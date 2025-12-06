@@ -1,0 +1,43 @@
+pub mod disk;
+pub mod buffer;
+pub mod page;
+
+pub use disk::DiskManager;
+pub use buffer::BufferPoolManager;
+pub use page::{Page, PageId};
+
+use crate::Result;
+
+/// Storage engine that manages data persistence
+pub struct StorageEngine {
+    disk_manager: DiskManager,
+    buffer_pool: BufferPoolManager,
+}
+
+impl StorageEngine {
+    pub fn new(data_dir: &str, page_size: usize, pool_size: usize) -> Result<Self> {
+        let disk_manager = DiskManager::new(data_dir, page_size)?;
+        let buffer_pool = BufferPoolManager::new(pool_size, disk_manager.clone());
+        
+        Ok(Self {
+            disk_manager,
+            buffer_pool,
+        })
+    }
+    
+    pub fn get_page(&mut self, page_id: PageId) -> Result<Page> {
+        self.buffer_pool.fetch_page(page_id)
+    }
+    
+    pub fn new_page(&mut self) -> Result<Page> {
+        self.buffer_pool.new_page()
+    }
+    
+    pub fn flush_page(&mut self, page_id: PageId) -> Result<()> {
+        self.buffer_pool.flush_page(page_id)
+    }
+    
+    pub fn flush_all(&mut self) -> Result<()> {
+        self.buffer_pool.flush_all()
+    }
+}
