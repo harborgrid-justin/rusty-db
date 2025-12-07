@@ -2,7 +2,7 @@
 /// Optimized for write-heavy and time-series workloads
 /// Features: Bloom filters, leveled compaction, concurrent memtable switching
 
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, VecDeque};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
