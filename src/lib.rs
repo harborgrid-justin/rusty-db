@@ -10,6 +10,14 @@ pub mod index;
 pub mod network;
 pub mod error;
 
+// Enterprise Features
+pub mod security;
+pub mod monitoring;
+pub mod backup;
+pub mod constraints;
+pub mod analytics;
+pub mod operations;
+
 pub use error::{Result, DbError};
 
 /// Database configuration

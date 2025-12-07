@@ -30,15 +30,30 @@ impl Executor {
                 self.catalog.drop_table(&name)?;
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::Select { table, columns, .. } => {
+            SqlStatement::Select { table, columns, join, group_by, order_by, limit, .. } => {
                 let schema = self.catalog.get_table(&table)?;
                 
                 // Simple implementation - return empty result with schema
-                let result_columns = if columns.contains(&"*".to_string()) {
+                let mut result_columns = if columns.contains(&"*".to_string()) {
                     schema.columns.iter().map(|c| c.name.clone()).collect()
                 } else {
                     columns
                 };
+                
+                // Handle JOIN (placeholder)
+                if join.is_some() {
+                    // JOIN implementation would go here
+                }
+                
+                // Handle GROUP BY (placeholder)
+                if !group_by.is_empty() {
+                    // Aggregation would be applied here
+                }
+                
+                // Handle ORDER BY (placeholder)
+                if !order_by.is_empty() {
+                    // Sorting would be applied here
+                }
                 
                 Ok(QueryResult::new(result_columns, Vec::new()))
             }
@@ -55,6 +70,28 @@ impl Executor {
             SqlStatement::Delete { table, .. } => {
                 // Validate table exists
                 let _schema = self.catalog.get_table(&table)?;
+                Ok(QueryResult::with_affected(0))
+            }
+            SqlStatement::CreateIndex { name, table, columns, unique } => {
+                // Validate table exists
+                let _schema = self.catalog.get_table(&table)?;
+                // Index creation would go here
+                Ok(QueryResult::with_affected(0))
+            }
+            SqlStatement::CreateView { name, query } => {
+                // View creation would go here
+                Ok(QueryResult::with_affected(0))
+            }
+            SqlStatement::AlterTable { name, action } => {
+                // Table alteration would go here
+                Ok(QueryResult::with_affected(0))
+            }
+            SqlStatement::GrantPermission { permission, table, user } => {
+                // Permission grant would go here
+                Ok(QueryResult::with_affected(0))
+            }
+            SqlStatement::RevokePermission { permission, table, user } => {
+                // Permission revoke would go here
                 Ok(QueryResult::with_affected(0))
             }
         }

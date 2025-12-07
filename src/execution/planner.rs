@@ -33,7 +33,7 @@ impl Planner {
     
     pub fn plan(&self, stmt: &SqlStatement) -> Result<PlanNode> {
         match stmt {
-            SqlStatement::Select { table, columns, filter } => {
+            SqlStatement::Select { table, columns, filter, .. } => {
                 let mut plan = PlanNode::TableScan {
                     table: table.clone(),
                     columns: columns.clone(),
@@ -73,6 +73,11 @@ mod tests {
             table: "users".to_string(),
             columns: vec!["id".to_string(), "name".to_string()],
             filter: None,
+            join: None,
+            group_by: Vec::new(),
+            having: None,
+            order_by: Vec::new(),
+            limit: None,
         };
         
         let plan = planner.plan(&stmt).unwrap();

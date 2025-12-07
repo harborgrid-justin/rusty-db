@@ -19,6 +19,11 @@ pub enum SqlStatement {
         table: String,
         columns: Vec<String>,
         filter: Option<String>,
+        join: Option<JoinClause>,
+        group_by: Vec<String>,
+        having: Option<String>,
+        order_by: Vec<OrderByClause>,
+        limit: Option<usize>,
     },
     Insert {
         table: String,
@@ -34,6 +39,60 @@ pub enum SqlStatement {
         table: String,
         filter: Option<String>,
     },
+    CreateIndex {
+        name: String,
+        table: String,
+        columns: Vec<String>,
+        unique: bool,
+    },
+    CreateView {
+        name: String,
+        query: String,
+    },
+    AlterTable {
+        name: String,
+        action: AlterAction,
+    },
+    GrantPermission {
+        permission: String,
+        table: String,
+        user: String,
+    },
+    RevokePermission {
+        permission: String,
+        table: String,
+        user: String,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub struct JoinClause {
+    pub join_type: JoinType,
+    pub table: String,
+    pub condition: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum JoinType {
+    Inner,
+    Left,
+    Right,
+    Full,
+    Cross,
+}
+
+#[derive(Debug, Clone)]
+pub struct OrderByClause {
+    pub column: String,
+    pub ascending: bool,
+}
+
+#[derive(Debug, Clone)]
+pub enum AlterAction {
+    AddColumn(Column),
+    DropColumn(String),
+    AddConstraint(String),
+    DropConstraint(String),
 }
 
 /// SQL parser wrapper
@@ -116,6 +175,11 @@ impl SqlParser {
                         table,
                         columns,
                         filter: None,
+                        join: None,
+                        group_by: Vec::new(),
+                        having: None,
+                        order_by: Vec::new(),
+                        limit: None,
                     })
                 } else {
                     Err(DbError::SqlParse("Unsupported query type".to_string()))

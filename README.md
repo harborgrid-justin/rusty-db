@@ -17,12 +17,60 @@ A high-performance, ACID-compliant relational database built from scratch in Rus
 - **Query Optimizer**: Cost-based query optimization
 - **Query Planner**: Intelligent query execution planning
 - **Supported Operations**:
-  - CREATE TABLE
-  - DROP TABLE
-  - SELECT (with projections)
-  - INSERT
-  - UPDATE
-  - DELETE
+  - CREATE TABLE, DROP TABLE, ALTER TABLE
+  - SELECT (with projections, JOINs, GROUP BY, ORDER BY, LIMIT)
+  - INSERT, UPDATE, DELETE
+  - CREATE INDEX (B-Tree and Hash)
+  - CREATE VIEW, CREATE MATERIALIZED VIEW
+  - GRANT/REVOKE permissions
+
+### Enterprise Security Features (NEW!)
+1. **User Authentication**: Secure login with session management
+2. **Role-Based Access Control (RBAC)**: Admin, reader, writer roles
+3. **Permission System**: Granular permissions (SELECT, INSERT, UPDATE, DELETE, etc.)
+4. **Session Management**: Secure session tokens
+5. **Password Hashing**: Secure password storage
+
+### Advanced Query Features (NEW!)
+6. **JOIN Operations**: INNER, LEFT, RIGHT, FULL, CROSS joins
+7. **Aggregation Functions**: COUNT, SUM, AVG, MIN, MAX, STDDEV, VARIANCE, MEDIAN
+8. **Window Functions**: ROW_NUMBER, RANK, DENSE_RANK, LEAD, LAG, FIRST_VALUE, LAST_VALUE
+9. **GROUP BY/HAVING**: Advanced grouping and filtering
+10. **ORDER BY**: Multi-column sorting with ASC/DESC
+11. **LIMIT/OFFSET**: Result pagination
+
+### Data Integrity & Constraints (NEW!)
+12. **Foreign Key Constraints**: Referential integrity with CASCADE, SET NULL, RESTRICT
+13. **Unique Constraints**: Ensure column uniqueness
+14. **Check Constraints**: Custom validation rules
+15. **Primary Key**: Automatic primary key enforcement
+16. **NOT NULL**: Null value prevention
+
+### Monitoring & Diagnostics (NEW!)
+17. **Query Statistics**: Execution time, rows affected, bytes read/written
+18. **Slow Query Log**: Automatic detection of slow queries (>1s)
+19. **Performance Metrics**: QPS, buffer pool hit rate, active connections
+20. **System Monitoring**: Transaction count, lock statistics, disk I/O metrics
+21. **Real-time Diagnostics**: Live system health monitoring
+
+### Backup & Recovery (NEW!)
+22. **Full Backups**: Complete database snapshots
+23. **Incremental Backups**: Differential backup support
+24. **Point-in-Time Recovery**: Restore to specific timestamp
+25. **Backup Compression**: Optional compression for storage efficiency
+26. **Backup Metadata**: Checksums and verification
+
+### Analytics & Caching (NEW!)
+27. **Materialized Views**: Pre-computed query results with refresh
+28. **Query Result Cache**: Automatic caching with TTL (5-minute default)
+29. **View Support**: Virtual table definitions
+30. **Cache Invalidation**: Smart cache management
+
+### Operational Excellence (NEW!)
+31. **Connection Pooling**: Min/max connection limits, timeout management
+32. **Prepared Statements**: Pre-compiled queries for performance
+33. **Batch Operations**: Efficient bulk inserts/updates
+34. **Async I/O**: Non-blocking operations throughout
 
 ### Advanced Features
 - **Indexing**: B-Tree and Hash index structures
@@ -55,10 +103,36 @@ RustyDB
 ├── Index Layer
 │   ├── B-Tree Index
 │   └── Hash Index
-└── Network Layer
-    ├── TCP Server
-    ├── Protocol Handler
-    └── Connection Manager
+├── Network Layer
+│   ├── TCP Server
+│   ├── Protocol Handler
+│   └── Connection Manager
+├── Security Layer (NEW!)
+│   ├── Authentication
+│   ├── Authorization (RBAC)
+│   ├── Session Management
+│   └── Permission System
+├── Monitoring Layer (NEW!)
+│   ├── Query Statistics
+│   ├── Performance Metrics
+│   ├── Slow Query Log
+│   └── System Diagnostics
+├── Backup Layer (NEW!)
+│   ├── Full Backup
+│   ├── Incremental Backup
+│   └── Point-in-Time Recovery
+├── Constraints Layer (NEW!)
+│   ├── Foreign Keys
+│   ├── Unique Constraints
+│   └── Check Constraints
+├── Analytics Layer (NEW!)
+│   ├── Materialized Views
+│   ├── Query Cache
+│   └── Window Functions
+└── Operations Layer (NEW!)
+    ├── Connection Pool
+    ├── Prepared Statements
+    └── Batch Operations
 ```
 
 ## 🔧 Installation
