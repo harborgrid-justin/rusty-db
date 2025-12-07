@@ -18,7 +18,7 @@ pub enum MetricType {
 }
 
 /// Counter metric - monotonically increasing value
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Counter {
     name: String,
     help: String,
@@ -75,7 +75,7 @@ impl Counter {
 }
 
 /// Gauge metric - value that can go up and down
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Gauge {
     name: String,
     help: String,
@@ -145,7 +145,7 @@ pub struct HistogramBucket {
 }
 
 /// Histogram metric - samples observations and counts them in buckets
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Histogram {
     name: String,
     help: String,
@@ -233,7 +233,7 @@ pub struct Quantile {
 }
 
 /// Summary metric - similar to histogram but calculates quantiles
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Summary {
     name: String,
     help: String,
