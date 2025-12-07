@@ -34,6 +34,24 @@ pub enum DbError {
     
     #[error("Deadlock detected")]
     Deadlock,
+    
+    #[error("Not found: {0}")]
+    NotFound(String),
+    
+    #[error("Already exists: {0}")]
+    AlreadyExists(String),
+    
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+    
+    #[error("Invalid operation: {0}")]
+    InvalidOperation(String),
+    
+    #[error("Not implemented: {0}")]
+    NotImplemented(String),
+    
+    #[error("Internal error: {0}")]
+    Internal(String),
 }
 
 pub type Result<T> = std::result::Result<T, DbError>;
