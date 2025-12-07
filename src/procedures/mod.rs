@@ -1,9 +1,22 @@
+// RustyDB Stored Procedures Module
+// Enterprise-grade PL/SQL-compatible stored procedures, functions, triggers, and packages
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
+
+// Sub-modules
+pub mod parser;
+pub mod runtime;
+pub mod functions;
+pub mod triggers;
+pub mod packages;
+pub mod cursors;
+pub mod builtins;
+pub mod compiler;
 
 /// Parameter mode for stored procedures
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
