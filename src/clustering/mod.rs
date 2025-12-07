@@ -2620,12 +2620,13 @@ impl NetworkPartitionHandler {
     }
 
     fn wait_and_reconnect(&self, partition: &NetworkPartition) -> Result<()> {
+        // TODO: Implement exponential backoff and make timeout configurable
         // Wait for network to recover
         std::thread::sleep(Duration::from_secs(5));
         
+        // TODO: Implement actual reconnection logic
         // Attempt to reconnect nodes
         for node_id in &partition.affected_nodes {
-            // Placeholder: actual reconnection logic
             let _ = node_id;
         }
         
@@ -2633,13 +2634,15 @@ impl NetworkPartitionHandler {
     }
 
     fn rebalance_cluster(&self, partition: &NetworkPartition) -> Result<()> {
-        // Trigger cluster rebalancing
+        // TODO: Implement actual cluster rebalancing logic
+        // This should trigger data migration and load distribution
         let _ = partition;
         Ok(())
     }
 
     fn trigger_failover(&self, partition: &NetworkPartition) -> Result<()> {
-        // Trigger failover for affected nodes
+        // TODO: Implement actual failover logic
+        // This should promote replicas and update cluster state
         let _ = partition;
         Ok(())
     }
@@ -2774,7 +2777,7 @@ impl ClusterResourceOptimizer {
         }
 
         Ok(OptimizationPlan {
-            id: format!("opt_{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()),
+            id: format!("opt_{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs()),
             actions: recommendations,
             estimated_savings: 0.0,
             created_at: SystemTime::now(),
@@ -2800,19 +2803,22 @@ impl ClusterResourceOptimizer {
     }
 
     fn scale_up_node(&self, node_id: &NodeId, resource_type: ResourceType, target: u64) -> Result<()> {
-        // Placeholder: actual scaling logic
+        // TODO: Implement actual scaling logic
+        // This should allocate additional resources to the node
         let _ = (node_id, resource_type, target);
         Ok(())
     }
 
     fn scale_down_node(&self, node_id: &NodeId) -> Result<()> {
-        // Placeholder: actual scaling down logic
+        // TODO: Implement actual scaling down logic
+        // This should release resources and potentially remove the node
         let _ = node_id;
         Ok(())
     }
 
     fn migrate_data(&self, from: &NodeId, to: &NodeId, size: u64) -> Result<()> {
-        // Placeholder: actual data migration logic
+        // TODO: Implement actual data migration logic
+        // This should transfer data between nodes with proper consistency guarantees
         let _ = (from, to, size);
         Ok(())
     }
