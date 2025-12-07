@@ -18,6 +18,11 @@ pub mod constraints;
 pub mod analytics;
 pub mod operations;
 
+// Advanced SQL Features
+pub mod triggers;
+pub mod procedures;
+pub mod replication;
+
 pub use error::{Result, DbError};
 
 /// Database configuration

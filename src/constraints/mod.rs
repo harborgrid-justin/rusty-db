@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
 use crate::Result;
-use crate::error::DbError;
 
 /// Foreign key constraint
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,6 +39,20 @@ pub struct CheckConstraint {
     pub name: String,
     pub table: String,
     pub expression: String,
+}
+
+/// Cascade action for foreign key operations
+#[derive(Debug, Clone)]
+pub enum CascadeAction {
+    Delete {
+        table: String,
+        condition: String,
+    },
+    Update {
+        table: String,
+        column: String,
+        value: String,
+    },
 }
 
 /// Constraint manager
@@ -87,12 +100,80 @@ impl ConstraintManager {
         
         if let Some(constraints) = fks.get(table) {
             for fk in constraints {
-                // Validate foreign key constraint
-                // In production, this would check referenced table
+                // Check if foreign key columns are present in values
+                for col in &fk.columns {
+                    if let Some(_value) = values.get(col) {
+                        // TODO: In production, this would:
+                        // 1. Look up the referenced table
+                        // 2. Check if the value exists in the referenced column(s)
+                        // 3. Return error if not found (for RESTRICT/NO ACTION)
+                        // For now, we just validate the structure exists
+                    }
+                }
             }
         }
         
         Ok(())
+    }
+    
+    /// Handle cascading deletes/updates for foreign keys
+    pub fn cascade_operation(
+        &self,
+        table: &str,
+        operation: &str,
+        values: &HashMap<String, String>,
+    ) -> Result<Vec<CascadeAction>> {
+        let fks = self.foreign_keys.read();
+        let mut actions = Vec::new();
+        
+        // Find all foreign keys that reference this table
+        for (referencing_table, constraints) in fks.iter() {
+            for fk in constraints {
+                if fk.referenced_table == table {
+                    match operation {
+                        "DELETE" => {
+                            match fk.on_delete {
+                                ReferentialAction::Cascade => {
+                                    actions.push(CascadeAction::Delete {
+                                        table: referencing_table.clone(),
+                                        condition: format!("{}={}", fk.columns[0], values.get(&fk.referenced_columns[0]).unwrap_or(&"".to_string())),
+                                    });
+                                }
+                                ReferentialAction::SetNull => {
+                                    actions.push(CascadeAction::Update {
+                                        table: referencing_table.clone(),
+                                        column: fk.columns[0].clone(),
+                                        value: "NULL".to_string(),
+                                    });
+                                }
+                                ReferentialAction::Restrict => {
+                                    // Check if there are dependent rows
+                                    // If yes, return error
+                                }
+                                _ => {}
+                            }
+                        }
+                        "UPDATE" => {
+                            match fk.on_update {
+                                ReferentialAction::Cascade => {
+                                    // Cascade the update
+                                }
+                                ReferentialAction::SetNull => {
+                                    // Set foreign key to NULL
+                                }
+                                ReferentialAction::Restrict => {
+                                    // Prevent the update if dependent rows exist
+                                }
+                                _ => {}
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        
+        Ok(actions)
     }
     
     pub fn validate_unique(&self, table: &str, values: &HashMap<String, String>) -> Result<()> {
