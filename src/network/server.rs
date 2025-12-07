@@ -75,7 +75,8 @@ struct ConnectionHandler {
 
 impl ConnectionHandler {
     async fn handle(&self, mut socket: TcpStream) -> Result<()> {
-        let mut buffer = vec![0u8; 4096];
+        const MAX_REQUEST_SIZE: usize = 1024 * 1024; // 1MB limit
+        let mut buffer = vec![0u8; MAX_REQUEST_SIZE];
         
         loop {
             let n = socket.read(&mut buffer).await
@@ -83,6 +84,11 @@ impl ConnectionHandler {
             
             if n == 0 {
                 break;
+            }
+            
+            // Validate request size
+            if n > MAX_REQUEST_SIZE {
+                return Err(DbError::Network("Request too large".to_string()));
             }
             
             let request: Request = bincode::deserialize(&buffer[..n])

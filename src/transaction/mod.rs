@@ -98,16 +98,23 @@ impl LockManager {
     }
     
     pub fn release_all_locks(&self, txn_id: TransactionId) -> Result<()> {
-        let txn_locks = self.txn_locks.read();
-        
-        if let Some(locks) = txn_locks.get(&txn_id) {
-            let resources: Vec<String> = locks.iter().cloned().collect();
-            drop(txn_locks);
-            
-            for resource in resources {
-                self.release_lock(txn_id, &resource)?;
+        // Get all locks for this transaction
+        let resources: Vec<String> = {
+            let txn_locks = self.txn_locks.read();
+            if let Some(locks) = txn_locks.get(&txn_id) {
+                locks.iter().cloned().collect()
+            } else {
+                return Ok(());
             }
+        };
+        
+        // Release each lock
+        for resource in resources {
+            self.release_lock(txn_id, &resource)?;
         }
+        
+        // Remove transaction entry
+        self.txn_locks.write().remove(&txn_id);
         
         Ok(())
     }

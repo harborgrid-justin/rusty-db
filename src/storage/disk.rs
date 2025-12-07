@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use crate::Result;
 use crate::storage::page::{Page, PageId};
+use crate::error::DbError;
 
 /// Manages reading and writing pages to disk
 #[derive(Clone)]
@@ -37,7 +38,8 @@ impl DiskManager {
     }
     
     pub fn read_page(&self, page_id: PageId) -> Result<Page> {
-        let mut file = self.data_file.lock().unwrap();
+        let mut file = self.data_file.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let offset = page_id as u64 * self.page_size as u64;
         
         file.seek(SeekFrom::Start(offset))?;
@@ -49,7 +51,8 @@ impl DiskManager {
     }
     
     pub fn write_page(&self, page: &Page) -> Result<()> {
-        let mut file = self.data_file.lock().unwrap();
+        let mut file = self.data_file.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let offset = page.id as u64 * self.page_size as u64;
         
         file.seek(SeekFrom::Start(offset))?;
@@ -60,7 +63,8 @@ impl DiskManager {
     }
     
     pub fn allocate_page(&self) -> Result<PageId> {
-        let mut num_pages = self.num_pages.lock().unwrap();
+        let mut num_pages = self.num_pages.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let page_id = *num_pages;
         *num_pages += 1;
         
@@ -72,7 +76,7 @@ impl DiskManager {
     }
     
     pub fn get_num_pages(&self) -> u32 {
-        *self.num_pages.lock().unwrap()
+        *self.num_pages.lock().unwrap_or_else(|e| e.into_inner())
     }
 }
 

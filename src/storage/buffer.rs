@@ -21,7 +21,12 @@ impl LruReplacer {
     }
     
     fn victim(&mut self) -> Option<PageId> {
-        self.frames.pop()
+        // Remove from the end (least recently used)
+        if !self.frames.is_empty() {
+            Some(self.frames.pop().unwrap())
+        } else {
+            None
+        }
     }
     
     fn pin(&mut self, page_id: PageId) {
@@ -59,27 +64,41 @@ impl BufferPoolManager {
     }
     
     pub fn fetch_page(&self, page_id: PageId) -> Result<Page> {
-        let mut page_table = self.page_table.write();
-        
-        // Check if page is already in buffer pool
-        if let Some(&frame_id) = page_table.get(&page_id) {
-            let mut pool = self.pool.write();
-            pool[frame_id].pin_count += 1;
-            self.replacer.write().pin(page_id);
-            return Ok(pool[frame_id].clone());
+        // Check if page is already in buffer pool (read lock only)
+        {
+            let page_table = self.page_table.read();
+            if let Some(&frame_id) = page_table.get(&page_id) {
+                let mut pool = self.pool.write();
+                pool[frame_id].pin_count += 1;
+                self.replacer.write().pin(page_id);
+                return Ok(pool[frame_id].clone());
+            }
         }
         
         // Find a frame to use
         let frame_id = self.get_frame_id()?;
         
+        // Flush dirty page if needed before evicting
+        {
+            let pool = self.pool.read();
+            if pool[frame_id].is_dirty {
+                self.disk_manager.write_page(&pool[frame_id])?;
+            }
+        }
+        
         // Load page from disk
         let page = self.disk_manager.read_page(page_id)?;
         
+        // Update pool and page table
         let mut pool = self.pool.write();
+        let old_page_id = pool[frame_id].id;
         pool[frame_id] = page.clone();
         pool[frame_id].pin_count = 1;
         
+        let mut page_table = self.page_table.write();
+        page_table.remove(&old_page_id);
         page_table.insert(page_id, frame_id);
+        
         self.replacer.write().pin(page_id);
         
         Ok(page)
@@ -131,10 +150,11 @@ impl BufferPoolManager {
             return Ok(frame_id);
         }
         
-        // Use replacer
+        // Use replacer to find victim
         let victim = self.replacer.write().victim()
             .ok_or_else(|| DbError::Storage("No available frames".to_string()))?;
         
+        // Find the frame for the victim page
         let page_table = self.page_table.read();
         if let Some(&frame_id) = page_table.get(&victim) {
             Ok(frame_id)

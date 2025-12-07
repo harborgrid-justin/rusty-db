@@ -121,10 +121,12 @@ impl SqlParser {
                     Err(DbError::SqlParse("Unsupported query type".to_string()))
                 }
             }
-            Statement::Insert { table_name, columns, source, .. } => {
+            Statement::Insert { table_name, columns, .. } => {
                 let table = table_name.to_string();
                 let cols: Vec<String> = columns.iter().map(|c| c.to_string()).collect();
                 
+                // TODO: Parse source values from the INSERT statement
+                // For now, return empty values - this will be enhanced in future versions
                 Ok(SqlStatement::Insert {
                     table,
                     columns: cols,

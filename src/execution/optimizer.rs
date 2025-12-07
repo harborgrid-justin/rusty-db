@@ -10,12 +10,15 @@ impl Optimizer {
     }
     
     pub fn optimize(&self, plan: PlanNode) -> Result<PlanNode> {
-        // Simple pass-through optimization
-        // In a real system, this would apply cost-based transformations:
+        // TODO: Implement advanced optimizations:
         // - Predicate pushdown
         // - Join reordering
         // - Index selection
         // - Partition pruning
+        // - Constant folding
+        
+        // For now, perform simple pass-through
+        // Future: Apply cost-based transformations
         Ok(plan)
     }
     
