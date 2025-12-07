@@ -1,3 +1,5 @@
+pub mod resources;
+
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
