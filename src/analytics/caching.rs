@@ -681,14 +681,360 @@ mod tests {
     #[test]
     fn test_adaptive_cache_policy() {
         let mut policy = AdaptiveCachePolicy::new(100);
-        
+
         // Record access patterns
         policy.record_access("key1".to_string(), true);
         policy.record_access("key1".to_string(), true);
         policy.record_access("key2".to_string(), true);
-        
+
         // key1 should have higher score (accessed more)
         let victim = policy.select_victim(&["key1".to_string(), "key2".to_string()]);
         assert_eq!(victim, Some("key2".to_string()));
+    }
+}
+
+/// Semantic query cache with normalization
+///
+/// Recognizes semantically equivalent queries even if syntactically different
+pub struct SemanticQueryCache {
+    cache: Arc<RwLock<HashMap<String, CachedQueryResult>>>,
+    normalizer: Arc<QueryNormalizer>,
+    partial_cache: Arc<RwLock<PartialResultCache>>,
+}
+
+impl SemanticQueryCache {
+    pub fn new() -> Self {
+        Self {
+            cache: Arc::new(RwLock::new(HashMap::new())),
+            normalizer: Arc::new(QueryNormalizer::new()),
+            partial_cache: Arc::new(RwLock::new(PartialResultCache::new())),
+        }
+    }
+
+    /// Get cached result for query
+    pub fn get(&self, query: &str) -> Option<QueryResult> {
+        // Normalize query
+        let normalized = self.normalizer.normalize(query).ok()?;
+
+        let cache = self.cache.read();
+        cache.get(&normalized).map(|cr| cr.result.clone())
+    }
+
+    /// Cache query result
+    pub fn put(&self, query: &str, result: QueryResult) -> Result<()> {
+        let normalized = self.normalizer.normalize(query)?;
+
+        let cached_result = CachedQueryResult {
+            result: result.clone(),
+            query: query.to_string(),
+            normalized_query: normalized.clone(),
+            cached_at: SystemTime::now(),
+            access_count: 0,
+            size_bytes: self.estimate_size(&result),
+        };
+
+        self.cache.write().insert(normalized, cached_result);
+
+        // Also cache partial results if applicable
+        self.cache_partial_results(query, &result)?;
+
+        Ok(())
+    }
+
+    /// Try to answer query using partial results
+    pub fn get_partial(&self, query: &str) -> Option<PartialMatch> {
+        self.partial_cache.read().find_partial_match(query)
+    }
+
+    /// Invalidate queries matching pattern
+    pub fn invalidate_pattern(&self, pattern: &str) -> usize {
+        let mut cache = self.cache.write();
+        let keys_to_remove: Vec<_> = cache.keys()
+            .filter(|k| k.contains(pattern))
+            .cloned()
+            .collect();
+
+        let count = keys_to_remove.len();
+        for key in keys_to_remove {
+            cache.remove(&key);
+        }
+
+        count
+    }
+
+    fn estimate_size(&self, result: &QueryResult) -> usize {
+        // Rough estimate
+        result.columns.len() * 100 + result.rows.len() * 100
+    }
+
+    fn cache_partial_results(&self, query: &str, result: &QueryResult) -> Result<()> {
+        // Extract subqueries and cache them separately
+        // In production, would parse query and cache intermediate results
+        Ok(())
+    }
+}
+
+/// Cached query result with metadata
+struct CachedQueryResult {
+    result: QueryResult,
+    query: String,
+    normalized_query: String,
+    cached_at: SystemTime,
+    access_count: u64,
+    size_bytes: usize,
+}
+
+/// Query normalizer for semantic equivalence
+pub struct QueryNormalizer {
+    rules: Vec<NormalizationRule>,
+}
+
+impl QueryNormalizer {
+    pub fn new() -> Self {
+        Self {
+            rules: vec![
+                NormalizationRule::RemoveWhitespace,
+                NormalizationRule::Lowercase,
+                NormalizationRule::SortPredicates,
+                NormalizationRule::CanonicalizeNames,
+                NormalizationRule::RemoveComments,
+            ],
+        }
+    }
+
+    /// Normalize query to canonical form
+    pub fn normalize(&self, query: &str) -> Result<String> {
+        let mut normalized = query.to_string();
+
+        for rule in &self.rules {
+            normalized = self.apply_rule(&normalized, rule)?;
+        }
+
+        Ok(normalized)
+    }
+
+    fn apply_rule(&self, query: &str, rule: &NormalizationRule) -> Result<String> {
+        match rule {
+            NormalizationRule::RemoveWhitespace => {
+                Ok(query.split_whitespace().collect::<Vec<_>>().join(" "))
+            }
+            NormalizationRule::Lowercase => {
+                Ok(query.to_lowercase())
+            }
+            NormalizationRule::SortPredicates => {
+                // Simplified - would parse and sort WHERE predicates
+                Ok(query.to_string())
+            }
+            NormalizationRule::CanonicalizeNames => {
+                // Simplified - would resolve aliases and use canonical names
+                Ok(query.to_string())
+            }
+            NormalizationRule::RemoveComments => {
+                Ok(query.lines()
+                    .filter(|line| !line.trim_start().starts_with("--"))
+                    .collect::<Vec<_>>()
+                    .join("\n"))
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+enum NormalizationRule {
+    RemoveWhitespace,
+    Lowercase,
+    SortPredicates,
+    CanonicalizeNames,
+    RemoveComments,
+}
+
+/// Partial result cache for query fragments
+pub struct PartialResultCache {
+    fragments: HashMap<String, QueryFragment>,
+}
+
+impl PartialResultCache {
+    pub fn new() -> Self {
+        Self {
+            fragments: HashMap::new(),
+        }
+    }
+
+    pub fn add_fragment(&mut self, fragment: QueryFragment) {
+        self.fragments.insert(fragment.key.clone(), fragment);
+    }
+
+    pub fn find_partial_match(&self, query: &str) -> Option<PartialMatch> {
+        // Find fragments that match parts of the query
+        for (key, fragment) in &self.fragments {
+            if query.contains(key) {
+                return Some(PartialMatch {
+                    fragment: fragment.clone(),
+                    coverage: 0.5, // Simplified
+                });
+            }
+        }
+        None
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct QueryFragment {
+    pub key: String,
+    pub result: QueryResult,
+    pub tables: Vec<String>,
+    pub predicates: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PartialMatch {
+    pub fragment: QueryFragment,
+    pub coverage: f64, // 0.0 to 1.0
+}
+
+/// Memory pressure handler for cache eviction
+pub struct MemoryPressureHandler {
+    max_memory_bytes: usize,
+    current_memory_bytes: Arc<RwLock<usize>>,
+    eviction_threshold: f64,
+}
+
+impl MemoryPressureHandler {
+    pub fn new(max_memory_bytes: usize) -> Self {
+        Self {
+            max_memory_bytes,
+            current_memory_bytes: Arc::new(RwLock::new(0)),
+            eviction_threshold: 0.9,
+        }
+    }
+
+    /// Check if under memory pressure
+    pub fn is_under_pressure(&self) -> bool {
+        let current = *self.current_memory_bytes.read();
+        current as f64 > self.max_memory_bytes as f64 * self.eviction_threshold
+    }
+
+    /// Record memory allocation
+    pub fn allocate(&self, bytes: usize) {
+        *self.current_memory_bytes.write() += bytes;
+    }
+
+    /// Record memory deallocation
+    pub fn deallocate(&self, bytes: usize) {
+        let mut current = self.current_memory_bytes.write();
+        *current = current.saturating_sub(bytes);
+    }
+
+    /// Get current memory usage
+    pub fn current_usage(&self) -> usize {
+        *self.current_memory_bytes.read()
+    }
+
+    /// Get memory usage percentage
+    pub fn usage_percentage(&self) -> f64 {
+        let current = *self.current_memory_bytes.read();
+        current as f64 / self.max_memory_bytes as f64
+    }
+}
+
+/// Cache update notification system
+pub struct CacheInvalidationNotifier {
+    subscribers: Arc<RwLock<Vec<InvalidationSubscriber>>>,
+}
+
+impl CacheInvalidationNotifier {
+    pub fn new() -> Self {
+        Self {
+            subscribers: Arc::new(RwLock::new(Vec::new())),
+        }
+    }
+
+    /// Subscribe to invalidation notifications
+    pub fn subscribe(&self, subscriber: InvalidationSubscriber) {
+        self.subscribers.write().push(subscriber);
+    }
+
+    /// Notify all subscribers of invalidation
+    pub fn notify(&self, event: InvalidationEvent) {
+        let subscribers = self.subscribers.read();
+        for subscriber in subscribers.iter() {
+            subscriber.notify(&event);
+        }
+    }
+}
+
+pub struct InvalidationSubscriber {
+    pub name: String,
+    pub callback: Arc<dyn Fn(&InvalidationEvent) + Send + Sync>,
+}
+
+impl InvalidationSubscriber {
+    pub fn notify(&self, event: &InvalidationEvent) {
+        (self.callback)(event);
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct InvalidationEvent {
+    pub event_type: InvalidationType,
+    pub affected_tables: Vec<String>,
+    pub affected_queries: Vec<String>,
+    pub timestamp: SystemTime,
+}
+
+#[derive(Debug, Clone)]
+pub enum InvalidationType {
+    TableUpdate,
+    TableDelete,
+    SchemaChange,
+    Manual,
+}
+
+#[cfg(test)]
+mod semantic_tests {
+    use super::*;
+
+    #[test]
+    fn test_query_normalization() {
+        let normalizer = QueryNormalizer::new();
+
+        let query1 = "SELECT * FROM users WHERE id = 1";
+        let query2 = "select   *   from   users   where   id=1";
+
+        let norm1 = normalizer.normalize(query1).unwrap();
+        let norm2 = normalizer.normalize(query2).unwrap();
+
+        // Should normalize to same form
+        assert_eq!(norm1, norm2);
+    }
+
+    #[test]
+    fn test_semantic_cache() {
+        let cache = SemanticQueryCache::new();
+
+        let result = QueryResult::new(
+            vec!["id".to_string()],
+            vec![vec!["1".to_string()]],
+        );
+
+        cache.put("SELECT * FROM users", result.clone()).unwrap();
+
+        // Should retrieve with different whitespace
+        let cached = cache.get("SELECT   *   FROM   users");
+        assert!(cached.is_some());
+    }
+
+    #[test]
+    fn test_memory_pressure() {
+        let handler = MemoryPressureHandler::new(1000);
+
+        handler.allocate(500);
+        assert!(!handler.is_under_pressure());
+
+        handler.allocate(500);
+        assert!(handler.is_under_pressure());
+
+        handler.deallocate(200);
+        assert!(!handler.is_under_pressure());
     }
 }

@@ -1,44 +1,39 @@
 //! # Security Module
 //!
-//! Comprehensive security system for database authentication, authorization, and encryption.
+//! Comprehensive enterprise-grade security system for RustyDB providing authentication,
+//! authorization, encryption, auditing, and mandatory access control.
 //!
-//! ## Features
+//! ## Architecture
 //!
-//! ### Authentication
-//! - Local username/password authentication
-//! - LDAP integration
-//! - OAuth 2.0 support
-//! - JWT token-based authentication
-//! - Multi-factor authentication (MFA)
-//! - API key authentication
+//! The security module is organized into seven core submodules:
 //!
-//! ### Authorization
-//! - Role-Based Access Control (RBAC)
-//! - Row-Level Security (RLS)
-//! - Column-level permissions
-//! - Dynamic permission evaluation
-//! - Permission inheritance
+//! ### 1. Role-Based Access Control (RBAC)
+//! Hierarchical role definitions with inheritance, dynamic activation, and separation
+//! of duties constraints. See [`rbac`] module for details.
 //!
-//! ### Encryption
-//! - Data encryption at rest
-//! - TLS/SSL for data in transit
-//! - Column-level encryption
-//! - Transparent Data Encryption (TDE)
-//! - Key rotation and management
+//! ### 2. Fine-Grained Access Control (FGAC)
+//! Row-level security policies, column-level masking, virtual private database patterns,
+//! and predicate injection. See [`fgac`] module for details.
 //!
-//! ### Audit Logging
-//! - Comprehensive audit trails
-//! - Login/logout tracking
-//! - Query auditing
-//! - Permission changes logging
-//! - Failed access attempts
+//! ### 3. Encryption Services
+//! Transparent Data Encryption (TDE), column-level encryption, key rotation without
+//! downtime, and HSM integration. See [`encryption`] module for details.
 //!
-//! ### Password Management
-//! - Password complexity policies
-//! - Password expiration
-//! - Password history
-//! - Account lockout after failed attempts
-//! - Password reset workflows
+//! ### 4. Audit System
+//! Statement and object-level auditing with fine-grained conditions and tamper
+//! protection. See [`audit`] module for details.
+//!
+//! ### 5. Authentication Framework
+//! Password policies, multi-factor authentication, LDAP/AD integration, and OAuth2/OIDC
+//! support. See [`authentication`] module for details.
+//!
+//! ### 6. Privilege Management
+//! System and object privileges, GRANT/REVOKE operations with admin option, and
+//! privilege inheritance. See [`privileges`] module for details.
+//!
+//! ### 7. Security Labels
+//! Mandatory access control, multi-level security, compartment-based security, and
+//! label-based filtering. See [`labels`] module for details.
 //!
 //! ## Usage Example
 //!
@@ -46,447 +41,453 @@
 //! use rusty_db::security::*;
 //!
 //! # fn example() -> rusty_db::Result<()> {
-//! let security = SecurityManager::new();
+//! // Create integrated security manager
+//! let security = IntegratedSecurityManager::new();
 //!
 //! // Authenticate user
-//! let session = security.authenticate("user", "password")?;
+//! let session = security.authenticate("username", "password")?;
 //!
-//! // Check permission
-//! security.authorize(&session, Permission::Select)?;
+//! // Check permissions
+//! let can_select = security.check_permission(
+//!     &session.session_id,
+//!     "SELECT",
+//!     "employees",
+//! )?;
 //!
-//! // Create new user with roles
-//! let mut roles = std::collections::HashSet::new();
-//! roles.insert("writer".to_string());
-//! security.create_user("newuser".to_string(), "password".to_string(), roles)?;
+//! // Apply row-level security
+//! let filtered_rows = security.filter_rows(
+//!     &session.session_id,
+//!     "employees",
+//!     vec!["row1".to_string(), "row2".to_string()],
+//! )?;
 //! # Ok(())
 //! # }
 //! ```
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
 
-/// User authentication and authorization
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct User {
-    pub username: String,
-    password_hash: String,
-    pub roles: HashSet<String>,
-    pub permissions: HashSet<Permission>,
-    pub email: Option<String>,
-    pub created_at: i64,
-    pub last_login: Option<i64>,
-    pub password_expires_at: Option<i64>,
-    pub account_locked: bool,
-    pub failed_login_attempts: u32,
-    pub mfa_enabled: bool,
-    pub mfa_secret: Option<String>,
-    pub api_keys: Vec<String>,
+// Re-export all submodules
+pub mod rbac;
+pub mod fgac;
+pub mod encryption;
+pub mod audit;
+pub mod authentication;
+pub mod privileges;
+pub mod labels;
+
+// Re-export commonly used types
+pub use rbac::{RbacManager, Role, RoleAssignment, SeparationOfDutiesConstraint};
+pub use fgac::{FgacManager, RowLevelPolicy, ColumnPolicy, SecurityContext as FgacContext};
+pub use encryption::{EncryptionManager, EncryptionKey, TdeConfig, ColumnEncryption};
+pub use audit::{AuditManager, AuditRecord, AuditAction, AuditPolicy};
+pub use authentication::{
+    AuthenticationManager, UserAccount, AuthSession, PasswordPolicy, LoginCredentials, LoginResult
+};
+pub use privileges::{PrivilegeManager, SystemPrivilege, ObjectPrivilege, PrivilegeGrant};
+pub use labels::{LabelManager, SecurityLabel, ClassificationLevel, UserClearance};
+
+/// Integrated security manager combining all security subsystems
+pub struct IntegratedSecurityManager {
+    /// RBAC manager
+    pub rbac: Arc<RbacManager>,
+    /// FGAC manager
+    pub fgac: Arc<FgacManager>,
+    /// Encryption manager
+    pub encryption: Arc<EncryptionManager>,
+    /// Audit manager
+    pub audit: Arc<AuditManager>,
+    /// Authentication manager
+    pub authentication: Arc<AuthenticationManager>,
+    /// Privilege manager
+    pub privileges: Arc<PrivilegeManager>,
+    /// Label manager
+    pub labels: Arc<LabelManager>,
 }
 
-/// Authentication method
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum AuthMethod {
-    Local,
-    LDAP,
-    OAuth,
-    JWT,
-    APIKey,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Permission {
-    CreateTable,
-    DropTable,
-    Select,
-    Insert,
-    Update,
-    Delete,
-    CreateUser,
-    GrantPermission,
-    CreateIndex,
-    CreateView,
-    Backup,
-    Restore,
-    AlterTable,
-    TruncateTable,
-    CreateDatabase,
-    DropDatabase,
-    CreateTrigger,
-    DropTrigger,
-    CreateProcedure,
-    DropProcedure,
-    ExecuteProcedure,
-    ManageReplication,
-    ManageSecurity,
-    ViewAuditLog,
-    EncryptData,
-    DecryptData,
-    ManageKeys,
-    SuperUser,
-}
-
-/// Row-Level Security policy
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RowLevelSecurityPolicy {
-    pub policy_id: String,
-    pub table_name: String,
-    pub policy_name: String,
-    pub policy_type: RLSPolicyType,
-    pub using_expression: String, // SQL expression
-    pub check_expression: Option<String>,
-    pub roles: HashSet<String>,
-    pub enabled: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum RLSPolicyType {
-    Permissive,
-    Restrictive,
-}
-
-/// Column-level permission
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ColumnPermission {
-    pub table_name: String,
-    pub column_name: String,
-    pub permission: Permission,
-    pub roles: HashSet<String>,
-}
-
-/// Audit log entry
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuditLogEntry {
-    pub log_id: u64,
-    pub timestamp: i64,
-    pub username: String,
-    pub action: AuditAction,
-    pub table_name: Option<String>,
-    pub success: bool,
-    pub ip_address: Option<String>,
-    pub details: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum AuditAction {
-    Login,
-    Logout,
-    FailedLogin,
-    CreateTable,
-    DropTable,
-    Select,
-    Insert,
-    Update,
-    Delete,
-    CreateUser,
-    DropUser,
-    GrantPermission,
-    RevokePermission,
-    ChangePassword,
-    AlterTable,
-    BackupDatabase,
-    RestoreDatabase,
-}
-
-/// Encryption key
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EncryptionKey {
-    pub key_id: String,
-    pub key_type: KeyType,
-    pub algorithm: EncryptionAlgorithm,
-    pub created_at: i64,
-    pub expires_at: Option<i64>,
-    pub rotated_from: Option<String>,
-    pub active: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum KeyType {
-    Master,
-    DataEncryption,
-    ColumnEncryption,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum EncryptionAlgorithm {
-    AES256,
-    ChaCha20,
-    RSA2048,
-    RSA4096,
-}
-
-/// Password policy
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PasswordPolicy {
-    pub min_length: usize,
-    pub require_uppercase: bool,
-    pub require_lowercase: bool,
-    pub require_numbers: bool,
-    pub require_special_chars: bool,
-    pub max_age_days: Option<u32>,
-    pub history_count: usize,
-    pub max_failed_attempts: u32,
-    pub lockout_duration_minutes: u32,
-}
-
-impl Default for PasswordPolicy {
-    fn default() -> Self {
-        Self {
-            min_length: 8,
-            require_uppercase: true,
-            require_lowercase: true,
-            require_numbers: true,
-            require_special_chars: true,
-            max_age_days: Some(90),
-            history_count: 5,
-            max_failed_attempts: 5,
-            lockout_duration_minutes: 30,
-        }
-    }
-}
-
-/// Session information
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Session {
-    pub session_id: String,
-    pub username: String,
-    pub created_at: i64,
-    pub last_activity: i64,
-    pub ip_address: Option<String>,
-    pub user_agent: Option<String>,
-    pub auth_method: AuthMethod,
-}
-
-/// OAuth configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OAuthConfig {
-    pub provider: String,
-    pub client_id: String,
-    pub client_secret: String,
-    pub auth_url: String,
-    pub token_url: String,
-    pub redirect_url: String,
-}
-
-/// LDAP configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LDAPConfig {
-    pub server_url: String,
-    pub bind_dn: String,
-    pub bind_password: String,
-    pub base_dn: String,
-    pub user_filter: String,
-    pub group_filter: Option<String>,
-}
-
-/// JWT configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct JWTConfig {
-    pub secret: String,
-    pub issuer: String,
-    pub audience: String,
-    pub expiration_seconds: u64,
-}
-
-/// Encryption at rest configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EncryptionConfig {
-    pub enabled: bool,
-    pub master_key_id: Option<String>,
-    pub algorithm: EncryptionAlgorithm,
-    pub auto_rotation_days: Option<u32>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Role {
-    pub name: String,
-    pub permissions: HashSet<Permission>,
-}
-
-/// Security manager for authentication and authorization
-pub struct SecurityManager {
-    users: Arc<RwLock<HashMap<String, User>>>,
-    roles: Arc<RwLock<HashMap<String, Role>>>,
-    sessions: Arc<RwLock<HashMap<String, Session>>>,
-    rls_policies: Arc<RwLock<HashMap<String, Vec<RowLevelSecurityPolicy>>>>, // table_name -> policies
-    column_permissions: Arc<RwLock<Vec<ColumnPermission>>>,
-    audit_log: Arc<RwLock<VecDeque<AuditLogEntry>>>,
-    audit_counter: Arc<RwLock<u64>>,
-    encryption_keys: Arc<RwLock<HashMap<String, EncryptionKey>>>,
-    password_policy: Arc<RwLock<PasswordPolicy>>,
-    password_history: Arc<RwLock<HashMap<String, Vec<String>>>>, // username -> password hashes
-    oauth_config: Arc<RwLock<Option<OAuthConfig>>>,
-    ldap_config: Arc<RwLock<Option<LDAPConfig>>>,
-    jwt_config: Arc<RwLock<Option<JWTConfig>>>,
-    encryption_config: Arc<RwLock<EncryptionConfig>>,
-    failed_login_tracking: Arc<RwLock<HashMap<String, (u32, i64)>>>, // username -> (count, timestamp)
-}
-
-impl SecurityManager {
+impl IntegratedSecurityManager {
+    /// Create a new integrated security manager
     pub fn new() -> Self {
-        let mut manager = Self {
-            users: Arc::new(RwLock::new(HashMap::new())),
-            roles: Arc::new(RwLock::new(HashMap::new())),
-            sessions: Arc::new(RwLock::new(HashMap::new())),
+        Self {
+            rbac: Arc::new(RbacManager::new()),
+            fgac: Arc::new(FgacManager::new()),
+            encryption: Arc::new(EncryptionManager::new()),
+            audit: Arc::new(AuditManager::new()),
+            authentication: Arc::new(AuthenticationManager::new()),
+            privileges: Arc::new(PrivilegeManager::new()),
+            labels: Arc::new(LabelManager::new()),
+        }
+    }
+
+    /// Authenticate a user and create a session
+    pub fn authenticate(&self, username: &str, password: &str) -> Result<AuthSession> {
+        let credentials = LoginCredentials {
+            username: username.to_string(),
+            password: password.to_string(),
+            mfa_code: None,
+            client_ip: None,
+            user_agent: None,
         };
-        
-        // Create default admin user
-        manager.create_default_admin();
-        manager.create_default_roles();
-        
-        manager
-    }
-    
-    fn create_default_admin(&self) {
-        let mut users = self.users.write();
-        let admin = User {
-            username: "admin".to_string(),
-            password_hash: hash_password("admin"),
-            roles: vec!["admin".to_string()].into_iter().collect(),
-            permissions: HashSet::from([
-                Permission::CreateTable, Permission::DropTable,
-                Permission::Select, Permission::Insert, Permission::Update, Permission::Delete,
-                Permission::CreateUser, Permission::GrantPermission,
-                Permission::CreateIndex, Permission::CreateView,
-                Permission::Backup, Permission::Restore,
-            ]),
-        };
-        users.insert("admin".to_string(), admin);
-    }
-    
-    fn create_default_roles(&self) {
-        let mut roles = self.roles.write();
-        
-        // Admin role
-        roles.insert("admin".to_string(), Role {
-            name: "admin".to_string(),
-            permissions: HashSet::from([
-                Permission::CreateTable, Permission::DropTable,
-                Permission::Select, Permission::Insert, Permission::Update, Permission::Delete,
-                Permission::CreateUser, Permission::GrantPermission,
-                Permission::CreateIndex, Permission::CreateView,
-                Permission::Backup, Permission::Restore,
-            ]),
-        });
-        
-        // Read-only role
-        roles.insert("reader".to_string(), Role {
-            name: "reader".to_string(),
-            permissions: HashSet::from([Permission::Select]),
-        });
-        
-        // Writer role
-        roles.insert("writer".to_string(), Role {
-            name: "writer".to_string(),
-            permissions: HashSet::from([
-                Permission::Select, Permission::Insert,
-                Permission::Update, Permission::Delete,
-            ]),
-        });
-    }
-    
-    pub fn authenticate(&self, username: &str, password: &str) -> Result<String> {
-        let users = self.users.read();
-        
-        if let Some(user) = users.get(username) {
-            if verify_password(password, &user.password_hash) {
-                let session_id = generate_session_id();
-                self.sessions.write().insert(session_id.clone(), username.to_string());
-                return Ok(session_id);
+
+        let result = self.authentication.login(credentials)?;
+
+        match result {
+            LoginResult::Success { session } => {
+                // Log successful authentication
+                self.audit.log_event(
+                    username.to_string(),
+                    Some(session.session_id.clone()),
+                    AuditAction::Login,
+                    None,
+                    None,
+                    true,
+                    HashMap::new(),
+                )?;
+
+                Ok(session)
+            }
+            LoginResult::MfaRequired { .. } => {
+                Err(DbError::Network("MFA required".to_string()))
+            }
+            LoginResult::PasswordChangeRequired { .. } => {
+                Err(DbError::Network("Password change required".to_string()))
+            }
+            LoginResult::AccountLocked { .. } => {
+                // Log failed login
+                self.audit.log_event(
+                    username.to_string(),
+                    None,
+                    AuditAction::FailedLogin,
+                    None,
+                    None,
+                    false,
+                    HashMap::new(),
+                )?;
+
+                Err(DbError::Network("Account locked".to_string()))
+            }
+            LoginResult::InvalidCredentials => {
+                // Log failed login
+                self.audit.log_event(
+                    username.to_string(),
+                    None,
+                    AuditAction::FailedLogin,
+                    None,
+                    None,
+                    false,
+                    HashMap::new(),
+                )?;
+
+                Err(DbError::Network("Invalid credentials".to_string()))
+            }
+            LoginResult::AccountDisabled => {
+                Err(DbError::Network("Account disabled".to_string()))
             }
         }
-        
-        Err(DbError::Network("Authentication failed".to_string()))
     }
-    
-    pub fn authorize(&self, session_id: &str, permission: Permission) -> Result<()> {
-        let sessions = self.sessions.read();
-        let username = sessions.get(session_id)
-            .ok_or_else(|| DbError::Network("Invalid session".to_string()))?;
-        
-        let users = self.users.read();
-        let user = users.get(username)
-            .ok_or_else(|| DbError::Network("User not found".to_string()))?;
-        
-        if user.permissions.contains(&permission) {
-            Ok(())
+
+    /// Check if user has permission for an operation
+    pub fn check_permission(
+        &self,
+        session_id: &str,
+        operation: &str,
+        object: &str,
+    ) -> Result<bool> {
+        // Validate session
+        let session = self.authentication.validate_session(session_id)?;
+
+        // Map operation to privilege
+        let privilege = match operation.to_uppercase().as_str() {
+            "SELECT" => ObjectPrivilege::Select,
+            "INSERT" => ObjectPrivilege::Insert,
+            "UPDATE" => ObjectPrivilege::Update,
+            "DELETE" => ObjectPrivilege::Delete,
+            "ALTER" => ObjectPrivilege::Alter,
+            _ => return Ok(false),
+        };
+
+        // Check privilege
+        let result = self.privileges.check_object_privilege(
+            &session.user_id,
+            &privilege,
+            &privileges::PrivilegeObjectType::Table,
+            &object.to_string(),
+            None,
+        );
+
+        Ok(result.has_privilege)
+    }
+
+    /// Filter rows based on security policies
+    pub fn filter_rows(
+        &self,
+        session_id: &str,
+        table_id: &str,
+        row_ids: Vec<String>,
+    ) -> Result<Vec<String>> {
+        // Validate session
+        let session = self.authentication.validate_session(session_id)?;
+
+        // Apply label-based filtering
+        let label_filtered = if let Ok(_clearance) = self.labels.get_user_clearance(&session.user_id) {
+            self.labels.filter_readable_rows(&session.user_id, table_id, row_ids)?
         } else {
-            Err(DbError::Network("Permission denied".to_string()))
-        }
-    }
-    
-    pub fn create_user(&self, username: String, password: String, roles: HashSet<String>) -> Result<()> {
-        let mut users = self.users.write();
-        
-        if users.contains_key(&username) {
-            return Err(DbError::Network("User already exists".to_string()));
-        }
-        
-        let mut permissions = HashSet::new();
-        let roles_map = self.roles.read();
-        for role_name in &roles {
-            if let Some(role) = roles_map.get(role_name) {
-                permissions.extend(role.permissions.iter().cloned());
-            }
-        }
-        
-        let user = User {
-            username: username.clone(),
-            password_hash: hash_password(&password),
-            roles,
-            permissions,
+            row_ids
         };
-        
-        users.insert(username, user);
-        Ok(())
+
+        // Additional FGAC filtering could be applied here
+
+        Ok(label_filtered)
+    }
+
+    /// Grant a privilege to a user
+    pub fn grant_privilege(
+        &self,
+        grantor_session_id: &str,
+        grantee: &str,
+        privilege: SystemPrivilege,
+        with_grant_option: bool,
+    ) -> Result<String> {
+        // Validate grantor session
+        let session = self.authentication.validate_session(grantor_session_id)?;
+
+        // Grant the privilege
+        let grant_id = self.privileges.grant_system_privilege(
+            session.user_id.clone(),
+            grantee.to_string(),
+            privilege.clone(),
+            with_grant_option,
+        )?;
+
+        // Audit the grant
+        let mut context = HashMap::new();
+        context.insert("privilege".to_string(), format!("{:?}", privilege));
+        context.insert("grantee".to_string(), grantee.to_string());
+
+        self.audit.log_event(
+            session.username.clone(),
+            Some(session.session_id.clone()),
+            AuditAction::Grant,
+            None,
+            None,
+            true,
+            context,
+        )?;
+
+        Ok(grant_id)
+    }
+
+    /// Encrypt sensitive data
+    pub fn encrypt_data(&self, key_id: &str, plaintext: &[u8]) -> Result<Vec<u8>> {
+        let ciphertext = self.encryption.encrypt_data(key_id, plaintext)?;
+
+        // Audit encryption operation
+        self.audit.log_event(
+            "SYSTEM".to_string(),
+            None,
+            AuditAction::Custom("ENCRYPT_DATA".to_string()),
+            None,
+            None,
+            true,
+            HashMap::new(),
+        )?;
+
+        Ok(ciphertext)
+    }
+
+    /// Decrypt sensitive data
+    pub fn decrypt_data(&self, key_id: &str, ciphertext: &[u8]) -> Result<Vec<u8>> {
+        let plaintext = self.encryption.decrypt_data(key_id, ciphertext)?;
+
+        // Audit decryption operation
+        self.audit.log_event(
+            "SYSTEM".to_string(),
+            None,
+            AuditAction::Custom("DECRYPT_DATA".to_string()),
+            None,
+            None,
+            true,
+            HashMap::new(),
+        )?;
+
+        Ok(plaintext)
+    }
+
+    /// Get security statistics
+    pub fn get_statistics(&self) -> SecurityStatistics {
+        SecurityStatistics {
+            audit_stats: self.audit.get_statistics(),
+            encryption_stats: self.encryption.get_statistics(),
+            privilege_stats: self.privileges.get_statistics(),
+            label_stats: self.labels.get_statistics(),
+            fgac_stats: self.fgac.get_statistics(),
+            active_sessions: self.authentication.sessions.read().len(),
+            total_users: self.authentication.users.read().len(),
+        }
     }
 }
 
-fn hash_password(password: &str) -> String {
-    // Simple hash for demo - in production use bcrypt/argon2
-    format!("hashed_{}", password)
-}
-
-fn verify_password(password: &str, hash: &str) -> bool {
-    hash == format!("hashed_{}", password)
-}
-
-fn generate_session_id() -> String {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
-    format!("session_{}", timestamp)
-}
-
-impl Default for SecurityManager {
+impl Default for IntegratedSecurityManager {
     fn default() -> Self {
         Self::new()
     }
 }
 
+/// Combined security statistics
+#[derive(Debug, Clone)]
+pub struct SecurityStatistics {
+    pub audit_stats: audit::AuditStatistics,
+    pub encryption_stats: encryption::EncryptionStatistics,
+    pub privilege_stats: privileges::PrivilegeStatistics,
+    pub label_stats: labels::LabelStatistics,
+    pub fgac_stats: fgac::FgacStatistics,
+    pub active_sessions: usize,
+    pub total_users: usize,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
-    fn test_authentication() -> Result<()> {
-        let sm = SecurityManager::new();
-        let session = sm.authenticate("admin", "admin")?;
-        assert!(!session.is_empty());
-        Ok(())
+    fn test_integrated_security() {
+        let security = IntegratedSecurityManager::new();
+
+        // Create a user
+        let user_id = security.authentication.create_user(
+            "testuser".to_string(),
+            "TestPassword123!".to_string(),
+            Some("test@example.com".to_string()),
+        ).unwrap();
+
+        // Update user status to active
+        {
+            let mut users = security.authentication.users.write();
+            if let Some(user) = users.get_mut(&user_id) {
+                user.status = authentication::AccountStatus::Active;
+            }
+        }
+
+        // Test authentication
+        let result = security.authenticate("testuser", "TestPassword123!");
+        assert!(result.is_ok());
     }
-    
+
     #[test]
-    fn test_authorization() -> Result<()> {
-        let sm = SecurityManager::new();
-        let session = sm.authenticate("admin", "admin")?;
-        sm.authorize(&session, Permission::CreateTable)?;
-        Ok(())
+    fn test_privilege_check() {
+        let security = IntegratedSecurityManager::new();
+
+        // Grant system privilege
+        let _grant_id = security.privileges.grant_system_privilege(
+            "SYSTEM".to_string(),
+            "user1".to_string(),
+            SystemPrivilege::CreateTable,
+            false,
+        ).unwrap();
+
+        // Check privilege
+        let result = security.privileges.check_system_privilege(
+            &"user1".to_string(),
+            &SystemPrivilege::CreateTable,
+        );
+
+        assert!(result.has_privilege);
+    }
+
+    #[test]
+    fn test_audit_logging() {
+        let security = IntegratedSecurityManager::new();
+
+        let id = security.audit.log_event(
+            "testuser".to_string(),
+            Some("session1".to_string()),
+            AuditAction::Select,
+            Some("users".to_string()),
+            Some(audit::ObjectType::Table),
+            true,
+            HashMap::new(),
+        ).unwrap();
+
+        assert!(id > 0);
+    }
+
+    #[test]
+    fn test_encryption_key_generation() {
+        let security = IntegratedSecurityManager::new();
+
+        // Initialize master key
+        let master_key = vec![0u8; 32];
+        security.encryption.initialize_master_key(master_key).unwrap();
+
+        // Generate table encryption key
+        let key_id = security.encryption.generate_key(
+            encryption::KeyType::TableEncryption,
+            encryption::EncryptionAlgorithm::Aes256Gcm,
+            Some("MASTER_KEY".to_string()),
+        ).unwrap();
+
+        assert!(key_id.starts_with("KEY_"));
+    }
+
+    #[test]
+    fn test_label_based_access() {
+        let security = IntegratedSecurityManager::new();
+
+        // Register compartment
+        let compartment = labels::Compartment {
+            id: "SECRET".to_string(),
+            name: "Secret".to_string(),
+            description: None,
+            parent: None,
+        };
+        security.labels.register_compartment(compartment).unwrap();
+
+        // Set user clearance
+        let mut max_read = SecurityLabel::new(ClassificationLevel::Secret);
+        max_read.add_compartment("SECRET".to_string());
+
+        let clearance = UserClearance {
+            user_id: "user1".to_string(),
+            max_read: max_read.clone(),
+            max_write: max_read.clone(),
+            current_label: max_read,
+            authorized_compartments: HashSet::from(["SECRET".to_string()]),
+            authorized_groups: HashSet::new(),
+        };
+
+        assert!(security.labels.set_user_clearance(clearance).is_ok());
+    }
+
+    #[test]
+    fn test_fgac_policy() {
+        let security = IntegratedSecurityManager::new();
+
+        let policy = fgac::RowLevelPolicy {
+            id: "pol1".to_string(),
+            name: "Test Policy".to_string(),
+            table_id: "employees".to_string(),
+            policy_type: fgac::PolicyType::Permissive,
+            predicate: "department = 'Engineering'".to_string(),
+            principals: vec![],
+            enabled: true,
+            priority: 100,
+            created_at: 0,
+            updated_at: 0,
+            description: None,
+        };
+
+        assert!(security.fgac.add_row_policy(policy).is_ok());
+    }
+
+    #[test]
+    fn test_rbac_role_creation() {
+        let security = IntegratedSecurityManager::new();
+
+        let role = rbac::Role::new("admin".to_string(), "Administrator".to_string());
+        assert!(security.rbac.create_role(role).is_ok());
     }
 }

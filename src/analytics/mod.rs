@@ -1,4 +1,11 @@
+// Module exports
 pub mod caching;
+pub mod materialized_views;
+pub mod approximate;
+pub mod window;
+pub mod cube;
+pub mod timeseries;
+pub mod warehouse;
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, BTreeMap, VecDeque};

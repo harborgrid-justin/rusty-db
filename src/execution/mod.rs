@@ -5,14 +5,24 @@ pub mod cte;
 pub mod subquery;
 pub mod optimization;
 pub mod parallel;
+pub mod vectorized;
+pub mod adaptive;
+pub mod hash_join;
+pub mod sort_merge;
+pub mod expressions;
 
 pub use executor::Executor;
 pub use planner::Planner;
-pub use optimizer::Optimizer;
+pub use optimizer::{Optimizer, TableStatistics, SingleTableStatistics, ColumnStatistics, IndexStatistics};
 pub use cte::{CteContext, CteDefinition, RecursiveCteEvaluator, CteOptimizer};
 pub use subquery::{SubqueryExpr, SubqueryType, ExistsEvaluator, InEvaluator, ScalarSubqueryEvaluator};
 pub use optimization::{PlanCache, StatisticsCollector, AdaptiveOptimizer, MaterializedViewRewriter};
 pub use parallel::{ParallelExecutor, ParallelizationOptimizer};
+pub use vectorized::{VectorizedExecutor, ColumnBatch, ColumnValue, AggregationType};
+pub use adaptive::{AdaptiveExecutor, AdaptiveContext, RuntimeStatistics};
+pub use hash_join::{HashJoinExecutor, HashJoinConfig, BloomFilterHashJoin};
+pub use sort_merge::{ExternalMergeSorter, SortMergeJoin, TopKSelector};
+pub use expressions::{ExpressionEvaluator, Expr, ExprValue, BinaryOperator, UnaryOperator};
 
 use serde::{Deserialize, Serialize};
 

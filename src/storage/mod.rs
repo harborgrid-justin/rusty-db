@@ -3,12 +3,18 @@ pub mod buffer;
 pub mod page;
 pub mod partitioning;
 pub mod json;
+pub mod tiered;
+pub mod lsm;
+pub mod columnar;
 
-pub use disk::DiskManager;
-pub use buffer::BufferPoolManager;
-pub use page::{Page, PageId};
+pub use disk::{DiskManager, IoPriority, DirectIoConfig};
+pub use buffer::{BufferPoolManager, BufferPoolStats};
+pub use page::{Page, PageId, SlottedPage, PageSplitter, PageMerger};
 pub use partitioning::{PartitionManager, PartitionStrategy, PartitionPruner};
 pub use json::{JsonData, JsonPath, JsonOperators};
+pub use tiered::{TieredStorageManager, StorageTier, TierStats};
+pub use lsm::{LsmTree, LsmStats};
+pub use columnar::{ColumnarTable, ColumnDef, ColumnType, ColumnValue};
 
 use crate::Result;
 

@@ -1,3 +1,13 @@
+// Enterprise Transaction Management Module
+// Provides MVCC, distributed transactions, WAL, lock management, and ARIES recovery
+
+// Sub-modules for enterprise transaction features
+pub mod mvcc;
+pub mod distributed;
+pub mod wal;
+pub mod locks;
+pub mod recovery;
+
 use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::fs::{File, OpenOptions};
