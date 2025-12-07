@@ -1,10 +1,14 @@
 pub mod executor;
 pub mod planner;
 pub mod optimizer;
+pub mod cte;
+pub mod subquery;
 
 pub use executor::Executor;
 pub use planner::Planner;
 pub use optimizer::Optimizer;
+pub use cte::{CteContext, CteDefinition, RecursiveCteEvaluator, CteOptimizer};
+pub use subquery::{SubqueryExpr, SubqueryType, ExistsEvaluator, InEvaluator, ScalarSubqueryEvaluator};
 
 use serde::{Deserialize, Serialize};
 

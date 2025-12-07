@@ -1,10 +1,12 @@
 pub mod disk;
 pub mod buffer;
 pub mod page;
+pub mod partitioning;
 
 pub use disk::DiskManager;
 pub use buffer::BufferPoolManager;
 pub use page::{Page, PageId};
+pub use partitioning::{PartitionManager, PartitionStrategy, PartitionPruner};
 
 use crate::Result;
 
