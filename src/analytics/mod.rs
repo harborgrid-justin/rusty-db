@@ -2855,6 +2855,15 @@ impl Default for QueryPerformanceTracker {
     }
 }
 
+/// Helper function to calculate the selectivity of a predicate
+pub fn calculate_selectivity(total_rows: u64, matching_rows: u64) -> f64 {
+    if total_rows == 0 {
+        0.0
+    } else {
+        matching_rows as f64 / total_rows as f64
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

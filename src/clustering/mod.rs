@@ -13,7 +13,7 @@ use crate::Result;
 use crate::error::DbError;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, Duration};
+use std::time::{SystemTime, Duration, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 
 /// Node identifier
@@ -2452,6 +2452,433 @@ pub enum PlanStatus {
     Failed,
 }
 
+/// Geographic Distribution Manager for multi-region clusters
+pub struct GeographicDistributionManager {
+    regions: Arc<RwLock<HashMap<String, RegionInfo>>>,
+    node_locations: Arc<RwLock<HashMap<NodeId, String>>>,
+    latency_matrix: Arc<RwLock<HashMap<(String, String), Duration>>>,
+}
+
+impl GeographicDistributionManager {
+    pub fn new() -> Self {
+        Self {
+            regions: Arc::new(RwLock::new(HashMap::new())),
+            node_locations: Arc::new(RwLock::new(HashMap::new())),
+            latency_matrix: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+
+    /// Register a region
+    pub fn register_region(&self, region: RegionInfo) -> Result<()> {
+        let mut regions = self.regions.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        regions.insert(region.name.clone(), region);
+        Ok(())
+    }
+
+    /// Assign node to region
+    pub fn assign_node_to_region(&self, node_id: NodeId, region_name: String) -> Result<()> {
+        let regions = self.regions.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        if !regions.contains_key(&region_name) {
+            return Err(DbError::NotFound(format!("Region {} not found", region_name)));
+        }
+
+        let mut locations = self.node_locations.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        locations.insert(node_id, region_name);
+        Ok(())
+    }
+
+    /// Get nearest nodes for a given region
+    pub fn get_nearest_nodes(&self, region_name: &str, count: usize) -> Result<Vec<NodeId>> {
+        let locations = self.node_locations.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        let latencies = self.latency_matrix.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+
+        let mut nodes_with_latency: Vec<(NodeId, Duration)> = locations
+            .iter()
+            .filter_map(|(node_id, node_region)| {
+                if node_region == region_name {
+                    return Some((node_id.clone(), Duration::from_millis(0)));
+                }
+                
+                let key = (region_name.to_string(), node_region.clone());
+                latencies.get(&key).map(|&latency| (node_id.clone(), latency))
+            })
+            .collect();
+
+        nodes_with_latency.sort_by_key(|(_, latency)| *latency);
+        
+        Ok(nodes_with_latency
+            .into_iter()
+            .take(count)
+            .map(|(node_id, _)| node_id)
+            .collect())
+    }
+
+    /// Update latency between regions
+    pub fn update_latency(&self, region1: String, region2: String, latency: Duration) -> Result<()> {
+        let mut latencies = self.latency_matrix.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        latencies.insert((region1.clone(), region2.clone()), latency);
+        latencies.insert((region2, region1), latency);
+        Ok(())
+    }
+
+    /// Get region distribution statistics
+    pub fn get_distribution_stats(&self) -> Result<DistributionStats> {
+        let locations = self.node_locations.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        let mut region_counts = HashMap::new();
+        for region in locations.values() {
+            *region_counts.entry(region.clone()).or_insert(0) += 1;
+        }
+
+        Ok(DistributionStats {
+            total_nodes: locations.len(),
+            regions: region_counts,
+            timestamp: SystemTime::now(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionInfo {
+    pub name: String,
+    pub location: GeoLocation,
+    pub availability_zones: Vec<String>,
+    pub data_residency_requirements: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GeoLocation {
+    pub latitude: f64,
+    pub longitude: f64,
+    pub country: String,
+    pub city: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct DistributionStats {
+    pub total_nodes: usize,
+    pub regions: HashMap<String, usize>,
+    pub timestamp: SystemTime,
+}
+
+/// Network Partition Handler for cluster resilience
+pub struct NetworkPartitionHandler {
+    coordinator: Arc<ClusterCoordinator>,
+    partition_detector: Arc<RwLock<PartitionDetector>>,
+    recovery_strategies: Arc<RwLock<HashMap<PartitionType, RecoveryStrategy>>>,
+}
+
+impl NetworkPartitionHandler {
+    pub fn new(coordinator: Arc<ClusterCoordinator>) -> Self {
+        let mut strategies = HashMap::new();
+        strategies.insert(PartitionType::Temporary, RecoveryStrategy::WaitAndReconnect);
+        strategies.insert(PartitionType::Permanent, RecoveryStrategy::Rebalance);
+        
+        Self {
+            coordinator,
+            partition_detector: Arc::new(RwLock::new(PartitionDetector::new())),
+            recovery_strategies: Arc::new(RwLock::new(strategies)),
+        }
+    }
+
+    /// Detect network partitions
+    pub fn detect_partitions(&self) -> Result<Vec<NetworkPartition>> {
+        let detector = self.partition_detector.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        detector.detect()
+    }
+
+    /// Handle a detected partition
+    pub fn handle_partition(&self, partition: NetworkPartition) -> Result<()> {
+        let strategies = self.recovery_strategies.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        let strategy = strategies.get(&partition.partition_type)
+            .unwrap_or(&RecoveryStrategy::WaitAndReconnect);
+
+        match strategy {
+            RecoveryStrategy::WaitAndReconnect => {
+                self.wait_and_reconnect(&partition)?;
+            }
+            RecoveryStrategy::Rebalance => {
+                self.rebalance_cluster(&partition)?;
+            }
+            RecoveryStrategy::Failover => {
+                self.trigger_failover(&partition)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn wait_and_reconnect(&self, partition: &NetworkPartition) -> Result<()> {
+        // Wait for network to recover
+        std::thread::sleep(Duration::from_secs(5));
+        
+        // Attempt to reconnect nodes
+        for node_id in &partition.affected_nodes {
+            // Placeholder: actual reconnection logic
+            let _ = node_id;
+        }
+        
+        Ok(())
+    }
+
+    fn rebalance_cluster(&self, partition: &NetworkPartition) -> Result<()> {
+        // Trigger cluster rebalancing
+        let _ = partition;
+        Ok(())
+    }
+
+    fn trigger_failover(&self, partition: &NetworkPartition) -> Result<()> {
+        // Trigger failover for affected nodes
+        let _ = partition;
+        Ok(())
+    }
+}
+
+pub struct PartitionDetector {
+    node_connectivity: HashMap<NodeId, Vec<NodeId>>,
+}
+
+impl PartitionDetector {
+    pub fn new() -> Self {
+        Self {
+            node_connectivity: HashMap::new(),
+        }
+    }
+
+    pub fn detect(&self) -> Result<Vec<NetworkPartition>> {
+        let mut partitions = Vec::new();
+        let mut visited = std::collections::HashSet::new();
+
+        for node_id in self.node_connectivity.keys() {
+            if visited.contains(node_id) {
+                continue;
+            }
+
+            let mut component = Vec::new();
+            let mut stack = vec![node_id.clone()];
+
+            while let Some(current) = stack.pop() {
+                if visited.contains(&current) {
+                    continue;
+                }
+
+                visited.insert(current.clone());
+                component.push(current.clone());
+
+                if let Some(neighbors) = self.node_connectivity.get(&current) {
+                    for neighbor in neighbors {
+                        if !visited.contains(neighbor) {
+                            stack.push(neighbor.clone());
+                        }
+                    }
+                }
+            }
+
+            if component.len() > 1 || component.len() < self.node_connectivity.len() {
+                partitions.push(NetworkPartition {
+                    id: format!("partition_{}", partitions.len()),
+                    affected_nodes: component,
+                    partition_type: PartitionType::Temporary,
+                    detected_at: SystemTime::now(),
+                });
+            }
+        }
+
+        Ok(partitions)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct NetworkPartition {
+    pub id: String,
+    pub affected_nodes: Vec<NodeId>,
+    pub partition_type: PartitionType,
+    pub detected_at: SystemTime,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum PartitionType {
+    Temporary,
+    Permanent,
+}
+
+#[derive(Debug, Clone)]
+pub enum RecoveryStrategy {
+    WaitAndReconnect,
+    Rebalance,
+    Failover,
+}
+
+/// Cluster Resource Optimizer for optimal resource allocation
+pub struct ClusterResourceOptimizer {
+    coordinator: Arc<ClusterCoordinator>,
+    resource_monitor: Arc<RwLock<ResourceMonitor>>,
+    optimization_interval: Duration,
+}
+
+impl ClusterResourceOptimizer {
+    pub fn new(coordinator: Arc<ClusterCoordinator>) -> Self {
+        Self {
+            coordinator,
+            resource_monitor: Arc::new(RwLock::new(ResourceMonitor::new())),
+            optimization_interval: Duration::from_secs(60),
+        }
+    }
+
+    /// Optimize resource allocation across the cluster
+    pub fn optimize(&self) -> Result<OptimizationPlan> {
+        let monitor = self.resource_monitor.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        let resources = monitor.get_cluster_resources()?;
+        
+        let mut recommendations = Vec::new();
+
+        // Check for over-allocated nodes
+        for (node_id, node_resources) in &resources {
+            if node_resources.cpu_usage > 0.8 {
+                recommendations.push(OptimizationAction::ScaleUp {
+                    node_id: node_id.clone(),
+                    resource_type: ResourceType::Cpu,
+                    target_capacity: (node_resources.cpu_capacity as f64 * 1.5) as u64,
+                });
+            }
+
+            if node_resources.memory_usage_ratio > 0.9 {
+                recommendations.push(OptimizationAction::ScaleUp {
+                    node_id: node_id.clone(),
+                    resource_type: ResourceType::Memory,
+                    target_capacity: (node_resources.memory_capacity as f64 * 1.5) as u64,
+                });
+            }
+        }
+
+        // Check for under-utilized nodes
+        for (node_id, node_resources) in &resources {
+            if node_resources.cpu_usage < 0.2 && node_resources.memory_usage_ratio < 0.2 {
+                recommendations.push(OptimizationAction::ScaleDown {
+                    node_id: node_id.clone(),
+                });
+            }
+        }
+
+        Ok(OptimizationPlan {
+            id: format!("opt_{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()),
+            actions: recommendations,
+            estimated_savings: 0.0,
+            created_at: SystemTime::now(),
+        })
+    }
+
+    /// Execute optimization plan
+    pub fn execute_plan(&self, plan: OptimizationPlan) -> Result<()> {
+        for action in plan.actions {
+            match action {
+                OptimizationAction::ScaleUp { node_id, resource_type, target_capacity } => {
+                    self.scale_up_node(&node_id, resource_type, target_capacity)?;
+                }
+                OptimizationAction::ScaleDown { node_id } => {
+                    self.scale_down_node(&node_id)?;
+                }
+                OptimizationAction::Migrate { from_node, to_node, data_size } => {
+                    self.migrate_data(&from_node, &to_node, data_size)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn scale_up_node(&self, node_id: &NodeId, resource_type: ResourceType, target: u64) -> Result<()> {
+        // Placeholder: actual scaling logic
+        let _ = (node_id, resource_type, target);
+        Ok(())
+    }
+
+    fn scale_down_node(&self, node_id: &NodeId) -> Result<()> {
+        // Placeholder: actual scaling down logic
+        let _ = node_id;
+        Ok(())
+    }
+
+    fn migrate_data(&self, from: &NodeId, to: &NodeId, size: u64) -> Result<()> {
+        // Placeholder: actual data migration logic
+        let _ = (from, to, size);
+        Ok(())
+    }
+}
+
+pub struct ResourceMonitor {
+    node_resources: HashMap<NodeId, NodeResources>,
+}
+
+impl ResourceMonitor {
+    pub fn new() -> Self {
+        Self {
+            node_resources: HashMap::new(),
+        }
+    }
+
+    pub fn get_cluster_resources(&self) -> Result<HashMap<NodeId, NodeResources>> {
+        Ok(self.node_resources.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct NodeResources {
+    pub cpu_capacity: u64,
+    pub cpu_usage: f64,
+    pub memory_capacity: u64,
+    pub memory_used: u64,
+    pub memory_usage_ratio: f64,
+    pub disk_capacity: u64,
+    pub disk_used: u64,
+    pub network_bandwidth: u64,
+}
+
+#[derive(Debug, Clone)]
+pub enum ResourceType {
+    Cpu,
+    Memory,
+    Disk,
+    Network,
+}
+
+#[derive(Debug, Clone)]
+pub struct OptimizationPlan {
+    pub id: String,
+    pub actions: Vec<OptimizationAction>,
+    pub estimated_savings: f64,
+    pub created_at: SystemTime,
+}
+
+#[derive(Debug, Clone)]
+pub enum OptimizationAction {
+    ScaleUp {
+        node_id: NodeId,
+        resource_type: ResourceType,
+        target_capacity: u64,
+    },
+    ScaleDown {
+        node_id: NodeId,
+    },
+    Migrate {
+        from_node: NodeId,
+        to_node: NodeId,
+        data_size: u64,
+    },
+}
+
 #[cfg(test)]
 mod extended_tests {
     use super::*;
@@ -2546,5 +2973,57 @@ mod extended_tests {
         ).unwrap();
         
         assert_eq!(plan.target_version, "v2.0.0");
+    }
+
+    #[test]
+    fn test_geographic_distribution_manager() {
+        let geo_manager = GeographicDistributionManager::new();
+        
+        let region = RegionInfo {
+            name: "us-east-1".to_string(),
+            location: GeoLocation {
+                latitude: 37.7749,
+                longitude: -122.4194,
+                country: "USA".to_string(),
+                city: "San Francisco".to_string(),
+            },
+            availability_zones: vec!["us-east-1a".to_string(), "us-east-1b".to_string()],
+            data_residency_requirements: vec![],
+        };
+        
+        assert!(geo_manager.register_region(region).is_ok());
+        assert!(geo_manager.assign_node_to_region("node1".to_string(), "us-east-1".to_string()).is_ok());
+    }
+
+    #[test]
+    fn test_network_partition_handler() {
+        let config = ClusterConfig {
+            cluster_name: "test-cluster".to_string(),
+            replication_factor: 3,
+            quorum_size: 2,
+            heartbeat_interval: Duration::from_secs(5),
+            election_timeout: Duration::from_secs(10),
+            node_timeout: Duration::from_secs(30),
+            auto_failover: true,
+        };
+        
+        let local_node = NodeInfo {
+            id: "node1".to_string(),
+            address: "127.0.0.1".to_string(),
+            port: 5000,
+            role: NodeRole::Leader,
+            status: NodeStatus::Healthy,
+            last_heartbeat: SystemTime::now(),
+            data_version: 0,
+            cpu_usage: 0.0,
+            memory_usage: 0.0,
+            disk_usage: 0.0,
+            active_connections: 0,
+        };
+        
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+        let handler = NetworkPartitionHandler::new(coordinator);
+        let partitions = handler.detect_partitions();
+        assert!(partitions.is_ok());
     }
 }

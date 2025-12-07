@@ -2867,6 +2867,93 @@ pub enum ComplexityFactor {
     HasWindowFunction,
 }
 
+/// Performance utility functions for common operations
+
+/// Calculate the expected number of disk I/O operations for a given query
+pub fn estimate_disk_io(
+    table_size_pages: u64,
+    index_levels: u32,
+    selectivity: f64,
+) -> u64 {
+    // For index scan: levels + selectivity * table_size
+    // For table scan: table_size
+    let index_cost = index_levels as u64 + (selectivity * table_size_pages as f64) as u64;
+    let table_scan_cost = table_size_pages;
+    
+    // Return the minimum cost
+    std::cmp::min(index_cost, table_scan_cost)
+}
+
+/// Calculate query cost based on multiple factors
+pub fn calculate_query_cost(
+    rows: u64,
+    joins: usize,
+    has_aggregation: bool,
+    has_sorting: bool,
+) -> f64 {
+    let mut cost = rows as f64;
+    
+    // Each join multiplies the cost
+    if joins > 0 {
+        cost *= (joins as f64 + 1.0).powf(1.5);
+    }
+    
+    // Aggregation adds n log n complexity
+    if has_aggregation {
+        cost *= (rows as f64).log2();
+    }
+    
+    // Sorting adds n log n complexity
+    if has_sorting {
+        cost *= (rows as f64).log2();
+    }
+    
+    cost
+}
+
+/// Estimate the cardinality of a join operation
+pub fn estimate_join_cardinality(
+    left_cardinality: u64,
+    right_cardinality: u64,
+    selectivity: f64,
+) -> u64 {
+    ((left_cardinality as f64 * right_cardinality as f64 * selectivity) as u64)
+        .max(1) // At least 1 row
+}
+
+/// Calculate buffer pool hit ratio
+pub fn calculate_hit_ratio(hits: u64, total_accesses: u64) -> f64 {
+    if total_accesses == 0 {
+        0.0
+    } else {
+        hits as f64 / total_accesses as f64
+    }
+}
+
+/// Estimate memory requirements for a hash join
+pub fn estimate_hash_join_memory(
+    build_side_rows: u64,
+    avg_row_size_bytes: usize,
+    hash_overhead_factor: f64,
+) -> usize {
+    let base_size = build_side_rows as usize * avg_row_size_bytes;
+    (base_size as f64 * hash_overhead_factor) as usize
+}
+
+/// Calculate the optimal number of worker threads for parallel query execution
+pub fn calculate_optimal_parallelism(
+    total_rows: u64,
+    min_rows_per_thread: u64,
+    max_threads: usize,
+) -> usize {
+    if total_rows < min_rows_per_thread {
+        return 1;
+    }
+    
+    let ideal_threads = (total_rows / min_rows_per_thread) as usize;
+    std::cmp::min(ideal_threads, max_threads).max(1)
+}
+
 #[cfg(test)]
 mod final_tests {
     use super::*;
