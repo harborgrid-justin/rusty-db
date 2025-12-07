@@ -1341,15 +1341,23 @@ impl CostModelCalibrator {
         }
 
         // Simple calibration based on averages
-        let avg_seq_scan_cost = measurements.iter()
+        let seq_scan_measurements: Vec<_> = measurements.iter()
             .filter(|m| m.operation_type == OperationType::SequentialScan)
-            .map(|m| m.actual_cost)
-            .sum::<f64>() / measurements.len().max(1) as f64;
+            .collect();
+        let avg_seq_scan_cost = if !seq_scan_measurements.is_empty() {
+            seq_scan_measurements.iter().map(|m| m.actual_cost).sum::<f64>() / seq_scan_measurements.len() as f64
+        } else {
+            1.0
+        };
         
-        let avg_index_scan_cost = measurements.iter()
+        let index_scan_measurements: Vec<_> = measurements.iter()
             .filter(|m| m.operation_type == OperationType::IndexScan)
-            .map(|m| m.actual_cost)
-            .sum::<f64>() / measurements.len().max(1) as f64;
+            .collect();
+        let avg_index_scan_cost = if !index_scan_measurements.is_empty() {
+            index_scan_measurements.iter().map(|m| m.actual_cost).sum::<f64>() / index_scan_measurements.len() as f64
+        } else {
+            0.1
+        };
         
         let params = CostModelParameters {
             seq_scan_cost: avg_seq_scan_cost.max(1.0),
@@ -1425,7 +1433,11 @@ impl QueryTemplateManager {
     /// Extract template from query
     pub fn extract_template(&self, query: &str) -> String {
         // Simplified template extraction - replace literals with placeholders
-        query.replace("'", "?").replace(char::is_numeric, "?")
+        let without_strings = query.replace("'", "?");
+        // Replace sequences of digits with placeholder
+        without_strings.chars()
+            .map(|c| if c.is_numeric() { '?' } else { c })
+            .collect()
     }
 
     /// Register query template
