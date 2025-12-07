@@ -142,7 +142,10 @@ impl ReplicationManager {
         let entry = ReplicationLogEntry {
             sequence_number,
             operation,
-            timestamp: chrono::Utc::now().timestamp(),
+            timestamp: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64,
             data,
         };
         
@@ -210,23 +213,6 @@ impl ReplicationManager {
             Err(DbError::NotFound(
                 format!("Replica '{}' not found", replica_id)
             ))
-        }
-    }
-}
-
-// Note: chrono is not in dependencies, so using a placeholder
-// In production, add chrono to Cargo.toml
-mod chrono {
-    pub struct Utc;
-    impl Utc {
-        pub fn now() -> DateTime {
-            DateTime
-        }
-    }
-    pub struct DateTime;
-    impl DateTime {
-        pub fn timestamp(&self) -> i64 {
-            0
         }
     }
 }

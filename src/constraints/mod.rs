@@ -130,13 +130,20 @@ impl ConstraintManager {
         for (referencing_table, constraints) in fks.iter() {
             for fk in constraints {
                 if fk.referenced_table == table {
+                    // Get the referenced column value
+                    let referenced_value = fk.referenced_columns.get(0)
+                        .and_then(|col| values.get(col))
+                        .ok_or_else(|| crate::error::DbError::InvalidInput(
+                            format!("Missing referenced column value for cascade operation")
+                        ))?;
+                    
                     match operation {
                         "DELETE" => {
                             match fk.on_delete {
                                 ReferentialAction::Cascade => {
                                     actions.push(CascadeAction::Delete {
                                         table: referencing_table.clone(),
-                                        condition: format!("{}={}", fk.columns[0], values.get(&fk.referenced_columns[0]).unwrap_or(&"".to_string())),
+                                        condition: format!("{}={}", fk.columns[0], referenced_value),
                                     });
                                 }
                                 ReferentialAction::SetNull => {

@@ -86,9 +86,16 @@ impl Planner {
                 // Start with table scan
                 let mut plan = PlanNode::TableScan {
                     table: table.clone(),
-                    columns: if columns.contains(&"*".to_string()) {
+                    columns: if columns.len() == 1 && columns[0] == "*" {
+                        // Only wildcard, expand to all columns
                         vec!["*".to_string()]
+                    } else if columns.contains(&"*".to_string()) {
+                        // Mixed wildcard and specific columns is invalid
+                        return Err(crate::error::DbError::SqlParse(
+                            "Cannot mix '*' with specific column names".to_string()
+                        ));
                     } else {
+                        // Specific columns
                         columns.clone()
                     },
                 };

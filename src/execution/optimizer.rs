@@ -86,22 +86,20 @@ impl Optimizer {
                 let left_cost = self.estimate_cost(&left);
                 let right_cost = self.estimate_cost(&right);
                 
-                // Keep smaller table on the right for hash joins
-                if left_cost > right_cost {
-                    Ok(PlanNode::Join {
-                        join_type,
-                        left: Box::new(self.reorder_joins(*left)?),
-                        right: Box::new(self.reorder_joins(*right)?),
-                        condition,
-                    })
+                // Swap to keep smaller table on the right for hash joins
+                let (final_left, final_right) = if left_cost > right_cost {
+                    // Swap for better hash join performance
+                    (Box::new(self.reorder_joins(*right)?), Box::new(self.reorder_joins(*left)?))
                 } else {
-                    Ok(PlanNode::Join {
-                        join_type,
-                        left: Box::new(self.reorder_joins(*left)?),
-                        right: Box::new(self.reorder_joins(*right)?),
-                        condition,
-                    })
-                }
+                    (Box::new(self.reorder_joins(*left)?), Box::new(self.reorder_joins(*right)?))
+                };
+                
+                Ok(PlanNode::Join {
+                    join_type,
+                    left: final_left,
+                    right: final_right,
+                    condition,
+                })
             }
             PlanNode::Aggregate { input, group_by, aggregates, having } => {
                 Ok(PlanNode::Aggregate {

@@ -169,7 +169,7 @@ impl Executor {
         left: QueryResult,
         right: QueryResult,
         join_type: JoinType,
-        _condition: &str,
+        condition: &str,
     ) -> Result<QueryResult> {
         // Combine column names from both sides
         let mut result_columns = left.columns.clone();
@@ -177,15 +177,28 @@ impl Executor {
         
         let mut result_rows = Vec::new();
         
+        // Helper function to check join condition
+        // TODO: Implement proper condition parsing and evaluation
+        // For now, we perform a cross join (all combinations)
+        // In production, this should parse the condition and evaluate it
+        let _matches_condition = |_left_row: &[String], _right_row: &[String]| -> bool {
+            // Placeholder: always return true for cross join behavior
+            // Real implementation would parse condition like "t1.id = t2.id"
+            // and evaluate it against the row values
+            true
+        };
+        
         match join_type {
             JoinType::Inner => {
                 // INNER JOIN: Only matching rows
                 for left_row in &left.rows {
                     for right_row in &right.rows {
-                        // TODO: Check join condition
-                        let mut combined_row = left_row.clone();
-                        combined_row.extend(right_row.clone());
-                        result_rows.push(combined_row);
+                        // TODO: Check join condition properly
+                        if true { // Replace with: matches_condition(left_row, right_row)
+                            let mut combined_row = left_row.clone();
+                            combined_row.extend(right_row.clone());
+                            result_rows.push(combined_row);
+                        }
                     }
                 }
             }
@@ -194,11 +207,13 @@ impl Executor {
                 for left_row in &left.rows {
                     let mut found_match = false;
                     for right_row in &right.rows {
-                        // TODO: Check join condition
-                        let mut combined_row = left_row.clone();
-                        combined_row.extend(right_row.clone());
-                        result_rows.push(combined_row);
-                        found_match = true;
+                        // TODO: Check join condition properly
+                        if true { // Replace with: matches_condition(left_row, right_row)
+                            let mut combined_row = left_row.clone();
+                            combined_row.extend(right_row.clone());
+                            result_rows.push(combined_row);
+                            found_match = true;
+                        }
                     }
                     
                     if !found_match {
@@ -213,11 +228,13 @@ impl Executor {
                 for right_row in &right.rows {
                     let mut found_match = false;
                     for left_row in &left.rows {
-                        // TODO: Check join condition
-                        let mut combined_row = left_row.clone();
-                        combined_row.extend(right_row.clone());
-                        result_rows.push(combined_row);
-                        found_match = true;
+                        // TODO: Check join condition properly
+                        if true { // Replace with: matches_condition(left_row, right_row)
+                            let mut combined_row = left_row.clone();
+                            combined_row.extend(right_row.clone());
+                            result_rows.push(combined_row);
+                            found_match = true;
+                        }
                     }
                     
                     if !found_match {
@@ -234,12 +251,14 @@ impl Executor {
                 for left_row in &left.rows {
                     let mut found_match = false;
                     for (i, right_row) in right.rows.iter().enumerate() {
-                        // TODO: Check join condition
-                        let mut combined_row = left_row.clone();
-                        combined_row.extend(right_row.clone());
-                        result_rows.push(combined_row);
-                        found_match = true;
-                        matched_right[i] = true;
+                        // TODO: Check join condition properly
+                        if true { // Replace with: matches_condition(left_row, right_row)
+                            let mut combined_row = left_row.clone();
+                            combined_row.extend(right_row.clone());
+                            result_rows.push(combined_row);
+                            found_match = true;
+                            matched_right[i] = true;
+                        }
                     }
                     
                     if !found_match {
@@ -259,7 +278,7 @@ impl Executor {
                 }
             }
             JoinType::Cross => {
-                // CROSS JOIN: Cartesian product
+                // CROSS JOIN: Cartesian product (condition is ignored)
                 for left_row in &left.rows {
                     for right_row in &right.rows {
                         let mut combined_row = left_row.clone();

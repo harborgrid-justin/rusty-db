@@ -34,7 +34,9 @@ pub struct StoredProcedure {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ProcedureLanguage {
     Sql,
-    Native,  // For future Rust-based procedures
+    // Note: Native procedures are not yet implemented
+    // Leaving this variant commented out until implementation is ready
+    // Native,  // For future Rust-based procedures
 }
 
 /// Procedure execution context
@@ -110,18 +112,8 @@ impl ProcedureManager {
         // Validate parameters
         self.validate_parameters(&procedure, context)?;
         
-        // Execute based on language
-        match procedure.language {
-            ProcedureLanguage::Sql => {
-                self.execute_sql_procedure(&procedure, context)
-            }
-            ProcedureLanguage::Native => {
-                // TODO: Implement native procedure execution
-                Err(DbError::NotImplemented(
-                    "Native procedures not yet implemented".to_string()
-                ))
-            }
-        }
+        // Execute based on language (only SQL is currently supported)
+        self.execute_sql_procedure(&procedure, context)
     }
     
     /// Validate procedure parameters
