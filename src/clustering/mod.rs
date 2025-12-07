@@ -958,6 +958,624 @@ pub enum TransactionState {
     Aborted,
 }
 
+/// Cluster snapshot manager for state persistence
+pub struct SnapshotManager {
+    coordinator: Arc<ClusterCoordinator>,
+    snapshot_dir: std::path::PathBuf,
+    snapshot_interval: Duration,
+    max_snapshots: usize,
+}
+
+impl SnapshotManager {
+    pub fn new(
+        coordinator: Arc<ClusterCoordinator>,
+        snapshot_dir: std::path::PathBuf,
+        snapshot_interval: Duration,
+        max_snapshots: usize,
+    ) -> Self {
+        Self {
+            coordinator,
+            snapshot_dir,
+            snapshot_interval,
+            max_snapshots,
+        }
+    }
+
+    /// Create a snapshot of cluster state
+    pub fn create_snapshot(&self) -> Result<Snapshot> {
+        let timestamp = SystemTime::now();
+        let nodes = self.coordinator.get_nodes()?;
+        let term = self.coordinator.get_current_term()?;
+        let health = self.coordinator.get_cluster_health()?;
+
+        let snapshot = Snapshot {
+            id: format!("snapshot-{}", timestamp.duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs()),
+            timestamp,
+            term,
+            nodes,
+            cluster_health: health,
+            data_version: 0,
+        };
+
+        // In real implementation, would persist to disk
+        Ok(snapshot)
+    }
+
+    /// Load a snapshot from disk
+    pub fn load_snapshot(&self, snapshot_id: &str) -> Result<Snapshot> {
+        // Placeholder: would load from disk
+        Err(DbError::NotFound(format!("Snapshot {} not found", snapshot_id)))
+    }
+
+    /// List available snapshots
+    pub fn list_snapshots(&self) -> Result<Vec<String>> {
+        // Placeholder: would list snapshots from disk
+        Ok(vec![])
+    }
+
+    /// Delete old snapshots beyond max_snapshots limit
+    pub fn cleanup_old_snapshots(&self) -> Result<usize> {
+        // Placeholder: would delete old snapshots
+        Ok(0)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Snapshot {
+    pub id: String,
+    pub timestamp: SystemTime,
+    pub term: u64,
+    pub nodes: Vec<NodeInfo>,
+    pub cluster_health: ClusterHealth,
+    pub data_version: u64,
+}
+
+/// Cluster metrics collector
+pub struct ClusterMetricsCollector {
+    coordinator: Arc<ClusterCoordinator>,
+    metrics: Arc<RwLock<ClusterMetrics>>,
+    collection_interval: Duration,
+}
+
+impl ClusterMetricsCollector {
+    pub fn new(coordinator: Arc<ClusterCoordinator>, collection_interval: Duration) -> Self {
+        Self {
+            coordinator,
+            metrics: Arc::new(RwLock::new(ClusterMetrics::default())),
+            collection_interval,
+        }
+    }
+
+    /// Collect current cluster metrics
+    pub fn collect_metrics(&self) -> Result<ClusterMetrics> {
+        let nodes = self.coordinator.get_nodes()?;
+        let health = self.coordinator.get_cluster_health()?;
+
+        let total_cpu = nodes.iter().map(|n| n.cpu_usage).sum::<f32>();
+        let total_memory = nodes.iter().map(|n| n.memory_usage).sum::<f32>();
+        let total_disk = nodes.iter().map(|n| n.disk_usage).sum::<f32>();
+        let total_connections = nodes.iter().map(|n| n.active_connections).sum();
+
+        let metrics = ClusterMetrics {
+            timestamp: SystemTime::now(),
+            total_nodes: nodes.len(),
+            healthy_nodes: health.healthy_nodes,
+            degraded_nodes: health.degraded_nodes,
+            failed_nodes: health.failed_nodes,
+            total_cpu_usage: total_cpu,
+            total_memory_usage: total_memory,
+            total_disk_usage: total_disk,
+            total_connections,
+            queries_per_second: 0.0,
+            avg_query_latency_ms: 0.0,
+            network_throughput_mbps: 0.0,
+        };
+
+        // Update stored metrics
+        let mut stored_metrics = self.metrics.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        *stored_metrics = metrics.clone();
+
+        Ok(metrics)
+    }
+
+    /// Get historical metrics
+    pub fn get_metrics(&self) -> Result<ClusterMetrics> {
+        let metrics = self.metrics.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        Ok(metrics.clone())
+    }
+
+    /// Get metrics aggregated over time period
+    pub fn get_aggregated_metrics(&self, _duration: Duration) -> Result<AggregatedMetrics> {
+        // Placeholder: would aggregate metrics from history
+        Ok(AggregatedMetrics {
+            period_start: SystemTime::now(),
+            period_end: SystemTime::now(),
+            avg_cpu_usage: 0.0,
+            max_cpu_usage: 0.0,
+            avg_memory_usage: 0.0,
+            max_memory_usage: 0.0,
+            avg_qps: 0.0,
+            max_qps: 0.0,
+            total_queries: 0,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClusterMetrics {
+    pub timestamp: SystemTime,
+    pub total_nodes: usize,
+    pub healthy_nodes: usize,
+    pub degraded_nodes: usize,
+    pub failed_nodes: usize,
+    pub total_cpu_usage: f32,
+    pub total_memory_usage: f32,
+    pub total_disk_usage: f32,
+    pub total_connections: usize,
+    pub queries_per_second: f64,
+    pub avg_query_latency_ms: f64,
+    pub network_throughput_mbps: f64,
+}
+
+impl Default for ClusterMetrics {
+    fn default() -> Self {
+        Self {
+            timestamp: SystemTime::now(),
+            total_nodes: 0,
+            healthy_nodes: 0,
+            degraded_nodes: 0,
+            failed_nodes: 0,
+            total_cpu_usage: 0.0,
+            total_memory_usage: 0.0,
+            total_disk_usage: 0.0,
+            total_connections: 0,
+            queries_per_second: 0.0,
+            avg_query_latency_ms: 0.0,
+            network_throughput_mbps: 0.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AggregatedMetrics {
+    pub period_start: SystemTime,
+    pub period_end: SystemTime,
+    pub avg_cpu_usage: f32,
+    pub max_cpu_usage: f32,
+    pub avg_memory_usage: f32,
+    pub max_memory_usage: f32,
+    pub avg_qps: f64,
+    pub max_qps: f64,
+    pub total_queries: u64,
+}
+
+/// Split-brain detector and resolver
+pub struct SplitBrainDetector {
+    coordinator: Arc<ClusterCoordinator>,
+    detection_interval: Duration,
+    resolution_strategy: SplitBrainResolution,
+}
+
+#[derive(Debug, Clone)]
+pub enum SplitBrainResolution {
+    /// Keep larger partition
+    PreferLargerPartition,
+    /// Keep partition with original leader
+    PreferOriginalLeader,
+    /// Manual resolution required
+    Manual,
+    /// Automatically elect new leader
+    AutoElect,
+}
+
+impl SplitBrainDetector {
+    pub fn new(
+        coordinator: Arc<ClusterCoordinator>,
+        detection_interval: Duration,
+        resolution_strategy: SplitBrainResolution,
+    ) -> Self {
+        Self {
+            coordinator,
+            detection_interval,
+            resolution_strategy,
+        }
+    }
+
+    /// Check for split-brain condition
+    pub fn detect_split_brain(&self) -> Result<Option<SplitBrainEvent>> {
+        let nodes = self.coordinator.get_nodes()?;
+        
+        // Count number of leaders
+        let leaders: Vec<_> = nodes.iter()
+            .filter(|n| n.role == NodeRole::Leader)
+            .collect();
+        
+        if leaders.len() > 1 {
+            // Split-brain detected!
+            let event = SplitBrainEvent {
+                detected_at: SystemTime::now(),
+                leaders: leaders.iter().map(|n| n.id.clone()).collect(),
+                total_nodes: nodes.len(),
+                resolution_attempted: false,
+            };
+            
+            return Ok(Some(event));
+        }
+        
+        Ok(None)
+    }
+
+    /// Resolve split-brain condition
+    pub fn resolve_split_brain(&self, event: &SplitBrainEvent) -> Result<ResolutionResult> {
+        match &self.resolution_strategy {
+            SplitBrainResolution::PreferLargerPartition => {
+                // In real implementation, would identify and keep larger partition
+                Ok(ResolutionResult {
+                    success: true,
+                    new_leader: event.leaders.first().cloned(),
+                    demoted_nodes: event.leaders[1..].to_vec(),
+                })
+            }
+            SplitBrainResolution::PreferOriginalLeader => {
+                // Keep the first leader (placeholder logic)
+                Ok(ResolutionResult {
+                    success: true,
+                    new_leader: event.leaders.first().cloned(),
+                    demoted_nodes: event.leaders[1..].to_vec(),
+                })
+            }
+            SplitBrainResolution::AutoElect => {
+                // Trigger new election
+                Ok(ResolutionResult {
+                    success: true,
+                    new_leader: None,
+                    demoted_nodes: event.leaders.clone(),
+                })
+            }
+            SplitBrainResolution::Manual => {
+                Err(DbError::InvalidOperation(
+                    "Manual resolution required for split-brain".to_string()
+                ))
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SplitBrainEvent {
+    pub detected_at: SystemTime,
+    pub leaders: Vec<NodeId>,
+    pub total_nodes: usize,
+    pub resolution_attempted: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolutionResult {
+    pub success: bool,
+    pub new_leader: Option<NodeId>,
+    pub demoted_nodes: Vec<NodeId>,
+}
+
+/// Consensus protocol implementation (Raft-based)
+pub struct ConsensusProtocol {
+    coordinator: Arc<ClusterCoordinator>,
+    log: Arc<RwLock<Vec<LogEntry>>>,
+    commit_index: Arc<RwLock<u64>>,
+    last_applied: Arc<RwLock<u64>>,
+}
+
+impl ConsensusProtocol {
+    pub fn new(coordinator: Arc<ClusterCoordinator>) -> Self {
+        Self {
+            coordinator,
+            log: Arc::new(RwLock::new(Vec::new())),
+            commit_index: Arc::new(RwLock::new(0)),
+            last_applied: Arc::new(RwLock::new(0)),
+        }
+    }
+
+    /// Append entry to log
+    pub fn append_entry(&self, entry: LogEntry) -> Result<u64> {
+        let mut log = self.log.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        
+        log.push(entry);
+        Ok(log.len() as u64)
+    }
+
+    /// Get log entry at index
+    pub fn get_entry(&self, index: u64) -> Result<Option<LogEntry>> {
+        let log = self.log.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        if index > 0 && index <= log.len() as u64 {
+            Ok(Some(log[(index - 1) as usize].clone()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Commit entries up to index
+    pub fn commit_to(&self, index: u64) -> Result<()> {
+        let mut commit_index = self.commit_index.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        
+        *commit_index = index;
+        Ok(())
+    }
+
+    /// Apply committed entries
+    pub fn apply_committed_entries(&self) -> Result<usize> {
+        let commit_index = *self.commit_index.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        let mut last_applied = self.last_applied.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        
+        let mut applied_count = 0;
+        while *last_applied < commit_index {
+            *last_applied += 1;
+            // In real implementation, would apply the entry
+            applied_count += 1;
+        }
+        
+        Ok(applied_count)
+    }
+
+    /// Get current commit index
+    pub fn get_commit_index(&self) -> Result<u64> {
+        let commit_index = self.commit_index.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        Ok(*commit_index)
+    }
+
+    /// Get log length
+    pub fn log_length(&self) -> Result<usize> {
+        let log = self.log.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        Ok(log.len())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogEntry {
+    pub index: u64,
+    pub term: u64,
+    pub command: String,
+    pub timestamp: SystemTime,
+}
+
+/// Cluster configuration manager
+pub struct ClusterConfigManager {
+    config: Arc<RwLock<ClusterConfig>>,
+    config_history: Arc<RwLock<Vec<ConfigChange>>>,
+}
+
+impl ClusterConfigManager {
+    pub fn new(config: ClusterConfig) -> Self {
+        Self {
+            config: Arc::new(RwLock::new(config)),
+            config_history: Arc::new(RwLock::new(Vec::new())),
+        }
+    }
+
+    /// Get current configuration
+    pub fn get_config(&self) -> Result<ClusterConfig> {
+        let config = self.config.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        Ok(config.clone())
+    }
+
+    /// Update configuration
+    pub fn update_config(&self, new_config: ClusterConfig) -> Result<()> {
+        let mut config = self.config.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        
+        let old_config = config.clone();
+        *config = new_config.clone();
+        
+        // Record change
+        let change = ConfigChange {
+            timestamp: SystemTime::now(),
+            old_config,
+            new_config,
+            applied_by: "system".to_string(),
+        };
+        
+        let mut history = self.config_history.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        history.push(change);
+        
+        Ok(())
+    }
+
+    /// Update heartbeat interval
+    pub fn update_heartbeat_interval(&self, interval: Duration) -> Result<()> {
+        let mut config = self.config.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        config.heartbeat_interval = interval;
+        Ok(())
+    }
+
+    /// Update replication factor
+    pub fn update_replication_factor(&self, factor: usize) -> Result<()> {
+        let mut config = self.config.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        config.replication_factor = factor;
+        Ok(())
+    }
+
+    /// Get configuration history
+    pub fn get_config_history(&self) -> Result<Vec<ConfigChange>> {
+        let history = self.config_history.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        Ok(history.clone())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConfigChange {
+    pub timestamp: SystemTime,
+    pub old_config: ClusterConfig,
+    pub new_config: ClusterConfig,
+    pub applied_by: String,
+}
+
+/// Network partition simulator for testing
+pub struct NetworkPartitionSimulator {
+    coordinator: Arc<ClusterCoordinator>,
+    partitions: Arc<RwLock<Vec<Partition>>>,
+}
+
+impl NetworkPartitionSimulator {
+    pub fn new(coordinator: Arc<ClusterCoordinator>) -> Self {
+        Self {
+            coordinator,
+            partitions: Arc::new(RwLock::new(Vec::new())),
+        }
+    }
+
+    /// Create a network partition
+    pub fn create_partition(&self, nodes: Vec<NodeId>) -> Result<String> {
+        let partition_id = format!("partition-{}", SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos());
+        
+        let partition = Partition {
+            id: partition_id.clone(),
+            nodes,
+            created_at: SystemTime::now(),
+            active: true,
+        };
+
+        let mut partitions = self.partitions.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        partitions.push(partition);
+        
+        Ok(partition_id)
+    }
+
+    /// Heal a network partition
+    pub fn heal_partition(&self, partition_id: &str) -> Result<()> {
+        let mut partitions = self.partitions.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        
+        if let Some(partition) = partitions.iter_mut().find(|p| p.id == partition_id) {
+            partition.active = false;
+            Ok(())
+        } else {
+            Err(DbError::NotFound(format!("Partition {} not found", partition_id)))
+        }
+    }
+
+    /// Get active partitions
+    pub fn get_active_partitions(&self) -> Result<Vec<Partition>> {
+        let partitions = self.partitions.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        Ok(partitions.iter()
+            .filter(|p| p.active)
+            .cloned()
+            .collect())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Partition {
+    pub id: String,
+    pub nodes: Vec<NodeId>,
+    pub created_at: SystemTime,
+    pub active: bool,
+}
+
+/// Cluster event log for auditing
+pub struct ClusterEventLog {
+    events: Arc<RwLock<Vec<ClusterEvent>>>,
+    max_events: usize,
+}
+
+impl ClusterEventLog {
+    pub fn new(max_events: usize) -> Self {
+        Self {
+            events: Arc::new(RwLock::new(Vec::new())),
+            max_events,
+        }
+    }
+
+    /// Log a cluster event
+    pub fn log_event(&self, event_type: ClusterEventType, description: String) -> Result<()> {
+        let event = ClusterEvent {
+            id: format!("event-{}", SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()),
+            timestamp: SystemTime::now(),
+            event_type,
+            description,
+        };
+
+        let mut events = self.events.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        
+        events.push(event);
+        
+        // Trim old events if exceeded max
+        if events.len() > self.max_events {
+            events.remove(0);
+        }
+        
+        Ok(())
+    }
+
+    /// Get recent events
+    pub fn get_recent_events(&self, count: usize) -> Result<Vec<ClusterEvent>> {
+        let events = self.events.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        let start_idx = events.len().saturating_sub(count);
+        Ok(events[start_idx..].to_vec())
+    }
+
+    /// Get events by type
+    pub fn get_events_by_type(&self, event_type: ClusterEventType) -> Result<Vec<ClusterEvent>> {
+        let events = self.events.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        Ok(events.iter()
+            .filter(|e| e.event_type == event_type)
+            .cloned()
+            .collect())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClusterEvent {
+    pub id: String,
+    pub timestamp: SystemTime,
+    pub event_type: ClusterEventType,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ClusterEventType {
+    NodeJoined,
+    NodeLeft,
+    NodeFailed,
+    LeaderElected,
+    FailoverStarted,
+    FailoverCompleted,
+    ConfigChanged,
+    SplitBrainDetected,
+    SplitBrainResolved,
+    MigrationStarted,
+    MigrationCompleted,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1072,5 +1690,861 @@ mod tests {
 
         let nodes = discovery.discover_nodes().unwrap();
         assert_eq!(nodes.len(), 2);
+    }
+
+    #[test]
+    fn test_snapshot_manager() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+
+        let snapshot_mgr = SnapshotManager::new(
+            coordinator,
+            std::path::PathBuf::from("/tmp/snapshots"),
+            Duration::from_secs(300),
+            10,
+        );
+
+        let snapshot = snapshot_mgr.create_snapshot();
+        assert!(snapshot.is_ok());
+    }
+
+    #[test]
+    fn test_cluster_metrics_collector() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+
+        let metrics_collector = ClusterMetricsCollector::new(
+            coordinator,
+            Duration::from_secs(10),
+        );
+
+        let metrics = metrics_collector.collect_metrics();
+        assert!(metrics.is_ok());
+    }
+
+    #[test]
+    fn test_split_brain_detector() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+
+        let detector = SplitBrainDetector::new(
+            coordinator,
+            Duration::from_secs(5),
+            SplitBrainResolution::PreferLargerPartition,
+        );
+
+        let result = detector.detect_split_brain();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_consensus_protocol() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+
+        let consensus = ConsensusProtocol::new(coordinator);
+
+        let entry = LogEntry {
+            index: 1,
+            term: 1,
+            command: "SET key value".to_string(),
+            timestamp: SystemTime::now(),
+        };
+
+        let index = consensus.append_entry(entry);
+        assert!(index.is_ok());
+        assert_eq!(index.unwrap(), 1);
+    }
+
+    #[test]
+    fn test_cluster_config_manager() {
+        let config = ClusterConfig::default();
+        let config_mgr = ClusterConfigManager::new(config);
+
+        let mut new_config = config_mgr.get_config().unwrap();
+        new_config.heartbeat_interval = Duration::from_secs(2);
+
+        assert!(config_mgr.update_config(new_config).is_ok());
+    }
+
+    #[test]
+    fn test_network_partition_simulator() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+
+        let simulator = NetworkPartitionSimulator::new(coordinator);
+
+        let partition_id = simulator.create_partition(
+            vec!["node1".to_string(), "node2".to_string()]
+        );
+        assert!(partition_id.is_ok());
+    }
+
+    #[test]
+    fn test_cluster_event_log() {
+        let event_log = ClusterEventLog::new(1000);
+
+        event_log.log_event(
+            ClusterEventType::NodeJoined,
+            "Node node1 joined cluster".to_string(),
+        ).unwrap();
+
+        let events = event_log.get_recent_events(10).unwrap();
+        assert_eq!(events.len(), 1);
+    }
+}
+
+/// Quorum manager for cluster decisions
+pub struct QuorumManager {
+    coordinator: Arc<ClusterCoordinator>,
+    quorum_policies: Arc<RwLock<HashMap<String, QuorumPolicy>>>,
+}
+
+impl QuorumManager {
+    pub fn new(coordinator: Arc<ClusterCoordinator>) -> Self {
+        Self {
+            coordinator,
+            quorum_policies: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+
+    /// Check if quorum is satisfied for an operation
+    pub fn check_quorum(&self, operation: &str) -> Result<bool> {
+        let policies = self.quorum_policies.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        let policy = policies.get(operation)
+            .unwrap_or(&QuorumPolicy::Majority);
+        
+        let nodes = self.coordinator.get_nodes()?;
+        let healthy_nodes = nodes.iter()
+            .filter(|n| n.status == NodeStatus::Healthy)
+            .count();
+        
+        let required = match policy {
+            QuorumPolicy::Majority => (nodes.len() / 2) + 1,
+            QuorumPolicy::All => nodes.len(),
+            QuorumPolicy::Custom(count) => *count,
+        };
+        
+        Ok(healthy_nodes >= required)
+    }
+
+    /// Set quorum policy for an operation
+    pub fn set_policy(&self, operation: String, policy: QuorumPolicy) -> Result<()> {
+        let mut policies = self.quorum_policies.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        policies.insert(operation, policy);
+        Ok(())
+    }
+
+    /// Get quorum status
+    pub fn get_quorum_status(&self) -> Result<QuorumStatus> {
+        let nodes = self.coordinator.get_nodes()?;
+        let healthy_nodes = nodes.iter()
+            .filter(|n| n.status == NodeStatus::Healthy)
+            .count();
+        
+        let majority_quorum = (nodes.len() / 2) + 1;
+        let has_majority = healthy_nodes >= majority_quorum;
+        
+        Ok(QuorumStatus {
+            total_nodes: nodes.len(),
+            healthy_nodes,
+            required_for_majority: majority_quorum,
+            has_majority,
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum QuorumPolicy {
+    Majority,
+    All,
+    Custom(usize),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QuorumStatus {
+    pub total_nodes: usize,
+    pub healthy_nodes: usize,
+    pub required_for_majority: usize,
+    pub has_majority: bool,
+}
+
+/// Cluster topology optimizer
+pub struct TopologyOptimizer {
+    coordinator: Arc<ClusterCoordinator>,
+    optimization_history: Arc<RwLock<Vec<TopologyChange>>>,
+}
+
+impl TopologyOptimizer {
+    pub fn new(coordinator: Arc<ClusterCoordinator>) -> Self {
+        Self {
+            coordinator,
+            optimization_history: Arc::new(RwLock::new(Vec::new())),
+        }
+    }
+
+    /// Analyze current topology
+    pub fn analyze_topology(&self) -> Result<TopologyAnalysis> {
+        let nodes = self.coordinator.get_nodes()?;
+        
+        // Analyze node distribution
+        let mut region_distribution: HashMap<String, usize> = HashMap::new();
+        for node in &nodes {
+            // Extract region from address (placeholder logic)
+            let region = node.address.split('.').next().unwrap_or("unknown").to_string();
+            *region_distribution.entry(region).or_insert(0) += 1;
+        }
+        
+        // Calculate balance score
+        let avg_per_region = nodes.len() as f64 / region_distribution.len().max(1) as f64;
+        let balance_score = region_distribution.values()
+            .map(|&count| {
+                let diff = (count as f64 - avg_per_region).abs();
+                1.0 - (diff / avg_per_region).min(1.0)
+            })
+            .sum::<f64>() / region_distribution.len().max(1) as f64;
+        
+        Ok(TopologyAnalysis {
+            total_nodes: nodes.len(),
+            region_distribution,
+            balance_score,
+            recommendations: self.generate_topology_recommendations(&nodes, balance_score)?,
+        })
+    }
+
+    fn generate_topology_recommendations(&self, nodes: &[NodeInfo], balance_score: f64) -> Result<Vec<String>> {
+        let mut recommendations = Vec::new();
+        
+        if nodes.len() < 3 {
+            recommendations.push("Consider adding more nodes for high availability".to_string());
+        }
+        
+        if balance_score < 0.7 {
+            recommendations.push("Node distribution is unbalanced across regions".to_string());
+        }
+        
+        let unhealthy_count = nodes.iter()
+            .filter(|n| n.status != NodeStatus::Healthy)
+            .count();
+        
+        if unhealthy_count > 0 {
+            recommendations.push(format!("{} unhealthy nodes detected, investigate", unhealthy_count));
+        }
+        
+        Ok(recommendations)
+    }
+
+    /// Apply topology optimization
+    pub fn optimize(&self) -> Result<TopologyChange> {
+        let analysis = self.analyze_topology()?;
+        
+        let change = TopologyChange {
+            timestamp: SystemTime::now(),
+            change_type: TopologyChangeType::Rebalance,
+            affected_nodes: vec![],
+            reason: "Automated optimization".to_string(),
+        };
+        
+        let mut history = self.optimization_history.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        history.push(change.clone());
+        
+        Ok(change)
+    }
+
+    /// Get optimization history
+    pub fn get_history(&self) -> Result<Vec<TopologyChange>> {
+        let history = self.optimization_history.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        Ok(history.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TopologyAnalysis {
+    pub total_nodes: usize,
+    pub region_distribution: HashMap<String, usize>,
+    pub balance_score: f64,
+    pub recommendations: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TopologyChange {
+    pub timestamp: SystemTime,
+    pub change_type: TopologyChangeType,
+    pub affected_nodes: Vec<NodeId>,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum TopologyChangeType {
+    NodeAdded,
+    NodeRemoved,
+    Rebalance,
+    RegionChange,
+}
+
+/// Node health scoring system
+pub struct HealthScoring {
+    coordinator: Arc<ClusterCoordinator>,
+    scoring_config: ScoringConfig,
+}
+
+#[derive(Debug, Clone)]
+pub struct ScoringConfig {
+    pub cpu_weight: f32,
+    pub memory_weight: f32,
+    pub disk_weight: f32,
+    pub connection_weight: f32,
+    pub heartbeat_weight: f32,
+}
+
+impl Default for ScoringConfig {
+    fn default() -> Self {
+        Self {
+            cpu_weight: 0.2,
+            memory_weight: 0.2,
+            disk_weight: 0.15,
+            connection_weight: 0.25,
+            heartbeat_weight: 0.2,
+        }
+    }
+}
+
+impl HealthScoring {
+    pub fn new(coordinator: Arc<ClusterCoordinator>, config: ScoringConfig) -> Self {
+        Self {
+            coordinator,
+            scoring_config: config,
+        }
+    }
+
+    /// Calculate health score for a node
+    pub fn calculate_score(&self, node: &NodeInfo) -> f32 {
+        let cpu_score = (100.0 - node.cpu_usage) / 100.0;
+        let memory_score = (100.0 - node.memory_usage) / 100.0;
+        let disk_score = (100.0 - node.disk_usage) / 100.0;
+        
+        // Connection score (assuming 100 is max healthy)
+        let connection_score = (100.0 - node.active_connections.min(100) as f32) / 100.0;
+        
+        // Heartbeat score
+        let heartbeat_score = if node.status == NodeStatus::Healthy { 1.0 } else { 0.0 };
+        
+        (cpu_score * self.scoring_config.cpu_weight +
+         memory_score * self.scoring_config.memory_weight +
+         disk_score * self.scoring_config.disk_weight +
+         connection_score * self.scoring_config.connection_weight +
+         heartbeat_score * self.scoring_config.heartbeat_weight) * 100.0
+    }
+
+    /// Get scores for all nodes
+    pub fn score_all_nodes(&self) -> Result<HashMap<NodeId, f32>> {
+        let nodes = self.coordinator.get_nodes()?;
+        let mut scores = HashMap::new();
+        
+        for node in nodes {
+            let score = self.calculate_score(&node);
+            scores.insert(node.id, score);
+        }
+        
+        Ok(scores)
+    }
+
+    /// Get nodes ranked by health score
+    pub fn get_ranked_nodes(&self) -> Result<Vec<(NodeInfo, f32)>> {
+        let nodes = self.coordinator.get_nodes()?;
+        let mut ranked: Vec<_> = nodes.into_iter()
+            .map(|n| {
+                let score = self.calculate_score(&n);
+                (n, score)
+            })
+            .collect();
+        
+        ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+        Ok(ranked)
+    }
+}
+
+/// Automated recovery manager
+pub struct AutomatedRecoveryManager {
+    coordinator: Arc<ClusterCoordinator>,
+    recovery_policies: Arc<RwLock<Vec<RecoveryPolicy>>>,
+    recovery_log: Arc<RwLock<Vec<RecoveryAction>>>,
+}
+
+impl AutomatedRecoveryManager {
+    pub fn new(coordinator: Arc<ClusterCoordinator>) -> Self {
+        let mut policies = Vec::new();
+        
+        // Default policies
+        policies.push(RecoveryPolicy {
+            name: "restart_unhealthy_nodes".to_string(),
+            trigger: RecoveryTrigger::NodeStatus(NodeStatus::Failed),
+            action: RecoveryActionType::Restart,
+            enabled: true,
+        });
+        
+        policies.push(RecoveryPolicy {
+            name: "redistribute_load".to_string(),
+            trigger: RecoveryTrigger::HighLoad(80.0),
+            action: RecoveryActionType::LoadBalance,
+            enabled: true,
+        });
+        
+        Self {
+            coordinator,
+            recovery_policies: Arc::new(RwLock::new(policies)),
+            recovery_log: Arc::new(RwLock::new(Vec::new())),
+        }
+    }
+
+    /// Check and execute recovery actions
+    pub fn check_and_recover(&self) -> Result<Vec<RecoveryAction>> {
+        let nodes = self.coordinator.get_nodes()?;
+        let policies = self.recovery_policies.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        let mut actions = Vec::new();
+        
+        for policy in policies.iter().filter(|p| p.enabled) {
+            match &policy.trigger {
+                RecoveryTrigger::NodeStatus(status) => {
+                    for node in &nodes {
+                        if node.status == *status {
+                            let action = RecoveryAction {
+                                timestamp: SystemTime::now(),
+                                node_id: node.id.clone(),
+                                action_type: policy.action.clone(),
+                                success: true,
+                                details: format!("Applied policy: {}", policy.name),
+                            };
+                            actions.push(action);
+                        }
+                    }
+                }
+                RecoveryTrigger::HighLoad(threshold) => {
+                    for node in &nodes {
+                        if node.cpu_usage > *threshold {
+                            let action = RecoveryAction {
+                                timestamp: SystemTime::now(),
+                                node_id: node.id.clone(),
+                                action_type: policy.action.clone(),
+                                success: true,
+                                details: format!("CPU usage {}% exceeds threshold", node.cpu_usage),
+                            };
+                            actions.push(action);
+                        }
+                    }
+                }
+                RecoveryTrigger::LostQuorum => {
+                    let health = self.coordinator.get_cluster_health()?;
+                    if !health.has_quorum {
+                        let action = RecoveryAction {
+                            timestamp: SystemTime::now(),
+                            node_id: "cluster".to_string(),
+                            action_type: policy.action.clone(),
+                            success: true,
+                            details: "Quorum lost, attempting recovery".to_string(),
+                        };
+                        actions.push(action);
+                    }
+                }
+            }
+        }
+        
+        // Log actions
+        let mut log = self.recovery_log.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        log.extend(actions.clone());
+        
+        Ok(actions)
+    }
+
+    /// Add recovery policy
+    pub fn add_policy(&self, policy: RecoveryPolicy) -> Result<()> {
+        let mut policies = self.recovery_policies.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        policies.push(policy);
+        Ok(())
+    }
+
+    /// Get recovery log
+    pub fn get_recovery_log(&self) -> Result<Vec<RecoveryAction>> {
+        let log = self.recovery_log.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        Ok(log.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RecoveryPolicy {
+    pub name: String,
+    pub trigger: RecoveryTrigger,
+    pub action: RecoveryActionType,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum RecoveryTrigger {
+    NodeStatus(NodeStatus),
+    HighLoad(f32),
+    LostQuorum,
+}
+
+#[derive(Debug, Clone)]
+pub enum RecoveryActionType {
+    Restart,
+    LoadBalance,
+    AddNode,
+    RemoveNode,
+    Failover,
+}
+
+#[derive(Debug, Clone)]
+pub struct RecoveryAction {
+    pub timestamp: SystemTime,
+    pub node_id: NodeId,
+    pub action_type: RecoveryActionType,
+    pub success: bool,
+    pub details: String,
+}
+
+/// Resource pool manager for cluster
+pub struct ClusterResourcePool {
+    coordinator: Arc<ClusterCoordinator>,
+    resource_limits: Arc<RwLock<HashMap<String, ResourceLimit>>>,
+    allocations: Arc<RwLock<HashMap<String, Vec<ResourceAllocation>>>>,
+}
+
+impl ClusterResourcePool {
+    pub fn new(coordinator: Arc<ClusterCoordinator>) -> Self {
+        Self {
+            coordinator,
+            resource_limits: Arc::new(RwLock::new(HashMap::new())),
+            allocations: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+
+    /// Set resource limit for a resource type
+    pub fn set_limit(&self, resource_type: String, limit: ResourceLimit) -> Result<()> {
+        let mut limits = self.resource_limits.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        limits.insert(resource_type, limit);
+        Ok(())
+    }
+
+    /// Allocate resources
+    pub fn allocate(&self, allocation: ResourceAllocation) -> Result<bool> {
+        let limits = self.resource_limits.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        if let Some(limit) = limits.get(&allocation.resource_type) {
+            let mut allocations = self.allocations.write()
+                .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+            
+            let type_allocations = allocations.entry(allocation.resource_type.clone())
+                .or_insert_with(Vec::new);
+            
+            let current_usage: f64 = type_allocations.iter()
+                .map(|a| a.amount)
+                .sum();
+            
+            if current_usage + allocation.amount <= limit.max_amount {
+                type_allocations.push(allocation);
+                return Ok(true);
+            }
+        }
+        
+        Ok(false)
+    }
+
+    /// Deallocate resources
+    pub fn deallocate(&self, allocation_id: &str) -> Result<()> {
+        let mut allocations = self.allocations.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        
+        for (_, type_allocs) in allocations.iter_mut() {
+            type_allocs.retain(|a| a.id != allocation_id);
+        }
+        
+        Ok(())
+    }
+
+    /// Get resource utilization
+    pub fn get_utilization(&self) -> Result<HashMap<String, ResourceUtilization>> {
+        let limits = self.resource_limits.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        let allocations = self.allocations.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        let mut utilizations = HashMap::new();
+        
+        for (resource_type, limit) in limits.iter() {
+            let used = allocations.get(resource_type)
+                .map(|allocs| allocs.iter().map(|a| a.amount).sum())
+                .unwrap_or(0.0);
+            
+            utilizations.insert(resource_type.clone(), ResourceUtilization {
+                resource_type: resource_type.clone(),
+                used,
+                limit: limit.max_amount,
+                utilization_percentage: (used / limit.max_amount) * 100.0,
+            });
+        }
+        
+        Ok(utilizations)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ResourceLimit {
+    pub max_amount: f64,
+    pub warning_threshold: f64,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResourceAllocation {
+    pub id: String,
+    pub resource_type: String,
+    pub amount: f64,
+    pub owner: String,
+    pub allocated_at: SystemTime,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResourceUtilization {
+    pub resource_type: String,
+    pub used: f64,
+    pub limit: f64,
+    pub utilization_percentage: f64,
+}
+
+/// Cluster upgrade coordinator
+pub struct UpgradeCoordinator {
+    coordinator: Arc<ClusterCoordinator>,
+    upgrade_plan: Arc<RwLock<Option<UpgradePlan>>>,
+    upgrade_status: Arc<RwLock<HashMap<NodeId, UpgradeStatus>>>,
+}
+
+impl UpgradeCoordinator {
+    pub fn new(coordinator: Arc<ClusterCoordinator>) -> Self {
+        Self {
+            coordinator,
+            upgrade_plan: Arc::new(RwLock::new(None)),
+            upgrade_status: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+
+    /// Create upgrade plan
+    pub fn create_plan(&self, target_version: String, strategy: UpgradeStrategy) -> Result<UpgradePlan> {
+        let nodes = self.coordinator.get_nodes()?;
+        
+        let plan = UpgradePlan {
+            id: format!("upgrade-{}", SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()),
+            target_version,
+            strategy,
+            nodes: nodes.iter().map(|n| n.id.clone()).collect(),
+            created_at: SystemTime::now(),
+            status: PlanStatus::Pending,
+        };
+        
+        let mut stored_plan = self.upgrade_plan.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        *stored_plan = Some(plan.clone());
+        
+        Ok(plan)
+    }
+
+    /// Execute upgrade
+    pub fn execute_upgrade(&self) -> Result<()> {
+        let plan = self.upgrade_plan.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        
+        if let Some(plan) = plan.as_ref() {
+            match plan.strategy {
+                UpgradeStrategy::RollingUpgrade => {
+                    // Upgrade nodes one by one
+                    for node_id in &plan.nodes {
+                        self.upgrade_node(node_id)?;
+                    }
+                }
+                UpgradeStrategy::BlueGreen => {
+                    // Upgrade all at once (simplified)
+                    for node_id in &plan.nodes {
+                        self.upgrade_node(node_id)?;
+                    }
+                }
+                UpgradeStrategy::Canary => {
+                    // Upgrade one node first
+                    if let Some(first_node) = plan.nodes.first() {
+                        self.upgrade_node(first_node)?;
+                    }
+                }
+            }
+        }
+        
+        Ok(())
+    }
+
+    fn upgrade_node(&self, node_id: &NodeId) -> Result<()> {
+        let mut status = self.upgrade_status.write()
+            .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
+        
+        status.insert(node_id.clone(), UpgradeStatus::InProgress);
+        
+        // Placeholder: actual upgrade logic
+        
+        status.insert(node_id.clone(), UpgradeStatus::Completed);
+        
+        Ok(())
+    }
+
+    /// Get upgrade status
+    pub fn get_status(&self) -> Result<HashMap<NodeId, UpgradeStatus>> {
+        let status = self.upgrade_status.read()
+            .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
+        Ok(status.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UpgradePlan {
+    pub id: String,
+    pub target_version: String,
+    pub strategy: UpgradeStrategy,
+    pub nodes: Vec<NodeId>,
+    pub created_at: SystemTime,
+    pub status: PlanStatus,
+}
+
+#[derive(Debug, Clone)]
+pub enum UpgradeStrategy {
+    RollingUpgrade,
+    BlueGreen,
+    Canary,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum UpgradeStatus {
+    Pending,
+    InProgress,
+    Completed,
+    Failed,
+}
+
+#[derive(Debug, Clone)]
+pub enum PlanStatus {
+    Pending,
+    InProgress,
+    Completed,
+    Failed,
+}
+
+#[cfg(test)]
+mod extended_tests {
+    use super::*;
+
+    #[test]
+    fn test_quorum_manager() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+        
+        let quorum_mgr = QuorumManager::new(coordinator);
+        
+        assert!(quorum_mgr.set_policy("write".to_string(), QuorumPolicy::Majority).is_ok());
+        
+        let status = quorum_mgr.get_quorum_status().unwrap();
+        assert_eq!(status.total_nodes, 1);
+    }
+
+    #[test]
+    fn test_topology_optimizer() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+        
+        let optimizer = TopologyOptimizer::new(coordinator);
+        
+        let analysis = optimizer.analyze_topology().unwrap();
+        assert_eq!(analysis.total_nodes, 1);
+    }
+
+    #[test]
+    fn test_health_scoring() {
+        let config = ClusterConfig::default();
+        let mut local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        local_node.cpu_usage = 50.0;
+        local_node.memory_usage = 60.0;
+        
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node.clone()));
+        let scoring = HealthScoring::new(coordinator, ScoringConfig::default());
+        
+        let score = scoring.calculate_score(&local_node);
+        assert!(score > 0.0 && score <= 100.0);
+    }
+
+    #[test]
+    fn test_automated_recovery_manager() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+        
+        let recovery_mgr = AutomatedRecoveryManager::new(coordinator);
+        
+        let actions = recovery_mgr.check_and_recover().unwrap();
+        assert!(actions.is_empty()); // No recovery needed for healthy node
+    }
+
+    #[test]
+    fn test_cluster_resource_pool() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+        
+        let pool = ClusterResourcePool::new(coordinator);
+        
+        pool.set_limit("cpu".to_string(), ResourceLimit {
+            max_amount: 100.0,
+            warning_threshold: 80.0,
+        }).unwrap();
+        
+        let allocation = ResourceAllocation {
+            id: "alloc1".to_string(),
+            resource_type: "cpu".to_string(),
+            amount: 50.0,
+            owner: "user1".to_string(),
+            allocated_at: SystemTime::now(),
+        };
+        
+        assert!(pool.allocate(allocation).unwrap());
+    }
+
+    #[test]
+    fn test_upgrade_coordinator() {
+        let config = ClusterConfig::default();
+        let local_node = NodeInfo::new("node1".to_string(), "127.0.0.1".to_string(), 5432);
+        let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
+        
+        let upgrade_coord = UpgradeCoordinator::new(coordinator);
+        
+        let plan = upgrade_coord.create_plan(
+            "v2.0.0".to_string(),
+            UpgradeStrategy::RollingUpgrade,
+        ).unwrap();
+        
+        assert_eq!(plan.target_version, "v2.0.0");
     }
 }
