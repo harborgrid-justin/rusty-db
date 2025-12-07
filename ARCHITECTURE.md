@@ -98,20 +98,50 @@ Provides fast data access through multiple index types.
 **Query Planner:**
 - Converts AST to execution plan
 - Creates operator tree
-- Handles table scans, filters, projections
+- Handles table scans, filters, projections, joins
+- Supports aggregation nodes (GROUP BY, HAVING)
+- Supports sort and limit nodes
+- Subquery handling
 
 **Query Optimizer:**
 - Cost-based optimization framework
-- Future: predicate pushdown, join reordering
+- Predicate pushdown optimization
+- Join reordering based on cost estimation
 - Index selection
 - Constant folding
+- Cost estimation for all plan nodes
 
 **Executor:**
 - Executes query plans
 - Returns results
 - Integrates with catalog and storage
+- JOIN execution (INNER, LEFT, RIGHT, FULL, CROSS)
+- Aggregation execution (COUNT, SUM, AVG, MIN, MAX, etc.)
+- Sorting and limiting
+- Subquery execution
 
-### 6. Network Layer
+### 6. Advanced SQL Features Layer
+
+**Triggers:**
+- BEFORE/AFTER trigger support
+- INSERT/UPDATE/DELETE events
+- Conditional trigger execution
+- Trigger management (create, drop, enable/disable)
+
+**Stored Procedures:**
+- SQL-based procedures
+- Parameter support (IN, OUT, INOUT)
+- Procedure execution framework
+- Procedure management
+
+**Replication:**
+- Primary-replica architecture
+- Synchronous, asynchronous, and semi-sync modes
+- Replication log management
+- Failover support
+- Replica monitoring
+
+### 7. Network Layer
 Enables client-server communication.
 
 **Components:**

@@ -318,21 +318,22 @@ at your option.
 - ✅ Transaction management
 - ✅ B-Tree and Hash indexes
 - ✅ Client-server architecture
+- ✅ Advanced query optimization (predicate pushdown, join reordering, cost-based optimization)
+- ✅ Join operations (INNER, LEFT, RIGHT, FULL, CROSS)
+- ✅ Aggregation functions (COUNT, SUM, AVG, MIN, MAX, STDDEV, VARIANCE)
+- ✅ GROUP BY and HAVING clauses
+- ✅ Subquery support
+- ✅ Enhanced foreign key constraints with CASCADE, SET NULL, RESTRICT
+- ✅ Triggers and stored procedures
+- ✅ Replication and high availability (synchronous, asynchronous, semi-sync)
 
 ### Planned Features
-- 🔄 Advanced query optimization
-- 🔄 Join operations (INNER, OUTER, CROSS)
-- 🔄 Aggregation functions (COUNT, SUM, AVG, etc.)
-- 🔄 Subqueries and CTEs
-- 🔄 Foreign key constraints
-- 🔄 Triggers and stored procedures
-- 🔄 Replication and high availability
+- 🔄 CTEs (Common Table Expressions with WITH clause)
+- 🔄 Advanced subquery optimization
 - 🔄 Partitioning support
 - 🔄 Full-text search
 - 🔄 JSON support
-- 🔄 Query result caching
-- 🔄 Performance monitoring and metrics
-- 🔄 Backup and restore utilities
+- 🔄 Additional optimization techniques (partition pruning, materialized view rewrite)
 
 ## 🤝 Acknowledgments
 
