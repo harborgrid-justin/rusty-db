@@ -1,14 +1,21 @@
+//! # RustyDB CLI
+//!
+//! Interactive SQL client for RustyDB.
+//! Connects to a RustyDB server and allows executing SQL queries.
+
 use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, stdin, AsyncBufReadExt, BufReader};
 use rusty_db::network::protocol::{Request, Response};
 use rusty_db::Result;
 use rusty_db::error::DbError;
 use rusty_db::execution::QueryResult;
+use rusty_db::VERSION;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     println!("╔══════════════════════════════════════════════════════════╗");
     println!("║          RustyDB CLI - Interactive SQL Client           ║");
+    println!("║                    Version {}                        ║", VERSION);
     println!("╚══════════════════════════════════════════════════════════╝");
     println!();
     
