@@ -23,6 +23,9 @@ pub mod triggers;
 pub mod procedures;
 pub mod replication;
 
+// Clustering and High Availability
+pub mod clustering;
+
 pub use error::{Result, DbError};
 
 /// Database configuration

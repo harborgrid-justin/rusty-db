@@ -32,6 +32,12 @@ pub enum DbError {
     #[error("Lock timeout")]
     LockTimeout,
     
+    #[error("Lock error: {0}")]
+    LockError(String),
+    
+    #[error("Service unavailable: {0}")]
+    Unavailable(String),
+    
     #[error("Deadlock detected")]
     Deadlock,
     
