@@ -1,3 +1,5 @@
+pub mod fulltext;
+
 use std::collections::BTreeMap;
 use parking_lot::RwLock;
 use std::sync::Arc;

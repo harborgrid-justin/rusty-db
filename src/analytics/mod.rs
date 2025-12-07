@@ -1,3 +1,5 @@
+pub mod caching;
+
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, BTreeMap, VecDeque};
 use parking_lot::RwLock;
@@ -551,7 +553,15 @@ impl Histogram {
     
     pub fn estimate_selectivity(&self, value: &str) -> f64 {
         for bucket in &self.buckets {
-            if value >= bucket.lower_bound.as_str() && value <= bucket.upper_bound.as_str() {
+            // Try numeric comparison first, fall back to string comparison
+            let in_range = if let (Ok(val_num), Ok(lower_num), Ok(upper_num)) = 
+                (value.parse::<f64>(), bucket.lower_bound.parse::<f64>(), bucket.upper_bound.parse::<f64>()) {
+                val_num >= lower_num && val_num <= upper_num
+            } else {
+                value >= bucket.lower_bound.as_str() && value <= bucket.upper_bound.as_str()
+            };
+            
+            if in_range {
                 if bucket.count == 0 {
                     return 0.0;
                 }
