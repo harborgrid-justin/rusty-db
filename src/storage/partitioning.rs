@@ -2102,26 +2102,29 @@ pub mod routing {
 #[cfg(test)]
 mod advanced_tests {
     use super::*;
-    use pruning::*;
-    use auto_management::*;
-    use partition_wise::*;
-    use dynamic::*;
-    use optimizer::*;
-    use parallel::*;
-    use monitoring::*;
-    use balancing::*;
-    use compression::*;
-    use routing::*;
+    use super::pruning::*;
+    use super::auto_management::*;
+    use super::partition_wise::*;
+    use super::dynamic;
+    use super::optimizer::*;
+    use super::parallel::*;
+    use super::monitoring::*;
+    use super::balancing::*;
+    use super::compression::*;
+    use super::routing::*;
+    use std::time::SystemTime;
     
     #[test]
     fn test_partition_pruning_optimizer() {
         let mut optimizer = PartitionPruningOptimizer::new();
         
         let stats = PartitionStatistics {
+            partition_name: "p_2023".to_string(),
             row_count: 1000,
             data_size: 1024000,
             min_value: "2023-01-01".to_string(),
             max_value: "2023-12-31".to_string(),
+            last_modified: SystemTime::now(),
         };
         
         optimizer.add_statistics("sales".to_string(), "p_2023".to_string(), stats);
@@ -2176,7 +2179,7 @@ mod advanced_tests {
     #[test]
     fn test_partition_splitter() {
         let split_points = vec!["500".to_string(), "1000".to_string()];
-        let result = PartitionSplitter::split_partition("sales", "p_2023", split_points);
+        let result = dynamic::PartitionSplitter::split_partition("sales", "p_2023", split_points);
         
         assert!(result.is_ok());
         assert_eq!(result.unwrap().len(), 2);
@@ -2188,10 +2191,12 @@ mod advanced_tests {
         
         let mut stats = HashMap::new();
         stats.insert("p1".to_string(), PartitionStatistics {
+            partition_name: "p1".to_string(),
             row_count: 1000,
             data_size: 4096 * 100,
             min_value: "0".to_string(),
             max_value: "1000".to_string(),
+            last_modified: SystemTime::now(),
         });
         
         let partitions = vec!["p1".to_string()];
@@ -2206,10 +2211,12 @@ mod advanced_tests {
         
         let mut stats = HashMap::new();
         stats.insert("sales:p_2023".to_string(), PartitionStatistics {
+            partition_name: "p_2023".to_string(),
             row_count: 1000,
             data_size: 1024000,
             min_value: "0".to_string(),
             max_value: "1000".to_string(),
+            last_modified: SystemTime::now(),
         });
         
         let partitions = vec![("sales".to_string(), "p_2023".to_string())];
@@ -2225,16 +2232,20 @@ mod advanced_tests {
         
         let mut partitions = HashMap::new();
         partitions.insert("p1".to_string(), PartitionStatistics {
+            partition_name: "p1".to_string(),
             row_count: 1000,
             data_size: 1000000,
             min_value: "0".to_string(),
             max_value: "1000".to_string(),
+            last_modified: SystemTime::now(),
         });
         partitions.insert("p2".to_string(), PartitionStatistics {
+            partition_name: "p2".to_string(),
             row_count: 100,
             data_size: 100000,
             min_value: "0".to_string(),
             max_value: "100".to_string(),
+            last_modified: SystemTime::now(),
         });
         
         let analysis = balancer.analyze_balance(&partitions);
