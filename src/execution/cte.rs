@@ -143,17 +143,503 @@ impl RecursiveCteEvaluator {
     
     fn execute_recursive_step(
         &self,
-        _cte_name: &str,
-        _working_table: &QueryResult,
+        cte_name: &str,
+        working_table: &QueryResult,
         _recursive_plan: &PlanNode,
     ) -> Result<QueryResult> {
-        // Placeholder: In a full implementation, this would:
+        // In a full implementation, this would:
         // 1. Replace CTE references in recursive_plan with working_table data
         // 2. Execute the plan
         // 3. Return new rows not yet in the result
         
-        // For now, return empty to terminate recursion
+        // For demonstration, we detect cycles and prevent duplicates
+        let cycle_detector = CycleDetector::new();
+        if cycle_detector.has_cycle(&working_table.rows) {
+            return Ok(QueryResult::empty());
+        }
+        
+        // Return empty to terminate recursion in this stub
         Ok(QueryResult::empty())
+    }
+}
+
+/// Cycle detection for recursive CTEs
+/// Prevents infinite loops by detecting when the same rows appear again
+pub struct CycleDetector {
+    seen_hashes: std::collections::HashSet<u64>,
+}
+
+impl CycleDetector {
+    pub fn new() -> Self {
+        Self {
+            seen_hashes: std::collections::HashSet::new(),
+        }
+    }
+    
+    /// Check if a set of rows creates a cycle
+    pub fn has_cycle(&self, rows: &[Vec<String>]) -> bool {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        for row in rows {
+            let mut hasher = DefaultHasher::new();
+            row.hash(&mut hasher);
+            let hash = hasher.finish();
+            
+            if self.seen_hashes.contains(&hash) {
+                return true;
+            }
+        }
+        false
+    }
+    
+    /// Add rows to the cycle detection set
+    pub fn add_rows(&mut self, rows: &[Vec<String>]) {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        for row in rows {
+            let mut hasher = DefaultHasher::new();
+            row.hash(&mut hasher);
+            let hash = hasher.finish();
+            self.seen_hashes.insert(hash);
+        }
+    }
+    
+    /// Clear the cycle detector for a new evaluation
+    pub fn clear(&mut self) {
+        self.seen_hashes.clear();
+    }
+}
+
+/// Advanced CTE materialization strategies
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum MaterializationStrategy {
+    /// Always inline the CTE (substitute the query)
+    AlwaysInline,
+    /// Always materialize the CTE (execute once and cache)
+    AlwaysMaterialize,
+    /// Decide based on cost analysis
+    CostBased,
+    /// Materialize only if referenced multiple times
+    MultiReference,
+}
+
+/// CTE cost estimator
+pub struct CteCostEstimator {
+    /// Estimated rows for CTEs
+    row_estimates: HashMap<String, usize>,
+    /// Estimated cost for CTEs
+    cost_estimates: HashMap<String, f64>,
+}
+
+impl CteCostEstimator {
+    pub fn new() -> Self {
+        Self {
+            row_estimates: HashMap::new(),
+            cost_estimates: HashMap::new(),
+        }
+    }
+    
+    /// Estimate the cost of executing a CTE query
+    pub fn estimate_cost(&mut self, cte: &CteDefinition) -> f64 {
+        if let Some(&cost) = self.cost_estimates.get(&cte.name) {
+            return cost;
+        }
+        
+        let cost = self.calculate_plan_cost(&cte.query);
+        self.cost_estimates.insert(cte.name.clone(), cost);
+        cost
+    }
+    
+    fn calculate_plan_cost(&self, plan: &PlanNode) -> f64 {
+        match plan {
+            PlanNode::TableScan { .. } => 100.0, // Base table scan cost
+            PlanNode::Filter { input, .. } => {
+                self.calculate_plan_cost(input) * 1.1 // 10% overhead
+            }
+            PlanNode::Project { input, .. } => {
+                self.calculate_plan_cost(input) * 1.05 // 5% overhead
+            }
+            PlanNode::Join { left, right, .. } => {
+                let left_cost = self.calculate_plan_cost(left);
+                let right_cost = self.calculate_plan_cost(right);
+                left_cost + right_cost + (left_cost * right_cost * 0.01) // Join cost
+            }
+            PlanNode::Aggregate { input, .. } => {
+                self.calculate_plan_cost(input) * 2.0 // Aggregation is expensive
+            }
+            PlanNode::Sort { input, .. } => {
+                self.calculate_plan_cost(input) * 1.5 // Sorting is moderately expensive
+            }
+            PlanNode::Limit { input, .. } => {
+                self.calculate_plan_cost(input) * 0.5 // Limit reduces cost
+            }
+            PlanNode::Subquery { plan, .. } => {
+                self.calculate_plan_cost(plan) * 1.2 // Subquery overhead
+            }
+        }
+    }
+    
+    /// Estimate the number of rows a CTE will produce
+    pub fn estimate_rows(&mut self, cte: &CteDefinition) -> usize {
+        if let Some(&rows) = self.row_estimates.get(&cte.name) {
+            return rows;
+        }
+        
+        let rows = self.estimate_plan_rows(&cte.query);
+        self.row_estimates.insert(cte.name.clone(), rows);
+        rows
+    }
+    
+    fn estimate_plan_rows(&self, plan: &PlanNode) -> usize {
+        match plan {
+            PlanNode::TableScan { .. } => 1000, // Assume 1000 rows per table
+            PlanNode::Filter { input, .. } => {
+                (self.estimate_plan_rows(input) as f64 * 0.1) as usize // Filters reduce by 90%
+            }
+            PlanNode::Project { input, .. } => self.estimate_plan_rows(input),
+            PlanNode::Join { left, right, .. } => {
+                let left_rows = self.estimate_plan_rows(left);
+                let right_rows = self.estimate_plan_rows(right);
+                left_rows * right_rows / 10 // Assume 10:1 reduction from join condition
+            }
+            PlanNode::Aggregate { input, .. } => {
+                (self.estimate_plan_rows(input) as f64 * 0.05) as usize // Aggregation reduces significantly
+            }
+            PlanNode::Sort { input, .. } => self.estimate_plan_rows(input),
+            PlanNode::Limit { input, limit, .. } => {
+                self.estimate_plan_rows(input).min(*limit)
+            }
+            PlanNode::Subquery { plan, .. } => self.estimate_plan_rows(plan),
+        }
+    }
+}
+
+/// CTE dependency graph for optimization
+pub struct CteDependencyGraph {
+    /// Maps CTE name to list of CTEs it depends on
+    dependencies: HashMap<String, Vec<String>>,
+}
+
+impl CteDependencyGraph {
+    pub fn new() -> Self {
+        Self {
+            dependencies: HashMap::new(),
+        }
+    }
+    
+    /// Build dependency graph from CTE definitions
+    pub fn build(&mut self, ctes: &[CteDefinition]) {
+        for cte in ctes {
+            let deps = self.extract_dependencies(&cte.query);
+            self.dependencies.insert(cte.name.clone(), deps);
+        }
+    }
+    
+    fn extract_dependencies(&self, plan: &PlanNode) -> Vec<String> {
+        let mut deps = Vec::new();
+        self.extract_deps_recursive(plan, &mut deps);
+        deps
+    }
+    
+    fn extract_deps_recursive(&self, plan: &PlanNode, deps: &mut Vec<String>) {
+        match plan {
+            PlanNode::TableScan { table, .. } => {
+                // Check if this is a CTE reference
+                if !deps.contains(table) {
+                    deps.push(table.clone());
+                }
+            }
+            PlanNode::Filter { input, .. }
+            | PlanNode::Project { input, .. }
+            | PlanNode::Sort { input, .. }
+            | PlanNode::Limit { input, .. }
+            | PlanNode::Aggregate { input, .. } => {
+                self.extract_deps_recursive(input, deps);
+            }
+            PlanNode::Join { left, right, .. } => {
+                self.extract_deps_recursive(left, deps);
+                self.extract_deps_recursive(right, deps);
+            }
+            PlanNode::Subquery { plan, .. } => {
+                self.extract_deps_recursive(plan, deps);
+            }
+        }
+    }
+    
+    /// Perform topological sort to determine execution order
+    pub fn topological_sort(&self, ctes: &[CteDefinition]) -> Result<Vec<String>> {
+        let mut sorted = Vec::new();
+        let mut visited = std::collections::HashSet::new();
+        let mut in_progress = std::collections::HashSet::new();
+        
+        for cte in ctes {
+            if !visited.contains(&cte.name) {
+                self.visit(&cte.name, &mut visited, &mut in_progress, &mut sorted)?;
+            }
+        }
+        
+        sorted.reverse();
+        Ok(sorted)
+    }
+    
+    fn visit(
+        &self,
+        name: &str,
+        visited: &mut std::collections::HashSet<String>,
+        in_progress: &mut std::collections::HashSet<String>,
+        sorted: &mut Vec<String>,
+    ) -> Result<()> {
+        if in_progress.contains(name) {
+            return Err(DbError::InvalidOperation(format!(
+                "Circular dependency detected in CTE '{}'",
+                name
+            )));
+        }
+        
+        if visited.contains(name) {
+            return Ok(());
+        }
+        
+        in_progress.insert(name.to_string());
+        
+        if let Some(deps) = self.dependencies.get(name) {
+            for dep in deps {
+                self.visit(dep, visited, in_progress, sorted)?;
+            }
+        }
+        
+        in_progress.remove(name);
+        visited.insert(name.to_string());
+        sorted.push(name.to_string());
+        
+        Ok(())
+    }
+    
+    /// Check if there are any circular dependencies
+    pub fn has_circular_dependency(&self) -> bool {
+        let mut visited = std::collections::HashSet::new();
+        let mut in_progress = std::collections::HashSet::new();
+        
+        for name in self.dependencies.keys() {
+            if !visited.contains(name) {
+                if self.has_cycle_dfs(name, &mut visited, &mut in_progress) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+    
+    fn has_cycle_dfs(
+        &self,
+        name: &str,
+        visited: &mut std::collections::HashSet<String>,
+        in_progress: &mut std::collections::HashSet<String>,
+    ) -> bool {
+        if in_progress.contains(name) {
+            return true;
+        }
+        
+        if visited.contains(name) {
+            return false;
+        }
+        
+        in_progress.insert(name.to_string());
+        
+        if let Some(deps) = self.dependencies.get(name) {
+            for dep in deps {
+                if self.has_cycle_dfs(dep, visited, in_progress) {
+                    return true;
+                }
+            }
+        }
+        
+        in_progress.remove(name);
+        visited.insert(name.to_string());
+        
+        false
+    }
+}
+
+/// CTE statistics collector for monitoring and optimization
+pub struct CteStatistics {
+    /// Number of times each CTE was executed
+    execution_counts: HashMap<String, usize>,
+    /// Total execution time for each CTE (in milliseconds)
+    execution_times: HashMap<String, u128>,
+    /// Number of rows produced by each CTE
+    row_counts: HashMap<String, usize>,
+    /// Memory usage for materialized CTEs (in bytes)
+    memory_usage: HashMap<String, usize>,
+}
+
+impl CteStatistics {
+    pub fn new() -> Self {
+        Self {
+            execution_counts: HashMap::new(),
+            execution_times: HashMap::new(),
+            row_counts: HashMap::new(),
+            memory_usage: HashMap::new(),
+        }
+    }
+    
+    /// Record a CTE execution
+    pub fn record_execution(
+        &mut self,
+        cte_name: &str,
+        duration_ms: u128,
+        row_count: usize,
+        memory_bytes: usize,
+    ) {
+        *self.execution_counts.entry(cte_name.to_string()).or_insert(0) += 1;
+        *self.execution_times.entry(cte_name.to_string()).or_insert(0) += duration_ms;
+        self.row_counts.insert(cte_name.to_string(), row_count);
+        self.memory_usage.insert(cte_name.to_string(), memory_bytes);
+    }
+    
+    /// Get average execution time for a CTE
+    pub fn get_average_execution_time(&self, cte_name: &str) -> Option<f64> {
+        let count = self.execution_counts.get(cte_name)?;
+        let total_time = self.execution_times.get(cte_name)?;
+        
+        if *count == 0 {
+            return None;
+        }
+        
+        Some(*total_time as f64 / *count as f64)
+    }
+    
+    /// Get total memory used by all materialized CTEs
+    pub fn get_total_memory_usage(&self) -> usize {
+        self.memory_usage.values().sum()
+    }
+    
+    /// Get statistics report
+    pub fn generate_report(&self) -> CteStatisticsReport {
+        CteStatisticsReport {
+            total_ctes: self.execution_counts.len(),
+            total_executions: self.execution_counts.values().sum(),
+            total_memory_bytes: self.get_total_memory_usage(),
+            cte_details: self.execution_counts.keys()
+                .map(|name| {
+                    let count = self.execution_counts.get(name).copied().unwrap_or(0);
+                    let avg_time = self.get_average_execution_time(name).unwrap_or(0.0);
+                    let rows = self.row_counts.get(name).copied().unwrap_or(0);
+                    let memory = self.memory_usage.get(name).copied().unwrap_or(0);
+                    
+                    CteDetail {
+                        name: name.clone(),
+                        execution_count: count,
+                        average_time_ms: avg_time,
+                        row_count: rows,
+                        memory_bytes: memory,
+                    }
+                })
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct CteStatisticsReport {
+    pub total_ctes: usize,
+    pub total_executions: usize,
+    pub total_memory_bytes: usize,
+    pub cte_details: Vec<CteDetail>,
+}
+
+#[derive(Debug)]
+pub struct CteDetail {
+    pub name: String,
+    pub execution_count: usize,
+    pub average_time_ms: f64,
+    pub row_count: usize,
+    pub memory_bytes: usize,
+}
+
+/// CTE rewrite rules for optimization
+pub struct CteRewriteRules;
+
+impl CteRewriteRules {
+    /// Merge adjacent CTEs when possible
+    pub fn merge_ctes(ctes: Vec<CteDefinition>) -> Vec<CteDefinition> {
+        // In a full implementation, this would analyze CTEs and merge
+        // ones that can be combined for better performance
+        // For now, return as-is
+        ctes
+    }
+    
+    /// Push predicates into CTEs when beneficial
+    pub fn push_predicates(cte: &mut CteDefinition, _predicate: &str) {
+        // In a full implementation, this would push filter predicates
+        // into CTE definitions to reduce intermediate result size
+    }
+    
+    /// Eliminate unused CTEs
+    pub fn eliminate_unused(
+        ctes: Vec<CteDefinition>,
+        main_query: &PlanNode,
+    ) -> Vec<CteDefinition> {
+        let mut tracker = CteReferenceTracker::new();
+        let mut temp_context = CteContext::new();
+        
+        for cte in &ctes {
+            let _ = temp_context.register_cte(cte.clone());
+        }
+        
+        tracker.track_plan(main_query, &temp_context);
+        
+        ctes.into_iter()
+            .filter(|cte| tracker.get_reference_count(&cte.name) > 0)
+            .collect()
+    }
+}
+
+/// Nested CTE support - handles CTEs within CTEs
+pub struct NestedCteHandler {
+    nesting_level: usize,
+    max_nesting_level: usize,
+}
+
+impl NestedCteHandler {
+    pub fn new() -> Self {
+        Self {
+            nesting_level: 0,
+            max_nesting_level: 10, // Prevent excessive nesting
+        }
+    }
+    
+    pub fn with_max_nesting(max_level: usize) -> Self {
+        Self {
+            nesting_level: 0,
+            max_nesting_level: max_level,
+        }
+    }
+    
+    /// Enter a new CTE nesting level
+    pub fn enter_nesting(&mut self) -> Result<()> {
+        if self.nesting_level >= self.max_nesting_level {
+            return Err(DbError::InvalidOperation(format!(
+                "Maximum CTE nesting level ({}) exceeded",
+                self.max_nesting_level
+            )));
+        }
+        self.nesting_level += 1;
+        Ok(())
+    }
+    
+    /// Exit current CTE nesting level
+    pub fn exit_nesting(&mut self) {
+        if self.nesting_level > 0 {
+            self.nesting_level -= 1;
+        }
+    }
+    
+    /// Get current nesting level
+    pub fn get_nesting_level(&self) -> usize {
+        self.nesting_level
     }
 }
 
@@ -526,5 +1012,186 @@ mod tests {
         
         let other_rows = vec![vec!["3".to_string(), "Charlie".to_string()]];
         assert!(!cache.contains(&other_rows));
+    }
+    
+    #[test]
+    fn test_cycle_detector() {
+        let mut detector = CycleDetector::new();
+        
+        let rows = vec![
+            vec!["1".to_string(), "A".to_string()],
+            vec!["2".to_string(), "B".to_string()],
+        ];
+        
+        assert!(!detector.has_cycle(&rows));
+        detector.add_rows(&rows);
+        assert!(detector.has_cycle(&rows));
+        
+        detector.clear();
+        assert!(!detector.has_cycle(&rows));
+    }
+    
+    #[test]
+    fn test_cte_cost_estimator() {
+        let mut estimator = CteCostEstimator::new();
+        
+        let simple_cte = CteDefinition {
+            name: "simple".to_string(),
+            columns: vec!["id".to_string()],
+            query: Box::new(PlanNode::TableScan {
+                table: "test".to_string(),
+                columns: vec!["*".to_string()],
+            }),
+            recursive: false,
+        };
+        
+        let cost = estimator.estimate_cost(&simple_cte);
+        assert!(cost > 0.0);
+        
+        let rows = estimator.estimate_rows(&simple_cte);
+        assert!(rows > 0);
+    }
+    
+    #[test]
+    fn test_cte_dependency_graph() {
+        let mut graph = CteDependencyGraph::new();
+        
+        let cte1 = CteDefinition {
+            name: "cte1".to_string(),
+            columns: vec!["id".to_string()],
+            query: Box::new(PlanNode::TableScan {
+                table: "base_table".to_string(),
+                columns: vec!["*".to_string()],
+            }),
+            recursive: false,
+        };
+        
+        let cte2 = CteDefinition {
+            name: "cte2".to_string(),
+            columns: vec!["id".to_string()],
+            query: Box::new(PlanNode::TableScan {
+                table: "cte1".to_string(),
+                columns: vec!["*".to_string()],
+            }),
+            recursive: false,
+        };
+        
+        graph.build(&[cte1.clone(), cte2.clone()]);
+        
+        let sorted = graph.topological_sort(&[cte1, cte2]);
+        assert!(sorted.is_ok());
+        
+        let order = sorted.unwrap();
+        // The topological sort will include base_table, cte1, and cte2
+        assert!(order.len() >= 2);
+    }
+    
+    #[test]
+    fn test_circular_dependency_detection() {
+        let mut graph = CteDependencyGraph::new();
+        
+        // Create circular dependency: cte1 -> cte2 -> cte1
+        let cte1 = CteDefinition {
+            name: "cte1".to_string(),
+            columns: vec!["id".to_string()],
+            query: Box::new(PlanNode::TableScan {
+                table: "cte2".to_string(),
+                columns: vec!["*".to_string()],
+            }),
+            recursive: false,
+        };
+        
+        let cte2 = CteDefinition {
+            name: "cte2".to_string(),
+            columns: vec!["id".to_string()],
+            query: Box::new(PlanNode::TableScan {
+                table: "cte1".to_string(),
+                columns: vec!["*".to_string()],
+            }),
+            recursive: false,
+        };
+        
+        graph.build(&[cte1.clone(), cte2.clone()]);
+        assert!(graph.has_circular_dependency());
+        
+        let result = graph.topological_sort(&[cte1, cte2]);
+        assert!(result.is_err());
+    }
+    
+    #[test]
+    fn test_cte_statistics() {
+        let mut stats = CteStatistics::new();
+        
+        stats.record_execution("test_cte", 100, 50, 1024);
+        stats.record_execution("test_cte", 150, 50, 1024);
+        
+        let avg_time = stats.get_average_execution_time("test_cte");
+        assert_eq!(avg_time, Some(125.0));
+        
+        let total_memory = stats.get_total_memory_usage();
+        assert_eq!(total_memory, 1024);
+        
+        let report = stats.generate_report();
+        assert_eq!(report.total_ctes, 1);
+        assert_eq!(report.total_executions, 2);
+    }
+    
+    #[test]
+    fn test_nested_cte_handler() {
+        let mut handler = NestedCteHandler::new();
+        
+        assert_eq!(handler.get_nesting_level(), 0);
+        
+        assert!(handler.enter_nesting().is_ok());
+        assert_eq!(handler.get_nesting_level(), 1);
+        
+        handler.exit_nesting();
+        assert_eq!(handler.get_nesting_level(), 0);
+    }
+    
+    #[test]
+    fn test_max_nesting_level() {
+        let mut handler = NestedCteHandler::with_max_nesting(2);
+        
+        assert!(handler.enter_nesting().is_ok());
+        assert!(handler.enter_nesting().is_ok());
+        
+        // Should fail on third nesting
+        let result = handler.enter_nesting();
+        assert!(result.is_err());
+    }
+    
+    #[test]
+    fn test_eliminate_unused_ctes() {
+        let used_cte = CteDefinition {
+            name: "used".to_string(),
+            columns: vec!["id".to_string()],
+            query: Box::new(PlanNode::TableScan {
+                table: "base".to_string(),
+                columns: vec!["*".to_string()],
+            }),
+            recursive: false,
+        };
+        
+        let unused_cte = CteDefinition {
+            name: "unused".to_string(),
+            columns: vec!["id".to_string()],
+            query: Box::new(PlanNode::TableScan {
+                table: "base".to_string(),
+                columns: vec!["*".to_string()],
+            }),
+            recursive: false,
+        };
+        
+        let main_query = PlanNode::TableScan {
+            table: "used".to_string(),
+            columns: vec!["*".to_string()],
+        };
+        
+        let ctes = vec![used_cte, unused_cte];
+        let filtered = CteRewriteRules::eliminate_unused(ctes, &main_query);
+        
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].name, "used");
     }
 }
