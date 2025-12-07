@@ -3012,7 +3012,7 @@ mod extended_tests {
             node_timeout: Duration::from_secs(30),
             auto_failover: true,
         };
-        
+
         let local_node = NodeInfo {
             id: "node1".to_string(),
             address: "127.0.0.1".to_string(),
@@ -3026,10 +3026,26 @@ mod extended_tests {
             disk_usage: 0.0,
             active_connections: 0,
         };
-        
+
         let coordinator = Arc::new(ClusterCoordinator::new(config, local_node));
         let handler = NetworkPartitionHandler::new(coordinator);
         let partitions = handler.detect_partitions();
         assert!(partitions.is_ok());
     }
 }
+
+// Enterprise-grade distributed database modules
+pub mod raft;
+pub mod dht;
+pub mod membership;
+pub mod geo_replication;
+pub mod coordinator;
+pub mod load_balancer;
+
+// Re-export key types for convenience (with aliases to avoid conflicts)
+pub use raft::{RaftNode, RaftConfig, RaftState, LogEntry as RaftLogEntry, VoteRequest, VoteResponse};
+pub use dht::{DistributedHashTable, DhtConfig, HashStrategy};
+pub use membership::{SwimMembership, SwimConfig, Member, MemberState};
+pub use geo_replication::{GeoReplicationManager, GeoReplicationConfig, ConsistencyLevel, VectorClock};
+pub use coordinator::{QueryCoordinator, DistributedQueryPlan, QueryPlanNode, ExecutionStrategy};
+pub use load_balancer::{LoadBalancer, LoadBalancerConfig, LoadBalanceStrategy as LBStrategy, Backend};
