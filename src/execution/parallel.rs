@@ -27,7 +27,7 @@ pub struct ParallelExecutor {
 
 impl ParallelExecutor {
     /// Create new executor with fixed-size thread pool
-    pub fn new(worker_count: usize) -> std::result::Result<Self> {
+    pub fn new(worker_count: usize) -> std::result::Result<Self, DbError> {
         // Fixed-size thread pool - no dynamic thread spawning
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(worker_count)
@@ -453,7 +453,7 @@ impl ParallelSorter {
         rows: Vec<Vec<String>>,
         column_index: usize,
         num_workers: usize,
-    ) -> std::result::Result<Vec<Vec<String>>> {
+    ) -> std::result::Result<Vec<Vec<String>>, DbError> {
         if rows.len() < 1000 {
             // Small dataset, use sequential sort
             let mut sorted = rows;

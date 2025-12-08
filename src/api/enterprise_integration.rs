@@ -1904,7 +1904,7 @@ impl ApiGatewayCoordinator {
         self.router.route(request)
     }
 
-    pub async fn process_batch(&self, batch: BatchRequest) -> Result<BatchResponse> {
+    pub async fn process_batch(&self, batch: BatchRequest) -> std::result::Result<BatchResponse, DbError> {
         self.batch_handler.handle_batch(batch).await
     }
 

@@ -394,7 +394,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Redo a log record
-    fn redo_record<'a>(&'a self, entry: &'a WALEntry) -> BoxFuture<'a, Result<()>> {
+    fn redo_record<'a>(&'a self, entry: &'a WALEntry) -> BoxFuture<'a, std::result::Result<(), DbError>> {
         Box::pin(async move {
             match &entry.record {
                 LogRecord::Update { page_id, offset, after_image, .. } => {
@@ -511,7 +511,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Find the last checkpoint LSN
-    async fn find_last_checkpoint(&self) -> std::result::Result<LSN> {
+    async fn find_last_checkpoint(&self) -> std::result::Result<LSN, DbError> {
         // Read log backwards to find last checkpoint
         let entries = self.wal.read_from(1)?;
 
@@ -583,7 +583,7 @@ impl FuzzyCheckpointManager {
     }
 
     /// Perform a fuzzy checkpoint
-    pub async fn checkpoint(&self) -> std::result::Result<LSN> {
+    pub async fn checkpoint(&self) -> std::result::Result<LSN, DbError> {
         let start = std::time::Instant::now();
 
         // Write checkpoint begin
@@ -654,7 +654,7 @@ impl PointInTimeRecovery {
     }
 
     /// Find LSN at a specific time
-    fn find_lsn_at_time(&self, target_time: SystemTime) -> std::result::Result<LSN> {
+    fn find_lsn_at_time(&self, target_time: SystemTime) -> std::result::Result<LSN, DbError> {
         let entries = self.wal.read_from(1)?;
 
         // Binary search for target time

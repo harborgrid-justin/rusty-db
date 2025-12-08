@@ -79,7 +79,7 @@ impl ExprValue {
     }
 
     /// Coerce to integer
-    pub fn to_integer(&self) -> std::result::Result<i64> {
+    pub fn to_integer(&self) -> std::result::Result<i64, DbError> {
         match self {
             ExprValue::Null => Ok(0),
             ExprValue::Boolean(b) => Ok(if *b { 1 } else { 0 }),
@@ -92,7 +92,7 @@ impl ExprValue {
     }
 
     /// Coerce to float
-    pub fn to_float(&self) -> std::result::Result<f64> {
+    pub fn to_float(&self) -> std::result::Result<f64, DbError> {
         match self {
             ExprValue::Null => Ok(0.0),
             ExprValue::Boolean(b) => Ok(if *b { 1.0 } else { 0.0 }),
@@ -250,7 +250,7 @@ impl ExpressionEvaluator {
             }
 
             Expr::Function { name, args } => {
-                let arg_values: std::result::Result<Vec<ExprValue>> = args.iter()
+                let arg_values: std::result::Result<Vec<ExprValue>, DbError> = args.iter()
                     .map(|arg| self.eval(arg, row))
                     .collect();
                 let arg_values = arg_values?;

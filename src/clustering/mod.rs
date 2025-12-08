@@ -9,7 +9,6 @@
 /// - Data migration and rebalancing
 /// - Cluster-wide transaction coordination
 
-use crate::Result;
 use crate::error::DbError;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -140,7 +139,7 @@ impl ClusterCoordinator {
     }
 
     /// Add a node to the cluster
-    pub fn add_node(&self, node: NodeInfo) -> Result<()> {
+    pub fn add_node(&self, node: NodeInfo) -> std::result::Result<(), DbError> {
         let mut nodes = self.nodes.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -153,7 +152,7 @@ impl ClusterCoordinator {
     }
 
     /// Remove a node from the cluster
-    pub fn remove_node(&self, node_id: &NodeId) -> Result<()> {
+    pub fn remove_node(&self, node_id: &NodeId) -> std::result::Result<(), DbError> {
         let mut nodes = self.nodes.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -166,7 +165,7 @@ impl ClusterCoordinator {
     }
 
     /// Get all nodes in the cluster
-    pub fn get_nodes(&self) -> Result<Vec<NodeInfo>> {
+    pub fn get_nodes(&self) -> std::result::Result<Vec<NodeInfo>, DbError> {
         let nodes = self.nodes.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -174,7 +173,7 @@ impl ClusterCoordinator {
     }
 
     /// Get the current leader node
-    pub fn get_leader(&self) -> Result<Option<NodeInfo>> {
+    pub fn get_leader(&self) -> std::result::Result<Option<NodeInfo>, DbError> {
         let nodes = self.nodes.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -189,7 +188,7 @@ impl ClusterCoordinator {
     }
 
     /// Get cluster health status
-    pub fn get_cluster_health(&self) -> Result<ClusterHealth> {
+    pub fn get_cluster_health(&self) -> std::result::Result<ClusterHealth, DbError> {
         let nodes = self.nodes.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -225,7 +224,7 @@ impl ClusterCoordinator {
     }
 
     /// Start leader election
-    pub fn start_election(&mut self) -> Result<()> {
+    pub fn start_election(&mut self) -> std::result::Result<(), DbError> {
         // Increment term
         let mut term = self.current_term.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -260,7 +259,7 @@ impl ClusterCoordinator {
     }
 
     /// Transition to leader role
-    fn become_leader(&mut self) -> Result<()> {
+    fn become_leader(&mut self) -> std::result::Result<(), DbError> {
         self.local_node.role = NodeRole::Leader;
         
         let mut nodes = self.nodes.write()
@@ -279,7 +278,7 @@ impl ClusterCoordinator {
     }
 
     /// Process heartbeat from another node
-    pub fn process_heartbeat(&self, node_id: &NodeId, term: u64) -> Result<()> {
+    pub fn process_heartbeat(&self, node_id: &NodeId, term: u64) -> std::result::Result<(), DbError> {
         let mut nodes = self.nodes.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -302,7 +301,7 @@ impl ClusterCoordinator {
     }
 
     /// Update node status
-    pub fn update_node_status(&self, node_id: &NodeId, status: NodeStatus) -> Result<()> {
+    pub fn update_node_status(&self, node_id: &NodeId, status: NodeStatus) -> std::result::Result<(), DbError> {
         let mut nodes = self.nodes.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -315,7 +314,7 @@ impl ClusterCoordinator {
     }
 
     /// Get current term
-    pub fn get_current_term(&self) -> Result<u64> {
+    pub fn get_current_term(&self) -> std::result::Result<u64, DbError> {
         let term = self.current_term.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(*term)
@@ -360,7 +359,7 @@ impl DistributedQueryExecutor {
     }
 
     /// Execute a distributed query across cluster nodes
-    pub fn execute_distributed_query(&self, query: &str) -> Result<DistributedQueryResult> {
+    pub fn execute_distributed_query(&self, query: &str) -> std::result::Result<DistributedQueryResult, DbError> {
         // Determine query type and routing strategy
         let plan = self.query_router.create_execution_plan(query)?;
         
@@ -410,7 +409,7 @@ impl QueryRouter {
         }
     }
 
-    pub fn create_execution_plan(&self, _query: &str) -> Result<ExecutionPlan> {
+    pub fn create_execution_plan(&self, _query: &str) -> std::result::Result<ExecutionPlan, DbError> {
         // Placeholder: Parse query and create execution plan
         // In real implementation, would analyze query and determine optimal sharding
         Ok(ExecutionPlan {
@@ -496,7 +495,7 @@ impl FailoverManager {
     }
 
     /// Check cluster health and trigger failover if needed
-    pub fn check_and_failover(&self) -> Result<Option<FailoverEvent>> {
+    pub fn check_and_failover(&self) -> std::result::Result<Option<FailoverEvent>, DbError> {
         if !self.config.auto_failover_enabled {
             return Ok(None);
         }
@@ -518,7 +517,7 @@ impl FailoverManager {
     }
 
     /// Initiate failover process
-    fn initiate_failover(&self, reason: FailoverReason) -> Result<FailoverEvent> {
+    fn initiate_failover(&self, reason: FailoverReason) -> std::result::Result<FailoverEvent, DbError> {
         let start_time = SystemTime::now();
         
         let event = FailoverEvent {
@@ -539,7 +538,7 @@ impl FailoverManager {
     }
 
     /// Get failover history
-    pub fn get_failover_history(&self) -> Result<Vec<FailoverEvent>> {
+    pub fn get_failover_history(&self) -> std::result::Result<Vec<FailoverEvent>, DbError> {
         let history = self.failover_history.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(history.clone())
@@ -581,7 +580,7 @@ impl DataMigrationManager {
     }
 
     /// Schedule a data migration task
-    pub fn schedule_migration(&self, task: MigrationTask) -> Result<()> {
+    pub fn schedule_migration(&self, task: MigrationTask) -> std::result::Result<(), DbError> {
         let mut queue = self.migration_queue.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -590,7 +589,7 @@ impl DataMigrationManager {
     }
 
     /// Execute next migration task
-    pub fn execute_next_migration(&self) -> Result<Option<MigrationResult>> {
+    pub fn execute_next_migration(&self) -> std::result::Result<Option<MigrationResult>, DbError> {
         let mut queue = self.migration_queue.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -618,7 +617,7 @@ impl DataMigrationManager {
     }
 
     /// Get pending migrations
-    pub fn get_pending_migrations(&self) -> Result<Vec<MigrationTask>> {
+    pub fn get_pending_migrations(&self) -> std::result::Result<Vec<MigrationTask>, DbError> {
         let queue = self.migration_queue.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(queue.clone())
@@ -679,7 +678,7 @@ impl ClusterLoadBalancer {
     }
 
     /// Select the best node for a new connection
-    pub fn select_node(&self) -> Result<NodeInfo> {
+    pub fn select_node(&self) -> std::result::Result<NodeInfo, DbError> {
         let nodes = self.coordinator.get_nodes()?;
         
         let healthy_nodes: Vec<_> = nodes.into_iter()
@@ -719,7 +718,7 @@ impl ClusterLoadBalancer {
     }
 
     /// Get load distribution across cluster
-    pub fn get_load_distribution(&self) -> Result<LoadDistribution> {
+    pub fn get_load_distribution(&self) -> std::result::Result<LoadDistribution, DbError> {
         let nodes = self.coordinator.get_nodes()?;
         
         let total_connections: usize = nodes.iter()
@@ -792,7 +791,7 @@ impl NodeDiscovery {
     }
 
     /// Discover and register new nodes
-    pub fn discover_nodes(&self) -> Result<Vec<NodeInfo>> {
+    pub fn discover_nodes(&self) -> std::result::Result<Vec<NodeInfo>, DbError> {
         match &self.discovery_method {
             DiscoveryMethod::Static(addresses) => {
                 let mut discovered = Vec::new();
@@ -829,7 +828,7 @@ impl NodeDiscovery {
     }
 
     /// Register all discovered nodes with coordinator
-    pub fn register_discovered_nodes(&self) -> Result<usize> {
+    pub fn register_discovered_nodes(&self) -> std::result::Result<usize, DbError> {
         let nodes = self.discover_nodes()?;
         let mut registered = 0;
         
@@ -858,7 +857,7 @@ impl ClusterTransactionCoordinator {
     }
 
     /// Begin a distributed transaction
-    pub fn begin_distributed_transaction(&self, nodes: Vec<NodeId>) -> Result<String> {
+    pub fn begin_distributed_transaction(&self, nodes: Vec<NodeId>) -> std::result::Result<String, DbError> {
         let txn_id = format!("txn-{}", SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
@@ -881,7 +880,7 @@ impl ClusterTransactionCoordinator {
     }
 
     /// Prepare phase of two-phase commit
-    pub fn prepare(&self, txn_id: &str) -> Result<bool> {
+    pub fn prepare(&self, txn_id: &str) -> std::result::Result<bool, DbError> {
         let mut transactions = self.active_transactions.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -897,7 +896,7 @@ impl ClusterTransactionCoordinator {
     }
 
     /// Commit phase of two-phase commit
-    pub fn commit(&self, txn_id: &str) -> Result<()> {
+    pub fn commit(&self, txn_id: &str) -> std::result::Result<(), DbError> {
         let mut transactions = self.active_transactions.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -917,7 +916,7 @@ impl ClusterTransactionCoordinator {
     }
 
     /// Abort/rollback a distributed transaction
-    pub fn abort(&self, txn_id: &str) -> Result<()> {
+    pub fn abort(&self, txn_id: &str) -> std::result::Result<(), DbError> {
         let mut transactions = self.active_transactions.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -929,7 +928,7 @@ impl ClusterTransactionCoordinator {
     }
 
     /// Get active transaction count
-    pub fn get_active_count(&self) -> Result<usize> {
+    pub fn get_active_count(&self) -> std::result::Result<usize, DbError> {
         let transactions = self.active_transactions.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -982,7 +981,7 @@ impl SnapshotManager {
     }
 
     /// Create a snapshot of cluster state
-    pub fn create_snapshot(&self) -> Result<Snapshot> {
+    pub fn create_snapshot(&self) -> std::result::Result<Snapshot, DbError> {
         let timestamp = SystemTime::now();
         let nodes = self.coordinator.get_nodes()?;
         let term = self.coordinator.get_current_term()?;
@@ -1004,19 +1003,19 @@ impl SnapshotManager {
     }
 
     /// Load a snapshot from disk
-    pub fn load_snapshot(&self, snapshot_id: &str) -> Result<Snapshot> {
+    pub fn load_snapshot(&self, snapshot_id: &str) -> std::result::Result<Snapshot, DbError> {
         // Placeholder: would load from disk
         Err(DbError::NotFound(format!("Snapshot {} not found", snapshot_id)))
     }
 
     /// List available snapshots
-    pub fn list_snapshots(&self) -> Result<Vec<String>> {
+    pub fn list_snapshots(&self) -> std::result::Result<Vec<String>, DbError> {
         // Placeholder: would list snapshots from disk
         Ok(vec![])
     }
 
     /// Delete old snapshots beyond max_snapshots limit
-    pub fn cleanup_old_snapshots(&self) -> Result<usize> {
+    pub fn cleanup_old_snapshots(&self) -> std::result::Result<usize, DbError> {
         // Placeholder: would delete old snapshots
         Ok(0)
     }
@@ -1049,7 +1048,7 @@ impl ClusterMetricsCollector {
     }
 
     /// Collect current cluster metrics
-    pub fn collect_metrics(&self) -> Result<ClusterMetrics> {
+    pub fn collect_metrics(&self) -> std::result::Result<ClusterMetrics, DbError> {
         let nodes = self.coordinator.get_nodes()?;
         let health = self.coordinator.get_cluster_health()?;
 
@@ -1082,14 +1081,14 @@ impl ClusterMetricsCollector {
     }
 
     /// Get historical metrics
-    pub fn get_metrics(&self) -> Result<ClusterMetrics> {
+    pub fn get_metrics(&self) -> std::result::Result<ClusterMetrics, DbError> {
         let metrics = self.metrics.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(metrics.clone())
     }
 
     /// Get metrics aggregated over time period
-    pub fn get_aggregated_metrics(&self, _duration: Duration) -> Result<AggregatedMetrics> {
+    pub fn get_aggregated_metrics(&self, _duration: Duration) -> std::result::Result<AggregatedMetrics, DbError> {
         // Placeholder: would aggregate metrics from history
         Ok(AggregatedMetrics {
             period_start: SystemTime::now(),
@@ -1186,7 +1185,7 @@ impl SplitBrainDetector {
     }
 
     /// Check for split-brain condition
-    pub fn detect_split_brain(&self) -> Result<Option<SplitBrainEvent>> {
+    pub fn detect_split_brain(&self) -> std::result::Result<Option<SplitBrainEvent>, DbError> {
         let nodes = self.coordinator.get_nodes()?;
         
         // Count number of leaders
@@ -1210,7 +1209,7 @@ impl SplitBrainDetector {
     }
 
     /// Resolve split-brain condition
-    pub fn resolve_split_brain(&self, event: &SplitBrainEvent) -> Result<ResolutionResult> {
+    pub fn resolve_split_brain(&self, event: &SplitBrainEvent) -> std::result::Result<ResolutionResult, DbError> {
         match &self.resolution_strategy {
             SplitBrainResolution::PreferLargerPartition => {
                 // In real implementation, would identify and keep larger partition
@@ -1279,7 +1278,7 @@ impl ConsensusProtocol {
     }
 
     /// Append entry to log
-    pub fn append_entry(&self, entry: LogEntry) -> Result<u64> {
+    pub fn append_entry(&self, entry: LogEntry) -> std::result::Result<u64, DbError> {
         let mut log = self.log.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -1288,7 +1287,7 @@ impl ConsensusProtocol {
     }
 
     /// Get log entry at index
-    pub fn get_entry(&self, index: u64) -> Result<Option<LogEntry>> {
+    pub fn get_entry(&self, index: u64) -> std::result::Result<Option<LogEntry>, DbError> {
         let log = self.log.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -1300,7 +1299,7 @@ impl ConsensusProtocol {
     }
 
     /// Commit entries up to index
-    pub fn commit_to(&self, index: u64) -> Result<()> {
+    pub fn commit_to(&self, index: u64) -> std::result::Result<(), DbError> {
         let mut commit_index = self.commit_index.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -1309,7 +1308,7 @@ impl ConsensusProtocol {
     }
 
     /// Apply committed entries
-    pub fn apply_committed_entries(&self) -> Result<usize> {
+    pub fn apply_committed_entries(&self) -> std::result::Result<usize, DbError> {
         let commit_index = *self.commit_index.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -1327,14 +1326,14 @@ impl ConsensusProtocol {
     }
 
     /// Get current commit index
-    pub fn get_commit_index(&self) -> Result<u64> {
+    pub fn get_commit_index(&self) -> std::result::Result<u64, DbError> {
         let commit_index = self.commit_index.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(*commit_index)
     }
 
     /// Get log length
-    pub fn log_length(&self) -> Result<usize> {
+    pub fn log_length(&self) -> std::result::Result<usize, DbError> {
         let log = self.log.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(log.len())
@@ -1364,14 +1363,14 @@ impl ClusterConfigManager {
     }
 
     /// Get current configuration
-    pub fn get_config(&self) -> Result<ClusterConfig> {
+    pub fn get_config(&self) -> std::result::Result<ClusterConfig, DbError> {
         let config = self.config.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(config.clone())
     }
 
     /// Update configuration
-    pub fn update_config(&self, new_config: ClusterConfig) -> Result<()> {
+    pub fn update_config(&self, new_config: ClusterConfig) -> std::result::Result<(), DbError> {
         let mut config = self.config.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -1394,7 +1393,7 @@ impl ClusterConfigManager {
     }
 
     /// Update heartbeat interval
-    pub fn update_heartbeat_interval(&self, interval: Duration) -> Result<()> {
+    pub fn update_heartbeat_interval(&self, interval: Duration) -> std::result::Result<(), DbError> {
         let mut config = self.config.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         config.heartbeat_interval = interval;
@@ -1402,7 +1401,7 @@ impl ClusterConfigManager {
     }
 
     /// Update replication factor
-    pub fn update_replication_factor(&self, factor: usize) -> Result<()> {
+    pub fn update_replication_factor(&self, factor: usize) -> std::result::Result<(), DbError> {
         let mut config = self.config.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         config.replication_factor = factor;
@@ -1410,7 +1409,7 @@ impl ClusterConfigManager {
     }
 
     /// Get configuration history
-    pub fn get_config_history(&self) -> Result<Vec<ConfigChange>> {
+    pub fn get_config_history(&self) -> std::result::Result<Vec<ConfigChange>, DbError> {
         let history = self.config_history.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(history.clone())
@@ -1440,7 +1439,7 @@ impl NetworkPartitionSimulator {
     }
 
     /// Create a network partition
-    pub fn create_partition(&self, nodes: Vec<NodeId>) -> Result<String> {
+    pub fn create_partition(&self, nodes: Vec<NodeId>) -> std::result::Result<String, DbError> {
         let partition_id = format!("partition-{}", SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
@@ -1461,7 +1460,7 @@ impl NetworkPartitionSimulator {
     }
 
     /// Heal a network partition
-    pub fn heal_partition(&self, partition_id: &str) -> Result<()> {
+    pub fn heal_partition(&self, partition_id: &str) -> std::result::Result<(), DbError> {
         let mut partitions = self.partitions.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -1474,7 +1473,7 @@ impl NetworkPartitionSimulator {
     }
 
     /// Get active partitions
-    pub fn get_active_partitions(&self) -> Result<Vec<Partition>> {
+    pub fn get_active_partitions(&self) -> std::result::Result<Vec<Partition>, DbError> {
         let partitions = self.partitions.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -1508,7 +1507,7 @@ impl ClusterEventLog {
     }
 
     /// Log a cluster event
-    pub fn log_event(&self, event_type: ClusterEventType, description: String) -> Result<()> {
+    pub fn log_event(&self, event_type: ClusterEventType, description: String) -> std::result::Result<(), DbError> {
         let event = ClusterEvent {
             id: format!("event-{}", SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -1533,7 +1532,7 @@ impl ClusterEventLog {
     }
 
     /// Get recent events
-    pub fn get_recent_events(&self, count: usize) -> Result<Vec<ClusterEvent>> {
+    pub fn get_recent_events(&self, count: usize) -> std::result::Result<Vec<ClusterEvent>, DbError> {
         let events = self.events.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -1542,7 +1541,7 @@ impl ClusterEventLog {
     }
 
     /// Get events by type
-    pub fn get_events_by_type(&self, event_type: ClusterEventType) -> Result<Vec<ClusterEvent>> {
+    pub fn get_events_by_type(&self, event_type: ClusterEventType) -> std::result::Result<Vec<ClusterEvent>, DbError> {
         let events = self.events.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -1814,7 +1813,7 @@ impl QuorumManager {
     }
 
     /// Check if quorum is satisfied for an operation
-    pub fn check_quorum(&self, operation: &str) -> Result<bool> {
+    pub fn check_quorum(&self, operation: &str) -> std::result::Result<bool, DbError> {
         let policies = self.quorum_policies.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -1836,7 +1835,7 @@ impl QuorumManager {
     }
 
     /// Set quorum policy for an operation
-    pub fn set_policy(&self, operation: String, policy: QuorumPolicy) -> Result<()> {
+    pub fn set_policy(&self, operation: String, policy: QuorumPolicy) -> std::result::Result<(), DbError> {
         let mut policies = self.quorum_policies.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         policies.insert(operation, policy);
@@ -1844,7 +1843,7 @@ impl QuorumManager {
     }
 
     /// Get quorum status
-    pub fn get_quorum_status(&self) -> Result<QuorumStatus> {
+    pub fn get_quorum_status(&self) -> std::result::Result<QuorumStatus, DbError> {
         let nodes = self.coordinator.get_nodes()?;
         let healthy_nodes = nodes.iter()
             .filter(|n| n.status == NodeStatus::Healthy)
@@ -1892,7 +1891,7 @@ impl TopologyOptimizer {
     }
 
     /// Analyze current topology
-    pub fn analyze_topology(&self) -> Result<TopologyAnalysis> {
+    pub fn analyze_topology(&self) -> std::result::Result<TopologyAnalysis, DbError> {
         let nodes = self.coordinator.get_nodes()?;
         
         // Analyze node distribution
@@ -1920,7 +1919,7 @@ impl TopologyOptimizer {
         })
     }
 
-    fn generate_topology_recommendations(&self, nodes: &[NodeInfo], balance_score: f64) -> Result<Vec<String>> {
+    fn generate_topology_recommendations(&self, nodes: &[NodeInfo], balance_score: f64) -> std::result::Result<Vec<String>, DbError> {
         let mut recommendations = Vec::new();
         
         if nodes.len() < 3 {
@@ -1943,7 +1942,7 @@ impl TopologyOptimizer {
     }
 
     /// Apply topology optimization
-    pub fn optimize(&self) -> Result<TopologyChange> {
+    pub fn optimize(&self) -> std::result::Result<TopologyChange, DbError> {
         let analysis = self.analyze_topology()?;
         
         let change = TopologyChange {
@@ -1961,7 +1960,7 @@ impl TopologyOptimizer {
     }
 
     /// Get optimization history
-    pub fn get_history(&self) -> Result<Vec<TopologyChange>> {
+    pub fn get_history(&self) -> std::result::Result<Vec<TopologyChange>, DbError> {
         let history = self.optimization_history.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(history.clone())
@@ -2047,7 +2046,7 @@ impl HealthScoring {
     }
 
     /// Get scores for all nodes
-    pub fn score_all_nodes(&self) -> Result<HashMap<NodeId, f32>> {
+    pub fn score_all_nodes(&self) -> std::result::Result<HashMap<NodeId, f32>> {
         let nodes = self.coordinator.get_nodes()?;
         let mut scores = HashMap::new();
         
@@ -2060,7 +2059,7 @@ impl HealthScoring {
     }
 
     /// Get nodes ranked by health score
-    pub fn get_ranked_nodes(&self) -> Result<Vec<(NodeInfo, f32)>> {
+    pub fn get_ranked_nodes(&self) -> std::result::Result<Vec<(NodeInfo, f32)>> {
         let nodes = self.coordinator.get_nodes()?;
         let mut ranked: Vec<_> = nodes.into_iter()
             .map(|n| {
@@ -2108,7 +2107,7 @@ impl AutomatedRecoveryManager {
     }
 
     /// Check and execute recovery actions
-    pub fn check_and_recover(&self) -> Result<Vec<RecoveryAction>> {
+    pub fn check_and_recover(&self) -> std::result::Result<Vec<RecoveryAction>, DbError> {
         let nodes = self.coordinator.get_nodes()?;
         let policies = self.recovery_policies.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2170,7 +2169,7 @@ impl AutomatedRecoveryManager {
     }
 
     /// Add recovery policy
-    pub fn add_policy(&self, policy: RecoveryPolicy) -> Result<()> {
+    pub fn add_policy(&self, policy: RecoveryPolicy) -> std::result::Result<(), DbError> {
         let mut policies = self.recovery_policies.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         policies.push(policy);
@@ -2178,7 +2177,7 @@ impl AutomatedRecoveryManager {
     }
 
     /// Get recovery log
-    pub fn get_recovery_log(&self) -> Result<Vec<RecoveryAction>> {
+    pub fn get_recovery_log(&self) -> std::result::Result<Vec<RecoveryAction>, DbError> {
         let log = self.recovery_log.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(log.clone())
@@ -2235,7 +2234,7 @@ impl ClusterResourcePool {
     }
 
     /// Set resource limit for a resource type
-    pub fn set_limit(&self, resource_type: String, limit: ResourceLimit) -> Result<()> {
+    pub fn set_limit(&self, resource_type: String, limit: ResourceLimit) -> std::result::Result<(), DbError> {
         let mut limits = self.resource_limits.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         limits.insert(resource_type, limit);
@@ -2243,7 +2242,7 @@ impl ClusterResourcePool {
     }
 
     /// Allocate resources
-    pub fn allocate(&self, allocation: ResourceAllocation) -> Result<bool> {
+    pub fn allocate(&self, allocation: ResourceAllocation) -> std::result::Result<bool, DbError> {
         let limits = self.resource_limits.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -2268,7 +2267,7 @@ impl ClusterResourcePool {
     }
 
     /// Deallocate resources
-    pub fn deallocate(&self, allocation_id: &str) -> Result<()> {
+    pub fn deallocate(&self, allocation_id: &str) -> std::result::Result<(), DbError> {
         let mut allocations = self.allocations.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -2280,7 +2279,7 @@ impl ClusterResourcePool {
     }
 
     /// Get resource utilization
-    pub fn get_utilization(&self) -> Result<HashMap<String, ResourceUtilization>> {
+    pub fn get_utilization(&self) -> std::result::Result<HashMap<String, ResourceUtilization>> {
         let limits = self.resource_limits.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         let allocations = self.allocations.read()
@@ -2345,7 +2344,7 @@ impl UpgradeCoordinator {
     }
 
     /// Create upgrade plan
-    pub fn create_plan(&self, target_version: String, strategy: UpgradeStrategy) -> Result<UpgradePlan> {
+    pub fn create_plan(&self, target_version: String, strategy: UpgradeStrategy) -> std::result::Result<UpgradePlan, DbError> {
         let nodes = self.coordinator.get_nodes()?;
         
         let plan = UpgradePlan {
@@ -2368,7 +2367,7 @@ impl UpgradeCoordinator {
     }
 
     /// Execute upgrade
-    pub fn execute_upgrade(&self) -> Result<()> {
+    pub fn execute_upgrade(&self) -> std::result::Result<(), DbError> {
         let plan = self.upgrade_plan.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -2398,7 +2397,7 @@ impl UpgradeCoordinator {
         Ok(())
     }
 
-    fn upgrade_node(&self, node_id: &NodeId) -> Result<()> {
+    fn upgrade_node(&self, node_id: &NodeId) -> std::result::Result<(), DbError> {
         let mut status = self.upgrade_status.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
@@ -2412,7 +2411,7 @@ impl UpgradeCoordinator {
     }
 
     /// Get upgrade status
-    pub fn get_status(&self) -> Result<HashMap<NodeId, UpgradeStatus>> {
+    pub fn get_status(&self) -> std::result::Result<HashMap<NodeId, UpgradeStatus>> {
         let status = self.upgrade_status.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(status.clone())
@@ -2469,7 +2468,7 @@ impl GeographicDistributionManager {
     }
 
     /// Register a region
-    pub fn register_region(&self, region: RegionInfo) -> Result<()> {
+    pub fn register_region(&self, region: RegionInfo) -> std::result::Result<(), DbError> {
         let mut regions = self.regions.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         regions.insert(region.name.clone(), region);
@@ -2477,7 +2476,7 @@ impl GeographicDistributionManager {
     }
 
     /// Assign node to region
-    pub fn assign_node_to_region(&self, node_id: NodeId, region_name: String) -> Result<()> {
+    pub fn assign_node_to_region(&self, node_id: NodeId, region_name: String) -> std::result::Result<(), DbError> {
         let regions = self.regions.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -2492,7 +2491,7 @@ impl GeographicDistributionManager {
     }
 
     /// Get nearest nodes for a given region
-    pub fn get_nearest_nodes(&self, region_name: &str, count: usize) -> Result<Vec<NodeId>> {
+    pub fn get_nearest_nodes(&self, region_name: &str, count: usize) -> std::result::Result<Vec<NodeId>, DbError> {
         let locations = self.node_locations.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         let latencies = self.latency_matrix.read()
@@ -2520,7 +2519,7 @@ impl GeographicDistributionManager {
     }
 
     /// Update latency between regions
-    pub fn update_latency(&self, region1: String, region2: String, latency: Duration) -> Result<()> {
+    pub fn update_latency(&self, region1: String, region2: String, latency: Duration) -> std::result::Result<(), DbError> {
         let mut latencies = self.latency_matrix.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         latencies.insert((region1.clone(), region2.clone()), latency);
@@ -2529,7 +2528,7 @@ impl GeographicDistributionManager {
     }
 
     /// Get region distribution statistics
-    pub fn get_distribution_stats(&self) -> Result<DistributionStats> {
+    pub fn get_distribution_stats(&self) -> std::result::Result<DistributionStats, DbError> {
         let locations = self.node_locations.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -2590,14 +2589,14 @@ impl NetworkPartitionHandler {
     }
 
     /// Detect network partitions
-    pub fn detect_partitions(&self) -> Result<Vec<NetworkPartition>> {
+    pub fn detect_partitions(&self) -> std::result::Result<Vec<NetworkPartition>, DbError> {
         let detector = self.partition_detector.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         detector.detect()
     }
 
     /// Handle a detected partition
-    pub fn handle_partition(&self, partition: NetworkPartition) -> Result<()> {
+    pub fn handle_partition(&self, partition: NetworkPartition) -> std::result::Result<(), DbError> {
         let strategies = self.recovery_strategies.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -2619,7 +2618,7 @@ impl NetworkPartitionHandler {
         Ok(())
     }
 
-    fn wait_and_reconnect(&self, partition: &NetworkPartition) -> Result<()> {
+    fn wait_and_reconnect(&self, partition: &NetworkPartition) -> std::result::Result<(), DbError> {
         // TODO: Implement exponential backoff and make timeout configurable
         // Wait for network to recover
         std::thread::sleep(Duration::from_secs(5));
@@ -2633,14 +2632,14 @@ impl NetworkPartitionHandler {
         Ok(())
     }
 
-    fn rebalance_cluster(&self, partition: &NetworkPartition) -> Result<()> {
+    fn rebalance_cluster(&self, partition: &NetworkPartition) -> std::result::Result<(), DbError> {
         // TODO: Implement actual cluster rebalancing logic
         // This should trigger data migration and load distribution
         let _ = partition;
         Ok(())
     }
 
-    fn trigger_failover(&self, partition: &NetworkPartition) -> Result<()> {
+    fn trigger_failover(&self, partition: &NetworkPartition) -> std::result::Result<(), DbError> {
         // TODO: Implement actual failover logic
         // This should promote replicas and update cluster state
         let _ = partition;
@@ -2659,7 +2658,7 @@ impl PartitionDetector {
         }
     }
 
-    pub fn detect(&self) -> Result<Vec<NetworkPartition>> {
+    pub fn detect(&self) -> std::result::Result<Vec<NetworkPartition>, DbError> {
         let mut partitions = Vec::new();
         let mut visited = std::collections::HashSet::new();
 
@@ -2740,7 +2739,7 @@ impl ClusterResourceOptimizer {
     }
 
     /// Optimize resource allocation across the cluster
-    pub fn optimize(&self) -> Result<OptimizationPlan> {
+    pub fn optimize(&self) -> std::result::Result<OptimizationPlan, DbError> {
         let monitor = self.resource_monitor.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
@@ -2785,7 +2784,7 @@ impl ClusterResourceOptimizer {
     }
 
     /// Execute optimization plan
-    pub fn execute_plan(&self, plan: OptimizationPlan) -> Result<()> {
+    pub fn execute_plan(&self, plan: OptimizationPlan) -> std::result::Result<(), DbError> {
         for action in plan.actions {
             match action {
                 OptimizationAction::ScaleUp { node_id, resource_type, target_capacity } => {
@@ -2802,21 +2801,21 @@ impl ClusterResourceOptimizer {
         Ok(())
     }
 
-    fn scale_up_node(&self, node_id: &NodeId, resource_type: ResourceType, target: u64) -> Result<()> {
+    fn scale_up_node(&self, node_id: &NodeId, resource_type: ResourceType, target: u64) -> std::result::Result<(), DbError> {
         // TODO: Implement actual scaling logic
         // This should allocate additional resources to the node
         let _ = (node_id, resource_type, target);
         Ok(())
     }
 
-    fn scale_down_node(&self, node_id: &NodeId) -> Result<()> {
+    fn scale_down_node(&self, node_id: &NodeId) -> std::result::Result<(), DbError> {
         // TODO: Implement actual scaling down logic
         // This should release resources and potentially remove the node
         let _ = node_id;
         Ok(())
     }
 
-    fn migrate_data(&self, from: &NodeId, to: &NodeId, size: u64) -> Result<()> {
+    fn migrate_data(&self, from: &NodeId, to: &NodeId, size: u64) -> std::result::Result<(), DbError> {
         // TODO: Implement actual data migration logic
         // This should transfer data between nodes with proper consistency guarantees
         let _ = (from, to, size);
@@ -2835,7 +2834,7 @@ impl ResourceMonitor {
         }
     }
 
-    pub fn get_cluster_resources(&self) -> Result<HashMap<NodeId, NodeResources>> {
+    pub fn get_cluster_resources(&self) -> std::result::Result<HashMap<NodeId, NodeResources>> {
         Ok(self.node_resources.clone())
     }
 }

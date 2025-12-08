@@ -184,9 +184,92 @@ This document tracks all compilation error fixes made to the transaction/ and ex
    - Pattern matching to find all occurrences
    - Global replace used efficiently for consistency
 
+## Additional Fixes (Second Pass)
+
+After initial fixes, additional Result type issues were found in:
+
+### Transaction Module (Additional Fixes)
+20. **F:\temp\rusty-db\src\transaction\wal.rs** - Fixed struct field types
+    - `waiters: Vec<tokio::sync::oneshot::Sender<Result<LSN>>>`
+    - Fixed to: `Vec<tokio::sync::oneshot::Sender<std::result::Result<LSN, DbError>>>`
+    - 3 function parameter/return types fixed
+
+21. **F:\temp\rusty-db\src\transaction\recovery.rs** - Fixed missing error types
+    - `analysis_phase() -> Result<(LSN, Vec<TransactionId>)>`
+    - `redo_record() -> BoxFuture<'a, Result<()>>`
+    - `find_last_checkpoint() -> Result<LSN>`
+    - `checkpoint() -> Result<LSN>`
+    - `find_lsn_at_time() -> Result<LSN>`
+    - All fixed to include `, DbError`
+
+22. **F:\temp\rusty-db\src\transaction\locks.rs** - Fixed DbError variant
+    - Changed `DbError::LockTimeout` to `DbError::Timeout` (correct variant)
+
+### Execution Module (Additional Fixes)
+23. **F:\temp\rusty-db\src\execution\expressions.rs** - Fixed method return types
+    - `to_integer() -> Result<i64>`
+    - `to_float() -> Result<f64>`
+    - Local variable type: `Result<Vec<ExprValue>>`
+    - All fixed to include `, DbError`
+
+24. **F:\temp\rusty-db\src\execution\vectorized.rs** - Fixed method return types
+    - `from_rows() -> Result<Self>`
+    - `create_batches() -> Result<Vec<ColumnBatch>>`
+    - `filter() -> Result<Vec<ColumnBatch>>`
+    - `project() -> Result<Vec<ColumnBatch>>`
+    - All fixed to include `, DbError`
+
+25. **F:\temp\rusty-db\src\execution\optimizer.rs** - Fixed method return type
+    - `try_match_view() -> Result<Option<PlanNode>>`
+    - Fixed to include `, DbError`
+
+26. **F:\temp\rusty-db\src\execution\cte.rs** - Fixed method return type
+    - `execute_parallel() -> Result<HashMap<String, QueryResult>>`
+    - Fixed to include `, DbError`
+
+27. **F:\temp\rusty-db\src\execution\parallel.rs** - Fixed method return types
+    - `new() -> Result<Self>`
+    - `parallel_sort() -> Result<Vec<Vec<String>>>`
+    - All fixed to include `, DbError`
+
+28. **F:\temp\rusty-db\src\execution\sort_merge.rs** - Fixed method return types
+    - `generate_sorted_runs() -> Result<Vec<PathBuf>>`
+    - `merge_runs() -> Result<PathBuf>`
+    - `write_run_to_disk() -> Result<PathBuf>`
+    - `write_row() -> Result<()>`
+    - `read_row() -> Result<Option<Vec<String>>>`
+    - `create_run_path() -> Result<PathBuf>`
+    - All fixed to include `, DbError`
+
+29. **F:\temp\rusty-db\src\execution\hash_join_simd.rs** - Fixed method return types
+    - `partition_and_build() -> Result<Vec<Partition>>`
+    - `probe_partitions() -> Result<Vec<Match>>`
+    - All fixed to include `, DbError`
+
+## Final Statistics
+
+### Transaction Module
+- **Files Modified**: 6
+- **Import Statements Fixed**: 6
+- **Function Signatures Fixed**: ~75+
+- **Additional fixes**: 6 functions with complex types
+
+### Execution Module
+- **Files Modified**: 13
+- **Import Statements Fixed**: 13
+- **Function Signatures Fixed**: ~130+
+- **Additional fixes**: 20+ functions with missing error types
+
+### Total Impact
+- **Total Files Modified**: 19
+- **Total Import Statements Fixed**: 19
+- **Total Function Signatures Fixed**: ~205+
+- **Pattern**: All Result types now use explicit `std::result::Result<T, DbError>` format
+- **DbError variant fix**: 1 (LockTimeout -> Timeout)
+
 ## Next Steps
-1. Run cargo build to verify compilation
-2. Check for any remaining type-related errors
+1. ~~Run cargo build to verify compilation~~ COMPLETED
+2. ~~Check for any remaining type-related errors~~ COMPLETED - All fixed
 3. Test that functionality is preserved
 
 ## Notes

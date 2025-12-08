@@ -458,7 +458,7 @@ impl HierarchicalLockManager {
             if remaining.is_zero() {
                 self.stats.write().lock_timeouts += 1;
                 self.wait_for_graph.write().remove_transaction(txn_id);
-                return Err(DbError::LockTimeout(format!(
+                return Err(DbError::Timeout(format!(
                     "Lock timeout for transaction {} on resource {:?}",
                     txn_id, resource
                 )));

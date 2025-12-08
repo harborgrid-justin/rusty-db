@@ -121,7 +121,7 @@ impl ExternalMergeSorter {
         &self,
         data: &QueryResult,
         order_by: &[OrderByClause],
-    ) -> std::result::Result<Vec<PathBuf>> {
+    ) -> std::result::Result<Vec<PathBuf>, DbError> {
         let rows_per_run = self.calculate_rows_per_run(&data.rows);
         let mut runs = Vec::new();
 
@@ -192,7 +192,7 @@ impl ExternalMergeSorter {
         &self,
         runs: &[PathBuf],
         order_by: &[OrderByClause],
-    ) -> std::result::Result<PathBuf> {
+    ) -> std::result::Result<PathBuf, DbError> {
         // Open readers for all runs
         let mut readers: Vec<BufReader<File>> = Vec::new();
         for run_path in runs {
@@ -288,7 +288,7 @@ impl ExternalMergeSorter {
     }
 
     /// Write sorted run to disk
-    fn write_run_to_disk(&self, rows: &[Vec<String>]) -> std::result::Result<PathBuf> {
+    fn write_run_to_disk(&self, rows: &[Vec<String>]) -> std::result::Result<PathBuf, DbError> {
         let path = self.create_run_path()?;
         let file = File::create(&path)
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -318,7 +318,7 @@ impl ExternalMergeSorter {
     }
 
     /// Write single row to file
-    fn write_row(writer: &mut BufWriter<File>, row: &[String]) -> std::result::Result<()> {
+    fn write_row(writer: &mut BufWriter<File>, row: &[String]) -> std::result::Result<(), DbError> {
         let line = row.join("\t") + "\n";
         writer.write_all(line.as_bytes())
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -326,7 +326,7 @@ impl ExternalMergeSorter {
     }
 
     /// Read single row from file
-    fn read_row(reader: &mut BufReader<File>) -> std::result::Result<Option<Vec<String>>> {
+    fn read_row(reader: &mut BufReader<File>) -> std::result::Result<Option<Vec<String>>, DbError> {
         let mut line = String::new();
         let bytes_read = reader.read_line(&mut line)
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -340,7 +340,7 @@ impl ExternalMergeSorter {
     }
 
     /// Create unique run path
-    fn create_run_path(&self) -> std::result::Result<PathBuf> {
+    fn create_run_path(&self) -> std::result::Result<PathBuf, DbError> {
         let mut counter = self.run_counter.lock();
         *counter += 1;
         let run_id = *counter;

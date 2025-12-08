@@ -122,7 +122,7 @@ impl ColumnBatch {
         schema: Vec<String>,
         types: Vec<DataType>,
         rows: Vec<Vec<String>>,
-    ) -> std::result::Result<Self> {
+    ) -> std::result::Result<Self, DbError> {
         let mut batch = Self::new(schema, types);
 
         for row in rows {
@@ -254,7 +254,7 @@ impl VectorizedExecutor {
         data: Vec<Vec<String>>,
         schema: Vec<String>,
         types: Vec<DataType>,
-    ) -> std::result::Result<Vec<ColumnBatch>> {
+    ) -> std::result::Result<Vec<ColumnBatch>, DbError> {
         let mut batches = Vec::new();
         let mut current_batch = ColumnBatch::new(schema.clone(), types.clone());
 
@@ -284,7 +284,7 @@ impl VectorizedExecutor {
         &self,
         batches: Vec<ColumnBatch>,
         predicate: F,
-    ) -> std::result::Result<Vec<ColumnBatch>>
+    ) -> std::result::Result<Vec<ColumnBatch>, DbError>
     where
         F: Fn(&[ColumnValue]) -> bool,
     {
@@ -327,7 +327,7 @@ impl VectorizedExecutor {
         &self,
         batches: Vec<ColumnBatch>,
         column_indices: &[usize],
-    ) -> std::result::Result<Vec<ColumnBatch>> {
+    ) -> std::result::Result<Vec<ColumnBatch>, DbError> {
         let mut result_batches = Vec::new();
 
         for batch in batches {

@@ -149,7 +149,7 @@ impl SimdHashJoin {
         &self,
         build_side: &QueryResult,
         key_col: usize,
-    ) -> std::result::Result<Vec<Partition>> {
+    ) -> std::result::Result<Vec<Partition>, DbError> {
         let num_partitions = self.config.num_partitions;
 
         // Create partitions
@@ -210,7 +210,7 @@ impl SimdHashJoin {
         probe_side: &QueryResult,
         key_col: usize,
         partitions: &[Partition],
-    ) -> std::result::Result<Vec<Match>> {
+    ) -> std::result::Result<Vec<Match>, DbError> {
         // Partition probe side
         let probe_partitions: Vec<Vec<usize>> = {
             let mut parts: Vec<Vec<usize>> = vec![Vec::new(); self.config.num_partitions];

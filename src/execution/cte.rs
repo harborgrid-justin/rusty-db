@@ -1407,7 +1407,7 @@ impl ParallelCteExecutor {
         &self,
         _ctes: Vec<CteDefinition>,
         _dependency_graph: &CteDependencyGraph,
-    ) -> std::result::Result<HashMap<String, QueryResult>> {
+    ) -> std::result::Result<HashMap<String, QueryResult>, DbError> {
         // Placeholder: In a full implementation, this would:
         // 1. Identify independent CTEs that can run in parallel
         // 2. Create a thread pool with worker_count threads

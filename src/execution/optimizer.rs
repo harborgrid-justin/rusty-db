@@ -925,7 +925,7 @@ impl Optimizer {
         Ok(plan)
     }
 
-    fn try_match_view(&self, plan: &PlanNode, view: &MaterializedView) -> std::result::Result<Option<PlanNode>> {
+    fn try_match_view(&self, plan: &PlanNode, view: &MaterializedView) -> std::result::Result<Option<PlanNode>, DbError> {
         // Simplified view matching - in production would use sophisticated pattern matching
         // Check if plan structurally matches view definition
         match (plan, &view.definition) {
