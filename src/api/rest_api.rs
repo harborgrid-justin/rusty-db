@@ -3350,7 +3350,7 @@ mod extended_tests {
 
     #[tokio::test]
     async fn test_query_cache() {
-        let cache = QueryCache::new(10::from_secs(60));
+        let cache = QueryCache::new(10, Duration::from_secs(60));
 
         let response = QueryResponse {
             query_id: Uuid::new_v4().to_string(),

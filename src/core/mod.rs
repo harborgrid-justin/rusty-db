@@ -681,7 +681,7 @@ impl BufferPoolManager {
             }
 
             // Second pass: clear reference bits
-            for i in 0..self.num_pages {
+            for _i in 0..self.num_pages {
                 let mut frame = self.frames[i].lock();
                 frame.reference_bit = false;
             }
@@ -763,7 +763,7 @@ impl IoEngine {
 
         // Spawn I/O worker threads
         let mut thread_pool = Vec::new();
-        for i in 0..config.num_io_threads {
+        for _i in 0..config.num_io_threads {
             let shutdown_clone = shutdown.clone();
             let handle = std::thread::Builder::new()
                 .name(format!("io-worker-{}", i))
@@ -1089,14 +1089,14 @@ mod tests {
         let arena = MemoryArena::new(config);
 
         // Allocate memory
-        let result = arena.allocate(1024);
+        let _result = arena.allocate(1024);
         assert!(result.is_ok());
 
         let usage = arena.get_usage();
         assert_eq!(usage.allocated_bytes, 1024);
 
         // Test memory limit
-        let result = arena.allocate(2 * 1024 * 1024);
+        let _result = arena.allocate(2 * 1024 * 1024);
         assert!(result.is_err());
     }
 

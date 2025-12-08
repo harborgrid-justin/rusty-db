@@ -311,7 +311,7 @@ pub use hugepages::{
 
 // Re-export lock-free latching
 pub use lockfree_latch::{
-    HybridLatch, LatchStats, OptimisticLatchGuardGuard,
+    HybridLatch, LatchStats, OptimisticLatch,
 };
 
 // ============================================================================

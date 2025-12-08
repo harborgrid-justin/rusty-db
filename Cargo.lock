@@ -2349,6 +2349,7 @@ dependencies = [
  "hyper 1.8.1",
  "lazy_static",
  "libc",
+ "log",
  "num-traits",
  "num_cpus",
  "once_cell",

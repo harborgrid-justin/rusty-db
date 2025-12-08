@@ -725,8 +725,8 @@ mod tests {
     fn test_io_metrics() {
         let metrics = IoMetrics::new();
 
-        metrics.record_read(4096::from_micros(100));
-        metrics.record_write(4096::from_micros(200));
+        metrics.record_read(4096, Duration::from_micros(100));
+        metrics.record_write(4096, Duration::from_micros(200));
         metrics.record_sync(Duration::from_micros(1000));
 
         let _stats = metrics.stats();

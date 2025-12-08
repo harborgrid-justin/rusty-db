@@ -190,7 +190,7 @@ impl FailureDetector for ClusterFailoverManager {
         let mut suspected = self.suspected_nodes.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
-        suspected.insert(node_id.clone()::now());
+        suspected.insert(node_id.clone(), std::time::Instant::now());
         Ok(())
     }
 }

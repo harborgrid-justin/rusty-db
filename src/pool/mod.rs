@@ -62,7 +62,6 @@ pub mod connection_pool;
 // Re-export new session types (preferred)
 pub use session::{
     SessionState as SessionStateV2,
-    SessionId,
     Username,
     SchemaName,
     Authenticator,
@@ -70,6 +69,7 @@ pub use session::{
     TokenAuthenticator,
     PrivilegeSet,
 };
+pub use crate::common::SessionId;
 
 // Re-export legacy session management types
 pub use session_manager::{

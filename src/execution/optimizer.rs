@@ -232,7 +232,7 @@ impl Optimizer {
             PlanNode::TableScan { table, columns } => {
                 // Check if an index would be beneficial
                 let _stats = self.statistics.read();
-                if let Some(table_stats) = stats.tables.get(&table) {
+                if let Some(table_stats) = _stats.tables.get(&table) {
                     // Would evaluate index selectivity here
                     // For now, keep as table scan
                 }
@@ -289,7 +289,7 @@ impl Optimizer {
         match plan {
             PlanNode::TableScan { table, .. } => {
                 let _stats = self.statistics.read();
-                if let Some(table_stats) = stats.tables.get(table) {
+                if let Some(table_stats) = _stats.tables.get(table) {
                     table_stats.num_pages as f64
                 } else {
                     cardinality / 100.0 // Assume 100 rows per page
@@ -304,7 +304,7 @@ impl Optimizer {
         match plan {
             PlanNode::TableScan { table, .. } => {
                 let _stats = self.statistics.read();
-                if let Some(table_stats) = stats.tables.get(table) {
+                if let Some(table_stats) = _stats.tables.get(table) {
                     table_stats.row_count as f64
                 } else {
                     1000.0 // Default estimate
@@ -390,7 +390,7 @@ impl Optimizer {
     /// Select the best index for a table scan (if available)
     pub fn select_index(&self, table: &str, _filter: Option<&str>) -> Option<String> {
         let _stats = self.statistics.read();
-        if let Some(table_stats) = stats.tables.get(table) {
+        if let Some(table_stats) = _stats.tables.get(table) {
             // Select most selective index
             if !table_stats.indexes.is_empty() {
                 return Some(table_stats.indexes[0].name.clone());
@@ -949,7 +949,7 @@ impl Optimizer {
         let mut cache = self.cse_cache.write();
 
         let _hash = self.hash_plan(&plan);
-        let expr_hash = ExpressionHash(hash);
+        let expr_hash = ExpressionHash(_hash);
 
         if let Some(cached) = cache.get(&expr_hash) {
             return Ok(cached.clone());

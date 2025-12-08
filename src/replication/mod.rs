@@ -290,7 +290,7 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use crate::error::Result;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use std::path::PathBuf;
 
 /// Replication mode

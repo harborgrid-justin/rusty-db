@@ -8,7 +8,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{Write as IoWrite, BufWriter, BufReader, IoSlice};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime};
+use std::time::{SystemTime, Duration, Instant};
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
@@ -1015,7 +1015,7 @@ mod tests {
         buffer.add(entry, tx);
 
         assert!(!buffer.is_empty());
-        assert!(buffer.should_flush(100::from_secs(1)));
+        assert!(buffer.should_flush(100, Duration::from_secs(1)));
     }
 }
 

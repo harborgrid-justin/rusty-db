@@ -717,7 +717,7 @@ mod tests {
 
     #[test]
     fn test_circuit_breaker() {
-        let breaker = CircuitBreaker::new(3::from_secs(10));
+        let breaker = CircuitBreaker::new(3, Duration::from_secs(10));
         assert!(breaker.can_attempt());
 
         // Record failures

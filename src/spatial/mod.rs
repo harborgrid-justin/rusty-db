@@ -284,7 +284,7 @@ pub use analysis::{
 };
 
 pub use geometry::{
-    BoundingBox, CircularString, CompoundCurve, CoordinateCollection,
+    BoundingBox, CircularString, CompoundCurve,
     LineString, LinearRing, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
     WkbParser, WktParser,
 };

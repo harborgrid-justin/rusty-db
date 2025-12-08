@@ -17,15 +17,15 @@
 //! instance load, and network topology. Results are streamed back through
 //! efficient data flow operators and aggregated at the coordinator.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::common::{NodeId, TableId, Value, Tuple};
 use crate::rac::interconnect::{ClusterInterconnect, MessageType, MessagePriority};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
-use parking_lot::{RwLock, Mutex};
-use tokio::sync::{mpsc, oneshot, Semaphore};
+use std::time::{Duration};
+use parking_lot::{RwLock};
+use tokio::sync::{mpsc, Semaphore};
 
 // ============================================================================
 // Constants

@@ -83,7 +83,7 @@ pub use async_io::{
 
 pub use file_manager::{
     FileManager, FileHandle, IoOptions, DirectIoFile, FileMetadata,
-    ReadOptionsOptions, FlushMode, BatchedIoRequest,
+    ReadOptions, FlushMode, BatchedIoRequest,
 };
 
 pub use ring_buffer::{

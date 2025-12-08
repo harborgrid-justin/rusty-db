@@ -41,7 +41,7 @@ use std::time::Duration;
 
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::timeout;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use crate::error::Result;
 
@@ -503,7 +503,7 @@ impl ActorSystem {
         if errors.is_empty() {
             Ok(())
         } else {
-            warn!("Broadcast failed for {} actors", errors.len());
+            log::warn!("Broadcast failed for {} actors", errors.len());
             Err(DbError::Internal(format!(
                 "Broadcast failed for {} actors",
                 errors.len()
@@ -541,7 +541,7 @@ impl ActorSystem {
                 // In a real system, this would notify a parent supervisor
             }
             SupervisionStrategy::Resume => {
-                warn!("Resuming actor {} after error: {}", id, error);
+                log::warn!("Resuming actor {} after error: {}", id, error);
                 // Continue processing
             }
         }
@@ -685,7 +685,7 @@ mod tests {
         tokio::time::sleep(Duration::from_millis(50)).await;
 
         let result: usize = actor_ref
-            .ask("get".to_string()::from_secs(1))
+            .ask("get".to_string(), Duration::from_secs(1))
             .await
             .unwrap();
 
@@ -714,7 +714,7 @@ mod tests {
     async fn test_actor_broadcast() {
         let system = ActorSystem::new();
 
-        for _i in 0..5 {
+        for i in 0..5 {
             let actor = TestActor { counter: 0 };
             system
                 .spawn(actor, Some(format!("actor-{}", i)), 10)
@@ -726,10 +726,10 @@ mod tests {
 
         tokio::time::sleep(Duration::from_millis(50)).await;
 
-        for _i in 0..5 {
+        for i in 0..5 {
             let actor_ref = system.find_actor(&format!("actor-{}", i)).await.unwrap();
             let result: usize = actor_ref
-                .ask("get".to_string()::from_secs(1))
+                .ask("get".to_string(), Duration::from_secs(1))
                 .await
                 .unwrap();
             assert_eq!(result, 10);

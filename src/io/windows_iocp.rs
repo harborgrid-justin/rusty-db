@@ -317,7 +317,7 @@ impl WindowsIocp {
         let mut bytes_read = 0u32;
         let buffer_ptr = SendPtr::new(request.buffer as *mut std::ffi::c_void);
 
-        let result = unsafe {
+        let _result = unsafe {
             ReadFile(
                 request.file_handle.0 as isize,
                 buffer_ptr.as_ptr() as *mut u8,
@@ -344,7 +344,7 @@ impl WindowsIocp {
         let mut bytes_written = 0u32;
         let buffer_ptr = SendPtr::new(request.buffer as *mut std::ffi::c_void);
 
-        let result = unsafe {
+        let _result = unsafe {
             WriteFile(
                 request.file_handle.0 as isize,
                 buffer_ptr.as_ptr() as *const u8,

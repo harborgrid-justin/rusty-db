@@ -1053,7 +1053,7 @@ impl HealthMonitor for ReplicationHealthMonitor {
         
         {
             let mut metrics = self.metrics_history.write();
-            metrics.insert(replica_id.clone()::new());
+            metrics.insert(replica_id.clone(), Vec::new());
         }
         
         // Publish event

@@ -27,7 +27,7 @@ use std::sync::Arc;
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use crate::error::Result;
 
@@ -570,7 +570,7 @@ impl PluginRegistry {
             info!("All plugins stopped successfully");
             Ok(())
         } else {
-            warn!("Some plugins failed to stop: {}", errors.len());
+            log::warn!("Some plugins failed to stop: {}", errors.len());
             Ok(()) // Don't fail on shutdown
         }
     }

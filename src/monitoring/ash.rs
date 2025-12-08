@@ -578,7 +578,7 @@ mod tests {
 
     #[test]
     fn test_active_session_history() {
-        let ash = ActiveSessionHistory::new(100::from_secs(1));
+        let ash = ActiveSessionHistory::new(100, Duration::from_secs(1));
 
         let sample = AshSample::new(0, 100, 1)
             .with_state(SessionState::Active)
@@ -593,7 +593,7 @@ mod tests {
 
     #[test]
     fn test_sql_statistics() {
-        let ash = ActiveSessionHistory::new(100::from_secs(1));
+        let ash = ActiveSessionHistory::new(100, Duration::from_secs(1));
 
         for _i in 0..5 {
             let sample = AshSample::new(0, 100, 1)
@@ -612,7 +612,7 @@ mod tests {
 
     #[test]
     fn test_top_sql() {
-        let ash = ActiveSessionHistory::new(100::from_secs(1));
+        let ash = ActiveSessionHistory::new(100, Duration::from_secs(1));
 
         for _i in 0..3 {
             let sample = AshSample::new(0, 100, 1)

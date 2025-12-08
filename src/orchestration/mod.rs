@@ -614,7 +614,7 @@ mod tests {
             .await
             .unwrap();
 
-        let stats = orchestrator.statistics().await;
+        let _stats = orchestrator.statistics().await;
         assert_eq!(stats.state, OrchestratorState::Initialized);
     }
 }

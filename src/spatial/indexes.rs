@@ -964,8 +964,8 @@ mod tests {
         let bounds = BoundingBox::new(0.0, 0.0, 100.0, 100.0);
         let mut qtree = Quadtree::new(bounds);
 
-        qtree.insert(1, BoundingBox::new(10.0, 10.0, 10.0, 10.0)).unwrap();
-        qtree.insert(2, BoundingBox::new(90.0, 90.0, 90.0, 90.0)).unwrap();
+        qtree.insert(BoundingBox::new(10.0, 10.0, 10.0, 10.0), 1).unwrap();
+        qtree.insert(BoundingBox::new(90.0, 90.0, 90.0, 90.0), 2).unwrap();
 
         let query = BoundingBox::new(0.0, 0.0, 50.0, 50.0);
         let results = qtree.search(&query);
@@ -990,8 +990,8 @@ mod tests {
         let bounds = BoundingBox::new(0.0, 0.0, 100.0, 100.0);
         let mut grid = GridIndex::new(bounds, 10.0);
 
-        grid.insert(1, BoundingBox::new(5.0, 5.0, 7.0, 7.0)).unwrap();
-        grid.insert(2, BoundingBox::new(25.0, 25.0, 27.0, 27.0)).unwrap();
+        grid.insert(BoundingBox::new(5.0, 5.0, 7.0, 7.0), 1).unwrap();
+        grid.insert(BoundingBox::new(25.0, 25.0, 27.0, 27.0), 2).unwrap();
 
         let query = BoundingBox::new(0.0, 0.0, 15.0, 15.0);
         let results = grid.search(&query);

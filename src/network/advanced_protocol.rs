@@ -2,7 +2,7 @@
 // Enterprise-grade wire protocol with comprehensive features
 // 3000+ lines of production-ready network protocol implementation
 
-use std::collections::{HashMap};
+use std::collections::{HashMap, VecDeque};
 use std::io::{self, Cursor};
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -15,7 +15,7 @@ use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::{mpsc, Semaphore};
 use tokio::time::{timeout};
 use thiserror::Error;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 // ============================================================================
 // SECTION 1: WIRE PROTOCOL ENGINE (800+ lines)
@@ -746,12 +746,12 @@ impl ConnectionState {
             (self, target),
             (Connecting, Authenticating)
                 | (Connecting, Closed)
-                | (Authenticatingy)
+                | (Authenticating, Ready)
                 | (Authenticating, Closed)
                 | (Ready, Busy)
                 | (Ready, Draining)
                 | (Ready, Closing)
-                | (Busyy)
+                | (Busy, Ready)
                 | (Busy, Draining)
                 | (Busy, Error)
                 | (Draining, Closing)
@@ -1354,17 +1354,18 @@ pub struct PipelineStats {
 
 /// Request prioritization queue
 pub struct PriorityRequestQueue {
-    queues: Arc<RwLock<HashMap<RequestPriority<ProtocolRequest>>>>,
+    queues: Arc<RwLock<HashMap<RequestPriority, VecDeque<ProtocolRequest>>>>,
     metrics: Arc<QueueMetrics>,
 }
 
 impl PriorityRequestQueue {
     pub fn new() -> Self {
+        use RequestPriority::*;
         let mut queues = HashMap::new();
-        queues.insert(RequestPriority::Low::new());
-        queues.insert(RequestPriority::Normal::new());
-        queues.insert(RequestPriority::High::new());
-        queues.insert(RequestPriority::Critical::new());
+        queues.insert(Low, VecDeque::new());
+        queues.insert(Normal, VecDeque::new());
+        queues.insert(High, VecDeque::new());
+        queues.insert(Critical, VecDeque::new());
 
         Self {
             queues: Arc::new(RwLock::new(queues)),
@@ -2075,11 +2076,11 @@ impl ProtocolManager {
             buffer_pool: Arc::new(BufferPool::new()),
             custom_messages: Arc::new(CustomMessageRegistry::new()),
             flow_control: Arc::new(FlowControlManager::new(65536, 1048576)),
-            circuit_breaker: Arc::new(CircuitBreaker::new(5::from_secs(30))),
+            circuit_breaker: Arc::new(CircuitBreaker::new(5, Duration::from_secs(30))),
             rate_limiter: Arc::new(RateLimiter::new(1000.0, 100.0)),
-            connection_pool: Arc::new(ConnectionPool::new(100, 10::from_secs(300))),
+            connection_pool: Arc::new(ConnectionPool::new(100, 10, Duration::from_secs(300))),
             load_balancer: Arc::new(ProtocolLoadBalancer::new(LoadBalancingStrategy::RoundRobin)),
-            metrics_aggregator: Arc::new(ProtocolMetricsAggregator::new(1000::from_secs(60))),
+            metrics_aggregator: Arc::new(ProtocolMetricsAggregator::new(1000, Duration::from_secs(60))),
         }
     }
 

@@ -28,7 +28,7 @@ use std::time::Duration;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use crate::error::Result;
 
@@ -382,7 +382,7 @@ impl RetryExecutor {
                     self.total_retries.fetch_add(1, Ordering::Relaxed);
                     let delay = self.config.delay_for_attempt(attempt);
 
-                    warn!(
+                    log::warn!(
                         "Attempt {} failed ({}), retrying in {:?}",
                         attempt + 1,
                         classified.category,
@@ -493,7 +493,7 @@ impl RecoveryManager {
                 // Check if we have a fallback
                 let _handlers = self.fallback_handlers.read();
                 if let Some(handler) = handlers.get(operation_name) {
-                    warn!("Primary operation failed, trying fallback for: {}", operation_name);
+                    log::warn!("Primary operation failed, trying fallback for: {}", operation_name);
                     match handler.execute().await {
                         Ok(_) => {
                             self.notify_fallback_success(operation_name);

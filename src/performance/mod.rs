@@ -1803,7 +1803,7 @@ mod extended_tests {
     fn test_timeout_manager() {
         let manager = TimeoutManager::new(Duration::from_secs(60));
         
-        manager.set_timeout("q1".to_string()::from_millis(100)).unwrap();
+        manager.set_timeout("q1".to_string(), Duration::from_millis(100)).unwrap();
         
         std::thread::sleep(Duration::from_millis(150));
         

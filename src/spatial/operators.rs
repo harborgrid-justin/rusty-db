@@ -11,7 +11,7 @@
 use crate::error::Result;
 use crate::error::DbError;
 use crate::spatial::geometry::{
-    BoundingBox, Coordinate, Geometry, LinearRing, LineString, Point, Polygon,
+    BoundingBox, Coordinate, LinearRing, Point, Polygon,
 };
 use std::collections::HashSet;
 

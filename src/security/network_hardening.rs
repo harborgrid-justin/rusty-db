@@ -716,7 +716,7 @@ impl DDoSMitigator {
 
     fn detect_attack(&self, ip: IpAddr, attack_type: DDoSAttackType, reason: String) {
         let mut attacks = self.active_attacks.write();
-        let attack_id = format!("{}_{}_{}", ip, format!("{:?}", attack_type), Instant::now().elapsed().as_secs());
+        let attack_id = format!("{}_{}_{}", ip, format!("{:?}", attack_type), std::time::Instant::now().elapsed().as_secs());
 
         let attack = DDoSAttack {
             attack_id: attack_id.clone(),

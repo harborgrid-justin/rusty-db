@@ -1477,11 +1477,11 @@ mod tests {
 
     #[test]
     fn test_wal_retention_policies() {
-        let time_policy = WalRetentionPolicy::Time(Duration::from_hours(24));
+        let time_policy = WalRetentionPolicy::Time(Duration::from_secs(24 * 60 * 60));
         let size_policy = WalRetentionPolicy::Size(1024 * 1024 * 1024); // 1GB
         
         match time_policy {
-            WalRetentionPolicy::Time(duration) => assert_eq!(duration::from_hours(24)),
+            WalRetentionPolicy::Time(duration) => assert_eq!(duration, Duration::from_secs(24 * 60 * 60)),
             _ => panic!("Expected time policy"),
         }
         

@@ -1629,7 +1629,7 @@ impl Alert {
         value: f64,
     ) -> Self {
         let id = uuid::Uuid::new_v4().to_string();
-        let fingerprint = format!("{}{}", rule_name::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+        let fingerprint = format!("{}{}", rule_name, std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
 
         Self {
             id,

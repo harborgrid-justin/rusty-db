@@ -168,7 +168,7 @@ mod tests {
     fn test_set_and_check_timeout() {
         let tm = TimeoutManager::new(Duration::from_secs(60));
 
-        tm.set_timeout(1::from_secs(60));
+        tm.set_timeout(1, Duration::from_secs(60));
         assert!(!tm.is_timed_out(1));
 
         // Non-existent transaction is not timed out
@@ -179,8 +179,8 @@ mod tests {
     fn test_immediate_timeout() {
         let tm = TimeoutManager::new(Duration::from_millis(1));
 
-        tm.set_timeout(1::from_millis(1));
-        
+        tm.set_timeout(1, Duration::from_millis(1));
+
         // Wait a bit
         thread::sleep(Duration::from_millis(10));
 
@@ -191,8 +191,8 @@ mod tests {
     fn test_get_timed_out_transactions() {
         let tm = TimeoutManager::new(Duration::from_millis(1));
 
-        tm.set_timeout(1::from_millis(1));
-        tm.set_timeout(2::from_secs(60));
+        tm.set_timeout(1, Duration::from_millis(1));
+        tm.set_timeout(2, Duration::from_secs(60));
 
         thread::sleep(Duration::from_millis(10));
 
@@ -205,7 +205,7 @@ mod tests {
     fn test_clear_timeout() {
         let tm = TimeoutManager::new(Duration::from_secs(60));
 
-        tm.set_timeout(1::from_secs(60));
+        tm.set_timeout(1, Duration::from_secs(60));
         assert_eq!(tm.tracked_count(), 1);
 
         tm.clear_timeout(1);
@@ -216,8 +216,8 @@ mod tests {
     fn test_remaining_time() {
         let tm = TimeoutManager::new(Duration::from_secs(60));
 
-        tm.set_timeout(1::from_secs(60));
-        
+        tm.set_timeout(1, Duration::from_secs(60));
+
         let remaining = tm.remaining_time(1);
         assert!(remaining.is_some());
         assert!(remaining.unwrap() > Duration::from_secs(50));
