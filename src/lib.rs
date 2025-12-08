@@ -528,3 +528,22 @@ pub mod autonomous;
 
 /// Blockchain tables and immutable ledgers
 pub mod blockchain;
+
+// ============================================================================
+// Workload Intelligence
+// ============================================================================
+
+/// Workload intelligence and performance tuning
+///
+/// AWR-like workload repository, SQL Tuning Advisor, real-time monitoring,
+/// and automatic diagnostic capabilities.
+///
+/// **Key Components:**
+/// - `WorkloadRepository`: AWR-like automatic workload repository
+/// - `SqlTuningAdvisor`: SQL performance tuning and recommendations
+/// - `SqlMonitor`: Real-time SQL execution monitoring
+/// - `PerformanceHub`: Unified performance dashboard
+/// - `DiagnosticAdvisor`: ADDM-like automatic problem detection
+///
+/// **Target LOC:** 3,000+ lines
+pub mod workload;
