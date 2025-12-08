@@ -29,8 +29,7 @@ use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 
 use crate::common::{TableId, RowId, Value, Schema, IndexId};
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use super::time_travel::{SCN, Timestamp, TimeTravelEngine};
 use super::versions::VersionManager;
 
@@ -154,12 +153,13 @@ impl TableRestoreManager {
         let dropped_table = recycle_bin.find_by_original_name(original_name)?;
 
         let restore_name = new_name.unwrap_or_else(|| original_name.to_string());
+        let recycle_name = dropped_table.recycle_name.clone();
 
         // Restore table from recycle bin
         let result = self.restore_from_recycle_bin(&dropped_table, restore_name)?;
 
         // Remove from recycle bin
-        recycle_bin.remove(&dropped_table.recycle_name);
+        recycle_bin.remove(&recycle_name);
 
         // Update statistics
         let mut stats = self.stats.write().unwrap();

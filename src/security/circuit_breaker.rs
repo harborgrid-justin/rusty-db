@@ -296,7 +296,7 @@ impl CircuitBreaker {
 
     /// Record call outcome in sliding window
     fn record_outcome(&self, outcome: CallOutcome) {
-        let mut outcomes = self.call_outcomes.lock();
+        let mut outcomes = self.call_outcomes.lock().unwrap();
         outcomes.push_back(outcome);
 
         if outcomes.len() > self.config.window_size {
@@ -306,7 +306,7 @@ impl CircuitBreaker {
 
     /// Check if circuit should open based on failure rate
     fn should_open_circuit(&self) -> bool {
-        let outcomes = self.call_outcomes.lock();
+        let outcomes = self.call_outcomes.lock().unwrap();
         let total = outcomes.len() as u64;
 
         // Need minimum number of calls to make decision
@@ -410,7 +410,7 @@ impl CircuitBreakerMetrics {
     }
 
     fn record_latency(&self, duration: Duration) {
-        let mut latencies = self.latencies.lock();
+        let mut latencies = self.latencies.lock().unwrap();
         latencies.push_back(duration);
 
         if latencies.len() > LATENCY_WINDOW_SIZE {
@@ -419,7 +419,7 @@ impl CircuitBreakerMetrics {
     }
 
     fn snapshot(&self) -> CircuitBreakerMetricsSnapshot {
-        let latencies = self.latencies.lock();
+        let latencies = self.latencies.lock().unwrap();
         let mut sorted: Vec<_> = latencies.iter().map(|d| d.as_micros() as u64).collect();
         sorted.sort_unstable();
 
@@ -1155,7 +1155,7 @@ impl CascadePreventor {
 
     /// Record call outcome
     pub fn record_outcome(&self, success: bool) {
-        let mut outcomes = self.outcomes.lock();
+        let mut outcomes = self.outcomes.lock().unwrap();
         outcomes.push_back(success);
 
         if outcomes.len() > self.config.window_size {

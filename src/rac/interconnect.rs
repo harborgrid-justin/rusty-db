@@ -317,7 +317,8 @@ struct Connection {
     remote_node: NodeId,
 
     /// TCP stream (in production, could be RDMA)
-    stream: Arc<Mutex<Option<TcpStream>>>,
+    /// Use tokio::sync::Mutex to allow holding across await points
+    stream: Arc<tokio::sync::Mutex<Option<TcpStream>>>,
 
     /// Message send queue
     send_queue: Arc<Mutex<VecDeque<Message>>>,
@@ -358,7 +359,7 @@ impl Connection {
     fn new(remote_node: NodeId) -> Self {
         Self {
             remote_node,
-            stream: Arc::new(Mutex::new(None)),
+            stream: Arc::new(tokio::sync::Mutex::new(None)),
             send_queue: Arc::new(Mutex::new(VecDeque::new())),
             state: Arc::new(RwLock::new(ConnectionState::Disconnected)),
             latency_samples: Arc::new(Mutex::new(VecDeque::new())),
@@ -371,7 +372,7 @@ impl Connection {
 
         match TcpStream::connect(address).await {
             Ok(stream) => {
-                *self.stream.lock() = Some(stream);
+                *self.stream.lock().await = Some(stream);
                 *self.state.write() = ConnectionState::Connected;
                 Ok(())
             }
@@ -391,12 +392,17 @@ impl Connection {
     }
 
     async fn flush_queue(&self) -> std::result::Result<(), DbError> {
-        let mut stream_guard = self.stream.lock();
+        // Extract messages from queue before acquiring stream lock
+        let messages_to_send: Vec<Message> = {
+            let mut queue = self.send_queue.lock();
+            queue.drain(..).collect()
+        };
+
+        // Now process messages with stream lock (using tokio::sync::Mutex)
+        let mut stream_guard = self.stream.lock().await;
 
         if let Some(stream) = stream_guard.as_mut() {
-            let mut queue = self.send_queue.lock();
-
-            while let Some(message) = queue.pop_front() {
+            for message in messages_to_send {
                 // Serialize message
                 let data = bincode::serialize(&message)
                     .map_err(|e| DbError::Serialization(e.to_string()))?;
@@ -420,8 +426,9 @@ impl Connection {
         Ok(())
     }
 
-    async fn receive_message(&self) -> std::result::Result<Message> {
-        let mut stream_guard = self.stream.lock();
+    async fn receive_message(&self) -> std::result::Result<Message, DbError> {
+        // Use tokio::sync::Mutex which can be held across await
+        let mut stream_guard = self.stream.lock().await;
 
         if let Some(stream) = stream_guard.as_mut() {
             // Read length prefix
@@ -664,7 +671,7 @@ impl ClusterInterconnect {
                             let remote_node = format!("node_{}", addr);
 
                             let conn = Arc::new(Connection::new(remote_node.clone()));
-                            *conn.stream.lock() = Some(stream);
+                            *conn.stream.lock().await = Some(stream);
                             *conn.state.write() = ConnectionState::Connected;
 
                             connections.write().insert(remote_node.clone(), conn.clone());
@@ -754,7 +761,7 @@ impl ClusterInterconnect {
         message_type: MessageType,
         payload: Vec<u8>,
         priority: MessagePriority,
-    ) -> std::result::Result<MessageAck> {
+    ) -> std::result::Result<MessageAck, DbError> {
         let message_id = self.next_message_id();
         let sequence = self.next_sequence();
 
@@ -882,7 +889,7 @@ impl ClusterInterconnect {
     }
 
     /// Detect split-brain scenario
-    pub fn detect_split_brain(&self) -> std::result::Result<bool> {
+    pub fn detect_split_brain(&self) -> std::result::Result<bool, DbError> {
         let health = self.node_health.read();
         let total_nodes = health.len() + 1; // +1 for local node
 

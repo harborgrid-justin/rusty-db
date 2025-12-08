@@ -29,8 +29,7 @@ use std::time::{SystemTime, Duration};
 use serde::{Deserialize, Serialize};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use super::time_travel::{SCN, Timestamp, RowVersion, current_timestamp};
 
 // ============================================================================
@@ -356,12 +355,14 @@ impl VersionStore {
             VersionBound::SCN(scn) => version.scn_created >= *scn,
             VersionBound::Timestamp(ts) => true, // Would need timestamp mapping
             VersionBound::Minvalue => true,
+            VersionBound::Maxvalue => false,
         };
 
         let before_end = match end {
             VersionBound::SCN(scn) => version.scn_created <= *scn,
             VersionBound::Timestamp(ts) => true, // Would need timestamp mapping
             VersionBound::Maxvalue => true,
+            VersionBound::Minvalue => false,
         };
 
         after_start && before_end
@@ -456,11 +457,13 @@ impl VersionStore {
             }
         }
 
+        let identical = changed_columns.is_empty();
+
         Ok(VersionComparison {
             scn1,
             scn2,
             changed_columns,
-            identical: changed_columns.is_empty(),
+            identical,
         })
     }
 

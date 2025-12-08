@@ -377,7 +377,7 @@ impl SecurePool {
             unsafe {
                 let ptr = alloc(layout);
                 if !ptr.is_null() {
-                    pool.free_blocks.lock().push_back(ptr);
+                    pool.free_blocks.lock().unwrap().push_back(ptr);
                     pool.total_blocks.fetch_add(1, Ordering::Relaxed);
                 }
             }
@@ -389,7 +389,7 @@ impl SecurePool {
     /// Allocate a block from the pool
     pub fn allocate(&self) -> Option<SecurePoolBlock> {
         let ptr = {
-            let mut blocks = self.free_blocks.lock();
+            let mut blocks = self.free_blocks.lock().unwrap();
             blocks.pop_front()
         };
 
@@ -429,7 +429,7 @@ impl SecurePool {
         }
 
         // Return to pool
-        self.free_blocks.lock().push_back(ptr);
+        self.free_blocks.lock().unwrap().push_back(ptr);
         self.used_blocks.fetch_sub(1, Ordering::Relaxed);
     }
 
@@ -438,7 +438,7 @@ impl SecurePool {
         SecurePoolStats {
             total_blocks: self.total_blocks.load(Ordering::Relaxed),
             used_blocks: self.used_blocks.load(Ordering::Relaxed),
-            free_blocks: self.free_blocks.lock().len(),
+            free_blocks: self.free_blocks.lock().unwrap().len(),
             block_size: self.block_size,
         }
     }
@@ -447,7 +447,7 @@ impl SecurePool {
 impl Drop for SecurePool {
     fn drop(&mut self) {
         // Sanitize and deallocate all blocks
-        let mut blocks = self.free_blocks.lock();
+        let mut blocks = self.free_blocks.lock().unwrap();
         while let Some(ptr) = blocks.pop_front() {
             unsafe {
                 let slice = std::slice::from_raw_parts_mut(ptr, self.block_size);
@@ -630,7 +630,7 @@ impl DelayedSanitizer {
         size: usize,
         pattern: Pattern,
     ) {
-        let mut queue = self.queue.lock();
+        let mut queue = self.queue.lock().unwrap();
 
         if queue.len() >= self.max_queue_size {
             // Queue full, sanitize immediately
@@ -648,7 +648,7 @@ impl DelayedSanitizer {
 
     /// Process pending sanitization tasks
     pub fn process_queue(&self, max_tasks: usize) -> usize {
-        let mut queue = self.queue.lock();
+        let mut queue = self.queue.lock().unwrap();
         let mut processed = 0;
 
         while processed < max_tasks && !queue.is_empty() {
@@ -666,7 +666,7 @@ impl DelayedSanitizer {
 
     /// Flush all pending tasks
     pub fn flush(&self) {
-        let mut queue = self.queue.lock();
+        let mut queue = self.queue.lock().unwrap();
         while let Some(task) = queue.pop_front() {
             unsafe {
                 MemorySanitizer::sanitize_ptr(task.ptr, task.size);
@@ -678,7 +678,7 @@ impl DelayedSanitizer {
     /// Get statistics
     pub fn stats(&self) -> DelayedSanitizerStats {
         DelayedSanitizerStats {
-            queue_size: self.queue.lock().len(),
+            queue_size: self.queue.lock().unwrap().len(),
             bytes_sanitized: self.bytes_sanitized.load(Ordering::Relaxed),
         }
     }
@@ -769,7 +769,7 @@ impl HeapGuard {
             canary_value,
             allocated_at: Instant::now(),
         };
-        self.regions.lock().insert(data_ptr as usize, region);
+        self.regions.lock().unwrap().insert(data_ptr as usize, region);
 
         Some(HeapGuardBlock {
             ptr: data_ptr,
@@ -780,7 +780,7 @@ impl HeapGuard {
 
     /// Verify canaries for a region
     fn verify_canaries(&self, ptr: *mut u8) -> bool {
-        let regions = self.regions.lock();
+        let regions = self.regions.lock().unwrap();
         if let Some(region) = regions.get(&(ptr as usize)) {
             unsafe {
                 let before_canary = ptr::read(region.ptr as *const u64);
@@ -802,7 +802,7 @@ impl HeapGuard {
             eprintln!("SECURITY WARNING: Heap corruption detected at {:p}", ptr);
         }
 
-        let region = self.regions.lock().remove(&(ptr as usize));
+        let region = self.regions.lock().unwrap().remove(&(ptr as usize));
         if let Some(region) = region {
             unsafe {
                 // Sanitize the entire region including canaries
@@ -818,7 +818,7 @@ impl HeapGuard {
     /// Get statistics
     pub fn stats(&self) -> HeapGuardStats {
         HeapGuardStats {
-            active_regions: self.regions.lock().len(),
+            active_regions: self.regions.lock().unwrap().len(),
             anomalies_detected: self.anomalies.load(Ordering::Relaxed),
         }
     }

@@ -360,6 +360,15 @@ impl<T> Default for Atomic<T> {
     }
 }
 
+impl<'g, T> From<Shared<'g, T>> for Atomic<T> {
+    fn from(shared: Shared<'g, T>) -> Self {
+        Self {
+            ptr: AtomicPtr::new(shared.ptr),
+            _marker: PhantomData,
+        }
+    }
+}
+
 impl<T> Drop for Atomic<T> {
     fn drop(&mut self) {
         let ptr = self.ptr.load(Ordering::Relaxed);
@@ -482,6 +491,14 @@ impl<'g, T> Shared<'g, T> {
     pub fn into_owned(self) -> Owned<T> {
         Owned {
             ptr: self.ptr,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Create a shared pointer from a raw pointer
+    pub fn from_raw(ptr: *mut T) -> Self {
+        Self {
+            ptr,
             _marker: PhantomData,
         }
     }

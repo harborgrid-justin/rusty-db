@@ -108,7 +108,8 @@ pub struct ConcurrentHashMap<K, V, S = RandomState> {
 
 impl<K, V> ConcurrentHashMap<K, V, RandomState>
 where
-    K: Eq + Hash,
+    K: Eq + Hash + 'static,
+    V: 'static,
 {
     /// Create a new concurrent hash map with default capacity
     pub fn new() -> Self {
@@ -123,7 +124,8 @@ where
 
 impl<K, V, S> ConcurrentHashMap<K, V, S>
 where
-    K: Eq + Hash,
+    K: Eq + Hash + 'static,
+    V: 'static,
     S: BuildHasher,
 {
     /// Create with custom hasher
@@ -168,7 +170,10 @@ where
     /// Insert or update a key-value pair
     ///
     /// Returns the previous value if the key already existed.
-    pub fn insert(&self, key: K, value: V) -> Option<V> {
+    pub fn insert(&self, key: K, value: V) -> Option<V>
+    where
+        K: Clone,
+    {
         let hash = self.hash(&key);
         let idx = self.bucket_index(hash);
         let bucket = &self.buckets[idx];
@@ -182,7 +187,10 @@ where
     }
 
     /// Insert into a locked bucket
-    fn insert_in_bucket(&self, bucket: &Bucket<K, V>, key: K, value: V, hash: u64) -> Option<V> {
+    fn insert_in_bucket(&self, bucket: &Bucket<K, V>, key: K, value: V, hash: u64) -> Option<V>
+    where
+        K: Clone,
+    {
         let guard = Epoch::pin();
         let mut current = bucket.head.load(Ordering::Acquire, &guard);
 
@@ -206,11 +214,12 @@ where
         let new_ptr = new_entry.into_shared();
 
         // Link to front of list
-        let old_head = bucket.head.swap(new_ptr, Ordering::Release, &guard);
+        let old_head = bucket.head.load(Ordering::Acquire, &guard);
         // Safety: We own new_ptr and bucket is locked
         unsafe {
             new_ptr.as_ref().unwrap().next.store(old_head, Ordering::Release);
         }
+        bucket.head.store(new_ptr, Ordering::Release);
 
         bucket.count.fetch_add(1, Ordering::Relaxed);
         self.size.fetch_add(1, Ordering::Relaxed);
@@ -365,7 +374,8 @@ where
             bucket.lock();
 
             let guard = Epoch::pin();
-            let head = bucket.head.swap(Shared::null(), Ordering::Acquire, &guard);
+            let head = bucket.head.load(Ordering::Acquire, &guard);
+            bucket.head.store(Shared::null(), Ordering::Release);
 
             let mut current = head;
             while !current.is_null() {
@@ -423,6 +433,7 @@ where
     pub fn compute<F>(&self, key: K, f: F) -> Option<V>
     where
         F: FnOnce(Option<&V>) -> Option<V>,
+        K: Clone,
         V: Clone,
     {
         let hash = self.hash(&key);
@@ -518,7 +529,8 @@ where
 
 impl<K, V, S> Default for ConcurrentHashMap<K, V, S>
 where
-    K: Eq + Hash,
+    K: Eq + Hash + 'static,
+    V: 'static,
     S: BuildHasher + Default,
 {
     fn default() -> Self {
@@ -536,16 +548,16 @@ impl<K, V, S> Drop for ConcurrentHashMap<K, V, S> {
 // Safety: The hash map is thread-safe
 unsafe impl<K, V, S> Send for ConcurrentHashMap<K, V, S>
 where
-    K: Send,
-    V: Send,
+    K: Send + 'static,
+    V: Send + 'static,
     S: Send,
 {
 }
 
 unsafe impl<K, V, S> Sync for ConcurrentHashMap<K, V, S>
 where
-    K: Send + Sync,
-    V: Send + Sync,
+    K: Send + Sync + 'static,
+    V: Send + Sync + 'static,
     S: Send + Sync,
 {
 }

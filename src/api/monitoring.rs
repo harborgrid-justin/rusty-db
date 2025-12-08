@@ -44,6 +44,8 @@ use parking_lot::{RwLock, Mutex};
 use serde::{Deserialize, Serialize};
 use crate::error::DbError;
 
+type Result<T> = std::result::Result<T, DbError>;
+
 // ============================================================================
 // SECTION 1: METRICS COLLECTION ENGINE (700+ lines)
 // ============================================================================

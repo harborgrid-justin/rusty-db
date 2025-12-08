@@ -44,7 +44,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::Mutex as StdMutex;
 use std::time::{Duration, Instant, SystemTime};
 use parking_lot::RwLock;
 use tokio::time::{interval, sleep};
@@ -247,7 +247,7 @@ pub struct CrashDetector {
     /// Watchdog timeout
     timeout: Duration,
     /// Crash callback
-    crash_callback: Arc<Mutex<Option<Box<dyn Fn(u32, String) + Send + Sync>>>>,
+    crash_callback: Arc<StdMutex<Option<Box<dyn Fn(u32, String) + Send + Sync>>>>,
     /// Statistics
     stats: Arc<RwLock<CrashStats>>,
 }
@@ -265,7 +265,7 @@ impl CrashDetector {
         Self {
             processes: Arc::new(RwLock::new(HashMap::new())),
             timeout,
-            crash_callback: Arc::new(Mutex::new(None)),
+            crash_callback: Arc::new(StdMutex::new(None)),
             stats: Arc::new(RwLock::new(CrashStats::default())),
         }
     }
@@ -305,7 +305,7 @@ impl CrashDetector {
     where
         F: Fn(u32, String) + Send + Sync + 'static,
     {
-        *self.crash_callback.lock() = Some(Box::new(callback));
+        *self.crash_callback.lock().unwrap() = Some(Box::new(callback));
     }
 
     /// Start monitoring
@@ -342,7 +342,7 @@ impl CrashDetector {
                 }
 
                 // Call callback
-                if let Some(ref callback) = *self.crash_callback.lock() {
+                if let Some(ref callback) = *self.crash_callback.lock().unwrap() {
                     callback(pid, reason.clone());
                 }
 
@@ -394,7 +394,7 @@ pub struct TransactionRollbackManager {
     /// Active transactions
     transactions: Arc<RwLock<HashMap<u64, TransactionState>>>,
     /// Rollback queue
-    rollback_queue: Arc<Mutex<VecDeque<u64>>>,
+    rollback_queue: Arc<StdMutex<VecDeque<u64>>>,
     /// Statistics
     stats: Arc<RwLock<RollbackStats>>,
 }
@@ -412,7 +412,7 @@ impl TransactionRollbackManager {
     pub fn new() -> Self {
         Self {
             transactions: Arc::new(RwLock::new(HashMap::new())),
-            rollback_queue: Arc::new(Mutex::new(VecDeque::new())),
+            rollback_queue: Arc::new(StdMutex::new(VecDeque::new())),
             stats: Arc::new(RwLock::new(RollbackStats::default())),
         }
     }
@@ -560,7 +560,7 @@ pub struct CorruptionDetector {
     /// Statistics
     stats: Arc<RwLock<CorruptionStats>>,
     /// Corruption callback
-    corruption_callback: Arc<Mutex<Option<Box<dyn Fn(PageCorruption) + Send + Sync>>>>,
+    corruption_callback: Arc<StdMutex<Option<Box<dyn Fn(PageCorruption) + Send + Sync>>>>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -578,7 +578,7 @@ impl CorruptionDetector {
             corrupted_pages: Arc::new(RwLock::new(HashMap::new())),
             scan_rate,
             stats: Arc::new(RwLock::new(CorruptionStats::default())),
-            corruption_callback: Arc::new(Mutex::new(None)),
+            corruption_callback: Arc::new(StdMutex::new(None)),
         }
     }
 
@@ -587,7 +587,7 @@ impl CorruptionDetector {
     where
         F: Fn(PageCorruption) + Send + Sync + 'static,
     {
-        *self.corruption_callback.lock() = Some(Box::new(callback));
+        *self.corruption_callback.lock().unwrap() = Some(Box::new(callback));
     }
 
     /// Start background scanning
@@ -616,7 +616,7 @@ impl CorruptionDetector {
                 self.corrupted_pages.write().insert(page_id as u64, corruption.clone());
 
                 // Call callback
-                if let Some(ref callback) = *self.corruption_callback.lock() {
+                if let Some(ref callback) = *self.corruption_callback.lock().unwrap() {
                     callback(corruption);
                 }
             }
@@ -1056,9 +1056,9 @@ pub struct HealthMonitor {
     /// Current health metrics
     metrics: Arc<RwLock<HealthMetrics>>,
     /// Health history
-    history: Arc<Mutex<VecDeque<HealthMetrics>>>,
+    history: Arc<StdMutex<VecDeque<HealthMetrics>>>,
     /// Health callback
-    health_callback: Arc<Mutex<Option<Box<dyn Fn(HealthMetrics) + Send + Sync>>>>,
+    health_callback: Arc<StdMutex<Option<Box<dyn Fn(HealthMetrics) + Send + Sync>>>>,
     /// Check interval
     interval: Duration,
 }
@@ -1077,8 +1077,8 @@ impl HealthMonitor {
 
         Self {
             metrics: Arc::new(RwLock::new(initial_metrics)),
-            history: Arc::new(Mutex::new(VecDeque::with_capacity(1000))),
-            health_callback: Arc::new(Mutex::new(None)),
+            history: Arc::new(StdMutex::new(VecDeque::with_capacity(1000))),
+            health_callback: Arc::new(StdMutex::new(None)),
             interval,
         }
     }
@@ -1088,7 +1088,7 @@ impl HealthMonitor {
     where
         F: Fn(HealthMetrics) + Send + Sync + 'static,
     {
-        *self.health_callback.lock() = Some(Box::new(callback));
+        *self.health_callback.lock().unwrap() = Some(Box::new(callback));
     }
 
     /// Start monitoring
@@ -1145,7 +1145,7 @@ impl HealthMonitor {
 
         // Add to history
         {
-            let mut history = self.history.lock();
+            let mut history = self.history.lock().unwrap();
             if history.len() >= 1000 {
                 history.pop_front();
             }
@@ -1153,7 +1153,7 @@ impl HealthMonitor {
         }
 
         // Call callback
-        if let Some(ref callback) = *self.health_callback.lock() {
+        if let Some(ref callback) = *self.health_callback.lock().unwrap() {
             callback(metrics);
         }
 
@@ -1213,7 +1213,7 @@ impl HealthMonitor {
 
     /// Predict failure probability (simple version)
     pub fn predict_failure_probability(&self) -> f64 {
-        let history = self.history.lock();
+        let history = self.history.lock().unwrap();
         if history.len() < 10 {
             return 0.0;
         }

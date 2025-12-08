@@ -459,7 +459,7 @@ impl RaftNode {
     }
 
     /// Convert to candidate and start election
-    pub fn start_election(&self) -> std::result::Result<VoteRequest> {
+    pub fn start_election(&self) -> std::result::Result<VoteRequest, DbError> {
         let mut state = self.state.write().unwrap();
         let mut persistent = self.persistent.write().unwrap();
         let mut votes = self.votes_received.write().unwrap();
@@ -490,7 +490,7 @@ impl RaftNode {
     }
 
     /// Handle vote request
-    pub fn handle_vote_request(&self, request: VoteRequest) -> std::result::Result<VoteResponse> {
+    pub fn handle_vote_request(&self, request: VoteRequest) -> std::result::Result<VoteResponse, DbError> {
         let mut persistent = self.persistent.write().unwrap();
         let mut state = self.state.write().unwrap();
 
@@ -584,7 +584,7 @@ impl RaftNode {
     pub fn handle_append_entries(
         &self,
         request: AppendEntriesRequest,
-    ) -> std::result::Result<AppendEntriesResponse> {
+    ) -> std::result::Result<AppendEntriesResponse, DbError> {
         let mut state = self.state.write().unwrap();
         let mut persistent = self.persistent.write().unwrap();
         let mut current_leader = self.current_leader.write().unwrap();
@@ -675,7 +675,7 @@ impl RaftNode {
     }
 
     /// Send append entries to a peer
-    pub fn send_append_entries(&self, peer: RaftNodeId) -> std::result::Result<AppendEntriesRequest> {
+    pub fn send_append_entries(&self, peer: RaftNodeId) -> std::result::Result<AppendEntriesRequest, DbError> {
         let persistent = self.persistent.read().unwrap();
         let leader_state_guard = self.leader_state.read().unwrap();
         let volatile = self.volatile.read().unwrap();
@@ -784,7 +784,7 @@ impl RaftNode {
     }
 
     /// Append command to log (leader only)
-    pub fn append_command(&self, command: Vec<u8>) -> std::result::Result<LogIndex> {
+    pub fn append_command(&self, command: Vec<u8>) -> std::result::Result<LogIndex, DbError> {
         let state = self.state.read().unwrap();
         if *state != RaftState::Leader {
             return Err(DbError::Internal("Not a leader".into()));
@@ -836,7 +836,7 @@ impl RaftNode {
     }
 
     /// Install snapshot from leader
-    pub fn install_snapshot(&self, request: InstallSnapshotRequest) -> std::result::Result<InstallSnapshotResponse> {
+    pub fn install_snapshot(&self, request: InstallSnapshotRequest) -> std::result::Result<InstallSnapshotResponse, DbError> {
         let mut persistent = self.persistent.write().unwrap();
         let mut state = self.state.write().unwrap();
 

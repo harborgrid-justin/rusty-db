@@ -137,22 +137,29 @@ pub struct LockFreeSkipList<K, V> {
 
 impl<K, V> LockFreeSkipList<K, V>
 where
-    K: Ord + Clone,
-    V: Clone,
+    K: Ord + Clone + 'static,
+    V: Clone + 'static,
 {
     /// Create a new lock-free skip list
-    pub fn new() -> Self {
-        let head = Owned::new(Node::sentinel(unsafe { std::mem::zeroed() }, MAX_HEIGHT));
-        let tail = Owned::new(Node::sentinel(unsafe { std::mem::zeroed() }, MAX_HEIGHT));
+    pub fn new() -> Self where K: Default, V: Default {
+        let guard = Epoch::pin();
+
+        let head = Owned::new(Node::sentinel(K::default(), MAX_HEIGHT));
+        let tail = Owned::new(Node::sentinel(K::default(), MAX_HEIGHT));
+
+        let head_shared = head.into_shared();
+        let tail_shared = tail.into_shared();
 
         // Link head to tail at all levels
         for level in 0..MAX_HEIGHT {
-            head.next[level].store(tail.into_shared(), Ordering::Relaxed);
+            unsafe {
+                head_shared.as_ref().unwrap().next[level].store(tail_shared, Ordering::Relaxed);
+            }
         }
 
         Self {
-            head: Atomic::from(head.into_shared()),
-            tail: Atomic::from(tail.into_shared()),
+            head: Atomic::from(head_shared),
+            tail: Atomic::from(tail_shared),
             size: AtomicUsize::new(0),
             height: AtomicUsize::new(1),
             _marker: PhantomData,
@@ -467,15 +474,13 @@ where
     }
 
     /// Range query (returns iterator)
-    pub fn range<'a, R>(&'a self, range: R) -> RangeIter<'a, K, V, R>
+    pub fn range<R>(&self, range: R) -> RangeIter<K, V, R>
     where
         R: std::ops::RangeBounds<K>,
     {
         RangeIter {
-            skiplist: self,
+            _skiplist: PhantomData,
             range,
-            guard: Epoch::pin(),
-            current: Shared::null(),
             started: false,
         }
     }
@@ -514,18 +519,16 @@ fn thread_local_rng() -> ThreadLocalRng {
 }
 
 /// Range iterator
-pub struct RangeIter<'a, K, V, R> {
-    skiplist: &'a LockFreeSkipList<K, V>,
+pub struct RangeIter<K, V, R> {
+    _skiplist: PhantomData<(K, V)>,
     range: R,
-    guard: EpochGuard,
-    current: Shared<'a, Node<K, V>>,
     started: bool,
 }
 
-impl<'a, K, V, R> Iterator for RangeIter<'a, K, V, R>
+impl<K, V, R> Iterator for RangeIter<K, V, R>
 where
-    K: Ord + Clone,
-    V: Clone,
+    K: Ord + Clone + 'static,
+    V: Clone + 'static,
     R: std::ops::RangeBounds<K>,
 {
     type Item = (K, V);
@@ -554,8 +557,8 @@ pub struct SkipListStats {
 
 impl<K, V> Default for LockFreeSkipList<K, V>
 where
-    K: Ord + Clone,
-    V: Clone,
+    K: Ord + Clone + Default + 'static,
+    V: Clone + Default + 'static,
 {
     fn default() -> Self {
         Self::new()

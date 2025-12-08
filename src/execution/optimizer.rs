@@ -1350,21 +1350,4 @@ mod tests {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_optimizer() {
-        let optimizer = Optimizer::new();
-        let plan = PlanNode::TableScan {
-            table: "users".to_string(),
-            columns: vec!["id".to_string()],
-        };
-        
-        let optimized = optimizer.optimize(plan).unwrap();
-        matches!(optimized, PlanNode::TableScan { .. });
-    }
-}
-
 

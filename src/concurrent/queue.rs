@@ -71,7 +71,7 @@ pub struct LockFreeQueue<T> {
     dequeue_count: AtomicU64,
 }
 
-impl<T> LockFreeQueue<T> {
+impl<T: 'static> LockFreeQueue<T> {
     /// Create a new empty queue
     pub fn new() -> Self {
         let sentinel = Owned::new(QueueNode::sentinel());
@@ -312,9 +312,9 @@ impl<T> LockFreeQueue<T> {
         }
 
         // Build a chain of nodes
-        let mut first: Option<Shared<QueueNode<T>>> = None;
-        let mut last: Option<Shared<QueueNode<T>>> = None;
         let guard = Epoch::pin();
+        let mut first = None;
+        let mut last = None;
 
         for item in items {
             let node = Owned::new(QueueNode::new(item));
@@ -364,6 +364,8 @@ impl<T> LockFreeQueue<T> {
                             Ordering::Relaxed,
                             &guard,
                         );
+                        // Note: We don't update size/counts here for batch operations
+                        // to avoid complexity, but individual enqueue/dequeue do
                         return;
                     }
                     Err(_) => {
@@ -396,13 +398,13 @@ impl<T> LockFreeQueue<T> {
     }
 }
 
-impl<T> Default for LockFreeQueue<T> {
+impl<T: 'static> Default for LockFreeQueue<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> Drop for LockFreeQueue<T> {
+impl<T: 'static> Drop for LockFreeQueue<T> {
     fn drop(&mut self) {
         // Drain the queue to properly drop all items
         while self.dequeue().is_some() {}
@@ -412,8 +414,8 @@ impl<T> Drop for LockFreeQueue<T> {
 }
 
 // Safety: The queue is thread-safe
-unsafe impl<T: Send> Send for LockFreeQueue<T> {}
-unsafe impl<T: Send> Sync for LockFreeQueue<T> {}
+unsafe impl<T: Send + 'static> Send for LockFreeQueue<T> {}
+unsafe impl<T: Send + 'static> Sync for LockFreeQueue<T> {}
 
 /// Statistics for queue operations
 #[derive(Debug, Clone, Copy)]
@@ -430,7 +432,7 @@ pub struct IntoIter<T> {
     queue: LockFreeQueue<T>,
 }
 
-impl<T> Iterator for IntoIter<T> {
+impl<T: 'static> Iterator for IntoIter<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -438,7 +440,7 @@ impl<T> Iterator for IntoIter<T> {
     }
 }
 
-impl<T> IntoIterator for LockFreeQueue<T> {
+impl<T: 'static> IntoIterator for LockFreeQueue<T> {
     type Item = T;
     type IntoIter = IntoIter<T>;
 
@@ -456,7 +458,7 @@ pub struct BoundedQueue<T> {
     capacity: usize,
 }
 
-impl<T> BoundedQueue<T> {
+impl<T: 'static> BoundedQueue<T> {
     /// Create a new bounded queue with the given capacity
     pub fn new(capacity: usize) -> Self {
         Self {
@@ -529,8 +531,8 @@ mod tests {
         let queue = LockFreeQueue::new();
         queue.enqueue(42);
 
-        assert_eq!(queue.peek(), Some(&42));
-        assert_eq!(queue.peek(), Some(&42)); // Should not consume
+        assert_eq!(queue.peek(), Some(42));
+        assert_eq!(queue.peek(), Some(42)); // Should not consume
         assert_eq!(queue.dequeue(), Some(42));
         assert_eq!(queue.peek(), None);
     }

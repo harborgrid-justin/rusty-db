@@ -9,7 +9,7 @@
 
 use crate::error::{DbError, Result};
 use crate::optimizer_pro::{PhysicalPlan, PlanId, QueryFingerprint};
-use std::collections::{HashMap, BTreeMap, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime};
 
@@ -133,13 +133,13 @@ impl PlanBaselineManager {
     }
 
     /// Load baseline from disk (simplified)
-    pub fn load_baseline(&self, fingerprint: &QueryFingerprint) -> Result<Option<SqlPlanBaseline>> {
+    pub fn load_baseline(&self, _fingerprint: &QueryFingerprint) -> Result<Option<SqlPlanBaseline>> {
         // In production, this would load from persistent storage
         Ok(None)
     }
 
     /// Save baseline to disk (simplified)
-    pub fn save_baseline(&self, baseline: &SqlPlanBaseline) -> Result<()> {
+    pub fn save_baseline(&self, _baseline: &SqlPlanBaseline) -> Result<()> {
         // In production, this would persist to disk
         Ok(())
     }

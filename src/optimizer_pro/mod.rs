@@ -46,8 +46,8 @@
 
 use crate::common::{TableId, IndexId, Value, Schema};
 use crate::error::{DbError, Result};
-use std::collections::{HashMap, BTreeMap, HashSet, VecDeque};
-use std::sync::{Arc, RwLock, Mutex};
+use std::collections::{HashMap, VecDeque};
+use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
 
 // Submodules

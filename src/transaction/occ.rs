@@ -403,7 +403,7 @@ impl OccManager {
         txn.commit_time = Some(Instant::now());
 
         // Add to commit history
-        self.committed_txns.write().push(Arc::new(txn.clone()));
+        self.committed_txns.write().push(Arc::new((*txn).clone()));
 
         // Update statistics
         self.stats.transactions_committed.fetch_add(1, Ordering::Relaxed);

@@ -9,15 +9,12 @@
 //! - Selectivity estimation
 //! - Multi-column statistics
 
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
-
 use crate::common::{TableId, IndexId, Value};
 use crate::error::{DbError, Result};
 use crate::optimizer_pro::{
     PhysicalOperator, Expression, BinaryOperator, JoinType, CostParameters,
 };
-use std::collections::{HashMap, BTreeMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 // ============================================================================
@@ -180,7 +177,7 @@ impl CostModel {
     fn estimate_seq_scan_cost(
         &self,
         table_id: TableId,
-        filter: Option<&Expression>,
+        _filter: Option<&Expression>,
     ) -> Result<CostEstimate> {
         let table_stats = self.get_table_stats(table_id)?;
 
@@ -191,7 +188,7 @@ impl CostModel {
         let cpu_cost = table_stats.num_tuples as f64 * self.params.cpu_tuple_cost;
 
         // Apply filter selectivity
-        let selectivity = if let Some(filter) = filter {
+        let selectivity = if let Some(filter) = _filter {
             self.selectivity_estimator.estimate(filter, &table_stats)?
         } else {
             1.0
@@ -216,7 +213,7 @@ impl CostModel {
         table_id: TableId,
         index_id: IndexId,
         key_conditions: &[Expression],
-        filter: Option<&Expression>,
+        _filter: Option<&Expression>,
     ) -> Result<CostEstimate> {
         let table_stats = self.get_table_stats(table_id)?;
         let index_stats = self.get_index_stats(index_id)?;
@@ -237,7 +234,7 @@ impl CostModel {
             * self.params.cpu_tuple_cost;
 
         // Apply additional filter if present
-        let final_selectivity = if let Some(filter) = filter {
+        let final_selectivity = if let Some(filter) = _filter {
             index_selectivity * self.selectivity_estimator.estimate(filter, &table_stats)?
         } else {
             index_selectivity
@@ -261,7 +258,7 @@ impl CostModel {
         &self,
         index_id: IndexId,
         key_conditions: &[Expression],
-        filter: Option<&Expression>,
+        _filter: Option<&Expression>,
     ) -> Result<CostEstimate> {
         let index_stats = self.get_index_stats(index_id)?;
 
@@ -294,14 +291,14 @@ impl CostModel {
         &self,
         table_id: TableId,
         bitmap_index_scans: &[IndexId],
-        filter: Option<&Expression>,
+        _filter: Option<&Expression>,
     ) -> Result<CostEstimate> {
         let table_stats = self.get_table_stats(table_id)?;
 
         // Combine selectivities from multiple bitmap index scans
         let mut combined_selectivity = 1.0;
         for index_id in bitmap_index_scans {
-            let index_stats = self.get_index_stats(*index_id)?;
+            let _index_stats = self.get_index_stats(*index_id)?;
             let selectivity = 0.1; // Simplified
             combined_selectivity *= 1.0 - selectivity;
         }
@@ -332,8 +329,8 @@ impl CostModel {
         &self,
         left: &crate::optimizer_pro::PhysicalPlan,
         right: &crate::optimizer_pro::PhysicalPlan,
-        condition: Option<&Expression>,
-        join_type: JoinType,
+        _condition: Option<&Expression>,
+        _join_type: JoinType,
     ) -> Result<CostEstimate> {
         // CPU cost: outer * inner * comparison cost
         let cpu_cost = (left.cardinality as f64)
@@ -344,7 +341,7 @@ impl CostModel {
         let io_cost = (left.cardinality as f64) * right.cost;
 
         // Estimate output cardinality
-        let selectivity = if let Some(condition) = condition {
+        let selectivity = if let Some(_condition) = _condition {
             0.1 // Simplified
         } else {
             1.0
@@ -369,9 +366,9 @@ impl CostModel {
         &self,
         left: &crate::optimizer_pro::PhysicalPlan,
         right: &crate::optimizer_pro::PhysicalPlan,
-        hash_keys: &[Expression],
-        condition: Option<&Expression>,
-        join_type: JoinType,
+        _hash_keys: &[Expression],
+        _condition: Option<&Expression>,
+        _join_type: JoinType,
     ) -> Result<CostEstimate> {
         // Build hash table from smaller relation
         let (build_side, probe_side) = if left.cardinality < right.cardinality {
@@ -410,9 +407,9 @@ impl CostModel {
         &self,
         left: &crate::optimizer_pro::PhysicalPlan,
         right: &crate::optimizer_pro::PhysicalPlan,
-        merge_keys: &[(Expression, Expression)],
-        condition: Option<&Expression>,
-        join_type: JoinType,
+        _merge_keys: &[(Expression, Expression)],
+        _condition: Option<&Expression>,
+        _join_type: JoinType,
     ) -> Result<CostEstimate> {
         // CPU cost: merge both sorted inputs
         let cpu_cost = ((left.cardinality + right.cardinality) as f64)
@@ -438,7 +435,7 @@ impl CostModel {
     fn estimate_sort_cost(
         &self,
         input: &crate::optimizer_pro::PhysicalPlan,
-        num_sort_keys: usize,
+        _num_sort_keys: usize,
     ) -> Result<CostEstimate> {
         let n = input.cardinality as f64;
 
@@ -685,13 +682,13 @@ impl Histogram {
     }
 
     /// Estimate selectivity for a range predicate
-    pub fn estimate_range_selectivity(&self, low: &Value, high: &Value) -> f64 {
+    pub fn estimate_range_selectivity(&self, _low: &Value, _high: &Value) -> f64 {
         // Simplified implementation
         0.1
     }
 
     /// Estimate selectivity for an equality predicate
-    pub fn estimate_equality_selectivity(&self, value: &Value) -> f64 {
+    pub fn estimate_equality_selectivity(&self, _value: &Value) -> f64 {
         // Simplified implementation
         1.0 / (self.buckets.len() as f64).max(1.0)
     }
@@ -740,7 +737,7 @@ impl CardinalityEstimator {
         left_card: usize,
         right_card: usize,
         join_type: JoinType,
-        join_keys: &[Expression],
+        _join_keys: &[Expression],
     ) -> usize {
         // Simplified estimation
         match join_type {
@@ -755,7 +752,7 @@ impl CardinalityEstimator {
     }
 
     /// Train ML model for cardinality estimation
-    pub fn train_ml_model(&self, query_signature: String, actual_cardinality: usize) {
+    pub fn train_ml_model(&self, query_signature: String, _actual_cardinality: usize) {
         // Simplified ML training
         let model = MLCardinalityModel {
             query_signature: query_signature.clone(),
@@ -827,7 +824,7 @@ impl SelectivityEstimator {
             Expression::UnaryOp { op, expr } => {
                 self.estimate_unary_op(*op, expr, table_stats)
             }
-            Expression::In { expr, list } => {
+            Expression::In { expr: _, list } => {
                 Ok(list.len() as f64 / 100.0) // Simplified
             }
             Expression::Between { .. } => Ok(0.1),
@@ -905,7 +902,7 @@ impl SelectivityEstimator {
 
         // For each key condition, estimate selectivity
         let mut selectivity = 1.0;
-        for condition in key_conditions {
+        for _condition in key_conditions {
             // Simplified: assume each condition divides search space
             selectivity *= 1.0 / index_stats.distinct_values.max(1) as f64;
         }

@@ -29,8 +29,7 @@ use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use super::time_travel::{SCN, Timestamp, current_timestamp};
 use super::versions::UndoRecord;
 
@@ -72,7 +71,7 @@ impl TransactionFlashbackManager {
         operation: TransactionOperation,
     ) -> Result<()> {
         let mut log = self.transaction_log.write().unwrap();
-        log.record(txn_id, operation)?;
+        log.record(txn_id, operation.clone())?;
 
         // Track dependencies
         let mut tracker = self.dependency_tracker.write().unwrap();

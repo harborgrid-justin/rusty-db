@@ -71,8 +71,11 @@ use uuid::Uuid;
 use sha2::{Sha256, Digest};
 use base64::{Engine as _, engine::general_purpose};
 
-use crate::{Result, DbError};
+use crate::error::DbError;
 use crate::common::{SessionId, TransactionId, Value};
+
+// Type alias for Result
+type Result<T> = std::result::Result<T, DbError>;
 
 // ============================================================================
 // SECTION 1: SESSION STATE MANAGEMENT (700+ lines)

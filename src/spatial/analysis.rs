@@ -10,9 +10,9 @@
 
 use crate::error::{DbError, Result};
 use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, LineString, Point, Polygon, LinearRing};
-use crate::spatial::indexes::{SpatialIndex, RTree};
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::cmp::Ordering;
+use crate::spatial::indexes::SpatialIndex;
+use crate::spatial::operators::{SetOps, ConvexHullOps, TransformOps};
+use std::collections::{HashMap, HashSet};
 
 /// Nearest neighbor search results
 #[derive(Debug, Clone)]
@@ -638,7 +638,7 @@ impl SpatialAggregation {
         let mut result = geometries[0].clone();
 
         for geom in geometries.iter().skip(1) {
-            result = crate::spatial::operators::SetOps::union(&result, geom)?;
+            result = SetOps::union(&result, geom)?;
         }
 
         Ok(result)
@@ -661,7 +661,7 @@ impl SpatialAggregation {
             return Err(DbError::InvalidInput("No coordinates found".to_string()));
         }
 
-        crate::spatial::operators::ConvexHullOps::convex_hull(&all_coords)
+        ConvexHullOps::convex_hull(&all_coords)
     }
 
     /// Calculate centroid of multiple geometries
@@ -675,7 +675,7 @@ impl SpatialAggregation {
         let mut count = 0;
 
         for geom in geometries {
-            if let Ok(centroid) = crate::spatial::operators::TransformOps::centroid(geom) {
+            if let Ok(centroid) = TransformOps::centroid(geom) {
                 sum_x += centroid.coord.x;
                 sum_y += centroid.coord.y;
                 count += 1;

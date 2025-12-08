@@ -6,7 +6,6 @@
 //! - Conflicting hint resolution
 //! - Hint reporting
 
-use crate::common::{TableId, IndexId};
 use crate::error::{DbError, Result};
 use std::collections::{HashMap, HashSet};
 use std::fmt;

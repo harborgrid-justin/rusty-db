@@ -19,14 +19,13 @@
 //! - CoW layer: Modified blocks for the clone
 //! - Metadata layer: Tracks block ownership and deltas
 
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use crate::error::{DbError, Result};
-use super::pdb::{PdbId, PdbConfig, PdbSnapshot};
+use super::pdb::{PdbId, PdbSnapshot};
 
 /// Clone type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

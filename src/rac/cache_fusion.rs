@@ -24,7 +24,6 @@ use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 use parking_lot::{RwLock, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use bytes::Bytes;
 
 // ============================================================================
 // Constants
@@ -359,7 +358,7 @@ struct BlockRequest {
     requestor: NodeId,
     transaction_id: TransactionId,
     timestamp: Instant,
-    response_tx: oneshot::Sender<Result<BlockGrant>>,
+    response_tx: oneshot::Sender<std::result::Result<BlockGrant, DbError>>,
 }
 
 /// Block grant response
@@ -962,7 +961,7 @@ struct LockWaiter {
     requested_lock: LockType,
     requestor: NodeId,
     wait_start: Instant,
-    response_tx: oneshot::Sender<Result<LockGrant>>,
+    response_tx: oneshot::Sender<std::result::Result<LockGrant, DbError>>,
 }
 
 /// Lock grant response

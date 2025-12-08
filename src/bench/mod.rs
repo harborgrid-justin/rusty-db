@@ -48,12 +48,9 @@
 
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 use std::collections::HashMap;
 use std::hint::black_box;
-
-#[cfg(test)]
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
 
 // ============================================================================
 // Benchmark Configuration
@@ -118,6 +115,21 @@ pub struct BenchMetrics {
     pub max_latency_ns: AtomicU64,
     /// Number of errors
     pub errors: AtomicU64,
+}
+
+impl Clone for BenchMetrics {
+    fn clone(&self) -> Self {
+        Self {
+            total_ops: AtomicU64::new(self.total_ops.load(Ordering::Relaxed)),
+            total_bytes: AtomicU64::new(self.total_bytes.load(Ordering::Relaxed)),
+            cache_hits: AtomicU64::new(self.cache_hits.load(Ordering::Relaxed)),
+            cache_misses: AtomicU64::new(self.cache_misses.load(Ordering::Relaxed)),
+            total_latency_ns: AtomicU64::new(self.total_latency_ns.load(Ordering::Relaxed)),
+            min_latency_ns: AtomicU64::new(self.min_latency_ns.load(Ordering::Relaxed)),
+            max_latency_ns: AtomicU64::new(self.max_latency_ns.load(Ordering::Relaxed)),
+            errors: AtomicU64::new(self.errors.load(Ordering::Relaxed)),
+        }
+    }
 }
 
 impl Default for BenchMetrics {
@@ -248,8 +260,6 @@ pub struct Page {
     pub pin_count: AtomicU32,
     pub dirty: AtomicBool,
 }
-
-use std::sync::atomic::{AtomicU32, AtomicBool};
 
 impl Page {
     pub fn new(page_id: u32) -> Self {
@@ -1102,9 +1112,11 @@ pub fn run_all_benchmarks() {
 // Criterion Integration (for cargo bench)
 // ============================================================================
 
-#[cfg(test)]
+#[cfg(all(test, not(target_os = "unknown")))]
 mod criterion_benches {
     use super::*;
+
+    #[allow(unused_imports)]
     use criterion::{criterion_group, criterion_main, Criterion};
 
     fn criterion_page_scan(c: &mut Criterion) {

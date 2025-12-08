@@ -47,6 +47,8 @@ use tokio_stream::wrappers::BroadcastStream;
 use crate::common::{Value, TableId, ColumnId, RowId, SessionId};
 use crate::error::DbError;
 
+type Result<T> = std::result::Result<T, DbError>;
+
 // Note: This module requires the following dependencies in Cargo.toml:
 // - async-graphql = "7.0"
 // - tokio = { version = "1", features = ["full"] }

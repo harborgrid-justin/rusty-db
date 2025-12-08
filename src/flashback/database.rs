@@ -30,8 +30,7 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 use crate::common::TableId;
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use super::time_travel::{SCN, Timestamp, TimeTravelEngine, current_timestamp};
 
 // ============================================================================

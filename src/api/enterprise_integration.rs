@@ -36,6 +36,8 @@ use uuid::Uuid;
 
 use crate::error::DbError;
 
+type Result<T> = std::result::Result<T, DbError>;
+
 // ============================================================================
 // SECTION 1: UNIFIED SERVICE REGISTRY (600+ lines)
 // ============================================================================
@@ -97,25 +99,25 @@ pub struct ServiceRegistration {
 /// Trait for service lifecycle management
 pub trait ServiceLifecycleHandler: Send + Sync {
     /// Initialize the service
-    fn initialize(&self) -> Result<()>;
+    fn initialize(&self) -> std::result::Result<(), DbError>;
 
     /// Start the service
-    fn start(&self) -> Result<()>;
+    fn start(&self) -> std::result::Result<(), DbError>;
 
     /// Pause the service
-    fn pause(&self) -> Result<()>;
+    fn pause(&self) -> std::result::Result<(), DbError>;
 
     /// Resume the service
-    fn resume(&self) -> Result<()>;
+    fn resume(&self) -> std::result::Result<(), DbError>;
 
     /// Stop the service gracefully
-    fn stop(&self) -> Result<()>;
+    fn stop(&self) -> std::result::Result<(), DbError>;
 
     /// Get service configuration
-    fn get_config(&self) -> Result<HashMap<String, String>>;
+    fn get_config(&self) -> std::result::Result<HashMap<String, String>, DbError>;
 
     /// Update service configuration
-    fn update_config(&self, config: HashMap<String, String>) -> Result<()>;
+    fn update_config(&self, config: HashMap<String, String>) -> std::result::Result<(), DbError>;
 }
 
 /// Health check trait
@@ -704,7 +706,7 @@ pub struct DistributedTracingManager {
 }
 
 pub trait SpanExporter: Send + Sync {
-    fn export(&self, spans: &[Span]) -> Result<()>;
+    fn export(&self, spans: &[Span]) -> std::result::Result<(), DbError>;
 }
 
 impl DistributedTracingManager {
@@ -784,7 +786,7 @@ impl DistributedTracingManager {
 
 /// Correlation ID propagator
 pub struct CorrelationIdPropagator {
-    context_storage: Arc<tokio::sync::RwLock<HashMap<tokio::task::Id, CorrelationId>>>,
+    context_storage: Arc<tokio::sync::RwLock<HashMap<std::thread::ThreadId, CorrelationId>>>,
 }
 
 impl CorrelationIdPropagator {
@@ -795,21 +797,21 @@ impl CorrelationIdPropagator {
     }
 
     pub async fn set_correlation_id(&self, correlation_id: CorrelationId) {
-        let task_id = tokio::task::id();
+        let thread_id = std::thread::current().id();
         let mut storage = self.context_storage.write().await;
-        storage.insert(task_id, correlation_id);
+        storage.insert(thread_id, correlation_id);
     }
 
     pub async fn get_correlation_id(&self) -> Option<CorrelationId> {
-        let task_id = tokio::task::id();
+        let thread_id = std::thread::current().id();
         let storage = self.context_storage.read().await;
-        storage.get(&task_id).cloned()
+        storage.get(&thread_id).cloned()
     }
 
     pub async fn clear_correlation_id(&self) {
-        let task_id = tokio::task::id();
+        let thread_id = std::thread::current().id();
         let mut storage = self.context_storage.write().await;
-        storage.remove(&task_id);
+        storage.remove(&thread_id);
     }
 }
 
@@ -1426,7 +1428,7 @@ impl ResourceContentionHandler {
         strategies.insert(resource_type.to_string(), resolver);
     }
 
-    pub fn resolve_contentions(&self) -> Result<Vec<String>> {
+    pub fn resolve_contentions(&self) -> std::result::Result<Vec<String>, DbError> {
         let mut contentions = self.contentions.write().unwrap();
         let strategies = self.resolution_strategies.read().unwrap();
         let mut resolutions = Vec::new();
@@ -1562,7 +1564,7 @@ pub trait RouteHandler: Send + Sync {
 }
 
 pub trait Middleware: Send + Sync {
-    fn process(&self, request: &mut UnifiedApiRequest) -> Result<()>;
+    fn process(&self, request: &mut UnifiedApiRequest) -> std::result::Result<(), DbError>;
 }
 
 impl RequestRouter {
@@ -1766,7 +1768,7 @@ pub struct BackwardCompatibilityLayer {
 }
 
 pub trait RequestTransformer: Send + Sync {
-    fn transform(&self, request: &mut UnifiedApiRequest) -> Result<()>;
+    fn transform(&self, request: &mut UnifiedApiRequest) -> std::result::Result<(), DbError>;
 }
 
 impl BackwardCompatibilityLayer {
@@ -1971,7 +1973,7 @@ pub struct StartupOrchestrator {
 #[derive(Clone)]
 struct StartupPhaseHandler {
     phase: StartupPhase,
-    handler: Arc<dyn Fn() -> Result<()> + Send + Sync>,
+    handler: Arc<dyn Fn() -> std::result::Result<(), DbError> + Send + Sync>,
 }
 
 impl StartupOrchestrator {
@@ -1985,7 +1987,7 @@ impl StartupOrchestrator {
 
     pub fn register_phase<F>(&self, phase: StartupPhase, handler: F)
     where
-        F: Fn() -> Result<()> + Send + Sync + 'static,
+        F: Fn() -> std::result::Result<(), DbError> + Send + Sync + 'static,
     {
         let mut phases = self.phases.write().unwrap();
         phases.push(StartupPhaseHandler {
@@ -2047,7 +2049,7 @@ pub struct ShutdownCoordinator {
 #[derive(Clone)]
 struct ShutdownPhaseHandler {
     phase: ShutdownPhase,
-    handler: Arc<dyn Fn() -> Result<()> + Send + Sync>,
+    handler: Arc<dyn Fn() -> std::result::Result<(), DbError> + Send + Sync>,
 }
 
 impl ShutdownCoordinator {
@@ -2062,7 +2064,7 @@ impl ShutdownCoordinator {
 
     pub fn register_phase<F>(&self, phase: ShutdownPhase, handler: F)
     where
-        F: Fn() -> Result<()> + Send + Sync + 'static,
+        F: Fn() -> std::result::Result<(), DbError> + Send + Sync + 'static,
     {
         let mut phases = self.phases.write().unwrap();
         phases.push(ShutdownPhaseHandler {
@@ -2132,8 +2134,8 @@ pub struct HotReloadManager {
 }
 
 pub trait ReloadHandler: Send + Sync {
-    fn reload(&self) -> Result<()>;
-    fn validate(&self) -> Result<()>;
+    fn reload(&self) -> std::result::Result<(), DbError>;
+    fn validate(&self) -> std::result::Result<(), DbError>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -2297,8 +2299,8 @@ pub struct StatePersistenceManager {
 }
 
 pub trait PersistenceHandler: Send + Sync {
-    fn persist(&self) -> Result<Vec<u8>>;
-    fn restore(&self, data: &[u8]) -> Result<()>;
+    fn persist(&self) -> std::result::Result<Vec<u8>, DbError>;
+    fn restore(&self, data: &[u8]) -> std::result::Result<(), DbError>;
 }
 
 impl StatePersistenceManager {
@@ -2357,8 +2359,8 @@ pub struct RecoveryOrchestrator {
 }
 
 pub trait RecoveryStrategy: Send + Sync {
-    fn recover(&self) -> Result<()>;
-    fn validate_recovery(&self) -> Result<bool>;
+    fn recover(&self) -> std::result::Result<(), DbError>;
+    fn validate_recovery(&self) -> std::result::Result<bool, DbError>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -2551,7 +2553,7 @@ pub struct EnterpriseIntegrator {
 }
 
 impl EnterpriseIntegrator {
-    pub async fn new(config: IntegratorConfig) -> Result<Self> {
+    pub async fn new(config: IntegratorConfig) -> std::result::Result<Self, DbError> {
         // Create a simple log sink
         struct StdoutLogSink;
         impl LogSink for StdoutLogSink {
@@ -2634,7 +2636,7 @@ impl EnterpriseIntegrator {
     }
 
     /// Process an API request through the integrated system
-    pub async fn process_api_request(&self, request: UnifiedApiRequest) -> Result<UnifiedApiResponse> {
+    pub async fn process_api_request(&self, request: UnifiedApiRequest) -> std::result::Result<UnifiedApiResponse, DbError> {
         // Set correlation ID
         self.correlation_propagator.set_correlation_id(request.correlation_id.clone()).await;
 

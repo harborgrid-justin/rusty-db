@@ -41,6 +41,8 @@ use uuid::Uuid;
 
 use crate::error::DbError;
 
+type Result<T> = std::result::Result<T, DbError>;
+
 // ============================================================================
 // API Gateway Core - Request Routing and Protocol Translation
 // ============================================================================

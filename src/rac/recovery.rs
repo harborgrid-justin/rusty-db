@@ -17,12 +17,12 @@
 //! to apply redo logs, release locks, and remaster resources from the failed instance.
 
 use crate::error::DbError;
-use crate::common::{NodeId, PageId, TransactionId, LogSequenceNumber};
-use crate::rac::cache_fusion::{ResourceId, BlockMode};
-use crate::rac::grd::{GlobalResourceDirectory, GrdConfig};
-use crate::rac::interconnect::{ClusterInterconnect, NodeState, MessageType, MessagePriority};
+use crate::common::{NodeId, TransactionId, LogSequenceNumber};
+use crate::rac::cache_fusion::ResourceId;
+use crate::rac::grd::GlobalResourceDirectory;
+use crate::rac::interconnect::ClusterInterconnect;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 use parking_lot::{RwLock, Mutex};

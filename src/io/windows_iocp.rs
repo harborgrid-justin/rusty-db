@@ -11,6 +11,31 @@ use std::time::Duration;
 use std::ptr;
 
 // ============================================================================
+// Send-safe pointer wrapper
+// ============================================================================
+
+/// A Send-safe wrapper for raw pointers
+/// SAFETY: The caller must ensure the pointer is valid for the lifetime of the wrapper
+/// and that concurrent access is properly synchronized.
+#[derive(Clone, Copy)]
+struct SendPtr(*mut std::ffi::c_void);
+
+unsafe impl Send for SendPtr {}
+unsafe impl Sync for SendPtr {}
+
+impl SendPtr {
+    #[inline]
+    fn new(ptr: *mut std::ffi::c_void) -> Self {
+        Self(ptr)
+    }
+
+    #[inline]
+    fn as_ptr(self) -> *mut std::ffi::c_void {
+        self.0
+    }
+}
+
+// ============================================================================
 // IOCP Configuration
 // ============================================================================
 
@@ -256,7 +281,7 @@ impl WindowsIocp {
         let mut overlapped = Box::new(OverlappedIo::new(request.id, request.offset));
 
         // Perform the I/O operation based on type
-        let result = match request.op_type {
+        match request.op_type {
             IoOpType::Read | IoOpType::ReadV => self.submit_read(request, &mut overlapped)?,
             IoOpType::Write | IoOpType::WriteV => self.submit_write(request, &mut overlapped)?,
             IoOpType::Sync | IoOpType::Fsync | IoOpType::Fdatasync => {
@@ -284,11 +309,12 @@ impl WindowsIocp {
         use windows_sys::Win32::Storage::FileSystem::ReadFile;
 
         let mut bytes_read = 0u32;
+        let buffer_ptr = SendPtr::new(request.buffer as *mut std::ffi::c_void);
 
         let result = unsafe {
             ReadFile(
                 request.file_handle.0 as isize,
-                request.buffer as *mut std::ffi::c_void,
+                buffer_ptr.as_ptr(),
                 request.len,
                 &mut bytes_read,
                 overlapped.as_ptr(),
@@ -310,11 +336,12 @@ impl WindowsIocp {
         use windows_sys::Win32::Storage::FileSystem::WriteFile;
 
         let mut bytes_written = 0u32;
+        let buffer_ptr = SendPtr::new(request.buffer as *mut std::ffi::c_void);
 
         let result = unsafe {
             WriteFile(
                 request.file_handle.0 as isize,
-                request.buffer as *const std::ffi::c_void,
+                buffer_ptr.as_ptr() as *const std::ffi::c_void,
                 request.len,
                 &mut bytes_written,
                 overlapped.as_ptr(),

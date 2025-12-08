@@ -26,8 +26,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 
 use crate::common::{TransactionId, TableId, RowId, Value, Tuple};
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // Type Aliases

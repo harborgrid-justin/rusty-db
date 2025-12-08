@@ -8,13 +8,13 @@
 //! - Subquery unnesting
 //! - View merging
 
-use crate::common::{TableId, IndexId, Schema, Value};
-use crate::error::{DbError, Result};
+use crate::common::{TableId, IndexId, Schema};
+use crate::error::Result;
 use crate::optimizer_pro::{
     PhysicalPlan, PhysicalOperator, Expression, JoinType, SortKey, AggregateFunction,
-    PlanId, PlanMetadata, Query, BinaryOperator, OptimizerHint, CostModel, CostEstimate,
+    PlanId, PlanMetadata, Query, BinaryOperator, OptimizerHint, CostModel,
 };
-use std::collections::{HashMap, HashSet, BTreeMap, BinaryHeap};
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::SystemTime;
 use std::cmp::Ordering;
@@ -244,7 +244,7 @@ impl PlanGenerator {
         let mut plans = Vec::new();
 
         // For OR conditions, bitmap scans can be efficient
-        if let Some(Expression::BinaryOp { op: BinaryOperator::Or, left, right }) = filter {
+        if let Some(Expression::BinaryOp { op: BinaryOperator::Or, left: _, right: _ }) = filter {
             let indexes = self.get_table_indexes(table)?;
             let bitmap_indexes: Vec<IndexId> = indexes.iter().map(|idx| idx.index_id).collect();
 
@@ -616,7 +616,7 @@ impl PlanGenerator {
     fn generate_projection_plans(
         &self,
         input: &LogicalPlan,
-        columns: &[Expression],
+        _columns: &[Expression],
         hint_config: &HintConfig,
     ) -> Result<Vec<PhysicalPlan>> {
         // Projection is typically pushed down to scans
@@ -627,7 +627,7 @@ impl PlanGenerator {
     fn parse_query(&self, query: &Query) -> Result<LogicalPlan> {
         // Simplified query parsing - in production this would be more sophisticated
         Ok(LogicalPlan::Scan {
-            table: TableId(1),
+            table: 1,
             filter: None,
         })
     }
@@ -675,7 +675,7 @@ impl PlanGenerator {
     fn extract_index_conditions(
         &self,
         filter: Option<&Expression>,
-        index: &IndexInfo,
+        _index: &IndexInfo,
     ) -> Result<(Vec<Expression>, Option<Expression>)> {
         // Simplified implementation
         if let Some(expr) = filter {
@@ -709,10 +709,10 @@ impl PlanGenerator {
     }
 
     /// Get indexes for a table
-    fn get_table_indexes(&self, table: TableId) -> Result<Vec<IndexInfo>> {
+    fn get_table_indexes(&self, _table: TableId) -> Result<Vec<IndexInfo>> {
         // Simplified implementation
         Ok(vec![IndexInfo {
-            index_id: IndexId(1),
+            index_id: 1,
             covering: false,
         }])
     }
@@ -995,8 +995,8 @@ impl AccessPathSelector {
 
     fn evaluate_index_scans(
         &self,
-        table: TableId,
-        filter: Option<&Expression>,
+        _table: TableId,
+        _filter: Option<&Expression>,
     ) -> Result<Vec<(IndexId, f64)>> {
         // Simplified implementation
         Ok(vec![])
@@ -1019,7 +1019,7 @@ mod tests {
     #[test]
     fn test_join_enumerator() {
         let enumerator = JoinEnumerator::new(100);
-        let tables = vec![TableId(1), TableId(2), TableId(3)];
+        let tables = vec![1, 2, 3];
 
         let orders = enumerator.enumerate_joins(&tables);
         assert!(!orders.is_empty());
@@ -1028,7 +1028,7 @@ mod tests {
     #[test]
     fn test_permutations() {
         let enumerator = JoinEnumerator::new(100);
-        let tables = vec![TableId(1), TableId(2)];
+        let tables = vec![1, 2];
 
         let perms = enumerator.permutations(&tables);
         assert_eq!(perms.len(), 2);

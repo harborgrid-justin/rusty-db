@@ -13,7 +13,7 @@ use crate::optimizer_pro::{
     PhysicalPlan, PhysicalOperator, Expression, JoinType, PlanId, ExecutionResult,
 };
 use std::collections::{HashMap, VecDeque};
-use std::sync::{Arc, RwLock, Mutex};
+use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
 
 // ============================================================================
@@ -168,8 +168,8 @@ impl AdaptiveExecutor {
     /// Execute sequential scan
     fn execute_seq_scan(
         &self,
-        table_id: TableId,
-        filter: Option<&Expression>,
+        _table_id: TableId,
+        _filter: Option<&Expression>,
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
         // Record operator start
@@ -187,10 +187,10 @@ impl AdaptiveExecutor {
     /// Execute index scan
     fn execute_index_scan(
         &self,
-        table_id: TableId,
-        index_id: IndexId,
-        key_conditions: &[Expression],
-        filter: Option<&Expression>,
+        _table_id: TableId,
+        _index_id: IndexId,
+        _key_conditions: &[Expression],
+        _filter: Option<&Expression>,
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
         self.stats_collector.record_operator_start(execution_id, "IndexScan");
@@ -208,14 +208,14 @@ impl AdaptiveExecutor {
         &self,
         left: &PhysicalPlan,
         right: &PhysicalPlan,
-        condition: Option<&Expression>,
-        join_type: JoinType,
+        _condition: Option<&Expression>,
+        _join_type: JoinType,
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
         self.stats_collector.record_operator_start(execution_id, "NestedLoopJoin");
 
         let left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
-        let right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
+        let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
 
         // Record actual vs estimated cardinality
         self.stats_collector.record_cardinality_mismatch(
@@ -237,15 +237,15 @@ impl AdaptiveExecutor {
         &self,
         left: &PhysicalPlan,
         right: &PhysicalPlan,
-        hash_keys: &[Expression],
-        condition: Option<&Expression>,
-        join_type: JoinType,
+        _hash_keys: &[Expression],
+        _condition: Option<&Expression>,
+        _join_type: JoinType,
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
         self.stats_collector.record_operator_start(execution_id, "HashJoin");
 
-        let left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
-        let right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
+        let _left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
+        let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
 
         // Simulate join execution
         let rows = vec![];
@@ -260,15 +260,15 @@ impl AdaptiveExecutor {
         &self,
         left: &PhysicalPlan,
         right: &PhysicalPlan,
-        merge_keys: &[(Expression, Expression)],
-        condition: Option<&Expression>,
-        join_type: JoinType,
+        _merge_keys: &[(Expression, Expression)],
+        _condition: Option<&Expression>,
+        _join_type: JoinType,
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
         self.stats_collector.record_operator_start(execution_id, "MergeJoin");
 
-        let left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
-        let right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
+        let _left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
+        let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
 
         // Simulate join execution
         let rows = vec![];
@@ -602,7 +602,7 @@ impl AdaptiveJoinSelector {
         &self,
         left_cardinality: usize,
         right_cardinality: usize,
-        execution_id: &ExecutionId,
+        _execution_id: &ExecutionId,
     ) -> Result<Option<JoinMethod>> {
         // Heuristics for join method selection
         if left_cardinality < 1000 || right_cardinality < 1000 {

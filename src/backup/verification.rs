@@ -4,7 +4,6 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::fs::metadata;
-use std::io::{Read, Write};
 use std::time::{SystemTime, Duration};
 use std::collections::{HashMap, BTreeMap};
 use parking_lot::RwLock;
@@ -122,7 +121,7 @@ pub struct BlockChecksum {
 impl BlockChecksum {
     pub fn verify(&self, data: &[u8]) -> bool {
         let computed = Self::compute(&self.algorithm, data);
-        computed == self.checksum
+        computed.as_str() == self.checksum.as_str()
     }
 
     pub fn compute(algorithm: &ChecksumAlgorithm, data: &[u8]) -> String {
@@ -240,7 +239,7 @@ impl VerificationManager {
     pub fn compute_checksums(
         &self,
         backup_id: String,
-        backup_path: &Path,
+        _backup_path: &Path,
         algorithm: ChecksumAlgorithm,
     ) -> Result<Vec<BlockChecksum>> {
         let mut checksums = Vec::new();
@@ -293,7 +292,7 @@ impl VerificationManager {
                 self.verify_full(&mut result, &backup_path)?;
             }
             VerificationType::RestoreTest => {
-                self.verify_restore_test(&mut result, &backup_id, &backup_path)?;
+                self.verify_restore_test(&mut result, backup_id.as_str(), &backup_path)?;
             }
         }
 
@@ -355,7 +354,7 @@ impl VerificationManager {
         result.status = VerificationStatus::Running { progress_pct: 90.0 };
 
         // Verify all blocks
-        let corrupted = self.verify_all_blocks(&result.backup_id, backup_path)?;
+        let corrupted = self.verify_all_blocks(result.backup_id.as_str(), backup_path)?;
 
         if !corrupted.is_empty() {
             result.corruption_detected = true;
@@ -408,7 +407,7 @@ impl VerificationManager {
         Ok(true)
     }
 
-    fn verify_all_blocks(&self, backup_id: &str, backup_path: &Path) -> Result<Vec<CorruptedBlock>> {
+    fn verify_all_blocks(&self, backup_id: &str, _backup_path: &Path) -> Result<Vec<CorruptedBlock>> {
         let mut corrupted = Vec::new();
 
         // Get stored checksums
@@ -491,13 +490,13 @@ impl VerificationManager {
         Ok(test_result)
     }
 
-    fn simulate_restore(&self, backup_path: &Path, restore_dir: &Path) -> Result<()> {
+    fn simulate_restore(&self, _backup_path: &Path, _restore_dir: &Path) -> Result<()> {
         // Simulate restore operation
         std::thread::sleep(Duration::from_millis(100));
         Ok(())
     }
 
-    fn verify_restored_data(&self, restore_dir: &Path) -> Result<bool> {
+    fn verify_restored_data(&self, _restore_dir: &Path) -> Result<bool> {
         // Verify restored data matches expectations
         // In a real implementation, would check data consistency
         Ok(true)
@@ -515,7 +514,7 @@ impl VerificationManager {
         let mut verification_ids = Vec::new();
         let mut schedules = self.schedules.write();
 
-        for (schedule_id, schedule) in schedules.iter_mut() {
+        for (_schedule_id, schedule) in schedules.iter_mut() {
             if schedule.is_due() {
                 // Get backups matching filters
                 // For simulation, assume one backup

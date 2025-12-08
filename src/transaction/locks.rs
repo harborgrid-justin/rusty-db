@@ -614,7 +614,7 @@ impl HierarchicalLockManager {
 
     /// Get statistics
     pub fn get_stats(&self) -> LockManagerStats {
-        self.stats.read().clone()
+        (*self.stats.read()).clone()
     }
 
     /// Get locks held by a transaction
@@ -781,7 +781,7 @@ impl LockEscalationManager {
     }
 
     pub fn get_stats(&self) -> EscalationStats {
-        self.stats.read().clone()
+        (*self.stats.read()).clone()
     }
 }
 

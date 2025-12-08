@@ -40,6 +40,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
 use parking_lot::{Mutex, RwLock as PRwLock};
 use serde::{Serialize, Deserialize};
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // SECTION 1: MULTI-TIER BUFFER POOL (700+ lines)

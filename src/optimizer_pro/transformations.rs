@@ -8,10 +8,10 @@
 //! - Materialized view rewrite
 //! - Common subexpression elimination
 
-use crate::common::{TableId, IndexId, Value};
-use crate::error::{DbError, Result};
+use crate::common::{TableId, Value};
+use crate::error::Result;
 use crate::optimizer_pro::{Expression, BinaryOperator, UnaryOperator, Query};
-use std::collections::{HashMap, HashSet, BTreeSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::sync::Arc;
 
 // ============================================================================
@@ -349,7 +349,7 @@ impl PredicateAnalyzer {
             Expression::UnaryOp { op, expr } => {
                 self.analyze_unary_op_selectivity(*op, expr)
             }
-            Expression::In { expr, list } => {
+            Expression::In { expr: _, list } => {
                 // IN clause selectivity depends on list size
                 (list.len() as f64) / 100.0
             }
@@ -446,7 +446,7 @@ impl JoinAnalyzer {
     }
 
     /// Build join graph from query
-    pub fn build_join_graph(&self, query: &Query) -> Result<()> {
+    pub fn build_join_graph(&self, _query: &Query) -> Result<()> {
         // Parse query and build graph of join relationships
         Ok(())
     }
@@ -600,7 +600,7 @@ impl CommonSubexpressionEliminator {
 
     /// Find common subexpressions
     pub fn find_common_subexpressions(&self, expressions: &[Expression]) -> Vec<Expression> {
-        let mut common = Vec::new();
+        let common = Vec::new();
         let mut expr_counts: HashMap<String, usize> = HashMap::new();
 
         for expr in expressions {
@@ -608,7 +608,7 @@ impl CommonSubexpressionEliminator {
             *expr_counts.entry(key).or_insert(0) += 1;
         }
 
-        for (key, count) in expr_counts {
+        for (_key, count) in expr_counts {
             if count > 1 {
                 // This expression appears multiple times
                 // In production, we would reconstruct the expression
@@ -655,8 +655,8 @@ impl ExpressionUtils {
         match expr {
             Expression::BinaryOp { op: BinaryOperator::And, left, right } => {
                 // Normalize AND expressions (commutative)
-                let mut normalized_left = Self::normalize(left);
-                let mut normalized_right = Self::normalize(right);
+                let normalized_left = Self::normalize(left);
+                let normalized_right = Self::normalize(right);
 
                 // Sort for canonical form
                 Expression::BinaryOp {

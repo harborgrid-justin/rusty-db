@@ -41,6 +41,7 @@ use crate::buffer::page_cache::{
 use crate::common::PageId;
 use crate::error::{DbError, Result};
 
+use num_cpus;
 use parking_lot::{Mutex, RwLock};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
@@ -684,7 +685,7 @@ impl BufferPoolManager {
         let frame_id = self
             .page_table
             .lookup(page_id)
-            .ok_or_else(|| DbError::PageNotFound(page_id))?;
+            .ok_or_else(|| DbError::PageNotFound(page_id.to_string()))?;
 
         let frame = &self.frames[frame_id as usize];
 
@@ -704,7 +705,7 @@ impl BufferPoolManager {
         let frame_id = self
             .page_table
             .lookup(page_id)
-            .ok_or_else(|| DbError::PageNotFound(page_id))?;
+            .ok_or_else(|| DbError::PageNotFound(page_id.to_string()))?;
 
         let frame = &self.frames[frame_id as usize];
         self.flush_page(frame)

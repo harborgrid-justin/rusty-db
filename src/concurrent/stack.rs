@@ -61,7 +61,7 @@ pub struct LockFreeStack<T> {
     _padding: [u8; 32],
 }
 
-impl<T> LockFreeStack<T> {
+impl<T: 'static> LockFreeStack<T> {
     /// Create a new empty stack
     pub fn new() -> Self {
         Self {
@@ -216,7 +216,7 @@ impl<T> LockFreeStack<T> {
         let guard = Epoch::pin();
 
         // Build a chain of nodes in reverse order (since it's a stack)
-        let mut chain_head: Option<Shared<StackNode<T>>> = None;
+        let mut chain_head = None;
 
         for item in items.drain(..).rev() {
             let node = Owned::new(StackNode::new(item));
@@ -339,13 +339,13 @@ impl<T> LockFreeStack<T> {
     }
 }
 
-impl<T> Default for LockFreeStack<T> {
+impl<T: 'static> Default for LockFreeStack<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> Drop for LockFreeStack<T> {
+impl<T: 'static> Drop for LockFreeStack<T> {
     fn drop(&mut self) {
         // Pop all items to properly drop them
         while self.pop().is_some() {}
@@ -353,8 +353,8 @@ impl<T> Drop for LockFreeStack<T> {
 }
 
 // Safety: The stack is thread-safe
-unsafe impl<T: Send> Send for LockFreeStack<T> {}
-unsafe impl<T: Send> Sync for LockFreeStack<T> {}
+unsafe impl<T: Send + 'static> Send for LockFreeStack<T> {}
+unsafe impl<T: Send + 'static> Sync for LockFreeStack<T> {}
 
 /// Statistics for stack operations
 #[derive(Debug, Clone, Copy)]
@@ -385,7 +385,7 @@ const EMPTY: usize = 0;
 const WAITING: usize = 1;
 const BUSY: usize = 2;
 
-impl<T> EliminationArray<T> {
+impl<T: 'static> EliminationArray<T> {
     /// Create a new elimination array
     pub fn new(size: usize) -> Self {
         let mut slots = Vec::with_capacity(size);
@@ -475,7 +475,7 @@ pub struct EliminationStack<T> {
     elimination_array: EliminationArray<T>,
 }
 
-impl<T> EliminationStack<T> {
+impl<T: 'static> EliminationStack<T> {
     /// Create a new elimination-backoff stack
     pub fn new(elimination_size: usize) -> Self {
         Self {
@@ -515,7 +515,7 @@ impl<T> EliminationStack<T> {
     }
 }
 
-impl<T> Default for EliminationStack<T> {
+impl<T: 'static> Default for EliminationStack<T> {
     fn default() -> Self {
         Self::new(16)
     }

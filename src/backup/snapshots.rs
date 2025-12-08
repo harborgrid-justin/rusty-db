@@ -4,7 +4,6 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::fs::{create_dir_all};
-use std::io::{Read, Write};
 use std::time::{SystemTime, Duration, UNIX_EPOCH};
 use std::collections::{HashMap, BTreeMap};
 use parking_lot::{Mutex, RwLock};
@@ -253,16 +252,16 @@ impl SnapshotSchedule {
             SnapshotFrequency::Hourly => {
                 Some(now + Duration::from_secs(3600))
             }
-            SnapshotFrequency::Daily { hour } => {
+            SnapshotFrequency::Daily { hour: _ } => {
                 Some(now + Duration::from_secs(86400))
             }
-            SnapshotFrequency::Weekly { day, hour } => {
+            SnapshotFrequency::Weekly { day: _, hour: _ } => {
                 Some(now + Duration::from_secs(7 * 86400))
             }
-            SnapshotFrequency::Monthly { day, hour } => {
+            SnapshotFrequency::Monthly { day: _, hour: _ } => {
                 Some(now + Duration::from_secs(30 * 86400))
             }
-            SnapshotFrequency::Custom { cron_expression } => {
+            SnapshotFrequency::Custom { cron_expression: _ } => {
                 // In a real implementation, parse cron expression
                 Some(now + Duration::from_secs(3600))
             }
@@ -361,7 +360,7 @@ impl SnapshotManager {
         purpose: ClonePurpose,
     ) -> Result<String> {
         // Verify parent snapshot exists
-        let parent = self.snapshots.read().get(parent_snapshot_id).cloned()
+        let _parent = self.snapshots.read().get(parent_snapshot_id).cloned()
             .ok_or_else(|| DbError::BackupError("Parent snapshot not found".to_string()))?;
 
         let clone_id = self.generate_clone_id();
@@ -465,7 +464,7 @@ impl SnapshotManager {
         let mut created_snapshots = Vec::new();
         let mut schedules = self.schedules.write();
 
-        for (schedule_id, schedule) in schedules.iter_mut() {
+        for (_schedule_id, schedule) in schedules.iter_mut() {
             if schedule.is_due() {
                 // Create snapshot for each database in the schedule
                 for database_name in &schedule.databases {
