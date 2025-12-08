@@ -38,7 +38,7 @@ use tokio::sync::mpsc;
 // ============================================================================
 
 /// Detected access pattern type
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AccessPattern {
     /// No pattern detected yet
     Unknown,
@@ -733,3 +733,5 @@ mod tests {
         assert!(!engine.should_throttle(0.7));
     }
 }
+
+

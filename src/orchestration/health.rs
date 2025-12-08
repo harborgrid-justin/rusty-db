@@ -86,9 +86,11 @@ pub struct HealthCheckResult {
     pub component: String,
     /// Health status
     pub status: HealthStatus,
-    /// Timestamp of the check
+    /// Timestamp of the check (skipped for serialization)
+    #[serde(skip, default = "Instant::now")]
     pub timestamp: Instant,
-    /// Duration of the health check
+    /// Duration of the health check (skipped for serialization)
+    #[serde(skip)]
     pub check_duration: Duration,
     /// Additional details
     pub details: HashMap<String, String>,
@@ -256,7 +258,8 @@ pub struct AggregatedHealth {
     pub status: HealthStatus,
     /// Individual component results
     pub components: Vec<HealthCheckResult>,
-    /// Timestamp
+    /// Timestamp (skipped for serialization)
+    #[serde(skip, default = "Instant::now")]
     pub timestamp: Instant,
     /// Number of healthy components
     pub healthy_count: usize,
@@ -702,3 +705,5 @@ mod tests {
         assert!(!is_cascading);
     }
 }
+
+

@@ -927,3 +927,5 @@ mod tests {
         assert!(dashboard.get_latest("value").is_some());
     }
 }
+
+

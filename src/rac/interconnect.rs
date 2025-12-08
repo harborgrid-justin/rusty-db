@@ -93,6 +93,7 @@ pub struct Message {
 
 /// Message type classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Hash)]
 pub enum MessageType {
     /// Heartbeat message
     Heartbeat,
@@ -836,9 +837,14 @@ impl ClusterInterconnect {
                 tokio::select! {
                     _ = interval_timer.tick() => {
                         // Send heartbeats to all nodes
-                        let conns = connections.read();
+                        let conns_to_ping: Vec<_> = {
+                            let conns = connections.read();
+                            conns.iter()
+                                .map(|(id, conn)| (id.clone(), conn.clone()))
+                                .collect()
+                        };
 
-                        for (remote_node, conn) in conns.iter() {
+                        for (remote_node, conn) in conns_to_ping {
                             let message = Message {
                                 message_id: 0,
                                 source: node_id.clone(),
@@ -993,3 +999,5 @@ mod tests {
         assert_eq!(*conn.state.read(), ConnectionState::Disconnected);
     }
 }
+
+

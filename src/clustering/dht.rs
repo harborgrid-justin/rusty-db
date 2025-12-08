@@ -755,3 +755,5 @@ mod tests {
         assert!(metrics.is_hot_spot(10000.0, 10 * 1024 * 1024 * 1024));
     }
 }
+
+

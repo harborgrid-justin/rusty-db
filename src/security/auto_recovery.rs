@@ -228,7 +228,8 @@ pub struct ProcessHealth {
     pub memory_bytes: u64,
     /// Thread count
     pub thread_count: usize,
-    /// Last heartbeat
+    /// Last heartbeat (skipped for serialization)
+    #[serde(skip, default = "Instant::now")]
     pub last_heartbeat: Instant,
     /// Is healthy
     pub is_healthy: bool,
@@ -1599,12 +1600,14 @@ impl AutoRecoveryManager {
     /// Recover from failure
     async fn recover_from_failure(&self, failure: DetectedFailure) -> Result<()> {
         // Check concurrent recovery limit
-        {
+        let should_delay = {
             let active = self.active_recoveries.read();
-            if active.len() >= self.config.max_concurrent_recoveries {
-                tracing::warn!("Recovery delayed: too many concurrent recoveries");
-                sleep(Duration::from_secs(5)).await;
-            }
+            active.len() >= self.config.max_concurrent_recoveries
+        };
+
+        if should_delay {
+            tracing::warn!("Recovery delayed: too many concurrent recoveries");
+            sleep(Duration::from_secs(5)).await;
         }
 
         // Mark as active
@@ -1947,3 +1950,5 @@ mod tests {
         manager.stop().await.unwrap();
     }
 }
+
+

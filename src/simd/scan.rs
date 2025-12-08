@@ -261,7 +261,7 @@ impl ColumnScan {
 
     /// Apply single filter to selection
     fn apply_filter(
-        &mut self,
+        &self,
         table: &ColumnarTable,
         filter: &FilterOp,
         input_selection: &SelectionVector,
@@ -327,7 +327,7 @@ impl ColumnScan {
 
     /// Filter sparse selection of i32 values
     fn filter_sparse_i32(
-        &mut self,
+        &self,
         data: &[i32],
         filter: &FilterOp,
         input_selection: &SelectionVector,
@@ -378,7 +378,7 @@ impl ColumnScan {
 
     /// Filter i64 column
     fn filter_i64(
-        &mut self,
+        &self,
         data: &[i64],
         filter: &FilterOp,
         input_selection: &SelectionVector,
@@ -418,7 +418,7 @@ impl ColumnScan {
 
     /// Filter f32 column
     fn filter_f32(
-        &mut self,
+        &self,
         data: &[f32],
         filter: &FilterOp,
         input_selection: &SelectionVector,
@@ -455,7 +455,7 @@ impl ColumnScan {
 
     /// Filter f64 column
     fn filter_f64(
-        &mut self,
+        &self,
         data: &[f64],
         filter: &FilterOp,
         input_selection: &SelectionVector,
@@ -492,7 +492,7 @@ impl ColumnScan {
 
     /// Filter string column
     fn filter_string(
-        &mut self,
+        &self,
         data: &[String],
         filter: &FilterOp,
         input_selection: &SelectionVector,
@@ -527,8 +527,8 @@ impl ColumnScan {
     }
 
     /// Filter boolean column
-    fn filter_boolean(
-        &mut self,
+    fn filter_bool(
+        &self,
         data: &[bool],
         filter: &FilterOp,
         input_selection: &SelectionVector,
@@ -558,7 +558,7 @@ impl ColumnScan {
 
     /// Filter nullable i32 column
     fn filter_nullable_i32(
-        &mut self,
+        &self,
         data: &[Option<i32>],
         filter: &FilterOp,
         input_selection: &SelectionVector,
@@ -770,3 +770,5 @@ mod tests {
         assert!(processor.next_batch(&data).is_none());
     }
 }
+
+

@@ -405,3 +405,5 @@ mod tests {
         assert_eq!(status.active_sessions, 0); // No sessions registered yet
     }
 }
+
+

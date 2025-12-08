@@ -869,3 +869,5 @@ mod tests {
         assert!(!commitment.verify(b"wrong value", &blinding));
     }
 }
+
+

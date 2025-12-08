@@ -1202,3 +1202,5 @@ mod tests {
         assert!(whitelister.validate("DROP TABLE users").is_err());
     }
 }
+
+

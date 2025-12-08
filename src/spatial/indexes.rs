@@ -173,7 +173,7 @@ impl RTree {
         d
     }
 
-    fn choose_subtree(&self, node: &RTreeNode, bbox: &BoundingBox) -> usize {
+    fn choose_subtree(node: &RTreeNode, bbox: &BoundingBox) -> usize {
         let mut min_enlargement = f64::INFINITY;
         let mut best_idx = 0;
 
@@ -318,7 +318,7 @@ impl SpatialIndex for RTree {
 
         if let Some(root) = &mut self.root {
             // Insert into existing tree
-            self.insert_entry(root, entry)?;
+            Self::insert_entry(root, entry, self.max_entries)?;
         } else {
             // Create first node
             self.root = Some(RTreeNode {
@@ -335,7 +335,7 @@ impl SpatialIndex for RTree {
 
     fn remove(&mut self, id: u64) -> Result<bool> {
         if let Some(root) = &mut self.root {
-            let removed = self.remove_from_node(root, id);
+            let removed = Self::remove_from_node(root, id);
             if removed {
                 self.size -= 1;
             }
@@ -382,19 +382,19 @@ impl SpatialIndex for RTree {
 }
 
 impl RTree {
-    fn insert_entry(&mut self, node: &mut RTreeNode, entry: RTreeEntry) -> Result<()> {
+    fn insert_entry(node: &mut RTreeNode, entry: RTreeEntry, max_entries: usize) -> Result<()> {
         if node.is_leaf {
-            node.entries.push(entry);
             node.bbox.expand(entry.bbox());
+            node.entries.push(entry);
 
-            if node.entries.len() > self.max_entries {
+            if node.entries.len() > max_entries {
                 // Need to split
                 // In a full implementation, would handle split propagation
             }
         } else {
-            let idx = self.choose_subtree(node, entry.bbox());
+            let idx = Self::choose_subtree(node, entry.bbox());
             if let RTreeEntry::Internal { node: child } = &mut node.entries[idx] {
-                self.insert_entry(child, entry)?;
+                Self::insert_entry(child, entry, max_entries)?;
                 node.bbox.expand(&child.bbox);
             }
         }
@@ -402,7 +402,7 @@ impl RTree {
         Ok(())
     }
 
-    fn remove_from_node(&mut self, node: &mut RTreeNode, id: u64) -> bool {
+    fn remove_from_node(node: &mut RTreeNode, id: u64) -> bool {
         if node.is_leaf {
             if let Some(pos) = node.entries.iter().position(|e| {
                 matches!(e, RTreeEntry::Leaf { id: eid, .. } if *eid == id)
@@ -413,7 +413,7 @@ impl RTree {
         } else {
             for entry in &mut node.entries {
                 if let RTreeEntry::Internal { node: child } = entry {
-                    if self.remove_from_node(child, id) {
+                    if Self::remove_from_node(child, id) {
                         return true;
                     }
                 }
@@ -496,10 +496,11 @@ impl Quadtree {
     }
 
     fn insert_into_node(
-        &self,
         node: &mut QuadtreeNode,
         id: u64,
         point: Coordinate,
+        max_points: usize,
+        max_depth: usize,
     ) -> Result<()> {
         if !node.bounds.contains_coord(&point) {
             return Err(DbError::InvalidInput("Point outside node bounds".to_string()));
@@ -516,12 +517,12 @@ impl Quadtree {
                 if point.y < mid_y { 1 } else { 3 }
             };
 
-            self.insert_into_node(&mut children[child_idx], id, point)?;
+            Self::insert_into_node(&mut children[child_idx], id, point, max_points, max_depth)?;
         } else {
             node.points.push((id, point));
 
             // Subdivide if necessary
-            if node.points.len() > self.max_points && node.depth < self.max_depth {
+            if node.points.len() > max_points && node.depth < max_depth {
                 let subdivisions = Self::subdivide_bounds(&node.bounds);
                 let mut children = [
                     Box::new(QuadtreeNode {
@@ -596,7 +597,7 @@ impl SpatialIndex for Quadtree {
         let point = bbox.center();
 
         if let Some(root) = &mut self.root {
-            self.insert_into_node(root, id, point)?;
+            Self::insert_into_node(root, id, point, self.max_points, self.max_depth)?;
         } else {
             self.root = Some(QuadtreeNode {
                 bounds: self.bounds,
@@ -999,3 +1000,5 @@ mod tests {
         assert!(!results.contains(&2));
     }
 }
+
+

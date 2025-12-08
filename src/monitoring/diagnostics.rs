@@ -711,3 +711,5 @@ mod tests {
         assert_eq!(results[0].status, HealthStatus::Healthy);
     }
 }
+
+

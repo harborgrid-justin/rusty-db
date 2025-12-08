@@ -752,3 +752,5 @@ mod tests {
         assert_eq!(branchfree_select_i64(false, 42, 99), 99);
     }
 }
+
+

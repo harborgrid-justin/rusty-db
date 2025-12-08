@@ -100,7 +100,7 @@ impl Default for BenchConfig {
 // ============================================================================
 
 /// Detailed performance metrics for benchmarks
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct BenchMetrics {
     /// Total operations executed
     pub total_ops: AtomicU64,
@@ -1177,3 +1177,5 @@ mod tests {
         assert!(!page.is_pinned());
     }
 }
+
+

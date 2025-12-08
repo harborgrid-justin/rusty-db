@@ -845,6 +845,26 @@ impl AuthenticationManager {
     fn clear_failed_logins(&self, username: &str) {
         self.failed_logins.write().remove(username);
     }
+
+    /// Get the number of active sessions
+    pub fn session_count(&self) -> usize {
+        self.sessions.read().len()
+    }
+
+    /// Get the number of registered users
+    pub fn user_count(&self) -> usize {
+        self.users.read().len()
+    }
+
+    /// Get access to users (for internal security module use)
+    pub(crate) fn users(&self) -> &Arc<RwLock<HashMap<UserId, UserAccount>>> {
+        &self.users
+    }
+
+    /// Get access to sessions (for internal security module use)
+    pub(crate) fn sessions(&self) -> &Arc<RwLock<HashMap<SessionId, AuthSession>>> {
+        &self.sessions
+    }
 }
 
 impl Default for AuthenticationManager {
@@ -908,7 +928,7 @@ mod tests {
 
         // Update user status to active (skip password change requirement for test)
         {
-            let mut users = manager.users.write();
+            let mut users = manager.users().write();
             let user = users.get_mut(&user_id).unwrap();
             user.status = AccountStatus::Active;
         }
@@ -926,3 +946,5 @@ mod tests {
         assert!(matches!(result, LoginResult::Success { .. }));
     }
 }
+
+

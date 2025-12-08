@@ -647,3 +647,5 @@ mod tests {
         assert!(sql.contains("DELETE FROM table_1"));
     }
 }
+
+

@@ -233,7 +233,7 @@ impl Ord for Value {
 // ============================================================================
 
 /// Represents a row of data with values and metadata
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tuple {
     /// Column values in order
     pub values: Vec<Value>,
@@ -246,6 +246,17 @@ pub struct Tuple {
 
     /// Transaction ID that deleted this version (for MVCC)
     pub xmax: Option<TransactionId>,
+}
+
+impl Default for Tuple {
+    fn default() -> Self {
+        Self {
+            values: Vec::new(),
+            row_id: 0,
+            xmin: None,
+            xmax: None,
+        }
+    }
 }
 
 impl Tuple {
@@ -278,7 +289,7 @@ impl Tuple {
 }
 
 /// Database schema definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Schema {
     /// Table name
     pub table_name: String,
@@ -306,6 +317,11 @@ impl Schema {
             foreign_keys: Vec::new(),
             unique_constraints: Vec::new(),
         }
+    }
+
+    /// Create an empty schema
+    pub fn empty() -> Self {
+        Self::default()
     }
 
     /// Get column by name
@@ -883,3 +899,5 @@ mod tests {
         assert!(!snapshot.is_visible(100)); // After snapshot
     }
 }
+
+

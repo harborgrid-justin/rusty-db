@@ -94,6 +94,7 @@ pub use quantization::{
 };
 
 use crate::error::{DbError, Result};
+use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
 /// ML-specific error types
@@ -234,12 +235,12 @@ impl Dataset {
 }
 
 /// Hyperparameters for ML algorithms
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Hyperparameters {
     params: HashMap<String, HyperparameterValue>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum HyperparameterValue {
     Float(f64),
     Int(i64),
@@ -394,3 +395,5 @@ mod tests {
         assert_eq!(params.get_bool("verbose"), Some(true));
     }
 }
+
+

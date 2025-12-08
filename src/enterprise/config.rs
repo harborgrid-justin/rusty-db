@@ -283,7 +283,7 @@ impl ConfigManager {
     pub async fn load_from_file(&self, path: impl AsRef<Path>) -> Result<()> {
         let path = path.as_ref();
         let contents = tokio::fs::read_to_string(path).await
-            .map_err(|e| DbError::Io(format!("Failed to read config file: {}", e)))?;
+            .map_err(|e| DbError::IoError(format!("Failed to read config file: {}", e)))?;
 
         let config: HashMap<String, ConfigValue> = serde_json::from_str(&contents)
             .map_err(|e| DbError::InvalidInput(format!("Invalid config JSON: {}", e)))?;
@@ -313,7 +313,7 @@ impl ConfigManager {
         };
 
         tokio::fs::write(&save_path, json).await
-            .map_err(|e| DbError::Io(format!("Failed to write config file: {}", e)))?;
+            .map_err(|e| DbError::IoError(format!("Failed to write config file: {}", e)))?;
 
         Ok(())
     }
@@ -748,3 +748,5 @@ mod tests {
         assert_eq!(value.as_string(), Some("value1"));
     }
 }
+
+

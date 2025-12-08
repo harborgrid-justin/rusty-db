@@ -324,7 +324,7 @@ impl Default for MVCCConfig {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MVCCStats {
     pub total_versions: u64,
     pub active_versions: u64,
@@ -798,3 +798,5 @@ mod tests {
         assert!(si.check_write_conflicts(1).is_err() || si.check_write_conflicts(2).is_err());
     }
 }
+
+

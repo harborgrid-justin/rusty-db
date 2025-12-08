@@ -361,7 +361,7 @@ impl Default for WALConfig {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct WALStats {
     pub total_records: u64,
     pub total_bytes: u64,
@@ -764,7 +764,7 @@ pub struct StandbyServer {
     pub last_applied_lsn: Arc<AtomicU64>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct LogShippingStats {
     pub total_shipped: u64,
     pub total_bytes_shipped: u64,
@@ -882,7 +882,7 @@ impl Default for CheckpointConfig {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CheckpointStats {
     pub total_checkpoints: u64,
     pub avg_checkpoint_time_ms: f64,
@@ -1018,3 +1018,5 @@ mod tests {
         assert!(buffer.should_flush(100, Duration::from_secs(1)));
     }
 }
+
+

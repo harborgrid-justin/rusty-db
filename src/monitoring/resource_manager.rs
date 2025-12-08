@@ -188,7 +188,9 @@ pub struct QueryResourceUsage {
     pub query_id: u64,
     pub session_id: u64,
     pub resource_group: String,
+    #[serde(skip, default = "Instant::now")]
     pub start_time: Instant,
+    #[serde(skip)]
     pub timeout: Option<Duration>,
     pub cpu_time_us: u64,
     pub memory_bytes: u64,
@@ -680,3 +682,5 @@ mod tests {
         assert_eq!(prediction, Some(50.0));
     }
 }
+
+

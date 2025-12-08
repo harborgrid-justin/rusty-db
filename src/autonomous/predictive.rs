@@ -264,23 +264,23 @@ impl ResourceExhaustionForecaster {
     }
 
     pub fn record_cpu_usage(&mut self, usage_percent: f64) {
-        self.add_to_history(&mut self.cpu_history, usage_percent);
+        Self::add_to_history(&mut self.cpu_history, usage_percent, self.max_history);
     }
 
     pub fn record_memory_usage(&mut self, usage_percent: f64) {
-        self.add_to_history(&mut self.memory_history, usage_percent);
+        Self::add_to_history(&mut self.memory_history, usage_percent, self.max_history);
     }
 
     pub fn record_disk_io(&mut self, io_percent: f64) {
-        self.add_to_history(&mut self.disk_io_history, io_percent);
+        Self::add_to_history(&mut self.disk_io_history, io_percent, self.max_history);
     }
 
     pub fn record_network(&mut self, network_percent: f64) {
-        self.add_to_history(&mut self.network_history, network_percent);
+        Self::add_to_history(&mut self.network_history, network_percent, self.max_history);
     }
 
-    fn add_to_history(&mut self, history: &mut VecDeque<TimeSeriesDataPoint>, value: f64) {
-        if history.len() >= self.max_history {
+    fn add_to_history(history: &mut VecDeque<TimeSeriesDataPoint>, value: f64, max_history: usize) {
+        if history.len() >= max_history {
             history.pop_front();
         }
 
@@ -642,3 +642,5 @@ mod tests {
         assert!(window.start_hour >= 22 || window.start_hour <= 2);
     }
 }
+
+

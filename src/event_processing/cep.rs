@@ -1267,10 +1267,11 @@ pub struct CorrelationRule {
 
 impl CorrelationRule {
     pub fn new(name: impl Into<String>, event_types: Vec<String>) -> Self {
+        let min_events = event_types.len();
         Self {
             name: name.into(),
             event_types,
-            min_events: event_types.len(),
+            min_events,
         }
     }
 
@@ -1362,3 +1363,5 @@ mod tests {
         assert!(!correlated.is_empty());
     }
 }
+
+

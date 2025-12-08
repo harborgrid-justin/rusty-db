@@ -389,8 +389,8 @@ impl IntegratedSecurityManager {
             privilege_stats: self.privileges.get_statistics(),
             label_stats: self.labels.get_statistics(),
             fgac_stats: self.fgac.get_statistics(),
-            active_sessions: self.authentication.sessions.read().len(),
-            total_users: self.authentication.users.read().len(),
+            active_sessions: self.authentication.session_count(),
+            total_users: self.authentication.user_count(),
             threat_stats: self.insider_threat.get_statistics(),
         }
     }
@@ -454,7 +454,7 @@ mod tests {
 
         // Update user status to active
         {
-            let mut users = security.authentication.users.write();
+            let mut users = security.authentication.users().write();
             if let Some(user) = users.get_mut(&user_id) {
                 user.status = authentication::AccountStatus::Active;
             }
@@ -592,3 +592,5 @@ pub use security_core::{
     SecurityPostureScore, PenTestReport, PenTestSummary,
     DashboardView, ExecutiveSummary, SecurityStatus,
 };
+
+

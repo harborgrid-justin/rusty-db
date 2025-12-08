@@ -733,3 +733,5 @@ mod tests {
         assert!(highlighted.contains("<b>fox</b>"));
     }
 }
+
+

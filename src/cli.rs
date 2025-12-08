@@ -121,3 +121,5 @@ fn print_result(result: &QueryResult) {
     
     println!("{} row(s) affected", result.rows_affected);
 }
+
+

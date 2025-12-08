@@ -675,3 +675,5 @@ mod tests {
         assert!(matches!(event.status, FailoverStatus::Completed { .. }));
     }
 }
+
+

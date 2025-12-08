@@ -727,3 +727,5 @@ mod tests {
         assert_eq!(hash_index, Some(IndexType::Hash));
     }
 }
+
+

@@ -976,3 +976,5 @@ mod tests {
         assert_eq!(comparison.changed_columns[0].column_index, 0);
     }
 }
+
+

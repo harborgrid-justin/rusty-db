@@ -549,9 +549,13 @@ impl GlobalCacheService {
 
         // Wait for response with timeout
         match tokio::time::timeout(TRANSFER_TIMEOUT, response_rx).await {
-            Ok(Ok(grant)) => {
+            Ok(Ok(Ok(grant))) => {
                 self.stats.write().successful_grants += 1;
                 Ok(grant)
+            }
+            Ok(Ok(Err(e))) => {
+                self.stats.write().failed_requests += 1;
+                Err(e)
             }
             Ok(Err(_)) => {
                 self.stats.write().failed_requests += 1;
@@ -1021,7 +1025,7 @@ impl GlobalEnqueueService {
 
         // Wait for grant with timeout
         match tokio::time::timeout(LOCK_CONVERSION_TIMEOUT, response_rx).await {
-            Ok(Ok(grant)) => {
+            Ok(Ok(Ok(grant))) => {
                 let elapsed = wait_start.elapsed().as_micros() as u64;
                 let mut stats = self.stats.write();
                 stats.successful_grants += 1;
@@ -1029,6 +1033,7 @@ impl GlobalEnqueueService {
                     (stats.avg_lock_wait_time_us + elapsed) / 2;
                 Ok(grant)
             }
+            Ok(Ok(Err(e))) => Err(e),
             Ok(Err(_)) => Err(DbError::Internal("Lock request channel closed".to_string())),
             Err(_) => Err(DbError::LockTimeout),
         }
@@ -1308,3 +1313,5 @@ mod tests {
         assert!(grant.is_ok());
     }
 }
+
+

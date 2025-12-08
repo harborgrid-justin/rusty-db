@@ -160,6 +160,88 @@ pub enum DbError {
 
     #[error("Memory error: {0}")]
     Memory(String),
+
+    #[error("Corruption error: {0}")]
+    CorruptionError(String),
+
+    #[error("Deadlock detected: {0}")]
+    DeadlockDetected(String),
+
+    #[error("Conflict: {0}")]
+    Conflict(String),
+
+    #[error("Constraint violation: {0}")]
+    ConstraintViolation(String),
+
+    #[error("Parse error: {0}")]
+    ParseError(String),
+}
+
+impl Clone for DbError {
+    fn clone(&self) -> Self {
+        match self {
+            DbError::Io(e) => DbError::IoError(e.to_string()),
+            DbError::SqlParse(s) => DbError::SqlParse(s.clone()),
+            DbError::Transaction(s) => DbError::Transaction(s.clone()),
+            DbError::Storage(s) => DbError::Storage(s.clone()),
+            DbError::Catalog(s) => DbError::Catalog(s.clone()),
+            DbError::Index(s) => DbError::Index(s.clone()),
+            DbError::Execution(s) => DbError::Execution(s.clone()),
+            DbError::Network(s) => DbError::Network(s.clone()),
+            DbError::Serialization(s) => DbError::Serialization(s.clone()),
+            DbError::LockTimeout => DbError::LockTimeout,
+            DbError::LockError(s) => DbError::LockError(s.clone()),
+            DbError::Unavailable(s) => DbError::Unavailable(s.clone()),
+            DbError::Deadlock => DbError::Deadlock,
+            DbError::NotFound(s) => DbError::NotFound(s.clone()),
+            DbError::AlreadyExists(s) => DbError::AlreadyExists(s.clone()),
+            DbError::InvalidInput(s) => DbError::InvalidInput(s.clone()),
+            DbError::InvalidOperation(s) => DbError::InvalidOperation(s.clone()),
+            DbError::NotImplemented(s) => DbError::NotImplemented(s.clone()),
+            DbError::Internal(s) => DbError::Internal(s.clone()),
+            DbError::Validation(s) => DbError::Validation(s.clone()),
+            DbError::BackupError(s) => DbError::BackupError(s.clone()),
+            DbError::Runtime(s) => DbError::Runtime(s.clone()),
+            DbError::Replication(s) => DbError::Replication(s.clone()),
+            DbError::InvalidArgument(s) => DbError::InvalidArgument(s.clone()),
+            DbError::ResourceExhausted(s) => DbError::ResourceExhausted(s.clone()),
+            DbError::SerializationError(s) => DbError::SerializationError(s.clone()),
+            DbError::Encryption(s) => DbError::Encryption(s.clone()),
+            DbError::IoError(s) => DbError::IoError(s.clone()),
+            DbError::OutOfMemory(s) => DbError::OutOfMemory(s.clone()),
+            DbError::TransactionError(s) => DbError::TransactionError(s.clone()),
+            DbError::LimitExceeded(s) => DbError::LimitExceeded(s.clone()),
+            DbError::IOError(s) => DbError::IOError(s.clone()),
+            DbError::Configuration(s) => DbError::Configuration(s.clone()),
+            DbError::PermissionDenied(s) => DbError::PermissionDenied(s.clone()),
+            DbError::Timeout(s) => DbError::Timeout(s.clone()),
+            DbError::Cluster(s) => DbError::Cluster(s.clone()),
+            DbError::Buffer(s) => DbError::Buffer(s.clone()),
+            DbError::Simd(s) => DbError::Simd(s.clone()),
+            DbError::Concurrent(s) => DbError::Concurrent(s.clone()),
+            DbError::CircuitBreakerOpen(s) => DbError::CircuitBreakerOpen(s.clone()),
+            DbError::BulkheadFull(s) => DbError::BulkheadFull(s.clone()),
+            DbError::Security(s) => DbError::Security(s.clone()),
+            DbError::InjectionAttempt(s) => DbError::InjectionAttempt(s.clone()),
+            DbError::InvalidRequest => DbError::InvalidRequest,
+            DbError::InvalidState(s) => DbError::InvalidState(s.clone()),
+            DbError::QuotaExceeded(s) => DbError::QuotaExceeded(s.clone()),
+            DbError::PageNotFound(s) => DbError::PageNotFound(s.clone()),
+            DbError::Other(s) => DbError::Other(s.clone()),
+            DbError::Authentication(s) => DbError::Authentication(s.clone()),
+            DbError::Authorization(s) => DbError::Authorization(s.clone()),
+            DbError::Compression(s) => DbError::Compression(s.clone()),
+            DbError::Recovery(s) => DbError::Recovery(s.clone()),
+            DbError::Memory(s) => DbError::Memory(s.clone()),
+            DbError::CorruptionError(s) => DbError::CorruptionError(s.clone()),
+            DbError::DeadlockDetected(s) => DbError::DeadlockDetected(s.clone()),
+            DbError::Conflict(s) => DbError::Conflict(s.clone()),
+            DbError::ConstraintViolation(s) => DbError::ConstraintViolation(s.clone()),
+            DbError::ParseError(s) => DbError::ParseError(s.clone()),
+        }
+    }
 }
 
 pub type Result<T> = std::result::Result<T, DbError>;
+
+

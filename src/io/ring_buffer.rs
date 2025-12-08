@@ -730,3 +730,5 @@ mod tests {
         assert_eq!(stats.pop_success_rate(), 0.8); // 4/5
     }
 }
+
+

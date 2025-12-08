@@ -637,3 +637,5 @@ mod tests {
         assert!(recommendation.should_compress);
     }
 }
+
+

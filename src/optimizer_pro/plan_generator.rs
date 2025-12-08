@@ -152,7 +152,7 @@ impl PlanGenerator {
             operator,
             cost: cost_estimate.total_cost,
             cardinality: cost_estimate.cardinality,
-            schema: Schema { columns: vec![] },
+            schema: Schema::default(),
             metadata: PlanMetadata {
                 created_at: SystemTime::now(),
                 optimizer_version: "1.0".to_string(),
@@ -194,7 +194,7 @@ impl PlanGenerator {
                     operator,
                     cost: cost_estimate.total_cost,
                     cardinality: cost_estimate.cardinality,
-                    schema: Schema { columns: vec![] },
+                    schema: Schema::default(),
                     metadata: PlanMetadata {
                         created_at: SystemTime::now(),
                         optimizer_version: "1.0".to_string(),
@@ -219,7 +219,7 @@ impl PlanGenerator {
                         operator,
                         cost: cost_estimate.total_cost,
                         cardinality: cost_estimate.cardinality,
-                        schema: Schema { columns: vec![] },
+                        schema: Schema::default(),
                         metadata: PlanMetadata {
                             created_at: SystemTime::now(),
                             optimizer_version: "1.0".to_string(),
@@ -262,7 +262,7 @@ impl PlanGenerator {
                     operator,
                     cost: cost_estimate.total_cost,
                     cardinality: cost_estimate.cardinality,
-                    schema: Schema { columns: vec![] },
+                    schema: Schema::default(),
                     metadata: PlanMetadata {
                         created_at: SystemTime::now(),
                         optimizer_version: "1.0".to_string(),
@@ -375,7 +375,7 @@ impl PlanGenerator {
             operator,
             cost: cost_estimate.total_cost,
             cardinality: cost_estimate.cardinality,
-            schema: Schema { columns: vec![] },
+            schema: Schema::default(),
             metadata: PlanMetadata {
                 created_at: SystemTime::now(),
                 optimizer_version: "1.0".to_string(),
@@ -416,7 +416,7 @@ impl PlanGenerator {
             operator,
             cost: cost_estimate.total_cost,
             cardinality: cost_estimate.cardinality,
-            schema: Schema { columns: vec![] },
+            schema: Schema::default(),
             metadata: PlanMetadata {
                 created_at: SystemTime::now(),
                 optimizer_version: "1.0".to_string(),
@@ -457,7 +457,7 @@ impl PlanGenerator {
             operator,
             cost: cost_estimate.total_cost,
             cardinality: cost_estimate.cardinality,
-            schema: Schema { columns: vec![] },
+            schema: Schema::default(),
             metadata: PlanMetadata {
                 created_at: SystemTime::now(),
                 optimizer_version: "1.0".to_string(),
@@ -495,7 +495,7 @@ impl PlanGenerator {
                     operator,
                     cost: cost_estimate.total_cost,
                     cardinality: cost_estimate.cardinality,
-                    schema: Schema { columns: vec![] },
+                    schema: Schema::default(),
                     metadata: PlanMetadata {
                         created_at: SystemTime::now(),
                         optimizer_version: "1.0".to_string(),
@@ -521,7 +521,7 @@ impl PlanGenerator {
                     operator,
                     cost: cost_estimate.total_cost,
                     cardinality: cost_estimate.cardinality,
-                    schema: Schema { columns: vec![] },
+                    schema: Schema::default(),
                     metadata: PlanMetadata {
                         created_at: SystemTime::now(),
                         optimizer_version: "1.0".to_string(),
@@ -559,7 +559,7 @@ impl PlanGenerator {
                 operator,
                 cost: cost_estimate.total_cost,
                 cardinality: cost_estimate.cardinality,
-                schema: Schema { columns: vec![] },
+                schema: Schema::default(),
                 metadata: PlanMetadata {
                     created_at: SystemTime::now(),
                     optimizer_version: "1.0".to_string(),
@@ -598,7 +598,7 @@ impl PlanGenerator {
                 operator,
                 cost: cost_estimate.total_cost,
                 cardinality: cost_estimate.cardinality,
-                schema: Schema { columns: vec![] },
+                schema: Schema::default(),
                 metadata: PlanMetadata {
                     created_at: SystemTime::now(),
                     optimizer_version: "1.0".to_string(),
@@ -1049,3 +1049,5 @@ mod tests {
         assert!(plans.is_ok());
     }
 }
+
+

@@ -598,7 +598,7 @@ impl<T> Drop for SecureBuffer<T> {
 // ============================================================================
 
 /// Metadata for tracking allocations
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct AllocationMetadata {
     /// Magic value for validation
     magic: AtomicU64,
@@ -614,6 +614,20 @@ struct AllocationMetadata {
     access_count: AtomicU64,
     /// Is this allocation freed?
     is_freed: AtomicBool,
+}
+
+impl Clone for AllocationMetadata {
+    fn clone(&self) -> Self {
+        Self {
+            magic: AtomicU64::new(self.magic.load(Ordering::SeqCst)),
+            size: self.size,
+            address: self.address,
+            allocated_at: self.allocated_at,
+            last_accessed: AtomicU64::new(self.last_accessed.load(Ordering::SeqCst)),
+            access_count: AtomicU64::new(self.access_count.load(Ordering::SeqCst)),
+            is_freed: AtomicBool::new(self.is_freed.load(Ordering::SeqCst)),
+        }
+    }
 }
 
 impl AllocationMetadata {
@@ -1186,3 +1200,5 @@ mod tests {
         assert!(result.is_ok());
     }
 }
+
+

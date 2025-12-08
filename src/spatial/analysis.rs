@@ -527,7 +527,7 @@ impl DelaunayTriangulation {
 
         // Create super-triangle that contains all points
         let super_triangle = self.create_super_triangle();
-        let mut triangles = vec![super_triangle];
+        let mut triangles = vec![super_triangle.clone()];
 
         // Add points one by one
         for point in &self.points {
@@ -923,3 +923,5 @@ mod tests {
         assert_eq!(cells.len(), 3);
     }
 }
+
+

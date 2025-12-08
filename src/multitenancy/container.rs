@@ -47,7 +47,7 @@ impl std::error::Error for ContainerError {}
 pub type ContainerResult<T> = Result<T, ContainerError>;
 
 /// PDB state enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub enum PdbState {
     Mounted,      // PDB is mounted but not open
     Open,         // PDB is open for read/write
@@ -983,3 +983,5 @@ mod tests {
         assert_eq!(config.state, PdbState::Closed);
     }
 }
+
+

@@ -1367,3 +1367,5 @@ mod tests {
         matches!(optimized, PlanNode::TableScan { .. });
     }
 }
+
+

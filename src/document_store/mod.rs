@@ -659,3 +659,5 @@ mod tests {
         assert_eq!(stats.total_documents, 1);
     }
 }
+
+

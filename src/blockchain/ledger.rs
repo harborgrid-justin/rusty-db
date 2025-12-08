@@ -405,7 +405,7 @@ pub struct BlockchainTable {
     /// Configuration
     config: BlockchainConfig,
     /// All blocks (ordered)
-    blocks: Arc<RwLock<BTreeMap<BlockId, Block>>>,
+    pub blocks: Arc<RwLock<BTreeMap<BlockId, Block>>>,
     /// Current open block
     current_block: Arc<RwLock<Option<Block>>>,
     /// Row index (row_id -> block_id)
@@ -415,7 +415,7 @@ pub struct BlockchainTable {
     /// Next row ID
     next_row_id: Arc<RwLock<RowId>>,
     /// Hash chain for all rows
-    hash_chain: Arc<RwLock<HashChain>>,
+    pub hash_chain: Arc<RwLock<HashChain>>,
     /// Statistics
     stats: Arc<RwLock<BlockchainStats>>,
 }
@@ -873,3 +873,5 @@ mod tests {
         assert!(!filter2.matches(&row));
     }
 }
+
+

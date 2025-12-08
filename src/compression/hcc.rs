@@ -979,3 +979,5 @@ mod tests {
         assert!(ratio > 8.0, "Should achieve >8:1 on repetitive booleans");
     }
 }
+
+

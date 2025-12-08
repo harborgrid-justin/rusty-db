@@ -650,3 +650,5 @@ mod tests {
         assert!(profile.is_statement_allowed("SELECT"));
     }
 }
+
+

@@ -254,7 +254,10 @@ impl<T> LockFreeQueue<T> {
     }
 
     /// Peek at the front item without removing it
-    pub fn peek(&self) -> Option<&T> {
+    pub fn peek(&self) -> Option<T>
+    where
+        T: Clone,
+    {
         let guard = Epoch::pin();
 
         loop {
@@ -272,7 +275,7 @@ impl<T> LockFreeQueue<T> {
 
             // Safety: Protected by epoch guard
             let next_ref = unsafe { next.as_ref().unwrap() };
-            return next_ref.data.as_ref();
+            return next_ref.data.clone();
         }
     }
 
@@ -622,3 +625,5 @@ mod tests {
         assert_eq!(items, vec![1, 2, 3]);
     }
 }
+
+

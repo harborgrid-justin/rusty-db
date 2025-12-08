@@ -80,7 +80,8 @@ pub struct ResourceEntry {
     /// Resource affinity score per instance
     pub affinity: HashMap<NodeId, AffinityScore>,
 
-    /// Last remaster timestamp
+    /// Last remaster timestamp (skipped for serialization)
+    #[serde(skip)]
     pub last_remaster: Option<Instant>,
 
     /// Resource flags
@@ -114,7 +115,7 @@ pub struct AccessStatistics {
 }
 
 /// Access pattern classification
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum AccessPattern {
     /// Hot - frequently accessed
     Hot,
@@ -126,17 +127,18 @@ pub enum AccessPattern {
     Cold,
 
     /// Unknown
+    #[default]
     Unknown,
 }
 
 /// Affinity score for resource placement
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AffinityScore {
     /// Access count from this instance
     pub access_count: u64,
 
     /// Last access timestamp
-    #[serde(skip)]
+    #[serde(skip, default = "Instant::now")]
     pub last_access: Instant,
 
     /// Average latency
@@ -144,6 +146,17 @@ pub struct AffinityScore {
 
     /// Computed score (higher = better affinity)
     pub score: f64,
+}
+
+impl Default for AffinityScore {
+    fn default() -> Self {
+        Self {
+            access_count: 0,
+            last_access: Instant::now(),
+            avg_latency_us: 0,
+            score: 0.0,
+        }
+    }
 }
 
 impl AffinityScore {
@@ -758,17 +771,22 @@ impl GlobalResourceDirectory {
             // Check if significantly overloaded
             if current_count > avg_resources + imbalance_threshold {
                 // Find underloaded instance
-                if let Some((target, target_count)) = resource_counts.iter()
+                let target_opt: Option<NodeId> = resource_counts.iter()
                     .filter(|(_, &count)| count < avg_resources - imbalance_threshold)
                     .min_by_key(|(_, &count)| count)
-                {
+                    .map(|(k, _)| k.clone());
+
+                if let Some(target) = target_opt {
+                    let old_master = bucket.master_instance.clone();
                     // Migrate bucket
                     bucket.master_instance = target.clone();
                     bucket.last_rebalance = Instant::now();
 
                     // Update counts for next iteration
-                    *resource_counts.get_mut(&bucket.master_instance).unwrap() -= bucket.resources.len();
-                    *resource_counts.entry(target.clone()).or_insert(0) += bucket.resources.len();
+                    if let Some(count) = resource_counts.get_mut(&old_master) {
+                        *count = count.saturating_sub(bucket.resources.len());
+                    }
+                    *resource_counts.entry(target).or_insert(0) += bucket.resources.len();
 
                     if self.config.proactive_balancing {
                         self.stats.write().proactive_rebalances += 1;
@@ -1020,3 +1038,5 @@ mod tests {
         assert_eq!(master.unwrap(), node_id);
     }
 }
+
+

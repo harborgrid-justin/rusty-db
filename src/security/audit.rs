@@ -65,6 +65,8 @@ pub enum AuditAction {
     StartDatabase,
     StopDatabase,
     ConfigChange,
+    DropDatabase,
+    CreateDatabase,
 
     // Security actions
     EnableEncryption,
@@ -854,3 +856,5 @@ mod tests {
         assert_eq!(results[0].username, "user1");
     }
 }
+
+

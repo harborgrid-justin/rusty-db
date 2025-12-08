@@ -718,3 +718,5 @@ mod tests {
         assert_eq!(aggregator.get_percentile("latency", 0.5), Some(20.0));
     }
 }
+
+

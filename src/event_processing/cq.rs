@@ -219,7 +219,7 @@ pub struct CQExecutor {
     materialized_view: Arc<RwLock<MaterializedView>>,
 
     /// Checkpoint manager
-    checkpoint_manager: CheckpointManager,
+    checkpoint_manager: RwLock<CheckpointManager>,
 
     /// Query optimizer
     optimizer: QueryOptimizer,
@@ -237,7 +237,7 @@ impl CQExecutor {
             state: Arc::new(RwLock::new(CQState::Created)),
             execution_state: Arc::new(RwLock::new(ExecutionState::new())),
             materialized_view: Arc::new(RwLock::new(MaterializedView::new(query.id.clone()))),
-            checkpoint_manager,
+            checkpoint_manager: RwLock::new(checkpoint_manager),
             optimizer: QueryOptimizer::new(query.config.clone()),
             metrics: Arc::new(RwLock::new(CQMetrics::default())),
         })
@@ -250,7 +250,7 @@ impl CQExecutor {
         drop(state);
 
         // Restore from checkpoint if available
-        if let Some(checkpoint) = self.checkpoint_manager.latest_checkpoint()? {
+        if let Some(checkpoint) = self.checkpoint_manager.read().unwrap().latest_checkpoint()? {
             self.restore_from_checkpoint(checkpoint)?;
         }
 
@@ -366,7 +366,7 @@ impl CQExecutor {
             view_snapshot: view.snapshot(),
         };
 
-        self.checkpoint_manager.save_checkpoint(checkpoint)?;
+        self.checkpoint_manager.write().unwrap().save_checkpoint(checkpoint)?;
 
         // Update checkpoint timestamp
         let mut exec_state = self.execution_state.write().unwrap();
@@ -818,3 +818,5 @@ mod tests {
         assert!(metrics.events_processed > 0);
     }
 }
+
+

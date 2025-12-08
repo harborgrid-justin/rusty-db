@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use parking_lot::{Mutex, RwLock, Condvar};
 use serde::{Deserialize, Serialize};
-use crate::{Result, DbError};
+use crate::error::DbError;
 use super::TransactionId;
 
 /// Lock granularity levels in hierarchical locking
@@ -840,3 +840,5 @@ mod tests {
         assert!(!txn_locks.contains(&row));
     }
 }
+
+

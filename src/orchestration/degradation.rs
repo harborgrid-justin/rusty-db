@@ -32,6 +32,7 @@ use crate::error::{DbError, Result};
 
 /// Degradation level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Hash)]
 pub enum DegradationLevel {
     /// Normal operation
     Normal = 0,
@@ -624,3 +625,5 @@ mod tests {
         assert!(stats.last_change.is_some());
     }
 }
+
+

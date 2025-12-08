@@ -174,9 +174,8 @@ impl<T> LockFreeStack<T> {
     }
 
     /// Peek at the top item without removing it
-    pub fn peek(&self) -> Option<&T> {
-        let guard = Epoch::pin();
-        let head = self.head.load(Ordering::Acquire, &guard);
+    pub fn peek<'g>(&self, guard: &'g EpochGuard) -> Option<&'g T> {
+        let head = self.head.load(Ordering::Acquire, guard);
 
         if head.is_null() {
             None
@@ -405,7 +404,7 @@ impl<T> EliminationArray<T> {
     }
 
     /// Try to exchange a value
-    pub fn visit(&self, value: Option<T>, is_push: bool) -> Option<T> {
+    pub fn visit(&self, mut value: Option<T>, is_push: bool) -> Option<T> {
         let range = self.range.load(Ordering::Relaxed);
         let slot_idx = fastrand::usize(..range.min(self.slots.len()));
         let slot = &self.slots[slot_idx];
@@ -418,7 +417,7 @@ impl<T> EliminationArray<T> {
                 Ordering::Acquire,
                 Ordering::Relaxed,
             ).is_ok() {
-                if let Some(v) = value {
+                if let Some(v) = value.take() {
                     let guard = Epoch::pin();
                     let owned = Owned::new(v);
                     slot.value.store(owned.into_shared(), Ordering::Release);
@@ -548,10 +547,15 @@ mod tests {
         let stack = LockFreeStack::new();
         stack.push(42);
 
-        assert_eq!(stack.peek(), Some(&42));
-        assert_eq!(stack.peek(), Some(&42));
+        let guard = Epoch::pin();
+        assert_eq!(stack.peek(&guard), Some(&42));
+        assert_eq!(stack.peek(&guard), Some(&42));
+        drop(guard);
+
         assert_eq!(stack.pop(), Some(42));
-        assert_eq!(stack.peek(), None);
+
+        let guard = Epoch::pin();
+        assert_eq!(stack.peek(&guard), None);
     }
 
     #[test]
@@ -662,3 +666,5 @@ mod tests {
         assert!(stack.is_empty());
     }
 }
+
+

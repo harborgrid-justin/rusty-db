@@ -907,3 +907,5 @@ mod tests {
         assert_eq!(report.total_issues, 0);
     }
 }
+
+

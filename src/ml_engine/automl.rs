@@ -701,3 +701,5 @@ mod tests {
         assert!(trial.mean_score > 0.0);
     }
 }
+
+

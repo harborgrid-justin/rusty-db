@@ -952,3 +952,5 @@ mod tests {
         assert_eq!(state.last_log_term(), 2);
     }
 }
+
+

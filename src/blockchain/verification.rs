@@ -632,18 +632,20 @@ impl TamperDetector {
     pub fn generate_report(table: &BlockchainTable) -> TamperReport {
         let issues = Self::detect_tampering(table);
         let stats = table.get_stats();
+        let issues_found = issues.len();
+        let status = if issues.is_empty() {
+            TamperStatus::Clean
+        } else {
+            TamperStatus::Compromised
+        };
 
         TamperReport {
             timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
             total_blocks: stats.total_blocks,
             total_rows: stats.total_rows,
-            issues_found: issues.len(),
+            issues_found,
             issues,
-            status: if issues.is_empty() {
-                TamperStatus::Clean
-            } else {
-                TamperStatus::Compromised
-            },
+            status,
         }
     }
 }
@@ -802,3 +804,5 @@ mod tests {
         assert_eq!(issue.row_id, Some(10));
     }
 }
+
+

@@ -217,7 +217,7 @@ impl QLearningAgent {
         )
     }
 
-    fn action_key(&self, parameter: &TunableParameter, direction: i32) -> String {
+    fn action_key(parameter: &TunableParameter, direction: i32) -> String {
         format!("{:?}_{}", parameter, if direction > 0 { "inc" } else { "dec" })
     }
 
@@ -248,7 +248,7 @@ impl QLearningAgent {
 
         for param in available_parameters {
             for &direction in &[1i32, -1i32] {
-                let action_key = self.action_key(param, direction);
+                let action_key = Self::action_key(param, direction);
                 let q = *q_values.get(&action_key).unwrap_or(&0.0);
 
                 if q > best_q {
@@ -273,7 +273,7 @@ impl QLearningAgent {
         next_state: &RLState,
     ) {
         let state_key = self.state_key(state);
-        let action_key = self.action_key(&action.0, action.1);
+        let action_key = Self::action_key(&action.0, action.1);
 
         let current_q = *self.q_table
             .entry(state_key.clone())
@@ -662,7 +662,8 @@ impl AutoTuner {
             }
 
             // Check for regression
-            if let Some(degradation) = self.regression_detector.read().detect_regression() {
+            let regression = self.regression_detector.read().detect_regression();
+            if let Some(degradation) = regression {
                 tracing::warn!("Performance regression detected: {:.2}%", degradation * 100.0);
 
                 // Rollback recent changes if regression is severe
@@ -685,7 +686,8 @@ impl AutoTuner {
 
             let current_state = self.build_rl_state(&workload);
 
-            if let Some((param, direction)) = self.rl_agent.write().select_action(&current_state, &available_params) {
+            let action_selection = self.rl_agent.write().select_action(&current_state, &available_params);
+            if let Some((param, direction)) = action_selection {
                 // Apply action
                 if let Some(action) = self.create_action_from_rl(param, direction, &workload) {
                     match self.apply_and_evaluate(action).await {
@@ -887,3 +889,5 @@ mod tests {
         assert!(gatherer.should_gather_stats("test_table", 1000));
     }
 }
+
+

@@ -3233,3 +3233,5 @@ pub use optimization::{CteCostModel, CteSelectivityEstimator, CteCardinalityEsti
 pub use transformation::{CteSubqueryFlattener, CteCommonExpressionEliminator, CtePredicateFactorizer};
 pub use integration::{CteSqlGenerator, CteValidator, CteSerializer};
 pub use documentation::CteExamples;
+
+

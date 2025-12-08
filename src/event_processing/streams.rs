@@ -161,7 +161,8 @@ impl PartitionStrategy {
     pub fn get_partition(&self, event: &Event, partition_counter: &mut u32) -> u32 {
         match self {
             PartitionStrategy::Hash { num_partitions } => {
-                let key = event.partition_key.as_ref().unwrap_or(&event.id.to_string());
+                let id_string = event.id.to_string();
+                let key = event.partition_key.as_ref().unwrap_or(&id_string);
                 let hash = Self::hash_string(key);
                 hash % num_partitions
             }
@@ -171,7 +172,8 @@ impl PartitionStrategy {
                 partition
             }
             PartitionStrategy::Range { ranges } => {
-                let key = event.partition_key.as_ref().unwrap_or(&event.id.to_string());
+                let id_string = event.id.to_string();
+                let key = event.partition_key.as_ref().unwrap_or(&id_string);
                 for (i, range) in ranges.iter().enumerate() {
                     if key >= range {
                         return i as u32;
@@ -1173,3 +1175,5 @@ mod tests {
         assert!(partition < 4);
     }
 }
+
+

@@ -964,3 +964,5 @@ mod tests {
         assert!(!manager.collection_exists("users"));
     }
 }
+
+

@@ -279,7 +279,7 @@ impl ServiceRegistry {
             .get(&type_id)
             .ok_or_else(|| DbError::Internal(format!("Service not registered: {:?}", type_id)))?;
 
-        let metadata = factory.metadata();
+        let metadata = factory.metadata().clone();
 
         // Create instance based on lifetime
         match metadata.lifetime {
@@ -744,3 +744,5 @@ mod tests {
         assert_eq!(scopes.len(), 1);
     }
 }
+
+

@@ -695,3 +695,5 @@ mod tests {
         assert!(cost > 0.0);
     }
 }
+
+

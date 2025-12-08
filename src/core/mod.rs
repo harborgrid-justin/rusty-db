@@ -1117,3 +1117,5 @@ mod tests {
         assert_eq!(core.get_state(), CoreState::Running);
     }
 }
+
+

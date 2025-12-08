@@ -195,7 +195,7 @@ pub enum PhysicalOperator {
 
 /// Physical execution plan
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PhysicalPlan {
     /// Plan identifier
     pub plan_id: PlanId,
@@ -213,7 +213,7 @@ pub struct PhysicalPlan {
 
 /// Plan metadata
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PlanMetadata {
     /// Creation timestamp
     pub created_at: SystemTime,
@@ -709,3 +709,5 @@ mod tests {
         assert!(cache.get(&fp3).is_some());
     }
 }
+
+

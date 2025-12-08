@@ -357,7 +357,7 @@ pub struct SecurePool {
     /// Blocks in use
     used_blocks: AtomicUsize,
     /// Sanitization pattern
-    pattern: MemorySanitizer::Pattern,
+    pattern: Pattern,
 }
 
 impl SecurePool {
@@ -368,7 +368,7 @@ impl SecurePool {
             free_blocks: Mutex::new(VecDeque::with_capacity(initial_capacity)),
             total_blocks: AtomicUsize::new(0),
             used_blocks: AtomicUsize::new(0),
-            pattern: MemorySanitizer::Pattern::Dod522022M,
+            pattern: Pattern::Dod522022M,
         };
 
         // Pre-allocate blocks
@@ -604,7 +604,7 @@ pub struct DelayedSanitizer {
 struct SanitizationTask {
     ptr: *mut u8,
     size: usize,
-    pattern: MemorySanitizer::Pattern,
+    pattern: Pattern,
     enqueued_at: Instant,
 }
 
@@ -628,7 +628,7 @@ impl DelayedSanitizer {
         &self,
         ptr: *mut u8,
         size: usize,
-        pattern: MemorySanitizer::Pattern,
+        pattern: Pattern,
     ) {
         let mut queue = self.queue.lock();
 
@@ -877,7 +877,7 @@ mod tests {
     #[test]
     fn test_memory_sanitizer_zero() {
         let mut data = vec![0xAA; 100];
-        MemorySanitizer::sanitize_with_pattern(&mut data, MemorySanitizer::Pattern::Zero);
+        MemorySanitizer::sanitize_with_pattern(&mut data, Pattern::Zero);
         assert!(data.iter().all(|&b| b == 0));
     }
 
@@ -936,7 +936,7 @@ mod tests {
         let ptr = data.as_mut_ptr();
 
         unsafe {
-            sanitizer.queue_sanitization(ptr, data.len(), MemorySanitizer::Pattern::Zero);
+            sanitizer.queue_sanitization(ptr, data.len(), Pattern::Zero);
         }
 
         let stats = sanitizer.stats();
@@ -977,3 +977,5 @@ mod tests {
         assert!(data.iter().all(|&b| b == 0));
     }
 }
+
+

@@ -9,6 +9,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use futures::future::BoxFuture;
 use crate::{Result, DbError};
 use super::TransactionId;
 use super::wal::{WALManager, WALEntry, LogRecord, LSN, PageId};
@@ -282,6 +283,7 @@ impl ARIESRecoveryManager {
             .collect();
 
         // Save tables
+        let dirty_pages_len = dirty_pages.len();
         *self.transaction_table.write() = txn_table.clone();
         *self.dirty_page_table.write() = dirty_pages;
 
@@ -290,7 +292,7 @@ impl ARIESRecoveryManager {
         println!(
             "Analysis complete: {} transactions, {} dirty pages, {} to undo",
             txn_table.len(),
-            dirty_pages.len(),
+            dirty_pages_len,
             undo_list.len()
         );
 
@@ -392,38 +394,40 @@ impl ARIESRecoveryManager {
     }
 
     /// Redo a log record
-    async fn redo_record(&self, entry: &WALEntry) -> Result<()> {
-        match &entry.record {
-            LogRecord::Update { page_id, offset, after_image, .. } => {
-                // Apply after image to page
-                self.apply_to_page(*page_id, *offset, after_image).await?;
+    fn redo_record<'a>(&'a self, entry: &'a WALEntry) -> BoxFuture<'a, Result<()>> {
+        Box::pin(async move {
+            match &entry.record {
+                LogRecord::Update { page_id, offset, after_image, .. } => {
+                    // Apply after image to page
+                    self.apply_to_page(*page_id, *offset, after_image).await?;
+                }
+
+                LogRecord::Insert { page_id, offset, data, .. } => {
+                    // Insert data at offset
+                    self.apply_to_page(*page_id, *offset, data).await?;
+                }
+
+                LogRecord::Delete { page_id, offset, deleted_data, .. } => {
+                    // Mark as deleted (in production, this would update page)
+                    // For now, simulate
+                }
+
+                LogRecord::CLR { redo_operation, .. } => {
+                    // CLRs contain the redo operation
+                    self.redo_record(&WALEntry {
+                        lsn: entry.lsn,
+                        prev_lsn: entry.prev_lsn,
+                        record: *redo_operation.clone(),
+                        size: entry.size,
+                        checksum: entry.checksum,
+                    }).await?;
+                }
+
+                _ => {}
             }
 
-            LogRecord::Insert { page_id, offset, data, .. } => {
-                // Insert data at offset
-                self.apply_to_page(*page_id, *offset, data).await?;
-            }
-
-            LogRecord::Delete { page_id, offset, deleted_data, .. } => {
-                // Mark as deleted (in production, this would update page)
-                // For now, simulate
-            }
-
-            LogRecord::CLR { redo_operation, .. } => {
-                // CLRs contain the redo operation
-                self.redo_record(&WALEntry {
-                    lsn: entry.lsn,
-                    prev_lsn: entry.prev_lsn,
-                    record: *redo_operation.clone(),
-                    size: entry.size,
-                    checksum: entry.checksum,
-                }).await?;
-            }
-
-            _ => {}
-        }
-
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Undo a log record by writing a CLR
@@ -770,3 +774,5 @@ mod tests {
         assert_eq!(undo_list[0], 1);
     }
 }
+
+

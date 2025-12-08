@@ -884,14 +884,19 @@ impl CDCEngine {
                     continue;
                 }
 
-                let mut batch = current_batch.lock();
-                if !batch.is_empty() {
-                    let completed = std::mem::replace(
-                        &mut *batch,
-                        ChangeEventBatch::new(next_batch_id.fetch_add(1, Ordering::SeqCst)),
-                    );
-                    drop(batch);
+                let completed = {
+                    let mut batch = current_batch.lock();
+                    if !batch.is_empty() {
+                        Some(std::mem::replace(
+                            &mut *batch,
+                            ChangeEventBatch::new(next_batch_id.fetch_add(1, Ordering::SeqCst)),
+                        ))
+                    } else {
+                        None
+                    }
+                };
 
+                if let Some(completed) = completed {
                     let _ = flush_fn(completed).await;
                 }
             }
@@ -1015,3 +1020,5 @@ mod tests {
         assert_eq!(engine.get_state(), CaptureState::Stopped);
     }
 }
+
+

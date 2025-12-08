@@ -437,50 +437,52 @@ impl FileSinkConnector {
             self.open_file()?;
         }
 
-        let writer = self.writer.as_ref().unwrap();
-        let mut writer = writer.lock().unwrap();
+        {
+            let writer = self.writer.as_ref().unwrap();
+            let mut writer = writer.lock().unwrap();
 
-        match self.format {
-            FileFormat::Json => {
-                let json = serde_json::to_string_pretty(event).map_err(|e| {
-                    crate::error::DbError::Serialization(e.to_string())
-                })?;
-                writeln!(writer, "{}", json).map_err(|e| {
-                    crate::error::DbError::Io(e)
-                })?;
-                self.current_size += json.len() as u64;
-            }
+            match self.format {
+                FileFormat::Json => {
+                    let json = serde_json::to_string_pretty(event).map_err(|e| {
+                        crate::error::DbError::Serialization(e.to_string())
+                    })?;
+                    writeln!(writer, "{}", json).map_err(|e| {
+                        crate::error::DbError::Io(e)
+                    })?;
+                    self.current_size += json.len() as u64;
+                }
 
-            FileFormat::JsonLines => {
-                let json = serde_json::to_string(event).map_err(|e| {
-                    crate::error::DbError::Serialization(e.to_string())
-                })?;
-                writeln!(writer, "{}", json).map_err(|e| {
-                    crate::error::DbError::Io(e)
-                })?;
-                self.current_size += json.len() as u64;
-            }
+                FileFormat::JsonLines => {
+                    let json = serde_json::to_string(event).map_err(|e| {
+                        crate::error::DbError::Serialization(e.to_string())
+                    })?;
+                    writeln!(writer, "{}", json).map_err(|e| {
+                        crate::error::DbError::Io(e)
+                    })?;
+                    self.current_size += json.len() as u64;
+                }
 
-            FileFormat::Csv => {
-                // Simplified CSV output
-                let csv_line = format!(
-                    "{},{},{}\n",
-                    event.id,
-                    event.event_type,
-                    serde_json::to_string(&event.payload).unwrap_or_default()
-                );
-                write!(writer, "{}", csv_line).map_err(|e| {
-                    crate::error::DbError::Io(e)
-                })?;
-                self.current_size += csv_line.len() as u64;
-            }
+                FileFormat::Csv => {
+                    // Simplified CSV output
+                    let csv_line = format!(
+                        "{},{},{}\n",
+                        event.id,
+                        event.event_type,
+                        serde_json::to_string(&event.payload).unwrap_or_default()
+                    );
+                    write!(writer, "{}", csv_line).map_err(|e| {
+                        crate::error::DbError::Io(e)
+                    })?;
+                    self.current_size += csv_line.len() as u64;
+                }
 
-            FileFormat::Parquet => {
-                // Parquet writing would require apache-parquet crate
-                // Simplified for now
-                return Err(crate::error::DbError::NotImplemented(
-                    "Parquet format not yet implemented".to_string(),
-                ));
+                FileFormat::Parquet => {
+                    // Parquet writing would require apache-parquet crate
+                    // Simplified for now
+                    return Err(crate::error::DbError::NotImplemented(
+                        "Parquet format not yet implemented".to_string(),
+                    ));
+                }
             }
         }
 
@@ -559,7 +561,8 @@ impl SinkConnector for FileSinkConnector {
     }
 
     fn flush(&mut self) -> Result<()> {
-        for event in &self.buffer {
+        let events = self.buffer.clone();
+        for event in &events {
             self.write_event_to_file(event)?;
         }
 
@@ -852,3 +855,5 @@ mod tests {
         assert!(manager.get_sink("default").is_some());
     }
 }
+
+

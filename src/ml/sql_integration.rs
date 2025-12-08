@@ -657,3 +657,5 @@ mod tests {
         assert!(sql.contains("PREDICT"));
     }
 }
+
+

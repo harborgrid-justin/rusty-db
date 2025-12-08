@@ -561,29 +561,6 @@ impl ProbeSeq {
 }
 
 // Implement AsRef<[u8]> for common types
-impl AsRef<[u8]> for String {
-    fn as_ref(&self) -> &[u8] {
-        self.as_bytes()
-    }
-}
-
-impl AsRef<[u8]> for str {
-    fn as_ref(&self) -> &[u8] {
-        self.as_bytes()
-    }
-}
-
-impl AsRef<[u8]> for u64 {
-    fn as_ref(&self) -> &[u8] {
-        unsafe { std::slice::from_raw_parts(self as *const u64 as *const u8, 8) }
-    }
-}
-
-impl AsRef<[u8]> for i64 {
-    fn as_ref(&self) -> &[u8] {
-        unsafe { std::slice::from_raw_parts(self as *const i64 as *const u8, 8) }
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -690,3 +667,5 @@ mod tests {
         assert!(lf > 0.0 && lf < 1.0);
     }
 }
+
+

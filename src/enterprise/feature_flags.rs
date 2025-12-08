@@ -43,6 +43,7 @@ use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use sha2::{Sha256, Digest};
+use futures::future::BoxFuture;
 
 use crate::{Result, DbError};
 
@@ -393,69 +394,71 @@ impl FeatureFlagManager {
     }
 
     /// Evaluate a feature flag
-    pub async fn evaluate(&self, name: &str, context: &EvaluationContext) -> Result<EvaluationResult> {
-        // Check for overrides first (for testing)
-        {
-            let overrides = self.overrides.read().await;
-            if let Some(&enabled) = overrides.get(name) {
-                return Ok(EvaluationResult {
-                    enabled,
-                    reason: "Override".to_string(),
-                    variant: None,
-                });
+    pub fn evaluate<'a>(&'a self, name: &'a str, context: &'a EvaluationContext) -> BoxFuture<'a, Result<EvaluationResult>> {
+        Box::pin(async move {
+            // Check for overrides first (for testing)
+            {
+                let overrides = self.overrides.read().await;
+                if let Some(&enabled) = overrides.get(name) {
+                    return Ok(EvaluationResult {
+                        enabled,
+                        reason: "Override".to_string(),
+                        variant: None,
+                    });
+                }
             }
-        }
 
-        let features = self.features.read().await;
-        let feature = features.get(name)
-            .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
+            let features = self.features.read().await;
+            let feature = features.get(name)
+                .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
-        // Check dependencies
-        for dep in &feature.dependencies {
-            if !self.is_enabled(dep, context).await {
-                self.record_evaluation(name, context, false).await;
-                return Ok(EvaluationResult {
-                    enabled: false,
-                    reason: format!("Dependency '{}' not enabled", dep),
-                    variant: None,
-                });
+            // Check dependencies
+            for dep in &feature.dependencies {
+                if !self.is_enabled(dep, context).await {
+                    self.record_evaluation(name, context, false).await;
+                    return Ok(EvaluationResult {
+                        enabled: false,
+                        reason: format!("Dependency '{}' not enabled", dep),
+                        variant: None,
+                    });
+                }
             }
-        }
 
-        // Check conflicts
-        for conflict in &feature.conflicts {
-            if self.is_enabled(conflict, context).await {
-                self.record_evaluation(name, context, false).await;
-                return Ok(EvaluationResult {
-                    enabled: false,
-                    reason: format!("Conflicts with enabled feature '{}'", conflict),
-                    variant: None,
-                });
+            // Check conflicts
+            for conflict in &feature.conflicts {
+                if self.is_enabled(conflict, context).await {
+                    self.record_evaluation(name, context, false).await;
+                    return Ok(EvaluationResult {
+                        enabled: false,
+                        reason: format!("Conflicts with enabled feature '{}'", conflict),
+                        variant: None,
+                    });
+                }
             }
-        }
 
-        // Evaluate based on state and rollout
-        let enabled = match feature.state {
-            FeatureState::Enabled => true,
-            FeatureState::Disabled => false,
-            FeatureState::Conditional => feature.rollout.applies(context),
-        };
+            // Evaluate based on state and rollout
+            let enabled = match feature.state {
+                FeatureState::Enabled => true,
+                FeatureState::Disabled => false,
+                FeatureState::Conditional => feature.rollout.applies(context),
+            };
 
-        // Check for A/B test
-        let variant = {
-            let tests = self.ab_tests.read().await;
-            tests.values()
-                .find(|t| t.feature_id == name)
-                .and_then(|test| test.select_variant(&context.user_id))
-                .map(|v| v.name.clone())
-        };
+            // Check for A/B test
+            let variant = {
+                let tests = self.ab_tests.read().await;
+                tests.values()
+                    .find(|t| t.feature_id == name)
+                    .and_then(|test| test.select_variant(&context.user_id))
+                    .map(|v| v.name.clone())
+            };
 
-        self.record_evaluation(name, context, enabled).await;
+            self.record_evaluation(name, context, enabled).await;
 
-        Ok(EvaluationResult {
-            enabled,
-            reason: format!("State: {:?}, Rollout applies: {}", feature.state, enabled),
-            variant,
+            Ok(EvaluationResult {
+                enabled,
+                reason: format!("State: {:?}, Rollout applies: {}", feature.state, enabled),
+                variant,
+            })
         })
     }
 
@@ -682,3 +685,5 @@ mod tests {
         assert!(result.variant.is_some());
     }
 }
+
+

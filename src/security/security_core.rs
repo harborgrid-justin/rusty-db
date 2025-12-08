@@ -184,7 +184,7 @@ pub struct EvaluationContext {
 }
 
 /// Policy engine statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PolicyEngineStatistics {
     pub total_evaluations: u64,
     pub cache_hits: u64,
@@ -1851,3 +1851,5 @@ mod tests {
         assert_eq!(value, Some(42.0));
     }
 }
+
+

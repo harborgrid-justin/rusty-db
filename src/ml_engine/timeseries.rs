@@ -408,7 +408,7 @@ pub struct TrendAnalyzer {
     method: DecompositionMethod,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DecompositionMethod {
     Additive,
     Multiplicative,
@@ -747,3 +747,5 @@ mod tests {
         assert_eq!(anomalies[0].index, 50);
     }
 }
+
+

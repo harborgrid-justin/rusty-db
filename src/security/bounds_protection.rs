@@ -73,7 +73,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// - Automatic validation on drop
 /// - Panic on corruption (fail-safe)
 /// - Prevents CWE-121 (Stack-based Buffer Overflow)
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct StackCanary {
     /// Primary canary value (randomly generated)
     value: u64,
@@ -87,7 +87,7 @@ impl StackCanary {
         // Use atomic counter + thread ID for entropy
         static CANARY_COUNTER: AtomicU64 = AtomicU64::new(0xDEADBEEFCAFEBABE);
         let value = CANARY_COUNTER.fetch_add(1, Ordering::SeqCst)
-            ^ (std::thread::current().id().as_u64().get());
+            ^ fastrand::u64(..);
 
         Self {
             value,
@@ -1208,3 +1208,5 @@ mod tests {
         assert_eq!(OverflowGuard::saturating_sub(0usize, 1), 0);
     }
 }
+
+

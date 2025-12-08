@@ -800,3 +800,5 @@ mod tests {
         assert_eq!(trend.unwrap().direction, TrendDirection::Increasing);
     }
 }
+
+

@@ -412,14 +412,15 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
     /// Build leaf level for bulk loading
     fn build_leaf_level(&self, data: Vec<(K, V)>) -> Result<Vec<NodeRef<K, V>>> {
         let mut leaves = Vec::new();
-        let leaf_capacity = self.order - 1;
+        let order = self.order.load(AtomicOrdering::Relaxed);
+        let leaf_capacity = order - 1;
 
         let mut current_leaf: Option<Node<K, V>> = None;
         let mut prev_leaf: Option<NodeRef<K, V>> = None;
 
         for (key, value) in data {
             if current_leaf.is_none() {
-                current_leaf = Some(Node::new_leaf(self.order));
+                current_leaf = Some(Node::new_leaf(order));
             }
 
             let leaf = current_leaf.as_mut().unwrap();
@@ -462,12 +463,13 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
     /// Build internal levels for bulk loading
     fn build_internal_levels(&self, mut children: Vec<NodeRef<K, V>>) -> Result<NodeRef<K, V>> {
         let mut height = 1;
+        let order = self.order.load(AtomicOrdering::Relaxed);
 
         while children.len() > 1 {
             let mut parents = Vec::new();
-            let parent_capacity = self.order;
+            let parent_capacity = order;
 
-            let mut current_parent = Node::new_internal(self.order);
+            let mut current_parent = Node::new_internal(order);
 
             for (i, child) in children.into_iter().enumerate() {
                 if i > 0 {
@@ -483,7 +485,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
                 if current_parent.children.len() >= parent_capacity {
                     // Parent is full
                     parents.push(Arc::new(RwLock::new(current_parent)));
-                    current_parent = Node::new_internal(self.order);
+                    current_parent = Node::new_internal(order);
                 }
             }
 
@@ -811,3 +813,5 @@ mod tests {
         assert!(stats.leaf_nodes > 0);
     }
 }
+
+

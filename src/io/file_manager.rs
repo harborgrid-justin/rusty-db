@@ -13,7 +13,11 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::fs::{File, OpenOptions};
-use std::os::fd::AsRawFd;
+
+#[cfg(unix)]
+use std::os::unix::io::AsRawFd;
+#[cfg(windows)]
+use std::os::windows::io::AsRawHandle;
 
 #[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
@@ -763,3 +767,5 @@ mod tests {
         assert!(sync_opts.sync);
     }
 }
+
+

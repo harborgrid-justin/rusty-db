@@ -725,3 +725,5 @@ mod tests {
         assert!(stats.total_migrations > 0 || stats.hot_pages > 0);
     }
 }
+
+

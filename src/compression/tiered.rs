@@ -543,3 +543,5 @@ mod tests {
         assert_eq!(level as u8, CompressionLevel::Fast as u8);
     }
 }
+
+
