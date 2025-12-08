@@ -113,7 +113,7 @@ impl Feature {
 }
 
 /// Degradation trigger that determines when to degrade
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct DegradationTrigger {
     /// Trigger name
     pub name: String,
@@ -127,6 +127,19 @@ pub struct DegradationTrigger {
     pub latency_threshold: Option<u64>,
     /// Custom condition
     pub custom_condition: Option<Arc<dyn Fn() -> bool + Send + Sync>>,
+}
+
+impl std::fmt::Debug for DegradationTrigger {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DegradationTrigger")
+            .field("name", &self.name)
+            .field("cpu_threshold", &self.cpu_threshold)
+            .field("memory_threshold", &self.memory_threshold)
+            .field("error_rate_threshold", &self.error_rate_threshold)
+            .field("latency_threshold", &self.latency_threshold)
+            .field("custom_condition", &self.custom_condition.is_some())
+            .finish()
+    }
 }
 
 impl DegradationTrigger {

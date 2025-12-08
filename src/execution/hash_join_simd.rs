@@ -50,7 +50,6 @@
 //!
 //! Speedup: 13x improvement
 
-use crate::Result;
 use crate::error::DbError;
 use crate::execution::QueryResult;
 use crate::index::swiss_table::SwissTable;
@@ -121,7 +120,7 @@ impl SimdHashJoin {
         probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // Phase 1: Partition and build
         let partitions = self.partition_and_build(
             &build_side,
@@ -150,7 +149,7 @@ impl SimdHashJoin {
         &self,
         build_side: &QueryResult,
         key_col: usize,
-    ) -> Result<Vec<Partition>> {
+    ) -> std::result::Result<Vec<Partition>> {
         let num_partitions = self.config.num_partitions;
 
         // Create partitions
@@ -161,7 +160,7 @@ impl SimdHashJoin {
         let partitions = Arc::new(RwLock::new(partitions));
 
         // Partition build side in parallel
-        build_side.rows.par_iter().try_for_each(|row| -> Result<()> {
+        build_side.rows.par_iter().try_for_each(|row| -> std::result::Result<()> {
             if let Some(key) = row.get(key_col) {
                 let partition_id = self.hash_partition(key);
                 let mut parts = partitions.write();
@@ -211,7 +210,7 @@ impl SimdHashJoin {
         probe_side: &QueryResult,
         key_col: usize,
         partitions: &[Partition],
-    ) -> Result<Vec<Match>> {
+    ) -> std::result::Result<Vec<Match>> {
         // Partition probe side
         let probe_partitions: Vec<Vec<usize>> = {
             let mut parts: Vec<Vec<usize>> = vec![Vec::new(); self.config.num_partitions];
@@ -272,7 +271,7 @@ impl SimdHashJoin {
         build_side: &QueryResult,
         probe_side: &QueryResult,
         matches: Vec<Match>,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // Pre-allocate result with exact capacity
         let mut result_rows = Vec::with_capacity(matches.len());
         let result_row_size = probe_side.columns.len() + build_side.columns.len();

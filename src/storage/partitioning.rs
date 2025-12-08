@@ -8,8 +8,7 @@
 /// - Partition pruning optimization
 /// - Dynamic partition management
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 

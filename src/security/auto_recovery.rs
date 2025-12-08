@@ -43,11 +43,9 @@ use crate::{Result, DbError};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Duration, Instant, SystemTime};
-use parking_lot::{RwLock, Mutex};
-use tokio::sync::{mpsc, oneshot};
-use tokio::time::{interval, sleep};
+use parking_lot::RwLock;
 
 // ============================================================================
 // Constants

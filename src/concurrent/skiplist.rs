@@ -82,14 +82,19 @@ struct Node<K, V> {
 impl<K, V> Node<K, V> {
     /// Create a new node with the given key, value, and height
     fn new(key: K, value: V, height: usize) -> Self {
-        const INIT: Atomic<Node<(), ()>> = Atomic::null();
-        let next = [INIT; MAX_HEIGHT];
+        // Initialize array of null atomic pointers
+        let mut next: [Atomic<Node<K, V>>; MAX_HEIGHT] = unsafe {
+            std::mem::MaybeUninit::uninit().assume_init()
+        };
+        for i in 0..MAX_HEIGHT {
+            next[i] = Atomic::null();
+        }
 
         Self {
             key,
             value: Atomic::new(value),
             height,
-            next: unsafe { std::mem::transmute(next) },
+            next,
             marked: AtomicBool::new(false),
             fully_linked: AtomicBool::new(false),
             _padding: [],

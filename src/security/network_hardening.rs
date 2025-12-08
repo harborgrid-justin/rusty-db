@@ -29,12 +29,11 @@
 //! ```
 
 use crate::{Result, DbError};
-use parking_lot::{RwLock, Mutex};
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
-use std::net::{IpAddr, SocketAddr};
+use parking_lot::RwLock;
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::net::IpAddr;
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Serialize};
+use std::time::{Duration, Instant, SystemTime};
 use sha2::{Sha256, Digest};
 
 // ============================================================================

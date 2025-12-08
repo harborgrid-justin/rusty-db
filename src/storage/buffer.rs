@@ -3,10 +3,10 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use parking_lot::{RwLock, Mutex};
-use crate::Result;
-use crate::storage::page::{Page, PageId};
+use crate::error::{DbError, Result};
+use crate::storage::page::Page;
+use crate::common::PageId;
 use crate::storage::disk::DiskManager;
-use crate::error::DbError;
 
 /// Copy-on-Write page frame for zero-copy reads
 #[derive(Clone)]

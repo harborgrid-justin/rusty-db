@@ -9,14 +9,16 @@ pub mod columnar;
 
 pub use disk::{DiskManager, IoPriority, DirectIoConfig};
 pub use buffer::{BufferPoolManager, BufferPoolStats};
-pub use page::{Page, PageId, SlottedPage, PageSplitter, PageMerger};
+pub use page::{Page, SlottedPage, PageSplitter, PageMerger};
 pub use partitioning::{PartitionManager, PartitionStrategy, PartitionPruner};
 pub use json::{JsonData, JsonPath, JsonOperators};
 pub use tiered::{TieredStorageManager, StorageTier, TierStats};
 pub use lsm::{LsmTree, LsmStats};
 pub use columnar::{ColumnarTable, ColumnDef, ColumnType, ColumnValue};
+// Re-export PageId from common for convenience
+pub use crate::common::PageId;
 
-use crate::Result;
+use crate::error::Result;
 
 /// Storage engine that manages data persistence
 pub struct StorageEngine {

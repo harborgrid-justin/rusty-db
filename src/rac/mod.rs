@@ -63,7 +63,7 @@
 //! use rusty_db::rac::{RacCluster, RacConfig, ClusterNode};
 //! use rusty_db::Result;
 //!
-//! # async fn example() -> Result<()> {
+//! # async fn example() -> std::result::Result<(), rusty_db::error::DbError> {
 //! // Create a 3-node RAC cluster
 //! let config = RacConfig::default();
 //!
@@ -101,7 +101,7 @@ pub mod interconnect;
 pub mod recovery;
 pub mod parallel_query;
 
-use crate::{Result, DbError};
+use crate::error::DbError;
 use crate::common::{NodeId, Tuple};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -384,7 +384,7 @@ pub struct ClusterStatistics {
 
 impl RacCluster {
     /// Create a new RAC cluster
-    pub async fn new(cluster_name: &str, config: RacConfig) -> Result<Self> {
+    pub async fn new(cluster_name: &str, config: RacConfig) -> std::result::Result<Self, DbError> {
         let node_id = Self::generate_node_id();
 
         // Initialize interconnect
@@ -450,7 +450,7 @@ impl RacCluster {
     }
 
     /// Start the RAC cluster
-    pub async fn start(&self) -> Result<()> {
+    pub async fn start(&self) -> std::result::Result<(), DbError> {
         *self.state.write() = ClusterState::Forming;
 
         // Start interconnect
@@ -470,7 +470,7 @@ impl RacCluster {
     }
 
     /// Stop the RAC cluster
-    pub async fn stop(&self) -> Result<()> {
+    pub async fn stop(&self) -> std::result::Result<(), DbError> {
         *self.state.write() = ClusterState::ShuttingDown;
 
         // Stop interconnect
@@ -482,7 +482,7 @@ impl RacCluster {
     }
 
     /// Add a node to the cluster
-    pub async fn add_node(&self, node: ClusterNode) -> Result<()> {
+    pub async fn add_node(&self, node: ClusterNode) -> std::result::Result<(), DbError> {
         // Add to interconnect
         self.interconnect.add_node(node.node_id.clone(), node.address.clone()).await?;
 
@@ -501,7 +501,7 @@ impl RacCluster {
     }
 
     /// Remove a node from the cluster
-    pub async fn remove_node(&self, node_id: &NodeId) -> Result<()> {
+    pub async fn remove_node(&self, node_id: &NodeId) -> std::result::Result<(), DbError> {
         // Remove from interconnect
         self.interconnect.remove_node(node_id).await?;
 
@@ -524,7 +524,7 @@ impl RacCluster {
         &self,
         sql: &str,
         degree_of_parallelism: usize,
-    ) -> Result<Vec<Tuple>> {
+    ) -> std::result::Result<Vec<Tuple>, DbError> {
         // Create a simple query plan
         let plan = ParallelQueryPlan {
             query_id: Self::generate_query_id(),
@@ -644,7 +644,7 @@ impl RacCluster {
     }
 
     /// Perform graceful failover from one node to another
-    pub async fn failover(&self, from_node: NodeId, to_node: NodeId) -> Result<()> {
+    pub async fn failover(&self, from_node: NodeId, to_node: NodeId) -> std::result::Result<(), DbError> {
         // Initiate recovery for the failing node
         self.recovery.initiate_recovery(
             from_node.clone(),
@@ -664,7 +664,7 @@ impl RacCluster {
     }
 
     /// Rebalance resources across cluster
-    pub async fn rebalance(&self) -> Result<()> {
+    pub async fn rebalance(&self) -> std::result::Result<(), DbError> {
         self.grd.load_balance()?;
         Ok(())
     }

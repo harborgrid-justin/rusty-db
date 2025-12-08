@@ -42,7 +42,7 @@ use std::sync::{Arc, atomic::{AtomicU64, AtomicBool, Ordering}};
 use std::time::{Duration, SystemTime, Instant, UNIX_EPOCH};
 use parking_lot::{RwLock, Mutex};
 use serde::{Deserialize, Serialize};
-use crate::{Result, DbError};
+use crate::error::DbError;
 
 // ============================================================================
 // SECTION 1: METRICS COLLECTION ENGINE (700+ lines)
@@ -876,7 +876,7 @@ impl PrometheusPushGateway {
         self
     }
 
-    pub async fn push(&self, metrics_data: String) -> Result<()> {
+    pub async fn push(&self, metrics_data: String) -> std::result::Result<(), DbError> {
         let url = self.build_url();
 
         // In a real implementation, this would use an HTTP client like reqwest
@@ -887,7 +887,7 @@ impl PrometheusPushGateway {
         Ok(())
     }
 
-    pub async fn delete(&self) -> Result<()> {
+    pub async fn delete(&self) -> std::result::Result<(), DbError> {
         let url = self.build_url();
 
         // DELETE request to remove metrics
@@ -986,7 +986,7 @@ impl RemoteWriteClient {
         buffer.push(ts);
     }
 
-    pub async fn flush(&self) -> Result<()> {
+    pub async fn flush(&self) -> std::result::Result<(), DbError> {
         let mut buffer = self.buffer.lock();
         if buffer.is_empty() {
             return Ok(());
@@ -1474,7 +1474,7 @@ pub struct SelfHealingTrigger {
     health_checker: Arc<dyn HealthChecker>,
     consecutive_failures: Arc<AtomicU64>,
     failure_threshold: u64,
-    healing_action: Arc<dyn Fn() -> Result<()> + Send + Sync>,
+    healing_action: Arc<dyn Fn() -> std::result::Result<(), DbError> + Send + Sync>,
 }
 
 impl SelfHealingTrigger {
@@ -1482,7 +1482,7 @@ impl SelfHealingTrigger {
         name: String,
         health_checker: Arc<dyn HealthChecker>,
         failure_threshold: u64,
-        healing_action: Arc<dyn Fn() -> Result<()> + Send + Sync>,
+        healing_action: Arc<dyn Fn() -> std::result::Result<(), DbError> + Send + Sync>,
     ) -> Self {
         Self {
             name,
@@ -1493,7 +1493,7 @@ impl SelfHealingTrigger {
         }
     }
 
-    pub fn check_and_heal(&self) -> Result<()> {
+    pub fn check_and_heal(&self) -> std::result::Result<(), DbError> {
         let result = self.health_checker.check();
 
         if !result.status.is_healthy() {
@@ -1919,7 +1919,7 @@ pub struct AlertInhibitionRule {
 /// Notification channel trait
 pub trait NotificationChannel: Send + Sync {
     fn name(&self) -> &str;
-    fn send(&self, alert: &Alert) -> Result<()>;
+    fn send(&self, alert: &Alert) -> std::result::Result<(), DbError>;
 }
 
 /// Webhook notification channel
@@ -1949,7 +1949,7 @@ impl NotificationChannel for WebhookChannel {
         &self.name
     }
 
-    fn send(&self, alert: &Alert) -> Result<()> {
+    fn send(&self, alert: &Alert) -> std::result::Result<(), DbError> {
         // In real implementation, would use HTTP client
         println!("Sending alert to webhook {}: {:?}", self.url, alert);
         Ok(())
@@ -1980,7 +1980,7 @@ impl NotificationChannel for EmailChannel {
         &self.name
     }
 
-    fn send(&self, alert: &Alert) -> Result<()> {
+    fn send(&self, alert: &Alert) -> std::result::Result<(), DbError> {
         println!("Sending email alert from {} to {:?}: {}", self.from, self.to, alert.message);
         Ok(())
     }
@@ -2008,7 +2008,7 @@ impl NotificationChannel for SlackChannel {
         &self.name
     }
 
-    fn send(&self, alert: &Alert) -> Result<()> {
+    fn send(&self, alert: &Alert) -> std::result::Result<(), DbError> {
         println!("Sending Slack alert to {}: {}", self.channel, alert.message);
         Ok(())
     }
@@ -2300,7 +2300,7 @@ impl DashboardManager {
         }
     }
 
-    pub fn create_dashboard(&self, dashboard: Dashboard) -> Result<()> {
+    pub fn create_dashboard(&self, dashboard: Dashboard) -> std::result::Result<(), DbError> {
         self.dashboards.write().insert(dashboard.id.clone(), dashboard);
         Ok(())
     }
@@ -2309,12 +2309,12 @@ impl DashboardManager {
         self.dashboards.read().get(id).cloned()
     }
 
-    pub fn update_dashboard(&self, dashboard: Dashboard) -> Result<()> {
+    pub fn update_dashboard(&self, dashboard: Dashboard) -> std::result::Result<(), DbError> {
         self.dashboards.write().insert(dashboard.id.clone(), dashboard);
         Ok(())
     }
 
-    pub fn delete_dashboard(&self, id: &str) -> Result<()> {
+    pub fn delete_dashboard(&self, id: &str) -> std::result::Result<(), DbError> {
         self.dashboards.write().remove(id);
         Ok(())
     }
@@ -2514,7 +2514,7 @@ impl MetricsExporter {
         Self { tsdb }
     }
 
-    pub fn export(&self, query: TimeSeriesQuery, format: ExportFormat) -> Result<String> {
+    pub fn export(&self, query: TimeSeriesQuery, format: ExportFormat) -> std::result::Result<String, DbError> {
         let result = self.tsdb.query(query);
 
         match format {
@@ -2524,7 +2524,7 @@ impl MetricsExporter {
         }
     }
 
-    fn export_json(&self, result: &TimeSeriesResult) -> Result<String> {
+    fn export_json(&self, result: &TimeSeriesResult) -> std::result::Result<String, DbError> {
         serde_json::to_string_pretty(result)
             .map_err(|e| DbError::Internal(format!("JSON serialization error: {}", e)))
     }
@@ -2743,7 +2743,7 @@ impl MonitoringApi {
 
     // Dashboard methods
 
-    pub fn create_dashboard(&self, dashboard: Dashboard) -> Result<()> {
+    pub fn create_dashboard(&self, dashboard: Dashboard) -> std::result::Result<(), DbError> {
         self.dashboard_manager.create_dashboard(dashboard)
     }
 

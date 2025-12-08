@@ -75,7 +75,7 @@ impl ColumnData {
             ColumnData::Int64(v) => v.get(index).map(|&x| Value::Integer(x)),
             ColumnData::Float32(v) => v.get(index).map(|&x| Value::Float(x as f64)),
             ColumnData::Float64(v) => v.get(index).map(|&x| Value::Float(x)),
-            ColumnData::String(v) => v.get(index).map(|x| Value::Text(x.clone())),
+            ColumnData::String(v) => v.get(index).map(|x| Value::String(x.clone())),
             ColumnData::Boolean(v) => v.get(index).map(|&x| Value::Boolean(x)),
             ColumnData::NullableInt32(v) => {
                 v.get(index).and_then(|x| x.map(|val| Value::Integer(val as i64)))

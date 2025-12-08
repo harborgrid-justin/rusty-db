@@ -8,8 +8,7 @@ use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use parking_lot::{RwLock, Mutex};
 use serde::{Deserialize, Serialize};
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 
 /// LSM key type
 pub type LsmKey = Vec<u8>;

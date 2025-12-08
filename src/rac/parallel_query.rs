@@ -17,7 +17,7 @@
 //! instance load, and network topology. Results are streamed back through
 //! efficient data flow operators and aggregated at the coordinator.
 
-use crate::{Result, DbError};
+use crate::error::DbError;
 use crate::common::{NodeId, TableId, Value, Tuple, Schema};
 use crate::rac::interconnect::{ClusterInterconnect, MessageType, MessagePriority};
 use serde::{Deserialize, Serialize};
@@ -607,7 +607,7 @@ impl ParallelQueryCoordinator {
     }
 
     /// Execute a parallel query
-    pub async fn execute_query(&self, plan: ParallelQueryPlan) -> Result<Vec<Tuple>> {
+    pub async fn execute_query(&self, plan: ParallelQueryPlan) -> std::result::Result<Vec<Tuple>, DbError> {
         let query_id = plan.query_id;
         let start = Instant::now();
 
@@ -660,7 +660,7 @@ impl ParallelQueryCoordinator {
     }
 
     /// Start executing a query plan
-    async fn start_query_execution(&self, plan: ParallelQueryPlan) -> Result<()> {
+    async fn start_query_execution(&self, plan: ParallelQueryPlan) -> std::result::Result<(), DbError> {
         let query_id = plan.query_id;
 
         // Update state
@@ -717,7 +717,7 @@ impl ParallelQueryCoordinator {
         query_id: u64,
         fragment_id: usize,
         fragment: QueryFragment,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         // Acquire worker
         let worker_id = self.worker_pool.acquire_worker().await
             .ok_or_else(|| DbError::Internal("No workers available".to_string()))?;
@@ -816,7 +816,7 @@ impl ParallelQueryCoordinator {
         fragment_id: usize,
         fragment: QueryFragment,
         instance: NodeId,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let message = QueryMessage::ExecuteFragment {
             query_id,
             fragment_id,
@@ -837,7 +837,7 @@ impl ParallelQueryCoordinator {
     }
 
     /// Execute the actual fragment work
-    async fn execute_fragment_work(fragment: QueryFragment) -> Result<(Vec<Tuple>, u64)> {
+    async fn execute_fragment_work(fragment: QueryFragment) -> std::result::Result<(Vec<Tuple>, u64), DbError> {
         let mut results = Vec::new();
         let mut rows_processed = 0;
 
@@ -899,7 +899,7 @@ impl ParallelQueryCoordinator {
         query_id: u64,
         _fragment_id: usize,
         chunk: DataChunk,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let queries = self.active_queries.read();
 
         if let Some(state) = queries.get(&query_id) {
@@ -918,7 +918,7 @@ impl ParallelQueryCoordinator {
         query_id: u64,
         fragment_id: usize,
         rows_processed: u64,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let mut queries = self.active_queries.write();
 
         if let Some(state) = queries.get_mut(&query_id) {
@@ -956,7 +956,7 @@ impl ParallelQueryCoordinator {
         query_id: u64,
         fragment_id: usize,
         error: String,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let mut queries = self.active_queries.write();
 
         if let Some(state) = queries.get_mut(&query_id) {
@@ -975,7 +975,7 @@ impl ParallelQueryCoordinator {
     }
 
     /// Cancel a running query
-    pub async fn cancel_query(&self, query_id: u64) -> Result<()> {
+    pub async fn cancel_query(&self, query_id: u64) -> std::result::Result<(), DbError> {
         let mut queries = self.active_queries.write();
 
         if let Some(state) = queries.get_mut(&query_id) {

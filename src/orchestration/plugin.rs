@@ -32,7 +32,7 @@ use tracing::{debug, error, info, warn};
 use crate::error::{DbError, Result};
 
 /// Plugin state
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PluginState {
     /// Plugin is registered but not initialized
     Registered,
@@ -209,7 +209,7 @@ pub struct PluginEvent {
     /// Event data
     pub data: serde_json::Value,
     /// Timestamp
-    #[serde(skip)]
+    #[serde(skip, default = "std::time::Instant::now")]
     pub timestamp: std::time::Instant,
 }
 

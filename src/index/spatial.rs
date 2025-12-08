@@ -21,6 +21,16 @@ pub struct RTree<T: Clone> {
     min_entries: usize,
 }
 
+impl<T: Clone> Clone for RTree<T> {
+    fn clone(&self) -> Self {
+        Self {
+            root: Arc::clone(&self.root),
+            max_entries: self.max_entries,
+            min_entries: self.min_entries,
+        }
+    }
+}
+
 impl<T: Clone> RTree<T> {
     /// Create a new R-tree with default parameters
     pub fn new() -> Self {

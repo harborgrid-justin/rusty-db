@@ -8,8 +8,7 @@
 /// - Distributed cache coordination
 /// - Cache statistics and monitoring
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use crate::execution::QueryResult;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;

@@ -11,7 +11,6 @@
 /// - Zero-copy batch transformations where possible
 /// - Adaptive batch sizing based on memory pressure
 
-use crate::Result;
 use crate::error::DbError;
 use crate::execution::QueryResult;
 use crate::catalog::DataType;
@@ -57,7 +56,7 @@ impl ColumnBatch {
     }
 
     /// Add a row to the batch
-    pub fn add_row(&mut self, values: Vec<ColumnValue>) -> Result<()> {
+    pub fn add_row(&mut self, values: Vec<ColumnValue>) -> std::result::Result<(), DbError> {
         if values.len() != self.schema.len() {
             return Err(DbError::Execution(
                 format!("Row has {} values but schema has {} columns",
@@ -123,7 +122,7 @@ impl ColumnBatch {
         schema: Vec<String>,
         types: Vec<DataType>,
         rows: Vec<Vec<String>>,
-    ) -> Result<Self> {
+    ) -> std::result::Result<Self> {
         let mut batch = Self::new(schema, types);
 
         for row in rows {
@@ -255,7 +254,7 @@ impl VectorizedExecutor {
         data: Vec<Vec<String>>,
         schema: Vec<String>,
         types: Vec<DataType>,
-    ) -> Result<Vec<ColumnBatch>> {
+    ) -> std::result::Result<Vec<ColumnBatch>> {
         let mut batches = Vec::new();
         let mut current_batch = ColumnBatch::new(schema.clone(), types.clone());
 
@@ -285,7 +284,7 @@ impl VectorizedExecutor {
         &self,
         batches: Vec<ColumnBatch>,
         predicate: F,
-    ) -> Result<Vec<ColumnBatch>>
+    ) -> std::result::Result<Vec<ColumnBatch>>
     where
         F: Fn(&[ColumnValue]) -> bool,
     {
@@ -328,7 +327,7 @@ impl VectorizedExecutor {
         &self,
         batches: Vec<ColumnBatch>,
         column_indices: &[usize],
-    ) -> Result<Vec<ColumnBatch>> {
+    ) -> std::result::Result<Vec<ColumnBatch>> {
         let mut result_batches = Vec::new();
 
         for batch in batches {
@@ -364,7 +363,7 @@ impl VectorizedExecutor {
         group_by_cols: &[usize],
         agg_col: usize,
         agg_type: AggregationType,
-    ) -> Result<ColumnBatch> {
+    ) -> std::result::Result<ColumnBatch, DbError> {
         let mut groups: HashMap<Vec<String>, AggregateState> = HashMap::new();
 
         for batch in batches {

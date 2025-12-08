@@ -14,7 +14,6 @@
 /// - Rebalancing data across the cluster
 
 use crate::error::DbError;
-use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
@@ -309,7 +308,7 @@ impl DistributedHashTable {
     }
 
     /// Add a node to the DHT
-    pub fn add_node(&self, metadata: NodeMetadata) -> Result<()> {
+    pub fn add_node(&self, metadata: NodeMetadata) -> std::result::Result<(), DbError> {
         let node_id = metadata.id.clone();
 
         match self.config.strategy {
@@ -333,7 +332,7 @@ impl DistributedHashTable {
     }
 
     /// Add node using consistent hashing
-    fn add_node_consistent_hash(&self, mut metadata: NodeMetadata) -> Result<()> {
+    fn add_node_consistent_hash(&self, mut metadata: NodeMetadata) -> std::result::Result<(), DbError> {
         let mut ring = self.hash_ring.write().unwrap();
         let node_id = metadata.id.clone();
 
@@ -353,7 +352,7 @@ impl DistributedHashTable {
     }
 
     /// Add node using range-based partitioning
-    fn add_node_range_based(&self, metadata: NodeMetadata) -> Result<()> {
+    fn add_node_range_based(&self, metadata: NodeMetadata) -> std::result::Result<(), DbError> {
         let mut partitions = self.partitions.write().unwrap();
         let mut nodes = self.nodes.write().unwrap();
         let node_id = metadata.id.clone();
@@ -378,7 +377,7 @@ impl DistributedHashTable {
     }
 
     /// Add node using rendezvous hashing
-    fn add_node_rendezvous(&self, metadata: NodeMetadata) -> Result<()> {
+    fn add_node_rendezvous(&self, metadata: NodeMetadata) -> std::result::Result<(), DbError> {
         let mut nodes = self.nodes.write().unwrap();
         nodes.insert(metadata.id.clone(), metadata);
         // Rendezvous hashing doesn't require ring updates
@@ -386,7 +385,7 @@ impl DistributedHashTable {
     }
 
     /// Remove a node from the DHT
-    pub fn remove_node(&self, node_id: &str) -> Result<()> {
+    pub fn remove_node(&self, node_id: &str) -> std::result::Result<(), DbError> {
         match self.config.strategy {
             HashStrategy::ConsistentHash => {
                 self.remove_node_consistent_hash(node_id)?;
@@ -413,7 +412,7 @@ impl DistributedHashTable {
     }
 
     /// Remove node from consistent hash ring
-    fn remove_node_consistent_hash(&self, node_id: &str) -> Result<()> {
+    fn remove_node_consistent_hash(&self, node_id: &str) -> std::result::Result<(), DbError> {
         let mut ring = self.hash_ring.write().unwrap();
 
         // Remove all virtual nodes for this node
@@ -423,7 +422,7 @@ impl DistributedHashTable {
     }
 
     /// Remove node from range-based partitions
-    fn remove_node_range_based(&self, node_id: &str) -> Result<()> {
+    fn remove_node_range_based(&self, node_id: &str) -> std::result::Result<(), DbError> {
         let mut partitions = self.partitions.write().unwrap();
         let nodes = self.nodes.read().unwrap();
 
@@ -446,13 +445,13 @@ impl DistributedHashTable {
     }
 
     /// Remove node from rendezvous hash
-    fn remove_node_rendezvous(&self, _node_id: &str) -> Result<()> {
+    fn remove_node_rendezvous(&self, _node_id: &str) -> std::result::Result<(), DbError> {
         // Node removal handled by nodes map
         Ok(())
     }
 
     /// Find which node should handle a key
-    pub fn get_node_for_key(&self, key: &[u8]) -> Result<DhtNodeId> {
+    pub fn get_node_for_key(&self, key: &[u8]) -> std::result::Result<DhtNodeId, DbError> {
         match self.config.strategy {
             HashStrategy::ConsistentHash => self.get_node_consistent_hash(key),
             HashStrategy::RangeBased => self.get_node_range_based(key),
@@ -461,7 +460,7 @@ impl DistributedHashTable {
     }
 
     /// Get node using consistent hashing
-    fn get_node_consistent_hash(&self, key: &[u8]) -> Result<DhtNodeId> {
+    fn get_node_consistent_hash(&self, key: &[u8]) -> std::result::Result<DhtNodeId, DbError> {
         let hash = self.hash_key(key);
         let ring = self.hash_ring.read().unwrap();
 
@@ -483,7 +482,7 @@ impl DistributedHashTable {
     }
 
     /// Get node using range-based partitioning
-    fn get_node_range_based(&self, key: &[u8]) -> Result<DhtNodeId> {
+    fn get_node_range_based(&self, key: &[u8]) -> std::result::Result<DhtNodeId, DbError> {
         let hash = self.hash_key(key);
         let partitions = self.partitions.read().unwrap();
 
@@ -497,7 +496,7 @@ impl DistributedHashTable {
     }
 
     /// Get node using rendezvous hashing
-    fn get_node_rendezvous(&self, key: &[u8]) -> Result<DhtNodeId> {
+    fn get_node_rendezvous(&self, key: &[u8]) -> std::result::Result<DhtNodeId, DbError> {
         use std::collections::hash_map::DefaultHasher;
 
         let nodes = self.nodes.read().unwrap();
@@ -525,7 +524,7 @@ impl DistributedHashTable {
     }
 
     /// Get replica nodes for a key
-    pub fn get_replica_nodes(&self, key: &[u8]) -> Result<Vec<DhtNodeId>> {
+    pub fn get_replica_nodes(&self, key: &[u8]) -> std::result::Result<Vec<DhtNodeId>, DbError> {
         let primary = self.get_node_for_key(key)?;
         let mut replicas = vec![primary.clone()];
 
@@ -621,7 +620,7 @@ impl DistributedHashTable {
     }
 
     /// Split a hot partition
-    pub fn split_hot_partition(&self, shard_id: ShardId) -> Result<()> {
+    pub fn split_hot_partition(&self, shard_id: ShardId) -> std::result::Result<(), DbError> {
         let mut partitions = self.partitions.write().unwrap();
         let nodes = self.nodes.read().unwrap();
 
@@ -645,7 +644,7 @@ impl DistributedHashTable {
         new_node: DhtNodeId,
         new_shard_id: ShardId,
         partitions: &mut Vec<RangePartition>,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let partition = &mut partitions[idx];
         let mid = partition.start + partition.size() / 2;
 
@@ -683,7 +682,7 @@ impl DistributedHashTable {
     }
 
     /// Trigger rebalancing
-    pub fn trigger_rebalance(&self) -> Result<()> {
+    pub fn trigger_rebalance(&self) -> std::result::Result<(), DbError> {
         // Detect hot spots
         let hot_spots = self.detect_hot_spots();
 

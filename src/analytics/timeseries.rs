@@ -9,8 +9,7 @@
 /// - Forecasting with multiple methods
 /// - Change point detection
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, BTreeMap};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};

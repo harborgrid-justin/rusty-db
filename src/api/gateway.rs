@@ -39,7 +39,7 @@ use hmac::{Hmac, Mac};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
 
-use crate::error::{Result, DbError};
+use crate::error::DbError;
 
 // ============================================================================
 // API Gateway Core - Request Routing and Protocol Translation
@@ -515,7 +515,7 @@ impl ApiGateway {
     }
 
     /// Process incoming request
-    pub async fn process_request(&self, request: ApiRequest) -> Result<ApiResponse> {
+    pub async fn process_request(&self, request: ApiRequest) -> std::result::Result<ApiResponse, DbError> {
         let start = Instant::now();
 
         // Update metrics
@@ -722,7 +722,7 @@ impl ApiGateway {
     }
 
     /// Forward request to backend service
-    async fn forward_to_backend(&self, request: &ApiRequest, route: &Route) -> Result<ApiResponse> {
+    async fn forward_to_backend(&self, request: &ApiRequest, route: &Route) -> std::result::Result<ApiResponse, DbError> {
         // Select endpoint using load balancing
         let endpoint = self.select_endpoint(&route.backend)?;
 
@@ -737,7 +737,7 @@ impl ApiGateway {
     }
 
     /// Select backend endpoint using load balancing strategy
-    fn select_endpoint(&self, backend: &BackendService) -> Result<ServiceEndpoint> {
+    fn select_endpoint(&self, backend: &BackendService) -> std::result::Result<ServiceEndpoint, DbError> {
         let healthy_endpoints: Vec<_> = backend.endpoints.iter()
             .filter(|e| *e.healthy.read())
             .collect();
@@ -1013,7 +1013,7 @@ impl AuthenticationManager {
     }
 
     /// Authenticate request
-    pub async fn authenticate(&self, request: &ApiRequest) -> Result<Session> {
+    pub async fn authenticate(&self, request: &ApiRequest) -> std::result::Result<Session, DbError> {
         // Try different authentication methods in order
 
         // 1. Try JWT bearer token
@@ -1046,7 +1046,7 @@ impl AuthenticationManager {
     }
 
     /// Create session from JWT claims
-    fn create_session_from_jwt(&self, claims: JwtClaims, request: &ApiRequest) -> Result<Session> {
+    fn create_session_from_jwt(&self, claims: JwtClaims, request: &ApiRequest) -> std::result::Result<Session, DbError> {
         let session = Session {
             session_id: Uuid::new_v4().to_string(),
             user_id: claims.sub.clone(),
@@ -1071,7 +1071,7 @@ impl AuthenticationManager {
     }
 
     /// Authenticate using API key
-    async fn authenticate_api_key(&self, api_key: &str, request: &ApiRequest) -> Result<Session> {
+    async fn authenticate_api_key(&self, api_key: &str, request: &ApiRequest) -> std::result::Result<Session, DbError> {
         let key_store = self.api_key_store.read();
 
         // Hash the provided key
@@ -1128,7 +1128,7 @@ impl AuthenticationManager {
     }
 
     /// Generate new API key
-    pub fn generate_api_key(&self, user_id: String, scopes: Vec<String>) -> Result<String> {
+    pub fn generate_api_key(&self, user_id: String, scopes: Vec<String>) -> std::result::Result<String, DbError> {
         let key = Uuid::new_v4().to_string();
         let key_hash = Self::hash_api_key(&key);
 
@@ -1184,7 +1184,7 @@ impl JwtValidator {
     }
 
     /// Validate JWT token
-    pub fn validate(&self, token: &str) -> Result<JwtClaims> {
+    pub fn validate(&self, token: &str) -> std::result::Result<JwtClaims, DbError> {
         // Parse token
         let parts: Vec<&str> = token.split('.').collect();
         if parts.len() != 3 {
@@ -1217,7 +1217,7 @@ impl JwtValidator {
     }
 
     /// Verify signature
-    fn verify_signature(&self, message: &str, signature: &[u8]) -> Result<()> {
+    fn verify_signature(&self, message: &str, signature: &[u8]) -> std::result::Result<(), DbError> {
         // TODO: Implement proper signature verification based on algorithm
         // For now, just check signature is not empty
         if signature.is_empty() {
@@ -1227,7 +1227,7 @@ impl JwtValidator {
     }
 
     /// Validate claims
-    fn validate_claims(&self, claims: &JwtClaims) -> Result<()> {
+    fn validate_claims(&self, claims: &JwtClaims) -> std::result::Result<(), DbError> {
         // Check issuer
         if claims.iss != self.issuer {
             return Err(DbError::InvalidOperation("Invalid issuer".to_string()));

@@ -9,8 +9,7 @@
 /// - Stratified sampling for better accuracy
 /// - Sample synopses for aggregation queries
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};

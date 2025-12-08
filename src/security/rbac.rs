@@ -15,7 +15,7 @@
 //! - Fine-grained permission sets per role
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::{HashMap, HashSet};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};

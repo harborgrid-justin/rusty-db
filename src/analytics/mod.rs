@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, BTreeMap, VecDeque};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use crate::Result;
+use crate::error::Result;
 use crate::catalog::Schema;
 use std::time::{SystemTime, Duration, UNIX_EPOCH};
 

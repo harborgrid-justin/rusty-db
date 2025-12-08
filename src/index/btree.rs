@@ -18,7 +18,6 @@
 /// - Space: 40-70% reduction with prefix compression on strings
 
 use crate::Result;
-use crate::error::DbError;
 use parking_lot::RwLock;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering as AtomicOrdering};
@@ -48,6 +47,18 @@ pub struct BPlusTree<K: Ord + Clone + Debug, V: Clone + Debug> {
     height: Arc<RwLock<usize>>,
     stats: Arc<AdaptiveStats>,
     config: BTreeConfig,
+}
+
+impl<K: Ord + Clone + Debug, V: Clone + Debug> Clone for BPlusTree<K, V> {
+    fn clone(&self) -> Self {
+        Self {
+            root: Arc::clone(&self.root),
+            order: Arc::clone(&self.order),
+            height: Arc::clone(&self.height),
+            stats: Arc::clone(&self.stats),
+            config: self.config.clone(),
+        }
+    }
 }
 
 /// Configuration for B+Tree behavior

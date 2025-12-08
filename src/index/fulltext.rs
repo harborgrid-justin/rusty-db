@@ -10,9 +10,7 @@
 /// - Stemming support
 
 use crate::Result;
-use crate::error::DbError;
 use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
 
 /// Full-text search index
 pub struct FullTextIndex {
@@ -25,6 +23,18 @@ pub struct FullTextIndex {
     document_store: DocumentStore,
     /// Tokenizer configuration
     tokenizer: Tokenizer,
+}
+
+impl Clone for FullTextIndex {
+    fn clone(&self) -> Self {
+        Self {
+            table_name: self.table_name.clone(),
+            column_name: self.column_name.clone(),
+            inverted_index: self.inverted_index.clone(),
+            document_store: self.document_store.clone(),
+            tokenizer: self.tokenizer.clone(),
+        }
+    }
 }
 
 impl FullTextIndex {
@@ -212,6 +222,7 @@ pub struct SearchResult {
 
 /// Inverted index structure
 #[derive(Debug)]
+#[derive(Clone)]
 struct InvertedIndex {
     /// Term -> set of document IDs containing the term
     index: HashMap<String, HashSet<DocumentId>>,
@@ -268,6 +279,7 @@ impl InvertedIndex {
 
 /// Document store
 #[derive(Debug)]
+#[derive(Clone)]
 struct DocumentStore {
     /// Document ID -> document content
     documents: HashMap<DocumentId, Document>,
@@ -347,6 +359,7 @@ struct Document {
 }
 
 /// Text tokenizer
+#[derive(Clone)]
 pub struct Tokenizer {
     stop_words: HashSet<String>,
     stemmer: Stemmer,
@@ -392,6 +405,7 @@ impl Tokenizer {
 }
 
 /// Simple Porter stemmer
+#[derive(Clone)]
 pub struct Stemmer;
 
 impl Stemmer {

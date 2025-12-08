@@ -11,7 +11,6 @@
 /// - Dynamic operator parameter tuning
 /// - Adaptive query timeouts and resource limits
 
-use crate::Result;
 use crate::error::DbError;
 use crate::execution::{QueryResult, planner::PlanNode};
 use crate::parser::JoinType;
@@ -80,7 +79,7 @@ impl AdaptiveContext {
     }
 
     /// Allocate memory
-    pub fn allocate_memory(&self, size: usize) -> Result<()> {
+    pub fn allocate_memory(&self, size: usize) -> std::result::Result<(), DbError> {
         let mut used = self.memory_used.write();
         if *used + size > self.memory_budget {
             return Err(DbError::Execution(
@@ -262,7 +261,7 @@ impl AdaptiveExecutor {
     }
 
     /// Execute plan with adaptive strategies
-    pub fn execute_adaptive(&self, plan: PlanNode) -> Result<QueryResult> {
+    pub fn execute_adaptive(&self, plan: PlanNode) -> std::result::Result<QueryResult, DbError> {
         let start = Instant::now();
         let mut current_plan = plan;
 
@@ -286,7 +285,7 @@ impl AdaptiveExecutor {
     }
 
     /// Execute with periodic adaptation checkpoints
-    fn execute_with_checkpoints(&self, plan: PlanNode) -> Result<QueryResult> {
+    fn execute_with_checkpoints(&self, plan: PlanNode) -> std::result::Result<QueryResult, DbError> {
         match plan {
             PlanNode::Join { join_type, left, right, condition } => {
                 self.execute_adaptive_join(join_type, *left, *right, condition)
@@ -311,7 +310,7 @@ impl AdaptiveExecutor {
         left: PlanNode,
         right: PlanNode,
         condition: String,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // Execute left side first to get actual cardinality
         let left_result = self.execute_with_checkpoints(left)?;
         let left_card = left_result.rows.len();
@@ -373,7 +372,7 @@ impl AdaptiveExecutor {
         _join_type: JoinType,
         _condition: String,
         algorithm: JoinAlgorithm,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         match algorithm {
             JoinAlgorithm::Hash => {
                 // Build hash table on right
@@ -470,7 +469,7 @@ impl AdaptiveExecutor {
         group_by: Vec<String>,
         aggregates: Vec<crate::execution::planner::AggregateExpr>,
         _having: Option<String>,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         let input_result = self.execute_with_checkpoints(input)?;
         let input_card = input_result.rows.len();
 
@@ -512,7 +511,7 @@ impl AdaptiveExecutor {
         input: QueryResult,
         group_by: Vec<String>,
         _aggregates: Vec<crate::execution::planner::AggregateExpr>,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         let mut groups: HashMap<Vec<String>, usize> = HashMap::new();
 
         // Build hash table of groups
@@ -546,7 +545,7 @@ impl AdaptiveExecutor {
         input: QueryResult,
         group_by: Vec<String>,
         _aggregates: Vec<crate::execution::planner::AggregateExpr>,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // Sort input by group keys
         let mut sorted_rows = input.rows.clone();
         sorted_rows.sort_by(|a, b| {
@@ -606,7 +605,7 @@ impl AdaptiveExecutor {
         &self,
         table: String,
         columns: Vec<String>,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // In a real implementation, would:
         // 1. Check available indexes
         // 2. Estimate selectivity
@@ -658,7 +657,7 @@ impl ProgressiveOptimizer {
     }
 
     /// Reoptimize plan based on runtime feedback
-    pub fn reoptimize(&mut self, feedback: &RuntimeStatistics) -> Result<()> {
+    pub fn reoptimize(&mut self, feedback: &RuntimeStatistics) -> std::result::Result<(), DbError> {
         // Check if reoptimization is worthwhile
         if !self.should_reoptimize(feedback) {
             return Ok(());
@@ -689,7 +688,7 @@ impl ProgressiveOptimizer {
         false
     }
 
-    fn build_adaptive_plan(&self, _feedback: &RuntimeStatistics) -> Result<PlanNode> {
+    fn build_adaptive_plan(&self, _feedback: &RuntimeStatistics) -> std::result::Result<PlanNode, DbError> {
         // In production, would rebuild plan with updated statistics
         // For now, return original plan
         Ok(self.original_plan.clone())

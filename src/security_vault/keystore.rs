@@ -39,13 +39,13 @@ use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
 };
-use argon2::{Argon2, PasswordHasher, PasswordHash, PasswordVerifier};
+use argon2::{Argon2, PasswordHasher};
 use argon2::password_hash::{SaltString, rand_core::OsRng as ArgonRng};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use parking_lot::RwLock;
-use sha2::{Sha256, Digest};
+use sha2::Digest;
 use std::fs;
 use std::sync::Arc;
 

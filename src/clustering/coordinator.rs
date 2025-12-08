@@ -15,7 +15,6 @@
 /// - Parallel execution optimization
 
 use crate::error::DbError;
-use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
@@ -348,7 +347,7 @@ impl QueryCoordinator {
     }
 
     /// Execute distributed query
-    pub async fn execute_query(&self, plan: DistributedQueryPlan) -> Result<QueryResult> {
+    pub async fn execute_query(&self, plan: DistributedQueryPlan) -> std::result::Result<QueryResult, DbError> {
         let query_id = plan.query_id;
 
         // Register query
@@ -373,7 +372,7 @@ impl QueryCoordinator {
     }
 
     /// Create query tasks from plan
-    fn create_query_tasks(&self, plan: &DistributedQueryPlan) -> Result<Vec<QueryTask>> {
+    fn create_query_tasks(&self, plan: &DistributedQueryPlan) -> std::result::Result<Vec<QueryTask>, DbError> {
         let mut tasks = Vec::new();
 
         for (idx, &shard_id) in plan.shards.iter().enumerate() {
@@ -398,13 +397,13 @@ impl QueryCoordinator {
     }
 
     /// Serialize plan node to query fragment
-    fn serialize_plan_node(&self, node: &QueryPlanNode) -> Result<String> {
+    fn serialize_plan_node(&self, node: &QueryPlanNode) -> std::result::Result<String, DbError> {
         serde_json::to_string(node)
             .map_err(|e| DbError::Internal(format!("Failed to serialize plan: {}", e)))
     }
 
     /// Execute tasks in parallel
-    async fn execute_tasks(&self, tasks: Vec<QueryTask>) -> Result<Vec<ShardResult>> {
+    async fn execute_tasks(&self, tasks: Vec<QueryTask>) -> std::result::Result<Vec<ShardResult>, DbError> {
         let mut results = Vec::new();
 
         // In a real implementation, these would be executed in parallel
@@ -418,7 +417,7 @@ impl QueryCoordinator {
     }
 
     /// Execute a single task
-    async fn execute_single_task(&self, task: QueryTask) -> Result<ShardResult> {
+    async fn execute_single_task(&self, task: QueryTask) -> std::result::Result<ShardResult, DbError> {
         let start = SystemTime::now();
 
         // Simulate query execution
@@ -444,7 +443,7 @@ impl QueryCoordinator {
         query_id: QueryId,
         shard_results: Vec<ShardResult>,
         plan: DistributedQueryPlan,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         let start = SystemTime::now();
 
         // Merge based on query plan
@@ -480,7 +479,7 @@ impl QueryCoordinator {
         &self,
         node: &QueryPlanNode,
         shard_results: &[ShardResult],
-    ) -> Result<Vec<Vec<u8>>> {
+    ) -> std::result::Result<Vec<Vec<u8>>, DbError> {
         let mut all_rows: Vec<Vec<u8>> = shard_results
             .iter()
             .flat_map(|r| r.rows.clone())
@@ -531,7 +530,7 @@ impl QueryCoordinator {
         right_table: String,
         join_key: String,
         strategy: JoinStrategy,
-    ) -> Result<Vec<Vec<u8>>> {
+    ) -> std::result::Result<Vec<Vec<u8>>, DbError> {
         match strategy {
             JoinStrategy::Broadcast => {
                 self.broadcast_join(left_table, right_table, join_key).await
@@ -554,7 +553,7 @@ impl QueryCoordinator {
         _left_table: String,
         _right_table: String,
         _join_key: String,
-    ) -> Result<Vec<Vec<u8>>> {
+    ) -> std::result::Result<Vec<Vec<u8>>, DbError> {
         // Implementation would:
         // 1. Identify smaller table
         // 2. Broadcast to all nodes with larger table
@@ -569,7 +568,7 @@ impl QueryCoordinator {
         _left_table: String,
         _right_table: String,
         _join_key: String,
-    ) -> Result<Vec<Vec<u8>>> {
+    ) -> std::result::Result<Vec<Vec<u8>>, DbError> {
         // Implementation would:
         // 1. Hash partition both tables by join key
         // 2. Send matching partitions to same nodes
@@ -584,7 +583,7 @@ impl QueryCoordinator {
         _left_table: String,
         _right_table: String,
         _join_key: String,
-    ) -> Result<Vec<Vec<u8>>> {
+    ) -> std::result::Result<Vec<Vec<u8>>, DbError> {
         // Implementation would:
         // 1. Verify co-location
         // 2. Execute local joins on each node
@@ -598,7 +597,7 @@ impl QueryCoordinator {
         _left_table: String,
         _right_table: String,
         _join_key: String,
-    ) -> Result<Vec<Vec<u8>>> {
+    ) -> std::result::Result<Vec<Vec<u8>>, DbError> {
         // Implementation would:
         // 1. Fetch all rows from both tables
         // 2. Perform nested loop join
@@ -612,7 +611,7 @@ impl QueryCoordinator {
         table: String,
         operation: AggregateOp,
         group_by: Option<Vec<String>>,
-    ) -> Result<Vec<Vec<u8>>> {
+    ) -> std::result::Result<Vec<Vec<u8>>, DbError> {
         // Phase 1: Map - Local aggregation on each shard
         let local_results = self.local_aggregate(&table, operation, group_by.clone()).await?;
 
@@ -628,7 +627,7 @@ impl QueryCoordinator {
         _table: &str,
         _operation: AggregateOp,
         _group_by: Option<Vec<String>>,
-    ) -> Result<Vec<Vec<u8>>> {
+    ) -> std::result::Result<Vec<Vec<u8>>, DbError> {
         // Implementation would execute aggregation on each shard
         Ok(Vec::new())
     }
@@ -639,7 +638,7 @@ impl QueryCoordinator {
         _local_results: Vec<Vec<u8>>,
         _operation: AggregateOp,
         _group_by: Option<Vec<String>>,
-    ) -> Result<Vec<Vec<u8>>> {
+    ) -> std::result::Result<Vec<Vec<u8>>, DbError> {
         // Implementation would merge local aggregation results
         Ok(Vec::new())
     }
@@ -656,7 +655,7 @@ impl QueryCoordinator {
     }
 
     /// Cancel a running query
-    pub fn cancel_query(&self, query_id: QueryId) -> Result<()> {
+    pub fn cancel_query(&self, query_id: QueryId) -> std::result::Result<(), DbError> {
         self.active_queries.write().unwrap().remove(&query_id);
         Ok(())
     }

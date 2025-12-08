@@ -16,7 +16,7 @@
 //! and coordinate recovery. One instance is elected as the recovery coordinator
 //! to apply redo logs, release locks, and remaster resources from the failed instance.
 
-use crate::{Result, DbError};
+use crate::error::DbError;
 use crate::common::{NodeId, PageId, TransactionId, LogSequenceNumber};
 use crate::rac::cache_fusion::{ResourceId, BlockMode};
 use crate::rac::grd::{GlobalResourceDirectory, GrdConfig};
@@ -426,7 +426,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Start recovery monitoring
-    pub async fn start(&self) -> Result<()> {
+    pub async fn start(&self) -> std::result::Result<(), DbError> {
         // Monitor for instance failures
         let interconnect = self.interconnect.clone();
         let message_tx = self.message_tx.clone();
@@ -496,7 +496,7 @@ impl InstanceRecoveryManager {
         &self,
         failed_instance: NodeId,
         reason: FailureReason,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         // Check if recovery already in progress
         {
             let recoveries = self.active_recoveries.read();
@@ -535,7 +535,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Elect recovery coordinator
-    async fn elect_recovery_coordinator(&self, failed_instance: NodeId) -> Result<()> {
+    async fn elect_recovery_coordinator(&self, failed_instance: NodeId) -> std::result::Result<(), DbError> {
         // Update phase
         {
             let mut recoveries = self.active_recoveries.write();
@@ -573,7 +573,7 @@ impl InstanceRecoveryManager {
         _failed_instance: NodeId,
         _candidate: NodeId,
         _ballot: u64,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         // Simplified voting - in production would use Paxos/Raft
         Ok(())
     }
@@ -582,7 +582,7 @@ impl InstanceRecoveryManager {
         &self,
         failed_instance: NodeId,
         coordinator: NodeId,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         // Update recovery state
         {
             let mut recoveries = self.active_recoveries.write();
@@ -600,7 +600,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Execute recovery process
-    async fn execute_recovery(&self, failed_instance: NodeId) -> Result<()> {
+    async fn execute_recovery(&self, failed_instance: NodeId) -> std::result::Result<(), DbError> {
         let start = Instant::now();
 
         // Phase 1: Freeze resources
@@ -648,7 +648,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Freeze resources during recovery
-    async fn freeze_resources(&self, failed_instance: &NodeId) -> Result<()> {
+    async fn freeze_resources(&self, failed_instance: &NodeId) -> std::result::Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
             state.phase = RecoveryPhase::Freezing;
@@ -664,7 +664,7 @@ impl InstanceRecoveryManager {
 
     /// Perform redo recovery
     /// NEW: Parallel redo apply with multiple threads for 10x faster recovery
-    async fn perform_redo_recovery(&self, failed_instance: &NodeId) -> Result<()> {
+    async fn perform_redo_recovery(&self, failed_instance: &NodeId) -> std::result::Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
             state.phase = RecoveryPhase::RedoRecovery;
@@ -700,7 +700,7 @@ impl InstanceRecoveryManager {
 
     /// NEW: Parallel redo apply for 10x faster recovery
     /// Partitions redo logs by resource and applies in parallel
-    async fn apply_redo_parallel(&self, failed_instance: &NodeId, logs: Vec<RedoLogEntry>) -> Result<()> {
+    async fn apply_redo_parallel(&self, failed_instance: &NodeId, logs: Vec<RedoLogEntry>) -> std::result::Result<(), DbError> {
         use std::collections::HashMap;
 
         // Partition logs by resource to avoid conflicts
@@ -753,7 +753,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Apply a single redo log entry
-    async fn apply_redo_log(&self, log: &RedoLogEntry) -> Result<()> {
+    async fn apply_redo_log(&self, log: &RedoLogEntry) -> std::result::Result<(), DbError> {
         match log.operation {
             RedoOperation::Insert | RedoOperation::Update | RedoOperation::Delete => {
                 // In production, would apply to storage
@@ -772,7 +772,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Reclaim locks from failed instance
-    async fn reclaim_locks(&self, failed_instance: &NodeId) -> Result<()> {
+    async fn reclaim_locks(&self, failed_instance: &NodeId) -> std::result::Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
             state.phase = RecoveryPhase::LockReclamation;
@@ -795,7 +795,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Remaster resources from failed instance
-    async fn remaster_resources(&self, failed_instance: &NodeId) -> Result<()> {
+    async fn remaster_resources(&self, failed_instance: &NodeId) -> std::result::Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
             state.phase = RecoveryPhase::Remastering;
@@ -818,7 +818,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Resume normal operations
-    async fn resume_operations(&self, failed_instance: &NodeId) -> Result<()> {
+    async fn resume_operations(&self, failed_instance: &NodeId) -> std::result::Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
             state.phase = RecoveryPhase::Resuming;
@@ -835,7 +835,7 @@ impl InstanceRecoveryManager {
         &self,
         _failed_instance: NodeId,
         from_lsn: LogSequenceNumber,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let buffer = self.redo_buffer.lock();
         let logs = buffer.get_entries_after(from_lsn);
         drop(buffer);
@@ -850,7 +850,7 @@ impl InstanceRecoveryManager {
         &self,
         _failed_instance: NodeId,
         logs: Vec<RedoLogEntry>,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         // Receive redo logs from another instance
         let mut buffer = self.redo_buffer.lock();
 
@@ -865,7 +865,7 @@ impl InstanceRecoveryManager {
         &self,
         failed_instance: NodeId,
         success: bool,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         // Remove from active recoveries
         self.active_recoveries.write().remove(&failed_instance);
 
@@ -877,7 +877,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Add redo log entry
-    pub fn append_redo_log(&self, entry: RedoLogEntry) -> Result<()> {
+    pub fn append_redo_log(&self, entry: RedoLogEntry) -> std::result::Result<(), DbError> {
         self.redo_buffer.lock().append(entry);
         Ok(())
     }

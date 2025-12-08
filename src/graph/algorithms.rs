@@ -10,8 +10,8 @@
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use serde::{Deserialize, Serialize};
-use crate::{Result, DbError};
-use super::property_graph::{PropertyGraph, VertexId, EdgeId};
+use crate::error::Result;
+use super::property_graph::{PropertyGraph, VertexId};
 
 // ============================================================================
 // PageRank Algorithm

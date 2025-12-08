@@ -323,6 +323,7 @@ impl Default for ChangeStreamFilter {
 }
 
 /// Change stream cursor for iterating through events
+#[derive(Clone)]
 pub struct ChangeStreamCursor {
     /// Stream ID
     pub id: String,

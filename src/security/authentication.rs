@@ -13,10 +13,10 @@
 //! - Account lockout and brute-force protection
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};

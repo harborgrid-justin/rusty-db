@@ -5,7 +5,8 @@ use crc32fast::Hasher;
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
-pub type PageId = u32;
+// Use PageId from common module for consistency
+pub use crate::common::PageId;
 pub type SlotId = u16;
 
 const SLOT_SIZE: usize = size_of::<Slot>();

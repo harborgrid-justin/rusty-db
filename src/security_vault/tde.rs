@@ -23,14 +23,14 @@
 
 use crate::{DbError, Result};
 use aes_gcm::{
-    aead::{Aead, KeyInit, OsRng},
+    aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
 };
-use chacha20poly1305::{ChaCha20Poly1305, Key as ChaChaKey};
+use chacha20poly1305::ChaCha20Poly1305;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
-use sha2::{Sha256, Digest};
+use sha2::Digest;
 
 /// Cache-aligned crypto buffer for high-performance encryption
 /// Aligned to 64 bytes (typical cache line size) to avoid false sharing

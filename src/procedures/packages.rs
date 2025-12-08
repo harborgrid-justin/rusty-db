@@ -270,6 +270,7 @@ impl Package {
 }
 
 /// Package instance state
+#[derive(Clone)]
 pub struct PackageInstance {
     pub package_name: String,
     pub variables: HashMap<String, RuntimeValue>,

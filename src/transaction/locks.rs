@@ -256,7 +256,7 @@ impl LockTableEntry {
     }
 
     /// Upgrade a lock
-    fn upgrade(&mut self, txn_id: TransactionId, new_mode: LockMode) -> Result<()> {
+    fn upgrade(&mut self, txn_id: TransactionId, new_mode: LockMode) -> std::result::Result<(), DbError> {
         if let Some(&current_mode) = self.granted.get(&txn_id) {
             if current_mode.can_upgrade_to(&new_mode) {
                 self.granted.insert(txn_id, new_mode);
@@ -336,7 +336,7 @@ impl HierarchicalLockManager {
         txn_id: TransactionId,
         resource: LockResource,
         mode: LockMode,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let start = Instant::now();
 
         // First, acquire intent locks on all ancestors
@@ -370,7 +370,7 @@ impl HierarchicalLockManager {
         txn_id: TransactionId,
         resource: &LockResource,
         mode: LockMode,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         if let Some(intent_mode) = mode.required_intent_lock() {
             for ancestor in resource.ancestors() {
                 self.acquire_lock_internal(txn_id, ancestor, intent_mode)?;
@@ -385,7 +385,7 @@ impl HierarchicalLockManager {
         txn_id: TransactionId,
         resource: LockResource,
         mode: LockMode,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let timeout = Duration::from_millis(self.config.lock_timeout_ms);
         let deadline = Instant::now() + timeout;
 
@@ -483,7 +483,7 @@ impl HierarchicalLockManager {
         txn_id: TransactionId,
         resource: LockResource,
         new_mode: LockMode,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let lock_table = self.lock_table.read();
         if let Some(entry_arc) = lock_table.get(&resource) {
             let mut entry = entry_arc.lock();
@@ -496,7 +496,7 @@ impl HierarchicalLockManager {
     }
 
     /// Release a lock
-    pub fn release_lock(&self, txn_id: TransactionId, resource: &LockResource) -> Result<()> {
+    pub fn release_lock(&self, txn_id: TransactionId, resource: &LockResource) -> std::result::Result<(), DbError> {
         let lock_table = self.lock_table.read();
         if let Some(entry_arc) = lock_table.get(resource) {
             let mut entry = entry_arc.lock();
@@ -522,7 +522,7 @@ impl HierarchicalLockManager {
     }
 
     /// Release all locks for a transaction
-    pub fn release_all_locks(&self, txn_id: TransactionId) -> Result<()> {
+    pub fn release_all_locks(&self, txn_id: TransactionId) -> std::result::Result<(), DbError> {
         let resources: Vec<LockResource> = {
             let txn_locks = self.txn_locks.read();
             txn_locks.get(&txn_id)
@@ -574,7 +574,7 @@ impl HierarchicalLockManager {
     }
 
     /// Escalate row locks to page lock
-    pub fn escalate_locks(&self, txn_id: TransactionId, table: &LockResource) -> Result<()> {
+    pub fn escalate_locks(&self, txn_id: TransactionId, table: &LockResource) -> std::result::Result<(), DbError> {
         if !self.config.enable_escalation {
             return Ok(());
         }
@@ -753,7 +753,7 @@ impl LockEscalationManager {
     }
 
     /// Check and perform escalation if needed
-    pub fn check_escalation(&self, txn_id: TransactionId, table_id: u64) -> Result<()> {
+    pub fn check_escalation(&self, txn_id: TransactionId, table_id: u64) -> std::result::Result<(), DbError> {
         let threshold = self.thresholds.read()
             .get(&table_id)
             .copied()

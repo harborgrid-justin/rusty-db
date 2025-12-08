@@ -10,14 +10,13 @@
 
 use std::collections::{HashMap, HashSet};
 use std::fs::{File, OpenOptions};
-use std::io::{self, Read, Write, Seek, SeekFrom};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
-use crate::{Result, DbError};
-use crate::common::Value;
+use crate::error::{Result, DbError};
 use super::property_graph::{
-    PropertyGraph, VertexId, EdgeId, Vertex, Edge, Properties,
-    EdgeDirection, HyperEdge,
+    PropertyGraph, VertexId, EdgeId, Vertex, Properties,
+    EdgeDirection,
 };
 
 // ============================================================================
@@ -290,7 +289,7 @@ impl CSRGraph {
 
     /// Iterate over all edges
     pub fn edges_iter(&self) -> impl Iterator<Item = (VertexId, VertexId, EdgeId)> + '_ {
-        self.vertex_map.iter().enumerate().flat_map(|(idx, &vertex_id)| {
+        self.vertex_map.iter().enumerate().flat_map(move |(idx, &vertex_id)| {
             let start = self.offsets[idx];
             let end = self.offsets[idx + 1];
 

@@ -37,7 +37,7 @@ impl std::fmt::Display for ContainerError {
             ContainerError::InvalidConfiguration(msg) => write!(f, "Invalid configuration: {}", msg),
             ContainerError::IoError(msg) => write!(f, "I/O error: {}", msg),
             ContainerError::LockTimeout(msg) => write!(f, "Lock timeout: {}", msg),
-            ContainerError::InsufficificientPrivileges(msg) => write!(f, "Insufficient privileges: {}", msg),
+            ContainerError::InsufficientPrivileges(msg) => write!(f, "Insufficient privileges: {}", msg),
         }
     }
 }

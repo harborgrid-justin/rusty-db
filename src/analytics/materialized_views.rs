@@ -8,8 +8,7 @@
 /// - Delta propagation for efficient updates
 /// - View dependency graph management
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use crate::catalog::Schema;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};

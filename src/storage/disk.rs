@@ -5,9 +5,9 @@ use std::sync::{Arc, Mutex};
 use std::collections::{HashMap, VecDeque};
 use std::time::Instant;
 use parking_lot::RwLock;
-use crate::Result;
-use crate::storage::page::{Page, PageId};
-use crate::error::DbError;
+use crate::error::{DbError, Result};
+use crate::storage::page::Page;
+use crate::common::PageId;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;

@@ -6,7 +6,6 @@
 /// - Multiple CTEs in a single query
 /// - CTE materialization and optimization
 
-use crate::Result;
 use crate::error::DbError;
 use std::collections::HashMap;
 use super::planner::PlanNode;
@@ -39,7 +38,7 @@ impl CteContext {
     }
     
     /// Register a CTE definition
-    pub fn register_cte(&mut self, cte: CteDefinition) -> Result<()> {
+    pub fn register_cte(&mut self, cte: CteDefinition) -> std::result::Result<(), DbError> {
         if self.definitions.contains_key(&cte.name) {
             return Err(DbError::AlreadyExists(format!(
                 "CTE '{}' already defined",
@@ -100,7 +99,7 @@ impl RecursiveCteEvaluator {
         cte_name: &str,
         base_result: QueryResult,
         recursive_plan: &PlanNode,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         let mut all_rows = base_result.rows.clone();
         let columns = base_result.columns.clone();
         let mut working_table = base_result;
@@ -146,7 +145,7 @@ impl RecursiveCteEvaluator {
         cte_name: &str,
         working_table: &QueryResult,
         _recursive_plan: &PlanNode,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // In a full implementation, this would:
         // 1. Replace CTE references in recursive_plan with working_table data
         // 2. Execute the plan
@@ -369,7 +368,7 @@ impl CteDependencyGraph {
     }
     
     /// Perform topological sort to determine execution order
-    pub fn topological_sort(&self, ctes: &[CteDefinition]) -> Result<Vec<String>> {
+    pub fn topological_sort(&self, ctes: &[CteDefinition]) -> std::result::Result<Vec<String>, DbError> {
         let mut sorted = Vec::new();
         let mut visited = std::collections::HashSet::new();
         let mut in_progress = std::collections::HashSet::new();
@@ -390,7 +389,7 @@ impl CteDependencyGraph {
         visited: &mut std::collections::HashSet<String>,
         in_progress: &mut std::collections::HashSet<String>,
         sorted: &mut Vec<String>,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         if in_progress.contains(name) {
             return Err(DbError::InvalidOperation(format!(
                 "Circular dependency detected in CTE '{}'",
@@ -619,7 +618,7 @@ impl NestedCteHandler {
     }
     
     /// Enter a new CTE nesting level
-    pub fn enter_nesting(&mut self) -> Result<()> {
+    pub fn enter_nesting(&mut self) -> std::result::Result<(), DbError> {
         if self.nesting_level >= self.max_nesting_level {
             return Err(DbError::InvalidOperation(format!(
                 "Maximum CTE nesting level ({}) exceeded",
@@ -792,7 +791,7 @@ impl WithClauseParser {
     ///   cte2 AS (SELECT ...)
     /// SELECT ...
     /// ```
-    pub fn parse(sql: &str) -> Result<Option<(Vec<CteDefinition>, String)>> {
+    pub fn parse(sql: &str) -> std::result::Result<Option<(Vec<CteDefinition>, String)>, DbError> {
         let sql_upper = sql.trim().to_uppercase();
         
         if !sql_upper.starts_with("WITH") {
@@ -1219,7 +1218,7 @@ impl CteExecutionEngine {
         &mut self,
         ctes: Vec<CteDefinition>,
         main_query: PlanNode,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // Build dependency graph
         let mut dep_graph = CteDependencyGraph::new();
         dep_graph.build(&ctes);
@@ -1250,7 +1249,7 @@ impl CteExecutionEngine {
         &mut self,
         cte: &CteDefinition,
         context: &mut CteContext,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let start = std::time::Instant::now();
         
         // Check cache first
@@ -1285,12 +1284,12 @@ impl CteExecutionEngine {
         Ok(())
     }
     
-    fn execute_non_recursive_cte(&self, _cte: &CteDefinition) -> Result<QueryResult> {
+    fn execute_non_recursive_cte(&self, _cte: &CteDefinition) -> std::result::Result<QueryResult, DbError> {
         // Placeholder: Execute non-recursive CTE
         Ok(QueryResult::empty())
     }
     
-    fn execute_recursive_cte(&self, cte: &CteDefinition) -> Result<QueryResult> {
+    fn execute_recursive_cte(&self, cte: &CteDefinition) -> std::result::Result<QueryResult, DbError> {
         let evaluator = RecursiveCteEvaluator::new();
         let base_result = QueryResult::empty();
         evaluator.evaluate(&cte.name, base_result, &cte.query)
@@ -1300,7 +1299,7 @@ impl CteExecutionEngine {
         &self,
         _main_query: &PlanNode,
         _context: &CteContext,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // Placeholder: Execute main query
         Ok(QueryResult::empty())
     }
@@ -1408,7 +1407,7 @@ impl ParallelCteExecutor {
         &self,
         _ctes: Vec<CteDefinition>,
         _dependency_graph: &CteDependencyGraph,
-    ) -> Result<HashMap<String, QueryResult>> {
+    ) -> std::result::Result<HashMap<String, QueryResult>> {
         // Placeholder: In a full implementation, this would:
         // 1. Identify independent CTEs that can run in parallel
         // 2. Create a thread pool with worker_count threads
@@ -1437,7 +1436,7 @@ impl IncrementalCteEvaluator {
         cte_name: &str,
         base_result: QueryResult,
         recursive_plan: &PlanNode,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         let mut all_rows = base_result.rows.clone();
         let columns = base_result.columns.clone();
         let mut delta = base_result.rows.clone();
@@ -1481,7 +1480,7 @@ impl IncrementalCteEvaluator {
         _cte_name: &str,
         _delta: &[Vec<String>],
         _recursive_plan: &PlanNode,
-    ) -> Result<Vec<Vec<String>>> {
+    ) -> std::result::Result<Vec<Vec<String>>, DbError> {
         // Placeholder: Compute new rows from delta
         Ok(Vec::new())
     }
@@ -1696,7 +1695,7 @@ impl CteMemoryManager {
     }
     
     /// Allocate memory for a CTE result
-    pub fn allocate(&mut self, cte_name: String, size_bytes: usize) -> Result<()> {
+    pub fn allocate(&mut self, cte_name: String, size_bytes: usize) -> std::result::Result<(), DbError> {
         if self.current_usage + size_bytes > self.memory_limit {
             return Err(DbError::Internal(format!(
                 "Out of memory: Cannot allocate {} bytes for CTE '{}'. Current usage: {}, Limit: {}",
@@ -2487,7 +2486,7 @@ pub mod advanced {
         }
         
         /// Apply window function to CTE result
-        pub fn apply(&self, result: &mut QueryResult) -> Result<()> {
+        pub fn apply(&self, result: &mut QueryResult) -> std::result::Result<(), DbError> {
             // Group by partition
             let partitions = self.partition_rows(&result.rows);
             
@@ -2504,7 +2503,7 @@ pub mod advanced {
             vec![rows.to_vec()]
         }
         
-        fn apply_to_partition(&self, _partition: &[Vec<String>]) -> Result<()> {
+        fn apply_to_partition(&self, _partition: &[Vec<String>]) -> std::result::Result<(), DbError> {
             // Placeholder: apply window function to partition
             Ok(())
         }
@@ -2531,7 +2530,7 @@ pub mod advanced {
         }
         
         /// Execute lateral join between CTEs
-        pub fn execute(&self, context: &CteContext) -> Result<QueryResult> {
+        pub fn execute(&self, context: &CteContext) -> std::result::Result<QueryResult, DbError> {
             let outer_result = context.get_materialized(&self.outer_cte)
                 .ok_or_else(|| DbError::NotFound(format!(
                     "CTE '{}' not materialized",
@@ -2629,7 +2628,7 @@ pub mod advanced {
         pub fn execute_partitioned(
             &self,
             cte: &CteDefinition,
-        ) -> Result<Vec<QueryResult>> {
+        ) -> std::result::Result<Vec<QueryResult>, DbError> {
             let mut results = Vec::new();
             
             for partition_id in 0..self.partition_count {
@@ -2644,7 +2643,7 @@ pub mod advanced {
             &self,
             _cte: &CteDefinition,
             _partition_id: usize,
-        ) -> Result<QueryResult> {
+        ) -> std::result::Result<QueryResult, DbError> {
             // Placeholder: execute CTE for specific partition
             Ok(QueryResult::empty())
         }
@@ -3018,7 +3017,7 @@ pub mod integration {
     
     impl CteValidator {
         /// Validate a CTE definition
-        pub fn validate(cte: &CteDefinition) -> Result<()> {
+        pub fn validate(cte: &CteDefinition) -> std::result::Result<(), DbError> {
             // Check name is not empty
             if cte.name.is_empty() {
                 return Err(DbError::InvalidInput("CTE name cannot be empty".to_string()));
@@ -3051,7 +3050,7 @@ pub mod integration {
         }
         
         /// Validate all CTEs in a collection
-        pub fn validate_all(ctes: &[CteDefinition]) -> Result<()> {
+        pub fn validate_all(ctes: &[CteDefinition]) -> std::result::Result<(), DbError> {
             for cte in ctes {
                 Self::validate(cte)?;
             }
@@ -3076,13 +3075,13 @@ pub mod integration {
     
     impl CteSerializer {
         /// Serialize CTE to JSON
-        pub fn to_json(cte: &CteDefinition) -> Result<String> {
+        pub fn to_json(cte: &CteDefinition) -> std::result::Result<String, DbError> {
             serde_json::to_string_pretty(&SerializableCte::from(cte))
                 .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))
         }
         
         /// Deserialize CTE from JSON
-        pub fn from_json(_json: &str) -> Result<CteDefinition> {
+        pub fn from_json(_json: &str) -> std::result::Result<CteDefinition, DbError> {
             // Placeholder for deserialization
             Err(DbError::Internal("Deserialization not yet implemented".to_string()))
         }

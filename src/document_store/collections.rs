@@ -600,6 +600,7 @@ impl CollectionMetadata {
 }
 
 /// Collection of documents
+#[derive(Clone)]
 pub struct Collection {
     /// Collection metadata
     pub metadata: CollectionMetadata,

@@ -37,7 +37,7 @@ use tracing::{debug, info, warn};
 use crate::error::{DbError, Result};
 
 /// Node in the dependency graph
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DependencyNode {
     /// Node identifier (service name)
     pub id: String,

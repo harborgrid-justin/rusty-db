@@ -8,7 +8,6 @@
 /// - Efficient bitmap scans
 
 use crate::Result;
-use crate::error::DbError;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -23,6 +22,16 @@ pub struct BitmapIndex<T: Eq + std::hash::Hash + Clone> {
     num_rows: Arc<RwLock<usize>>,
     /// Bitmap compression enabled
     compression_enabled: bool,
+}
+
+impl<T: Eq + std::hash::Hash + Clone> Clone for BitmapIndex<T> {
+    fn clone(&self) -> Self {
+        Self {
+            bitmaps: Arc::clone(&self.bitmaps),
+            num_rows: Arc::clone(&self.num_rows),
+            compression_enabled: self.compression_enabled,
+        }
+    }
 }
 
 impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {

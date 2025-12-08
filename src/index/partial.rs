@@ -26,6 +26,17 @@ pub struct PartialIndex<K: Ord + Clone, V: Clone> {
     stats: Arc<RwLock<PartialIndexStats>>,
 }
 
+impl<K: Ord + Clone, V: Clone> Clone for PartialIndex<K, V> {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            index: Arc::clone(&self.index),
+            predicate: Arc::clone(&self.predicate),
+            stats: Arc::clone(&self.stats),
+        }
+    }
+}
+
 impl<K: Ord + Clone, V: Clone> PartialIndex<K, V> {
     /// Create a new partial index
     pub fn new(name: String, predicate: Predicate) -> Self {
@@ -123,6 +134,17 @@ pub struct ExpressionIndex<V: Clone> {
     stats: Arc<RwLock<ExpressionIndexStats>>,
 }
 
+impl<V: Clone> Clone for ExpressionIndex<V> {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            index: Arc::clone(&self.index),
+            expression: Arc::clone(&self.expression),
+            stats: Arc::clone(&self.stats),
+        }
+    }
+}
+
 impl<V: Clone> ExpressionIndex<V> {
     /// Create a new expression index
     pub fn new(name: String, expression: Expression) -> Self {
@@ -197,6 +219,17 @@ pub struct CoveringIndex<K: Ord + Clone> {
     included_columns: Vec<String>,
     /// The index structure
     index: Arc<RwLock<BTreeMap<K, Vec<CoveringEntry>>>>,
+}
+
+impl<K: Ord + Clone> Clone for CoveringIndex<K> {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            indexed_columns: self.indexed_columns.clone(),
+            included_columns: self.included_columns.clone(),
+            index: Arc::clone(&self.index),
+        }
+    }
 }
 
 impl<K: Ord + Clone> CoveringIndex<K> {

@@ -860,7 +860,7 @@ impl HyperLogLog {
         // Count leading zeros in remaining bits + 1
         let w = hash >> self.b;
         let leading_zeros = if w == 0 {
-            64 - self.b + 1
+            (64 - self.b + 1) as u8
         } else {
             (w.leading_zeros() + 1) as u8
         };

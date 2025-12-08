@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::error::DbError;
 use crate::execution::{QueryResult, planner::PlanNode};
 use crate::parser::{SqlStatement, JoinType};
 use crate::catalog::{Catalog, Schema};
@@ -22,7 +22,7 @@ impl Executor {
     
     /// Execute SQL statement (inline for performance)
     #[inline]
-    pub fn execute(&self, stmt: SqlStatement) -> Result<QueryResult> {
+    pub fn execute(&self, stmt: SqlStatement) -> std::result::Result<QueryResult, DbError> {
         match stmt {
             SqlStatement::CreateTable { name, columns } => {
                 let schema = Schema::new(name.clone(), columns);
@@ -102,7 +102,7 @@ impl Executor {
     
     /// Execute a query plan node (inline for performance)
     #[inline]
-    pub fn execute_plan(&self, plan: PlanNode) -> Result<QueryResult> {
+    pub fn execute_plan(&self, plan: PlanNode) -> std::result::Result<QueryResult, DbError> {
         match plan {
             PlanNode::TableScan { table, columns } => {
                 self.execute_table_scan(&table, &columns)
@@ -138,7 +138,7 @@ impl Executor {
         }
     }
     
-    fn execute_table_scan(&self, table: &str, columns: &[String]) -> Result<QueryResult> {
+    fn execute_table_scan(&self, table: &str, columns: &[String]) -> std::result::Result<QueryResult, DbError> {
         let schema = self.catalog.get_table(table)?;
         
         let result_columns = if columns.contains(&"*".to_string()) {
@@ -151,13 +151,13 @@ impl Executor {
         Ok(QueryResult::new(result_columns, Vec::new()))
     }
     
-    fn execute_filter(&self, input: QueryResult, _predicate: &str) -> Result<QueryResult> {
+    fn execute_filter(&self, input: QueryResult, _predicate: &str) -> std::result::Result<QueryResult, DbError> {
         // TODO: Implement actual filtering based on predicate
         // For now, just pass through the input
         Ok(input)
     }
     
-    fn execute_project(&self, input: QueryResult, columns: &[String]) -> Result<QueryResult> {
+    fn execute_project(&self, input: QueryResult, columns: &[String]) -> std::result::Result<QueryResult, DbError> {
         // Project only the specified columns
         if columns.contains(&"*".to_string()) {
             return Ok(input);
@@ -173,7 +173,7 @@ impl Executor {
         right: QueryResult,
         join_type: JoinType,
         condition: &str,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // Combine column names from both sides
         let mut result_columns = left.columns.clone();
         result_columns.extend(right.columns.clone());
@@ -301,7 +301,7 @@ impl Executor {
         group_by: &[String],
         aggregates: &[crate::execution::planner::AggregateExpr],
         _having: Option<&str>,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         use crate::execution::planner::AggregateFunction;
         
         if group_by.is_empty() {
@@ -341,7 +341,7 @@ impl Executor {
         &self,
         input: QueryResult,
         _order_by: &[crate::parser::OrderByClause],
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // TODO: Implement actual sorting based on order_by clauses
         // For now, just return the input as-is
         Ok(input)
@@ -352,7 +352,7 @@ impl Executor {
         mut input: QueryResult,
         limit: usize,
         offset: Option<usize>,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         let start = offset.unwrap_or(0);
         
         input.rows = input.rows.into_iter()
@@ -370,7 +370,7 @@ mod tests {
     use crate::parser::SqlParser;
     
     #[test]
-    fn test_executor() -> Result<()> {
+    fn test_executor() -> std::result::Result<(), DbError> {
         let catalog = Arc::new(Catalog::new());
         let txn_manager = Arc::new(TransactionManager::new());
         let executor = Executor::new(catalog, txn_manager);

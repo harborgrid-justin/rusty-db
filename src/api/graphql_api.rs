@@ -45,7 +45,7 @@ use tokio::sync::{broadcast, RwLock, Mutex};
 use tokio_stream::wrappers::BroadcastStream;
 
 use crate::common::{Value, TableId, ColumnId, RowId, SessionId};
-use crate::error::{DbError, Result};
+use crate::error::DbError;
 
 // Note: This module requires the following dependencies in Cargo.toml:
 // - async-graphql = "7.0"
@@ -1867,7 +1867,7 @@ impl ComplexityAnalyzer {
         }
     }
 
-    pub fn analyze(&self, _doc: &ExecutableDocument) -> Result<ComplexityMetrics> {
+    pub fn analyze(&self, _doc: &ExecutableDocument) -> std::result::Result<ComplexityMetrics, DbError> {
         // Simplified implementation - full analysis requires async-graphql internals
         let metrics = ComplexityMetrics {
             total_complexity: 10, // Default estimate
@@ -1900,7 +1900,7 @@ impl ComplexityAnalyzer {
         _selection_set: &async_graphql::parser::types::SelectionSet,
         metrics: &mut ComplexityMetrics,
         depth: usize,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         // Simplified implementation
         metrics.max_depth = metrics.max_depth.max(depth);
         metrics.field_count += 1;
@@ -2009,11 +2009,11 @@ impl AuthorizationContext {
         self.roles.contains(role)
     }
 
-    pub fn has_permission(&self, permission: &str) -> Result<bool> {
+    pub fn has_permission(&self, permission: &str) -> std::result::Result<bool, DbError> {
         Ok(self.permissions.contains(permission))
     }
 
-    pub fn can_read(&self, table: &str) -> Result<bool> {
+    pub fn can_read(&self, table: &str) -> std::result::Result<bool, DbError> {
         Ok(self.permissions.contains(&format!("read:{}", table))
             || self.permissions.contains("read:*")
             || self.has_role("admin"))

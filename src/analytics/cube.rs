@@ -9,8 +9,7 @@
 /// - Slice and dice operations
 /// - Pivot table generation
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;

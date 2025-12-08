@@ -10,7 +10,7 @@ use std::time::SystemTime;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use futures::future::BoxFuture;
-use crate::{Result, DbError};
+use crate::error::DbError;
 use super::TransactionId;
 use super::wal::{WALManager, WALEntry, LogRecord, LSN, PageId};
 
@@ -120,7 +120,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Run full ARIES recovery (Analysis, Redo, Undo)
-    pub async fn recover(&self) -> Result<()> {
+    pub async fn recover(&self) -> std::result::Result<(), DbError> {
         let start = std::time::Instant::now();
 
         *self.state.write() = RecoveryState::Analysis;
@@ -159,7 +159,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Phase 1: Analysis - scan log to build transaction and dirty page tables
-    async fn analysis_phase(&self) -> Result<(LSN, Vec<TransactionId>)> {
+    async fn analysis_phase(&self) -> std::result::Result<(LSN, Vec<TransactionId>), DbError> {
         println!("Starting ARIES Analysis phase...");
 
         // Find the last checkpoint
@@ -300,7 +300,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Phase 2: Redo - replay log from minimum recovery LSN
-    async fn redo_phase(&self, start_lsn: LSN) -> Result<()> {
+    async fn redo_phase(&self, start_lsn: LSN) -> std::result::Result<(), DbError> {
         println!("Starting ARIES Redo phase from LSN {}...", start_lsn);
 
         // Read log from start_lsn to end
@@ -337,7 +337,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Phase 3: Undo - rollback active transactions
-    async fn undo_phase(&self, undo_list: Vec<TransactionId>) -> Result<()> {
+    async fn undo_phase(&self, undo_list: Vec<TransactionId>) -> std::result::Result<(), DbError> {
         println!("Starting ARIES Undo phase for {} transactions...", undo_list.len());
 
         if undo_list.is_empty() {
@@ -431,7 +431,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Undo a log record by writing a CLR
-    async fn undo_record(&self, entry: &WALEntry) -> Result<()> {
+    async fn undo_record(&self, entry: &WALEntry) -> std::result::Result<(), DbError> {
         match &entry.record {
             LogRecord::Update { txn_id, page_id, offset, before_image, undo_next_lsn, .. } => {
                 // Create CLR with reverse operation
@@ -504,14 +504,14 @@ impl ARIESRecoveryManager {
     }
 
     /// Apply data to a page (simulation)
-    async fn apply_to_page(&self, page_id: PageId, offset: u32, data: &[u8]) -> Result<()> {
+    async fn apply_to_page(&self, page_id: PageId, offset: u32, data: &[u8]) -> std::result::Result<(), DbError> {
         // In production, this would update the actual page in buffer pool
         // For now, just simulate
         Ok(())
     }
 
     /// Find the last checkpoint LSN
-    async fn find_last_checkpoint(&self) -> Result<LSN> {
+    async fn find_last_checkpoint(&self) -> std::result::Result<LSN> {
         // Read log backwards to find last checkpoint
         let entries = self.wal.read_from(1)?;
 
@@ -583,7 +583,7 @@ impl FuzzyCheckpointManager {
     }
 
     /// Perform a fuzzy checkpoint
-    pub async fn checkpoint(&self) -> Result<LSN> {
+    pub async fn checkpoint(&self) -> std::result::Result<LSN> {
         let start = std::time::Instant::now();
 
         // Write checkpoint begin
@@ -639,7 +639,7 @@ impl PointInTimeRecovery {
     }
 
     /// Recover to a specific point in time
-    pub async fn recover_to_time(&self, target_time: SystemTime) -> Result<()> {
+    pub async fn recover_to_time(&self, target_time: SystemTime) -> std::result::Result<(), DbError> {
         println!("Starting point-in-time recovery to {:?}", target_time);
 
         // Find the LSN at target time
@@ -654,7 +654,7 @@ impl PointInTimeRecovery {
     }
 
     /// Find LSN at a specific time
-    fn find_lsn_at_time(&self, target_time: SystemTime) -> Result<LSN> {
+    fn find_lsn_at_time(&self, target_time: SystemTime) -> std::result::Result<LSN> {
         let entries = self.wal.read_from(1)?;
 
         // Binary search for target time
@@ -683,7 +683,7 @@ impl PointInTimeRecovery {
     }
 
     /// Run recovery up to a specific LSN
-    async fn recovery_up_to_lsn(&self, target_lsn: LSN) -> Result<()> {
+    async fn recovery_up_to_lsn(&self, target_lsn: LSN) -> std::result::Result<(), DbError> {
         // Similar to ARIES recovery, but stop at target_lsn
         // This is a simplified version
         self.recovery.recover().await?;
@@ -703,7 +703,7 @@ impl MediaRecoveryManager {
     }
 
     /// Recover from media failure using archive logs
-    pub async fn recover_from_media_failure(&self) -> Result<()> {
+    pub async fn recover_from_media_failure(&self) -> std::result::Result<(), DbError> {
         println!("Starting media recovery from archive logs...");
 
         // In production, this would:
@@ -718,7 +718,7 @@ impl MediaRecoveryManager {
     }
 
     /// Archive WAL segments
-    pub fn archive_segment(&self, segment_path: &Path) -> Result<()> {
+    pub fn archive_segment(&self, segment_path: &Path) -> std::result::Result<(), DbError> {
         // Copy WAL segment to archive directory
         let filename = segment_path.file_name().ok_or_else(|| {
             DbError::IOError("Invalid segment path".to_string())

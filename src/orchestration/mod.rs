@@ -532,10 +532,10 @@ impl Orchestrator {
     }
 
     /// Get orchestrator statistics
-    pub fn statistics(&self) -> OrchestratorStatistics {
+    pub async fn statistics(&self) -> OrchestratorStatistics {
         OrchestratorStatistics {
             state: *self.state.read(),
-            actor_stats: self.actor_system.statistics(),
+            actor_stats: self.actor_system.statistics().await,
             registry_stats: self.service_registry.statistics(),
             health_stats: self.health_aggregator.statistics(),
             degradation_stats: self.degradation.statistics(),

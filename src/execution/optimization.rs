@@ -8,7 +8,6 @@
 /// - Join order optimization with dynamic programming
 /// - Index selection optimization
 
-use crate::Result;
 use crate::error::DbError;
 use crate::execution::planner::PlanNode;
 use std::collections::HashMap;
@@ -485,7 +484,7 @@ impl JoinOrderOptimizer {
     }
     
     /// Find optimal join order for a set of tables
-    pub fn optimize_join_order(&self, tables: Vec<PlanNode>) -> Result<PlanNode> {
+    pub fn optimize_join_order(&self, tables: Vec<PlanNode>) -> std::result::Result<PlanNode, DbError> {
         if tables.is_empty() {
             return Err(DbError::InvalidInput("No tables to join".to_string()));
         }
@@ -514,7 +513,7 @@ impl JoinOrderOptimizer {
         self.greedy_join_order(tables)
     }
     
-    fn greedy_join_order(&self, mut tables: Vec<PlanNode>) -> Result<PlanNode> {
+    fn greedy_join_order(&self, mut tables: Vec<PlanNode>) -> std::result::Result<PlanNode, DbError> {
         while tables.len() > 1 {
             let mut best_pair = (0, 1);
             let mut best_cost = f64::MAX;

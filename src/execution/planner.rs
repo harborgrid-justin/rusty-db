@@ -1,5 +1,5 @@
 use crate::parser::{SqlStatement, JoinType, OrderByClause};
-use crate::Result;
+use crate::error::DbError;
 
 /// Query plan node
 #[derive(Debug, Clone)]
@@ -71,7 +71,7 @@ impl Planner {
         Self
     }
     
-    pub fn plan(&self, stmt: &SqlStatement) -> Result<PlanNode> {
+    pub fn plan(&self, stmt: &SqlStatement) -> std::result::Result<PlanNode, DbError> {
         match stmt {
             SqlStatement::Select { 
                 table, 

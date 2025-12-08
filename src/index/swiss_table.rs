@@ -35,7 +35,7 @@
 use std::arch::x86_64::*;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
-use crate::simd::hash::{xxhash3_avx2, hash_u64};
+use crate::simd::hash::xxhash3_avx2;
 
 /// Control byte indicating an empty slot
 const EMPTY: u8 = 0xFF;

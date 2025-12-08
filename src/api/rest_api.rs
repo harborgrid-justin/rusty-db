@@ -39,7 +39,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use uuid::Uuid;
 
 use crate::{
-    Result, DbError,
+    error::DbError,
     common::*,
 };
 
@@ -879,7 +879,7 @@ impl<T> PaginatedResponse<T> {
 
 impl RestApiServer {
     /// Create a new REST API server
-    pub async fn new(config: ApiConfig) -> Result<Self> {
+    pub async fn new(config: ApiConfig) -> std::result::Result<Self, DbError> {
         let state = Arc::new(ApiState {
             config: config.clone(),
             connection_semaphore: Arc::new(Semaphore::new(config.max_connections)),
@@ -993,7 +993,7 @@ impl RestApiServer {
     }
 
     /// Run the API server
-    pub async fn run(&self, addr: &str) -> Result<()> {
+    pub async fn run(&self, addr: &str) -> std::result::Result<(), DbError> {
         let router = self.build_router();
 
         let listener = tokio::net::TcpListener::bind(addr)

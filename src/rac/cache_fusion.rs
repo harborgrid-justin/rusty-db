@@ -16,7 +16,7 @@
 //! by allowing direct transfer of cached blocks from one instance's memory to another's,
 //! maintaining strict consistency guarantees through sophisticated locking protocols.
 
-use crate::{Result, DbError};
+use crate::error::DbError;
 use crate::common::{PageId, TransactionId, NodeId};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -495,7 +495,7 @@ impl GlobalCacheService {
         mode: BlockMode,
         transaction_id: TransactionId,
         force_current: bool,
-    ) -> Result<BlockGrant> {
+    ) -> std::result::Result<BlockGrant, DbError> {
         // Update statistics
         self.stats.write().total_requests += 1;
 
@@ -573,7 +573,7 @@ impl GlobalCacheService {
         &self,
         resource_id: &ResourceId,
         requested_mode: BlockMode,
-    ) -> Result<Option<BlockGrant>> {
+    ) -> std::result::Result<Option<BlockGrant>, DbError> {
         let cache = self.local_cache.read();
 
         if let Some(state) = cache.get(resource_id) {
@@ -599,7 +599,7 @@ impl GlobalCacheService {
         resource_id: ResourceId,
         mode: BlockMode,
         transaction_id: TransactionId,
-    ) -> Result<BlockGrant> {
+    ) -> std::result::Result<BlockGrant, DbError> {
         let mut cache = self.local_cache.write();
 
         // Get or create block state
@@ -643,7 +643,7 @@ impl GlobalCacheService {
         block_data: Vec<u8>,
         source_mode: BlockMode,
         target_mode: BlockMode,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let start = Instant::now();
 
         // Update local cache state
@@ -688,7 +688,7 @@ impl GlobalCacheService {
         &self,
         resource_id: ResourceId,
         as_of_scn: u64,
-    ) -> Result<Vec<u8>> {
+    ) -> std::result::Result<Vec<u8>, DbError> {
         self.stats.write().past_image_requests += 1;
 
         // Determine which instance has the past image
@@ -711,7 +711,7 @@ impl GlobalCacheService {
     }
 
     /// Invalidate block across all instances
-    pub async fn invalidate_block(&self, resource_id: ResourceId, new_scn: u64) -> Result<()> {
+    pub async fn invalidate_block(&self, resource_id: ResourceId, new_scn: u64) -> std::result::Result<(), DbError> {
         let message = CacheFusionMessage::BlockInvalidate {
             resource_id: resource_id.clone(),
             new_scn,
@@ -730,7 +730,7 @@ impl GlobalCacheService {
     }
 
     /// Write back dirty block to disk
-    pub async fn write_back_block(&self, resource_id: ResourceId) -> Result<()> {
+    pub async fn write_back_block(&self, resource_id: ResourceId) -> std::result::Result<(), DbError> {
         self.stats.write().write_backs += 1;
 
         let mut cache = self.local_cache.write();
@@ -746,7 +746,7 @@ impl GlobalCacheService {
     }
 
     /// Get master instance for a resource
-    async fn get_master_instance(&self, resource_id: &ResourceId) -> Result<NodeId> {
+    async fn get_master_instance(&self, resource_id: &ResourceId) -> std::result::Result<NodeId, DbError> {
         let dir = self.resource_directory.read();
 
         if let Some(master) = dir.get(resource_id) {
@@ -762,7 +762,7 @@ impl GlobalCacheService {
         &self,
         resource_id: &ResourceId,
         _as_of_scn: u64,
-    ) -> Result<NodeId> {
+    ) -> std::result::Result<NodeId, DbError> {
         let cache = self.local_cache.read();
 
         if let Some(state) = cache.get(resource_id) {
@@ -784,7 +784,7 @@ impl GlobalCacheService {
         &self,
         source: NodeId,
         message: CacheFusionMessage,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         match message {
             CacheFusionMessage::BlockRequest {
                 resource_id,
@@ -837,7 +837,7 @@ impl GlobalCacheService {
         requestor: NodeId,
         transaction_id: TransactionId,
         _force_current: bool,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         // Handle the request and send grant
         let grant = self.handle_local_block_request(
             resource_id,
@@ -867,7 +867,7 @@ impl GlobalCacheService {
         _source_mode: BlockMode,
         target_mode: BlockMode,
         scn: u64,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let mut cache = self.local_cache.write();
 
         let state = cache.entry(resource_id.clone()).or_insert_with(|| {
@@ -897,7 +897,7 @@ impl GlobalCacheService {
         resource_id: ResourceId,
         new_scn: u64,
         _invalidator: NodeId,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), DbError> {
         let mut cache = self.local_cache.write();
 
         if let Some(state) = cache.get_mut(&resource_id) {
@@ -1000,7 +1000,7 @@ impl GlobalEnqueueService {
         &self,
         resource_id: ResourceId,
         lock_type: LockType,
-    ) -> Result<LockGrant> {
+    ) -> std::result::Result<LockGrant, DbError> {
         self.stats.write().total_lock_requests += 1;
         let wait_start = Instant::now();
 
@@ -1044,7 +1044,7 @@ impl GlobalEnqueueService {
         &self,
         resource_id: &ResourceId,
         lock_type: &LockType,
-    ) -> Result<Option<LockGrant>> {
+    ) -> std::result::Result<Option<LockGrant>, DbError> {
         let mut registry = self.lock_registry.write();
 
         let state = registry.entry(resource_id.clone()).or_insert_with(|| {
@@ -1075,7 +1075,7 @@ impl GlobalEnqueueService {
     }
 
     /// Release a lock
-    pub async fn release_lock(&self, resource_id: ResourceId) -> Result<()> {
+    pub async fn release_lock(&self, resource_id: ResourceId) -> std::result::Result<(), DbError> {
         let mut registry = self.lock_registry.write();
 
         if let Some(state) = registry.get_mut(&resource_id) {
@@ -1094,7 +1094,7 @@ impl GlobalEnqueueService {
     }
 
     /// Process pending lock requests from wait queue
-    async fn process_wait_queue(&self) -> Result<()> {
+    async fn process_wait_queue(&self) -> std::result::Result<(), DbError> {
         let mut queue = self.wait_queue.lock();
 
         while let Some(waiter) = queue.pop_front() {
@@ -1114,7 +1114,7 @@ impl GlobalEnqueueService {
     }
 
     /// Detect deadlocks in the wait-for graph using Tarjan's algorithm (O(N) instead of O(N²))
-    pub async fn detect_deadlocks(&self) -> Result<Vec<NodeId>> {
+    pub async fn detect_deadlocks(&self) -> std::result::Result<Vec<NodeId>, DbError> {
         let graph = self.wait_for_graph.read();
         let mut visited = HashSet::new();
         let mut rec_stack = HashSet::new();
@@ -1137,7 +1137,7 @@ impl GlobalEnqueueService {
 
     /// NEW: Fast deadlock detection with timeout-based prevention
     /// Proactively abort transactions that wait too long (before full deadlock forms)
-    pub async fn detect_deadlocks_fast(&self, timeout_ms: u64) -> Result<Vec<NodeId>> {
+    pub async fn detect_deadlocks_fast(&self, timeout_ms: u64) -> std::result::Result<Vec<NodeId>, DbError> {
         let mut timed_out = Vec::new();
         let queue = self.wait_queue.lock();
 
@@ -1222,7 +1222,7 @@ impl CacheFusionCoordinator {
         resource_id: ResourceId,
         mode: BlockMode,
         transaction_id: TransactionId,
-    ) -> Result<(BlockGrant, LockGrant)> {
+    ) -> std::result::Result<(BlockGrant, LockGrant), DbError> {
         // First acquire lock
         let lock_type = match mode {
             BlockMode::Exclusive | BlockMode::ExclusiveCurrent => LockType::Exclusive,
@@ -1244,7 +1244,7 @@ impl CacheFusionCoordinator {
     }
 
     /// Release block and lock
-    pub async fn release_block_with_lock(&self, resource_id: ResourceId) -> Result<()> {
+    pub async fn release_block_with_lock(&self, resource_id: ResourceId) -> std::result::Result<(), DbError> {
         // Release lock
         self.ges.release_lock(resource_id).await?;
 

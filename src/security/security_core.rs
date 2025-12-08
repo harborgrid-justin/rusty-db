@@ -16,7 +16,7 @@
 //! - **SecurityDashboard**: Real-time security visualization
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
+use std::collections::{HashMap, HashSet, VecDeque};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
@@ -25,11 +25,7 @@ use crate::error::DbError;
 
 use super::{
     IntegratedSecurityManager,
-    audit::{AuditAction, AuditRecord},
-    authentication::AuthSession,
     rbac::RoleId,
-    fgac::SecurityContext,
-    labels::SecurityLabel,
 };
 
 // ============================================================================

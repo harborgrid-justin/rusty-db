@@ -7,8 +7,7 @@
 /// - JSON indexing for fast queries
 /// - JSON aggregation functions
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use serde_json::{Value as JsonValue, json};
 use std::collections::HashMap;
 

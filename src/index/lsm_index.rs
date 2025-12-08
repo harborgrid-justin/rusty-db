@@ -19,13 +19,11 @@
 use crate::Result;
 use crate::error::DbError;
 use parking_lot::RwLock;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
 
 /// LSM Tree Index
 pub struct LSMTreeIndex<K: Ord + Clone + Hash, V: Clone> {
@@ -39,6 +37,18 @@ pub struct LSMTreeIndex<K: Ord + Clone + Hash, V: Clone> {
     config: LSMConfig,
     /// Compaction strategy
     compaction_strategy: CompactionStrategy,
+}
+
+impl<K: Ord + Clone + Hash, V: Clone> Clone for LSMTreeIndex<K, V> {
+    fn clone(&self) -> Self {
+        Self {
+            memtable: Arc::clone(&self.memtable),
+            immutable_memtable: Arc::clone(&self.immutable_memtable),
+            levels: Arc::clone(&self.levels),
+            config: self.config.clone(),
+            compaction_strategy: self.compaction_strategy,
+        }
+    }
 }
 
 impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {

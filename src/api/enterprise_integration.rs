@@ -34,7 +34,7 @@ use tokio::time::sleep;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-use crate::error::{Result, DbError};
+use crate::error::DbError;
 
 // ============================================================================
 // SECTION 1: UNIFIED SERVICE REGISTRY (600+ lines)
@@ -121,7 +121,7 @@ pub trait ServiceLifecycleHandler: Send + Sync {
 /// Health check trait
 pub trait HealthCheck: Send + Sync {
     /// Perform health check
-    fn check(&self) -> Result<HealthCheckStatus>;
+    fn check(&self) -> std::result::Result<HealthCheckStatus, DbError>;
 }
 
 /// Health check status
@@ -310,7 +310,7 @@ impl VersionCompatibilityChecker {
             .push(constraint);
     }
 
-    pub fn check_compatibility(&self, service: &str, version: &str) -> Result<bool> {
+    pub fn check_compatibility(&self, service: &str, version: &str) -> std::result::Result<bool, DbError> {
         let matrix = self.compatibility_matrix.read().unwrap();
         if let Some(constraints) = matrix.get(service) {
             for constraint in constraints {
@@ -458,7 +458,7 @@ impl ServiceRegistry {
     }
 
     /// Register a new service
-    pub fn register(&self, registration: ServiceRegistration) -> Result<()> {
+    pub fn register(&self, registration: ServiceRegistration) -> std::result::Result<(), DbError> {
         let service_id = registration.metadata.id.clone();
 
         // Check version compatibility
@@ -495,7 +495,7 @@ impl ServiceRegistry {
     }
 
     /// Unregister a service
-    pub fn unregister(&self, service_id: &str) -> Result<()> {
+    pub fn unregister(&self, service_id: &str) -> std::result::Result<(), DbError> {
         {
             let mut services = self.services.write().unwrap();
             services.remove(service_id);
@@ -520,7 +520,7 @@ impl ServiceRegistry {
     }
 
     /// Check if all dependencies are satisfied
-    fn check_dependencies(&self, dependencies: &[String]) -> Result<()> {
+    fn check_dependencies(&self, dependencies: &[String]) -> std::result::Result<(), DbError> {
         let metadata = self.metadata_index.read().unwrap();
         for dep in dependencies {
             if !metadata.contains_key(dep) {
@@ -534,7 +534,7 @@ impl ServiceRegistry {
     }
 
     /// Start a service
-    pub fn start_service(&self, service_id: &str) -> Result<()> {
+    pub fn start_service(&self, service_id: &str) -> std::result::Result<(), DbError> {
         let services = self.services.read().unwrap();
         if let Some(registration) = services.get(service_id) {
             registration.lifecycle_handler.start()?;
@@ -562,7 +562,7 @@ impl ServiceRegistry {
     }
 
     /// Stop a service
-    pub fn stop_service(&self, service_id: &str) -> Result<()> {
+    pub fn stop_service(&self, service_id: &str) -> std::result::Result<(), DbError> {
         let services = self.services.read().unwrap();
         if let Some(registration) = services.get(service_id) {
             registration.lifecycle_handler.stop()?;
@@ -1122,7 +1122,7 @@ impl MemoryBudgetAllocator {
         }
     }
 
-    pub fn allocate(&self, service: &str, amount: usize) -> Result<()> {
+    pub fn allocate(&self, service: &str, amount: usize) -> std::result::Result<(), DbError> {
         let mut allocations = self.allocations.write().unwrap();
         let mut reserved = self.reserved.write().unwrap();
 
@@ -1137,7 +1137,7 @@ impl MemoryBudgetAllocator {
         Ok(())
     }
 
-    pub fn deallocate(&self, service: &str) -> Result<()> {
+    pub fn deallocate(&self, service: &str) -> std::result::Result<(), DbError> {
         let mut allocations = self.allocations.write().unwrap();
         let mut reserved = self.reserved.write().unwrap();
 
@@ -1174,7 +1174,7 @@ impl ConnectionQuotaManager {
         }
     }
 
-    pub fn set_quota(&self, service: &str, quota: usize) -> Result<()> {
+    pub fn set_quota(&self, service: &str, quota: usize) -> std::result::Result<(), DbError> {
         let mut quotas = self.quotas.write().unwrap();
         let total_allocated: usize = quotas.values().sum();
 
@@ -1188,7 +1188,7 @@ impl ConnectionQuotaManager {
         Ok(())
     }
 
-    pub fn acquire_connection(&self, service: &str) -> Result<()> {
+    pub fn acquire_connection(&self, service: &str) -> std::result::Result<(), DbError> {
         let quotas = self.quotas.read().unwrap();
         let mut active = self.active_connections.write().unwrap();
 
@@ -1405,7 +1405,7 @@ pub enum ContentionSeverity {
 }
 
 pub trait ContentionResolver: Send + Sync {
-    fn resolve(&self, contention: &ResourceContention) -> Result<String>;
+    fn resolve(&self, contention: &ResourceContention) -> std::result::Result<String, DbError>;
 }
 
 impl ResourceContentionHandler {
@@ -1500,7 +1500,7 @@ impl ResourceOrchestrator {
         &self.contention_handler
     }
 
-    pub async fn orchestrate_resources(&self) -> Result<()> {
+    pub async fn orchestrate_resources(&self) -> std::result::Result<(), DbError> {
         // Resolve any resource contentions
         self.contention_handler.resolve_contentions()?;
 
@@ -1558,7 +1558,7 @@ pub struct RequestRouter {
 }
 
 pub trait RouteHandler: Send + Sync {
-    fn handle(&self, request: UnifiedApiRequest) -> Result<UnifiedApiResponse>;
+    fn handle(&self, request: UnifiedApiRequest) -> std::result::Result<UnifiedApiResponse, DbError>;
 }
 
 pub trait Middleware: Send + Sync {
@@ -1583,7 +1583,7 @@ impl RequestRouter {
         mw.push(middleware);
     }
 
-    pub fn route(&self, mut request: UnifiedApiRequest) -> Result<UnifiedApiResponse> {
+    pub fn route(&self, mut request: UnifiedApiRequest) -> std::result::Result<UnifiedApiResponse, DbError> {
         // Apply middleware
         {
             let middleware = self.middleware.read().unwrap();
@@ -1615,7 +1615,7 @@ pub struct ResponseAggregator {
 }
 
 pub trait AggregationStrategy: Send + Sync {
-    fn aggregate(&self, responses: Vec<UnifiedApiResponse>) -> Result<UnifiedApiResponse>;
+    fn aggregate(&self, responses: Vec<UnifiedApiResponse>) -> std::result::Result<UnifiedApiResponse, DbError>;
 }
 
 impl ResponseAggregator {
@@ -1630,7 +1630,7 @@ impl ResponseAggregator {
         strategies.insert(name.to_string(), strategy);
     }
 
-    pub fn aggregate(&self, strategy_name: &str, responses: Vec<UnifiedApiResponse>) -> Result<UnifiedApiResponse> {
+    pub fn aggregate(&self, strategy_name: &str, responses: Vec<UnifiedApiResponse>) -> std::result::Result<UnifiedApiResponse, DbError> {
         let strategies = self.aggregation_strategies.read().unwrap();
         if let Some(strategy) = strategies.get(strategy_name) {
             strategy.aggregate(responses)
@@ -1667,7 +1667,7 @@ impl BatchRequestHandler {
         }
     }
 
-    pub async fn handle_batch(&self, batch: BatchRequest) -> Result<BatchResponse> {
+    pub async fn handle_batch(&self, batch: BatchRequest) -> std::result::Result<BatchResponse, DbError> {
         if batch.requests.len() > self.max_batch_size {
             return Err(DbError::InvalidInput(format!(
                 "Batch size {} exceeds maximum {}",
@@ -1781,7 +1781,7 @@ impl BackwardCompatibilityLayer {
         transformers.insert(from_version.to_string(), transformer);
     }
 
-    pub fn transform_request(&self, request: &mut UnifiedApiRequest) -> Result<()> {
+    pub fn transform_request(&self, request: &mut UnifiedApiRequest) -> std::result::Result<(), DbError> {
         let transformers = self.transformers.read().unwrap();
         if let Some(transformer) = transformers.get(&request.api_version) {
             transformer.transform(request)?;
@@ -1839,7 +1839,7 @@ impl RateLimiter {
         });
     }
 
-    pub fn check_rate_limit(&self, key: &str) -> Result<()> {
+    pub fn check_rate_limit(&self, key: &str) -> std::result::Result<(), DbError> {
         let limits = self.limits.read().unwrap();
         let limit = limits.get(key)
             .ok_or_else(|| DbError::NotFound(format!("Rate limit not found for: {}", key)))?;
@@ -1884,7 +1884,7 @@ impl ApiGatewayCoordinator {
         }
     }
 
-    pub async fn process_request(&self, mut request: UnifiedApiRequest) -> Result<UnifiedApiResponse> {
+    pub async fn process_request(&self, mut request: UnifiedApiRequest) -> std::result::Result<UnifiedApiResponse, DbError> {
         // Check rate limit
         let rate_key = format!("{}:{}", request.correlation_id.as_str(), request.endpoint);
         self.rate_limiter.check_rate_limit(&rate_key)?;
@@ -1994,7 +1994,7 @@ impl StartupOrchestrator {
         });
     }
 
-    pub async fn execute_startup(&self) -> Result<()> {
+    pub async fn execute_startup(&self) -> std::result::Result<(), DbError> {
         let phases = self.phases.read().unwrap().clone();
 
         for phase_handler in phases {
@@ -2079,7 +2079,7 @@ impl ShutdownCoordinator {
         self.shutdown_signal.notified().await;
     }
 
-    pub async fn execute_shutdown(&self) -> Result<()> {
+    pub async fn execute_shutdown(&self) -> std::result::Result<(), DbError> {
         let phases = self.phases.read().unwrap().clone();
 
         for phase_handler in phases {
@@ -2157,7 +2157,7 @@ impl HotReloadManager {
         handlers.insert(component.to_string(), handler);
     }
 
-    pub fn reload_component(&self, component: &str) -> Result<()> {
+    pub fn reload_component(&self, component: &str) -> std::result::Result<(), DbError> {
         let handlers = self.reload_handlers.read().unwrap();
         let handler = handlers.get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
@@ -2237,7 +2237,7 @@ impl RollingUpgradeCoordinator {
         *upgrade_plan = Some(plan);
     }
 
-    pub async fn execute_upgrade(&self) -> Result<()> {
+    pub async fn execute_upgrade(&self) -> std::result::Result<(), DbError> {
         let plan = {
             let plan_lock = self.upgrade_plan.read().unwrap();
             plan_lock.clone().ok_or_else(|| DbError::InvalidInput("No upgrade plan set".to_string()))?
@@ -2314,7 +2314,7 @@ impl StatePersistenceManager {
         handlers.insert(component.to_string(), handler);
     }
 
-    pub fn persist_state(&self, component: &str) -> Result<()> {
+    pub fn persist_state(&self, component: &str) -> std::result::Result<(), DbError> {
         let handlers = self.persistence_handlers.read().unwrap();
         let handler = handlers.get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
@@ -2327,7 +2327,7 @@ impl StatePersistenceManager {
         Ok(())
     }
 
-    pub fn restore_state(&self, component: &str) -> Result<()> {
+    pub fn restore_state(&self, component: &str) -> std::result::Result<(), DbError> {
         let storage = self.state_storage.read().unwrap();
         let data = storage.get(component)
             .ok_or_else(|| DbError::NotFound(format!("No persisted state for: {}", component)))?;
@@ -2341,7 +2341,7 @@ impl StatePersistenceManager {
         Ok(())
     }
 
-    pub fn persist_all(&self) -> Result<()> {
+    pub fn persist_all(&self) -> std::result::Result<(), DbError> {
         let handlers = self.persistence_handlers.read().unwrap();
         for component in handlers.keys() {
             self.persist_state(component)?;
@@ -2383,7 +2383,7 @@ impl RecoveryOrchestrator {
         strategies.insert(component.to_string(), strategy);
     }
 
-    pub async fn recover_component(&self, component: &str) -> Result<()> {
+    pub async fn recover_component(&self, component: &str) -> std::result::Result<(), DbError> {
         let start = Instant::now();
 
         let strategies = self.recovery_strategies.read().unwrap();
@@ -2443,7 +2443,7 @@ impl SystemLifecycleManager {
         }
     }
 
-    pub async fn startup(&self) -> Result<()> {
+    pub async fn startup(&self) -> std::result::Result<(), DbError> {
         {
             let mut state = self.system_state.write().unwrap();
             *state = SystemState::Starting;
@@ -2459,7 +2459,7 @@ impl SystemLifecycleManager {
         Ok(())
     }
 
-    pub async fn shutdown(&self) -> Result<()> {
+    pub async fn shutdown(&self) -> std::result::Result<(), DbError> {
         {
             let mut state = self.system_state.write().unwrap();
             *state = SystemState::ShuttingDown;
@@ -2579,12 +2579,12 @@ impl EnterpriseIntegrator {
     }
 
     /// Start the integrator and all registered services
-    pub async fn start(&self) -> Result<()> {
+    pub async fn start(&self) -> std::result::Result<(), DbError> {
         self.lifecycle_manager.startup().await
     }
 
     /// Stop the integrator and all registered services
-    pub async fn stop(&self) -> Result<()> {
+    pub async fn stop(&self) -> std::result::Result<(), DbError> {
         self.lifecycle_manager.shutdown().await
     }
 

@@ -1,7 +1,6 @@
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
 use crate::catalog::Catalog;
 use crate::transaction::TransactionManager;
@@ -32,7 +31,7 @@ impl Server {
         }
     }
     
-    pub async fn run(&self, addr: &str) -> Result<()> {
+    pub async fn run(&self, addr: &str) -> std::result::Result<(), DbError> {
         let listener = TcpListener::bind(addr).await
             .map_err(|e| DbError::Network(e.to_string()))?;
         
@@ -74,7 +73,7 @@ struct ConnectionHandler {
 }
 
 impl ConnectionHandler {
-    async fn handle(&self, mut socket: TcpStream) -> Result<()> {
+    async fn handle(&self, mut socket: TcpStream) -> std::result::Result<(), DbError> {
         const MAX_REQUEST_SIZE: usize = 1024 * 1024; // 1MB limit
         let mut buffer = vec![0u8; MAX_REQUEST_SIZE];
         

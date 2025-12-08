@@ -8,10 +8,10 @@
 //! - Efficient ID generation and management
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, Ordering};
-use crate::{Result, DbError};
+use crate::error::{Result, DbError};
 use crate::common::Value;
 
 // ============================================================================
@@ -535,6 +535,7 @@ pub enum PartitioningStrategy {
 }
 
 /// Graph partitioner
+#[derive(Clone)]
 pub struct GraphPartitioner {
     strategy: PartitioningStrategy,
     num_partitions: u32,

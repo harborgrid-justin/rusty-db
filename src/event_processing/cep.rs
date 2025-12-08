@@ -704,28 +704,26 @@ impl PatternMatcher {
                 let mut start_time = None;
                 let mut end_time = None;
 
-                for element_spec in elements {
-                    if let PatternSpec::Element(element) = element_spec {
-                        if current_idx >= events.len() {
-                            return None;
+                for element in elements {
+                    if current_idx >= events.len() {
+                        return None;
+                    }
+
+                    let event = events[current_idx];
+                    if element.condition.evaluate(event, context) {
+                        all_events
+                            .entry(element.variable.clone())
+                            .or_insert_with(Vec::new)
+                            .push((*event).clone());
+
+                        if start_time.is_none() {
+                            start_time = Some(event.event_time);
                         }
+                        end_time = Some(event.event_time);
 
-                        let event = events[current_idx];
-                        if element.condition.evaluate(event, context) {
-                            all_events
-                                .entry(element.variable.clone())
-                                .or_insert_with(Vec::new)
-                                .push((*event).clone());
-
-                            if start_time.is_none() {
-                                start_time = Some(event.event_time);
-                            }
-                            end_time = Some(event.event_time);
-
-                            current_idx += 1;
-                        } else {
-                            return None;
-                        }
+                        current_idx += 1;
+                    } else {
+                        return None;
                     }
                 }
 
@@ -982,8 +980,9 @@ impl NFA {
             PatternSpec::Sequence(elements) => {
                 let mut current = start;
 
-                for elem_spec in elements {
-                    current = self.compile_spec(elem_spec, current)?;
+                for elem in elements {
+                    let elem_spec = PatternSpec::Element(elem.clone());
+                    current = self.compile_spec(&elem_spec, current)?;
                 }
 
                 Ok(current)

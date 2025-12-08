@@ -72,7 +72,7 @@ pub mod string;
 pub mod hash;
 
 // Re-export commonly used types
-pub use filter::{FilterOp, PredicateType};
+pub use filter::{FilterOp, PredicateType, SimdFilter};
 pub use scan::{ColumnScan, ScanStrategy, BatchProcessor};
 pub use aggregate::{SimdAggregator, AggregateOp};
 pub use string::{StringMatcher, PatternType};

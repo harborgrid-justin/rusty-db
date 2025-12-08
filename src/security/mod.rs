@@ -72,9 +72,7 @@
 //! # }
 //! ```
 
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;

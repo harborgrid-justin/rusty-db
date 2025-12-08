@@ -8,9 +8,9 @@
 //! - Graph machine learning features
 //! - Recommendation engine basics
 
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
+use std::collections::{HashMap, HashSet, BTreeMap};
 use serde::{Deserialize, Serialize};
-use crate::{Result, DbError};
+use crate::error::{Result, DbError};
 use crate::common::{Value, Tuple};
 use super::property_graph::{PropertyGraph, VertexId, EdgeId, Properties};
 use super::query_engine::{GraphQuery, QueryResult, VariableBindings, PatternMatcher};

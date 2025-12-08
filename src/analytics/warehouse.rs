@@ -9,8 +9,7 @@
 /// - Data quality and validation
 /// - Aggregate awareness and query rewriting
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use crate::catalog::Schema;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, BTreeMap};

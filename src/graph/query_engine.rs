@@ -11,9 +11,9 @@
 use std::collections::{HashMap, HashSet, VecDeque, BinaryHeap};
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
-use crate::{Result, DbError};
+use crate::error::{Result, DbError};
 use crate::common::Value;
-use super::property_graph::{PropertyGraph, VertexId, EdgeId, Edge, Vertex, Properties};
+use super::property_graph::{PropertyGraph, VertexId, EdgeId, Edge, Properties};
 
 // ============================================================================
 // Query AST (Abstract Syntax Tree)

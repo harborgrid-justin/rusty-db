@@ -8,7 +8,6 @@
 /// - ANY and ALL operators
 /// - Subquery decorrelation optimization
 
-use crate::Result;
 use crate::error::DbError;
 use super::planner::PlanNode;
 use super::QueryResult;
@@ -96,7 +95,7 @@ impl InEvaluator {
         value: &str,
         result: &QueryResult,
         negated: bool,
-    ) -> Result<bool> {
+    ) -> std::result::Result<bool, DbError> {
         if result.columns.len() != 1 {
             return Err(DbError::InvalidInput(
                 "IN subquery must return exactly one column".to_string()
@@ -136,7 +135,7 @@ pub struct ScalarSubqueryEvaluator;
 impl ScalarSubqueryEvaluator {
     /// Evaluate scalar subquery
     /// Must return exactly one row and one column
-    pub fn evaluate(result: &QueryResult) -> Result<Option<String>> {
+    pub fn evaluate(result: &QueryResult) -> std::result::Result<Option<String>, DbError> {
         if result.columns.len() > 1 {
             return Err(DbError::InvalidInput(
                 "Scalar subquery must return exactly one column".to_string()
@@ -167,7 +166,7 @@ impl QuantifiedComparisonEvaluator {
         value: &str,
         operator: ComparisonOp,
         result: &QueryResult,
-    ) -> Result<bool> {
+    ) -> std::result::Result<bool, DbError> {
         if result.columns.len() != 1 {
             return Err(DbError::InvalidInput(
                 "Quantified comparison subquery must return exactly one column".to_string()
@@ -191,7 +190,7 @@ impl QuantifiedComparisonEvaluator {
         value: &str,
         operator: ComparisonOp,
         result: &QueryResult,
-    ) -> Result<bool> {
+    ) -> std::result::Result<bool, DbError> {
         if result.columns.len() != 1 {
             return Err(DbError::InvalidInput(
                 "Quantified comparison subquery must return exactly one column".to_string()
@@ -213,7 +212,7 @@ impl QuantifiedComparisonEvaluator {
         Ok(true)
     }
     
-    fn compare(left: &str, op: ComparisonOp, right: &str) -> Result<bool> {
+    fn compare(left: &str, op: ComparisonOp, right: &str) -> std::result::Result<bool, DbError> {
         // Try numeric comparison first
         if let (Ok(l), Ok(r)) = (left.parse::<f64>(), right.parse::<f64>()) {
             return Ok(match op {
@@ -257,7 +256,7 @@ impl CorrelatedSubqueryHandler {
     pub fn execute_correlated(
         _outer_row: &[String],
         _subquery: &SubqueryExpr,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // In a full implementation:
         // 1. Bind outer row values to subquery parameters
         // 2. Execute subquery with bound values

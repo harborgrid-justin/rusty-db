@@ -417,6 +417,7 @@ impl ApplicationContainer {
 /// Pluggable Database (PDB)
 ///
 /// A fully isolated database instance within a CDB
+#[derive(Debug, Clone)]
 pub struct PluggableDatabase {
     /// PDB configuration
     config: PdbConfig,

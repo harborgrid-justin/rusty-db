@@ -31,7 +31,6 @@
 //! - Throughput: 100M+ probes/second with AVX2
 //! - Cache efficiency: 95%+ hit rate (1 cache line per probe)
 
-use std::arch::x86_64::*;
 use crate::simd::hash::{xxhash3_avx2, wyhash};
 
 /// Block size in bits (512 bits = 64 bytes = 1 cache line)
@@ -105,8 +104,8 @@ impl SimdBloomFilter {
         let (h1, h2) = self.hash_key(key);
 
         let block_idx = (h1 as usize) % self.num_blocks;
-        let bit_idx_1 = (h1 as usize % BLOCK_SIZE_BITS);
-        let bit_idx_2 = (h2 as usize % BLOCK_SIZE_BITS);
+        let bit_idx_1 = h1 as usize % BLOCK_SIZE_BITS;
+        let bit_idx_2 = h2 as usize % BLOCK_SIZE_BITS;
 
         let block = &mut self.blocks[block_idx];
 
@@ -136,8 +135,8 @@ impl SimdBloomFilter {
         let (h1, h2) = self.hash_key(key);
 
         let block_idx = (h1 as usize) % self.num_blocks;
-        let bit_idx_1 = (h1 as usize % BLOCK_SIZE_BITS);
-        let bit_idx_2 = (h2 as usize % BLOCK_SIZE_BITS);
+        let bit_idx_1 = h1 as usize % BLOCK_SIZE_BITS;
+        let bit_idx_2 = h2 as usize % BLOCK_SIZE_BITS;
 
         let block = &self.blocks[block_idx];
 

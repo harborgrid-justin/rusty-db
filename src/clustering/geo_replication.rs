@@ -16,7 +16,6 @@
 /// - Compliance with data sovereignty requirements
 
 use crate::error::DbError;
-use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
@@ -369,7 +368,7 @@ impl GeoReplicationManager {
     }
 
     /// Add a datacenter to the topology
-    pub fn add_datacenter(&self, dc: Datacenter) -> Result<()> {
+    pub fn add_datacenter(&self, dc: Datacenter) -> std::result::Result<(), DbError> {
         let mut datacenters = self.datacenters.write().unwrap();
         let dc_id = dc.id.clone();
 
@@ -387,7 +386,7 @@ impl GeoReplicationManager {
     }
 
     /// Remove a datacenter
-    pub fn remove_datacenter(&self, dc_id: &str) -> Result<()> {
+    pub fn remove_datacenter(&self, dc_id: &str) -> std::result::Result<(), DbError> {
         let mut datacenters = self.datacenters.write().unwrap();
         datacenters.remove(dc_id);
 
@@ -403,7 +402,7 @@ impl GeoReplicationManager {
         key: Vec<u8>,
         value: Vec<u8>,
         target_dcs: Option<Vec<DatacenterId>>,
-    ) -> Result<u64> {
+    ) -> std::result::Result<u64> {
         // Increment vector clock
         let mut vc = self.vector_clock.write().unwrap();
         vc.increment(&self.config.local_dc);
@@ -451,7 +450,7 @@ impl GeoReplicationManager {
     }
 
     /// Replicate a delete operation
-    pub fn replicate_delete(&self, key: Vec<u8>) -> Result<u64> {
+    pub fn replicate_delete(&self, key: Vec<u8>) -> std::result::Result<u64> {
         let mut vc = self.vector_clock.write().unwrap();
         vc.increment(&self.config.local_dc);
         drop(vc);
@@ -511,7 +510,7 @@ impl GeoReplicationManager {
         &self,
         v1: &ReplicatedValue,
         v2: &ReplicatedValue,
-    ) -> Result<ConflictResolution> {
+    ) -> std::result::Result<ConflictResolution> {
         match self.config.conflict_resolution {
             ConflictResolution::LastWriteWins => {
                 // Compare timestamps
@@ -567,7 +566,7 @@ impl GeoReplicationManager {
     }
 
     /// Select best datacenter for read based on consistency level
-    pub fn select_read_datacenter(&self, consistency: ConsistencyLevel) -> Result<DatacenterId> {
+    pub fn select_read_datacenter(&self, consistency: ConsistencyLevel) -> std::result::Result<DatacenterId> {
         let datacenters = self.datacenters.read().unwrap();
 
         match consistency {
@@ -658,7 +657,7 @@ impl GeoReplicationManager {
     }
 
     /// Initiate disaster recovery failover
-    pub fn initiate_failover(&self, failed_dc: &str, target_dc: &str) -> Result<()> {
+    pub fn initiate_failover(&self, failed_dc: &str, target_dc: &str) -> std::result::Result<(), DbError> {
         let mut datacenters = self.datacenters.write().unwrap();
 
         // Mark failed DC as inactive

@@ -8,7 +8,6 @@
 /// - Load balancing across nodes
 /// - Result aggregation from multiple nodes
 
-use crate::Result;
 use crate::error::DbError;
 use crate::execution::{QueryResult, planner::PlanNode};
 use std::collections::HashMap;
@@ -41,7 +40,7 @@ impl DistributedCoordinator {
     }
     
     /// Execute query across distributed nodes
-    pub async fn execute_distributed(&self, plan: &PlanNode) -> Result<QueryResult> {
+    pub async fn execute_distributed(&self, plan: &PlanNode) -> std::result::Result<QueryResult, DbError> {
         // Analyze query to determine distribution strategy
         let strategy = self.analyze_query(plan)?;
         
@@ -61,7 +60,7 @@ impl DistributedCoordinator {
         }
     }
     
-    fn analyze_query(&self, plan: &PlanNode) -> Result<DistributionStrategy> {
+    fn analyze_query(&self, plan: &PlanNode) -> std::result::Result<DistributionStrategy, DbError> {
         match plan {
             PlanNode::Join { .. } => {
                 // Use broadcast join for small tables
@@ -79,7 +78,7 @@ impl DistributedCoordinator {
         }
     }
     
-    async fn execute_broadcast_join(&self, _plan: &PlanNode) -> Result<QueryResult> {
+    async fn execute_broadcast_join(&self, _plan: &PlanNode) -> std::result::Result<QueryResult, DbError> {
         // 1. Send smaller table to all nodes (broadcast)
         // 2. Partition larger table across nodes
         // 3. Execute local joins on each node
@@ -88,7 +87,7 @@ impl DistributedCoordinator {
         Ok(QueryResult::empty())
     }
     
-    async fn execute_hash_partitioned(&self, _plan: &PlanNode) -> Result<QueryResult> {
+    async fn execute_hash_partitioned(&self, _plan: &PlanNode) -> std::result::Result<QueryResult, DbError> {
         // 1. Hash partition data across nodes
         // 2. Execute local aggregations on each node
         // 3. Collect partial results
@@ -97,7 +96,7 @@ impl DistributedCoordinator {
         Ok(QueryResult::empty())
     }
     
-    async fn execute_range_partitioned(&self, _plan: &PlanNode) -> Result<QueryResult> {
+    async fn execute_range_partitioned(&self, _plan: &PlanNode) -> std::result::Result<QueryResult, DbError> {
         // 1. Partition data by range
         // 2. Execute on each partition
         // 3. Merge sorted results
@@ -105,7 +104,7 @@ impl DistributedCoordinator {
         Ok(QueryResult::empty())
     }
     
-    async fn execute_on_single_node(&self, _plan: &PlanNode) -> Result<QueryResult> {
+    async fn execute_on_single_node(&self, _plan: &PlanNode) -> std::result::Result<QueryResult, DbError> {
         // Select best node and execute there
         let nodes = self.nodes.read();
         if let Some(node) = self.load_balancer.select_node(&nodes) {
@@ -145,7 +144,7 @@ impl WorkerNode {
         }
     }
     
-    pub async fn execute_query(&self, _plan: &PlanNode) -> Result<QueryResult> {
+    pub async fn execute_query(&self, _plan: &PlanNode) -> std::result::Result<QueryResult, DbError> {
         // In real implementation, would send query to remote node
         Ok(QueryResult::empty())
     }
@@ -236,7 +235,7 @@ impl QueryScheduler {
     }
     
     /// Schedule query for execution
-    pub async fn schedule(&self, query: ScheduledQuery) -> Result<()> {
+    pub async fn schedule(&self, query: ScheduledQuery) -> std::result::Result<(), DbError> {
         // Wait for available slot
         let _permit = self.semaphore.acquire().await
             .map_err(|e| DbError::Internal(format!("Semaphore error: {}", e)))?;
@@ -276,7 +275,7 @@ impl DataShuffler {
         data: Vec<Vec<String>>,
         nodes: &[WorkerNode],
         partition_column: usize,
-    ) -> Result<HashMap<String, Vec<Vec<String>>>> {
+    ) -> std::result::Result<HashMap<String, Vec<Vec<String>>>, DbError> {
         let mut partitions: HashMap<String, Vec<Vec<String>>> = HashMap::new();
         
         for row in data {
@@ -330,9 +329,9 @@ impl FaultToleranceManager {
     }
     
     /// Execute with retry on failure
-    pub async fn execute_with_retry<F, T>(&self, mut operation: F) -> Result<T>
+    pub async fn execute_with_retry<F, T>(&self, mut operation: F) -> std::result::Result<T, DbError>
     where
-        F: FnMut() -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<T>> + Send>>,
+        F: FnMut() -> std::pin::Pin<Box<dyn std::future::Future<Output = std::result::Result<T, DbError>> + Send>>,
     {
         let mut attempts = 0;
         
@@ -501,7 +500,7 @@ impl DistributedTransactionCoordinator {
     }
     
     /// Execute two-phase commit
-    pub async fn commit_2pc(&self) -> Result<()> {
+    pub async fn commit_2pc(&self) -> std::result::Result<(), DbError> {
         // Phase 1: Prepare
         *self.state.write() = TransactionState::Preparing;
         
@@ -526,17 +525,17 @@ impl DistributedTransactionCoordinator {
         Ok(())
     }
     
-    async fn send_prepare(&self, _participant: &str) -> Result<bool> {
+    async fn send_prepare(&self, _participant: &str) -> std::result::Result<bool, DbError> {
         // Would send prepare message to participant node
         Ok(true)
     }
     
-    async fn send_commit(&self, _participant: &str) -> Result<()> {
+    async fn send_commit(&self, _participant: &str) -> std::result::Result<(), DbError> {
         // Would send commit message to participant node
         Ok(())
     }
     
-    async fn abort(&self) -> Result<()> {
+    async fn abort(&self) -> std::result::Result<(), DbError> {
         *self.state.write() = TransactionState::Aborted;
         
         for participant in &self.participants {
@@ -546,7 +545,7 @@ impl DistributedTransactionCoordinator {
         Ok(())
     }
     
-    async fn send_abort(&self, _participant: &str) -> Result<()> {
+    async fn send_abort(&self, _participant: &str) -> std::result::Result<(), DbError> {
         // Would send abort message to participant node
         Ok(())
     }

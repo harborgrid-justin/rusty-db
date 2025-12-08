@@ -22,7 +22,6 @@
 ///    - Eliminates need for hash tables
 ///    - Supports streaming aggregation
 
-use crate::Result;
 use crate::error::DbError;
 use crate::execution::QueryResult;
 use crate::parser::OrderByClause;
@@ -81,7 +80,7 @@ impl ExternalMergeSorter {
         &self,
         data: QueryResult,
         order_by: &[OrderByClause],
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         if data.rows.is_empty() {
             return Ok(data);
         }
@@ -112,7 +111,7 @@ impl ExternalMergeSorter {
         &self,
         mut data: QueryResult,
         order_by: &[OrderByClause],
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         data.rows.sort_by(|a, b| self.compare_rows(a, b, order_by));
         Ok(data)
     }
@@ -122,7 +121,7 @@ impl ExternalMergeSorter {
         &self,
         data: &QueryResult,
         order_by: &[OrderByClause],
-    ) -> Result<Vec<PathBuf>> {
+    ) -> std::result::Result<Vec<PathBuf>> {
         let rows_per_run = self.calculate_rows_per_run(&data.rows);
         let mut runs = Vec::new();
 
@@ -146,7 +145,7 @@ impl ExternalMergeSorter {
         &self,
         runs: Vec<PathBuf>,
         order_by: &[OrderByClause],
-    ) -> Result<Vec<Vec<String>>> {
+    ) -> std::result::Result<Vec<Vec<String>>, DbError> {
         if runs.is_empty() {
             return Ok(Vec::new());
         }
@@ -193,7 +192,7 @@ impl ExternalMergeSorter {
         &self,
         runs: &[PathBuf],
         order_by: &[OrderByClause],
-    ) -> Result<PathBuf> {
+    ) -> std::result::Result<PathBuf> {
         // Open readers for all runs
         let mut readers: Vec<BufReader<File>> = Vec::new();
         for run_path in runs {
@@ -289,7 +288,7 @@ impl ExternalMergeSorter {
     }
 
     /// Write sorted run to disk
-    fn write_run_to_disk(&self, rows: &[Vec<String>]) -> Result<PathBuf> {
+    fn write_run_to_disk(&self, rows: &[Vec<String>]) -> std::result::Result<PathBuf> {
         let path = self.create_run_path()?;
         let file = File::create(&path)
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -305,7 +304,7 @@ impl ExternalMergeSorter {
     }
 
     /// Read sorted run from disk
-    fn read_run_from_disk(&self, path: &Path) -> Result<Vec<Vec<String>>> {
+    fn read_run_from_disk(&self, path: &Path) -> std::result::Result<Vec<Vec<String>>, DbError> {
         let file = File::open(path)
             .map_err(|e| DbError::IoError(e.to_string()))?;
         let mut reader = BufReader::new(file);
@@ -319,7 +318,7 @@ impl ExternalMergeSorter {
     }
 
     /// Write single row to file
-    fn write_row(writer: &mut BufWriter<File>, row: &[String]) -> Result<()> {
+    fn write_row(writer: &mut BufWriter<File>, row: &[String]) -> std::result::Result<()> {
         let line = row.join("\t") + "\n";
         writer.write_all(line.as_bytes())
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -327,7 +326,7 @@ impl ExternalMergeSorter {
     }
 
     /// Read single row from file
-    fn read_row(reader: &mut BufReader<File>) -> Result<Option<Vec<String>>> {
+    fn read_row(reader: &mut BufReader<File>) -> std::result::Result<Option<Vec<String>>> {
         let mut line = String::new();
         let bytes_read = reader.read_line(&mut line)
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -341,7 +340,7 @@ impl ExternalMergeSorter {
     }
 
     /// Create unique run path
-    fn create_run_path(&self) -> Result<PathBuf> {
+    fn create_run_path(&self) -> std::result::Result<PathBuf> {
         let mut counter = self.run_counter.lock();
         *counter += 1;
         let run_id = *counter;
@@ -426,7 +425,7 @@ impl SortMergeJoin {
         right: QueryResult,
         left_key_col: usize,
         right_key_col: usize,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         // Assume inputs are already sorted by join keys
         // In practice, would sort them first if needed
 
@@ -523,7 +522,7 @@ impl TopKSelector {
         data: QueryResult,
         k: usize,
         order_by: &[OrderByClause],
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         let mut selector = Self::new(k);
 
         for row in data.rows {
@@ -592,7 +591,7 @@ impl SortBasedGrouping {
         data: QueryResult,
         group_by_cols: &[usize],
         agg_col: usize,
-    ) -> Result<QueryResult> {
+    ) -> std::result::Result<QueryResult, DbError> {
         if data.rows.is_empty() {
             return Ok(data);
         }

@@ -8,8 +8,7 @@
 /// - Value functions (LEAD, LAG, FIRST_VALUE, LAST_VALUE, NTH_VALUE)
 /// - Distribution functions (PERCENT_RANK, CUME_DIST, NTILE)
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;

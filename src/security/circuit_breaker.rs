@@ -23,14 +23,14 @@
 //!                          FallbackHandler
 //! ```
 
-use crate::{Result, DbError};
+use crate::DbError;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque, BTreeMap};
+use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, Instant, SystemTime};
-use parking_lot::{RwLock, Mutex};
-use tokio::sync::{Semaphore, OwnedSemaphorePermit};
+use parking_lot::RwLock;
+use tokio::sync::Semaphore;
 use tokio::time::timeout;
 use rand::Rng;
 

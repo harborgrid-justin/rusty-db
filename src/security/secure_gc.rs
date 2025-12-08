@@ -39,14 +39,14 @@
 //! ```
 
 use std::ops::{Deref, DerefMut};
-use std::sync::atomic::{AtomicPtr, AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Weak};
 use std::ptr;
 use std::mem;
 use std::alloc::{alloc, dealloc, Layout};
-use parking_lot::{Mutex, RwLock};
+use parking_lot::RwLock;
 use std::collections::{HashMap, VecDeque};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use rand::RngCore;
 
 // ============================================================================

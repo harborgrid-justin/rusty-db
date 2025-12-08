@@ -138,6 +138,7 @@ impl HashIndex {
 }
 
 /// Unified index types supporting all index structures
+#[derive(Clone)]
 pub enum Index {
     BTree(BTreeIndex),
     Hash(HashIndex),

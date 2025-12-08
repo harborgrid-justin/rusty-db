@@ -14,14 +14,10 @@
 /// - Cache-efficient layouts reducing miss rate by 78%
 
 use crate::Result;
-use crate::error::DbError;
 use parking_lot::RwLock;
-use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 use std::sync::Arc;
-use crate::simd::hash::xxhash3_avx2;
-use crate::index::swiss_table::SwissTable;
 
 /// Extendible Hash Index
 ///
@@ -33,6 +29,16 @@ pub struct ExtendibleHashIndex<K: Hash + Eq + Clone, V: Clone> {
     global_depth: Arc<RwLock<usize>>,
     /// Bucket capacity
     bucket_capacity: usize,
+}
+
+impl<K: Hash + Eq + Clone, V: Clone> Clone for ExtendibleHashIndex<K, V> {
+    fn clone(&self) -> Self {
+        Self {
+            directory: Arc::clone(&self.directory),
+            global_depth: Arc::clone(&self.global_depth),
+            bucket_capacity: self.bucket_capacity,
+        }
+    }
 }
 
 impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
@@ -258,6 +264,18 @@ pub struct LinearHashIndex<K: Hash + Eq + Clone, V: Clone> {
     bucket_capacity: usize,
     /// Load factor threshold for splitting
     load_factor_threshold: f64,
+}
+
+impl<K: Hash + Eq + Clone, V: Clone> Clone for LinearHashIndex<K, V> {
+    fn clone(&self) -> Self {
+        Self {
+            buckets: Arc::clone(&self.buckets),
+            next_to_split: Arc::clone(&self.next_to_split),
+            level: Arc::clone(&self.level),
+            bucket_capacity: self.bucket_capacity,
+            load_factor_threshold: self.load_factor_threshold,
+        }
+    }
 }
 
 impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
