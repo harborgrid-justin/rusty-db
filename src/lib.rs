@@ -134,6 +134,28 @@ pub mod storage;
 /// **Target LOC:** 3,000+ lines
 pub mod buffer;
 
+/// Enterprise Memory Allocator System
+///
+/// Comprehensive memory management with multiple allocation strategies
+/// optimized for database workloads.
+///
+/// **Key Components:**
+/// - `SlabAllocator`: Size-class based allocation with thread-local caching
+/// - `ArenaAllocator`: Bump allocation for per-query memory contexts
+/// - `LargeObjectAllocator`: Direct mmap for huge allocations with huge page support
+/// - `MemoryPressureManager`: Global memory monitoring and OOM prevention
+/// - `MemoryDebugger`: Leak detection, profiling, and corruption detection
+///
+/// **Features:**
+/// - Magazine-layer CPU caching for slab allocation
+/// - Hierarchical memory contexts with automatic cleanup
+/// - Huge page support (2MB, 1GB)
+/// - Memory pressure callbacks and emergency release
+/// - Comprehensive debugging with stack traces
+///
+/// **Target LOC:** 3,000+ lines
+pub mod memory;
+
 /// System catalog for metadata management
 ///
 /// Manages database metadata including tables, columns, indexes, and constraints.
@@ -867,6 +889,54 @@ pub mod optimizer_pro;
 pub mod resource_manager;
 
 // ============================================================================
+// Session Management and Connection Pooling
+// ============================================================================
+
+/// Session Management & Connection Pooling System
+///
+/// Enterprise-grade session management and connection pooling with Oracle DRCP-like
+/// capabilities, multi-method authentication, resource control, and comprehensive
+/// lifecycle events and monitoring.
+///
+/// **Session Management Components:**
+/// - `SessionManager`: Main session lifecycle coordinator
+/// - `SessionState`: Session context preservation (variables, settings, transactions, cursors)
+/// - `AuthenticationProvider`: Multi-method authentication (LDAP, Kerberos, SAML, tokens)
+/// - `ResourceController`: Per-session resource quotas (CPU, memory, I/O, temp space)
+/// - `SessionPool`: DRCP-like connection pooling with session multiplexing
+/// - `SessionEventManager`: Lifecycle events (login, logoff, idle timeout, migration)
+///
+/// **Connection Pool Components:**
+/// - `ConnectionPool`: Elastic pool with min/max sizing and throttling
+/// - `ConnectionFactory`: Factory pattern for connection creation and validation
+/// - `WaitQueue`: Fair/priority queuing with deadlock detection and starvation prevention
+/// - `PartitionManager`: Multi-tenant pool partitioning and routing
+/// - `LifetimeEnforcer`: Connection aging policies (time/usage/adaptive)
+/// - `PoolStatistics`: Real-time metrics, leak detection, and dashboard data
+/// - `RecyclingManager`: Connection state reset and recycling strategies
+///
+/// **Features:**
+/// - Session state management with variable and cursor tracking
+/// - Multi-method authentication with privilege caching
+/// - Granular resource limits and consumer groups
+/// - Tag-based session selection and affinity
+/// - Session multiplexing with purity levels (NEW, SELF)
+/// - Login/logoff triggers and state change callbacks
+/// - Elastic pool sizing with min/max/initial configuration
+/// - Connection creation throttling and lazy initialization
+/// - Background connection maintenance and validation
+/// - Statement and cursor caching per connection
+/// - Fair and priority-based wait queues
+/// - User/application/tenant-based pool partitioning
+/// - Service-based routing and load balancing
+/// - Comprehensive statistics and real-time monitoring
+/// - Connection leak detection and alerting
+/// - Prometheus/JSON/CSV metrics export
+///
+/// **Target LOC:** 6,000+ lines (3,000+ session management, 3,000+ connection pooling)
+pub mod pool;
+
+// ============================================================================
 // I/O Layer - High-Performance I/O Engine
 // ============================================================================
 
@@ -1000,3 +1070,32 @@ pub mod bench;
 ///
 /// **Target LOC:** 1,700+ lines
 pub mod core;
+
+// ============================================================================
+// REST API Layer
+// ============================================================================
+
+/// REST API Management Layer
+///
+/// Comprehensive REST API server exposing all database functionality via HTTP endpoints.
+/// Built on axum web framework with full OpenAPI/Swagger documentation.
+///
+/// **Key Components:**
+/// - `RestApiServer`: Main HTTP server with routing and middleware
+/// - `ApiConfig`: Configuration for API server
+/// - Core Database Operations: Query execution, transactions, CRUD operations
+/// - Administration API: Config, backup, health checks, user/role management
+/// - Monitoring API: Prometheus metrics, session stats, performance data
+/// - Pool Management API: Connection pool configuration and monitoring
+/// - Cluster Management API: Node management, topology, replication status
+///
+/// **Features:**
+/// - OpenAPI/Swagger documentation
+/// - Request validation and response pagination
+/// - Rate limiting and CORS support
+/// - WebSocket support for real-time query streaming
+/// - Prometheus-compatible metrics endpoint
+/// - Comprehensive error handling
+///
+/// **Target LOC:** 3,000+ lines
+pub mod api;
