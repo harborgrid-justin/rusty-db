@@ -367,7 +367,7 @@ impl TdeEngine {
             )));
         }
 
-        let result = self.encrypt_internal(
+        let _result = self.encrypt_internal(
             &ts_enc.config.algorithm,
             &ts_enc.dek,
             plaintext,
@@ -441,7 +441,7 @@ impl TdeEngine {
         // Use table.column as AAD for additional security
         let aad = format!("{}.{}", table_name, column_name);
 
-        let result = self.encrypt_internal(
+        let _result = self.encrypt_internal(
             &col_enc.config.algorithm,
             &col_enc.dek,
             plaintext,
@@ -515,7 +515,7 @@ impl TdeEngine {
 
         // Amortize setup cost by reusing cipher instance
         for plaintext in plaintexts {
-            let result = self.encrypt_internal(
+            let _result = self.encrypt_internal(
                 &ts_enc.config.algorithm,
                 &ts_enc.dek,
                 plaintext,

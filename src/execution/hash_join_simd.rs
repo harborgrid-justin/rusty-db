@@ -135,7 +135,7 @@ impl SimdHashJoin {
         )?;
 
         // Phase 3: Materialize results
-        let result = self.materialize(
+        let _result = self.materialize(
             &build_side,
             &probe_side,
             matches,
@@ -162,7 +162,7 @@ impl SimdHashJoin {
         // Partition build side in parallel
         build_side.rows.par_iter().try_for_each(|row| -> std::result::Result<(), DbError> {
             if let Some(key) = row.get(key_col) {
-                let partition_id = self.hash_partition(key);
+                let _partition_id = self.hash_partition(key);
                 let mut parts = partitions.write();
                 parts[partition_id].rows.push(row.clone());
             }
@@ -217,7 +217,7 @@ impl SimdHashJoin {
 
             for (idx, row) in probe_side.rows.iter().enumerate() {
                 if let Some(key) = row.get(key_col) {
-                    let partition_id = self.hash_partition(key);
+                    let _partition_id = self.hash_partition(key);
                     parts[partition_id].push(idx);
                 }
             }
@@ -318,7 +318,7 @@ impl SimdHashJoin {
     /// Hash partition a key to partition ID
     #[inline]
     fn hash_partition(&self, key: &str) -> usize {
-        let hash = hash_str(key);
+        let _hash = hash_str(key);
         (hash as usize) % self.config.num_partitions
     }
 }
@@ -393,7 +393,7 @@ mod tests {
             ],
         );
 
-        let result = join.execute(build, probe, 0, 0).unwrap();
+        let _result = join.execute(build, probe, 0, 0).unwrap();
 
         assert_eq!(result.rows.len(), 2); // Only 2 matches
         assert_eq!(result.columns.len(), 4); // 2 + 2 columns
@@ -405,7 +405,7 @@ mod tests {
 
         // Build side: 10K rows
         let mut build_rows = Vec::new();
-        for i in 0..10_000 {
+        for _i in 0..10_000 {
             build_rows.push(vec![format!("{}", i), format!("name_{}", i)]);
         }
         let build = QueryResult::new(
@@ -415,7 +415,7 @@ mod tests {
 
         // Probe side: 100K rows (10x larger)
         let mut probe_rows = Vec::new();
-        for i in 0..100_000 {
+        for _i in 0..100_000 {
             let id = i % 10_000; // Ensure matches
             probe_rows.push(vec![format!("{}", id), format!("value_{}", i)]);
         }
@@ -424,7 +424,7 @@ mod tests {
             probe_rows,
         );
 
-        let result = join.execute(build, probe, 0, 0).unwrap();
+        let _result = join.execute(build, probe, 0, 0).unwrap();
 
         assert_eq!(result.rows.len(), 100_000);
     }
@@ -443,7 +443,7 @@ mod tests {
             vec![vec!["3".to_string()], vec!["4".to_string()]],
         );
 
-        let result = join.execute(build, probe, 0, 0).unwrap();
+        let _result = join.execute(build, probe, 0, 0).unwrap();
 
         assert_eq!(result.rows.len(), 0);
     }
@@ -462,7 +462,7 @@ mod tests {
             vec![vec!["1".to_string()], vec!["2".to_string()]],
         );
 
-        let result = join.execute(build, probe, 0, 0).unwrap();
+        let _result = join.execute(build, probe, 0, 0).unwrap();
 
         assert_eq!(result.rows.len(), 2);
     }
@@ -489,7 +489,7 @@ mod tests {
             vec![vec!["1".to_string()]],
         );
 
-        let result = join.execute(build, probe, 0, 0).unwrap();
+        let _result = join.execute(build, probe, 0, 0).unwrap();
         assert_eq!(result.rows.len(), 1);
     }
 }

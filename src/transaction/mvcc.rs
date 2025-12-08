@@ -2,13 +2,13 @@
 // Provides timestamp-based versioning with hybrid logical clocks,
 // snapshot isolation, and write skew detection
 
-use std::collections::{HashMap, BTreeMap, VecDeque, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime, Duration};
-use parking_lot::{RwLock, Mutex};
+use std::time::{SystemTime};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::{TransactionId, LogSequenceNumber};
 
 /// Hybrid Logical Clock for distributed timestamp ordering
@@ -500,9 +500,9 @@ pub struct SnapshotIsolationManager {
     /// Active transactions with their read timestamps
     active_txns: Arc<RwLock<HashMap<TransactionId, TransactionSnapshot>>>,
     /// Write sets for conflict detection
-    write_sets: Arc<RwLock<HashMap<TransactionId, HashSet<String>>>>,
+    write_sets: Arc<RwLock<HashMap<TransactionId<String>>>>,
     /// Committed write sets (for write-skew detection)
-    committed_writes: Arc<RwLock<BTreeMap<HybridTimestamp, HashSet<String>>>>,
+    committed_writes: Arc<RwLock<BTreeMap<HybridTimestamp<String>>>>,
     /// Hybrid clock
     clock: Arc<HybridClock>,
     /// Configuration
@@ -776,7 +776,7 @@ mod tests {
         mvcc.write("key1".to_string(), "value1".to_string(), 1, ts1).unwrap();
 
         let ts2 = mvcc.begin_snapshot(2);
-        let value = mvcc.read(&"key1".to_string(), &ts2).unwrap();
+        let _value = mvcc.read(&"key1".to_string(), &ts2).unwrap();
         assert_eq!(value, Some("value1".to_string()));
 
         mvcc.end_snapshot(1);

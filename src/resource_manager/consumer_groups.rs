@@ -3,12 +3,12 @@
 //! This module implements Oracle-like consumer groups for workload classification,
 //! user-to-group mapping, dynamic group switching, and priority management.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 /// Consumer group identifier
 pub type ConsumerGroupId = u64;

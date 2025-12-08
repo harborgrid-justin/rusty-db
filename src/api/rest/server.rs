@@ -22,7 +22,7 @@ use tower_http::{
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use tokio::sync::{RwLock, Semaphore};
 use utoipa::{OpenApi, ToSchema};
 use utoipa_swagger_ui::SwaggerUi;
@@ -44,7 +44,7 @@ pub struct RestApiServer {
 impl RestApiServer {
     /// Create a new REST API server with injected dependencies
     pub async fn new(config: ApiConfig) -> std::result::Result<Self, DbError> {
-        let state = Arc::new(ApiState {
+        let _state = Arc::new(ApiState {
             config: config.clone(),
             connection_semaphore: Arc::new(Semaphore::new(config.max_connections)),
             active_queries: Arc::new(RwLock::new(HashMap::new())),

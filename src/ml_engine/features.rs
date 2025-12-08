@@ -3,7 +3,7 @@
 //! Advanced feature preprocessing, transformation, and selection for ML models.
 //! Supports automatic feature extraction from SQL tables and zero-copy transformations.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::Dataset;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -310,7 +310,7 @@ impl OneHotEncoder {
         for &feature_idx in &self.feature_indices {
             let mut categories = Vec::new();
             for sample in &dataset.features {
-                let value = sample[feature_idx] as i64;
+                let _value = sample[feature_idx] as i64;
                 if !categories.contains(&value) {
                     categories.push(value);
                 }
@@ -543,7 +543,7 @@ impl Imputer {
         let n_features = dataset.num_features();
         self.fill_values = vec![0.0; n_features];
 
-        for i in 0..n_features {
+        for _i in 0..n_features {
             let mut values: Vec<f64> = dataset.features.iter()
                 .map(|sample| sample[i])
                 .filter(|&v| (v - self.missing_value).abs() > 1e-10)
@@ -676,7 +676,7 @@ impl PolynomialTransform {
             // Higher degrees
             if self.degree >= 2 {
                 // Degree 2
-                for i in 0..n_features {
+                for _i in 0..n_features {
                     for j in i..n_features {
                         if !self.interaction_only || i != j {
                             new_sample.push(sample[i] * sample[j]);
@@ -690,7 +690,7 @@ impl PolynomialTransform {
 
         // Generate feature names for degree 2
         if self.degree >= 2 {
-            for i in 0..n_features {
+            for _i in 0..n_features {
                 for j in i..n_features {
                     if !self.interaction_only || i != j {
                         feature_names.push(format!(
@@ -746,7 +746,7 @@ impl VarianceThresholdSelector {
 
         self.variances = Vec::with_capacity(n_features);
 
-        for i in 0..n_features {
+        for _i in 0..n_features {
             let values: Vec<f64> = dataset.features.iter().map(|s| s[i]).collect();
             let mean = values.iter().sum::<f64>() / n_samples;
             let variance = values.iter()
@@ -824,7 +824,7 @@ impl CorrelationSelector {
         let n_features = dataset.num_features();
         let mut keep = vec![true; n_features];
 
-        for i in 0..n_features {
+        for _i in 0..n_features {
             if !keep[i] {
                 continue;
             }

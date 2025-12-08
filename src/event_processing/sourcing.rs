@@ -6,7 +6,7 @@
 use super::{Event, EventId, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
@@ -405,7 +405,7 @@ pub struct Snapshot<A> {
 /// Snapshot store
 pub struct SnapshotStore<A> {
     snapshots: HashMap<AggregateId, Snapshot<A>>,
-    snapshot_history: HashMap<AggregateId, VecDeque<Snapshot<A>>>,
+    snapshot_history: HashMap<AggregateId<Snapshot<A>>>,
     max_history: usize,
 }
 

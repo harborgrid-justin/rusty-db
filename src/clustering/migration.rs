@@ -8,7 +8,7 @@
 
 use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
@@ -29,12 +29,17 @@ pub trait MigrationStrategy {
 }
 
 /// Data migration manager
-#[derive(Debug)]
 pub struct DataMigrationManager {
     coordinator: Arc<dyn ClusterCoordinator>,
     migration_queue: Arc<RwLock<VecDeque<MigrationTask>>>,
     active_migrations: Arc<RwLock<HashMap<String, MigrationTask>>>,
     completed_migrations: Arc<RwLock<Vec<MigrationResult>>>,
+}
+
+impl std::fmt::Debug for DataMigrationManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DataMigrationManager").finish_non_exhaustive()
+    }
 }
 
 impl DataMigrationManager {
@@ -55,7 +60,7 @@ impl DataMigrationManager {
         };
 
         if let Some(task) = task {
-            let result = self.execute_migration(&task)?;
+            let _result = self.execute_migration(&task)?;
             
             // Move from active to completed
             {
@@ -135,7 +140,7 @@ impl MigrationCoordinator for DataMigrationManager {
         
         let end_time = SystemTime::now();
         let duration = end_time.duration_since(start_time)
-            .map_err(|_| DbError::InternalError("Invalid time calculation".to_string()))?;
+            .map_err(|_| DbError::Internal("Invalid time calculation".to_string()))?;
 
         Ok(MigrationResult {
             task_id: task.id.clone(),
@@ -323,7 +328,7 @@ mod tests {
             created_at: SystemTime::now(),
         };
 
-        let result = migration_mgr.execute_migration(&task);
+        let _result = migration_mgr.execute_migration(&task);
         assert!(result.is_ok());
         
         let migration_result = result.unwrap();

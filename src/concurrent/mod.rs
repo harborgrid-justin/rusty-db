@@ -173,7 +173,7 @@ mod tests {
 
     #[test]
     fn test_tagged_ptr() {
-        let value = Box::into_raw(Box::new(42));
+        let _value = Box::into_raw(Box::new(42));
         let tagged = tagged_ptr::TaggedPtr::new(value, 5);
 
         assert_eq!(tagged.ptr(), value);

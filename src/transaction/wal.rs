@@ -5,14 +5,14 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fs::{File, OpenOptions};
-use std::io::{Write as IoWrite, Read, BufWriter, BufReader, IoSlice};
+use std::io::{Write as IoWrite, BufWriter, BufReader, IoSlice};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, Duration, Instant};
+use std::time::{SystemTime};
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::TransactionId;
 
 #[cfg(target_arch = "x86_64")]
@@ -46,7 +46,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
 
     // Process 8 bytes at a time for maximum throughput
     while remaining >= 8 {
-        let value = (ptr as *const u64).read_unaligned();
+        let _value = (ptr as *const u64).read_unaligned();
         crc = _mm_crc32_u64(crc as u64, value) as u32;
         ptr = ptr.add(8);
         remaining -= 8;
@@ -54,7 +54,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
 
     // Process remaining bytes
     while remaining > 0 {
-        let value = *ptr;
+        let _value = *ptr;
         crc = _mm_crc32_u8(crc, value);
         ptr = ptr.add(1);
         remaining -= 1;
@@ -438,7 +438,7 @@ impl WALManager {
 
         // Update transaction table
         if let Some(txn_id) = record.txn_id() {
-            let state = match &record {
+            let _state = match &record {
                 LogRecord::Commit { .. } => TransactionState::Committed,
                 LogRecord::Abort { .. } => TransactionState::Aborted,
                 _ => TransactionState::Active,
@@ -1015,7 +1015,7 @@ mod tests {
         buffer.add(entry, tx);
 
         assert!(!buffer.is_empty());
-        assert!(buffer.should_flush(100, Duration::from_secs(1)));
+        assert!(buffer.should_flush(100::from_secs(1)));
     }
 }
 

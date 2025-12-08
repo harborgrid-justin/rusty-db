@@ -8,7 +8,7 @@
 //! - Subgraph matching
 //! - Query optimization
 
-use std::collections::{HashMap, HashSet, VecDeque, BinaryHeap};
+use std::collections::{HashMap, BinaryHeap};
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};
@@ -1025,7 +1025,7 @@ impl<'a> QueryExecutor<'a> {
             FilterExpression::PropertyComparison { variable, property, constraint } => {
                 if let Some(vertex_id) = binding.get_vertex(variable) {
                     if let Some(vertex) = self.graph.get_vertex(vertex_id) {
-                        let value = vertex.properties.get(property);
+                        let _value = vertex.properties.get(property);
                         return Ok(self.pattern_matcher.check_property_constraint(value, constraint));
                     }
                 }
@@ -1084,7 +1084,7 @@ impl<'a> QueryExecutor<'a> {
             let mut values = Vec::new();
 
             for item in &return_clause.items {
-                let value = match item {
+                let _value = match item {
                     ReturnItem::Vertex(var) => {
                         if let Some(vertex_id) = binding.get_vertex(var) {
                             if let Some(vertex) = self.graph.get_vertex(vertex_id) {

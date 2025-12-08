@@ -150,7 +150,7 @@
 //! async fn example() -> rusty_db::Result<()> {
 //!     let breaker = CircuitBreaker::new("my-service".into(), CircuitBreakerConfig::default());
 //!
-//!     let result = breaker.call(async {
+//!     let _result = breaker.call(async {
 //!         // Your operation here
 //!         Ok::<_, rusty_db::DbError>(42)
 //!     }).await?;
@@ -179,7 +179,7 @@
 //!
 //! ```rust,ignore
 //! let breaker = circuit_breaker_registry.get_or_create("external_api");
-//! let result = breaker.call(|| external_api_call()).await?;
+//! let _result = breaker.call(|| external_api_call()).await?;
 //! ```
 //!
 //! ### 3. Define Health Checks for All Components
@@ -614,7 +614,7 @@ mod tests {
             .await
             .unwrap();
 
-        let stats = orchestrator.statistics();
+        let stats = orchestrator.statistics().await;
         assert_eq!(stats.state, OrchestratorState::Initialized);
     }
 }

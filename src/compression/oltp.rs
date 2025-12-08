@@ -611,7 +611,7 @@ mod tests {
         let compressor = OLTPCompressor::new(CompressionLevel::Default);
 
         let mut rows = Vec::new();
-        for i in 0..1000 {
+        for _i in 0..1000 {
             rows.push(vec![i as u8; 10]);
         }
 
@@ -623,7 +623,7 @@ mod tests {
     fn test_compression_advisor() {
         let advisor = OLTPCompressionAdvisor::new();
 
-        let stats = TableStats {
+        let _stats = TableStats {
             table_id: 1,
             total_rows: 100000,
             total_size: 10_000_000,

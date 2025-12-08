@@ -2,7 +2,7 @@
 //!
 //! High-performance asynchronous I/O using Windows IOCP.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::io::{IoRequest, IoCompletion, IoOpType, IoStatus, IoHandle};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -265,7 +265,7 @@ impl WindowsIocp {
     pub fn associate_file(&self, file_handle: IoHandle, completion_key: usize) -> Result<()> {
         use windows_sys::Win32::System::IO::CreateIoCompletionPort;
 
-        let result = unsafe {
+        let _result = unsafe {
             CreateIoCompletionPort(
                 file_handle.0 as isize,
                 self.iocp_handle.into(),
@@ -320,7 +320,7 @@ impl WindowsIocp {
         let result = unsafe {
             ReadFile(
                 request.file_handle.0 as isize,
-                buffer_ptr.as_ptr(),
+                buffer_ptr.as_ptr() as *mut u8,
                 request.len,
                 &mut bytes_read,
                 overlapped.as_ptr(),
@@ -347,7 +347,7 @@ impl WindowsIocp {
         let result = unsafe {
             WriteFile(
                 request.file_handle.0 as isize,
-                buffer_ptr.as_ptr() as *const std::ffi::c_void,
+                buffer_ptr.as_ptr() as *const u8,
                 request.len,
                 &mut bytes_written,
                 overlapped.as_ptr(),
@@ -368,7 +368,7 @@ impl WindowsIocp {
     fn submit_sync(&self, request: &IoRequest) -> Result<()> {
         use windows_sys::Win32::Storage::FileSystem::FlushFileBuffers;
 
-        let result = unsafe { FlushFileBuffers(request.file_handle.0 as isize) };
+        let _result = unsafe { FlushFileBuffers(request.file_handle.0 as isize) };
 
         if result == 0 {
             let error = unsafe { windows_sys::Win32::Foundation::GetLastError() };
@@ -407,7 +407,7 @@ impl WindowsIocp {
             let mut completion_key = 0usize;
             let mut overlapped_ptr: *mut windows_sys::Win32::System::IO::OVERLAPPED = ptr::null_mut();
 
-            let result = unsafe {
+            let _result = unsafe {
                 GetQueuedCompletionStatus(
                     self.iocp_handle.into(),
                     &mut bytes_transferred,
@@ -427,7 +427,7 @@ impl WindowsIocp {
 
             // Get the overlapped structure
             let overlapped = unsafe {
-                let offset = overlapped_ptr as usize - overlapped_ptr as usize;
+                let _offset = overlapped_ptr as usize - overlapped_ptr as usize;
                 &*(overlapped_ptr as *const OverlappedIo)
             };
 
@@ -560,7 +560,7 @@ mod tests {
     #[test]
     fn test_iocp_creation() {
         let config = IocpConfig::default();
-        let result = WindowsIocp::new(config);
+        let _result = WindowsIocp::new(config);
         assert!(result.is_ok());
     }
 }

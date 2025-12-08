@@ -5,9 +5,8 @@
 
 use super::types::{SessionId, CursorId, StatementId, Username, SchemaName};
 use crate::common::{TransactionId, Value};
-use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::time::SystemTime;
 
 /// Session state representing all context for a database session
@@ -25,7 +24,7 @@ use std::time::SystemTime;
 /// # Examples
 ///
 /// ```rust,ignore
-/// use rusty_db::pool::session::{SessionState, SessionId, Username, SchemaName};
+/// use rusty_db::pool::session::{SessionState, Username, SchemaName};
 ///
 /// let session = SessionState::new(
 ///     SessionId::new(1),
@@ -169,7 +168,7 @@ impl SessionState {
 
     /// Remove session variable
     pub fn remove_variable(&mut self, name: &str) -> Option<Value> {
-        let result = self.session_variables.remove(name);
+        let _result = self.session_variables.remove(name);
         self.touch();
         result
     }
@@ -435,7 +434,7 @@ mod tests {
             SchemaName::new("public").unwrap(),
         );
 
-        assert_eq!(session.id(), SessionId::new(1));
+        assert_eq!(session.id(), &SessionId::new(1));
         assert_eq!(session.username().as_str(), "alice");
         assert_eq!(session.schema().as_str(), "public");
         assert_eq!(session.status(), &SessionStatus::Active);
@@ -471,7 +470,7 @@ mod tests {
         assert!(!session.has_active_transaction());
 
         session.set_transaction_state(TransactionState::Active {
-            transaction_id: TransactionId::from(100),
+            transaction_id: 100u64,
             isolation_level: IsolationLevel::Serializable,
             read_only: false,
             started_at: SystemTime::now(),

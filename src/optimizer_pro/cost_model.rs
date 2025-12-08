@@ -10,7 +10,7 @@
 //! - Multi-column statistics
 
 use crate::common::{TableId, IndexId, Value};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::optimizer_pro::{
     PhysicalOperator, Expression, BinaryOperator, JoinType, CostParameters,
 };
@@ -939,7 +939,7 @@ impl SimdCardinalityEstimator {
     ) -> Vec<usize> {
         let mut results = Vec::with_capacity(selectivities.len());
 
-        for i in 0..selectivities.len() {
+        for _i in 0..selectivities.len() {
             let cardinality = (row_counts[i] as f64 * selectivities[i]) as usize;
             results.push(cardinality);
         }

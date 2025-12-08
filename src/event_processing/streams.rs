@@ -10,9 +10,9 @@ use super::{
 };
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, VecDeque};
-use std::sync::{Arc, Mutex, RwLock};
-use std::time::{Duration, SystemTime};
+use std::collections::{BTreeMap, HashMap};
+use std::sync::{Arc, RwLock};
+use std::time::{Duration};
 
 /// Stream identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -163,7 +163,7 @@ impl PartitionStrategy {
             PartitionStrategy::Hash { num_partitions } => {
                 let id_string = event.id.to_string();
                 let key = event.partition_key.as_ref().unwrap_or(&id_string);
-                let hash = Self::hash_string(key);
+                let _hash = Self::hash_string(key);
                 hash % num_partitions
             }
             PartitionStrategy::RoundRobin { num_partitions } => {
@@ -283,7 +283,7 @@ impl EventStream {
         let config = Arc::new(config);
 
         let mut partitions = Vec::new();
-        for i in 0..num_partitions {
+        for _i in 0..num_partitions {
             partitions.push(Arc::new(Mutex::new(StreamPartition::new(
                 i,
                 config.clone(),
@@ -304,7 +304,7 @@ impl EventStream {
     /// Publish an event to the stream
     pub fn publish(&self, mut event: Event) -> Result<StreamPosition> {
         // Check state
-        let state = self.state.read().unwrap();
+        let _state = self.state.read().unwrap();
         if *state != StreamLifecycleState::Active {
             return Err(crate::error::DbError::InvalidOperation(format!(
                 "Stream {} is not active (state: {:?})",
@@ -315,7 +315,7 @@ impl EventStream {
 
         // Determine partition
         let mut counter = self.partition_counter.lock().unwrap();
-        let partition_id = self.config.partition_strategy.get_partition(&event, &mut counter);
+        let _partition_id = self.config.partition_strategy.get_partition(&event, &mut counter);
         drop(counter);
 
         // Set ingestion time
@@ -437,7 +437,7 @@ pub struct LazyWatermarkManager {
     watermarks: HashMap<u32, Watermark>,
 
     /// Last propagated watermark per partition
-    last_propagated: HashMap<u32, SystemTime>,
+    last_propagated: HashMap<u32>,
 
     /// Minimum time advancement before propagation (default: 1 second)
     min_advancement: Duration,
@@ -637,14 +637,14 @@ impl LazyWatermarkManager {
             WatermarkStrategy::Periodic(interval) => {
                 // Generate watermark = latest_event_time - max_lateness
                 let watermark_time = latest_event_time - Duration::from_secs(5);
-                let watermark = Watermark::new(watermark_time, Duration::from_secs(10));
+                let watermark = Watermark::new(watermark_time::from_secs(10));
 
                 self.update_watermark(partition, watermark)
             }
 
             WatermarkStrategy::Ascending => {
                 // For ordered streams, watermark = latest event time
-                let watermark = Watermark::new(latest_event_time, Duration::from_secs(0));
+                let watermark = Watermark::new(latest_event_time::from_secs(0));
                 self.update_watermark(partition, watermark)
             }
 
@@ -659,7 +659,7 @@ impl LazyWatermarkManager {
 
                 if let Ok(skew) = latest_event_time.duration_since(min_time) {
                     if skew <= max_skew {
-                        let watermark = Watermark::new(min_time, Duration::from_secs(10));
+                        let watermark = Watermark::new(min_time::from_secs(10));
                         return self.update_watermark(partition, watermark);
                     }
                 }
@@ -1153,7 +1153,7 @@ mod tests {
 
     #[test]
     fn test_retention_policy() {
-        let policy = RetentionPolicy::TimeBased {
+        let _policy = RetentionPolicy::TimeBased {
             retention: Duration::from_secs(60),
         };
 

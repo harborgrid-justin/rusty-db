@@ -8,9 +8,9 @@
 //! - Index structures for graph lookups
 //! - Graph compression techniques
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
+use std::io::{Read};
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};
@@ -431,7 +431,7 @@ impl GraphCompression {
         let mut compressed = Vec::with_capacity(sorted_ids.len());
         compressed.push(sorted_ids[0]);
 
-        for i in 1..sorted_ids.len() {
+        for _i in 1..sorted_ids.len() {
             let gap = sorted_ids[i] - sorted_ids[i - 1];
             compressed.push(gap);
         }
@@ -448,7 +448,7 @@ impl GraphCompression {
         let mut ids = Vec::with_capacity(compressed.len());
         ids.push(compressed[0]);
 
-        for i in 1..compressed.len() {
+        for _i in 1..compressed.len() {
             ids.push(ids[i - 1] + compressed[i]);
         }
 
@@ -630,16 +630,16 @@ impl GraphStorageManager {
 #[derive(Debug, Clone)]
 pub struct GraphIndex {
     /// Label index: label -> vertices
-    pub vertex_label_index: HashMap<String, HashSet<VertexId>>,
+    pub vertex_label_index: HashMap<String<VertexId>>,
 
     /// Property index: property_key -> vertices (simplified to avoid Value as key)
-    pub vertex_property_index: HashMap<String, HashSet<VertexId>>,
+    pub vertex_property_index: HashMap<String<VertexId>>,
 
     /// Edge label index: label -> edges
-    pub edge_label_index: HashMap<String, HashSet<EdgeId>>,
+    pub edge_label_index: HashMap<String<EdgeId>>,
 
     /// Two-hop index for faster path queries
-    pub two_hop_index: HashMap<VertexId, HashSet<VertexId>>,
+    pub two_hop_index: HashMap<VertexId<VertexId>>,
 }
 
 impl GraphIndex {

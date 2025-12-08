@@ -29,7 +29,7 @@
 
 use crate::buffer::eviction::{EvictionPolicy, EvictionStats};
 use crate::buffer::page_cache::{BufferFrame, FrameId};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use parking_lot::Mutex;
@@ -300,7 +300,7 @@ impl ArcState {
 /// ```rust
 /// use rusty_db::buffer::arc::ArcEvictionPolicy;
 ///
-/// let policy = ArcEvictionPolicy::new(1000);
+/// let _policy = ArcEvictionPolicy::new(1000);
 /// // Use with BufferPoolManager
 /// ```
 pub struct ArcEvictionPolicy {
@@ -333,7 +333,7 @@ impl ArcEvictionPolicy {
 
     /// Get list sizes (for monitoring and debugging)
     pub fn list_sizes(&self) -> (usize, usize, usize, usize) {
-        let state = self.state.lock();
+        let _state = self.state.lock();
         (state.t1.len(), state.t2.len(), state.b1.len(), state.b2.len())
     }
 
@@ -456,7 +456,7 @@ impl EvictionPolicy for ArcEvictionPolicy {
     }
 
     fn stats(&self) -> EvictionStats {
-        let state = self.state.lock();
+        let _state = self.state.lock();
         let victim_searches = self.victim_searches.load(Ordering::Relaxed);
 
         EvictionStats {
@@ -491,10 +491,10 @@ mod tests {
     #[test]
     fn test_arc_basic() {
         let frames = create_test_frames(10);
-        let policy = ArcEvictionPolicy::new(5);
+        let _policy = ArcEvictionPolicy::new(5);
 
         // Access frames 0-4 (fill T1)
-        for i in 0..5 {
+        for _i in 0..5 {
             policy.record_access(i);
         }
 
@@ -512,10 +512,10 @@ mod tests {
     #[test]
     fn test_arc_eviction() {
         let frames = create_test_frames(10);
-        let policy = ArcEvictionPolicy::new(3);
+        let _policy = ArcEvictionPolicy::new(3);
 
         // Fill cache
-        for i in 0..3 {
+        for _i in 0..3 {
             policy.record_access(i);
         }
 
@@ -523,17 +523,17 @@ mod tests {
         policy.record_access(3);
 
         // Should have evicted something
-        let stats = policy.stats();
+        let _stats = policy.stats();
         assert_eq!(stats.evictions, 1);
     }
 
     #[test]
     fn test_arc_adaptation() {
-        let policy = ArcEvictionPolicy::new(10);
+        let _policy = ArcEvictionPolicy::new(10);
 
         // Access pattern that should favor frequency (T2)
         for _ in 0..3 {
-            for i in 0..5 {
+            for _i in 0..5 {
                 policy.record_access(i);
             }
         }
@@ -542,7 +542,7 @@ mod tests {
         let initial_target = policy.target_t1();
 
         // Access pattern that should favor recency (T1)
-        for i in 5..15 {
+        for _i in 5..15 {
             policy.record_access(i);
         }
 
@@ -554,10 +554,10 @@ mod tests {
     #[test]
     fn test_arc_ghost_hits() {
         let frames = create_test_frames(10);
-        let policy = ArcEvictionPolicy::new(3);
+        let _policy = ArcEvictionPolicy::new(3);
 
         // Fill cache with 0, 1, 2
-        for i in 0..3 {
+        for _i in 0..3 {
             policy.record_access(i);
         }
 
@@ -578,11 +578,11 @@ mod tests {
     #[test]
     fn test_arc_scan_resistance() {
         let frames = create_test_frames(20);
-        let policy = ArcEvictionPolicy::new(5);
+        let _policy = ArcEvictionPolicy::new(5);
 
         // Hot set: 0-4
         for _ in 0..10 {
-            for i in 0..5 {
+            for _i in 0..5 {
                 policy.record_access(i);
             }
         }
@@ -593,7 +593,7 @@ mod tests {
         assert_eq!(t1_size, 0);
 
         // Scan: 10-14 (one-time access)
-        for i in 10..15 {
+        for _i in 10..15 {
             policy.record_access(i);
         }
 

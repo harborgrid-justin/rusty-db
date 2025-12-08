@@ -37,14 +37,14 @@ use chrono::{DateTime as ChronoDateTime, Utc};
 use futures_util::stream::{Stream, StreamExt};
 use futures_util::Future;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::pin::Pin;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
-use tokio::sync::{broadcast, RwLock, Mutex};
+use std::time::{Duration};
+use tokio::sync::{broadcast, RwLock};
 use tokio_stream::wrappers::BroadcastStream;
 
-use crate::common::{Value, TableId, ColumnId, RowId, SessionId};
+use crate::common::{Value, TableId, ColumnId, RowId};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
@@ -1930,7 +1930,7 @@ pub struct ComplexityMetrics {
 /// Rate limiter for GraphQL operations
 pub struct RateLimiter {
     limits: Arc<RwLock<HashMap<String, RateLimit>>>,
-    requests: Arc<RwLock<HashMap<String, VecDeque<Instant>>>>,
+    requests: Arc<RwLock<HashMap<String<Instant>>>>,
 }
 
 impl RateLimiter {
@@ -3385,7 +3385,7 @@ mod tests {
     #[tokio::test]
     async fn test_request_validator() {
         let validator = RequestValidator::new(10000);
-        let result = validator.validate("{ users { id name } }");
+        let _result = validator.validate("{ users { id name } }");
         assert!(result.is_ok());
     }
 

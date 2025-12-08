@@ -62,7 +62,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
     /// Insert a key-value pair
     pub fn insert(&self, key: K, value: V) -> Result<()> {
         loop {
-            let hash = self.hash(&key);
+            let _hash = self.hash(&key);
             let global_depth = *self.global_depth.read();
             let index = self.get_index(hash, global_depth);
 
@@ -94,7 +94,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
 
     /// Get a value by key
     pub fn get(&self, key: &K) -> Result<Option<V>> {
-        let hash = self.hash(key);
+        let _hash = self.hash(key);
         let global_depth = *self.global_depth.read();
         let index = self.get_index(hash, global_depth);
 
@@ -114,7 +114,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
 
     /// Delete a key
     pub fn delete(&self, key: &K) -> Result<bool> {
-        let hash = self.hash(key);
+        let _hash = self.hash(key);
         let global_depth = *self.global_depth.read();
         let index = self.get_index(hash, global_depth);
 
@@ -145,7 +145,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
         drop(old_bucket_lock);
 
         for (key, value) in old_entries {
-            let hash = self.hash(&key);
+            let _hash = self.hash(&key);
             let bit = (hash >> local_depth) & 1;
 
             if bit == 0 {
@@ -161,7 +161,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
         let new_bucket_arc = Arc::new(RwLock::new(new_bucket));
 
         let step = 1 << new_depth;
-        for i in (0..directory.len()).step_by(step) {
+        for _i in (0..directory.len()).step_by(step) {
             let idx = i + (1 << local_depth);
             if idx < directory.len() {
                 directory[idx] = new_bucket_arc.clone();
@@ -180,7 +180,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
 
         // Double the directory size
         let old_size = directory.len();
-        for i in 0..old_size {
+        for _i in 0..old_size {
             let bucket = directory[i].clone();
             directory.push(bucket);
         }
@@ -297,7 +297,7 @@ impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
 
     /// Insert a key-value pair
     pub fn insert(&self, key: K, value: V) -> Result<()> {
-        let hash = self.hash(&key);
+        let _hash = self.hash(&key);
         let bucket_idx = self.find_bucket(hash);
 
         let buckets = self.buckets.read();
@@ -323,7 +323,7 @@ impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
 
     /// Get a value by key
     pub fn get(&self, key: &K) -> Result<Option<V>> {
-        let hash = self.hash(key);
+        let _hash = self.hash(key);
         let bucket_idx = self.find_bucket(hash);
 
         let buckets = self.buckets.read();
@@ -342,7 +342,7 @@ impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
 
     /// Delete a key
     pub fn delete(&self, key: &K) -> Result<bool> {
-        let hash = self.hash(key);
+        let _hash = self.hash(key);
         let bucket_idx = self.find_bucket(hash);
 
         let buckets = self.buckets.read();
@@ -393,7 +393,7 @@ impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
         old_bucket_lock.overflow_count = 0;
 
         for (key, value) in old_entries {
-            let hash = self.hash(&key);
+            let _hash = self.hash(&key);
             let initial_size = buckets.len() >> *level;
             let new_idx = hash % (initial_size * 2);
 
@@ -547,16 +547,16 @@ mod tests {
         let index: ExtendibleHashIndex<i32, String> = ExtendibleHashIndex::new(2);
 
         // Insert enough to cause splits
-        for i in 0..20 {
+        for _i in 0..20 {
             index.insert(i, format!("value_{}", i)).unwrap();
         }
 
         // Verify all values
-        for i in 0..20 {
+        for _i in 0..20 {
             assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i)));
         }
 
-        let stats = index.stats();
+        let _stats = index.stats();
         assert!(stats.global_depth > 2);
     }
 
@@ -578,16 +578,16 @@ mod tests {
         let index: LinearHashIndex<i32, String> = LinearHashIndex::new(2, 2);
 
         // Insert enough to trigger splits
-        for i in 0..20 {
+        for _i in 0..20 {
             index.insert(i, format!("value_{}", i)).unwrap();
         }
 
         // Verify all values
-        for i in 0..20 {
+        for _i in 0..20 {
             assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i)));
         }
 
-        let stats = index.stats();
+        let _stats = index.stats();
         assert!(stats.num_buckets > 2);
     }
 }

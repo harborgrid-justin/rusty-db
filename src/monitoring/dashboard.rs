@@ -2,10 +2,10 @@
 // WebSocket-ready metrics streaming, top queries, connection pool status, replication lag
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 
 /// Real-time metric data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -606,7 +606,7 @@ mod tests {
 
     #[test]
     fn test_connection_pool_stats() {
-        let stats = ConnectionPoolStats::new(100);
+        let _stats = ConnectionPoolStats::new(100);
         assert_eq!(stats.utilization_percent(), 0.0);
         assert!(!stats.is_saturated());
     }

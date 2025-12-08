@@ -10,9 +10,9 @@
 //! - Historical row versioning
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::common::{Value, RowId, TableId};
 use crate::Result;
 use crate::error::DbError;
@@ -129,7 +129,7 @@ impl LedgerRow {
         hasher.update(previous_hash);
         hasher.update(&timestamp.to_le_bytes());
 
-        let result = hasher.finalize();
+        let _result = hasher.finalize();
         let mut hash = [0u8; 32];
         hash.copy_from_slice(&result);
         hash
@@ -294,7 +294,7 @@ impl Block {
         hasher.update(&self.merkle_root);
         hasher.update(&self.created_at.to_le_bytes());
 
-        let result = hasher.finalize();
+        let _result = hasher.finalize();
         let mut hash = [0u8; 32];
         hash.copy_from_slice(&result);
         hash
@@ -314,7 +314,7 @@ impl Block {
         }
 
         // Verify row chain
-        for i in 1..self.rows.len() {
+        for _i in 1..self.rows.len() {
             if !self.rows[i].verify_chain(&self.rows[i - 1]) {
                 return Ok(false);
             }

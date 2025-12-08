@@ -15,10 +15,10 @@
 //! - Fine-grained permission sets per role
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::Result;
 use crate::error::DbError;
 
@@ -241,7 +241,7 @@ pub struct RbacManager {
     /// Active sessions
     sessions: Arc<RwLock<HashMap<String, SessionContext>>>,
     /// Role hierarchy cache (role -> all inherited permissions)
-    permission_cache: Arc<RwLock<HashMap<RoleId, HashSet<PermissionId>>>>,
+    permission_cache: Arc<RwLock<HashMap<RoleId<PermissionId>>>>,
 }
 
 impl RbacManager {

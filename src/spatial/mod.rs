@@ -3,7 +3,7 @@
 //! Oracle Spatial-compatible geospatial database engine for RustyDB.
 //!
 //! This module provides comprehensive spatial data management including:
-//! - Multiple geometry types (Point, LineString, Polygon, etc.)
+//! - Multiple geometry types (Point, Polygon, etc.)
 //! - Spatial indexing (R-tree, Quadtree, Grid)
 //! - Topological operators and spatial analysis
 //! - Coordinate reference systems and transformations
@@ -25,7 +25,7 @@
 //! specification with extensions for Oracle Spatial compatibility:
 //!
 //! ```rust,no_run
-//! use rusty_db::spatial::geometry::{Point, Coordinate, LineString, Polygon};
+//! use rusty_db::spatial::geometry::{Point, Coordinate, Polygon};
 //!
 //! // Create a point
 //! let point = Point::new(Coordinate::new(-122.4194, 37.7749));
@@ -140,7 +140,7 @@
 //!
 //! // Perform raster algebra
 //! # let raster2 = raster.clone();
-//! let result = RasterAlgebra::add(&raster, &raster2).unwrap();
+//! let _result = RasterAlgebra::add(&raster, &raster2).unwrap();
 //! ```
 //!
 //! ### Network Analysis
@@ -242,7 +242,7 @@
 //!     IndexType::RTree { max_entries: 8, min_entries: 3 }
 //! );
 //!
-//! for i in 0..1000 {
+//! for _i in 0..1000 {
 //!     let bbox = BoundingBox::new(i as f64, i as f64, i as f64 + 1.0, i as f64 + 1.0);
 //!     builder.add(i, bbox);
 //! }
@@ -284,7 +284,7 @@ pub use analysis::{
 };
 
 pub use geometry::{
-    BoundingBox, CircularString, CompoundCurve, Coordinate, Geometry, GeometryCollection,
+    BoundingBox, CircularString, CompoundCurve, CoordinateCollection,
     LineString, LinearRing, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
     WkbParser, WktParser,
 };
@@ -481,7 +481,7 @@ mod tests {
         let engine = SpatialEngine::new();
         let rtree = engine.create_rtree();
 
-        let stats = rtree.stats();
+        let _stats = rtree.stats();
         assert_eq!(stats.num_entries, 0);
     }
 

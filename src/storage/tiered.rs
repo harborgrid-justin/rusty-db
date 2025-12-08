@@ -2,12 +2,12 @@
 /// Provides hot/warm/cold data classification with automatic migration
 /// and tier-specific compression strategies
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
-use parking_lot::{RwLock, Mutex};
+use std::time::{Duration};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::storage::page::Page;
 use crate::common::PageId;
 
@@ -274,7 +274,7 @@ impl CompressionEngine {
         for chunk in data.chunks(2) {
             if chunk.len() == 2 {
                 let count = chunk[0];
-                let value = chunk[1];
+                let _value = chunk[1];
                 decompressed.extend(std::iter::repeat(value).take(count as usize));
             }
         }
@@ -698,7 +698,7 @@ mod tests {
         let retrieved = manager.get_page(1).unwrap();
         assert_eq!(retrieved.id, 1);
 
-        let stats = manager.get_stats();
+        let _stats = manager.get_stats();
         assert!(stats.hot_pages + stats.warm_pages + stats.cold_pages > 0);
     }
 
@@ -721,7 +721,7 @@ mod tests {
         // Run maintenance to trigger migration
         manager.maintenance().unwrap();
 
-        let stats = manager.get_stats();
+        let _stats = manager.get_stats();
         assert!(stats.total_migrations > 0 || stats.hot_pages > 0);
     }
 }

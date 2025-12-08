@@ -19,13 +19,13 @@
 use crate::error::DbError;
 use crate::common::NodeId;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use parking_lot::{RwLock, Mutex};
-use tokio::sync::{mpsc, oneshot, broadcast};
+use std::time::{Duration};
+use parking_lot::{RwLock};
+use tokio::sync::{mpsc, broadcast};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncReadExt};
 use bytes::{Bytes, BytesMut, Buf, BufMut};
 
 // ============================================================================
@@ -249,7 +249,7 @@ impl NodeHealth {
     /// Calculates suspicion level based on heartbeat timing variance
     /// Higher phi = more suspicious, threshold typically 8.0-10.0
     fn update_phi_accrual(&mut self, interval: Duration) {
-        let interval_ms = interval.as_millis() as f64;
+        let _interval_ms = interval.as_millis() as f64;
 
         // Add to history
         self.heartbeat_intervals.push(interval);
@@ -501,7 +501,7 @@ pub struct ClusterInterconnect {
     message_handlers: Arc<RwLock<HashMap<MessageType, MessageHandler>>>,
 
     /// Pending message acknowledgments
-    pending_acks: Arc<RwLock<HashMap<u64, oneshot::Sender<MessageAck>>>>,
+    pending_acks: Arc<RwLock<HashMap<u64::Sender<MessageAck>>>>,
 
     /// Message sequence counter
     sequence_counter: Arc<Mutex<u64>>,
@@ -657,8 +657,8 @@ impl ClusterInterconnect {
         // Accept connections
         let connections = self.connections.clone();
         let node_health = self.node_health.clone();
-        let handlers = self.message_handlers.clone();
-        let stats = self.stats.clone();
+        let _handlers = self.message_handlers.clone();
+        let _stats = self.stats.clone();
         let mut shutdown_rx = self.shutdown_tx.subscribe();
 
         tokio::spawn(async move {
@@ -739,7 +739,7 @@ impl ClusterInterconnect {
         let message_id = self.next_message_id();
         let sequence = self.next_sequence();
 
-        let message = Message {
+        let _message = Message {
             message_id,
             source: self.node_id.clone(),
             destination: destination.clone(),
@@ -765,7 +765,7 @@ impl ClusterInterconnect {
         let message_id = self.next_message_id();
         let sequence = self.next_sequence();
 
-        let message = Message {
+        let _message = Message {
             message_id,
             source: self.node_id.clone(),
             destination: destination.clone(),
@@ -832,7 +832,7 @@ impl ClusterInterconnect {
     async fn start_heartbeat_monitor(&self) {
         let node_health = self.node_health.clone();
         let connections = self.connections.clone();
-        let stats = self.stats.clone();
+        let _stats = self.stats.clone();
         let interval = self.config.heartbeat_interval;
         let node_id = self.node_id.clone();
         let mut shutdown_rx = self.shutdown_tx.subscribe();
@@ -852,7 +852,7 @@ impl ClusterInterconnect {
                         };
 
                         for (remote_node, conn) in conns_to_ping {
-                            let message = Message {
+                            let _message = Message {
                                 message_id: 0,
                                 source: node_id.clone(),
                                 destination: remote_node.clone(),

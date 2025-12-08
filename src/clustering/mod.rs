@@ -63,26 +63,26 @@ pub struct ClusterManager {
 impl ClusterManager {
     /// Create a new cluster manager with default configuration
     pub fn new() -> Result<Self, DbError> {
-        // Create query executor
-        let query_executor = Arc::new(DistributedQueryExecutor::new(Arc::new(DistributedQueryProcessor::new())));
-        
-        // Create failover manager
-        let failover_config = FailoverConfig::default();
-        let node_id = NodeId::default();
-        let failover_manager = Arc::new(ClusterFailoverManager::new(node_id, failover_config));
-        
-        // Create migration manager
-        let migration_manager = Arc::new(DataMigrationManager::new(node_id));
-        
-        // Create transaction manager
-        let transaction_manager = Arc::new(ClusterTransactionCoordinator::new());
+        // This requires proper coordinator implementations to be provided
+        // For now, return not implemented
+        Err(DbError::NotImplemented(
+            "ClusterManager::new requires coordinator implementations".to_string()
+        ))
+    }
 
-        Ok(Self {
+    /// Create a new cluster manager with provided components
+    pub fn with_components(
+        query_executor: Arc<DistributedQueryExecutor>,
+        failover_manager: Arc<ClusterFailoverManager>,
+        migration_manager: Arc<DataMigrationManager>,
+        transaction_manager: Arc<ClusterTransactionCoordinator>,
+    ) -> Self {
+        Self {
             query_executor,
             failover_manager,
             migration_manager,
             transaction_manager,
-        })
+        }
     }
 
     /// Get cluster performance metrics

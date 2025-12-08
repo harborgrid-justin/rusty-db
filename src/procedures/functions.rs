@@ -5,7 +5,7 @@
 
 use crate::{Result, DbError};
 use crate::procedures::parser::{PlSqlBlock, PlSqlType, Expression};
-use crate::procedures::runtime::{RuntimeExecutor, RuntimeValue, ExecutionResult};
+use crate::procedures::runtime::{RuntimeExecutor, RuntimeValue};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -241,7 +241,7 @@ impl FunctionManager {
                 }
 
                 // Execute the function body
-                let result = self.runtime.execute(&func.body)?;
+                let _result = self.runtime.execute(&func.body)?;
 
                 // Return the result
                 result.return_value.ok_or_else(||
@@ -329,7 +329,7 @@ impl FunctionManager {
         match function {
             UserFunction::Aggregate(func) => {
                 // TODO: Pass state to finalize_body
-                let result = self.runtime.execute(&func.finalize_body)?;
+                let _result = self.runtime.execute(&func.finalize_body)?;
 
                 result.return_value.ok_or_else(||
                     DbError::Runtime(format!("Aggregate function '{}' did not return a value", name))

@@ -9,10 +9,9 @@
 /// - Data quality and validation
 /// - Aggregate awareness and query rewriting
 
-use crate::error::{DbError, Result};
-use crate::catalog::Schema;
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::SystemTime;
@@ -253,7 +252,7 @@ impl BitVector {
         let num_words = (size + 63) / 64;
         let mut result = BitVector::new(size);
 
-        for i in 0..num_words {
+        for _i in 0..num_words {
             result.bits[i] = self.bits[i] & other.bits[i];
         }
 
@@ -267,7 +266,7 @@ impl BitVector {
         let num_words = (size + 63) / 64;
         let mut result = BitVector::new(size);
 
-        for i in 0..num_words.min(self.bits.len()).min(other.bits.len()) {
+        for _i in 0..num_words.min(self.bits.len()).min(other.bits.len()) {
             result.bits[i] = self.bits[i] | other.bits[i];
         }
 
@@ -279,7 +278,7 @@ impl BitVector {
     pub fn not(&self) -> BitVector {
         let mut result = BitVector::new(self.size);
 
-        for i in 0..self.bits.len() {
+        for _i in 0..self.bits.len() {
             result.bits[i] = !self.bits[i];
         }
 
@@ -479,8 +478,8 @@ impl DataWarehouseManager {
         &self,
         schema_name: &str,
         dimension_name: &str,
-        key: String,
-        new_attributes: HashMap<String, String>,
+        _key: String,
+        _new_attributes: HashMap<String, String>,
     ) -> Result<()> {
         let schemas = self.schemas.read();
         let schema = schemas.get(schema_name)
@@ -526,9 +525,9 @@ impl DataWarehouseManager {
             PartitioningStrategy::Range { column: _, partitions } => {
                 for partition in partitions {
                     let in_range = match (&partition.lower_bound, &partition.upper_bound) {
-                        (Some(lower), Some(upper)) => value >= lower && value < upper,
-                        (Some(lower), None) => value >= lower,
-                        (None, Some(upper)) => value < upper,
+                        (Some(lower), Some(upper)) => value >= lower.as_str() && value < upper.as_str(),
+                        (Some(lower), None) => value >= lower.as_str(),
+                        (None, Some(upper)) => value < upper.as_str(),
                         (None, None) => true,
                     };
 
@@ -539,7 +538,7 @@ impl DataWarehouseManager {
                 Err(DbError::NotFound("No matching partition".to_string()))
             }
             PartitioningStrategy::Hash { column: _, num_partitions } => {
-                let hash = self.hash_value(value);
+                let _hash = self.hash_value(value);
                 let partition_num = hash % num_partitions;
                 Ok(format!("partition_{}", partition_num))
             }
@@ -681,7 +680,7 @@ mod tests {
         bv2.set(10);
         bv2.set(20);
 
-        let result = bv1.and(&bv2);
+        let _result = bv1.and(&bv2);
         assert!(result.get(10));
         assert!(!result.get(5));
         assert!(!result.get(20));
@@ -695,7 +694,7 @@ mod tests {
         bv1.set(5);
         bv2.set(10);
 
-        let result = bv1.or(&bv2);
+        let _result = bv1.or(&bv2);
         assert!(result.get(5));
         assert!(result.get(10));
     }
@@ -732,7 +731,7 @@ mod tests {
             },
         };
 
-        let result = manager.create_star_schema(schema);
+        let _result = manager.create_star_schema(schema);
         assert!(result.is_ok());
     }
 }

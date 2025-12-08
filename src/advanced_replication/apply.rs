@@ -5,12 +5,12 @@
 //! Optimized with lock-free ring buffers for maximum throughput.
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
@@ -364,7 +364,7 @@ impl ApplyEngine {
 
         // Create checkpoint if needed
         if self.config.enable_checkpointing {
-            let stats = self.stats.read();
+            let _stats = self.stats.read();
             if stats.changes_applied % self.config.checkpoint_interval == 0 {
                 drop(stats);
                 self.create_checkpoint()?;
@@ -589,7 +589,7 @@ impl ApplyEngine {
 
     /// Create a checkpoint
     fn create_checkpoint(&self) -> Result<()> {
-        let stats = self.stats.read();
+        let _stats = self.stats.read();
 
         let checkpoint = ApplyCheckpoint {
             id: format!("checkpoint-{}", uuid::Uuid::new_v4()),
@@ -681,7 +681,7 @@ mod tests {
 
         engine.queue_change(change).unwrap();
 
-        let stats = engine.get_stats();
+        let _stats = engine.get_stats();
         assert_eq!(stats.total_changes, 1);
     }
 
@@ -703,7 +703,7 @@ mod tests {
         engine.queue_change(change).unwrap();
         engine.process_changes().await.unwrap();
 
-        let stats = engine.get_stats();
+        let _stats = engine.get_stats();
         assert_eq!(stats.changes_applied, 1);
     }
 }

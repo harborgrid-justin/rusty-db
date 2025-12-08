@@ -770,7 +770,7 @@ mod tests {
     fn test_btree_range_scan() {
         let tree: BPlusTree<i32, String> = BPlusTree::new();
 
-        for i in 1..=10 {
+        for _i in 1..=10 {
             tree.insert(i, format!("value_{}", i)).unwrap();
         }
 
@@ -791,7 +791,7 @@ mod tests {
         tree.bulk_load(data).unwrap();
 
         // Verify all values can be found
-        for i in 1..=100 {
+        for _i in 1..=100 {
             assert_eq!(tree.search(&i).unwrap(), Some(format!("value_{}", i)));
         }
     }
@@ -814,11 +814,11 @@ mod tests {
     fn test_btree_stats() {
         let tree: BPlusTree<i32, String> = BPlusTree::new();
 
-        for i in 1..=50 {
+        for _i in 1..=50 {
             tree.insert(i, format!("value_{}", i)).unwrap();
         }
 
-        let stats = tree.stats();
+        let _stats = tree.stats();
         assert!(stats.height > 0);
         assert_eq!(stats.total_keys, 50);
         assert!(stats.leaf_nodes > 0);

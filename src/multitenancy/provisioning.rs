@@ -1,11 +1,11 @@
 // Self-service tenant provisioning with workflows and automation
 // Implements template-based provisioning, tier configuration, and lifecycle management
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, Duration};
+use std::time::{SystemTime};
 
 /// Provisioning error types
 #[derive(Debug, Clone)]
@@ -710,7 +710,7 @@ impl ProvisioningService {
         policy: Option<DeprovisioningPolicy>,
     ) -> ProvisioningResult<String> {
         let request_id = uuid::Uuid::new_v4().to_string();
-        let policy = policy.unwrap_or_default();
+        let _policy = policy.unwrap_or_default();
 
         let scheduled_at = SystemTime::now() + Duration::from_secs(policy.grace_period_days as u64 * 86400);
 
@@ -798,7 +798,7 @@ mod tests {
     async fn test_provisioning_request() {
         let service = ProvisioningService::new();
 
-        let result = service.submit_request(
+        let _result = service.submit_request(
             "user@example.com".to_string(),
             "test-tenant".to_string(),
             "tpl_basic".to_string(),
@@ -836,7 +836,7 @@ mod tests {
     async fn test_deprovisioning_request() {
         let service = ProvisioningService::new();
 
-        let result = service.submit_deprovisioning_request(
+        let _result = service.submit_deprovisioning_request(
             "tenant-123".to_string(),
             "admin@example.com".to_string(),
             "No longer needed".to_string(),

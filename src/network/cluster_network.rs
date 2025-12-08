@@ -1,22 +1,22 @@
 // Enterprise-grade Network Clustering & High Availability Architecture
 // Comprehensive cluster management, inter-node communication, and failover systems
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use async_trait::async_trait;
 use bincode;
 use bytes::{Bytes, BytesMut};
 use futures::stream::{Stream, StreamExt};
-use parking_lot::{RwLock, Mutex};
+use parking_lot::{RwLock};
 use rand;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
+use std::collections::{HashMap};
 use std::net::{SocketAddr, IpAddr};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use tokio::net::{TcpListener, TcpStream, UdpSocket};
-use tokio::sync::{mpsc, oneshot, broadcast, Semaphore, RwLock as TokioRwLock};
-use tokio::time::{interval, timeout, sleep};
-use tracing::{info, warn, error, debug, trace};
+use tokio::sync::{mpsc, broadcast, Semaphore, RwLock as TokioRwLock};
+use tokio::time::{interval, timeout};
+use tracing::{info, error, debug, trace, warn};
 use uuid::Uuid;
 
 // =============================================================================
@@ -163,7 +163,7 @@ pub struct ClusterTopologyManager {
     event_tx: broadcast::Sender<MembershipEvent>,
     udp_socket: Arc<UdpSocket>,
     protocol_seq: Arc<RwLock<u64>>,
-    pending_acks: Arc<RwLock<HashMap<u64, oneshot::Sender<bool>>>>,
+    pending_acks: Arc<RwLock<HashMap<u64::Sender<bool>>>>,
     multicast_groups: Arc<RwLock<Vec<IpAddr>>>,
     quorum_config: Arc<RwLock<QuorumConfig>>,
     partition_detector: Arc<PartitionDetector>,
@@ -1040,7 +1040,7 @@ impl NodeConnectionPool {
         let mut results = Vec::new();
 
         for (node_id, addr) in targets {
-            let result = self.send_message(node_id, addr, message.clone()).await;
+            let _result = self.send_message(node_id, addr, message.clone()).await;
             results.push(result);
         }
 
@@ -1134,7 +1134,7 @@ impl NodeConnection {
     async fn sender_loop(&self) {
         loop {
             // Sort by priority and send
-            let message = {
+            let _message = {
                 let mut queue = self.send_queue.lock();
                 if queue.is_empty() {
                     None
@@ -1687,7 +1687,7 @@ impl LocalityMap {
 
 /// Hot-spot detection and mitigation
 pub struct HotspotDetector {
-    query_counts: Arc<RwLock<HashMap<NodeId, VecDeque<(Instant, usize)>>>>,
+    query_counts: Arc<RwLock<HashMap<NodeId<(Instant, usize)>>>>,
     threshold_qps: usize,
     window_size: Duration,
 }
@@ -1984,7 +1984,7 @@ impl RaftLeaderElection {
 
     async fn election_loop(&self) {
         loop {
-            let state = *self.state.read();
+            let _state = *self.state.read();
 
             match state {
                 RaftState::Follower => {
@@ -2572,7 +2572,7 @@ pub struct HealthCheckResult {
 
 /// Latency tracking for nodes
 pub struct LatencyTracker {
-    measurements: Arc<RwLock<HashMap<NodeId, VecDeque<(Instant, Duration)>>>>,
+    measurements: Arc<RwLock<HashMap<NodeId<(Instant)>>>>,
     window_size: usize,
 }
 

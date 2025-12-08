@@ -53,7 +53,7 @@
 //! The engine automatically detects CPU capabilities and falls back to scalar
 //! implementations when SIMD is not available.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::common::{Value, Tuple};
 
 /// SIMD filter operations
@@ -247,7 +247,7 @@ impl SelectionVector {
     /// Add multiple indices
     #[inline(always)]
     pub fn add_range(&mut self, start: usize, count: usize) {
-        for i in 0..count {
+        for _i in 0..count {
             self.indices.push(start + i);
         }
     }

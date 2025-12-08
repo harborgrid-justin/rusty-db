@@ -503,7 +503,7 @@ mod tests {
     
     #[test]
     fn test_exists_evaluator() {
-        let result = QueryResult::new(
+        let _result = QueryResult::new(
             vec!["id".to_string()],
             vec![vec!["1".to_string()]],
         );
@@ -518,7 +518,7 @@ mod tests {
     
     #[test]
     fn test_in_evaluator() {
-        let result = QueryResult::new(
+        let _result = QueryResult::new(
             vec!["value".to_string()],
             vec![
                 vec!["1".to_string()],
@@ -535,17 +535,17 @@ mod tests {
     #[test]
     fn test_scalar_subquery_evaluator() {
         // Valid scalar subquery
-        let result = QueryResult::new(
+        let _result = QueryResult::new(
             vec!["count".to_string()],
             vec![vec!["42".to_string()]],
         );
         
-        let value = ScalarSubqueryEvaluator::evaluate(&result).unwrap();
+        let _value = ScalarSubqueryEvaluator::evaluate(&result).unwrap();
         assert_eq!(value, Some("42".to_string()));
         
         // Empty result (NULL)
         let empty = QueryResult::empty();
-        let value = ScalarSubqueryEvaluator::evaluate(&empty).unwrap();
+        let _value = ScalarSubqueryEvaluator::evaluate(&empty).unwrap();
         assert_eq!(value, None);
         
         // Too many rows - should error
@@ -562,7 +562,7 @@ mod tests {
     
     #[test]
     fn test_quantified_comparison() {
-        let result = QueryResult::new(
+        let _result = QueryResult::new(
             vec!["value".to_string()],
             vec![
                 vec!["10".to_string()],
@@ -612,7 +612,7 @@ mod tests {
     fn test_subquery_cache() {
         let mut cache = SubqueryCache::new(10);
         
-        let result = QueryResult::new(
+        let _result = QueryResult::new(
             vec!["id".to_string()],
             vec![vec!["1".to_string()]],
         );

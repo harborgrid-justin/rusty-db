@@ -298,7 +298,7 @@ impl PredictFunction {
         inference_engine: &InferenceEngine,
         feature_values: &Matrix,
     ) -> Result<Vector> {
-        let result = inference_engine.predict(
+        let _result = inference_engine.predict(
             &self.model_name,
             self.model_version,
             feature_values,

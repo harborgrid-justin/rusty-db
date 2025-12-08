@@ -26,10 +26,10 @@
 //! }
 //! ```
 
-use std::collections::{HashMap, BTreeMap, VecDeque};
-use std::sync::{Arc, RwLock, Mutex};
-use std::time::{Duration, Instant, SystemTime};
-use std::fmt;
+use std::collections::{HashMap};
+use std::sync::{Arc, RwLock};
+use std::time::{Duration};
+
 use tokio::time::sleep;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
@@ -251,7 +251,7 @@ impl FeatureFlagManager {
 
             // Check rollout percentage
             if flag.rollout_percentage < 100.0 {
-                let hash = self.hash_context(context);
+                let _hash = self.hash_context(context);
                 return (hash % 100) < flag.rollout_percentage as u64;
             }
 
@@ -933,7 +933,7 @@ impl RetryPolicyExecutor {
     where
         F: FnMut() -> std::result::Result<T, E>,
     {
-        let policy = {
+        let _policy = {
             let policies = self.policies.read().unwrap();
             policies.get(operation).cloned().unwrap_or_default()
         };
@@ -990,7 +990,7 @@ impl CircuitBreaker {
     }
 
     pub fn is_open(&self) -> bool {
-        let state = self.state.read().unwrap();
+        let _state = self.state.read().unwrap();
         matches!(*state, CircuitState::Open)
     }
 
@@ -1345,7 +1345,7 @@ impl IoScheduler {
 /// Priority manager
 pub struct PriorityManager {
     priorities: Arc<RwLock<HashMap<String, usize>>>,
-    priority_queues: Arc<RwLock<BTreeMap<usize, VecDeque<String>>>>,
+    priority_queues: Arc<RwLock<BTreeMap<usize<String>>>>,
 }
 
 impl PriorityManager {
@@ -2006,7 +2006,7 @@ impl StartupOrchestrator {
             }
 
             // Execute with timeout
-            let result = tokio::time::timeout(
+            let _result = tokio::time::timeout(
                 self.timeout_per_phase,
                 tokio::task::spawn_blocking({
                     let handler = phase_handler.handler.clone();
@@ -2091,7 +2091,7 @@ impl ShutdownCoordinator {
             }
 
             // Execute with timeout
-            let result = tokio::time::timeout(
+            let _result = tokio::time::timeout(
                 self.timeout_per_phase,
                 tokio::task::spawn_blocking({
                     let handler = phase_handler.handler.clone();
@@ -2160,7 +2160,7 @@ impl HotReloadManager {
     }
 
     pub fn reload_component(&self, component: &str) -> std::result::Result<(), DbError> {
-        let handlers = self.reload_handlers.read().unwrap();
+        let _handlers = self.reload_handlers.read().unwrap();
         let handler = handlers.get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
@@ -2168,7 +2168,7 @@ impl HotReloadManager {
         handler.validate()?;
 
         // Perform reload
-        let result = handler.reload();
+        let _result = handler.reload();
 
         // Record event
         let event = ReloadEvent {
@@ -2317,7 +2317,7 @@ impl StatePersistenceManager {
     }
 
     pub fn persist_state(&self, component: &str) -> std::result::Result<(), DbError> {
-        let handlers = self.persistence_handlers.read().unwrap();
+        let _handlers = self.persistence_handlers.read().unwrap();
         let handler = handlers.get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
@@ -2334,7 +2334,7 @@ impl StatePersistenceManager {
         let data = storage.get(component)
             .ok_or_else(|| DbError::NotFound(format!("No persisted state for: {}", component)))?;
 
-        let handlers = self.persistence_handlers.read().unwrap();
+        let _handlers = self.persistence_handlers.read().unwrap();
         let handler = handlers.get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
@@ -2344,7 +2344,7 @@ impl StatePersistenceManager {
     }
 
     pub fn persist_all(&self) -> std::result::Result<(), DbError> {
-        let handlers = self.persistence_handlers.read().unwrap();
+        let _handlers = self.persistence_handlers.read().unwrap();
         for component in handlers.keys() {
             self.persist_state(component)?;
         }
@@ -2392,7 +2392,7 @@ impl RecoveryOrchestrator {
         let strategy = strategies.get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
-        let result = strategy.recover();
+        let _result = strategy.recover();
 
         let recovery_time = start.elapsed();
         let success = result.is_ok() && strategy.validate_recovery().unwrap_or(false);
@@ -2656,7 +2656,7 @@ impl EnterpriseIntegrator {
         ).await;
 
         // Process through gateway
-        let result = self.api_gateway.process_request(request).await;
+        let _result = self.api_gateway.process_request(request).await;
 
         // End tracing
         let status = if result.is_ok() { SpanStatus::Ok } else { SpanStatus::Error };

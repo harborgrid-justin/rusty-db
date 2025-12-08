@@ -68,10 +68,10 @@
 //! ```
 
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 // Module declarations
 pub mod consumer_groups;
@@ -649,7 +649,7 @@ mod tests {
         let config = ResourceManagerConfig::default();
         let manager = ResourceManager::new(config).unwrap();
 
-        let stats = manager.get_resource_stats();
+        let _stats = manager.get_resource_stats();
         assert!(stats.memory_usage_pct >= 0.0);
     }
 }

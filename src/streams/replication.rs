@@ -3,13 +3,13 @@
 //! Logical replication using CDC for table-level replication with transformations,
 //! conflict detection and resolution, bidirectional replication, and monitoring.
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, Duration, Instant};
-use parking_lot::{RwLock, Mutex};
+use std::time::{SystemTime};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{mpsc};
 use tokio::time::interval;
 use crate::{Result, DbError};
 use crate::common::{TransactionId, TableId, Value};
@@ -550,7 +550,7 @@ impl LogicalReplication {
     fn spawn_replication_worker(&self) {
         let cdc_engine = self.cdc_engine.clone();
         let rules = self.rules.clone();
-        let stats = self.stats.clone();
+        let _stats = self.stats.clone();
         let shutdown = self.shutdown.clone();
 
         tokio::spawn(async move {
@@ -580,7 +580,7 @@ impl LogicalReplication {
     }
 
     fn spawn_lag_monitor(&self) {
-        let stats = self.stats.clone();
+        let _stats = self.stats.clone();
         let config = self.config.clone();
         let shutdown = self.shutdown.clone();
 
@@ -605,7 +605,7 @@ impl LogicalReplication {
 
     fn spawn_conflict_resolver(&self) {
         let conflicts = self.conflicts.clone();
-        let stats = self.stats.clone();
+        let _stats = self.stats.clone();
         let shutdown = self.shutdown.clone();
         let resolution = self.config.conflict_resolution;
 

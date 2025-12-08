@@ -8,7 +8,7 @@ use super::{
     filter::SimdFilter, prefetch_read, BATCH_SIZE,
 };
 use crate::common::{Value, Tuple};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use std::sync::Arc;
 
 /// Scan strategy
@@ -241,7 +241,7 @@ impl ColumnScan {
         let mut selection = SelectionVector::with_capacity(row_count);
 
         // Initialize with all rows selected
-        for i in 0..row_count {
+        for _i in 0..row_count {
             selection.add(i);
         }
 
@@ -337,7 +337,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let value = match &filter.values[0] {
+        let _value = match &filter.values[0] {
             Value::Integer(v) => *v as i32,
             _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
         };
@@ -388,7 +388,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let value = match &filter.values[0] {
+        let _value = match &filter.values[0] {
             Value::Integer(v) => *v,
             _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
         };
@@ -428,7 +428,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let value = match &filter.values[0] {
+        let _value = match &filter.values[0] {
             Value::Float(v) => *v as f32,
             _ => return Err(DbError::InvalidArgument("Expected float value".to_string())),
         };
@@ -465,7 +465,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let value = match &filter.values[0] {
+        let _value = match &filter.values[0] {
             Value::Float(v) => *v,
             _ => return Err(DbError::InvalidArgument("Expected float value".to_string())),
         };
@@ -502,7 +502,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let value = match &filter.values[0] {
+        let _value = match &filter.values[0] {
             Value::Text(v) => v,
             _ => return Err(DbError::InvalidArgument("Expected text value".to_string())),
         };
@@ -538,7 +538,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let value = match &filter.values[0] {
+        let _value = match &filter.values[0] {
             Value::Boolean(v) => *v,
             _ => return Err(DbError::InvalidArgument("Expected boolean value".to_string())),
         };
@@ -586,7 +586,7 @@ impl ColumnScan {
                     return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
                 }
 
-                let value = match &filter.values[0] {
+                let _value = match &filter.values[0] {
                     Value::Integer(v) => *v as i32,
                     _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
                 };

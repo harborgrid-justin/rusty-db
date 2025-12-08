@@ -686,7 +686,7 @@ mod tests {
 
         keystore.initialize_mek("test_password", None).unwrap();
 
-        let stats = keystore.get_stats();
+        let _stats = keystore.get_stats();
         assert_eq!(stats.mek_version, 1);
     }
 
@@ -699,7 +699,7 @@ mod tests {
         let dek = keystore.generate_dek("test_tablespace", "AES256GCM").unwrap();
         assert_eq!(dek.len(), 32);
 
-        let stats = keystore.get_stats();
+        let _stats = keystore.get_stats();
         assert_eq!(stats.total_deks, 1);
         assert_eq!(stats.active_deks, 1);
     }
@@ -742,7 +742,7 @@ mod tests {
         // Rotate MEK
         keystore.generate_mek().unwrap();
 
-        let stats = keystore.get_stats();
+        let _stats = keystore.get_stats();
         assert_eq!(stats.mek_version, 2);
 
         // Re-encrypt all DEKs
@@ -772,7 +772,7 @@ mod tests {
         keystore.generate_dek("test_key", "AES256GCM").unwrap();
         keystore.deactivate_dek("test_key").unwrap();
 
-        let result = keystore.get_dek("test_key");
+        let _result = keystore.get_dek("test_key");
         assert!(result.is_err());
     }
 }

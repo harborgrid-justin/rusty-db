@@ -10,10 +10,10 @@
 //! - Audit log protection
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
-use crate::common::{TableId, RowId, SessionId};
+use std::time::{SystemTime};
+use crate::common::{TableId, RowId};
 use crate::Result;
 use crate::error::DbError;
 use super::ledger::BlockId;
@@ -24,7 +24,7 @@ use super::crypto::{sha256, Hash256, hash_to_hex};
 // ============================================================================
 
 /// Type of audit event
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AuditEventType {
     /// Table creation
     TableCreate,

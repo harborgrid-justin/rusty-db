@@ -3,13 +3,13 @@
 //! This module implements Oracle-like resource plans with directives, sub-plans,
 //! time-based switching, and maintenance windows.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc, Timelike, Weekday, NaiveTime};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::consumer_groups::ConsumerGroupId;
 
 /// Resource plan identifier

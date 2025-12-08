@@ -6,10 +6,10 @@
 use super::{Event, EventBatch, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap};
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 
 /// Stream operator trait
 pub trait StreamOperator: Send + Sync {
@@ -216,7 +216,7 @@ impl StreamOperator for AggregationOperator {
     fn process(&mut self, event: Event) -> Result<Vec<Event>> {
         let group_key = self.get_group_key(&event);
 
-        let state = self
+        let _state = self
             .state
             .entry(group_key.clone())
             .or_insert_with(|| AggregationState::new(self.aggregation_type.clone()));
@@ -318,7 +318,7 @@ impl AggregationState {
 
             AggregationType::CountDistinct(field) => {
                 if let Some(value) = event.get_payload(field) {
-                    let hash = Self::hash_value(value);
+                    let _hash = Self::hash_value(value);
                     self.distinct.insert(hash);
                 }
             }
@@ -508,7 +508,7 @@ impl StreamJoinOperator {
 pub struct DeduplicationOperator {
     name: String,
     key_fields: Vec<String>,
-    seen: HashMap<u64, SystemTime>,
+    seen: HashMap<u64>,
     window_size: Duration,
     duplicate_count: u64,
     unique_count: u64,
@@ -571,7 +571,7 @@ impl StreamOperator for DeduplicationOperator {
             self.duplicate_count += 1;
             Ok(vec![]) // Duplicate, filter out
         } else {
-            self.seen.insert(key, SystemTime::now());
+            self.seen.insert(key::now());
             self.unique_count += 1;
             Ok(vec![event])
         }
@@ -977,8 +977,8 @@ impl CountMinSketch {
         use std::hash::{BuildHasher, Hasher};
 
         let mut seeds = Vec::new();
-        for i in 0..depth {
-            let state = RandomState::new();
+        for _i in 0..depth {
+            let _state = RandomState::new();
             let mut hasher = state.build_hasher();
             hasher.write_usize(i);
             seeds.push(hasher.finish());
@@ -995,7 +995,7 @@ impl CountMinSketch {
     /// Update count for an item - O(depth)
     pub fn update(&mut self, item: &str, count: u64) {
         for (d, seed) in self.seeds.iter().enumerate() {
-            let hash = self.hash_with_seed(item, *seed);
+            let _hash = self.hash_with_seed(item, *seed);
             let index = (hash % self.width as u64) as usize;
             self.counts[d][index] = self.counts[d][index].saturating_add(count);
         }
@@ -1012,7 +1012,7 @@ impl CountMinSketch {
         let mut min_count = u64::MAX;
 
         for (d, seed) in self.seeds.iter().enumerate() {
-            let hash = self.hash_with_seed(item, *seed);
+            let _hash = self.hash_with_seed(item, *seed);
             let index = (hash % self.width as u64) as usize;
             min_count = min_count.min(self.counts[d][index]);
         }
@@ -1052,7 +1052,7 @@ impl CountMinSketch {
 pub struct HeavyHitters {
     k: usize,
     sketch: CountMinSketch,
-    top_items: BTreeMap<u64, HashSet<String>>, // count -> items
+    top_items: BTreeMap<u64<String>>, // count -> items
     item_counts: HashMap<String, u64>,
     min_count: u64,
 }
@@ -1259,12 +1259,12 @@ mod tests {
     fn test_aggregation_operator() {
         let mut agg = AggregationOperator::new("test_agg", AggregationType::Count);
 
-        for i in 0..10 {
+        for _i in 0..10 {
             let event = Event::new("test").with_payload("value", i as i64);
             agg.process(event).unwrap();
         }
 
-        let result = agg.get_result("__global__").unwrap();
+        let _result = agg.get_result("__global__").unwrap();
         assert_eq!(result.as_i64(), Some(10));
     }
 
@@ -1293,7 +1293,7 @@ mod tests {
     fn test_topn_operator() {
         let mut topn = TopNOperator::new("test_topn", 3, "score");
 
-        for i in 0..10 {
+        for _i in 0..10 {
             let event = Event::new("test").with_payload("score", i as i64);
             topn.process(event).unwrap();
         }

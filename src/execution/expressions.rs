@@ -27,7 +27,7 @@
 use crate::error::DbError;
 use crate::catalog::DataType;
 use std::collections::HashMap;
-use std::fmt;
+
 
 /// Expression value with NULL support
 #[derive(Debug, Clone, PartialEq)]
@@ -276,7 +276,7 @@ impl ExpressionEvaluator {
                 let expr_val = self.eval(expr, row)?;
 
                 for value_expr in values {
-                    let value = self.eval(value_expr, row)?;
+                    let _value = self.eval(value_expr, row)?;
                     let is_equal = self.values_equal(&expr_val, &value)?;
                     if matches!(is_equal, ExprValue::Boolean(true)) {
                         return Ok(ExprValue::Boolean(true));
@@ -476,7 +476,7 @@ impl ExpressionEvaluator {
                     s.len()
                 };
 
-                let result = s.chars()
+                let _result = s.chars()
                     .skip(start.saturating_sub(1))
                     .take(len)
                     .collect::<String>();
@@ -700,10 +700,10 @@ mod tests {
         let left = ExprValue::Integer(10);
         let right = ExprValue::Integer(5);
 
-        let result = evaluator.eval_binary_op(&left, BinaryOperator::Add, &right).unwrap();
+        let _result = evaluator.eval_binary_op(&left, BinaryOperator::Add, &right).unwrap();
         assert_eq!(result.to_float().unwrap(), 15.0);
 
-        let result = evaluator.eval_binary_op(&left, BinaryOperator::Multiply, &right).unwrap();
+        let _result = evaluator.eval_binary_op(&left, BinaryOperator::Multiply, &right).unwrap();
         assert_eq!(result.to_float().unwrap(), 50.0);
     }
 
@@ -713,7 +713,7 @@ mod tests {
         let null = ExprValue::Null;
         let val = ExprValue::Integer(10);
 
-        let result = evaluator.eval_binary_op(&null, BinaryOperator::Add, &val).unwrap();
+        let _result = evaluator.eval_binary_op(&null, BinaryOperator::Add, &val).unwrap();
         assert!(result.is_null());
     }
 
@@ -744,12 +744,12 @@ mod tests {
     fn test_functions() {
         let evaluator = ExpressionEvaluator::new();
 
-        let result = evaluator.eval_function("UPPER", vec![
+        let _result = evaluator.eval_function("UPPER", vec![
             ExprValue::String("hello".to_string())
         ]).unwrap();
         assert_eq!(result.to_string(), "HELLO");
 
-        let result = evaluator.eval_function("LENGTH", vec![
+        let _result = evaluator.eval_function("LENGTH", vec![
             ExprValue::String("test".to_string())
         ]).unwrap();
         assert_eq!(result.to_integer().unwrap(), 4);

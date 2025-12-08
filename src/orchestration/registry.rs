@@ -28,13 +28,13 @@
 
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
-use std::fmt;
+
 use std::sync::Arc;
 
 use parking_lot::RwLock;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 /// Service lifetime scope
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

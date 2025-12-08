@@ -22,13 +22,11 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
-
-use crate::error::{DbError, Result};
 
 /// Degradation level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -598,11 +596,11 @@ mod tests {
         shedder.set_rejection_rate(0.5);
 
         // Check multiple requests
-        let mut accepted = 0;
+        let mut _accepted = 0;
         let mut rejected = 0;
         for _ in 0..1000 {
             if shedder.should_accept(5) {
-                accepted += 1;
+                _accepted += 1;
             } else {
                 rejected += 1;
             }
@@ -632,7 +630,7 @@ mod tests {
         strategy.set_level(DegradationLevel::DegradedL1);
         strategy.set_level(DegradationLevel::DegradedL2);
 
-        let stats = strategy.statistics();
+        let _stats = strategy.statistics();
         assert_eq!(stats.current_level, DegradationLevel::DegradedL2);
         assert_eq!(stats.level_changes, 2);
         assert!(stats.last_change.is_some());

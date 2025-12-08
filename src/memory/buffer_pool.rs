@@ -34,13 +34,13 @@
 //! └──────────────────────────────────────────────────────────────────────┘
 //! ```
 
-use std::collections::{HashMap, VecDeque, BTreeMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 use parking_lot::{Mutex, RwLock as PRwLock};
 use serde::{Serialize, Deserialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 // ============================================================================
 // SECTION 1: MULTI-TIER BUFFER POOL (700+ lines)
@@ -1306,7 +1306,7 @@ impl PagePrefetcher {
         let vec: Vec<&PageId> = history.iter().collect();
         let mut sequential_count = 0;
 
-        for i in 0..vec.len() - 1 {
+        for _i in 0..vec.len() - 1 {
             if vec[i].tablespace_id == vec[i + 1].tablespace_id &&
                vec[i + 1].page_number == vec[i].page_number + 1 {
                 sequential_count += 1;
@@ -1321,7 +1321,7 @@ impl PagePrefetcher {
         let mut predictions = Vec::new();
 
         // Prefetch next 4 pages
-        for i in 1..=4 {
+        for _i in 1..=4 {
             predictions.push(PageId {
                 tablespace_id: last_page.tablespace_id,
                 page_number: last_page.page_number + i,
@@ -1460,7 +1460,7 @@ pub struct LruKPolicy {
     /// K value (typically 2)
     k: usize,
     /// Access history for each page
-    history: PRwLock<HashMap<PageId, VecDeque<Instant>>>,
+    history: PRwLock<HashMap<PageId<Instant>>>,
     /// Correlation period for history
     corr_period: Duration,
     /// Statistics
@@ -1763,7 +1763,7 @@ impl CostAwareReplacement {
         let mut victim = None;
 
         for &page_id in candidates {
-            let value = self.replacement_value(page_id);
+            let _value = self.replacement_value(page_id);
             if value < min_value {
                 min_value = value;
                 victim = Some(page_id);
@@ -1978,7 +1978,7 @@ impl IncrementalCheckpointer {
         let batch_size = self.batch_size;
         let queue = self.checkpoint_queue.clone();
         let running = self.running.clone();
-        let stats = Arc::new(Mutex::new(AtomicU64::new(self.stats.incremental_checkpoints.load(Ordering::Relaxed))));
+        let _stats = Arc::new(Mutex::new(AtomicU64::new(self.stats.incremental_checkpoints.load(Ordering::Relaxed))));
 
         std::thread::spawn(move || {
             while running.load(Ordering::Acquire) {
@@ -2265,7 +2265,7 @@ pub struct DoubleWriteStatsSnapshot {
 /// Flush list manager
 pub struct FlushListManager {
     /// Flush lists per tablespace
-    flush_lists: PRwLock<HashMap<u32, Mutex<VecDeque<DirtyPage>>>>,
+    flush_lists: PRwLock<HashMap<u32<VecDeque<DirtyPage>>>>,
     /// Flush batch size
     batch_size: usize,
     /// Statistics
@@ -2804,7 +2804,7 @@ impl BufferPoolStatisticsTracker {
 
     /// Export metrics in Prometheus format
     pub fn export_prometheus(&self) -> String {
-        let stats = self.get_comprehensive_stats();
+        let _stats = self.get_comprehensive_stats();
         let mut output = String::new();
 
         // Buffer pool hit ratios
@@ -2852,7 +2852,7 @@ impl BufferPoolStatisticsTracker {
 
     /// Export metrics in JSON format
     pub fn export_json(&self) -> String {
-        let stats = self.get_comprehensive_stats();
+        let _stats = self.get_comprehensive_stats();
         serde_json::to_string_pretty(&stats).unwrap_or_default()
     }
 }

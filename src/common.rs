@@ -38,7 +38,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use crate::Result;
 
 // ============================================================================
@@ -77,7 +77,7 @@ pub type SessionId = u64;
 // ============================================================================
 
 /// Represents all possible data values in the database
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Value {
     /// NULL value
     Null,

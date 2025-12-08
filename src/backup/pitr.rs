@@ -3,9 +3,9 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::io::{Read, Write};
-use std::time::{SystemTime, Duration};
-use std::collections::{HashMap, BTreeMap, HashSet};
+use std::io::{Read};
+use std::time::{SystemTime};
+use std::collections::{HashMap};
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
 use crate::Result;
@@ -257,7 +257,7 @@ impl LogMiner {
         let mut active_txns = self.active_transactions.write();
 
         // Simulate some log entries
-        for i in 0..100 {
+        for _i in 0..100 {
             let scn = log_file.start_scn + i;
             let txn_id = format!("TXN-{}", i % 10);
 
@@ -291,7 +291,7 @@ impl LogMiner {
         // Simulate finding log files
         let mut log_files = Vec::new();
 
-        for i in 0..5 {
+        for _i in 0..5 {
             let seq = LogSequence {
                 sequence_number: i,
                 file_path: self.log_directory.join(format!("redo_{:04}.log", i)),
@@ -483,7 +483,7 @@ impl PitrManager {
 
     fn restore_backup(&self, session: &mut RecoverySession) -> Result<()> {
         // Simulate restoring backup files
-        for i in 0..10 {
+        for _i in 0..10 {
             session.status = RecoveryStatus::RestoringBackup {
                 progress_pct: (i as f64 / 10.0) * 100.0,
             };
@@ -654,7 +654,7 @@ mod tests {
     #[test]
     fn test_flashback_query() {
         let miner = LogMiner::new(PathBuf::from("/tmp/logs"));
-        let mut query = FlashbackQuery::new("test_table".to_string(), SystemTime::now(), 1000);
+        let mut query = FlashbackQuery::new("test_table".to_string()::now(), 1000);
 
         assert_eq!(query.table_name, "test_table");
         assert_eq!(query.target_scn, 1000);

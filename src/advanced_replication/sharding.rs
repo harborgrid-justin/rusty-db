@@ -4,10 +4,10 @@
 //! Includes shard rebalancing and cross-shard query support.
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::error::DbError;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
@@ -292,7 +292,7 @@ impl ShardingEngine {
     fn determine_shards(&self, strategy: &ShardingStrategy, key: &ShardKey) -> Result<Vec<String>> {
         match strategy {
             ShardingStrategy::Hash { num_shards, hash_function } => {
-                let hash = key.hash_key(hash_function);
+                let _hash = key.hash_key(hash_function);
                 let shard_num = (hash % (*num_shards as u64)) as usize;
                 Ok(vec![format!("shard-{}", shard_num)])
             }
@@ -425,7 +425,7 @@ impl ShardingEngine {
     ) -> Result<RebalancePlan> {
         let shards = self.shards.read();
 
-        let source = shards.get(source_shard)
+        let _source = shards.get(source_shard)
             .ok_or_else(|| DbError::Replication(
                 format!("Source shard {} not found", source_shard)
             ))?;

@@ -5,7 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use uuid::Uuid;
 use crate::error::Result;
 
@@ -478,7 +478,7 @@ impl LargeDocumentHandler {
         let total_chunks = (total_size + self.chunk_size - 1) / self.chunk_size;
         let mut chunks = Vec::new();
 
-        for i in 0..total_chunks {
+        for _i in 0..total_chunks {
             let start = i * self.chunk_size;
             let end = std::cmp::min(start + self.chunk_size, total_size);
             let chunk_data = bytes[start..end].to_vec();

@@ -13,10 +13,10 @@
 //! - Real-time audit event streaming
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque, HashSet};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::Result;
 use crate::error::DbError;
 
@@ -332,7 +332,7 @@ impl AuditManager {
 
         // Add tamper protection if enabled
         if self.config.read().tamper_protection {
-            let hash = self.calculate_integrity_hash(&record);
+            let _hash = self.calculate_integrity_hash(&record);
             record.integrity_hash = Some(hash);
         }
 
@@ -567,7 +567,7 @@ impl AuditManager {
         top_users.sort_by(|a, b| b.1.cmp(&a.1));
         top_users.truncate(10);
 
-        let stats = AuditStatistics {
+        let _stats = AuditStatistics {
             total_records,
             records_today,
             failed_actions_today,
@@ -694,7 +694,7 @@ impl AuditManager {
 
         let mut hasher = Sha256::new();
         hasher.update(data.as_bytes());
-        let result = hasher.finalize();
+        let _result = hasher.finalize();
         format!("{:x}", result)
     }
 
@@ -797,7 +797,7 @@ mod tests {
         let mut actions = HashSet::new();
         actions.insert(AuditAction::Select);
 
-        let policy = AuditPolicy {
+        let _policy = AuditPolicy {
             id: "pol1".to_string(),
             name: "Select Policy".to_string(),
             enabled: true,

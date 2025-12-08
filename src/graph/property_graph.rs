@@ -8,7 +8,7 @@
 //! - Efficient ID generation and management
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, Ordering};
 use crate::error::{Result, DbError};
@@ -546,7 +546,7 @@ impl GraphPartitioner {
     /// Create a new partitioner
     pub fn new(strategy: PartitioningStrategy, num_partitions: u32) -> Self {
         let mut partitions = Vec::with_capacity(num_partitions as usize);
-        for i in 0..num_partitions {
+        for _i in 0..num_partitions {
             partitions.push(GraphPartition::new(i));
         }
 
@@ -559,7 +559,7 @@ impl GraphPartitioner {
 
     /// Assign a vertex to a partition
     pub fn assign_vertex(&mut self, vertex_id: VertexId) -> PartitionId {
-        let partition_id = match self.strategy {
+        let _partition_id = match self.strategy {
             PartitioningStrategy::Hash => {
                 (vertex_id % self.num_partitions as u64) as PartitionId
             }
@@ -751,13 +751,13 @@ pub struct PropertyGraph {
     stats: Arc<RwLock<GraphStats>>,
 
     /// Index: label -> vertex IDs
-    vertex_label_index: HashMap<Label, HashSet<VertexId>>,
+    vertex_label_index: HashMap<Label<VertexId>>,
 
     /// Index: label -> edge IDs
-    edge_label_index: HashMap<Label, HashSet<EdgeId>>,
+    edge_label_index: HashMap<Label<EdgeId>>,
 
     /// Index: property key -> vertex IDs
-    vertex_property_index: HashMap<PropertyKey, HashSet<VertexId>>,
+    vertex_property_index: HashMap<PropertyKey<VertexId>>,
 }
 
 impl PropertyGraph {

@@ -3,9 +3,9 @@
 //! Intelligent index recommendation, creation, consolidation, and maintenance
 //! based on workload analysis and query patterns.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::Result;
@@ -364,7 +364,7 @@ impl IndexAdvisor {
 
         let index_list: Vec<_> = indexes.values().collect();
 
-        for i in 0..index_list.len() {
+        for _i in 0..index_list.len() {
             for j in (i + 1)..index_list.len() {
                 if index_list[i].is_redundant(index_list[j]) {
                     redundant_pairs.push((
@@ -679,7 +679,7 @@ mod tests {
 
     #[test]
     fn test_index_statistics_unused() {
-        let stats = IndexStatistics {
+        let _stats = IndexStatistics {
             index_name: "test_idx".to_string(),
             table_name: "test".to_string(),
             columns: vec!["col1".to_string()],

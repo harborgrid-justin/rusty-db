@@ -15,7 +15,7 @@
 
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap};
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
@@ -337,7 +337,7 @@ impl DistributedHashTable {
         let node_id = metadata.id.clone();
 
         // Create virtual nodes
-        for i in 0..self.config.virtual_nodes_per_node {
+        for _i in 0..self.config.virtual_nodes_per_node {
             let position = self.hash_vnode(&node_id, i);
             let vnode = VirtualNode::new(position, node_id.clone(), i);
             ring.insert(position, vnode);
@@ -461,7 +461,7 @@ impl DistributedHashTable {
 
     /// Get node using consistent hashing
     fn get_node_consistent_hash(&self, key: &[u8]) -> std::result::Result<DhtNodeId, DbError> {
-        let hash = self.hash_key(key);
+        let _hash = self.hash_key(key);
         let ring = self.hash_ring.read().unwrap();
 
         if ring.is_empty() {
@@ -483,7 +483,7 @@ impl DistributedHashTable {
 
     /// Get node using range-based partitioning
     fn get_node_range_based(&self, key: &[u8]) -> std::result::Result<DhtNodeId, DbError> {
-        let hash = self.hash_key(key);
+        let _hash = self.hash_key(key);
         let partitions = self.partitions.read().unwrap();
 
         for partition in partitions.iter() {
@@ -530,7 +530,7 @@ impl DistributedHashTable {
 
         match self.config.strategy {
             HashStrategy::ConsistentHash => {
-                let hash = self.hash_key(key);
+                let _hash = self.hash_key(key);
                 let ring = self.hash_ring.read().unwrap();
                 let mut seen = HashSet::new();
                 seen.insert(primary);
@@ -560,7 +560,7 @@ impl DistributedHashTable {
                 }
             }
             HashStrategy::RangeBased => {
-                let hash = self.hash_key(key);
+                let _hash = self.hash_key(key);
                 let partitions = self.partitions.read().unwrap();
 
                 for partition in partitions.iter() {

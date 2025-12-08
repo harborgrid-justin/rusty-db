@@ -13,7 +13,7 @@ use std::mem::{self, ManuallyDrop};
 use std::ops::{Deref, DerefMut};
 use std::ptr;
 use std::sync::atomic::{fence, AtomicPtr, AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 
 /// Number of epochs to track (3 provides enough lag for reclamation)
 const EPOCH_COUNT: usize = 3;
@@ -560,7 +560,7 @@ mod tests {
         let current = atomic.load(Ordering::SeqCst, &guard);
         let new_value = Owned::new(100).into_shared();
 
-        let result = atomic.compare_exchange(
+        let _result = atomic.compare_exchange(
             current,
             new_value,
             Ordering::SeqCst,
@@ -578,7 +578,7 @@ mod tests {
         let atomic = Arc::new(Atomic::new(0));
         let mut handles = vec![];
 
-        for i in 0..10 {
+        for _i in 0..10 {
             let atomic = atomic.clone();
             handles.push(thread::spawn(move || {
                 for _ in 0..100 {

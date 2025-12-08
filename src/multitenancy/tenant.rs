@@ -1,12 +1,12 @@
 // Tenant management with isolation guarantees and resource governance
 // Provides tenant-level isolation, resource controls, and SLA enforcement
 
-use std::collections::{HashMap, BTreeMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::path::PathBuf;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, Duration, Instant};
+use std::time::{SystemTime};
 
 /// Tenant-specific errors
 #[derive(Debug, Clone)]
@@ -905,7 +905,7 @@ mod tests {
         );
 
         assert_eq!(tenant.tenant_id, "tenant1");
-        let state = tenant.state.read().await;
+        let _state = tenant.state.read().await;
         assert_eq!(*state, TenantState::Active);
     }
 
@@ -918,17 +918,17 @@ mod tests {
             ServiceTier::bronze(),
         );
 
-        let result = tenant.suspend("Testing".to_string()).await;
+        let _result = tenant.suspend("Testing".to_string()).await;
         assert!(result.is_ok());
 
-        let state = tenant.state.read().await;
+        let _state = tenant.state.read().await;
         assert_eq!(*state, TenantState::Suspended);
         drop(state);
 
-        let result = tenant.resume().await;
+        let _result = tenant.resume().await;
         assert!(result.is_ok());
 
-        let state = tenant.state.read().await;
+        let _state = tenant.state.read().await;
         assert_eq!(*state, TenantState::Active);
     }
 
@@ -941,10 +941,10 @@ mod tests {
             ServiceTier::bronze(),
         );
 
-        let result = tenant.check_resource_quota(ResourceType::Memory, 1024).await;
+        let _result = tenant.check_resource_quota(ResourceType::Memory, 1024).await;
         assert!(result.is_ok());
 
-        let result = tenant.check_resource_quota(ResourceType::Memory, 10000).await;
+        let _result = tenant.check_resource_quota(ResourceType::Memory, 10000).await;
         assert!(result.is_err());
     }
 
@@ -959,7 +959,7 @@ mod tests {
             ServiceTier::silver(),
         ));
 
-        let result = manager.register_tenant(tenant1).await;
+        let _result = manager.register_tenant(tenant1).await;
         assert!(result.is_ok());
 
         let tenant = manager.get_tenant("tenant1").await;

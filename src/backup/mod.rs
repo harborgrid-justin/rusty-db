@@ -329,7 +329,7 @@ mod tests {
         assert!(!backup_id.is_empty());
 
         // Verify backup was registered
-        let stats = system.get_system_statistics();
+        let _stats = system.get_system_statistics();
         assert!(stats.backup_stats.total_backups > 0);
     }
 
@@ -348,7 +348,7 @@ mod tests {
         let snapshot_id = system.create_test_snapshot("testdb").unwrap();
         assert!(!snapshot_id.is_empty());
 
-        let stats = system.get_system_statistics();
+        let _stats = system.get_system_statistics();
         assert!(stats.snapshot_stats.total_snapshots > 0);
     }
 }

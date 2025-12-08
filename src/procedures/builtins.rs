@@ -5,12 +5,12 @@
 
 use crate::{Result, DbError};
 use crate::procedures::runtime::RuntimeValue;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::path::PathBuf;
 use std::fs::{File, OpenOptions};
-use std::io::{Write, Read, BufRead, BufReader};
+use std::io::{Write, BufRead, BufReader};
 
 // ============================================================================
 // DBMS_OUTPUT - Text output buffering
@@ -793,7 +793,7 @@ mod tests {
     fn test_dbms_lock() -> Result<()> {
         let lock_mgr = DbmsLock::new();
 
-        let result = lock_mgr.request(
+        let _result = lock_mgr.request(
             "my_lock".to_string(),
             "EXCLUSIVE".to_string(),
             Some(10),

@@ -313,7 +313,7 @@ impl Executor {
                 result_columns.push(agg.column.clone());
                 
                 // Calculate aggregate value
-                let value = match agg.function {
+                let _value = match agg.function {
                     AggregateFunction::Count => input.rows.len().to_string(),
                     AggregateFunction::Sum => "0".to_string(),  // TODO: Implement
                     AggregateFunction::Avg => "0".to_string(),  // TODO: Implement
@@ -378,7 +378,7 @@ mod tests {
         let parser = SqlParser::new();
         let stmts = parser.parse("CREATE TABLE users (id INT, name VARCHAR(255))")?;
         
-        let result = executor.execute(stmts[0].clone())?;
+        let _result = executor.execute(stmts[0].clone())?;
         assert_eq!(result.rows_affected, 0);
         
         Ok(())

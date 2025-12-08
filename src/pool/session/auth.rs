@@ -8,7 +8,7 @@
 /// - Token-based authentication
 
 use super::types::Username;
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
@@ -137,7 +137,7 @@ pub struct PrivilegeSet {
     pub system_privileges: HashSet<String>,
 
     /// Object privileges (e.g., SELECT on table X)
-    pub object_privileges: HashMap<String, HashSet<String>>,
+    pub object_privileges: HashMap<String<String>>,
 
     /// Administrative privileges
     pub is_dba: bool,
@@ -215,7 +215,7 @@ impl DatabaseAuthenticator {
     /// * `username` - Username
     /// * `password` - Plain-text password (will be hashed)
     pub fn register_user(&self, username: String, password: &str) {
-        let hash = self.hash_password(password);
+        let _hash = self.hash_password(password);
         self.password_hashes.write().insert(username, hash);
     }
 
@@ -286,7 +286,7 @@ impl Authenticator for DatabaseAuthenticator {
 /// Implements JWT or custom token authentication.
 pub struct TokenAuthenticator {
     /// Valid tokens (token -> username, expiry)
-    tokens: parking_lot::RwLock<HashMap<String, (String, SystemTime)>>,
+    tokens: parking_lot::RwLock<HashMap<String, (String)>>,
 }
 
 impl TokenAuthenticator {
@@ -415,7 +415,7 @@ mod tests {
             password: "secret123".to_string(),
         };
 
-        let result = auth.authenticate(&creds).await.unwrap();
+        let _result = auth.authenticate(&creds).await.unwrap();
         assert!(result.authenticated);
         assert_eq!(result.username.as_str(), "alice");
         assert_eq!(result.auth_method, AuthMethod::Database);
@@ -440,7 +440,7 @@ mod tests {
         let token = auth.issue_token("carol".to_string(), std::time::Duration::from_secs(3600));
 
         let creds = Credentials::Token { token: token.clone() };
-        let result = auth.authenticate(&creds).await.unwrap();
+        let _result = auth.authenticate(&creds).await.unwrap();
 
         assert!(result.authenticated);
         assert_eq!(result.username.as_str(), "carol");

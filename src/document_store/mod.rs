@@ -572,7 +572,7 @@ mod tests {
         store.create_collection("users".to_string()).unwrap();
 
         // Insert test documents
-        for i in 1..=5 {
+        for _i in 1..=5 {
             let doc = Document::from_json(
                 DocumentId::new_custom(format!("user{}", i)),
                 "users".to_string(),
@@ -598,7 +598,7 @@ mod tests {
         store.create_collection("sales".to_string()).unwrap();
 
         // Insert test data
-        for i in 1..=5 {
+        for _i in 1..=5 {
             let doc = Document::from_json(
                 DocumentId::new_custom(format!("sale{}", i)),
                 "sales".to_string(),
@@ -654,7 +654,7 @@ mod tests {
         ).unwrap();
         store.insert("users", doc).unwrap();
 
-        let stats = store.database_stats();
+        let _stats = store.database_stats();
         assert_eq!(stats.collection_count, 1);
         assert_eq!(stats.total_documents, 1);
     }

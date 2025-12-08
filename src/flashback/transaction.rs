@@ -23,14 +23,14 @@
 //! FLASHBACK TRANSACTION 0500120000AB0001 CASCADE;
 //! ```
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::error::{DbError, Result};
-use super::time_travel::{SCN, Timestamp};
+use crate::error::Result;
+use super::time_travel::{SCN, Timestamp, current_timestamp};
 
 
 // ============================================================================
@@ -158,7 +158,7 @@ impl TransactionFlashbackManager {
 
         // 3. Update statistics
         let mut stats = self.stats.write().unwrap();
-        stats.transactions_reversed += dep_graph.transaction_count();
+        stats.transactions_reversed += dep_graph.transaction_count() as u64;
         stats.total_rows_reversed += total_rows;
 
         Ok(FlashbackTransactionResult {
@@ -307,7 +307,7 @@ pub struct TransactionHistory {
 /// Tracks dependencies between transactions
 struct DependencyTracker {
     /// Transaction ID -> Dependent transaction IDs
-    dependencies: HashMap<TransactionId, HashSet<TransactionId>>,
+    dependencies: HashMap<TransactionId, Vec<TransactionId>>,
 
     /// Row-level dependency tracking
     row_dependencies: HashMap<(TableId, RowId), Vec<TransactionId>>,

@@ -8,9 +8,10 @@
 //! - Geometric transformations
 //! - Simplification algorithms
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
+use crate::error::DbError;
 use crate::spatial::geometry::{
-    BoundingBox, Coordinate, Geometry, LineString, LinearRing, Point, Polygon,
+    BoundingBox, Coordinate, Geometry, LinearRing, LineString, Point, Polygon,
 };
 use std::collections::HashSet;
 
@@ -62,13 +63,13 @@ impl TopologicalOps {
 
         match (a, b) {
             (Geometry::LineString(ls_a), Geometry::LineString(ls_b)) => {
-                Ok(Self::linestring_intersects_linestring(ls_a, ls_b))
+                Ok(Self::linestring_intersects(ls_a, ls_b))
             }
             (Geometry::Polygon(poly), Geometry::Point(point)) => {
                 Ok(Self::polygon_contains_point(poly, &point.coord))
             }
             (Geometry::Polygon(poly_a), Geometry::Polygon(poly_b)) => {
-                Ok(Self::polygon_intersects_polygon(poly_a, poly_b))
+                Ok(Self::polygon_intersects(poly_a, poly_b))
             }
             _ => Ok(false),
         }
@@ -125,7 +126,7 @@ impl TopologicalOps {
         let mut inside = false;
         let coords = &ring.coords;
 
-        for i in 0..coords.len() - 1 {
+        for _i in 0..coords.len() - 1 {
             let xi = coords[i].x;
             let yi = coords[i].y;
             let xj = coords[i + 1].x;
@@ -181,7 +182,7 @@ impl TopologicalOps {
 
     /// Check if two rings intersect
     fn rings_intersect(ring_a: &LinearRing, ring_b: &LinearRing) -> bool {
-        for i in 0..ring_a.coords.len() - 1 {
+        for _i in 0..ring_a.coords.len() - 1 {
             for j in 0..ring_b.coords.len() - 1 {
                 let a1 = &ring_a.coords[i];
                 let a2 = &ring_a.coords[i + 1];
@@ -242,7 +243,7 @@ impl TopologicalOps {
 
     /// LineString intersects LineString
     fn linestring_intersects_linestring(ls_a: &LineString, ls_b: &LineString) -> bool {
-        for i in 0..ls_a.coords.len() - 1 {
+        for _i in 0..ls_a.coords.len() - 1 {
             for j in 0..ls_b.coords.len() - 1 {
                 let a1 = &ls_a.coords[i];
                 let a2 = &ls_a.coords[i + 1];
@@ -266,13 +267,13 @@ impl DistanceOps {
     pub fn distance(a: &Geometry, b: &Geometry) -> Result<f64> {
         match (a, b) {
             (Geometry::Point(p1), Geometry::Point(p2)) => {
-                Ok(p1.coord.distance_2d(&p2.coord))
+                Ok(Self::point_distance(&p1.coord, &p2.coord))
             }
             (Geometry::Point(point), Geometry::LineString(ls)) => {
-                Ok(Self::point_to_linestring_distance(&point.coord, ls))
+                Ok(Self::point_linestring_distance(&point.coord, ls))
             }
             (Geometry::Point(point), Geometry::Polygon(poly)) => {
-                Ok(Self::point_to_polygon_distance(&point.coord, poly))
+                Ok(Self::point_polygon_distance(&point.coord, poly))
             }
             _ => Err(DbError::NotImplemented(
                 "Distance calculation for this geometry pair".to_string(),
@@ -309,7 +310,7 @@ impl DistanceOps {
     fn point_to_linestring_distance(point: &Coordinate, linestring: &LineString) -> f64 {
         let mut min_dist = f64::INFINITY;
 
-        for i in 0..linestring.coords.len() - 1 {
+        for _i in 0..linestring.coords.len() - 1 {
             let dist = Self::point_to_segment_distance(
                 point,
                 &linestring.coords[i],
@@ -330,7 +331,7 @@ impl DistanceOps {
         let mut min_dist = f64::INFINITY;
 
         // Distance to exterior ring
-        for i in 0..polygon.exterior.coords.len() - 1 {
+        for _i in 0..polygon.exterior.coords.len() - 1 {
             let dist = Self::point_to_segment_distance(
                 point,
                 &polygon.exterior.coords[i],
@@ -362,7 +363,7 @@ impl BufferOps {
         let segments = 32;
         let mut coords = Vec::with_capacity(segments + 1);
 
-        for i in 0..=segments {
+        for _i in 0..=segments {
             let angle = 2.0 * std::f64::consts::PI * (i as f64) / (segments as f64);
             let x = point.coord.x + distance * angle.cos();
             let y = point.coord.y + distance * angle.sin();
@@ -379,7 +380,7 @@ impl BufferOps {
         let mut left_coords = Vec::new();
         let mut right_coords = Vec::new();
 
-        for i in 0..linestring.coords.len() - 1 {
+        for _i in 0..linestring.coords.len() - 1 {
             let p1 = &linestring.coords[i];
             let p2 = &linestring.coords[i + 1];
 
@@ -422,7 +423,7 @@ impl BufferOps {
         // Simplified - offset each edge
         let mut new_coords = Vec::new();
 
-        for i in 0..polygon.exterior.coords.len() - 1 {
+        for _i in 0..polygon.exterior.coords.len() - 1 {
             let p1 = &polygon.exterior.coords[i];
             let p2 = &polygon.exterior.coords[i + 1];
 
@@ -459,7 +460,7 @@ impl ConvexHullOps {
 
         // Find lowest point (and leftmost if tied)
         let mut lowest_idx = 0;
-        for i in 1..points.len() {
+        for _i in 1..points.len() {
             if points[i].y < points[lowest_idx].y
                 || (points[i].y == points[lowest_idx].y && points[i].x < points[lowest_idx].x)
             {
@@ -480,7 +481,7 @@ impl ConvexHullOps {
         // Graham scan
         let mut hull = vec![points[0], points[1]];
 
-        for i in 2..points.len() {
+        for _i in 2..points.len() {
             while hull.len() >= 2 {
                 let len = hull.len();
                 let ccw = Self::ccw(&hull[len - 2], &hull[len - 1], &points[i]);
@@ -621,7 +622,7 @@ impl SimplificationOps {
         let mut max_dist = 0.0;
         let mut max_idx = 0;
 
-        for i in 1..coords.len() - 1 {
+        for _i in 1..coords.len() - 1 {
             let dist = DistanceOps::point_to_segment_distance(&coords[i], first, last);
             if dist > max_dist {
                 max_dist = dist;
@@ -652,7 +653,7 @@ impl SimplificationOps {
             let mut min_idx = 0;
 
             // Find point with minimum area
-            for i in 1..coords.len() - 1 {
+            for _i in 1..coords.len() - 1 {
                 let area = Self::triangle_area(&coords[i - 1], &coords[i], &coords[i + 1]);
                 if area < min_area {
                     min_area = area;
@@ -809,7 +810,7 @@ impl TransformOps {
         let mut area = 0.0;
 
         let coords = &poly.exterior.coords;
-        for i in 0..coords.len() - 1 {
+        for _i in 0..coords.len() - 1 {
             let cross = coords[i].x * coords[i + 1].y - coords[i + 1].x * coords[i].y;
             area += cross;
             cx += (coords[i].x + coords[i + 1].x) * cross;

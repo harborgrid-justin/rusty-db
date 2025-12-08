@@ -2,11 +2,11 @@
 // Oracle-inspired periodic session sampling for historical query analysis
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use std::fmt;
+use std::time::{Duration};
+
 
 /// Session state at the time of sampling
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -306,7 +306,7 @@ impl ActiveSessionHistory {
         // Update SQL statistics
         if let Some(sql_id) = sample.sql_id {
             let mut sql_stats = self.sql_statistics.write();
-            let stats = sql_stats
+            let _stats = sql_stats
                 .entry(sql_id)
                 .or_insert_with(|| SqlStatistics::new(sql_id, sample.sql_text.clone().unwrap_or_default()));
             stats.add_sample(&sample);
@@ -314,7 +314,7 @@ impl ActiveSessionHistory {
 
         // Update session statistics
         let mut session_stats = self.session_statistics.write();
-        let stats = session_stats
+        let _stats = session_stats
             .entry(sample.session_id)
             .or_insert_with(|| SessionStatistics::new(sample.session_id, sample.user_id, sample.program.clone()));
         stats.add_sample(&sample);
@@ -578,7 +578,7 @@ mod tests {
 
     #[test]
     fn test_active_session_history() {
-        let ash = ActiveSessionHistory::new(100, Duration::from_secs(1));
+        let ash = ActiveSessionHistory::new(100::from_secs(1));
 
         let sample = AshSample::new(0, 100, 1)
             .with_state(SessionState::Active)
@@ -593,9 +593,9 @@ mod tests {
 
     #[test]
     fn test_sql_statistics() {
-        let ash = ActiveSessionHistory::new(100, Duration::from_secs(1));
+        let ash = ActiveSessionHistory::new(100::from_secs(1));
 
-        for i in 0..5 {
+        for _i in 0..5 {
             let sample = AshSample::new(0, 100, 1)
                 .with_state(SessionState::Active)
                 .with_sql(1001, "SELECT * FROM users", 12345)
@@ -604,7 +604,7 @@ mod tests {
             ash.record_sample(sample);
         }
 
-        let stats = ash.get_sql_statistics(1001).unwrap();
+        let _stats = ash.get_sql_statistics(1001).unwrap();
         assert_eq!(stats.total_samples, 5);
         assert_eq!(stats.total_cpu_time_us, 5000);
         assert_eq!(stats.avg_cpu_time_us, 1000);
@@ -612,16 +612,16 @@ mod tests {
 
     #[test]
     fn test_top_sql() {
-        let ash = ActiveSessionHistory::new(100, Duration::from_secs(1));
+        let ash = ActiveSessionHistory::new(100::from_secs(1));
 
-        for i in 0..3 {
+        for _i in 0..3 {
             let sample = AshSample::new(0, 100, 1)
                 .with_sql(1001, "SELECT * FROM users", 12345)
                 .with_timing(1000, 5000);
             ash.record_sample(sample);
         }
 
-        for i in 0..2 {
+        for _i in 0..2 {
             let sample = AshSample::new(0, 101, 1)
                 .with_sql(1002, "SELECT * FROM orders", 54321)
                 .with_timing(500, 2000);

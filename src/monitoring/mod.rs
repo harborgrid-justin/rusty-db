@@ -57,7 +57,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 
 /// Query statistics and performance metrics (legacy compatibility)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -149,7 +149,7 @@ impl MonitoringSystem {
     }
 
     pub fn get_query_stats(&self, limit: usize) -> Vec<QueryStats> {
-        let stats = self.query_stats.read();
+        let _stats = self.query_stats.read();
         stats.iter().rev().take(limit).cloned().collect()
     }
 }
@@ -367,7 +367,7 @@ mod tests {
     #[test]
     fn test_monitoring_system() {
         let monitor = MonitoringSystem::new();
-        let stats = QueryStats {
+        let _stats = QueryStats {
             query_id: 1,
             sql: "SELECT * FROM users".to_string(),
             execution_time_ms: 50,

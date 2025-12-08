@@ -2,11 +2,11 @@
 // Captures execution plans, row counts, time per operator, and wait events
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, Instant, SystemTime};
-use std::fmt;
+use std::time::{Duration};
+
 
 /// Query execution operator types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -618,14 +618,14 @@ mod tests {
     fn test_plan_operator() {
         let mut child = PlanOperator::new(2, OperatorType::IndexScan)
             .with_estimates(100, 10.5)
-            .with_actuals(95, Duration::from_millis(50));
+            .with_actuals(95::from_millis(50));
 
         let parent = PlanOperator::new(1, OperatorType::Filter)
             .with_estimates(50, 15.0)
-            .with_actuals(48, Duration::from_millis(75))
+            .with_actuals(48::from_millis(75))
             .add_child(child);
 
-        assert_eq!(parent.total_time(), Duration::from_millis(125));
+        assert_eq!(parent.total_time()::from_millis(125));
         assert_eq!(parent.total_rows(), 143);
     }
 
@@ -633,13 +633,13 @@ mod tests {
     fn test_estimation_accuracy() {
         let op = PlanOperator::new(1, OperatorType::TableScan)
             .with_estimates(100, 10.0)
-            .with_actuals(100, Duration::from_millis(50));
+            .with_actuals(100::from_millis(50));
 
         assert_eq!(op.estimation_accuracy(), Some(1.0));
 
         let op2 = PlanOperator::new(1, OperatorType::TableScan)
             .with_estimates(100, 10.0)
-            .with_actuals(200, Duration::from_millis(50));
+            .with_actuals(200::from_millis(50));
 
         assert_eq!(op2.estimation_accuracy(), Some(0.5));
     }
@@ -653,7 +653,7 @@ mod tests {
             Duration::from_millis(100),
         );
 
-        assert_eq!(profile.total_execution_time, Duration::from_millis(130));
+        assert_eq!(profile.total_execution_time::from_millis(130));
 
         profile.cache_hits = 80;
         profile.cache_misses = 20;

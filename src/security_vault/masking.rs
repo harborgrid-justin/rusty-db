@@ -153,7 +153,7 @@ impl SubstitutionTable {
         let mut hasher = Sha256::new();
         hasher.update(input);
         hasher.update(seed);
-        let hash = hasher.finalize();
+        let _hash = hasher.finalize();
         let idx = (hash[0] as usize) % self.values.len();
         &self.values[idx]
     }
@@ -247,7 +247,7 @@ impl MaskingEngine {
         masking_type: &str,
     ) -> Result<()> {
         let mask_type = MaskingType::from_str(masking_type)?;
-        let policy = MaskingPolicy::new(
+        let _policy = MaskingPolicy::new(
             name.to_string(),
             column_pattern.to_string(),
             mask_type,
@@ -282,7 +282,7 @@ impl MaskingEngine {
     /// Enable a policy
     pub fn enable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
-        let policy = policies.get_mut(name)
+        let _policy = policies.get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = true;
         Ok(())
@@ -291,7 +291,7 @@ impl MaskingEngine {
     /// Disable a policy
     pub fn disable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
-        let policy = policies.get_mut(name)
+        let _policy = policies.get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = false;
         Ok(())
@@ -319,7 +319,7 @@ impl MaskingEngine {
         applicable.sort_by(|a, b| b.priority.cmp(&a.priority));
 
         // Apply first matching policy
-        let policy = applicable[0];
+        let _policy = applicable[0];
         let masked = self.apply_masking(&policy.masking_type, value, policy.consistency_key.as_deref())?;
 
         // Update statistics
@@ -530,7 +530,7 @@ impl MaskingEngine {
 
     /// Get masking statistics
     pub fn get_stats(&self) -> (u64, u64, HashMap<String, u64>) {
-        let stats = self.stats.read();
+        let _stats = self.stats.read();
         (stats.total_masked, stats.cache_hits, stats.by_policy.clone())
     }
 

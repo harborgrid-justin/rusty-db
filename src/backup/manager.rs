@@ -3,10 +3,9 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::fs::{OpenOptions, create_dir_all};
-use std::io::{Write, Read};
-use std::time::{SystemTime, Duration, UNIX_EPOCH};
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::fs::create_dir_all;
+use std::time::{SystemTime};
+use std::collections::{HashMap};
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
 use crate::Result;
@@ -292,7 +291,8 @@ impl RetentionPolicy {
     }
 
     pub fn apply(&self, backups: &mut Vec<BackupMetadata>) {
-        backups.retain(|backup| self.should_keep(backup, backups));
+        let backups_clone = backups.clone();
+        backups.retain(|backup| self.should_keep(backup, &backups_clone));
     }
 }
 
@@ -462,7 +462,7 @@ impl BackupManager {
         let mut total_size = 0u64;
         let num_files = 10; // Simulate 10 data files
 
-        for i in 0..num_files {
+        for _i in 0..num_files {
             let file_size = 1024 * 1024 * 100; // 100MB per file
             total_size += file_size;
 
@@ -524,7 +524,7 @@ impl BackupManager {
 
         // Create change map for this backup
         let mut change_map = BlockChangeMap::new(parent.scn, 10000);
-        for i in 0..num_changed {
+        for _i in 0..num_changed {
             change_map.mark_block_changed(
                 i as u64,
                 0,

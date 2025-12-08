@@ -4,7 +4,7 @@
 /// to prevent type confusion and enable compile-time safety.
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
+
 
 /// Session identifier (SID) - unique per session
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

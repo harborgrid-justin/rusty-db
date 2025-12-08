@@ -2,9 +2,9 @@
 // Provides comprehensive performance views and drill-down capabilities
 
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use crate::Result;
 
@@ -348,7 +348,7 @@ impl PerformanceHub {
 
         let mut tracker = self.top_sql_tracker.write();
 
-        let stats = tracker.sql_lookup.entry(sql_id.clone()).or_insert_with(|| {
+        let _stats = tracker.sql_lookup.entry(sql_id.clone()).or_insert_with(|| {
             SqlStats {
                 sql_id: sql_id.clone(),
                 sql_text: sql_text.clone(),
@@ -489,7 +489,7 @@ impl PerformanceHub {
 
         let duration_micros = duration.as_micros() as u64;
 
-        let stats = analyzer.file_stats.entry(file_name.clone()).or_insert_with(|| {
+        let _stats = analyzer.file_stats.entry(file_name.clone()).or_insert_with(|| {
             FileIoStats {
                 file_name: file_name.clone(),
                 file_type: file_type.clone(),

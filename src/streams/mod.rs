@@ -270,7 +270,7 @@ pub use replication::{
 pub use integration::{
     OutboxProcessor, OutboxConfig, OutboxEntry,
     EventStore, DomainEvent, AggregateSnapshot,
-    CQRSCoordinator, Command, Query, QueryResult, ReadModelProjection,
+    CQRSCoordinator, Command, Query, QueryResultModelProjection,
     ExternalConnector, WebhookConnector, KafkaConnector,
     SchemaRegistry, EventSchema, SchemaCompatibility,
 };

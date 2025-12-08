@@ -658,7 +658,7 @@ impl HCCEngine {
         let mut seen = std::collections::HashSet::new();
         let cell_size = col_type.size_hint();
 
-        for i in (0..sample_size).step_by(cell_size) {
+        for _i in (0..sample_size).step_by(cell_size) {
             if i + cell_size <= column.len() {
                 seen.insert(&column[i..i + cell_size]);
             }
@@ -865,7 +865,7 @@ mod tests {
         let engine = HCCEngine::new(HCCStrategy::QueryHigh);
 
         let mut rows = Vec::new();
-        for i in 0..1000 {
+        for _i in 0..1000 {
             let row = vec![
                 (i % 256) as u8, ((i / 256) % 256) as u8,
                 (i % 100) as u8, ((i / 100) % 256) as u8,

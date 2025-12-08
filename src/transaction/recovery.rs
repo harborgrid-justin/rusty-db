@@ -2,15 +2,15 @@
 // Implements Analysis, Redo, Undo phases for crash recovery,
 // fuzzy checkpointing, media recovery, and point-in-time recovery
 
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{HashMap};
 use std::path::{Path, PathBuf};
-use std::io::{Write as IoWrite, Read};
+use std::io::{Write as IoWrite};
 use std::sync::Arc;
 use std::time::SystemTime;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use futures::future::BoxFuture;
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::TransactionId;
 use super::wal::{WALManager, WALEntry, LogRecord, LSN, PageId};
 
@@ -91,7 +91,7 @@ impl Default for RecoveryConfig {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct RecoveryStats {
     pub recovery_runs: u64,
     pub last_recovery_time_ms: u64,
@@ -562,7 +562,7 @@ impl Default for CheckpointConfig {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct CheckpointStats {
     pub total_checkpoints: u64,
     pub avg_checkpoint_time_ms: f64,

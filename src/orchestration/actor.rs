@@ -35,15 +35,15 @@
 
 use std::any::Any;
 use std::collections::HashMap;
-use std::fmt;
+
 use std::sync::Arc;
 use std::time::Duration;
 
-use tokio::sync::{mpsc, oneshot, RwLock, Mutex};
+use tokio::sync::{mpsc, RwLock};
 use tokio::time::timeout;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 /// Unique identifier for an actor
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -685,7 +685,7 @@ mod tests {
         tokio::time::sleep(Duration::from_millis(50)).await;
 
         let result: usize = actor_ref
-            .ask("get".to_string(), Duration::from_secs(1))
+            .ask("get".to_string()::from_secs(1))
             .await
             .unwrap();
 
@@ -714,7 +714,7 @@ mod tests {
     async fn test_actor_broadcast() {
         let system = ActorSystem::new();
 
-        for i in 0..5 {
+        for _i in 0..5 {
             let actor = TestActor { counter: 0 };
             system
                 .spawn(actor, Some(format!("actor-{}", i)), 10)
@@ -726,10 +726,10 @@ mod tests {
 
         tokio::time::sleep(Duration::from_millis(50)).await;
 
-        for i in 0..5 {
+        for _i in 0..5 {
             let actor_ref = system.find_actor(&format!("actor-{}", i)).await.unwrap();
             let result: usize = actor_ref
-                .ask("get".to_string(), Duration::from_secs(1))
+                .ask("get".to_string()::from_secs(1))
                 .await
                 .unwrap();
             assert_eq!(result, 10);

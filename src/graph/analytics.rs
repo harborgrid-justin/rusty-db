@@ -8,7 +8,7 @@
 //! - Graph machine learning features
 //! - Recommendation engine basics
 
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::{HashMap};
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};
 use crate::common::{Value, Tuple};
@@ -320,7 +320,7 @@ impl<'a> PathEnumerator<'a> {
 
             let (prev_path, _) = &paths[k_idx - 1];
 
-            for i in 0..(prev_path.len() - 1) {
+            for _i in 0..(prev_path.len() - 1) {
                 let spur_node = prev_path[i];
                 let root_path = &prev_path[0..=i];
 
@@ -584,7 +584,7 @@ impl GraphEmbedding {
     /// Generate PageRank-based features
     pub fn pagerank_features(graph: &PropertyGraph) -> Result<HashMap<VertexId, Vec<f64>>> {
         let config = PageRankConfig::default();
-        let result = PageRank::compute(graph, &config)?;
+        let _result = PageRank::compute(graph, &config)?;
 
         let mut features = HashMap::new();
         for (vertex_id, score) in result.scores {

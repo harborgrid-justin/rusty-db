@@ -8,13 +8,13 @@
 /// - Delta propagation for efficient updates
 /// - View dependency graph management
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::catalog::Schema;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 
 /// Materialized view with full metadata and state tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -111,7 +111,7 @@ pub struct StalenessInfo {
     pub is_stale: bool,
     pub staleness_duration: Option<Duration>,
     pub pending_changes: usize,
-    pub last_base_table_update: HashMap<String, SystemTime>,
+    pub last_base_table_update: HashMap<String>,
     pub confidence_level: f64, // 0.0 to 1.0
 }
 
@@ -248,7 +248,7 @@ impl MaterializedViewManager {
 
         let start = SystemTime::now();
 
-        let result = match &view.maintenance_mode {
+        let _result = match &view.maintenance_mode {
             MaintenanceMode::Complete => self.complete_refresh(view)?,
             MaintenanceMode::Incremental { .. } => self.incremental_refresh(view)?,
             MaintenanceMode::Fast { .. } => self.fast_refresh(view)?,
@@ -472,7 +472,7 @@ pub struct RefreshResult {
     pub method: RefreshMethod,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum RefreshMethod {
     Complete,
     Incremental,
@@ -482,11 +482,11 @@ pub enum RefreshMethod {
 /// Dependency graph for materialized views
 pub struct DependencyGraph {
     /// View ID -> Base tables
-    view_to_tables: HashMap<String, HashSet<String>>,
+    view_to_tables: HashMap<String<String>>,
     /// Table -> View IDs
-    table_to_views: HashMap<String, HashSet<String>>,
+    table_to_views: HashMap<String<String>>,
     /// View ID -> Dependent view IDs
-    view_dependencies: HashMap<String, HashSet<String>>,
+    view_dependencies: HashMap<String<String>>,
 }
 
 impl DependencyGraph {
@@ -721,6 +721,8 @@ mod tests {
         let manager = MaterializedViewManager::new();
 
         let schema = Schema {
+            name: "test_schema".to_string(),
+            primary_key: Some("id".to_string()),
             columns: vec![
                 Column {
                     name: "id".to_string(),
@@ -731,7 +733,7 @@ mod tests {
             ],
         };
 
-        let result = manager.create_view(
+        let _result = manager.create_view(
             "test_mv".to_string(),
             "SELECT id FROM users".to_string(),
             schema,
@@ -759,6 +761,8 @@ mod tests {
         let manager = MaterializedViewManager::new();
 
         let schema = Schema {
+            name: "delta_schema".to_string(),
+            primary_key: Some("id".to_string()),
             columns: vec![
                 Column {
                     name: "id".to_string(),
@@ -781,7 +785,7 @@ mod tests {
             },
         ).unwrap();
 
-        let result = manager.record_base_table_change(
+        let _result = manager.record_base_table_change(
             "users",
             DeltaOperation::Insert,
             "1".to_string(),
@@ -799,11 +803,11 @@ mod tests {
     #[test]
     fn test_complete_refresh() {
         let manager = MaterializedViewManager::new();
-        let schema = catalog::Schema {
+        let schema = Schema {
             name: "some_name".to_string(),
-            primary_key: Some(vec!["some_pk".to_string()]),
+            primary_key: Some("some_pk".to_string()),
             columns: vec![
-                catalog::Column {
+                Column {
                     name: "id".to_string(),
                     data_type: DataType::Integer,
                     nullable: false,
@@ -812,7 +816,7 @@ mod tests {
             ],
         };
 
-        let result = manager.create_view(
+        let _result = manager.create_view(
             "test_mv".to_string(),
             "SELECT id FROM users".to_string(),
             schema,
@@ -830,11 +834,11 @@ mod tests {
     #[test]
     fn test_fast_refresh() {
         let manager = MaterializedViewManager::new();
-        let schema = catalog::Schema {
+        let schema = Schema {
             name: "some_name".to_string(),
-            primary_key: Some(vec!["some_pk".to_string()]),
+            primary_key: Some("some_pk".to_string()),
             columns: vec![
-                catalog::Column {
+                Column {
                     name: "c".to_string(),
                     data_type: DataType::Integer,
                     nullable: false,
@@ -843,7 +847,7 @@ mod tests {
             ],
         };
 
-        let result = manager.create_view(
+        let _result = manager.create_view(
             "test_mv".to_string(),
             "SELECT c, COUNT(*) FROM orders GROUP BY c".to_string(),
             schema,

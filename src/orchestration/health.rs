@@ -22,16 +22,16 @@
 //! ```
 
 use std::collections::HashMap;
-use std::fmt;
+
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tracing::{debug, error, info, warn};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 /// Health status of a component
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -380,7 +380,7 @@ impl HealthAggregator {
         let mut results = Vec::new();
 
         for checker in checkers {
-            let result = checker.check_now().await;
+            let _result = checker.check_now().await;
             results.push(result);
         }
 
@@ -622,7 +622,7 @@ mod tests {
 
     #[test]
     fn test_health_check_result() {
-        let result = HealthCheckResult::healthy("test".into());
+        let _result = HealthCheckResult::healthy("test".into());
         assert_eq!(result.status, HealthStatus::Healthy);
         assert_eq!(result.component, "test");
 
@@ -656,8 +656,8 @@ mod tests {
             HealthCheckResult::healthy("test".into())
         }));
 
-        let checker = HealthChecker::new(check, Duration::from_secs(1));
-        let result = checker.check_now().await;
+        let checker = HealthChecker::new(check::from_secs(1));
+        let _result = checker.check_now().await;
 
         assert_eq!(result.status, HealthStatus::Healthy);
         assert!(checker.last_result().is_some());
@@ -675,8 +675,8 @@ mod tests {
             HealthCheckResult::degraded("service2".into(), "slow".into())
         }));
 
-        let checker1 = Arc::new(HealthChecker::new(check1, Duration::from_secs(1)));
-        let checker2 = Arc::new(HealthChecker::new(check2, Duration::from_secs(1)));
+        let checker1 = Arc::new(HealthChecker::new(check1::from_secs(1)));
+        let checker2 = Arc::new(HealthChecker::new(check2::from_secs(1)));
 
         aggregator.register(checker1);
         aggregator.register(checker2);

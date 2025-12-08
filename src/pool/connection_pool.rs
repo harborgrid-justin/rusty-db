@@ -22,15 +22,15 @@
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use std::collections::{HashMap, VecDeque, BTreeMap};
-use parking_lot::{RwLock, Mutex, Condvar};
-use tokio::sync::{Semaphore, OwnedSemaphorePermit};
-use tokio::time::{sleep, timeout};
+use std::time::{Duration};
+use std::collections::{HashMap};
+use parking_lot::{RwLock, Condvar};
+use tokio::sync::{Semaphore};
+use tokio::time::timeout;
 use async_trait::async_trait;
 use serde::{Serialize, Deserialize};
 use thiserror::Error;
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 // ============================================================================
 // SECTION 1: POOL CORE ENGINE (700+ lines)
@@ -470,7 +470,7 @@ pub struct ConnectionPool<C> {
     idle: Arc<Mutex<VecDeque<PooledConnection<C>>>>,
 
     /// Active connections (tracking only)
-    active: Arc<RwLock<HashMap<u64, Instant>>>,
+    active: Arc<RwLock<HashMap<u64>>>,
 
     /// Connection factory
     factory: Arc<dyn ConnectionFactory<C>>,
@@ -598,7 +598,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         let config = Arc::clone(&self.config);
         let closed = Arc::new(AtomicBool::new(self.closed.load(Ordering::Relaxed)));
         let total_destroyed = Arc::new(AtomicU64::new(self.total_destroyed.load(Ordering::Relaxed)));
-        let stats = Arc::clone(&self.stats);
+        let _stats = Arc::clone(&self.stats);
 
         let handle = tokio::spawn(async move {
             let mut interval = tokio::time::interval(config.maintenance_interval);
@@ -632,7 +632,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     /// Perform maintenance tasks
     async fn perform_maintenance(
         idle: &Arc<Mutex<VecDeque<PooledConnection<C>>>>,
-        active: &Arc<RwLock<HashMap<u64, Instant>>>,
+        active: &Arc<RwLock<HashMap<u64>>>,
         config: &PoolConfig,
         total_destroyed: &AtomicU64,
         stats: &Arc<PoolStatistics>,
@@ -682,7 +682,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         self.stats.record_acquire_attempt();
 
         // Try to get connection with timeout
-        let result = timeout(
+        let _result = timeout(
             self.config.acquire_timeout,
             self.acquire_inner()
         ).await;
@@ -723,7 +723,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
                 conn.borrow_count += 1;
 
                 let conn_id = conn.id;
-                self.active.write().insert(conn_id, Instant::now());
+                self.active.write().insert(conn_id::now());
 
                 return Ok(PooledConnectionGuard {
                     connection: Some(conn),
@@ -747,7 +747,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
                             conn.acquired_at = Some(Instant::now());
 
                             let conn_id = conn.id;
-                            self.active.write().insert(conn_id, Instant::now());
+                            self.active.write().insert(conn_id::now());
 
                             // Release permit after creation
                             drop(permit);
@@ -779,7 +779,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     async fn validate_connection(&self, conn: &mut PooledConnection<C>) -> std::result::Result<(), PoolError> {
         conn.state = ConnectionState::Validating;
 
-        let result = timeout(
+        let _result = timeout(
             self.config.validation_timeout,
             self.factory.validate(&conn.connection)
         ).await;
@@ -845,7 +845,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
 /// Handle for returning connections to pool
 struct PoolHandle<C> {
     idle: Arc<Mutex<VecDeque<PooledConnection<C>>>>,
-    active: Arc<RwLock<HashMap<u64, Instant>>>,
+    active: Arc<RwLock<HashMap<u64>>>,
     config: Arc<PoolConfig>,
     stats: Arc<PoolStatistics>,
 }
@@ -2462,7 +2462,7 @@ impl DashboardProvider {
 
     /// Get real-time dashboard data
     pub fn get_dashboard_data(&self) -> DashboardData {
-        let stats = self.pool_stats.snapshot();
+        let _stats = self.pool_stats.snapshot();
 
         DashboardData {
             timestamp: SystemTime::now(),
@@ -2531,7 +2531,7 @@ impl LeakDetector {
     }
 
     /// Check for leaks
-    pub fn check_leaks<C>(&self, active: &HashMap<u64, Instant>) {
+    pub fn check_leaks<C>(&self, active: &HashMap<u64>) {
         let now = Instant::now();
         let mut leaks = self.detected_leaks.write();
 
@@ -2593,7 +2593,7 @@ impl MonitoringExporter {
 
     /// Export metrics in configured format
     pub fn export(&self) -> String {
-        let stats = self.stats.snapshot();
+        let _stats = self.stats.snapshot();
 
         match self.export_format {
             ExportFormat::Json => {
@@ -2752,7 +2752,7 @@ mod tests {
     #[test]
     fn test_aging_policy() {
         // Test time-based aging
-        let policy = AgingPolicy::TimeBased {
+        let _policy = AgingPolicy::TimeBased {
             max_lifetime: Duration::from_secs(60),
         };
 
@@ -2769,7 +2769,7 @@ mod tests {
 
     #[test]
     fn test_pool_statistics() {
-        let stats = PoolStatistics::new();
+        let _stats = PoolStatistics::new();
         stats.record_connection_created();
         stats.record_acquire_success(Duration::from_millis(10));
 

@@ -11,7 +11,7 @@ use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo, NodeStatus};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, Duration};
+use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
 
 /// Trait for failover management behavior
@@ -30,12 +30,19 @@ pub trait FailureDetector {
 }
 
 /// Failover manager implementation
-#[derive(Debug)]
 pub struct ClusterFailoverManager {
     coordinator: Arc<dyn ClusterState>,
     config: FailoverConfig,
     failover_history: Arc<RwLock<Vec<FailoverEvent>>>,
-    suspected_nodes: Arc<RwLock<HashMap<NodeId, SystemTime>>>,
+    suspected_nodes: Arc<RwLock<HashMap<NodeId>>>,
+}
+
+impl std::fmt::Debug for ClusterFailoverManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ClusterFailoverManager")
+            .field("config", &self.config)
+            .finish_non_exhaustive()
+    }
 }
 
 impl ClusterFailoverManager {
@@ -144,12 +151,12 @@ impl FailoverManager for ClusterFailoverManager {
         Ok(event)
     }
 
-    fn promote_follower(&self, node_id: &NodeId) -> Result<(), DbError> {
+    fn promote_follower(&self, _node_id: &NodeId) -> Result<(), DbError> {
         // Implementation would update node role to leader
         Ok(())
     }
 
-    fn demote_leader(&self, node_id: &NodeId) -> Result<(), DbError> {
+    fn demote_leader(&self, _node_id: &NodeId) -> Result<(), DbError> {
         // Implementation would update node role to follower
         Ok(())
     }
@@ -162,7 +169,7 @@ impl FailureDetector for ClusterFailoverManager {
         if let Some(node) = nodes.iter().find(|n| &n.id == node_id) {
             let last_heartbeat = node.last_heartbeat;
             let elapsed = last_heartbeat.elapsed()
-                .map_err(|_| DbError::InternalError("Invalid heartbeat timestamp".to_string()))?;
+                .map_err(|_| DbError::Internal("Invalid heartbeat timestamp".to_string()))?;
             
             Ok(elapsed > self.config.failure_timeout)
         } else {
@@ -183,7 +190,7 @@ impl FailureDetector for ClusterFailoverManager {
         let mut suspected = self.suspected_nodes.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
-        suspected.insert(node_id.clone(), SystemTime::now());
+        suspected.insert(node_id.clone()::now());
         Ok(())
     }
 }
@@ -283,7 +290,7 @@ mod tests {
         let config = FailoverConfig::default();
         let manager = ClusterFailoverManager::new(cluster_state, config);
 
-        let result = manager.check_and_failover().unwrap();
+        let _result = manager.check_and_failover().unwrap();
         assert!(result.is_some());
         
         let event = result.unwrap();

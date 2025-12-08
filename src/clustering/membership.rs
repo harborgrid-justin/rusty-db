@@ -20,10 +20,10 @@ use crate::error::DbError;
 use rand::seq::SliceRandom;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 
 /// Member identifier
 pub type MemberId = String;

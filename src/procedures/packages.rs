@@ -5,7 +5,7 @@
 /// with public and private visibility control.
 
 use crate::{Result, DbError};
-use crate::procedures::parser::{PlSqlBlock, PlSqlType, Declaration};
+use crate::procedures::parser::{PlSqlBlock, PlSqlType};
 use crate::procedures::runtime::{RuntimeExecutor, RuntimeValue};
 use crate::procedures::functions::{ScalarFunction, TableFunction};
 use serde::{Deserialize, Serialize};
@@ -481,7 +481,7 @@ impl PackageManager {
 
         // Execute function body
         if let Some(ref body) = function.body {
-            let result = self.runtime.execute(body)?;
+            let _result = self.runtime.execute(body)?;
             result.return_value.ok_or_else(||
                 DbError::Runtime(format!("Function '{}' did not return a value", function_name))
             )
@@ -703,7 +703,7 @@ mod tests {
         manager.set_variable("vars_package", "counter", RuntimeValue::Integer(100))?;
 
         // Get variable
-        let value = manager.get_variable("vars_package", "counter")?;
+        let _value = manager.get_variable("vars_package", "counter")?;
         assert_eq!(value, RuntimeValue::Integer(100));
 
         Ok(())

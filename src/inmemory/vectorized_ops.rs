@@ -174,7 +174,7 @@ impl VectorizedFilter {
         let _remainder = values.len() % VECTOR_WIDTH_I64;
 
         // Vectorized path (simulated - in production would use actual SIMD intrinsics)
-        for i in 0..chunks {
+        for _i in 0..chunks {
             let start = i * VECTOR_WIDTH_I64;
             let end = start + VECTOR_WIDTH_I64;
 
@@ -226,7 +226,7 @@ impl VectorizedFilter {
         let compare_vec = _mm256_set1_epi64x(compare_value);
 
         let chunks = values.len() / 4;
-        for i in 0..chunks {
+        for _i in 0..chunks {
             let offset = i * 4;
             let vals = _mm256_loadu_si256(values.as_ptr().add(offset) as *const __m256i);
 
@@ -257,7 +257,7 @@ impl VectorizedFilter {
         }
 
         // Handle remainder
-        for i in (chunks * 4)..values.len() {
+        for _i in (chunks * 4)..values.len() {
             let v = values[i];
             mask[i] = match op {
                 ComparisonOp::Equal => v == compare_value,
@@ -303,7 +303,7 @@ impl VectorizedFilter {
         assert_eq!(mask1.len(), mask2.len());
 
         let mut result = vec![false; mask1.len()];
-        for i in 0..mask1.len() {
+        for _i in 0..mask1.len() {
             result[i] = mask1.mask[i] && mask2.mask[i];
         }
 
@@ -315,7 +315,7 @@ impl VectorizedFilter {
         assert_eq!(mask1.len(), mask2.len());
 
         let mut result = vec![false; mask1.len()];
-        for i in 0..mask1.len() {
+        for _i in 0..mask1.len() {
             result[i] = mask1.mask[i] || mask2.mask[i];
         }
 
@@ -378,7 +378,7 @@ impl VectorizedAggregator {
         let mut sum_vec = _mm256_setzero_si256();
 
         let chunks = values.len() / 4;
-        for i in 0..chunks {
+        for _i in 0..chunks {
             let vals = _mm256_loadu_si256(values.as_ptr().add(i * 4) as *const __m256i);
             sum_vec = _mm256_add_epi64(sum_vec, vals);
         }
@@ -389,7 +389,7 @@ impl VectorizedAggregator {
         let mut total: i64 = sum_array.iter().sum();
 
         // Add remainder
-        for i in (chunks * 4)..values.len() {
+        for _i in (chunks * 4)..values.len() {
             total += values[i];
         }
 
@@ -448,7 +448,7 @@ impl VectorizedAggregator {
         let mut sum_vec = _mm256_setzero_pd();
 
         let chunks = values.len() / 4;
-        for i in 0..chunks {
+        for _i in 0..chunks {
             let vals = _mm256_loadu_pd(values.as_ptr().add(i * 4));
             sum_vec = _mm256_add_pd(sum_vec, vals);
         }
@@ -459,7 +459,7 @@ impl VectorizedAggregator {
         let mut total: f64 = sum_array.iter().sum();
 
         // Add remainder
-        for i in (chunks * 4)..values.len() {
+        for _i in (chunks * 4)..values.len() {
             total += values[i];
         }
 
@@ -579,7 +579,7 @@ impl VectorGatherScatter {
         let mut result = vec![default; mask.len()];
         let mut value_idx = 0;
 
-        for i in 0..mask.len() {
+        for _i in 0..mask.len() {
             if mask.get(i) && value_idx < values.len() {
                 result[i] = values[value_idx];
                 value_idx += 1;
@@ -689,7 +689,7 @@ mod tests {
         let filter = VectorizedFilter::new(8);
 
         let mut data = Vec::new();
-        for i in 0..100 {
+        for _i in 0..100 {
             data.extend_from_slice(&(i as i64).to_le_bytes());
         }
 
@@ -704,7 +704,7 @@ mod tests {
         let filter = VectorizedFilter::new(8);
 
         let mut data = Vec::new();
-        for i in 0..20 {
+        for _i in 0..20 {
             data.extend_from_slice(&(i as i64).to_le_bytes());
         }
 
@@ -719,7 +719,7 @@ mod tests {
         let agg = VectorizedAggregator::new(8);
 
         let mut data = Vec::new();
-        for i in 1..=10 {
+        for _i in 1..=10 {
             data.extend_from_slice(&(i as i64).to_le_bytes());
         }
 

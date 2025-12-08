@@ -85,7 +85,7 @@
 //!
 //! // Set and get configuration
 //! config.set("database.max_connections", ConfigValue::Integer(100)).await?;
-//! let value = config.get("database.max_connections").await?;
+//! let _value = config.get("database.max_connections").await?;
 //!
 //! // Watch for changes
 //! let mut watcher = config.watch("database.max_connections").await;
@@ -124,7 +124,7 @@
 //! manager.register(feature).await?;
 //!
 //! // Check if enabled for user
-//! let context = EvaluationContext::for_user("user123");
+//! let _context = EvaluationContext::for_user("user123");
 //! if manager.is_enabled("new_optimizer", &context).await {
 //!     // Use new optimizer
 //! }
@@ -183,7 +183,7 @@
 //! # async fn example() -> rusty_db::Result<()> {
 //! // Circuit breaker
 //! let breaker = CircuitBreaker::new("external_api", 5, 60);
-//! let result = breaker.call(async {
+//! let _result = breaker.call(async {
 //!     // External call
 //!     Ok::<_, rusty_db::DbError>(42)
 //! }).await?;
@@ -322,7 +322,7 @@
 //!     ctx.tracing.end_span().await;
 //!
 //!     ctx.tracing.start_span("query.execute").await;
-//!     let result = execute_query(&ast).await?;
+//!     let _result = execute_query(&ast).await?;
 //!     ctx.tracing.end_span().await;
 //!
 //!     Ok(())

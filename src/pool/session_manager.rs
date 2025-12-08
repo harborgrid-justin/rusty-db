@@ -59,14 +59,14 @@
 //! }
 //! ```
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use parking_lot::{RwLock, Mutex};
+use std::time::{Duration};
+use parking_lot::{RwLock};
 use serde::{Serialize, Deserialize};
-use tokio::sync::{mpsc, oneshot};
-use tokio::time::{interval, Instant};
-use chrono::{DateTime, Utc};
+use tokio::sync::{mpsc};
+use tokio::time::{interval};
+
 use uuid::Uuid;
 use sha2::{Sha256, Digest};
 use base64::{Engine as _, engine::general_purpose};
@@ -584,7 +584,7 @@ pub struct AuthenticationProvider {
     privilege_cache: Arc<RwLock<HashMap<String, PrivilegeSet>>>,
 
     /// Active roles per user
-    active_roles: Arc<RwLock<HashMap<String, HashSet<String>>>>,
+    active_roles: Arc<RwLock<HashMap<String<String>>>>,
 
     /// LDAP configuration
     ldap_config: Option<LdapConfig>,
@@ -664,7 +664,7 @@ impl AuthenticationProvider {
         password: &str,
     ) -> Result<AuthenticationResult> {
         // Hash password and verify against stored hash
-        let hash = self.hash_password(password);
+        let _hash = self.hash_password(password);
 
         // In production, this would check against user database
         // For now, simulate successful authentication
@@ -802,7 +802,7 @@ impl AuthenticationProvider {
         let data = format!("{}-{}-{}", username, uuid, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
         let mut hasher = Sha256::new();
         hasher.update(data.as_bytes());
-        let result = hasher.finalize();
+        let _result = hasher.finalize();
         general_purpose::STANDARD.encode(result)
     }
 
@@ -816,7 +816,7 @@ impl AuthenticationProvider {
     fn hash_password(&self, password: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(password.as_bytes());
-        let result = hasher.finalize();
+        let _result = hasher.finalize();
         general_purpose::STANDARD.encode(result)
     }
 
@@ -1327,7 +1327,7 @@ pub struct SessionPool {
     connection_classes: Arc<RwLock<HashMap<String, ConnectionClass>>>,
 
     /// Tag-based session index
-    tag_index: Arc<RwLock<HashMap<String, HashSet<SID>>>>,
+    tag_index: Arc<RwLock<HashMap<String<SID>>>>,
 
     /// Pool statistics
     stats: Arc<RwLock<PoolStatistics>>,
@@ -2528,7 +2528,7 @@ mod tests {
         controller.allocate_memory(session_id, 512 * 1024).unwrap();
 
         // Should fail
-        let result = controller.allocate_memory(session_id, 1024 * 1024);
+        let _result = controller.allocate_memory(session_id, 1024 * 1024);
         assert!(result.is_err());
     }
 
@@ -2587,7 +2587,7 @@ impl SessionMigrationCoordinator {
             ));
         }
 
-        let state = MigrationState {
+        let _state = MigrationState {
             session_id,
             from_node: from_node.clone(),
             to_node: to_node.clone(),
@@ -3136,7 +3136,7 @@ impl SessionStatisticsAggregator {
     pub fn update_session_stats(&self, session: &SessionState) {
         // Update user statistics
         let mut user_stats = self.user_stats.write();
-        let stats = user_stats.entry(session.username.clone())
+        let _stats = user_stats.entry(session.username.clone())
             .or_insert_with(UserSessionStatistics::default);
 
         stats.total_sessions += 1;
@@ -3211,7 +3211,7 @@ pub struct GlobalSessionStatistics {
 #[derive(Debug)]
 pub struct SessionCache {
     /// LRU cache of session states
-    cache: Arc<RwLock<HashMap<SID, (SessionState, SystemTime)>>>,
+    cache: Arc<RwLock<HashMap<SID, (SessionState)>>>,
 
     /// Cache size limit
     max_size: usize,
@@ -3239,7 +3239,7 @@ impl SessionCache {
             self.evict_oldest(&mut cache);
         }
 
-        cache.insert(session.session_id, (session, SystemTime::now()));
+        cache.insert(session.session_id, (session::now()));
     }
 
     /// Get session from cache
@@ -3269,7 +3269,7 @@ impl SessionCache {
     }
 
     /// Evict oldest entry
-    fn evict_oldest(&self, cache: &mut HashMap<SID, (SessionState, SystemTime)>) {
+    fn evict_oldest(&self, cache: &mut HashMap<SID, (SessionState)>) {
         if let Some(oldest_sid) = cache.iter()
             .min_by_key(|(_, (_, cached_at))| cached_at)
             .map(|(sid, _)| *sid)
@@ -3322,7 +3322,7 @@ mod advanced_tests {
     async fn test_session_health_check() {
         let checker = SessionHealthChecker::new();
 
-        let policy = HealthCheckPolicy {
+        let _policy = HealthCheckPolicy {
             name: "test".to_string(),
             max_idle_time: Some(Duration::from_secs(60)),
             max_session_age: Some(Duration::from_secs(3600)),
@@ -3333,7 +3333,7 @@ mod advanced_tests {
         checker.add_policy(policy);
 
         let session = SessionState::new(1, "testuser".to_string(), "testdb".to_string());
-        let result = checker.check_health(&session).await.unwrap();
+        let _result = checker.check_health(&session).await.unwrap();
 
         assert!(result.healthy);
     }

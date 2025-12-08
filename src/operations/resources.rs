@@ -13,7 +13,7 @@ use crate::error::DbError;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime, Instant};
+use std::time::{Duration};
 
 /// Resource manager for the database
 pub struct ResourceManager {

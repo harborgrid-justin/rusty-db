@@ -20,10 +20,17 @@ pub trait DistributedQueryProcessor {
 }
 
 /// Distributed query executor
-#[derive(Debug)]
 pub struct DistributedQueryExecutor {
     coordinator: Arc<dyn QueryCoordinator>,
     router: QueryRouter,
+}
+
+impl std::fmt::Debug for DistributedQueryExecutor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DistributedQueryExecutor")
+            .field("router", &self.router)
+            .finish_non_exhaustive()
+    }
 }
 
 impl DistributedQueryExecutor {
@@ -41,7 +48,7 @@ impl DistributedQueryProcessor for DistributedQueryExecutor {
         let mut results = HashMap::new();
         
         for shard_plan in plan.shards {
-            let result = self.execute_shard(&shard_plan)?;
+            let _result = self.execute_shard(&shard_plan)?;
             results.insert(shard_plan.node_id.clone(), result);
         }
         
@@ -172,7 +179,7 @@ pub trait QueryCoordinator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::clustering::node::{NodeInfo, NodeStatus, NodeRole};
+    use crate::clustering::node::NodeInfo;
 
     struct MockCoordinator {
         nodes: Vec<NodeInfo>,
@@ -198,7 +205,7 @@ mod tests {
         let coordinator = Arc::new(MockCoordinator { nodes });
         let executor = DistributedQueryExecutor::new(coordinator);
         
-        let result = executor.execute_query("SELECT * FROM test");
+        let _result = executor.execute_query("SELECT * FROM test");
         assert!(result.is_ok());
         
         let query_result = result.unwrap();

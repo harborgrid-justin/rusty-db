@@ -4,10 +4,10 @@
 //! error rates, and health dashboards.
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
+use std::time::{SystemTime};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
@@ -224,7 +224,7 @@ pub struct ReplicationMonitor {
     /// Channel statuses
     channels: Arc<RwLock<HashMap<String, ChannelStatus>>>,
     /// Time series data
-    time_series: Arc<RwLock<HashMap<String, VecDeque<TimeSeriesPoint>>>>,
+    time_series: Arc<RwLock<HashMap<String<TimeSeriesPoint>>>>,
     /// Measurement window (seconds)
     window_seconds: u64,
 }

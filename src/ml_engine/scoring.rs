@@ -3,7 +3,7 @@
 //! Real-time and batch prediction capabilities with PMML import/export,
 //! model explanations (SHAP-like), and confidence intervals.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::{Prediction, Algorithm};
 use super::model_store::{Model, ModelParameters, ActivationType};
 use serde::{Deserialize, Serialize};
@@ -180,7 +180,7 @@ impl ScoringEngine {
         for _model_data in models {
             // In production, deserialize and score each model
             // For now, using placeholder
-            for i in 0..n_samples {
+            for _i in 0..n_samples {
                 aggregated_predictions[i] += 0.5; // Placeholder
                 prediction_counts[i] += 1;
             }
@@ -343,7 +343,7 @@ impl ScoringEngine {
         let baseline_pred = self.predict(model, vec![sample.to_vec()])?;
         let baseline_value = baseline_pred[0].value;
 
-        for i in 0..sample.len() {
+        for _i in 0..sample.len() {
             let mut perturbed = sample.to_vec();
             perturbed[i] = 0.0; // Perturbation: zero out feature
 

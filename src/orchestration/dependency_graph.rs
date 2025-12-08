@@ -29,12 +29,12 @@
 //! └────────────────────────────────────────────────┘
 //! ```
 
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::fmt;
+use std::collections::{HashMap};
 
-use tracing::{debug, info, warn};
 
-use crate::error::{DbError, Result};
+use tracing::{debug, info};
+
+use crate::error::Result;
 
 /// Node in the dependency graph
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -696,7 +696,7 @@ mod tests {
             .add_edge(DependencyEdge::new("a".into(), "b".into(), DependencyType::Hard))
             .unwrap();
 
-        let stats = graph.statistics();
+        let _stats = graph.statistics();
         assert_eq!(stats.total_nodes, 2);
         assert_eq!(stats.total_edges, 1);
         assert_eq!(stats.hard_edges, 1);

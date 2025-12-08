@@ -303,7 +303,7 @@ impl VpdEngine {
         let policy_name = format!("vpd_{}", table_name);
         let pred = SecurityPredicate::parse(predicate)?;
 
-        let policy = VpdPolicy::new(
+        let _policy = VpdPolicy::new(
             policy_name.clone(),
             table_name.to_string(),
             pred,
@@ -329,7 +329,7 @@ impl VpdEngine {
     /// Enable a policy
     pub fn enable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
-        let policy = policies.get_mut(name)
+        let _policy = policies.get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = true;
         Ok(())
@@ -338,7 +338,7 @@ impl VpdEngine {
     /// Disable a policy
     pub fn disable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
-        let policy = policies.get_mut(name)
+        let _policy = policies.get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = false;
         Ok(())
@@ -352,7 +352,7 @@ impl VpdEngine {
         column_name: String,
         action: ColumnAction,
     ) -> Result<()> {
-        let policy = ColumnPolicy {
+        let _policy = ColumnPolicy {
             name: name.clone(),
             table_name,
             column_name,
@@ -554,7 +554,7 @@ impl VpdEngine {
 
     /// Get VPD statistics
     pub fn get_stats(&self) -> (u64, u64, u64, u64) {
-        let stats = self.stats.read();
+        let _stats = self.stats.read();
         (stats.total_rewrites, stats.policies_applied, stats.columns_hidden, stats.policy_violations)
     }
 }
@@ -566,8 +566,8 @@ mod tests {
     #[test]
     fn test_static_predicate() {
         let pred = SecurityPredicate::Static("user_id = 123".to_string());
-        let context = HashMap::new();
-        let result = pred.evaluate(&context).unwrap();
+        let _context = HashMap::new();
+        let _result = pred.evaluate(&context).unwrap();
         assert_eq!(result, "user_id = 123");
     }
 
@@ -581,7 +581,7 @@ mod tests {
         let mut context = HashMap::new();
         context.insert("USER_ID".to_string(), "123".to_string());
 
-        let result = pred.evaluate(&context).unwrap();
+        let _result = pred.evaluate(&context).unwrap();
         assert_eq!(result, "user_id = 123");
     }
 
@@ -595,14 +595,14 @@ mod tests {
             ],
         };
 
-        let context = HashMap::new();
-        let result = pred.evaluate(&context).unwrap();
+        let _context = HashMap::new();
+        let _result = pred.evaluate(&context).unwrap();
         assert_eq!(result, "(role = 'ADMIN' OR user_id = 123)");
     }
 
     #[test]
     fn test_policy_applies_to() {
-        let policy = VpdPolicy::new(
+        let _policy = VpdPolicy::new(
             "test_policy".to_string(),
             "employees".to_string(),
             SecurityPredicate::Static("1=1".to_string()),
@@ -624,7 +624,7 @@ mod tests {
     fn test_query_rewrite_simple() {
         let mut engine = VpdEngine::new().unwrap();
 
-        let policy = VpdPolicy::new(
+        let _policy = VpdPolicy::new(
             "emp_policy".to_string(),
             "employees".to_string(),
             SecurityPredicate::Static("department_id = 10".to_string()),
@@ -635,7 +635,7 @@ mod tests {
         let mut context = HashMap::new();
         context.insert("USER_ID".to_string(), "123".to_string());
 
-        let result = engine.rewrite_query(query, "user1", &[], &context).unwrap();
+        let _result = engine.rewrite_query(query, "user1", &[], &context).unwrap();
 
         assert!(result.rewritten.contains("department_id = 10"));
         assert_eq!(result.applied_policies.len(), 1);
@@ -672,7 +672,7 @@ mod tests {
         let engine = VpdEngine::new().unwrap();
 
         let query = "SELECT * FROM employees WHERE active = 1";
-        let result = engine.inject_predicate(query, "dept_id = 10").unwrap();
+        let _result = engine.inject_predicate(query, "dept_id = 10").unwrap();
 
         assert!(result.contains("dept_id = 10 AND"));
         assert!(result.contains("active = 1"));

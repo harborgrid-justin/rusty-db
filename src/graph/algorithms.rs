@@ -8,7 +8,7 @@
 //! - Influence maximization
 //! - Similarity measures
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use serde::{Deserialize, Serialize};
 use crate::error::Result;
 use super::property_graph::{PropertyGraph, VertexId};
@@ -951,7 +951,7 @@ mod tests {
         graph.add_edge(v3, v1, "link".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
 
         let config = PageRankConfig::default();
-        let result = PageRank::compute(&graph, &config).unwrap();
+        let _result = PageRank::compute(&graph, &config).unwrap();
 
         assert!(result.converged);
         assert!(result.scores.len() == 3);
@@ -973,7 +973,7 @@ mod tests {
         graph.add_edge(v1, v2, "link".to_string(), Properties::new(), EdgeDirection::Undirected).unwrap();
         graph.add_edge(v3, v4, "link".to_string(), Properties::new(), EdgeDirection::Undirected).unwrap();
 
-        let result = ConnectedComponentsAlgorithm::compute(&graph).unwrap();
+        let _result = ConnectedComponentsAlgorithm::compute(&graph).unwrap();
 
         assert_eq!(result.num_components, 2);
         assert!(!ConnectedComponentsAlgorithm::same_component(&result, v1, v3));

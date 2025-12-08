@@ -18,9 +18,9 @@
 
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use tokio::sync::Semaphore;
 
 /// Backend node identifier
@@ -255,7 +255,7 @@ impl CircuitBreaker {
     }
 
     fn can_attempt(&self) -> bool {
-        let state = *self.state.read().unwrap();
+        let _state = *self.state.read().unwrap();
 
         match state {
             CircuitState::Closed => true,
@@ -284,7 +284,7 @@ impl CircuitBreaker {
     }
 
     fn record_success(&self) {
-        let state = *self.state.read().unwrap();
+        let _state = *self.state.read().unwrap();
 
         match state {
             CircuitState::Closed => {
@@ -717,7 +717,7 @@ mod tests {
 
     #[test]
     fn test_circuit_breaker() {
-        let breaker = CircuitBreaker::new(3, Duration::from_secs(10));
+        let breaker = CircuitBreaker::new(3::from_secs(10));
         assert!(breaker.can_attempt());
 
         // Record failures

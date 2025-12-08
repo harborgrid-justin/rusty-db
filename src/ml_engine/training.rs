@@ -3,7 +3,7 @@
 //! Model training coordination with mini-batch training, distributed training,
 //! early stopping, learning rate scheduling, and progress monitoring.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::{Algorithm, Dataset, Hyperparameters, TrainingStats, EvaluationMetrics, GpuConfig};
 use super::algorithms::*;
 use super::model_store::{Model, ModelParameters, ActivationType, NetworkLayer};
@@ -492,7 +492,7 @@ impl TrainingEngine {
             intercept: model.intercept,
         };
 
-        let stats = TrainingStats {
+        let _stats = TrainingStats {
             num_samples: train.num_samples(),
             num_features: train.num_features(),
             training_time: 0.0,
@@ -541,7 +541,7 @@ impl TrainingEngine {
             intercept: model.intercept,
         };
 
-        let stats = TrainingStats {
+        let _stats = TrainingStats {
             num_samples: train.num_samples(),
             num_features: train.num_features(),
             training_time: 0.0,
@@ -587,7 +587,7 @@ impl TrainingEngine {
 
         let parameters = ModelParameters::TreeModel { tree_data };
 
-        let stats = TrainingStats {
+        let _stats = TrainingStats {
             num_samples: train.num_samples(),
             num_features: train.num_features(),
             training_time: 0.0,
@@ -632,7 +632,7 @@ impl TrainingEngine {
 
         let parameters = ModelParameters::EnsembleModel { models };
 
-        let stats = TrainingStats {
+        let _stats = TrainingStats {
             num_samples: train.num_samples(),
             num_features: train.num_features(),
             training_time: 0.0,
@@ -683,7 +683,7 @@ impl TrainingEngine {
             centroids: model.centroids.clone(),
         };
 
-        let stats = TrainingStats {
+        let _stats = TrainingStats {
             num_samples: train.num_samples(),
             num_features: train.num_features(),
             training_time: 0.0,
@@ -709,7 +709,7 @@ impl TrainingEngine {
             centroids: vec![vec![0.0; train.num_features()]],
         };
 
-        let stats = TrainingStats {
+        let _stats = TrainingStats {
             num_samples: train.num_samples(),
             num_features: train.num_features(),
             training_time: 0.0,
@@ -739,7 +739,7 @@ impl TrainingEngine {
             distributions,
         };
 
-        let stats = TrainingStats {
+        let _stats = TrainingStats {
             num_samples: train.num_samples(),
             num_features: train.num_features(),
             training_time: 0.0,
@@ -776,7 +776,7 @@ impl TrainingEngine {
             intercept: 0.0,
         };
 
-        let stats = TrainingStats {
+        let _stats = TrainingStats {
             num_samples: train.num_samples(),
             num_features: train.num_features(),
             training_time: 0.0,
@@ -818,7 +818,7 @@ impl TrainingEngine {
             layers: vec![layer1, layer2],
         };
 
-        let stats = TrainingStats {
+        let _stats = TrainingStats {
             num_samples: train.num_samples(),
             num_features: train.num_features(),
             training_time: 0.0,
@@ -880,7 +880,7 @@ mod tests {
         let mut progress = TrainingProgress::new();
         let config = EarlyStoppingConfig::default();
 
-        for i in 0..20 {
+        for _i in 0..20 {
             let val_loss = 1.0 / (i + 1) as f64;
             progress.update(
                 val_loss,

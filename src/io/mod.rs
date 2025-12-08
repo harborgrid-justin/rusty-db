@@ -55,7 +55,7 @@
 //! # }
 //! ```
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use std::sync::Arc;
 
 // ============================================================================
@@ -83,7 +83,7 @@ pub use async_io::{
 
 pub use file_manager::{
     FileManager, FileHandle, IoOptions, DirectIoFile, FileMetadata,
-    ReadOptions, WriteOptions, FlushMode, BatchedIoRequest,
+    ReadOptionsOptions, FlushMode, BatchedIoRequest,
 };
 
 pub use ring_buffer::{

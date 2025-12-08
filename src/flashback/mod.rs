@@ -357,7 +357,7 @@ mod tests {
     #[test]
     fn test_flashback_coordinator_creation() {
         let coordinator = FlashbackCoordinator::new();
-        let stats = coordinator.get_stats();
+        let _stats = coordinator.get_stats();
 
         assert_eq!(stats.time_travel.queries_executed, 0);
         assert_eq!(stats.versions.total_versions, 0);

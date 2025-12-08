@@ -2,7 +2,7 @@
 // Eliminates duplicate data across tables and databases
 
 use super::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
@@ -626,7 +626,7 @@ mod tests {
         let data = b"test".repeat(100);
         engine.deduplicate(&data).unwrap();
 
-        let stats = engine.stats();
+        let _stats = engine.stats();
         assert!(stats.total_bytes_processed > 0);
         assert!(stats.dedup_ratio() > 0.0);
     }

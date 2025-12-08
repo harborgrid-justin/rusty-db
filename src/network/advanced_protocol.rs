@@ -2,20 +2,20 @@
 // Enterprise-grade wire protocol with comprehensive features
 // 3000+ lines of production-ready network protocol implementation
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::io::{self, Cursor};
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
-use tokio::sync::{mpsc, oneshot, Semaphore};
-use tokio::time::{timeout, sleep};
+use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::sync::{mpsc, Semaphore};
+use tokio::time::{timeout};
 use thiserror::Error;
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 // ============================================================================
 // SECTION 1: WIRE PROTOCOL ENGINE (800+ lines)
@@ -369,7 +369,7 @@ impl WireCodec {
         }
 
         // Deserialize
-        let message = bincode::deserialize(&payload)
+        let _message = bincode::deserialize(&payload)
             .map_err(|e| ProtocolError::DeserializationError(e.to_string()))?;
 
         self.metrics.record_decode(start.elapsed(), payload.len());
@@ -746,12 +746,12 @@ impl ConnectionState {
             (self, target),
             (Connecting, Authenticating)
                 | (Connecting, Closed)
-                | (Authenticating, Ready)
+                | (Authenticatingy)
                 | (Authenticating, Closed)
                 | (Ready, Busy)
                 | (Ready, Draining)
                 | (Ready, Closing)
-                | (Busy, Ready)
+                | (Busyy)
                 | (Busy, Draining)
                 | (Busy, Error)
                 | (Draining, Closing)
@@ -1208,7 +1208,7 @@ impl RequestResponsePipeline {
 
         // Wait for response with timeout
         let timeout_duration = request.timeout.unwrap_or(Duration::from_secs(30));
-        let result = timeout(timeout_duration, response_rx).await;
+        let _result = timeout(timeout_duration, response_rx).await;
 
         drop(permit);
 
@@ -1354,17 +1354,17 @@ pub struct PipelineStats {
 
 /// Request prioritization queue
 pub struct PriorityRequestQueue {
-    queues: Arc<RwLock<HashMap<RequestPriority, VecDeque<ProtocolRequest>>>>,
+    queues: Arc<RwLock<HashMap<RequestPriority<ProtocolRequest>>>>,
     metrics: Arc<QueueMetrics>,
 }
 
 impl PriorityRequestQueue {
     pub fn new() -> Self {
         let mut queues = HashMap::new();
-        queues.insert(RequestPriority::Low, VecDeque::new());
-        queues.insert(RequestPriority::Normal, VecDeque::new());
-        queues.insert(RequestPriority::High, VecDeque::new());
-        queues.insert(RequestPriority::Critical, VecDeque::new());
+        queues.insert(RequestPriority::Low::new());
+        queues.insert(RequestPriority::Normal::new());
+        queues.insert(RequestPriority::High::new());
+        queues.insert(RequestPriority::Critical::new());
 
         Self {
             queues: Arc::new(RwLock::new(queues)),
@@ -1476,7 +1476,7 @@ pub struct QueueStats {
 
 /// Zero-copy buffer pool for efficient memory management
 pub struct BufferPool {
-    pools: Arc<RwLock<HashMap<usize, VecDeque<BytesMut>>>>,
+    pools: Arc<RwLock<HashMap<usize<BytesMut>>>>,
     standard_sizes: Vec<usize>,
     max_buffers_per_size: usize,
     metrics: Arc<BufferPoolMetrics>,
@@ -1490,7 +1490,7 @@ impl BufferPool {
     pub fn with_config(config: BufferPoolConfig) -> Self {
         let mut pools = HashMap::new();
         for &size in &config.standard_sizes {
-            pools.insert(size, VecDeque::new());
+            pools.insert(size::new());
         }
 
         Self {
@@ -2075,11 +2075,11 @@ impl ProtocolManager {
             buffer_pool: Arc::new(BufferPool::new()),
             custom_messages: Arc::new(CustomMessageRegistry::new()),
             flow_control: Arc::new(FlowControlManager::new(65536, 1048576)),
-            circuit_breaker: Arc::new(CircuitBreaker::new(5, Duration::from_secs(30))),
+            circuit_breaker: Arc::new(CircuitBreaker::new(5::from_secs(30))),
             rate_limiter: Arc::new(RateLimiter::new(1000.0, 100.0)),
-            connection_pool: Arc::new(ConnectionPool::new(100, 10, Duration::from_secs(300))),
+            connection_pool: Arc::new(ConnectionPool::new(100, 10::from_secs(300))),
             load_balancer: Arc::new(ProtocolLoadBalancer::new(LoadBalancingStrategy::RoundRobin)),
-            metrics_aggregator: Arc::new(ProtocolMetricsAggregator::new(1000, Duration::from_secs(60))),
+            metrics_aggregator: Arc::new(ProtocolMetricsAggregator::new(1000::from_secs(60))),
         }
     }
 
@@ -2418,7 +2418,7 @@ impl CircuitBreaker {
     }
 
     pub fn can_execute(&self) -> bool {
-        let state = *self.state.read();
+        let _state = *self.state.read();
 
         match state {
             CircuitState::Closed => true,
@@ -2442,7 +2442,7 @@ impl CircuitBreaker {
     }
 
     pub fn record_success(&self) {
-        let state = *self.state.read();
+        let _state = *self.state.read();
         self.success_count.fetch_add(1, Ordering::Relaxed);
         self.metrics.record_success();
 
@@ -2466,7 +2466,7 @@ impl CircuitBreaker {
     }
 
     pub fn record_failure(&self) {
-        let state = *self.state.read();
+        let _state = *self.state.read();
         self.failure_count.fetch_add(1, Ordering::Relaxed);
         self.metrics.record_failure();
 
@@ -3132,7 +3132,7 @@ mod tests {
         assert!(buffer.capacity() >= 1024);
         pool.release(buffer);
 
-        let stats = pool.get_metrics();
+        let _stats = pool.get_metrics();
         assert_eq!(stats.acquired_new, 1);
         assert_eq!(stats.released_to_pool, 1);
     }

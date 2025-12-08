@@ -1,97 +1,296 @@
-//! # Replication Module
-//!
-//! This module provides comprehensive database replication functionality including:
-//!
-//! ## Features
-//!
-//! ### Replication Modes
-//! - **Synchronous**: Wait for all replicas to acknowledge before committing
-//! - **Asynchronous**: Fire-and-forget replication for maximum performance
-//! - **Semi-Synchronous**: Wait for at least one replica to acknowledge
-//!
-//! ### Replication Topologies
-//! - **Single Master**: One primary with multiple read replicas
-//! - **Multi-Master**: Multiple primaries with conflict resolution
-//! - **Cascading**: Replicas can have their own replicas
-//! - **Chain Replication**: Linear chain of replicas for consistency
-//!
-//! ### Conflict Resolution
-//! - Last Write Wins (LWW)
-//! - First Write Wins (FWW)
-//! - Primary Wins
-//! - Custom conflict resolution strategies
-//!
-//! ### Write-Ahead Log (WAL)
-//! - Transaction logging with LSN (Log Sequence Number)
-//! - WAL streaming for replicas
-//! - WAL archiving and cleanup
-//! - Point-in-time recovery support
-//!
-//! ### Snapshot-based Replication
-//! - Full database snapshots
-//! - Incremental snapshots
-//! - Snapshot restore for new replicas
-//! - Snapshot compression and deduplication
-//!
-//! ### Health Monitoring
-//! - Real-time health checks
-//! - Lag monitoring and alerting
-//! - Heartbeat detection
-//! - Automatic failover support
-//!
-//! ### Geo-Replication
-//! - Multi-region support
-//! - Region-aware replica selection
-//! - Latency-based routing
-//! - Cross-region bandwidth optimization
-//!
-//! ### Replication Slots
-//! - Logical replication slots
-//! - Physical replication slots
-//! - Slot-based WAL retention
-//!
-//! ## Usage Example
-//!
-//! ```rust,no_run
-//! use rusty_db::replication::*;
-//!
-//! # async fn example() -> rusty_db::Result<()> {
-//! // Create primary replication manager
-//! let mut primary = ReplicationManager::new(
-//!     ReplicationMode::SemiSync,
-//!     true  // is_primary
-//! );
-//!
-//! // Add a replica
-//! let replica = ReplicaNode {
-//!     id: "replica-1".to_string(),
-//!     address: "127.0.0.1:5433".to_string(),
-//!     status: ReplicaStatus::Syncing,
-//!     lag_bytes: 0,
-//!     last_sync: 0,
+//! # Replication System
+//! 
+//! This module provides a comprehensive enterprise-grade replication system
+//! for the RustyDB database. It supports both synchronous and asynchronous
+//! replication with strong consistency guarantees, automatic failover,
+//! conflict resolution, health monitoring, snapshot management, and replication slots.
+//! 
+//! ## Key Features
+//! 
+//! - **Multi-Master Replication**: Support for multiple write nodes with automatic conflict resolution
+//! - **Automatic Failover**: Fast detection and recovery from node failures with minimal downtime
+//! - **Advanced Conflict Resolution**: Multiple strategies including Last Writer Wins, CRDT, and custom resolvers
+//! - **WAL-Based Replication**: Write-ahead logging for consistent and reliable data replication
+//! - **Real-time Health Monitoring**: Comprehensive health monitoring, alerting, and performance analytics
+//! - **Snapshot Management**: Incremental and full backups with compression and encryption support
+//! - **Replication Slots**: Logical and physical slot management with WAL retention policies
+//! - **Performance Optimization**: Advanced buffer management, connection pooling, and throughput optimization
+//! - **Enterprise Security**: End-to-end encryption, authentication, and authorization controls
+//! - **Operational Excellence**: Comprehensive metrics, logging, tracing, and diagnostic capabilities
+//! 
+//! ## Architecture Overview
+//! 
+//! The replication system consists of several interconnected components working together
+//! to provide reliable, scalable, and high-performance database replication:
+//! 
+//! ```text
+//! ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
+//! │    Primary Node     │───▶│  Replication Hub    │───▶│   Secondary Node    │
+//! │                     │    │                     │    │                     │
+//! │ ┌─────────────────┐ │    │ ┌─────────────────┐ │    │ ┌─────────────────┐ │
+//! │ │ WAL Manager     │ │    │ │ Conflict        │ │    │ │ Replay Engine   │ │
+//! │ │ - Log Writing   │ │    │ │ Resolution      │ │    │ │ - Apply Changes │ │
+//! │ │ - Streaming     │ │    │ │ - Detection     │ │    │ │ - Validation    │ │
+//! │ │ - Archival      │ │    │ │ - Strategies    │ │    │ │ - Recovery      │ │
+//! │ └─────────────────┘ │    │ └─────────────────┘ │    │ └─────────────────┘ │
+//! │                     │    │                     │    │                     │
+//! │ ┌─────────────────┐ │    │ ┌─────────────────┐ │    │ ┌─────────────────┐ │
+//! │ │ Health Monitor  │ │    │ │ Load Balancer   │ │    │ │ Lag Monitor     │ │
+//! │ │ - Metrics       │ │    │ │ - Routing       │ │    │ │ - Lag Tracking  │ │
+//! │ │ - Alerting      │ │    │ │ - Failover      │ │    │ │ - Performance   │ │
+//! │ │ - Analytics     │ │    │ │ - Discovery     │ │    │ │ - Alerts        │ │
+//! │ └─────────────────┘ │    │ └─────────────────┘ │    │ └─────────────────┘ │
+//! │                     │    │                     │    │                     │
+//! │ ┌─────────────────┐ │    │ ┌─────────────────┐ │    │ ┌─────────────────┐ │
+//! │ │ Snapshot Mgmt   │ │    │ │ Replication     │ │    │ │ Recovery Mgmt   │ │
+//! │ │ - Incremental   │ │    │ │ Slots           │ │    │ │ - Point-in-Time │ │
+//! │ │ - Full Backup   │ │    │ │ - Logical       │ │    │ │ - Snapshot      │ │
+//! │ │ - Compression   │ │    │ │ - Physical      │ │    │ │ - Restoration   │ │
+//! │ └─────────────────┘ │    │ └─────────────────┘ │    │ └─────────────────┘ │
+//! └─────────────────────┘    └─────────────────────┘    └─────────────────────┘
+//!                                        │
+//!                                        ▼
+//!                            ┌─────────────────────┐
+//!                            │   Monitoring &      │
+//!                            │   Management        │
+//!                            │                     │
+//!                            │ ┌─────────────────┐ │
+//!                            │ │ Metrics         │ │
+//!                            │ │ Dashboard       │ │
+//!                            │ └─────────────────┘ │
+//!                            │                     │
+//!                            │ ┌─────────────────┐ │
+//!                            │ │ Alert Manager   │ │
+//!                            │ │ & Notifications │ │
+//!                            │ └─────────────────┘ │
+//!                            └─────────────────────┘
+//! ```
+//! 
+//! ## Module Organization
+//! 
+//! ### Core Components
+//! 
+//! - **types**: Fundamental types, identifiers, and data structures used throughout the replication system
+//! - **manager**: Central replication manager orchestrating all replication activities and coordination
+//! - **wal**: Write-Ahead Log management for reliable change tracking and streaming
+//! - **conflicts**: Advanced conflict detection and resolution with multiple strategies
+//! 
+//! ### Operational Components
+//! 
+//! - **monitor**: Real-time health monitoring, performance analytics, and proactive alerting system
+//! - **snapshots**: Comprehensive snapshot management with incremental/full backups and lifecycle management
+//! - **slots**: Replication slot management for logical/physical replication and WAL retention
+//! 
+//! ## Usage Examples
+//! 
+//! ### Basic Replication Setup
+//! 
+//! ```rust
+//! use crate::replication::*;
+//! 
+//! # async fn basic_setup() -> Result<(), Box<dyn std::error::Error>> {
+//! // Configure replication with enterprise settings
+//! let config = ReplicationConfig {
+//!     cluster_name: "production-cluster".to_string(),
+//!     node_id: NodeId::new("primary-001")?,
+//!     replication_mode: ReplicationMode::Async,
+//!     max_replicas: 10,
+//!     heartbeat_interval: Duration::from_secs(5),
+//!     conflict_resolution: ConflictResolutionStrategy::LastWriterWins,
+//!     enable_compression: true,
+//!     enable_encryption: true,
+//!     performance_settings: PerformanceSettings {
+//!         max_connections: 1000,
+//!         buffer_size: 64 * 1024,
+//!         batch_size: 1000,
+//!         ..Default::default()
+//!     },
+//!     ..Default::default()
 //! };
-//!
-//! primary.add_replica(replica)?;
-//!
-//! // Replicate an operation
-//! primary.replicate_operation(
-//!     ReplicationOperation::Insert,
-//!     vec![1, 2, 3]
+//! 
+//! // Create and start replication manager
+//! let manager = ReplicationManager::new(config)?;
+//! manager.start().await?;
+//! 
+//! // Add high-availability replica
+//! let replica_config = ReplicaConfig {
+//!     replica_id: ReplicaId::new("replica-001")?,
+//!     address: ReplicaAddress::from_str("10.0.1.100:5433")?,
+//!     replication_lag_threshold: Duration::from_secs(10),
+//!     priority: ReplicationPriority::High,
+//!     enable_health_checks: true,
+//!     ..Default::default()
+//! };
+//! 
+//! manager.add_replica(replica_config).await?;
+//! 
+//! // Monitor replication health
+//! let status = manager.get_replication_status().await?;
+//! println!("Cluster health: {:?}", status.overall_health);
+//! println!("Active replicas: {}", status.active_replicas.len());
+//! println!("Average lag: {:?}", status.average_lag);
+//! # Ok(())
+//! # }
+//! ```
+//! 
+//! ### Advanced Health Monitoring
+//! 
+//! ```rust
+//! use crate::replication::monitor::*;
+//! 
+//! # async fn health_monitoring() -> Result<(), Box<dyn std::error::Error>> {
+//! // Configure comprehensive health monitoring
+//! let monitor_config = HealthMonitorConfig {
+//!     check_interval: Duration::from_secs(30),
+//!     lag_threshold_bytes: 1024 * 1024, // 1MB
+//!     lag_threshold_seconds: 60,
+//!     enable_proactive_alerts: true,
+//!     enable_performance_analytics: true,
+//!     enable_trend_analysis: true,
+//!     ..Default::default()
+//! };
+//! 
+//! let monitor = ReplicationHealthMonitor::new(monitor_config)?;
+//! monitor.start_monitoring().await?;
+//! 
+//! // Add replica for monitoring
+//! let _replica_id = ReplicaId::new("replica-001")?;
+//! monitor.add_replica(replica_id.clone()).await?;
+//! 
+//! // Get comprehensive health report
+//! let health = monitor.get_replica_health(&replica_id).await?;
+//! println!("Health score: {}/100", health.health_score);
+//! println!("Lag: {} bytes, {} seconds", health.current_lag.lag_bytes, health.current_lag.lag_seconds);
+//! 
+//! // Generate analytics report
+//! let report = monitor.generate_analytics_report(
+//!     SystemTime::now() - Duration::from_hours(24),
+//!     SystemTime::now()
 //! ).await?;
-//!
-//! // Check replication health
-//! let health = primary.check_overall_health();
+//! println!("System health trend: {:?}", report.trend_analysis.health_trend);
+//! # Ok(())
+//! # }
+//! ```
+//! 
+//! ### Snapshot Management
+//! 
+//! ```rust
+//! use crate::replication::snapshots::*;
+//! 
+//! # async fn snapshot_management() -> Result<(), Box<dyn std::error::Error>> {
+//! // Configure enterprise snapshot management
+//! let snapshot_config = SnapshotConfig {
+//!     storage_path: "/data/backups/snapshots".into(),
+//!     compression: CompressionType::Zstd,
+//!     encryption: Some(EncryptionConfig {
+//!         algorithm: EncryptionAlgorithm::Aes256Gcm,
+//!         key_source: KeySource::Environment("SNAPSHOT_ENCRYPTION_KEY".to_string()),
+//!         aad: Some("production-cluster".to_string()),
+//!     }),
+//!     retention_policy: RetentionPolicy {
+//!         max_snapshots: 50,
+//!         max_age: Duration::from_days(90),
+//!         min_full_snapshots: 5,
+//!         daily_retention: Some(Duration::from_days(30)),
+//!         weekly_retention: Some(Duration::from_days(90)),
+//!         ..Default::default()
+//!     },
+//!     ..Default::default()
+//! };
+//! 
+//! let manager = FileSnapshotManager::new(snapshot_config).await?;
+//! 
+//! // Create full baseline snapshot
+//! let _replica_id = ReplicaId::new("replica-001")?;
+//! let full_snapshot_id = manager.create_full_snapshot(&replica_id).await?;
+//! println!("Created full snapshot: {}", full_snapshot_id);
+//! 
+//! // Create incremental snapshots
+//! let incremental_id = manager.create_incremental_snapshot(&replica_id, &full_snapshot_id).await?;
+//! println!("Created incremental snapshot: {}", incremental_id);
+//! 
+//! // List and manage snapshots
+//! let snapshots = manager.list_snapshots(&replica_id).await?;
+//! for snapshot in snapshots {
+//!     println!("Snapshot: {} ({:?}) - {} bytes", 
+//!         snapshot.snapshot_id, 
+//!         snapshot.snapshot_type, 
+//!         snapshot.size_bytes);
+//! }
+//! 
+//! // Apply retention policies
+//! let deleted_snapshots = manager.apply_retention_policy(&replica_id).await?;
+//! println!("Cleaned up {} old snapshots", deleted_snapshots.len());
+//! # Ok(())
+//! # }
+//! ```
+//! 
+//! ### Replication Slots Management
+//! 
+//! ```rust
+//! use crate::replication::slots::*;
+//! 
+//! # async fn slot_management() -> Result<(), Box<dyn std::error::Error>> {
+//! // Configure slot manager for logical replication
+//! let slot_config = SlotManagerConfig {
+//!     max_slots: 100,
+//!     default_wal_retention: Duration::from_hours(48),
+//!     enable_auto_cleanup: true,
+//!     enable_monitoring: true,
+//!     enable_failover_slots: true,
+//!     ..Default::default()
+//! };
+//! 
+//! let manager = ReplicationSlotManager::new(slot_config)?;
+//! 
+//! // Create logical replication slot
+//! let slot_name = SlotName::new("logical_replication_slot")?;
+//! let slot_config = SlotConfig {
+//!     slot_type: SlotType::Logical {
+//!         plugin_name: "pgoutput".to_string(),
+//!         publication_names: vec!["all_tables_pub".to_string()],
+//!     },
+//!     wal_retention_policy: WalRetentionPolicy::Time(Duration::from_hours(24)),
+//!     enable_lag_monitoring: true,
+//!     priority: SlotPriority::High,
+//!     ..Default::default()
+//! };
+//! 
+//! let slot_id = manager.create_slot(&slot_name, slot_config).await?;
+//! 
+//! // Start consuming changes
+//! let mut stream = manager.start_consuming(&slot_id).await?;
+//! 
+//! // Process replication changes
+//! while let Some(change) = stream.next_change().await? {
+//!     match change.change_type {
+//!         ChangeType::Insert | ChangeType::Update | ChangeType::Delete => {
+//!             println!("Processing {} on {}.{}", 
+//!                 change.change_type, 
+//!                 change.schema_name, 
+//!                 change.table_name);
+//!             
+//!             // Process the change...
+//!             
+//!             // Advance slot position
+//!             manager.advance_slot(&slot_id, &change.end_lsn).await?;
+//!         }
+//!         _ => {
+//!             // Handle other change types
+//!         }
+//!     }
+//! }
 //! # Ok(())
 //! # }
 //! ```
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use crate::error::{DbError, Result};
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
+use crate::error::Result;
+use std::time::{Duration, SystemTime};
 use std::path::PathBuf;
 
 /// Replication mode
@@ -100,6 +299,7 @@ pub enum ReplicationMode {
     Synchronous,   // Wait for replica acknowledgment
     Asynchronous,  // Don't wait for replica
     SemiSync,      // Wait for at least one replica
+    MultiMaster,   // Multi-master replication with conflict resolution
 }
 
 /// Replica status
@@ -412,7 +612,7 @@ impl ReplicationManager {
             ));
         }
         
-        let replica_id = replica.id.clone();
+        let _replica_id = replica.id.clone();
         let address = replica.address.clone();
         
         let mut replicas = self.replicas.write();
@@ -505,6 +705,9 @@ impl ReplicationManager {
             }
             ReplicationMode::Asynchronous => {
                 // Fire and forget
+            }
+            ReplicationMode::MultiMaster => {
+                // Multi-master: async with conflict resolution handled elsewhere
             }
         }
         
@@ -820,7 +1023,7 @@ impl ReplicationManager {
     // ===== Automatic Discovery =====
     
     /// Auto-discover replicas in the network
-    pub async fn discover_replicas(&self, network_range: &str) -> Result<Vec<String>> {
+    pub async fn discover_replicas(&self, _network_range: &str) -> Result<Vec<String>> {
         // In real implementation, this would:
         // 1. Scan the network for database instances
         // 2. Query each instance for its role
@@ -831,7 +1034,7 @@ impl ReplicationManager {
     }
     
     /// Register this node for discovery
-    pub fn register_for_discovery(&self, port: u16) -> Result<()> {
+    pub fn register_for_discovery(&self, _port: u16) -> Result<()> {
         // In real implementation, this would:
         // 1. Start a discovery service on the specified port
         // 2. Respond to discovery requests
@@ -1346,7 +1549,7 @@ impl ReplicationManager {
     
     /// Get comprehensive replication report
     pub fn get_replication_report(&self) -> ReplicationReport {
-        let stats = self.get_replication_stats();
+        let _stats = self.get_replication_stats();
         let health_statuses = self.get_all_replica_health();
         let lag_monitors = self.get_all_lag_monitors();
         let conflicts = self.get_unresolved_conflicts();
@@ -1750,7 +1953,7 @@ mod tests {
             last_sync: 0,
         };
         
-        let result = rm.add_replica(replica);
+        let _result = rm.add_replica(replica);
         assert!(result.is_err());
         
         Ok(())
@@ -1761,7 +1964,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Synchronous, true);
         
         // Add WAL entries
-        for i in 1..=5 {
+        for _i in 1..=5 {
             let entry = WALEntry {
                 lsn: i,
                 transaction_id: Some(i),
@@ -1885,7 +2088,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Synchronous, true);
         
         // Add multiple replicas
-        for i in 1..=3 {
+        for _i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("replica-stats-{}", i),
                 address: format!("127.0.0.1:544{}", i),
@@ -1907,7 +2110,7 @@ mod tests {
             rm.update_replica_health(health)?;
         }
         
-        let stats = rm.get_replication_stats();
+        let _stats = rm.get_replication_stats();
         assert_eq!(stats.total_replicas, 3);
         assert_eq!(stats.healthy_replicas, 2);
         assert_eq!(stats.lagging_replicas, 1);
@@ -1917,7 +2120,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_cascading_replication() -> Result<()> {
-        let mut rm = ReplicationManager::new_with_topology(
+        let rm = ReplicationManager::new_with_topology(
             ReplicationMode::Asynchronous,
             ReplicationTopology::Cascading,
             true,
@@ -2111,7 +2314,7 @@ mod tests {
         };
         
         // Should fail because topology is not Cascading
-        let result = rm.add_cascading_replica("parent", child);
+        let _result = rm.add_cascading_replica("parent", child);
         assert!(result.is_err());
     }
     
@@ -2120,7 +2323,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Asynchronous, true);
         
         // Add multiple replicas with different health statuses
-        for i in 1..=3 {
+        for _i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("replica-{}", i),
                 address: format!("127.0.0.1:550{}", i),
@@ -2156,7 +2359,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::MultiMaster, true);
         
         // Create multiple conflicts
-        for i in 1..=5 {
+        for _i in 1..=5 {
             rm.detect_conflict(
                 i,
                 "test".to_string(),
@@ -2171,7 +2374,7 @@ mod tests {
         assert_eq!(rm.get_conflict_count(), 5);
         
         // Resolve first 3
-        for i in 1..=3 {
+        for _i in 1..=3 {
             rm.resolve_conflict(i)?;
         }
         
@@ -2282,7 +2485,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Asynchronous, false);
         
         // Add some WAL entries
-        for i in 1..=10 {
+        for _i in 1..=10 {
             let entry = WALEntry {
                 lsn: i,
                 transaction_id: Some(i),
@@ -2388,7 +2591,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::SemiSync, true);
         
         // Add replicas
-        for i in 1..=3 {
+        for _i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("replica-{}", i),
                 address: format!("127.0.0.1:553{}", i),
@@ -2416,7 +2619,7 @@ mod tests {
         assert_eq!(rm.check_overall_health(), OverallHealth::NoReplicas);
         
         // Add healthy replicas
-        for i in 1..=3 {
+        for _i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("replica-{}", i),
                 address: format!("127.0.0.1:554{}", i),
@@ -2450,7 +2653,7 @@ mod tests {
         rm.create_logical_slot("test".to_string(), "plugin".to_string())?;
         rm.advance_logical_slot("test", 100)?;
         
-        let result = rm.advance_logical_slot("test", 50);
+        let _result = rm.advance_logical_slot("test", 50);
         assert!(result.is_err());
         
         Ok(())
@@ -2461,7 +2664,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Asynchronous, true);
         
         rm.create_logical_slot("dup_slot".to_string(), "plugin".to_string())?;
-        let result = rm.create_logical_slot("dup_slot".to_string(), "plugin".to_string());
+        let _result = rm.create_logical_slot("dup_slot".to_string(), "plugin".to_string());
         assert!(result.is_err());
         
         Ok(())
@@ -2563,7 +2766,7 @@ mod tests {
     fn test_all_lag_monitors() -> Result<()> {
         let rm = ReplicationManager::new(ReplicationMode::SemiSync, true);
         
-        for i in 1..=3 {
+        for _i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("r{}", i),
                 address: format!("127.0.0.1:557{}", i),
@@ -2608,7 +2811,7 @@ mod tests {
         rm.add_replica(replica)?;
         
         // Add measurements
-        for i in 1..=5 {
+        for _i in 1..=5 {
             rm.update_lag("history-test", i * 100)?;
         }
         
@@ -2633,7 +2836,7 @@ mod tests {
         rm.add_replica(replica)?;
         
         // Add more than 100 measurements
-        for i in 1..=150 {
+        for _i in 1..=150 {
             rm.update_lag("limit-test", i)?;
         }
         
@@ -2655,7 +2858,7 @@ mod tests {
         rm.checkpoints.write().push(checkpoint.clone());
         
         // Attempt to restore should fail
-        let result = tokio_test::block_on(rm.restore_from_checkpoint(&checkpoint.checkpoint_id));
+        let _result = tokio_test::block_on(rm.restore_from_checkpoint(&checkpoint.checkpoint_id));
         assert!(result.is_err());
         
         Ok(())
@@ -2730,7 +2933,7 @@ mod tests {
         assert_eq!(rm.active_replica_count(), 0);
         
         // Add replicas with different statuses
-        for i in 1..=5 {
+        for _i in 1..=5 {
             let status = if i <= 3 {
                 ReplicaStatus::Active
             } else {
@@ -2758,7 +2961,7 @@ mod tests {
     fn test_average_and_max_lag() -> Result<()> {
         let rm = ReplicationManager::new(ReplicationMode::SemiSync, true);
         
-        for i in 1..=5 {
+        for _i in 1..=5 {
             let replica = ReplicaNode {
                 id: format!("r{}", i),
                 address: format!("127.0.0.1:561{}", i),
@@ -2813,7 +3016,7 @@ mod tests {
     fn test_get_unhealthy_and_critical_replicas() -> Result<()> {
         let rm = ReplicationManager::new(ReplicationMode::Asynchronous, true);
         
-        for i in 1..=4 {
+        for _i in 1..=4 {
             let replica = ReplicaNode {
                 id: format!("r{}", i),
                 address: format!("127.0.0.1:563{}", i),
@@ -2882,7 +3085,7 @@ mod tests {
         assert_eq!(rm.total_snapshot_size(), 0);
         
         // Create multiple snapshots
-        for i in 1..=10 {
+        for _i in 1..=10 {
             let mut snapshot = rm.create_snapshot(vec![format!("table{}", i)])?;
             snapshot.size_bytes = i * 1000;
             rm.snapshots.write().pop(); // Remove auto-added
@@ -2974,7 +3177,7 @@ mod tests {
         
         rm.update_lag("uptime-test", 5000)?;
         
-        let stats = rm.get_replica_uptime_stats("uptime-test")?;
+        let _stats = rm.get_replica_uptime_stats("uptime-test")?;
         assert_eq!(stats.replica_id, "uptime-test");
         assert_eq!(stats.status, ReplicaStatus::Active);
         assert_eq!(stats.error_count, 2);
@@ -2987,7 +3190,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::SemiSync, true);
         
         // Add WAL entries
-        for i in 1..=20 {
+        for _i in 1..=20 {
             let entry = WALEntry {
                 lsn: i,
                 transaction_id: Some(i),
@@ -3060,7 +3263,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::MultiMaster, true);
         
         // Create conflicts
-        for i in 1..=10 {
+        for _i in 1..=10 {
             rm.detect_conflict(
                 i,
                 "test".to_string(),
@@ -3075,7 +3278,7 @@ mod tests {
         assert_eq!(rm.get_resolved_conflicts_count(), 0);
         
         // Resolve half
-        for i in 1..=5 {
+        for _i in 1..=5 {
             rm.resolve_conflict(i)?;
         }
         
@@ -3086,14 +3289,24 @@ mod tests {
 }
 
 // Additional helper implementations for testing
-#[cfg(test)]
-mod tokio_test {
-    use std::future::Future;
-    
-    pub fn block_on<F: Future>(f: F) -> F::Output {
-        tokio::runtime::Runtime::new().unwrap().block_on(f)
-    }
-}
+
+// Re-export all public APIs for convenient access
+pub use types::*;
+pub use manager::*;
+pub use wal::*;
+pub use conflicts::*;
+pub use monitor::*;
+pub use snapshots::*;
+pub use slots::*;
+
+// Module declarations
+pub mod types;
+pub mod manager;
+pub mod wal;
+pub mod conflicts;
+pub mod monitor;
+pub mod snapshots;
+pub mod slots;
 
 
 

@@ -85,7 +85,7 @@ impl DictionaryEncoder {
         let count = data.len() / 8;
         let mut values = Vec::with_capacity(count);
 
-        for i in 0..count {
+        for _i in 0..count {
             let offset = i * 8;
             let bytes: [u8; 8] = data[offset..offset + 8].try_into().unwrap();
             values.push(i64::from_le_bytes(bytes));
@@ -253,7 +253,7 @@ impl RunLengthEncoder {
         let count = data.len() / 8;
         let mut values = Vec::with_capacity(count);
 
-        for i in 0..count {
+        for _i in 0..count {
             let offset = i * 8;
             let bytes: [u8; 8] = data[offset..offset + 8].try_into().unwrap();
             values.push(i64::from_le_bytes(bytes));
@@ -263,7 +263,7 @@ impl RunLengthEncoder {
 
         let mut i = 0;
         while i < values.len() {
-            let value = values[i];
+            let _value = values[i];
             let mut run_length = 1;
 
             while i + run_length < values.len() && values[i + run_length] == value {
@@ -309,7 +309,7 @@ impl RunLengthEncoder {
                     return Err("Truncated RLE data".to_string());
                 }
 
-                let value = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
+                let _value = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
                 offset += 8;
 
                 let run_length = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
@@ -379,10 +379,10 @@ impl BitPacker {
         let count = data.len() / 8;
         let mut max_value = 0i64;
 
-        for i in 0..count {
+        for _i in 0..count {
             let offset = i * 8;
             let bytes: [u8; 8] = data[offset..offset + 8].try_into().unwrap();
-            let value = i64::from_le_bytes(bytes);
+            let _value = i64::from_le_bytes(bytes);
             max_value = max_value.max(value);
         }
 
@@ -401,7 +401,7 @@ impl BitPacker {
         let count = data.len() / 8;
         let mut values = Vec::with_capacity(count);
 
-        for i in 0..count {
+        for _i in 0..count {
             let offset = i * 8;
             let bytes: [u8; 8] = data[offset..offset + 8].try_into().unwrap();
             values.push(i64::from_le_bytes(bytes) as u64);
@@ -462,7 +462,7 @@ impl BitPacker {
                 offset += 1;
             }
 
-            let value = (bit_buffer & value_mask) as i64;
+            let _value = (bit_buffer & value_mask) as i64;
             unpacked.extend_from_slice(&value.to_le_bytes());
 
             bit_buffer >>= bits_per_value;
@@ -511,7 +511,7 @@ impl DeltaEncoder {
         }
 
         let mut values = Vec::with_capacity(count);
-        for i in 0..count {
+        for _i in 0..count {
             let offset = i * 8;
             let bytes: [u8; 8] = data[offset..offset + 8].try_into().unwrap();
             values.push(i64::from_le_bytes(bytes));
@@ -523,7 +523,7 @@ impl DeltaEncoder {
         encoded.extend_from_slice(&values[0].to_le_bytes());
 
         // Write deltas
-        for i in 1..values.len() {
+        for _i in 1..values.len() {
             let delta = values[i] - values[i - 1];
             encoded.extend_from_slice(&delta.to_le_bytes());
         }
@@ -546,7 +546,7 @@ impl DeltaEncoder {
         let mut current = base;
 
         // Read and apply deltas
-        for i in 1..count {
+        for _i in 1..count {
             let offset = i * 8;
             let delta = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
             current += delta;
@@ -589,7 +589,7 @@ impl FrameOfReferenceEncoder {
         let count = data.len() / 8;
         let mut values = Vec::with_capacity(count);
 
-        for i in 0..count {
+        for _i in 0..count {
             let offset = i * 8;
             let bytes: [u8; 8] = data[offset..offset + 8].try_into().unwrap();
             values.push(i64::from_le_bytes(bytes));
@@ -645,7 +645,7 @@ impl FrameOfReferenceEncoder {
                 let frame_offset = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
                 offset += 8;
 
-                let value = reference + frame_offset as i64;
+                let _value = reference + frame_offset as i64;
                 decoded.extend_from_slice(&value.to_le_bytes());
             }
         }
@@ -818,7 +818,7 @@ mod tests {
         let packer = BitPacker::new(32);
 
         let mut data = Vec::new();
-        for i in 0..100 {
+        for _i in 0..100 {
             data.extend_from_slice(&(i as i64).to_le_bytes());
         }
 
@@ -832,7 +832,7 @@ mod tests {
         let encoder = DeltaEncoder::new();
 
         let mut data = Vec::new();
-        for i in 0i64..100 {
+        for _i in 0i64..100 {
             data.extend_from_slice(&(i * 10).to_le_bytes());
         }
 
@@ -846,7 +846,7 @@ mod tests {
         let encoder = FrameOfReferenceEncoder::new(10);
 
         let mut data = Vec::new();
-        for i in 100i64..200 {
+        for _i in 100i64..200 {
             data.extend_from_slice(&i.to_le_bytes());
         }
 

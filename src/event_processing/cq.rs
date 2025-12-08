@@ -6,9 +6,9 @@
 use super::{Event, EventValue, StreamState, Watermark};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 
 /// Continuous Query identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -291,7 +291,7 @@ impl CQExecutor {
 
     /// Process an event
     pub fn process_event(&self, event: Event) -> Result<Vec<Event>> {
-        let state = self.state.read().unwrap();
+        let _state = self.state.read().unwrap();
         if *state != CQState::Running {
             return Ok(vec![]);
         }

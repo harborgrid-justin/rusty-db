@@ -10,9 +10,9 @@
 //! - Compliance reporting
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use crate::common::{TableId, RowId};
 use crate::Result;
 use crate::error::DbError;
@@ -688,7 +688,7 @@ mod tests {
 
     #[test]
     fn test_retention_policy() {
-        let policy = RetentionPolicy::new(
+        let _policy = RetentionPolicy::new(
             "policy1".to_string(),
             "30 Day Retention".to_string(),
             RetentionPeriod::Days(30),
@@ -724,7 +724,7 @@ mod tests {
     fn test_retention_manager() {
         let manager = RetentionManager::new();
 
-        let policy = RetentionPolicy::new(
+        let _policy = RetentionPolicy::new(
             "policy1".to_string(),
             "Test Policy".to_string(),
             RetentionPeriod::Days(30),

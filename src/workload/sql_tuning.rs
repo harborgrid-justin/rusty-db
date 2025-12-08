@@ -2,9 +2,9 @@
 // Provides automated SQL analysis, plan recommendations, and tuning suggestions
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use crate::Result;
 use crate::error::DbError;

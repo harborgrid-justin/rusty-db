@@ -27,12 +27,12 @@
 //! └─────────────────────────────────────────────────────────────┘
 //! ```
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::net::IpAddr;
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 
-use parking_lot::{RwLock, Mutex};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Sha512, Digest};
 use hmac::{Hmac, Mac};
@@ -1209,7 +1209,7 @@ impl JwtValidator {
         let signature = BASE64.decode(parts[2])
             .map_err(|_| DbError::InvalidOperation("Invalid JWT signature".to_string()))?;
 
-        let message = format!("{}.{}", parts[0], parts[1]);
+        let _message = format!("{}.{}", parts[0], parts[1]);
         self.verify_signature(&message, &signature)?;
 
         // Validate claims
@@ -1384,7 +1384,7 @@ impl MfaManager {
     /// Generate TOTP secret for user
     pub fn generate_totp_secret(&self, user_id: String) -> Vec<u8> {
         let mut secret = vec![0u8; 32];
-        for i in 0..32 {
+        for _i in 0..32 {
             secret[i] = rand::random();
         }
 
@@ -2636,7 +2636,7 @@ pub struct AuditEventFilter {
     /// Filter by client IP
     pub client_ip: Option<IpAddr>,
     /// Filter by time range
-    pub time_range: Option<(SystemTime, SystemTime)>,
+    pub time_range: Option<(SystemTime)>,
     /// Filter by result
     pub result: Option<AuditResult>,
 }

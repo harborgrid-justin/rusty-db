@@ -2,11 +2,11 @@
 // Threshold-based alerting, anomaly detection, alert routing and escalation
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, Instant, SystemTime};
-use std::fmt;
+use std::time::{Duration};
+
 
 /// Alert severity levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -352,9 +352,9 @@ pub struct AlertManager {
     alert_history: Arc<RwLock<VecDeque<Alert>>>,
     threshold_rules: Arc<RwLock<HashMap<String, ThresholdRule>>>,
     anomaly_rules: Arc<RwLock<HashMap<String, AnomalyRule>>>,
-    metric_history: Arc<RwLock<HashMap<String, VecDeque<(SystemTime, f64)>>>>,
+    metric_history: Arc<RwLock<HashMap<String<(SystemTime, f64)>>>>,
     last_alert_id: Arc<RwLock<u64>>,
-    last_trigger_time: Arc<RwLock<HashMap<String, SystemTime>>>,
+    last_trigger_time: Arc<RwLock<HashMap<String>>>,
     max_history: usize,
     max_metric_history: usize,
 }
@@ -437,7 +437,7 @@ impl AlertManager {
                         metric_name, value, rule.threshold),
                 );
 
-                self.last_trigger_time.write().insert(rule.name.clone(), SystemTime::now());
+                self.last_trigger_time.write().insert(rule.name.clone(), Instant::now());
             }
         }
     }

@@ -714,7 +714,7 @@ impl AuditVault {
 
     /// Get audit statistics
     pub fn get_stats(&self) -> (u64, u64, HashMap<String, u64>) {
-        let stats = self.stats.read();
+        let _stats = self.stats.read();
         (stats.total_records, stats.failed_operations, stats.by_action.clone())
     }
 
@@ -778,7 +778,7 @@ mod tests {
 
     #[test]
     fn test_audit_policy() {
-        let policy = AuditPolicy::new(
+        let _policy = AuditPolicy::new(
             "test_policy".to_string(),
             vec![AuditAction::Select, AuditAction::Update],
         );
@@ -793,7 +793,7 @@ mod tests {
         let mut vault = AuditVault::new(temp_dir.path(), 365).unwrap();
 
         // Create policy
-        let policy = AuditPolicy::new(
+        let _policy = AuditPolicy::new(
             "select_policy".to_string(),
             vec![AuditAction::Select],
         );
@@ -822,14 +822,14 @@ mod tests {
         let temp_dir = tempfile::tempdir().unwrap();
         let mut vault = AuditVault::new(temp_dir.path(), 365).unwrap();
 
-        let policy = AuditPolicy::new(
+        let _policy = AuditPolicy::new(
             "test_policy".to_string(),
             vec![AuditAction::Select, AuditAction::Insert],
         );
         vault.create_policy(policy).unwrap();
 
         // Log multiple records
-        for i in 0..5 {
+        for _i in 0..5 {
             vault.log(
                 "user1",
                 "session1",

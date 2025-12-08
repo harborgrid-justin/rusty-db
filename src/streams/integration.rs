@@ -3,11 +3,11 @@
 //! Provides integration patterns including Outbox, Event Sourcing, CQRS,
 //! external system connectors, webhooks, and schema registry.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, Duration, Instant};
-use parking_lot::{RwLock, Mutex};
+use std::time::{SystemTime};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio::time::interval;
@@ -393,7 +393,7 @@ pub struct CQRSCoordinator {
     /// Event store
     event_store: Arc<EventStore>,
     /// Read model projections
-    projections: Arc<RwLock<HashMap<String, ReadModelProjection>>>,
+    projections: Arc<RwLock<HashMap<StringModelProjection>>>,
 }
 
 impl CQRSCoordinator {

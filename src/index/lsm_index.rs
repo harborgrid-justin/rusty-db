@@ -685,7 +685,7 @@ impl BlockedBloomFilter {
     #[target_feature(enable = "avx2")]
     unsafe fn contains_simd_avx2(&self, hashes: &[u64; 8]) -> bool {
         // Process 4 hashes at once with AVX2
-        for i in (0..self.num_hashes).step_by(2) {
+        for _i in (0..self.num_hashes).step_by(2) {
             let hash1 = hashes[i];
             let hash2 = hashes[i.min(self.num_hashes - 1)];
 
@@ -727,7 +727,7 @@ impl BlockedBloomFilter {
         let h2 = hasher2.finish();
 
         let mut hashes = [0u64; 8];
-        for i in 0..8 {
+        for _i in 0..8 {
             hashes[i] = h1.wrapping_add(
                 (i as u64).wrapping_mul(h2)
             ).wrapping_add(
@@ -830,7 +830,7 @@ mod tests {
     fn test_lsm_range() {
         let lsm: LSMTreeIndex<i32, String> = LSMTreeIndex::new(LSMConfig::default());
 
-        for i in 1..=10 {
+        for _i in 1..=10 {
             lsm.insert(i, format!("value_{}", i)).unwrap();
         }
 

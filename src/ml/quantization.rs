@@ -354,7 +354,7 @@ impl QuantizedLinearModel {
         config: &QuantizationConfig,
     ) -> Self {
         let qweights = quantize_weights(weights, config);
-        let stats = QuantizationStats::compute(weights, &qweights);
+        let _stats = QuantizationStats::compute(weights, &qweights);
 
         Self {
             weights: qweights,
@@ -428,7 +428,7 @@ mod tests {
         let config = QuantizationConfig::default();
         let qweights = quantize_weights(&weights, &config);
 
-        let stats = QuantizationStats::compute(&weights, &qweights);
+        let _stats = QuantizationStats::compute(&weights, &qweights);
 
         assert!(stats.mae < 0.1);
         assert!(stats.mse < 0.01);

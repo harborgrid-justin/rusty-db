@@ -38,7 +38,7 @@
 //! }
 //!
 //! // Get statistics
-//! let stats = manager.api_get_stats();
+//! let _stats = manager.api_get_stats();
 //! println!("Buffer pool stats: {}", stats);
 //! ```
 //!
@@ -54,14 +54,14 @@
 //! let ptr = manager.allocate(1024, AllocationSource::QueryExecution).unwrap();
 //!
 //! // Create query context
-//! let context = manager.create_context(
+//! let _context = manager.create_context(
 //!     "query-123".to_string(),
 //!     ContextType::Query,
 //!     100 * 1024 * 1024  // 100MB limit
 //! ).unwrap();
 //!
 //! // Get comprehensive stats
-//! let stats = manager.get_comprehensive_stats();
+//! let _stats = manager.get_comprehensive_stats();
 //! ```
 
 pub mod buffer_pool;

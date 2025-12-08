@@ -5,7 +5,7 @@
 
 use rusty_db::{Config, Result, VERSION};
 use rusty_db::network::Server;
-use tracing::{info, warn};
+use tracing::{info};
 use tracing_subscriber;
 
 #[tokio::main]
@@ -60,7 +60,7 @@ async fn main() -> Result<()> {
     println!();
 
     // Run server (blocks until shutdown)
-    let result = server.run(&addr).await;
+    let _result = server.run(&addr).await;
 
     if let Err(ref e) = result {
         warn!("Server stopped with error: {}", e);

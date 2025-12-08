@@ -98,7 +98,7 @@ impl<K: Ord + Clone, V: Clone> PartialIndex<K, V> {
                 index.remove(key);
             }
 
-            let deleted = values.len() < initial_len;
+            let _deleted = values.len() < initial_len;
             if deleted {
                 let mut stats = self.stats.write();
                 stats.total_entries -= 1;
@@ -320,11 +320,11 @@ impl Predicate {
             }
             Predicate::Not(pred) => Ok(!pred.evaluate(row_data)?),
             Predicate::IsNull(column) => {
-                let value = row_data.get_column(column)?;
+                let _value = row_data.get_column(column)?;
                 Ok(matches!(value, ColumnValue::Null))
             }
             Predicate::IsNotNull(column) => {
-                let value = row_data.get_column(column)?;
+                let _value = row_data.get_column(column)?;
                 Ok(!matches!(value, ColumnValue::Null))
             }
         }
@@ -396,7 +396,7 @@ impl Expression {
     pub fn evaluate(&self, row_data: &RowData) -> Result<ComputedValue> {
         match self {
             Expression::Column(name) => {
-                let value = row_data.get_column(name)?;
+                let _value = row_data.get_column(name)?;
                 Ok(ComputedValue::from_column_value(value))
             }
             Expression::Constant(value) => Ok(ComputedValue::from_column_value(value.clone())),
@@ -611,7 +611,7 @@ mod tests {
         let results = index.search(&1).unwrap();
         assert_eq!(results, vec![100]);
 
-        let stats = index.stats();
+        let _stats = index.stats();
         assert_eq!(stats.total_entries, 1);
         assert_eq!(stats.filtered_entries, 1);
     }
@@ -699,7 +699,7 @@ mod tests {
         row.set_column("quantity".to_string(), ColumnValue::Integer(5));
         row.set_column("price".to_string(), ColumnValue::Integer(10));
 
-        let result = expression.evaluate(&row).unwrap();
+        let _result = expression.evaluate(&row).unwrap();
         assert_eq!(result, ComputedValue::Integer(50));
     }
 }

@@ -34,7 +34,7 @@
 
 use crate::{DbError, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 
 /// Privilege type enumeration
@@ -606,7 +606,7 @@ impl PrivilegeAnalyzer {
 
     /// Get analysis statistics
     pub fn get_stats(&self) -> (u64, u64, u64, u64) {
-        let stats = self.stats.read();
+        let _stats = self.stats.read();
         (
             stats.total_grants,
             stats.unused_privileges,
@@ -759,7 +759,7 @@ mod tests {
         let priv3 = PrivilegeType::System("CREATE INDEX".to_string());
 
         // Grant same privileges to multiple users
-        for i in 1..=5 {
+        for _i in 1..=5 {
             let user = format!("user{}", i);
             analyzer.grant_privilege(&user, priv1.clone(), "admin").unwrap();
             analyzer.grant_privilege(&user, priv2.clone(), "admin").unwrap();

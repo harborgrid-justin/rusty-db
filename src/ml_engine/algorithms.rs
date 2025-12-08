@@ -3,7 +3,7 @@
 //! Pure Rust implementations of core ML algorithms optimized for in-database execution.
 //! All algorithms support incremental updates and zero-copy integration with the query engine.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::{Dataset, Hyperparameters, EvaluationMetrics};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -50,7 +50,7 @@ impl LinearRegression {
 
         // Compute X^T X
         let mut xtx = vec![vec![0.0; n_features]; n_features];
-        for i in 0..n_features {
+        for _i in 0..n_features {
             for j in 0..n_features {
                 let mut sum = 0.0;
                 for sample in &dataset.features {
@@ -62,7 +62,7 @@ impl LinearRegression {
 
         // Compute X^T y
         let mut xty = vec![0.0; n_features];
-        for i in 0..n_features {
+        for _i in 0..n_features {
             let mut sum = 0.0;
             for (sample, &target) in dataset.features.iter().zip(targets.iter()) {
                 sum += sample[i] * target;
@@ -122,7 +122,7 @@ impl LinearRegression {
         let mut aug = vec![vec![0.0; n + 1]; n];
 
         // Create augmented matrix
-        for i in 0..n {
+        for _i in 0..n {
             for j in 0..n {
                 aug[i][j] = a[i][j];
             }
@@ -130,7 +130,7 @@ impl LinearRegression {
         }
 
         // Forward elimination with partial pivoting
-        for i in 0..n {
+        for _i in 0..n {
             // Find pivot
             let mut max_row = i;
             for k in (i + 1)..n {
@@ -156,7 +156,7 @@ impl LinearRegression {
 
         // Back substitution
         let mut x = vec![0.0; n];
-        for i in (0..n).rev() {
+        for _i in (0..n).rev() {
             x[i] = aug[i][n];
             for j in (i + 1)..n {
                 x[i] -= aug[i][j] * x[j];
@@ -240,7 +240,7 @@ impl LogisticRegression {
 
             // Update weights with L2 regularization
             let n_samples = dataset.num_samples() as f64;
-            for i in 0..n_features {
+            for _i in 0..n_features {
                 self.weights[i] -= self.learning_rate * (
                     weight_gradient[i] / n_samples + self.regularization * self.weights[i]
                 );
@@ -613,7 +613,7 @@ impl RandomForest {
 
         for tree in &self.trees {
             let tree_preds = tree.predict(features)?;
-            for i in 0..n_samples {
+            for _i in 0..n_samples {
                 predictions[i] += tree_preds[i];
             }
         }
@@ -702,7 +702,7 @@ impl KMeans {
                 counts[cluster] += 1;
             }
 
-            for i in 0..self.k {
+            for _i in 0..self.k {
                 if counts[i] > 0 {
                     for j in 0..n_features {
                         new_centroids[i][j] /= counts[i] as f64;
@@ -813,7 +813,7 @@ impl NaiveBayes {
             let mut means = vec![0.0; n_features];
             let mut variances = vec![0.0; n_features];
 
-            for i in 0..n_features {
+            for _i in 0..n_features {
                 let values: Vec<f64> = class_samples.iter().map(|s| s[i]).collect();
                 let mean = values.iter().sum::<f64>() / values.len() as f64;
                 let variance = values.iter()
@@ -848,7 +848,7 @@ impl NaiveBayes {
                 let means = &self.means[&class];
                 let variances = &self.variances[&class];
 
-                for i in 0..sample.len() {
+                for _i in 0..sample.len() {
                     let mean = means[i];
                     let variance = variances[i];
                     let x = sample[i];

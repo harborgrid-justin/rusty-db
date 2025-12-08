@@ -19,11 +19,11 @@
 
 use crate::error::DbError;
 use crate::common::NodeId;
-use crate::rac::cache_fusion::{ResourceId, ResourceClass, LockValueBlock, BlockMode};
+use crate::rac::cache_fusion::{ResourceId, LockValueBlock, BlockMode};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
 
@@ -429,7 +429,7 @@ impl GlobalResourceDirectory {
 
         // Initialize hash buckets with round-robin master assignment
         let member_count = cluster_members.len().max(1);
-        for i in 0..HASH_BUCKETS {
+        for _i in 0..HASH_BUCKETS {
             let master_idx = i % member_count;
             let master = cluster_members.get(master_idx)
                 .cloned()
@@ -686,7 +686,7 @@ impl GlobalResourceDirectory {
             entry.access_stats.remote_accesses = 0;
 
             // Send remaster message
-            let message = GrdMessage::RemasterRequest {
+            let _message = GrdMessage::RemasterRequest {
                 resource_id: request.resource_id.clone(),
                 new_master: request.new_master.clone(),
                 reason: format!("{:?}", request.reason),
@@ -1030,7 +1030,7 @@ mod tests {
             class: ResourceClass::Data,
         };
 
-        let result = grd.register_resource(resource.clone(), node_id.clone());
+        let _result = grd.register_resource(resource.clone(), node_id.clone());
         assert!(result.is_ok());
 
         let master = grd.get_master(&resource);

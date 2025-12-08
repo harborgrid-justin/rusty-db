@@ -22,11 +22,11 @@
 
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::RefCell;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::ptr::{self, NonNull};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex, RwLock, Weak};
-use std::time::{Duration, Instant, SystemTime};
+use std::sync::{Arc, RwLock, Weak};
+use std::time::{Duration};
 use std::backtrace::Backtrace;
 
 use crate::{DbError, Result};
@@ -226,7 +226,7 @@ impl Slab {
         let mut current = base.as_ptr().add(color * 64); // Apply cache coloring
         let mut freelist_head = None;
 
-        for i in 0..objects_per_slab {
+        for _i in 0..objects_per_slab {
             let next = if i < objects_per_slab - 1 {
                 current.add(object_size)
             } else {
@@ -1033,7 +1033,7 @@ impl ArenaAllocator {
 
     /// Create a new top-level context
     pub fn create_context(&self, name: String, limit: usize) -> Result<Arc<Mutex<MemoryContext>>> {
-        let context = MemoryContext::new_top_level(name, limit)?;
+        let _context = MemoryContext::new_top_level(name, limit)?;
         let id = context.lock().unwrap().id;
 
         self.contexts.write().unwrap().insert(id, Arc::downgrade(&context));
@@ -2898,7 +2898,7 @@ impl MemoryApi {
 
     /// Get memory usage summary
     pub fn api_get_usage_summary(&self) -> UsageSummary {
-        let stats = self.manager.get_comprehensive_stats();
+        let _stats = self.manager.get_comprehensive_stats();
 
         UsageSummary {
             total_memory: stats.total_usage.total_memory,

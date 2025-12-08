@@ -2,9 +2,9 @@
 // Provides comprehensive workload capture, analysis, and historical trending
 
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use crate::Result;
 use crate::error::DbError;
@@ -840,7 +840,7 @@ mod tests {
     #[test]
     fn test_repository_creation() {
         let repo = WorkloadRepository::new();
-        let stats = repo.get_repository_stats();
+        let _stats = repo.get_repository_stats();
         assert_eq!(stats.total_snapshots, 0);
         assert_eq!(stats.total_baselines, 0);
     }

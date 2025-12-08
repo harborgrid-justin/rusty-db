@@ -11,9 +11,9 @@
 //! - Recovery procedures for detected issues
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use tokio::task;
 use crate::Result;
 use crate::error::DbError;
@@ -205,7 +205,7 @@ impl BlockVerifier {
         }
 
         // Verify row chain
-        for i in 1..block.rows.len() {
+        for _i in 1..block.rows.len() {
             if !block.rows[i].verify_chain(&block.rows[i - 1]) {
                 issues.push(VerificationIssue::new(
                     IssueSeverity::Critical,
@@ -283,7 +283,7 @@ impl BlockVerifier {
         let mut issues = Vec::new();
 
         // Check rows have increasing timestamps
-        for i in 1..block.rows.len() {
+        for _i in 1..block.rows.len() {
             if block.rows[i].timestamp < block.rows[i - 1].timestamp {
                 issues.push(VerificationIssue::new(
                     IssueSeverity::Warning,
@@ -545,7 +545,7 @@ impl VerificationScheduler {
 
     /// Run verification
     pub async fn run_verification(&self, table: &BlockchainTable) -> Result<VerificationResult> {
-        let result = ParallelVerifier::verify_all_blocks(table).await?;
+        let _result = ParallelVerifier::verify_all_blocks(table).await?;
 
         // Update last verification time
         let mut last = self.last_verification.write().unwrap();
@@ -631,7 +631,7 @@ impl TamperDetector {
     /// Generate tamper detection report
     pub fn generate_report(table: &BlockchainTable) -> TamperReport {
         let issues = Self::detect_tampering(table);
-        let stats = table.get_stats();
+        let _stats = table.get_stats();
         let issues_found = issues.len();
         let status = if issues.is_empty() {
             TamperStatus::Clean
@@ -787,7 +787,7 @@ mod tests {
 
         block.finalize().unwrap();
 
-        let result = BlockVerifier::verify_block(&block).unwrap();
+        let _result = BlockVerifier::verify_block(&block).unwrap();
         assert!(result.passed);
     }
 

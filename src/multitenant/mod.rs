@@ -194,7 +194,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 /// Unique identifier for a tenant
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -435,7 +435,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_multitenant_database_creation() {
-        let result = MultiTenantDatabase::new("TEST_CDB").await;
+        let _result = MultiTenantDatabase::new("TEST_CDB").await;
         assert!(result.is_ok());
     }
 }

@@ -19,11 +19,11 @@
 use crate::error::DbError;
 use crate::common::{PageId, TransactionId, NodeId};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
-use parking_lot::{RwLock, Mutex};
-use tokio::sync::{mpsc, oneshot};
+use std::time::{Duration};
+use parking_lot::{RwLock};
+use tokio::sync::{mpsc};
 
 // ============================================================================
 // Constants
@@ -534,7 +534,7 @@ impl GlobalCacheService {
             .push(request);
 
         // Send message to master
-        let message = CacheFusionMessage::BlockRequest {
+        let _message = CacheFusionMessage::BlockRequest {
             resource_id,
             requested_mode: mode,
             requestor: self.node_id.clone(),
@@ -602,7 +602,7 @@ impl GlobalCacheService {
         let mut cache = self.local_cache.write();
 
         // Get or create block state
-        let state = cache.entry(resource_id.clone()).or_insert_with(|| {
+        let _state = cache.entry(resource_id.clone()).or_insert_with(|| {
             BlockState {
                 resource_id: resource_id.clone(),
                 mode: BlockMode::Null,
@@ -656,7 +656,7 @@ impl GlobalCacheService {
         }
 
         // Create transfer message
-        let message = CacheFusionMessage::BlockTransfer {
+        let _message = CacheFusionMessage::BlockTransfer {
             resource_id: resource_id.clone(),
             block_data,
             source_mode,
@@ -694,7 +694,7 @@ impl GlobalCacheService {
         let holder = self.find_past_image_holder(&resource_id, as_of_scn).await?;
 
         // Request past image
-        let message = CacheFusionMessage::PastImageRequest {
+        let _message = CacheFusionMessage::PastImageRequest {
             resource_id: resource_id.clone(),
             as_of_scn,
             requestor: self.node_id.clone(),
@@ -711,7 +711,7 @@ impl GlobalCacheService {
 
     /// Invalidate block across all instances
     pub async fn invalidate_block(&self, resource_id: ResourceId, new_scn: u64) -> std::result::Result<(), DbError> {
-        let message = CacheFusionMessage::BlockInvalidate {
+        let _message = CacheFusionMessage::BlockInvalidate {
             resource_id: resource_id.clone(),
             new_scn,
             invalidator: self.node_id.clone(),
@@ -844,7 +844,7 @@ impl GlobalCacheService {
             transaction_id,
         ).await?;
 
-        let message = CacheFusionMessage::BlockGrant {
+        let _message = CacheFusionMessage::BlockGrant {
             resource_id: grant.resource_id,
             granted_mode: grant.granted_mode,
             block_data: grant.block_data,
@@ -869,7 +869,7 @@ impl GlobalCacheService {
     ) -> std::result::Result<(), DbError> {
         let mut cache = self.local_cache.write();
 
-        let state = cache.entry(resource_id.clone()).or_insert_with(|| {
+        let _state = cache.entry(resource_id.clone()).or_insert_with(|| {
             BlockState {
                 resource_id: resource_id.clone(),
                 mode: BlockMode::Null,
@@ -938,7 +938,7 @@ pub struct GlobalEnqueueService {
     wait_queue: Arc<Mutex<VecDeque<LockWaiter>>>,
 
     /// Deadlock detection graph
-    wait_for_graph: Arc<RwLock<HashMap<NodeId, HashSet<NodeId>>>>,
+    wait_for_graph: Arc<RwLock<HashMap<NodeId<NodeId>>>>,
 
     /// GES statistics
     stats: Arc<RwLock<GesStatistics>>,
@@ -1046,7 +1046,7 @@ impl GlobalEnqueueService {
     ) -> std::result::Result<Option<LockGrant>, DbError> {
         let mut registry = self.lock_registry.write();
 
-        let state = registry.entry(resource_id.clone()).or_insert_with(|| {
+        let _state = registry.entry(resource_id.clone()).or_insert_with(|| {
             LockState {
                 resource_id: resource_id.clone(),
                 lock_type: LockType::Null,
@@ -1156,7 +1156,7 @@ impl GlobalEnqueueService {
     fn has_cycle(
         &self,
         node: &NodeId,
-        graph: &HashMap<NodeId, HashSet<NodeId>>,
+        graph: &HashMap<NodeId<NodeId>>,
         visited: &mut HashSet<NodeId>,
         rec_stack: &mut HashSet<NodeId>,
     ) -> bool {

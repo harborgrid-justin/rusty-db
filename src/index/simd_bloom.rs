@@ -371,14 +371,14 @@ mod tests {
         let mut bloom = SimdBloomFilter::new(1000, 0.01);
 
         // Insert 1000 items
-        for i in 0..1000 {
+        for _i in 0..1000 {
             let key = format!("key_{}", i);
             bloom.insert(key.as_bytes());
         }
 
         // Test 1000 non-existent items
         let mut false_positives = 0;
-        for i in 1000..2000 {
+        for _i in 1000..2000 {
             let key = format!("key_{}", i);
             if bloom.contains(key.as_bytes()) {
                 false_positives += 1;
@@ -443,11 +443,11 @@ mod tests {
     fn test_stats() {
         let mut bloom = SimdBloomFilter::new(1000, 0.01);
 
-        for i in 0..500 {
+        for _i in 0..500 {
             bloom.insert(format!("key_{}", i).as_bytes());
         }
 
-        let stats = bloom.stats();
+        let _stats = bloom.stats();
         println!("Stats: {:?}", stats);
 
         assert_eq!(stats.num_items, 500);
@@ -478,7 +478,7 @@ mod tests {
         let mut bloom = SimdBloomFilter::new(1_000_000, 0.01);
 
         // Insert 1M items
-        for i in 0..1_000_000 {
+        for _i in 0..1_000_000 {
             let key = format!("key_{}", i);
             bloom.insert(key.as_bytes());
         }
@@ -488,7 +488,7 @@ mod tests {
         assert!(bloom.contains(b"key_500000"));
         assert!(bloom.contains(b"key_999999"));
 
-        let stats = bloom.stats();
+        let _stats = bloom.stats();
         println!("Large dataset stats: {:?}", stats);
         assert!(stats.fpr < 0.02);
     }

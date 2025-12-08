@@ -7,7 +7,7 @@
 /// - JSON indexing for fast queries
 /// - JSON aggregation functions
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use serde_json::{Value as JsonValue, json};
 use std::collections::HashMap;
 
@@ -20,7 +20,7 @@ pub struct JsonData {
 impl JsonData {
     /// Create new JSON data from string
     pub fn from_str(s: &str) -> Result<Self> {
-        let value = serde_json::from_str(s)
+        let _value = serde_json::from_str(s)
             .map_err(|e| DbError::InvalidInput(format!("Invalid JSON: {}", e)))?;
         Ok(Self { value })
     }

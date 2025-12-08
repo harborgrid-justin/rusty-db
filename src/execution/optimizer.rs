@@ -1,7 +1,7 @@
 use crate::execution::planner::{PlanNode, AggregateFunction};
 use crate::parser::JoinType;
 use crate::error::DbError;
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::hash::{Hash, Hasher};
@@ -231,7 +231,7 @@ impl Optimizer {
         match plan {
             PlanNode::TableScan { table, columns } => {
                 // Check if an index would be beneficial
-                let stats = self.statistics.read();
+                let _stats = self.statistics.read();
                 if let Some(table_stats) = stats.tables.get(&table) {
                     // Would evaluate index selectivity here
                     // For now, keep as table scan
@@ -288,7 +288,7 @@ impl Optimizer {
     fn estimate_io_cost(&self, plan: &PlanNode, cardinality: f64) -> f64 {
         match plan {
             PlanNode::TableScan { table, .. } => {
-                let stats = self.statistics.read();
+                let _stats = self.statistics.read();
                 if let Some(table_stats) = stats.tables.get(table) {
                     table_stats.num_pages as f64
                 } else {
@@ -303,7 +303,7 @@ impl Optimizer {
     pub fn estimate_cardinality(&self, plan: &PlanNode) -> f64 {
         match plan {
             PlanNode::TableScan { table, .. } => {
-                let stats = self.statistics.read();
+                let _stats = self.statistics.read();
                 if let Some(table_stats) = stats.tables.get(table) {
                     table_stats.row_count as f64
                 } else {
@@ -389,7 +389,7 @@ impl Optimizer {
 
     /// Select the best index for a table scan (if available)
     pub fn select_index(&self, table: &str, _filter: Option<&str>) -> Option<String> {
-        let stats = self.statistics.read();
+        let _stats = self.statistics.read();
         if let Some(table_stats) = stats.tables.get(table) {
             // Select most selective index
             if !table_stats.indexes.is_empty() {
@@ -401,7 +401,7 @@ impl Optimizer {
 
     /// Update statistics for a table
     pub fn update_statistics(&self, table: String, stats: SingleTableStatistics) {
-        let mut statistics = self.statistics.write();
+        let statistics = self.statistics.write();
         statistics.tables.insert(table, stats);
     }
 }
@@ -948,7 +948,7 @@ impl Optimizer {
     fn eliminate_common_subexpressions(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
         let mut cache = self.cse_cache.write();
 
-        let hash = self.hash_plan(&plan);
+        let _hash = self.hash_plan(&plan);
         let expr_hash = ExpressionHash(hash);
 
         if let Some(cached) = cache.get(&expr_hash) {
@@ -1269,7 +1269,7 @@ impl BitSet {
             return;
         }
 
-        for i in start..n {
+        for _i in start..n {
             Self::enumerate_recursive(n, size - 1, i + 1, current | (1 << i), result);
         }
     }
@@ -1279,7 +1279,7 @@ impl BitSet {
         let mut result = Vec::new();
         let n = 64 - self.bits.leading_zeros();
 
-        for i in 1..(1 << n) {
+        for _i in 1..(1 << n) {
             if i & self.bits == i && i != self.bits {
                 let left = BitSet { bits: i };
                 let right = BitSet { bits: self.bits ^ i };

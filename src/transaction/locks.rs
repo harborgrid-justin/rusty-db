@@ -2,12 +2,12 @@
 // Provides hierarchical locking with intent locks, deadlock detection,
 // lock escalation, and multi-granularity locking
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 use parking_lot::{Mutex, RwLock, Condvar};
 use serde::{Deserialize, Serialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::TransactionId;
 
 /// Lock granularity levels in hierarchical locking
@@ -275,7 +275,7 @@ pub struct HierarchicalLockManager {
     /// Lock table indexed by resource
     lock_table: Arc<RwLock<HashMap<LockResource, Arc<Mutex<LockTableEntry>>>>>,
     /// Transaction lock holdings (for easy release)
-    txn_locks: Arc<RwLock<HashMap<TransactionId, HashSet<LockResource>>>>,
+    txn_locks: Arc<RwLock<HashMap<TransactionId<LockResource>>>>,
     /// Wait-for graph for deadlock detection
     wait_for_graph: Arc<RwLock<WaitForGraph>>,
     /// Configuration
@@ -307,7 +307,7 @@ impl Default for LockManagerConfig {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct LockManagerStats {
     pub locks_acquired: u64,
     pub locks_released: u64,
@@ -343,7 +343,7 @@ impl HierarchicalLockManager {
         self.acquire_intent_locks(txn_id, &resource, mode)?;
 
         // Now acquire the actual lock
-        let result = self.acquire_lock_internal(txn_id, resource.clone(), mode);
+        let _result = self.acquire_lock_internal(txn_id, resource.clone(), mode);
 
         // Update statistics
         if result.is_ok() {
@@ -630,9 +630,9 @@ impl HierarchicalLockManager {
 #[derive(Debug)]
 pub struct WaitForGraph {
     /// Edges: waiting_txn -> set of transactions it's waiting for
-    edges: HashMap<TransactionId, HashSet<TransactionId>>,
+    edges: HashMap<TransactionId<TransactionId>>,
     /// Transaction start times for victim selection
-    timestamps: HashMap<TransactionId, Instant>,
+    timestamps: HashMap<TransactionId>,
 }
 
 impl WaitForGraph {
@@ -731,7 +731,7 @@ pub struct LockEscalationManager {
     stats: Arc<RwLock<EscalationStats>>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct EscalationStats {
     pub total_escalations: u64,
     pub row_to_page: u64,

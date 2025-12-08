@@ -13,7 +13,7 @@
 //! - Data classification and sensitivity levels
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use crate::Result;
@@ -704,7 +704,7 @@ mod tests {
     fn test_row_policy() {
         let manager = FgacManager::new();
 
-        let policy = RowLevelPolicy {
+        let _policy = RowLevelPolicy {
             id: "pol1".to_string(),
             name: "User Data Policy".to_string(),
             table_id: "users".to_string(),
@@ -766,7 +766,7 @@ mod tests {
     fn test_predicate_generation() {
         let manager = FgacManager::new();
 
-        let policy = RowLevelPolicy {
+        let _policy = RowLevelPolicy {
             id: "pol1".to_string(),
             name: "Department Policy".to_string(),
             table_id: "employees".to_string(),
@@ -782,7 +782,7 @@ mod tests {
 
         manager.add_row_policy(policy).unwrap();
 
-        let context = SecurityContext {
+        let _context = SecurityContext {
             user_id: "user1".to_string(),
             roles: HashSet::new(),
             session_attributes: HashMap::new(),

@@ -3,7 +3,7 @@
 //! High-performance file manager with batched operations, Direct I/O,
 //! and buffer pooling.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::io::{
     AsyncIoEngine, IoRequest, IoOpType, IoHandle, AlignedBuffer, BufferPool,
     BufferPoolConfig, PAGE_SIZE, SECTOR_SIZE, align_up, align_down,
@@ -494,7 +494,7 @@ impl FileManager {
 
     /// Read a page from file
     pub async fn read_page(&self, handle: FileHandle, offset: u64) -> Result<Vec<u8>> {
-        self.read(handle, ReadOptions::new(offset, PAGE_SIZE)).await
+        self.read(handleOptions::new(offset, PAGE_SIZE)).await
     }
 
     /// Write a page to file
@@ -506,7 +506,7 @@ impl FileManager {
                 data.len()
             )));
         }
-        self.write(handle, WriteOptions::new(offset), data).await
+        self.write(handleOptions::new(offset), data).await
     }
 
     /// Read data from file

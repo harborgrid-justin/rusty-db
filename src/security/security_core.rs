@@ -16,10 +16,10 @@
 //! - **SecurityDashboard**: Real-time security visualization
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
+use std::time::{SystemTime};
 use crate::Result;
 use crate::error::DbError;
 
@@ -549,7 +549,7 @@ pub struct DefenseCoverageReport {
 /// Correlates security events to detect attack patterns
 pub struct SecurityEventCorrelator {
     /// Event window storage
-    event_windows: Arc<RwLock<HashMap<String, VecDeque<CorrelatedEvent>>>>,
+    event_windows: Arc<RwLock<HashMap<String<CorrelatedEvent>>>>,
     /// Attack patterns
     attack_patterns: Arc<RwLock<Vec<AttackPattern>>>,
     /// Detected incidents
@@ -1254,7 +1254,7 @@ pub struct SecurityMetrics {
     /// Metrics storage
     metrics: Arc<RwLock<HashMap<String, MetricValue>>>,
     /// Time-series data
-    time_series: Arc<RwLock<HashMap<String, VecDeque<TimeSeriesPoint>>>>,
+    time_series: Arc<RwLock<HashMap<String<TimeSeriesPoint>>>>,
 }
 
 /// Metric value
@@ -1439,7 +1439,7 @@ impl PenetrationTestHarness {
         let mut results = Vec::new();
 
         for scenario in scenarios.iter().filter(|s| s.enabled) {
-            let result = self.run_test(scenario)?;
+            let _result = self.run_test(scenario)?;
             results.push(result);
         }
 
@@ -1770,7 +1770,7 @@ mod tests {
     fn test_policy_engine() {
         let engine = SecurityPolicyEngine::new();
 
-        let policy = SecurityPolicy {
+        let _policy = SecurityPolicy {
             id: "pol1".to_string(),
             name: "Test Policy".to_string(),
             policy_type: PolicyType::AccessControl,
@@ -1794,7 +1794,7 @@ mod tests {
 
         engine.add_policy(policy).unwrap();
 
-        let context = EvaluationContext {
+        let _context = EvaluationContext {
             user_id: "admin".to_string(),
             roles: HashSet::new(),
             resource: "table1".to_string(),
@@ -1843,7 +1843,7 @@ mod tests {
         let metrics = SecurityMetrics::new();
 
         metrics.record("test_metric", 42.0);
-        let value = metrics.get("test_metric");
+        let _value = metrics.get("test_metric");
         assert_eq!(value, Some(42.0));
     }
 }

@@ -35,7 +35,7 @@
 
 use crate::buffer::eviction::{EvictionPolicy, EvictionStats};
 use crate::buffer::page_cache::{BufferFrame, FrameId};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use parking_lot::Mutex;
@@ -305,7 +305,7 @@ impl LirsState {
 /// ```rust
 /// use rusty_db::buffer::lirs::LirsEvictionPolicy;
 ///
-/// let policy = LirsEvictionPolicy::new(1000);
+/// let _policy = LirsEvictionPolicy::new(1000);
 /// // Use with BufferPoolManager
 /// ```
 pub struct LirsEvictionPolicy {
@@ -351,7 +351,7 @@ impl LirsEvictionPolicy {
 
     /// Get LIR/HIR sizes (for monitoring)
     pub fn lir_hir_sizes(&self) -> (usize, usize) {
-        let state = self.state.lock();
+        let _state = self.state.lock();
         (state.current_lir_count, state.queue.len())
     }
 
@@ -469,15 +469,23 @@ impl EvictionPolicy for LirsEvictionPolicy {
         // Already handled in evict_from_queue
         // Clean up if necessary
         let mut state = self.state.lock();
-        if let Some(entry) = state.directory.get_mut(&frame_id) {
+        let should_remove = if let Some(entry) = state.directory.get_mut(&frame_id) {
             if entry.status == BlockStatus::ResidentHir {
+                entry.in_queue = false;
                 if entry.in_stack {
                     entry.status = BlockStatus::NonResidentHir;
+                    false
                 } else {
-                    state.directory.remove(&frame_id);
+                    true // mark for removal
                 }
-                entry.in_queue = false;
+            } else {
+                false
             }
+        } else {
+            false
+        };
+        if should_remove {
+            state.directory.remove(&frame_id);
         }
     }
 
@@ -493,7 +501,7 @@ impl EvictionPolicy for LirsEvictionPolicy {
     }
 
     fn stats(&self) -> EvictionStats {
-        let state = self.state.lock();
+        let _state = self.state.lock();
         let victim_searches = self.victim_searches.load(Ordering::Relaxed);
 
         EvictionStats {
@@ -523,23 +531,23 @@ mod tests {
 
     #[test]
     fn test_lirs_basic() {
-        let frames = create_test_frames(10);
-        let policy = LirsEvictionPolicy::new(5);
+        let _frames = create_test_frames(10);
+        let _policy = LirsEvictionPolicy::new(5);
 
         // Access frames 0-4
-        for i in 0..5 {
+        for _i in 0..5 {
             policy.record_access(i);
         }
 
-        let (lir_count, hir_count) = policy.lir_hir_sizes();
+        let (_lir_count, hir_count) = policy.lir_hir_sizes();
         // Most should be HIR initially
         assert!(hir_count > 0);
     }
 
     #[test]
     fn test_lirs_promotion() {
-        let frames = create_test_frames(10);
-        let policy = LirsEvictionPolicy::new(5);
+        let _frames = create_test_frames(10);
+        let _policy = LirsEvictionPolicy::new(5);
 
         // Access 0 multiple times to promote to LIR
         for _ in 0..3 {
@@ -547,7 +555,7 @@ mod tests {
         }
 
         // Fill rest of cache
-        for i in 1..5 {
+        for _i in 1..5 {
             policy.record_access(i);
         }
 
@@ -557,31 +565,31 @@ mod tests {
 
     #[test]
     fn test_lirs_eviction() {
-        let frames = create_test_frames(10);
-        let policy = LirsEvictionPolicy::new(3);
+        let _frames = create_test_frames(10);
+        let _policy = LirsEvictionPolicy::new(3);
 
         // Fill cache
-        for i in 0..3 {
+        for _i in 0..3 {
             policy.record_access(i);
         }
 
         // Add more frames (should trigger eviction)
-        for i in 3..6 {
+        for _i in 3..6 {
             policy.record_access(i);
         }
 
-        let stats = policy.stats();
+        let _stats = policy.stats();
         assert!(stats.evictions > 0);
     }
 
     #[test]
     fn test_lirs_scan_resistance() {
-        let frames = create_test_frames(20);
-        let policy = LirsEvictionPolicy::new(5);
+        let _frames = create_test_frames(20);
+        let _policy = LirsEvictionPolicy::new(5);
 
         // Create hot set 0-2
         for _ in 0..10 {
-            for i in 0..3 {
+            for _i in 0..3 {
                 policy.record_access(i);
             }
         }
@@ -589,7 +597,7 @@ mod tests {
         let (lir_before, _) = policy.lir_hir_sizes();
 
         // Sequential scan 10-19 (should not evict hot set)
-        for i in 10..20 {
+        for _i in 10..20 {
             policy.record_access(i);
         }
 
@@ -602,11 +610,11 @@ mod tests {
 
     #[test]
     fn test_lirs_workload_adaptation() {
-        let policy = LirsEvictionPolicy::new(10);
+        let _policy = LirsEvictionPolicy::new(10);
 
         // Phase 1: Frequent accesses to 0-4
         for _ in 0..5 {
-            for i in 0..5 {
+            for _i in 0..5 {
                 policy.record_access(i);
             }
         }
@@ -615,7 +623,7 @@ mod tests {
 
         // Phase 2: Switch to different pattern
         for _ in 0..5 {
-            for i in 5..10 {
+            for _i in 5..10 {
                 policy.record_access(i);
             }
         }
@@ -628,10 +636,10 @@ mod tests {
 
     #[test]
     fn test_lirs_custom_ratio() {
-        let policy = LirsEvictionPolicy::with_lir_ratio(100, 0.99);
+        let _policy = LirsEvictionPolicy::with_lir_ratio(100, 0.99);
 
         // Access pages
-        for i in 0..100 {
+        for _i in 0..100 {
             policy.record_access(i);
         }
 

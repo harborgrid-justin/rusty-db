@@ -4,9 +4,9 @@
 /// tracking for stored procedures, functions, packages, and triggers.
 
 use crate::{Result, DbError};
-use crate::procedures::parser::{PlSqlParser, PlSqlBlock, Statement, Expression, Declaration, PlSqlType};
+use crate::procedures::parser::{PlSqlParser, PlSqlBlock, Statement, Expression, PlSqlType};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 
@@ -34,7 +34,7 @@ impl CompilationResult {
         self.errors.push(error);
     }
 
-    pub fn add_warning(&mut self, warning: CompilationWarning) {
+    pub fn add_warning(&mut selfing: CompilationWarning) {
         self.warnings.push(warning);
     }
 
@@ -518,7 +518,7 @@ impl PlSqlCompiler {
             if obj.status == CompilationStatus::Invalid || obj.status == CompilationStatus::NeedsRecompilation {
                 // TODO: Get source code for object and recompile
                 // For now, create a placeholder result
-                let result = CompilationResult::new();
+                let _result = CompilationResult::new();
                 results.insert(name.clone(), result);
             }
         }
@@ -588,7 +588,7 @@ impl Default for SymbolTable {
 
 /// Dependency graph
 pub struct DependencyGraph {
-    graph: Arc<RwLock<HashMap<String, HashSet<String>>>>,
+    graph: Arc<RwLock<HashMap<String<String>>>>,
 }
 
 impl DependencyGraph {
@@ -670,7 +670,7 @@ mod tests {
     fn test_compile_simple_block() -> Result<()> {
         let mut compiler = PlSqlCompiler::new();
 
-        let source = r#"
+        let _source = r#"
             DECLARE
                 x INTEGER := 10;
             BEGIN
@@ -678,7 +678,7 @@ mod tests {
             END;
         "#;
 
-        let result = compiler.compile(source)?;
+        let _result = compiler.compile(source)?;
 
         assert!(result.success);
         assert_eq!(result.errors.len(), 0);
@@ -690,13 +690,13 @@ mod tests {
     fn test_undefined_variable_error() -> Result<()> {
         let mut compiler = PlSqlCompiler::new();
 
-        let source = r#"
+        let _source = r#"
             BEGIN
                 y := x + 5;
             END;
         "#;
 
-        let result = compiler.compile(source)?;
+        let _result = compiler.compile(source)?;
 
         assert!(!result.success);
         assert!(result.errors.iter().any(|e| e.error_type == ErrorType::UndefinedVariable));

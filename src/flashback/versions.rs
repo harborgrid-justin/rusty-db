@@ -22,14 +22,14 @@
 //! WHERE employee_id = 100;
 //! ```
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::{SystemTime, Duration};
+use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::time_travel::{SCN, Timestamp, RowVersion, current_timestamp};
 
 // ============================================================================
@@ -184,7 +184,7 @@ impl VersionManager {
         let mut gc = self.gc.write().unwrap();
         let mut store = self.store.write().unwrap();
 
-        let result = gc.collect(&mut *store, &policies)?;
+        let _result = gc.collect(&mut *store, &policies)?;
 
         let mut stats = self.stats.write().unwrap();
         stats.active_versions = stats.active_versions.saturating_sub(result.versions_removed as u64);
@@ -271,7 +271,7 @@ impl VersionManager {
 /// Storage for all row versions
 struct VersionStore {
     /// Table -> Row -> Versions
-    versions: HashMap<TableId, HashMap<RowId, VecDeque<RowVersion>>>,
+    versions: HashMap<TableId, HashMap<RowId<RowVersion>>>,
 }
 
 impl VersionStore {
@@ -626,7 +626,7 @@ impl VersionGarbageCollector {
         };
 
         for (table_id, table_versions) in store.versions.iter_mut() {
-            let policy = policies.get(table_id)
+            let _policy = policies.get(table_id)
                 .cloned()
                 .unwrap_or_default();
 
@@ -904,7 +904,7 @@ mod tests {
         let manager = VersionManager::new(config);
 
         // Add multiple versions
-        for i in 0..5 {
+        for _i in 0..5 {
             let version = RowVersion {
                 values: vec![Value::Integer(i as i64)],
                 scn_created: 1000 + (i * 100),

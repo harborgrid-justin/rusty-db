@@ -39,16 +39,16 @@
 //! let plan = optimizer.optimize(&query)?;
 //!
 //! // Execute with adaptive monitoring
-//! let result = optimizer.execute_adaptive(&plan)?;
+//! let _result = optimizer.execute_adaptive(&plan)?;
 //! # Ok(())
 //! # }
 //! ```
 
 use crate::common::{TableId, IndexId, Value, Schema};
-use crate::error::{DbError, Result};
-use std::collections::{HashMap, VecDeque};
+use crate::error::Result;
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 
 // Submodules
 pub mod cost_model;
@@ -666,7 +666,7 @@ mod tests {
         let config = OptimizerConfig::default();
         let optimizer = QueryOptimizer::new(config);
 
-        let stats = optimizer.get_statistics();
+        let _stats = optimizer.get_statistics();
         assert_eq!(stats.queries_optimized, 0);
     }
 
@@ -681,12 +681,12 @@ mod tests {
         let plan = PhysicalPlan {
             plan_id: PlanId(1),
             operator: PhysicalOperator::SeqScan {
-                table_id: TableId(1),
+                table_id: 1,
                 filter: None,
             },
             cost: 100.0,
             cardinality: 1000,
-            schema: Schema { columns: vec![] },
+            schema: Schema::empty(),
             metadata: PlanMetadata {
                 created_at: SystemTime::now(),
                 optimizer_version: "1.0".to_string(),

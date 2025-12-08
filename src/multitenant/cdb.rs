@@ -23,10 +23,10 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tokio::sync::{RwLock, Mutex};
+use std::time::{Duration};
+use tokio::sync::{RwLock};
 use serde::{Serialize, Deserialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::pdb::{PluggableDatabase, PdbId, PdbConfig, PdbLifecycleState, PdbCreateMode};
 use super::isolation::ResourceLimits;
 
@@ -459,7 +459,7 @@ impl BackgroundProcessManager {
     /// Start all background processes
     pub async fn start_all(&self) -> Result<()> {
         // Start DBWR processes
-        for i in 0..self.config.dbwr_processes {
+        for _i in 0..self.config.dbwr_processes {
             self.start_process(
                 format!("DBWR{}", i),
                 BackgroundProcessType::DatabaseWriter,
@@ -467,7 +467,7 @@ impl BackgroundProcessManager {
         }
 
         // Start LGWR processes
-        for i in 0..self.config.lgwr_processes {
+        for _i in 0..self.config.lgwr_processes {
             self.start_process(
                 format!("LGWR{}", i),
                 BackgroundProcessType::LogWriter,
@@ -475,7 +475,7 @@ impl BackgroundProcessManager {
         }
 
         // Start CKPT processes
-        for i in 0..self.config.ckpt_processes {
+        for _i in 0..self.config.ckpt_processes {
             self.start_process(
                 format!("CKPT{}", i),
                 BackgroundProcessType::Checkpoint,
@@ -507,7 +507,7 @@ impl BackgroundProcessManager {
         }
 
         // Start recovery processes
-        for i in 0..self.config.recovery_processes {
+        for _i in 0..self.config.recovery_processes {
             self.start_process(
                 format!("RECO{}", i),
                 BackgroundProcessType::Recoverer,
@@ -524,7 +524,7 @@ impl BackgroundProcessManager {
             .unwrap()
             .as_secs();
 
-        let state = BackgroundProcessState {
+        let _state = BackgroundProcessState {
             name: name.clone(),
             process_type,
             started_at: now,
@@ -773,7 +773,7 @@ impl ContainerDatabase {
     /// Clone a PDB
     pub async fn clone_pdb(&self, source_pdb_id: PdbId, clone_name: &str) -> Result<PdbId> {
         let source_arc = self.registry.get(source_pdb_id).await?;
-        let source = source_arc.read().await;
+        let _source = source_arc.read().await;
 
         // Create clone config based on source
         let clone_config = PdbConfig {

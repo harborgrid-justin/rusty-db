@@ -183,7 +183,7 @@ impl CycleDetector {
         for row in rows {
             let mut hasher = DefaultHasher::new();
             row.hash(&mut hasher);
-            let hash = hasher.finish();
+            let _hash = hasher.finish();
             
             if self.seen_hashes.contains(&hash) {
                 return true;
@@ -200,7 +200,7 @@ impl CycleDetector {
         for row in rows {
             let mut hasher = DefaultHasher::new();
             row.hash(&mut hasher);
-            let hash = hasher.finish();
+            let _hash = hasher.finish();
             self.seen_hashes.insert(hash);
         }
     }
@@ -901,7 +901,7 @@ mod tests {
     fn test_cte_materialization() {
         let mut context = CteContext::new();
         
-        let result = QueryResult::new(
+        let _result = QueryResult::new(
             vec!["id".to_string(), "name".to_string()],
             vec![
                 vec!["1".to_string(), "Alice".to_string()],
@@ -930,7 +930,7 @@ mod tests {
             columns: vec!["*".to_string()],
         };
         
-        let result = evaluator.evaluate("test_cte", base_result, &recursive_plan);
+        let _result = evaluator.evaluate("test_cte", base_result, &recursive_plan);
         assert!(result.is_ok());
     }
     
@@ -1113,7 +1113,7 @@ mod tests {
         graph.build(&[cte1.clone(), cte2.clone()]);
         assert!(graph.has_circular_dependency());
         
-        let result = graph.topological_sort(&[cte1, cte2]);
+        let _result = graph.topological_sort(&[cte1, cte2]);
         assert!(result.is_err());
     }
     
@@ -1156,7 +1156,7 @@ mod tests {
         assert!(handler.enter_nesting().is_ok());
         
         // Should fail on third nesting
-        let result = handler.enter_nesting();
+        let _result = handler.enter_nesting();
         assert!(result.is_err());
     }
     
@@ -1259,7 +1259,7 @@ impl CteExecutionEngine {
         }
         
         // Execute the CTE query
-        let result = if cte.recursive {
+        let _result = if cte.recursive {
             self.execute_recursive_cte(cte)?
         } else {
             self.execute_non_recursive_cte(cte)?
@@ -1934,7 +1934,7 @@ mod extended_tests {
             columns: vec!["*".to_string()],
         };
         
-        let result = engine.execute_with_optimization(vec![cte], main_query);
+        let _result = engine.execute_with_optimization(vec![cte], main_query);
         assert!(result.is_ok());
     }
     
@@ -1987,7 +1987,7 @@ mod extended_tests {
             columns: vec!["*".to_string()],
         };
         
-        let result = evaluator.evaluate_incremental("test_cte", base, &plan);
+        let _result = evaluator.evaluate_incremental("test_cte", base, &plan);
         assert!(result.is_ok());
     }
     
@@ -2296,12 +2296,12 @@ pub mod optimization {
 /// CTE Execution Monitoring and Observability
 pub mod monitoring {
     use super::*;
-    use std::time::{Duration, Instant};
+    use std::time::{Duration};
     
     /// CTE Execution Monitor
     pub struct CteExecutionMonitor {
         executions: Vec<CteExecution>,
-        active_executions: HashMap<String, Instant>,
+        active_executions: HashMap<String>,
     }
     
     #[derive(Debug, Clone)]
@@ -2324,7 +2324,7 @@ pub mod monitoring {
         
         /// Start monitoring a CTE execution
         pub fn start_execution(&mut self, cte_name: String) {
-            self.active_executions.insert(cte_name, Instant::now());
+            self.active_executions.insert(cte_name::now());
         }
         
         /// End monitoring and record results

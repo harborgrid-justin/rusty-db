@@ -1,16 +1,16 @@
 //! Geometry Types and Serialization
 //!
 //! Provides Oracle Spatial-compatible geometry types with support for:
-//! - Basic 2D/3D geometries (Point, LineString, Polygon)
+//! - Basic 2D/3D geometries (Point, Polygon)
 //! - Multi-geometries (MultiPoint, MultiLineString, MultiPolygon)
-//! - Complex geometries (CircularString, CompoundCurve, GeometryCollection)
+//! - Complex geometries (CircularString, CompoundCurveCollection)
 //! - Measured geometries (M coordinate)
 //! - WKT/WKB serialization
 //! - GeoJSON support
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+
 
 /// Coordinate representation with optional Z (elevation) and M (measure) values
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -457,7 +457,7 @@ impl LinearRing {
     pub fn area(&self) -> f64 {
         // Shoelace formula
         let mut area = 0.0;
-        for i in 0..self.coords.len() - 1 {
+        for _i in 0..self.coords.len() - 1 {
             area += self.coords[i].x * self.coords[i + 1].y;
             area -= self.coords[i + 1].x * self.coords[i].y;
         }
@@ -467,7 +467,7 @@ impl LinearRing {
     pub fn is_clockwise(&self) -> bool {
         // Calculate signed area
         let mut area = 0.0;
-        for i in 0..self.coords.len() - 1 {
+        for _i in 0..self.coords.len() - 1 {
             area += (self.coords[i + 1].x - self.coords[i].x)
                 * (self.coords[i + 1].y + self.coords[i].y);
         }
@@ -813,7 +813,7 @@ impl CircularString {
     /// Calculate arc length (approximation)
     pub fn length(&self) -> f64 {
         let mut total_length = 0.0;
-        for i in (0..self.coords.len() - 2).step_by(2) {
+        for _i in (0..self.coords.len() - 2).step_by(2) {
             let p1 = &self.coords[i];
             let p2 = &self.coords[i + 1];
             let p3 = &self.coords[i + 2];
@@ -1086,7 +1086,7 @@ impl WkbParser {
         let num_points = Self::read_u32(data, 0, is_little_endian) as usize;
         let mut coords = Vec::with_capacity(num_points);
 
-        for i in 0..num_points {
+        for _i in 0..num_points {
             let offset = 4 + i * 16;
             let x = Self::read_f64(data, offset, is_little_endian);
             let y = Self::read_f64(data, offset + 8, is_little_endian);

@@ -4,11 +4,11 @@
 //! Captures INSERT, UPDATE, and DELETE operations with before/after images,
 //! column-level tracking, and low-latency event delivery.
 
-use std::collections::{HashMap, VecDeque, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, Duration, Instant};
-use parking_lot::{RwLock, Mutex};
+use std::time::{SystemTime};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, broadcast};
 use tokio::time::interval;
@@ -484,7 +484,7 @@ impl CDCEngine {
 
     /// Process a WAL entry and generate change events
     pub async fn process_wal_entry(&self, entry: &WALEntry) -> Result<Vec<ChangeEvent>> {
-        let state = *self.state.read();
+        let _state = *self.state.read();
         if state != CaptureState::Running {
             return Ok(Vec::new());
         }
@@ -863,7 +863,7 @@ impl CDCEngine {
         let next_batch_id = self.next_batch_id.clone();
         let config = self.config.clone();
         let shutdown = self.shutdown.clone();
-        let state = self.state.clone();
+        let _state = self.state.clone();
         let flush_fn = {
             let engine = self.clone_for_task();
             move |batch: ChangeEventBatch| {
@@ -923,7 +923,7 @@ impl CDCEngine {
             return;
         }
 
-        let stats = self.stats.clone();
+        let _stats = self.stats.clone();
         let shutdown = self.shutdown.clone();
 
         tokio::spawn(async move {

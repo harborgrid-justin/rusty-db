@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use tokio::sync::{RwLock, Semaphore};
 use utoipa::{OpenApi, ToSchema};
 use utoipa_swagger_ui::SwaggerUi;
@@ -882,7 +882,7 @@ impl<T> PaginatedResponse<T> {
 impl RestApiServer {
     /// Create a new REST API server
     pub async fn new(config: ApiConfig) -> std::result::Result<Self, DbError> {
-        let state = Arc::new(ApiState {
+        let _state = Arc::new(ApiState {
             config: config.clone(),
             connection_semaphore: Arc::new(Semaphore::new(config.max_connections)),
             active_queries: Arc::new(RwLock::new(HashMap::new())),
@@ -1939,7 +1939,7 @@ async fn get_pool_stats(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<String>,
 ) -> ApiResult<AxumJson<PoolStatsResponse>> {
-    let stats = PoolStatsResponse {
+    let _stats = PoolStatsResponse {
         pool_id: id,
         active_connections: 25,
         idle_connections: 15,
@@ -2613,7 +2613,7 @@ impl QueryResultBuilder {
         self.columns.push(column);
     }
 
-    pub fn add_warning(&mut self, warning: String) {
+    pub fn add_warning(&mut selfing: String) {
         self.warnings.push(warning);
     }
 
@@ -2686,7 +2686,7 @@ impl ApiTransactionManager {
             .unwrap()
             .as_micros() as TransactionId;
 
-        let state = TransactionState {
+        let _state = TransactionState {
             transaction_id: txn_id,
             isolation_level: isolation,
             read_only,
@@ -2947,7 +2947,7 @@ impl PoolHealthChecker {
             }
         }
 
-        (status, warnings)
+        (statusings)
     }
 }
 
@@ -3338,19 +3338,19 @@ mod extended_tests {
             .await
             .unwrap();
 
-        let state = manager.get_transaction_state(txn_id).await;
+        let _state = manager.get_transaction_state(txn_id).await;
         assert!(state.is_some());
         assert_eq!(state.unwrap().status, TransactionStatus::Active);
 
         manager.commit_transaction(txn_id).await.unwrap();
 
-        let state = manager.get_transaction_state(txn_id).await;
+        let _state = manager.get_transaction_state(txn_id).await;
         assert_eq!(state.unwrap().status, TransactionStatus::Committed);
     }
 
     #[tokio::test]
     async fn test_query_cache() {
-        let cache = QueryCache::new(10, Duration::from_secs(60));
+        let cache = QueryCache::new(10::from_secs(60));
 
         let response = QueryResponse {
             query_id: Uuid::new_v4().to_string(),
@@ -3449,13 +3449,13 @@ mod extended_tests {
         metrics.active_connections = 90;
         metrics.calculate_utilization(100);
 
-        let (status, warnings) = checker.check_health(&metrics);
+        let (statusings) = checker.check_health(&metrics);
         assert_eq!(status, HealthStatus::Healthy);
 
         metrics.active_connections = 95;
         metrics.calculate_utilization(100);
 
-        let (status, warnings) = checker.check_health(&metrics);
+        let (statusings) = checker.check_health(&metrics);
         assert_eq!(status, HealthStatus::Degraded);
     }
 }

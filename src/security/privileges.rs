@@ -14,10 +14,10 @@
 //! - Cascading privilege revocation
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::Result;
 use crate::error::DbError;
 
@@ -201,11 +201,11 @@ pub struct PrivilegeManager {
     /// All privilege grants
     grants: Arc<RwLock<HashMap<String, PrivilegeGrant>>>,
     /// Grants by grantee (for quick lookup)
-    grantee_index: Arc<RwLock<HashMap<PrincipalId, HashSet<String>>>>,
+    grantee_index: Arc<RwLock<HashMap<PrincipalId<String>>>>,
     /// Grants by grantor (for dependency tracking)
-    grantor_index: Arc<RwLock<HashMap<PrincipalId, HashSet<String>>>>,
+    grantor_index: Arc<RwLock<HashMap<PrincipalId<String>>>>,
     /// Grants by object (for object-level privileges)
-    object_index: Arc<RwLock<HashMap<ObjectId, HashSet<String>>>>,
+    object_index: Arc<RwLock<HashMap<ObjectId<String>>>>,
     /// Privilege dependencies
     dependencies: Arc<RwLock<Vec<PrivilegeDependency>>>,
     /// Grant ID counter
@@ -410,7 +410,7 @@ impl PrivilegeManager {
         }
 
         // Check through role hierarchy
-        let result = self.check_privilege_through_roles(principal, privilege);
+        let _result = self.check_privilege_through_roles(principal, privilege);
         if result.has_privilege {
             return result;
         }
@@ -830,7 +830,7 @@ mod tests {
             false,
         ).unwrap();
 
-        let result = manager.check_system_privilege(
+        let _result = manager.check_system_privilege(
             &"user1".to_string(),
             &SystemPrivilege::CreateTable,
         );
@@ -852,7 +852,7 @@ mod tests {
 
         assert!(manager.revoke_grant(&grant_id, false).is_ok());
 
-        let result = manager.check_system_privilege(
+        let _result = manager.check_system_privilege(
             &"user1".to_string(),
             &SystemPrivilege::CreateTable,
         );

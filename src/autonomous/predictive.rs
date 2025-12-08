@@ -3,9 +3,9 @@
 //! Forecasting and prediction capabilities for storage growth, query performance,
 //! resource exhaustion, and capacity planning.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::Result;
@@ -74,7 +74,7 @@ impl StorageGrowthPredictor {
         let mut forecasts = Vec::new();
         let next_index = data.len();
 
-        for i in 0..days_ahead {
+        for _i in 0..days_ahead {
             let x = (next_index + i) as f64;
             let predicted = slope * x + intercept;
 
@@ -148,7 +148,7 @@ impl StorageGrowthPredictor {
 
 /// Query response time predictor
 pub struct ResponseTimePredictor {
-    query_history: Arc<RwLock<HashMap<u64, VecDeque<f64>>>>,  // query_hash -> execution times
+    query_history: Arc<RwLock<HashMap<u64<f64>>>>,  // query_hash -> execution times
     max_history_per_query: usize,
 }
 
@@ -582,7 +582,7 @@ mod tests {
         let predictor = StorageGrowthPredictor::new(100);
 
         // Record increasing storage
-        for i in 0..10 {
+        for _i in 0..10 {
             predictor.record_storage_size(100.0 + i as f64 * 5.0);
         }
 
@@ -600,7 +600,7 @@ mod tests {
 
         let query_hash = 12345u64;
 
-        for i in 0..10 {
+        for _i in 0..10 {
             predictor.record_execution(query_hash, 100.0 + i as f64);
         }
 
@@ -616,7 +616,7 @@ mod tests {
         let mut forecaster = ResourceExhaustionForecaster::new(100);
 
         // Record increasing CPU usage
-        for i in 0..10 {
+        for _i in 0..10 {
             forecaster.record_cpu_usage(70.0 + i as f64 * 2.0);
         }
 

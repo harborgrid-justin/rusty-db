@@ -29,16 +29,16 @@
 //!     manager.register(feature).await.unwrap();
 //!
 //!     // Check if feature is enabled
-//!     let context = Default::default();
+//!     let _context = Default::default();
 //!     if manager.is_enabled("new_query_optimizer", &context).await {
 //!         // Use new optimizer
 //!     }
 //! }
 //! ```
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{SystemTime, Duration};
+use std::time::{SystemTime};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
@@ -74,7 +74,7 @@ pub enum RolloutStrategy {
     /// Enable based on custom attributes
     Attributes(HashMap<String, Vec<String>>),
     /// Time-based rollout (start time, end time)
-    TimeBased(SystemTime, SystemTime),
+    TimeBased(SystemTime),
 }
 
 impl RolloutStrategy {
@@ -108,7 +108,7 @@ impl RolloutStrategy {
     fn hash_percentage(user_id: &str) -> u8 {
         let mut hasher = Sha256::new();
         hasher.update(user_id.as_bytes());
-        let result = hasher.finalize();
+        let _result = hasher.finalize();
         // Use first byte for percentage (0-255 maps to 0-100)
         ((result[0] as u16 * 100) / 256) as u8
     }
@@ -316,7 +316,7 @@ impl ABTest {
         let mut hasher = Sha256::new();
         hasher.update(user_id.as_bytes());
         hasher.update(self.id.as_bytes());
-        let result = hasher.finalize();
+        let _result = hasher.finalize();
         let hash_value = u32::from_be_bytes([result[0], result[1], result[2], result[3]]);
 
         let bucket = (hash_value % total_weight) as u8;
@@ -534,7 +534,7 @@ impl FeatureFlagManager {
 
     /// Get feature statistics
     pub async fn get_stats(&self, name: &str) -> Option<FeatureStats> {
-        let stats = self.stats.read().await;
+        let _stats = self.stats.read().await;
         stats.get(name).cloned()
     }
 
@@ -599,7 +599,7 @@ mod tests {
 
         manager.register(feature).await.unwrap();
 
-        let context = EvaluationContext::for_user("user1");
+        let _context = EvaluationContext::for_user("user1");
         assert!(manager.is_enabled("test_feature", &context).await);
     }
 
@@ -613,8 +613,8 @@ mod tests {
 
         // Test multiple users - should see roughly 50% enabled
         let mut enabled_count = 0;
-        for i in 0..100 {
-            let context = EvaluationContext::for_user(format!("user{}", i));
+        for _i in 0..100 {
+            let _context = EvaluationContext::for_user(format!("user{}", i));
             if manager.is_enabled("test_rollout", &context).await {
                 enabled_count += 1;
             }
@@ -637,7 +637,7 @@ mod tests {
         manager.register(base_feature).await.unwrap();
         manager.register(dependent_feature).await.unwrap();
 
-        let context = EvaluationContext::for_user("user1");
+        let _context = EvaluationContext::for_user("user1");
 
         // Dependent should be disabled because base is disabled
         assert!(!manager.is_enabled("dependent", &context).await);
@@ -679,8 +679,8 @@ mod tests {
 
         manager.create_ab_test(test).await.unwrap();
 
-        let context = EvaluationContext::for_user("user1");
-        let result = manager.evaluate("test_ab", &context).await.unwrap();
+        let _context = EvaluationContext::for_user("user1");
+        let _result = manager.evaluate("test_ab", &context).await.unwrap();
 
         assert!(result.variant.is_some());
     }

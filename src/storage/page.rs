@@ -36,7 +36,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
 
     // Process 8 bytes at a time for maximum throughput
     while remaining >= 8 {
-        let value = (ptr as *const u64).read_unaligned();
+        let _value = (ptr as *const u64).read_unaligned();
         crc = _mm_crc32_u64(crc as u64, value) as u32;
         ptr = ptr.add(8);
         remaining -= 8;
@@ -44,7 +44,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
 
     // Process remaining bytes
     while remaining > 0 {
-        let value = *ptr;
+        let _value = *ptr;
         crc = _mm_crc32_u8(crc, value);
         ptr = ptr.add(1);
         remaining -= 1;
@@ -625,7 +625,7 @@ mod tests {
         let mut page = SlottedPage::new(1, 4096);
 
         // Insert multiple records
-        for i in 0..10 {
+        for _i in 0..10 {
             page.insert_record(format!("Record {}", i).as_bytes());
         }
 
@@ -647,7 +647,7 @@ mod tests {
         let splitter = PageSplitter::new(0.8);
 
         // Fill page
-        for i in 0..50 {
+        for _i in 0..50 {
             page.insert_record(format!("Record number {}", i).as_bytes());
         }
 

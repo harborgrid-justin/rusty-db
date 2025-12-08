@@ -5,7 +5,7 @@
 //!
 //! ## Traditional Latching Problem
 //!
-//! Traditional read/write locks (RwLock, Mutex) become bottlenecks at high
+//! Traditional read/write locks (RwLock) become bottlenecks at high
 //! concurrency due to:
 //! - Lock contention and wait times
 //! - Cache line bouncing
@@ -29,7 +29,7 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::hint::spin_loop;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 
 // ============================================================================
 // Version-Based Optimistic Latch
@@ -350,7 +350,7 @@ impl HybridLatch {
 
     /// Begin read operation
     pub fn begin_read(&self) -> Option<u64> {
-        let result = self.optimistic.begin_read();
+        let _result = self.optimistic.begin_read();
 
         if result.is_none() {
             // Contention detected
@@ -609,7 +609,7 @@ mod tests {
         let _guard = WriteGuard::new(&latch);
 
         // Try to acquire read with timeout
-        let result = ReadGuard::try_new(&latch, Duration::from_millis(10));
+        let _result = ReadGuard::try_new(&latch::from_millis(10));
         assert!(result.is_none()); // Should timeout
     }
 }

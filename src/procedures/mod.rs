@@ -243,7 +243,7 @@ mod tests {
         
         pm.create_procedure(procedure.clone())?;
         
-        let result = pm.create_procedure(procedure);
+        let _result = pm.create_procedure(procedure);
         assert!(result.is_err());
         
         Ok(())

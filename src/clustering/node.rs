@@ -5,7 +5,7 @@
 
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 
 /// Node identifier - a unique string identifier for cluster nodes
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

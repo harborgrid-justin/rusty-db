@@ -4,15 +4,13 @@
 //! This module implements continuous optimization loops with reinforcement learning
 //! concepts to automatically adjust database parameters for optimal performance.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
 use tokio::time::sleep;
 use crate::Result;
-use crate::error::DbError;
 
 /// Aggressiveness level for autonomous tuning
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -82,7 +80,7 @@ pub struct ParameterConfig {
 }
 
 /// Performance metrics for evaluation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceMetrics {
     pub queries_per_second: f64,
     pub avg_response_time_ms: f64,
@@ -96,6 +94,25 @@ pub struct PerformanceMetrics {
     pub lock_wait_time_ms: f64,
     pub transaction_throughput: f64,
     pub timestamp: SystemTime,
+}
+
+impl Default for PerformanceMetrics {
+    fn default() -> Self {
+        Self {
+            queries_per_second: 0.0,
+            avg_response_time_ms: 0.0,
+            p95_response_time_ms: 0.0,
+            p99_response_time_ms: 0.0,
+            buffer_hit_rate: 0.0,
+            cpu_usage: 0.0,
+            memory_usage_mb: 0,
+            disk_io_rate: 0.0,
+            cache_hit_rate: 0.0,
+            lock_wait_time_ms: 0.0,
+            transaction_throughput: 0.0,
+            timestamp: UNIX_EPOCH,
+        }
+    }
 }
 
 impl PerformanceMetrics {
@@ -367,7 +384,7 @@ impl RegressionDetector {
 /// Statistics gatherer for automatic statistics collection
 pub struct StatisticsGatherer {
     table_stats: HashMap<String, TableStatistics>,
-    last_gather_time: HashMap<String, SystemTime>,
+    last_gather_time: HashMap<String>,
     auto_gather_threshold: f64,  // Percentage of data change
 }
 
@@ -401,7 +418,7 @@ impl StatisticsGatherer {
     }
 
     pub fn update_stats(&mut self, table_name: String, stats: TableStatistics) {
-        self.last_gather_time.insert(table_name.clone(), SystemTime::now());
+        self.last_gather_time.insert(table_name.clone(), Instant::now());
         self.table_stats.insert(table_name, stats);
     }
 
@@ -737,7 +754,7 @@ impl AutoTuner {
         &self,
         parameter: TunableParameter,
         direction: i32,
-        workload: &WorkloadCharacteristics,
+        _workload: &WorkloadCharacteristics,
     ) -> Option<TuningAction> {
         let params = self.parameters.read();
         let config = params.get(&parameter)?;

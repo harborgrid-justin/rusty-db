@@ -4,10 +4,10 @@
 //! Implements XA transaction management with heuristic completion support.
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
+use std::time::{SystemTime};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
@@ -769,7 +769,7 @@ mod tests {
         // Commit (one-phase)
         xa_mgr.xa_commit(&xid, true).await.unwrap();
 
-        let stats = xa_mgr.get_stats();
+        let _stats = xa_mgr.get_stats();
         assert_eq!(stats.total_transactions, 1);
     }
 }

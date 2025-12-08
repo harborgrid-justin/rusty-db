@@ -23,10 +23,10 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 use tokio::sync::{RwLock, Semaphore};
 use serde::{Serialize, Deserialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::pdb::PdbId;
 
 /// Resource limits for a PDB
@@ -914,7 +914,7 @@ mod tests {
         let pdb_id = PdbId::new(1);
 
         allocator.register(pdb_id, 100 * 1024 * 1024).await.unwrap();
-        let result = allocator.try_consume(pdb_id, 1024).await.unwrap();
+        let _result = allocator.try_consume(pdb_id, 1024).await.unwrap();
         assert!(result);
     }
 }

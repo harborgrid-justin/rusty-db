@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cargo check:*)"
+      "Bash(cargo check:*)",
+      "Bash(find:*)",
+      "Bash(dir:*)",
+      "Bash(cargo clean:*)",
+      "Bash(xxd:*)"
     ],
     "deny": [],
     "ask": []

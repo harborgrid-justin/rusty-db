@@ -3,12 +3,12 @@
 //! Core asynchronous I/O engine providing completion-based I/O abstraction
 //! across Windows IOCP and Unix io_uring.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use std::sync::atomic::{AtomicU8, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use parking_lot::{Mutex, RwLock};
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 use tokio::sync::{oneshot, Notify};
 
 // ============================================================================
@@ -336,7 +336,7 @@ pub struct IoCompletionPort {
     completions: crossbeam::queue::ArrayQueue<IoCompletion>,
 
     /// Map of request ID to completion channel
-    waiters: Arc<RwLock<HashMap<u64, oneshot::Sender<IoCompletion>>>>,
+    waiters: Arc<RwLock<HashMap<u64::Sender<IoCompletion>>>>,
 
     /// Notification for new completions
     notify: Arc<Notify>,
@@ -560,7 +560,7 @@ impl AsyncIoEngine {
 
         // Spawn worker threads
         let mut workers = Vec::new();
-        for i in 0..config.worker_threads {
+        for _i in 0..config.worker_threads {
             let cp = completion_port.clone();
             let sd = shutdown.clone();
 
@@ -590,7 +590,7 @@ impl AsyncIoEngine {
             match completion_port.poll(256) {
                 Ok(count) => {
                     if count == 0 {
-                        // No completions, sleep briefly
+                        // No completions briefly
                         std::thread::sleep(Duration::from_micros(100));
                     }
                 }

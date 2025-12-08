@@ -25,11 +25,11 @@
 
 use crate::DbError;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Mutex;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use tokio::sync::Semaphore;
 use tokio::time::timeout;
@@ -196,7 +196,7 @@ impl CircuitBreaker {
 
         // Execute operation
         let start = Instant::now();
-        let result = operation.await;
+        let _result = operation.await;
         let duration = start.elapsed();
 
         // Record outcome
@@ -210,7 +210,7 @@ impl CircuitBreaker {
 
     /// Check if request should be allowed
     fn allow_request(&self) -> bool {
-        let state = *self.state.read();
+        let _state = *self.state.read();
 
         match state {
             CircuitState::Closed => true,
@@ -246,7 +246,7 @@ impl CircuitBreaker {
         // Add to sliding window
         self.record_outcome(CallOutcome::Success);
 
-        let state = *self.state.read();
+        let _state = *self.state.read();
 
         match state {
             CircuitState::Closed => {
@@ -275,7 +275,7 @@ impl CircuitBreaker {
         // Add to sliding window
         self.record_outcome(CallOutcome::Failure);
 
-        let state = *self.state.read();
+        let _state = *self.state.read();
 
         match state {
             CircuitState::Closed => {
@@ -546,7 +546,7 @@ impl Bulkhead {
 
         // Execute operation
         let start = Instant::now();
-        let result = operation.await;
+        let _result = operation.await;
         let duration = start.elapsed();
 
         self.metrics.record_call(duration);
@@ -686,7 +686,7 @@ pub struct TimeoutManager {
     config: TimeoutManagerConfig,
 
     /// Latency samples per endpoint
-    latencies: Arc<RwLock<HashMap<String, VecDeque<Duration>>>>,
+    latencies: Arc<RwLock<HashMap<String<Duration>>>>,
 
     /// Metrics
     metrics: Arc<RwLock<HashMap<String, TimeoutMetrics>>>,
@@ -711,7 +711,7 @@ impl TimeoutManager {
         let timeout_duration = self.calculate_timeout(endpoint);
 
         let start = Instant::now();
-        let result = match timeout(timeout_duration, operation).await {
+        let _result = match timeout(timeout_duration, operation).await {
             Ok(result) => {
                 let duration = start.elapsed();
                 self.record_latency(endpoint, duration);
@@ -969,7 +969,7 @@ pub enum FallbackResponse<T> {
 /// Fallback handler for graceful degradation
 pub struct FallbackHandler<T> {
     /// Cached responses
-    cache: Arc<RwLock<HashMap<String, (T, SystemTime)>>>,
+    cache: Arc<RwLock<HashMap<String, (T)>>>,
 
     /// Cache TTL
     cache_ttl: Duration,
@@ -1004,7 +1004,7 @@ impl<T: Clone + Send + Sync> FallbackHandler<T> {
     /// Cache response
     pub fn cache_response(&self, key: String, value: T) {
         let mut cache = self.cache.write();
-        cache.insert(key, (value, SystemTime::now()));
+        cache.insert(key, (value::now()));
     }
 
     /// Get cached response
@@ -1532,7 +1532,7 @@ mod tests {
         let retry = RetryPolicy::new(config);
 
         let mut attempt = 0;
-        let result = retry.call(|| async {
+        let _result = retry.call(|| async {
             attempt += 1;
             if attempt < 3 {
                 Err::<(), DbError>(DbError::Network("temporary failure".to_string()))

@@ -109,7 +109,7 @@
 //! }
 //!
 //! // Get statistics
-//! let stats = buffer_pool.stats();
+//! let _stats = buffer_pool.stats();
 //! println!("Hit rate: {:.2}%", stats.hit_rate * 100.0);
 //! println!("Dirty pages: {}", stats.dirty_frames);
 //! # Ok(())
@@ -249,7 +249,7 @@
 //!     .build();
 //!
 //! // Get detailed statistics
-//! let stats = buffer_pool.stats();
+//! let _stats = buffer_pool.stats();
 //!
 //! println!("=== Buffer Pool Statistics ===");
 //! println!("Total frames: {}", stats.total_frames);
@@ -311,7 +311,7 @@ pub use hugepages::{
 
 // Re-export lock-free latching
 pub use lockfree_latch::{
-    HybridLatch, LatchStats, OptimisticLatch, ReadGuard, WriteGuard,
+    HybridLatch, LatchStats, OptimisticLatchGuardGuard,
 };
 
 // ============================================================================
@@ -427,7 +427,7 @@ mod tests {
         drop(guard);
 
         // Get stats
-        let stats = pool.stats();
+        let _stats = pool.stats();
         assert_eq!(stats.total_frames, 10);
         assert!(stats.page_reads > 0);
     }
@@ -438,11 +438,11 @@ mod tests {
 
         // Pin multiple pages
         let mut guards = Vec::new();
-        for i in 0..5 {
+        for _i in 0..5 {
             guards.push(pool.pin_page(i).unwrap());
         }
 
-        let stats = pool.stats();
+        let _stats = pool.stats();
         assert!(stats.pinned_frames >= 5);
     }
 
@@ -460,14 +460,14 @@ mod tests {
         // Flush all pages
         pool.flush_all().unwrap();
 
-        let stats = pool.stats();
+        let _stats = pool.stats();
         assert!(stats.page_writes > 0 || stats.dirty_frames == 0);
     }
 
     #[test]
     fn test_page_buffer_alignment() {
         let buffer = PageBuffer::new();
-        let ptr = buffer.as_ptr();
+        let ptr = unsafe { buffer.as_ptr() };
         assert_eq!(ptr as usize % 4096, 0, "PageBuffer must be 4096-byte aligned");
     }
 
@@ -534,7 +534,7 @@ mod tests {
         let _g2 = pool.pin_page(2).unwrap();
         let _g3 = pool.pin_page(3).unwrap();
 
-        let stats = pool.stats();
+        let _stats = pool.stats();
         assert_eq!(stats.total_frames, 100);
         assert!(stats.pinned_frames >= 3);
         assert!(stats.lookups >= 3);
@@ -552,7 +552,7 @@ mod tests {
             // Writing automatically marks as dirty
         }
 
-        let stats = pool.stats();
+        let _stats = pool.stats();
         assert!(stats.dirty_frames > 0);
 
         let dirty_ratio = pool.dirty_page_ratio();

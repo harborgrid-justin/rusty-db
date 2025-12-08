@@ -9,9 +9,9 @@
 /// - Slice and dice operations
 /// - Pivot table generation
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 
@@ -204,7 +204,7 @@ impl CubeBuilder {
         sets.push(columns.to_vec());
 
         // Add progressive rollups
-        for i in (0..columns.len()).rev() {
+        for _i in (0..columns.len()).rev() {
             if i > 0 {
                 sets.push(columns[..i].to_vec());
             }
@@ -223,7 +223,7 @@ impl CubeBuilder {
         let num_sets = 1 << n; // 2^n
         let mut sets = Vec::new();
 
-        for i in 0..num_sets {
+        for _i in 0..num_sets {
             let mut set = Vec::new();
             for (j, col) in columns.iter().enumerate() {
                 if (i & (1 << j)) != 0 {
@@ -280,7 +280,7 @@ impl CubeBuilder {
                 grouping_id: set_id,
             };
 
-            let result = AggregationResult {
+            let _result = AggregationResult {
                 measure_values,
                 row_count: group_rows.len() as u64,
             };
@@ -308,7 +308,7 @@ impl CubeBuilder {
             return Ok(0.0);
         }
 
-        let result = match measure.aggregation {
+        let _result = match measure.aggregation {
             AggregationType::Sum => values.iter().sum(),
             AggregationType::Avg => values.iter().sum::<f64>() / values.len() as f64,
             AggregationType::Count => values.len() as f64,
@@ -404,7 +404,7 @@ impl CubeQuery {
         let mut filter_indices = HashMap::new();
         for (dim_name, value) in &filters {
             let index = cube.dimensions.iter()
-                .position(|d| d.name == dim_name)
+                .position(|d| &d.name == dim_name)
                 .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dim_name)))?;
             filter_indices.insert(index, value);
         }
@@ -414,7 +414,7 @@ impl CubeQuery {
             let mut matches = true;
             for (index, expected_value) in &filter_indices {
                 if let Some(Some(actual_value)) = key.values.get(*index) {
-                    if actual_value != **expected_value {
+                    if actual_value != *expected_value {
                         matches = false;
                         break;
                     }
@@ -437,7 +437,7 @@ impl CubeQuery {
         &self,
         hierarchy: &str,
         current_level: &str,
-        value: &str,
+        _value: &str,
     ) -> Result<Vec<AggregationResult>> {
         let cube = self.cube.read();
 
@@ -539,10 +539,10 @@ impl CubeQuery {
 
         for dim_name in dimensions {
             let dim_index = cube.dimensions.iter()
-                .position(|d| d.name == dim_name)
+                .position(|d| &d.name == dim_name)
                 .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dim_name)))?;
 
-            let value = key.values.get(dim_index)
+            let _value = key.values.get(dim_index)
                 .and_then(|v| v.clone())
                 .unwrap_or_else(|| "ALL".to_string());
 

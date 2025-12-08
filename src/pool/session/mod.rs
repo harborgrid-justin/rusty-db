@@ -20,7 +20,7 @@
 /// ## Creating a Session
 ///
 /// ```rust,ignore
-/// use rusty_db::pool::session::{SessionState, SessionId, Username, SchemaName};
+/// use rusty_db::pool::session::{SessionState, Username, SchemaName};
 ///
 /// let session = SessionState::new(
 ///     SessionId::new(1),
@@ -42,7 +42,7 @@
 ///     password: "password123".to_string(),
 /// };
 ///
-/// let result = auth.authenticate(&creds).await?;
+/// let _result = auth.authenticate(&creds).await?;
 /// println!("Authenticated: {}", result.username);
 /// ```
 ///
@@ -91,4 +91,4 @@ pub use state::{
     ClientInfo, CursorState, CursorStatus, IsolationLevel, OptimizerMode, PreparedStatement,
     ResourceUsage, SessionSettings, SessionState, SessionStatus, TransactionState,
 };
-pub use types::{CursorId, SchemaName, SessionId, StatementId, Username};
+pub use types::{CursorId, SchemaName, StatementId, Username};

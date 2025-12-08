@@ -43,7 +43,7 @@
 use crate::{Result, DbError};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use unicode_normalization::{UnicodeNormalization, is_nfc, is_nfd, is_nfkc, is_nfkd};
@@ -149,7 +149,7 @@ impl InputSanitizer {
 
     /// Remove BOM (Byte Order Mark) characters
     fn remove_bom(&self, input: &str) -> String {
-        let result = input.trim_start_matches('\u{FEFF}');
+        let _result = input.trim_start_matches('\u{FEFF}');
         if result.len() != input.len() {
             let mut stats = self.stats.write();
             stats.bom_removed += 1;
@@ -1153,7 +1153,7 @@ mod tests {
     fn test_zero_width_removal() {
         let sanitizer = InputSanitizer::new();
         let input = "SELECT\u{200B}* FROM users";
-        let result = sanitizer.sanitize(input).unwrap();
+        let _result = sanitizer.sanitize(input).unwrap();
         assert!(!result.contains('\u{200B}'));
     }
 

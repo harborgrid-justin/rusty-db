@@ -22,14 +22,14 @@
 
 use std::any::Any;
 use std::collections::HashMap;
-use std::fmt;
+
 use std::sync::Arc;
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 /// Plugin state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -334,7 +334,7 @@ impl PluginRegistry {
         }
 
         // Create plugin context
-        let context = Arc::new(PluginContext::new(
+        let _context = Arc::new(PluginContext::new(
             name.clone(),
             config,
             Arc::clone(&self.event_bus),
@@ -679,7 +679,7 @@ mod tests {
         let config = HashMap::new();
         assert!(registry.register(plugin, config).is_ok());
 
-        let state = registry.get_state("test-plugin").unwrap();
+        let _state = registry.get_state("test-plugin").unwrap();
         assert_eq!(state, PluginState::Registered);
     }
 
@@ -722,7 +722,7 @@ mod tests {
     async fn test_plugin_list() {
         let registry = PluginRegistry::new();
 
-        for i in 0..3 {
+        for _i in 0..3 {
             let plugin = Box::new(TestPlugin {
                 name: format!("plugin-{}", i),
             });

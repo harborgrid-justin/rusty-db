@@ -5,7 +5,7 @@
 
 use super::{ComparisonMask, SelectionVector, SimdContext, prefetch_read};
 use crate::common::Value;
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
@@ -91,7 +91,7 @@ pub unsafe fn filter_i32_eq_avx2(data: &[i32], value: i32, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 8;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         let cmp = _mm256_cmpeq_epi32(vec, val);
@@ -125,7 +125,7 @@ pub unsafe fn filter_i32_lt_avx2(data: &[i32], value: i32, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 8;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         let cmp = _mm256_cmpgt_epi32(val, vec);
@@ -158,7 +158,7 @@ pub unsafe fn filter_i32_gt_avx2(data: &[i32], value: i32, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 8;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         let cmp = _mm256_cmpgt_epi32(vec, val);
@@ -192,7 +192,7 @@ pub unsafe fn filter_i32_between_avx2(data: &[i32], low: i32, high: i32, result:
     let len = data.len();
     let chunks = len / 8;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
 
@@ -242,7 +242,7 @@ pub unsafe fn filter_i64_eq_avx2(data: &[i64], value: i64, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 4;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         let cmp = _mm256_cmpeq_epi64(vec, val);
@@ -275,7 +275,7 @@ pub unsafe fn filter_i64_lt_avx2(data: &[i64], value: i64, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 4;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         let cmp = _mm256_cmpgt_epi64(val, vec);
@@ -308,7 +308,7 @@ pub unsafe fn filter_i64_gt_avx2(data: &[i64], value: i64, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 4;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         let cmp = _mm256_cmpgt_epi64(vec, val);
@@ -345,7 +345,7 @@ pub unsafe fn filter_f32_eq_avx2(data: &[f32], value: f32, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 8;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_ps(data.as_ptr().add(offset));
         let cmp = _mm256_cmp_ps(vec, val, _CMP_EQ_OQ);
@@ -378,7 +378,7 @@ pub unsafe fn filter_f32_lt_avx2(data: &[f32], value: f32, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 8;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_ps(data.as_ptr().add(offset));
         let cmp = _mm256_cmp_ps(vec, val, _CMP_LT_OQ);
@@ -411,7 +411,7 @@ pub unsafe fn filter_f32_gt_avx2(data: &[f32], value: f32, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 8;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_ps(data.as_ptr().add(offset));
         let cmp = _mm256_cmp_ps(vec, val, _CMP_GT_OQ);
@@ -448,7 +448,7 @@ pub unsafe fn filter_f64_eq_avx2(data: &[f64], value: f64, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 4;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_pd(data.as_ptr().add(offset));
         let cmp = _mm256_cmp_pd(vec, val, _CMP_EQ_OQ);
@@ -481,7 +481,7 @@ pub unsafe fn filter_f64_lt_avx2(data: &[f64], value: f64, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 4;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_pd(data.as_ptr().add(offset));
         let cmp = _mm256_cmp_pd(vec, val, _CMP_LT_OQ);
@@ -514,7 +514,7 @@ pub unsafe fn filter_f64_gt_avx2(data: &[f64], value: f64, result: &mut [u8]) {
     let len = data.len();
     let chunks = len / 4;
 
-    for i in 0..chunks {
+    for _i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_pd(data.as_ptr().add(offset));
         let cmp = _mm256_cmp_pd(vec, val, _CMP_GT_OQ);
@@ -613,7 +613,7 @@ impl SimdFilter {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let value = match &values[0] {
+        let _value = match &values[0] {
             Value::Integer(v) => *v as i32,
             _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
         };

@@ -30,10 +30,10 @@
 
 use crate::{Result, DbError};
 use parking_lot::RwLock;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::net::IpAddr;
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 use sha2::{Sha256, Digest};
 
 // ============================================================================
@@ -716,7 +716,7 @@ impl DDoSMitigator {
 
     fn detect_attack(&self, ip: IpAddr, attack_type: DDoSAttackType, reason: String) {
         let mut attacks = self.active_attacks.write();
-        let attack_id = format!("{}_{:?}_{}", ip, attack_type, Instant::now().elapsed().as_secs());
+        let attack_id = format!("{}_{}_{}", ip, format!("{:?}", attack_type), Instant::now().elapsed().as_secs());
 
         let attack = DDoSAttack {
             attack_id: attack_id.clone(),
@@ -1736,7 +1736,7 @@ mod tests {
         let mut headers = HashMap::new();
         headers.insert("Host".to_string(), "example.com".to_string());
 
-        let result = manager.check_request(ip, "GET", "/test", &headers, 100);
+        let _result = manager.check_request(ip, "GET", "/test", &headers, 100);
         assert!(result.is_ok());
     }
 }

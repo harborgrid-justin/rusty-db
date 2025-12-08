@@ -104,15 +104,15 @@ pub mod parallel_query;
 use crate::error::DbError;
 use crate::common::{NodeId, Tuple};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 use parking_lot::RwLock;
 
 // Re-export key types for convenience
 pub use cache_fusion::{
     GlobalCacheService, GlobalEnqueueService, CacheFusionCoordinator,
-    BlockMode, LockType, ResourceId, ResourceClass, GcsConfig, GcsStatistics,
+    BlockMode, LockType, ResourceId, GcsConfig, GcsStatistics,
 };
 
 pub use grd::{
@@ -580,7 +580,7 @@ impl RacCluster {
     /// Check cluster health
     pub fn check_health(&self) -> ClusterHealth {
         let view = self.get_cluster_view();
-        let state = self.get_state();
+        let _state = self.get_state();
 
         ClusterHealth {
             state,

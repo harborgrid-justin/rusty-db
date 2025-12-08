@@ -22,11 +22,11 @@ use crate::rac::cache_fusion::ResourceId;
 use crate::rac::grd::GlobalResourceDirectory;
 use crate::rac::interconnect::ClusterInterconnect;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
-use parking_lot::{RwLock, Mutex};
-use tokio::sync::{mpsc, oneshot};
+use std::time::{Duration};
+use parking_lot::{RwLock};
+use tokio::sync::{mpsc};
 
 // ============================================================================
 // Constants
@@ -514,7 +514,7 @@ impl InstanceRecoveryManager {
         }
 
         // Create recovery state
-        let state = RecoveryState {
+        let _state = RecoveryState {
             phase: RecoveryPhase::Detecting,
             coordinator: None,
             failed_instance: failed_instance.clone(),
@@ -555,7 +555,7 @@ impl InstanceRecoveryManager {
             .clone();
 
         // Broadcast coordinator
-        let message = RecoveryMessage::CoordinatorElected {
+        let _message = RecoveryMessage::CoordinatorElected {
             failed_instance: failed_instance.clone(),
             coordinator: coordinator.clone(),
         };
@@ -637,7 +637,7 @@ impl InstanceRecoveryManager {
         }
 
         // Notify completion
-        let message = RecoveryMessage::RecoveryComplete {
+        let _message = RecoveryMessage::RecoveryComplete {
             failed_instance,
             success: true,
         };
@@ -674,7 +674,7 @@ impl InstanceRecoveryManager {
 
         // Get redo logs from buffer
         let buffer = self.redo_buffer.lock();
-        let logs = buffer.get_entries_after(0);
+        let _logs = buffer.get_entries_after(0);
         drop(buffer);
 
         if self.config.enable_parallel {
@@ -715,7 +715,7 @@ impl InstanceRecoveryManager {
         let mut handles = Vec::new();
 
         for (partition_id, partition_logs) in partitions {
-            let stats = self.stats.clone();
+            let _stats = self.stats.clone();
             let recoveries = self.active_recoveries.clone();
             let failed_instance = failed_instance.clone();
 
@@ -837,7 +837,7 @@ impl InstanceRecoveryManager {
         from_lsn: LogSequenceNumber,
     ) -> std::result::Result<(), DbError> {
         let buffer = self.redo_buffer.lock();
-        let logs = buffer.get_entries_after(from_lsn);
+        let _logs = buffer.get_entries_after(from_lsn);
         drop(buffer);
 
         // Send logs back

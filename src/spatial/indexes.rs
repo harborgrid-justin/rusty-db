@@ -7,9 +7,9 @@
 //! - Hilbert curve ordering for locality preservation
 //! - Bulk loading and dynamic maintenance
 
-use crate::error::{DbError, Result};
-use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry};
-use std::collections::{HashMap, VecDeque};
+use crate::error::Result;
+use crate::spatial::geometry::{BoundingBox, Coordinate};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 
 /// Spatial index trait
@@ -90,7 +90,7 @@ impl RTree {
     }
 
     /// Bulk load entries efficiently
-    pub fn bulk_load(&mut self, mut entries: Vec<(u64, BoundingBox)>) -> Result<()> {
+    pub fn bulk_load(&mut self, mut entries: Vec<(u64)>) -> Result<()> {
         if entries.is_empty() {
             return Ok(());
         }
@@ -105,7 +105,7 @@ impl RTree {
         Ok(())
     }
 
-    fn build_level(&self, entries: &[(u64, BoundingBox)], level: usize) -> Result<RTreeNode> {
+    fn build_level(&self, entries: &[(u64)], level: usize) -> Result<RTreeNode> {
         if entries.len() <= self.max_entries {
             // Create leaf node
             let mut node_entries = Vec::new();
@@ -243,7 +243,7 @@ impl RTree {
         let mut seed2_idx = 1;
 
         // Find pair with maximum waste
-        for i in 0..entries.len() {
+        for _i in 0..entries.len() {
             for j in (i + 1)..entries.len() {
                 let bbox1 = entries[i].bbox();
                 let bbox2 = entries[j].bbox();
@@ -648,7 +648,7 @@ impl SpatialIndex for Quadtree {
 
 /// Grid-based spatial index for uniform distributions
 pub struct GridIndex {
-    grid: HashMap<(i32, i32), Vec<(u64, BoundingBox)>>,
+    grid: HashMap<(i32, i32), Vec<(u64)>>,
     cell_size: f64,
     bounds: BoundingBox,
     size: usize,
@@ -889,7 +889,7 @@ impl ConcurrentSpatialIndex {
 /// Index builder for bulk loading
 pub struct SpatialIndexBuilder {
     index_type: IndexType,
-    entries: Vec<(u64, BoundingBox)>,
+    entries: Vec<(u64)>,
 }
 
 pub enum IndexType {

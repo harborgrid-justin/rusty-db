@@ -4,8 +4,8 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::fs::{File, create_dir_all};
-use std::io::{Read, Write};
-use std::time::{SystemTime, Duration};
+use std::io::{Read};
+use std::time::{SystemTime};
 use std::collections::HashMap;
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
@@ -109,7 +109,7 @@ impl EncryptionKey {
             KeyDerivationFunction::PBKDF2 { iterations } => {
                 // Simulate PBKDF2 key derivation
                 let mut derived = vec![0u8; 32];
-                for i in 0..32 {
+                for _i in 0..32 {
                     derived[i] = (password.len() + i + *iterations as usize) as u8;
                 }
                 derived
@@ -117,7 +117,7 @@ impl EncryptionKey {
             KeyDerivationFunction::Argon2 { memory_kb, iterations, parallelism } => {
                 // Simulate Argon2 key derivation
                 let mut derived = vec![0u8; 32];
-                for i in 0..32 {
+                for _i in 0..32 {
                     derived[i] = (password.len() + i + *memory_kb as usize) as u8;
                 }
                 derived
@@ -125,7 +125,7 @@ impl EncryptionKey {
             KeyDerivationFunction::Scrypt { n, r, p } => {
                 // Simulate Scrypt key derivation
                 let mut derived = vec![0u8; 32];
-                for i in 0..32 {
+                for _i in 0..32 {
                     derived[i] = (password.len() + i + *n as usize) as u8;
                 }
                 derived

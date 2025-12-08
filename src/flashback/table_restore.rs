@@ -28,7 +28,7 @@ use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
 use crate::common::{TableId, RowId, Value, Schema, IndexId};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::time_travel::{SCN, Timestamp, TimeTravelEngine};
 use super::versions::VersionManager;
 
@@ -155,7 +155,7 @@ impl TableRestoreManager {
         let recycle_name = dropped_table.recycle_name.clone();
 
         // Restore table from recycle bin
-        let result = self.restore_from_recycle_bin(&dropped_table, restore_name)?;
+        let _result = self.restore_from_recycle_bin(&dropped_table, restore_name)?;
 
         // Remove from recycle bin
         recycle_bin.remove(&recycle_name);
@@ -175,7 +175,7 @@ impl TableRestoreManager {
         target_scn: SCN,
     ) -> Result<FlashbackResult> {
         // Validate partition exists
-        let partition_id = self.get_partition_id(table_id, partition_name)?;
+        let _partition_id = self.get_partition_id(table_id, partition_name)?;
 
         // Reconstruct partition state
         let partition_state = self.reconstruct_partition_state(
@@ -718,7 +718,7 @@ mod tests {
         );
 
         // Cannot flashback to future
-        let result = manager.validate_flashback(1, u64::MAX);
+        let _result = manager.validate_flashback(1, u64::MAX);
         assert!(result.is_err());
     }
 }

@@ -8,7 +8,7 @@
 /// - Value functions (LEAD, LAG, FIRST_VALUE, LAST_VALUE, NTH_VALUE)
 /// - Distribution functions (PERCENT_RANK, CUME_DIST, NTILE)
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -316,7 +316,7 @@ impl WindowExecutor {
         let mut current_rank = 1;
         let mut rows_at_rank = 0;
 
-        for i in 0..sorted_indices.len() {
+        for _i in 0..sorted_indices.len() {
             rows_at_rank += 1;
 
             // Check if next row has different ORDER BY values
@@ -342,7 +342,7 @@ impl WindowExecutor {
         let mut results = Vec::new();
         let mut current_rank = 1;
 
-        for i in 0..sorted_indices.len() {
+        for _i in 0..sorted_indices.len() {
             results.push((sorted_indices[i], current_rank.to_string()));
 
             // Check if next row has different ORDER BY values
@@ -382,7 +382,7 @@ impl WindowExecutor {
         let n = sorted_indices.len();
         let mut results = Vec::new();
 
-        for i in 0..n {
+        for _i in 0..n {
             // Count rows with ORDER BY values <= current row
             let mut count = i + 1;
 
@@ -432,7 +432,7 @@ impl WindowExecutor {
             .enumerate()
             .map(|(i, &idx)| {
                 let target_pos = i + offset;
-                let value = if target_pos < sorted_indices.len() {
+                let _value = if target_pos < sorted_indices.len() {
                     // Get value from future row
                     let target_idx = sorted_indices[target_pos];
                     spec.order_by.first()
@@ -456,7 +456,7 @@ impl WindowExecutor {
         Ok(sorted_indices.iter()
             .enumerate()
             .map(|(i, &idx)| {
-                let value = if i >= offset {
+                let _value = if i >= offset {
                     // Get value from previous row
                     let target_idx = sorted_indices[i - offset];
                     spec.order_by.first()
@@ -496,7 +496,7 @@ impl WindowExecutor {
             .map(|(i, &idx)| {
                 let (_, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
                 let last_idx = sorted_indices[frame_end - 1];
-                let value = self.rows[last_idx].get_value(column).unwrap_or_default();
+                let _value = self.rows[last_idx].get_value(column).unwrap_or_default();
                 (idx, value)
             })
             .collect())
@@ -514,7 +514,7 @@ impl WindowExecutor {
             .map(|(i, &idx)| {
                 let (frame_start, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
                 let target_pos = frame_start + n - 1;
-                let value = if target_pos < frame_end {
+                let _value = if target_pos < frame_end {
                     let target_idx = sorted_indices[target_pos];
                     self.rows[target_idx].get_value(column).unwrap_or_default()
                 } else {
@@ -769,7 +769,7 @@ mod tests {
 
     fn create_test_rows() -> Vec<Row> {
         let mut rows = Vec::new();
-        for i in 0..10 {
+        for _i in 0..10 {
             let mut row = Row::new();
             row.set_value("id".to_string(), i.to_string());
             row.set_value("value".to_string(), (i * 10).to_string());

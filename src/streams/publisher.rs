@@ -3,14 +3,14 @@
 //! Kafka-like event publishing with topics, partitions, ordering guarantees,
 //! acknowledgments, and backpressure management.
 
-use std::collections::{HashMap, VecDeque, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, Duration, Instant};
+use std::time::{SystemTime};
 use std::hash::{Hash, Hasher};
-use parking_lot::{RwLock, Mutex};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc, oneshot, Semaphore};
+use tokio::sync::{mpsc, Semaphore};
 use tokio::time::interval;
 use crate::{Result, DbError};
 
@@ -231,7 +231,7 @@ impl Topic {
                 // Hash-based partitioning for key ordering
                 let mut hasher = std::collections::hash_map::DefaultHasher::new();
                 k.hash(&mut hasher);
-                let hash = hasher.finish();
+                let _hash = hasher.finish();
                 (hash % self.config.num_partitions as u64) as u32
             }
             (_, OrderingGuarantee::GloballyOrdered) => {
@@ -326,7 +326,7 @@ pub struct EventPublisher {
     /// Backpressure semaphore
     backpressure_sem: Arc<Semaphore>,
     /// Pending acknowledgments
-    pending_acks: Arc<RwLock<HashMap<u64, oneshot::Sender<Result<PublishAck>>>>>,
+    pending_acks: Arc<RwLock<HashMap<u64::Sender<Result<PublishAck>>>>>,
     /// Shutdown flag
     shutdown: Arc<AtomicBool>,
 }
@@ -412,7 +412,7 @@ impl EventPublisher {
         event.id = self.next_event_id.fetch_add(1, Ordering::SeqCst);
 
         // Select partition
-        let partition_id = if event.partition > 0 {
+        let _partition_id = if event.partition > 0 {
             event.partition
         } else {
             topic.select_partition(event.key.as_deref())

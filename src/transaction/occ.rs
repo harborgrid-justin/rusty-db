@@ -15,8 +15,8 @@
 //
 // Scalability: Near-linear to 128+ cores for read-heavy workloads
 
-use crate::error::{DbError, Result};
-use std::collections::{HashMap, HashSet};
+use crate::error::Result;
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use parking_lot::RwLock;
@@ -97,6 +97,7 @@ impl VersionedData {
 }
 
 /// OCC Transaction
+#[derive(Debug, Clone)]
 pub struct OccTransaction {
     /// Transaction ID
     txn_id: TxnId,
@@ -316,7 +317,7 @@ impl OccManager {
         // Read from database
         let db = self.database.read();
         if let Some(data) = db.get(key) {
-            let value = data.value.clone();
+            let _value = data.value.clone();
             let version = data.version;
 
             // Record the read
@@ -600,7 +601,7 @@ mod tests {
         occ.commit(txn1).unwrap();
 
         let txn2 = occ.begin_transaction();
-        let value = occ.read(txn2, &"key1".to_string()).unwrap();
+        let _value = occ.read(txn2, &"key1".to_string()).unwrap();
         assert_eq!(value, Some(b"value1".to_vec()));
     }
 
@@ -616,7 +617,7 @@ mod tests {
         occ.read(txn2, &"key1".to_string()).unwrap();
         occ.commit(txn2).unwrap();
 
-        let stats = occ.get_stats();
+        let _stats = occ.get_stats();
         assert_eq!(stats.read_only_txns, 1);
     }
 

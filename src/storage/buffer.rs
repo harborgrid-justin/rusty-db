@@ -1,9 +1,9 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
-use parking_lot::{RwLock, Mutex};
-use crate::error::{DbError, Result};
+use std::time::{Duration};
+use parking_lot::{RwLock};
+use crate::error::Result;
 use crate::storage::page::Page;
 use crate::common::PageId;
 use crate::storage::disk::DiskManager;
@@ -647,7 +647,7 @@ mod tests {
         let page = bp.new_page()?;
         assert_eq!(page.id, 0);
 
-        let stats = bp.stats();
+        let _stats = bp.stats();
         assert_eq!(stats.pool_size, 10);
 
         Ok(())

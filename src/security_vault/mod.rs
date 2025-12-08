@@ -278,7 +278,7 @@ impl SecurityVaultManager {
         session_id: String,
         client_ip: String,
     ) -> SecurityContext {
-        let context = SecurityContext::new(user_id, session_id.clone(), client_ip);
+        let _context = SecurityContext::new(user_id, session_id.clone(), client_ip);
         self.active_contexts.write().insert(session_id, context.clone());
         context
     }

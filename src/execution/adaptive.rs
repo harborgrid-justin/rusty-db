@@ -17,7 +17,7 @@ use crate::parser::JoinType;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 
 /// Adaptive execution context that tracks runtime statistics
 pub struct AdaptiveContext {
@@ -60,7 +60,7 @@ impl AdaptiveContext {
 
     /// Check if reoptimization is needed
     pub fn should_reoptimize(&self) -> bool {
-        let stats = self.stats.read();
+        let _stats = self.stats.read();
 
         // Reoptimize if we see significant cardinality misestimation
         for feedback in stats.cardinality_feedback.values() {
@@ -129,7 +129,7 @@ pub struct RuntimeStatistics {
     /// Execution start time
     pub start_time: Option<Instant>,
     /// Operator timings
-    pub operator_timings: HashMap<String, Duration>,
+    pub operator_timings: HashMap<String>,
 }
 
 impl RuntimeStatistics {
@@ -273,7 +273,7 @@ impl AdaptiveExecutor {
         }
 
         // Execute with checkpoints for adaptation
-        let result = self.execute_with_checkpoints(current_plan)?;
+        let _result = self.execute_with_checkpoints(current_plan)?;
 
         // Finalization
         {
@@ -720,7 +720,7 @@ mod tests {
     fn test_histogram() {
         let mut hist = Histogram::new("age".to_string(), 10);
 
-        for i in 0..100 {
+        for _i in 0..100 {
             hist.add_value(i as f64);
         }
 
@@ -740,7 +740,7 @@ mod tests {
             columns: vec!["*".to_string()],
         };
 
-        let result = executor.execute_adaptive(plan);
+        let _result = executor.execute_adaptive(plan);
         assert!(result.is_ok());
     }
 }

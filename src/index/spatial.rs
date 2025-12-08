@@ -313,7 +313,7 @@ impl<T: Clone> RTree<T> {
         let mut seed1 = 0;
         let mut seed2 = 1;
 
-        for i in 0..entries.len() {
+        for _i in 0..entries.len() {
             for j in (i + 1)..entries.len() {
                 let combined = entries[i].bbox.union(&entries[j].bbox);
                 let waste = combined.area()
@@ -569,7 +569,7 @@ impl Polygon {
         let mut inside = false;
         let n = self.vertices.len();
 
-        for i in 0..n {
+        for _i in 0..n {
             let j = (i + 1) % n;
             let vi = &self.vertices[i];
             let vj = &self.vertices[j];

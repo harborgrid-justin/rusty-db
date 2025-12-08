@@ -8,10 +8,10 @@
 //! - Materialized view rewrite
 //! - Common subexpression elimination
 
-use crate::common::{TableId, Value};
+use crate::common::TableId;
 use crate::error::Result;
 use crate::optimizer_pro::{Expression, BinaryOperator, UnaryOperator, Query};
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 use std::sync::Arc;
 
 // ============================================================================
@@ -785,7 +785,7 @@ mod tests {
         let mv = MaterializedView {
             name: "user_summary".to_string(),
             definition: "SELECT * FROM users".to_string(),
-            base_tables: vec![TableId(1)],
+            base_tables: vec![1],
             indexed_columns: vec![],
             refresh_mode: RefreshMode::Manual,
             last_refresh: None,

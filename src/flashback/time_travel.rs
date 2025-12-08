@@ -20,12 +20,12 @@
 //! SELECT * FROM accounts AS OF SCN 12345;
 //! ```
 
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 // ============================================================================
 // Type Aliases

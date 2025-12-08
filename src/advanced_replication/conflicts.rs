@@ -5,11 +5,11 @@
 //! Optimized with per-core sharding and lock-free operations for maximum throughput.
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use parking_lot::RwLock;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use std::hash::{Hash, Hasher};
 use crate::error::DbError;
 
@@ -244,7 +244,7 @@ impl CrdtType {
             CrdtType::PnCounter { positive, negative } => {
                 let pos_sum: u64 = positive.values().sum();
                 let neg_sum: u64 = negative.values().sum();
-                let result = pos_sum.saturating_sub(neg_sum);
+                let _result = pos_sum.saturating_sub(neg_sum);
                 Ok(result.to_le_bytes().to_vec())
             }
             CrdtType::GSet(set) => {
@@ -376,7 +376,7 @@ impl ConflictResolver {
     fn select_shard(&self, conflict_id: &str) -> &ConflictShard {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         std::hash::Hash::hash(conflict_id, &mut hasher);
-        let hash = std::hash::Hasher::finish(&hasher);
+        let _hash = std::hash::Hasher::finish(&hasher);
         let index = (hash as usize) % NUM_SHARDS;
         &self.shards[index]
     }
@@ -608,7 +608,7 @@ impl ConflictResolver {
 
     /// Custom handler resolution
     fn resolve_custom(&self, conflict: &Conflict, handler_name: &str) -> Result<ConflictResolution> {
-        let handlers = self.custom_handlers.read();
+        let _handlers = self.custom_handlers.read();
         let handler = handlers.get(handler_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Custom handler '{}' not found", handler_name)

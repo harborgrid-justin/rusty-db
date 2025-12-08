@@ -29,7 +29,7 @@
 //!
 //!     // Use circuit breaker
 //!     let breaker = CircuitBreaker::new("external_api", 5, 60);
-//!     let result = breaker.call(async {
+//!     let _result = breaker.call(async {
 //!         // Make external call
 //!         Ok::<_, rusty_db::DbError>(42)
 //!     }).await;
@@ -42,11 +42,11 @@
 //! }
 //! ```
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, Instant};
+use std::time::{Duration};
 use std::future::Future;
-use tokio::sync::{RwLock, Mutex, Semaphore};
+use tokio::sync::{RwLock, Semaphore};
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
@@ -375,7 +375,7 @@ impl CircuitBreaker {
 
     /// Check if we should attempt the call
     async fn should_attempt(&self) -> bool {
-        let state = *self.state.read().await;
+        let _state = *self.state.read().await;
 
         match state {
             CircuitState::Closed => true,
@@ -399,7 +399,7 @@ impl CircuitBreaker {
 
     /// Handle successful call
     async fn on_success(&self) {
-        let state = *self.state.read().await;
+        let _state = *self.state.read().await;
 
         match state {
             CircuitState::Closed => {
@@ -431,7 +431,7 @@ impl CircuitBreaker {
 
     /// Handle failed call
     async fn on_failure(&self) {
-        let state = *self.state.read().await;
+        let _state = *self.state.read().await;
 
         match state {
             CircuitState::Closed => {
@@ -808,7 +808,7 @@ mod tests {
 
         assert_eq!(bulkhead.available_permits(), 2);
 
-        let result = bulkhead.execute(async {
+        let _result = bulkhead.execute(async {
             Ok::<_, DbError>(42)
         }).await;
 

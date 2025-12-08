@@ -3,9 +3,9 @@
 //! Oracle SODA-like collection management with schema validation, statistics, and metadata.
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::error::Result;
 use super::document::{Document, DocumentId, IdGenerationType};
 

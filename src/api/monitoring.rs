@@ -37,10 +37,10 @@
 //! let health = monitoring.check_health();
 //! ```
 
-use std::collections::{HashMap, BTreeMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, atomic::{AtomicU64, AtomicBool, Ordering}};
-use std::time::{Duration, SystemTime, Instant, UNIX_EPOCH};
-use parking_lot::{RwLock, Mutex};
+use std::time::{Duration};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use crate::error::DbError;
 
@@ -442,7 +442,7 @@ impl MetricAggregator {
         let sum: f64 = recent_points.iter().sum();
         let min = recent_points.iter().cloned().fold(f64::INFINITY, f64::min);
         let max = recent_points.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-        let value = sum / count as f64;
+        let _value = sum / count as f64;
 
         let point = AggregatedMetricPoint {
             timestamp: now,
@@ -1496,7 +1496,7 @@ impl SelfHealingTrigger {
     }
 
     pub fn check_and_heal(&self) -> std::result::Result<(), DbError> {
-        let result = self.health_checker.check();
+        let _result = self.health_checker.check();
 
         if !result.status.is_healthy() {
             let failures = self.consecutive_failures.fetch_add(1, Ordering::SeqCst) + 1;
@@ -1629,7 +1629,7 @@ impl Alert {
         value: f64,
     ) -> Self {
         let id = uuid::Uuid::new_v4().to_string();
-        let fingerprint = format!("{}{}", rule_name, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+        let fingerprint = format!("{}{}", rule_name::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
 
         Self {
             id,
@@ -1740,7 +1740,7 @@ impl ThresholdAlertRule {
             // Check if duration threshold met
             if let Ok(elapsed) = SystemTime::now().duration_since(*trigger_time) {
                 if elapsed >= self.duration {
-                    let message = format!(
+                    let _message = format!(
                         "{} {} {} (current: {})",
                         self.metric_name,
                         match self.operator {
@@ -1825,7 +1825,7 @@ impl MultiConditionAlertRule {
         };
 
         if triggered {
-            let message = format!("Multi-condition alert: {}", self.name);
+            let _message = format!("Multi-condition alert: {}", self.name);
             let mut alert = Alert::new(
                 self.name.clone(),
                 self.severity,
@@ -2334,7 +2334,7 @@ impl Default for DashboardManager {
 
 /// Time-series database for historical metrics
 pub struct TimeSeriesDatabase {
-    data: Arc<RwLock<HashMap<String, VecDeque<TimeSeriesPoint>>>>,
+    data: Arc<RwLock<HashMap<String<TimeSeriesPoint>>>>,
     max_points_per_metric: usize,
     retention_period: Duration,
 }
@@ -2517,7 +2517,7 @@ impl MetricsExporter {
     }
 
     pub fn export(&self, query: TimeSeriesQuery, format: ExportFormat) -> std::result::Result<String, DbError> {
-        let result = self.tsdb.query(query);
+        let _result = self.tsdb.query(query);
 
         match format {
             ExportFormat::Json => self.export_json(&result),
@@ -2829,7 +2829,7 @@ mod tests {
 
         coordinator.add_checker(liveness.clone());
 
-        let result = coordinator.check_all();
+        let _result = coordinator.check_all();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].status, HealthStatus::Healthy);
     }

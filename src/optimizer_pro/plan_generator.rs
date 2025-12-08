@@ -14,7 +14,7 @@ use crate::optimizer_pro::{
     PhysicalPlan, PhysicalOperator, Expression, JoinType, SortKey, AggregateFunction,
     PlanId, PlanMetadata, Query, BinaryOperator, OptimizerHint, CostModel,
 };
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 use std::sync::Arc;
 use std::time::SystemTime;
 use std::cmp::Ordering;
@@ -624,7 +624,7 @@ impl PlanGenerator {
     }
 
     /// Parse query into logical plan
-    fn parse_query(&self, query: &Query) -> Result<LogicalPlan> {
+    fn parse_query(&self, _query: &Query) -> Result<LogicalPlan> {
         // Simplified query parsing - in production this would be more sophisticated
         Ok(LogicalPlan::Scan {
             table: 1,
@@ -784,7 +784,7 @@ struct IndexInfo {
 /// Set of joined tables (for memoization)
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct JoinSet {
-    tables: HashSet<TableId>,
+    tables: BTreeSet<TableId>,
 }
 
 // ============================================================================
@@ -881,7 +881,7 @@ impl JoinEnumerator {
 
         let mut result = Vec::new();
 
-        for i in 0..tables.len() {
+        for _i in 0..tables.len() {
             let mut remaining = tables.to_vec();
             let item = remaining.remove(i);
 
@@ -903,7 +903,7 @@ impl JoinEnumerator {
         let mut result = Vec::new();
         let n = tables.len();
 
-        for i in 1..(1 << n) {
+        for _i in 1..(1 << n) {
             let mut subset = Vec::new();
             let mut complement = Vec::new();
 

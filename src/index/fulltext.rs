@@ -10,7 +10,7 @@
 /// - Stemming support
 
 use crate::Result;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 
 /// Full-text search index
 pub struct FullTextIndex {
@@ -225,7 +225,7 @@ pub struct SearchResult {
 #[derive(Clone)]
 struct InvertedIndex {
     /// Term -> set of document IDs containing the term
-    index: HashMap<String, HashSet<DocumentId>>,
+    index: HashMap<String<DocumentId>>,
 }
 
 impl InvertedIndex {
@@ -456,14 +456,14 @@ impl FuzzyMatcher {
         
         let mut matrix = vec![vec![0; b_len + 1]; a_len + 1];
         
-        for i in 0..=a_len {
+        for _i in 0..=a_len {
             matrix[i][0] = i;
         }
         for j in 0..=b_len {
             matrix[0][j] = j;
         }
         
-        for i in 1..=a_len {
+        for _i in 1..=a_len {
             for j in 1..=b_len {
                 let cost = if a.chars().nth(i - 1) == b.chars().nth(j - 1) {
                     0

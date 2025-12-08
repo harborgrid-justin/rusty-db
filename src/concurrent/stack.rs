@@ -155,7 +155,7 @@ impl<T: 'static> LockFreeStack<T> {
 
                     // Take the data from the node
                     // Safety: We own this node now (we just popped it)
-                    let result = unsafe {
+                    let _result = unsafe {
                         let node_ptr = head.as_ptr();
                         let node_ref = &mut *node_ptr;
                         std::ptr::read(&node_ref.data)
@@ -564,7 +564,7 @@ mod tests {
         let mut handles = vec![];
 
         // Pushers
-        for i in 0..5 {
+        for _i in 0..5 {
             let s = stack.clone();
             handles.push(thread::spawn(move || {
                 for j in 0..1000 {
@@ -601,7 +601,7 @@ mod tests {
         let items = vec![1, 2, 3, 4, 5];
 
         stack.push_batch(items);
-        let result = stack.pop_batch(5);
+        let _result = stack.pop_batch(5);
 
         // Stack is LIFO
         assert_eq!(result, vec![1, 2, 3, 4, 5]);
@@ -611,7 +611,7 @@ mod tests {
     #[test]
     fn test_pop_all() {
         let stack = LockFreeStack::new();
-        for i in 0..10 {
+        for _i in 0..10 {
             stack.push(i);
         }
 
@@ -639,7 +639,7 @@ mod tests {
         let stack = Arc::new(EliminationStack::new(32));
         let mut handles = vec![];
 
-        for i in 0..10 {
+        for _i in 0..10 {
             let s = stack.clone();
             handles.push(thread::spawn(move || {
                 for j in 0..100 {

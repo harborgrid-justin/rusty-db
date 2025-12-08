@@ -27,7 +27,7 @@
 
 use crate::common::PageId;
 use std::collections::{HashMap, VecDeque};
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use parking_lot::{Mutex, RwLock};
@@ -257,7 +257,7 @@ impl PatternDetector {
 
     /// Get current pattern
     pub fn current_pattern(&self) -> AccessPattern {
-        self.current_pattern
+        self.current_pattern.clone()
     }
 
     /// Get pattern confidence
@@ -270,7 +270,7 @@ impl PatternDetector {
         PatternDetectorStats {
             total_accesses: self.total_accesses,
             pattern_changes: self.pattern_changes,
-            current_pattern: self.current_pattern,
+            current_pattern: self.current_pattern.clone(),
             confidence: self.confidence(),
         }
     }
@@ -629,7 +629,7 @@ mod tests {
         let mut detector = PatternDetector::new(20, Duration::from_secs(1));
 
         // Sequential forward pattern
-        for i in 1..=10 {
+        for _i in 1..=10 {
             detector.record_access(i);
         }
 
@@ -643,7 +643,7 @@ mod tests {
         let mut detector = PatternDetector::new(20, Duration::from_secs(1));
 
         // Sequential backward pattern
-        for i in (1..=10).rev() {
+        for _i in (1..=10).rev() {
             detector.record_access(i);
         }
 
@@ -656,7 +656,7 @@ mod tests {
         let mut detector = PatternDetector::new(20, Duration::from_secs(1));
 
         // Strided pattern with stride=5
-        for i in 0..10 {
+        for _i in 0..10 {
             detector.record_access(i * 5);
         }
 
@@ -674,7 +674,7 @@ mod tests {
 
         // Temporal pattern (repeating 1,2,3)
         for _ in 0..3 {
-            for i in 1..=3 {
+            for _i in 1..=3 {
                 detector.record_access(i);
             }
         }
@@ -710,11 +710,11 @@ mod tests {
         let engine = PrefetchEngine::new(config);
 
         // Sequential access
-        for i in 1..=10 {
+        for _i in 1..=10 {
             engine.record_access("test_table", i);
         }
 
-        let stats = engine.stats();
+        let _stats = engine.stats();
         assert!(stats.total_requests > 0);
     }
 

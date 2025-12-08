@@ -195,7 +195,7 @@ impl IntegratedSecurityManager {
             user_agent: None,
         };
 
-        let result = self.authentication.login(credentials)?;
+        let _result = self.authentication.login(credentials)?;
 
         match result {
             LoginResult::Success { session } => {
@@ -273,7 +273,7 @@ impl IntegratedSecurityManager {
         };
 
         // Check privilege
-        let result = self.privileges.check_object_privilege(
+        let _result = self.privileges.check_object_privilege(
             &session.user_id,
             &privilege,
             &privileges::PrivilegeObjectType::Table,
@@ -459,7 +459,7 @@ mod tests {
         }
 
         // Test authentication
-        let result = security.authenticate("testuser", "TestPassword123!");
+        let _result = security.authenticate("testuser", "TestPassword123!");
         assert!(result.is_ok());
     }
 
@@ -476,7 +476,7 @@ mod tests {
         ).unwrap();
 
         // Check privilege
-        let result = security.privileges.check_system_privilege(
+        let _result = security.privileges.check_system_privilege(
             &"user1".to_string(),
             &SystemPrivilege::CreateTable,
         );
@@ -552,7 +552,7 @@ mod tests {
     fn test_fgac_policy() {
         let security = IntegratedSecurityManager::new();
 
-        let policy = fgac::RowLevelPolicy {
+        let _policy = fgac::RowLevelPolicy {
             id: "pol1".to_string(),
             name: "Test Policy".to_string(),
             table_id: "employees".to_string(),

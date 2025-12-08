@@ -9,14 +9,14 @@
 //! - Inline hints for hot paths
 //! - Cold attributes for error paths
 
-use std::collections::{HashMap, VecDeque, BinaryHeap};
-use std::sync::{Arc, RwLock, Mutex};
+use std::collections::{HashMap, BinaryHeap};
+use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::consumer_groups::{ConsumerGroupId, PriorityLevel};
 use super::plans::ResourcePlanId;
 
@@ -308,7 +308,7 @@ pub struct CpuScheduler {
     /// Ready queue (priority queue for CFS)
     ready_queue: Arc<Mutex<BinaryHeap<ScheduledTask>>>,
     /// Per-group ready queues (for group-based scheduling)
-    group_queues: Arc<RwLock<HashMap<ConsumerGroupId, VecDeque<TaskId>>>>,
+    group_queues: Arc<RwLock<HashMap<ConsumerGroupId<TaskId>>>>,
     /// Group allocations
     group_allocations: Arc<RwLock<HashMap<ConsumerGroupId, GroupAllocation>>>,
     /// Running tasks
@@ -478,7 +478,7 @@ impl CpuScheduler {
 
         // Create group queue
         let mut queues = self.group_queues.write().unwrap();
-        queues.insert(group_id, VecDeque::new());
+        queues.insert(group_id::new());
 
         Ok(())
     }

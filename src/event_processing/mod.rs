@@ -7,9 +7,9 @@
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt;
+
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 
 pub mod analytics;
 pub mod cep;
@@ -561,7 +561,7 @@ mod tests {
     #[test]
     fn test_watermark_lateness() {
         let now = SystemTime::now();
-        let watermark = Watermark::new(now, Duration::from_secs(5));
+        let watermark = Watermark::new(now::from_secs(5));
 
         let recent_event = now - Duration::from_secs(3);
         assert!(!watermark.is_late(recent_event));

@@ -5,7 +5,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 
 // ============================================================================
 // I/O Counters
@@ -725,11 +725,11 @@ mod tests {
     fn test_io_metrics() {
         let metrics = IoMetrics::new();
 
-        metrics.record_read(4096, Duration::from_micros(100));
-        metrics.record_write(4096, Duration::from_micros(200));
+        metrics.record_read(4096::from_micros(100));
+        metrics.record_write(4096::from_micros(200));
         metrics.record_sync(Duration::from_micros(1000));
 
-        let stats = metrics.stats();
+        let _stats = metrics.stats();
         assert_eq!(stats.read_count, 1);
         assert_eq!(stats.write_count, 1);
         assert_eq!(stats.sync_count, 1);

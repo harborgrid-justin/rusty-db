@@ -15,10 +15,10 @@
 //! - Geographic and temporal anomaly detection
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
+use std::time::{SystemTime};
 use crate::Result;
 use crate::error::DbError;
 use sha2::{Sha256, Digest};
@@ -588,7 +588,7 @@ pub struct BehaviorAnalyzer {
     /// User baselines
     baselines: Arc<RwLock<HashMap<UserId, UserBehaviorBaseline>>>,
     /// Recent queries for baseline building
-    query_history: Arc<RwLock<HashMap<UserId, VecDeque<QueryHistoryEntry>>>>,
+    query_history: Arc<RwLock<HashMap<UserId<QueryHistoryEntry>>>>,
     config: Arc<RwLock<InsiderThreatConfig>>,
 }
 
@@ -783,7 +783,7 @@ pub struct DataExfiltrationGuard {
     /// Recent exfiltration attempts
     attempts: Arc<RwLock<Vec<ExfiltrationAttempt>>>,
     /// Per-user data volume tracking (rolling 1 hour)
-    user_volumes: Arc<RwLock<HashMap<UserId, VecDeque<(i64, u64)>>>>,
+    user_volumes: Arc<RwLock<HashMap<UserId<(i64, u64)>>>>,
     config: Arc<RwLock<InsiderThreatConfig>>,
 }
 
@@ -1034,7 +1034,7 @@ impl ForensicLogger {
         };
 
         // Calculate integrity hash
-        let hash = self.calculate_hash(&record);
+        let _hash = self.calculate_hash(&record);
         record.integrity_hash = hash.clone();
 
         // Update previous hash
@@ -1459,7 +1459,7 @@ mod tests {
     fn test_insider_threat_manager() {
         let manager = InsiderThreatManager::new();
 
-        let result = manager.assess_query(
+        let _result = manager.assess_query(
             &"user1".to_string(),
             Some("session1".to_string()),
             "SELECT id, name FROM employees WHERE department = 'Engineering' LIMIT 100",

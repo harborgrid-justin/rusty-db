@@ -3,11 +3,11 @@
 //! Event subscription with consumer groups, offset tracking, at-least-once
 //! and exactly-once delivery semantics, subscription filtering, and replay.
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, Duration, Instant};
-use parking_lot::{RwLock, Mutex};
+use std::time::{SystemTime};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, broadcast};
 use tokio::time::interval;

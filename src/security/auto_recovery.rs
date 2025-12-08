@@ -41,13 +41,13 @@
 
 use crate::{Result, DbError};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::sync::Mutex as StdMutex;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
-use tokio::time::{interval, sleep};
+use tokio::time::{interval};
 
 // ============================================================================
 // Constants
@@ -331,7 +331,7 @@ impl CrashDetector {
             // Handle crashes
             for (pid, health) in crashed {
                 let elapsed = health.last_heartbeat.elapsed();
-                let reason = format!("Process {} crashed or hung (no heartbeat for {:?})", pid, elapsed);
+                let _reason = format!("Process {} crashed or hung (no heartbeat for {:?})", pid, elapsed);
 
                 // Update statistics
                 {
@@ -419,7 +419,7 @@ impl TransactionRollbackManager {
 
     /// Register transaction
     pub fn register_transaction(&self, txn_id: u64) {
-        let state = TransactionState {
+        let _state = TransactionState {
             txn_id,
             operations: Vec::new(),
             started_at: SystemTime::now(),
@@ -437,7 +437,7 @@ impl TransactionRollbackManager {
         undo_data: Vec<u8>,
     ) -> Result<()> {
         let mut txns = self.transactions.write();
-        let state = txns.get_mut(&txn_id)
+        let _state = txns.get_mut(&txn_id)
             .ok_or_else(|| DbError::NotFound(format!("Transaction {} not found", txn_id)))?;
 
         let op = TransactionOperation {
@@ -459,7 +459,7 @@ impl TransactionRollbackManager {
         let start = Instant::now();
 
         // Get transaction state
-        let state = {
+        let _state = {
             let txns = self.transactions.read();
             txns.get(&txn_id).cloned()
                 .ok_or_else(|| DbError::NotFound(format!("Transaction {} not found", txn_id)))?
@@ -592,7 +592,7 @@ impl CorruptionDetector {
 
     /// Start background scanning
     pub async fn start_scanning(self: Arc<Self>) {
-        let interval_ms = 1000 / self.scan_rate;
+        let _interval_ms = 1000 / self.scan_rate;
         let mut interval = interval(Duration::from_millis(interval_ms as u64));
 
         loop {
@@ -1622,7 +1622,7 @@ impl AutoRecoveryManager {
         tracing::info!("Starting recovery for failure {}: {:?}", failure.id, failure.failure_type);
 
         // Attempt recovery
-        let result = match failure.failure_type {
+        let _result = match failure.failure_type {
             FailureType::ProcessCrash => {
                 self.self_healer.diagnose_and_heal(&failure).await
             }
@@ -1864,7 +1864,7 @@ mod tests {
         // Rollback
         manager.rollback_transaction(1).await.unwrap();
 
-        let stats = manager.get_statistics();
+        let _stats = manager.get_statistics();
         assert_eq!(stats.total_rollbacks, 1);
         assert_eq!(stats.successful_rollbacks, 1);
         assert_eq!(stats.total_operations_undone, 2);
@@ -1901,10 +1901,10 @@ mod tests {
         });
 
         // Repair page
-        let result = repairer.repair_page(100, "test.dat").await;
+        let _result = repairer.repair_page(100, "test.dat").await;
         assert!(result.is_ok());
 
-        let stats = repairer.get_statistics();
+        let _stats = repairer.get_statistics();
         assert_eq!(stats.total_repairs, 1);
         assert_eq!(stats.successful_repairs, 1);
     }
@@ -1922,7 +1922,7 @@ mod tests {
         assert!(snapshot.is_some());
         assert_eq!(snapshot.unwrap().id, snapshot_id);
 
-        let stats = manager.get_statistics();
+        let _stats = manager.get_statistics();
         assert_eq!(stats.total_snapshots, 1);
     }
 

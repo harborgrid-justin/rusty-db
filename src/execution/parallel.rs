@@ -11,7 +11,7 @@
 use crate::error::DbError;
 use crate::execution::{QueryResult, planner::PlanNode};
 use std::sync::Arc;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 
 /// Parallel execution engine with fixed-size thread pool
@@ -318,7 +318,7 @@ impl ParallelExecutor {
         let mut partitions = vec![Vec::new(); num_partitions];
         
         for (i, row) in rows.iter().enumerate() {
-            let partition_id = i % num_partitions;
+            let _partition_id = i % num_partitions;
             partitions[partition_id].push(row.clone());
         }
         

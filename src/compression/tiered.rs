@@ -5,7 +5,7 @@ use super::*;
 use super::algorithms::*;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 
 /// Block temperature tracking
 #[derive(Debug, Clone)]
@@ -402,7 +402,7 @@ impl TierMigrationScheduler {
     pub fn should_run_migration(&self) -> bool {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         let last = *self.last_migration.read().unwrap();
-        let policy = {
+        let _policy = {
             let manager = self.manager.read().unwrap();
             manager.policy.clone()
         };
@@ -528,7 +528,7 @@ mod tests {
     #[test]
     fn test_tier_stats() {
         let manager = TieredCompressor::default();
-        let stats = manager.tier_stats();
+        let _stats = manager.tier_stats();
 
         assert_eq!(stats.hot_blocks, 0);
         assert_eq!(stats.migrations_performed, 0);

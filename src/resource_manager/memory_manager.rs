@@ -3,12 +3,12 @@
 //! This module implements PGA memory limits, session memory quotas,
 //! automatic memory management, and out-of-memory prevention.
 
-use std::collections::{HashMap, BTreeMap};
-use std::sync::{Arc, RwLock, Mutex};
-use std::time::{Duration, Instant, SystemTime};
+use std::collections::{HashMap};
+use std::sync::{Arc, RwLock};
+use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::consumer_groups::ConsumerGroupId;
 use super::session_control::SessionId;
 

@@ -3,11 +3,11 @@
 //! Model versioning, serialization, registry, and deployment pipeline.
 //! Supports A/B testing and production model management.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::{Algorithm, ModelId, Hyperparameters, TrainingStats, EvaluationMetrics};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 
 // ============================================================================
 // Model Definition

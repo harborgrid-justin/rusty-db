@@ -5,9 +5,9 @@
 //!
 //! Enhanced with SIMD acceleration for sub-millisecond inference!
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::Result;
@@ -302,7 +302,7 @@ impl PerformancePredictor {
                 let mut weight_gradients = vec![0.0; self.weights.len()];
                 let mut bias_gradient = 0.0;
 
-                for i in batch_start..batch_end {
+                for _i in batch_start..batch_end {
                     let prediction = self.predict_internal(&x_data[i]);
                     let error = prediction - y_data[i];
 
@@ -788,7 +788,7 @@ mod tests {
         let mut analyzer = TimeSeriesAnalyzer::new(10);
 
         // Add increasing values
-        for i in 0..10 {
+        for _i in 0..10 {
             analyzer.add_point(TimeSeriesPoint {
                 timestamp: SystemTime::now(),
                 value: i as f64 * 2.0,

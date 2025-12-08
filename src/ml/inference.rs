@@ -12,7 +12,7 @@ use super::{
 };
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use serde::{Serialize, Deserialize};
 use parking_lot::Mutex;
 
@@ -352,7 +352,7 @@ impl ModelCache {
 
     /// Get cache statistics
     pub fn stats(&self) -> (u64, u64, u64) {
-        let stats = self.stats.lock();
+        let _stats = self.stats.lock();
         (stats.hits, stats.misses, stats.evictions)
     }
 
@@ -694,7 +694,7 @@ impl InferenceEngine {
 
     /// Get average inference time
     pub fn average_inference_time(&self) -> Duration {
-        let logs = self.prediction_logs.lock();
+        let _logs = self.prediction_logs.lock();
         if logs.is_empty() {
             Duration::from_micros(0)
         } else {
@@ -724,7 +724,7 @@ mod tests {
         cache.put("test:1.0.0".to_string(), &model);
         assert_eq!(cache.count(), 1);
 
-        let result = cache.get("test:1.0.0");
+        let _result = cache.get("test:1.0.0");
         assert!(result.is_some());
 
         let (hits, misses, _) = cache.stats();

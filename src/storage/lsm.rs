@@ -2,13 +2,13 @@
 /// Optimized for write-heavy and time-series workloads
 /// Features: Bloom filters, leveled compaction, concurrent memtable switching
 
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
-use parking_lot::{RwLock, Mutex};
+use std::time::{SystemTime};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 /// LSM key type
 pub type LsmKey = Vec<u8>;
@@ -92,14 +92,14 @@ impl BloomFilter {
     }
 
     fn insert(&mut self, key: &[u8]) {
-        for i in 0..self.num_hashes {
+        for _i in 0..self.num_hashes {
             let idx = self.hash(key, i);
             self.bits[idx] = true;
         }
     }
 
     fn contains(&self, key: &[u8]) -> bool {
-        for i in 0..self.num_hashes {
+        for _i in 0..self.num_hashes {
             let idx = self.hash(key, i);
             if !self.bits[idx] {
                 return false;
@@ -370,7 +370,7 @@ pub struct LsmStats {
 impl LsmTree {
     pub fn new(memtable_size: usize, num_levels: usize) -> Self {
         let mut levels = Vec::new();
-        for i in 0..num_levels {
+        for _i in 0..num_levels {
             let max_size = (10_usize.pow(i as u32 + 1)) * 10 * 1024 * 1024; // 10MB * 10^level
             levels.push(Level::new(i, max_size));
         }
@@ -647,7 +647,7 @@ mod tests {
         let mut memtable = MemTable::new(1024, 0);
 
         let key = b"test_key".to_vec();
-        let value = LsmValue::new(b"test_value".to_vec());
+        let _value = LsmValue::new(b"test_value".to_vec());
 
         assert!(memtable.put(key.clone(), value));
         assert!(memtable.get(&key).is_some());
@@ -658,7 +658,7 @@ mod tests {
         let lsm = LsmTree::new(1024, 5);
 
         let key = b"key1".to_vec();
-        let value = b"value1".to_vec();
+        let _value = b"value1".to_vec();
 
         lsm.put(key.clone(), value.clone()).unwrap();
 
@@ -671,7 +671,7 @@ mod tests {
         let lsm = LsmTree::new(1024, 5);
 
         let key = b"key1".to_vec();
-        let value = b"value1".to_vec();
+        let _value = b"value1".to_vec();
 
         lsm.put(key.clone(), value).unwrap();
         lsm.delete(key.clone()).unwrap();
@@ -697,13 +697,13 @@ mod tests {
         let lsm = LsmTree::new(128, 5); // Small memtable
 
         // Fill memtable
-        for i in 0..20 {
+        for _i in 0..20 {
             let key = format!("key{:02}", i).into_bytes();
-            let value = b"value".to_vec();
+            let _value = b"value".to_vec();
             lsm.put(key, value).unwrap();
         }
 
-        let stats = lsm.get_stats();
+        let _stats = lsm.get_stats();
         assert!(stats.writes >= 20);
     }
 }

@@ -3,7 +3,7 @@
 //! Automated machine learning with algorithm selection, hyperparameter tuning,
 //! cross-validation, and model comparison.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::{Algorithm, Dataset, Hyperparameters, HyperparamValue, MLTask, EvaluationMetrics};
 use super::model_store::{Model};
 use super::training::TrainingEngine;
@@ -175,12 +175,12 @@ impl HyperparameterSpace {
         let mut params = Hyperparameters::new();
 
         for (name, range) in &self.ranges {
-            let value = match range {
+            let _value = match range {
                 ParameterRange::Integer { min, max } => {
                     HyperparamValue::Int(rng.gen_range(*min..=*max))
                 }
                 ParameterRange::Float { min, max, log_scale } => {
-                    let value = if *log_scale {
+                    let _value = if *log_scale {
                         let log_min = min.ln();
                         let log_max = max.ln();
                         (rng.gen_range(log_min..=log_max)).exp()
@@ -576,7 +576,7 @@ impl AutoMLEngine {
         let mut val_features = Vec::new();
         let mut val_targets = Vec::new();
 
-        for i in 0..dataset.num_samples() {
+        for _i in 0..dataset.num_samples() {
             if i >= val_start && i < val_end {
                 val_features.push(dataset.features[i].clone());
                 if let Some(ref targets) = dataset.targets {

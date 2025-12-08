@@ -139,7 +139,7 @@ pub fn simd_vector_add(a: &[f64], b: &[f64], result: &mut [f64]) {
 
     #[cfg(not(all(target_arch = "x86_64", any(target_feature = "avx2", target_feature = "sse2"))))]
     {
-        for i in 0..a.len() {
+        for _i in 0..a.len() {
             result[i] = a[i] + b[i];
         }
     }
@@ -216,7 +216,7 @@ pub fn simd_scalar_multiply(scalar: f64, vector: &[f64], result: &mut [f64]) {
 
     #[cfg(not(all(target_arch = "x86_64", any(target_feature = "avx2", target_feature = "sse2"))))]
     {
-        for i in 0..vector.len() {
+        for _i in 0..vector.len() {
             result[i] = scalar * vector[i];
         }
     }
@@ -479,7 +479,7 @@ mod tests {
         let a = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let b = vec![2.0, 3.0, 4.0, 5.0, 6.0];
 
-        let result = simd_dot_product(&a, &b);
+        let _result = simd_dot_product(&a, &b);
         let expected = 70.0; // 1*2 + 2*3 + 3*4 + 4*5 + 5*6
 
         assert!((result - expected).abs() < 1e-10);
@@ -511,7 +511,7 @@ mod tests {
         let a = vec![1.0, 2.0, 3.0];
         let b = vec![4.0, 6.0, 8.0];
 
-        let result = simd_euclidean_distance(&a, &b);
+        let _result = simd_euclidean_distance(&a, &b);
         let expected = ((3.0_f64).powi(2) + (4.0_f64).powi(2) + (5.0_f64).powi(2)).sqrt();
 
         assert!((result - expected).abs() < 1e-10);
@@ -522,7 +522,7 @@ mod tests {
         let matrix = vec![vec![1.0, 2.0], vec![3.0, 4.0], vec![5.0, 6.0]];
         let vector = vec![2.0, 3.0];
 
-        let result = simd_matrix_vector_multiply(&matrix, &vector);
+        let _result = simd_matrix_vector_multiply(&matrix, &vector);
 
         assert_eq!(result, vec![8.0, 18.0, 28.0]);
     }
@@ -530,7 +530,7 @@ mod tests {
     #[test]
     fn test_simd_sum() {
         let vector = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let result = simd_sum(&vector);
+        let _result = simd_sum(&vector);
 
         assert!((result - 15.0).abs() < 1e-10);
     }

@@ -93,7 +93,7 @@ pub use quantization::{
     quantize_weights, dequantize_weights,
 };
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 

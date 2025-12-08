@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, Instant, SystemTime};
-use std::fmt;
+use std::time::{Duration};
+
 
 /// Resource type enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -643,7 +643,7 @@ mod tests {
 
         assert!(manager.assign_session_to_group(1, "high_priority"));
 
-        let result = manager.start_query(1001, 1, Some(Duration::from_secs(30)));
+        let _result = manager.start_query(1001, 1, Some(Duration::from_secs(30)));
         assert!(result.is_ok());
 
         let usage = manager.get_query_usage(1001);
@@ -667,7 +667,7 @@ mod tests {
     fn test_resource_planner() {
         let planner = ResourcePlanner::new(100);
 
-        let stats = ResourceGroupStatistics {
+        let _stats = ResourceGroupStatistics {
             name: "test".to_string(),
             priority: 100,
             active_sessions: 5,

@@ -2,7 +2,7 @@
 //!
 //! High-performance asynchronous I/O using Linux io_uring.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::io::{IoRequest, IoCompletion, IoOpType, IoStatus};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicU32, Ordering};

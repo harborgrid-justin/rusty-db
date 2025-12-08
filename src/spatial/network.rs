@@ -7,10 +7,10 @@
 //! - Service area computation
 //! - Network routing and optimization
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::spatial::geometry::Coordinate;
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashMap};
 use std::f64;
 
 /// Network node
@@ -114,7 +114,7 @@ impl Network {
 
         let edge_id = edge.id;
         let from_node = edge.from_node;
-        let to_node = edge.to_node;
+        let _to_node = edge.to_node;
         let is_bidirectional = edge.is_bidirectional();
 
         self.edges.insert(edge_id, edge);
@@ -632,7 +632,7 @@ impl<'a> TspSolver<'a> {
             improved = false;
             iteration += 1;
 
-            for i in 1..path.nodes.len() - 2 {
+            for _i in 1..path.nodes.len() - 2 {
                 for j in i + 1..path.nodes.len() - 1 {
                     // Calculate cost of current edges
                     let current_cost = router.shortest_path(path.nodes[i - 1], path.nodes[i])
@@ -663,7 +663,7 @@ impl<'a> TspSolver<'a> {
         let mut total_cost = 0.0;
         let mut edges = Vec::new();
 
-        for i in 0..path.nodes.len() - 1 {
+        for _i in 0..path.nodes.len() - 1 {
             if let Ok(segment) = router.shortest_path(path.nodes[i], path.nodes[i + 1]) {
                 total_cost += segment.total_cost;
                 edges.extend(segment.edges);

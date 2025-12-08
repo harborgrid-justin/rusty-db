@@ -8,12 +8,12 @@
 /// - Distributed cache coordination
 /// - Cache statistics and monitoring
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::execution::QueryResult;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, SystemTime, Instant};
+use std::time::{Duration};
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 
@@ -428,7 +428,7 @@ impl CacheWarmer {
             // In real implementation, would execute query
             // and cache the result
             let _query = &warming_query.query;
-            // let result = executor.execute(query).await?;
+            // let _result = executor.execute(query).await?;
             // self.cache.put(query.clone(), result);
         }
         Ok(())
@@ -643,7 +643,7 @@ mod tests {
     fn test_multi_level_cache() {
         let cache = MultiLevelCache::new(10, 50, 200);
         
-        let result = QueryResult::new(
+        let _result = QueryResult::new(
             vec!["id".to_string(), "name".to_string()],
             vec![vec!["1".to_string(), "Alice".to_string()]],
         );
@@ -653,7 +653,7 @@ mod tests {
         let cached = cache.get("query1");
         assert!(cached.is_some());
         
-        let stats = cache.get_stats();
+        let _stats = cache.get_stats();
         assert_eq!(stats.l1_hits, 1);
         assert_eq!(stats.total_hits(), 1);
     }
@@ -662,7 +662,7 @@ mod tests {
     fn test_dependency_aware_cache() {
         let cache = DependencyAwareCache::new();
         
-        let result = QueryResult::new(vec!["id".to_string()], vec![]);
+        let _result = QueryResult::new(vec!["id".to_string()], vec![]);
         
         cache.cache_query(
             "SELECT * FROM users".to_string(),
@@ -1011,7 +1011,7 @@ mod semantic_tests {
     fn test_semantic_cache() {
         let cache = SemanticQueryCache::new();
 
-        let result = QueryResult::new(
+        let _result = QueryResult::new(
             vec!["id".to_string()],
             vec![vec!["1".to_string()]],
         );

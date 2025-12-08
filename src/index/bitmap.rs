@@ -93,7 +93,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
 
         match (bitmap1, bitmap2) {
             (Some(b1), Some(b2)) => {
-                let result = b1.and(b2);
+                let _result = b1.and(b2);
                 Ok(result.get_set_bits())
             }
             _ => Ok(Vec::new()),
@@ -109,7 +109,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
 
         match (bitmap1, bitmap2) {
             (Some(b1), Some(b2)) => {
-                let result = b1.or(b2);
+                let _result = b1.or(b2);
                 Ok(result.get_set_bits())
             }
             (Some(b1), None) => Ok(b1.get_set_bits()),
@@ -125,7 +125,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
 
         match bitmaps.get(value) {
             Some(bitmap) => {
-                let result = bitmap.not(num_rows);
+                let _result = bitmap.not(num_rows);
                 Ok(result.get_set_bits())
             }
             None => {
@@ -274,7 +274,7 @@ impl CompressedBitmap {
 
         for run in &self.runs {
             if run.value {
-                for i in 0..run.length {
+                for _i in 0..run.length {
                     result.push(position + i);
                 }
             }
@@ -555,7 +555,7 @@ mod tests {
         index.insert("tag2".to_string(), 1).unwrap();
         index.insert("tag2".to_string(), 2).unwrap();
 
-        let result = index.and(&"tag1".to_string(), &"tag2".to_string()).unwrap();
+        let _result = index.and(&"tag1".to_string(), &"tag2".to_string()).unwrap();
         assert_eq!(result, vec![1]);
     }
 
@@ -567,7 +567,7 @@ mod tests {
         index.insert("tag1".to_string(), 1).unwrap();
         index.insert("tag2".to_string(), 2).unwrap();
 
-        let result = index.or(&"tag1".to_string(), &"tag2".to_string()).unwrap();
+        let _result = index.or(&"tag1".to_string(), &"tag2".to_string()).unwrap();
         assert!(result.contains(&0));
         assert!(result.contains(&1));
         assert!(result.contains(&2));

@@ -7,11 +7,11 @@
 //! - Plan history and comparison
 //! - Automatic plan regression detection
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::optimizer_pro::{PhysicalPlan, PlanId, QueryFingerprint};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 
 // ============================================================================
 // Plan Baseline Manager
@@ -689,12 +689,12 @@ mod tests {
         PhysicalPlan {
             plan_id: PlanId(1),
             operator: PhysicalOperator::SeqScan {
-                table_id: TableId(1),
+                table_id: 1,
                 filter: None,
             },
             cost: 100.0,
             cardinality: 1000,
-            schema: Schema { columns: vec![] },
+            schema: Schema::empty(),
             metadata: PlanMetadata {
                 created_at: SystemTime::now(),
                 optimizer_version: "1.0".to_string(),

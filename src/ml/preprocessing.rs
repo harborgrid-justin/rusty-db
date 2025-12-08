@@ -5,7 +5,7 @@
 
 use crate::error::Result;
 use super::{Dataset, Vector, Matrix, FeatureNames, MLError};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use serde::{Serialize, Deserialize};
 
 // ============================================================================
@@ -192,7 +192,7 @@ impl MinMaxScaler {
         let mut max = f64::NEG_INFINITY;
 
         for row in features {
-            let value = row[col];
+            let _value = row[col];
             if value < min {
                 min = value;
             }
@@ -376,7 +376,7 @@ impl OneHotEncoder {
 
                 if let Some(pos) = categories.iter().position(|c| c == value) {
                     // Create one-hot encoding for this feature
-                    for i in 0..categories.len() {
+                    for _i in 0..categories.len() {
                         encoded_row.push(if i == pos { 1.0 } else { 0.0 });
                     }
                 } else {
@@ -536,7 +536,7 @@ impl Imputer {
             ImputationStrategy::MostFrequent => {
                 let mut counts: HashMap<i64, usize> = HashMap::new();
                 for row in features {
-                    let value = row[col];
+                    let _value = row[col];
                     if !value.is_nan() {
                         *counts.entry(value as i64).or_insert(0) += 1;
                     }
@@ -970,7 +970,7 @@ mod tests {
         let feature_names = vec!["f1".to_string(), "f2".to_string()];
 
         let mut scaler = StandardScaler::new();
-        let result = scaler.fit_transform(&features, &feature_names).unwrap();
+        let _result = scaler.fit_transform(&features, &feature_names).unwrap();
 
         // Check that mean is approximately 0
         let mean_col1 = result.iter().map(|row| row[0]).sum::<f64>() / result.len() as f64;
@@ -987,7 +987,7 @@ mod tests {
         let feature_names = vec!["f1".to_string(), "f2".to_string()];
 
         let mut scaler = MinMaxScaler::new();
-        let result = scaler.fit_transform(&features, &feature_names).unwrap();
+        let _result = scaler.fit_transform(&features, &feature_names).unwrap();
 
         // Check that values are in [0, 1]
         for row in &result {

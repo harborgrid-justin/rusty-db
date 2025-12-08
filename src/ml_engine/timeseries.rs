@@ -3,7 +3,7 @@
 //! Advanced time series capabilities including ARIMA-like forecasting,
 //! exponential smoothing, seasonality detection, trend analysis, and anomaly detection.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::Algorithm;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
@@ -143,7 +143,7 @@ impl ExponentialSmoothing {
 
         // Initialize seasonal components
         if self.model_type != SeasonalityType::None {
-            for i in 0..self.season_length {
+            for _i in 0..self.season_length {
                 let mut season_sum = 0.0;
                 let mut count = 0;
 
@@ -306,7 +306,7 @@ impl ARIMAModel {
         let mut x_matrix = vec![vec![0.0; self.p]; n - self.p];
         let mut y_vector = vec![0.0; n - self.p];
 
-        for i in 0..(n - self.p) {
+        for _i in 0..(n - self.p) {
             for j in 0..self.p {
                 x_matrix[i][j] = series[self.p - j - 1 + i];
             }
@@ -379,7 +379,7 @@ impl SeasonalityDetector {
 
         for lag in 1..acf.len() {
             let mut sum = 0.0;
-            for i in 0..(n - lag) {
+            for _i in 0..(n - lag) {
                 sum += (series[i] - mean) * (series[i + lag] - mean);
             }
             acf[lag] = sum / variance;
@@ -438,7 +438,7 @@ impl TrendAnalyzer {
         let window = period;
         let mut trend = Vec::with_capacity(series.len());
 
-        for i in 0..series.len() {
+        for _i in 0..series.len() {
             let start = i.saturating_sub(window / 2);
             let end = (i + window / 2 + 1).min(series.len());
             let avg = series[start..end].iter().sum::<f64>() / (end - start) as f64;
@@ -463,7 +463,7 @@ impl TrendAnalyzer {
         let mut seasonal = vec![0.0; period];
 
         // Average each seasonal period
-        for i in 0..period {
+        for _i in 0..period {
             let mut sum = 0.0;
             let mut count = 0;
 

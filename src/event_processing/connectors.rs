@@ -8,10 +8,10 @@ use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
-use std::io::{BufWriter, Write};
+use std::io::{BufWriter};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex, RwLock};
-use std::time::{Duration, SystemTime};
+use std::sync::{Arc, RwLock};
+use std::time::{Duration};
 
 /// Connector type
 #[derive(Debug, Clone, Serialize, Deserialize)]

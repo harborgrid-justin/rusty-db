@@ -37,10 +37,10 @@
 //! }
 //! ```
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
-use tokio::sync::{RwLock, Mutex, Semaphore};
+use std::time::{Duration};
+use tokio::sync::{RwLock, Semaphore};
 use serde::{Serialize, Deserialize};
 use async_trait::async_trait;
 
@@ -680,7 +680,7 @@ impl LifecycleManager {
 
     /// Get current system state
     pub async fn get_system_state(&self) -> ComponentState {
-        let state = self.system_state.read().await;
+        let _state = self.system_state.read().await;
         *state
     }
 

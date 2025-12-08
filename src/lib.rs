@@ -774,7 +774,7 @@ pub mod workload;
 /// vector and raster data support, spatial indexing, and analytical operations.
 ///
 /// **Key Components:**
-/// - `Geometry`: Point, LineString, Polygon, and complex geometries
+/// - `Geometry`: Point, Polygon, and complex geometries
 /// - `SpatialIndex`: R-tree, Quadtree, and Grid-based spatial indexing
 /// - `Operators`: Topological operators, distance calculations, buffer operations
 /// - `Analysis`: K-nearest neighbors, clustering, Voronoi, Delaunay triangulation

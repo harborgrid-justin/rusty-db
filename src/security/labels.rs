@@ -14,7 +14,7 @@
 //! - Label composition and decomposition
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use std::cmp::Ordering;
@@ -361,7 +361,7 @@ impl LabelManager {
         };
 
         // Get policy for table
-        let policy = self.get_table_policy(table_id)?;
+        let _policy = self.get_table_policy(table_id)?;
 
         match policy.read_policy {
             LabelAccessPolicy::ReadDown => {
@@ -397,7 +397,7 @@ impl LabelManager {
             None => return Ok(true),
         };
 
-        let policy = self.get_table_policy(table_id)?;
+        let _policy = self.get_table_policy(table_id)?;
 
         match policy.write_policy {
             LabelAccessPolicy::ReadDown => {
@@ -424,7 +424,7 @@ impl LabelManager {
         row_ids: Vec<String>,
     ) -> Result<Vec<String>> {
         let clearance = self.get_user_clearance(user_id)?;
-        let policy = self.get_table_policy(table_id)?;
+        let _policy = self.get_table_policy(table_id)?;
 
         let row_labels = self.row_labels.read();
         let table_labels = row_labels.get(table_id);
@@ -614,7 +614,7 @@ impl Default for LabelStatistics {
 }
 
 fn current_timestamp() -> i64 {
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::time::{SystemTime};
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -680,7 +680,7 @@ mod tests {
         manager.set_user_clearance(clearance).unwrap();
 
         // Create policy
-        let policy = LabelPolicy {
+        let _policy = LabelPolicy {
             id: "pol1".to_string(),
             name: "Test Policy".to_string(),
             table_id: "table1".to_string(),

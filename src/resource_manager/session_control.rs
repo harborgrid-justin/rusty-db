@@ -3,12 +3,12 @@
 //! This module implements maximum active sessions, idle timeout management,
 //! long-running query limits, automatic session termination, and priority boosting.
 
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::sync::{Arc, RwLock, Mutex};
-use std::time::{Duration, Instant, SystemTime};
+use std::collections::{HashMap};
+use std::sync::{Arc, RwLock};
+use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::consumer_groups::ConsumerGroupId;
 
 /// Session identifier

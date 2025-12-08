@@ -6,7 +6,7 @@
 use std::sync::Arc;
 use std::collections::HashMap;
 use parking_lot::RwLock;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 
 use crate::inmemory::compression::{CompressionType, HybridCompressor, CompressionStats};
 use crate::inmemory::vectorized_ops::{VectorizedFilter, VectorizedAggregator, VectorBatch};
@@ -594,7 +594,7 @@ impl ColumnStore {
                 }
             } else {
                 // Scalar path for other types
-                for i in 0..segment.row_count {
+                for _i in 0..segment.row_count {
                     if !segment.is_null(i) {
                         if let Ok(val) = segment.read_int64(i) {
                             if predicate(&ColumnValue::Int64(val)) {

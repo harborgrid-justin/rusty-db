@@ -8,13 +8,13 @@
 //! - SQL Plan Directives
 
 use crate::common::{TableId, IndexId, Value};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::optimizer_pro::{
-    PhysicalPlan, PhysicalOperator, Expression, JoinType, PlanId, ExecutionResult,
+    PhysicalPlan, PhysicalOperator, Expression, JoinType, PlanId,
 };
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 
 // ============================================================================
 // Adaptive Executor
@@ -357,7 +357,7 @@ impl RuntimeStatsCollector {
     pub fn start_execution(&self, plan_id: PlanId) -> ExecutionId {
         let execution_id = ExecutionId(rand::random());
 
-        let stats = ExecutionStats {
+        let _stats = ExecutionStats {
             execution_id,
             plan_id,
             start_time: Instant::now(),
@@ -829,7 +829,7 @@ mod tests {
         collector.record_operator_start(&execution_id, "SeqScan");
         collector.record_operator_end(&execution_id, "SeqScan", 100);
 
-        let stats = collector.stop_execution(execution_id);
+        let _stats = collector.stop_execution(execution_id);
         assert_eq!(stats.plan_id, plan_id);
     }
 

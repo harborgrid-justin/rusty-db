@@ -17,16 +17,15 @@
 //! instance load, and network topology. Results are streamed back through
 //! efficient data flow operators and aggregated at the coordinator.
 
-use crate::error::DbError;
-use crate::common::{NodeId, TableId, Value, Tuple, Schema};
+use crate::error::{DbError, Result};
+use crate::common::{NodeId, TableId, Value, Tuple};
 use crate::rac::interconnect::{ClusterInterconnect, MessageType, MessagePriority};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
+use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 use parking_lot::{RwLock, Mutex};
 use tokio::sync::{mpsc, oneshot, Semaphore};
-use bytes::Bytes;
 
 // ============================================================================
 // Constants
@@ -402,7 +401,7 @@ struct WorkerInfo {
 impl WorkerPool {
     fn new(max_workers: usize) -> Self {
         let mut available = VecDeque::new();
-        for i in 0..max_workers {
+        for _i in 0..max_workers {
             available.push_back(i);
         }
 
@@ -614,7 +613,7 @@ impl ParallelQueryCoordinator {
         // Create execution state
         let (completion_tx, completion_rx) = oneshot::channel();
 
-        let state = QueryExecutionState {
+        let _state = QueryExecutionState {
             query_id,
             status: ExecutionStatus::Initializing,
             started_at: start,
@@ -632,7 +631,7 @@ impl ParallelQueryCoordinator {
         self.start_query_execution(plan).await?;
 
         // Wait for completion
-        let result = match completion_rx.await {
+        let _result = match completion_rx.await {
             Ok(Ok(tuples)) => {
                 self.stats.write().successful_queries += 1;
                 Ok(tuples)
@@ -744,13 +743,13 @@ impl ParallelQueryCoordinator {
         };
 
         let worker_pool = self.worker_pool.clone();
-        let stats = self.stats.clone();
+        let _stats = self.stats.clone();
         let enable_speculation = self.config.enable_speculation;
         let speculation_threshold = self.config.speculation_threshold;
 
         tokio::spawn(async move {
             let start = Instant::now();
-            let result = Self::execute_fragment_work(fragment.clone()).await;
+            let _result = Self::execute_fragment_work(fragment.clone()).await;
 
             // NEW: Check if this is taking too long (straggler detection)
             let elapsed = start.elapsed().as_millis() as f64;
@@ -798,8 +797,8 @@ impl ParallelQueryCoordinator {
 
     /// NEW: Work stealing implementation
     /// Idle workers can steal work from busy workers' queues
-    async fn try_steal_work(&self, thief_worker_id: WorkerId) -> Option<QueryFragment> {
-        let active_workers = self.worker_pool.active_workers.read();
+    async fn try_steal_work(&self, _thief_worker_id: WorkerId) -> Option<QueryFragment> {
+        let _active_workers = self.worker_pool.active_workers.read();
 
         // Find busiest worker (most work remaining)
         // In production, would maintain per-worker work queues
@@ -817,7 +816,7 @@ impl ParallelQueryCoordinator {
         fragment: QueryFragment,
         instance: NodeId,
     ) -> std::result::Result<(), DbError> {
-        let message = QueryMessage::ExecuteFragment {
+        let _message = QueryMessage::ExecuteFragment {
             query_id,
             fragment_id,
             fragment,

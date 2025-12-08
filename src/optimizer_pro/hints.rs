@@ -6,9 +6,9 @@
 //! - Conflicting hint resolution
 //! - Hint reporting
 
-use crate::error::{DbError, Result};
-use std::collections::{HashMap, HashSet};
-use std::fmt;
+use crate::error::Result;
+use std::collections::{HashMap};
+
 
 // ============================================================================
 // Hint Parser
@@ -522,7 +522,7 @@ impl HintValidator {
     /// Validate hints
     pub fn validate(&self, hints: &[OptimizerHint]) -> Result<()> {
         // Check for conflicts
-        for i in 0..hints.len() {
+        for _i in 0..hints.len() {
             for j in i + 1..hints.len() {
                 if let Some(conflict) = self.check_conflict(&hints[i], &hints[j]) {
                     match conflict.severity {
@@ -706,7 +706,7 @@ impl HintReporter {
 
     /// Get effectiveness ratio
     pub fn get_effectiveness_ratio(&self, hint_name: &str) -> f64 {
-        let stats = self.usage_stats.read().unwrap();
+        let _stats = self.usage_stats.read().unwrap();
 
         if let Some(usage) = stats.get(hint_name) {
             if usage.total_uses > 0 {
@@ -754,7 +754,7 @@ mod tests {
         ];
 
         // Should detect conflict
-        let result = validator.validate(&hints);
+        let _result = validator.validate(&hints);
         assert!(result.is_err());
     }
 

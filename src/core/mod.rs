@@ -41,11 +41,11 @@
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::time::{Duration, Instant};
-use parking_lot::{RwLock, Mutex};
+use std::time::{Duration};
+use parking_lot::{RwLock};
 use std::collections::HashMap;
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 // ============================================================================
 // Core Configuration
@@ -322,7 +322,7 @@ impl DatabaseCore {
     /// Initialize the database core with the given configuration
     pub async fn initialize(config: CoreConfig) -> Result<Arc<Self>> {
         let start = Instant::now();
-        let state = Arc::new(RwLock::new(CoreState::Bootstrapping));
+        let _state = Arc::new(RwLock::new(CoreState::Bootstrapping));
 
         println!("╔════════════════════════════════════════════════════════╗");
         println!("║         RustyDB Core Initialization                   ║");
@@ -754,7 +754,7 @@ pub struct IoStats {
 impl IoEngine {
     pub fn new(config: IoConfig) -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
-        let stats = IoStats {
+        let _stats = IoStats {
             reads: AtomicU64::new(0),
             writes: AtomicU64::new(0),
             bytes_read: AtomicU64::new(0),
@@ -838,7 +838,7 @@ impl WorkerPool {
     pub fn new(config: WorkerConfig) -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
         let task_queue = Arc::new(crossbeam::queue::SegQueue::<Box<dyn Fn() + Send>>::new());
-        let stats = WorkerStats {
+        let _stats = WorkerStats {
             tasks_executed: AtomicU64::new(0),
             tasks_queued: AtomicU64::new(0),
             idle_time_ns: AtomicU64::new(0),
@@ -1076,7 +1076,7 @@ mod tests {
         // Unpin the page
         manager.unpin_page(frame_id.unwrap(), false);
 
-        let (_stats, _hit_rate) = manager.get_stats();
+        let (stats, _hit_rate) = manager.get_stats();
         assert_eq!(stats.misses.load(Ordering::Relaxed), 1);
     }
 

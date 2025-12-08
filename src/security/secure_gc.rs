@@ -40,12 +40,12 @@
 
 use std::ops::{Deref, DerefMut};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Arc, Weak};
 use std::ptr;
 use std::mem;
 use std::alloc::{alloc, dealloc, Layout};
 use parking_lot::RwLock;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::time::Instant;
 use rand::RngCore;
 
@@ -905,13 +905,13 @@ mod tests {
         let block1 = pool.allocate().unwrap();
         let block2 = pool.allocate().unwrap();
 
-        let stats = pool.stats();
+        let _stats = pool.stats();
         assert_eq!(stats.used_blocks, 2);
 
         drop(block1);
         drop(block2);
 
-        let stats = pool.stats();
+        let _stats = pool.stats();
         assert_eq!(stats.used_blocks, 0);
     }
 
@@ -939,12 +939,12 @@ mod tests {
             sanitizer.queue_sanitization(ptr, data.len(), Pattern::Zero);
         }
 
-        let stats = sanitizer.stats();
+        let _stats = sanitizer.stats();
         assert_eq!(stats.queue_size, 1);
 
         sanitizer.flush();
 
-        let stats = sanitizer.stats();
+        let _stats = sanitizer.stats();
         assert_eq!(stats.queue_size, 0);
 
         // Prevent data from being dropped
@@ -959,13 +959,13 @@ mod tests {
         let slice = block.as_mut_slice();
         slice[0] = 42;
 
-        let stats = guard.stats();
+        let _stats = guard.stats();
         assert_eq!(stats.active_regions, 1);
         assert_eq!(stats.anomalies_detected, 0);
 
         drop(block);
 
-        let stats = guard.stats();
+        let _stats = guard.stats();
         assert_eq!(stats.active_regions, 0);
     }
 

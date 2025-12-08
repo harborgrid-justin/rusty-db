@@ -114,7 +114,7 @@ impl<T> RwLockWP<T> {
         let mut spin_count = 0;
 
         loop {
-            let state = self.state.load(Ordering::Acquire);
+            let _state = self.state.load(Ordering::Acquire);
 
             // Check if writer is active or waiting
             if (state & WRITER_BIT) != 0 || (state & WAITING_MASK) != 0 {
@@ -154,7 +154,7 @@ impl<T> RwLockWP<T> {
     /// Try to acquire read lock (non-blocking)
     #[inline]
     fn try_acquire_read(&self) -> bool {
-        let state = self.state.load(Ordering::Acquire);
+        let _state = self.state.load(Ordering::Acquire);
 
         // Check if writer is active or waiting
         if (state & WRITER_BIT) != 0 || (state & WAITING_MASK) != 0 {
@@ -199,7 +199,7 @@ impl<T> RwLockWP<T> {
         self.increment_waiting_writers();
 
         loop {
-            let state = self.state.load(Ordering::Acquire);
+            let _state = self.state.load(Ordering::Acquire);
 
             // Check if we can acquire write lock
             // (no readers and no writer)
@@ -234,7 +234,7 @@ impl<T> RwLockWP<T> {
     /// Try to acquire write lock (non-blocking)
     #[inline]
     fn try_acquire_write(&self) -> bool {
-        let state = self.state.load(Ordering::Acquire);
+        let _state = self.state.load(Ordering::Acquire);
 
         if (state & (READER_MASK | WRITER_BIT)) != 0 {
             return false;
@@ -271,7 +271,7 @@ impl<T> RwLockWP<T> {
     #[inline]
     fn increment_waiting_writers(&self) {
         loop {
-            let state = self.state.load(Ordering::Acquire);
+            let _state = self.state.load(Ordering::Acquire);
             let waiting = (state & WAITING_MASK) >> WAITING_SHIFT;
 
             if waiting >= MAX_WAITING {

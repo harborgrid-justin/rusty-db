@@ -4,11 +4,11 @@
 //! transformation, and schema evolution handling.
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;

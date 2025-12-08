@@ -2,9 +2,9 @@
 // Provides real-time monitoring of SQL execution with plan tracking and wait analysis
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use crate::Result;
 use crate::error::DbError;
@@ -704,7 +704,7 @@ mod tests {
     fn test_execution_statistics() {
         let monitor = SqlMonitor::new();
 
-        for i in 0..10 {
+        for _i in 0..10 {
             let exec_id = monitor
                 .start_execution(
                     format!("SELECT * FROM users WHERE id = {}", i),
@@ -717,7 +717,7 @@ mod tests {
             monitor.complete_execution(exec_id, ExecutionStatus::Completed).unwrap();
         }
 
-        let stats = monitor.get_execution_statistics();
+        let _stats = monitor.get_execution_statistics();
         assert_eq!(stats.completed_executions, 10);
         assert_eq!(stats.active_executions, 0);
     }

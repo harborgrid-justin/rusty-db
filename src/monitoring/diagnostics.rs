@@ -2,11 +2,11 @@
 // Automatic diagnostic repository, incident packaging, core dump analysis, health checks
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, Instant, SystemTime};
-use std::fmt;
+use std::time::{Duration};
+
 use std::path::PathBuf;
 
 /// Incident severity
@@ -504,7 +504,7 @@ impl DiagnosticRepository {
     fn generate_system_state_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== SYSTEM STATE DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", SystemTime::now()));
+        dump.push_str(&format!("Timestamp: {:?}\n"::now()));
         dump.push_str(&format!("Active Incidents: {}\n", self.get_active_incidents().len()));
         dump.push_str("\n");
         dump
@@ -513,7 +513,7 @@ impl DiagnosticRepository {
     fn generate_process_state_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== PROCESS STATE DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", SystemTime::now()));
+        dump.push_str(&format!("Timestamp: {:?}\n"::now()));
         dump.push_str("\n");
         dump
     }
@@ -521,7 +521,7 @@ impl DiagnosticRepository {
     fn generate_memory_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== MEMORY DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", SystemTime::now()));
+        dump.push_str(&format!("Timestamp: {:?}\n"::now()));
         dump.push_str("\n");
         dump
     }
@@ -529,7 +529,7 @@ impl DiagnosticRepository {
     fn generate_lock_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== LOCK DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", SystemTime::now()));
+        dump.push_str(&format!("Timestamp: {:?}\n"::now()));
         dump.push_str("\n");
         dump
     }
@@ -537,7 +537,7 @@ impl DiagnosticRepository {
     fn generate_transaction_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== TRANSACTION DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", SystemTime::now()));
+        dump.push_str(&format!("Timestamp: {:?}\n"::now()));
         dump.push_str("\n");
         dump
     }
@@ -545,7 +545,7 @@ impl DiagnosticRepository {
     fn generate_buffer_cache_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== BUFFER CACHE DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", SystemTime::now()));
+        dump.push_str(&format!("Timestamp: {:?}\n"::now()));
         dump.push_str("\n");
         dump
     }
@@ -553,7 +553,7 @@ impl DiagnosticRepository {
     fn generate_error_stack_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== ERROR STACK DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", SystemTime::now()));
+        dump.push_str(&format!("Timestamp: {:?}\n"::now()));
         dump.push_str("\n");
         dump
     }

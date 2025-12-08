@@ -8,7 +8,7 @@ use crate::{Result, DbError};
 use crate::procedures::parser::PlSqlBlock;
 use crate::procedures::runtime::{RuntimeExecutor, RuntimeValue, ExecutionContext};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 

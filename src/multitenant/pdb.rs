@@ -23,10 +23,10 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::isolation::ResourceLimits;
 
 /// Unique identifier for a Pluggable Database
@@ -528,7 +528,7 @@ impl PluggableDatabase {
     /// Create a new PDB
     pub async fn create(config: PdbConfig) -> Result<Self> {
         let metadata = Arc::new(RwLock::new(PdbMetadata::new()));
-        let state = Arc::new(RwLock::new(PdbLifecycleState::Creating));
+        let _state = Arc::new(RwLock::new(PdbLifecycleState::Creating));
 
         let pdb = Self {
             config: config.clone(),

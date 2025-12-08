@@ -45,7 +45,7 @@
 //! WITH (time_budget=3600, metric='auc');
 //! ```
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};

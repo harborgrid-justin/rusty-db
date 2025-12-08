@@ -1,11 +1,11 @@
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom, Write, IoSlice, IoSliceMut};
+use std::io::{Read, Seek, SeekFrom, IoSlice, IoSliceMut};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
-use std::collections::{HashMap, VecDeque};
+use std::sync::{Arc};
+use std::collections::{HashMap};
 use std::time::Instant;
 use parking_lot::RwLock;
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::storage::page::Page;
 use crate::common::PageId;
 
@@ -316,7 +316,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
 
     // Process 8 bytes at a time for maximum throughput
     while remaining >= 8 {
-        let value = (ptr as *const u64).read_unaligned();
+        let _value = (ptr as *const u64).read_unaligned();
         crc = _mm_crc32_u64(crc as u64, value) as u32;
         ptr = ptr.add(8);
         remaining -= 8;
@@ -324,7 +324,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
 
     // Process remaining bytes
     while remaining > 0 {
-        let value = *ptr;
+        let _value = *ptr;
         crc = _mm_crc32_u8(crc, value);
         ptr = ptr.add(1);
         remaining -= 1;
@@ -1044,7 +1044,7 @@ impl DiskManager {
 
     /// Calculate current IOPS
     pub fn calculate_iops(&self, duration_secs: f64) -> f64 {
-        let stats = self.stats.read();
+        let _stats = self.stats.read();
         stats.total_iops as f64 / duration_secs
     }
 }
@@ -1083,11 +1083,11 @@ mod tests {
         }
 
         // Read sequentially to trigger read-ahead
-        for i in 0..5 {
+        for _i in 0..5 {
             dm.read_page(i)?;
         }
 
-        let stats = dm.get_stats();
+        let _stats = dm.get_stats();
         assert!(stats.read_ahead_hits > 0);
 
         Ok(())
@@ -1104,7 +1104,7 @@ mod tests {
 
         dm.write_page(&page)?;
 
-        let stats = dm.get_stats();
+        let _stats = dm.get_stats();
         assert!(stats.write_behind_hits > 0);
 
         Ok(())

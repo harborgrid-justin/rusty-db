@@ -2,13 +2,13 @@
 // Implements two-phase commit, saga pattern, distributed deadlock detection,
 // and cross-shard transaction routing for distributed database systems
 
-use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime, Instant};
-use parking_lot::{RwLock, Mutex};
+use std::time::{SystemTime};
+use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::TransactionId;
 
 /// Distributed transaction identifier
@@ -548,9 +548,9 @@ pub struct DeadlockStats {
 #[derive(Debug, Clone)]
 pub struct WaitForGraph {
     /// Edges: txn_id -> set of transactions it's waiting for
-    edges: HashMap<TransactionId, HashSet<TransactionId>>,
+    edges: HashMap<TransactionId<TransactionId>>,
     /// Transaction timestamps for victim selection
-    timestamps: HashMap<TransactionId, SystemTime>,
+    timestamps: HashMap<TransactionId>,
 }
 
 impl WaitForGraph {

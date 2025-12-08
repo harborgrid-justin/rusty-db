@@ -16,9 +16,9 @@
 
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 use tokio::sync::mpsc;
 
 /// Query identifier
@@ -360,7 +360,7 @@ impl QueryCoordinator {
         let shard_results = self.execute_tasks(tasks).await?;
 
         // Merge results
-        let result = self.merge_results(query_id, shard_results, plan.clone())?;
+        let _result = self.merge_results(query_id, shard_results, plan.clone())?;
 
         // Cache result
         self.result_cache.write().unwrap().insert(query_id, result.clone());
@@ -409,7 +409,7 @@ impl QueryCoordinator {
         // In a real implementation, these would be executed in parallel
         // using async tasks and network communication
         for task in tasks {
-            let result = self.execute_single_task(task).await?;
+            let _result = self.execute_single_task(task).await?;
             results.push(result);
         }
 
@@ -457,7 +457,7 @@ impl QueryCoordinator {
             .map(|row| row.len())
             .sum();
 
-        let stats = QueryStats {
+        let _stats = QueryStats {
             rows_returned: rows.len(),
             rows_scanned,
             shards_accessed: shard_results.len(),

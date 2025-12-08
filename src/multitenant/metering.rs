@@ -23,10 +23,10 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::{TenantId, ResourceConsumption};
 
 /// Metering engine

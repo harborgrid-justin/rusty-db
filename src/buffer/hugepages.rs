@@ -42,7 +42,7 @@
 //! - Requires `SeLockMemoryPrivilege`
 //! - Not as mature as Linux support
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -307,7 +307,7 @@ impl HugePageAllocator {
         #[cfg(target_os = "linux")]
         {
             unsafe {
-                let result = libc::madvise(
+                let _result = libc::madvise(
                     ptr as *mut libc::c_void,
                     aligned_size,
                     libc::MADV_HUGEPAGE,
@@ -370,7 +370,7 @@ impl HugePageAllocator {
 
     /// Get memory efficiency (percentage of memory that uses huge pages)
     pub fn huge_page_efficiency(&self) -> f64 {
-        let stats = self.stats.lock();
+        let _stats = self.stats.lock();
         let total = stats.huge_page_bytes + stats.standard_page_bytes;
 
         if total > 0 {
@@ -606,7 +606,7 @@ mod tests {
         if let Ok(alloc) = alloc {
             assert!(alloc.size() >= size);
 
-            let stats = allocator.stats();
+            let _stats = allocator.stats();
             assert!(stats.total_requests > 0);
         }
         // If huge pages not available, that's OK (test environment)
@@ -621,7 +621,7 @@ mod tests {
         let _ = allocator.allocate(PAGE_SIZE_4K, PAGE_SIZE_4K);
         let _ = allocator.allocate(PAGE_SIZE_2M * 10, PAGE_SIZE_2M);
 
-        let stats = allocator.stats();
+        let _stats = allocator.stats();
         assert!(stats.total_requests >= 2);
         assert!(stats.estimated_tlb_miss_rate >= 0.0);
         assert!(stats.estimated_tlb_miss_rate <= 1.0);

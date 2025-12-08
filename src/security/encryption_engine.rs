@@ -31,10 +31,10 @@ use sha2::{Digest, Sha256};
 use hmac::{Hmac, Mac};
 use rand::{RngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
-use parking_lot::{RwLock, Mutex};
+use parking_lot::{RwLock};
 use std::sync::Arc;
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::Result;
 use crate::error::DbError;
 
@@ -674,7 +674,7 @@ impl KeyDerivation {
             mac.update(info);
             mac.update(&[counter]);
 
-            let result = mac.finalize();
+            let _result = mac.finalize();
             let bytes = result.into_bytes();
 
             let bytes_needed = output_len - output.len();
@@ -703,7 +703,7 @@ impl KeyDerivation {
             .map_err(|e| DbError::Internal(format!("Argon2 error: {}", e)))?;
 
         // Extract hash bytes
-        let hash = password_hash.hash
+        let _hash = password_hash.hash
             .ok_or_else(|| DbError::Internal("No hash produced".to_string()))?;
 
         let mut key_material = [0u8; KEY_SIZE];
@@ -719,7 +719,7 @@ impl KeyDerivation {
         let mut hasher = Sha256::new();
         hasher.update(base_key);
         hasher.update(context);
-        let result = hasher.finalize();
+        let _result = hasher.finalize();
 
         let mut key = [0u8; KEY_SIZE];
         key.copy_from_slice(&result);
@@ -1016,7 +1016,7 @@ impl EncryptedIndex {
         let mut mac = HmacSha256::new_from_slice(&token_key)
             .map_err(|e| DbError::Internal(format!("Token generation error: {}", e)))?;
         mac.update(search_value);
-        let result = mac.finalize();
+        let _result = mac.finalize();
 
         Ok(result.into_bytes().to_vec())
     }
@@ -1144,7 +1144,7 @@ mod tests {
 
         // Wrong AAD should fail
         let wrong_aad = b"wrong";
-        let result = engine.decrypt(&key, &ciphertext, Some(wrong_aad));
+        let _result = engine.decrypt(&key, &ciphertext, Some(wrong_aad));
         assert!(result.is_err());
     }
 
@@ -1200,7 +1200,7 @@ mod tests {
     #[test]
     fn test_key_derivation() {
         let master_key = CryptoRandom::generate_key().unwrap();
-        let context = b"table_encryption";
+        let _context = b"table_encryption";
 
         let derived1 = KeyDerivation::hkdf_expand(&master_key, context, 32).unwrap();
         let derived2 = KeyDerivation::hkdf_expand(&master_key, context, 32).unwrap();
@@ -1261,7 +1261,7 @@ mod tests {
         let index = EncryptedIndex::new(manager.clone());
 
         let key_id = manager.generate_key(None, Algorithm::Aes256Gcm, None).unwrap();
-        let value = b"search@example.com";
+        let _value = b"search@example.com";
         let column_id = "email";
 
         // Generate search tokens

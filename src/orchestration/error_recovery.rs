@@ -19,7 +19,7 @@
 //! ```
 
 use std::collections::HashMap;
-use std::fmt;
+
 use std::future::Future;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -28,9 +28,9 @@ use std::time::Duration;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 
 /// Error severity level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -353,7 +353,7 @@ impl RetryExecutor {
         Fut: Future<Output = Result<T>>,
     {
         let mut attempt = 0;
-        let mut last_error = None;
+        let mut _last_error = None;
 
         loop {
             match f().await {
@@ -491,7 +491,7 @@ impl RecoveryManager {
                 self.notify_failure(operation_name, &classified);
 
                 // Check if we have a fallback
-                let handlers = self.fallback_handlers.read();
+                let _handlers = self.fallback_handlers.read();
                 if let Some(handler) = handlers.get(operation_name) {
                     warn!("Primary operation failed, trying fallback for: {}", operation_name);
                     match handler.execute().await {
@@ -648,7 +648,7 @@ mod tests {
         let counter = Arc::new(AtomicUsize::new(0));
         let counter_clone = Arc::clone(&counter);
 
-        let result = executor
+        let _result = executor
             .execute(|| {
                 let counter = Arc::clone(&counter_clone);
                 async move {
@@ -680,7 +680,7 @@ mod tests {
 
         let executor = RetryExecutor::new(config, classifier);
 
-        let result = executor
+        let _result = executor
             .execute(|| async { Err::<(), _>(DbError::Internal("timeout".into())) })
             .await;
 
@@ -726,7 +726,7 @@ mod tests {
         manager.register_fallback("test_op".into(), Arc::new(TestFallback));
 
         // This will fail and use fallback
-        let result = manager
+        let _result = manager
             .execute_with_recovery("test_op", || async {
                 Err::<(), _>(DbError::Internal("failure".into()))
             })

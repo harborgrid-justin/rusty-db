@@ -3,7 +3,7 @@
 
 use super::*;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 use std::time::Instant;
 
 const MIN_MATCH_LENGTH: usize = 4;
@@ -100,7 +100,7 @@ impl Compressor for LZ4Compressor {
                 break;
             }
 
-            let hash = self.hash_sequence(input, pos);
+            let _hash = self.hash_sequence(input, pos);
             let hash_pos = hash_table[hash];
             hash_table[hash] = pos;
 
@@ -185,7 +185,7 @@ impl Compressor for LZ4Compressor {
 
                 if match_len > 0 && distance > 0 && distance <= out_pos {
                     let match_start = out_pos - distance;
-                    for i in 0..match_len {
+                    for _i in 0..match_len {
                         if out_pos >= output.len() {
                             return Err(CompressionError::BufferTooSmall(out_pos + 1, output.len()));
                         }
@@ -347,7 +347,7 @@ impl ZstdCompressor {
                 }
 
                 let match_start = decoded.len() - distance;
-                for i in 0..length {
+                for _i in 0..length {
                     decoded.push(decoded[match_start + i]);
                 }
             } else {
@@ -443,7 +443,7 @@ impl DictionaryCompressor {
         let mut reverse_dict = HashMap::new();
 
         // Initialize with single-byte entries
-        for i in 0..=255u16 {
+        for _i in 0..=255u16 {
             dictionary.insert(vec![i as u8], i);
             reverse_dict.insert(i, vec![i as u8]);
         }
@@ -771,7 +771,7 @@ impl Compressor for HuffmanCompressor {
 
         // Read frequency table
         let mut frequencies = [0u32; 256];
-        for i in 0..256 {
+        for _i in 0..256 {
             frequencies[i] = u32::from_le_bytes([
                 input[i * 4], input[i * 4 + 1], input[i * 4 + 2], input[i * 4 + 3]
             ]);
@@ -1250,7 +1250,7 @@ impl DeltaEncoder {
 
         // Calculate deltas
         let mut deltas = Vec::with_capacity(values.len() - 1);
-        for i in 1..values.len() {
+        for _i in 1..values.len() {
             let delta = values[i].wrapping_sub(values[i - 1]);
             deltas.push(delta);
         }
@@ -1342,7 +1342,7 @@ impl DeltaEncoder {
         let mut delta_deltas = Vec::with_capacity(values.len() - 2);
         let mut prev_delta = values[1].wrapping_sub(values[0]);
 
-        for i in 2..values.len() {
+        for _i in 2..values.len() {
             let delta = values[i].wrapping_sub(values[i - 1]);
             let delta_delta = delta.wrapping_sub(prev_delta);
             delta_deltas.push(delta_delta as u32); // Assuming small deltas
@@ -1439,7 +1439,7 @@ impl RLEEncoder {
         let mut decoded = Vec::new();
 
         for chunk in encoded.chunks_exact(2) {
-            let value = chunk[0];
+            let _value = chunk[0];
             let run_length = chunk[1] as usize;
 
             decoded.extend(std::iter::repeat(value).take(run_length));
@@ -1506,7 +1506,7 @@ impl RLEEncoder {
         let mut pos = 4;
 
         while pos + 6 <= encoded.len() && decoded.len() < count {
-            let value = u32::from_le_bytes([
+            let _value = u32::from_le_bytes([
                 encoded[pos], encoded[pos + 1], encoded[pos + 2], encoded[pos + 3]
             ]);
             let run_length = u16::from_le_bytes([encoded[pos + 4], encoded[pos + 5]]) as usize;
@@ -1700,7 +1700,7 @@ impl CascadedCompressor {
         // Check for sorted/monotonic (good for Delta or FOR)
         let mut is_sorted = true;
         let mut is_monotonic = true;
-        for i in 1..values.len() {
+        for _i in 1..values.len() {
             if values[i] < values[i - 1] {
                 is_sorted = false;
                 break;

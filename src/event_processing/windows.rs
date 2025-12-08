@@ -6,8 +6,8 @@
 use super::{Event, EventValue, Watermark};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, VecDeque};
-use std::time::{Duration, SystemTime};
+use std::collections::{BTreeMap, HashMap};
+use std::time::{Duration};
 
 /// Window identifier
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -87,7 +87,7 @@ impl WindowType {
                 // Calculate how many windows this event belongs to
                 let num_windows = (size.as_millis() / slide.as_millis()).max(1);
 
-                for i in 0..num_windows {
+                for _i in 0..num_windows {
                     let offset = slide.as_millis() * i;
                     let window_start_ms = (duration_since_epoch.as_millis() / slide.as_millis())
                         * slide.as_millis()
@@ -978,7 +978,7 @@ impl SlidingWindowAggregator {
     }
 
     pub fn add_event(&mut self, event: Event) -> Result<()> {
-        let value = event
+        let _value = event
             .get_payload(&self.field_name)
             .and_then(|v| v.as_f64())
             .unwrap_or(0.0);
@@ -1035,7 +1035,7 @@ mod tests {
 
     #[test]
     fn test_trigger_policy() {
-        let policy = TriggerPolicy::OnCount(10);
+        let _policy = TriggerPolicy::OnCount(10);
         let window = Window {
             id: WindowId::new(1),
             start: SystemTime::now(),
@@ -1044,13 +1044,13 @@ mod tests {
         };
         let mut state = WindowState::new(window);
 
-        assert!(!policy.should_trigger(&state, None, SystemTime::now()));
+        assert!(!policy.should_trigger(&state, None::now()));
 
         for _ in 0..10 {
             state.add_event(Event::new("test"), false);
         }
 
-        assert!(policy.should_trigger(&state, None, SystemTime::now()));
+        assert!(policy.should_trigger(&state, None::now()));
     }
 
     #[test]

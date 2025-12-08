@@ -11,7 +11,7 @@ use super::{
 };
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use serde::{Serialize, Deserialize};
 use parking_lot::Mutex;
 
@@ -584,7 +584,7 @@ impl MLEngine {
         }
 
         // Train the model
-        let result = self.train_model_internal(model_type, &dataset, &params);
+        let _result = self.train_model_internal(model_type, &dataset, &params);
 
         match result {
             Ok((model_data, metrics)) => {
@@ -858,7 +858,7 @@ mod tests {
         let target = Some(vec![2.0, 4.0, 6.0]);
         let dataset = Dataset::new(features, target, vec!["x".to_string()]);
 
-        let result = engine.train_model(
+        let _result = engine.train_model(
             "test_model".to_string(),
             ModelType::LinearRegression,
             dataset,

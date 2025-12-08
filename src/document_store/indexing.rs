@@ -15,10 +15,10 @@
 //! - Full-text search: BM25 provides 15-30% better relevance
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, BTreeMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime};
 use crate::error::Result;
 use super::document::{Document, DocumentId};
 use super::jsonpath::{JsonPath, JsonPathEvaluator};
@@ -231,7 +231,7 @@ pub struct BTreeIndex {
     /// Definition of the index
     definition: IndexDefinition,
     /// Index entries (key -> document IDs)
-    entries: BTreeMap<IndexKey, HashSet<DocumentId>>,
+    entries: BTreeMap<IndexKey<DocumentId>>,
     /// Reverse index (document ID -> keys)
     reverse_index: HashMap<DocumentId, Vec<IndexKey>>,
     /// Statistics for adaptive optimization
@@ -320,7 +320,7 @@ impl BTreeIndex {
     /// Look up documents by exact key with statistics
     pub fn lookup(&self, key: &IndexKey) -> HashSet<DocumentId> {
         self.stats.lookups.fetch_add(1, AtomicOrdering::Relaxed);
-        let result = self.entries.get(key).cloned().unwrap_or_default();
+        let _result = self.entries.get(key).cloned().unwrap_or_default();
         if !result.is_empty() {
             self.stats.cache_hits.fetch_add(1, AtomicOrdering::Relaxed);
         }
@@ -643,7 +643,7 @@ pub struct TTLIndex {
     /// Index definition
     definition: IndexDefinition,
     /// Expiration times (document ID -> expiration timestamp)
-    expiration_times: BTreeMap<u64, HashSet<DocumentId>>,
+    expiration_times: BTreeMap<u64<DocumentId>>,
 }
 
 impl TTLIndex {

@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use std::fmt;
+use std::time::{Duration};
+
 
 /// Metric types supported by the system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

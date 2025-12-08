@@ -6,7 +6,7 @@
 // - Partitioned parallel joins
 // - Memory-efficient algorithms
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::sync::Arc;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
@@ -76,8 +76,8 @@ impl BloomFilter {
     }
 
     pub fn insert(&mut self, value: i64) {
-        for i in 0..self.num_hashes {
-            let hash = self.hash(value, i);
+        for _i in 0..self.num_hashes {
+            let _hash = self.hash(value, i);
             let bit_index = hash % self.num_bits;
             let word_index = bit_index / 64;
             let bit_offset = bit_index % 64;
@@ -89,8 +89,8 @@ impl BloomFilter {
     }
 
     pub fn contains(&self, value: i64) -> bool {
-        for i in 0..self.num_hashes {
-            let hash = self.hash(value, i);
+        for _i in 0..self.num_hashes {
+            let _hash = self.hash(value, i);
             let bit_index = hash % self.num_bits;
             let word_index = bit_index / 64;
             let bit_offset = bit_index % 64;
@@ -234,12 +234,12 @@ impl PartitionedJoin {
     }
 
     pub fn add_build(&mut self, key: i64, row_id: usize) {
-        let partition_id = self.partition_key(key);
+        let _partition_id = self.partition_key(key);
         self.partitions[partition_id].add_build(key, row_id);
     }
 
     pub fn add_probe(&mut self, key: i64, row_id: usize) {
-        let partition_id = self.partition_key(key);
+        let _partition_id = self.partition_key(key);
         self.partitions[partition_id].add_probe(key, row_id);
     }
 
@@ -316,7 +316,7 @@ impl HashJoinEngine {
             None
         };
 
-        for i in 0..build_segment.row_count {
+        for _i in 0..build_segment.row_count {
             if let Ok(key) = build_segment.read_int64(i) {
                 hash_table.insert(key, i);
 
@@ -339,7 +339,7 @@ impl HashJoinEngine {
         let mut build_row_ids = Vec::new();
         let mut probe_row_ids = Vec::new();
 
-        for i in 0..probe_segment.row_count {
+        for _i in 0..probe_segment.row_count {
             if let Ok(key) = probe_segment.read_int64(i) {
                 // Bloom filter check
                 if let Some(ref bf) = bloom_filter {
@@ -394,14 +394,14 @@ impl HashJoinEngine {
 
         // Partition build side
         let build_start = std::time::Instant::now();
-        for i in 0..build_segment.row_count {
+        for _i in 0..build_segment.row_count {
             if let Ok(key) = build_segment.read_int64(i) {
                 partitioned.add_build(key, i);
             }
         }
 
         // Partition probe side
-        for i in 0..probe_segment.row_count {
+        for _i in 0..probe_segment.row_count {
             if let Ok(key) = probe_segment.read_int64(i) {
                 partitioned.add_probe(key, i);
             }
@@ -441,7 +441,7 @@ impl HashJoinEngine {
 
         let mut matching_rows = Vec::new();
 
-        for i in 0..probe_segment.row_count {
+        for _i in 0..probe_segment.row_count {
             if let Ok(key) = probe_segment.read_int64(i) {
                 if build_set.contains(&key) {
                     matching_rows.push(i);
@@ -462,7 +462,7 @@ impl HashJoinEngine {
 
         let mut matching_rows = Vec::new();
 
-        for i in 0..probe_segment.row_count {
+        for _i in 0..probe_segment.row_count {
             if let Ok(key) = probe_segment.read_int64(i) {
                 if !build_set.contains(&key) {
                     matching_rows.push(i);
@@ -531,18 +531,18 @@ mod tests {
         let mut bf = BloomFilter::new(1000, 0.01);
 
         // Insert values
-        for i in 0..1000 {
+        for _i in 0..1000 {
             bf.insert(i);
         }
 
         // Test membership
-        for i in 0..1000 {
+        for _i in 0..1000 {
             assert!(bf.contains(i));
         }
 
         // Test false positives (should be rare)
         let mut false_positives = 0;
-        for i in 1000..2000 {
+        for _i in 1000..2000 {
             if bf.contains(i) {
                 false_positives += 1;
             }
@@ -577,12 +577,12 @@ mod tests {
         let mut pjoin = PartitionedJoin::new(4);
 
         // Add build side
-        for i in 0..10 {
+        for _i in 0..10 {
             pjoin.add_build(i, i as usize);
         }
 
         // Add probe side
-        for i in 0..10 {
+        for _i in 0..10 {
             pjoin.add_probe(i, i as usize);
         }
 
@@ -600,12 +600,12 @@ mod tests {
         let mut probe_seg = ColumnSegment::new(1, 0, ColumnDataType::Int64, 10);
 
         // Populate build segment
-        for i in 0..10 {
+        for _i in 0..10 {
             build_seg.write_int64(i, i as i64).unwrap();
         }
 
         // Populate probe segment (with some overlap)
-        for i in 5..15 {
+        for _i in 5..15 {
             if i < 10 {
                 probe_seg.write_int64(i - 5, i as i64).unwrap();
             }
@@ -626,7 +626,7 @@ mod tests {
         let engine = HashJoinEngine::new();
 
         let mut probe_seg = ColumnSegment::new(0, 0, ColumnDataType::Int64, 10);
-        for i in 0..10 {
+        for _i in 0..10 {
             probe_seg.write_int64(i, i as i64).unwrap();
         }
 
@@ -646,7 +646,7 @@ mod tests {
         let engine = HashJoinEngine::new();
 
         let mut probe_seg = ColumnSegment::new(0, 0, ColumnDataType::Int64, 10);
-        for i in 0..10 {
+        for _i in 0..10 {
             probe_seg.write_int64(i, i as i64).unwrap();
         }
 

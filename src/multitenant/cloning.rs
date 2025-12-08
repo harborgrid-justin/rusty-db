@@ -21,10 +21,10 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::pdb::{PdbId, PdbSnapshot};
 
 /// Clone type
@@ -126,7 +126,7 @@ impl CloningEngine {
     pub async fn create_full_clone(
         &self,
         source_pdb_id: PdbId,
-        clone_name: &str,
+        _clone_name: &str,
         source_scn: u64,
     ) -> Result<(u64, PdbId)> {
         let clone_id = self.allocate_clone_id().await;
@@ -167,7 +167,7 @@ impl CloningEngine {
     pub async fn create_thin_clone(
         &self,
         source_pdb_id: PdbId,
-        clone_name: &str,
+        _clone_name: &str,
         source_scn: u64,
     ) -> Result<(u64, PdbId)> {
         let clone_id = self.allocate_clone_id().await;
@@ -211,14 +211,15 @@ impl CloningEngine {
         &self,
         snapshot_id: u64,
         source_pdb_id: PdbId,
-        clone_name: &str,
+        _clone_name: &str,
     ) -> Result<(u64, PdbId)> {
         let clone_id = self.allocate_clone_id().await;
         let cloned_pdb_id = PdbId::new(clone_id);
 
         // Get snapshot metadata
-        let snapshot_manager = self.snapshot_manager.read().await;
-        let snapshots = snapshot_manager.get(&source_pdb_id).ok_or_else(|| {
+        let snapshot_manager = self.snapshot_manager.clone();
+        let snapshot_manager_guard = snapshot_manager.read().await;
+        let snapshots = snapshot_manager_guard.get(&source_pdb_id).ok_or_else(|| {
             DbError::NotFound(format!("No snapshots for PDB {:?}", source_pdb_id))
         })?;
 
@@ -227,14 +228,18 @@ impl CloningEngine {
             .find(|s| s.id == snapshot_id)
             .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot_id)))?;
 
+        // Clone snapshot data before releasing lock
+        let snapshot_scn = snapshot.scn;
+        let snapshot_size_bytes = snapshot.size_bytes;
+
         let metadata = CloneMetadata {
             clone_id,
             source_pdb_id,
             cloned_pdb_id,
             clone_type: CloneType::Snapshot,
             created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
-            source_scn: snapshot.scn,
-            current_scn: snapshot.scn,
+            source_scn: snapshot_scn,
+            current_scn: snapshot_scn,
             status: CloneStatus::Creating,
             size_bytes: 0,
             cow_layer_bytes: 0,
@@ -242,7 +247,7 @@ impl CloningEngine {
             parent_clone_id: None,
         };
 
-        drop(snapshot_manager);
+        drop(snapshot_manager_guard);
         self.clones.write().await.insert(clone_id, metadata.clone());
 
         // Clone from snapshot
@@ -252,7 +257,7 @@ impl CloningEngine {
         let mut clones = self.clones.write().await;
         if let Some(meta) = clones.get_mut(&clone_id) {
             meta.status = CloneStatus::Active;
-            meta.size_bytes = snapshot.size_bytes;
+            meta.size_bytes = snapshot_size_bytes;
         }
 
         Ok((clone_id, cloned_pdb_id))
@@ -262,7 +267,7 @@ impl CloningEngine {
     pub async fn create_refreshable_clone(
         &self,
         source_pdb_id: PdbId,
-        clone_name: &str,
+        _clone_name: &str,
         source_scn: u64,
     ) -> Result<(u64, PdbId)> {
         let clone_id = self.allocate_clone_id().await;
@@ -337,7 +342,7 @@ impl CloningEngine {
     pub async fn delete_clone(&self, clone_id: u64) -> Result<()> {
         let mut clones = self.clones.write().await;
 
-        if let Some(mut meta) = clones.get_mut(&clone_id) {
+        if let Some(meta) = clones.get_mut(&clone_id) {
             meta.status = CloneStatus::Deleting;
 
             // Clean up CoW layer if thin clone
@@ -616,7 +621,7 @@ mod tests {
         let engine = CloningEngine::new();
         let source_pdb_id = PdbId::new(1);
 
-        let result = engine.create_full_clone(source_pdb_id, "CLONE1", 1000).await;
+        let _result = engine.create_full_clone(source_pdb_id, "CLONE1", 1000).await;
         assert!(result.is_ok());
 
         let (clone_id, _cloned_pdb_id) = result.unwrap();
@@ -629,7 +634,7 @@ mod tests {
         let engine = CloningEngine::new();
         let source_pdb_id = PdbId::new(1);
 
-        let result = engine.create_thin_clone(source_pdb_id, "CLONE2", 1000).await;
+        let _result = engine.create_thin_clone(source_pdb_id, "CLONE2", 1000).await;
         assert!(result.is_ok());
 
         let (clone_id, _cloned_pdb_id) = result.unwrap();
@@ -645,7 +650,7 @@ mod tests {
 
         engine.create_cow_layer(source_pdb_id, clone_pdb_id).await.unwrap();
 
-        let block_data = vec![1, 2, 3, 4];
+        let _block_data = vec![1, 2, 3, 4];
         engine.write_block(clone_pdb_id, 0, block_data.clone()).await.unwrap();
 
         let read_data = engine.read_block(clone_pdb_id, 0).await.unwrap();

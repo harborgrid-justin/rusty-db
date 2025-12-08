@@ -12,9 +12,9 @@
 
 use crate::Result;
 use crate::error::DbError;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, Duration};
+use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
 
 /// Query plan cache with LRU eviction
@@ -213,7 +213,7 @@ impl AdaptiveQueryOptimizer {
 
     /// Get optimization suggestions
     pub fn get_suggestions(&self, query_hash: &str) -> Result<OptimizationSuggestions> {
-        let stats = self.statistics.read()
+        let _stats = self.statistics.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
         if let Some(stat) = stats.get(query_hash) {
@@ -260,7 +260,7 @@ impl AdaptiveQueryOptimizer {
 
     /// Get all query statistics
     pub fn get_all_statistics(&self) -> Result<Vec<QueryStatistics>> {
-        let stats = self.statistics.read()
+        let _stats = self.statistics.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(stats.values().cloned().collect())
     }
@@ -946,7 +946,7 @@ mod tests {
         let retrieved = cache.get("hash1").unwrap();
         assert!(retrieved.is_some());
         
-        let stats = cache.get_statistics().unwrap();
+        let _stats = cache.get_statistics().unwrap();
         assert_eq!(stats.hits, 1);
     }
 
@@ -993,7 +993,7 @@ mod tests {
     fn test_workload_analyzer() {
         let analyzer = WorkloadAnalyzer::new(1000);
         
-        for i in 0..100 {
+        for _i in 0..100 {
             let execution = QueryExecution {
                 query_hash: format!("q{}", i % 10),
                 execution_time_ms: 100 + i,
@@ -1761,7 +1761,7 @@ mod extended_tests {
         
         manager.register_template("t1".to_string(), template).unwrap();
         
-        let stats = manager.get_template_stats("t1").unwrap();
+        let _stats = manager.get_template_stats("t1").unwrap();
         assert!(stats.is_some());
         assert_eq!(stats.unwrap().execution_count, 10);
     }
@@ -1803,7 +1803,7 @@ mod extended_tests {
     fn test_timeout_manager() {
         let manager = TimeoutManager::new(Duration::from_secs(60));
         
-        manager.set_timeout("q1".to_string(), Duration::from_millis(100)).unwrap();
+        manager.set_timeout("q1".to_string()::from_millis(100)).unwrap();
         
         std::thread::sleep(Duration::from_millis(150));
         
@@ -1838,7 +1838,7 @@ impl BenchmarkRunner {
         let benchmarks = self.benchmarks.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
-        let benchmark = benchmarks.get(benchmark_id)
+        let _benchmark = benchmarks.get(benchmark_id)
             .ok_or_else(|| DbError::NotFound(format!("Benchmark {} not found", benchmark_id)))?;
         
         let mut execution_times = Vec::new();
@@ -1863,7 +1863,7 @@ impl BenchmarkRunner {
             .sum::<f64>() / iterations as f64;
         let stddev_us = variance.sqrt();
         
-        let result = BenchmarkResult {
+        let _result = BenchmarkResult {
             benchmark_id: benchmark_id.to_string(),
             iterations,
             avg_time_us,
@@ -1889,7 +1889,7 @@ impl BenchmarkRunner {
         let mut all_results = Vec::new();
         
         for benchmark_id in benchmarks.keys() {
-            let result = self.run_benchmark(benchmark_id, iterations)?;
+            let _result = self.run_benchmark(benchmark_id, iterations)?;
             all_results.push(result);
         }
         
@@ -1967,7 +1967,7 @@ impl PerformanceStatsCollector {
         let mut query_stats = self.query_stats.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         
-        let stats = query_stats.entry(query_hash.to_string())
+        let _stats = query_stats.entry(query_hash.to_string())
             .or_insert_with(|| QueryPerformanceStats {
                 query_hash: query_hash.to_string(),
                 execution_count: 0,
@@ -2384,7 +2384,7 @@ mod more_tests {
     fn test_benchmark_runner() {
         let runner = BenchmarkRunner::new();
         
-        let benchmark = Benchmark {
+        let _benchmark = Benchmark {
             id: "b1".to_string(),
             name: "Select benchmark".to_string(),
             description: "Tests SELECT performance".to_string(),
@@ -2393,7 +2393,7 @@ mod more_tests {
         
         runner.register_benchmark(benchmark).unwrap();
         
-        let result = runner.run_benchmark("b1", 10).unwrap();
+        let _result = runner.run_benchmark("b1", 10).unwrap();
         assert_eq!(result.iterations, 10);
         assert!(result.throughput_qps > 0.0);
     }
@@ -2402,11 +2402,11 @@ mod more_tests {
     fn test_performance_stats_collector() {
         let collector = PerformanceStatsCollector::new();
         
-        for i in 0..10 {
+        for _i in 0..10 {
             collector.record_query("q1", 100 + i * 10, 1000).unwrap();
         }
         
-        let stats = collector.get_query_stats("q1").unwrap();
+        let _stats = collector.get_query_stats("q1").unwrap();
         assert!(stats.is_some());
         assert_eq!(stats.unwrap().execution_count, 10);
         
@@ -2418,7 +2418,7 @@ mod more_tests {
     fn test_adaptive_caching_strategy() {
         let strategy_mgr = AdaptiveCachingStrategy::new();
         
-        for i in 0..10 {
+        for _i in 0..10 {
             strategy_mgr.record_performance(0.7 + (i as f64 * 0.01)).unwrap();
         }
         

@@ -173,7 +173,7 @@ impl JsonTableFunction {
             return Self::handle_empty(column);
         }
 
-        let value = &values[0];
+        let _value = &values[0];
 
         // Convert to target type
         Self::convert_type(value, column.data_type, column)
@@ -335,7 +335,7 @@ impl JsonValueFunction {
             ));
         }
 
-        let value = &results[0];
+        let _value = &results[0];
 
         // Ensure it's a scalar value
         if value.is_object() || value.is_array() {
@@ -708,7 +708,7 @@ mod tests {
             JsonTableColumn::new("price", "$.price", JsonDataType::Float),
         ];
 
-        let result = JsonTableFunction::execute(
+        let _result = JsonTableFunction::execute(
             &data,
             "$.store.books[*]",
             columns,
@@ -728,7 +728,7 @@ mod tests {
             ]
         });
 
-        let result = JsonQueryFunction::execute(
+        let _result = JsonQueryFunction::execute(
             &data,
             "$.contacts",
             JsonWrapper::None,
@@ -742,7 +742,7 @@ mod tests {
     fn test_json_value() {
         let data = json!({"name": "Alice", "age": 30});
 
-        let result = JsonValueFunction::execute(
+        let _result = JsonValueFunction::execute(
             &data,
             "$.age",
             JsonDataType::Integer,
@@ -796,7 +796,7 @@ mod tests {
         let target = json!({"name": "Alice", "age": 30});
         let patch = json!({"age": 31, "city": "NYC"});
 
-        let result = JsonGenerationFunctions::json_mergepatch(&target, &patch);
+        let _result = JsonGenerationFunctions::json_mergepatch(&target, &patch);
 
         assert_eq!(result["name"], "Alice");
         assert_eq!(result["age"], 31);

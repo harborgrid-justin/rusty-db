@@ -9,10 +9,10 @@
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::collections::{HashMap, BinaryHeap, VecDeque};
+use std::collections::{HashMap, BinaryHeap};
 use std::cmp::Ordering as CmpOrdering;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use parking_lot::{RwLock, Mutex};
+use std::time::{Duration};
+use parking_lot::{RwLock};
 use std::thread;
 
 use crate::inmemory::column_store::ColumnStore;
@@ -315,7 +315,7 @@ impl PopulationWorker {
 
                 task.completed_at = Some(current_timestamp());
             } else {
-                // No tasks available, sleep
+                // No tasks available
                 thread::sleep(Duration::from_millis(100));
             }
         }
@@ -367,8 +367,8 @@ impl PopulationWorker {
     fn generate_test_data(&self, column_id: u32, row_count: usize) -> Vec<u8> {
         // Generate test data for simulation
         let mut data = Vec::with_capacity(row_count * 8);
-        for i in 0..row_count {
-            let value = (column_id as i64 * 1000 + i as i64) % 10000;
+        for _i in 0..row_count {
+            let _value = (column_id as i64 * 1000 + i as i64) % 10000;
             data.extend_from_slice(&value.to_le_bytes());
         }
         data
@@ -420,7 +420,7 @@ impl PopulationManager {
         let mut workers = self.workers.write();
         let mut threads = self.worker_threads.write();
 
-        for i in 0..num_workers {
+        for _i in 0..num_workers {
             let worker = PopulationWorker::new(
                 i,
                 self.task_queue.clone(),
@@ -616,7 +616,7 @@ mod tests {
 
         manager.schedule_column("test_store".to_string(), 0, PopulationPriority::Medium);
 
-        let stats = manager.stats();
+        let _stats = manager.stats();
         assert_eq!(stats.total_tasks, 1);
         assert_eq!(stats.queued_tasks, 1);
 

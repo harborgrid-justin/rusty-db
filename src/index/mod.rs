@@ -303,23 +303,23 @@ impl IndexManager {
 
         Ok(match index {
             Index::BPlusTree(idx) => {
-                let stats = idx.stats();
+                let _stats = idx.stats();
                 IndexStats::BPlusTree(stats)
             }
             Index::LSMTree(idx) => {
-                let stats = idx.stats();
+                let _stats = idx.stats();
                 IndexStats::LSMTree(stats)
             }
             Index::ExtendibleHash(idx) => {
-                let stats = idx.stats();
+                let _stats = idx.stats();
                 IndexStats::ExtendibleHash(stats)
             }
             Index::LinearHash(idx) => {
-                let stats = idx.stats();
+                let _stats = idx.stats();
                 IndexStats::LinearHash(stats)
             }
             Index::Bitmap(idx) => {
-                let stats = idx.stats();
+                let _stats = idx.stats();
                 IndexStats::Bitmap(stats)
             }
             _ => IndexStats::Unknown,

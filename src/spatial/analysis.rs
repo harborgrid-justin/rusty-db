@@ -8,11 +8,11 @@
 //! - Spatial aggregation and statistics
 //! - Hot spot analysis
 
-use crate::error::{DbError, Result};
-use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, LineString, Point, Polygon, LinearRing};
+use crate::error::Result;
+use crate::spatial::geometry::{BoundingBox, Coordinate, Point, Polygon, LinearRing};
 use crate::spatial::indexes::SpatialIndex;
 use crate::spatial::operators::{SetOps, ConvexHullOps, TransformOps};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 
 /// Nearest neighbor search results
 #[derive(Debug, Clone)]
@@ -24,11 +24,11 @@ pub struct NearestNeighborResult {
 /// K-nearest neighbors searcher
 pub struct KNearestNeighbors {
     index: Box<dyn SpatialIndex>,
-    geometries: HashMap<u64, Geometry>,
+    geometries: HashMap<u64>,
 }
 
 impl KNearestNeighbors {
-    pub fn new(index: Box<dyn SpatialIndex>, geometries: HashMap<u64, Geometry>) -> Self {
+    pub fn new(index: Box<dyn SpatialIndex>, geometries: HashMap<u64>) -> Self {
         Self { index, geometries }
     }
 
@@ -402,7 +402,7 @@ impl VoronoiDiagram {
         let mut vertices = Vec::new();
 
         // Sample points around the boundary
-        for i in 0..resolution {
+        for _i in 0..resolution {
             let t = i as f64 / resolution as f64;
 
             // Top edge
@@ -827,7 +827,7 @@ impl SpatialAutocorrelation {
         let mut denominator = 0.0;
         let mut sum_weights = 0.0;
 
-        for i in 0..self.points.len() {
+        for _i in 0..self.points.len() {
             let (_, coord_i, value_i) = &self.points[i];
             let dev_i = value_i - mean;
 

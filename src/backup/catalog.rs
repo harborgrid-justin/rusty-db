@@ -4,9 +4,9 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::fs::{File, create_dir_all};
-use std::io::{Read, Write};
-use std::time::{SystemTime, Duration};
-use std::collections::{HashMap, BTreeMap};
+use std::io::{Read};
+use std::time::{SystemTime};
+use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use crate::Result;
@@ -346,7 +346,7 @@ impl BackupCatalog {
         let mut recovery_sets = Vec::new();
 
         // Find the most recent full backup before target SCN
-        let mut full_backup = None;
+        let mut full_backup: Option<BackupSet> = None;
         for set in sets.values() {
             if set.database_id == database_id
                 && matches!(set.backup_type, BackupSetType::Full)
@@ -562,7 +562,7 @@ impl BackupCatalog {
         let databases = self.databases.read();
         let sets = self.backup_sets.read();
         let pieces = self.backup_pieces.read();
-        let logs = self.archived_logs.read();
+        let _logs = self.archived_logs.read();
 
         let total_backups = sets.len();
         let obsolete_backups = sets.values().filter(|s| s.is_obsolete()).count();

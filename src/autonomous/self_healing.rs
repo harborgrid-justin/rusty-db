@@ -3,9 +3,9 @@
 //! Provides autonomous detection and repair of database issues including
 //! corruption, deadlocks, memory leaks, and connection problems.
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
@@ -309,7 +309,7 @@ impl ConnectionPoolManager {
     }
 
     pub fn should_recover(&self) -> bool {
-        let stats = self.pool_stats.read();
+        let _stats = self.pool_stats.read();
         let utilization = stats.active_connections as f64 / stats.total_connections as f64;
         let failure_rate = stats.failed_connections as f64 / stats.total_connections.max(1) as f64;
 
@@ -800,7 +800,7 @@ impl SelfHealingEngine {
     async fn execute_healing(&self, issue_id: u64, action: HealingAction) -> Result<()> {
         tracing::info!("Executing healing action: {:?}", action);
 
-        let result = match &action {
+        let _result = match &action {
             HealingAction::RepairDataBlock { page_id, .. } => {
                 self.corruption_detector.repair_page(*page_id, &[]).await
             }
@@ -883,7 +883,7 @@ mod tests {
         let detector = MemoryLeakDetector::new(5.0);
 
         // Add increasing memory snapshots
-        for i in 0..20 {
+        for _i in 0..20 {
             detector.record_snapshot(MemorySnapshot {
                 timestamp: SystemTime::now(),
                 total_memory_mb: 1000 + i * 10,
