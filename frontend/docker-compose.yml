@@ -1,0 +1,118 @@
+# ============================================================================
+# RustyDB Frontend - Docker Compose Configuration
+# Production-ready deployment with all services
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # Frontend Web Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+        VITE_GRAPHQL_URL: ${VITE_GRAPHQL_URL:-http://localhost:8080/graphql}
+        VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8080/ws}
+        VITE_AUTH_ENABLED: ${VITE_AUTH_ENABLED:-true}
+        VITE_ENABLE_CLUSTER_MANAGEMENT: ${VITE_ENABLE_CLUSTER_MANAGEMENT:-true}
+        VITE_ENABLE_REALTIME_MONITORING: ${VITE_ENABLE_REALTIME_MONITORING:-true}
+    container_name: rustydb-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - rustydb-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`rustydb.localhost`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+  # RustyDB API Server (placeholder - replace with actual RustyDB)
+  api:
+    image: rustydb:latest
+    container_name: rustydb-api
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      - RUSTYDB_DATA_DIR=/data
+      - RUSTYDB_LOG_LEVEL=info
+      - RUSTYDB_MAX_CONNECTIONS=1000
+      - RUSTYDB_ENABLE_AUTH=${VITE_AUTH_ENABLED:-true}
+    volumes:
+      - rustydb-data:/data
+      - rustydb-logs:/var/log/rustydb
+    restart: unless-stopped
+    networks:
+      - rustydb-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Prometheus for Metrics (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: rustydb-prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - rustydb-network
+    profiles:
+      - monitoring
+
+  # Grafana for Dashboards (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: rustydb-grafana
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - rustydb-network
+    profiles:
+      - monitoring
+
+networks:
+  rustydb-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  rustydb-data:
+    driver: local
+  rustydb-logs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
