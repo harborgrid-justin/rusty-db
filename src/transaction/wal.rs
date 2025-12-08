@@ -12,7 +12,7 @@ use std::time::{SystemTime, Duration, Instant};
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use super::TransactionId;
 
 #[cfg(target_arch = "x86_64")]
@@ -240,7 +240,7 @@ impl WALEntry {
 /// Group commit buffer for batching log writes
 struct GroupCommitBuffer {
     entries: Vec<WALEntry>,
-    waiters: Vec<tokio::sync::oneshot::Sender<std::result::Result<LSN, DbError>>>,
+    waiters: Vec<tokio::sync::oneshot::Sender<Result<LSN>>>,
     size_bytes: usize,
     oldest_entry_time: Option<Instant>,
 }
@@ -255,7 +255,7 @@ impl GroupCommitBuffer {
         }
     }
 
-    fn add(&mut self, entry: WALEntry, waiter: tokio::sync::oneshot::Sender<std::result::Result<LSN, DbError>>) {
+    fn add(&mut self, entry: WALEntry, waiter: tokio::sync::oneshot::Sender<Result<LSN>>) {
         self.size_bytes += entry.size as usize;
         if self.oldest_entry_time.is_none() {
             self.oldest_entry_time = Some(Instant::now());
@@ -288,7 +288,7 @@ impl GroupCommitBuffer {
         false
     }
 
-    fn take(&mut self) -> (Vec<WALEntry>, Vec<tokio::sync::oneshot::Sender<std::result::Result<LSN, DbError>>>) {
+    fn take(&mut self) -> (Vec<WALEntry>, Vec<tokio::sync::oneshot::Sender<Result<LSN>>>) {
         self.oldest_entry_time = None;
         self.size_bytes = 0;
         (
@@ -394,7 +394,7 @@ enum TransactionState {
 
 impl WALManager {
     /// Create a new WAL manager
-    pub fn new(wal_path: PathBuf, config: WALConfig) -> std::result::Result<Self, DbError> {
+    pub fn new(wal_path: PathBuf, config: WALConfig) -> Result<Self> {
         let wal_file = OpenOptions::new()
             .create(true)
             .append(true)
@@ -423,7 +423,7 @@ impl WALManager {
     }
 
     /// Append a log record
-    pub async fn append(&self, record: LogRecord) -> std::result::Result<LSN, DbError> {
+    pub async fn append(&self, record: LogRecord) -> Result<LSN> {
         let lsn = self.allocate_lsn();
 
         // Get previous LSN for this transaction
@@ -491,7 +491,7 @@ impl WALManager {
     }
 
     /// Maybe flush the group commit buffer
-    async fn maybe_flush_buffer(&self) -> std::result::Result<(), DbError> {
+    async fn maybe_flush_buffer(&self) -> Result<()> {
         let should_flush = {
             let buffer = self.commit_buffer.lock();
             buffer.should_flush(
@@ -508,7 +508,7 @@ impl WALManager {
     }
 
     /// Flush the group commit buffer with vectored I/O
-    async fn flush_buffer(&self) -> std::result::Result<(), DbError> {
+    async fn flush_buffer(&self) -> Result<()> {
         let (entries, waiters) = {
             let mut buffer = self.commit_buffer.lock();
             if buffer.is_empty() {
@@ -551,7 +551,7 @@ impl WALManager {
     }
 
     /// Write a single entry to WAL
-    fn write_entry(&self, entry: &WALEntry) -> std::result::Result<(), DbError> {
+    fn write_entry(&self, entry: &WALEntry) -> Result<()> {
         let serialized = bincode::serialize(entry)
             .map_err(|e| DbError::SerializationError(format!("Failed to serialize WAL entry: {}", e)))?;
 
@@ -569,7 +569,7 @@ impl WALManager {
     }
 
     /// Write multiple entries using vectored I/O for better performance
-    fn write_entries_vectored(&self, entries: &[WALEntry]) -> std::result::Result<(), DbError> {
+    fn write_entries_vectored(&self, entries: &[WALEntry]) -> Result<()> {
         if entries.is_empty() {
             return Ok(());
         }
@@ -610,7 +610,7 @@ impl WALManager {
     }
 
     /// Sync WAL to disk
-    fn sync(&self) -> std::result::Result<(), DbError> {
+    fn sync(&self) -> Result<()> {
         let mut file = self.wal_file.lock();
         file.flush()
             .map_err(|e| DbError::IOError(format!("Failed to flush WAL: {}", e)))?;
@@ -628,7 +628,7 @@ impl WALManager {
     }
 
     /// Sync if needed based on config and record type
-    fn sync_if_needed(&self, record: &LogRecord) -> std::result::Result<(), DbError> {
+    fn sync_if_needed(&self, record: &LogRecord) -> Result<()> {
         match self.config.sync_mode {
             SyncMode::AlwaysSync => {
                 if matches!(record, LogRecord::Commit { .. } | LogRecord::Abort { .. }) {
@@ -657,7 +657,7 @@ impl WALManager {
     }
 
     /// Truncate WAL up to a given LSN (after checkpoint)
-    pub fn truncate(&self, up_to_lsn: LSN) -> std::result::Result<(), DbError> {
+    pub fn truncate(&self, up_to_lsn: LSN) -> Result<()> {
         // In production, this would archive old log segments
         // and create a new active segment
         Ok(())
@@ -674,7 +674,7 @@ impl WALManager {
     }
 
     /// Read log records starting from LSN
-    pub fn read_from(&self, start_lsn: LSN) -> std::result::Result<Vec<WALEntry>, DbError> {
+    pub fn read_from(&self, start_lsn: LSN) -> Result<Vec<WALEntry>> {
         let file = File::open(&self.wal_path)
             .map_err(|e| DbError::IOError(format!("Failed to open WAL for reading: {}", e)))?;
 
@@ -716,7 +716,7 @@ impl WALManager {
     }
 
     /// Shutdown WAL manager
-    pub fn shutdown(&self) -> std::result::Result<(), DbError> {
+    pub fn shutdown(&self) -> Result<()> {
         self.shutdown.store(true, Ordering::SeqCst);
         self.sync()?;
         Ok(())
@@ -789,7 +789,7 @@ impl LogShippingManager {
     }
 
     /// Ship logs to standby servers
-    pub async fn ship_logs(&self) -> std::result::Result<(), DbError> {
+    pub async fn ship_logs(&self) -> Result<()> {
         let last_shipped = self.last_shipped_lsn.load(Ordering::SeqCst);
         let current_lsn = self.wal.current_lsn();
 
@@ -840,7 +840,7 @@ impl LogShippingManager {
         Ok(())
     }
 
-    async fn ship_to_standby(&self, standby: &StandbyServer, entries: &[WALEntry]) -> std::result::Result<(), DbError> {
+    async fn ship_to_standby(&self, standby: &StandbyServer, entries: &[WALEntry]) -> Result<()> {
         // In production, this would send over network
         // For now, just update the last applied LSN
         if let Some(last_entry) = entries.last() {
@@ -900,7 +900,7 @@ impl CheckpointCoordinator {
     }
 
     /// Perform a checkpoint
-    pub async fn checkpoint(&self) -> std::result::Result<LSN, DbError> {
+    pub async fn checkpoint(&self) -> Result<LSN> {
         let start = Instant::now();
 
         // Write checkpoint begin record

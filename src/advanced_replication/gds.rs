@@ -10,6 +10,8 @@ use parking_lot::RwLock;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use crate::error::DbError;
 
+type Result<T> = std::result::Result<T, DbError>;
+
 /// Global service definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalService {

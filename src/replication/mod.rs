@@ -90,7 +90,7 @@ use std::collections::{HashMap, VecDeque};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use std::path::PathBuf;
 

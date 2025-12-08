@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, Duration};
 use parking_lot::{RwLock, Mutex};
 use serde::{Deserialize, Serialize};
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use super::{TransactionId, LogSequenceNumber};
 
 /// Hybrid Logical Clock for distributed timestamp ordering

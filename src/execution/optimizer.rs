@@ -866,7 +866,7 @@ impl AdaptiveStatistics {
 
     pub fn record_error(&mut self, operator: String, estimated: f64, actual: f64) {
         self.cardinality_errors.push(CardinalityError {
-            operator,
+            operator: operator.clone(),
             estimated,
             actual,
             error_ratio: actual / estimated.max(1.0),
@@ -875,7 +875,7 @@ impl AdaptiveStatistics {
         // Update correction factor (exponential moving average)
         let alpha = 0.1;
         let ratio = actual / estimated.max(1.0);
-        let correction = self.correction_factors.entry(operator.clone()).or_insert(1.0);
+        let correction = self.correction_factors.entry(operator).or_insert(1.0);
         *correction = alpha * ratio + (1.0 - alpha) * (*correction);
     }
 }
@@ -1196,7 +1196,7 @@ impl Optimizer {
                     {
                         // Create join of left and right
                         let join_plan = PlanNode::Join {
-                            join_type: *join_type,
+                            join_type: join_type.clone(),
                             left: Box::new(left_plan.clone()),
                             right: Box::new(right_plan.clone()),
                             condition: condition.to_string(),

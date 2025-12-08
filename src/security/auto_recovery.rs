@@ -44,8 +44,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
+use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime};
 use parking_lot::RwLock;
+use tokio::time::{interval, sleep};
 
 // ============================================================================
 // Constants
@@ -215,6 +217,11 @@ pub struct RecoveryResult {
 // CrashDetector - Detects system crashes and hangs
 // ============================================================================
 
+/// Helper function for serde default
+fn default_instant() -> Instant {
+    Instant::now()
+}
+
 /// Process health information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProcessHealth {
@@ -227,7 +234,7 @@ pub struct ProcessHealth {
     /// Thread count
     pub thread_count: usize,
     /// Last heartbeat (skipped for serialization)
-    #[serde(skip, default = "Instant::now")]
+    #[serde(skip, default = "default_instant")]
     pub last_heartbeat: Instant,
     /// Is healthy
     pub is_healthy: bool,

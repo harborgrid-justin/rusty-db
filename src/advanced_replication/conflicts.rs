@@ -10,7 +10,10 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use parking_lot::RwLock;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::hash::{Hash, Hasher};
 use crate::error::DbError;
+
+type Result<T> = std::result::Result<T, DbError>;
 
 /// Conflict resolution strategy
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -489,7 +492,8 @@ impl ConflictResolver {
             }
             ConflictResolutionStrategy::Manual => {
                 // Add to manual resolution queue
-                self.pending_conflicts.write().push_back(conflict.clone());
+                let shard = self.select_shard(&conflict.id);
+                shard.pending_conflicts.write().push_back(conflict.clone());
                 return Err(DbError::Replication(
                     "Conflict requires manual resolution".to_string()
                 ));

@@ -91,3 +91,4 @@ codegen-units = 1
 default = []
 simd = []
 iocp = []
+stats = []

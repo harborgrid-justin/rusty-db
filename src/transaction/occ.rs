@@ -15,7 +15,7 @@
 //
 // Scalability: Near-linear to 128+ cores for read-heavy workloads
 
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};

@@ -66,7 +66,7 @@ pub mod simd_ops;
 pub mod quantization;
 
 // Re-export key types for convenience
-pub use engine::{MLEngine, ModelRegistry, ModelMetadata, TrainingJob, ModelVersion};
+pub use engine::{MLEngine, ModelRegistry, ModelMetadata, TrainingJob, ModelVersion, ModelStatus, StoredModel};
 pub use algorithms::{
     Algorithm, LinearRegression, LogisticRegression, DecisionTree, RandomForest,
     KMeansClustering, NaiveBayes, ModelType,

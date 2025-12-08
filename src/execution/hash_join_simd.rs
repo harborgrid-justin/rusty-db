@@ -160,7 +160,7 @@ impl SimdHashJoin {
         let partitions = Arc::new(RwLock::new(partitions));
 
         // Partition build side in parallel
-        build_side.rows.par_iter().try_for_each(|row| -> std::result::Result<()> {
+        build_side.rows.par_iter().try_for_each(|row| -> std::result::Result<(), DbError> {
             if let Some(key) = row.get(key_col) {
                 let partition_id = self.hash_partition(key);
                 let mut parts = partitions.write();

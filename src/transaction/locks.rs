@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use parking_lot::{Mutex, RwLock, Condvar};
 use serde::{Deserialize, Serialize};
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use super::TransactionId;
 
 /// Lock granularity levels in hierarchical locking

@@ -366,7 +366,7 @@ impl VectorizedExecutor {
     ) -> std::result::Result<ColumnBatch, DbError> {
         let mut groups: HashMap<Vec<String>, AggregateState> = HashMap::new();
 
-        for batch in batches {
+        for batch in &batches {
             for row_idx in 0..batch.row_count {
                 // Extract group key
                 let group_key: Vec<String> = group_by_cols.iter()

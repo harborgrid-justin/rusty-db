@@ -11,6 +11,8 @@ use tokio::sync::mpsc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::error::DbError;
 
+type Result<T> = std::result::Result<T, DbError>;
+
 /// Logical replication publication
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Publication {

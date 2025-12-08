@@ -644,7 +644,7 @@ impl MLEngine {
             ModelType::LinearRegression => {
                 let mut model = LinearRegression::new();
                 model.fit(dataset, params)?;
-                let model_data = model.serialize()?;
+                let model_data = Algorithm::serialize(&model)?;
 
                 let mut metrics = Metrics::new();
                 // Extract metrics from model if available
@@ -655,7 +655,7 @@ impl MLEngine {
             ModelType::LogisticRegression => {
                 let mut model = LogisticRegression::new();
                 model.fit(dataset, params)?;
-                let model_data = model.serialize()?;
+                let model_data = Algorithm::serialize(&model)?;
 
                 let mut metrics = Metrics::new();
                 metrics.set("trained", 1.0);
@@ -669,7 +669,7 @@ impl MLEngine {
 
                 let mut model = DecisionTree::new(is_classifier);
                 model.fit(dataset, params)?;
-                let model_data = model.serialize()?;
+                let model_data = Algorithm::serialize(&model)?;
 
                 let mut metrics = Metrics::new();
                 metrics.set("trained", 1.0);
@@ -683,7 +683,7 @@ impl MLEngine {
 
                 let mut model = RandomForest::new(is_classifier);
                 model.fit(dataset, params)?;
-                let model_data = model.serialize()?;
+                let model_data = Algorithm::serialize(&model)?;
 
                 let mut metrics = Metrics::new();
                 metrics.set("trained", 1.0);
@@ -693,7 +693,7 @@ impl MLEngine {
             ModelType::KMeans => {
                 let mut model = KMeansClustering::new();
                 model.fit(dataset, params)?;
-                let model_data = model.serialize()?;
+                let model_data = Algorithm::serialize(&model)?;
 
                 let mut metrics = Metrics::new();
                 metrics.set("trained", 1.0);
@@ -703,7 +703,7 @@ impl MLEngine {
             ModelType::NaiveBayes => {
                 let mut model = NaiveBayes::new();
                 model.fit(dataset, params)?;
-                let model_data = model.serialize()?;
+                let model_data = Algorithm::serialize(&model)?;
 
                 let mut metrics = Metrics::new();
                 metrics.set("trained", 1.0);

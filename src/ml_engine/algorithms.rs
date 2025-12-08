@@ -7,6 +7,7 @@ use crate::error::{DbError, Result};
 use super::{Dataset, Hyperparameters, EvaluationMetrics};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use rand::Rng;
 
 // ============================================================================
 // Linear Regression

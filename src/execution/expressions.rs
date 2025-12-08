@@ -277,7 +277,8 @@ impl ExpressionEvaluator {
 
                 for value_expr in values {
                     let value = self.eval(value_expr, row)?;
-                    if self.values_equal(&expr_val, &value)? {
+                    let is_equal = self.values_equal(&expr_val, &value)?;
+                    if matches!(is_equal, ExprValue::Boolean(true)) {
                         return Ok(ExprValue::Boolean(true));
                     }
                 }
@@ -516,7 +517,7 @@ impl ExpressionEvaluator {
     }
 
     /// Compare two values
-    fn compare_values(&self, left: &ExprValue, right: &ExprValue) -> std::result::Result<i32> {
+    fn compare_values(&self, left: &ExprValue, right: &ExprValue) -> std::result::Result<i32, DbError> {
         if left.is_null() || right.is_null() {
             return Ok(0); // NULL comparison is undefined
         }

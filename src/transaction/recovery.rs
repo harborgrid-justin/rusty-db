@@ -10,7 +10,7 @@ use std::time::SystemTime;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use futures::future::BoxFuture;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use super::TransactionId;
 use super::wal::{WALManager, WALEntry, LogRecord, LSN, PageId};
 

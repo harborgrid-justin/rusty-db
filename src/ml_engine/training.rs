@@ -557,8 +557,8 @@ impl TrainingEngine {
         if let Some(val_targets) = &val.targets {
             let predictions = model.predict(&val.features)?;
             let correct = predictions.iter()
-                .zip(val_targets)
-                .filter(|(pred, target)| (pred - target).abs() < 0.5)
+                .zip(val_targets.iter())
+                .filter(|(pred, target)| (*pred - *target).abs() < 0.5)
                 .count();
 
             let accuracy = correct as f64 / predictions.len() as f64;
@@ -601,8 +601,8 @@ impl TrainingEngine {
         if let Some(val_targets) = &val.targets {
             let predictions = model.predict(&val.features)?;
             let correct = predictions.iter()
-                .zip(val_targets)
-                .filter(|(pred, target)| (pred - target).abs() < 0.5)
+                .zip(val_targets.iter())
+                .filter(|(pred, target)| (*pred - *target).abs() < 0.5)
                 .count();
 
             let accuracy = correct as f64 / predictions.len() as f64;
@@ -646,8 +646,8 @@ impl TrainingEngine {
         if let Some(val_targets) = &val.targets {
             let predictions = model.predict(&val.features)?;
             let correct = predictions.iter()
-                .zip(val_targets)
-                .filter(|(pred, target)| (pred - target).abs() < 0.5)
+                .zip(val_targets.iter())
+                .filter(|(pred, target)| (*pred - *target).abs() < 0.5)
                 .count();
 
             let accuracy = correct as f64 / predictions.len() as f64;
@@ -753,8 +753,8 @@ impl TrainingEngine {
         if let Some(val_targets) = &val.targets {
             let predictions = model.predict(&val.features)?;
             let correct = predictions.iter()
-                .zip(val_targets)
-                .filter(|(pred, target)| (pred - target).abs() < 0.5)
+                .zip(val_targets.iter())
+                .filter(|(pred, target)| (*pred - *target).abs() < 0.5)
                 .count();
 
             let accuracy = correct as f64 / predictions.len() as f64;

@@ -10,6 +10,8 @@ use parking_lot::RwLock;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use crate::error::DbError;
 
+type Result<T> = std::result::Result<T, DbError>;
+
 /// Global transaction identifier
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct Xid {

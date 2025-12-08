@@ -12,6 +12,8 @@ use crate::error::DbError;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 
+type Result<T> = std::result::Result<T, DbError>;
+
 /// Sharding strategy
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ShardingStrategy {

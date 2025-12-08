@@ -12,6 +12,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::error::DbError;
 use super::conflicts::{ConflictResolver, ConflictingChange, ConflictResolutionStrategy};
 
+type Result<T> = std::result::Result<T, DbError>;
+
 /// Replication group for multi-master setup
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationGroup {

@@ -17,11 +17,8 @@ use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
 use std::time::{SystemTime, Duration, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
-use crate::Result;
-use crate::error::DbError;
-
-pub type TransactionId = u64;
-pub type LogSequenceNumber = u64;
+use crate::error::{DbError, Result};
+use crate::common::{TransactionId, LogSequenceNumber};
 
 /// Isolation level for transactions
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

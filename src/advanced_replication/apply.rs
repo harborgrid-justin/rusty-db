@@ -13,6 +13,8 @@ use tokio::sync::mpsc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::error::DbError;
 
+type Result<T> = std::result::Result<T, DbError>;
+
 /// Lock-free ring buffer for apply queue
 #[repr(C, align(64))]
 struct RingBuffer<T> {
