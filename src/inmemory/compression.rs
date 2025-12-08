@@ -832,7 +832,7 @@ mod tests {
         let encoder = DeltaEncoder::new();
 
         let mut data = Vec::new();
-        for i in 0..100 {
+        for i in 0i64..100 {
             data.extend_from_slice(&(i * 10).to_le_bytes());
         }
 
@@ -846,7 +846,7 @@ mod tests {
         let encoder = FrameOfReferenceEncoder::new(10);
 
         let mut data = Vec::new();
-        for i in 100..200 {
+        for i in 100i64..200 {
             data.extend_from_slice(&i.to_le_bytes());
         }
 

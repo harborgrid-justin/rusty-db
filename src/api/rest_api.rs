@@ -1217,8 +1217,8 @@ async fn create_table(
 )]
 async fn update_table(
     State(_state): State<Arc<ApiState>>,
-    Path(name): Path<String>,
-    AxumJson(request): AxumJson<TableRequest>,
+    Path(_name): Path<String>,
+    AxumJson(_request): AxumJson<TableRequest>,
 ) -> ApiResult<StatusCode> {
     // TODO: Implement table update
     Ok(StatusCode::OK)
@@ -1236,7 +1236,7 @@ async fn update_table(
 )]
 async fn delete_table(
     State(_state): State<Arc<ApiState>>,
-    Path(name): Path<String>,
+    Path(_name): Path<String>,
 ) -> ApiResult<StatusCode> {
     // TODO: Implement table deletion
     Ok(StatusCode::NO_CONTENT)
@@ -1310,7 +1310,7 @@ async fn begin_transaction(
 )]
 async fn commit_transaction(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<TransactionId>,
+    Path(_id): Path<TransactionId>,
 ) -> ApiResult<StatusCode> {
     // TODO: Implement transaction commit
     Ok(StatusCode::OK)
@@ -1331,7 +1331,7 @@ async fn commit_transaction(
 )]
 async fn rollback_transaction(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<TransactionId>,
+    Path(_id): Path<TransactionId>,
 ) -> ApiResult<StatusCode> {
     // TODO: Implement transaction rollback
     Ok(StatusCode::OK)
@@ -1345,7 +1345,7 @@ async fn websocket_stream(
     ws.on_upgrade(|socket| handle_websocket(socket, state))
 }
 
-async fn handle_websocket(mut socket: WebSocket, state: Arc<ApiState>) {
+async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
     // Handle WebSocket connection for real-time query streaming
     use axum::extract::ws::Message;
 
@@ -1354,7 +1354,7 @@ async fn handle_websocket(mut socket: WebSocket, state: Arc<ApiState>) {
             match msg {
                 Message::Text(text) => {
                     // Parse query request from WebSocket message
-                    if let Ok(request) = serde_json::from_str::<QueryRequest>(&text) {
+                    if let Ok(_request) = serde_json::from_str::<QueryRequest>(&text) {
                         // TODO: Execute query and stream results
                         let response = json!({
                             "status": "success",
@@ -1416,7 +1416,7 @@ async fn get_config(
 )]
 async fn update_config(
     State(_state): State<Arc<ApiState>>,
-    AxumJson(settings): AxumJson<HashMap<String, serde_json::Value>>,
+    AxumJson(_settings): AxumJson<HashMap<String, serde_json::Value>>,
 ) -> ApiResult<StatusCode> {
     // TODO: Validate and apply configuration changes
     Ok(StatusCode::OK)
@@ -1434,7 +1434,7 @@ async fn update_config(
 )]
 async fn create_backup(
     State(_state): State<Arc<ApiState>>,
-    AxumJson(request): AxumJson<BackupRequest>,
+    AxumJson(_request): AxumJson<BackupRequest>,
 ) -> ApiResult<AxumJson<BackupResponse>> {
     let backup_id = Uuid::new_v4();
 
@@ -1561,7 +1561,7 @@ async fn create_user(
 /// Get user by ID
 async fn get_user(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<u64>,
+    Path(_id): Path<u64>,
 ) -> ApiResult<AxumJson<UserResponse>> {
     // TODO: Implement user lookup
     Err(ApiError::new("NOT_FOUND", "User not found"))
@@ -1570,8 +1570,8 @@ async fn get_user(
 /// Update user
 async fn update_user(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<u64>,
-    AxumJson(request): AxumJson<UserRequest>,
+    Path(_id): Path<u64>,
+    AxumJson(_request): AxumJson<UserRequest>,
 ) -> ApiResult<StatusCode> {
     // TODO: Implement user update
     Ok(StatusCode::OK)
@@ -1580,7 +1580,7 @@ async fn update_user(
 /// Delete user
 async fn delete_user(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<u64>,
+    Path(_id): Path<u64>,
 ) -> ApiResult<StatusCode> {
     // TODO: Implement user deletion
     Ok(StatusCode::NO_CONTENT)
@@ -1630,7 +1630,7 @@ async fn create_role(
 /// Get role by ID
 async fn get_role(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<u64>,
+    Path(_id): Path<u64>,
 ) -> ApiResult<AxumJson<RoleResponse>> {
     Err(ApiError::new("NOT_FOUND", "Role not found"))
 }
@@ -1638,8 +1638,8 @@ async fn get_role(
 /// Update role
 async fn update_role(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<u64>,
-    AxumJson(request): AxumJson<RoleRequest>,
+    Path(_id): Path<u64>,
+    AxumJson(_request): AxumJson<RoleRequest>,
 ) -> ApiResult<StatusCode> {
     Ok(StatusCode::OK)
 }
@@ -1647,7 +1647,7 @@ async fn update_role(
 /// Delete role
 async fn delete_role(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<u64>,
+    Path(_id): Path<u64>,
 ) -> ApiResult<StatusCode> {
     Ok(StatusCode::NO_CONTENT)
 }
@@ -1853,7 +1853,7 @@ async fn get_alerts(
 /// Acknowledge an alert
 async fn acknowledge_alert(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<String>,
+    Path(_id): Path<String>,
 ) -> ApiResult<StatusCode> {
     // TODO: Mark alert as acknowledged
     Ok(StatusCode::OK)
@@ -1919,8 +1919,8 @@ async fn get_pool(
 )]
 async fn update_pool(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<String>,
-    AxumJson(config): AxumJson<PoolConfig>,
+    Path(_id): Path<String>,
+    AxumJson(_config): AxumJson<PoolConfig>,
 ) -> ApiResult<StatusCode> {
     // TODO: Apply pool configuration
     Ok(StatusCode::OK)
@@ -1964,7 +1964,7 @@ async fn get_pool_stats(
 )]
 async fn drain_pool(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<String>,
+    Path(_id): Path<String>,
 ) -> ApiResult<StatusCode> {
     // TODO: Initiate pool draining
     Ok(StatusCode::ACCEPTED)
@@ -1993,7 +1993,7 @@ async fn get_connections(
 /// Get connection by ID
 async fn get_connection(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<u64>,
+    Path(_id): Path<u64>,
 ) -> ApiResult<AxumJson<ConnectionInfo>> {
     Err(ApiError::new("NOT_FOUND", "Connection not found"))
 }
@@ -2009,7 +2009,7 @@ async fn get_connection(
 )]
 async fn kill_connection(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<u64>,
+    Path(_id): Path<u64>,
 ) -> ApiResult<StatusCode> {
     // TODO: Terminate connection
     Ok(StatusCode::NO_CONTENT)
@@ -2057,7 +2057,7 @@ async fn get_session(
 /// Terminate a session
 async fn terminate_session(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<SessionId>,
+    Path(_id): Path<SessionId>,
 ) -> ApiResult<StatusCode> {
     // TODO: Terminate session
     Ok(StatusCode::NO_CONTENT)
@@ -2134,7 +2134,7 @@ async fn add_cluster_node(
 /// Get cluster node by ID
 async fn get_cluster_node(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<String>,
+    Path(_id): Path<String>,
 ) -> ApiResult<AxumJson<ClusterNodeInfo>> {
     // TODO: Fetch node information
     Err(ApiError::new("NOT_FOUND", "Node not found"))
@@ -2143,7 +2143,7 @@ async fn get_cluster_node(
 /// Remove a cluster node
 async fn remove_cluster_node(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<String>,
+    Path(_id): Path<String>,
 ) -> ApiResult<StatusCode> {
     // TODO: Remove node from cluster
     Ok(StatusCode::NO_CONTENT)
@@ -2196,7 +2196,7 @@ async fn get_cluster_topology(
 )]
 async fn trigger_failover(
     State(_state): State<Arc<ApiState>>,
-    AxumJson(request): AxumJson<FailoverRequest>,
+    AxumJson(_request): AxumJson<FailoverRequest>,
 ) -> ApiResult<StatusCode> {
     // TODO: Initiate cluster failover
     Ok(StatusCode::ACCEPTED)
@@ -2256,7 +2256,7 @@ async fn get_cluster_config(
 )]
 async fn update_cluster_config(
     State(_state): State<Arc<ApiState>>,
-    AxumJson(config): AxumJson<HashMap<String, serde_json::Value>>,
+    AxumJson(_config): AxumJson<HashMap<String, serde_json::Value>>,
 ) -> ApiResult<StatusCode> {
     // TODO: Apply cluster configuration
     Ok(StatusCode::OK)
@@ -2705,7 +2705,7 @@ impl ApiTransactionManager {
     pub async fn commit_transaction(&self, txn_id: TransactionId) -> Result<()> {
         let mut transactions = self.active_transactions.write().await;
 
-        if let Some(mut state) = transactions.get_mut(&txn_id) {
+        if let Some(state) = transactions.get_mut(&txn_id) {
             state.status = TransactionStatus::Committed;
             Ok(())
         } else {
@@ -2716,7 +2716,7 @@ impl ApiTransactionManager {
     pub async fn rollback_transaction(&self, txn_id: TransactionId) -> Result<()> {
         let mut transactions = self.active_transactions.write().await;
 
-        if let Some(mut state) = transactions.get_mut(&txn_id) {
+        if let Some(state) = transactions.get_mut(&txn_id) {
             state.status = TransactionStatus::Aborted;
             Ok(())
         } else {

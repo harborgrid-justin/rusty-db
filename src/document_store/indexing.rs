@@ -616,8 +616,9 @@ impl FullTextIndex {
     }
 
     fn tokenize(&self, text: &str) -> Vec<String> {
+        let default_options = TextIndexOptions::default();
         let options = self.definition.text_options.as_ref()
-            .unwrap_or(&TextIndexOptions::default());
+            .unwrap_or(&default_options);
 
         let text = if options.case_sensitive {
             text.to_string()

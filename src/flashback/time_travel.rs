@@ -23,9 +23,8 @@
 use std::collections::{HashMap, BTreeMap};
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Serialize};
 
-use crate::common::{TransactionId, TableId, RowId, Value, Tuple};
+use crate::common::{TransactionId, TableId, RowId, Value};
 use crate::error::{DbError, Result};
 
 // ============================================================================

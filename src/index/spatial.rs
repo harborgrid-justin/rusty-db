@@ -69,7 +69,7 @@ impl<T: Clone> RTree<T> {
         let leaf = self.choose_leaf(root.clone(), &bbox)?;
 
         // Insert entry
-        let mut leaf_lock = leaf.write();
+        let leaf_lock = leaf.write();
         leaf_lock.entries.write().push(Entry {
             bbox,
             data: EntryData::Data(data),
@@ -229,7 +229,7 @@ impl<T: Clone> RTree<T> {
 
     /// Split a node when it overflows
     fn split_node(&self, node_ref: NodeRef<T>) -> Result<()> {
-        let mut node = node_ref.write();
+        let node = node_ref.write();
         let mut entries = node.entries.write().clone();
 
         // Use quadratic split algorithm
@@ -252,7 +252,7 @@ impl<T: Clone> RTree<T> {
 
             drop(node);
 
-            let mut new_root = Node::new_internal(self.max_entries);
+            let new_root = Node::new_internal(self.max_entries);
             new_root.entries.write().push(Entry {
                 bbox: old_root_bbox,
                 data: EntryData::Child(node_ref.clone()),

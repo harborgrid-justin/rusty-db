@@ -104,7 +104,7 @@ pub enum LearningRateSchedule {
 }
 
 impl LearningRateSchedule {
-    pub fn get_lr(&self, epoch: usize, current_lr: f64, metric: Option<f64>) -> f64 {
+    pub fn get_lr(&self, epoch: usize, current_lr: f64, _metric: Option<f64>) -> f64 {
         match self {
             LearningRateSchedule::ExponentialDecay { initial_lr, decay_rate, decay_steps } => {
                 initial_lr * decay_rate.powf((epoch / decay_steps) as f64)
@@ -670,7 +670,7 @@ impl TrainingEngine {
     fn train_kmeans(
         &self,
         train: &Dataset,
-        val: &Dataset,
+        _val: &Dataset,
         params: &Hyperparameters,
     ) -> Result<(ModelParameters, TrainingStats, EvaluationMetrics)> {
         let k = params.get_int("k", 3) as usize;
@@ -792,7 +792,7 @@ impl TrainingEngine {
     fn train_neural_network(
         &self,
         train: &Dataset,
-        val: &Dataset,
+        _val: &Dataset,
         params: &Hyperparameters,
         _gpu_config: &GpuConfig,
     ) -> Result<(ModelParameters, TrainingStats, EvaluationMetrics)> {

@@ -80,7 +80,7 @@ struct Slot<K, V> {
 
 impl<K, V> SwissTable<K, V>
 where
-    K: Eq + Clone,
+    K: Eq + Clone + AsRef<[u8]>,
     V: Clone,
 {
     /// Create a new Swiss table with default capacity
@@ -100,7 +100,7 @@ where
         let num_groups = (capacity + GROUP_SIZE - 1) / GROUP_SIZE;
 
         // Allocate control bytes (aligned to 16 bytes for SIMD)
-        let mut ctrl = vec![EMPTY; num_groups * GROUP_SIZE];
+        let ctrl = vec![EMPTY; num_groups * GROUP_SIZE];
 
         // Allocate slots
         let mut slots = Vec::with_capacity(capacity);

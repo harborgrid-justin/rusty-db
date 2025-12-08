@@ -416,11 +416,13 @@ impl TimeSeriesAnalyzer {
             }
         }
 
+        let metadata = self.calculate_metadata(&ma_points);
+
         Ok(TimeSeries {
             name: format!("{}_ma", self.series.name),
             points: ma_points,
             interval: self.series.interval,
-            metadata: self.calculate_metadata(&ma_points),
+            metadata,
         })
     }
 

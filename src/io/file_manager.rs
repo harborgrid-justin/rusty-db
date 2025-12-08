@@ -16,8 +16,6 @@ use std::fs::{File, OpenOptions};
 
 #[cfg(unix)]
 use std::os::unix::io::AsRawFd;
-#[cfg(windows)]
-use std::os::windows::io::AsRawHandle;
 
 #[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
@@ -468,7 +466,7 @@ impl FileManager {
     }
 
     /// Open a file
-    pub async fn open<P: AsRef<Path>>(&mut self, path: P, create: bool) -> Result<FileHandle> {
+    pub async fn open<P: AsRef<Path>>(&mut self, path: P, _create: bool) -> Result<FileHandle> {
         let file = DirectIoFile::open(path, &self.options)?;
         let handle = FileHandle(self.next_handle.fetch_add(1, Ordering::Relaxed));
 

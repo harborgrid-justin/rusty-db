@@ -13,7 +13,6 @@ use crate::execution::{QueryResult, planner::PlanNode};
 use std::sync::Arc;
 use std::collections::{HashMap, VecDeque};
 use parking_lot::RwLock;
-use tokio::task::JoinHandle;
 
 /// Parallel execution engine with fixed-size thread pool
 pub struct ParallelExecutor {
@@ -115,7 +114,7 @@ impl ParallelExecutor {
     ) -> std::result::Result<QueryResult, DbError> {
         // Execute left and right in parallel
         let left_handle = {
-            let left = left.clone();
+            let _left = left.clone();
             tokio::spawn(async move {
                 // Placeholder: execute left plan
                 QueryResult::empty()
@@ -123,7 +122,7 @@ impl ParallelExecutor {
         };
         
         let right_handle = {
-            let right = right.clone();
+            let _right = right.clone();
             tokio::spawn(async move {
                 // Placeholder: execute right plan
                 QueryResult::empty()
@@ -213,7 +212,7 @@ impl ParallelExecutor {
     /// Parallel aggregation
     async fn parallel_aggregate(
         &self,
-        input: &PlanNode,
+        _input: &PlanNode,
         group_by: &[String],
         aggregates: &[crate::execution::planner::AggregateExpr],
         _having: &Option<String>,
@@ -380,7 +379,7 @@ impl WorkStealingScheduler {
         let work_queues = (0..num_workers)
             .map(|_| {
                 // Pre-allocate with capacity to avoid reallocation
-                let mut deque = VecDeque::with_capacity(1024);
+                let deque = VecDeque::with_capacity(1024);
                 Arc::new(RwLock::new(deque))
             })
             .collect();

@@ -360,27 +360,36 @@ impl PluginRegistry {
 
     /// Initialize a plugin
     pub async fn initialize(&self, name: &str) -> Result<()> {
+        // Check dependencies first (immutable borrow)
+        {
+            let plugins = self.plugins.read();
+            let instance = plugins
+                .get(name)
+                .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
+
+            if instance.state != PluginState::Registered {
+                return Err(DbError::Internal(format!(
+                    "Plugin {} is not in REGISTERED state",
+                    name
+                )));
+            }
+
+            // Check dependencies
+            for dep in &instance.metadata.dependencies {
+                if !plugins.contains_key(dep) {
+                    return Err(DbError::Internal(format!(
+                        "Plugin {} requires dependency: {}",
+                        name, dep
+                    )));
+                }
+            }
+        }
+
+        // Now initialize (mutable borrow)
         let mut plugins = self.plugins.write();
         let instance = plugins
             .get_mut(name)
             .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
-
-        if instance.state != PluginState::Registered {
-            return Err(DbError::Internal(format!(
-                "Plugin {} is not in REGISTERED state",
-                name
-            )));
-        }
-
-        // Check dependencies
-        for dep in &instance.metadata.dependencies {
-            if !plugins.contains_key(dep) {
-                return Err(DbError::Internal(format!(
-                    "Plugin {} requires dependency: {}",
-                    name, dep
-                )));
-            }
-        }
 
         // Initialize
         debug!("Initializing plugin: {}", name);

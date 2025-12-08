@@ -271,8 +271,8 @@ impl CubeBuilder {
             let mut measure_values = HashMap::new();
 
             for measure in &self.cube.measures {
-                let value = self.compute_aggregate(measure, &group_rows)?;
-                measure_values.insert(measure.name.clone(), value);
+                let _value = self.compute_aggregate(measure, &group_rows)?;
+                measure_values.insert(measure.name.clone(), _value);
             }
 
             let grouping_key = GroupingKey {
@@ -414,7 +414,7 @@ impl CubeQuery {
             let mut matches = true;
             for (index, expected_value) in &filter_indices {
                 if let Some(Some(actual_value)) = key.values.get(*index) {
-                    if actual_value != *expected_value {
+                    if actual_value != **expected_value {
                         matches = false;
                         break;
                     }

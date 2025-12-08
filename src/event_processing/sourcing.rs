@@ -6,9 +6,9 @@
 use super::{Event, EventId, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 /// Aggregate identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -336,7 +336,7 @@ impl<A: Aggregate> AggregateRepository<A> {
         }
 
         // Reconstruct aggregate from events
-        let mut aggregate = None;
+        let mut aggregate: Option<Box<dyn Aggregate>> = None;
 
         for envelope in events {
             if aggregate.is_none() {

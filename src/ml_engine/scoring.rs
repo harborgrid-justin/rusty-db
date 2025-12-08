@@ -172,7 +172,7 @@ impl ScoringEngine {
         };
 
         let n_samples = features.len();
-        let n_models = models.len();
+        let _n_models = models.len();
         let mut aggregated_predictions = vec![0.0; n_samples];
         let mut prediction_counts = vec![0; n_samples];
 

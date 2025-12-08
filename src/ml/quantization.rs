@@ -8,7 +8,7 @@
 //! dequantized = (quantized - zero_point) * scale
 
 use serde::{Serialize, Deserialize};
-use super::{Vector, Matrix};
+use super::{Vector};
 
 // ============================================================================
 // Quantized Weights

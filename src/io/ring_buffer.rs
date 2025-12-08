@@ -5,7 +5,7 @@
 
 use crate::error::{DbError, Result};
 use crate::io::{IoOpType, IoRequest, IoCompletion, IoHandle};
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr;

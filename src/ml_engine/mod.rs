@@ -46,7 +46,6 @@
 //! ```
 
 use crate::error::{DbError, Result};
-use crate::common::{TableId, Value, Tuple, Schema};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};

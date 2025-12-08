@@ -11,7 +11,6 @@
 use crate::error::DbError;
 use super::planner::PlanNode;
 use super::QueryResult;
-use std::collections::HashSet;
 
 /// Subquery type classification
 #[derive(Debug, Clone, PartialEq)]

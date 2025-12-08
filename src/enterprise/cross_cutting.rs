@@ -704,7 +704,7 @@ impl ErrorHandler {
     pub async fn handle<F, Fut, T>(
         &self,
         strategy: RecoveryStrategy,
-        operation: F,
+        mut operation: F,
         fallback: Option<T>,
     ) -> Result<T>
     where

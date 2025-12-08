@@ -15,7 +15,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use parking_lot::{RwLock, Mutex};
 use std::thread;
 
-use crate::inmemory::column_store::{ColumnStore, ColumnSegment, ColumnDataType, ColumnValue};
+use crate::inmemory::column_store::ColumnStore;
 use crate::inmemory::compression::HybridCompressor;
 
 /// Population priority levels
@@ -334,7 +334,7 @@ impl PopulationWorker {
             .insert(task.task_id, progress);
 
         // Simulate population from disk
-        for (idx, &column_id) in task.column_ids.iter().enumerate() {
+        for (_idx, &column_id) in task.column_ids.iter().enumerate() {
             // Check memory pressure
             if self.memory_handler.should_evict() {
                 self.memory_handler.evict_if_needed(1024 * 1024); // Evict 1MB
@@ -428,7 +428,7 @@ impl PopulationManager {
                 self.memory_handler.clone(),
             );
 
-            let worker_running = worker.running.clone();
+            let _worker_running = worker.running.clone();
             let task_queue = self.task_queue.clone();
             let progress_tracker = self.progress_tracker.clone();
             let memory_handler = self.memory_handler.clone();

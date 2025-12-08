@@ -93,7 +93,7 @@ impl HyperLogLog {
             return raw_estimate as u64;
         } else {
             // Large range correction
-            return (-(1u64 << 32) as f64 * (1.0 - raw_estimate / (1u64 << 32) as f64).ln()) as u64;
+            return (-( (1i64 << 32) as f64) * (1.0 - raw_estimate / (1u64 << 32) as f64).ln()) as u64;
         }
 
         raw_estimate as u64

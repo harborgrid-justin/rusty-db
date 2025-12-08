@@ -28,7 +28,7 @@ use crate::parser::OrderByClause;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::fs::File;
-use std::io::{Write as IoWrite, Read, BufWriter, BufReader, BufRead};
+use std::io::{Write as IoWrite, BufWriter, BufReader, BufRead};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use parking_lot::Mutex;
@@ -590,7 +590,7 @@ impl SortBasedGrouping {
     pub fn execute(
         data: QueryResult,
         group_by_cols: &[usize],
-        agg_col: usize,
+        _agg_col: usize,
     ) -> std::result::Result<QueryResult, DbError> {
         if data.rows.is_empty() {
             return Ok(data);

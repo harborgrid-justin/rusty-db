@@ -365,7 +365,7 @@ impl CompressedBitmap {
     }
 
     /// NOT operation
-    pub fn not(&self, size: usize) -> CompressedBitmap {
+    pub fn not(&self, _size: usize) -> CompressedBitmap {
         let mut result = CompressedBitmap {
             runs: Vec::new(),
         };

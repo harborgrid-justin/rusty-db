@@ -11,10 +11,10 @@
 use crate::error::{DbError, Result};
 use crate::catalog::Schema;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime};
 
 /// Materialized view with full metadata and state tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -270,7 +270,7 @@ impl MaterializedViewManager {
     }
 
     /// Complete refresh - rebuild entire view
-    fn complete_refresh(&self, view: &MaterializedView) -> Result<RefreshResult> {
+    fn complete_refresh(&self, _view: &MaterializedView) -> Result<RefreshResult> {
         // In production, would execute view query and replace data
         Ok(RefreshResult {
             rows_inserted: 1000,
@@ -318,7 +318,7 @@ impl MaterializedViewManager {
     }
 
     /// Fast refresh - optimized for specific patterns
-    fn fast_refresh(&self, view: &MaterializedView) -> Result<RefreshResult> {
+    fn fast_refresh(&self, _view: &MaterializedView) -> Result<RefreshResult> {
         // Fast refresh for aggregate views
         Ok(RefreshResult {
             rows_inserted: 10,
@@ -601,17 +601,17 @@ impl QueryRewriter {
         })
     }
 
-    fn identify_patterns(&self, query: &str) -> Result<Vec<QueryPattern>> {
+    fn identify_patterns(&self, _query: &str) -> Result<Vec<QueryPattern>> {
         // Simplified pattern identification
         let mut patterns = Vec::new();
 
-        if query.contains("GROUP BY") {
+        if _query.contains("GROUP BY") {
             patterns.push(QueryPattern::Aggregation);
         }
-        if query.contains("JOIN") {
+        if _query.contains("JOIN") {
             patterns.push(QueryPattern::Join);
         }
-        if query.contains("WHERE") {
+        if _query.contains("WHERE") {
             patterns.push(QueryPattern::Filter);
         }
 
@@ -620,7 +620,7 @@ impl QueryRewriter {
 
     fn find_candidate_views(
         &self,
-        patterns: &[QueryPattern],
+        _patterns: &[QueryPattern],
         views: &HashMap<String, MaterializedView>,
     ) -> Result<Vec<String>> {
         // Find views that could satisfy the query
@@ -631,7 +631,7 @@ impl QueryRewriter {
     fn select_best_view(
         &self,
         candidates: &[String],
-        views: &HashMap<String, MaterializedView>,
+        _views: &HashMap<String, MaterializedView>,
     ) -> Result<String> {
         // Cost-based selection
         candidates.first()
@@ -639,7 +639,7 @@ impl QueryRewriter {
             .ok_or_else(|| DbError::Internal("No candidates".to_string()))
     }
 
-    fn apply_rewrite(&self, query: &str, view_name: &str) -> Result<String> {
+    fn apply_rewrite(&self, _query: &str, view_name: &str) -> Result<String> {
         // Rewrite query to use materialized view
         Ok(format!("SELECT * FROM {}", view_name))
     }
@@ -794,6 +794,72 @@ mod tests {
         let staleness = manager.get_staleness("test_mv").unwrap();
         assert!(staleness.is_stale);
         assert_eq!(staleness.pending_changes, 1);
+    }
+
+    #[test]
+    fn test_complete_refresh() {
+        let manager = MaterializedViewManager::new();
+        let schema = catalog::Schema {
+            name: "some_name".to_string(),
+            primary_key: Some(vec!["some_pk".to_string()]),
+            columns: vec![
+                catalog::Column {
+                    name: "id".to_string(),
+                    data_type: DataType::Integer,
+                    nullable: false,
+                    default: None,
+                },
+            ],
+        };
+
+        let result = manager.create_view(
+            "test_mv".to_string(),
+            "SELECT id FROM users".to_string(),
+            schema,
+            vec!["users".to_string()],
+            RefreshPolicy::Manual,
+            MaintenanceMode::Complete,
+        );
+
+        assert!(result.is_ok());
+
+        let refresh_result = manager.refresh_view("test_mv").unwrap();
+        assert_eq!(refresh_result.method, RefreshMethod::Complete);
+    }
+
+    #[test]
+    fn test_fast_refresh() {
+        let manager = MaterializedViewManager::new();
+        let schema = catalog::Schema {
+            name: "some_name".to_string(),
+            primary_key: Some(vec!["some_pk".to_string()]),
+            columns: vec![
+                catalog::Column {
+                    name: "c".to_string(),
+                    data_type: DataType::Integer,
+                    nullable: false,
+                    default: None,
+                },
+            ],
+        };
+
+        let result = manager.create_view(
+            "test_mv".to_string(),
+            "SELECT c, COUNT(*) FROM orders GROUP BY c".to_string(),
+            schema,
+            vec!["orders".to_string()],
+            RefreshPolicy::Manual,
+            MaintenanceMode::Fast {
+                supports_insert: true,
+                supports_update: true,
+                supports_delete: true,
+            },
+        );
+
+        assert!(result.is_ok());
+
+        let refresh_result = manager.refresh_view("test_mv").unwrap();
+        assert_eq!(refresh_result.method, RefreshMethod::Fast);
     }
 }
 

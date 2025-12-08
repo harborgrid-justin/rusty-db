@@ -95,6 +95,7 @@ impl BTreeIndex {
 }
 
 /// Simple hash index implementation (for backward compatibility)
+#[derive(Clone)]
 pub struct HashIndex {
     name: String,
     map: Arc<RwLock<std::collections::HashMap<IndexKey, Vec<IndexValue>>>>,

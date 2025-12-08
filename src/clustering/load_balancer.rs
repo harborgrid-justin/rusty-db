@@ -620,7 +620,7 @@ impl LoadBalancer {
     }
 
     /// Acquire a connection
-    pub async fn acquire_connection(&self, session_id: Option<&str>) -> std::result::Result<(BackendId, ConnectionId)> {
+    pub async fn acquire_connection(&self, session_id: Option<&str>) -> std::result::Result<(BackendId, ConnectionId), DbError> {
         let backend_id = self.select_backend(session_id)?;
 
         let pools = self.pools.read().unwrap();

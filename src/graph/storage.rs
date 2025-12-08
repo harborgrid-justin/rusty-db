@@ -568,7 +568,7 @@ impl GraphStorageManager {
         // Add vertices
         for (vertex_id, vertex_data) in &adj_list.vertices {
             // Note: This is a simplified conversion; in practice, we'd need to handle ID generation
-            let mut vertex = Vertex::with_properties(
+            let _vertex = Vertex::with_properties(
                 *vertex_id,
                 vertex_data.labels.clone(),
                 vertex_data.properties.clone(),
@@ -578,7 +578,7 @@ impl GraphStorageManager {
         }
 
         // Add edges
-        for (edge_id, edge_data) in &adj_list.edges {
+        for (_edge_id, edge_data) in &adj_list.edges {
             graph.add_edge(
                 edge_data.source,
                 edge_data.target,
@@ -596,8 +596,8 @@ impl GraphStorageManager {
         let mut graph = PropertyGraph::new();
 
         // Add vertices
-        for (idx, &vertex_id) in csr.vertex_map.iter().enumerate() {
-            let properties = csr.vertex_properties.get(idx)
+        for (idx, &_vertex_id) in csr.vertex_map.iter().enumerate() {
+            let _properties = csr.vertex_properties.get(idx)
                 .cloned()
                 .unwrap_or_else(Properties::new);
             // Simplified conversion

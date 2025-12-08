@@ -22,7 +22,7 @@
 //! WHERE employee_id = 100;
 //! ```
 
-use std::collections::{HashMap, BTreeMap, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{SystemTime, Duration};
@@ -353,14 +353,14 @@ impl VersionStore {
     ) -> bool {
         let after_start = match start {
             VersionBound::SCN(scn) => version.scn_created >= *scn,
-            VersionBound::Timestamp(ts) => true, // Would need timestamp mapping
+            VersionBound::Timestamp(_ts) => true, // Would need timestamp mapping
             VersionBound::Minvalue => true,
             VersionBound::Maxvalue => false,
         };
 
         let before_end = match end {
             VersionBound::SCN(scn) => version.scn_created <= *scn,
-            VersionBound::Timestamp(ts) => true, // Would need timestamp mapping
+            VersionBound::Timestamp(_ts) => true, // Would need timestamp mapping
             VersionBound::Maxvalue => true,
             VersionBound::Minvalue => false,
         };
@@ -659,7 +659,7 @@ impl VersionGarbageCollector {
             return 0;
         }
 
-        let now = current_timestamp();
+        let _now = current_timestamp();
         let mut to_remove = Vec::new();
 
         for (i, version) in versions.iter().enumerate() {
@@ -678,8 +678,8 @@ impl VersionGarbageCollector {
 
             // Check max age
             if let Some(max_age_secs) = policy.max_age_seconds {
-                let age_micros = max_age_secs * 1_000_000;
-                if let Some(end_scn) = version.scn_deleted {
+                let _age_micros = max_age_secs * 1_000_000;
+                if let Some(_end_scn) = version.scn_deleted {
                     // Version is deleted, check if old enough
                     // Note: Would need proper timestamp mapping
                     to_remove.push(i);
@@ -781,11 +781,11 @@ impl VersionJoinExecutor {
     /// Execute temporal join between two table versions
     pub fn execute_temporal_join(
         &self,
-        left_table: TableId,
-        right_table: TableId,
-        left_scn: SCN,
-        right_scn: SCN,
-        join_condition: JoinCondition,
+        _left_table: TableId,
+        _right_table: TableId,
+        _left_scn: SCN,
+        _right_scn: SCN,
+        _join_condition: JoinCondition,
     ) -> Result<Vec<JoinedVersionRow>> {
         // Implementation would require integration with query executor
         // This is a placeholder for the structure

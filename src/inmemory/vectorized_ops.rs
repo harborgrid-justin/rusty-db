@@ -171,7 +171,7 @@ impl VectorizedFilter {
 
         // Process in SIMD-friendly chunks
         let chunks = values.len() / VECTOR_WIDTH_I64;
-        let remainder = values.len() % VECTOR_WIDTH_I64;
+        let _remainder = values.len() % VECTOR_WIDTH_I64;
 
         // Vectorized path (simulated - in production would use actual SIMD intrinsics)
         for i in 0..chunks {
@@ -638,7 +638,7 @@ pub fn branchfree_select_i64(condition: bool, true_val: i64, false_val: i64) -> 
 /// Parallel column scan
 pub fn parallel_scan_int64<F>(values: &[i64], predicate: F, num_threads: usize) -> Vec<bool>
 where
-    F: Fn(i64) -> bool + Send + Sync,
+    F: Fn(i64) -> bool + Send + Sync + 'static,
 {
     use std::sync::Arc;
     use std::thread;

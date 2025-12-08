@@ -707,7 +707,7 @@ impl InferenceEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ml::engine::{ModelRegistry, ModelMetadata, StoredModel};
+    use crate::ml::engine::{ModelMetadata, StoredModel};
     use crate::ml::algorithms::ModelType;
 
     #[test]

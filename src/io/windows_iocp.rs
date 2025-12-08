@@ -5,7 +5,7 @@
 use crate::error::{DbError, Result};
 use crate::io::{IoRequest, IoCompletion, IoOpType, IoStatus, IoHandle};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use parking_lot::Mutex;
 use std::time::Duration;
 use std::ptr;
@@ -118,6 +118,12 @@ pub struct OverlappedIo {
     /// User data
     pub user_data: usize,
 }
+
+// Safety: OverlappedIo is safe to send between threads as it's used for async I/O completion
+#[cfg(windows)]
+unsafe impl Send for OverlappedIo {}
+#[cfg(windows)]
+unsafe impl Sync for OverlappedIo {}
 
 #[cfg(windows)]
 impl OverlappedIo {

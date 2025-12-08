@@ -77,7 +77,7 @@ pub type SessionId = u64;
 // ============================================================================
 
 /// Represents all possible data values in the database
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Value {
     /// NULL value
     Null,
@@ -289,7 +289,7 @@ impl Tuple {
 }
 
 /// Database schema definition
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct Schema {
     /// Table name
     pub table_name: String,
@@ -336,7 +336,7 @@ impl Schema {
 }
 
 /// Column definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ColumnDef {
     /// Column name
     pub name: String,
@@ -423,7 +423,7 @@ pub enum DataType {
 }
 
 /// Foreign key constraint
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ForeignKeyConstraint {
     pub name: String,
     pub columns: Vec<ColumnId>,

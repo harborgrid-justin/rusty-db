@@ -30,8 +30,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
 use crate::error::{DbError, Result};
-use super::time_travel::{SCN, Timestamp, current_timestamp};
-use super::versions::UndoRecord;
+use super::time_travel::{SCN, Timestamp};
+
 
 // ============================================================================
 // Transaction Flashback Manager

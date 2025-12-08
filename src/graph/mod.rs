@@ -324,7 +324,7 @@ mod tests {
         assert_eq!(graph.vertex_count(), 2);
 
         // Add edge
-        let edge = graph.add_edge(
+        let _edge = graph.add_edge(
             v1,
             v2,
             "KNOWS".to_string(),

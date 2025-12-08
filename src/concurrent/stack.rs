@@ -9,7 +9,7 @@
 // Reference: "Systems Programming: Coping with Parallelism" by R.K. Treiber (1986)
 
 use super::epoch::{Atomic, Epoch, EpochGuard, Owned, Shared};
-use super::tagged_ptr::TaggedPtr;
+
 use super::Backoff;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
@@ -345,7 +345,7 @@ impl<T: 'static> Default for LockFreeStack<T> {
     }
 }
 
-impl<T: 'static> Drop for LockFreeStack<T> {
+impl<T> Drop for LockFreeStack<T> {
     fn drop(&mut self) {
         // Pop all items to properly drop them
         while self.pop().is_some() {}

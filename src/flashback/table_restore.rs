@@ -23,10 +23,9 @@
 //! FLASHBACK TABLE employees TO BEFORE DROP RENAME TO employees_recovered;
 //! ```
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
 
 use crate::common::{TableId, RowId, Value, Schema, IndexId};
 use crate::error::{DbError, Result};
@@ -309,9 +308,9 @@ impl TableRestoreManager {
 
     fn apply_table_state(
         &self,
-        table_id: TableId,
-        state: TableState,
-        options: &FlashbackOptions,
+        _table_id: TableId,
+        _state: TableState,
+        _options: &FlashbackOptions,
     ) -> Result<()> {
         // This would integrate with the storage layer to:
         // 1. Clear current table data
@@ -322,30 +321,30 @@ impl TableRestoreManager {
         Ok(())
     }
 
-    fn rebuild_indexes(&self, table_id: TableId) -> Result<usize> {
+    fn rebuild_indexes(&self, _table_id: TableId) -> Result<usize> {
         // Placeholder - would integrate with index module
         Ok(0)
     }
 
-    fn restore_constraints(&self, table_id: TableId, scn: SCN) -> Result<usize> {
+    fn restore_constraints(&self, _table_id: TableId, _scn: SCN) -> Result<usize> {
         // Placeholder - would integrate with constraints module
         Ok(0)
     }
 
-    fn restore_triggers(&self, table_id: TableId, scn: SCN) -> Result<usize> {
+    fn restore_triggers(&self, _table_id: TableId, _scn: SCN) -> Result<usize> {
         // Placeholder - would integrate with triggers module
         Ok(0)
     }
 
-    fn validate_constraints(&self, table_id: TableId) -> Result<()> {
+    fn validate_constraints(&self, _table_id: TableId) -> Result<()> {
         // Placeholder - would validate all constraints
         Ok(())
     }
 
     fn restore_from_recycle_bin(
         &self,
-        dropped_table: &DroppedTable,
-        new_name: String,
+        _dropped_table: &DroppedTable,
+        _new_name: String,
     ) -> Result<FlashbackResult> {
         // Restore table metadata and data
         // This would integrate with catalog and storage layers
@@ -360,16 +359,16 @@ impl TableRestoreManager {
         })
     }
 
-    fn get_partition_id(&self, table_id: TableId, partition_name: &str) -> Result<u32> {
+    fn get_partition_id(&self, _table_id: TableId, _partition_name: &str) -> Result<u32> {
         // Placeholder - would look up partition ID
         Ok(0)
     }
 
     fn reconstruct_partition_state(
         &self,
-        table_id: TableId,
+        _table_id: TableId,
         partition_id: u32,
-        target_scn: SCN,
+        _target_scn: SCN,
     ) -> Result<PartitionState> {
         // Reconstruct state for a specific partition
         Ok(PartitionState {
@@ -380,9 +379,9 @@ impl TableRestoreManager {
 
     fn apply_partition_state(
         &self,
-        table_id: TableId,
-        partition_id: u32,
-        state: PartitionState,
+        _table_id: TableId,
+        _partition_id: u32,
+        _state: PartitionState,
     ) -> Result<()> {
         // Apply state to partition
         Ok(())

@@ -255,7 +255,7 @@ impl Slab {
 
     /// Allocate an object from this slab
     unsafe fn allocate(&mut self) -> Option<NonNull<u8>> {
-        if let Some(mut obj) = self.freelist {
+        if let Some(obj) = self.freelist {
             // Pop from freelist
             let next_ptr = *(obj.as_ptr() as *const *mut u8);
             self.freelist = NonNull::new(next_ptr);
@@ -450,7 +450,7 @@ impl SlabDepot {
         Slab::new(size_class_info, size_class, color)
     }
 
-    fn put_slab(&mut self, size_class_info: &SizeClass, mut slab: Slab) {
+    fn put_slab(&mut self, size_class_info: &SizeClass, slab: Slab) {
         let size_class = slab.size_class;
 
         if slab.is_empty(size_class_info) {
@@ -1098,7 +1098,7 @@ struct LargeObject {
 
 impl LargeObject {
     /// Allocate a large object using mmap
-    unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
+    unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
         #[cfg(unix)]
         {
             use std::os::unix::io::RawFd;
@@ -2216,7 +2216,7 @@ impl MemoryManager {
     pub fn create_context(
         &self,
         name: String,
-        context_type: ContextType,
+        _context_type: ContextType,
         limit: usize,
     ) -> Result<Arc<Mutex<MemoryContext>>> {
         self.arena_allocator.create_context(name, limit)
@@ -2522,7 +2522,7 @@ impl BuddyAllocator {
             let num_orders = (size / min_block_size).trailing_zeros() as usize + 1;
             let mut free_lists = Vec::with_capacity(num_orders);
 
-            for i in 0..num_orders {
+            for _ in 0..num_orders {
                 free_lists.push(Mutex::new(Vec::new()));
             }
 

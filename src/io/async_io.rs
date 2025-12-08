@@ -4,7 +4,6 @@
 //! across Windows IOCP and Unix io_uring.
 
 use crate::error::{DbError, Result};
-use crate::io::{PAGE_SIZE, SECTOR_SIZE};
 use std::sync::atomic::{AtomicU8, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use parking_lot::{Mutex, RwLock};
@@ -661,6 +660,7 @@ impl Drop for AsyncIoEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::io::PAGE_SIZE;
 
     #[test]
     fn test_io_request_status() {

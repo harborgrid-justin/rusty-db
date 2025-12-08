@@ -837,7 +837,7 @@ pub struct WorkerStats {
 impl WorkerPool {
     pub fn new(config: WorkerConfig) -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
-        let task_queue = Arc::new(crossbeam::queue::SegQueue::new());
+        let task_queue = Arc::new(crossbeam::queue::SegQueue::<Box<dyn Fn() + Send>>::new());
         let stats = WorkerStats {
             tasks_executed: AtomicU64::new(0),
             tasks_queued: AtomicU64::new(0),
@@ -1076,7 +1076,7 @@ mod tests {
         // Unpin the page
         manager.unpin_page(frame_id.unwrap(), false);
 
-        let (stats, hit_rate) = manager.get_stats();
+        let (_stats, _hit_rate) = manager.get_stats();
         assert_eq!(stats.misses.load(Ordering::Relaxed), 1);
     }
 

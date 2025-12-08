@@ -1167,7 +1167,7 @@ mod tests {
         let v2 = graph.add_vertex(vec!["Person".to_string()], Properties::new()).unwrap();
 
         // Add edge
-        let e1 = graph.add_edge(
+        let _e1 = graph.add_edge(
             v1,
             v2,
             "KNOWS".to_string(),

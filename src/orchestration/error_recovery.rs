@@ -76,6 +76,19 @@ pub enum ErrorCategory {
     Unknown,
 }
 
+impl fmt::Display for ErrorCategory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ErrorCategory::Transient => write!(f, "TRANSIENT"),
+            ErrorCategory::Resource => write!(f, "RESOURCE"),
+            ErrorCategory::Logic => write!(f, "LOGIC"),
+            ErrorCategory::External => write!(f, "EXTERNAL"),
+            ErrorCategory::Configuration => write!(f, "CONFIGURATION"),
+            ErrorCategory::Unknown => write!(f, "UNKNOWN"),
+        }
+    }
+}
+
 /// Classified error with metadata
 #[derive(Debug, Clone)]
 pub struct ClassifiedError {

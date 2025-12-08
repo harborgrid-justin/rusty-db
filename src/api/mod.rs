@@ -4,7 +4,7 @@
 //!
 //! ## Modules
 //!
-//! - **rest_api**: REST API endpoints for database operations
+//! - **rest**: REST API endpoints for database operations
 //! - **graphql_api**: GraphQL API layer with real-time subscriptions
 //! - **monitoring**: Monitoring, metrics, and health check APIs
 //! - **gateway**: API gateway for request routing and management
@@ -286,5 +286,3 @@ pub use enterprise_integration::{
     SystemHealthStatus,
     ResourceUsageSnapshot,
 };
-
-

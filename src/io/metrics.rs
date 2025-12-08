@@ -2,7 +2,7 @@
 //!
 //! Comprehensive metrics collection for I/O operations.
 
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::{Duration, Instant};

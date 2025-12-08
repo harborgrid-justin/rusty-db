@@ -6,8 +6,9 @@
 //!
 //! ## Modules
 //!
+//! - `session`: Refactored session management with strong types and focused modules
 //! - `session_manager`: Complete session management system with authentication,
-//!   resource control, pooling, and lifecycle events
+//!   resource control, pooling, and lifecycle events (legacy - being migrated)
 //! - `connection_pool`: Enterprise connection pooling engine with elastic sizing,
 //!   partitioning, wait queue management, and comprehensive monitoring
 //!
@@ -54,10 +55,23 @@
 //! }
 //! ```
 
-pub mod session_manager;
+pub mod session;           // New refactored session module
+pub mod session_manager;   // Legacy - being migrated
 pub mod connection_pool;
 
-// Re-export session management types
+// Re-export new session types (preferred)
+pub use session::{
+    SessionState as SessionStateV2,
+    SessionId,
+    Username,
+    SchemaName,
+    Authenticator,
+    DatabaseAuthenticator,
+    TokenAuthenticator,
+    PrivilegeSet,
+};
+
+// Re-export legacy session management types
 pub use session_manager::{
     SessionManager,
     SessionConfig,

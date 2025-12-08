@@ -494,10 +494,13 @@ impl PlSqlCompiler {
             obj.status = CompilationStatus::NeedsRecompilation;
             to_recompile.push(object_name.to_string());
 
+            // Clone dependents to avoid borrowing conflict
+            let dependents = obj.dependents.clone();
+
             // Mark all dependents
-            for dependent in &obj.dependents {
+            for dependent in dependents {
                 to_recompile.push(dependent.clone());
-                if let Some(dep_obj) = objects.get_mut(dependent) {
+                if let Some(dep_obj) = objects.get_mut(&dependent) {
                     dep_obj.status = CompilationStatus::NeedsRecompilation;
                 }
             }

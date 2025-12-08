@@ -1052,7 +1052,7 @@ impl<'a> QueryExecutor<'a> {
     fn apply_order_by(
         &self,
         _order_by: &OrderByClause,
-        mut bindings: Vec<VariableBindings>,
+        bindings: Vec<VariableBindings>,
     ) -> Result<Vec<VariableBindings>> {
         // Simplified ordering - would need more complex comparison logic
         // For now, just return as-is

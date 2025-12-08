@@ -4,9 +4,9 @@
 //! All algorithms are designed to work efficiently with streaming data and large datasets.
 
 use crate::error::Result;
-use super::{Dataset, Vector, Matrix, Hyperparameters, Metrics, MLError};
-use super::simd_ops::{simd_dot_product, simd_matrix_vector_multiply};
-use super::optimizers::{Optimizer, AdamOptimizer, SGDMomentum, LRScheduler, LRSchedule};
+use super::{Dataset, Vector, Matrix, Hyperparameters, MLError};
+use super::simd_ops::{simd_dot_product};
+use super::optimizers::{Optimizer, AdamOptimizer, LRScheduler, LRSchedule};
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 

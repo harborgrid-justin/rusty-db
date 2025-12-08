@@ -918,7 +918,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Get resource information
-    pub fn get_resource_info(&self, resource_id: &ResourceId) -> std::result::Result<ResourceEntry> {
+    pub fn get_resource_info(&self, resource_id: &ResourceId) -> std::result::Result<ResourceEntry, DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let buckets = self.buckets.read();
 

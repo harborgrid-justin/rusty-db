@@ -439,7 +439,7 @@ impl<'a> PathEnumerator<'a> {
 
     fn path_cost(&self, path: &[VertexId]) -> Result<f64> {
         let mut cost = 0.0;
-        for i in 0..(path.len() - 1) {
+        for _ in 0..(path.len() - 1) {
             cost += 1.0; // Simplified: assume unit weights
         }
         Ok(cost)
@@ -804,7 +804,7 @@ mod tests {
         let mut temporal = TemporalGraph::new();
 
         let mut graph1 = PropertyGraph::new();
-        let v1 = graph1.add_vertex(vec![], Properties::new()).unwrap();
+        let _v1 = graph1.add_vertex(vec![], Properties::new()).unwrap();
 
         temporal.add_snapshot(100, graph1);
 

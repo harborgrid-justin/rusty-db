@@ -8,7 +8,6 @@ use super::{
     Dataset, Hyperparameters, Metrics, MLError,
     algorithms::{Algorithm, ModelType, LinearRegression, LogisticRegression,
                  DecisionTree, RandomForest, KMeansClustering, NaiveBayes},
-    preprocessing::Preprocessor,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};

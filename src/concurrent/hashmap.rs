@@ -11,7 +11,7 @@ use super::Backoff;
 use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hash, Hasher};
 use std::sync::atomic::{AtomicU64, AtomicU8, AtomicUsize, Ordering};
-use std::sync::{Arc, RwLock};
+
 
 /// Entry in the hash map
 struct Entry<K, V> {
@@ -124,8 +124,7 @@ where
 
 impl<K, V, S> ConcurrentHashMap<K, V, S>
 where
-    K: Eq + Hash + 'static,
-    V: 'static,
+    K: Eq + Hash,
     S: BuildHasher,
 {
     /// Create with custom hasher
@@ -153,7 +152,7 @@ where
     /// Now uses xxHash3-AVX2 for 10x faster hashing when possible
     fn hash(&self, key: &K) -> u64 {
         // Try to use fast path for common types
-        use std::any::TypeId;
+
 
         // For types that can be converted to bytes, use SIMD hash
         // Otherwise fall back to standard hasher

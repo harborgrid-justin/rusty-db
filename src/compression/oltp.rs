@@ -255,7 +255,7 @@ impl OLTPCompressor {
     }
 
     /// Insert a new row into a compressed block
-    pub fn insert_row(&self, block: &mut OLTPBlock, row_id: u64, row: Vec<u8>)
+    pub fn insert_row(&self, block: &mut OLTPBlock, _row_id: u64, row: Vec<u8>)
         -> CompressionResult<()> {
 
         // Check if there's enough free space

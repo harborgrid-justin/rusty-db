@@ -9,7 +9,7 @@
 
 use super::epoch::{Atomic, Epoch, EpochGuard, Owned, Shared};
 use super::Backoff;
-use std::marker::PhantomData;
+
 use std::sync::atomic::{AtomicPtr, AtomicU64, AtomicUsize, Ordering};
 
 /// Cache-line padded node to avoid false sharing
@@ -404,7 +404,7 @@ impl<T: 'static> Default for LockFreeQueue<T> {
     }
 }
 
-impl<T: 'static> Drop for LockFreeQueue<T> {
+impl<T> Drop for LockFreeQueue<T> {
     fn drop(&mut self) {
         // Drain the queue to properly drop all items
         while self.dequeue().is_some() {}

@@ -408,7 +408,7 @@ impl SwimMembership {
     }
 
     /// Handle timeout for ping
-    pub fn handle_ping_timeout(&self, sequence: u64) -> std::result::Result<Vec<(MemberId, SwimMessage)>> {
+    pub fn handle_ping_timeout(&self, sequence: u64) -> std::result::Result<Vec<(MemberId, SwimMessage)>, DbError> {
         let pending = {
             let pings = self.pending_pings.read().unwrap();
             pings.get(&sequence).cloned()
@@ -445,7 +445,7 @@ impl SwimMembership {
     }
 
     /// Check for suspected members that should be marked as failed
-    pub fn check_suspected_members(&self) -> std::result::Result<Vec<MemberId>> {
+    pub fn check_suspected_members(&self) -> std::result::Result<Vec<MemberId>, DbError> {
         let mut failed = Vec::new();
         let mut members = self.members.write().unwrap();
 
@@ -573,7 +573,7 @@ impl SwimMembership {
     }
 
     /// Handle join request
-    pub fn handle_join(&self, member: Member) -> std::result::Result<Vec<Member>> {
+    pub fn handle_join(&self, member: Member) -> std::result::Result<Vec<Member>, DbError> {
         let mut members = self.members.write().unwrap();
         members.insert(member.id.clone(), member);
 

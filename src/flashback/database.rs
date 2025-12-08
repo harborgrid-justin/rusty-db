@@ -25,9 +25,8 @@
 
 use std::collections::{HashMap, BTreeMap};
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, Duration};
+use std::time::SystemTime;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
 
 use crate::common::TableId;
 use crate::error::{DbError, Result};
@@ -516,7 +515,7 @@ impl RecoveryOrchestrator {
         }
     }
 
-    fn execute_database_flashback(&mut self, plan: &FlashbackPlan) -> Result<RecoveryResult> {
+    fn execute_database_flashback(&mut self, _plan: &FlashbackPlan) -> Result<RecoveryResult> {
         if self.recovery_in_progress {
             return Err(DbError::Validation(
                 "Recovery already in progress".to_string()
@@ -640,7 +639,6 @@ impl DatabaseFlashbackStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::super::time_travel::TimeTravelConfig;
 
     #[test]
     fn test_incarnation_tree() {

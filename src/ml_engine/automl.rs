@@ -5,7 +5,7 @@
 
 use crate::error::{DbError, Result};
 use super::{Algorithm, Dataset, Hyperparameters, HyperparamValue, MLTask, EvaluationMetrics};
-use super::model_store::{Model, ModelParameters, ModelMetadata};
+use super::model_store::{Model};
 use super::training::TrainingEngine;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -510,7 +510,7 @@ impl AutoMLEngine {
         };
 
         // Build leaderboard
-        let mut leaderboard = self.build_leaderboard(&trials, config);
+        let leaderboard = self.build_leaderboard(&trials, config);
 
         Ok(AutoMLResults {
             best_trial: best_trial.unwrap_or_else(|| trials[0].clone()),
@@ -647,7 +647,7 @@ impl AutoMLEngine {
     }
 
     /// Get feature importance from best model
-    pub fn get_feature_importance(&self, model: &Model) -> Vec<(String, f64)> {
+    pub fn get_feature_importance(&self, _model: &Model) -> Vec<(String, f64)> {
         // Simplified feature importance
         vec![
             ("feature_0".to_string(), 0.3),

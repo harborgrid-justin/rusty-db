@@ -5,9 +5,9 @@
 //! Optimized with lock-free ring buffers for maximum throughput.
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -444,8 +444,8 @@ impl ApplyEngine {
         }
 
         // Apply changes in order
-        for change in &group.changes {
-            match self.apply_change(change).await {
+        for change in group.changes.clone() {
+            match self.apply_change(&change).await {
                 Ok(_) => {
                     // Mark as applied
                     let mut applied = self.applied_changes.write();
@@ -453,7 +453,7 @@ impl ApplyEngine {
                 }
                 Err(e) => {
                     // Handle error
-                    self.handle_apply_error(change, e).await?;
+                    self.handle_apply_error(&change, e).await?;
 
                     // Mark group as failed
                     group.state = GroupState::Failed(format!("Change {} failed", change.id));

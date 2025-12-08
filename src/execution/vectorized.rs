@@ -12,7 +12,6 @@
 /// - Adaptive batch sizing based on memory pressure
 
 use crate::error::DbError;
-use crate::execution::QueryResult;
 use crate::catalog::DataType;
 use std::sync::Arc;
 use parking_lot::RwLock;
@@ -570,7 +569,6 @@ impl MaterializationPoint {
 
 /// SIMD-optimized operations (placeholder for actual SIMD)
 pub mod simd_ops {
-    use super::*;
 
     /// SIMD-optimized filter for integer columns
     pub fn filter_integers(column: &[i32], threshold: i32) -> Vec<usize> {

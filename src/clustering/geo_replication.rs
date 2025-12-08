@@ -402,7 +402,7 @@ impl GeoReplicationManager {
         key: Vec<u8>,
         value: Vec<u8>,
         target_dcs: Option<Vec<DatacenterId>>,
-    ) -> std::result::Result<u64> {
+    ) -> std::result::Result<u64, DbError> {
         // Increment vector clock
         let mut vc = self.vector_clock.write().unwrap();
         vc.increment(&self.config.local_dc);
@@ -450,7 +450,7 @@ impl GeoReplicationManager {
     }
 
     /// Replicate a delete operation
-    pub fn replicate_delete(&self, key: Vec<u8>) -> std::result::Result<u64> {
+    pub fn replicate_delete(&self, key: Vec<u8>) -> std::result::Result<u64, DbError> {
         let mut vc = self.vector_clock.write().unwrap();
         vc.increment(&self.config.local_dc);
         drop(vc);
@@ -510,7 +510,7 @@ impl GeoReplicationManager {
         &self,
         v1: &ReplicatedValue,
         v2: &ReplicatedValue,
-    ) -> std::result::Result<ConflictResolution> {
+    ) -> std::result::Result<ConflictResolution, DbError> {
         match self.config.conflict_resolution {
             ConflictResolution::LastWriteWins => {
                 // Compare timestamps
@@ -566,7 +566,7 @@ impl GeoReplicationManager {
     }
 
     /// Select best datacenter for read based on consistency level
-    pub fn select_read_datacenter(&self, consistency: ConsistencyLevel) -> std::result::Result<DatacenterId> {
+    pub fn select_read_datacenter(&self, consistency: ConsistencyLevel) -> std::result::Result<DatacenterId, DbError> {
         let datacenters = self.datacenters.read().unwrap();
 
         match consistency {

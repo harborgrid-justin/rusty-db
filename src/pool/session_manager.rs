@@ -2309,7 +2309,7 @@ impl SessionManager {
 
         // Create session state
         let schema = schema.unwrap_or_else(|| username.to_string());
-        let mut session = SessionState::new(session_id, username.to_string(), schema);
+        let session = SessionState::new(session_id, username.to_string(), schema);
 
         // Set default limits
         self.resource_controller.set_limits(session_id, ResourceLimits::default())?;

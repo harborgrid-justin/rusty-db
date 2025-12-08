@@ -802,17 +802,17 @@ impl AutoTuner {
     }
 
     async fn auto_rollback(&self) -> Result<()> {
-        let history = self.tuning_history.read();
-
-        // Find recent successful tunings
-        let recent_actions: Vec<_> = history
-            .iter()
-            .rev()
-            .take(5)
-            .filter(|r| !r.rollback_performed && r.actual_improvement > 0.0)
-            .collect();
-
-        drop(history);
+        // Find recent successful tunings (clone the data we need)
+        let recent_actions: Vec<_> = {
+            let history = self.tuning_history.read();
+            history
+                .iter()
+                .rev()
+                .take(5)
+                .filter(|r| !r.rollback_performed && r.actual_improvement > 0.0)
+                .cloned()
+                .collect()
+        };
 
         // Rollback in reverse order
         for result in recent_actions.iter().rev() {

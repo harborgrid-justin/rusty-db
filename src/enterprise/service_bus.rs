@@ -332,7 +332,7 @@ impl ServiceBus {
     }
 
     /// Publish a message to a topic
-    pub async fn publish(&self, mut message: Message) -> Result<()> {
+    pub async fn publish(&self, message: Message) -> Result<()> {
         // Validate message size
         if message.payload.len() > self.config.max_message_size {
             return Err(DbError::InvalidInput(format!(
