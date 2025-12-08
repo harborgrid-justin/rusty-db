@@ -120,6 +120,164 @@ impl HCCEngine {
         }
     }
 
+    /// Compress column using type-specific encoding (NEW!)
+    pub fn compress_column_typed(&self, column: &[u8], col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
+        use super::algorithms::*;
+
+        match col_type {
+            ColumnDataType::Integer | ColumnDataType::BigInt => {
+                // Convert bytes to u32/u64 and use cascaded compression
+                let cascaded = CascadedCompressor::new();
+
+                if *col_type == ColumnDataType::Integer && column.len() >= 4 {
+                    let mut values = Vec::with_capacity(column.len() / 4);
+                    for chunk in column.chunks_exact(4) {
+                        values.push(u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+                    }
+
+                    let mut result = vec![1u8]; // Marker: typed compression
+                    result.extend_from_slice(&cascaded.compress_u32(&values)?);
+                    Ok(result)
+                } else {
+                    // Fall back to LZ4 for odd sizes
+                    let mut output = vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
+                    let size = self.lz4_compressor.compress(column, &mut output)?;
+                    output.truncate(size);
+                    let mut result = vec![0u8]; // Marker: generic compression
+                    result.extend_from_slice(&output);
+                    Ok(result)
+                }
+            }
+
+            ColumnDataType::Date | ColumnDataType::Timestamp => {
+                // Use delta encoding for temporal data
+                let delta_encoder = DeltaEncoder::new();
+
+                if column.len() >= 4 {
+                    let mut values = Vec::with_capacity(column.len() / 4);
+                    for chunk in column.chunks_exact(4) {
+                        values.push(u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+                    }
+
+                    let mut result = vec![2u8]; // Marker: delta encoding
+                    result.extend_from_slice(&delta_encoder.encode(&values)?);
+                    Ok(result)
+                } else {
+                    let mut output = vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
+                    let size = self.lz4_compressor.compress(column, &mut output)?;
+                    output.truncate(size);
+                    let mut result = vec![0u8];
+                    result.extend_from_slice(&output);
+                    Ok(result)
+                }
+            }
+
+            ColumnDataType::Boolean => {
+                // Bit packing for booleans (8:1 compression minimum)
+                let rle_encoder = RLEEncoder::new();
+                let mut result = vec![3u8]; // Marker: RLE
+                result.extend_from_slice(&rle_encoder.encode(column)?);
+                Ok(result)
+            }
+
+            ColumnDataType::Varchar | ColumnDataType::Binary => {
+                // Use dictionary or LZ4 based on cardinality
+                let unique_count = column.chunks(32).collect::<std::collections::HashSet<_>>().len();
+                let total_chunks = (column.len() + 31) / 32;
+
+                if unique_count < total_chunks / 3 {
+                    // Low cardinality - use dictionary encoding
+                    // For simplicity, use Zstd which has dictionary support
+                    let mut output = vec![0u8; self.zstd_compressor.max_compressed_size(column.len())];
+                    let size = self.zstd_compressor.compress(column, &mut output)?;
+                    output.truncate(size);
+                    let mut result = vec![4u8]; // Marker: dictionary/zstd
+                    result.extend_from_slice(&output);
+                    Ok(result)
+                } else {
+                    // High cardinality - use LZ4
+                    let mut output = vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
+                    let size = self.lz4_compressor.compress(column, &mut output)?;
+                    output.truncate(size);
+                    let mut result = vec![0u8];
+                    result.extend_from_slice(&output);
+                    Ok(result)
+                }
+            }
+
+            _ => {
+                // Default: use LZ4
+                let mut output = vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
+                let size = self.lz4_compressor.compress(column, &mut output)?;
+                output.truncate(size);
+                let mut result = vec![0u8];
+                result.extend_from_slice(&output);
+                Ok(result)
+            }
+        }
+    }
+
+    /// Decompress column using type-specific encoding (NEW!)
+    pub fn decompress_column_typed(&self, compressed: &[u8], col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
+        use super::algorithms::*;
+
+        if compressed.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let marker = compressed[0];
+        let data = &compressed[1..];
+
+        match marker {
+            0 => {
+                // Generic LZ4
+                let mut output = vec![0u8; data.len() * 4];
+                let size = self.lz4_compressor.decompress(data, &mut output)?;
+                output.truncate(size);
+                Ok(output)
+            }
+            1 => {
+                // Cascaded integer compression
+                let cascaded = CascadedCompressor::new();
+                let values = cascaded.decompress_u32(data)?;
+
+                let mut bytes = Vec::with_capacity(values.len() * 4);
+                for value in values {
+                    bytes.extend_from_slice(&value.to_le_bytes());
+                }
+                Ok(bytes)
+            }
+            2 => {
+                // Delta encoding
+                let delta_encoder = DeltaEncoder::new();
+                let values = delta_encoder.decode(data)?;
+
+                let mut bytes = Vec::with_capacity(values.len() * 4);
+                for value in values {
+                    bytes.extend_from_slice(&value.to_le_bytes());
+                }
+                Ok(bytes)
+            }
+            3 => {
+                // RLE
+                let rle_encoder = RLEEncoder::new();
+                rle_encoder.decode(data)
+            }
+            4 => {
+                // Dictionary/Zstd
+                let mut output = vec![0u8; data.len() * 4];
+                let size = self.zstd_compressor.decompress(data, &mut output)?;
+                output.truncate(size);
+                Ok(output)
+            }
+            _ => {
+                Err(CompressionError::UnsupportedAlgorithm(
+                    format!("Unknown compression marker: {}", marker)
+                ))
+            }
+        }
+    }
+
     pub fn with_strategy(strategy: HCCStrategy) -> Self {
         Self::new(strategy)
     }
@@ -757,5 +915,67 @@ mod tests {
 
         let strategy = advisor.recommend_strategy(&rows, &column_types);
         assert!(matches!(strategy, HCCStrategy::QueryLow | HCCStrategy::QueryHigh));
+    }
+
+    #[test]
+    fn test_hcc_typed_compression_integers() {
+        let engine = HCCEngine::new(HCCStrategy::QueryHigh);
+
+        // Create column of sorted integers (perfect for cascaded compression)
+        let values: Vec<u32> = (1000..1100).collect();
+        let mut column = Vec::new();
+        for &v in &values {
+            column.extend_from_slice(&v.to_le_bytes());
+        }
+
+        let compressed = engine.compress_column_typed(&column, &ColumnDataType::Integer).unwrap();
+        let decompressed = engine.decompress_column_typed(&compressed, &ColumnDataType::Integer).unwrap();
+
+        assert_eq!(column, decompressed);
+
+        // Check compression ratio (should be excellent for sorted integers)
+        let ratio = column.len() as f64 / compressed.len() as f64;
+        println!("Integer column compression ratio: {:.2}:1", ratio);
+        assert!(ratio > 3.0, "Should achieve >3:1 on sorted integers");
+    }
+
+    #[test]
+    fn test_hcc_typed_compression_timestamps() {
+        let engine = HCCEngine::new(HCCStrategy::QueryHigh);
+
+        // Create column of timestamps (perfect for delta encoding)
+        let timestamps: Vec<u32> = (0..1000).map(|i| 1609459200 + i).collect();
+        let mut column = Vec::new();
+        for &ts in &timestamps {
+            column.extend_from_slice(&ts.to_le_bytes());
+        }
+
+        let compressed = engine.compress_column_typed(&column, &ColumnDataType::Timestamp).unwrap();
+        let decompressed = engine.decompress_column_typed(&compressed, &ColumnDataType::Timestamp).unwrap();
+
+        assert_eq!(column, decompressed);
+
+        // Check compression ratio (should be excellent for timestamps)
+        let ratio = column.len() as f64 / compressed.len() as f64;
+        println!("Timestamp column compression ratio: {:.2}:1", ratio);
+        assert!(ratio > 5.0, "Should achieve >5:1 on timestamps");
+    }
+
+    #[test]
+    fn test_hcc_typed_compression_booleans() {
+        let engine = HCCEngine::new(HCCStrategy::QueryHigh);
+
+        // Create column of booleans (perfect for RLE)
+        let booleans = vec![1u8; 1000];
+
+        let compressed = engine.compress_column_typed(&booleans, &ColumnDataType::Boolean).unwrap();
+        let decompressed = engine.decompress_column_typed(&compressed, &ColumnDataType::Boolean).unwrap();
+
+        assert_eq!(booleans, decompressed);
+
+        // Check compression ratio (should be excellent for repetitive booleans)
+        let ratio = booleans.len() as f64 / compressed.len() as f64;
+        println!("Boolean column compression ratio: {:.2}:1", ratio);
+        assert!(ratio > 8.0, "Should achieve >8:1 on repetitive booleans");
     }
 }

@@ -4,6 +4,7 @@ use sqlparser::parser::Parser;
 use crate::Result;
 use crate::error::DbError;
 use crate::catalog::{Column, DataType};
+use crate::security::injection_prevention::InjectionPreventionGuard;
 
 /// Parsed SQL statement
 #[derive(Debug, Clone)]
@@ -95,28 +96,40 @@ pub enum AlterAction {
     DropConstraint(String),
 }
 
-/// SQL parser wrapper
+/// SQL parser wrapper with integrated injection prevention
 pub struct SqlParser {
     dialect: GenericDialect,
+    injection_guard: InjectionPreventionGuard,
 }
 
 impl SqlParser {
     pub fn new() -> Self {
         Self {
             dialect: GenericDialect {},
+            injection_guard: InjectionPreventionGuard::new(),
         }
     }
     
     pub fn parse(&self, sql: &str) -> Result<Vec<SqlStatement>> {
-        let ast = Parser::parse_sql(&self.dialect, sql)
+        // LAYER 1-6: Multi-layer injection prevention
+        // This validates and sanitizes the input through:
+        // - Input sanitization (Unicode normalization, homograph detection)
+        // - Dangerous pattern detection (SQL keywords, comments, tautologies)
+        // - Syntax validation (quotes, parentheses, identifiers)
+        // - Escape validation
+        // - Whitelist validation
+        let safe_sql = self.injection_guard.validate_and_sanitize(sql)?;
+
+        // Parse the now-safe SQL
+        let ast = Parser::parse_sql(&self.dialect, &safe_sql)
             .map_err(|e| DbError::SqlParse(e.to_string()))?;
-        
+
         let mut statements = Vec::new();
-        
+
         for stmt in ast {
             statements.push(self.convert_statement(stmt)?);
         }
-        
+
         Ok(statements)
     }
     

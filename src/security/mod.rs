@@ -35,6 +35,14 @@
 //! Mandatory access control, multi-level security, compartment-based security, and
 //! label-based filtering. See [`labels`] module for details.
 //!
+//! ### 8. Buffer Overflow Protection
+//! Comprehensive bounds checking, stack canaries, integer overflow guards, and safe
+//! memory operations. See [`bounds_protection`] module for details.
+//!
+//! ### 9. Secure Garbage Collection
+//! Memory sanitization, secure deallocation, cryptographic erasure, and heap spray
+//! prevention. See [`secure_gc`] module for details.
+//!
 //! ## Usage Example
 //!
 //! ```rust,no_run
@@ -75,21 +83,74 @@ use crate::error::DbError;
 pub mod rbac;
 pub mod fgac;
 pub mod encryption;
+pub mod encryption_engine;
 pub mod audit;
 pub mod authentication;
 pub mod privileges;
 pub mod labels;
+pub mod bounds_protection;
+pub mod secure_gc;
+pub mod injection_prevention;
+pub mod network_hardening;
+pub mod insider_threat;
+pub mod auto_recovery;
+pub mod memory_hardening;
+pub mod circuit_breaker;
 
 // Re-export commonly used types
 pub use rbac::{RbacManager, Role, RoleAssignment, SeparationOfDutiesConstraint};
 pub use fgac::{FgacManager, RowLevelPolicy, ColumnPolicy, SecurityContext as FgacContext};
 pub use encryption::{EncryptionManager, EncryptionKey, TdeConfig, ColumnEncryption};
+pub use encryption_engine::{
+    EncryptionEngine, KeyManager, SecureKey, SecureKeyMaterial, ColumnEncryptor,
+    TransparentEncryption, KeyRotator, EncryptedIndex, SecureKeyStore, CryptoRandom,
+    Algorithm, Ciphertext, KeyDerivation,
+};
 pub use audit::{AuditManager, AuditRecord, AuditAction, AuditPolicy};
 pub use authentication::{
     AuthenticationManager, UserAccount, AuthSession, PasswordPolicy, LoginCredentials, LoginResult
 };
 pub use privileges::{PrivilegeManager, SystemPrivilege, ObjectPrivilege, PrivilegeGrant};
 pub use labels::{LabelManager, SecurityLabel, ClassificationLevel, UserClearance};
+pub use bounds_protection::{
+    BoundsCheckedBuffer, SafeSlice, SafeSliceMut, SafeIndex, OverflowGuard,
+    StackCanary, SafeString, ArrayBoundsChecker,
+};
+pub use secure_gc::{
+    SecureDrop, SensitiveData, MemorySanitizer, CryptoErase, SecurePool,
+    ReferenceTracker, DelayedSanitizer, HeapGuard,
+};
+pub use injection_prevention::{
+    InjectionPreventionGuard, InputSanitizer, DangerousPatternDetector,
+    SQLValidator, ParameterizedQueryBuilder, UnicodeNormalizer,
+    EscapeValidator, QueryWhitelister, ThreatDetection, ThreatType,
+    Severity, PreparedStatement, Parameter, ParameterValue, ParameterType,
+};
+pub use network_hardening::{
+    NetworkHardeningManager, AdaptiveRateLimiter, ConnectionGuard, DDoSMitigator,
+    ProtocolValidator, TLSEnforcer, NetworkAnomalyDetector, IPReputationChecker,
+    DDoSAttackType, ViolationType, AnomalyType, NetworkHardeningStats,
+};
+pub use insider_threat::{
+    InsiderThreatManager, ThreatScorer, BehaviorAnalyzer, AnomalyDetector,
+    DataExfiltrationGuard, PrivilegeEscalationDetector, QuerySanitizer, ForensicLogger,
+    QueryRiskAssessment, ThreatAction, InsiderThreatConfig, ThreatStatistics,
+    UserBehaviorBaseline, AnomalyScore, ExfiltrationAttempt, PrivilegeEscalationAttempt,
+    ThreatLevel as InsiderThreatLevel,
+};
+pub use auto_recovery::{
+    AutoRecoveryManager, AutoRecoveryConfig, CrashDetector, TransactionRollbackManager,
+    CorruptionDetector, DataRepairer, StateSnapshotManager, HealthMonitor, SelfHealer,
+};
+pub use memory_hardening::{
+    SecureBuffer, GuardedMemory, SecureZeroingAllocator, MemoryCanary,
+    IsolatedHeap, MemoryHardeningConfig, CanaryCheckFrequency,
+    AllocatorStatsSnapshot, IsolatedHeapStatsSnapshot, PAGE_SIZE, CANARY_SIZE,
+    SecurityMetrics as MemorySecurityMetrics,
+};
+pub use circuit_breaker::{
+    CircuitBreaker, CircuitBreakerConfig, CircuitState, CircuitBreakerMetrics,
+};
 
 /// Integrated security manager combining all security subsystems
 pub struct IntegratedSecurityManager {
@@ -107,6 +168,8 @@ pub struct IntegratedSecurityManager {
     pub privileges: Arc<PrivilegeManager>,
     /// Label manager
     pub labels: Arc<LabelManager>,
+    /// Insider threat manager
+    pub insider_threat: Arc<InsiderThreatManager>,
 }
 
 impl IntegratedSecurityManager {
@@ -120,6 +183,7 @@ impl IntegratedSecurityManager {
             authentication: Arc::new(AuthenticationManager::new()),
             privileges: Arc::new(PrivilegeManager::new()),
             labels: Arc::new(LabelManager::new()),
+            insider_threat: Arc::new(InsiderThreatManager::new()),
         }
     }
 
@@ -327,7 +391,30 @@ impl IntegratedSecurityManager {
             fgac_stats: self.fgac.get_statistics(),
             active_sessions: self.authentication.sessions.read().len(),
             total_users: self.authentication.users.read().len(),
+            threat_stats: self.insider_threat.get_statistics(),
         }
+    }
+
+    /// Assess query for insider threats
+    pub fn assess_query_threat(
+        &self,
+        user_id: &str,
+        session_id: Option<String>,
+        query: &str,
+        tables: Vec<String>,
+        estimated_rows: u64,
+        client_ip: Option<String>,
+        location: Option<String>,
+    ) -> Result<QueryRiskAssessment> {
+        self.insider_threat.assess_query(
+            &user_id.to_string(),
+            session_id,
+            query,
+            tables,
+            estimated_rows,
+            client_ip,
+            location,
+        )
     }
 }
 
@@ -347,6 +434,7 @@ pub struct SecurityStatistics {
     pub fgac_stats: fgac::FgacStatistics,
     pub active_sessions: usize,
     pub total_users: usize,
+    pub threat_stats: insider_threat::ThreatStatistics,
 }
 
 #[cfg(test)]
@@ -491,3 +579,16 @@ mod tests {
         assert!(security.rbac.create_role(role).is_ok());
     }
 }
+pub mod security_core;
+pub use security_core::{
+    UnifiedSecurityCore, SecurityPolicyEngine, DefenseOrchestrator,
+    SecurityEventCorrelator, ThreatIntelligence, ComplianceValidator,
+    SecurityMetrics as CoreSecurityMetrics, PenetrationTestHarness, SecurityDashboard,
+    SecurityPolicy, PolicyType, PolicyEffect, PolicyDecision,
+    DefenseLayer, ThreatLevel as CoreThreatLevel, DefenseCoverageReport,
+    SecurityIncident, IncidentStatus, EventSeverity,
+    IndicatorOfCompromise, IocType, ThreatActor,
+    ComplianceFramework, ComplianceControl, ComplianceStatus, ComplianceSummary,
+    SecurityPostureScore, PenTestReport, PenTestSummary,
+    DashboardView, ExecutiveSummary, SecurityStatus,
+};

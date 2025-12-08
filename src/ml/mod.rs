@@ -61,6 +61,9 @@ pub mod algorithms;
 pub mod preprocessing;
 pub mod inference;
 pub mod sql_integration;
+pub mod optimizers;
+pub mod simd_ops;
+pub mod quantization;
 
 // Re-export key types for convenience
 pub use engine::{MLEngine, ModelRegistry, ModelMetadata, TrainingJob, ModelVersion};
@@ -78,6 +81,16 @@ pub use inference::{
 };
 pub use sql_integration::{
     MLSqlParser, CreateModelStatement, PredictFunction, ModelTable,
+};
+pub use optimizers::{
+    Optimizer, SGDMomentum, AdamOptimizer, LRScheduler, LRSchedule, OptimizerType,
+};
+pub use simd_ops::{
+    simd_dot_product, simd_matrix_vector_multiply, simd_euclidean_distance,
+};
+pub use quantization::{
+    QuantizedWeights, QuantizationConfig, QuantizationMethod, QuantizedLinearModel,
+    quantize_weights, dequantize_weights,
 };
 
 use crate::error::{DbError, Result};

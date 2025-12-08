@@ -274,6 +274,13 @@ pub mod eviction;
 pub mod manager;
 pub mod page_cache;
 
+// New advanced buffer pool modules
+pub mod arc;
+pub mod lirs;
+pub mod prefetch;
+pub mod hugepages;
+pub mod lockfree_latch;
+
 // Re-export main types
 pub use eviction::{
     create_eviction_policy, ClockEvictionPolicy, EvictionPolicy, EvictionPolicyType,
@@ -285,6 +292,26 @@ pub use manager::{BufferPoolBuilder, BufferPoolConfig, BufferPoolManager, Buffer
 pub use page_cache::{
     BufferFrame, FrameBatch, FrameGuard, FrameId, PageBuffer, PerCoreFramePool, FrameStats,
     INVALID_FRAME_ID, INVALID_PAGE_ID, PAGE_SIZE,
+};
+
+// Re-export advanced eviction policies
+pub use arc::ArcEvictionPolicy;
+pub use lirs::LirsEvictionPolicy;
+
+// Re-export prefetching
+pub use prefetch::{
+    AccessPattern, PatternDetector, PrefetchConfig, PrefetchEngine, PrefetchRequest, PrefetchStats,
+};
+
+// Re-export huge pages
+pub use hugepages::{
+    HugePageAllocator, HugePageAllocation, HugePageConfig, HugePageSize, HugePageStats,
+    HugePageSystemInfo, query_huge_page_info,
+};
+
+// Re-export lock-free latching
+pub use lockfree_latch::{
+    HybridLatch, LatchStats, OptimisticLatch, ReadGuard, WriteGuard,
 };
 
 // ============================================================================

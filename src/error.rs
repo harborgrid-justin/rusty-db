@@ -118,6 +118,48 @@ pub enum DbError {
 
     #[error("Concurrent operation error: {0}")]
     Concurrent(String),
+
+    #[error("Circuit breaker open: {0}")]
+    CircuitBreakerOpen(String),
+
+    #[error("Bulkhead full: {0}")]
+    BulkheadFull(String),
+
+    #[error("Security error: {0}")]
+    Security(String),
+
+    #[error("Injection attempt detected: {0}")]
+    InjectionAttempt(String),
+
+    #[error("Invalid request")]
+    InvalidRequest,
+
+    #[error("Invalid state: {0}")]
+    InvalidState(String),
+
+    #[error("Quota exceeded: {0}")]
+    QuotaExceeded(String),
+
+    #[error("Page not found: {0}")]
+    PageNotFound(String),
+
+    #[error("Other error: {0}")]
+    Other(String),
+
+    #[error("Authentication error: {0}")]
+    Authentication(String),
+
+    #[error("Authorization error: {0}")]
+    Authorization(String),
+
+    #[error("Compression error: {0}")]
+    Compression(String),
+
+    #[error("Recovery error: {0}")]
+    Recovery(String),
+
+    #[error("Memory error: {0}")]
+    Memory(String),
 }
 
 pub type Result<T> = std::result::Result<T, DbError>;

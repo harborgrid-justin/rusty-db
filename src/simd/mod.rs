@@ -68,11 +68,15 @@ pub mod aggregate;
 /// String operations
 pub mod string;
 
+/// SIMD-accelerated hash functions (xxHash3, wyhash)
+pub mod hash;
+
 // Re-export commonly used types
 pub use filter::{FilterOp, PredicateType};
 pub use scan::{ColumnScan, ScanStrategy, BatchProcessor};
 pub use aggregate::{SimdAggregator, AggregateOp};
 pub use string::{StringMatcher, PatternType};
+pub use hash::{xxhash3_avx2, wyhash, hash_str, hash_str_batch, HashBuilder};
 
 /// CPU feature detection for SIMD capabilities
 #[derive(Debug, Clone, Copy)]

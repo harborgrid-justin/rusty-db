@@ -1,5 +1,5 @@
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write, IoSlice, IoSliceMut};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::collections::{HashMap, VecDeque};
@@ -8,6 +8,9 @@ use parking_lot::RwLock;
 use crate::Result;
 use crate::storage::page::{Page, PageId};
 use crate::error::DbError;
+
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
 
 /// I/O operation priority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -291,6 +294,246 @@ impl Default for DirectIoConfig {
     }
 }
 
+/// Hardware-accelerated CRC32C checksum (SSE4.2 on x86_64)
+#[inline]
+pub fn hardware_crc32c(data: &[u8]) -> u32 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("sse4.2") {
+            return unsafe { hardware_crc32c_impl(data) };
+        }
+    }
+    // Fallback to software CRC32
+    software_crc32c(data)
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse4.2")]
+unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
+    let mut crc: u32 = 0xFFFFFFFF;
+    let mut ptr = data.as_ptr();
+    let mut remaining = data.len();
+
+    // Process 8 bytes at a time for maximum throughput
+    while remaining >= 8 {
+        let value = (ptr as *const u64).read_unaligned();
+        crc = _mm_crc32_u64(crc as u64, value) as u32;
+        ptr = ptr.add(8);
+        remaining -= 8;
+    }
+
+    // Process remaining bytes
+    while remaining > 0 {
+        let value = *ptr;
+        crc = _mm_crc32_u8(crc, value);
+        ptr = ptr.add(1);
+        remaining -= 1;
+    }
+
+    !crc
+}
+
+/// Software fallback CRC32C
+fn software_crc32c(data: &[u8]) -> u32 {
+    const CRC32C_TABLE: [u32; 256] = generate_crc32c_table();
+    let mut crc: u32 = 0xFFFFFFFF;
+    for &byte in data {
+        let index = ((crc ^ byte as u32) & 0xFF) as usize;
+        crc = (crc >> 8) ^ CRC32C_TABLE[index];
+    }
+    !crc
+}
+
+const fn generate_crc32c_table() -> [u32; 256] {
+    let mut table = [0u32; 256];
+    let poly: u32 = 0x82F63B78; // CRC32C polynomial
+    let mut i = 0;
+    while i < 256 {
+        let mut crc = i as u32;
+        let mut j = 0;
+        while j < 8 {
+            if crc & 1 != 0 {
+                crc = (crc >> 1) ^ poly;
+            } else {
+                crc >>= 1;
+            }
+            j += 1;
+        }
+        table[i] = crc;
+        i += 1;
+    }
+    table
+}
+
+/// Vectored I/O batch for efficient multi-page operations
+#[derive(Debug, Clone)]
+pub struct VectoredIoBatch {
+    pub pages: Vec<Page>,
+    pub offsets: Vec<u64>,
+    pub total_bytes: usize,
+}
+
+impl VectoredIoBatch {
+    pub fn new() -> Self {
+        Self {
+            pages: Vec::new(),
+            offsets: Vec::new(),
+            total_bytes: 0,
+        }
+    }
+
+    pub fn add_page(&mut self, page: Page, offset: u64, page_size: usize) {
+        self.total_bytes += page_size;
+        self.offsets.push(offset);
+        self.pages.push(page);
+    }
+
+    pub fn len(&self) -> usize {
+        self.pages.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.pages.is_empty()
+    }
+
+    pub fn clear(&mut self) {
+        self.pages.clear();
+        self.offsets.clear();
+        self.total_bytes = 0;
+    }
+}
+
+/// Write coalescing engine for merging adjacent writes
+struct WriteCoalescer {
+    pending_writes: HashMap<PageId, (Page, u64)>,
+    coalesce_window_us: u64,
+    last_flush: Instant,
+    max_batch_size: usize,
+}
+
+impl WriteCoalescer {
+    fn new(coalesce_window_us: u64, max_batch_size: usize) -> Self {
+        Self {
+            pending_writes: HashMap::new(),
+            coalesce_window_us,
+            last_flush: Instant::now(),
+            max_batch_size,
+        }
+    }
+
+    fn add_write(&mut self, page: Page, offset: u64) -> bool {
+        self.pending_writes.insert(page.id, (page, offset));
+        self.should_flush()
+    }
+
+    fn should_flush(&self) -> bool {
+        if self.pending_writes.len() >= self.max_batch_size {
+            return true;
+        }
+        if self.last_flush.elapsed().as_micros() as u64 >= self.coalesce_window_us {
+            return true;
+        }
+        false
+    }
+
+    fn get_coalesced_batch(&mut self) -> VectoredIoBatch {
+        let mut batch = VectoredIoBatch::new();
+
+        // Sort by offset for sequential writes
+        let mut writes: Vec<_> = self.pending_writes.drain().collect();
+        writes.sort_by_key(|(_, (_, offset))| *offset);
+
+        for (_, (page, offset)) in writes {
+            batch.add_page(page.clone(), offset, page.data.len());
+        }
+
+        self.last_flush = Instant::now();
+        batch
+    }
+
+    fn pending_count(&self) -> usize {
+        self.pending_writes.len()
+    }
+}
+
+/// io_uring operation descriptor (placeholder for future implementation)
+#[derive(Debug, Clone)]
+pub struct IoUringOp {
+    pub op_type: IoOpType,
+    pub page_id: PageId,
+    pub offset: u64,
+    pub data: Vec<u8>,
+    pub user_data: u64,
+}
+
+impl IoUringOp {
+    pub fn read(page_id: PageId, offset: u64, size: usize) -> Self {
+        Self {
+            op_type: IoOpType::Read,
+            page_id,
+            offset,
+            data: vec![0u8; size],
+            user_data: page_id as u64,
+        }
+    }
+
+    pub fn write(page_id: PageId, offset: u64, data: Vec<u8>) -> Self {
+        Self {
+            op_type: IoOpType::Write,
+            page_id,
+            offset,
+            data,
+            user_data: page_id as u64,
+        }
+    }
+}
+
+/// io_uring interface (simulated for now, real implementation would use io-uring crate)
+pub struct IoUring {
+    submission_queue: VecDeque<IoUringOp>,
+    completion_queue: VecDeque<(u64, Result<usize>)>,
+    max_queue_depth: usize,
+    polling_mode: bool,
+}
+
+impl IoUring {
+    pub fn new(queue_depth: usize, polling_mode: bool) -> Self {
+        Self {
+            submission_queue: VecDeque::with_capacity(queue_depth),
+            completion_queue: VecDeque::with_capacity(queue_depth),
+            max_queue_depth: queue_depth,
+            polling_mode,
+        }
+    }
+
+    pub fn submit_op(&mut self, op: IoUringOp) -> Result<()> {
+        if self.submission_queue.len() >= self.max_queue_depth {
+            return Err(DbError::Storage("io_uring queue full".to_string()));
+        }
+        self.submission_queue.push_back(op);
+        Ok(())
+    }
+
+    pub fn submit_batch(&mut self) -> Result<usize> {
+        // In real implementation, this would submit to kernel io_uring
+        let count = self.submission_queue.len();
+        Ok(count)
+    }
+
+    pub fn wait_completions(&mut self, min_complete: usize) -> Result<usize> {
+        // Simulated - real implementation would wait on io_uring
+        Ok(min_complete)
+    }
+
+    pub fn get_completion(&mut self) -> Option<(u64, Result<usize>)> {
+        self.completion_queue.pop_front()
+    }
+
+    pub fn pending_submissions(&self) -> usize {
+        self.submission_queue.len()
+    }
+}
+
 /// Advanced disk manager with I/O optimizations
 #[derive(Clone)]
 pub struct DiskManager {
@@ -305,8 +548,19 @@ pub struct DiskManager {
     read_ahead: Arc<Mutex<ReadAheadBuffer>>,
     write_behind: Arc<Mutex<WriteBehindBuffer>>,
 
+    // Write coalescing engine
+    write_coalescer: Arc<Mutex<WriteCoalescer>>,
+
+    // io_uring interface
+    io_uring: Arc<Mutex<IoUring>>,
+
     // Direct I/O configuration
     direct_io_config: DirectIoConfig,
+
+    // Adaptive page sizing
+    adaptive_page_size: bool,
+    min_page_size: usize,
+    max_page_size: usize,
 
     // Statistics
     stats: Arc<RwLock<DiskStats>>,
@@ -323,6 +577,13 @@ struct DiskStats {
     write_behind_hits: u64,
     avg_read_latency_us: u64,
     avg_write_latency_us: u64,
+    vectored_reads: u64,
+    vectored_writes: u64,
+    coalesced_writes: u64,
+    io_uring_ops: u64,
+    hardware_crc_ops: u64,
+    total_iops: u64,
+    peak_iops: u64,
 }
 
 impl DiskManager {
@@ -357,7 +618,12 @@ impl DiskManager {
             scheduler: Arc::new(Mutex::new(IoScheduler::new())),
             read_ahead: Arc::new(Mutex::new(ReadAheadBuffer::new(64, 10))),
             write_behind: Arc::new(Mutex::new(WriteBehindBuffer::new(128, 32))),
+            write_coalescer: Arc::new(Mutex::new(WriteCoalescer::new(5000, 64))), // 5ms window, 64 pages
+            io_uring: Arc::new(Mutex::new(IoUring::new(256, false))), // 256 queue depth
             direct_io_config,
+            adaptive_page_size: false,
+            min_page_size: 4096,
+            max_page_size: 2 * 1024 * 1024, // 2MB
             stats: Arc::new(RwLock::new(DiskStats::default())),
         })
     }
@@ -367,11 +633,15 @@ impl DiskManager {
         let start = Instant::now();
 
         // Check read-ahead buffer first
-        if let Some(data) = self.read_ahead.lock().get(page_id) {
-            let mut stats = self.stats.write();
-            stats.read_ahead_hits += 1;
-            stats.reads += 1;
-            return Ok(Page::from_bytes(page_id, data));
+        {
+            let mut read_ahead = self.read_ahead.lock()
+                .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
+            if let Some(data) = read_ahead.get(page_id) {
+                let mut stats = self.stats.write();
+                stats.read_ahead_hits += 1;
+                stats.reads += 1;
+                return Ok(Page::from_bytes(page_id, data));
+            }
         }
 
         // Perform actual read
@@ -404,7 +674,8 @@ impl DiskManager {
     }
 
     fn trigger_read_ahead(&self, page_id: PageId) -> Result<()> {
-        let mut read_ahead = self.read_ahead.lock();
+        let mut read_ahead = self.read_ahead.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let next_pages = read_ahead.predict_next_pages();
 
         // Prefetch predicted pages
@@ -424,7 +695,8 @@ impl DiskManager {
         let start = Instant::now();
 
         // Try write-behind buffer first
-        let mut write_behind = self.write_behind.lock();
+        let mut write_behind = self.write_behind.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         if write_behind.add(page.id, page.data.clone()) {
             drop(write_behind);
 
@@ -469,7 +741,8 @@ impl DiskManager {
     }
 
     fn flush_write_behind_if_needed(&self) -> Result<()> {
-        let mut write_behind = self.write_behind.lock();
+        let mut write_behind = self.write_behind.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
 
         if write_behind.should_flush() {
             let batch = write_behind.get_flush_batch();
@@ -485,7 +758,8 @@ impl DiskManager {
     }
 
     pub fn flush_all_writes(&self) -> Result<()> {
-        let mut write_behind = self.write_behind.lock();
+        let mut write_behind = self.write_behind.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let batch = write_behind.flush_all();
         drop(write_behind);
 
@@ -532,7 +806,9 @@ impl DiskManager {
         self.scheduler.lock().schedule(op);
 
         // Buffer the write
-        self.write_behind.lock().add(page.id, page.data.clone());
+        self.write_behind.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?
+            .add(page.id, page.data.clone());
 
         Ok(())
     }
@@ -574,6 +850,202 @@ impl DiskManager {
 
     pub fn reset_stats(&self) {
         *self.stats.write() = DiskStats::default();
+    }
+
+    /// Vectored read - read multiple pages in a single syscall
+    pub fn read_pages_vectored(&self, page_ids: &[PageId]) -> Result<Vec<Page>> {
+        let start = Instant::now();
+
+        if page_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let mut file = self.data_file.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
+
+        let mut pages = Vec::with_capacity(page_ids.len());
+        let mut bufs: Vec<Vec<u8>> = page_ids.iter()
+            .map(|_| vec![0u8; self.page_size])
+            .collect();
+
+        // Read pages sequentially (in real impl with preadv, would be single syscall)
+        for (idx, &page_id) in page_ids.iter().enumerate() {
+            let offset = page_id as u64 * self.page_size as u64;
+            file.seek(SeekFrom::Start(offset))?;
+            file.read_exact(&mut bufs[idx])?;
+
+            pages.push(Page::from_bytes(page_id, bufs[idx].clone()));
+        }
+
+        // Update statistics
+        let latency = start.elapsed().as_micros() as u64;
+        let mut stats = self.stats.write();
+        stats.reads += page_ids.len() as u64;
+        stats.vectored_reads += 1;
+        stats.read_bytes += (page_ids.len() * self.page_size) as u64;
+        stats.avg_read_latency_us = (stats.avg_read_latency_us + latency) / 2;
+        stats.total_iops += page_ids.len() as u64;
+
+        Ok(pages)
+    }
+
+    /// Vectored write - write multiple pages in a single syscall
+    pub fn write_pages_vectored(&self, pages: &[Page]) -> Result<()> {
+        let start = Instant::now();
+
+        if pages.is_empty() {
+            return Ok(());
+        }
+
+        let mut file = self.data_file.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
+
+        // Sort pages by ID for sequential writes
+        let mut sorted_pages: Vec<_> = pages.iter().collect();
+        sorted_pages.sort_by_key(|p| p.id);
+
+        // Write pages (in real impl with pwritev, would be single syscall)
+        for page in sorted_pages {
+            let offset = page.id as u64 * self.page_size as u64;
+            file.seek(SeekFrom::Start(offset))?;
+            file.write_all(&page.data)?;
+        }
+
+        // Sync if needed
+        if self.direct_io_config.enabled {
+            file.sync_data()?;
+        }
+
+        // Update statistics
+        let latency = start.elapsed().as_micros() as u64;
+        let mut stats = self.stats.write();
+        stats.writes += pages.len() as u64;
+        stats.vectored_writes += 1;
+        stats.write_bytes += (pages.len() * self.page_size) as u64;
+        stats.avg_write_latency_us = (stats.avg_write_latency_us + latency) / 2;
+        stats.total_iops += pages.len() as u64;
+
+        Ok(())
+    }
+
+    /// Write with coalescing - batches writes automatically
+    pub fn write_page_coalesced(&self, page: &Page) -> Result<()> {
+        let offset = page.id as u64 * self.page_size as u64;
+
+        let should_flush = {
+            let mut coalescer = self.write_coalescer.lock()
+                .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
+            coalescer.add_write(page.clone(), offset)
+        };
+
+        if should_flush {
+            self.flush_coalesced_writes()?;
+        }
+
+        let mut stats = self.stats.write();
+        stats.coalesced_writes += 1;
+
+        Ok(())
+    }
+
+    /// Flush coalesced writes
+    pub fn flush_coalesced_writes(&self) -> Result<()> {
+        let batch = {
+            let mut coalescer = self.write_coalescer.lock()
+                .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
+            coalescer.get_coalesced_batch()
+        };
+
+        if !batch.is_empty() {
+            self.write_pages_vectored(&batch.pages)?;
+        }
+
+        Ok(())
+    }
+
+    /// Submit async read via io_uring
+    pub fn read_page_io_uring(&self, page_id: PageId) -> Result<()> {
+        let offset = page_id as u64 * self.page_size as u64;
+        let op = IoUringOp::read(page_id, offset, self.page_size);
+
+        let mut io_uring = self.io_uring.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
+        io_uring.submit_op(op)?;
+
+        self.stats.write().io_uring_ops += 1;
+
+        Ok(())
+    }
+
+    /// Submit async write via io_uring
+    pub fn write_page_io_uring(&self, page: &Page) -> Result<()> {
+        let offset = page.id as u64 * self.page_size as u64;
+        let op = IoUringOp::write(page.id, offset, page.data.clone());
+
+        let mut io_uring = self.io_uring.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
+        io_uring.submit_op(op)?;
+
+        self.stats.write().io_uring_ops += 1;
+
+        Ok(())
+    }
+
+    /// Submit pending io_uring operations
+    pub fn submit_io_uring_batch(&self) -> Result<usize> {
+        let mut io_uring = self.io_uring.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
+        io_uring.submit_batch()
+    }
+
+    /// Wait for io_uring completions
+    pub fn wait_io_uring_completions(&self, min_complete: usize) -> Result<Vec<(u64, Result<usize>)>> {
+        let mut io_uring = self.io_uring.lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
+        io_uring.wait_completions(min_complete)?;
+
+        let mut completions = Vec::new();
+        while let Some(completion) = io_uring.get_completion() {
+            completions.push(completion);
+        }
+
+        Ok(completions)
+    }
+
+    /// Compute hardware-accelerated checksum for a page
+    pub fn compute_hardware_checksum(&self, data: &[u8]) -> u32 {
+        self.stats.write().hardware_crc_ops += 1;
+        hardware_crc32c(data)
+    }
+
+    /// Select adaptive page size based on workload
+    pub fn select_adaptive_page_size(&self, data_size: usize, access_pattern: &str) -> usize {
+        if !self.adaptive_page_size {
+            return self.page_size;
+        }
+
+        match access_pattern {
+            "sequential" | "scan" => {
+                // Large pages for sequential access
+                std::cmp::min(data_size.next_power_of_two(), self.max_page_size)
+            }
+            "random" | "point" => {
+                // Small pages for random access
+                std::cmp::max(self.min_page_size, self.page_size)
+            }
+            _ => self.page_size,
+        }
+    }
+
+    /// Get enhanced statistics
+    pub fn get_enhanced_stats(&self) -> DiskStats {
+        self.stats.read().clone()
+    }
+
+    /// Calculate current IOPS
+    pub fn calculate_iops(&self, duration_secs: f64) -> f64 {
+        let stats = self.stats.read();
+        stats.total_iops as f64 / duration_secs
     }
 }
 

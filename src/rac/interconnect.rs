@@ -195,6 +195,19 @@ pub struct NodeHealth {
 
     /// Last state change
     pub last_state_change: Instant,
+
+    /// NEW: Phi accrual failure detector state
+    /// Heartbeat interval history for adaptive detection
+    pub heartbeat_intervals: Vec<Duration>,
+
+    /// Current phi value (suspicion level)
+    pub phi_value: f64,
+
+    /// Mean heartbeat interval
+    pub mean_interval_ms: f64,
+
+    /// Standard deviation of intervals
+    pub std_dev_interval_ms: f64,
 }
 
 impl NodeHealth {
@@ -208,17 +221,67 @@ impl NodeHealth {
             packet_loss: 0.0,
             bandwidth_mbps: 0.0,
             last_state_change: Instant::now(),
+            heartbeat_intervals: Vec::with_capacity(100),
+            phi_value: 0.0,
+            mean_interval_ms: 100.0,
+            std_dev_interval_ms: 10.0,
         }
     }
 
     fn update_heartbeat(&mut self) {
-        self.last_heartbeat = Instant::now();
+        let now = Instant::now();
+        let interval = now.duration_since(self.last_heartbeat);
+
+        // Update phi accrual detector
+        self.update_phi_accrual(interval);
+
+        self.last_heartbeat = now;
         self.missed_heartbeats = 0;
 
         if self.state == NodeState::Suspected {
             self.state = NodeState::Healthy;
-            self.last_state_change = Instant::now();
+            self.last_state_change = now;
         }
+    }
+
+    /// NEW: Phi accrual failure detector
+    /// Calculates suspicion level based on heartbeat timing variance
+    /// Higher phi = more suspicious, threshold typically 8.0-10.0
+    fn update_phi_accrual(&mut self, interval: Duration) {
+        let interval_ms = interval.as_millis() as f64;
+
+        // Add to history
+        self.heartbeat_intervals.push(interval);
+        if self.heartbeat_intervals.len() > 100 {
+            self.heartbeat_intervals.remove(0);
+        }
+
+        // Calculate mean and std dev
+        if self.heartbeat_intervals.len() > 1 {
+            let sum: f64 = self.heartbeat_intervals.iter()
+                .map(|d| d.as_millis() as f64)
+                .sum();
+            self.mean_interval_ms = sum / self.heartbeat_intervals.len() as f64;
+
+            let variance: f64 = self.heartbeat_intervals.iter()
+                .map(|d| {
+                    let diff = d.as_millis() as f64 - self.mean_interval_ms;
+                    diff * diff
+                })
+                .sum::<f64>() / self.heartbeat_intervals.len() as f64;
+
+            self.std_dev_interval_ms = variance.sqrt().max(1.0); // Avoid division by zero
+        }
+
+        // Calculate phi value
+        let elapsed_since_last = self.last_heartbeat.elapsed().as_millis() as f64;
+        let expected = self.mean_interval_ms;
+        let sigma = self.std_dev_interval_ms;
+
+        // Phi(t) = -log10(P(t_now - t_last))
+        // Using normal distribution approximation
+        let z_score = (elapsed_since_last - expected) / sigma;
+        self.phi_value = z_score.abs().max(0.0);
     }
 
     fn record_missed_heartbeat(&mut self) {
@@ -226,11 +289,18 @@ impl NodeHealth {
 
         let elapsed = self.last_heartbeat.elapsed();
 
-        if elapsed > HEARTBEAT_TIMEOUT {
+        // Use phi value for adaptive threshold
+        if self.phi_value > 8.0 {
+            // High suspicion - mark as down
             self.state = NodeState::Down;
             self.last_state_change = Instant::now();
-        } else if self.missed_heartbeats > 3 {
+        } else if self.phi_value > 5.0 || self.missed_heartbeats > 3 {
+            // Medium suspicion
             self.state = NodeState::Suspected;
+            self.last_state_change = Instant::now();
+        } else if elapsed > HEARTBEAT_TIMEOUT {
+            // Legacy timeout fallback
+            self.state = NodeState::Down;
             self.last_state_change = Instant::now();
         }
     }
@@ -461,6 +531,18 @@ pub struct InterconnectConfig {
 
     /// Enable message compression
     pub enable_compression: bool,
+
+    /// NEW: Enable message batching for efficiency
+    pub enable_batching: bool,
+
+    /// NEW: Batching window (milliseconds)
+    pub batch_window_ms: u64,
+
+    /// NEW: Maximum batch size (messages)
+    pub max_batch_size: usize,
+
+    /// NEW: Phi accrual failure detector threshold
+    pub phi_threshold: f64,
 }
 
 impl Default for InterconnectConfig {
@@ -472,6 +554,10 @@ impl Default for InterconnectConfig {
             adaptive_routing: true,
             max_retries: 3,
             enable_compression: false,
+            enable_batching: true,        // Enable message batching
+            batch_window_ms: 1,           // 1ms batching window
+            max_batch_size: 100,          // Up to 100 messages per batch
+            phi_threshold: 8.0,           // Phi threshold for failure detection
         }
     }
 }
@@ -505,6 +591,25 @@ pub struct InterconnectStatistics {
 
     /// Average message latency (microseconds)
     pub avg_latency_us: u64,
+
+    /// NEW: Batching statistics
+    /// Batches sent
+    pub batches_sent: u64,
+
+    /// Messages batched
+    pub messages_batched: u64,
+
+    /// Average batch size
+    pub avg_batch_size: f64,
+
+    /// Phi accrual suspicion levels (histogram)
+    pub phi_suspicions: u64,
+
+    /// P99 message latency (microseconds)
+    pub p99_latency_us: u64,
+
+    /// False positive detections
+    pub false_positives: u64,
 }
 
 impl ClusterInterconnect {

@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fs::{File, OpenOptions};
-use std::io::{Write as IoWrite, Read, BufWriter, BufReader};
+use std::io::{Write as IoWrite, Read, BufWriter, BufReader, IoSlice};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{SystemTime, Duration, Instant};
@@ -15,11 +15,85 @@ use tokio::time::interval;
 use crate::{Result, DbError};
 use super::TransactionId;
 
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
+
 /// Log Sequence Number type
 pub type LSN = u64;
 
 /// Page ID type
 pub type PageId = u64;
+
+/// Hardware-accelerated CRC32C checksum (SSE4.2 on x86_64)
+#[inline]
+fn hardware_crc32c(data: &[u8]) -> u32 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("sse4.2") {
+            return unsafe { hardware_crc32c_impl(data) };
+        }
+    }
+    // Fallback to software CRC32
+    software_crc32c(data)
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse4.2")]
+unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
+    let mut crc: u32 = 0xFFFFFFFF;
+    let mut ptr = data.as_ptr();
+    let mut remaining = data.len();
+
+    // Process 8 bytes at a time for maximum throughput
+    while remaining >= 8 {
+        let value = (ptr as *const u64).read_unaligned();
+        crc = _mm_crc32_u64(crc as u64, value) as u32;
+        ptr = ptr.add(8);
+        remaining -= 8;
+    }
+
+    // Process remaining bytes
+    while remaining > 0 {
+        let value = *ptr;
+        crc = _mm_crc32_u8(crc, value);
+        ptr = ptr.add(1);
+        remaining -= 1;
+    }
+
+    !crc
+}
+
+/// Software fallback CRC32C
+fn software_crc32c(data: &[u8]) -> u32 {
+    const CRC32C_TABLE: [u32; 256] = generate_crc32c_table();
+    let mut crc: u32 = 0xFFFFFFFF;
+    for &byte in data {
+        let index = ((crc ^ byte as u32) & 0xFF) as usize;
+        crc = (crc >> 8) ^ CRC32C_TABLE[index];
+    }
+    !crc
+}
+
+const fn generate_crc32c_table() -> [u32; 256] {
+    let mut table = [0u32; 256];
+    let poly: u32 = 0x82F63B78; // CRC32C polynomial
+    let mut i = 0;
+    while i < 256 {
+        let mut crc = i as u32;
+        let mut j = 0;
+        while j < 8 {
+            if crc & 1 != 0 {
+                crc = (crc >> 1) ^ poly;
+            } else {
+                crc >>= 1;
+            }
+            j += 1;
+        }
+        table[i] = crc;
+        i += 1;
+    }
+    table
+}
 
 /// ARIES-style log record types
 #[repr(C)]
@@ -148,8 +222,13 @@ impl WALEntry {
     }
 
     fn calculate_checksum(data: &[u8]) -> u32 {
-        // Simple checksum (in production, use CRC32 or similar)
-        data.iter().fold(0u32, |acc, &byte| acc.wrapping_add(byte as u32))
+        // Hardware-accelerated CRC32C checksum
+        hardware_crc32c(data)
+    }
+
+    fn calculate_checksum_batch(entries: &[&[u8]]) -> Vec<u32> {
+        // Batch checksum computation for better cache utilization
+        entries.iter().map(|data| hardware_crc32c(data)).collect()
     }
 
     fn verify_checksum(&self) -> bool {
@@ -291,6 +370,9 @@ pub struct WALStats {
     pub avg_group_size: f64,
     pub fsyncs: u64,
     pub avg_flush_time_ms: f64,
+    pub vectored_writes: u64,
+    pub hardware_crc_ops: u64,
+    pub batched_checksums: u64,
 }
 
 /// Transaction table entry for recovery
@@ -425,7 +507,7 @@ impl WALManager {
         Ok(())
     }
 
-    /// Flush the group commit buffer
+    /// Flush the group commit buffer with vectored I/O
     async fn flush_buffer(&self) -> Result<()> {
         let (entries, waiters) = {
             let mut buffer = self.commit_buffer.lock();
@@ -440,13 +522,10 @@ impl WALManager {
         }
 
         let start = Instant::now();
-        let mut last_lsn = 0;
+        let last_lsn = entries.last().map(|e| e.lsn).unwrap_or(0);
 
-        // Write all entries
-        for entry in &entries {
-            self.write_entry(entry)?;
-            last_lsn = entry.lsn;
-        }
+        // Use vectored write for better performance (single syscall)
+        self.write_entries_vectored(&entries)?;
 
         // Sync to disk
         self.sync()?;
@@ -484,6 +563,48 @@ impl WALManager {
         let mut stats = self.stats.write();
         stats.total_records += 1;
         stats.total_bytes += serialized.len() as u64;
+        stats.hardware_crc_ops += 1; // Checksum computed with hardware acceleration
+
+        Ok(())
+    }
+
+    /// Write multiple entries using vectored I/O for better performance
+    fn write_entries_vectored(&self, entries: &[WALEntry]) -> Result<()> {
+        if entries.is_empty() {
+            return Ok(());
+        }
+
+        // Serialize all entries
+        let serialized: Vec<Vec<u8>> = entries.iter()
+            .map(|e| bincode::serialize(e))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| DbError::SerializationError(format!("Batch serialization failed: {}", e)))?;
+
+        // Prepare IoSlice for writev
+        let slices: Vec<IoSlice> = serialized.iter()
+            .map(|buf| IoSlice::new(buf))
+            .collect();
+
+        let mut file = self.wal_file.lock();
+
+        // Write all slices in a single syscall (vectored I/O)
+        let mut total_written = 0;
+        let total_size: usize = serialized.iter().map(|s| s.len()).sum();
+
+        // Note: write_vectored might not write everything in one call
+        while total_written < total_size {
+            let written = file.get_mut()
+                .write_vectored(&slices[total_written..])
+                .map_err(|e| DbError::IOError(format!("Vectored write failed: {}", e)))?;
+            total_written += written;
+        }
+
+        // Update statistics
+        let mut stats = self.stats.write();
+        stats.total_records += entries.len() as u64;
+        stats.total_bytes += total_size as u64;
+        stats.vectored_writes += 1;
+        stats.hardware_crc_ops += entries.len() as u64;
 
         Ok(())
     }

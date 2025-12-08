@@ -8,6 +8,7 @@ pub mod parallel;
 pub mod vectorized;
 pub mod adaptive;
 pub mod hash_join;
+pub mod hash_join_simd;
 pub mod sort_merge;
 pub mod expressions;
 
@@ -21,6 +22,7 @@ pub use parallel::{ParallelExecutor, ParallelizationOptimizer};
 pub use vectorized::{VectorizedExecutor, ColumnBatch, ColumnValue, AggregationType};
 pub use adaptive::{AdaptiveExecutor, AdaptiveContext, RuntimeStatistics};
 pub use hash_join::{HashJoinExecutor, HashJoinConfig, BloomFilterHashJoin};
+pub use hash_join_simd::{SimdHashJoin, SimdHashJoinConfig};
 pub use sort_merge::{ExternalMergeSorter, SortMergeJoin, TopKSelector};
 pub use expressions::{ExpressionEvaluator, Expr, ExprValue, BinaryOperator, UnaryOperator};
 

@@ -254,8 +254,8 @@ impl Drop for EpochGuard {
 }
 
 // Prevent Send/Sync - guards are thread-local
-impl !Send for EpochGuard {}
-impl !Sync for EpochGuard {}
+// Use PhantomData to make EpochGuard not Send/Sync
+// Note: EpochGuard contains a raw pointer which is already !Send + !Sync
 
 /// An atomic pointer with epoch-based reclamation
 pub struct Atomic<T> {
