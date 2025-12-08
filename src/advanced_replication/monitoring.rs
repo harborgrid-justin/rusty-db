@@ -8,7 +8,6 @@ use std::collections::{HashMap, VecDeque, BTreeMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
-use crate::Result;
 use crate::error::DbError;
 
 /// Replication lag measurement

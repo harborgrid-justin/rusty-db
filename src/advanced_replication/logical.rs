@@ -9,7 +9,6 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
 use crate::error::DbError;
 
 /// Logical replication publication

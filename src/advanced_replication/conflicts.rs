@@ -10,7 +10,6 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use parking_lot::RwLock;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
 use crate::error::DbError;
 
 /// Conflict resolution strategy

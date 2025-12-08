@@ -8,7 +8,6 @@ use std::collections::{HashMap, HashSet, BTreeMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
 use crate::error::DbError;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;

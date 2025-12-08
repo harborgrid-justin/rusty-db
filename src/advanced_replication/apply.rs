@@ -11,7 +11,6 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
 use crate::error::DbError;
 
 /// Lock-free ring buffer for apply queue

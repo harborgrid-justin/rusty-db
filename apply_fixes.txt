@@ -1,0 +1,22 @@
+# Manual fixes needed for missing imports in RustyDB
+# Apply these changes to fix compilation errors
+
+## File: src/replication/mod.rs
+
+Line 90 - Change:
+  use parking_lot::RwLock;
+
+To:
+  use parking_lot::{RwLock, Mutex};
+
+After line 92 (after `use tokio::sync::mpsc;`), add new line:
+  use tokio::time::sleep;
+
+---
+
+These are the confirmed fixes needed. Other files may already be fixed or use fully qualified paths.
+
+To verify after fixing, run:
+  cargo check 2>&1 | grep "cannot find"
+
+If empty output, all errors are fixed!

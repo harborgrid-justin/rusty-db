@@ -309,12 +309,6 @@ impl Hyperparameters {
     }
 }
 
-impl Default for Hyperparameters {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// Performance metrics for model evaluation
 #[derive(Debug, Clone)]
 pub struct Metrics {

@@ -1,9 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cargo build:*)",
-      "Bash(dir:*)",
-      "Bash(ls -la \"F:\\temp\\rusty-db\\.scratchpad\"\" 2>/dev/null || dir \"F:temprusty-db.scratchpad\" 2>/dev/null || echo \"Scratchpad not yet created \")"
+      "Bash(cargo check:*)"
     ],
     "deny": [],
     "ask": []
