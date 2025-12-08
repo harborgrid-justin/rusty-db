@@ -77,7 +77,8 @@ impl HashJoinExecutor {
         Self::new(HashJoinConfig::default())
     }
 
-    /// Execute hash join with automatic algorithm selection
+    /// Execute hash join with automatic algorithm selection (inline for performance)
+    #[inline]
     pub fn execute(
         &self,
         build_side: QueryResult,
@@ -102,7 +103,8 @@ impl HashJoinExecutor {
         }
     }
 
-    /// Simple in-memory hash join
+    /// Simple in-memory hash join (optimized - avoid allocations in hot loop)
+    #[inline]
     fn simple_hash_join(
         &self,
         build_side: QueryResult,
@@ -110,8 +112,9 @@ impl HashJoinExecutor {
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult> {
-        // Build phase - construct hash table from build side
-        let mut hash_table: HashMap<String, Vec<Vec<String>>> = HashMap::new();
+        // Build phase - pre-allocate hash table with capacity
+        let mut hash_table: HashMap<String, Vec<Vec<String>>> =
+            HashMap::with_capacity(build_side.rows.len());
 
         for row in &build_side.rows {
             if let Some(key) = row.get(build_key_col) {
@@ -121,15 +124,21 @@ impl HashJoinExecutor {
             }
         }
 
-        // Probe phase - match rows from probe side
-        let mut result_rows = Vec::new();
+        // Probe phase - pre-allocate result vector to avoid reallocations
+        // Estimate: assume average 1.5x rows (accounting for joins)
+        let mut result_rows = Vec::with_capacity(probe_side.rows.len() + probe_side.rows.len() / 2);
+
+        // Pre-calculate result row size to avoid Vec reallocations
+        let result_row_size = probe_side.columns.len() + build_side.columns.len();
 
         for probe_row in &probe_side.rows {
             if let Some(key) = probe_row.get(probe_key_col) {
                 if let Some(build_rows) = hash_table.get(key) {
                     for build_row in build_rows {
-                        let mut joined_row = probe_row.clone();
-                        joined_row.extend(build_row.clone());
+                        // Pre-allocate joined row with exact capacity (avoid realloc)
+                        let mut joined_row = Vec::with_capacity(result_row_size);
+                        joined_row.extend_from_slice(probe_row);
+                        joined_row.extend_from_slice(build_row);
                         result_rows.push(joined_row);
                     }
                 }

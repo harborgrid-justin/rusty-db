@@ -2,17 +2,19 @@
 // Provides space-efficient storage snapshots for testing and backup
 
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::fs::{File, OpenOptions, create_dir_all, copy};
-use std::io::{Read, Write, Seek, SeekFrom};
+use std::path::PathBuf;
+use std::fs::{create_dir_all};
+use std::io::{Read, Write};
 use std::time::{SystemTime, Duration, UNIX_EPOCH};
-use std::collections::{HashMap, BTreeMap, HashSet, VecDeque};
+use std::collections::{HashMap, BTreeMap};
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
 /// Snapshot metadata
+#[repr(C)]
+#[repr(align(64))] // Cache-line aligned for hot-path performance
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
     pub snapshot_id: String,
@@ -35,6 +37,7 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
+    #[inline]
     pub fn new(snapshot_id: String, snapshot_name: String, database_name: String, scn: u64) -> Self {
         Self {
             snapshot_id,
@@ -57,6 +60,7 @@ impl Snapshot {
         }
     }
 
+    #[inline]
     pub fn deduplication_ratio(&self) -> f64 {
         if self.size_bytes == 0 {
             1.0
@@ -65,6 +69,7 @@ impl Snapshot {
         }
     }
 
+    #[inline]
     pub fn is_expired(&self) -> bool {
         if let Some(expiry) = self.retention_policy.expires_at {
             SystemTime::now() > expiry

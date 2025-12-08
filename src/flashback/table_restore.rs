@@ -562,6 +562,7 @@ struct PartitionState {
 // ============================================================================
 
 /// Options for FLASHBACK TABLE operation
+#[repr(C)]
 #[derive(Debug, Clone)]
 pub struct FlashbackOptions {
     /// Rebuild all indexes after flashback
@@ -601,6 +602,7 @@ impl Default for FlashbackOptions {
 // ============================================================================
 
 /// Result of FLASHBACK TABLE operation
+#[repr(C)]
 #[derive(Debug, Clone, Default)]
 pub struct FlashbackResult {
     pub success: bool,

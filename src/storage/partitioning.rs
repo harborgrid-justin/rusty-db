@@ -39,6 +39,7 @@ pub enum PartitionStrategy {
 }
 
 /// Range partition definition
+#[repr(C)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RangePartition {
     pub name: String,
@@ -47,6 +48,7 @@ pub struct RangePartition {
 }
 
 /// List partition definition
+#[repr(C)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ListPartition {
     pub name: String,
@@ -54,6 +56,7 @@ pub struct ListPartition {
 }
 
 /// Partition metadata
+#[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PartitionMetadata {
     pub table_name: String,
@@ -105,6 +108,7 @@ impl PartitionManager {
     }
     
     /// Get partition for a given row value
+    #[inline]
     pub fn get_partition_for_value(
         &self,
         table_name: &str,

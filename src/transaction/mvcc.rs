@@ -4,7 +4,7 @@
 
 use std::collections::{HashMap, BTreeMap, VecDeque, HashSet};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, Duration};
 use parking_lot::{RwLock, Mutex};
 use serde::{Deserialize, Serialize};

@@ -11,7 +11,7 @@ pub mod recovery;
 use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::fs::{File, OpenOptions};
-use std::io::{Write, Read, Seek, SeekFrom};
+use std::io::{Write, Read};
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
 use std::time::{SystemTime, Duration, UNIX_EPOCH};

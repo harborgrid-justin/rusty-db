@@ -273,6 +273,7 @@ impl WriteBehindBuffer {
 }
 
 /// Direct I/O configuration
+#[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct DirectIoConfig {
     pub enabled: bool,
@@ -311,6 +312,7 @@ pub struct DiskManager {
     stats: Arc<RwLock<DiskStats>>,
 }
 
+#[repr(C)]
 #[derive(Debug, Clone, Default)]
 struct DiskStats {
     reads: u64,
@@ -360,6 +362,7 @@ impl DiskManager {
         })
     }
 
+    #[inline]
     pub fn read_page(&self, page_id: PageId) -> Result<Page> {
         let start = Instant::now();
 
@@ -416,6 +419,7 @@ impl DiskManager {
         Ok(())
     }
 
+    #[inline]
     pub fn write_page(&self, page: &Page) -> Result<()> {
         let start = Instant::now();
 

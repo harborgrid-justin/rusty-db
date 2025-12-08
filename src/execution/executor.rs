@@ -20,6 +20,8 @@ impl Executor {
         }
     }
     
+    /// Execute SQL statement (inline for performance)
+    #[inline]
     pub fn execute(&self, stmt: SqlStatement) -> Result<QueryResult> {
         match stmt {
             SqlStatement::CreateTable { name, columns } => {
@@ -98,7 +100,8 @@ impl Executor {
         }
     }
     
-    /// Execute a query plan node
+    /// Execute a query plan node (inline for performance)
+    #[inline]
     pub fn execute_plan(&self, plan: PlanNode) -> Result<QueryResult> {
         match plan {
             PlanNode::TableScan { table, columns } => {

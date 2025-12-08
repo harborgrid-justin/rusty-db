@@ -388,6 +388,7 @@ impl VersionIndex {
 // ============================================================================
 
 /// Represents all versions of a single row over time
+#[repr(C)]
 #[derive(Debug, Clone)]
 pub struct VersionChain {
     /// Row identifier
@@ -414,9 +415,11 @@ impl VersionChain {
     }
 
     /// Get the version visible at a specific SCN
+    #[inline]
     fn get_version_at_scn(&self, scn: SCN) -> Option<&RowVersion> {
         // Find the latest version created before or at SCN
         // that was not deleted before SCN
+        // SAFETY: Using iterator in reverse is safe and avoids bounds checks
         self.versions
             .iter()
             .rev()
@@ -475,6 +478,7 @@ impl VersionChain {
 // ============================================================================
 
 /// A specific version of a row at a point in time
+#[repr(C)]
 #[derive(Debug, Clone)]
 pub struct RowVersion {
     /// Column values
@@ -498,6 +502,7 @@ pub struct RowVersion {
 // ============================================================================
 
 /// Bi-temporal metadata for valid time tracking
+#[repr(C)]
 #[derive(Debug, Clone)]
 pub struct BiTemporalMetadata {
     /// Start of valid time period

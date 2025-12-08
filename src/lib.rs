@@ -113,6 +113,27 @@ pub mod common;
 /// **Target LOC:** 3,000+ lines
 pub mod storage;
 
+/// High-performance buffer manager optimized for Windows/MSVC
+///
+/// Enterprise-grade buffer pool management system with zero-allocation hot path,
+/// lock-free page table, per-core frame pools, and batch flush support.
+///
+/// **Key Components:**
+/// - `BufferPoolManager`: Main buffer pool with pluggable eviction policies
+/// - `PageCache`: Page-aligned buffers for direct I/O (4KB aligned)
+/// - `EvictionPolicy`: CLOCK, LRU, 2Q, and LRU-K replacement algorithms
+/// - `FrameGuard`: RAII pin/unpin management
+///
+/// **Performance Features:**
+/// - Zero allocations in pin/unpin hot path
+/// - Lock-free page table with partitioned hash maps
+/// - Per-core frame pools to reduce contention
+/// - Batch flush support for efficient sequential I/O
+/// - Windows IOCP integration ready
+///
+/// **Target LOC:** 3,000+ lines
+pub mod buffer;
+
 /// System catalog for metadata management
 ///
 /// Manages database metadata including tables, columns, indexes, and constraints.
@@ -214,6 +235,23 @@ pub mod network;
 /// **Target LOC:** 3,000+ lines
 pub mod security;
 
+/// Advanced Security Vault Engine
+///
+/// Oracle-like comprehensive security vault providing enterprise-grade data protection,
+/// transparent data encryption (TDE), data masking, hierarchical key management,
+/// tamper-evident audit trails, and virtual private database (VPD) capabilities.
+///
+/// **Key Components:**
+/// - `TdeEngine`: Transparent Data Encryption (tablespace & column-level)
+/// - `MaskingEngine`: Static and dynamic data masking with FPE
+/// - `KeyStore`: Hierarchical key management (MEK/DEK) with envelope encryption
+/// - `AuditVault`: Fine-grained auditing with blockchain-backed tamper detection
+/// - `VpdEngine`: Virtual Private Database with row-level security
+/// - `PrivilegeAnalyzer`: Least privilege analysis and role mining
+///
+/// **Target LOC:** 3,000+ lines
+pub mod security_vault;
+
 /// Monitoring, metrics, and profiling
 ///
 /// Real-time performance metrics, query profiling, and resource governance.
@@ -305,6 +343,30 @@ pub mod inmemory;
 /// **Target LOC:** 3,000+ lines
 pub mod multitenancy;
 
+/// Multi-Tenant Architecture Engine
+///
+/// Oracle Multitenant-compatible architecture with Pluggable Databases (PDBs),
+/// Container Database (CDB), hot cloning, online relocation, and advanced resource isolation.
+///
+/// **Key Components:**
+/// - `ContainerDatabase`: CDB root with PDB lifecycle management
+/// - `PluggableDatabase`: Fully isolated tenant databases with lifecycle operations
+/// - `ResourceIsolator`: Per-tenant CPU, memory, I/O, and storage limits
+/// - `TenantProvisioningService`: Automated tenant onboarding workflows
+/// - `CloningEngine`: Hot cloning with copy-on-write and snapshot support
+/// - `RelocationEngine`: Online PDB migration with minimal downtime
+/// - `SharedServices`: Common users, undo, and temp tablespaces
+/// - `MeteringEngine`: Usage tracking, billing, and quota enforcement
+///
+/// **Innovations:**
+/// - Kubernetes-native tenant management
+/// - Serverless PDB scaling
+/// - Cross-cloud tenant portability
+/// - AI-driven resource optimization
+///
+/// **Target LOC:** 3,000+ lines
+pub mod multitenant;
+
 // ============================================================================
 // Graph Database Engine
 // ============================================================================
@@ -355,6 +417,30 @@ pub mod triggers;
 /// Multi-datacenter replication, logical and physical replication, and conflict resolution.
 pub mod replication;
 
+/// Advanced Replication Engine
+///
+/// Enterprise-grade replication system with Oracle-like capabilities including multi-master
+/// replication, logical replication, sharding, and global data services.
+///
+/// **Key Components:**
+/// - `MultiMasterReplication`: Bidirectional replication with conflict detection and quorum writes
+/// - `LogicalReplication`: Row-level replication with filtering, transformation, and schema evolution
+/// - `ShardingEngine`: Hash, range, list, and composite sharding with auto-rebalancing
+/// - `GlobalDataServices`: Region-aware routing, load balancing, and failover
+/// - `ConflictResolver`: CRDT-based and traditional conflict resolution strategies
+/// - `ReplicationMonitor`: Real-time monitoring with alerts and dashboards
+/// - `ApplyEngine`: Parallel change application with dependency tracking
+/// - `XaTransactionManager`: Distributed two-phase commit protocol
+///
+/// **Key Innovations:**
+/// - CRDT-based conflict-free replication (LWW-Register, G-Counter, PN-Counter, OR-Set)
+/// - ML-based conflict prediction and prevention
+/// - Adaptive replication topology based on workload
+/// - Zero-downtime shard migration
+///
+/// **Target LOC:** 3,000+ lines
+pub mod advanced_replication;
+
 // ============================================================================
 // Clustering and High Availability
 // ============================================================================
@@ -371,6 +457,30 @@ pub mod replication;
 ///
 /// **Target LOC:** 3,000+ lines
 pub mod clustering;
+
+/// Real Application Clusters (RAC) Engine
+///
+/// Oracle RAC-like clustering with Cache Fusion technology for shared-disk clustering,
+/// high availability, and horizontal scalability across multiple instances.
+///
+/// **Key Components:**
+/// - `CacheFusionCoordinator`: Direct memory-to-memory block transfers with GCS/GES
+/// - `GlobalResourceDirectory`: Resource ownership tracking and dynamic remastering
+/// - `ClusterInterconnect`: High-speed message passing and heartbeat monitoring
+/// - `InstanceRecoveryManager`: Automatic failure detection and recovery
+/// - `ParallelQueryCoordinator`: Cross-instance parallel query execution
+///
+/// **Features:**
+/// - Cache Fusion protocol with zero-copy transfers
+/// - Global Cache Service (GCS) for block management
+/// - Global Enqueue Service (GES) for distributed locking
+/// - Split-brain detection and network partition handling
+/// - Automatic instance recovery with redo log replay
+/// - Parallel query execution across cluster nodes
+/// - Resource affinity and load balancing
+///
+/// **Target LOC:** 3,000+ lines
+pub mod rac;
 
 // ============================================================================
 // Performance Optimization
@@ -401,6 +511,35 @@ pub mod performance;
 /// **Target LOC:** 3,000+ lines
 pub mod enterprise;
 
+/// Orchestration Framework
+///
+/// Provides comprehensive orchestration infrastructure for coordinating all RustyDB
+/// enterprise modules with actor-based coordination, service registry, dependency
+/// injection, circuit breakers, health aggregation, and graceful degradation.
+///
+/// **Key Components:**
+/// - `ActorSystem`: Actor-based coordination with async message passing
+/// - `ServiceRegistry`: Unified service registry and dependency injection
+/// - `DependencyGraph`: Dependency resolution with cycle detection
+/// - `CircuitBreaker`: Fault tolerance and cascading failure prevention
+/// - `HealthAggregator`: Health monitoring and aggregation
+/// - `PluginRegistry`: Plugin architecture for extensibility
+/// - `DegradationStrategy`: Graceful degradation under load
+/// - `RecoveryManager`: Unified error handling and recovery
+///
+/// **Features:**
+/// - Actor-based coordination using async message passing
+/// - Circuit breaker patterns for fault tolerance
+/// - Service mesh-like internal communication
+/// - Dynamic feature flag system
+/// - Unified lifecycle management for all components
+/// - Health aggregation and cascading failure prevention
+/// - Dependency graph resolution with cycle detection
+/// - Graceful degradation strategies
+///
+/// **Target LOC:** 3,000+ lines
+pub mod orchestration;
+
 // ============================================================================
 // Streaming and Change Data Capture
 // ============================================================================
@@ -420,6 +559,33 @@ pub mod enterprise;
 ///
 /// **Target LOC:** 3,000+ lines
 pub mod streams;
+
+/// Event Processing and Complex Event Processing (CEP) Engine
+///
+/// Comprehensive event stream processing with Oracle Streams-like capabilities,
+/// complex event processing, windowing, continuous queries, and event sourcing.
+///
+/// **Key Components:**
+/// - `EventStream`: Event stream management with partitioning and consumer groups
+/// - `PatternMatcher`: CEP with MATCH_RECOGNIZE-like pattern matching
+/// - `WindowManager`: Tumbling, sliding, session, and hopping windows
+/// - `StreamOperators`: Filter, map, aggregations, joins, TopN, deduplication
+/// - `ContinuousQuery`: Continuous queries with incremental view maintenance
+/// - `EventStore`: Event sourcing with snapshots and replay
+/// - `Connectors`: Kafka-compatible, JDBC, file, HTTP webhook connectors
+/// - `StreamAnalytics`: Real-time dashboards, anomaly detection, trend analysis
+///
+/// **Features:**
+/// - Out-of-order event handling with watermarks
+/// - Exactly-once processing semantics
+/// - Incremental checkpointing for fault tolerance
+/// - GPU-accelerated pattern matching
+/// - ML model serving in streams
+/// - Event correlation and hierarchies
+/// - Predictive analytics and alert generation
+///
+/// **Target LOC:** 3,000+ lines
+pub mod event_processing;
 
 // ============================================================================
 // Machine Learning
@@ -447,6 +613,34 @@ pub mod streams;
 ///
 /// **Target LOC:** 3,000+ lines
 pub mod ml;
+
+/// Advanced In-Database Machine Learning Engine
+///
+/// Next-generation ML engine with comprehensive production features including AutoML,
+/// time series forecasting, federated learning, and GPU acceleration.
+///
+/// **Key Components:**
+/// - `MLEngine`: Core orchestration with zero-copy integration and GPU support
+/// - `Algorithms`: Linear/Logistic Regression, Decision Trees, Random Forest,
+///   Gradient Boosting, K-Means, DBSCAN, Naive Bayes, SVM, Neural Networks
+/// - `FeatureEngine`: Normalization, standardization, one-hot encoding, binning,
+///   imputation, polynomial features, feature selection
+/// - `ModelStore`: Versioning, serialization, A/B testing, deployment pipeline
+/// - `ScoringEngine`: Batch/real-time predictions, PMML import/export, SHAP-like explanations
+/// - `AutoMLEngine`: Automated algorithm selection, hyperparameter tuning, cross-validation
+/// - `TimeSeriesEngine`: ARIMA, Exponential Smoothing, seasonality detection, anomaly detection
+/// - `TrainingEngine`: Mini-batch training, distributed coordination, early stopping,
+///   learning rate scheduling
+///
+/// **Innovations:**
+/// - Zero-copy integration with query engine
+/// - GPU acceleration interface (CUDA/OpenCL)
+/// - Federated learning support with differential privacy
+/// - Incremental model updates without full retraining
+/// - SQL-native ML operations
+///
+/// **Target LOC:** 3,700+ lines
+pub mod ml_engine;
 
 // ============================================================================
 // Re-exports for convenience
@@ -547,3 +741,262 @@ pub mod blockchain;
 ///
 /// **Target LOC:** 3,000+ lines
 pub mod workload;
+
+// ============================================================================
+// Spatial Database Engine
+// ============================================================================
+
+/// Spatial database engine for geospatial data
+///
+/// Oracle Spatial-compatible geospatial database engine with comprehensive
+/// vector and raster data support, spatial indexing, and analytical operations.
+///
+/// **Key Components:**
+/// - `Geometry`: Point, LineString, Polygon, and complex geometries
+/// - `SpatialIndex`: R-tree, Quadtree, and Grid-based spatial indexing
+/// - `Operators`: Topological operators, distance calculations, buffer operations
+/// - `Analysis`: K-nearest neighbors, clustering, Voronoi, Delaunay triangulation
+/// - `SRS`: Coordinate reference systems and transformations
+/// - `Raster`: Raster data types, algebra, and pyramids
+/// - `Network`: Road network routing and optimization
+///
+/// **Features:**
+/// - WKT/WKB/GeoJSON serialization
+/// - 3D and measured geometries
+/// - Spatial reference system transformations
+/// - Geodetic calculations (great circle distance)
+/// - Raster to vector conversion
+/// - Network shortest path (Dijkstra, A*)
+/// - Spatial clustering (DBSCAN, K-means)
+///
+/// **Target LOC:** 3,000+ lines
+pub mod spatial;
+
+// ============================================================================
+// Document Store / JSON Database
+// ============================================================================
+
+/// JSON Document Store Engine (Oracle SODA-like)
+///
+/// Complete NoSQL document database with JSON/BSON support, aggregation pipelines,
+/// change streams, and SQL/JSON integration.
+///
+/// **Key Components:**
+/// - `DocumentStore`: Main document store interface
+/// - `Document`: JSON document model with BSON and versioning
+/// - `Collection`: Document collection with schema validation
+/// - `JsonPath`: Full JSONPath query engine with filters
+/// - `IndexManager`: B-tree, full-text, compound, and TTL indexes
+/// - `QueryByExample`: MongoDB-like query syntax
+/// - `AggregationPipeline`: $match, $project, $group, $sort, $limit, $unwind, $lookup
+/// - `ChangeStreams`: Real-time change notifications with resume tokens
+/// - `SqlJsonFunctions`: JSON_TABLE, JSON_QUERY, JSON_VALUE, JSON_EXISTS
+///
+/// **Features:**
+/// - Multiple ID generation strategies (UUID, auto-increment, custom)
+/// - Document versioning and metadata tracking
+/// - Large document chunking support
+/// - Schema validation with JSON Schema
+/// - Collection-level settings and statistics
+/// - Recursive descent and array slicing in JSONPath
+/// - Full-text search with TF-IDF scoring
+/// - Geospatial query support
+/// - Multi-faceted aggregation
+/// - Document diff generation
+/// - IS JSON predicate
+/// - JSON generation functions (JSON_OBJECT, JSON_ARRAY, JSON_MERGEPATCH)
+///
+/// **Target LOC:** 3,000+ lines
+pub mod document_store;
+
+// ============================================================================
+// Query Optimizer Pro
+// ============================================================================
+
+/// Query Optimizer Pro - Advanced cost-based query optimization
+///
+/// Oracle-like query optimizer with advanced cost-based optimization, adaptive execution,
+/// SQL plan management, and machine learning-based cardinality estimation.
+///
+/// **Key Components:**
+/// - `CostModel`: CPU, I/O, network, and memory cost modeling with histogram-based cardinality estimation
+/// - `PlanGenerator`: Bottom-up dynamic programming with join enumeration (bushy, left-deep, right-deep)
+/// - `AdaptiveExecutor`: Runtime statistics feedback and automatic plan correction
+/// - `PlanBaselineManager`: SQL Plan Baselines with plan capture, evolution, and stability guarantees
+/// - `QueryTransformer`: Predicate pushdown, OR expansion, star transformation, MV rewrite
+/// - `HintParser`: Oracle-compatible optimizer hints with validation and conflict resolution
+///
+/// **Key Features:**
+/// - Multi-column statistics and selectivity estimation
+/// - Access path selection (seq scan, index scan, bitmap scan)
+/// - Join method selection (nested loop, hash, merge)
+/// - Subquery unnesting and view merging
+/// - Cardinality feedback loop and SQL Plan Directives
+/// - Query fingerprinting and plan caching
+/// - Machine learning-based cardinality estimation
+/// - Parallel plan search
+///
+/// **Target LOC:** 3,000+ lines
+pub mod optimizer_pro;
+
+// ============================================================================
+// Resource Management
+// ============================================================================
+
+/// Resource Manager for enterprise workload management
+///
+/// Oracle-like resource management with consumer groups, resource plans,
+/// CPU/I/O/memory scheduling, parallel execution control, and session management.
+///
+/// **Key Components:**
+/// - `ConsumerGroupManager`: Workload classification and user mapping
+/// - `ResourcePlanManager`: Resource plan definitions and scheduling
+/// - `CpuScheduler`: Fair-share and priority-based CPU scheduling
+/// - `IoScheduler`: I/O bandwidth and IOPS limiting with priority queues
+/// - `MemoryManager`: PGA limits, session quotas, and automatic memory management
+/// - `ParallelExecutionController`: Parallel degree limits and auto DOP calculation
+/// - `SessionController`: Active session pools and timeout management
+///
+/// **Innovations:**
+/// - ML-based workload prediction
+/// - Dynamic resource rebalancing
+/// - Container-aware resource limits
+/// - SLA-based resource allocation
+///
+/// **Target LOC:** 3,000+ lines
+pub mod resource_manager;
+
+// ============================================================================
+// I/O Layer - High-Performance I/O Engine
+// ============================================================================
+
+/// High-Performance I/O Layer
+///
+/// Cross-platform asynchronous I/O engine optimized for database workloads
+/// with Windows IOCP and Unix io_uring support.
+///
+/// **Key Components:**
+/// - `AsyncIoEngine`: Async I/O engine with completion-based model
+/// - `FileManager`: High-level file manager with batched operations
+/// - `IoRingBuffer`: Lock-free ring buffer for I/O queue
+/// - `BufferPool`: Pre-allocated aligned buffer pool for Direct I/O
+/// - `IoMetrics`: Comprehensive I/O metrics and performance monitoring
+/// - `WindowsIocp`: Windows I/O Completion Ports implementation
+/// - `IoUringEngine`: Linux io_uring implementation
+///
+/// **Features:**
+/// - Direct I/O (bypass OS cache)
+/// - Batched I/O operations (multiple pages per syscall)
+/// - Zero-copy where possible
+/// - Lock-free submission and completion queues
+/// - Page-aligned buffers (4KB) for Direct I/O
+/// - Fixed thread pool for I/O workers
+/// - Cross-platform abstraction (Windows IOCP / Unix io_uring)
+///
+/// **Target LOC:** 3,000+ lines
+pub mod io;
+
+// ============================================================================
+// SIMD Query Execution Engine
+// ============================================================================
+
+/// SIMD-Optimized Scan Engine
+///
+/// High-performance vectorized query execution using AVX2 SIMD instructions
+/// for processing 8-16 elements per instruction with zero-allocation scan loops.
+///
+/// **Key Components:**
+/// - `filter`: SIMD filter operations for predicate evaluation
+/// - `scan`: Columnar scanning with late materialization
+/// - `aggregate`: Vectorized SUM, COUNT, MIN, MAX, AVG operations
+/// - `string`: SIMD string comparison and pattern matching
+///
+/// **Performance Features:**
+/// - Processes 8-16 elements per SIMD instruction
+/// - Zero allocations in scan loop
+/// - Automatic fallback for non-AVX2 CPUs
+/// - Cache-oblivious algorithms
+/// - Explicit prefetch instructions for sequential access
+///
+/// **Target LOC:** 3,000+ lines
+pub mod simd;
+
+// ============================================================================
+// Lock-Free Concurrent Data Structures
+// ============================================================================
+
+/// Lock-Free Concurrent Data Structures
+///
+/// High-performance lock-free data structures for concurrent database operations
+/// with cache-line optimization and epoch-based memory reclamation.
+///
+/// **Key Components:**
+/// - `LockFreeQueue`: Michael-Scott lock-free FIFO queue
+/// - `LockFreeStack`: Treiber stack with ABA prevention
+/// - `ConcurrentHashMap`: Fine-grained locking hash map
+/// - `WorkStealingDeque`: Chase-Lev work-stealing deque
+/// - `Epoch`: Epoch-based memory reclamation system
+///
+/// **Performance Features:**
+/// - Cache-line aligned structures to prevent false sharing
+/// - Minimal CAS retries with exponential backoff
+/// - Optimized memory ordering (Relaxed where safe)
+/// - Batch operations for improved throughput
+/// - Per-core pools to reduce contention
+///
+/// **Safety:**
+/// - Every unsafe block has safety comments
+/// - Clear ownership semantics
+/// - Documented memory ordering guarantees
+///
+/// **Target LOC:** 3,000+ lines
+pub mod concurrent;
+
+// ============================================================================
+// Benchmarking Suite
+// ============================================================================
+
+/// Performance Benchmark Suite
+///
+/// Comprehensive benchmarking infrastructure for measuring and optimizing
+/// critical database operations including storage, indexing, concurrency,
+/// and SIMD operations.
+///
+/// **Key Components:**
+/// - Page scan throughput benchmarks (sequential, random, filtered)
+/// - Index lookup latency benchmarks (B-tree, hash, range scans)
+/// - Buffer manager pin/unpin cycle benchmarks
+/// - Lock-free queue operation benchmarks
+/// - SIMD filter and aggregation benchmarks
+/// - Transaction overhead benchmarks
+/// - Memory allocation benchmarks
+///
+/// **Target LOC:** 1,200+ lines
+pub mod bench;
+
+// ============================================================================
+// Core Integration Layer
+// ============================================================================
+
+/// Core Integration and Orchestration
+///
+/// Central coordination layer for all database subsystems including buffer pool,
+/// I/O engine, worker pools, memory arenas, and lifecycle management.
+///
+/// **Key Components:**
+/// - `DatabaseCore`: Main database coordinator with initialization and shutdown
+/// - `BufferPoolManager`: Buffer pool with CLOCK eviction policy
+/// - `IoEngine`: High-performance I/O engine with thread pool
+/// - `WorkerPool`: Worker thread pool for query execution
+/// - `MemoryArena`: Memory allocation and management
+/// - `CoreMetrics`: Metrics collection and monitoring
+///
+/// **Initialization Phases:**
+/// 1. Bootstrap: Configuration and logging
+/// 2. Foundation: Memory and I/O subsystems
+/// 3. Storage: Buffer pool initialization
+/// 4. Execution: Worker pool setup
+/// 5. Service: Monitoring and health checks
+///
+/// **Target LOC:** 1,700+ lines
+pub mod core;

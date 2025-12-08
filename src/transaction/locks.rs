@@ -2,9 +2,9 @@
 // Provides hierarchical locking with intent locks, deadlock detection,
 // lock escalation, and multi-granularity locking
 
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 use parking_lot::{Mutex, RwLock, Condvar};
 use serde::{Deserialize, Serialize};
 use crate::{Result, DbError};

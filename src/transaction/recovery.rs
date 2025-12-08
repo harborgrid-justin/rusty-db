@@ -2,19 +2,19 @@
 // Implements Analysis, Redo, Undo phases for crash recovery,
 // fuzzy checkpointing, media recovery, and point-in-time recovery
 
-use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
+use std::collections::{HashMap, BTreeMap};
 use std::path::{Path, PathBuf};
-use std::fs::{File, OpenOptions};
-use std::io::{Write as IoWrite, Read, Seek, SeekFrom};
+use std::io::{Write as IoWrite, Read};
 use std::sync::Arc;
-use std::time::{SystemTime, Duration};
-use parking_lot::{RwLock, Mutex};
+use std::time::SystemTime;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::{Result, DbError};
 use super::TransactionId;
 use super::wal::{WALManager, WALEntry, LogRecord, LSN, PageId};
 
 /// Recovery state
+#[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RecoveryState {
     NotStarted,

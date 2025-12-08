@@ -2,12 +2,12 @@
 // Centralized backup tracking and management across databases
 
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::fs::{File, create_dir_all};
 use std::io::{Read, Write};
 use std::time::{SystemTime, Duration};
-use std::collections::{HashMap, BTreeMap, HashSet, VecDeque};
-use parking_lot::{Mutex, RwLock};
+use std::collections::{HashMap, BTreeMap};
+use parking_lot::RwLock;
 use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
@@ -199,7 +199,7 @@ pub struct ArchivedRedoLog {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ArchiveLogStatus {
     Available,
-    Backed_up,
+    BackedUp,
     Deleted,
     Expired,
 }
