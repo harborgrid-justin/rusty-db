@@ -2,12 +2,12 @@
 /// Provides hot/warm/cold data classification with automatic migration
 /// and tier-specific compression strategies
 
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::time::{Duration};
+use std::collections::{HashMap, VecDeque};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, SystemTime, Instant};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::storage::page::Page;
 use crate::common::PageId;
 
@@ -274,7 +274,7 @@ impl CompressionEngine {
         for chunk in data.chunks(2) {
             if chunk.len() == 2 {
                 let count = chunk[0];
-                let _value = chunk[1];
+                let value = chunk[1];
                 decompressed.extend(std::iter::repeat(value).take(count as usize));
             }
         }

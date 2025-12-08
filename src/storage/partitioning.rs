@@ -8,8 +8,10 @@
 /// - Partition pruning optimization
 /// - Dynamic partition management
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use std::collections::HashMap;
+use std::sync::Mutex;
+use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 
 /// Partitioning strategy
@@ -312,7 +314,7 @@ impl PartitionManager {
     
     fn hash_partition(value: &str, num_partitions: usize) -> String {
         // Simple hash function for partitioning
-        let _hash = value.bytes().fold(0u64, |acc, b| {
+        let hash = value.bytes().fold(0u64, |acc, b| {
             acc.wrapping_mul(31).wrapping_add(b as u64)
         });
         
@@ -1562,7 +1564,7 @@ pub mod parallel {
             let mut total_rows = 0;
             
             for (partition, rows) in data_by_partition {
-                let _result = self.load_partition(table, &partition, rows)?;
+                let result = self.load_partition(table, &partition, rows)?;
                 loaded_partitions.push(partition);
                 total_rows += result.rows_loaded;
             }

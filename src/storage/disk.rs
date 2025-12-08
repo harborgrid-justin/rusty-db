@@ -1044,7 +1044,7 @@ impl DiskManager {
 
     /// Calculate current IOPS
     pub fn calculate_iops(&self, duration_secs: f64) -> f64 {
-        let _stats = self.stats.read();
+        let stats = self.stats.read();
         stats.total_iops as f64 / duration_secs
     }
 }

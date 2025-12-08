@@ -42,13 +42,14 @@ use crate::common::PageId;
 use crate::error::Result;
 use crate::storage::disk::DiskManager;
 use crate::storage::page::Page;
+use crate::DbError;
 
 use parking_lot::{Mutex, RwLock};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread;
-use std::time::{Duration};
+use std::time::{Duration, Instant};
 
 // ============================================================================
 // Configuration
@@ -177,7 +178,7 @@ impl PageTable {
         // SAFETY: partition_idx is guaranteed to be < num_partitions
         let partition = unsafe { self.partitions.get_unchecked(partition_idx) };
 
-        let _result = partition.read().get(&page_id).copied();
+        let result = partition.read().get(&page_id).copied();
 
         if result.is_some() {
             self.hits.fetch_add(1, Ordering::Relaxed);
@@ -334,7 +335,7 @@ impl FreeFrameManager {
             }
 
             // Try stealing from other cores
-            for _i in 0..self.num_cores {
+            for i in 0..self.num_cores {
                 let steal_core = (core_id + i) % self.num_cores;
                 if let Some(frame_id) = pools[steal_core].try_allocate() {
                     self.per_core_allocations.fetch_add(1, Ordering::Relaxed);
@@ -1497,7 +1498,7 @@ pub mod windows {
             let file_handle = file.as_raw_handle();
 
             // Associate file with completion port
-            let _result = unsafe {
+            let result = unsafe {
                 CreateIoCompletionPort(
                     file_handle,
                     self.completion_port,
@@ -1542,7 +1543,7 @@ pub mod windows {
             let offset = page_id as u64 * self.page_size as u64;
             let mut overlapped = Box::new(IocpOverlapped::new(page_id, offset, IocpOpType::Read));
 
-            let _result = unsafe {
+            let result = unsafe {
                 ReadFile(
                     file.as_raw_handle(),
                     buffer.data_mut().as_mut_ptr(),
@@ -1592,7 +1593,7 @@ pub mod windows {
             let offset = page_id as u64 * self.page_size as u64;
             let mut overlapped = Box::new(IocpOverlapped::new(page_id, offset, IocpOpType::Write));
 
-            let _result = unsafe {
+            let result = unsafe {
                 WriteFile(
                     file.as_raw_handle(),
                     buffer.data().as_ptr(),
@@ -1639,7 +1640,7 @@ pub mod windows {
                 let mut completion_key: usize = 0;
                 let mut overlapped_ptr: *mut IocpOverlapped = ptr::null_mut();
 
-                let _result = unsafe {
+                let result = unsafe {
                     GetQueuedCompletionStatus(
                         self.completion_port,
                         &mut bytes_transferred,
@@ -1701,7 +1702,7 @@ pub mod windows {
 
         /// Post a manual completion to the IOCP (useful for signaling shutdown).
         pub fn post_completion(&self, page_id: PageId, bytes: u32) -> Result<()> {
-            let _result = unsafe {
+            let result = unsafe {
                 PostQueuedCompletionStatus(
                     self.completion_port,
                     bytes,

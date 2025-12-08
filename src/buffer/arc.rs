@@ -29,7 +29,7 @@
 
 use crate::buffer::eviction::{EvictionPolicy, EvictionStats};
 use crate::buffer::page_cache::{BufferFrame, FrameId};
-use std::collections::{HashMap};
+use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use parking_lot::Mutex;
@@ -333,7 +333,7 @@ impl ArcEvictionPolicy {
 
     /// Get list sizes (for monitoring and debugging)
     pub fn list_sizes(&self) -> (usize, usize, usize, usize) {
-        let _state = self.state.lock();
+        let state = self.state.lock();
         (state.t1.len(), state.t2.len(), state.b1.len(), state.b2.len())
     }
 
@@ -456,7 +456,7 @@ impl EvictionPolicy for ArcEvictionPolicy {
     }
 
     fn stats(&self) -> EvictionStats {
-        let _state = self.state.lock();
+        let state = self.state.lock();
         let victim_searches = self.victim_searches.load(Ordering::Relaxed);
 
         EvictionStats {

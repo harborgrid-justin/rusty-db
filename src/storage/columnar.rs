@@ -7,6 +7,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::error::Result;
+use crate::DbError;
 
 /// Column data type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -227,7 +228,7 @@ impl DeltaEncoder {
         self.base_value = values[0];
         self.deltas.clear();
 
-        for _i in 1..values.len() {
+        for i in 1..values.len() {
             let delta = (values[i] - values[i - 1]) as i32;
             self.deltas.push(delta);
         }
@@ -256,7 +257,7 @@ impl DeltaEncoder {
         }
 
         // Check if deltas are small enough to fit in i32
-        for _i in 1..values.len() {
+        for i in 1..values.len() {
             let delta = values[i] - values[i - 1];
             if delta < i32::MIN as i64 || delta > i32::MAX as i64 {
                 return false;
@@ -585,7 +586,7 @@ impl ColumnarTable {
 
         let mut result = Vec::new();
 
-        for _i in 0..self.row_count {
+        for i in 0..self.row_count {
             let mut row = HashMap::new();
 
             for col_name in column_names {

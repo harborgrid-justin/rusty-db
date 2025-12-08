@@ -20,7 +20,7 @@
 
 use crate::buffer::page_cache::{BufferFrame, FrameId};
 use parking_lot::{Mutex, RwLock};
-use std::collections::{HashMap};
+use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
 
@@ -276,7 +276,7 @@ impl LruEvictionPolicy {
     /// Create a new LRU policy
     pub fn new(num_frames: usize) -> Self {
         let mut list = Vec::with_capacity(num_frames);
-        for _i in 0..num_frames {
+        for i in 0..num_frames {
             list.push(LruNode {
                 frame_id: i as FrameId,
                 prev: if i > 0 { Some(i - 1) } else { None },
@@ -408,7 +408,7 @@ impl EvictionPolicy for LruEvictionPolicy {
         let mut list = self.list.write();
         let num_frames = list.len();
 
-        for _i in 0..num_frames {
+        for i in 0..num_frames {
             list[i].prev = if i > 0 { Some(i - 1) } else { None };
             list[i].next = if i < num_frames - 1 { Some(i + 1) } else { None };
         }

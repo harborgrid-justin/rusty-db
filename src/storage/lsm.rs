@@ -2,13 +2,14 @@
 /// Optimized for write-heavy and time-series workloads
 /// Features: Bloom filters, leveled compaction, concurrent memtable switching
 
-use std::collections::{BTreeMap};
-use std::sync::Arc;
+use std::collections::{BTreeMap, VecDeque};
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use crate::error::Result;
+use crate::DbError;
 
 /// LSM key type
 pub type LsmKey = Vec<u8>;
@@ -92,14 +93,14 @@ impl BloomFilter {
     }
 
     fn insert(&mut self, key: &[u8]) {
-        for _i in 0..self.num_hashes {
+        for i in 0..self.num_hashes {
             let idx = self.hash(key, i);
             self.bits[idx] = true;
         }
     }
 
     fn contains(&self, key: &[u8]) -> bool {
-        for _i in 0..self.num_hashes {
+        for i in 0..self.num_hashes {
             let idx = self.hash(key, i);
             if !self.bits[idx] {
                 return false;
@@ -370,7 +371,7 @@ pub struct LsmStats {
 impl LsmTree {
     pub fn new(memtable_size: usize, num_levels: usize) -> Self {
         let mut levels = Vec::new();
-        for _i in 0..num_levels {
+        for i in 0..num_levels {
             let max_size = (10_usize.pow(i as u32 + 1)) * 10 * 1024 * 1024; // 10MB * 10^level
             levels.push(Level::new(i, max_size));
         }

@@ -43,6 +43,7 @@
 //! - Not as mature as Linux support
 
 use crate::error::Result;
+use crate::DbError;
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -370,7 +371,7 @@ impl HugePageAllocator {
 
     /// Get memory efficiency (percentage of memory that uses huge pages)
     pub fn huge_page_efficiency(&self) -> f64 {
-        let _stats = self.stats.lock();
+        let stats = self.stats.lock();
         let total = stats.huge_page_bytes + stats.standard_page_bytes;
 
         if total > 0 {

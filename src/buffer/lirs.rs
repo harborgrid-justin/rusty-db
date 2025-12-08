@@ -35,7 +35,7 @@
 
 use crate::buffer::eviction::{EvictionPolicy, EvictionStats};
 use crate::buffer::page_cache::{BufferFrame, FrameId};
-use std::collections::{HashMap};
+use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use parking_lot::Mutex;
@@ -351,7 +351,7 @@ impl LirsEvictionPolicy {
 
     /// Get LIR/HIR sizes (for monitoring)
     pub fn lir_hir_sizes(&self) -> (usize, usize) {
-        let _state = self.state.lock();
+        let state = self.state.lock();
         (state.current_lir_count, state.queue.len())
     }
 
@@ -501,7 +501,7 @@ impl EvictionPolicy for LirsEvictionPolicy {
     }
 
     fn stats(&self) -> EvictionStats {
-        let _state = self.state.lock();
+        let state = self.state.lock();
         let victim_searches = self.victim_searches.load(Ordering::Relaxed);
 
         EvictionStats {

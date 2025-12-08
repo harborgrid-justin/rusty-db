@@ -13,8 +13,8 @@
 
 use crate::common::PageId;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
-use std::sync::Arc;
-use std::time::{Duration};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 use parking_lot::{RwLock};
 
 /// Standard page size (4KB) - Windows default page size
