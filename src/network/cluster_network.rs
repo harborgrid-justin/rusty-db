@@ -227,10 +227,14 @@ impl ClusterTopologyManager {
             manager.protocol_loop().await;
         });
 
-        // Start UDP message receiver
+        // Start UDP message receiver - runs in dedicated tokio task
+        // Note: Using block_in_place to avoid Send requirements on parking_lot guards
         let manager = self.clone_arc();
-        tokio::spawn(async move {
-            manager.receive_loop().await;
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async move {
+                manager.receive_loop().await;
+            });
         });
 
         // Start failure detector
@@ -656,7 +660,9 @@ impl ClusterTopologyManager {
         loop {
             interval.tick().await;
 
-            if let Some(status) = self.partition_detector.detect_partition(&self.members.read()).await {
+            // Clone members to avoid holding lock across await
+            let members_snapshot = self.members.read().clone();
+            if let Some(status) = self.partition_detector.detect_partition_sync(&members_snapshot) {
                 if status.detected {
                     warn!("Network partition detected: {} partitions", status.partitions.len());
                     *self.metrics.partition_detections.write() += 1;
@@ -672,7 +678,7 @@ impl ClusterTopologyManager {
     async fn resolve_partition(&self, status: PartitionStatus) {
         info!("Attempting to resolve network partition");
 
-        // Find the partition with quorum
+        // Find the partition with quorum - read lock released before await
         let quorum_size = self.quorum_config.read().min_nodes;
         let largest_partition = status.partitions
             .iter()
@@ -682,6 +688,7 @@ impl ClusterTopologyManager {
         if let Some(partition) = largest_partition {
             if partition.len() >= quorum_size {
                 // This partition has quorum, mark others as suspect
+                // Clone keys to avoid holding lock across await
                 let all_nodes: HashSet<_> = self.members.read().keys().cloned().collect();
                 let minority_nodes: Vec<_> = all_nodes.difference(&partition).cloned().collect();
 
@@ -807,8 +814,23 @@ impl PartitionDetector {
         }
     }
 
+    /// Detect network partitions using reachability analysis (sync version)
+    pub fn detect_partition_sync(
+        &self,
+        members: &HashMap<NodeId, NodeInfo>,
+    ) -> Option<PartitionStatus> {
+        self.detect_partition_inner(members)
+    }
+
     /// Detect network partitions using reachability analysis
     pub async fn detect_partition(
+        &self,
+        members: &HashMap<NodeId, NodeInfo>,
+    ) -> Option<PartitionStatus> {
+        self.detect_partition_inner(members)
+    }
+
+    fn detect_partition_inner(
         &self,
         members: &HashMap<NodeId, NodeInfo>,
     ) -> Option<PartitionStatus> {
@@ -1791,14 +1813,17 @@ impl FailoverCoordinator {
     pub async fn start(&self) -> Result<()> {
         info!("Starting failover coordinator for node {}", self.local_node);
 
-        // Subscribe to membership events
+        // Subscribe to membership events - runs in dedicated thread
         let mut events = self.topology.subscribe();
         let coordinator = self.clone_for_task();
 
-        tokio::spawn(async move {
-            while let Ok(event) = events.recv().await {
-                coordinator.handle_membership_event(event).await;
-            }
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async move {
+                while let Ok(event) = events.recv().await {
+                    coordinator.handle_membership_event(event).await;
+                }
+            });
         });
 
         // Start leader election

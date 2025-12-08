@@ -261,8 +261,10 @@ impl SummaryMetric {
         obs.push(value);
 
         // Limit samples
-        if obs.len() > self.max_samples {
-            obs.drain(0..obs.len() - self.max_samples);
+        let max_samples = self.max_samples;
+        if obs.len() > max_samples {
+            let drain_count = obs.len() - max_samples;
+            obs.drain(0..drain_count);
         }
     }
 

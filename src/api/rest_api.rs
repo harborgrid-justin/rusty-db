@@ -309,7 +309,7 @@ pub struct QueryRequest {
     pub transaction_id: Option<TransactionId>,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct QueryResponse {
     /// Query execution ID
     pub query_id: String,
@@ -339,7 +339,7 @@ pub struct QueryResponse {
     pub has_more: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ColumnMetadata {
     pub name: String,
     pub data_type: String,
@@ -975,12 +975,9 @@ impl RestApiServer {
         // }
 
         // Add middleware layers
-        let middleware_stack = ServiceBuilder::new()
+        let router = router
             .layer(TraceLayer::new_for_http())
-            .layer(TimeoutLayer::new(Duration::from_secs(self.config.request_timeout_secs)))
-            .layer(RequestBodyLimitLayer::new(self.config.max_body_size));
-
-        let router = router.layer(middleware_stack);
+            .layer(TimeoutLayer::new(Duration::from_secs(self.config.request_timeout_secs)));
 
         // Add CORS if enabled
         if self.config.enable_cors {
