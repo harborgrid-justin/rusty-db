@@ -7,6 +7,7 @@ pub mod distributed;
 pub mod wal;
 pub mod locks;
 pub mod recovery;
+pub mod occ;
 
 use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
 use std::path::{Path, PathBuf};

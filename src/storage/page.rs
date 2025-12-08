@@ -2,11 +2,55 @@ use serde::{Deserialize, Serialize};
 use std::mem::size_of;
 use crc32fast::Hasher;
 
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
+
 pub type PageId = u32;
 pub type SlotId = u16;
 
 const SLOT_SIZE: usize = size_of::<Slot>();
 const PAGE_HEADER_SIZE: usize = size_of::<PageHeader>();
+
+/// Hardware-accelerated CRC32C checksum (SSE4.2 on x86_64)
+#[inline]
+fn hardware_crc32c(data: &[u8]) -> u32 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if is_x86_feature_detected!("sse4.2") {
+            return unsafe { hardware_crc32c_impl(data) };
+        }
+    }
+    // Fallback to software CRC32
+    let mut hasher = Hasher::new();
+    hasher.update(data);
+    hasher.finalize()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse4.2")]
+unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
+    let mut crc: u32 = 0xFFFFFFFF;
+    let mut ptr = data.as_ptr();
+    let mut remaining = data.len();
+
+    // Process 8 bytes at a time for maximum throughput
+    while remaining >= 8 {
+        let value = (ptr as *const u64).read_unaligned();
+        crc = _mm_crc32_u64(crc as u64, value) as u32;
+        ptr = ptr.add(8);
+        remaining -= 8;
+    }
+
+    // Process remaining bytes
+    while remaining > 0 {
+        let value = *ptr;
+        crc = _mm_crc32_u8(crc, value);
+        ptr = ptr.add(1);
+        remaining -= 1;
+    }
+
+    !crc
+}
 
 /// A page represents a fixed-size block of data
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,10 +112,9 @@ impl Page {
     }
 
     fn compute_checksum(&self) -> u32 {
-        let mut hasher = Hasher::new();
+        // Use hardware-accelerated CRC32C
         // Hash everything except the checksum field itself
-        hasher.update(&self.data[4..]);
-        hasher.finalize()
+        hardware_crc32c(&self.data[4..])
     }
 
     pub fn update_checksum(&mut self) {

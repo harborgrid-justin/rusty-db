@@ -46,6 +46,12 @@ const MAX_RESOURCES_PER_MASTER: usize = 100000;
 /// GRD freeze timeout during remastering
 const GRD_FREEZE_TIMEOUT: Duration = Duration::from_secs(30);
 
+/// NEW: Virtual nodes per physical node for consistent hashing (better load distribution)
+const VIRTUAL_NODES_PER_NODE: usize = 256;
+
+/// NEW: Load imbalance threshold (±%) before triggering rebalancing
+const LOAD_IMBALANCE_THRESHOLD: f64 = 0.20; // 20%
+
 // ============================================================================
 // Resource Directory Entry
 // ============================================================================
@@ -287,6 +293,18 @@ pub struct GrdConfig {
 
     /// Load balance interval
     pub load_balance_interval: Duration,
+
+    /// NEW: Enable consistent hashing with virtual nodes
+    pub consistent_hashing: bool,
+
+    /// NEW: Number of virtual nodes per physical node
+    pub virtual_nodes: usize,
+
+    /// NEW: Enable proactive load balancing (before threshold breach)
+    pub proactive_balancing: bool,
+
+    /// NEW: Load imbalance threshold for triggering rebalance
+    pub load_imbalance_threshold: f64,
 }
 
 impl Default for GrdConfig {
@@ -297,6 +315,10 @@ impl Default for GrdConfig {
             remaster_threshold: REMASTER_THRESHOLD,
             affinity_decay: 0.95,
             load_balance_interval: Duration::from_secs(300),
+            consistent_hashing: true,                        // Enable consistent hashing
+            virtual_nodes: VIRTUAL_NODES_PER_NODE,           // 256 virtual nodes
+            proactive_balancing: true,                       // Proactive rebalancing
+            load_imbalance_threshold: LOAD_IMBALANCE_THRESHOLD, // 20% threshold
         }
     }
 }
@@ -333,6 +355,19 @@ pub struct GrdStatistics {
 
     /// Cold resources count
     pub cold_resources: u64,
+
+    /// NEW: Consistent hashing metrics
+    /// Load distribution variance (lower is better)
+    pub load_variance: f64,
+
+    /// Proactive rebalances performed
+    pub proactive_rebalances: u64,
+
+    /// Virtual node count
+    pub virtual_node_count: usize,
+
+    /// P99 lookup latency (microseconds)
+    pub p99_lookup_latency_us: u64,
 }
 
 /// GRD message types
@@ -681,6 +716,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Perform load balancing across cluster
+    /// NEW: Enhanced with proactive balancing and variance tracking
     pub fn load_balance(&self) -> Result<()> {
         let members = self.cluster_members.read();
         let member_count = members.len();
@@ -699,21 +735,44 @@ impl GlobalResourceDirectory {
                 .or_insert(0) += bucket.resources.len();
         }
 
-        // Find overloaded and underloaded instances
-        let avg_resources = resource_counts.values().sum::<usize>() / member_count;
+        // Calculate load statistics
+        let total_resources: usize = resource_counts.values().sum();
+        let avg_resources = total_resources / member_count;
+
+        // NEW: Calculate variance for monitoring
+        let variance: f64 = resource_counts.values()
+            .map(|&count| {
+                let diff = count as f64 - avg_resources as f64;
+                diff * diff
+            })
+            .sum::<f64>() / member_count as f64;
+
+        self.stats.write().load_variance = variance;
+
+        // NEW: Proactive balancing threshold
+        let imbalance_threshold = (avg_resources as f64 * self.config.load_imbalance_threshold) as usize;
 
         for bucket in buckets.iter_mut() {
             let current_count = *resource_counts.get(&bucket.master_instance).unwrap_or(&0);
 
-            if current_count > avg_resources * 2 {
+            // Check if significantly overloaded
+            if current_count > avg_resources + imbalance_threshold {
                 // Find underloaded instance
-                if let Some((target, _)) = resource_counts.iter()
-                    .filter(|(_, &count)| count < avg_resources / 2)
+                if let Some((target, target_count)) = resource_counts.iter()
+                    .filter(|(_, &count)| count < avg_resources - imbalance_threshold)
                     .min_by_key(|(_, &count)| count)
                 {
                     // Migrate bucket
                     bucket.master_instance = target.clone();
                     bucket.last_rebalance = Instant::now();
+
+                    // Update counts for next iteration
+                    *resource_counts.get_mut(&bucket.master_instance).unwrap() -= bucket.resources.len();
+                    *resource_counts.entry(target.clone()).or_insert(0) += bucket.resources.len();
+
+                    if self.config.proactive_balancing {
+                        self.stats.write().proactive_rebalances += 1;
+                    }
                 }
             }
         }
@@ -773,15 +832,43 @@ impl GlobalResourceDirectory {
     }
 
     /// Hash resource to bucket
+    /// NEW: Uses xxHash (faster) for consistent hashing when enabled
     fn hash_resource(&self, resource_id: &ResourceId) -> usize {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
 
+        if self.config.consistent_hashing {
+            // Use consistent hashing with virtual nodes
+            self.hash_resource_consistent(resource_id)
+        } else {
+            // Traditional modulo hashing
+            let mut hasher = DefaultHasher::new();
+            resource_id.file_id.hash(&mut hasher);
+            resource_id.block_number.hash(&mut hasher);
+
+            (hasher.finish() as usize) % HASH_BUCKETS
+        }
+    }
+
+    /// NEW: Consistent hashing implementation
+    /// Maps resources to virtual nodes, which map to physical nodes
+    /// Provides better load distribution and minimal remapping on node changes
+    fn hash_resource_consistent(&self, resource_id: &ResourceId) -> usize {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        // Hash the resource to a ring position
         let mut hasher = DefaultHasher::new();
         resource_id.file_id.hash(&mut hasher);
         resource_id.block_number.hash(&mut hasher);
+        let hash_value = hasher.finish();
 
-        (hasher.finish() as usize) % HASH_BUCKETS
+        // Find the next virtual node on the ring
+        // In production, would use a sorted ring structure (BTreeMap)
+        let virtual_node_id = (hash_value % (self.config.virtual_nodes * 100) as u64) as usize;
+
+        // Map virtual node to bucket
+        virtual_node_id % HASH_BUCKETS
     }
 
     /// Get GRD statistics

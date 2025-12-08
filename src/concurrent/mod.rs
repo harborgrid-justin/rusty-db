@@ -11,6 +11,9 @@ pub mod queue;
 pub mod stack;
 pub mod hashmap;
 pub mod work_stealing;
+pub mod skiplist;
+pub mod rwlock_wp;
+pub mod hazard;
 
 // Re-export main types
 pub use epoch::{Epoch, EpochGuard, Atomic, Owned, Shared};
@@ -18,6 +21,9 @@ pub use queue::{LockFreeQueue, QueueNode};
 pub use stack::{LockFreeStack, StackNode};
 pub use hashmap::{ConcurrentHashMap, Bucket};
 pub use work_stealing::{WorkStealingDeque, Worker, Stealer};
+pub use skiplist::{LockFreeSkipList, SkipListStats};
+pub use rwlock_wp::{RwLockWP, RwLockReadGuard, RwLockWriteGuard};
+pub use hazard::{HazardGuard, HazardDomain, HazardScope, Protected, retire, HazardStats};
 
 /// Cache line size for padding to avoid false sharing
 pub const CACHE_LINE_SIZE: usize = 64;

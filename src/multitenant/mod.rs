@@ -146,7 +146,7 @@ pub mod metering;
 // ============================================================================
 
 pub use cdb::{
-    ContainerDatabase, CdbConfig, CdbMetadata, CdbRegistry, CdbResourcePool,
+    ContainerDatabase, CdbConfig, CdbRegistry, CdbResourcePool,
     SystemMetadata, BackgroundProcessManager,
 };
 

@@ -19,6 +19,8 @@ pub mod spatial;
 pub mod fulltext;
 pub mod advisor;
 pub mod partial;
+pub mod swiss_table;
+pub mod simd_bloom;
 
 use std::collections::BTreeMap;
 use parking_lot::RwLock;

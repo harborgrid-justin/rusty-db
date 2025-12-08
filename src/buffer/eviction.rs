@@ -822,6 +822,10 @@ pub enum EvictionPolicyType {
     Lru,
     TwoQ,
     LruK(usize),
+    /// ARC (Adaptive Replacement Cache) - self-tuning algorithm
+    Arc,
+    /// LIRS (Low Inter-reference Recency Set) - superior scan resistance
+    Lirs,
 }
 
 /// Create an eviction policy of the specified type
@@ -834,6 +838,8 @@ pub fn create_eviction_policy(
         EvictionPolicyType::Lru => Arc::new(LruEvictionPolicy::new(num_frames)),
         EvictionPolicyType::TwoQ => Arc::new(TwoQEvictionPolicy::new(num_frames)),
         EvictionPolicyType::LruK(k) => Arc::new(LruKEvictionPolicy::new(num_frames, k)),
+        EvictionPolicyType::Arc => Arc::new(crate::buffer::arc::ArcEvictionPolicy::new(num_frames)),
+        EvictionPolicyType::Lirs => Arc::new(crate::buffer::lirs::LirsEvictionPolicy::new(num_frames)),
     }
 }
 

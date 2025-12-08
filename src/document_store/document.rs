@@ -241,7 +241,9 @@ impl DocumentContent {
         match self {
             DocumentContent::Json(v) => Ok(v.clone()),
             DocumentContent::Bson(doc) => {
-                let json = bson::to_json(doc);
+                // Convert BSON to JSON via serialization
+                let json = serde_json::to_value(doc)
+                    .map_err(|e| crate::error::DbError::InvalidInput(format!("BSON to JSON conversion failed: {}", e)))?;
                 Ok(json)
             }
             DocumentContent::Bytes(bytes) => {
