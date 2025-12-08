@@ -131,6 +131,21 @@ pub mod catalog;
 /// **Target LOC:** 3,000+ lines
 pub mod index;
 
+/// Advanced Compression Engine
+///
+/// Oracle-like HCC (Hybrid Columnar Compression) and advanced compression algorithms
+/// for both OLAP and OLTP workloads with deduplication and tiered compression.
+///
+/// **Key Components:**
+/// - `HCCEngine`: Hybrid Columnar Compression for OLAP
+/// - `OLTPCompressor`: Update-friendly compression for transactional data
+/// - `DedupEngine`: Block-level deduplication with content-defined chunking
+/// - `TieredCompressionManager`: Temperature-based compression tiers
+/// - `Algorithms`: LZ4, Zstandard, Dictionary, Huffman, Arithmetic coding
+///
+/// **Target LOC:** 3,000+ lines
+pub mod compression;
+
 // ============================================================================
 // Transaction Layer - Concurrency control and ACID properties
 // ============================================================================
@@ -225,6 +240,20 @@ pub mod monitoring;
 /// **Target LOC:** 3,000+ lines
 pub mod backup;
 
+/// Flashback technology
+///
+/// Oracle-like time travel and point-in-time recovery capabilities.
+///
+/// **Key Components:**
+/// - `TimeTravelEngine`: AS OF TIMESTAMP/SCN queries
+/// - `VersionManager`: VERSIONS BETWEEN and row version tracking
+/// - `TableRestoreManager`: FLASHBACK TABLE implementation
+/// - `DatabaseFlashbackManager`: FLASHBACK DATABASE recovery
+/// - `TransactionFlashbackManager`: FLASHBACK TRANSACTION analysis
+///
+/// **Target LOC:** 3,000+ lines
+pub mod flashback;
+
 /// Constraint checking and validation
 ///
 /// Enforces integrity constraints including foreign keys, unique constraints, and check constraints.
@@ -242,6 +271,57 @@ pub mod constraints;
 ///
 /// **Target LOC:** 3,000+ lines
 pub mod analytics;
+
+/// In-Memory Column Store
+///
+/// Oracle-like in-memory database option with SIMD vectorization, dual-format architecture,
+/// and advanced compression for analytical workloads.
+///
+/// **Key Components:**
+/// - `ColumnStore`: Dual-format (row+column) storage
+/// - `HybridCompressor`: Advanced compression algorithms (dictionary, RLE, bit-packing, delta)
+/// - `VectorizedFilter`: SIMD-accelerated filtering
+/// - `VectorizedAggregator`: SIMD aggregations (SUM, AVG, MIN, MAX)
+/// - `PopulationManager`: Background population from disk
+/// - `HashJoinEngine`: Vectorized hash joins with Bloom filters
+///
+/// **Target LOC:** 3,000+ lines
+pub mod inmemory;
+
+/// Multi-Tenant Architecture
+///
+/// Oracle-like Pluggable Database (PDB) / Container Database (CDB) architecture with
+/// complete tenant isolation, resource governance, and self-service provisioning.
+///
+/// **Key Components:**
+/// - `ContainerDatabase`: CDB root container with PDB lifecycle management
+/// - `Tenant`: Tenant-level isolation and resource controls
+/// - `MemoryIsolator`: Memory isolation using Rust ownership
+/// - `IoBandwidthAllocator`: I/O bandwidth allocation with token bucket
+/// - `CpuScheduler`: Fair share CPU scheduling
+/// - `ConsolidationPlanner`: Intelligent tenant placement and rebalancing
+/// - `ProvisioningService`: Self-service tenant provisioning
+///
+/// **Target LOC:** 3,000+ lines
+pub mod multitenancy;
+
+// ============================================================================
+// Graph Database Engine
+// ============================================================================
+
+/// Graph database engine
+///
+/// Property graph database with PGQL-like queries, graph algorithms, and analytics.
+///
+/// **Key Components:**
+/// - `PropertyGraph`: Vertices, edges, and properties with multi-graph support
+/// - `QueryEngine`: PGQL-like pattern matching and path queries
+/// - `Algorithms`: PageRank, centrality, community detection, clustering
+/// - `Storage`: Adjacency list, CSR format, compression, and persistence
+/// - `Analytics`: Temporal graphs, ML features, and recommendations
+///
+/// **Target LOC:** 3,000+ lines
+pub mod graph;
 
 /// Database operations and maintenance
 ///
@@ -302,6 +382,73 @@ pub mod clustering;
 pub mod performance;
 
 // ============================================================================
+// Enterprise Integration Layer
+// ============================================================================
+
+/// Enterprise integration and orchestration
+///
+/// Provides enterprise-grade infrastructure for coordinating all subsystems including
+/// service bus, configuration management, feature flags, lifecycle management, and
+/// cross-cutting concerns.
+///
+/// **Key Components:**
+/// - `ServiceBus`: Async message routing and event-driven architecture
+/// - `ConfigManager`: Hierarchical configuration with hot-reload
+/// - `FeatureFlagManager`: Runtime feature toggles and A/B testing
+/// - `LifecycleManager`: Graceful startup/shutdown orchestration
+/// - `Cross-Cutting`: Tracing, circuit breakers, rate limiting
+///
+/// **Target LOC:** 3,000+ lines
+pub mod enterprise;
+
+// ============================================================================
+// Streaming and Change Data Capture
+// ============================================================================
+
+/// Streams and Change Data Capture (CDC)
+///
+/// Change data capture, event streaming, logical replication, and integration patterns.
+///
+/// **Key Components:**
+/// - `CDCEngine`: Change data capture from WAL
+/// - `EventPublisher`: Kafka-like event publishing
+/// - `EventSubscriber`: Consumer groups and subscriptions
+/// - `LogicalReplication`: Table-level replication
+/// - `OutboxProcessor`: Transactional outbox pattern
+/// - `EventStore`: Event sourcing support
+/// - `CQRSCoordinator`: CQRS pattern implementation
+///
+/// **Target LOC:** 3,000+ lines
+pub mod streams;
+
+// ============================================================================
+// Machine Learning
+// ============================================================================
+
+/// In-database machine learning engine
+///
+/// Provides comprehensive ML capabilities directly within the database,
+/// including model training, inference, and SQL integration without data export.
+///
+/// **Key Components:**
+/// - `MLEngine`: Core ML orchestration and model lifecycle management
+/// - `Algorithm`: Pure Rust ML algorithm implementations
+/// - `Preprocessor`: Data preprocessing and feature engineering
+/// - `InferenceEngine`: Real-time and batch prediction
+/// - `MLSqlParser`: SQL syntax extensions for ML operations
+///
+/// **Supported Algorithms:**
+/// - Linear Regression
+/// - Logistic Regression
+/// - Decision Trees (CART)
+/// - Random Forests
+/// - K-Means Clustering
+/// - Naive Bayes
+///
+/// **Target LOC:** 3,000+ lines
+pub mod ml;
+
+// ============================================================================
 // Re-exports for convenience
 // ============================================================================
 
@@ -359,3 +506,25 @@ pub fn print_info() {
     println!("{}", BUILD_INFO);
     println!("Rust Version: {}", env!("CARGO_PKG_RUST_VERSION"));
 }
+
+// ============================================================================
+// Autonomous Database Features
+// ============================================================================
+
+/// Autonomous database with ML-driven optimization
+///
+/// Self-driving database capabilities including automatic tuning, self-healing,
+/// intelligent indexing, and predictive analytics.
+///
+/// **Key Components:**
+/// - `AutoTuner`: ML-driven parameter optimization with reinforcement learning
+/// - `SelfHealingEngine`: Automatic issue detection and repair
+/// - `WorkloadMLAnalyzer`: Workload classification and prediction
+/// - `AutoIndexingEngine`: Intelligent index management
+/// - `CapacityPlanner`: Predictive capacity planning
+///
+/// **Target LOC:** 3,000+ lines
+pub mod autonomous;
+
+/// Blockchain tables and immutable ledgers
+pub mod blockchain;
