@@ -2,19 +2,18 @@
 // Provides ARIES-style physiological logging with group commit,
 // log shipping for replication, and checkpoint coordination
 
-use std::collections::{HashMap, VecDeque, BTreeMap};
-use std::path::{Path, PathBuf};
+use std::collections::HashMap;
+use std::path::PathBuf;
 use std::fs::{File, OpenOptions};
-use std::io::{Write as IoWrite, Read, Seek, SeekFrom, BufWriter, BufReader};
+use std::io::{Write as IoWrite, Read, BufWriter, BufReader};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{SystemTime, Duration, Instant};
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
 use tokio::time::interval;
 use crate::{Result, DbError};
-use super::{TransactionId, LogSequenceNumber};
+use super::TransactionId;
 
 /// Log Sequence Number type
 pub type LSN = u64;
@@ -23,6 +22,7 @@ pub type LSN = u64;
 pub type PageId = u64;
 
 /// ARIES-style log record types
+#[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LogRecord {
     /// Begin transaction
@@ -88,6 +88,7 @@ pub enum LogRecord {
 
 impl LogRecord {
     /// Get transaction ID if applicable
+    #[inline]
     pub fn txn_id(&self) -> Option<TransactionId> {
         match self {
             LogRecord::Begin { txn_id, .. } |
@@ -102,6 +103,7 @@ impl LogRecord {
     }
 
     /// Get page ID if applicable
+    #[inline]
     pub fn page_id(&self) -> Option<PageId> {
         match self {
             LogRecord::Update { page_id, .. } |
@@ -119,6 +121,8 @@ impl LogRecord {
 }
 
 /// WAL entry with metadata
+#[repr(C)]
+#[repr(align(64))] // Cache-line aligned for performance
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WALEntry {
     pub lsn: LSN,

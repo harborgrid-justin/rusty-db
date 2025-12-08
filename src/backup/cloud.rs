@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::fs::{File, metadata};
-use std::io::{Read, Write, Seek, SeekFrom};
+use std::io::{Read, Write};
 use std::time::{SystemTime, Duration, Instant};
 use std::collections::{HashMap, VecDeque};
 use parking_lot::{Mutex, RwLock};
@@ -13,6 +13,7 @@ use crate::Result;
 use crate::error::DbError;
 
 /// Cloud storage provider
+#[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum CloudProvider {
     AWS,

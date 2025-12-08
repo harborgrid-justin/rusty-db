@@ -2,17 +2,17 @@
 // Supports recovery to specific timestamp, transaction, or SCN with log mining
 
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Write, BufReader, BufWriter, Seek, SeekFrom};
-use std::time::{SystemTime, Duration, UNIX_EPOCH};
-use std::collections::{HashMap, BTreeMap, VecDeque, HashSet};
+use std::path::PathBuf;
+use std::io::{Read, Write};
+use std::time::{SystemTime, Duration};
+use std::collections::{HashMap, BTreeMap, HashSet};
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
 /// Recovery target specification
+#[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RecoveryTarget {
     /// Recover to a specific point in time

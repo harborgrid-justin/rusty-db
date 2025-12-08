@@ -4,19 +4,19 @@
 
 use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, Duration, Instant};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, Instant};
 use parking_lot::{RwLock, Mutex};
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
-use tokio::time::timeout;
 use crate::{Result, DbError};
-use super::{TransactionId, TransactionState};
+use super::TransactionId;
 
 /// Distributed transaction identifier
 pub type GlobalTxnId = (u64, u32); // (sequence, coordinator_node_id)
 
 /// Participant node in a distributed transaction
+#[repr(C)]
+#[repr(align(64))] // Cache-line aligned for hot-path performance
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ParticipantNode {
     pub node_id: u32,
@@ -25,6 +25,7 @@ pub struct ParticipantNode {
 }
 
 impl ParticipantNode {
+    #[inline]
     pub fn new(node_id: u32, address: String, shard_id: Option<u32>) -> Self {
         Self { node_id, address, shard_id }
     }

@@ -2,10 +2,10 @@
 // Provides secure backup encryption with key rotation and management
 
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::fs::{File, create_dir_all};
-use std::io::{Read, Write, Seek, SeekFrom};
-use std::time::{SystemTime, Duration};
+use std::io::{Read, Write};
+use std::time::SystemTime;
 use std::collections::HashMap;
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
@@ -13,6 +13,7 @@ use crate::Result;
 use crate::error::DbError;
 
 /// Encryption algorithm
+#[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum EncryptionAlgorithm {
     AES256GCM,

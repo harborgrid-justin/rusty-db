@@ -2,11 +2,11 @@
 // Handles full, incremental, and differential backups with block-level change tracking
 
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::fs::{File, OpenOptions, create_dir_all};
-use std::io::{Write, Read, BufReader, BufWriter, Seek, SeekFrom};
+use std::path::PathBuf;
+use std::fs::{OpenOptions, create_dir_all};
+use std::io::{Write, Read};
 use std::time::{SystemTime, Duration, UNIX_EPOCH};
-use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
+use std::collections::{HashMap, HashSet, BTreeMap};
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
 use crate::Result;

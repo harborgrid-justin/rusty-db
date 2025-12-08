@@ -3,11 +3,11 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use std::fs::{File, metadata};
-use std::io::{Read, Write, Seek, SeekFrom};
+use std::fs::metadata;
+use std::io::{Read, Write};
 use std::time::{SystemTime, Duration};
-use std::collections::{HashMap, HashSet, BTreeMap};
-use parking_lot::{Mutex, RwLock};
+use std::collections::{HashMap, BTreeMap};
+use parking_lot::RwLock;
 use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;

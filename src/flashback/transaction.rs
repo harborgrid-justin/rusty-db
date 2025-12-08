@@ -65,6 +65,7 @@ impl TransactionFlashbackManager {
     }
 
     /// Record a transaction operation
+    #[inline]
     pub fn record_operation(
         &self,
         txn_id: TransactionId,
@@ -260,6 +261,7 @@ impl TransactionLog {
 // ============================================================================
 
 /// Represents a single operation within a transaction
+#[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionOperation {
     pub operation_type: OperationType,

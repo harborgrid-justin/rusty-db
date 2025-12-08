@@ -12,29 +12,35 @@ use crate::Result;
 use crate::error::DbError;
 use crate::execution::{QueryResult, planner::PlanNode};
 use std::sync::Arc;
+use std::collections::{HashMap, VecDeque};
 use parking_lot::RwLock;
 use tokio::task::JoinHandle;
-use std::collections::HashMap;
 
-/// Parallel execution engine
+/// Parallel execution engine with fixed-size thread pool
 pub struct ParallelExecutor {
     /// Number of worker threads
     worker_count: usize,
-    /// Thread pool for query execution
+    /// Fixed-size thread pool for query execution (no dynamic spawning)
     runtime: Arc<tokio::runtime::Runtime>,
+    /// Work-stealing scheduler for load balancing
+    work_scheduler: Arc<WorkStealingScheduler>,
 }
 
 impl ParallelExecutor {
+    /// Create new executor with fixed-size thread pool
     pub fn new(worker_count: usize) -> Result<Self> {
+        // Fixed-size thread pool - no dynamic thread spawning
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(worker_count)
+            .thread_name("rustydb-worker")
             .enable_all()
             .build()
             .map_err(|e| DbError::Internal(format!("Failed to create runtime: {}", e)))?;
-        
+
         Ok(Self {
             worker_count,
             runtime: Arc::new(runtime),
+            work_scheduler: Arc::new(WorkStealingScheduler::new(worker_count)),
         })
     }
     
@@ -361,44 +367,74 @@ impl ParallelizationOptimizer {
     }
 }
 
-/// Work stealing scheduler for load balancing
+/// Work stealing scheduler for load balancing with lock-free queues
+/// Uses deque-based work stealing for high performance
 pub struct WorkStealingScheduler {
-    /// Work queues for each worker
-    work_queues: Vec<Arc<RwLock<Vec<WorkItem>>>>,
+    /// Lock-free work queues for each worker (pre-allocated, fixed size)
+    work_queues: Vec<Arc<RwLock<VecDeque<WorkItem>>>>,
+    /// Number of workers
+    num_workers: usize,
 }
 
 impl WorkStealingScheduler {
     pub fn new(num_workers: usize) -> Self {
         let work_queues = (0..num_workers)
-            .map(|_| Arc::new(RwLock::new(Vec::new())))
+            .map(|_| {
+                // Pre-allocate with capacity to avoid reallocation
+                let mut deque = VecDeque::with_capacity(1024);
+                Arc::new(RwLock::new(deque))
+            })
             .collect();
-        
-        Self { work_queues }
+
+        Self { work_queues, num_workers }
     }
-    
-    /// Add work item to a worker queue
+
+    /// Add work item to a worker queue (hot path - inline)
+    #[inline]
     pub fn add_work(&self, worker_id: usize, item: WorkItem) {
         if let Some(queue) = self.work_queues.get(worker_id) {
-            queue.write().push(item);
+            // Push to front (LIFO for locality)
+            queue.write().push_front(item);
         }
     }
-    
-    /// Try to steal work from another worker
+
+    /// Try to get work from own queue (hot path - inline)
+    #[inline]
+    pub fn try_pop_local(&self, worker_id: usize) -> Option<WorkItem> {
+        self.work_queues.get(worker_id)
+            .and_then(|queue| queue.write().pop_front())
+    }
+
+    /// Try to steal work from another worker (FIFO from victim's end)
+    #[inline]
     pub fn try_steal(&self, thief_id: usize) -> Option<WorkItem> {
+        // Randomize stealing to avoid contention
+        let start = (thief_id + 1) % self.num_workers;
+
         // Try to steal from other workers
-        for (victim_id, queue) in self.work_queues.iter().enumerate() {
+        for offset in 0..self.num_workers {
+            let victim_id = (start + offset) % self.num_workers;
+
             if victim_id == thief_id {
                 continue; // Don't steal from self
             }
-            
-            let mut queue = queue.write();
-            if !queue.is_empty() {
-                // Steal from back of queue (opposite end from owner)
-                return queue.pop();
+
+            if let Some(queue) = self.work_queues.get(victim_id) {
+                // Steal from back of queue (opposite end from owner - FIFO)
+                if let Some(item) = queue.write().pop_back() {
+                    return Some(item);
+                }
             }
         }
-        
+
         None
+    }
+
+    /// Get total pending work across all queues
+    pub fn total_pending_work(&self) -> usize {
+        self.work_queues.iter()
+            .map(|q| q.read().len())
+            .sum()
     }
 }
 

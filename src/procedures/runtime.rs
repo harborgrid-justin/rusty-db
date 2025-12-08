@@ -13,6 +13,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 
 /// Runtime value types
+#[repr(C)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum RuntimeValue {
     Integer(i64),
@@ -29,6 +30,7 @@ pub enum RuntimeValue {
 
 impl RuntimeValue {
     /// Convert to integer if possible
+    #[inline]
     pub fn as_integer(&self) -> Result<i64> {
         match self {
             RuntimeValue::Integer(v) => Ok(*v),
@@ -40,6 +42,7 @@ impl RuntimeValue {
     }
 
     /// Convert to float if possible
+    #[inline]
     pub fn as_float(&self) -> Result<f64> {
         match self {
             RuntimeValue::Float(v) => Ok(*v),
@@ -65,6 +68,7 @@ impl RuntimeValue {
     }
 
     /// Convert to boolean
+    #[inline]
     pub fn as_boolean(&self) -> Result<bool> {
         match self {
             RuntimeValue::Boolean(b) => Ok(*b),
@@ -75,6 +79,7 @@ impl RuntimeValue {
     }
 
     /// Check if value is null
+    #[inline]
     pub fn is_null(&self) -> bool {
         matches!(self, RuntimeValue::Null)
     }
@@ -150,15 +155,23 @@ impl ExecutionContext {
     }
 
     /// Set a variable value
+    #[inline]
     pub fn set_variable(&mut self, name: String, value: RuntimeValue) {
         self.variables.insert(name, value);
     }
 
     /// Get a variable value
+    #[inline]
     pub fn get_variable(&self, name: &str) -> Result<RuntimeValue> {
         self.variables.get(name)
             .cloned()
-            .ok_or_else(|| DbError::Runtime(format!("Variable '{}' not found", name)))
+            .ok_or_else(|| Self::variable_not_found(name))
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn variable_not_found(name: &str) -> DbError {
+        DbError::Runtime(format!("Variable '{}' not found", name))
     }
 
     /// Set an output parameter

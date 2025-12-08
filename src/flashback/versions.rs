@@ -24,6 +24,7 @@
 
 use std::collections::{HashMap, BTreeMap, VecDeque};
 use std::sync::{Arc, RwLock};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{SystemTime, Duration};
 use serde::{Deserialize, Serialize};
 
@@ -31,6 +32,63 @@ use crate::common::{TransactionId, TableId, RowId, Value};
 use crate::Result;
 use crate::error::DbError;
 use super::time_travel::{SCN, Timestamp, RowVersion, current_timestamp};
+
+// ============================================================================
+// Arena Allocator for Version Data
+// ============================================================================
+
+/// Arena allocator for version data - avoids per-version heap allocations
+/// Aligned to 4KB pages for optimal cache performance
+#[repr(C, align(4096))]
+pub struct VersionArena {
+    /// Pre-allocated memory block
+    data: Box<[u8]>,
+    /// Current allocation offset
+    offset: AtomicUsize,
+    /// Arena capacity
+    capacity: usize,
+}
+
+impl VersionArena {
+    /// Create a new arena with specified capacity
+    pub fn new(capacity: usize) -> Self {
+        Self {
+            data: vec![0u8; capacity].into_boxed_slice(),
+            offset: AtomicUsize::new(0),
+            capacity,
+        }
+    }
+
+    /// Allocate space in the arena, returns offset
+    #[inline]
+    pub fn allocate(&self, size: usize) -> Option<usize> {
+        let current = self.offset.load(Ordering::Relaxed);
+        let new_offset = current + size;
+
+        if new_offset > self.capacity {
+            return None;
+        }
+
+        self.offset.compare_exchange(
+            current,
+            new_offset,
+            Ordering::Release,
+            Ordering::Relaxed
+        ).ok().map(|_| current)
+    }
+
+    /// Get remaining capacity
+    #[inline]
+    pub fn remaining(&self) -> usize {
+        self.capacity.saturating_sub(self.offset.load(Ordering::Relaxed))
+    }
+
+    /// Reset arena (use with caution - only when all allocations are done)
+    #[inline]
+    pub fn reset(&self) {
+        self.offset.store(0, Ordering::Release);
+    }
+}
 
 // ============================================================================
 // Version Manager
@@ -130,9 +188,9 @@ impl VersionManager {
         let result = gc.collect(&mut *store, &policies)?;
 
         let mut stats = self.stats.write().unwrap();
-        stats.active_versions = stats.active_versions.saturating_sub(result.versions_removed);
+        stats.active_versions = stats.active_versions.saturating_sub(result.versions_removed as u64);
         stats.gc_runs += 1;
-        stats.total_versions_removed += result.versions_removed;
+        stats.total_versions_removed += result.versions_removed as u64;
 
         Ok(result)
     }
@@ -239,6 +297,7 @@ impl VersionStore {
         Ok(())
     }
 
+    #[inline]
     fn get_versions_in_range(
         &self,
         table_id: TableId,
@@ -267,6 +326,7 @@ impl VersionStore {
         Ok(versions.iter().map(|v| self.version_to_row(v)).collect())
     }
 
+    #[inline]
     fn get_row_version_deque(
         &self,
         table_id: TableId,
@@ -275,9 +335,15 @@ impl VersionStore {
         self.versions
             .get(&table_id)
             .and_then(|t| t.get(&row_id))
-            .ok_or_else(|| DbError::Validation(
-                format!("No versions found for table {} row {}", table_id, row_id)
-            ))
+            .ok_or_else(|| Self::no_versions_error(table_id, row_id))
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn no_versions_error(table_id: TableId, row_id: RowId) -> DbError {
+        DbError::Validation(
+            format!("No versions found for table {} row {}", table_id, row_id)
+        )
     }
 
     fn is_version_in_range(
@@ -455,6 +521,7 @@ pub enum VersionBound {
 // ============================================================================
 
 /// Result row from VERSIONS BETWEEN query with pseudocolumns
+#[repr(C)]
 #[derive(Debug, Clone)]
 pub struct VersionRow {
     /// Actual column values
@@ -639,6 +706,7 @@ pub struct GarbageCollectionResult {
 // ============================================================================
 
 /// Undo record for transaction rollback
+#[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UndoRecord {
     pub table_id: TableId,
@@ -663,6 +731,7 @@ impl UndoRecord {
 // ============================================================================
 
 /// Metadata about a specific version
+#[repr(C)]
 #[derive(Debug, Clone)]
 pub struct VersionMetadata {
     pub scn_created: SCN,
