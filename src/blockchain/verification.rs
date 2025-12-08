@@ -17,7 +17,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::task;
 use crate::Result;
 use crate::error::DbError;
-use super::ledger::{Block, BlockId, LedgerRow, BlockchainTable, RowId};
+use super::ledger::{Block, BlockId, LedgerRow, BlockchainTable};
+use crate::common::RowId;
 use super::crypto::{Hash256, MerkleProof, hash_to_hex};
 
 // ============================================================================
@@ -502,7 +503,7 @@ impl ParallelVerifier {
         if all_issues.is_empty() {
             Ok(VerificationResult::success(details, duration))
         } else {
-            Ok(VerificationResult::failure(details, issues: all_issues, duration))
+            Ok(VerificationResult::failure(details, all_issues, duration))
         }
     }
 }

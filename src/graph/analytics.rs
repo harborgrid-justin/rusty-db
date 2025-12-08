@@ -105,7 +105,7 @@ impl GraphRelationalBridge {
     pub fn graph_to_relational(&self, query_result: &QueryResult) -> Vec<Tuple> {
         let mut tuples = Vec::new();
 
-        for row in &query_result.rows {
+        for (row_idx, row) in query_result.rows.iter().enumerate() {
             let mut tuple_values = Vec::new();
 
             for value in &row.values {
@@ -122,7 +122,7 @@ impl GraphRelationalBridge {
                 }
             }
 
-            tuples.push(Tuple(tuple_values));
+            tuples.push(Tuple::new(tuple_values, row_idx as u64));
         }
 
         tuples

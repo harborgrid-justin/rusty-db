@@ -170,7 +170,7 @@ impl TwoPhaseCommitCoordinator {
     ) -> Result<GlobalTxnId> {
         // Check concurrent transaction limit
         if self.active_txns.read().len() >= self.config.max_concurrent_txns {
-            return Err(DbError::TransactionError(
+            return Err(DbError::Transaction(
                 "Maximum concurrent distributed transactions reached".to_string()
             ));
         }
@@ -200,7 +200,7 @@ impl TwoPhaseCommitCoordinator {
         let mut txn = {
             let txns = self.active_txns.read();
             txns.get(&global_txn_id)
-                .ok_or_else(|| DbError::TransactionError("Transaction not found".to_string()))?
+                .ok_or_else(|| DbError::Transaction("Transaction not found".to_string()))?
                 .clone()
         };
 
@@ -242,7 +242,7 @@ impl TwoPhaseCommitCoordinator {
         let mut txn = {
             let txns = self.active_txns.read();
             txns.get(&global_txn_id)
-                .ok_or_else(|| DbError::TransactionError("Transaction not found".to_string()))?
+                .ok_or_else(|| DbError::Transaction("Transaction not found".to_string()))?
                 .clone()
         };
 
@@ -400,7 +400,7 @@ impl SagaCoordinator {
     /// Begin a new saga
     pub fn begin_saga(&self, steps: Vec<SagaStep>) -> Result<u64> {
         if self.active_sagas.read().len() >= self.config.max_concurrent_sagas {
-            return Err(DbError::TransactionError(
+            return Err(DbError::Transaction(
                 "Maximum concurrent sagas reached".to_string()
             ));
         }
@@ -425,7 +425,7 @@ impl SagaCoordinator {
         let mut saga = {
             let sagas = self.active_sagas.read();
             sagas.get(&saga_id)
-                .ok_or_else(|| DbError::TransactionError("Saga not found".to_string()))?
+                .ok_or_else(|| DbError::Transaction("Saga not found".to_string()))?
                 .clone()
         };
 
@@ -462,7 +462,7 @@ impl SagaCoordinator {
         let mut saga = {
             let sagas = self.active_sagas.read();
             sagas.get(&saga_id)
-                .ok_or_else(|| DbError::TransactionError("Saga not found".to_string()))?
+                .ok_or_else(|| DbError::Transaction("Saga not found".to_string()))?
                 .clone()
         };
 

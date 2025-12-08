@@ -107,7 +107,7 @@ impl HybridClock {
         if remote_ts.physical > local_physical {
             let skew = remote_ts.physical - local_physical;
             if skew > self.skew_tolerance.as_millis() as u64 {
-                return Err(DbError::TransactionError(
+                return Err(DbError::Transaction(
                     format!("Clock skew too large: {}ms", skew)
                 ));
             }
@@ -575,7 +575,7 @@ impl SnapshotIsolationManager {
             snapshot.read_set.insert(key);
             Ok(())
         } else {
-            Err(DbError::TransactionError(format!(
+            Err(DbError::Transaction(format!(
                 "Transaction {} not found",
                 txn_id
             )))
@@ -594,7 +594,7 @@ impl SnapshotIsolationManager {
                 .insert(key);
             Ok(())
         } else {
-            Err(DbError::TransactionError(format!(
+            Err(DbError::Transaction(format!(
                 "Transaction {} not found",
                 txn_id
             )))
@@ -605,7 +605,7 @@ impl SnapshotIsolationManager {
     pub fn check_write_conflicts(&self, txn_id: TransactionId) -> Result<()> {
         let txns = self.active_txns.read();
         let snapshot = txns.get(&txn_id).ok_or_else(|| {
-            DbError::TransactionError(format!("Transaction {} not found", txn_id))
+            DbError::Transaction(format!("Transaction {} not found", txn_id))
         })?;
 
         if snapshot.read_only {
@@ -625,7 +625,7 @@ impl SnapshotIsolationManager {
                 if let Some(other_writes) = write_sets.get(other_txn) {
                     // Check for overlapping writes
                     if my_writes.intersection(other_writes).next().is_some() {
-                        return Err(DbError::TransactionError(format!(
+                        return Err(DbError::Transaction(format!(
                             "Write-write conflict between txn {} and {}",
                             txn_id, other_txn
                         )));
@@ -645,7 +645,7 @@ impl SnapshotIsolationManager {
 
         let txns = self.active_txns.read();
         let snapshot = txns.get(&txn_id).ok_or_else(|| {
-            DbError::TransactionError(format!("Transaction {} not found", txn_id))
+            DbError::Transaction(format!("Transaction {} not found", txn_id))
         })?;
 
         if snapshot.read_only {
@@ -656,7 +656,7 @@ impl SnapshotIsolationManager {
         let committed = self.committed_writes.read();
         for (commit_ts, committed_keys) in committed.range(snapshot.start_ts..) {
             if snapshot.read_set.intersection(committed_keys).next().is_some() {
-                return Err(DbError::TransactionError(format!(
+                return Err(DbError::Transaction(format!(
                     "Write-skew detected: transaction {} read data modified by commit at {:?}",
                     txn_id, commit_ts
                 )));
