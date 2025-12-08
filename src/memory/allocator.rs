@@ -364,7 +364,7 @@ impl ThreadLocalCache {
         }
     }
 
-    fn get_or_init() -> std::cell::Ref<'static, Option<ThreadLocalCache>> {
+    fn ensure_initialized() {
         THREAD_CACHE.with(|cache| {
             let mut cache_mut = cache.borrow_mut();
             if cache_mut.is_none() {
@@ -372,8 +372,16 @@ impl ThreadLocalCache {
                 let thread_id = THREAD_COUNTER.fetch_add(1, Ordering::SeqCst);
                 *cache_mut = Some(ThreadLocalCache::new(thread_id));
             }
-            drop(cache_mut);
-            cache.borrow()
+        })
+    }
+
+    fn with_cache<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut Option<ThreadLocalCache>) -> R,
+    {
+        Self::ensure_initialized();
+        THREAD_CACHE.with(|cache| {
+            f(&mut *cache.borrow_mut())
         })
     }
 }
