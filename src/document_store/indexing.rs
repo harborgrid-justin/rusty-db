@@ -1,19 +1,21 @@
-//! # Document Indexing - PhD-Level Optimizations
-//!
-//! Revolutionary features:
-//! - Prefix compression for string keys (40-70% space savings)
-//! - SIMD-accelerated text tokenization
-//! - Adaptive index selection based on query patterns
-//! - Cache-conscious data structures
-//! - BM25 ranking for full-text search (better than TF-IDF)
-//! - Concurrent index updates with optimistic locking
-//!
-//! Performance characteristics:
-//! - String key compression: 40-70% space reduction
-//! - Text tokenization: 4-8x faster with SIMD
-//! - Index lookup: O(log n) with minimal cache misses
-//! - Full-text search: BM25 provides 15-30% better relevance
+// # Document Indexing - PhD-Level Optimizations
+//
+// Revolutionary features:
+// - Prefix compression for string keys (40-70% space savings)
+// - SIMD-accelerated text tokenization
+// - Adaptive index selection based on query patterns
+// - Cache-conscious data structures
+// - BM25 ranking for full-text search (better than TF-IDF)
+// - Concurrent index updates with optimistic locking
+//
+// Performance characteristics:
+// - String key compression: 40-70% space reduction
+// - Text tokenization: 4-8x faster with SIMD
+// - Index lookup: O(log n) with minimal cache misses
+// - Full-text search: BM25 provides 15-30% better relevance
 
+use std::collections::HashSet;
+use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
@@ -834,5 +836,3 @@ mod tests {
         assert!(!results.is_empty());
     }
 }
-
-

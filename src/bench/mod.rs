@@ -1,50 +1,50 @@
-//! # RustyDB Benchmark Suite
-//!
-//! Comprehensive benchmark suite for measuring and optimizing critical database operations.
-//! This module provides detailed performance measurements for:
-//!
-//! - Page scan throughput
-//! - Index lookup latency
-//! - Buffer manager pin/unpin operations
-//! - Lock-free queue operations
-//! - SIMD filter operations
-//! - Transaction commit latency
-//! - Concurrent access patterns
-//! - Memory allocator performance
-//!
-//! ## Usage
-//!
-//! Run benchmarks with:
-//! ```bash
-//! cargo bench
-//! ```
-//!
-//! Run specific benchmark:
-//! ```bash
-//! cargo bench --bench page_scan
-//! ```
-//!
-//! ## Benchmark Categories
-//!
-//! ### Storage Layer Benchmarks
-//! - **Page Scan**: Sequential and random page access patterns
-//! - **Buffer Pool**: Pin/unpin cycles, cache hit rates, eviction performance
-//! - **Disk I/O**: Sequential/random reads and writes with various block sizes
-//!
-//! ### Index Benchmarks
-//! - **B-tree**: Lookup, insert, update, delete operations
-//! - **Hash Index**: Point lookups and range scans
-//! - **LSM Tree**: Write throughput and compaction performance
-//!
-//! ### Concurrency Benchmarks
-//! - **Lock-Free Structures**: Queue, stack, hash map operations
-//! - **MVCC**: Transaction start/commit overhead
-//! - **Lock Manager**: Lock acquisition and release latency
-//!
-//! ### SIMD Benchmarks
-//! - **Filter Operations**: Equality, inequality, range predicates
-//! - **Aggregations**: SUM, AVG, MIN, MAX operations
-//! - **String Operations**: Pattern matching and comparisons
+// # RustyDB Benchmark Suite
+//
+// Comprehensive benchmark suite for measuring and optimizing critical database operations.
+// This module provides detailed performance measurements for:
+//
+// - Page scan throughput
+// - Index lookup latency
+// - Buffer manager pin/unpin operations
+// - Lock-free queue operations
+// - SIMD filter operations
+// - Transaction commit latency
+// - Concurrent access patterns
+// - Memory allocator performance
+//
+// ## Usage
+//
+// Run benchmarks with:
+// ```bash
+// cargo bench
+// ```
+//
+// Run specific benchmark:
+// ```bash
+// cargo bench --bench page_scan
+// ```
+//
+// ## Benchmark Categories
+//
+// ### Storage Layer Benchmarks
+// - **Page Scan**: Sequential and random page access patterns
+// - **Buffer Pool**: Pin/unpin cycles, cache hit rates, eviction performance
+// - **Disk I/O**: Sequential/random reads and writes with various block sizes
+//
+// ### Index Benchmarks
+// - **B-tree**: Lookup, insert, update, delete operations
+// - **Hash Index**: Point lookups and range scans
+// - **LSM Tree**: Write throughput and compaction performance
+//
+// ### Concurrency Benchmarks
+// - **Lock-Free Structures**: Queue, stack, hash map operations
+// - **MVCC**: Transaction start/commit overhead
+// - **Lock Manager**: Lock acquisition and release latency
+//
+// ### SIMD Benchmarks
+// - **Filter Operations**: Equality, inequality, range predicates
+// - **Aggregations**: SUM, AVG, MIN, MAX operations
+// - **String Operations**: Pattern matching and comparisons
 
 use std::sync::Arc;
 use std::time::{Duration};
@@ -1189,5 +1189,3 @@ mod tests {
         assert!(!page.is_pinned());
     }
 }
-
-

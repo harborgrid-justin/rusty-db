@@ -1,33 +1,37 @@
-//! # Network Threat Protection
-//!
-//! Military-grade network security hardening for RustyDB providing comprehensive
-//! protection against DDoS attacks, protocol exploits, man-in-the-middle attacks,
-//! and network-based intrusions.
-//!
-//! ## Components
-//!
-//! - **Adaptive Rate Limiting**: Token bucket and sliding window with behavior-based adjustment
-//! - **Connection Guard**: Connection throttling, pooling, and protection
-//! - **DDoS Mitigation**: Multi-layer attack detection and automatic mitigation
-//! - **Protocol Validation**: Strict protocol compliance enforcement
-//! - **TLS Enforcement**: Certificate pinning, PFS, and secure cipher selection
-//! - **Network Anomaly Detection**: Statistical and ML-based anomaly detection
-//! - **IP Reputation**: Dynamic IP scoring and blacklist management
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌────────────────────────────────────────────────────────────────┐
-//! │                    Network Hardening Stack                     │
-//! ├────────────────────────────────────────────────────────────────┤
-//! │  IP Reputation Check → DDoS Detection → Connection Guard       │
-//! │         ↓                    ↓                  ↓               │
-//! │  Rate Limiting → Protocol Validation → TLS Enforcement         │
-//! │         ↓                    ↓                  ↓               │
-//! │      Anomaly Detection → Threat Intelligence                   │
-//! └────────────────────────────────────────────────────────────────┘
-//! ```
+// # Network Threat Protection
+//
+// Military-grade network security hardening for RustyDB providing comprehensive
+// protection against DDoS attacks, protocol exploits, man-in-the-middle attacks,
+// and network-based intrusions.
+//
+// ## Components
+//
+// - **Adaptive Rate Limiting**: Token bucket and sliding window with behavior-based adjustment
+// - **Connection Guard**: Connection throttling, pooling, and protection
+// - **DDoS Mitigation**: Multi-layer attack detection and automatic mitigation
+// - **Protocol Validation**: Strict protocol compliance enforcement
+// - **TLS Enforcement**: Certificate pinning, PFS, and secure cipher selection
+// - **Network Anomaly Detection**: Statistical and ML-based anomaly detection
+// - **IP Reputation**: Dynamic IP scoring and blacklist management
+//
+// ## Architecture
+//
+// ```text
+// ┌────────────────────────────────────────────────────────────────┐
+// │                    Network Hardening Stack                     │
+// ├────────────────────────────────────────────────────────────────┤
+// │  IP Reputation Check → DDoS Detection → Connection Guard       │
+// │         ↓                    ↓                  ↓               │
+// │  Rate Limiting → Protocol Validation → TLS Enforcement         │
+// │         ↓                    ↓                  ↓               │
+// │      Anomaly Detection → Threat Intelligence                   │
+// └────────────────────────────────────────────────────────────────┘
+// ```
 
+use std::time::SystemTime;
+use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::time::Instant;
 use crate::{Result, DbError};
 use parking_lot::RwLock;
 use std::collections::{HashMap};
@@ -1740,5 +1744,3 @@ mod tests {
         assert!(result.is_ok());
     }
 }
-
-

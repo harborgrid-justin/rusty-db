@@ -1,25 +1,30 @@
-//! # Enterprise Connection Pooling Engine
-//!
-//! This module provides a comprehensive, Oracle-inspired connection pooling system
-//! with advanced features including elastic sizing, sophisticated wait queue management,
-//! pool partitioning, and extensive monitoring capabilities.
-//!
-//! ## Key Features
-//!
-//! - **Elastic Pool Sizing**: Dynamic adjustment between min/max connections
-//! - **Connection Lifecycle Management**: Factory pattern, state reset, caching
-//! - **Advanced Wait Queue**: Fair/priority queuing, deadlock detection
-//! - **Pool Partitioning**: User/application/service-based isolation
-//! - **Comprehensive Monitoring**: Real-time metrics and leak detection
-//!
-//! ## Architecture
-//!
-//! The connection pool is designed for high concurrency with minimal contention:
-//! - Lock-free operations where possible
-//! - Fine-grained locking for critical sections
-//! - Background maintenance thread for housekeeping
-//! - Per-partition statistics for reduced contention
+// # Enterprise Connection Pooling Engine
+//
+// This module provides a comprehensive, Oracle-inspired connection pooling system
+// with advanced features including elastic sizing, sophisticated wait queue management,
+// pool partitioning, and extensive monitoring capabilities.
+//
+// ## Key Features
+//
+// - **Elastic Pool Sizing**: Dynamic adjustment between min/max connections
+// - **Connection Lifecycle Management**: Factory pattern, state reset, caching
+// - **Advanced Wait Queue**: Fair/priority queuing, deadlock detection
+// - **Pool Partitioning**: User/application/service-based isolation
+// - **Comprehensive Monitoring**: Real-time metrics and leak detection
+//
+// ## Architecture
+//
+// The connection pool is designed for high concurrency with minimal contention:
+// - Lock-free operations where possible
+// - Fine-grained locking for critical sections
+// - Background maintenance thread for housekeeping
+// - Per-partition statistics for reduced contention
 
+use std::time::SystemTime;
+use std::collections::BTreeMap;
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::Instant;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use std::time::{Duration};
@@ -2778,5 +2783,3 @@ mod tests {
         assert_eq!(snapshot.acquire_successes, 1);
     }
 }
-
-

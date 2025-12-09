@@ -1,7 +1,7 @@
-//! # Lock-Free Ring Buffer for I/O Queue
-//!
-//! High-performance, lock-free ring buffer for I/O request submission
-//! and completion queues.
+// # Lock-Free Ring Buffer for I/O Queue
+//
+// High-performance, lock-free ring buffer for I/O request submission
+// and completion queues.
 
 use crate::error::Result;
 use crate::io::{IoOpType, IoRequest, IoCompletion, IoHandle};
@@ -730,5 +730,3 @@ mod tests {
         assert_eq!(stats.pop_success_rate(), 0.8); // 4/5
     }
 }
-
-

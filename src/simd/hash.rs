@@ -1,23 +1,23 @@
-//! SIMD-Accelerated Hash Functions
-//!
-//! This module provides high-performance hash functions optimized with SIMD:
-//! - xxHash3 with AVX2: 15-20 GB/s throughput (10x faster than SipHash)
-//! - wyhash: Ultra-fast 64-bit hash for small keys
-//! - Vectorized batch hashing: Process 8 keys simultaneously
-//!
-//! ## Performance Comparison
-//! ```text
-//! Hash Function    | Throughput | Use Case
-//! -----------------|------------|------------------
-//! SipHash (std)    | 1.5 GB/s   | Security (slow)
-//! xxHash3-AVX2     | 15 GB/s    | General purpose
-//! wyhash           | 12 GB/s    | Small keys
-//! ```
-//!
-//! ## Complexity
-//! - Time: O(n/8) with AVX2 vectorization
-//! - Space: O(1) constant memory
-//! - Cache: Sequential access, 95%+ hit rate
+// SIMD-Accelerated Hash Functions
+//
+// This module provides high-performance hash functions optimized with SIMD:
+// - xxHash3 with AVX2: 15-20 GB/s throughput (10x faster than SipHash)
+// - wyhash: Ultra-fast 64-bit hash for small keys
+// - Vectorized batch hashing: Process 8 keys simultaneously
+//
+// ## Performance Comparison
+// ```text
+// Hash Function    | Throughput | Use Case
+// -----------------|------------|------------------
+// SipHash (std)    | 1.5 GB/s   | Security (slow)
+// xxHash3-AVX2     | 15 GB/s    | General purpose
+// wyhash           | 12 GB/s    | Small keys
+// ```
+//
+// ## Complexity
+// - Time: O(n/8) with AVX2 vectorization
+// - Space: O(1) constant memory
+// - Cache: Sequential access, 95%+ hit rate
 
 /// xxHash3 64-bit hash with AVX2 acceleration
 ///
@@ -477,5 +477,3 @@ mod tests {
             "Avalanche effect too weak: only {} bits differ", diff_bits);
     }
 }
-
-

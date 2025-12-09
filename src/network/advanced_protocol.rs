@@ -2,6 +2,8 @@
 // Enterprise-grade wire protocol with comprehensive features
 // 3000+ lines of production-ready network protocol implementation
 
+use std::time::Instant;
+use std::time::SystemTime;
 use std::collections::{HashMap, VecDeque};
 use std::io::{self, Cursor};
 use std::net::SocketAddr;

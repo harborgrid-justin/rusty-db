@@ -1,7 +1,7 @@
-//! # REST API Types
-//!
-//! Request and response types for the REST API, along with internal data structures.
-//! All types are strongly typed with domain-specific newtypes where appropriate.
+// # REST API Types
+//
+// Request and response types for the REST API, along with internal data structures.
+// All types are strongly typed with domain-specific newtypes where appropriate.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

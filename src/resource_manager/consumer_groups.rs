@@ -1,8 +1,9 @@
-//! Consumer Groups for Resource Management
-//!
-//! This module implements Oracle-like consumer groups for workload classification,
-//! user-to-group mapping, dynamic group switching, and priority management.
+// Consumer Groups for Resource Management
+//
+// This module implements Oracle-like consumer groups for workload classification,
+// user-to-group mapping, dynamic group switching, and priority management.
 
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
@@ -787,5 +788,3 @@ mod tests {
         assert_eq!(assigned_group, group_id);
     }
 }
-
-

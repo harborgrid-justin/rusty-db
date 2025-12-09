@@ -1,6 +1,6 @@
-//! # Unix io_uring Support
-//!
-//! High-performance asynchronous I/O using Linux io_uring.
+// # Unix io_uring Support
+//
+// High-performance asynchronous I/O using Linux io_uring.
 
 use crate::error::Result;
 use crate::io::{IoRequest, IoCompletion, IoOpType, IoStatus};
@@ -613,5 +613,3 @@ mod tests {
         assert!(!config.iopoll);
     }
 }
-
-

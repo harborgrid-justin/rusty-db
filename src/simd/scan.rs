@@ -1,7 +1,7 @@
-//! # Columnar Scan Operations
-//!
-//! SIMD-optimized table scanning with predicate pushdown, late materialization,
-//! and batch processing for maximum throughput.
+// # Columnar Scan Operations
+//
+// SIMD-optimized table scanning with predicate pushdown, late materialization,
+// and batch processing for maximum throughput.
 
 use super::{
     filter::SimdFilter, FilterOp, PredicateType, SelectionVector, SimdContext,
@@ -769,5 +769,3 @@ mod tests {
         assert!(processor.next_batch(&data).is_none());
     }
 }
-
-

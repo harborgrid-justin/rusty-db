@@ -1,7 +1,7 @@
-//! # SIMD Filter Operations
-//!
-//! Vectorized predicate evaluation for filtering rows in table scans.
-//! Supports AVX2 SIMD instructions processing 8-16 elements per operation.
+// # SIMD Filter Operations
+//
+// Vectorized predicate evaluation for filtering rows in table scans.
+// Supports AVX2 SIMD instructions processing 8-16 elements per operation.
 
 use super::{SelectionVector, SimdContext};
 use crate::common::Value;
@@ -820,5 +820,3 @@ mod tests {
         assert_ne!(result[0] & (1 << 4), 0);
     }
 }
-
-

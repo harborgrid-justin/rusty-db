@@ -1,8 +1,9 @@
-//! # Replication Monitoring
-//!
-//! Comprehensive monitoring for replication lag, throughput,
-//! error rates, and health dashboards.
+// # Replication Monitoring
+//
+// Comprehensive monitoring for replication lag, throughput,
+// error rates, and health dashboards.
 
+use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -696,5 +697,3 @@ mod tests {
         assert_eq!(alerts.len(), 1);
     }
 }
-
-

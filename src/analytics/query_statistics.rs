@@ -1,28 +1,29 @@
-//! Query Statistics and Workload Analysis
-//!
-//! This module provides comprehensive query statistics tracking, workload
-//! analysis, and performance monitoring for analytical query processing.
-//!
-//! # Architecture
-//!
-//! The statistics system operates at multiple levels:
-//! - Individual query execution tracking
-//! - Aggregate workload pattern analysis
-//! - Performance trend detection
-//! - Index recommendation based on access patterns
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! use crate::analytics::query_statistics::{QueryStatisticsTracker, WorkloadAnalyzer};
-//!
-//! let mut tracker = QueryStatisticsTracker::new();
-//! tracker.record_query("SELECT * FROM users WHERE id = 1", 50);
-//!
-//! let analyzer = WorkloadAnalyzer::new();
-//! let recommendations = analyzer.analyze(&tracker);
-//! ```
+// Query Statistics and Workload Analysis
+//
+// This module provides comprehensive query statistics tracking, workload
+// analysis, and performance monitoring for analytical query processing.
+//
+// # Architecture
+//
+// The statistics system operates at multiple levels:
+// - Individual query execution tracking
+// - Aggregate workload pattern analysis
+// - Performance trend detection
+// - Index recommendation based on access patterns
+//
+// # Example
+//
+// ```rust,ignore
+// use crate::analytics::query_statistics::{QueryStatisticsTracker, WorkloadAnalyzer};
+//
+// let mut tracker = QueryStatisticsTracker::new();
+// tracker.record_query("SELECT * FROM users WHERE id = 1", 50);
+//
+// let analyzer = WorkloadAnalyzer::new();
+// let recommendations = analyzer.analyze(&tracker);
+// ```
 
+use std::collections::VecDeque;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;

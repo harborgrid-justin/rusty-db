@@ -1,44 +1,49 @@
-//! # Bulletproof Auto-Recovery System
-//!
-//! Comprehensive auto-recovery system providing:
-//! - Automatic crash detection and restart
-//! - Transaction rollback on failure
-//! - Data corruption detection with checksums
-//! - Automatic corruption repair from replicas
-//! - State snapshot and restore
-//! - Incremental recovery for minimal downtime
-//! - Health monitoring with auto-remediation
-//!
-//! ## RTO/RPO Guarantees
-//!
-//! - **RTO**: < 30 seconds for most failures, < 5 minutes for catastrophic failures
-//! - **RPO**: Zero data loss (all committed transactions preserved)
-//! - **Availability**: 99.999% uptime target
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────┐
-//! │          AutoRecoveryManager (Central Orchestrator)         │
-//! ├─────────────────────────────────────────────────────────────┤
-//! │  - Crash detection        - Health monitoring               │
-//! │  - Recovery coordination  - Self-healing orchestration      │
-//! │  - Failover management    - RTO/RPO tracking                │
-//! └──────────────────┬──────────────────────────────────────────┘
-//!                    │
-//!         ┌──────────┴──────────┬──────────────┬──────────────┐
-//!         │                     │              │              │
-//! ┌───────▼────────┐  ┌────────▼──────┐ ┌────▼──────┐ ┌─────▼──────┐
-//! │ CrashDetector  │  │TransactionRoll│ │Corruption │ │   Health   │
-//! │                │  │  backManager  │ │  Detector │ │  Monitor   │
-//! └────────────────┘  └───────────────┘ └───────────┘ └────────────┘
-//!
-//! ┌──────────────────┐  ┌────────────────┐  ┌─────────────────┐
-//! │  DataRepairer    │  │StateSnapshot   │  │   SelfHealer    │
-//! │                  │  │   Manager      │  │                 │
-//! └──────────────────┘  └────────────────┘  └─────────────────┘
-//! ```
+// # Bulletproof Auto-Recovery System
+//
+// Comprehensive auto-recovery system providing:
+// - Automatic crash detection and restart
+// - Transaction rollback on failure
+// - Data corruption detection with checksums
+// - Automatic corruption repair from replicas
+// - State snapshot and restore
+// - Incremental recovery for minimal downtime
+// - Health monitoring with auto-remediation
+//
+// ## RTO/RPO Guarantees
+//
+// - **RTO**: < 30 seconds for most failures, < 5 minutes for catastrophic failures
+// - **RPO**: Zero data loss (all committed transactions preserved)
+// - **Availability**: 99.999% uptime target
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────┐
+// │          AutoRecoveryManager (Central Orchestrator)         │
+// ├─────────────────────────────────────────────────────────────┤
+// │  - Crash detection        - Health monitoring               │
+// │  - Recovery coordination  - Self-healing orchestration      │
+// │  - Failover management    - RTO/RPO tracking                │
+// └──────────────────┬──────────────────────────────────────────┘
+//                    │
+//         ┌──────────┴──────────┬──────────────┬──────────────┐
+//         │                     │              │              │
+// ┌───────▼────────┐  ┌────────▼──────┐ ┌────▼──────┐ ┌─────▼──────┐
+// │ CrashDetector  │  │TransactionRoll│ │Corruption │ │   Health   │
+// │                │  │  backManager  │ │  Detector │ │  Monitor   │
+// └────────────────┘  └───────────────┘ └───────────┘ └────────────┘
+//
+// ┌──────────────────┐  ┌────────────────┐  ┌─────────────────┐
+// │  DataRepairer    │  │StateSnapshot   │  │   SelfHealer    │
+// │                  │  │   Manager      │  │                 │
+// └──────────────────┘  └────────────────┘  └─────────────────┘
+// ```
 
+use std::collections::HashSet;
+use std::collections::BTreeMap;
+use std::collections::VecDeque;
+use std::time::Instant;
+use std::time::SystemTime;
 use crate::{Result, DbError};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -1955,5 +1960,3 @@ mod tests {
         manager.stop().await.unwrap();
     }
 }
-
-

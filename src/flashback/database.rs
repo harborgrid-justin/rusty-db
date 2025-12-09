@@ -1,28 +1,29 @@
-//! # FLASHBACK DATABASE Implementation
-//!
-//! Oracle-like FLASHBACK DATABASE for point-in-time database recovery.
-//! Provides database-level flashback to restore the entire database to a previous state.
-//!
-//! ## Features
-//!
-//! - FLASHBACK DATABASE TO TIMESTAMP/SCN
-//! - FLASHBACK DATABASE TO RESTORE POINT
-//! - Guaranteed restore points (never purged)
-//! - Database incarnation management
-//! - Resetlogs operations for new timeline
-//! - Point-in-time recovery (PITR) orchestration
-//! - Archive log coordination
-//! - Flashback logs management
-//!
-//! ## Example
-//!
-//! ```sql
-//! FLASHBACK DATABASE TO TIMESTAMP '2024-01-01 12:00:00';
-//! FLASHBACK DATABASE TO SCN 12345;
-//! FLASHBACK DATABASE TO RESTORE POINT before_migration;
-//! ALTER DATABASE OPEN RESETLOGS;
-//! ```
+// # FLASHBACK DATABASE Implementation
+//
+// Oracle-like FLASHBACK DATABASE for point-in-time database recovery.
+// Provides database-level flashback to restore the entire database to a previous state.
+//
+// ## Features
+//
+// - FLASHBACK DATABASE TO TIMESTAMP/SCN
+// - FLASHBACK DATABASE TO RESTORE POINT
+// - Guaranteed restore points (never purged)
+// - Database incarnation management
+// - Resetlogs operations for new timeline
+// - Point-in-time recovery (PITR) orchestration
+// - Archive log coordination
+// - Flashback logs management
+//
+// ## Example
+//
+// ```sql
+// FLASHBACK DATABASE TO TIMESTAMP '2024-01-01 12:00:00';
+// FLASHBACK DATABASE TO SCN 12345;
+// FLASHBACK DATABASE TO RESTORE POINT before_migration;
+// ALTER DATABASE OPEN RESETLOGS;
+// ```
 
+use std::collections::BTreeMap;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
@@ -694,5 +695,3 @@ mod tests {
         assert!(!logs.covers_scn(2500));
     }
 }
-
-

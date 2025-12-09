@@ -1,7 +1,7 @@
-//! # Machine Learning Algorithms
-//!
-//! Pure Rust implementations of common ML algorithms for in-database training and inference.
-//! All algorithms are designed to work efficiently with streaming data and large datasets.
+// # Machine Learning Algorithms
+//
+// Pure Rust implementations of common ML algorithms for in-database training and inference.
+// All algorithms are designed to work efficiently with streaming data and large datasets.
 
 use crate::error::Result;
 use super::{Dataset, Vector, Matrix, Hyperparameters, MLError};
@@ -1312,5 +1312,3 @@ mod tests {
         assert!(model.fit(&dataset, &params).is_ok());
     }
 }
-
-

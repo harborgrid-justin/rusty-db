@@ -1,6 +1,7 @@
 // Disaster Recovery - Standby database, failover, and RTO/RPO management
 // Provides comprehensive disaster recovery capabilities
 
+use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime};
 use std::collections::{HashMap};

@@ -1,28 +1,29 @@
-//! # FLASHBACK TRANSACTION Implementation
-//!
-//! Oracle-like FLASHBACK TRANSACTION QUERY for analyzing and reversing transactions.
-//! Provides transaction-level flashback capabilities with dependency tracking.
-//!
-//! ## Features
-//!
-//! - FLASHBACK TRANSACTION QUERY
-//! - Transaction analysis and history
-//! - Automatic undo SQL generation
-//! - Compensating transaction creation
-//! - Transaction dependency tracking and analysis
-//! - Selective transaction reversal
-//! - Cascade undo of dependent transactions
-//! - Transaction impact analysis
-//!
-//! ## Example
-//!
-//! ```sql
-//! SELECT * FROM FLASHBACK_TRANSACTION_QUERY
-//! WHERE xid = HEXTORAW('0500120000AB0001');
-//!
-//! FLASHBACK TRANSACTION 0500120000AB0001 CASCADE;
-//! ```
+// # FLASHBACK TRANSACTION Implementation
+//
+// Oracle-like FLASHBACK TRANSACTION QUERY for analyzing and reversing transactions.
+// Provides transaction-level flashback capabilities with dependency tracking.
+//
+// ## Features
+//
+// - FLASHBACK TRANSACTION QUERY
+// - Transaction analysis and history
+// - Automatic undo SQL generation
+// - Compensating transaction creation
+// - Transaction dependency tracking and analysis
+// - Selective transaction reversal
+// - Cascade undo of dependent transactions
+// - Transaction impact analysis
+//
+// ## Example
+//
+// ```sql
+// SELECT * FROM FLASHBACK_TRANSACTION_QUERY
+// WHERE xid = HEXTORAW('0500120000AB0001');
+//
+// FLASHBACK TRANSACTION 0500120000AB0001 CASCADE;
+// ```
 
+use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
@@ -646,5 +647,3 @@ mod tests {
         assert!(sql.contains("DELETE FROM table_1"));
     }
 }
-
-

@@ -1,6 +1,7 @@
 // RustyDB SQL Tuning Advisor - Oracle-like SQL performance tuning
 // Provides automated SQL analysis, plan recommendations, and tuning suggestions
 
+use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;

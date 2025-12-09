@@ -1,16 +1,16 @@
-//! Transaction manager for coordinating transaction lifecycle.
-//!
-//! This module provides the core transaction management functionality,
-//! including beginning, committing, and aborting transactions.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let manager = TransactionManager::new();
-//! let txn_id = manager.begin()?;
-//! // ... perform operations ...
-//! manager.commit(txn_id)?;
-//! ```
+// Transaction manager for coordinating transaction lifecycle.
+//
+// This module provides the core transaction management functionality,
+// including beginning, committing, and aborting transactions.
+//
+// # Example
+//
+// ```rust,ignore
+// let manager = TransactionManager::new();
+// let txn_id = manager.begin()?;
+// // ... perform operations ...
+// manager.commit(txn_id)?;
+// ```
 
 use std::collections::HashMap;
 use std::sync::Arc;

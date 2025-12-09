@@ -1,13 +1,13 @@
-//! # Retention Policy Management
-//!
-//! This module implements retention policies for blockchain tables:
-//! - Retention policy enforcement
-//! - Time-based retention locks
-//! - Legal hold implementation
-//! - Retention period tracking
-//! - Expiration and archival
-//! - Retention inheritance
-//! - Compliance reporting
+// # Retention Policy Management
+//
+// This module implements retention policies for blockchain tables:
+// - Retention policy enforcement
+// - Time-based retention locks
+// - Legal hold implementation
+// - Retention period tracking
+// - Expiration and archival
+// - Retention inheritance
+// - Compliance reporting
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -738,5 +738,3 @@ mod tests {
         assert!(retrieved.is_some());
     }
 }
-
-

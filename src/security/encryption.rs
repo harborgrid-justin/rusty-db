@@ -1,16 +1,16 @@
-//! # Encryption Services Module
-//!
-//! Provides transparent data encryption (TDE), column-level encryption,
-//! key rotation without downtime, and hardware security module integration.
-//!
-//! ## Features
-//!
-//! - Transparent Data Encryption (TDE) for tablespaces
-//! - Column-level encryption with different algorithms
-//! - Online key rotation without downtime
-//! - Hardware Security Module (HSM) integration patterns
-//! - Key hierarchy and derivation
-//! - Encrypted backup support
+// # Encryption Services Module
+//
+// Provides transparent data encryption (TDE), column-level encryption,
+// key rotation without downtime, and hardware security module integration.
+//
+// ## Features
+//
+// - Transparent Data Encryption (TDE) for tablespaces
+// - Column-level encryption with different algorithms
+// - Online key rotation without downtime
+// - Hardware Security Module (HSM) integration patterns
+// - Key hierarchy and derivation
+// - Encrypted backup support
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -773,5 +773,3 @@ mod tests {
         assert_eq!(job.old_key_id, key_id);
     }
 }
-
-

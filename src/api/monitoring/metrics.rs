@@ -1,7 +1,7 @@
-//! Core metric types and collection
-//!
-//! Provides fundamental metric types including counters, gauges, histograms,
-//! and summaries for comprehensive system monitoring.
+// Core metric types and collection
+//
+// Provides fundamental metric types including counters, gauges, histograms,
+// and summaries for comprehensive system monitoring.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};

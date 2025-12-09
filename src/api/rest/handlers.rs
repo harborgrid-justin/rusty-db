@@ -1,7 +1,7 @@
-//! # REST API Handlers
-//!
-//! Handler functions for all REST API endpoints.
-//! Each handler implements proper error handling and uses dependency injection.
+// # REST API Handlers
+//
+// Handler functions for all REST API endpoints.
+// Each handler implements proper error handling and uses dependency injection.
 
 use axum::{
     extract::{Path, Query, State},

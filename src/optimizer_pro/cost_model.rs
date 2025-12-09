@@ -1,13 +1,13 @@
-//! Cost Model Engine - Advanced cost estimation for query optimization
-//!
-//! Implements Oracle-like cost modeling with:
-//! - CPU cost estimation
-//! - I/O cost estimation (sequential vs random)
-//! - Network cost for distributed queries
-//! - Memory cost modeling
-//! - Cardinality estimation with histograms
-//! - Selectivity estimation
-//! - Multi-column statistics
+// Cost Model Engine - Advanced cost estimation for query optimization
+//
+// Implements Oracle-like cost modeling with:
+// - CPU cost estimation
+// - I/O cost estimation (sequential vs random)
+// - Network cost for distributed queries
+// - Memory cost modeling
+// - Cardinality estimation with histograms
+// - Selectivity estimation
+// - Multi-column statistics
 
 use crate::common::{TableId, IndexId, Value};
 use crate::error::Result;
@@ -1035,5 +1035,3 @@ mod tests {
         assert!(card > 0);
     }
 }
-
-

@@ -1,25 +1,25 @@
-//! Query Result Compression
-//!
-//! This module provides compression capabilities for query results,
-//! reducing memory usage and network transfer times for large result sets.
-//!
-//! # Architecture
-//!
-//! The compression system supports multiple algorithms:
-//! - Run-length encoding for repeated values
-//! - Dictionary encoding for low-cardinality columns
-//! - Delta encoding for sorted numeric data
-//! - LZ4-style compression for general data
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! use crate::analytics::compression::{QueryResultCompressor, CompressionAlgorithm};
-//!
-//! let compressor = QueryResultCompressor::new(CompressionAlgorithm::Dictionary);
-//! let compressed = compressor.compress(&data);
-//! let original = compressor.decompress(&compressed);
-//! ```
+// Query Result Compression
+//
+// This module provides compression capabilities for query results,
+// reducing memory usage and network transfer times for large result sets.
+//
+// # Architecture
+//
+// The compression system supports multiple algorithms:
+// - Run-length encoding for repeated values
+// - Dictionary encoding for low-cardinality columns
+// - Delta encoding for sorted numeric data
+// - LZ4-style compression for general data
+//
+// # Example
+//
+// ```rust,ignore
+// use crate::analytics::compression::{QueryResultCompressor, CompressionAlgorithm};
+//
+// let compressor = QueryResultCompressor::new(CompressionAlgorithm::Dictionary);
+// let compressed = compressor.compress(&data);
+// let original = compressor.decompress(&compressed);
+// ```
 
 use parking_lot::RwLock;
 use std::collections::HashMap;

@@ -1,12 +1,12 @@
-//! Spatial Operators
-//!
-//! Implements Oracle Spatial-compatible geometric operations:
-//! - Topological relationships (DE-9IM model)
-//! - Distance calculations
-//! - Buffer operations
-//! - Set operations (union, intersection, difference)
-//! - Geometric transformations
-//! - Simplification algorithms
+// Spatial Operators
+//
+// Implements Oracle Spatial-compatible geometric operations:
+// - Topological relationships (DE-9IM model)
+// - Distance calculations
+// - Buffer operations
+// - Set operations (union, intersection, difference)
+// - Geometric transformations
+// - Simplification algorithms
 
 use crate::error::DbError;
 use crate::error::Result;
@@ -889,5 +889,3 @@ mod tests {
         assert!(simplified.coords.len() <= ls.coords.len());
     }
 }
-
-

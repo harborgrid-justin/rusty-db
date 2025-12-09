@@ -1,24 +1,25 @@
-//! # Shared Services and Common Objects
-//!
-//! Shared undo tablespace, temp tablespace, common users and roles,
-//! application common objects, and lockdown profiles.
-//!
-//! ## Features
-//!
-//! - **Shared Undo**: Centralized undo management for all PDBs
-//! - **Shared Temp**: Shared temporary tablespace
-//! - **Common Users**: Users that exist across all PDBs
-//! - **Common Roles**: Roles shared across PDBs
-//! - **Application Objects**: Shared application metadata
-//! - **Lockdown Profiles**: Security restrictions for PDBs
-//!
-//! ## Architecture
-//!
-//! Common objects are stored in the CDB root and referenced by PDBs:
-//! - Common users: C##USER format
-//! - Local users: Regular naming
-//! - Lockdown profiles: Restrict PDB capabilities
+// # Shared Services and Common Objects
+//
+// Shared undo tablespace, temp tablespace, common users and roles,
+// application common objects, and lockdown profiles.
+//
+// ## Features
+//
+// - **Shared Undo**: Centralized undo management for all PDBs
+// - **Shared Temp**: Shared temporary tablespace
+// - **Common Users**: Users that exist across all PDBs
+// - **Common Roles**: Roles shared across PDBs
+// - **Application Objects**: Shared application metadata
+// - **Lockdown Profiles**: Security restrictions for PDBs
+//
+// ## Architecture
+//
+// Common objects are stored in the CDB root and referenced by PDBs:
+// - Common users: C##USER format
+// - Local users: Regular naming
+// - Lockdown profiles: Restrict PDB capabilities
 
+use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{SystemTime};
@@ -650,5 +651,3 @@ mod tests {
         assert!(profile.is_statement_allowed("SELECT"));
     }
 }
-
-

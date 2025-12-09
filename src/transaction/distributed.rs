@@ -2,6 +2,11 @@
 // Implements two-phase commit, saga pattern, distributed deadlock detection,
 // and cross-shard transaction routing for distributed database systems
 
+use std::collections::VecDeque;
+use std::collections::BTreeMap;
+use std::collections::HashSet;
+use std::time::Instant;
+use std::sync::Mutex;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};

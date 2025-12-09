@@ -1,24 +1,24 @@
-//! # Data Masking Engine
-//!
-//! Oracle-like data masking for protecting sensitive data in non-production environments
-//! and real-time query masking for production access control.
-//!
-//! ## Features
-//!
-//! - **Static Masking**: One-time masking for database clones
-//! - **Dynamic Masking**: Real-time masking in query results
-//! - **Format-Preserving Encryption (FPE)**: Maintain data format
-//! - **Consistent Masking**: Same input produces same masked output
-//! - **Custom Functions**: User-defined masking logic
-//!
-//! ## Masking Types
-//!
-//! - **Full Masking**: Replace with generic value
-//! - **Partial Masking**: Show subset (e.g., last 4 digits)
-//! - **Shuffle**: Randomize within same data set
-//! - **Substitution**: Replace with realistic fake data
-//! - **Nullify**: Replace with NULL
-//! - **Hash**: One-way hashing with salt
+// # Data Masking Engine
+//
+// Oracle-like data masking for protecting sensitive data in non-production environments
+// and real-time query masking for production access control.
+//
+// ## Features
+//
+// - **Static Masking**: One-time masking for database clones
+// - **Dynamic Masking**: Real-time masking in query results
+// - **Format-Preserving Encryption (FPE)**: Maintain data format
+// - **Consistent Masking**: Same input produces same masked output
+// - **Custom Functions**: User-defined masking logic
+//
+// ## Masking Types
+//
+// - **Full Masking**: Replace with generic value
+// - **Partial Masking**: Show subset (e.g., last 4 digits)
+// - **Shuffle**: Randomize within same data set
+// - **Substitution**: Replace with realistic fake data
+// - **Nullify**: Replace with NULL
+// - **Hash**: One-way hashing with salt
 
 use crate::{DbError, Result};
 use serde::{Deserialize, Serialize};
@@ -700,5 +700,3 @@ mod tests {
         assert_eq!(masked, "CUSTOM_TEST");
     }
 }
-
-

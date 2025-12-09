@@ -1,59 +1,59 @@
-//! # High-Performance I/O Layer for RustyDB
-//!
-//! This module provides a high-performance, cross-platform I/O abstraction layer
-//! optimized for database workloads with support for:
-//!
-//! - **Windows IOCP**: I/O Completion Ports for Windows
-//! - **Unix io_uring**: Modern asynchronous I/O for Linux
-//! - **Direct I/O**: Bypass OS page cache for database-managed caching
-//! - **Batched Operations**: Submit multiple I/O requests in a single syscall
-//! - **Zero-Copy**: Minimize data copying where possible
-//! - **Lock-Free Queues**: High-throughput concurrent data structures
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────┐
-//! │           High-Level API (FileManager)          │
-//! ├─────────────────────────────────────────────────┤
-//! │         Async I/O Engine (IoCompletionPort)     │
-//! ├─────────────────────────────────────────────────┤
-//! │       Ring Buffer Queue (IoRingBuffer)          │
-//! ├─────────────────────────────────────────────────┤
-//! │  Platform-Specific Layer (IOCP / io_uring)      │
-//! └─────────────────────────────────────────────────┘
-//! ```
-//!
-//! ## Performance Features
-//!
-//! - **Sector-Aligned Buffers**: All I/O buffers aligned to 4KB for Direct I/O
-//! - **Buffer Pool**: Pre-allocated buffer pool to avoid runtime allocations
-//! - **Batching**: Multiple I/O operations submitted per syscall
-//! - **Lock-Free**: Submission and completion queues use atomic operations
-//! - **Thread Pool**: Fixed thread pool for I/O workers to avoid thread creation overhead
-//!
-//! ## Example Usage
-//!
-//! ```rust,no_run
-//! use rusty_db::io::{FileManager, IoOptions};
-//!
-//! # async fn example() -> rusty_db::Result<()> {
-//! let mut file_mgr = FileManager::new(IoOptions::default()).await?;
-//!
-//! // Open a file for Direct I/O
-//! let file_id = file_mgr.open("data.db", true).await?;
-//!
-//! // Read a 4KB page at offset 8192
-//! let buffer = file_mgr.read_page(file_id, 8192).await?;
-//!
-//! // Write a page with batching
-//! file_mgr.write_page(file_id, 8192, &buffer).await?;
-//!
-//! // Flush all pending writes
-//! file_mgr.flush(file_id).await?;
-//! # Ok(())
-//! # }
-//! ```
+// # High-Performance I/O Layer for RustyDB
+//
+// This module provides a high-performance, cross-platform I/O abstraction layer
+// optimized for database workloads with support for:
+//
+// - **Windows IOCP**: I/O Completion Ports for Windows
+// - **Unix io_uring**: Modern asynchronous I/O for Linux
+// - **Direct I/O**: Bypass OS page cache for database-managed caching
+// - **Batched Operations**: Submit multiple I/O requests in a single syscall
+// - **Zero-Copy**: Minimize data copying where possible
+// - **Lock-Free Queues**: High-throughput concurrent data structures
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────┐
+// │           High-Level API (FileManager)          │
+// ├─────────────────────────────────────────────────┤
+// │         Async I/O Engine (IoCompletionPort)     │
+// ├─────────────────────────────────────────────────┤
+// │       Ring Buffer Queue (IoRingBuffer)          │
+// ├─────────────────────────────────────────────────┤
+// │  Platform-Specific Layer (IOCP / io_uring)      │
+// └─────────────────────────────────────────────────┘
+// ```
+//
+// ## Performance Features
+//
+// - **Sector-Aligned Buffers**: All I/O buffers aligned to 4KB for Direct I/O
+// - **Buffer Pool**: Pre-allocated buffer pool to avoid runtime allocations
+// - **Batching**: Multiple I/O operations submitted per syscall
+// - **Lock-Free**: Submission and completion queues use atomic operations
+// - **Thread Pool**: Fixed thread pool for I/O workers to avoid thread creation overhead
+//
+// ## Example Usage
+//
+// ```rust,no_run
+// use rusty_db::io::{FileManager, IoOptions};
+//
+// # async fn example() -> rusty_db::Result<()> {
+// let mut file_mgr = FileManager::new(IoOptions::default()).await?;
+//
+// // Open a file for Direct I/O
+// let file_id = file_mgr.open("data.db", true).await?;
+//
+// // Read a 4KB page at offset 8192
+// let buffer = file_mgr.read_page(file_id, 8192).await?;
+//
+// // Write a page with batching
+// file_mgr.write_page(file_id, 8192, &buffer).await?;
+//
+// // Flush all pending writes
+// file_mgr.flush(file_id).await?;
+// # Ok(())
+// # }
+// ```
 
 use crate::error::Result;
 use std::sync::Arc;
@@ -356,5 +356,3 @@ mod tests {
         assert!(config.async_io);
     }
 }
-
-

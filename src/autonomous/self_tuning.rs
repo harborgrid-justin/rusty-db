@@ -1,9 +1,11 @@
-//! Self-Tuning Database Engine
-//!
-//! Provides autonomous parameter tuning and optimization using ML-driven approaches.
-//! This module implements continuous optimization loops with reinforcement learning
-//! concepts to automatically adjust database parameters for optimal performance.
+// Self-Tuning Database Engine
+//
+// Provides autonomous parameter tuning and optimization using ML-driven approaches.
+// This module implements continuous optimization loops with reinforcement learning
+// concepts to automatically adjust database parameters for optimal performance.
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -906,5 +908,3 @@ mod tests {
         assert!(gatherer.should_gather_stats("test_table", 1000));
     }
 }
-
-

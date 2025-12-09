@@ -1,8 +1,10 @@
-//! # Logical Replication
-//!
-//! Row-level logical replication with table/column filtering,
-//! transformation, and schema evolution handling.
+// # Logical Replication
+//
+// Row-level logical replication with table/column filtering,
+// transformation, and schema evolution handling.
 
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -671,5 +673,3 @@ mod tests {
         assert_eq!(subs[0].name, "sub1");
     }
 }
-
-

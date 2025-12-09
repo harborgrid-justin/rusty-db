@@ -1,14 +1,14 @@
-//! # Cryptographic Primitives for Blockchain Tables
-//!
-//! This module provides cryptographic functions for blockchain table operations including:
-//! - Hash computations (SHA-256, SHA-3)
-//! - Digital signatures (Ed25519-like)
-//! - Hash chain verification
-//! - Merkle tree operations
-//! - Zero-knowledge proof concepts
-//! - Cryptographic accumulators
-//! - Key derivation functions
-//! - Secure random generation
+// # Cryptographic Primitives for Blockchain Tables
+//
+// This module provides cryptographic functions for blockchain table operations including:
+// - Hash computations (SHA-256, SHA-3)
+// - Digital signatures (Ed25519-like)
+// - Hash chain verification
+// - Merkle tree operations
+// - Zero-knowledge proof concepts
+// - Cryptographic accumulators
+// - Key derivation functions
+// - Secure random generation
 
 use sha2::{Sha256, Sha512, Digest};
 use hmac::{Hmac, Mac};
@@ -869,5 +869,3 @@ mod tests {
         assert!(!commitment.verify(b"wrong value", &blinding));
     }
 }
-
-

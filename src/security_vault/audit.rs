@@ -1,34 +1,34 @@
-//! # Audit Vault
-//!
-//! Comprehensive audit trail system with fine-grained auditing (FGA),
-//! tamper-evident blockchain-backed logs, and compliance reporting.
-//!
-//! ## Features
-//!
-//! - **Fine-Grained Auditing**: Track specific column access and modifications
-//! - **Unified Audit Trail**: Centralized audit repository
-//! - **Tamper-Evident**: Blockchain-backed integrity verification
-//! - **Real-Time Alerts**: Immediate notification of security events
-//! - **Compliance Reports**: SOX, HIPAA, GDPR, PCI-DSS reporting
-//!
-//! ## Audit Record Structure
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────┐
-//! │  Audit Record                               │
-//! ├─────────────────────────────────────────────┤
-//! │  - Timestamp                                │
-//! │  - User ID                                  │
-//! │  - Session ID                               │
-//! │  - Action Type                              │
-//! │  - Object Name                              │
-//! │  - SQL Statement                            │
-//! │  - Result (Success/Failure)                 │
-//! │  - Client IP                                │
-//! │  - Previous Hash (Blockchain)               │
-//! │  - Current Hash                             │
-//! └─────────────────────────────────────────────┘
-//! ```
+// # Audit Vault
+//
+// Comprehensive audit trail system with fine-grained auditing (FGA),
+// tamper-evident blockchain-backed logs, and compliance reporting.
+//
+// ## Features
+//
+// - **Fine-Grained Auditing**: Track specific column access and modifications
+// - **Unified Audit Trail**: Centralized audit repository
+// - **Tamper-Evident**: Blockchain-backed integrity verification
+// - **Real-Time Alerts**: Immediate notification of security events
+// - **Compliance Reports**: SOX, HIPAA, GDPR, PCI-DSS reporting
+//
+// ## Audit Record Structure
+//
+// ```text
+// ┌─────────────────────────────────────────────┐
+// │  Audit Record                               │
+// ├─────────────────────────────────────────────┤
+// │  - Timestamp                                │
+// │  - User ID                                  │
+// │  - Session ID                               │
+// │  - Action Type                              │
+// │  - Object Name                              │
+// │  - SQL Statement                            │
+// │  - Result (Success/Failure)                 │
+// │  - Client IP                                │
+// │  - Previous Hash (Blockchain)               │
+// │  - Current Hash                             │
+// └─────────────────────────────────────────────┘
+// ```
 
 use crate::{DbError, Result};
 use serde::{Deserialize, Serialize};
@@ -847,5 +847,3 @@ mod tests {
         assert!(vault.verify_integrity().unwrap());
     }
 }
-
-

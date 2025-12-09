@@ -1,18 +1,19 @@
-//! Transaction timeout management.
-//!
-//! This module provides timeout tracking for transactions to prevent
-//! resource leaks from long-running or abandoned transactions.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let tm = TimeoutManager::new(Duration::from_secs(60));
-//! tm.set_timeout(txn_id::from_secs(30));
-//! if tm.is_timed_out(txn_id) {
-//!     // Abort the transaction
-//! }
-//! ```
+// Transaction timeout management.
+//
+// This module provides timeout tracking for transactions to prevent
+// resource leaks from long-running or abandoned transactions.
+//
+// # Example
+//
+// ```rust,ignore
+// let tm = TimeoutManager::new(Duration::from_secs(60));
+// tm.set_timeout(txn_id::from_secs(30));
+// if tm.is_timed_out(txn_id) {
+//     // Abort the transaction
+// }
+// ```
 
+use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};

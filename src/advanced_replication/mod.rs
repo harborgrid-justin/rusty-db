@@ -1,322 +1,322 @@
-//! # Advanced Replication Engine
-//!
-//! Enterprise-grade replication system for RustyDB with Oracle-like capabilities.
-//!
-//! ## Overview
-//!
-//! This module provides comprehensive replication features including:
-//!
-//! - **Multi-Master Replication**: Bidirectional replication with conflict detection and resolution
-//! - **Logical Replication**: Row-level replication with filtering and transformation
-//! - **Sharding**: Hash, range, list, and composite sharding strategies
-//! - **Global Data Services**: Region-aware routing and load balancing
-//! - **Conflict Resolution**: CRDT-based and traditional conflict resolution strategies
-//! - **Replication Monitoring**: Real-time metrics, alerts, and dashboards
-//! - **Apply Engine**: Parallel change application with dependency tracking
-//! - **XA Transactions**: Distributed two-phase commit protocol
-//!
-//! ## Key Innovations
-//!
-//! ### CRDT-Based Conflict-Free Replication
-//!
-//! Implements multiple Conflict-free Replicated Data Types (CRDTs) for automatic
-//! conflict resolution without manual intervention:
-//!
-//! - **LWW-Register**: Last-Writer-Wins with timestamp and site-ID tie-breaking
-//! - **G-Counter**: Grow-only counter for monotonically increasing values
-//! - **PN-Counter**: Positive-Negative counter for increment/decrement operations
-//! - **G-Set**: Grow-only set for append-only collections
-//! - **2P-Set**: Two-Phase Set supporting additions and removals
-//! - **OR-Set**: Observed-Remove Set for concurrent add/remove operations
-//!
-//! ### ML-Based Conflict Prediction
-//!
-//! The system can analyze historical conflict patterns to predict and prevent
-//! future conflicts:
-//!
-//! - Pattern recognition for conflict-prone data access patterns
-//! - Predictive routing to minimize conflicts
-//! - Automatic recommendation of optimal conflict resolution strategies
-//!
-//! ### Adaptive Replication Topology
-//!
-//! Dynamically adjusts replication topology based on:
-//!
-//! - Workload characteristics
-//! - Network latency patterns
-//! - Geographic distribution of clients
-//! - Read/write ratios
-//!
-//! ### Zero-Downtime Shard Migration
-//!
-//! Move data between shards without service interruption:
-//!
-//! - Live migration with minimal performance impact
-//! - Automatic failback on errors
-//! - Progress tracking and ETA prediction
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────┐
-//! │                  Advanced Replication Engine                │
-//! └─────────────────────────────────────────────────────────────┘
-//!          │              │              │              │
-//!     ┌────▼────┐    ┌────▼────┐   ┌────▼────┐   ┌────▼────┐
-//!     │  Multi  │    │Logical  │   │Sharding │   │   GDS   │
-//!     │ Master  │    │  Repli  │   │ Engine  │   │ Routing │
-//!     └────┬────┘    └────┬────┘   └────┬────┘   └────┬────┘
-//!          │              │              │              │
-//!          └──────────────┴──────────────┴──────────────┘
-//!                           │
-//!          ┌────────────────┴────────────────┐
-//!          │                                 │
-//!     ┌────▼────┐                       ┌────▼────┐
-//!     │Conflict │                       │  Apply  │
-//!     │Resolver │                       │ Engine  │
-//!     └────┬────┘                       └────┬────┘
-//!          │                                 │
-//!          └─────────────┬───────────────────┘
-//!                        │
-//!                   ┌────▼────┐
-//!                   │   XA    │
-//!                   │  Trans  │
-//!                   └────┬────┘
-//!                        │
-//!                   ┌────▼────┐
-//!                   │Monitor  │
-//!                   │  ing    │
-//!                   └─────────┘
-//! ```
-//!
-//! ## Usage Examples
-//!
-//! ### Multi-Master Replication
-//!
-//! ```rust,no_run
-//! use rusty_db::advanced_replication::multi_master::*;
-//! use rusty_db::advanced_replication::conflicts::*;
-//!
-//! # async fn example() -> rusty_db::Result<()> {
-//! // Create multi-master replication manager
-//! let mm = MultiMasterReplication::new("site-1".to_string());
-//!
-//! // Create a replication group
-//! let group = ReplicationGroup {
-//!     id: "group-1".to_string(),
-//!     name: "Global Replication".to_string(),
-//!     members: vec![],
-//!     tables: vec!["users".to_string(), "orders".to_string()],
-//!     conflict_strategy: ConflictResolutionStrategy::LastWriterWins,
-//!     write_quorum: 2,
-//!     read_quorum: 1,
-//!     created_at: 0,
-//! };
-//!
-//! mm.create_group(group)?;
-//!
-//! // Add sites to the group
-//! let site = SiteInfo {
-//!     site_id: "site-2".to_string(),
-//!     name: "EU West".to_string(),
-//!     address: "eu-west.example.com:5432".to_string(),
-//!     priority: 1,
-//!     region: "eu-west-1".to_string(),
-//!     active: true,
-//!     last_heartbeat: 0,
-//! };
-//!
-//! mm.add_site_to_group("group-1", site)?;
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ### Logical Replication with Filtering
-//!
-//! ```rust,no_run
-//! use rusty_db::advanced_replication::logical::*;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! // Create logical replication manager
-//! let lr = LogicalReplication::new();
-//!
-//! // Create a publication with column filtering
-//! let table_pub = TablePublication {
-//!     table_name: "users".to_string(),
-//!     schema_name: "public".to_string(),
-//!     columns: Some(vec!["id".to_string(), "email".to_string(), "created_at".to_string()]),
-//!     row_filter: Some("active = true".to_string()),
-//!     transformations: vec![
-//!         Transformation::Mask {
-//!             column: "email".to_string(),
-//!             mask_type: MaskType::Hash,
-//!         }
-//!     ],
-//!     replicate_insert: true,
-//!     replicate_update: true,
-//!     replicate_delete: false,
-//! };
-//!
-//! let publication = Publication {
-//!     name: "active_users_pub".to_string(),
-//!     tables: vec![table_pub],
-//!     replicate_ddl: false,
-//!     replicate_truncate: false,
-//!     owner: "admin".to_string(),
-//!     created_at: 0,
-//! };
-//!
-//! lr.create_publication(publication)?;
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ### Sharding with Auto-Rebalancing
-//!
-//! ```rust,no_run
-//! use rusty_db::advanced_replication::sharding::*;
-//!
-//! # async fn example() -> rusty_db::Result<()> {
-//! // Create sharding engine
-//! let engine = ShardingEngine::new();
-//!
-//! // Create hash-based sharding
-//! let strategy = ShardingStrategy::Hash {
-//!     num_shards: 16,
-//!     hash_function: HashFunction::Consistent,
-//! };
-//!
-//! let sharded_table = ShardedTable {
-//!     table_name: "orders".to_string(),
-//!     schema_name: "public".to_string(),
-//!     shard_key_columns: vec!["customer_id".to_string()],
-//!     strategy,
-//!     shards: vec![],
-//!     created_at: 0,
-//! };
-//!
-//! engine.create_sharded_table(sharded_table)?;
-//!
-//! // Plan and execute rebalance
-//! let plan = engine.plan_rebalance("public.orders", "shard-0", "shard-1")?;
-//! engine.execute_rebalance(&plan.id).await?;
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ### Global Data Services with Region-Aware Routing
-//!
-//! ```rust,no_run
-//! use rusty_db::advanced_replication::gds::*;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! // Create GDS manager
-//! let gds = GlobalDataServices::new();
-//!
-//! // Register a global service
-//! let service = GlobalService {
-//!     name: "global-db".to_string(),
-//!     regions: vec![],
-//!     load_balancing: LoadBalancingStrategy::LocalityAware,
-//!     failover_policy: FailoverPolicy {
-//!         auto_failover: true,
-//!         timeout_ms: 5000,
-//!         max_retries: 3,
-//!         priority_order: vec!["us-east-1".to_string(), "eu-west-1".to_string()],
-//!     },
-//!     state: ServiceState::Active,
-//!     created_at: 0,
-//! };
-//!
-//! gds.register_service(service)?;
-//!
-//! // Route a request
-//! let request = ConnectionRequest {
-//!     id: "req-1".to_string(),
-//!     client_location: Some(GeoLocation {
-//!         latitude: 40.7128,
-//!         longitude: -74.0060,
-//!         country: "US".to_string(),
-//!         city: "New York".to_string(),
-//!     }),
-//!     request_type: RequestType::Read,
-//!     priority: 1,
-//!     timestamp: 0,
-//! };
-//!
-//! let decision = gds.route_request("global-db", &request)?;
-//! println!("Routed to region: {}", decision.region_id);
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ### XA Distributed Transactions
-//!
-//! ```rust,no_run
-//! use rusty_db::advanced_replication::xa::*;
-//!
-//! # async fn example() -> rusty_db::Result<()> {
-//! // Create XA transaction manager
-//! let xa_mgr = XaTransactionManager::new();
-//!
-//! // Register resource managers (databases)
-//! xa_mgr.register_resource_manager(ResourceManager {
-//!     id: "db1".to_string(),
-//!     name: "Database 1".to_string(),
-//!     connection: "host1:5432".to_string(),
-//!     state: RmState::Available,
-//! })?;
-//!
-//! xa_mgr.register_resource_manager(ResourceManager {
-//!     id: "db2".to_string(),
-//!     name: "Database 2".to_string(),
-//!     connection: "host2:5432".to_string(),
-//!     state: RmState::Available,
-//! })?;
-//!
-//! // Start distributed transaction
-//! let xid = Xid::generate();
-//! xa_mgr.xa_start(
-//!     xid.clone(),
-//!     vec!["db1".to_string(), "db2".to_string()],
-//!     30  // 30 second timeout
-//! )?;
-//!
-//! // Perform operations...
-//!
-//! // End transaction
-//! xa_mgr.xa_end(&xid)?;
-//!
-//! // Two-phase commit
-//! let votes = xa_mgr.xa_prepare(&xid).await?;
-//!
-//! if votes.iter().all(|v| *v == Vote::VoteCommit) {
-//!     xa_mgr.xa_commit(&xid, false).await?;
-//! } else {
-//!     xa_mgr.xa_rollback(&xid).await?;
-//! }
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ## Performance Considerations
-//!
-//! - **Parallel Apply**: The apply engine processes changes in parallel while respecting dependencies
-//! - **Batching**: Changes are grouped by transaction for efficient application
-//! - **CRDT Optimization**: CRDTs eliminate the need for coordination in many scenarios
-//! - **Consistent Hashing**: Minimizes data movement during shard rebalancing
-//! - **Locality-Aware Routing**: Reduces network latency by routing to nearby regions
-//!
-//! ## Monitoring and Observability
-//!
-//! The monitoring module provides comprehensive metrics:
-//!
-//! - Replication lag (time, bytes, transactions)
-//! - Throughput (changes/sec, bytes/sec, transactions/sec)
-//! - Error rates and conflict rates
-//! - Alert thresholds with configurable severity
-//! - Time-series data for historical analysis
-//! - Dashboard generation for real-time visibility
+// # Advanced Replication Engine
+//
+// Enterprise-grade replication system for RustyDB with Oracle-like capabilities.
+//
+// ## Overview
+//
+// This module provides comprehensive replication features including:
+//
+// - **Multi-Master Replication**: Bidirectional replication with conflict detection and resolution
+// - **Logical Replication**: Row-level replication with filtering and transformation
+// - **Sharding**: Hash, range, list, and composite sharding strategies
+// - **Global Data Services**: Region-aware routing and load balancing
+// - **Conflict Resolution**: CRDT-based and traditional conflict resolution strategies
+// - **Replication Monitoring**: Real-time metrics, alerts, and dashboards
+// - **Apply Engine**: Parallel change application with dependency tracking
+// - **XA Transactions**: Distributed two-phase commit protocol
+//
+// ## Key Innovations
+//
+// ### CRDT-Based Conflict-Free Replication
+//
+// Implements multiple Conflict-free Replicated Data Types (CRDTs) for automatic
+// conflict resolution without manual intervention:
+//
+// - **LWW-Register**: Last-Writer-Wins with timestamp and site-ID tie-breaking
+// - **G-Counter**: Grow-only counter for monotonically increasing values
+// - **PN-Counter**: Positive-Negative counter for increment/decrement operations
+// - **G-Set**: Grow-only set for append-only collections
+// - **2P-Set**: Two-Phase Set supporting additions and removals
+// - **OR-Set**: Observed-Remove Set for concurrent add/remove operations
+//
+// ### ML-Based Conflict Prediction
+//
+// The system can analyze historical conflict patterns to predict and prevent
+// future conflicts:
+//
+// - Pattern recognition for conflict-prone data access patterns
+// - Predictive routing to minimize conflicts
+// - Automatic recommendation of optimal conflict resolution strategies
+//
+// ### Adaptive Replication Topology
+//
+// Dynamically adjusts replication topology based on:
+//
+// - Workload characteristics
+// - Network latency patterns
+// - Geographic distribution of clients
+// - Read/write ratios
+//
+// ### Zero-Downtime Shard Migration
+//
+// Move data between shards without service interruption:
+//
+// - Live migration with minimal performance impact
+// - Automatic failback on errors
+// - Progress tracking and ETA prediction
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────┐
+// │                  Advanced Replication Engine                │
+// └─────────────────────────────────────────────────────────────┘
+//          │              │              │              │
+//     ┌────▼────┐    ┌────▼────┐   ┌────▼────┐   ┌────▼────┐
+//     │  Multi  │    │Logical  │   │Sharding │   │   GDS   │
+//     │ Master  │    │  Repli  │   │ Engine  │   │ Routing │
+//     └────┬────┘    └────┬────┘   └────┬────┘   └────┬────┘
+//          │              │              │              │
+//          └──────────────┴──────────────┴──────────────┘
+//                           │
+//          ┌────────────────┴────────────────┐
+//          │                                 │
+//     ┌────▼────┐                       ┌────▼────┐
+//     │Conflict │                       │  Apply  │
+//     │Resolver │                       │ Engine  │
+//     └────┬────┘                       └────┬────┘
+//          │                                 │
+//          └─────────────┬───────────────────┘
+//                        │
+//                   ┌────▼────┐
+//                   │   XA    │
+//                   │  Trans  │
+//                   └────┬────┘
+//                        │
+//                   ┌────▼────┐
+//                   │Monitor  │
+//                   │  ing    │
+//                   └─────────┘
+// ```
+//
+// ## Usage Examples
+//
+// ### Multi-Master Replication
+//
+// ```rust,no_run
+// use rusty_db::advanced_replication::multi_master::*;
+// use rusty_db::advanced_replication::conflicts::*;
+//
+// # async fn example() -> rusty_db::Result<()> {
+// // Create multi-master replication manager
+// let mm = MultiMasterReplication::new("site-1".to_string());
+//
+// // Create a replication group
+// let group = ReplicationGroup {
+//     id: "group-1".to_string(),
+//     name: "Global Replication".to_string(),
+//     members: vec![],
+//     tables: vec!["users".to_string(), "orders".to_string()],
+//     conflict_strategy: ConflictResolutionStrategy::LastWriterWins,
+//     write_quorum: 2,
+//     read_quorum: 1,
+//     created_at: 0,
+// };
+//
+// mm.create_group(group)?;
+//
+// // Add sites to the group
+// let site = SiteInfo {
+//     site_id: "site-2".to_string(),
+//     name: "EU West".to_string(),
+//     address: "eu-west.example.com:5432".to_string(),
+//     priority: 1,
+//     region: "eu-west-1".to_string(),
+//     active: true,
+//     last_heartbeat: 0,
+// };
+//
+// mm.add_site_to_group("group-1", site)?;
+// # Ok(())
+// # }
+// ```
+//
+// ### Logical Replication with Filtering
+//
+// ```rust,no_run
+// use rusty_db::advanced_replication::logical::*;
+//
+// # fn example() -> rusty_db::Result<()> {
+// // Create logical replication manager
+// let lr = LogicalReplication::new();
+//
+// // Create a publication with column filtering
+// let table_pub = TablePublication {
+//     table_name: "users".to_string(),
+//     schema_name: "public".to_string(),
+//     columns: Some(vec!["id".to_string(), "email".to_string(), "created_at".to_string()]),
+//     row_filter: Some("active = true".to_string()),
+//     transformations: vec![
+//         Transformation::Mask {
+//             column: "email".to_string(),
+//             mask_type: MaskType::Hash,
+//         }
+//     ],
+//     replicate_insert: true,
+//     replicate_update: true,
+//     replicate_delete: false,
+// };
+//
+// let publication = Publication {
+//     name: "active_users_pub".to_string(),
+//     tables: vec![table_pub],
+//     replicate_ddl: false,
+//     replicate_truncate: false,
+//     owner: "admin".to_string(),
+//     created_at: 0,
+// };
+//
+// lr.create_publication(publication)?;
+// # Ok(())
+// # }
+// ```
+//
+// ### Sharding with Auto-Rebalancing
+//
+// ```rust,no_run
+// use rusty_db::advanced_replication::sharding::*;
+//
+// # async fn example() -> rusty_db::Result<()> {
+// // Create sharding engine
+// let engine = ShardingEngine::new();
+//
+// // Create hash-based sharding
+// let strategy = ShardingStrategy::Hash {
+//     num_shards: 16,
+//     hash_function: HashFunction::Consistent,
+// };
+//
+// let sharded_table = ShardedTable {
+//     table_name: "orders".to_string(),
+//     schema_name: "public".to_string(),
+//     shard_key_columns: vec!["customer_id".to_string()],
+//     strategy,
+//     shards: vec![],
+//     created_at: 0,
+// };
+//
+// engine.create_sharded_table(sharded_table)?;
+//
+// // Plan and execute rebalance
+// let plan = engine.plan_rebalance("public.orders", "shard-0", "shard-1")?;
+// engine.execute_rebalance(&plan.id).await?;
+// # Ok(())
+// # }
+// ```
+//
+// ### Global Data Services with Region-Aware Routing
+//
+// ```rust,no_run
+// use rusty_db::advanced_replication::gds::*;
+//
+// # fn example() -> rusty_db::Result<()> {
+// // Create GDS manager
+// let gds = GlobalDataServices::new();
+//
+// // Register a global service
+// let service = GlobalService {
+//     name: "global-db".to_string(),
+//     regions: vec![],
+//     load_balancing: LoadBalancingStrategy::LocalityAware,
+//     failover_policy: FailoverPolicy {
+//         auto_failover: true,
+//         timeout_ms: 5000,
+//         max_retries: 3,
+//         priority_order: vec!["us-east-1".to_string(), "eu-west-1".to_string()],
+//     },
+//     state: ServiceState::Active,
+//     created_at: 0,
+// };
+//
+// gds.register_service(service)?;
+//
+// // Route a request
+// let request = ConnectionRequest {
+//     id: "req-1".to_string(),
+//     client_location: Some(GeoLocation {
+//         latitude: 40.7128,
+//         longitude: -74.0060,
+//         country: "US".to_string(),
+//         city: "New York".to_string(),
+//     }),
+//     request_type: RequestType::Read,
+//     priority: 1,
+//     timestamp: 0,
+// };
+//
+// let decision = gds.route_request("global-db", &request)?;
+// println!("Routed to region: {}", decision.region_id);
+// # Ok(())
+// # }
+// ```
+//
+// ### XA Distributed Transactions
+//
+// ```rust,no_run
+// use rusty_db::advanced_replication::xa::*;
+//
+// # async fn example() -> rusty_db::Result<()> {
+// // Create XA transaction manager
+// let xa_mgr = XaTransactionManager::new();
+//
+// // Register resource managers (databases)
+// xa_mgr.register_resource_manager(ResourceManager {
+//     id: "db1".to_string(),
+//     name: "Database 1".to_string(),
+//     connection: "host1:5432".to_string(),
+//     state: RmState::Available,
+// })?;
+//
+// xa_mgr.register_resource_manager(ResourceManager {
+//     id: "db2".to_string(),
+//     name: "Database 2".to_string(),
+//     connection: "host2:5432".to_string(),
+//     state: RmState::Available,
+// })?;
+//
+// // Start distributed transaction
+// let xid = Xid::generate();
+// xa_mgr.xa_start(
+//     xid.clone(),
+//     vec!["db1".to_string(), "db2".to_string()],
+//     30  // 30 second timeout
+// )?;
+//
+// // Perform operations...
+//
+// // End transaction
+// xa_mgr.xa_end(&xid)?;
+//
+// // Two-phase commit
+// let votes = xa_mgr.xa_prepare(&xid).await?;
+//
+// if votes.iter().all(|v| *v == Vote::VoteCommit) {
+//     xa_mgr.xa_commit(&xid, false).await?;
+// } else {
+//     xa_mgr.xa_rollback(&xid).await?;
+// }
+// # Ok(())
+// # }
+// ```
+//
+// ## Performance Considerations
+//
+// - **Parallel Apply**: The apply engine processes changes in parallel while respecting dependencies
+// - **Batching**: Changes are grouped by transaction for efficient application
+// - **CRDT Optimization**: CRDTs eliminate the need for coordination in many scenarios
+// - **Consistent Hashing**: Minimizes data movement during shard rebalancing
+// - **Locality-Aware Routing**: Reduces network latency by routing to nearby regions
+//
+// ## Monitoring and Observability
+//
+// The monitoring module provides comprehensive metrics:
+//
+// - Replication lag (time, bytes, transactions)
+// - Throughput (changes/sec, bytes/sec, transactions/sec)
+// - Error rates and conflict rates
+// - Alert thresholds with configurable severity
+// - Time-series data for historical analysis
+// - Dashboard generation for real-time visibility
 
 use serde::{Deserialize, Serialize};
 
@@ -565,5 +565,3 @@ mod tests {
         assert!(report.multi_master_stats.is_some());
     }
 }
-
-

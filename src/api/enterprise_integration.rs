@@ -1,31 +1,36 @@
-//! # Enterprise Integration Layer
-//!
-//! This module serves as the central nervous system of RustyDB, coordinating all enterprise
-//! modules and providing a unified interface for system-wide operations.
-//!
-//! ## Architecture
-//!
-//! The integration layer consists of five major components:
-//!
-//! 1. **Unified Service Registry** - Service discovery, dependency injection, and lifecycle management
-//! 2. **Cross-Cutting Concerns** - Distributed tracing, logging, and error handling
-//! 3. **Resource Orchestration** - Memory, connection, and thread pool coordination
-//! 4. **API Facade Layer** - Unified API entry point with routing and aggregation
-//! 5. **System Lifecycle Management** - Startup, shutdown, and recovery orchestration
-//!
-//! ## Usage
-//!
-//! ```rust,no_run
-//! use rusty_db::api::enterprise_integration::{EnterpriseIntegrator, IntegratorConfig};
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!     let config = IntegratorConfig::default();
-//!     let integrator = EnterpriseIntegrator::new(config).await.unwrap();
-//!     integrator.start().await.unwrap();
-//! }
-//! ```
+// # Enterprise Integration Layer
+//
+// This module serves as the central nervous system of RustyDB, coordinating all enterprise
+// modules and providing a unified interface for system-wide operations.
+//
+// ## Architecture
+//
+// The integration layer consists of five major components:
+//
+// 1. **Unified Service Registry** - Service discovery, dependency injection, and lifecycle management
+// 2. **Cross-Cutting Concerns** - Distributed tracing, logging, and error handling
+// 3. **Resource Orchestration** - Memory, connection, and thread pool coordination
+// 4. **API Facade Layer** - Unified API entry point with routing and aggregation
+// 5. **System Lifecycle Management** - Startup, shutdown, and recovery orchestration
+//
+// ## Usage
+//
+// ```rust,no_run
+// use rusty_db::api::enterprise_integration::{EnterpriseIntegrator, IntegratorConfig};
+//
+// #[tokio::main]
+// async fn main() {
+//     let config = IntegratorConfig::default();
+//     let integrator = EnterpriseIntegrator::new(config).await.unwrap();
+//     integrator.start().await.unwrap();
+// }
+// ```
 
+use std::collections::BTreeMap;
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::Instant;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
@@ -2718,5 +2723,3 @@ mod tests {
         assert_eq!(integrator.lifecycle_manager().get_system_state(), SystemState::Initializing);
     }
 }
-
-

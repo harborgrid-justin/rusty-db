@@ -1,69 +1,71 @@
-//! # Replication Health Monitoring and Analytics
-//! 
-//! This module provides comprehensive health monitoring, lag tracking, and
-//! real-time analytics for the replication system with proactive alerting
-//! and performance optimization recommendations.
-//! 
-//! ## Key Features
-//! 
-//! - **Real-time Monitoring**: Continuous health checks and lag tracking
-//! - **Proactive Alerting**: Configurable alerts for various conditions
-//! - **Performance Analytics**: Detailed metrics and trend analysis
-//! - **Health Scoring**: Comprehensive health scoring algorithm
-//! - **Diagnostic Tools**: Automated issue detection and recommendations
-//! - **Historical Analysis**: Long-term performance trend tracking
-//! 
-//! ## Monitoring Metrics
-//! 
-//! - **Replication Lag**: Byte and time-based lag measurements
-//! - **Throughput**: Operations per second and data transfer rates
-//! - **Connection Health**: Network connectivity and response times
-//! - **Error Rates**: Failure frequencies and error patterns
-//! - **Resource Usage**: Memory and CPU consumption
-//! - **Conflict Rates**: Frequency and resolution success rates
-//! 
-//! ## Usage Example
-//! 
-//! ```rust
-//! use crate::replication::monitor::*;
-//! use crate::replication::types::*;
-//! 
-//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! // Create monitoring configuration
-//! let config = HealthMonitorConfig {
-//!     check_interval: Duration::from_secs(30),
-//!     lag_threshold_bytes: 1024 * 1024, // 1MB
-//!     lag_threshold_seconds: 60,
-//!     enable_proactive_alerts: true,
-//!     enable_performance_analytics: true,
-//!     ..Default::default()
-//! };
-//! 
-//! // Create health monitor
-//! let monitor = ReplicationHealthMonitor::new(config)?;
-//! 
-//! // Add replica for monitoring
-//! let _replica_id = ReplicaId::new("replica-01")?;
-//! monitor.add_replica(replica_id.clone()).await?;
-//! 
-//! // Start monitoring
-//! monitor.start_monitoring().await?;
-//! 
-//! // Get current health status
-//! let health = monitor.get_replica_health(&replica_id).await?;
-//! println!("Replica health score: {}", health.health_score);
-//! 
-//! // Get analytics report
-//! let analytics = monitor.generate_analytics_report(
-//!     SystemTime::now() - Duration::from_hours(24),
-//!     SystemTime::now()
-//! ).await?;
-//! 
-//! println!("Average lag: {:?}", analytics.average_lag);
-//! # Ok(())
-//! # }
-//! ```
+// # Replication Health Monitoring and Analytics
+//
+// This module provides comprehensive health monitoring, lag tracking, and
+// real-time analytics for the replication system with proactive alerting
+// and performance optimization recommendations.
+//
+// ## Key Features
+//
+// - **Real-time Monitoring**: Continuous health checks and lag tracking
+// - **Proactive Alerting**: Configurable alerts for various conditions
+// - **Performance Analytics**: Detailed metrics and trend analysis
+// - **Health Scoring**: Comprehensive health scoring algorithm
+// - **Diagnostic Tools**: Automated issue detection and recommendations
+// - **Historical Analysis**: Long-term performance trend tracking
+//
+// ## Monitoring Metrics
+//
+// - **Replication Lag**: Byte and time-based lag measurements
+// - **Throughput**: Operations per second and data transfer rates
+// - **Connection Health**: Network connectivity and response times
+// - **Error Rates**: Failure frequencies and error patterns
+// - **Resource Usage**: Memory and CPU consumption
+// - **Conflict Rates**: Frequency and resolution success rates
+//
+// ## Usage Example
+//
+// ```rust
+// use crate::replication::monitor::*;
+// use crate::replication::types::*;
+//
+// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+// // Create monitoring configuration
+// let config = HealthMonitorConfig {
+//     check_interval: Duration::from_secs(30),
+//     lag_threshold_bytes: 1024 * 1024, // 1MB
+//     lag_threshold_seconds: 60,
+//     enable_proactive_alerts: true,
+//     enable_performance_analytics: true,
+//     ..Default::default()
+// };
+//
+// // Create health monitor
+// let monitor = ReplicationHealthMonitor::new(config)?;
+//
+// // Add replica for monitoring
+// let _replica_id = ReplicaId::new("replica-01")?;
+// monitor.add_replica(replica_id.clone()).await?;
+//
+// // Start monitoring
+// monitor.start_monitoring().await?;
+//
+// // Get current health status
+// let health = monitor.get_replica_health(&replica_id).await?;
+// println!("Replica health score: {}", health.health_score);
+//
+// // Get analytics report
+// let analytics = monitor.generate_analytics_report(
+//     SystemTime::now() - Duration::from_hours(24),
+//     SystemTime::now()
+// ).await?;
+//
+// println!("Average lag: {:?}", analytics.average_lag);
+// # Ok(())
+// # }
+// ```
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use crate::error::DbError;
 use crate::replication::types::*;
 use async_trait::async_trait;
@@ -82,28 +84,28 @@ use uuid::Uuid;
 pub enum HealthMonitorError {
     #[error("Replica monitoring not found: {replica_id}")]
     ReplicaNotFound { replica_id: String },
-    
+
     #[error("Invalid monitoring configuration: {reason}")]
     InvalidConfiguration { reason: String },
-    
+
     #[error("Health check failed for replica {replica_id}: {reason}")]
     HealthCheckFailed { replica_id: String, reason: String },
-    
+
     #[error("Analytics computation failed: {reason}")]
     AnalyticsError { reason: String },
-    
+
     #[error("Alert delivery failed: {alert_type} - {reason}")]
     AlertDeliveryFailed { alert_type: String, reason: String },
-    
+
     #[error("Monitoring service unavailable: {service}")]
     ServiceUnavailable { service: String },
-    
+
     #[error("Metric collection failed: {metric} - {reason}")]
     MetricCollectionFailed { metric: String, reason: String },
 }
 
 /// Comprehensive health monitor configuration
-/// 
+///
 /// Contains all configurable parameters for health monitoring
 /// with sensible defaults for production environments.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -160,7 +162,7 @@ impl Default for HealthMonitorConfig {
 }
 
 /// Comprehensive replica health status
-/// 
+///
 /// Contains detailed health information including scores,
 /// metrics, and diagnostic information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -458,22 +460,22 @@ pub struct SystemTrendAnalysis {
 pub trait HealthMonitor: Send + Sync {
     /// Start health monitoring
     async fn start_monitoring(&self) -> Result<(), HealthMonitorError>;
-    
+
     /// Stop health monitoring
     async fn stop_monitoring(&self) -> Result<(), HealthMonitorError>;
-    
+
     /// Add a replica to monitor
     async fn add_replica(&self, replica_id: ReplicaId) -> Result<(), HealthMonitorError>;
-    
+
     /// Remove a replica from monitoring
     async fn remove_replica(&self, replica_id: &ReplicaId) -> Result<(), HealthMonitorError>;
-    
+
     /// Get health status for a specific replica
     async fn get_replica_health(&self, replica_id: &ReplicaId) -> Result<ReplicaHealthStatus, HealthMonitorError>;
-    
+
     /// Get health status for all replicas
     async fn get_all_replica_health(&self) -> Result<Vec<ReplicaHealthStatus>, HealthMonitorError>;
-    
+
     /// Generate analytics report
     async fn generate_analytics_report(
         &self,
@@ -567,25 +569,25 @@ impl HealthScoreCalculator {
             component_weights: ComponentWeights::default(),
         }
     }
-    
+
     /// Calculates overall health score from components
     pub fn calculate_health_score(&self, components: &HealthComponents) -> u8 {
-        let weighted_score = 
+        let weighted_score =
             (components.connectivity_score as f64 * self.component_weights.connectivity) +
             (components.lag_score as f64 * self.component_weights.lag) +
             (components.error_rate_score as f64 * self.component_weights.error_rate) +
             (components.performance_score as f64 * self.component_weights.performance) +
             (components.resource_score as f64 * self.component_weights.resource_usage);
-        
+
         (weighted_score.round() as u8).min(100)
     }
-    
+
     /// Calculates connectivity score based on connection metrics
     pub fn calculate_connectivity_score(&self, metrics: &ConnectionMetrics) -> u8 {
         if !metrics.is_connected {
             return 0;
         }
-        
+
         let uptime_score = (metrics.uptime_percentage * 100.0) as u8;
         let latency_score = if metrics.latency_ms <= 10 {
             100
@@ -598,18 +600,18 @@ impl HealthScoreCalculator {
         } else {
             20
         };
-        
+
         ((uptime_score as f64 * 0.7) + (latency_score as f64 * 0.3)) as u8
     }
-    
+
     /// Calculates lag score based on lag metrics
     pub fn calculate_lag_score(&self, lag: &LagMetrics, threshold_bytes: u64) -> u8 {
         if lag.lag_bytes == 0 {
             return 100;
         }
-        
+
         let lag_ratio = lag.lag_bytes as f64 / threshold_bytes as f64;
-        
+
         if lag_ratio <= 0.1 {
             100
         } else if lag_ratio <= 0.25 {
@@ -624,13 +626,13 @@ impl HealthScoreCalculator {
             10
         }
     }
-    
+
     /// Calculates error rate score
     pub fn calculate_error_rate_score(&self, errors: &ErrorStatistics) -> u8 {
         if errors.error_rate == 0.0 {
             return 100;
         }
-        
+
         // Score based on errors per minute
         if errors.error_rate <= 0.1 {
             100
@@ -650,22 +652,22 @@ impl HealthScoreCalculator {
 
 impl ReplicationHealthMonitor {
     /// Creates a new replication health monitor
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `config` - Health monitoring configuration
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(ReplicationHealthMonitor)` - Successfully created monitor
     /// * `Err(HealthMonitorError)` - Creation failed
     pub fn new(config: HealthMonitorConfig) -> Result<Self, HealthMonitorError> {
         // Validate configuration
         Self::validate_config(&config)?;
-        
+
         let (event_sender, _) = mpsc::unbounded_channel();
         let (shutdown_sender, _) = mpsc::unbounded_channel();
-        
+
         Ok(Self {
             config: Arc::new(config),
             replica_monitors: Arc::new(RwLock::new(HashMap::new())),
@@ -678,7 +680,7 @@ impl ReplicationHealthMonitor {
             score_calculator: Arc::new(HealthScoreCalculator::new()),
         })
     }
-    
+
     /// Validates the monitoring configuration
     fn validate_config(config: &HealthMonitorConfig) -> Result<(), HealthMonitorError> {
         if config.check_interval.is_zero() {
@@ -686,32 +688,32 @@ impl ReplicationHealthMonitor {
                 reason: "check_interval must be greater than 0".to_string(),
             });
         }
-        
+
         if config.connection_timeout.is_zero() {
             return Err(HealthMonitorError::InvalidConfiguration {
                 reason: "connection_timeout must be greater than 0".to_string(),
             });
         }
-        
+
         if config.max_metrics_history == 0 {
             return Err(HealthMonitorError::InvalidConfiguration {
                 reason: "max_metrics_history must be greater than 0".to_string(),
             });
         }
-        
+
         Ok(())
     }
-    
+
     /// Collects health metrics for a replica
     async fn collect_health_metrics(&self, replica_id: &ReplicaId) -> Result<ReplicaHealthStatus, HealthMonitorError> {
         let now = SystemTime::now();
-        
+
         // Collect various metrics (simplified implementation)
         let connection_metrics = self.collect_connection_metrics(replica_id).await?;
         let lag_metrics = self.collect_lag_metrics(replica_id).await?;
         let performance_metrics = self.collect_performance_metrics(replica_id).await?;
         let error_statistics = self.collect_error_statistics(replica_id).await?;
-        
+
         // Calculate health components
         let health_components = HealthComponents {
             connectivity_score: self.score_calculator.calculate_connectivity_score(&connection_metrics),
@@ -720,19 +722,19 @@ impl ReplicationHealthMonitor {
             performance_score: 85, // Simplified
             resource_score: 90,     // Simplified
         };
-        
+
         // Calculate overall health score
         let health_score = self.score_calculator.calculate_health_score(&health_components);
-        
+
         // Determine health trend
         let health_trend = self.calculate_health_trend(replica_id, health_score);
-        
+
         // Check for alerts
         let active_alerts = self.check_for_alerts(replica_id, &health_components, &lag_metrics, &error_statistics).await;
-        
+
         // Generate recommendations
         let recommendations = self.generate_recommendations(replica_id, &health_components).await;
-        
+
         Ok(ReplicaHealthStatus {
             replica_id: replica_id.clone(),
             health_score,
@@ -747,7 +749,7 @@ impl ReplicationHealthMonitor {
             recommendations,
         })
     }
-    
+
     /// Collects connection metrics for a replica
     async fn collect_connection_metrics(&self, _replica_id: &ReplicaId) -> Result<ConnectionMetrics, HealthMonitorError> {
         // Simplified implementation - in practice would ping replica
@@ -760,7 +762,7 @@ impl ReplicationHealthMonitor {
             failed_connections: 15,
         })
     }
-    
+
     /// Collects lag metrics for a replica
     async fn collect_lag_metrics(&self, _replica_id: &ReplicaId) -> Result<LagMetrics, HealthMonitorError> {
         // Simplified implementation - in practice would query WAL position
@@ -777,7 +779,7 @@ impl ReplicationHealthMonitor {
             },
         })
     }
-    
+
     /// Collects performance metrics for a replica
     async fn collect_performance_metrics(&self, _replica_id: &ReplicaId) -> Result<PerformanceMetrics, HealthMonitorError> {
         // Simplified implementation
@@ -790,14 +792,14 @@ impl ReplicationHealthMonitor {
             network_usage_bps: 1024 * 1024 * 5,    // 5MB/s
         })
     }
-    
+
     /// Collects error statistics for a replica
     async fn collect_error_statistics(&self, _replica_id: &ReplicaId) -> Result<ErrorStatistics, HealthMonitorError> {
         // Simplified implementation
         let mut common_errors = HashMap::new();
         common_errors.insert("connection_timeout".to_string(), 5);
         common_errors.insert("wal_read_error".to_string(), 2);
-        
+
         Ok(ErrorStatistics {
             total_errors: 25,
             errors_last_hour: 3,
@@ -807,7 +809,7 @@ impl ReplicationHealthMonitor {
             last_error_message: Some("Connection timeout to replica".to_string()),
         })
     }
-    
+
     /// Calculates health trend for a replica
     fn calculate_health_trend(&self, _replica_id: &ReplicaId, current_score: u8) -> HealthTrend {
         // Simplified implementation - would analyze historical scores
@@ -821,7 +823,7 @@ impl ReplicationHealthMonitor {
             HealthTrend::Critical
         }
     }
-    
+
     /// Checks for alert conditions
     async fn check_for_alerts(
         &self,
@@ -831,7 +833,7 @@ impl ReplicationHealthMonitor {
         errors: &ErrorStatistics,
     ) -> Vec<HealthAlert> {
         let mut alerts = Vec::new();
-        
+
         // Check lag alert
         if lag.lag_bytes > self.config.lag_threshold_bytes {
             let alert = HealthAlert {
@@ -853,7 +855,7 @@ impl ReplicationHealthMonitor {
             };
             alerts.push(alert);
         }
-        
+
         // Check error rate alert
         if errors.error_rate > 5.0 {
             let alert = HealthAlert {
@@ -871,7 +873,7 @@ impl ReplicationHealthMonitor {
             };
             alerts.push(alert);
         }
-        
+
         // Check connectivity alert
         if components.connectivity_score < 50 {
             let alert = HealthAlert {
@@ -889,10 +891,10 @@ impl ReplicationHealthMonitor {
             };
             alerts.push(alert);
         }
-        
+
         alerts
     }
-    
+
     /// Generates diagnostic recommendations
     async fn generate_recommendations(
         &self,
@@ -900,7 +902,7 @@ impl ReplicationHealthMonitor {
         components: &HealthComponents,
     ) -> Vec<DiagnosticRecommendation> {
         let mut recommendations = Vec::new();
-        
+
         if components.lag_score < 70 {
             recommendations.push(DiagnosticRecommendation {
                 recommendation_id: Uuid::new_v4(),
@@ -913,7 +915,7 @@ impl ReplicationHealthMonitor {
                 related_metrics: vec!["lag_bytes".to_string(), "throughput_bps".to_string()],
             });
         }
-        
+
         if components.error_rate_score < 80 {
             recommendations.push(DiagnosticRecommendation {
                 recommendation_id: Uuid::new_v4(),
@@ -926,28 +928,28 @@ impl ReplicationHealthMonitor {
                 related_metrics: vec!["error_rate".to_string(), "total_errors".to_string()],
             });
         }
-        
+
         recommendations
     }
-    
+
     /// Starts background monitoring tasks
     async fn start_monitoring_tasks(&self) {
         let replica_monitors = Arc::clone(&self.replica_monitors);
         let config = Arc::clone(&self.config);
         let event_sender = self.event_sender.clone();
-        
+
         // Health check task
         let health_check_handle = tokio::spawn(async move {
             let mut interval = interval(config.check_interval);
-            
+
             loop {
                 interval.tick().await;
-                
+
                 let replica_ids: Vec<_> = {
                     let monitors = replica_monitors.read();
                     monitors.keys().cloned().collect()
                 };
-                
+
                 for replica_id in replica_ids {
                     // Simplified health check - would call collect_health_metrics
                     let _ = event_sender.send(HealthEvent::HealthCheckCompleted {
@@ -957,7 +959,7 @@ impl ReplicationHealthMonitor {
                 }
             }
         });
-        
+
         self.task_handles.lock().push(health_check_handle);
     }
 }
@@ -968,26 +970,26 @@ impl HealthMonitor for ReplicationHealthMonitor {
         self.start_monitoring_tasks().await;
         Ok(())
     }
-    
+
     async fn stop_monitoring(&self) -> Result<(), HealthMonitorError> {
         // Send shutdown signal
         if let Some(sender) = self.shutdown_sender.lock().take() {
             let _ = sender.send(());
         }
-        
+
         // Wait for all tasks to complete
         let handles = {
             let mut handles = self.task_handles.lock();
             std::mem::take(&mut *handles)
         };
-        
+
         for handle in handles {
             let _ = handle.await;
         }
-        
+
         Ok(())
     }
-    
+
     async fn add_replica(&self, replica_id: ReplicaId) -> Result<(), HealthMonitorError> {
         let initial_health = ReplicaHealthStatus {
             replica_id: replica_id.clone(),
@@ -1036,7 +1038,7 @@ impl HealthMonitor for ReplicationHealthMonitor {
             active_alerts: Vec::new(),
             recommendations: Vec::new(),
         };
-        
+
         let monitor_state = ReplicaMonitorState {
             replica_id: replica_id.clone(),
             current_health: initial_health,
@@ -1045,42 +1047,42 @@ impl HealthMonitor for ReplicationHealthMonitor {
             consecutive_failures: 0,
             last_alert_time: None,
         };
-        
+
         {
             let mut monitors = self.replica_monitors.write();
             monitors.insert(replica_id.clone(), monitor_state);
         }
-        
+
         {
             let mut metrics = self.metrics_history.write();
             metrics.insert(replica_id.clone(), Vec::new());
         }
-        
+
         // Publish event
         let _ = self.event_sender.send(HealthEvent::MonitoringStarted { replica_id });
-        
+
         Ok(())
     }
-    
+
     async fn remove_replica(&self, replica_id: &ReplicaId) -> Result<(), HealthMonitorError> {
         {
             let mut monitors = self.replica_monitors.write();
             monitors.remove(replica_id);
         }
-        
+
         {
             let mut metrics = self.metrics_history.write();
             metrics.remove(replica_id);
         }
-        
+
         // Publish event
-        let _ = self.event_sender.send(HealthEvent::MonitoringStopped { 
-            replica_id: replica_id.clone() 
+        let _ = self.event_sender.send(HealthEvent::MonitoringStopped {
+            replica_id: replica_id.clone()
         });
-        
+
         Ok(())
     }
-    
+
     async fn get_replica_health(&self, replica_id: &ReplicaId) -> Result<ReplicaHealthStatus, HealthMonitorError> {
         // Try to get from cache first, then collect fresh metrics
         let monitors = self.replica_monitors.read();
@@ -1092,14 +1094,14 @@ impl HealthMonitor for ReplicationHealthMonitor {
             })
         }
     }
-    
+
     async fn get_all_replica_health(&self) -> Result<Vec<ReplicaHealthStatus>, HealthMonitorError> {
         let monitors = self.replica_monitors.read();
         Ok(monitors.values()
             .map(|monitor| monitor.current_health.clone())
             .collect())
     }
-    
+
     async fn generate_analytics_report(
         &self,
         start_time: SystemTime,
@@ -1107,7 +1109,7 @@ impl HealthMonitor for ReplicationHealthMonitor {
     ) -> Result<AnalyticsReport, HealthMonitorError> {
         let monitors = self.replica_monitors.read();
         let replica_count = monitors.len();
-        
+
         // Calculate overall system health
         let overall_health_score = if replica_count > 0 {
             let total_score: u32 = monitors.values()
@@ -1117,7 +1119,7 @@ impl HealthMonitor for ReplicationHealthMonitor {
         } else {
             100
         };
-        
+
         // Aggregate metrics (simplified)
         let average_lag = LagMetrics {
             lag_bytes: 1024 * 256,
@@ -1127,7 +1129,7 @@ impl HealthMonitor for ReplicationHealthMonitor {
             trend: LagTrend::Stable,
             percentiles: LagPercentiles { p50: 1024 * 100, p95: 1024 * 300, p99: 1024 * 500 },
         };
-        
+
         let system_performance = PerformanceMetrics {
             operations_per_second: 1500.0,
             average_latency_ms: 15.0,
@@ -1136,7 +1138,7 @@ impl HealthMonitor for ReplicationHealthMonitor {
             memory_usage_bytes: 1024 * 1024 * 1024,
             network_usage_bps: 1024 * 1024 * 8,
         };
-        
+
         Ok(AnalyticsReport {
             generated_at: SystemTime::now(),
             time_period: (start_time, end_time),
@@ -1182,7 +1184,7 @@ mod tests {
     #[test]
     fn test_health_score_calculation() {
         let calculator = HealthScoreCalculator::new();
-        
+
         let components = HealthComponents {
             connectivity_score: 100,
             lag_score: 90,
@@ -1190,7 +1192,7 @@ mod tests {
             performance_score: 80,
             resource_score: 75,
         };
-        
+
         let score = calculator.calculate_health_score(&components);
         assert!(score >= 80 && score <= 95);
     }
@@ -1198,7 +1200,7 @@ mod tests {
     #[test]
     fn test_connectivity_score_calculation() {
         let calculator = HealthScoreCalculator::new();
-        
+
         let metrics = ConnectionMetrics {
             is_connected: true,
             last_connected: SystemTime::now(),
@@ -1207,7 +1209,7 @@ mod tests {
             connection_attempts: 1000,
             failed_connections: 10,
         };
-        
+
         let score = calculator.calculate_connectivity_score(&metrics);
         assert!(score >= 80);
     }
@@ -1216,7 +1218,7 @@ mod tests {
     fn test_lag_score_calculation() {
         let calculator = HealthScoreCalculator::new();
         let threshold = 1024 * 1024; // 1MB
-        
+
         let lag_metrics = LagMetrics {
             lag_bytes: 1024 * 100, // 100KB (10% of threshold)
             lag_seconds: 10,
@@ -1225,7 +1227,7 @@ mod tests {
             trend: LagTrend::Stable,
             percentiles: LagPercentiles { p50: 1024 * 50, p95: 1024 * 150, p99: 1024 * 200 },
         };
-        
+
         let score = calculator.calculate_lag_score(&lag_metrics, threshold);
         assert_eq!(score, 100); // Should be 100 for 10% of threshold
     }
@@ -1234,23 +1236,23 @@ mod tests {
     async fn test_replica_monitoring() {
         let config = HealthMonitorConfig::default();
         let monitor = ReplicationHealthMonitor::new(config).unwrap();
-        
+
         let _replica_id = ReplicaId::new("test-replica").unwrap();
-        
+
         // Add replica
         assert!(monitor.add_replica(replica_id.clone()).await.is_ok());
-        
+
         // Get health status
         let health = monitor.get_replica_health(&replica_id).await;
         assert!(health.is_ok());
-        
+
         let health = health.unwrap();
         assert_eq!(health.replica_id, replica_id);
         assert_eq!(health.health_score, 100);
-        
+
         // Remove replica
         assert!(monitor.remove_replica(&replica_id).await.is_ok());
-        
+
         // Should not find replica after removal
         let health = monitor.get_replica_health(&replica_id).await;
         assert!(health.is_err());
@@ -1260,16 +1262,16 @@ mod tests {
     async fn test_analytics_report_generation() {
         let config = HealthMonitorConfig::default();
         let monitor = ReplicationHealthMonitor::new(config).unwrap();
-        
+
         let _replica_id = ReplicaId::new("test-replica").unwrap();
         monitor.add_replica(replica_id).await.unwrap();
-        
+
         let start_time = SystemTime::now() - Duration::from_hours(24);
         let end_time = SystemTime::now();
-        
+
         let report = monitor.generate_analytics_report(start_time, end_time).await;
         assert!(report.is_ok());
-        
+
         let report = report.unwrap();
         assert_eq!(report.replica_count, 1);
         assert!(report.overall_health_score > 0);
@@ -1286,7 +1288,7 @@ mod tests {
             acknowledged: false,
             metric_values: HashMap::new(),
         };
-        
+
         assert_eq!(alert.alert_type, AlertType::HighLag);
         assert_eq!(alert.severity, AlertSeverity::Warning);
         assert!(!alert.acknowledged);
@@ -1304,7 +1306,7 @@ mod tests {
             difficulty: ImplementationDifficulty::Medium,
             related_metrics: vec!["test_metric".to_string()],
         };
-        
+
         assert_eq!(recommendation.category, RecommendationCategory::Performance);
         assert_eq!(recommendation.priority, RecommendationPriority::High);
         assert_eq!(recommendation.difficulty, ImplementationDifficulty::Medium);

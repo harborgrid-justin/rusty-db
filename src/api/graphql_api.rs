@@ -1,31 +1,34 @@
-//! # GraphQL API Layer
-//!
-//! Comprehensive GraphQL API implementation for RustyDB, providing a modern,
-//! type-safe interface for database operations with real-time capabilities.
-//!
-//! ## Features
-//!
-//! - **Dynamic Schema Generation**: Automatically generate GraphQL schemas from database metadata
-//! - **Query Operations**: Complex queries with filtering, pagination, and aggregations
-//! - **Mutation Operations**: CRUD operations with transaction support
-//! - **Subscriptions**: Real-time data streaming for table changes
-//! - **Performance**: DataLoader, query complexity analysis, caching
-//! - **Security**: Rate limiting, field-level authorization, depth limiting
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────┐
-//! │                    GraphQL API Layer                    │
-//! ├─────────────────────────────────────────────────────────┤
-//! │  Schema Types  │  Queries  │  Mutations  │  Subscriptions│
-//! ├─────────────────────────────────────────────────────────┤
-//! │  Complexity    │  DataLoader │  Caching  │  Rate Limiter│
-//! ├─────────────────────────────────────────────────────────┤
-//! │              Database Engine Core                       │
-//! └─────────────────────────────────────────────────────────┘
-//! ```
+// # GraphQL API Layer
+//
+// Comprehensive GraphQL API implementation for RustyDB, providing a modern,
+// type-safe interface for database operations with real-time capabilities.
+//
+// ## Features
+//
+// - **Dynamic Schema Generation**: Automatically generate GraphQL schemas from database metadata
+// - **Query Operations**: Complex queries with filtering, pagination, and aggregations
+// - **Mutation Operations**: CRUD operations with transaction support
+// - **Subscriptions**: Real-time data streaming for table changes
+// - **Performance**: DataLoader, query complexity analysis, caching
+// - **Security**: Rate limiting, field-level authorization, depth limiting
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────┐
+// │                    GraphQL API Layer                    │
+// ├─────────────────────────────────────────────────────────┤
+// │  Schema Types  │  Queries  │  Mutations  │  Subscriptions│
+// ├─────────────────────────────────────────────────────────┤
+// │  Complexity    │  DataLoader │  Caching  │  Rate Limiter│
+// ├─────────────────────────────────────────────────────────┤
+// │              Database Engine Core                       │
+// └─────────────────────────────────────────────────────────┘
+// ```
 
+use std::sync::Mutex;
+use std::collections::HashSet;
+use std::time::Instant;
 use async_graphql::{
     Context, Enum, Error, ErrorExtensions, InputObject, Interface, Object,
     Result as GqlResult, Schema, SimpleObject, Subscription, Union, ID,
@@ -3415,5 +3418,3 @@ mod tests {
         assert!(!suggestions.suggestions.is_empty());
     }
 }
-
-

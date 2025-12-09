@@ -1,8 +1,9 @@
-//! # Inference Engine
-//!
-//! This module provides real-time and batch prediction capabilities with optimized
-//! execution paths, model caching, and prediction explanations.
+// # Inference Engine
+//
+// This module provides real-time and batch prediction capabilities with optimized
+// execution paths, model caching, and prediction explanations.
 
+use std::time::Instant;
 use crate::error::Result;
 use super::{
     Vector, Matrix, MLError,
@@ -755,5 +756,3 @@ mod tests {
         assert_eq!(top[0].0, "f1");
     }
 }
-
-

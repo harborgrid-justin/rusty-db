@@ -1,0 +1,71 @@
+{
+    "recommendations": [
+        // ═══════════════════════════════════════════════════════════════════════
+        // ESSENTIAL - Core Rust Development
+        // ═══════════════════════════════════════════════════════════════════════
+
+        // Official Rust language server - REQUIRED
+        "rust-lang.rust-analyzer",
+
+        // Debugger for Rust (LLDB-based) - REQUIRED for debugging
+        "vadimcn.vscode-lldb",
+
+        // TOML language support (for Cargo.toml) - REQUIRED
+        "tamasfe.even-better-toml",
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // DEPENDENCY MANAGEMENT
+        // ═══════════════════════════════════════════════════════════════════════
+
+        // Shows crate versions and vulnerabilities inline
+        "fill-labs.dependi",
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // TESTING & DEBUGGING
+        // ═══════════════════════════════════════════════════════════════════════
+
+        // Code lens for running/debugging tests
+        "hdevalke.rust-test-lens",
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // ERROR & CODE QUALITY
+        // ═══════════════════════════════════════════════════════════════════════
+
+        // Inline error/warning display
+        "usernamehw.errorlens",
+
+        // Better error messages
+        "github.copilot",
+        "github.copilot-chat",
+
+        // Code runner for quick execution
+        "formulahendry.code-runner",
+
+        // Better comments with highlighting
+        "aaron-bond.better-comments",
+
+        // TODO tree - track TODOs and FIXMEs
+        "gruntfuggly.todo-tree",
+
+        // GitLens for advanced Git features
+        "eamodio.gitlens",
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // VISUAL ENHANCEMENTS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        // Indent guides with color
+        "oderwat.indent-rainbow",
+
+        // Colored bracket pairs (now native, but extension adds more features)
+        "coenraads.bracket-pair-colorizer-2",
+
+        // Icons for file explorer
+        "vscode-icons-team.vscode-icons"
+    ],
+    "unwantedRecommendations": [
+        // Old/deprecated Rust extensions - rust-analyzer replaces these
+        "rust-lang.rust",
+        "kalitaalexey.vscode-rust"
+    ]
+}

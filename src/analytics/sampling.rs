@@ -1,26 +1,26 @@
-//! Query Sampling and Approximate Query Processing
-//!
-//! This module provides sampling-based techniques for approximate query
-//! processing, enabling fast answers to analytical queries with bounded
-//! error margins.
-//!
-//! # Architecture
-//!
-//! The sampling subsystem supports multiple sampling strategies:
-//! - Random sampling for uniform distribution
-//! - Stratified sampling for skewed data
-//! - Reservoir sampling for streaming data
-//! - Systematic sampling for ordered data
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! use crate::analytics::sampling::{QueryResultSampler, SamplingMethod};
-//!
-//! let sampler = QueryResultSampler::new(SamplingMethod::Random, 0.01);
-//! let sample = sampler.sample(&data);
-//! let estimate = sampler.estimate_aggregate(&sample, AggregateFunction::Sum);
-//! ```
+// Query Sampling and Approximate Query Processing
+//
+// This module provides sampling-based techniques for approximate query
+// processing, enabling fast answers to analytical queries with bounded
+// error margins.
+//
+// # Architecture
+//
+// The sampling subsystem supports multiple sampling strategies:
+// - Random sampling for uniform distribution
+// - Stratified sampling for skewed data
+// - Reservoir sampling for streaming data
+// - Systematic sampling for ordered data
+//
+// # Example
+//
+// ```rust,ignore
+// use crate::analytics::sampling::{QueryResultSampler, SamplingMethod};
+//
+// let sampler = QueryResultSampler::new(SamplingMethod::Random, 0.01);
+// let sample = sampler.sample(&data);
+// let estimate = sampler.estimate_aggregate(&sample, AggregateFunction::Sum);
+// ```
 
 use parking_lot::RwLock;
 use std::collections::HashMap;

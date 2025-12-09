@@ -1,49 +1,51 @@
-//! # Query Optimizer Pro - Advanced Cost-Based Query Optimization
-//!
-//! Oracle-like query optimizer with advanced cost-based optimization, adaptive execution,
-//! SQL plan management, and machine learning-based cardinality estimation.
-//!
-//! ## Architecture Overview
-//!
-//! The optimizer follows a multi-phase approach:
-//!
-//! 1. **Query Transformation**: Rewrites queries for better performance
-//! 2. **Plan Generation**: Generates multiple candidate plans using dynamic programming
-//! 3. **Cost Estimation**: Estimates costs using sophisticated cost models
-//! 4. **Plan Selection**: Selects the best plan based on cost estimates
-//! 5. **Adaptive Execution**: Monitors and adapts plans at runtime
-//! 6. **Plan Management**: Manages plan baselines for stability
-//!
-//! ## Key Features
-//!
-//! - **Cost-Based Optimization**: CPU, I/O, network, and memory cost modeling
-//! - **Cardinality Estimation**: Histogram-based with ML enhancement
-//! - **Join Enumeration**: Bushy, left-deep, and right-deep tree generation
-//! - **Adaptive Execution**: Runtime plan correction and statistics feedback
-//! - **Plan Baselines**: Stable plan guarantees with evolution
-//! - **Query Transformations**: Predicate pushdown, view merging, subquery unnesting
-//! - **Hints System**: Oracle-compatible optimizer hints
-//!
-//! ## Example Usage
-//!
-//! ```rust,no_run
-//! use rusty_db::optimizer_pro::{QueryOptimizer, OptimizerConfig};
-//! use rusty_db::parser::Query;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! let config = OptimizerConfig::default();
-//! let optimizer = QueryOptimizer::new(config);
-//!
-//! // Parse and optimize a query
-//! let query = Query::parse("SELECT * FROM users WHERE age > 25")?;
-//! let plan = optimizer.optimize(&query)?;
-//!
-//! // Execute with adaptive monitoring
-//! let _result = optimizer.execute_adaptive(&plan)?;
-//! # Ok(())
-//! # }
-//! ```
+// # Query Optimizer Pro - Advanced Cost-Based Query Optimization
+//
+// Oracle-like query optimizer with advanced cost-based optimization, adaptive execution,
+// SQL plan management, and machine learning-based cardinality estimation.
+//
+// ## Architecture Overview
+//
+// The optimizer follows a multi-phase approach:
+//
+// 1. **Query Transformation**: Rewrites queries for better performance
+// 2. **Plan Generation**: Generates multiple candidate plans using dynamic programming
+// 3. **Cost Estimation**: Estimates costs using sophisticated cost models
+// 4. **Plan Selection**: Selects the best plan based on cost estimates
+// 5. **Adaptive Execution**: Monitors and adapts plans at runtime
+// 6. **Plan Management**: Manages plan baselines for stability
+//
+// ## Key Features
+//
+// - **Cost-Based Optimization**: CPU, I/O, network, and memory cost modeling
+// - **Cardinality Estimation**: Histogram-based with ML enhancement
+// - **Join Enumeration**: Bushy, left-deep, and right-deep tree generation
+// - **Adaptive Execution**: Runtime plan correction and statistics feedback
+// - **Plan Baselines**: Stable plan guarantees with evolution
+// - **Query Transformations**: Predicate pushdown, view merging, subquery unnesting
+// - **Hints System**: Oracle-compatible optimizer hints
+//
+// ## Example Usage
+//
+// ```rust,no_run
+// use rusty_db::optimizer_pro::{QueryOptimizer, OptimizerConfig};
+// use rusty_db::parser::Query;
+//
+// # fn example() -> rusty_db::Result<()> {
+// let config = OptimizerConfig::default();
+// let optimizer = QueryOptimizer::new(config);
+//
+// // Parse and optimize a query
+// let query = Query::parse("SELECT * FROM users WHERE age > 25")?;
+// let plan = optimizer.optimize(&query)?;
+//
+// // Execute with adaptive monitoring
+// let _result = optimizer.execute_adaptive(&plan)?;
+// # Ok(())
+// # }
+// ```
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use crate::common::{TableId, IndexId, Value, Schema};
 use crate::error::Result;
 use std::collections::{HashMap};
@@ -709,5 +711,3 @@ mod tests {
         assert!(cache.get(&fp3).is_some());
     }
 }
-
-

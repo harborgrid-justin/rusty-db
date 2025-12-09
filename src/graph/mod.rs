@@ -1,148 +1,148 @@
-//! # Graph Database Engine
-//!
-//! Comprehensive property graph database implementation with PGQL-like queries.
-//!
-//! ## Features
-//!
-//! - **Property Graph Model**: Vertices and edges with rich properties
-//! - **Multi-graph Support**: Multiple edges between vertices
-//! - **Hypergraph Extensions**: Edges connecting multiple vertices
-//! - **PGQL-like Queries**: Pattern matching, path queries, and graph traversal
-//! - **Graph Algorithms**: PageRank, community detection, centrality measures
-//! - **Efficient Storage**: Adjacency list, CSR format, and compression
-//! - **Graph Analytics**: Temporal analysis, machine learning features, recommendations
-//!
-//! ## Architecture
-//!
-//! The graph engine is organized into several key modules:
-//!
-//! - `property_graph`: Core graph data structure with vertices, edges, and properties
-//! - `query_engine`: PGQL-like query parsing and execution
-//! - `algorithms`: Graph algorithms (PageRank, centrality, community detection)
-//! - `storage`: Persistent storage formats and serialization
-//! - `analytics`: Advanced analytics, temporal graphs, and ML features
-//!
-//! ## Usage Example
-//!
-//! ```rust,no_run
-//! use rusty_db::graph::{PropertyGraph, Properties};
-//! use rusty_db::common::Value;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! // Create a new graph
-//! let mut graph = PropertyGraph::new();
-//!
-//! // Add vertices with properties
-//! let mut props1 = Properties::new();
-//! props1.set("name".to_string(), Value::String("Alice".to_string()));
-//! props1.set("age".to_string(), Value::Integer(30));
-//! let alice = graph.add_vertex(vec!["Person".to_string()], props1)?;
-//!
-//! let mut props2 = Properties::new();
-//! props2.set("name".to_string(), Value::String("Bob".to_string()));
-//! props2.set("age".to_string(), Value::Integer(25));
-//! let bob = graph.add_vertex(vec!["Person".to_string()], props2)?;
-//!
-//! // Add an edge
-//! use rusty_db::graph::property_graph::EdgeDirection;
-//! let edge_props = Properties::new();
-//! graph.add_edge(
-//!     alice,
-//!     bob,
-//!     "KNOWS".to_string(),
-//!     edge_props,
-//!     EdgeDirection::Directed,
-//! )?;
-//!
-//! // Query the graph
-//! let neighbors = graph.get_outgoing_neighbors(alice)?;
-//! println!("Alice knows {} people", neighbors.len());
-//!
-//! // Get graph statistics
-//! let _stats = graph.get_stats();
-//! println!("Graph has {} vertices and {} edges", stats.num_vertices, stats.num_edges);
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ## Query Examples
-//!
-//! The query engine supports PGQL-like pattern matching:
-//!
-//! ```rust,no_run
-//! use rusty_db::graph::{PropertyGraph, QueryExecutor};
-//! use rusty_db::graph::query_engine::*;
-//!
-//! # fn example(graph: &PropertyGraph) -> rusty_db::Result<()> {
-//! // Create a query executor
-//! let executor = QueryExecutor::new(graph);
-//!
-//! // Pattern matching example (simplified)
-//! // MATCH (a:Person)-[:KNOWS]->(b:Person)
-//! // WHERE a.age > 25
-//! // RETURN a, b
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ## Graph Algorithms
-//!
-//! ```rust,no_run
-//! use rusty_db::graph::{PropertyGraph, PageRank, PageRankConfig};
-//!
-//! # fn example(graph: &PropertyGraph) -> rusty_db::Result<()> {
-//! // Compute PageRank
-//! let config = PageRankConfig::default();
-//! let _result = PageRank::compute(graph, &config)?;
-//!
-//! // Get top-k vertices by PageRank
-//! let top_vertices = PageRank::top_k(&result, 10);
-//! for (vertex_id, score) in top_vertices {
-//!     println!("Vertex {}: score = {:.4}", vertex_id, score);
-//! }
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ## Storage and Persistence
-//!
-//! ```rust,no_run
-//! use rusty_db::graph::{PropertyGraph, GraphStorageManager, StorageFormat};
-//! use std::path::Path;
-//!
-//! # fn example(graph: &PropertyGraph) -> rusty_db::Result<()> {
-//! // Create storage manager
-//! let manager = GraphStorageManager::new(
-//!     Path::new("./graph_data"),
-//!     StorageFormat::AdjacencyList,
-//! )?;
-//!
-//! // Save graph
-//! manager.save_graph(graph, "my_graph")?;
-//!
-//! // Load graph
-//! let loaded_graph = manager.load_graph("my_graph")?;
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ## Integration with Relational Data
-//!
-//! The graph engine can integrate with relational tables:
-//!
-//! ```rust,no_run
-//! use rusty_db::graph::{PropertyGraph, GraphRelationalBridge};
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! let mut graph = PropertyGraph::new();
-//! let mut bridge = GraphRelationalBridge::new();
-//!
-//! // Map relational tables to graph vertices
-//! // Map foreign keys to graph edges
-//! // Execute graph queries and convert results back to relational format
-//! # Ok(())
-//! # }
-//! ```
+// # Graph Database Engine
+//
+// Comprehensive property graph database implementation with PGQL-like queries.
+//
+// ## Features
+//
+// - **Property Graph Model**: Vertices and edges with rich properties
+// - **Multi-graph Support**: Multiple edges between vertices
+// - **Hypergraph Extensions**: Edges connecting multiple vertices
+// - **PGQL-like Queries**: Pattern matching, path queries, and graph traversal
+// - **Graph Algorithms**: PageRank, community detection, centrality measures
+// - **Efficient Storage**: Adjacency list, CSR format, and compression
+// - **Graph Analytics**: Temporal analysis, machine learning features, recommendations
+//
+// ## Architecture
+//
+// The graph engine is organized into several key modules:
+//
+// - `property_graph`: Core graph data structure with vertices, edges, and properties
+// - `query_engine`: PGQL-like query parsing and execution
+// - `algorithms`: Graph algorithms (PageRank, centrality, community detection)
+// - `storage`: Persistent storage formats and serialization
+// - `analytics`: Advanced analytics, temporal graphs, and ML features
+//
+// ## Usage Example
+//
+// ```rust,no_run
+// use rusty_db::graph::{PropertyGraph, Properties};
+// use rusty_db::common::Value;
+//
+// # fn example() -> rusty_db::Result<()> {
+// // Create a new graph
+// let mut graph = PropertyGraph::new();
+//
+// // Add vertices with properties
+// let mut props1 = Properties::new();
+// props1.set("name".to_string(), Value::String("Alice".to_string()));
+// props1.set("age".to_string(), Value::Integer(30));
+// let alice = graph.add_vertex(vec!["Person".to_string()], props1)?;
+//
+// let mut props2 = Properties::new();
+// props2.set("name".to_string(), Value::String("Bob".to_string()));
+// props2.set("age".to_string(), Value::Integer(25));
+// let bob = graph.add_vertex(vec!["Person".to_string()], props2)?;
+//
+// // Add an edge
+// use rusty_db::graph::property_graph::EdgeDirection;
+// let edge_props = Properties::new();
+// graph.add_edge(
+//     alice,
+//     bob,
+//     "KNOWS".to_string(),
+//     edge_props,
+//     EdgeDirection::Directed,
+// )?;
+//
+// // Query the graph
+// let neighbors = graph.get_outgoing_neighbors(alice)?;
+// println!("Alice knows {} people", neighbors.len());
+//
+// // Get graph statistics
+// let _stats = graph.get_stats();
+// println!("Graph has {} vertices and {} edges", stats.num_vertices, stats.num_edges);
+// # Ok(())
+// # }
+// ```
+//
+// ## Query Examples
+//
+// The query engine supports PGQL-like pattern matching:
+//
+// ```rust,no_run
+// use rusty_db::graph::{PropertyGraph, QueryExecutor};
+// use rusty_db::graph::query_engine::*;
+//
+// # fn example(graph: &PropertyGraph) -> rusty_db::Result<()> {
+// // Create a query executor
+// let executor = QueryExecutor::new(graph);
+//
+// // Pattern matching example (simplified)
+// // MATCH (a:Person)-[:KNOWS]->(b:Person)
+// // WHERE a.age > 25
+// // RETURN a, b
+// # Ok(())
+// # }
+// ```
+//
+// ## Graph Algorithms
+//
+// ```rust,no_run
+// use rusty_db::graph::{PropertyGraph, PageRank, PageRankConfig};
+//
+// # fn example(graph: &PropertyGraph) -> rusty_db::Result<()> {
+// // Compute PageRank
+// let config = PageRankConfig::default();
+// let _result = PageRank::compute(graph, &config)?;
+//
+// // Get top-k vertices by PageRank
+// let top_vertices = PageRank::top_k(&result, 10);
+// for (vertex_id, score) in top_vertices {
+//     println!("Vertex {}: score = {:.4}", vertex_id, score);
+// }
+// # Ok(())
+// # }
+// ```
+//
+// ## Storage and Persistence
+//
+// ```rust,no_run
+// use rusty_db::graph::{PropertyGraph, GraphStorageManager, StorageFormat};
+// use std::path::Path;
+//
+// # fn example(graph: &PropertyGraph) -> rusty_db::Result<()> {
+// // Create storage manager
+// let manager = GraphStorageManager::new(
+//     Path::new("./graph_data"),
+//     StorageFormat::AdjacencyList,
+// )?;
+//
+// // Save graph
+// manager.save_graph(graph, "my_graph")?;
+//
+// // Load graph
+// let loaded_graph = manager.load_graph("my_graph")?;
+// # Ok(())
+// # }
+// ```
+//
+// ## Integration with Relational Data
+//
+// The graph engine can integrate with relational tables:
+//
+// ```rust,no_run
+// use rusty_db::graph::{PropertyGraph, GraphRelationalBridge};
+//
+// # fn example() -> rusty_db::Result<()> {
+// let mut graph = PropertyGraph::new();
+// let mut bridge = GraphRelationalBridge::new();
+//
+// // Map relational tables to graph vertices
+// // Map foreign keys to graph edges
+// // Execute graph queries and convert results back to relational format
+// # Ok(())
+// # }
+// ```
 
 // ============================================================================
 // Module Declarations
@@ -446,5 +446,3 @@ mod tests {
         assert_eq!(out_degree, 2);
     }
 }
-
-

@@ -1,6 +1,8 @@
 // Active Session History (ASH)
 // Oracle-inspired periodic session sampling for historical query analysis
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;

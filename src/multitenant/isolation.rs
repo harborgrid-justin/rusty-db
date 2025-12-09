@@ -1,26 +1,27 @@
-//! # Resource Isolation and Governance
-//!
-//! Per-tenant resource limits including memory, CPU, I/O bandwidth, connections,
-//! temp space, and storage quotas. Enforces fair-share scheduling and QoS policies.
-//!
-//! ## Features
-//!
-//! - **Memory Isolation**: Per-PDB memory limits with Rust ownership tracking
-//! - **CPU Scheduling**: Fair-share CPU allocation with priority queues
-//! - **I/O Bandwidth**: Token bucket-based I/O rate limiting
-//! - **Connection Limiting**: Max connections per PDB
-//! - **Temp Space Management**: Temporary tablespace quotas
-//! - **Storage Quotas**: Persistent storage limits
-//! - **QoS Policies**: Priority-based resource allocation
-//!
-//! ## Architecture
-//!
-//! Uses Linux cgroups-inspired resource isolation with Rust-native implementations:
-//! - Memory: Tracked allocations per PDB using custom allocators
-//! - CPU: Cooperative scheduling with weighted fair queuing
-//! - I/O: Token bucket algorithm for bandwidth limiting
-//! - Storage: Quota enforcement at tablespace level
+// # Resource Isolation and Governance
+//
+// Per-tenant resource limits including memory, CPU, I/O bandwidth, connections,
+// temp space, and storage quotas. Enforces fair-share scheduling and QoS policies.
+//
+// ## Features
+//
+// - **Memory Isolation**: Per-PDB memory limits with Rust ownership tracking
+// - **CPU Scheduling**: Fair-share CPU allocation with priority queues
+// - **I/O Bandwidth**: Token bucket-based I/O rate limiting
+// - **Connection Limiting**: Max connections per PDB
+// - **Temp Space Management**: Temporary tablespace quotas
+// - **Storage Quotas**: Persistent storage limits
+// - **QoS Policies**: Priority-based resource allocation
+//
+// ## Architecture
+//
+// Uses Linux cgroups-inspired resource isolation with Rust-native implementations:
+// - Memory: Tracked allocations per PDB using custom allocators
+// - CPU: Cooperative scheduling with weighted fair queuing
+// - I/O: Token bucket algorithm for bandwidth limiting
+// - Storage: Quota enforcement at tablespace level
 
+use std::time::Instant;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
@@ -918,5 +919,3 @@ mod tests {
         assert!(result);
     }
 }
-
-

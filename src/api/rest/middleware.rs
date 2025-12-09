@@ -1,7 +1,7 @@
-//! # REST API Middleware
-//!
-//! Middleware functions for request processing, authentication, rate limiting, and logging.
-//! Implements proper error handling and dependency injection.
+// # REST API Middleware
+//
+// Middleware functions for request processing, authentication, rate limiting, and logging.
+// Implements proper error handling and dependency injection.
 
 use axum::{
     extract::State,

@@ -2,6 +2,11 @@
 // Provides timestamp-based versioning with hybrid logical clocks,
 // snapshot isolation, and write skew detection
 
+use std::collections::HashSet;
+use std::collections::BTreeMap;
+use std::sync::Mutex;
+use std::collections::VecDeque;
+use std::time::Duration;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};

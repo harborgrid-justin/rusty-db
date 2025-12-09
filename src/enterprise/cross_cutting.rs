@@ -1,47 +1,50 @@
-//! # Cross-Cutting Concerns
-//!
-//! Provides unified infrastructure for distributed tracing, error handling and recovery,
-//! circuit breakers, rate limiting, and request context propagation across all subsystems.
-//!
-//! ## Features
-//!
-//! - **Distributed Tracing**: Correlation IDs and span tracking across service boundaries
-//! - **Error Handling**: Unified error handling with automatic recovery strategies
-//! - **Circuit Breaker**: Prevent cascading failures in distributed systems
-//! - **Rate Limiting**: Token bucket and sliding window rate limiting
-//! - **Request Context**: Propagate request metadata across async boundaries
-//! - **Retry Logic**: Configurable retry with exponential backoff
-//! - **Bulkhead Pattern**: Resource isolation to prevent resource exhaustion
-//!
-//! ## Example
-//!
-//! ```rust,no_run
-//! use rusty_db::enterprise::cross_cutting::{
-//!     RequestContext, CircuitBreaker, RateLimiter, TracingContext
-//! };
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!     // Create request context
-//!     let ctx = RequestContext::new()
-//!         .with_user("user123")
-//!         .with_trace_id("trace-xyz");
-//!
-//!     // Use circuit breaker
-//!     let breaker = CircuitBreaker::new("external_api", 5, 60);
-//!     let _result = breaker.call(async {
-//!         // Make external call
-//!         Ok::<_, rusty_db::DbError>(42)
-//!     }).await;
-//!
-//!     // Rate limiting
-//!     let limiter = RateLimiter::new(100, 60); // 100 req/min
-//!     if limiter.allow("user123").await {
-//!         // Process request
-//!     }
-//! }
-//! ```
+// # Cross-Cutting Concerns
+//
+// Provides unified infrastructure for distributed tracing, error handling and recovery,
+// circuit breakers, rate limiting, and request context propagation across all subsystems.
+//
+// ## Features
+//
+// - **Distributed Tracing**: Correlation IDs and span tracking across service boundaries
+// - **Error Handling**: Unified error handling with automatic recovery strategies
+// - **Circuit Breaker**: Prevent cascading failures in distributed systems
+// - **Rate Limiting**: Token bucket and sliding window rate limiting
+// - **Request Context**: Propagate request metadata across async boundaries
+// - **Retry Logic**: Configurable retry with exponential backoff
+// - **Bulkhead Pattern**: Resource isolation to prevent resource exhaustion
+//
+// ## Example
+//
+// ```rust,no_run
+// use rusty_db::enterprise::cross_cutting::{
+//     RequestContext, CircuitBreaker, RateLimiter, TracingContext
+// };
+//
+// #[tokio::main]
+// async fn main() {
+//     // Create request context
+//     let ctx = RequestContext::new()
+//         .with_user("user123")
+//         .with_trace_id("trace-xyz");
+//
+//     // Use circuit breaker
+//     let breaker = CircuitBreaker::new("external_api", 5, 60);
+//     let _result = breaker.call(async {
+//         // Make external call
+//         Ok::<_, rusty_db::DbError>(42)
+//     }).await;
+//
+//     // Rate limiting
+//     let limiter = RateLimiter::new(100, 60); // 100 req/min
+//     if limiter.allow("user123").await {
+//         // Process request
+//     }
+// }
+// ```
 
+use std::time::Instant;
+use std::sync::Mutex;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -816,5 +819,3 @@ mod tests {
         assert_eq!(bulkhead.available_permits(), 2);
     }
 }
-
-

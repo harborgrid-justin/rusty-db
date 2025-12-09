@@ -1,16 +1,16 @@
-//! # Tenant Management and Provisioning
-//!
-//! High-level tenant lifecycle management including onboarding workflows,
-//! metadata management, configuration, backup/restore, and cross-tenant queries.
-//!
-//! ## Features
-//!
-//! - **Tenant Provisioning**: Automated tenant onboarding and setup
-//! - **Metadata Management**: Tenant-specific configuration and properties
-//! - **Backup/Restore**: Per-tenant backup and recovery
-//! - **Cross-Tenant Queries**: Secure multi-tenant analytics
-//! - **Self-Service Portal**: API for tenant self-management
-//! - **Billing Integration**: Usage tracking and billing hooks
+// # Tenant Management and Provisioning
+//
+// High-level tenant lifecycle management including onboarding workflows,
+// metadata management, configuration, backup/restore, and cross-tenant queries.
+//
+// ## Features
+//
+// - **Tenant Provisioning**: Automated tenant onboarding and setup
+// - **Metadata Management**: Tenant-specific configuration and properties
+// - **Backup/Restore**: Per-tenant backup and recovery
+// - **Cross-Tenant Queries**: Secure multi-tenant analytics
+// - **Self-Service Portal**: API for tenant self-management
+// - **Billing Integration**: Usage tracking and billing hooks
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -751,5 +751,3 @@ mod tests {
         assert!(enterprise_limits.cpu_shares > free_limits.cpu_shares);
     }
 }
-
-

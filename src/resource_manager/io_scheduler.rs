@@ -1,14 +1,16 @@
-//! I/O Scheduler for Resource Management
-//!
-//! This module implements I/O bandwidth allocation, IOPS limiting,
-//! priority queues, deadline-based scheduling, and multi-tenant I/O isolation.
-//!
-//! Optimizations:
-//! - Atomic counters for lock-free I/O stat updates
-//! - Inline hints for scheduling hot paths
-//! - Cold attributes for error paths
-//! - Per-device I/O tracking
+// I/O Scheduler for Resource Management
+//
+// This module implements I/O bandwidth allocation, IOPS limiting,
+// priority queues, deadline-based scheduling, and multi-tenant I/O isolation.
+//
+// Optimizations:
+// - Atomic counters for lock-free I/O stat updates
+// - Inline hints for scheduling hot paths
+// - Cold attributes for error paths
+// - Per-device I/O tracking
 
+use std::sync::Mutex;
+use std::time::Instant;
 use std::collections::{HashMap, BinaryHeap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
@@ -832,5 +834,3 @@ mod tests {
         assert!(scheduled.is_some());
     }
 }
-
-

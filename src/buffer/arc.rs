@@ -1,31 +1,31 @@
-//! # ARC (Adaptive Replacement Cache) Eviction Policy
-//!
-//! Self-tuning cache replacement algorithm that dynamically balances between
-//! recency (LRU) and frequency (LFU) based on workload characteristics.
-//!
-//! ## Algorithm Overview
-//!
-//! ARC maintains four lists:
-//! - **T1**: Recent pages seen once (recency)
-//! - **T2**: Frequent pages seen multiple times (frequency)
-//! - **B1**: Ghost entries evicted from T1 (track recent evictions)
-//! - **B2**: Ghost entries evicted from T2 (track frequent evictions)
-//!
-//! The algorithm adapts the target size of T1 vs T2 using parameter `p`,
-//! which increases when B1 entries are hit (favoring recency) and decreases
-//! when B2 entries are hit (favoring frequency).
-//!
-//! ## Key Advantages
-//!
-//! - **Self-tuning**: No manual parameter configuration required
-//! - **Scan-resistant**: Long scans don't evict hot pages
-//! - **Workload adaptive**: Automatically adjusts to access patterns
-//! - **Constant overhead**: O(1) operations for all cache operations
-//!
-//! ## References
-//!
-//! Megiddo, N., & Modha, D. S. (2003). "ARC: A Self-Tuning, Low Overhead
-//! Replacement Cache". USENIX FAST 2003.
+// # ARC (Adaptive Replacement Cache) Eviction Policy
+//
+// Self-tuning cache replacement algorithm that dynamically balances between
+// recency (LRU) and frequency (LFU) based on workload characteristics.
+//
+// ## Algorithm Overview
+//
+// ARC maintains four lists:
+// - **T1**: Recent pages seen once (recency)
+// - **T2**: Frequent pages seen multiple times (frequency)
+// - **B1**: Ghost entries evicted from T1 (track recent evictions)
+// - **B2**: Ghost entries evicted from T2 (track frequent evictions)
+//
+// The algorithm adapts the target size of T1 vs T2 using parameter `p`,
+// which increases when B1 entries are hit (favoring recency) and decreases
+// when B2 entries are hit (favoring frequency).
+//
+// ## Key Advantages
+//
+// - **Self-tuning**: No manual parameter configuration required
+// - **Scan-resistant**: Long scans don't evict hot pages
+// - **Workload adaptive**: Automatically adjusts to access patterns
+// - **Constant overhead**: O(1) operations for all cache operations
+//
+// ## References
+//
+// Megiddo, N., & Modha, D. S. (2003). "ARC: A Self-Tuning, Low Overhead
+// Replacement Cache". USENIX FAST 2003.
 
 use crate::buffer::eviction::{EvictionPolicy, EvictionStats};
 use crate::buffer::page_cache::{BufferFrame, FrameId};
@@ -602,5 +602,3 @@ mod tests {
         assert!(t2_size >= 2); // At least some hot pages remain
     }
 }
-
-

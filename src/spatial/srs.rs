@@ -1,11 +1,11 @@
-//! Spatial Reference Systems and Coordinate Transformations
-//!
-//! Provides Oracle Spatial-compatible SRS management:
-//! - EPSG coordinate system registry
-//! - Coordinate transformations
-//! - Map projections (UTM, Web Mercator, etc.)
-//! - Geodetic calculations
-//! - Great circle distance calculations
+// Spatial Reference Systems and Coordinate Transformations
+//
+// Provides Oracle Spatial-compatible SRS management:
+// - EPSG coordinate system registry
+// - Coordinate transformations
+// - Map projections (UTM, Web Mercator, etc.)
+// - Geodetic calculations
+// - Great circle distance calculations
 
 use crate::error::Result;
 use crate::spatial::geometry::Coordinate;
@@ -627,5 +627,3 @@ mod tests {
         assert!(bearing >= 0.0 && bearing < 360.0);
     }
 }
-
-

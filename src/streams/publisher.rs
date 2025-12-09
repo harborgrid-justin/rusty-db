@@ -1,8 +1,11 @@
-//! # Event Publisher
-//!
-//! Kafka-like event publishing with topics, partitions, ordering guarantees,
-//! acknowledgments, and backpressure management.
+// # Event Publisher
+//
+// Kafka-like event publishing with topics, partitions, ordering guarantees,
+// acknowledgments, and backpressure management.
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::Duration;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
@@ -735,5 +738,3 @@ mod tests {
         assert_eq!(data, deserialized);
     }
 }
-
-

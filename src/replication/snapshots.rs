@@ -1,70 +1,72 @@
-//! # Replication Snapshot Management
-//! 
-//! This module provides comprehensive snapshot management for the replication
-//! system, supporting both incremental and full backups with compression,
-//! encryption, and efficient storage management.
-//! 
-//! ## Key Features
-//! 
-//! - **Incremental Snapshots**: Efficient incremental backup with change tracking
-//! - **Full Snapshots**: Complete database snapshots for baseline recovery
-//! - **Compression Support**: Multiple compression algorithms for space efficiency
-//! - **Encryption**: At-rest encryption for snapshot security
-//! - **Lifecycle Management**: Automated cleanup and retention policies
-//! - **Fast Recovery**: Optimized restore operations with parallel processing
-//! 
-//! ## Snapshot Types
-//! 
-//! - **Full Snapshot**: Complete database state at a point in time
-//! - **Incremental Snapshot**: Changes since last full or incremental snapshot
-//! - **Differential Snapshot**: Changes since last full snapshot
-//! - **Transaction Log Snapshot**: WAL-based incremental changes
-//! - **Compressed Snapshot**: Space-optimized snapshots with various algorithms
-//! 
-//! ## Usage Example
-//! 
-//! ```rust
-//! use crate::replication::snapshots::*;
-//! use crate::replication::types::*;
-//! 
-//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! // Create snapshot manager
-//! let config = SnapshotConfig {
-//!     storage_path: "/data/snapshots".into(),
-//!     compression: CompressionType::Lz4,
-//!     encryption: Some(EncryptionConfig {
-//!         algorithm: EncryptionAlgorithm::Aes256Gcm,
-//!         key_source: KeySource::Environment("SNAPSHOT_KEY".to_string()),
-//!     }),
-//!     retention_policy: RetentionPolicy {
-//!         max_snapshots: 30,
-//!         max_age: Duration::from_days(90),
-//!         min_full_snapshots: 2,
-//!     },
-//!     ..Default::default()
-//! };
-//! 
-//! let manager = SnapshotManager::new(config)?;
-//! 
-//! // Create a full snapshot
-//! let _replica_id = ReplicaId::new("replica-01")?;
-//! let snapshot_id = manager.create_full_snapshot(&replica_id).await?;
-//! 
-//! // Create incremental snapshot
-//! let incremental_id = manager.create_incremental_snapshot(
-//!     &replica_id,
-//!     &snapshot_id
-//! ).await?;
-//! 
-//! // List available snapshots
-//! let snapshots = manager.list_snapshots(&replica_id).await?;
-//! 
-//! // Restore from snapshot
-//! manager.restore_snapshot(&replica_id, &snapshot_id).await?;
-//! # Ok(())
-//! # }
-//! ```
+// # Replication Snapshot Management
+//
+// This module provides comprehensive snapshot management for the replication
+// system, supporting both incremental and full backups with compression,
+// encryption, and efficient storage management.
+//
+// ## Key Features
+//
+// - **Incremental Snapshots**: Efficient incremental backup with change tracking
+// - **Full Snapshots**: Complete database snapshots for baseline recovery
+// - **Compression Support**: Multiple compression algorithms for space efficiency
+// - **Encryption**: At-rest encryption for snapshot security
+// - **Lifecycle Management**: Automated cleanup and retention policies
+// - **Fast Recovery**: Optimized restore operations with parallel processing
+//
+// ## Snapshot Types
+//
+// - **Full Snapshot**: Complete database state at a point in time
+// - **Incremental Snapshot**: Changes since last full or incremental snapshot
+// - **Differential Snapshot**: Changes since last full snapshot
+// - **Transaction Log Snapshot**: WAL-based incremental changes
+// - **Compressed Snapshot**: Space-optimized snapshots with various algorithms
+//
+// ## Usage Example
+//
+// ```rust
+// use crate::replication::snapshots::*;
+// use crate::replication::types::*;
+//
+// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+// // Create snapshot manager
+// let config = SnapshotConfig {
+//     storage_path: "/data/snapshots".into(),
+//     compression: CompressionType::Lz4,
+//     encryption: Some(EncryptionConfig {
+//         algorithm: EncryptionAlgorithm::Aes256Gcm,
+//         key_source: KeySource::Environment("SNAPSHOT_KEY".to_string()),
+//     }),
+//     retention_policy: RetentionPolicy {
+//         max_snapshots: 30,
+//         max_age: Duration::from_days(90),
+//         min_full_snapshots: 2,
+//     },
+//     ..Default::default()
+// };
+//
+// let manager = SnapshotManager::new(config)?;
+//
+// // Create a full snapshot
+// let _replica_id = ReplicaId::new("replica-01")?;
+// let snapshot_id = manager.create_full_snapshot(&replica_id).await?;
+//
+// // Create incremental snapshot
+// let incremental_id = manager.create_incremental_snapshot(
+//     &replica_id,
+//     &snapshot_id
+// ).await?;
+//
+// // List available snapshots
+// let snapshots = manager.list_snapshots(&replica_id).await?;
+//
+// // Restore from snapshot
+// manager.restore_snapshot(&replica_id, &snapshot_id).await?;
+// # Ok(())
+// # }
+// ```
 
+use std::collections::HashSet;
+use std::time::SystemTime;
 use crate::error::DbError;
 use crate::replication::types::*;
 use async_trait::async_trait;
@@ -86,43 +88,43 @@ use uuid::Uuid;
 pub enum SnapshotError {
     #[error("Snapshot not found: {snapshot_id}")]
     SnapshotNotFound { snapshot_id: String },
-    
+
     #[error("Invalid snapshot format: {reason}")]
     InvalidFormat { reason: String },
-    
+
     #[error("Compression failed: {algorithm} - {reason}")]
     CompressionFailed { algorithm: String, reason: String },
-    
+
     #[error("Decompression failed: {algorithm} - {reason}")]
     DecompressionFailed { algorithm: String, reason: String },
-    
+
     #[error("Encryption failed: {reason}")]
     EncryptionFailed { reason: String },
-    
+
     #[error("Decryption failed: {reason}")]
     DecryptionFailed { reason: String },
-    
+
     #[error("Storage operation failed: {operation} - {reason}")]
     StorageError { operation: String, reason: String },
-    
+
     #[error("Restore operation failed: {reason}")]
     RestoreError { reason: String },
-    
+
     #[error("Snapshot validation failed: {snapshot_id} - {reason}")]
     ValidationFailed { snapshot_id: String, reason: String },
-    
+
     #[error("Retention policy violation: {reason}")]
     RetentionViolation { reason: String },
-    
+
     #[error("Concurrent operation conflict: {operation}")]
     ConcurrencyConflict { operation: String },
-    
+
     #[error("Insufficient storage space: required {required_bytes}, available {available_bytes}")]
     InsufficientStorage { required_bytes: u64, available_bytes: u64 },
 }
 
 /// Snapshot configuration
-/// 
+///
 /// Comprehensive configuration for snapshot operations including
 /// storage, compression, encryption, and retention policies.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -267,7 +269,7 @@ impl Default for RetentionPolicy {
 }
 
 /// Unique snapshot identifier
-/// 
+///
 /// Provides type-safe snapshot identification with validation.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SnapshotId(String);
@@ -283,12 +285,12 @@ impl SnapshotId {
         }
         Ok(Self(id))
     }
-    
+
     /// Generates a new unique snapshot ID
     pub fn generate() -> Self {
         Self(Uuid::new_v4().to_string())
     }
-    
+
     /// Returns the snapshot ID as a string
     pub fn as_str(&self) -> &str {
         &self.0
@@ -302,7 +304,7 @@ impl std::fmt::Display for SnapshotId {
 }
 
 /// Snapshot metadata
-/// 
+///
 /// Contains comprehensive information about a snapshot including
 /// creation details, size, dependencies, and verification data.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -509,37 +511,37 @@ pub struct StorageEfficiency {
 pub trait SnapshotManager: Send + Sync {
     /// Create a full snapshot
     async fn create_full_snapshot(&self, replica_id: &ReplicaId) -> Result<SnapshotId, SnapshotError>;
-    
+
     /// Create an incremental snapshot
     async fn create_incremental_snapshot(
         &self,
         replica_id: &ReplicaId,
         parent_snapshot: &SnapshotId,
     ) -> Result<SnapshotId, SnapshotError>;
-    
+
     /// Create a differential snapshot
     async fn create_differential_snapshot(
         &self,
         replica_id: &ReplicaId,
         base_snapshot: &SnapshotId,
     ) -> Result<SnapshotId, SnapshotError>;
-    
+
     /// List all snapshots for a replica
     async fn list_snapshots(&self, replica_id: &ReplicaId) -> Result<Vec<SnapshotMetadata>, SnapshotError>;
-    
+
     /// Get snapshot metadata
     async fn get_snapshot_metadata(&self, snapshot_id: &SnapshotId) -> Result<SnapshotMetadata, SnapshotError>;
-    
+
     /// Delete a snapshot
     async fn delete_snapshot(&self, snapshot_id: &SnapshotId) -> Result<(), SnapshotError>;
-    
+
     /// Restore from snapshot
     async fn restore_snapshot(
         &self,
         replica_id: &ReplicaId,
         snapshot_id: &SnapshotId,
     ) -> Result<(), SnapshotError>;
-    
+
     /// Restore from snapshot with options
     async fn restore_snapshot_with_options(
         &self,
@@ -547,13 +549,13 @@ pub trait SnapshotManager: Send + Sync {
         snapshot_id: &SnapshotId,
         options: RestoreOptions,
     ) -> Result<(), SnapshotError>;
-    
+
     /// Verify snapshot integrity
     async fn verify_snapshot(&self, snapshot_id: &SnapshotId) -> Result<bool, SnapshotError>;
-    
+
     /// Apply retention policy
     async fn apply_retention_policy(&self, replica_id: &ReplicaId) -> Result<Vec<SnapshotId>, SnapshotError>;
-    
+
     /// Get snapshot statistics
     async fn get_statistics(&self, replica_id: Option<&ReplicaId>) -> Result<SnapshotStatistics, SnapshotError>;
 }
@@ -576,22 +578,22 @@ pub struct FileSnapshotManager {
 
 impl FileSnapshotManager {
     /// Creates a new file-based snapshot manager
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `config` - Snapshot configuration
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(FileSnapshotManager)` - Successfully created manager
     /// * `Err(SnapshotError)` - Creation failed
     pub async fn new(config: SnapshotConfig) -> Result<Self, SnapshotError> {
         // Validate configuration
         Self::validate_config(&config).await?;
-        
+
         // Create directories
         Self::create_directories(&config).await?;
-        
+
         let manager = Self {
             config: Arc::new(config),
             metadata_cache: Arc::new(RwLock::new(HashMap::new())),
@@ -616,18 +618,18 @@ impl FileSnapshotManager {
             cleanup_handle: Arc::new(Mutex::new(None)),
             progress_tracking: Arc::new(RwLock::new(HashMap::new())),
         };
-        
+
         // Load existing snapshots
         manager.load_existing_snapshots().await?;
-        
+
         // Start background cleanup if enabled
         if manager.config.enable_background_cleanup {
             manager.start_background_cleanup().await;
         }
-        
+
         Ok(manager)
     }
-    
+
     /// Validates the snapshot configuration
     async fn validate_config(config: &SnapshotConfig) -> Result<(), SnapshotError> {
         if !config.storage_path.exists() {
@@ -636,22 +638,22 @@ impl FileSnapshotManager {
                 reason: format!("Storage path does not exist: {:?}", config.storage_path),
             });
         }
-        
+
         if config.chunk_size == 0 {
             return Err(SnapshotError::InvalidFormat {
                 reason: "Chunk size must be greater than 0".to_string(),
             });
         }
-        
+
         if config.max_parallel_operations == 0 {
             return Err(SnapshotError::InvalidFormat {
                 reason: "Max parallel operations must be greater than 0".to_string(),
             });
         }
-        
+
         Ok(())
     }
-    
+
     /// Creates necessary directories
     async fn create_directories(config: &SnapshotConfig) -> Result<(), SnapshotError> {
         tokio::fs::create_dir_all(&config.storage_path)
@@ -660,17 +662,17 @@ impl FileSnapshotManager {
                 operation: "create_directory".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         tokio::fs::create_dir_all(&config.temp_directory)
             .await
             .map_err(|e| SnapshotError::StorageError {
                 operation: "create_temp_directory".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         Ok(())
     }
-    
+
     /// Loads existing snapshots from storage
     async fn load_existing_snapshots(&self) -> Result<(), SnapshotError> {
         let mut metadata_files = tokio::fs::read_dir(&self.config.storage_path)
@@ -679,14 +681,14 @@ impl FileSnapshotManager {
                 operation: "read_directory".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         while let Some(entry) = metadata_files.next_entry()
             .await
             .map_err(|e| SnapshotError::StorageError {
                 operation: "read_directory_entry".to_string(),
                 reason: e.to_string(),
             })? {
-            
+
             let path = entry.path();
             if path.extension().map_or(false, |ext| ext == "metadata") {
                 if let Ok(metadata) = self.load_snapshot_metadata(&path).await {
@@ -695,13 +697,13 @@ impl FileSnapshotManager {
                 }
             }
         }
-        
+
         // Update statistics
         self.update_statistics().await;
-        
+
         Ok(())
     }
-    
+
     /// Loads snapshot metadata from file
     async fn load_snapshot_metadata(&self, path: &Path) -> Result<SnapshotMetadata, SnapshotError> {
         let contents = tokio::fs::read_to_string(path)
@@ -710,94 +712,94 @@ impl FileSnapshotManager {
                 operation: "read_metadata".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         serde_json::from_str(&contents)
             .map_err(|e| SnapshotError::InvalidFormat {
                 reason: format!("Failed to parse metadata: {}", e),
             })
     }
-    
+
     /// Saves snapshot metadata to file
     async fn save_snapshot_metadata(&self, metadata: &SnapshotMetadata) -> Result<(), SnapshotError> {
         let metadata_path = self.config.storage_path.join(format!("{}.metadata", metadata.snapshot_id));
-        
+
         let contents = serde_json::to_string_pretty(metadata)
             .map_err(|e| SnapshotError::StorageError {
                 operation: "serialize_metadata".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         tokio::fs::write(&metadata_path, contents)
             .await
             .map_err(|e| SnapshotError::StorageError {
                 operation: "write_metadata".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         Ok(())
     }
-    
+
     /// Creates snapshot data file path
     fn get_snapshot_data_path(&self, snapshot_id: &SnapshotId) -> PathBuf {
         self.config.storage_path.join(format!("{}.snapshot", snapshot_id))
     }
-    
+
     /// Starts background cleanup task
     async fn start_background_cleanup(&self) {
         let config = Arc::clone(&self.config);
         let metadata_cache = Arc::clone(&self.metadata_cache);
-        
+
         let handle = tokio::spawn(async move {
             let mut interval = tokio::time::interval(config.cleanup_interval);
-            
+
             loop {
                 interval.tick().await;
-                
+
                 // Apply retention policies to all replicas
                 let replica_ids: Vec<ReplicaId> = {
                     let cache = metadata_cache.read();
                     cache.values().map(|m| m.replica_id.clone()).collect::<HashSet<_>>().into_iter().collect()
                 };
-                
+
                 for replica_id in replica_ids {
                     // Would apply retention policy here
                     // let _ = self.apply_retention_policy(&replica_id).await;
                 }
             }
         });
-        
+
         *self.cleanup_handle.lock() = Some(handle);
     }
-    
+
     /// Updates statistics based on current snapshots
     async fn update_statistics(&self) {
         let cache = self.metadata_cache.read();
         let snapshots: Vec<_> = cache.values().collect();
-        
+
         if snapshots.is_empty() {
             return;
         }
-        
+
         let total_snapshots = snapshots.len();
         let full_snapshots = snapshots.iter().filter(|s| s.snapshot_type == SnapshotType::Full).count();
         let incremental_snapshots = snapshots.iter().filter(|s| s.snapshot_type == SnapshotType::Incremental).count();
-        
+
         let total_storage_bytes: u64 = snapshots.iter().map(|s| s.size_bytes).sum();
         let compressed_storage_bytes: u64 = snapshots.iter()
             .map(|s| s.compressed_size_bytes.unwrap_or(s.size_bytes))
             .sum();
-        
+
         let average_compression_ratio = if total_storage_bytes > 0 {
             compressed_storage_bytes as f64 / total_storage_bytes as f64
         } else {
             1.0
         };
-        
+
         let oldest_snapshot_age = snapshots.iter()
             .map(|s| s.created_at)
             .min()
             .map(|oldest| SystemTime::now().duration_since(oldest).unwrap_or_default());
-        
+
         let success_rate = {
             let successful = snapshots.iter().filter(|s| s.status == SnapshotStatus::Completed).count();
             if total_snapshots > 0 {
@@ -806,7 +808,7 @@ impl FileSnapshotManager {
                 100.0
             }
         };
-        
+
         let storage_efficiency = StorageEfficiency {
             deduplication_ratio: 1.0, // Simplified
             compression_effectiveness: 1.0 - average_compression_ratio,
@@ -817,7 +819,7 @@ impl FileSnapshotManager {
             },
             average_size_reduction: average_compression_ratio,
         };
-        
+
         let mut stats = self.statistics.write();
         *stats = SnapshotStatistics {
             total_snapshots,
@@ -832,7 +834,7 @@ impl FileSnapshotManager {
             storage_efficiency,
         };
     }
-    
+
     /// Compresses data using specified algorithm
     async fn compress_data(&self, data: &[u8], algorithm: &CompressionType) -> Result<Vec<u8>, SnapshotError> {
         match algorithm {
@@ -859,7 +861,7 @@ impl FileSnapshotManager {
             },
         }
     }
-    
+
     /// Decompresses data using specified algorithm
     async fn decompress_data(&self, data: &[u8], algorithm: &CompressionType) -> Result<Vec<u8>, SnapshotError> {
         match algorithm {
@@ -870,7 +872,7 @@ impl FileSnapshotManager {
             }
         }
     }
-    
+
     /// Calculates checksum for data
     fn calculate_checksum(&self, data: &[u8], algorithm: &ChecksumAlgorithm) -> String {
         match algorithm {
@@ -892,11 +894,11 @@ impl FileSnapshotManager {
             },
         }
     }
-    
+
     /// Creates a full snapshot implementation
     async fn create_full_snapshot_impl(&self, replica_id: &ReplicaId) -> Result<SnapshotId, SnapshotError> {
         let snapshot_id = SnapshotId::generate();
-        
+
         // Check for concurrent operations
         {
             let mut active = self.active_operations.lock();
@@ -907,7 +909,7 @@ impl FileSnapshotManager {
             }
             active.insert(snapshot_id.clone());
         }
-        
+
         // Initialize progress tracking
         {
             let mut progress = self.progress_tracking.write();
@@ -922,10 +924,10 @@ impl FileSnapshotManager {
                 progress_percentage: 0.0,
             });
         }
-        
+
         // Simulate snapshot creation
         let snapshot_data = b"Full snapshot data".to_vec(); // Simplified
-        
+
         // Update progress
         {
             let mut progress = self.progress_tracking.write();
@@ -935,10 +937,10 @@ impl FileSnapshotManager {
                 p.progress_percentage = 20.0;
             }
         }
-        
+
         // Compress data
         let compressed_data = self.compress_data(&snapshot_data, &self.config.compression).await?;
-        
+
         // Update progress
         {
             let mut progress = self.progress_tracking.write();
@@ -948,10 +950,10 @@ impl FileSnapshotManager {
                 p.progress_percentage = 50.0;
             }
         }
-        
+
         // Calculate checksum
         let checksum = self.calculate_checksum(&compressed_data, &ChecksumAlgorithm::Sha256);
-        
+
         // Write to storage
         let data_path = self.get_snapshot_data_path(&snapshot_id);
         tokio::fs::write(&data_path, &compressed_data)
@@ -960,7 +962,7 @@ impl FileSnapshotManager {
                 operation: "write_snapshot".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         // Update progress
         {
             let mut progress = self.progress_tracking.write();
@@ -970,7 +972,7 @@ impl FileSnapshotManager {
                 p.progress_percentage = 80.0;
             }
         }
-        
+
         // Create metadata
         let metadata = SnapshotMetadata {
             snapshot_id: snapshot_id.clone(),
@@ -994,16 +996,16 @@ impl FileSnapshotManager {
             verified: false,
             last_verified: None,
         };
-        
+
         // Save metadata
         self.save_snapshot_metadata(&metadata).await?;
-        
+
         // Update cache
         {
             let mut cache = self.metadata_cache.write();
             cache.insert(snapshot_id.clone(), metadata);
         }
-        
+
         // Complete progress tracking
         {
             let mut progress = self.progress_tracking.write();
@@ -1013,16 +1015,16 @@ impl FileSnapshotManager {
                 p.progress_percentage = 100.0;
             }
         }
-        
+
         // Remove from active operations
         {
             let mut active = self.active_operations.lock();
             active.remove(&snapshot_id);
         }
-        
+
         // Update statistics
         self.update_statistics().await;
-        
+
         Ok(snapshot_id)
     }
 }
@@ -1032,7 +1034,7 @@ impl SnapshotManager for FileSnapshotManager {
     async fn create_full_snapshot(&self, replica_id: &ReplicaId) -> Result<SnapshotId, SnapshotError> {
         self.create_full_snapshot_impl(replica_id).await
     }
-    
+
     async fn create_incremental_snapshot(
         &self,
         replica_id: &ReplicaId,
@@ -1047,14 +1049,14 @@ impl SnapshotManager for FileSnapshotManager {
                 });
             }
         }
-        
+
         let snapshot_id = SnapshotId::generate();
-        
+
         // Simulate incremental snapshot creation (simplified)
         let snapshot_data = b"Incremental snapshot data".to_vec();
         let compressed_data = self.compress_data(&snapshot_data, &self.config.compression).await?;
         let checksum = self.calculate_checksum(&compressed_data, &ChecksumAlgorithm::Sha256);
-        
+
         let data_path = self.get_snapshot_data_path(&snapshot_id);
         tokio::fs::write(&data_path, &compressed_data)
             .await
@@ -1062,7 +1064,7 @@ impl SnapshotManager for FileSnapshotManager {
                 operation: "write_snapshot".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         let metadata = SnapshotMetadata {
             snapshot_id: snapshot_id.clone(),
             replica_id: replica_id.clone(),
@@ -1085,24 +1087,24 @@ impl SnapshotManager for FileSnapshotManager {
             verified: false,
             last_verified: None,
         };
-        
+
         // Save metadata and update cache
         self.save_snapshot_metadata(&metadata).await?;
         {
             let mut cache = self.metadata_cache.write();
             cache.insert(snapshot_id.clone(), metadata);
-            
+
             // Update parent to reference this child
             if let Some(parent_metadata) = cache.get_mut(parent_snapshot) {
                 parent_metadata.child_snapshots.push(snapshot_id.clone());
             }
         }
-        
+
         self.update_statistics().await;
-        
+
         Ok(snapshot_id)
     }
-    
+
     async fn create_differential_snapshot(
         &self,
         replica_id: &ReplicaId,
@@ -1111,7 +1113,7 @@ impl SnapshotManager for FileSnapshotManager {
         // Similar to incremental but tracks changes from base full snapshot
         self.create_incremental_snapshot(replica_id, base_snapshot).await
     }
-    
+
     async fn list_snapshots(&self, replica_id: &ReplicaId) -> Result<Vec<SnapshotMetadata>, SnapshotError> {
         let cache = self.metadata_cache.read();
         Ok(cache.values()
@@ -1119,7 +1121,7 @@ impl SnapshotManager for FileSnapshotManager {
             .cloned()
             .collect())
     }
-    
+
     async fn get_snapshot_metadata(&self, snapshot_id: &SnapshotId) -> Result<SnapshotMetadata, SnapshotError> {
         let cache = self.metadata_cache.read();
         cache.get(snapshot_id)
@@ -1128,7 +1130,7 @@ impl SnapshotManager for FileSnapshotManager {
                 snapshot_id: snapshot_id.to_string(),
             })
     }
-    
+
     async fn delete_snapshot(&self, snapshot_id: &SnapshotId) -> Result<(), SnapshotError> {
         let metadata = {
             let mut cache = self.metadata_cache.write();
@@ -1137,7 +1139,7 @@ impl SnapshotManager for FileSnapshotManager {
                     snapshot_id: snapshot_id.to_string(),
                 })?
         };
-        
+
         // Delete data file
         if metadata.storage_path.exists() {
             tokio::fs::remove_file(&metadata.storage_path)
@@ -1147,7 +1149,7 @@ impl SnapshotManager for FileSnapshotManager {
                     reason: e.to_string(),
                 })?;
         }
-        
+
         // Delete metadata file
         let metadata_path = self.config.storage_path.join(format!("{}.metadata", snapshot_id));
         if metadata_path.exists() {
@@ -1158,12 +1160,12 @@ impl SnapshotManager for FileSnapshotManager {
                     reason: e.to_string(),
                 })?;
         }
-        
+
         self.update_statistics().await;
-        
+
         Ok(())
     }
-    
+
     async fn restore_snapshot(
         &self,
         replica_id: &ReplicaId,
@@ -1172,7 +1174,7 @@ impl SnapshotManager for FileSnapshotManager {
         let options = RestoreOptions::default();
         self.restore_snapshot_with_options(replica_id, snapshot_id, options).await
     }
-    
+
     async fn restore_snapshot_with_options(
         &self,
         _replica_id: &ReplicaId,
@@ -1180,7 +1182,7 @@ impl SnapshotManager for FileSnapshotManager {
         _options: RestoreOptions,
     ) -> Result<(), SnapshotError> {
         let metadata = self.get_snapshot_metadata(snapshot_id).await?;
-        
+
         // Read compressed data
         let compressed_data = tokio::fs::read(&metadata.storage_path)
             .await
@@ -1188,7 +1190,7 @@ impl SnapshotManager for FileSnapshotManager {
                 operation: "read_snapshot".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         // Verify checksum
         let calculated_checksum = self.calculate_checksum(&compressed_data, &metadata.checksum_algorithm);
         if calculated_checksum != metadata.checksum {
@@ -1197,24 +1199,24 @@ impl SnapshotManager for FileSnapshotManager {
                 reason: "Checksum mismatch".to_string(),
             });
         }
-        
+
         // Decompress data
         let _data = self.decompress_data(&compressed_data, &metadata.compression).await?;
-        
+
         // In a real implementation, would restore the data to the replica
         // For now, we just simulate success
-        
+
         Ok(())
     }
-    
+
     async fn verify_snapshot(&self, snapshot_id: &SnapshotId) -> Result<bool, SnapshotError> {
         let metadata = self.get_snapshot_metadata(snapshot_id).await?;
-        
+
         // Check if file exists
         if !metadata.storage_path.exists() {
             return Ok(false);
         }
-        
+
         // Verify checksum
         let data = tokio::fs::read(&metadata.storage_path)
             .await
@@ -1222,10 +1224,10 @@ impl SnapshotManager for FileSnapshotManager {
                 operation: "read_for_verification".to_string(),
                 reason: e.to_string(),
             })?;
-        
+
         let calculated_checksum = self.calculate_checksum(&data, &metadata.checksum_algorithm);
         let verified = calculated_checksum == metadata.checksum;
-        
+
         // Update verification status
         if verified {
             let mut cache = self.metadata_cache.write();
@@ -1234,36 +1236,36 @@ impl SnapshotManager for FileSnapshotManager {
                 metadata.last_verified = Some(SystemTime::now());
             }
         }
-        
+
         Ok(verified)
     }
-    
+
     async fn apply_retention_policy(&self, replica_id: &ReplicaId) -> Result<Vec<SnapshotId>, SnapshotError> {
         let mut deleted_snapshots = Vec::new();
         let _policy = &self.config.retention_policy;
-        
+
         let snapshots = self.list_snapshots(replica_id).await?;
         if snapshots.is_empty() {
             return Ok(deleted_snapshots);
         }
-        
+
         // Sort by creation time (newest first)
         let mut snapshots = snapshots;
         snapshots.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-        
+
         let now = SystemTime::now();
         let mut full_snapshots_kept = 0;
-        
+
         for (index, snapshot) in snapshots.iter().enumerate() {
             let age = now.duration_since(snapshot.created_at).unwrap_or_default();
-            let should_delete = 
+            let should_delete =
                 // Too many snapshots
                 index >= policy.max_snapshots ||
                 // Too old
                 age > policy.max_age ||
                 // Keep minimum full snapshots
                 (snapshot.snapshot_type == SnapshotType::Full && full_snapshots_kept >= policy.min_full_snapshots);
-            
+
             if should_delete {
                 if let Ok(()) = self.delete_snapshot(&snapshot.snapshot_id).await {
                     deleted_snapshots.push(snapshot.snapshot_id.clone());
@@ -1272,10 +1274,10 @@ impl SnapshotManager for FileSnapshotManager {
                 full_snapshots_kept += 1;
             }
         }
-        
+
         Ok(deleted_snapshots)
     }
-    
+
     async fn get_statistics(&self, replica_id: Option<&ReplicaId>) -> Result<SnapshotStatistics, SnapshotError> {
         if let Some(replica_id) = replica_id {
             // Calculate statistics for specific replica
@@ -1283,12 +1285,12 @@ impl SnapshotManager for FileSnapshotManager {
             let total_snapshots = snapshots.len();
             let full_snapshots = snapshots.iter().filter(|s| s.snapshot_type == SnapshotType::Full).count();
             let incremental_snapshots = snapshots.iter().filter(|s| s.snapshot_type == SnapshotType::Incremental).count();
-            
+
             let total_storage_bytes: u64 = snapshots.iter().map(|s| s.size_bytes).sum();
             let compressed_storage_bytes: u64 = snapshots.iter()
                 .map(|s| s.compressed_size_bytes.unwrap_or(s.size_bytes))
                 .sum();
-            
+
             Ok(SnapshotStatistics {
                 total_snapshots,
                 full_snapshots,
@@ -1354,13 +1356,13 @@ mod tests {
     async fn create_test_manager() -> (FileSnapshotManager, TempDir) {
         let temp_dir = TempDir::new().unwrap();
         let temp_path = temp_dir.path().to_path_buf();
-        
+
         let config = SnapshotConfig {
             storage_path: temp_path.clone(),
             temp_directory: temp_path.join("temp"),
             ..SnapshotConfig::default()
         };
-        
+
         let manager = FileSnapshotManager::new(config).await.unwrap();
         (manager, temp_dir)
     }
@@ -1369,10 +1371,10 @@ mod tests {
     async fn test_snapshot_id_creation() {
         let id = SnapshotId::new("test-snapshot");
         assert!(id.is_ok());
-        
+
         let empty_id = SnapshotId::new("");
         assert!(empty_id.is_err());
-        
+
         let generated_id = SnapshotId::generate();
         assert!(!generated_id.as_str().is_empty());
     }
@@ -1380,7 +1382,7 @@ mod tests {
     #[tokio::test]
     async fn test_snapshot_manager_creation() {
         let (manager, _temp_dir) = create_test_manager().await;
-        
+
         let _stats = manager.get_statistics(None).await.unwrap();
         assert_eq!(stats.total_snapshots, 0);
     }
@@ -1389,10 +1391,10 @@ mod tests {
     async fn test_full_snapshot_creation() {
         let (manager, _temp_dir) = create_test_manager().await;
         let _replica_id = ReplicaId::new("test-replica").unwrap();
-        
+
         let snapshot_id = manager.create_full_snapshot(&replica_id).await.unwrap();
         assert!(!snapshot_id.as_str().is_empty());
-        
+
         let metadata = manager.get_snapshot_metadata(&snapshot_id).await.unwrap();
         assert_eq!(metadata.replica_id, replica_id);
         assert_eq!(metadata.snapshot_type, SnapshotType::Full);
@@ -1403,13 +1405,13 @@ mod tests {
     async fn test_incremental_snapshot_creation() {
         let (manager, _temp_dir) = create_test_manager().await;
         let _replica_id = ReplicaId::new("test-replica").unwrap();
-        
+
         // Create parent snapshot first
         let parent_id = manager.create_full_snapshot(&replica_id).await.unwrap();
-        
+
         // Create incremental snapshot
         let incremental_id = manager.create_incremental_snapshot(&replica_id, &parent_id).await.unwrap();
-        
+
         let metadata = manager.get_snapshot_metadata(&incremental_id).await.unwrap();
         assert_eq!(metadata.snapshot_type, SnapshotType::Incremental);
         assert_eq!(metadata.parent_snapshot, Some(parent_id));
@@ -1419,14 +1421,14 @@ mod tests {
     async fn test_snapshot_listing() {
         let (manager, _temp_dir) = create_test_manager().await;
         let _replica_id = ReplicaId::new("test-replica").unwrap();
-        
+
         // Create multiple snapshots
         let _full1 = manager.create_full_snapshot(&replica_id).await.unwrap();
         let _full2 = manager.create_full_snapshot(&replica_id).await.unwrap();
-        
+
         let snapshots = manager.list_snapshots(&replica_id).await.unwrap();
         assert_eq!(snapshots.len(), 2);
-        
+
         for snapshot in snapshots {
             assert_eq!(snapshot.replica_id, replica_id);
             assert_eq!(snapshot.snapshot_type, SnapshotType::Full);
@@ -1437,15 +1439,15 @@ mod tests {
     async fn test_snapshot_deletion() {
         let (manager, _temp_dir) = create_test_manager().await;
         let _replica_id = ReplicaId::new("test-replica").unwrap();
-        
+
         let snapshot_id = manager.create_full_snapshot(&replica_id).await.unwrap();
-        
+
         // Verify snapshot exists
         assert!(manager.get_snapshot_metadata(&snapshot_id).await.is_ok());
-        
+
         // Delete snapshot
         assert!(manager.delete_snapshot(&snapshot_id).await.is_ok());
-        
+
         // Verify snapshot no longer exists
         assert!(manager.get_snapshot_metadata(&snapshot_id).await.is_err());
     }
@@ -1454,9 +1456,9 @@ mod tests {
     async fn test_snapshot_verification() {
         let (manager, _temp_dir) = create_test_manager().await;
         let _replica_id = ReplicaId::new("test-replica").unwrap();
-        
+
         let snapshot_id = manager.create_full_snapshot(&replica_id).await.unwrap();
-        
+
         let verified = manager.verify_snapshot(&snapshot_id).await.unwrap();
         assert!(verified);
     }
@@ -1465,9 +1467,9 @@ mod tests {
     async fn test_snapshot_restore() {
         let (manager, _temp_dir) = create_test_manager().await;
         let _replica_id = ReplicaId::new("test-replica").unwrap();
-        
+
         let snapshot_id = manager.create_full_snapshot(&replica_id).await.unwrap();
-        
+
         let _result = manager.restore_snapshot(&replica_id, &snapshot_id).await;
         assert!(result.is_ok());
     }
@@ -1476,17 +1478,17 @@ mod tests {
     async fn test_retention_policy() {
         let (manager, _temp_dir) = create_test_manager().await;
         let _replica_id = ReplicaId::new("test-replica").unwrap();
-        
+
         // Create multiple snapshots
         for _ in 0..5 {
             let _ = manager.create_full_snapshot(&replica_id).await.unwrap();
         }
-        
+
         let snapshots_before = manager.list_snapshots(&replica_id).await.unwrap();
         assert_eq!(snapshots_before.len(), 5);
-        
+
         let _deleted = manager.apply_retention_policy(&replica_id).await.unwrap();
-        
+
         let snapshots_after = manager.list_snapshots(&replica_id).await.unwrap();
         assert!(snapshots_after.len() <= snapshots_before.len());
     }
@@ -1495,10 +1497,10 @@ mod tests {
     async fn test_statistics_collection() {
         let (manager, _temp_dir) = create_test_manager().await;
         let _replica_id = ReplicaId::new("test-replica").unwrap();
-        
+
         // Create snapshots
         let _full = manager.create_full_snapshot(&replica_id).await.unwrap();
-        
+
         let _stats = manager.get_statistics(Some(&replica_id)).await.unwrap();
         assert_eq!(stats.total_snapshots, 1);
         assert_eq!(stats.full_snapshots, 1);

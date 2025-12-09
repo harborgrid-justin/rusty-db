@@ -1,17 +1,19 @@
-//! # Audit System Module
-//!
-//! Provides comprehensive audit logging with statement-level, object-level,
-//! and fine-grained auditing with conditions and tamper protection.
-//!
-//! ## Features
-//!
-//! - Statement-level auditing (DDL/DML)
-//! - Object-level auditing (per table/view)
-//! - Fine-grained auditing with conditions
-//! - Audit trail tamper protection
-//! - Audit log archival and rotation
-//! - Real-time audit event streaming
+// # Audit System Module
+//
+// Provides comprehensive audit logging with statement-level, object-level,
+// and fine-grained auditing with conditions and tamper protection.
+//
+// ## Features
+//
+// - Statement-level auditing (DDL/DML)
+// - Object-level auditing (per table/view)
+// - Fine-grained auditing with conditions
+// - Audit trail tamper protection
+// - Audit log archival and rotation
+// - Real-time audit event streaming
 
+use std::collections::VecDeque;
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use parking_lot::RwLock;
@@ -856,5 +858,3 @@ mod tests {
         assert_eq!(results[0].username, "user1");
     }
 }
-
-

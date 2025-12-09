@@ -1,70 +1,70 @@
-//! # JSON Document Store Engine
-//!
-//! Oracle SODA-like document store with comprehensive JSON support, indexing,
-//! aggregation, change streams, and SQL/JSON integration.
-//!
-//! ## Overview
-//!
-//! The Document Store Engine provides a complete NoSQL document database
-//! implementation with the following features:
-//!
-//! - **Document Model**: JSON and BSON support with versioning and metadata
-//! - **Collections**: Schema validation, statistics, and collection management
-//! - **JSONPath**: Full JSONPath query support with filters and array slicing
-//! - **Indexing**: B-tree, full-text, compound, partial, and TTL indexes
-//! - **Query By Example**: MongoDB-like query syntax with operators
-//! - **Aggregation**: Pipeline-based aggregation with multiple stages
-//! - **Change Streams**: Real-time change notifications with resume tokens
-//! - **SQL/JSON**: Oracle-like SQL/JSON functions and predicates
-//!
-//! ## Quick Start
-//!
-//! ```rust,no_run
-//! use rusty_db::document_store::{
-//!     DocumentStore,
-//!     document::{Document, DocumentId},
-//!     collections::CollectionSettings,
-//! };
-//! use serde_json::json;
-//!
-//! # fn main() -> rusty_db::Result<()> {
-//! // Create a document store
-//! let mut store = DocumentStore::new();
-//!
-//! // Create a collection
-//! store.create_collection("users".to_string())?;
-//!
-//! // Insert a document
-//! let doc = Document::from_json(
-//!     DocumentId::new_uuid(),
-//!     "users".to_string(),
-//!     json!({
-//!         "name": "Alice",
-//!         "age": 30,
-//!         "email": "alice@example.com"
-//!     }),
-//! )?;
-//!
-//! let doc_id = store.insert("users", doc)?;
-//!
-//! // Query documents
-//! let results = store.find("users", json!({"age": {"$gte": 25}}))?;
-//!
-//! println!("Found {} documents", results.len());
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ## Module Organization
-//!
-//! - [`document`]: Document model with JSON/BSON support
-//! - [`collections`]: Collection management and schema validation
-//! - [`jsonpath`]: JSONPath expression engine
-//! - [`indexing`]: Document indexing infrastructure
-//! - [`qbe`]: Query By Example implementation
-//! - [`aggregation`]: Aggregation pipeline
-//! - [`changes`]: Change streams and notifications
-//! - [`sql_json`]: SQL/JSON integration functions
+// # JSON Document Store Engine
+//
+// Oracle SODA-like document store with comprehensive JSON support, indexing,
+// aggregation, change streams, and SQL/JSON integration.
+//
+// ## Overview
+//
+// The Document Store Engine provides a complete NoSQL document database
+// implementation with the following features:
+//
+// - **Document Model**: JSON and BSON support with versioning and metadata
+// - **Collections**: Schema validation, statistics, and collection management
+// - **JSONPath**: Full JSONPath query support with filters and array slicing
+// - **Indexing**: B-tree, full-text, compound, partial, and TTL indexes
+// - **Query By Example**: MongoDB-like query syntax with operators
+// - **Aggregation**: Pipeline-based aggregation with multiple stages
+// - **Change Streams**: Real-time change notifications with resume tokens
+// - **SQL/JSON**: Oracle-like SQL/JSON functions and predicates
+//
+// ## Quick Start
+//
+// ```rust,no_run
+// use rusty_db::document_store::{
+//     DocumentStore,
+//     document::{Document, DocumentId},
+//     collections::CollectionSettings,
+// };
+// use serde_json::json;
+//
+// # fn main() -> rusty_db::Result<()> {
+// // Create a document store
+// let mut store = DocumentStore::new();
+//
+// // Create a collection
+// store.create_collection("users".to_string())?;
+//
+// // Insert a document
+// let doc = Document::from_json(
+//     DocumentId::new_uuid(),
+//     "users".to_string(),
+//     json!({
+//         "name": "Alice",
+//         "age": 30,
+//         "email": "alice@example.com"
+//     }),
+// )?;
+//
+// let doc_id = store.insert("users", doc)?;
+//
+// // Query documents
+// let results = store.find("users", json!({"age": {"$gte": 25}}))?;
+//
+// println!("Found {} documents", results.len());
+// # Ok(())
+// # }
+// ```
+//
+// ## Module Organization
+//
+// - [`document`]: Document model with JSON/BSON support
+// - [`collections`]: Collection management and schema validation
+// - [`jsonpath`]: JSONPath expression engine
+// - [`indexing`]: Document indexing infrastructure
+// - [`qbe`]: Query By Example implementation
+// - [`aggregation`]: Aggregation pipeline
+// - [`changes`]: Change streams and notifications
+// - [`sql_json`]: SQL/JSON integration functions
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -659,5 +659,3 @@ mod tests {
         assert_eq!(stats.total_documents, 1);
     }
 }
-
-

@@ -1,6 +1,8 @@
 // Tenant management with isolation guarantees and resource governance
 // Provides tenant-level isolation, resource controls, and SLA enforcement
 
+use std::collections::BTreeMap;
+use std::collections::VecDeque;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::path::PathBuf;

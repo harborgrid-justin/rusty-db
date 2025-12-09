@@ -1,35 +1,35 @@
-//! SIMD-Accelerated Bloom Filter
-//!
-//! High-performance blocked Bloom filter with AVX2 acceleration.
-//! Achieves 10-20x faster probe operations compared to standard implementations.
-//!
-//! ## Key Features
-//! - **Blocked design**: 512-bit blocks (1 cache line each)
-//! - **AVX2 acceleration**: 8 bits tested per instruction
-//! - **Register-based**: Entire block fits in 8 AVX2 registers
-//! - **Optimal k**: k=2 hashes for join workloads (~1% FPR)
-//! - **Batch probing**: Process 8 keys simultaneously
-//!
-//! ## Architecture
-//! ```text
-//! Block Size: 512 bits (64 bytes) = 1 cache line
-//! Number of Blocks: Computed from expected items and FPR
-//! Hash Functions: 2 (optimal for join selectivity)
-//!
-//! Memory Layout:
-//! [Block 0: 512 bits] [Block 1: 512 bits] ... [Block N: 512 bits]
-//! ```
-//!
-//! ## Complexity Analysis
-//! - Insert: O(k) = O(1) with k=2 hashes
-//! - Probe (scalar): O(k) = O(1) with k=2
-//! - Probe (SIMD): O(k*n/8) for n keys batched
-//! - Space: m = -n * ln(p) / ln(2)² ≈ 9.6 bits per element @ 1% FPR
-//!
-//! ## Performance
-//! - FPR: 0.1% - 1% configurable
-//! - Throughput: 100M+ probes/second with AVX2
-//! - Cache efficiency: 95%+ hit rate (1 cache line per probe)
+// SIMD-Accelerated Bloom Filter
+//
+// High-performance blocked Bloom filter with AVX2 acceleration.
+// Achieves 10-20x faster probe operations compared to standard implementations.
+//
+// ## Key Features
+// - **Blocked design**: 512-bit blocks (1 cache line each)
+// - **AVX2 acceleration**: 8 bits tested per instruction
+// - **Register-based**: Entire block fits in 8 AVX2 registers
+// - **Optimal k**: k=2 hashes for join workloads (~1% FPR)
+// - **Batch probing**: Process 8 keys simultaneously
+//
+// ## Architecture
+// ```text
+// Block Size: 512 bits (64 bytes) = 1 cache line
+// Number of Blocks: Computed from expected items and FPR
+// Hash Functions: 2 (optimal for join selectivity)
+//
+// Memory Layout:
+// [Block 0: 512 bits] [Block 1: 512 bits] ... [Block N: 512 bits]
+// ```
+//
+// ## Complexity Analysis
+// - Insert: O(k) = O(1) with k=2 hashes
+// - Probe (scalar): O(k) = O(1) with k=2
+// - Probe (SIMD): O(k*n/8) for n keys batched
+// - Space: m = -n * ln(p) / ln(2)² ≈ 9.6 bits per element @ 1% FPR
+//
+// ## Performance
+// - FPR: 0.1% - 1% configurable
+// - Throughput: 100M+ probes/second with AVX2
+// - Cache efficiency: 95%+ hit rate (1 cache line per probe)
 
 use crate::simd::hash::{xxhash3_avx2, wyhash};
 
@@ -500,5 +500,3 @@ mod tests {
         assert_eq!(bloom.false_positive_rate(), 0.0);
     }
 }
-
-

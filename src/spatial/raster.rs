@@ -1,11 +1,11 @@
-//! Raster Data Support
-//!
-//! Oracle Spatial-compatible raster operations:
-//! - Raster data types and storage
-//! - Raster algebra operations
-//! - Raster to vector conversion
-//! - Pyramids and overviews for performance
-//! - Tile-based storage for large rasters
+// Raster Data Support
+//
+// Oracle Spatial-compatible raster operations:
+// - Raster data types and storage
+// - Raster algebra operations
+// - Raster to vector conversion
+// - Pyramids and overviews for performance
+// - Tile-based storage for large rasters
 
 use crate::error::Result;
 use crate::spatial::geometry::{BoundingBox, Coordinate, LinearRing, Polygon};
@@ -820,5 +820,3 @@ mod tests {
         assert_eq!(value.to_f64(), Some(15.0));
     }
 }
-
-

@@ -1,25 +1,26 @@
-//! # Time Travel Engine
-//!
-//! Oracle-like time travel queries with AS OF TIMESTAMP and AS OF SCN support.
-//! Provides temporal query capabilities for accessing historical database states.
-//!
-//! ## Features
-//!
-//! - AS OF TIMESTAMP queries
-//! - AS OF SCN (System Change Number) queries
-//! - Version chain management
-//! - Temporal indexes for fast historical access
-//! - Time-bounded range queries
-//! - Bi-temporal data support (valid time and transaction time)
-//! - Historical data optimization and caching
-//!
-//! ## Example
-//!
-//! ```sql
-//! SELECT * FROM employees AS OF TIMESTAMP '2024-01-01 12:00:00';
-//! SELECT * FROM accounts AS OF SCN 12345;
-//! ```
+// # Time Travel Engine
+//
+// Oracle-like time travel queries with AS OF TIMESTAMP and AS OF SCN support.
+// Provides temporal query capabilities for accessing historical database states.
+//
+// ## Features
+//
+// - AS OF TIMESTAMP queries
+// - AS OF SCN (System Change Number) queries
+// - Version chain management
+// - Temporal indexes for fast historical access
+// - Time-bounded range queries
+// - Bi-temporal data support (valid time and transaction time)
+// - Historical data optimization and caching
+//
+// ## Example
+//
+// ```sql
+// SELECT * FROM employees AS OF TIMESTAMP '2024-01-01 12:00:00';
+// SELECT * FROM accounts AS OF SCN 12345;
+// ```
 
+use std::collections::BTreeMap;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime};
@@ -880,5 +881,3 @@ mod tests {
         assert!(pred.evaluate(&values));
     }
 }
-
-

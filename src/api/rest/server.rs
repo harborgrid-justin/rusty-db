@@ -1,7 +1,7 @@
-//! # REST API Server Implementation
-//!
-//! Server setup, routing, and core functionality for the REST API.
-//! Uses dependency injection and proper error handling.
+// # REST API Server Implementation
+//
+// Server setup, routing, and core functionality for the REST API.
+// Uses dependency injection and proper error handling.
 
 use axum::{
     Router,

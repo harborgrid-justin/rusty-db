@@ -1,17 +1,18 @@
-//! # Fine-Grained Access Control (FGAC) Module
-//!
-//! Provides row-level security policies, column-level masking, virtual private
-//! database patterns, and predicate injection for queries.
-//!
-//! ## Features
-//!
-//! - Row-level security (RLS) policies
-//! - Column-level masking and redaction
-//! - Virtual Private Database (VPD) implementation
-//! - Dynamic predicate injection
-//! - Context-sensitive access control
-//! - Data classification and sensitivity levels
+// # Fine-Grained Access Control (FGAC) Module
+//
+// Provides row-level security policies, column-level masking, virtual private
+// database patterns, and predicate injection for queries.
+//
+// ## Features
+//
+// - Row-level security (RLS) policies
+// - Column-level masking and redaction
+// - Virtual Private Database (VPD) implementation
+// - Dynamic predicate injection
+// - Context-sensitive access control
+// - Data classification and sensitivity levels
 
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use parking_lot::RwLock;
@@ -795,5 +796,3 @@ mod tests {
         assert_eq!(predicates.len(), 1);
     }
 }
-
-

@@ -1,30 +1,30 @@
-//! # Virtual Private Database (VPD)
-//!
-//! Oracle-like row-level security and column-level security with policy-based
-//! access control and dynamic predicate injection.
-//!
-//! ## Features
-//!
-//! - **Row-Level Security (RLS)**: Filter rows based on security policies
-//! - **Column-Level Security**: Hide or redact columns based on privileges
-//! - **Dynamic Predicates**: Runtime query rewriting with security predicates
-//! - **Context-Aware**: Security based on session context attributes
-//! - **Policy Functions**: Custom security predicates via functions
-//!
-//! ## How It Works
-//!
-//! ```text
-//! Original Query:
-//!   SELECT * FROM employees WHERE department = 'IT'
-//!
-//! VPD Predicate Injection:
-//!   SELECT * FROM employees
-//!   WHERE department = 'IT'
-//!   AND (manager_id = SYS_CONTEXT('USER_ID')
-//!        OR SYS_CONTEXT('ROLE') = 'ADMIN')
-//!
-//! Result: User only sees their managed employees unless they're admin
-//! ```
+// # Virtual Private Database (VPD)
+//
+// Oracle-like row-level security and column-level security with policy-based
+// access control and dynamic predicate injection.
+//
+// ## Features
+//
+// - **Row-Level Security (RLS)**: Filter rows based on security policies
+// - **Column-Level Security**: Hide or redact columns based on privileges
+// - **Dynamic Predicates**: Runtime query rewriting with security predicates
+// - **Context-Aware**: Security based on session context attributes
+// - **Policy Functions**: Custom security predicates via functions
+//
+// ## How It Works
+//
+// ```text
+// Original Query:
+//   SELECT * FROM employees WHERE department = 'IT'
+//
+// VPD Predicate Injection:
+//   SELECT * FROM employees
+//   WHERE department = 'IT'
+//   AND (manager_id = SYS_CONTEXT('USER_ID')
+//        OR SYS_CONTEXT('ROLE') = 'ADMIN')
+//
+// Result: User only sees their managed employees unless they're admin
+// ```
 
 use crate::{DbError, Result};
 use serde::{Deserialize, Serialize};
@@ -678,5 +678,3 @@ mod tests {
         assert!(result.contains("active = 1"));
     }
 }
-
-

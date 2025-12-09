@@ -1,17 +1,17 @@
-//! # Privilege Management Module
-//!
-//! Provides comprehensive privilege management including system privileges,
-//! object privileges, GRANT/REVOKE operations with admin option, and
-//! privilege inheritance through roles.
-//!
-//! ## Features
-//!
-//! - System-level privileges (CREATE, ALTER, DROP, etc.)
-//! - Object-level privileges (SELECT, INSERT, UPDATE, DELETE)
-//! - GRANT/REVOKE with WITH GRANT OPTION
-//! - Privilege inheritance through roles
-//! - Privilege dependency tracking
-//! - Cascading privilege revocation
+// # Privilege Management Module
+//
+// Provides comprehensive privilege management including system privileges,
+// object privileges, GRANT/REVOKE operations with admin option, and
+// privilege inheritance through roles.
+//
+// ## Features
+//
+// - System-level privileges (CREATE, ALTER, DROP, etc.)
+// - Object-level privileges (SELECT, INSERT, UPDATE, DELETE)
+// - GRANT/REVOKE with WITH GRANT OPTION
+// - Privilege inheritance through roles
+// - Privilege dependency tracking
+// - Cascading privilege revocation
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -860,5 +860,3 @@ mod tests {
         assert!(!result.has_privilege);
     }
 }
-
-

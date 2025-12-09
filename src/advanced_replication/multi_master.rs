@@ -1,8 +1,10 @@
-//! # Multi-Master Replication
-//!
-//! Bidirectional replication with conflict detection and resolution,
-//! quorum-based writes, and convergence guarantees.
+// # Multi-Master Replication
+//
+// Bidirectional replication with conflict detection and resolution,
+// quorum-based writes, and convergence guarantees.
 
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -641,5 +643,3 @@ mod tests {
         assert_eq!(group.members.len(), 1);
     }
 }
-
-

@@ -1,43 +1,43 @@
-//! # Unified Configuration Management
-//!
-//! Provides a hierarchical configuration system with inheritance, dynamic updates,
-//! validation, encryption of sensitive parameters, and environment-specific profiles.
-//!
-//! ## Features
-//!
-//! - **Hierarchical Configuration**: Support for configuration inheritance and overrides
-//! - **Dynamic Updates**: Change configuration without restart via hot-reload
-//! - **Schema Validation**: Type-safe configuration with validation rules
-//! - **Encryption**: Secure storage of sensitive parameters (passwords, API keys)
-//! - **Environment Profiles**: Separate configs for dev, test, staging, and production
-//! - **Configuration History**: Track configuration changes over time
-//! - **Templating**: Support for variable substitution and expressions
-//!
-//! ## Example
-//!
-//! ```rust,no_run
-//! use rusty_db::enterprise::config::{ConfigManager, ConfigValue, Environment};
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!     let mut config = ConfigManager::new(Environment::Production);
-//!
-//!     // Set configuration
-//!     config.set("database.max_connections", ConfigValue::Integer(100)).await.unwrap();
-//!
-//!     // Get configuration
-//!     let max_conn = config.get("database.max_connections").await.unwrap();
-//!     println!("Max connections: {:?}", max_conn);
-//!
-//!     // Watch for changes
-//!     let mut watcher = config.watch("database.max_connections").await;
-//!     tokio::spawn(async move {
-//!         while let Some(new_value) = watcher.recv().await {
-//!             println!("Config changed: {:?}", new_value);
-//!         }
-//!     });
-//! }
-//! ```
+// # Unified Configuration Management
+//
+// Provides a hierarchical configuration system with inheritance, dynamic updates,
+// validation, encryption of sensitive parameters, and environment-specific profiles.
+//
+// ## Features
+//
+// - **Hierarchical Configuration**: Support for configuration inheritance and overrides
+// - **Dynamic Updates**: Change configuration without restart via hot-reload
+// - **Schema Validation**: Type-safe configuration with validation rules
+// - **Encryption**: Secure storage of sensitive parameters (passwords, API keys)
+// - **Environment Profiles**: Separate configs for dev, test, staging, and production
+// - **Configuration History**: Track configuration changes over time
+// - **Templating**: Support for variable substitution and expressions
+//
+// ## Example
+//
+// ```rust,no_run
+// use rusty_db::enterprise::config::{ConfigManager, ConfigValue, Environment};
+//
+// #[tokio::main]
+// async fn main() {
+//     let mut config = ConfigManager::new(Environment::Production);
+//
+//     // Set configuration
+//     config.set("database.max_connections", ConfigValue::Integer(100)).await.unwrap();
+//
+//     // Get configuration
+//     let max_conn = config.get("database.max_connections").await.unwrap();
+//     println!("Max connections: {:?}", max_conn);
+//
+//     // Watch for changes
+//     let mut watcher = config.watch("database.max_connections").await;
+//     tokio::spawn(async move {
+//         while let Some(new_value) = watcher.recv().await {
+//             println!("Config changed: {:?}", new_value);
+//         }
+//     });
+// }
+// ```
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -748,5 +748,3 @@ mod tests {
         assert_eq!(value.as_string(), Some("value1"));
     }
 }
-
-

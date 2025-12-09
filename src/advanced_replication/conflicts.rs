@@ -1,9 +1,10 @@
-//! # Conflict Resolution Engine
-//!
-//! Advanced conflict detection and resolution for multi-master replication.
-//! Supports multiple strategies including CRDT-based conflict-free resolution.
-//! Optimized with per-core sharding and lock-free operations for maximum throughput.
+// # Conflict Resolution Engine
+//
+// Advanced conflict detection and resolution for multi-master replication.
+// Supports multiple strategies including CRDT-based conflict-free resolution.
+// Optimized with per-core sharding and lock-free operations for maximum throughput.
 
+use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -919,5 +920,3 @@ mod tests {
         }
     }
 }
-
-

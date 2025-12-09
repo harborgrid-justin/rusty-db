@@ -1,46 +1,4 @@
-//! Autonomous Database Module
-//!
-//! Self-driving database capabilities with ML-driven optimization, self-healing,
-//! intelligent indexing, and predictive analytics.
-//!
-//! ## Features
-//!
-//! - **Self-Tuning**: Automatic parameter optimization using reinforcement learning
-//! - **Self-Healing**: Automatic detection and repair of database issues
-//! - **Workload ML**: Machine learning for workload classification and prediction
-//! - **Auto-Indexing**: Intelligent index recommendation and management
-//! - **Predictive Analytics**: Forecasting for capacity planning and resource management
-//!
-//! ## Example Usage
-//!
-//! ```rust,no_run
-//! use rusty_db::autonomous::{
-//!     AutoTuner, AggressivenessLevel, SelfHealingEngine,
-//!     WorkloadMLAnalyzer, AutoIndexingEngine, CapacityPlanner,
-//! };
-//! use std::sync::Arc;
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!     // Initialize autonomous components
-//!     let auto_tuner = Arc::new(AutoTuner::new(AggressivenessLevel::Moderate));
-//!     let healing_engine = Arc::new(SelfHealingEngine::new());
-//!     let ml_analyzer = Arc::new(WorkloadMLAnalyzer::new());
-//!     let auto_indexing = Arc::new(AutoIndexingEngine::new());
-//!     let planner = Arc::new(CapacityPlanner::new());
-//!
-//!     // Start autonomous operations
-//!     tokio::spawn({
-//!         let tuner = Arc::clone(&auto_tuner);
-//!         async move { tuner.start_optimization_loop().await }
-//!     });
-//!
-//!     tokio::spawn({
-//!         let engine = Arc::clone(&healing_engine);
-//!         async move { engine.start_healing_loop().await }
-//!     });
-//! }
-//! ```
+// comment
 
 pub mod self_tuning;
 pub mod self_healing;
@@ -320,5 +278,3 @@ mod tests {
         assert!(report.is_ok());
     }
 }
-
-

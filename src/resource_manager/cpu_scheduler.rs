@@ -1,14 +1,16 @@
-//! CPU Scheduler for Resource Management
-//!
-//! This module implements CPU time allocation, fair-share scheduling,
-//! priority-based round-robin, and runaway query detection.
-//!
-//! Optimizations:
-//! - Per-core resource tracking with cache-line alignment to avoid false sharing
-//! - Atomic counters for lock-free updates
-//! - Inline hints for hot paths
-//! - Cold attributes for error paths
+// CPU Scheduler for Resource Management
+//
+// This module implements CPU time allocation, fair-share scheduling,
+// priority-based round-robin, and runaway query detection.
+//
+// Optimizations:
+// - Per-core resource tracking with cache-line alignment to avoid false sharing
+// - Atomic counters for lock-free updates
+// - Inline hints for hot paths
+// - Cold attributes for error paths
 
+use std::sync::Mutex;
+use std::time::Instant;
 use std::collections::{HashMap, BinaryHeap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
@@ -974,5 +976,3 @@ mod tests {
         assert!(!runaway.is_empty());
     }
 }
-
-

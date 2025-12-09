@@ -1,7 +1,7 @@
-//! # Machine Learning Algorithms
-//!
-//! Pure Rust implementations of core ML algorithms optimized for in-database execution.
-//! All algorithms support incremental updates and zero-copy integration with the query engine.
+// # Machine Learning Algorithms
+//
+// Pure Rust implementations of core ML algorithms optimized for in-database execution.
+// All algorithms support incremental updates and zero-copy integration with the query engine.
 
 use crate::error::Result;
 use super::{Dataset, Hyperparameters, EvaluationMetrics};
@@ -918,5 +918,3 @@ mod tests {
         assert_eq!(predictions.len(), 6);
     }
 }
-
-

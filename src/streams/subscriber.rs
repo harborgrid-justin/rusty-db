@@ -1,8 +1,12 @@
-//! # Event Subscriber
-//!
-//! Event subscription with consumer groups, offset tracking, at-least-once
-//! and exactly-once delivery semantics, subscription filtering, and replay.
+// # Event Subscriber
+//
+// Event subscription with consumer groups, offset tracking, at-least-once
+// and exactly-once delivery semantics, subscription filtering, and replay.
 
+use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::Duration;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
@@ -684,5 +688,3 @@ mod tests {
         assert_eq!(position.get_offset(0), 100);
     }
 }
-
-

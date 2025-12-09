@@ -1,8 +1,10 @@
-//! # XA Transactions
-//!
-//! Two-phase commit protocol for distributed transactions across multiple databases.
-//! Implements XA transaction management with heuristic completion support.
+// # XA Transactions
+//
+// Two-phase commit protocol for distributed transactions across multiple databases.
+// Implements XA transaction management with heuristic completion support.
 
+use std::collections::VecDeque;
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -773,5 +775,3 @@ mod tests {
         assert_eq!(stats.total_transactions, 1);
     }
 }
-
-

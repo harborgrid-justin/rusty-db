@@ -1,25 +1,26 @@
-//! Two-Phase Commit (2PC) protocol implementation.
-//!
-//! This module implements the two-phase commit protocol for
-//! distributed transactions across multiple participants.
-//!
-//! # Protocol Phases
-//!
-//! 1. **Prepare Phase**: Coordinator asks all participants to prepare.
-//! 2. **Commit Phase**: If all prepared, coordinator sends commit; else abort.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let coordinator = TwoPhaseCommitCoordinator::new(Duration::from_secs(30));
-//! coordinator.register_participant(txn_id, participant);
-//! if coordinator.prepare_phase(txn_id)? {
-//!     coordinator.commit_phase(txn_id)?;
-//! } else {
-//!     coordinator.abort_phase(txn_id)?;
-//! }
-//! ```
+// Two-Phase Commit (2PC) protocol implementation.
+//
+// This module implements the two-phase commit protocol for
+// distributed transactions across multiple participants.
+//
+// # Protocol Phases
+//
+// 1. **Prepare Phase**: Coordinator asks all participants to prepare.
+// 2. **Commit Phase**: If all prepared, coordinator sends commit; else abort.
+//
+// # Example
+//
+// ```rust,ignore
+// let coordinator = TwoPhaseCommitCoordinator::new(Duration::from_secs(30));
+// coordinator.register_participant(txn_id, participant);
+// if coordinator.prepare_phase(txn_id)? {
+//     coordinator.commit_phase(txn_id)?;
+// } else {
+//     coordinator.abort_phase(txn_id)?;
+// }
+// ```
 
+use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};

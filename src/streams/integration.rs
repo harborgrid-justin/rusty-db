@@ -1,8 +1,11 @@
-//! # Stream Integration Patterns
-//!
-//! Provides integration patterns including Outbox, Event Sourcing, CQRS,
-//! external system connectors, webhooks, and schema registry.
+// # Stream Integration Patterns
+//
+// Provides integration patterns including Outbox, Event Sourcing, CQRS,
+// external system connectors, webhooks, and schema registry.
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::Duration;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
@@ -791,5 +794,3 @@ mod tests {
         assert!(retrieved.is_some());
     }
 }
-
-

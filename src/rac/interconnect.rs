@@ -1,21 +1,24 @@
-//! # Cluster Interconnect
-//!
-//! Oracle RAC-like high-speed cluster interconnect for node communication,
-//! heartbeat monitoring, split-brain detection, and network partition handling.
-//!
-//! ## Key Components
-//!
-//! - **Message Bus**: High-performance message passing between cluster nodes
-//! - **Heartbeat Monitor**: Detect node failures and network issues
-//! - **Split-Brain Detection**: Identify and resolve cluster partitions
-//! - **Adaptive Routing**: Intelligent message routing with failover
-//!
-//! ## Architecture
-//!
-//! The interconnect provides reliable, ordered, low-latency communication between
-//! cluster nodes using multiple transport protocols (TCP, UDP, RDMA-like) with
-//! automatic failover and adaptive routing based on network conditions.
+// # Cluster Interconnect
+//
+// Oracle RAC-like high-speed cluster interconnect for node communication,
+// heartbeat monitoring, split-brain detection, and network partition handling.
+//
+// ## Key Components
+//
+// - **Message Bus**: High-performance message passing between cluster nodes
+// - **Heartbeat Monitor**: Detect node failures and network issues
+// - **Split-Brain Detection**: Identify and resolve cluster partitions
+// - **Adaptive Routing**: Intelligent message routing with failover
+//
+// ## Architecture
+//
+// The interconnect provides reliable, ordered, low-latency communication between
+// cluster nodes using multiple transport protocols (TCP, UDP, RDMA-like) with
+// automatic failover and adaptive routing based on network conditions.
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::Instant;
 use crate::error::DbError;
 use crate::common::NodeId;
 use serde::{Deserialize, Serialize};
@@ -1006,5 +1009,3 @@ mod tests {
         assert_eq!(*conn.state.read(), ConnectionState::Disconnected);
     }
 }
-
-

@@ -1,58 +1,58 @@
-//! # Buffer Overflow Protection System
-//!
-//! Comprehensive, multi-layered defense against buffer overflow attacks and
-//! out-of-bounds memory access. This module provides:
-//!
-//! - **BoundsCheckedBuffer<T>**: Runtime bounds-checked buffer operations
-//! - **SafeSlice<T>**: Wrapper for slices with automatic bounds verification
-//! - **SafeIndex**: Trait for safe indexing operations
-//! - **OverflowGuard**: Integer overflow detection and prevention
-//! - **StackCanary**: Stack buffer overflow detection
-//! - **SafeString**: Secure string operations
-//! - **ArrayBoundsChecker<T, N>**: Compile-time sized array with sentinels
-//!
-//! ## CVE Classes Prevented
-//!
-//! - **CWE-119**: Buffer Bounds Restrictions
-//! - **CWE-120**: Classic Buffer Overflow
-//! - **CWE-121**: Stack-based Buffer Overflow
-//! - **CWE-122**: Heap-based Buffer Overflow
-//! - **CWE-125**: Out-of-bounds Read
-//! - **CWE-134**: Format String Vulnerabilities
-//! - **CWE-190**: Integer Overflow
-//! - **CWE-191**: Integer Underflow
-//! - **CWE-787**: Out-of-bounds Write
-//! - **CWE-823**: Out-of-bounds Pointer Offset
-//!
-//! ## Usage Example
-//!
-//! ```rust
-//! use rusty_db::security::bounds_protection::*;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! // Create a bounds-checked buffer
-//! let mut buffer = BoundsCheckedBuffer::<u8>::new(1024)?;
-//!
-//! // Safe writes with automatic bounds checking
-//! buffer.write(0, 42)?;
-//! buffer.write_slice(10, &[1, 2, 3, 4])?;
-//!
-//! // Safe reads
-//! let _value = buffer.read(0)?;
-//! let slice = buffer.read_slice(10, 4)?;
-//!
-//! // Integer overflow protection
-//! let size1 = 1000usize;
-//! let size2 = 2000usize;
-//! let total = OverflowGuard::checked_add(size1, size2)?;
-//!
-//! // Safe string operations
-//! let mut safe_str = SafeString::new(256)?;
-//! safe_str.append("Hello, ")?;
-//! safe_str.append("World!")?;
-//! # Ok(())
-//! # }
-//! ```
+// # Buffer Overflow Protection System
+//
+// Comprehensive, multi-layered defense against buffer overflow attacks and
+// out-of-bounds memory access. This module provides:
+//
+// - **BoundsCheckedBuffer<T>**: Runtime bounds-checked buffer operations
+// - **SafeSlice<T>**: Wrapper for slices with automatic bounds verification
+// - **SafeIndex**: Trait for safe indexing operations
+// - **OverflowGuard**: Integer overflow detection and prevention
+// - **StackCanary**: Stack buffer overflow detection
+// - **SafeString**: Secure string operations
+// - **ArrayBoundsChecker<T, N>**: Compile-time sized array with sentinels
+//
+// ## CVE Classes Prevented
+//
+// - **CWE-119**: Buffer Bounds Restrictions
+// - **CWE-120**: Classic Buffer Overflow
+// - **CWE-121**: Stack-based Buffer Overflow
+// - **CWE-122**: Heap-based Buffer Overflow
+// - **CWE-125**: Out-of-bounds Read
+// - **CWE-134**: Format String Vulnerabilities
+// - **CWE-190**: Integer Overflow
+// - **CWE-191**: Integer Underflow
+// - **CWE-787**: Out-of-bounds Write
+// - **CWE-823**: Out-of-bounds Pointer Offset
+//
+// ## Usage Example
+//
+// ```rust
+// use rusty_db::security::bounds_protection::*;
+//
+// # fn example() -> rusty_db::Result<()> {
+// // Create a bounds-checked buffer
+// let mut buffer = BoundsCheckedBuffer::<u8>::new(1024)?;
+//
+// // Safe writes with automatic bounds checking
+// buffer.write(0, 42)?;
+// buffer.write_slice(10, &[1, 2, 3, 4])?;
+//
+// // Safe reads
+// let _value = buffer.read(0)?;
+// let slice = buffer.read_slice(10, 4)?;
+//
+// // Integer overflow protection
+// let size1 = 1000usize;
+// let size2 = 2000usize;
+// let total = OverflowGuard::checked_add(size1, size2)?;
+//
+// // Safe string operations
+// let mut safe_str = SafeString::new(256)?;
+// safe_str.append("Hello, ")?;
+// safe_str.append("World!")?;
+// # Ok(())
+// # }
+// ```
 
 use crate::{Result, error::DbError};
 
@@ -1208,5 +1208,3 @@ mod tests {
         assert_eq!(OverflowGuard::saturating_sub(0usize, 1), 0);
     }
 }
-
-

@@ -1,54 +1,54 @@
-//! SIMD-Accelerated Hash Join
-//!
-//! Revolutionary hash join implementation achieving 10-15x speedup through:
-//! - Swiss table build phase (SIMD control bytes)
-//! - xxHash3-AVX2 for partitioning (10x faster hashing)
-//! - SIMD Bloom filter pre-filtering (100x reduction in probes)
-//! - Vectorized probe operations
-//! - Cache-efficient partitioning
-//!
-//! ## Architecture
-//! ```text
-//! Phase 1: Partitioned Build (Parallel)
-//!   ┌─────────────────────────────────────┐
-//!   │ Build Side → Partition (xxHash3)    │
-//!   │ 16-32 partitions (cache-sized)      │
-//!   │ Per-partition Swiss table           │
-//!   │ Per-partition Bloom filter          │
-//!   └─────────────────────────────────────┘
-//!
-//! Phase 2: Probe (Parallel + SIMD)
-//!   ┌─────────────────────────────────────┐
-//!   │ Probe Side → Partition (xxHash3)    │
-//!   │ Bloom filter test (AVX2, 8 keys)    │
-//!   │ Swiss table probe (SIMD)            │
-//!   │ Late materialization (indices only) │
-//!   └─────────────────────────────────────┘
-//!
-//! Phase 3: Materialize
-//!   ┌─────────────────────────────────────┐
-//!   │ Reconstruct matching rows           │
-//!   │ Sequential memory access            │
-//!   └─────────────────────────────────────┘
-//! ```
-//!
-//! ## Complexity Analysis
-//! - Partitioning: O(n + m) with xxHash3 (10x faster than SipHash)
-//! - Build: O(n/P) per partition, fully parallel
-//! - Probe: O(m/P) per partition with O(1) Swiss table lookups
-//! - Total: O((n + m) / P) with P cores
-//! - Space: O(n + m + B) where B = Bloom filter (negligible)
-//!
-//! ## Performance Model
-//! Without improvements: T = (n + m) * t_siphash + m * t_std_hashmap
-//!   where t_siphash = 67ns, t_std_hashmap = 45ns
-//!   Example: n=1M, m=10M → 1,187ms
-//!
-//! With improvements: T = (n + m) / P * t_xxhash3 + m / P * t_swiss
-//!   where t_xxhash3 = 6ns, t_swiss = 8ns, P = 16
-//!   Example: n=1M, m=10M, P=16 → 91ms
-//!
-//! Speedup: 13x improvement
+// SIMD-Accelerated Hash Join
+//
+// Revolutionary hash join implementation achieving 10-15x speedup through:
+// - Swiss table build phase (SIMD control bytes)
+// - xxHash3-AVX2 for partitioning (10x faster hashing)
+// - SIMD Bloom filter pre-filtering (100x reduction in probes)
+// - Vectorized probe operations
+// - Cache-efficient partitioning
+//
+// ## Architecture
+// ```text
+// Phase 1: Partitioned Build (Parallel)
+//   ┌─────────────────────────────────────┐
+//   │ Build Side → Partition (xxHash3)    │
+//   │ 16-32 partitions (cache-sized)      │
+//   │ Per-partition Swiss table           │
+//   │ Per-partition Bloom filter          │
+//   └─────────────────────────────────────┘
+//
+// Phase 2: Probe (Parallel + SIMD)
+//   ┌─────────────────────────────────────┐
+//   │ Probe Side → Partition (xxHash3)    │
+//   │ Bloom filter test (AVX2, 8 keys)    │
+//   │ Swiss table probe (SIMD)            │
+//   │ Late materialization (indices only) │
+//   └─────────────────────────────────────┘
+//
+// Phase 3: Materialize
+//   ┌─────────────────────────────────────┐
+//   │ Reconstruct matching rows           │
+//   │ Sequential memory access            │
+//   └─────────────────────────────────────┘
+// ```
+//
+// ## Complexity Analysis
+// - Partitioning: O(n + m) with xxHash3 (10x faster than SipHash)
+// - Build: O(n/P) per partition, fully parallel
+// - Probe: O(m/P) per partition with O(1) Swiss table lookups
+// - Total: O((n + m) / P) with P cores
+// - Space: O(n + m + B) where B = Bloom filter (negligible)
+//
+// ## Performance Model
+// Without improvements: T = (n + m) * t_siphash + m * t_std_hashmap
+//   where t_siphash = 67ns, t_std_hashmap = 45ns
+//   Example: n=1M, m=10M → 1,187ms
+//
+// With improvements: T = (n + m) / P * t_xxhash3 + m / P * t_swiss
+//   where t_xxhash3 = 6ns, t_swiss = 8ns, P = 16
+//   Example: n=1M, m=10M, P=16 → 91ms
+//
+// Speedup: 13x improvement
 
 use crate::error::DbError;
 use crate::execution::QueryResult;
@@ -493,5 +493,3 @@ mod tests {
         assert_eq!(result.rows.len(), 1);
     }
 }
-
-

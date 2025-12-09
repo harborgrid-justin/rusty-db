@@ -7,6 +7,7 @@
 /// - Node replacement and recovery
 /// - Split-brain prevention
 
+use std::time::Duration;
 use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo, NodeStatus};
 use std::collections::HashMap;

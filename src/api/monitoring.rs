@@ -1,42 +1,47 @@
-//! # Metrics & Monitoring API Module
-//!
-//! Comprehensive metrics collection, monitoring, and observability API for RustyDB.
-//! This module provides enterprise-grade monitoring capabilities including:
-//!
-//! - **Metrics Collection Engine**: Counter, Gauge, Histogram, and Summary metrics
-//! - **Prometheus Integration**: Full Prometheus exposition format and remote write support
-//! - **Health Check System**: Liveness, readiness, and startup probes
-//! - **Alerting Engine**: Multi-condition alerts with routing and notification
-//! - **Dashboard Data API**: Real-time streaming and historical query support
-//!
-//! ## Architecture
-//!
-//! The monitoring API is designed for high-throughput, low-overhead operation with:
-//! - Lock-free data structures for metric collection
-//! - Efficient aggregation with time-window bucketing
-//! - Cardinality management to prevent metric explosion
-//! - Configurable retention policies
-//!
-//! ## Usage
-//!
-//! ```rust
-//! use rusty_db::api::monitoring::*;
-//!
-//! // Initialize monitoring API
-//! let monitoring = MonitoringApi::new(MonitoringConfig::default());
-//!
-//! // Record metrics
-//! monitoring.increment_counter("http_requests_total", &[("method", "GET")]);
-//! monitoring.record_gauge("memory_usage_bytes", 1024.0 * 1024.0 * 512.0, &[]);
-//! monitoring.observe_histogram("request_duration_seconds", 0.045, &[]);
-//!
-//! // Export Prometheus metrics
-//! let metrics = monitoring.export_prometheus_metrics();
-//!
-//! // Check health
-//! let health = monitoring.check_health();
-//! ```
+// # Metrics & Monitoring API Module
+//
+// Comprehensive metrics collection, monitoring, and observability API for RustyDB.
+// This module provides enterprise-grade monitoring capabilities including:
+//
+// - **Metrics Collection Engine**: Counter, Gauge, Histogram, and Summary metrics
+// - **Prometheus Integration**: Full Prometheus exposition format and remote write support
+// - **Health Check System**: Liveness, readiness, and startup probes
+// - **Alerting Engine**: Multi-condition alerts with routing and notification
+// - **Dashboard Data API**: Real-time streaming and historical query support
+//
+// ## Architecture
+//
+// The monitoring API is designed for high-throughput, low-overhead operation with:
+// - Lock-free data structures for metric collection
+// - Efficient aggregation with time-window bucketing
+// - Cardinality management to prevent metric explosion
+// - Configurable retention policies
+//
+// ## Usage
+//
+// ```rust
+// use rusty_db::api::monitoring::*;
+//
+// // Initialize monitoring API
+// let monitoring = MonitoringApi::new(MonitoringConfig::default());
+//
+// // Record metrics
+// monitoring.increment_counter("http_requests_total", &[("method", "GET")]);
+// monitoring.record_gauge("memory_usage_bytes", 1024.0 * 1024.0 * 512.0, &[]);
+// monitoring.observe_histogram("request_duration_seconds", 0.045, &[]);
+//
+// // Export Prometheus metrics
+// let metrics = monitoring.export_prometheus_metrics();
+//
+// // Check health
+// let health = monitoring.check_health();
+// ```
 
+use std::sync::Mutex;
+use std::collections::VecDeque;
+use std::time::Instant;
+use std::time::SystemTime;
+use std::collections::BTreeMap;
 use std::collections::{HashMap};
 use std::sync::{Arc, atomic::{AtomicU64, AtomicBool, Ordering}};
 use std::time::{Duration};
@@ -2851,5 +2856,3 @@ mod tests {
         assert!(rule.evaluate(85.0).is_none());
     }
 }
-
-

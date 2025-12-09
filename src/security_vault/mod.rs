@@ -1,51 +1,51 @@
-//! # Advanced Security Vault Engine
-//!
-//! Oracle-like comprehensive security vault providing enterprise-grade data protection,
-//! encryption, masking, auditing, and access control capabilities.
-//!
-//! ## Overview
-//!
-//! The Security Vault Engine provides:
-//! - **Transparent Data Encryption (TDE)**: Tablespace and column-level encryption
-//! - **Data Masking**: Static and dynamic masking with format-preserving encryption
-//! - **Key Management**: Hierarchical key management with envelope encryption
-//! - **Audit Vault**: Tamper-evident audit trails with blockchain backing
-//! - **Virtual Private Database (VPD)**: Row and column-level security
-//! - **Privilege Analysis**: Least privilege analysis and optimization
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────┐
-//! │                    Security Vault Manager                    │
-//! ├─────────────────────────────────────────────────────────────┤
-//! │  TDE Engine  │  Masking  │  Keystore  │  Audit  │  VPD      │
-//! │  (AES-256,   │  (Static/ │  (MEK/DEK  │  (FGA)  │  (RLS)    │
-//! │   ChaCha20)  │  Dynamic) │  Hierarchy)│         │           │
-//! └─────────────────────────────────────────────────────────────┘
-//! ```
-//!
-//! ## Usage Example
-//!
-//! ```rust,no_run
-//! use rusty_db::security_vault::{SecurityVaultManager, TdeEngine, KeyStore};
-//!
-//! # async fn example() -> rusty_db::Result<()> {
-//! // Initialize security vault
-//! let mut vault = SecurityVaultManager::new("/secure/vault".to_string())?;
-//!
-//! // Enable TDE for a tablespace
-//! vault.enable_tablespace_encryption("users_ts", "AES256GCM").await?;
-//!
-//! // Configure data masking
-//! vault.create_masking_policy("mask_ssn", "SSN", "PARTIAL_MASK").await?;
-//!
-//! // Set up VPD policy
-//! vault.create_vpd_policy("customer_data", "dept_id = SYS_CONTEXT('USERENV', 'DEPT')")
-//!     .await?;
-//! # Ok(())
-//! # }
-//! ```
+// # Advanced Security Vault Engine
+//
+// Oracle-like comprehensive security vault providing enterprise-grade data protection,
+// encryption, masking, auditing, and access control capabilities.
+//
+// ## Overview
+//
+// The Security Vault Engine provides:
+// - **Transparent Data Encryption (TDE)**: Tablespace and column-level encryption
+// - **Data Masking**: Static and dynamic masking with format-preserving encryption
+// - **Key Management**: Hierarchical key management with envelope encryption
+// - **Audit Vault**: Tamper-evident audit trails with blockchain backing
+// - **Virtual Private Database (VPD)**: Row and column-level security
+// - **Privilege Analysis**: Least privilege analysis and optimization
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    Security Vault Manager                    │
+// ├─────────────────────────────────────────────────────────────┤
+// │  TDE Engine  │  Masking  │  Keystore  │  Audit  │  VPD      │
+// │  (AES-256,   │  (Static/ │  (MEK/DEK  │  (FGA)  │  (RLS)    │
+// │   ChaCha20)  │  Dynamic) │  Hierarchy)│         │           │
+// └─────────────────────────────────────────────────────────────┘
+// ```
+//
+// ## Usage Example
+//
+// ```rust,no_run
+// use rusty_db::security_vault::{SecurityVaultManager, TdeEngine, KeyStore};
+//
+// # async fn example() -> rusty_db::Result<()> {
+// // Initialize security vault
+// let mut vault = SecurityVaultManager::new("/secure/vault".to_string())?;
+//
+// // Enable TDE for a tablespace
+// vault.enable_tablespace_encryption("users_ts", "AES256GCM").await?;
+//
+// // Configure data masking
+// vault.create_masking_policy("mask_ssn", "SSN", "PARTIAL_MASK").await?;
+//
+// // Set up VPD policy
+// vault.create_vpd_policy("customer_data", "dept_id = SYS_CONTEXT('USERENV', 'DEPT')")
+//     .await?;
+// # Ok(())
+// # }
+// ```
 
 use crate::{DbError, Result};
 use serde::{Deserialize, Serialize};
@@ -516,5 +516,3 @@ mod tests {
         assert!(after_remove.is_none());
     }
 }
-
-

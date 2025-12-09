@@ -1,30 +1,30 @@
-//! # Service Registry and Dependency Injection
-//!
-//! This module provides a comprehensive service registry and dependency injection
-//! system for RustyDB, enabling loose coupling and testability.
-//!
-//! ## Features
-//!
-//! - **Service Registration**: Type-safe service registration with lifetimes
-//! - **Dependency Injection**: Constructor and setter injection patterns
-//! - **Lifecycle Management**: Singleton, transient, and scoped lifetimes
-//! - **Lazy Initialization**: Services created on-demand
-//! - **Service Discovery**: Dynamic service lookup and metadata
-//! - **Circular Detection**: Prevent circular dependency issues
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌──────────────────────────────────────────────┐
-//! │         Service Registry                      │
-//! ├──────────────────────────────────────────────┤
-//! │                                              │
-//! │  Service Type → Factory + Metadata          │
-//! │  Service Name → Service Instance            │
-//! │  Dependencies → Dependency Graph            │
-//! │                                              │
-//! └──────────────────────────────────────────────┘
-//! ```
+// # Service Registry and Dependency Injection
+//
+// This module provides a comprehensive service registry and dependency injection
+// system for RustyDB, enabling loose coupling and testability.
+//
+// ## Features
+//
+// - **Service Registration**: Type-safe service registration with lifetimes
+// - **Dependency Injection**: Constructor and setter injection patterns
+// - **Lifecycle Management**: Singleton, transient, and scoped lifetimes
+// - **Lazy Initialization**: Services created on-demand
+// - **Service Discovery**: Dynamic service lookup and metadata
+// - **Circular Detection**: Prevent circular dependency issues
+//
+// ## Architecture
+//
+// ```text
+// ┌──────────────────────────────────────────────┐
+// │         Service Registry                      │
+// ├──────────────────────────────────────────────┤
+// │                                              │
+// │  Service Type → Factory + Metadata          │
+// │  Service Name → Service Instance            │
+// │  Dependencies → Dependency Graph            │
+// │                                              │
+// └──────────────────────────────────────────────┘
+// ```
 
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
@@ -744,5 +744,3 @@ mod tests {
         assert_eq!(scopes.len(), 1);
     }
 }
-
-

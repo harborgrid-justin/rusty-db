@@ -14,6 +14,7 @@
 /// - Minimizing data movement
 /// - Parallel execution optimization
 
+use std::collections::HashSet;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};

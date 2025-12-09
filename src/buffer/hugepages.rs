@@ -1,46 +1,46 @@
-//! # Huge Page Support for Buffer Pool
-//!
-//! Provides support for 2MB and 1GB huge pages to dramatically reduce TLB
-//! (Translation Lookaside Buffer) misses and improve memory access performance.
-//!
-//! ## Performance Benefits
-//!
-//! ### Standard 4KB Pages
-//! - TLB entries: ~64-512 entries (depending on CPU)
-//! - Coverage: 256KB - 2MB of memory
-//! - TLB miss rate: 5-15% for large buffer pools
-//! - TLB miss cost: ~100-200 CPU cycles
-//!
-//! ### 2MB Huge Pages
-//! - TLB entries: Same number but 512x coverage each
-//! - Coverage: 128MB - 1GB of memory
-//! - TLB miss rate: 0.5-3% (10x improvement)
-//! - Performance gain: 5-15% for memory-intensive workloads
-//!
-//! ### 1GB Huge Pages
-//! - TLB entries: 512x coverage compared to 2MB
-//! - Coverage: 64GB - 512GB of memory
-//! - TLB miss rate: <0.5%
-//! - Performance gain: Up to 20% for very large buffer pools
-//!
-//! ## Linux Support
-//!
-//! ### Transparent Huge Pages (THP)
-//! - Automatically promoted by kernel
-//! - No application changes required
-//! - Can be explicitly requested with `madvise(MADV_HUGEPAGE)`
-//!
-//! ### Explicit Huge Pages
-//! - Allocated from hugetlbfs
-//! - Guaranteed huge pages
-//! - Requires system configuration (`/proc/sys/vm/nr_hugepages`)
-//! - Better for production databases
-//!
-//! ## Windows Support
-//!
-//! - Large pages (2MB) via `VirtualAlloc` with `MEM_LARGE_PAGES`
-//! - Requires `SeLockMemoryPrivilege`
-//! - Not as mature as Linux support
+// # Huge Page Support for Buffer Pool
+//
+// Provides support for 2MB and 1GB huge pages to dramatically reduce TLB
+// (Translation Lookaside Buffer) misses and improve memory access performance.
+//
+// ## Performance Benefits
+//
+// ### Standard 4KB Pages
+// - TLB entries: ~64-512 entries (depending on CPU)
+// - Coverage: 256KB - 2MB of memory
+// - TLB miss rate: 5-15% for large buffer pools
+// - TLB miss cost: ~100-200 CPU cycles
+//
+// ### 2MB Huge Pages
+// - TLB entries: Same number but 512x coverage each
+// - Coverage: 128MB - 1GB of memory
+// - TLB miss rate: 0.5-3% (10x improvement)
+// - Performance gain: 5-15% for memory-intensive workloads
+//
+// ### 1GB Huge Pages
+// - TLB entries: 512x coverage compared to 2MB
+// - Coverage: 64GB - 512GB of memory
+// - TLB miss rate: <0.5%
+// - Performance gain: Up to 20% for very large buffer pools
+//
+// ## Linux Support
+//
+// ### Transparent Huge Pages (THP)
+// - Automatically promoted by kernel
+// - No application changes required
+// - Can be explicitly requested with `madvise(MADV_HUGEPAGE)`
+//
+// ### Explicit Huge Pages
+// - Allocated from hugetlbfs
+// - Guaranteed huge pages
+// - Requires system configuration (`/proc/sys/vm/nr_hugepages`)
+// - Better for production databases
+//
+// ## Windows Support
+//
+// - Large pages (2MB) via `VirtualAlloc` with `MEM_LARGE_PAGES`
+// - Requires `SeLockMemoryPrivilege`
+// - Not as mature as Linux support
 
 use crate::error::Result;
 use crate::DbError;
@@ -637,5 +637,3 @@ mod tests {
         assert!(info.total_huge_pages >= 0);
     }
 }
-
-

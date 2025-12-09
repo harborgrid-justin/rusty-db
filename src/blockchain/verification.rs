@@ -1,19 +1,20 @@
-//! # Blockchain Verification
-//!
-//! This module provides comprehensive verification for blockchain tables:
-//! - Chain integrity verification
-//! - Block validation algorithms
-//! - Proof-of-inclusion verification
-//! - Tamper detection mechanisms
-//! - Verification scheduling
-//! - Parallel verification
-//! - Verification reports and alerts
-//! - Recovery procedures for detected issues
+// # Blockchain Verification
+//
+// This module provides comprehensive verification for blockchain tables:
+// - Chain integrity verification
+// - Block validation algorithms
+// - Proof-of-inclusion verification
+// - Tamper detection mechanisms
+// - Verification scheduling
+// - Parallel verification
+// - Verification reports and alerts
+// - Recovery procedures for detected issues
 
+use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::{Duration, UNIX_EPOCH};
 use tokio::task;
 use crate::Result;
 use crate::error::DbError;
@@ -205,7 +206,7 @@ impl BlockVerifier {
         }
 
         // Verify row chain
-        for _i in 1..block.rows.len() {
+        for i in 1..block.rows.len() {
             if !block.rows[i].verify_chain(&block.rows[i - 1]) {
                 issues.push(VerificationIssue::new(
                     IssueSeverity::Critical,
@@ -283,7 +284,7 @@ impl BlockVerifier {
         let mut issues = Vec::new();
 
         // Check rows have increasing timestamps
-        for _i in 1..block.rows.len() {
+        for i in 1..block.rows.len() {
             if block.rows[i].timestamp < block.rows[i - 1].timestamp {
                 issues.push(VerificationIssue::new(
                     IssueSeverity::Warning,
@@ -545,7 +546,7 @@ impl VerificationScheduler {
 
     /// Run verification
     pub async fn run_verification(&self, table: &BlockchainTable) -> Result<VerificationResult> {
-        let _result = ParallelVerifier::verify_all_blocks(table).await?;
+        let result = ParallelVerifier::verify_all_blocks(table).await?;
 
         // Update last verification time
         let mut last = self.last_verification.write().unwrap();
@@ -631,7 +632,7 @@ impl TamperDetector {
     /// Generate tamper detection report
     pub fn generate_report(table: &BlockchainTable) -> TamperReport {
         let issues = Self::detect_tampering(table);
-        let _stats = table.get_stats();
+        let stats = table.get_stats();
         let issues_found = issues.len();
         let status = if issues.is_empty() {
             TamperStatus::Clean
@@ -787,7 +788,7 @@ mod tests {
 
         block.finalize().unwrap();
 
-        let _result = BlockVerifier::verify_block(&block).unwrap();
+        let result = BlockVerifier::verify_block(&block).unwrap();
         assert!(result.passed);
     }
 
@@ -804,5 +805,3 @@ mod tests {
         assert_eq!(issue.row_id, Some(10));
     }
 }
-
-

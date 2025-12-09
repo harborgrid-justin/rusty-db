@@ -1,0 +1,395 @@
+{
+    // ═══════════════════════════════════════════════════════════════════════
+    // RUST-ANALYZER SETTINGS - Core Language Server
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // Enable rust-analyzer
+    "rust-analyzer.enable": true,
+
+    // Check on save configuration
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.check.extraArgs": [
+        "--all-targets",
+        "--all-features"
+    ],
+    "rust-analyzer.check.allTargets": true,
+
+    // Cargo settings
+    "rust-analyzer.cargo.allFeatures": true,
+    "rust-analyzer.cargo.autoreload": true,
+    "rust-analyzer.cargo.buildScripts.enable": true,
+    "rust-analyzer.cargo.buildScripts.useRustcWrapper": true,
+
+    // Diagnostics
+    "rust-analyzer.diagnostics.enable": true,
+    "rust-analyzer.diagnostics.experimental.enable": true,
+    "rust-analyzer.diagnostics.styleLints.enable": true,
+
+    // Inlay hints - Enhanced type information display
+    "rust-analyzer.inlayHints.bindingModeHints.enable": true,
+    "rust-analyzer.inlayHints.chainingHints.enable": true,
+    "rust-analyzer.inlayHints.closingBraceHints.enable": true,
+    "rust-analyzer.inlayHints.closingBraceHints.minLines": 20,
+    "rust-analyzer.inlayHints.closureReturnTypeHints.enable": "with_block",
+    "rust-analyzer.inlayHints.discriminantHints.enable": "fieldless",
+    "rust-analyzer.inlayHints.expressionAdjustmentHints.enable": "reborrow",
+    "rust-analyzer.inlayHints.implicitDrops.enable": true,
+    "rust-analyzer.inlayHints.lifetimeElisionHints.enable": "skip_trivial",
+    "rust-analyzer.inlayHints.maxLength": 50,
+    "rust-analyzer.inlayHints.parameterHints.enable": true,
+    "rust-analyzer.inlayHints.reborrowHints.enable": "mutable",
+    "rust-analyzer.inlayHints.typeHints.enable": true,
+    "rust-analyzer.inlayHints.typeHints.hideClosureInitialization": false,
+    "rust-analyzer.inlayHints.typeHints.hideNamedConstructor": false,
+
+    // Completion settings
+    "rust-analyzer.completion.autoimport.enable": true,
+    "rust-analyzer.completion.autoself.enable": true,
+    "rust-analyzer.completion.callable.snippets": "fill_arguments",
+    "rust-analyzer.completion.fullFunctionSignatures.enable": true,
+    "rust-analyzer.completion.limit": 100,
+    "rust-analyzer.completion.postfix.enable": true,
+    "rust-analyzer.completion.privateEditable.enable": true,
+    "rust-analyzer.completion.snippets.custom": {
+        "Arc::new": {
+            "postfix": "arc",
+            "body": "Arc::new(${receiver})",
+            "requires": "std::sync::Arc",
+            "description": "Put the expression into an `Arc`",
+            "scope": "expr"
+        },
+        "Rc::new": {
+            "postfix": "rc",
+            "body": "Rc::new(${receiver})",
+            "requires": "std::rc::Rc",
+            "description": "Put the expression into an `Rc`",
+            "scope": "expr"
+        },
+        "Box::pin": {
+            "postfix": "pinbox",
+            "body": "Box::pin(${receiver})",
+            "requires": "std::boxed::Box",
+            "description": "Put the expression into a pinned `Box`",
+            "scope": "expr"
+        },
+        "Ok": {
+            "postfix": "ok",
+            "body": "Ok(${receiver})",
+            "description": "Wrap the expression in a `Result::Ok`",
+            "scope": "expr"
+        },
+        "Err": {
+            "postfix": "err",
+            "body": "Err(${receiver})",
+            "description": "Wrap the expression in a `Result::Err`",
+            "scope": "expr"
+        },
+        "Some": {
+            "postfix": "some",
+            "body": "Some(${receiver})",
+            "description": "Wrap the expression in an `Option::Some`",
+            "scope": "expr"
+        },
+        "tokio::spawn": {
+            "postfix": "spawn",
+            "body": "tokio::spawn(async move { ${receiver} })",
+            "requires": "tokio",
+            "description": "Spawn an async task with tokio",
+            "scope": "expr"
+        }
+    },
+
+    // Hover and documentation
+    "rust-analyzer.hover.actions.debug.enable": true,
+    "rust-analyzer.hover.actions.enable": true,
+    "rust-analyzer.hover.actions.gotoTypeDef.enable": true,
+    "rust-analyzer.hover.actions.implementations.enable": true,
+    "rust-analyzer.hover.actions.references.enable": true,
+    "rust-analyzer.hover.actions.run.enable": true,
+    "rust-analyzer.hover.documentation.enable": true,
+    "rust-analyzer.hover.documentation.keywords.enable": true,
+    "rust-analyzer.hover.links.enable": true,
+    "rust-analyzer.hover.memoryLayout.enable": true,
+
+    // Imports and organization
+    "rust-analyzer.imports.granularity.group": "module",
+    "rust-analyzer.imports.granularity.enforce": true,
+    "rust-analyzer.imports.group.enable": true,
+    "rust-analyzer.imports.merge.glob": true,
+    "rust-analyzer.imports.preferNoStd": false,
+    "rust-analyzer.imports.preferPrelude": true,
+    "rust-analyzer.imports.prefix": "self",
+
+    // Lens settings - Code actions above functions
+    "rust-analyzer.lens.enable": true,
+    "rust-analyzer.lens.debug.enable": true,
+    "rust-analyzer.lens.implementations.enable": true,
+    "rust-analyzer.lens.references.adt.enable": true,
+    "rust-analyzer.lens.references.enumVariant.enable": true,
+    "rust-analyzer.lens.references.method.enable": true,
+    "rust-analyzer.lens.references.trait.enable": true,
+    "rust-analyzer.lens.run.enable": true,
+
+    // Proc macro support
+    "rust-analyzer.procMacro.enable": true,
+    "rust-analyzer.procMacro.attributes.enable": true,
+
+    // Semantic highlighting
+    "rust-analyzer.semanticHighlighting.doc.comment.inject.enable": true,
+    "rust-analyzer.semanticHighlighting.operator.enable": true,
+    "rust-analyzer.semanticHighlighting.operator.specialization.enable": true,
+    "rust-analyzer.semanticHighlighting.punctuation.enable": true,
+    "rust-analyzer.semanticHighlighting.punctuation.separate.macro.bang": true,
+    "rust-analyzer.semanticHighlighting.punctuation.specialization.enable": true,
+    "rust-analyzer.semanticHighlighting.strings.enable": true,
+
+    // Typing assists
+    "rust-analyzer.typing.autoClosingAngleBrackets.enable": true,
+
+    // Workspace settings
+    "rust-analyzer.workspace.symbol.search.scope": "workspace_and_dependencies",
+    "rust-analyzer.workspace.symbol.search.kind": "all_symbols",
+
+    // Rustfmt settings
+    "rust-analyzer.rustfmt.extraArgs": ["+nightly"],
+    "rust-analyzer.rustfmt.rangeFormatting.enable": true,
+
+    // Interpret tests setting (for debugging)
+    "rust-analyzer.interpret.tests": true,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // EDITOR SETTINGS - Rust-specific editor configuration
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true,
+        "editor.formatOnPaste": true,
+        "editor.formatOnType": true,
+        "editor.inlayHints.enabled": "onUnlessPressed",
+        "editor.semanticHighlighting.enabled": true,
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.rulers": [100],
+        "editor.wordWrap": "off",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        },
+        "editor.quickSuggestions": {
+            "strings": true
+        },
+        "editor.suggest.insertMode": "replace",
+        "editor.acceptSuggestionOnCommitCharacter": true,
+        "editor.stickyScroll.enabled": true,
+        "editor.bracketPairColorization.enabled": true,
+        "editor.guides.bracketPairs": "active",
+        "editor.guides.bracketPairsHorizontal": true,
+        "editor.linkedEditing": true
+    },
+
+    // TOML files (Cargo.toml)
+    "[toml]": {
+        "editor.defaultFormatter": null,
+        "editor.formatOnSave": true,
+        "editor.semanticHighlighting.enabled": true
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // DEBUGGING - CodeLLDB Configuration
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "lldb.showDisassembly": "auto",
+    "lldb.dereferencePointers": true,
+    "lldb.consoleMode": "commands",
+    "lldb.displayFormat": "auto",
+    "lldb.evaluationTimeout": 5,
+    "lldb.launch.terminal": "integrated",
+    "lldb.suppressMissingSourceFiles": false,
+    "lldb.verboseLogging": false,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // EVEN BETTER TOML - Cargo.toml support
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "evenBetterToml.formatter.alignComments": true,
+    "evenBetterToml.formatter.alignEntries": false,
+    "evenBetterToml.formatter.allowedBlankLines": 1,
+    "evenBetterToml.formatter.arrayAutoCollapse": true,
+    "evenBetterToml.formatter.arrayAutoExpand": true,
+    "evenBetterToml.formatter.arrayTrailingComma": true,
+    "evenBetterToml.formatter.columnWidth": 100,
+    "evenBetterToml.formatter.compactArrays": true,
+    "evenBetterToml.formatter.compactEntries": false,
+    "evenBetterToml.formatter.compactInlineTables": false,
+    "evenBetterToml.formatter.indentEntries": false,
+    "evenBetterToml.formatter.indentTables": false,
+    "evenBetterToml.formatter.inlineTableExpand": false,
+    "evenBetterToml.formatter.reorderArrays": true,
+    "evenBetterToml.formatter.reorderKeys": true,
+    "evenBetterToml.formatter.trailingNewline": true,
+    "evenBetterToml.schema.enabled": true,
+    "evenBetterToml.schema.links": true,
+    "evenBetterToml.semanticTokens": true,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // DEPENDI - Dependency management (crates.io versions)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "dependi.rust.enabled": true,
+    "dependi.rust.indexServerURL": "https://index.crates.io",
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ERROR LENS - Inline error display
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "errorLens.enabled": true,
+    "errorLens.enabledDiagnosticLevels": ["error", "warning", "hint"],
+    "errorLens.messageEnabled": true,
+    "errorLens.statusBarMessageEnabled": true,
+    "errorLens.delay": 100,
+    "errorLens.fontWeight": "normal",
+    "errorLens.gutterIconsEnabled": true,
+    "errorLens.gutterIconsFollowCursorOverride": true,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // FILES AND WORKSPACE
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // File associations
+    "files.associations": {
+        "*.rs": "rust",
+        "Cargo.toml": "toml",
+        "Cargo.lock": "toml",
+        ".rustfmt.toml": "toml",
+        "rustfmt.toml": "toml",
+        "clippy.toml": "toml",
+        ".clippy.toml": "toml",
+        "rust-toolchain": "toml",
+        "rust-toolchain.toml": "toml",
+        ".cargo/config": "toml",
+        ".cargo/config.toml": "toml"
+    },
+
+    // Exclude from file explorer and search
+    "files.exclude": {
+        "**/target": true,
+        "**/.git": true,
+        "**/Cargo.lock": false
+    },
+
+    "search.exclude": {
+        "**/target": true,
+        "**/Cargo.lock": true
+    },
+
+    // Watch files exclusion
+    "files.watcherExclude": {
+        "**/target/**": true
+    },
+
+    // Auto-save configuration
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TERMINAL CONFIGURATION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.scrollback": 10000,
+    "terminal.integrated.enablePersistentSessions": true,
+    "terminal.integrated.env.linux": {
+        "RUST_BACKTRACE": "1",
+        "RUST_LOG": "debug"
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TESTING CONFIGURATION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "testing.automaticallyOpenPeekView": "failureInVisibleDocument",
+    "testing.countBadge": "passed",
+    "testing.defaultGutterClickAction": "run",
+    "testing.gutterEnabled": true,
+    "testing.showAllMessages": true,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // EDITOR GENERAL SETTINGS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "editor.fontLigatures": true,
+    "editor.renderWhitespace": "selection",
+    "editor.minimap.enabled": true,
+    "editor.minimap.renderCharacters": false,
+    "editor.minimap.maxColumn": 100,
+    "editor.cursorBlinking": "smooth",
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.smoothScrolling": true,
+    "editor.mouseWheelZoom": true,
+    "editor.folding": true,
+    "editor.foldingStrategy": "auto",
+    "editor.showFoldingControls": "mouseover",
+    "editor.unfoldOnClickAfterEndOfLine": true,
+    "editor.lineNumbers": "on",
+    "editor.glyphMargin": true,
+    "editor.parameterHints.enabled": true,
+    "editor.suggestSelection": "first",
+
+    // Bracket pairs
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": true,
+    "editor.matchBrackets": "always",
+
+    // Sticky scroll for context
+    "editor.stickyScroll.enabled": true,
+    "editor.stickyScroll.maxLineCount": 5,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // WORKBENCH SETTINGS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "workbench.editor.highlightModifiedTabs": true,
+    "workbench.editor.labelFormat": "short",
+    "workbench.editor.enablePreview": true,
+    "workbench.editor.enablePreviewFromQuickOpen": false,
+
+    // Problem panel settings
+    "problems.decorations.enabled": true,
+    "problems.showCurrentInStatus": true,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GIT SETTINGS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "git.enableSmartCommit": true,
+    "git.decorations.enabled": true,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CODE RUNNER (Optional - for quick script execution)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "code-runner.executorMap": {
+        "rust": "cd $dir && rustc $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt"
+    },
+    "code-runner.runInTerminal": true,
+    "code-runner.saveFileBeforeRun": true,
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // EXPLORER SETTINGS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    "explorer.compactFolders": false,
+    "explorer.confirmDelete": true,
+    "explorer.confirmDragAndDrop": false,
+    "explorer.sortOrder": "type",
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.expand": false,
+    "explorer.fileNesting.patterns": {
+        "Cargo.toml": "Cargo.lock, .cargo, rust-toolchain, rust-toolchain.toml, .rustfmt.toml, rustfmt.toml, clippy.toml, .clippy.toml, deny.toml"
+    }
+}

@@ -1,7 +1,7 @@
-//! # RustyDB Server
-//!
-//! Main entry point for the RustyDB database server.
-//! Initializes all subsystems and starts the network server.
+// # RustyDB Server
+//
+// Main entry point for the RustyDB database server.
+// Initializes all subsystems and starts the network server.
 
 use rusty_db::{Config, Result, VERSION};
 use rusty_db::network::Server;
@@ -104,5 +104,3 @@ fn print_banner() {
     println!("  ✓ OLAP & Columnar Storage");
     println!();
 }
-
-

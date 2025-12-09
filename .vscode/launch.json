@@ -1,0 +1,104 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug rusty-db",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rusty-db",
+                    "--package=rusty-db"
+                ],
+                "filter": {
+                    "name": "rusty-db",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "1",
+                "RUST_LOG": "debug"
+            },
+            "terminal": "integrated"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug rusty-db (Release)",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--release",
+                    "--bin=rusty-db",
+                    "--package=rusty-db"
+                ],
+                "filter": {
+                    "name": "rusty-db",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "1"
+            },
+            "terminal": "integrated"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Unit Tests",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--package=rusty-db"
+                ],
+                "filter": {
+                    "name": "rusty-db",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "1",
+                "RUST_LOG": "debug"
+            },
+            "terminal": "integrated"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Current Test",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--package=rusty-db"
+                ],
+                "filter": {
+                    "name": "rusty-db",
+                    "kind": "lib"
+                }
+            },
+            "args": ["${selectedText}"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "1",
+                "RUST_LOG": "debug"
+            },
+            "terminal": "integrated"
+        },
+        {
+            "type": "lldb",
+            "request": "attach",
+            "name": "Attach to Process",
+            "pid": "${command:pickProcess}",
+            "program": "${workspaceFolder}/target/debug/rusty-db"
+        }
+    ]
+}

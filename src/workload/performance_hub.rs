@@ -1,6 +1,8 @@
 // RustyDB Performance Hub - Unified performance dashboard and analysis
 // Provides comprehensive performance views and drill-down capabilities
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;

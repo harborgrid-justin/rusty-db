@@ -1,270 +1,270 @@
-//! # High-Performance Buffer Manager
-//!
-//! Enterprise-grade buffer pool management system optimized for Windows/MSVC with:
-//!
-//! - **Zero-allocation hot path**: Pin/unpin operations don't allocate
-//! - **Lock-free page table**: Partitioned hash map for concurrent access
-//! - **Per-core frame pools**: NUMA-aware allocation reduces contention
-//! - **Batch flush support**: Optimized sequential I/O for dirty pages
-//! - **Windows IOCP ready**: Async I/O integration points
-//! - **Multiple eviction policies**: CLOCK, LRU, 2Q, LRU-K
-//!
-//! ## Architecture Overview
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────┐
-//! │                  Buffer Pool Manager                        │
-//! │                                                              │
-//! │  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
-//! │  │ Page Table │  │   Frames   │  │  Eviction  │           │
-//! │  │ (Lock-free)│  │  (Aligned) │  │   Policy   │           │
-//! │  └────────────┘  └────────────┘  └────────────┘           │
-//! │                                                              │
-//! │  ┌────────────────────────────────────────────┐            │
-//! │  │         Per-Core Frame Pools               │            │
-//! │  │  Core 0  │  Core 1  │  Core 2  │  Core 3  │            │
-//! │  └────────────────────────────────────────────┘            │
-//! └─────────────────────────────────────────────────────────────┘
-//!          │                   │                   │
-//!          ▼                   ▼                   ▼
-//!    ┌──────────┐        ┌──────────┐       ┌──────────┐
-//!    │   Disk   │        │   WAL    │       │  Network │
-//!    │  Manager │        │ Manager  │       │   I/O    │
-//!    └──────────┘        └──────────┘       └──────────┘
-//! ```
-//!
-//! ## Performance Characteristics
-//!
-//! ### Hot Path (Page in Buffer Pool)
-//! - **Page table lookup**: O(1) - lock-free hash map
-//! - **Pin operation**: O(1) - atomic increment
-//! - **Memory allocation**: 0 bytes
-//! - **Latency**: ~50-100ns (L3 cache hit)
-//!
-//! ### Cold Path (Page Fault)
-//! - **Frame allocation**: O(1) - per-core pool or O(1) global list
-//! - **Eviction scan**: O(n) worst case, O(1) amortized for CLOCK
-//! - **Disk I/O**: ~100µs for SSD, ~10ms for HDD
-//!
-//! ### Concurrent Access
-//! - **Page table**: 16 partitions by default (configurable)
-//! - **Per-core pools**: No contention for local allocations
-//! - **Pin/unpin**: Lock-free atomics
-//!
-//! ## Usage Examples
-//!
-//! ### Basic Usage
-//!
-//! ```rust
-//! use rusty_db::buffer::{BufferPoolBuilder, EvictionPolicyType};
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! // Create buffer pool with 1000 frames
-//! let buffer_pool = BufferPoolBuilder::new()
-//!     .num_frames(1000)
-//!     .eviction_policy(EvictionPolicyType::Clock)
-//!     .build();
-//!
-//! // Pin a page
-//! let page_id = 42;
-//! let guard = buffer_pool.pin_page(page_id)?;
-//!
-//! // Access page data
-//! let data = guard.read_data();
-//! // ... use data ...
-//!
-//! // Page is automatically unpinned when guard is dropped
-//! drop(guard);
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ### Advanced Configuration
-//!
-//! ```rust
-//! use rusty_db::buffer::{BufferPoolBuilder, EvictionPolicyType};
-//! use std::time::Duration;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! let buffer_pool = BufferPoolBuilder::new()
-//!     .num_frames(10000)
-//!     .eviction_policy(EvictionPolicyType::TwoQ)
-//!     .per_core_pools(true)
-//!     .frames_per_core(8)
-//!     .max_flush_batch_size(64)
-//!     .background_flush(true)
-//!     .flush_interval(Duration::from_secs(30))
-//!     .dirty_threshold(0.7)
-//!     .build();
-//!
-//! // Pin multiple pages
-//! let guards: Vec<_> = (0..10)
-//!     .map(|i| buffer_pool.pin_page(i))
-//!     .collect::<Result<_, _>>()?;
-//!
-//! // Modify pages
-//! for guard in &guards {
-//!     let mut data = guard.write_data();
-//!     // ... modify data ...
-//! }
-//!
-//! // Get statistics
-//! let _stats = buffer_pool.stats();
-//! println!("Hit rate: {:.2}%", stats.hit_rate * 100.0);
-//! println!("Dirty pages: {}", stats.dirty_frames);
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ### Batch Flush
-//!
-//! ```rust
-//! use rusty_db::buffer::{BufferPoolBuilder, FrameBatch};
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! let buffer_pool = BufferPoolBuilder::new()
-//!     .num_frames(1000)
-//!     .build();
-//!
-//! // Flush all dirty pages
-//! buffer_pool.flush_all()?;
-//!
-//! // Check dirty ratio
-//! let dirty_ratio = buffer_pool.dirty_page_ratio();
-//! println!("Dirty pages: {:.1}%", dirty_ratio * 100.0);
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ## Eviction Policies
-//!
-//! ### CLOCK (Default)
-//! - Simple second-chance algorithm
-//! - Good approximation of LRU
-//! - Constant memory overhead
-//! - Used by PostgreSQL, SQLite
-//!
-//! ### LRU
-//! - True least-recently-used
-//! - O(1) operations with intrusive list
-//! - Higher memory overhead
-//! - Best for predictable workloads
-//!
-//! ### 2Q
-//! - Scan-resistant algorithm
-//! - Three queues: A1in, A1out, Am
-//! - Excellent for mixed workloads
-//! - Used by Oracle (similar)
-//!
-//! ### LRU-K
-//! - Tracks K-th access time
-//! - K=2 provides good scan resistance
-//! - Higher CPU overhead
-//! - Best for analytical workloads
-//!
-//! ## Memory Layout
-//!
-//! All buffer structures use `#[repr(C)]` for predictable layout:
-//!
-//! ```text
-//! PageBuffer (4096 bytes, aligned to 4096):
-//! ┌────────────────────────────────┐
-//! │  data: [u8; 4096]             │ ← 4KB aligned
-//! └────────────────────────────────┘
-//!
-//! BufferFrame (~4200 bytes):
-//! ┌────────────────────────────────┐
-//! │  page_id: u64                  │
-//! │  frame_id: u32                 │
-//! │  pin_count: AtomicU32          │
-//! │  dirty: AtomicBool             │
-//! │  ...metadata...                │
-//! │  data: PageBuffer (4096)       │ ← 4KB aligned
-//! └────────────────────────────────┘
-//! ```
-//!
-//! ## Windows IOCP Integration
-//!
-//! The buffer manager is designed for integration with Windows I/O Completion Ports:
-//!
-//! ```rust,no_run
-//! #[cfg(target_os = "windows")]
-//! use rusty_db::buffer::windows::IocpContext;
-//!
-//! # #[cfg(target_os = "windows")]
-//! # fn example() -> rusty_db::Result<()> {
-//! // Create IOCP context
-//! let iocp = IocpContext::new()?;
-//!
-//! // Submit async read
-//! // iocp.async_read(page_id, buffer)?;
-//!
-//! // Poll for completions
-//! // let completions = iocp.poll_completions(timeout_ms)?;
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ## Safety
-//!
-//! This module uses `unsafe` code in performance-critical paths:
-//!
-//! - `get_unchecked`: Array access with compile-time bounds checking
-//! - `ptr::copy_nonoverlapping`: Page data copies (always valid)
-//! - Raw pointers: Zero-copy I/O (lifetime guarantees via guards)
-//!
-//! All unsafe code is documented with safety invariants.
-//!
-//! ## Performance Tuning
-//!
-//! ### Buffer Pool Size
-//! - **Too small**: High eviction rate, poor hit rate
-//! - **Too large**: Wasted memory, longer eviction scans
-//! - **Rule of thumb**: 25-50% of available RAM for OLTP
-//! - **OLAP**: 50-75% of RAM (more read-heavy)
-//!
-//! ### Page Table Partitions
-//! - **Default**: 16 partitions
-//! - **High concurrency**: 32-64 partitions
-//! - **Low concurrency**: 4-8 partitions
-//!
-//! ### Per-Core Pools
-//! - **NUMA systems**: Enable for better locality
-//! - **Non-NUMA**: May not improve performance
-//! - **Frames per core**: 4-16 (tune based on workload)
-//!
-//! ### Eviction Policy
-//! - **OLTP**: CLOCK (fast, low overhead)
-//! - **OLAP**: LRU or 2Q (better scan resistance)
-//! - **Mixed**: 2Q or LRU-2
-//!
-//! ## Monitoring
-//!
-//! ```rust
-//! use rusty_db::buffer::BufferPoolBuilder;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! let buffer_pool = BufferPoolBuilder::new()
-//!     .num_frames(1000)
-//!     .build();
-//!
-//! // Get detailed statistics
-//! let _stats = buffer_pool.stats();
-//!
-//! println!("=== Buffer Pool Statistics ===");
-//! println!("Total frames: {}", stats.total_frames);
-//! println!("Free frames: {}", stats.free_frames);
-//! println!("Pinned frames: {}", stats.pinned_frames);
-//! println!("Dirty frames: {}", stats.dirty_frames);
-//! println!("Hit rate: {:.2}%", stats.hit_rate * 100.0);
-//! println!("Page reads: {}", stats.page_reads);
-//! println!("Page writes: {}", stats.page_writes);
-//! println!("Evictions: {}", stats.evictions);
-//! println!("Avg search length: {:.2}", stats.avg_search_length);
-//! println!("I/O wait time: {}µs", stats.io_wait_time_us);
-//! # Ok(())
-//! # }
-//! ```
+// # High-Performance Buffer Manager
+//
+// Enterprise-grade buffer pool management system optimized for Windows/MSVC with:
+//
+// - **Zero-allocation hot path**: Pin/unpin operations don't allocate
+// - **Lock-free page table**: Partitioned hash map for concurrent access
+// - **Per-core frame pools**: NUMA-aware allocation reduces contention
+// - **Batch flush support**: Optimized sequential I/O for dirty pages
+// - **Windows IOCP ready**: Async I/O integration points
+// - **Multiple eviction policies**: CLOCK, LRU, 2Q, LRU-K
+//
+// ## Architecture Overview
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────┐
+// │                  Buffer Pool Manager                        │
+// │                                                              │
+// │  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
+// │  │ Page Table │  │   Frames   │  │  Eviction  │           │
+// │  │ (Lock-free)│  │  (Aligned) │  │   Policy   │           │
+// │  └────────────┘  └────────────┘  └────────────┘           │
+// │                                                              │
+// │  ┌────────────────────────────────────────────┐            │
+// │  │         Per-Core Frame Pools               │            │
+// │  │  Core 0  │  Core 1  │  Core 2  │  Core 3  │            │
+// │  └────────────────────────────────────────────┘            │
+// └─────────────────────────────────────────────────────────────┘
+//          │                   │                   │
+//          ▼                   ▼                   ▼
+//    ┌──────────┐        ┌──────────┐       ┌──────────┐
+//    │   Disk   │        │   WAL    │       │  Network │
+//    │  Manager │        │ Manager  │       │   I/O    │
+//    └──────────┘        └──────────┘       └──────────┘
+// ```
+//
+// ## Performance Characteristics
+//
+// ### Hot Path (Page in Buffer Pool)
+// - **Page table lookup**: O(1) - lock-free hash map
+// - **Pin operation**: O(1) - atomic increment
+// - **Memory allocation**: 0 bytes
+// - **Latency**: ~50-100ns (L3 cache hit)
+//
+// ### Cold Path (Page Fault)
+// - **Frame allocation**: O(1) - per-core pool or O(1) global list
+// - **Eviction scan**: O(n) worst case, O(1) amortized for CLOCK
+// - **Disk I/O**: ~100µs for SSD, ~10ms for HDD
+//
+// ### Concurrent Access
+// - **Page table**: 16 partitions by default (configurable)
+// - **Per-core pools**: No contention for local allocations
+// - **Pin/unpin**: Lock-free atomics
+//
+// ## Usage Examples
+//
+// ### Basic Usage
+//
+// ```rust
+// use rusty_db::buffer::{BufferPoolBuilder, EvictionPolicyType};
+//
+// # fn example() -> rusty_db::Result<()> {
+// // Create buffer pool with 1000 frames
+// let buffer_pool = BufferPoolBuilder::new()
+//     .num_frames(1000)
+//     .eviction_policy(EvictionPolicyType::Clock)
+//     .build();
+//
+// // Pin a page
+// let page_id = 42;
+// let guard = buffer_pool.pin_page(page_id)?;
+//
+// // Access page data
+// let data = guard.read_data();
+// // ... use data ...
+//
+// // Page is automatically unpinned when guard is dropped
+// drop(guard);
+// # Ok(())
+// # }
+// ```
+//
+// ### Advanced Configuration
+//
+// ```rust
+// use rusty_db::buffer::{BufferPoolBuilder, EvictionPolicyType};
+// use std::time::Duration;
+//
+// # fn example() -> rusty_db::Result<()> {
+// let buffer_pool = BufferPoolBuilder::new()
+//     .num_frames(10000)
+//     .eviction_policy(EvictionPolicyType::TwoQ)
+//     .per_core_pools(true)
+//     .frames_per_core(8)
+//     .max_flush_batch_size(64)
+//     .background_flush(true)
+//     .flush_interval(Duration::from_secs(30))
+//     .dirty_threshold(0.7)
+//     .build();
+//
+// // Pin multiple pages
+// let guards: Vec<_> = (0..10)
+//     .map(|i| buffer_pool.pin_page(i))
+//     .collect::<Result<_, _>>()?;
+//
+// // Modify pages
+// for guard in &guards {
+//     let mut data = guard.write_data();
+//     // ... modify data ...
+// }
+//
+// // Get statistics
+// let _stats = buffer_pool.stats();
+// println!("Hit rate: {:.2}%", stats.hit_rate * 100.0);
+// println!("Dirty pages: {}", stats.dirty_frames);
+// # Ok(())
+// # }
+// ```
+//
+// ### Batch Flush
+//
+// ```rust
+// use rusty_db::buffer::{BufferPoolBuilder, FrameBatch};
+//
+// # fn example() -> rusty_db::Result<()> {
+// let buffer_pool = BufferPoolBuilder::new()
+//     .num_frames(1000)
+//     .build();
+//
+// // Flush all dirty pages
+// buffer_pool.flush_all()?;
+//
+// // Check dirty ratio
+// let dirty_ratio = buffer_pool.dirty_page_ratio();
+// println!("Dirty pages: {:.1}%", dirty_ratio * 100.0);
+// # Ok(())
+// # }
+// ```
+//
+// ## Eviction Policies
+//
+// ### CLOCK (Default)
+// - Simple second-chance algorithm
+// - Good approximation of LRU
+// - Constant memory overhead
+// - Used by PostgreSQL, SQLite
+//
+// ### LRU
+// - True least-recently-used
+// - O(1) operations with intrusive list
+// - Higher memory overhead
+// - Best for predictable workloads
+//
+// ### 2Q
+// - Scan-resistant algorithm
+// - Three queues: A1in, A1out, Am
+// - Excellent for mixed workloads
+// - Used by Oracle (similar)
+//
+// ### LRU-K
+// - Tracks K-th access time
+// - K=2 provides good scan resistance
+// - Higher CPU overhead
+// - Best for analytical workloads
+//
+// ## Memory Layout
+//
+// All buffer structures use `#[repr(C)]` for predictable layout:
+//
+// ```text
+// PageBuffer (4096 bytes, aligned to 4096):
+// ┌────────────────────────────────┐
+// │  data: [u8; 4096]             │ ← 4KB aligned
+// └────────────────────────────────┘
+//
+// BufferFrame (~4200 bytes):
+// ┌────────────────────────────────┐
+// │  page_id: u64                  │
+// │  frame_id: u32                 │
+// │  pin_count: AtomicU32          │
+// │  dirty: AtomicBool             │
+// │  ...metadata...                │
+// │  data: PageBuffer (4096)       │ ← 4KB aligned
+// └────────────────────────────────┘
+// ```
+//
+// ## Windows IOCP Integration
+//
+// The buffer manager is designed for integration with Windows I/O Completion Ports:
+//
+// ```rust,no_run
+// #[cfg(target_os = "windows")]
+// use rusty_db::buffer::windows::IocpContext;
+//
+// # #[cfg(target_os = "windows")]
+// # fn example() -> rusty_db::Result<()> {
+// // Create IOCP context
+// let iocp = IocpContext::new()?;
+//
+// // Submit async read
+// // iocp.async_read(page_id, buffer)?;
+//
+// // Poll for completions
+// // let completions = iocp.poll_completions(timeout_ms)?;
+// # Ok(())
+// # }
+// ```
+//
+// ## Safety
+//
+// This module uses `unsafe` code in performance-critical paths:
+//
+// - `get_unchecked`: Array access with compile-time bounds checking
+// - `ptr::copy_nonoverlapping`: Page data copies (always valid)
+// - Raw pointers: Zero-copy I/O (lifetime guarantees via guards)
+//
+// All unsafe code is documented with safety invariants.
+//
+// ## Performance Tuning
+//
+// ### Buffer Pool Size
+// - **Too small**: High eviction rate, poor hit rate
+// - **Too large**: Wasted memory, longer eviction scans
+// - **Rule of thumb**: 25-50% of available RAM for OLTP
+// - **OLAP**: 50-75% of RAM (more read-heavy)
+//
+// ### Page Table Partitions
+// - **Default**: 16 partitions
+// - **High concurrency**: 32-64 partitions
+// - **Low concurrency**: 4-8 partitions
+//
+// ### Per-Core Pools
+// - **NUMA systems**: Enable for better locality
+// - **Non-NUMA**: May not improve performance
+// - **Frames per core**: 4-16 (tune based on workload)
+//
+// ### Eviction Policy
+// - **OLTP**: CLOCK (fast, low overhead)
+// - **OLAP**: LRU or 2Q (better scan resistance)
+// - **Mixed**: 2Q or LRU-2
+//
+// ## Monitoring
+//
+// ```rust
+// use rusty_db::buffer::BufferPoolBuilder;
+//
+// # fn example() -> rusty_db::Result<()> {
+// let buffer_pool = BufferPoolBuilder::new()
+//     .num_frames(1000)
+//     .build();
+//
+// // Get detailed statistics
+// let _stats = buffer_pool.stats();
+//
+// println!("=== Buffer Pool Statistics ===");
+// println!("Total frames: {}", stats.total_frames);
+// println!("Free frames: {}", stats.free_frames);
+// println!("Pinned frames: {}", stats.pinned_frames);
+// println!("Dirty frames: {}", stats.dirty_frames);
+// println!("Hit rate: {:.2}%", stats.hit_rate * 100.0);
+// println!("Page reads: {}", stats.page_reads);
+// println!("Page writes: {}", stats.page_writes);
+// println!("Evictions: {}", stats.evictions);
+// println!("Avg search length: {:.2}", stats.avg_search_length);
+// println!("I/O wait time: {}µs", stats.io_wait_time_us);
+// # Ok(())
+// # }
+// ```
 
 // ============================================================================
 // Module Exports
@@ -560,5 +560,3 @@ mod tests {
         assert!(dirty_ratio <= 1.0);
     }
 }
-
-

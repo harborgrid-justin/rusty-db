@@ -3,6 +3,7 @@
 /// This module handles the core session state including variables, settings,
 /// transactions, cursors, and prepared statements.
 
+use std::collections::HashSet;
 use super::types::{SessionId, CursorId, StatementId, Username, SchemaName};
 use crate::common::{TransactionId, Value};
 use serde::{Deserialize, Serialize};

@@ -8,6 +8,7 @@
 /// - Join order optimization with dynamic programming
 /// - Index selection optimization
 
+use std::time::SystemTime;
 use crate::error::DbError;
 use crate::execution::planner::PlanNode;
 use parking_lot::RwLock;

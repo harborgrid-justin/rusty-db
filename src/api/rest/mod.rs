@@ -1,18 +1,18 @@
-//! # REST API Module
-//!
-//! Comprehensive REST API server for RustyDB with proper module structure.
-//! This module demonstrates all 10 Rust best practices:
-//!
-//! 1. **Cohesive Module Structure**: Each file implements a single domain concept
-//! 2. **Strong Typing & Newtypes**: Domain-specific types prevent confusion
-//! 3. **File Size Management**: Split into focused modules under 800 LOC each
-//! 4. **Traits for Extensibility**: Middleware traits enable pluggable behavior
-//! 5. **No Unsafe Blocks**: Safe Rust throughout
-//! 6. **Structured Error Handling**: `thiserror`-style error types
-//! 7. **Dependency Injection**: Constructor injection instead of globals
-//! 8. **Documentation-First**: Comprehensive rustdoc on all public APIs
-//! 9. **Consistent Formatting**: `rustfmt` and `clippy` compliant
-//! 10. **Comprehensive Tests**: Unit and integration tests included
+// # REST API Module
+//
+// Comprehensive REST API server for RustyDB with proper module structure.
+// This module demonstrates all 10 Rust best practices:
+//
+// 1. **Cohesive Module Structure**: Each file implements a single domain concept
+// 2. **Strong Typing & Newtypes**: Domain-specific types prevent confusion
+// 3. **File Size Management**: Split into focused modules under 800 LOC each
+// 4. **Traits for Extensibility**: Middleware traits enable pluggable behavior
+// 5. **No Unsafe Blocks**: Safe Rust throughout
+// 6. **Structured Error Handling**: `thiserror`-style error types
+// 7. **Dependency Injection**: Constructor injection instead of globals
+// 8. **Documentation-First**: Comprehensive rustdoc on all public APIs
+// 9. **Consistent Formatting**: `rustfmt` and `clippy` compliant
+// 10. **Comprehensive Tests**: Unit and integration tests included
 
 pub mod types;
 pub mod handlers;

@@ -1,7 +1,7 @@
-//! # Query By Example (QBE)
-//!
-//! MongoDB-like query syntax for document queries with comparison operators,
-//! logical operators, array operators, and regular expressions.
+// # Query By Example (QBE)
+//
+// MongoDB-like query syntax for document queries with comparison operators,
+// logical operators, array operators, and regular expressions.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -773,5 +773,3 @@ mod tests {
         assert!(result.get("email").is_none());
     }
 }
-
-

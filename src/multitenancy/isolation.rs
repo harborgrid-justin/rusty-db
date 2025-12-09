@@ -1,6 +1,9 @@
 // Resource isolation mechanisms for multi-tenant environments
 // Implements memory, I/O, CPU, and network isolation using Rust ownership and resource governors
 
+use std::collections::VecDeque;
+use std::time::Duration;
+use std::time::Instant;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use tokio::sync::RwLock;

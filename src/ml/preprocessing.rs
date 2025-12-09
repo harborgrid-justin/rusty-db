@@ -1,8 +1,9 @@
-//! # Data Preprocessing and Feature Engineering
-//!
-//! This module provides comprehensive data preprocessing capabilities for ML pipelines,
-//! including feature scaling, encoding, selection, and transformation.
+// # Data Preprocessing and Feature Engineering
+//
+// This module provides comprehensive data preprocessing capabilities for ML pipelines,
+// including feature scaling, encoding, selection, and transformation.
 
+use std::collections::HashSet;
 use crate::error::Result;
 use super::{Dataset, Vector, Matrix, FeatureNames, MLError};
 use std::collections::{HashMap};
@@ -1014,5 +1015,3 @@ mod tests {
         assert_eq!(test.num_samples(), 2);
     }
 }
-
-

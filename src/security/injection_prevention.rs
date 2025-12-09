@@ -1,45 +1,46 @@
-//! # Injection Attack Prevention System
-//!
-//! Comprehensive, multi-layer defense system against ALL injection attacks including:
-//! - SQL Injection (all variants: UNION, stacked, time-based, boolean, error-based)
-//! - NoSQL Injection
-//! - Command Injection
-//! - Code Injection
-//! - XPath/LDAP Injection
-//! - Unicode/Encoding attacks
-//! - Homograph attacks
-//!
-//! ## Architecture
-//!
-//! Six-layer defense-in-depth architecture:
-//! 1. Input Reception - Unicode normalization, encoding validation
-//! 2. Pattern Detection - Blacklist dangerous keywords and patterns
-//! 3. Syntax Validation - AST-based SQL structure validation
-//! 4. Parameterized Queries - Enforce parameter binding
-//! 5. Whitelist Validation - Allow only safe operations
-//! 6. Runtime Monitoring - Anomaly detection and logging
-//!
-//! ## Usage
-//!
-//! ```rust,no_run
-//! use rusty_db::security::injection_prevention::*;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! // Create injection prevention guard
-//! let guard = InjectionPreventionGuard::new();
-//!
-//! // Validate and sanitize SQL input
-//! let user_input = "SELECT * FROM users WHERE id = ?";
-//! let safe_sql = guard.validate_and_sanitize(user_input)?;
-//!
-//! // Build parameterized query
-//! let mut builder = ParameterizedQueryBuilder::new();
-//! builder.add_parameter("id", Value::Integer(123))?;
-//! let prepared = builder.build()?;
-//! # Ok(())
-//! # }
-//! ```
+// # Injection Attack Prevention System
+//
+// Comprehensive, multi-layer defense system against ALL injection attacks including:
+// - SQL Injection (all variants: UNION, stacked, time-based, boolean, error-based)
+// - NoSQL Injection
+// - Command Injection
+// - Code Injection
+// - XPath/LDAP Injection
+// - Unicode/Encoding attacks
+// - Homograph attacks
+//
+// ## Architecture
+//
+// Six-layer defense-in-depth architecture:
+// 1. Input Reception - Unicode normalization, encoding validation
+// 2. Pattern Detection - Blacklist dangerous keywords and patterns
+// 3. Syntax Validation - AST-based SQL structure validation
+// 4. Parameterized Queries - Enforce parameter binding
+// 5. Whitelist Validation - Allow only safe operations
+// 6. Runtime Monitoring - Anomaly detection and logging
+//
+// ## Usage
+//
+// ```rust,no_run
+// use rusty_db::security::injection_prevention::*;
+//
+// # fn example() -> rusty_db::Result<()> {
+// // Create injection prevention guard
+// let guard = InjectionPreventionGuard::new();
+//
+// // Validate and sanitize SQL input
+// let user_input = "SELECT * FROM users WHERE id = ?";
+// let safe_sql = guard.validate_and_sanitize(user_input)?;
+//
+// // Build parameterized query
+// let mut builder = ParameterizedQueryBuilder::new();
+// builder.add_parameter("id", Value::Integer(123))?;
+// let prepared = builder.build()?;
+// # Ok(())
+// # }
+// ```
 
+use std::collections::HashSet;
 use crate::{Result, DbError};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -1202,5 +1203,3 @@ mod tests {
         assert!(whitelister.validate("DROP TABLE users").is_err());
     }
 }
-
-

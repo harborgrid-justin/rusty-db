@@ -1,13 +1,14 @@
-//! Spatial Analysis
-//!
-//! Advanced spatial analytics including:
-//! - Nearest neighbor and k-nearest neighbors search
-//! - Spatial clustering (DBSCAN, K-means)
-//! - Voronoi diagrams
-//! - Delaunay triangulation
-//! - Spatial aggregation and statistics
-//! - Hot spot analysis
+// Spatial Analysis
+//
+// Advanced spatial analytics including:
+// - Nearest neighbor and k-nearest neighbors search
+// - Spatial clustering (DBSCAN, K-means)
+// - Voronoi diagrams
+// - Delaunay triangulation
+// - Spatial aggregation and statistics
+// - Hot spot analysis
 
+use std::collections::HashSet;
 use crate::error::Result;
 use crate::spatial::geometry::{BoundingBox, Coordinate, Point, Polygon, LinearRing};
 use crate::spatial::indexes::SpatialIndex;
@@ -923,5 +924,3 @@ mod tests {
         assert_eq!(cells.len(), 3);
     }
 }
-
-

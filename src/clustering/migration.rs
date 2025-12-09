@@ -6,6 +6,7 @@
 /// - Node addition/removal
 /// - Partition reorganization
 
+use std::collections::VecDeque;
 use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo};
 use std::collections::{HashMap};

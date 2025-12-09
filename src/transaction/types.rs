@@ -1,20 +1,21 @@
-//! Core transaction types and domain models.
-//!
-//! This module defines the fundamental types used throughout the transaction
-//! management system. Each type is designed to be:
-//! - Strongly typed for safety
-//! - Serializable for persistence
-//! - Well-documented for clarity
-//!
-//! # Example
-//!
-//! ```rust
-//! use crate::transaction::types::{Transaction, IsolationLevel, TransactionState};
-//!
-//! let txn = Transaction::new(1, IsolationLevel::ReadCommitted);
-//! assert_eq!(txn.state, TransactionState::Active);
-//! ```
+// Core transaction types and domain models.
+//
+// This module defines the fundamental types used throughout the transaction
+// management system. Each type is designed to be:
+// - Strongly typed for safety
+// - Serializable for persistence
+// - Well-documented for clarity
+//
+// # Example
+//
+// ```rust
+// use crate::transaction::types::{Transaction, IsolationLevel, TransactionState};
+//
+// let txn = Transaction::new(1, IsolationLevel::ReadCommitted);
+// assert_eq!(txn.state, TransactionState::Active);
+// ```
 
+use std::time::SystemTime;
 use std::collections::HashSet;
 use std::time::{Duration};
 
@@ -536,7 +537,7 @@ mod tests {
     fn test_transaction_savepoint() {
         let mut txn = Transaction::new(1, IsolationLevel::ReadCommitted);
         let sp = txn.add_savepoint("sp1".to_string(), 100);
-        
+
         assert_eq!(sp.name, "sp1");
         assert_eq!(txn.savepoints.len(), 1);
         assert!(txn.get_savepoint("sp1").is_some());

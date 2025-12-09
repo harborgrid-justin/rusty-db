@@ -1,13 +1,14 @@
-//! View and Materialized View Management
-//!
-//! This module provides types and operations for managing database views
-//! and materialized views, including:
-//!
-//! - **Views**: Virtual tables based on SQL queries
-//! - **Materialized Views**: Pre-computed query results stored on disk
-//! - **Refresh Scheduling**: Automatic refresh of materialized views
-//! - **View Statistics**: Access and performance tracking
+// View and Materialized View Management
+//
+// This module provides types and operations for managing database views
+// and materialized views, including:
+//
+// - **Views**: Virtual tables based on SQL queries
+// - **Materialized Views**: Pre-computed query results stored on disk
+// - **Refresh Scheduling**: Automatic refresh of materialized views
+// - **View Statistics**: Access and performance tracking
 
+use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration};
 use crate::catalog::Schema;
@@ -36,16 +37,16 @@ use crate::catalog::Schema;
 pub struct View {
     /// Name of the view
     pub name: String,
-    
+
     /// SQL query defining the view
     pub query: String,
-    
+
     /// Schema of the view's result set
     pub schema: Schema,
-    
+
     /// Whether the view supports INSERT/UPDATE/DELETE
     pub updatable: bool,
-    
+
     /// Check option for updatable views
     pub check_option: Option<CheckOption>,
 }
@@ -89,25 +90,25 @@ pub enum CheckOption {
 pub struct MaterializedView {
     /// Name of the materialized view
     pub name: String,
-    
+
     /// SQL query defining the view
     pub query: String,
-    
+
     /// Schema of the result set
     pub schema: Schema,
-    
+
     /// Last refresh timestamp
     pub last_refreshed: SystemTime,
-    
+
     /// Optional automatic refresh schedule
     pub refresh_schedule: Option<RefreshSchedule>,
-    
+
     /// Cached query result data
     pub data: Vec<Vec<String>>,
-    
+
     /// Indexes on the materialized view
     pub indexes: Vec<MaterializedViewIndex>,
-    
+
     /// Access and performance statistics
     pub statistics: ViewStatistics,
 }
@@ -126,7 +127,7 @@ impl MaterializedView {
             statistics: ViewStatistics::default(),
         }
     }
-    
+
     /// Check if the materialized view needs refresh.
     pub fn needs_refresh(&self) -> bool {
         if let Some(schedule) = &self.refresh_schedule {
@@ -135,7 +136,7 @@ impl MaterializedView {
             false
         }
     }
-    
+
     /// Get the age of the data in seconds.
     pub fn data_age_seconds(&self) -> u64 {
         SystemTime::now()
@@ -143,18 +144,18 @@ impl MaterializedView {
             .map(|d| d.as_secs())
             .unwrap_or(0)
     }
-    
+
     /// Add an index to the materialized view.
     pub fn add_index(&mut self, index: MaterializedViewIndex) {
         self.indexes.push(index);
     }
-    
+
     /// Update the data and refresh timestamp.
     pub fn update_data(&mut self, data: Vec<Vec<String>>) {
         self.data = data;
         self.last_refreshed = SystemTime::now();
         self.statistics.row_count = self.data.len() as u64;
-        
+
         // Update next refresh time if scheduled
         if let Some(schedule) = &mut self.refresh_schedule {
             schedule.next_refresh = SystemTime::now() + schedule.interval;
@@ -167,10 +168,10 @@ impl MaterializedView {
 pub struct RefreshSchedule {
     /// Interval between refreshes
     pub interval: Duration,
-    
+
     /// Next scheduled refresh time
     pub next_refresh: SystemTime,
-    
+
     /// Whether auto-refresh is enabled
     pub auto_refresh: bool,
 }
@@ -184,17 +185,17 @@ impl RefreshSchedule {
             auto_refresh: true,
         }
     }
-    
+
     /// Create a schedule that refreshes every N minutes.
     pub fn every_minutes(minutes: u64) -> Self {
         Self::every_seconds(minutes * 60)
     }
-    
+
     /// Create a schedule that refreshes every N hours.
     pub fn every_hours(hours: u64) -> Self {
         Self::every_seconds(hours * 3600)
     }
-    
+
     /// Create a daily refresh schedule.
     pub fn daily() -> Self {
         Self::every_hours(24)
@@ -206,10 +207,10 @@ impl RefreshSchedule {
 pub struct MaterializedViewIndex {
     /// Index name
     pub name: String,
-    
+
     /// Indexed columns
     pub columns: Vec<String>,
-    
+
     /// Whether the index enforces uniqueness
     pub unique: bool,
 }
@@ -223,7 +224,7 @@ impl MaterializedViewIndex {
             unique: false,
         }
     }
-    
+
     /// Create a new unique index.
     pub fn unique(name: String, columns: Vec<String>) -> Self {
         Self {
@@ -245,16 +246,16 @@ impl MaterializedViewIndex {
 pub struct ViewStatistics {
     /// Number of rows in the view
     pub row_count: u64,
-    
+
     /// Size of data in bytes
     pub data_size_bytes: u64,
-    
+
     /// Last access timestamp
     pub last_accessed: SystemTime,
-    
+
     /// Total number of accesses
     pub access_count: u64,
-    
+
     /// Average query time in milliseconds
     pub avg_query_time_ms: f64,
 }
@@ -276,12 +277,12 @@ impl ViewStatistics {
     pub fn record_access(&mut self, query_time_ms: f64) {
         self.access_count += 1;
         self.last_accessed = SystemTime::now();
-        
+
         // Update running average
         let total_time = self.avg_query_time_ms * (self.access_count - 1) as f64;
         self.avg_query_time_ms = (total_time + query_time_ms) / self.access_count as f64;
     }
-    
+
     /// Get the access frequency (accesses per hour).
     pub fn access_frequency_per_hour(&self) -> f64 {
         // This would need first_accessed to calculate properly
@@ -297,7 +298,7 @@ impl ViewStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_view_creation() {
         let view = View {
@@ -307,11 +308,11 @@ mod tests {
             updatable: false,
             check_option: None,
         };
-        
+
         assert_eq!(view.name, "test_view");
         assert!(!view.updatable);
     }
-    
+
     #[test]
     fn test_materialized_view_refresh() {
         let mut mv = MaterializedView::new(
@@ -319,21 +320,21 @@ mod tests {
             "SELECT * FROM users".to_string(),
             Schema::new("test_mv".to_string(), vec![]),
         );
-        
+
         mv.refresh_schedule = Some(RefreshSchedule::every_seconds(0));
         assert!(mv.needs_refresh());
     }
-    
+
     #[test]
     fn test_view_statistics() {
         let mut stats = ViewStatistics::default();
         stats.record_access(10.0);
         stats.record_access(20.0);
-        
+
         assert_eq!(stats.access_count, 2);
         assert!((stats.avg_query_time_ms - 15.0).abs() < 0.001);
     }
-    
+
     #[test]
     fn test_refresh_schedule() {
         let schedule = RefreshSchedule::daily();

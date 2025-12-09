@@ -1,6 +1,6 @@
-//! # SIMD String Operations
-//!
-//! Vectorized string comparison, pattern matching, and hash computation using SIMD instructions.
+// # SIMD String Operations
+//
+// Vectorized string comparison, pattern matching, and hash computation using SIMD instructions.
 
 use super::{SimdContext, SimdStats, SelectionVector};
 use crate::error::Result;
@@ -886,5 +886,3 @@ mod tests {
         }
     }
 }
-
-

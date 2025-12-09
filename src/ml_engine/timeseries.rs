@@ -1,7 +1,7 @@
-//! # Time Series Analysis and Forecasting
-//!
-//! Advanced time series capabilities including ARIMA-like forecasting,
-//! exponential smoothing, seasonality detection, trend analysis, and anomaly detection.
+// # Time Series Analysis and Forecasting
+//
+// Advanced time series capabilities including ARIMA-like forecasting,
+// exponential smoothing, seasonality detection, trend analysis, and anomaly detection.
 
 use crate::error::Result;
 use super::Algorithm;
@@ -747,5 +747,3 @@ mod tests {
         assert_eq!(anomalies[0].index, 50);
     }
 }
-
-

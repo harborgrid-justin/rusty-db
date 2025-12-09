@@ -1,42 +1,45 @@
-//! # Enterprise Lifecycle Manager
-//!
-//! Manages the complete lifecycle of the database system including graceful startup
-//! with dependency ordering, health check aggregation, graceful shutdown with connection
-//! draining, hot reload capabilities, and version compatibility management.
-//!
-//! ## Features
-//!
-//! - **Graceful Startup**: Orchestrated component initialization with dependency resolution
-//! - **Health Checks**: Aggregated health monitoring from all subsystems
-//! - **Graceful Shutdown**: Coordinated shutdown with resource cleanup and connection draining
-//! - **Hot Reload**: Dynamic configuration and code reload without full restart
-//! - **Version Management**: Compatibility checks and migration support
-//! - **State Persistence**: Save and restore system state across restarts
-//!
-//! ## Example
-//!
-//! ```rust,no_run
-//! use rusty_db::enterprise::lifecycle::{LifecycleManager, Component, ComponentHealth};
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!     let manager = LifecycleManager::new();
-//!
-//!     // Register components
-//!     manager.register_component(my_component).await;
-//!
-//!     // Start all components
-//!     manager.startup().await.unwrap();
-//!
-//!     // Check health
-//!     let health = manager.health_check().await;
-//!     println!("System health: {:?}", health);
-//!
-//!     // Graceful shutdown
-//!     manager.shutdown().await.unwrap();
-//! }
-//! ```
+// # Enterprise Lifecycle Manager
+//
+// Manages the complete lifecycle of the database system including graceful startup
+// with dependency ordering, health check aggregation, graceful shutdown with connection
+// draining, hot reload capabilities, and version compatibility management.
+//
+// ## Features
+//
+// - **Graceful Startup**: Orchestrated component initialization with dependency resolution
+// - **Health Checks**: Aggregated health monitoring from all subsystems
+// - **Graceful Shutdown**: Coordinated shutdown with resource cleanup and connection draining
+// - **Hot Reload**: Dynamic configuration and code reload without full restart
+// - **Version Management**: Compatibility checks and migration support
+// - **State Persistence**: Save and restore system state across restarts
+//
+// ## Example
+//
+// ```rust,no_run
+// use rusty_db::enterprise::lifecycle::{LifecycleManager, Component, ComponentHealth};
+//
+// #[tokio::main]
+// async fn main() {
+//     let manager = LifecycleManager::new();
+//
+//     // Register components
+//     manager.register_component(my_component).await;
+//
+//     // Start all components
+//     manager.startup().await.unwrap();
+//
+//     // Check health
+//     let health = manager.health_check().await;
+//     println!("System health: {:?}", health);
+//
+//     // Graceful shutdown
+//     manager.shutdown().await.unwrap();
+// }
+// ```
 
+use std::collections::HashSet;
+use std::sync::Mutex;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -767,5 +770,3 @@ mod tests {
         assert!(!*started.lock().await);
     }
 }
-
-

@@ -1,22 +1,22 @@
-//! # Eviction Policies - Buffer Frame Replacement Algorithms
-//!
-//! Implements multiple page replacement policies optimized for zero allocations
-//! in the hot path. All policies are lock-free where possible.
-//!
-//! ## Supported Policies
-//!
-//! - **CLOCK**: Second-chance algorithm with reference bits (default)
-//! - **LRU**: Least Recently Used with O(1) operations
-//! - **2Q**: Two-queue algorithm for scan resistance
-//! - **LRU-K**: K-distance with correlated reference tracking
-//!
-//! ## Performance Characteristics
-//!
-//! All policies guarantee:
-//! - Zero allocations in victim selection
-//! - Lock-free reads where possible
-//! - Constant-time operations in hot path
-//! - MSVC-compatible memory layouts
+// # Eviction Policies - Buffer Frame Replacement Algorithms
+//
+// Implements multiple page replacement policies optimized for zero allocations
+// in the hot path. All policies are lock-free where possible.
+//
+// ## Supported Policies
+//
+// - **CLOCK**: Second-chance algorithm with reference bits (default)
+// - **LRU**: Least Recently Used with O(1) operations
+// - **2Q**: Two-queue algorithm for scan resistance
+// - **LRU-K**: K-distance with correlated reference tracking
+//
+// ## Performance Characteristics
+//
+// All policies guarantee:
+// - Zero allocations in victim selection
+// - Lock-free reads where possible
+// - Constant-time operations in hot path
+// - MSVC-compatible memory layouts
 
 use crate::buffer::page_cache::{BufferFrame, FrameId};
 use parking_lot::{Mutex, RwLock};
@@ -943,5 +943,3 @@ mod tests {
         assert_eq!(policy.name(), "LRU-K");
     }
 }
-
-

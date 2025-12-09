@@ -1,7 +1,7 @@
-//! # Document Model
-//!
-//! JSON document representation with BSON support, versioning, and metadata management.
-//! This module provides the core document abstraction for the document store engine.
+// # Document Model
+//
+// JSON document representation with BSON support, versioning, and metadata management.
+// This module provides the core document abstraction for the document store engine.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -719,5 +719,3 @@ mod tests {
         assert_eq!(doc.metadata.ttl, Some(3600));
     }
 }
-
-

@@ -2,6 +2,9 @@
 // Provides hierarchical locking with intent locks, deadlock detection,
 // lock escalation, and multi-granularity locking
 
+use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::time::Instant;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};

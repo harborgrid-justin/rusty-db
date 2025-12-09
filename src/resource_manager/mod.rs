@@ -1,72 +1,73 @@
-//! # Resource Manager - Enterprise Workload Management
-//!
-//! This module provides Oracle-like resource management capabilities including:
-//! - Consumer groups for workload classification
-//! - Resource plans with directives and sub-plans
-//! - CPU scheduling with fair-share and priority-based algorithms
-//! - I/O scheduling with bandwidth and IOPS limiting
-//! - Memory management with PGA limits and automatic tuning
-//! - Parallel execution control with auto DOP calculation
-//! - Session control with active session pools and timeout management
-//!
-//! ## Key Innovations
-//!
-//! - **ML-based workload prediction**: Uses historical data to predict resource needs
-//! - **Dynamic resource rebalancing**: Automatically adjusts allocations based on demand
-//! - **Container-aware resource limits**: Integrates with container resource constraints
-//! - **SLA-based resource allocation**: Prioritizes workloads based on SLA requirements
-//!
-//! ## Architecture
-//!
-//! The Resource Manager follows a hierarchical approach:
-//!
-//! ```text
-//! ┌─────────────────────────────────────────┐
-//! │      Resource Manager (Coordinator)      │
-//! └──────────────┬──────────────────────────┘
-//!                │
-//!    ┌───────────┼───────────┬──────────────┬──────────────┬──────────────┐
-//!    │           │           │              │              │              │
-//!    ▼           ▼           ▼              ▼              ▼              ▼
-//! ┌─────┐   ┌────────┐  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐
-//! │Group│   │Resource│  │   CPU   │  │   I/O    │  │  Memory  │  │Parallel │
-//! │ Mgr │   │  Plan  │  │Scheduler│  │Scheduler │  │ Manager  │  │ Control │
-//! └─────┘   └────────┘  └─────────┘  └──────────┘  └──────────┘  └─────────┘
-//!                                                                        │
-//!                                                                        ▼
-//!                                                                  ┌──────────┐
-//!                                                                  │ Session  │
-//!                                                                  │ Control  │
-//!                                                                  └──────────┘
-//! ```
-//!
-//! ## Usage Example
-//!
-//! ```rust,no_run
-//! use rusty_db::resource_manager::{ResourceManager, ResourceManagerConfig};
-//! use rusty_db::resource_manager::consumer_groups::PriorityLevel;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! // Create resource manager
-//! let config = ResourceManagerConfig::default();
-//! let mut manager = ResourceManager::new(config)?;
-//!
-//! // Create a consumer group
-//! let group_id = manager.create_consumer_group(
-//!     "ANALYTICS".to_string(),
-//!     PriorityLevel::medium(),
-//! )?;
-//!
-//! // Configure resource limits
-//! manager.set_group_cpu_shares(group_id, 2000)?;
-//! manager.set_group_memory_limit(group_id, 8 * 1024 * 1024 * 1024)?; // 8 GB
-//!
-//! // Start monitoring
-//! manager.start_monitoring()?;
-//! # Ok(())
-//! # }
-//! ```
+// # Resource Manager - Enterprise Workload Management
+//
+// This module provides Oracle-like resource management capabilities including:
+// - Consumer groups for workload classification
+// - Resource plans with directives and sub-plans
+// - CPU scheduling with fair-share and priority-based algorithms
+// - I/O scheduling with bandwidth and IOPS limiting
+// - Memory management with PGA limits and automatic tuning
+// - Parallel execution control with auto DOP calculation
+// - Session control with active session pools and timeout management
+//
+// ## Key Innovations
+//
+// - **ML-based workload prediction**: Uses historical data to predict resource needs
+// - **Dynamic resource rebalancing**: Automatically adjusts allocations based on demand
+// - **Container-aware resource limits**: Integrates with container resource constraints
+// - **SLA-based resource allocation**: Prioritizes workloads based on SLA requirements
+//
+// ## Architecture
+//
+// The Resource Manager follows a hierarchical approach:
+//
+// ```text
+// ┌─────────────────────────────────────────┐
+// │      Resource Manager (Coordinator)      │
+// └──────────────┬──────────────────────────┘
+//                │
+//    ┌───────────┼───────────┬──────────────┬──────────────┬──────────────┐
+//    │           │           │              │              │              │
+//    ▼           ▼           ▼              ▼              ▼              ▼
+// ┌─────┐   ┌────────┐  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐
+// │Group│   │Resource│  │   CPU   │  │   I/O    │  │  Memory  │  │Parallel │
+// │ Mgr │   │  Plan  │  │Scheduler│  │Scheduler │  │ Manager  │  │ Control │
+// └─────┘   └────────┘  └─────────┘  └──────────┘  └──────────┘  └─────────┘
+//                                                                        │
+//                                                                        ▼
+//                                                                  ┌──────────┐
+//                                                                  │ Session  │
+//                                                                  │ Control  │
+//                                                                  └──────────┘
+// ```
+//
+// ## Usage Example
+//
+// ```rust,no_run
+// use rusty_db::resource_manager::{ResourceManager, ResourceManagerConfig};
+// use rusty_db::resource_manager::consumer_groups::PriorityLevel;
+//
+// # fn example() -> rusty_db::Result<()> {
+// // Create resource manager
+// let config = ResourceManagerConfig::default();
+// let mut manager = ResourceManager::new(config)?;
+//
+// // Create a consumer group
+// let group_id = manager.create_consumer_group(
+//     "ANALYTICS".to_string(),
+//     PriorityLevel::medium(),
+// )?;
+//
+// // Configure resource limits
+// manager.set_group_cpu_shares(group_id, 2000)?;
+// manager.set_group_memory_limit(group_id, 8 * 1024 * 1024 * 1024)?; // 8 GB
+//
+// // Start monitoring
+// manager.start_monitoring()?;
+// # Ok(())
+// # }
+// ```
 
+use std::time::SystemTime;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 use serde::{Deserialize, Serialize};
@@ -653,5 +654,3 @@ mod tests {
         assert!(stats.memory_usage_pct >= 0.0);
     }
 }
-
-

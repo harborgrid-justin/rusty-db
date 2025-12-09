@@ -3,6 +3,8 @@
 // Implements functional operators for event stream transformations including
 // filter, map, flatmap, aggregations, joins, deduplication, and TopN.
 
+use std::collections::VecDeque;
+use std::collections::HashSet;
 use super::{Event, EventBatch, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

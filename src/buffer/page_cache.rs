@@ -1,15 +1,15 @@
-//! # Page Cache - High-Performance Buffer Frames
-//!
-//! Provides page-aligned buffers with explicit control optimized for Windows/MSVC.
-//! All structures use `#[repr(C)]` for predictable memory layout and direct I/O compatibility.
-//!
-//! ## Key Features
-//!
-//! - Page-aligned buffers (4KB alignment) for direct I/O
-//! - Lock-free pin counting with atomics
-//! - Zero-copy page access with unsafe optimizations
-//! - Explicit dirty tracking for write-back cache
-//! - MSVC-compatible memory layout
+// # Page Cache - High-Performance Buffer Frames
+//
+// Provides page-aligned buffers with explicit control optimized for Windows/MSVC.
+// All structures use `#[repr(C)]` for predictable memory layout and direct I/O compatibility.
+//
+// ## Key Features
+//
+// - Page-aligned buffers (4KB alignment) for direct I/O
+// - Lock-free pin counting with atomics
+// - Zero-copy page access with unsafe optimizations
+// - Explicit dirty tracking for write-back cache
+// - MSVC-compatible memory layout
 
 use crate::common::PageId;
 use parking_lot::RwLock;
@@ -807,5 +807,3 @@ mod tests {
         assert!(!buffer.verify_checksum(checksum));
     }
 }
-
-

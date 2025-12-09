@@ -4,6 +4,8 @@
 // partitioning, retention, compaction, and consumer group coordination with
 // exactly-once processing semantics.
 
+use std::sync::Mutex;
+use std::time::SystemTime;
 use super::{
     Event, EventBatch, EventId, EventProcessingConfig, ProcessingGuarantee, StreamMetrics,
     StreamPosition, StreamState, Watermark,

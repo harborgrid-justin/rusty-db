@@ -1,7 +1,7 @@
-//! Transaction traits for extensibility.
-//!
-//! This module defines traits that enable trait-driven design,
-//! allowing for testability and alternative implementations.
+// Transaction traits for extensibility.
+//
+// This module defines traits that enable trait-driven design,
+// allowing for testability and alternative implementations.
 
 use std::time::Duration;
 

@@ -1,37 +1,37 @@
-//! # Buffer Pool Manager - Main Buffer Management System
-//!
-//! High-performance buffer pool manager optimized for Windows/MSVC with:
-//! - Lock-free page table for fast lookups
-//! - Per-core frame pools to reduce contention
-//! - Batch flush support for efficient I/O
-//! - Windows IOCP integration ready
-//! - Zero allocations in pin/unpin hot path
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────┐
-//! │              Buffer Pool Manager                        │
-//! ├─────────────────────────────────────────────────────────┤
-//! │  Page Table (PageId -> FrameId)                        │
-//! │  ┌──────────┬──────────┬──────────┬──────────┐        │
-//! │  │ Hash Map │ Hash Map │ Hash Map │ Hash Map │        │
-//! │  └──────────┴──────────┴──────────┴──────────┘        │
-//! │           (Partitioned for concurrency)                │
-//! ├─────────────────────────────────────────────────────────┤
-//! │  Frame Array (Pre-allocated)                           │
-//! │  ┌──────┬──────┬──────┬──────┬──────┬──────┐         │
-//! │  │Frame │Frame │Frame │Frame │Frame │ ...  │         │
-//! │  │  0   │  1   │  2   │  3   │  4   │      │         │
-//! │  └──────┴──────┴──────┴──────┴──────┴──────┘         │
-//! ├─────────────────────────────────────────────────────────┤
-//! │  Per-Core Free Lists                                   │
-//! │  ┌─────────┬─────────┬─────────┬─────────┐           │
-//! │  │ Core 0  │ Core 1  │ Core 2  │ Core 3  │           │
-//! │  │ [3,7,11]│[4,8,12] │[5,9,13] │[6,10,14]│           │
-//! │  └─────────┴─────────┴─────────┴─────────┘           │
-//! └─────────────────────────────────────────────────────────┘
-//! ```
+// # Buffer Pool Manager - Main Buffer Management System
+//
+// High-performance buffer pool manager optimized for Windows/MSVC with:
+// - Lock-free page table for fast lookups
+// - Per-core frame pools to reduce contention
+// - Batch flush support for efficient I/O
+// - Windows IOCP integration ready
+// - Zero allocations in pin/unpin hot path
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────┐
+// │              Buffer Pool Manager                        │
+// ├─────────────────────────────────────────────────────────┤
+// │  Page Table (PageId -> FrameId)                        │
+// │  ┌──────────┬──────────┬──────────┬──────────┐        │
+// │  │ Hash Map │ Hash Map │ Hash Map │ Hash Map │        │
+// │  └──────────┴──────────┴──────────┴──────────┘        │
+// │           (Partitioned for concurrency)                │
+// ├─────────────────────────────────────────────────────────┤
+// │  Frame Array (Pre-allocated)                           │
+// │  ┌──────┬──────┬──────┬──────┬──────┬──────┐         │
+// │  │Frame │Frame │Frame │Frame │Frame │ ...  │         │
+// │  │  0   │  1   │  2   │  3   │  4   │      │         │
+// │  └──────┴──────┴──────┴──────┴──────┴──────┘         │
+// ├─────────────────────────────────────────────────────────┤
+// │  Per-Core Free Lists                                   │
+// │  ┌─────────┬─────────┬─────────┬─────────┐           │
+// │  │ Core 0  │ Core 1  │ Core 2  │ Core 3  │           │
+// │  │ [3,7,11]│[4,8,12] │[5,9,13] │[6,10,14]│           │
+// │  └─────────┴─────────┴─────────┴─────────┘           │
+// └─────────────────────────────────────────────────────────┘
+// ```
 
 use crate::buffer::eviction::{create_eviction_policy, EvictionPolicy, EvictionPolicyType};
 use crate::buffer::page_cache::{
@@ -1909,5 +1909,3 @@ mod tests {
         assert_eq!(pool.eviction_policy_name(), "LRU");
     }
 }
-
-

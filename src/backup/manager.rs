@@ -1,6 +1,9 @@
 // Backup Manager - Enterprise-grade backup orchestration
 // Handles full, incremental, and differential backups with block-level change tracking
 
+use std::collections::HashSet;
+use std::collections::BTreeMap;
+use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::fs::create_dir_all;

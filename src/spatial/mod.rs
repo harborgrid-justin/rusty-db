@@ -1,273 +1,273 @@
-//! # Spatial Database Engine
-//!
-//! Oracle Spatial-compatible geospatial database engine for RustyDB.
-//!
-//! This module provides comprehensive spatial data management including:
-//! - Multiple geometry types (Point, Polygon, etc.)
-//! - Spatial indexing (R-tree, Quadtree, Grid)
-//! - Topological operators and spatial analysis
-//! - Coordinate reference systems and transformations
-//! - Raster data support
-//! - Network analysis and routing
-//!
-//! ## Overview
-//!
-//! The spatial engine is designed to provide Oracle Spatial-level functionality
-//! for managing, querying, and analyzing geographic data. It supports both vector
-//! and raster data types, with efficient spatial indexing and a wide range of
-//! analytical operations.
-//!
-//! ## Architecture
-//!
-//! ### Geometry System
-//!
-//! The geometry module provides a complete implementation of the Simple Features
-//! specification with extensions for Oracle Spatial compatibility:
-//!
-//! ```rust,no_run
-//! use rusty_db::spatial::geometry::{Point, Coordinate, Polygon};
-//!
-//! // Create a point
-//! let point = Point::new(Coordinate::new(-122.4194, 37.7749));
-//!
-//! // Create a linestring
-//! let coords = vec![
-//!     Coordinate::new(0.0, 0.0),
-//!     Coordinate::new(1.0, 1.0),
-//!     Coordinate::new(2.0, 0.0),
-//! ];
-//! let linestring = LineString::new(coords).unwrap();
-//!
-//! // Convert to WKT
-//! println!("Point WKT: {}", point.to_wkt());
-//! println!("LineString WKT: {}", linestring.to_wkt());
-//! ```
-//!
-//! ### Spatial Indexing
-//!
-//! Multiple spatial index types are supported for different use cases:
-//!
-//! ```rust,no_run
-//! use rusty_db::spatial::indexes::{RTree, Quadtree, GridIndex, SpatialIndex};
-//! use rusty_db::spatial::geometry::BoundingBox;
-//!
-//! // Create an R-tree index
-//! let mut rtree = RTree::new();
-//!
-//! // Insert geometries
-//! let bbox = BoundingBox::new(0.0, 0.0, 1.0, 1.0);
-//! rtree.insert(1, bbox).unwrap();
-//!
-//! // Query the index
-//! let query_box = BoundingBox::new(-0.5, -0.5, 2.0, 2.0);
-//! let results = rtree.search(&query_box);
-//! ```
-//!
-//! ### Spatial Operators
-//!
-//! Comprehensive topological and geometric operations:
-//!
-//! ```rust,no_run
-//! use rusty_db::spatial::operators::{TopologicalOps, DistanceOps, BufferOps};
-//! use rusty_db::spatial::geometry::{Geometry, Point, Coordinate};
-//!
-//! // Check if geometries intersect
-//! # let geom1 = Geometry::Point(Point::new(Coordinate::new(0.0, 0.0)));
-//! # let geom2 = Geometry::Point(Point::new(Coordinate::new(1.0, 1.0)));
-//! let intersects = TopologicalOps::intersects(&geom1, &geom2).unwrap();
-//!
-//! // Calculate distance
-//! let distance = DistanceOps::distance(&geom1, &geom2).unwrap();
-//!
-//! // Create buffer
-//! let buffered = BufferOps::buffer(&geom1, 10.0).unwrap();
-//! ```
-//!
-//! ### Spatial Analysis
-//!
-//! Advanced analytical capabilities including clustering and statistics:
-//!
-//! ```rust,no_run
-//! use rusty_db::spatial::analysis::{DbscanClusterer, KMeansClusterer};
-//! use rusty_db::spatial::geometry::Coordinate;
-//!
-//! let points = vec![
-//!     (1, Coordinate::new(0.0, 0.0)),
-//!     (2, Coordinate::new(1.0, 1.0)),
-//!     (3, Coordinate::new(10.0, 10.0)),
-//! ];
-//!
-//! // DBSCAN clustering
-//! let dbscan = DbscanClusterer::new(2.0, 2);
-//! let clusters = dbscan.cluster(&points);
-//!
-//! // K-means clustering
-//! let kmeans = KMeansClusterer::new(2, 100);
-//! let clusters = kmeans.cluster(&points);
-//! ```
-//!
-//! ### Coordinate Systems
-//!
-//! Full support for coordinate transformations and geodetic calculations:
-//!
-//! ```rust,no_run
-//! use rusty_db::spatial::srs::{SrsRegistry, CoordinateTransformer, well_known_srid};
-//! use rusty_db::spatial::geometry::Coordinate;
-//! use std::sync::Arc;
-//!
-//! let registry = Arc::new(SrsRegistry::new());
-//! let transformer = CoordinateTransformer::new(registry);
-//!
-//! // Transform from WGS84 to Web Mercator
-//! let wgs84_coord = Coordinate::new(-122.4194, 37.7749);
-//! let mercator = transformer.transform(
-//!     &wgs84_coord,
-//!     well_known_srid::WGS84,
-//!     well_known_srid::WEB_MERCATOR
-//! ).unwrap();
-//! ```
-//!
-//! ### Raster Support
-//!
-//! Raster data management and analysis:
-//!
-//! ```rust,no_run
-//! use rusty_db::spatial::raster::{Raster, PixelType, GeoTransform, RasterAlgebra};
-//!
-//! // Create a raster
-//! let geo_transform = GeoTransform::new(0.0, 100.0, 1.0, -1.0);
-//! let raster = Raster::new(100, 100, 3, PixelType::UInt8, geo_transform);
-//!
-//! // Perform raster algebra
-//! # let raster2 = raster.clone();
-//! let _result = RasterAlgebra::add(&raster, &raster2).unwrap();
-//! ```
-//!
-//! ### Network Analysis
-//!
-//! Routing and network optimization:
-//!
-//! ```rust,no_run
-//! use rusty_db::spatial::network::{Network, Node, Edge, DijkstraRouter};
-//! use rusty_db::spatial::geometry::Coordinate;
-//!
-//! let mut network = Network::new();
-//!
-//! // Add nodes
-//! network.add_node(Node::new(1, Coordinate::new(0.0, 0.0)));
-//! network.add_node(Node::new(2, Coordinate::new(1.0, 0.0)));
-//!
-//! // Add edges
-//! network.add_edge(Edge::new(1, 1, 2, 1.0)).unwrap();
-//!
-//! // Find shortest path
-//! let router = DijkstraRouter::new(&network);
-//! let path = router.shortest_path(1, 2).unwrap();
-//! ```
-//!
-//! ## Performance
-//!
-//! The spatial engine is optimized for performance:
-//!
-//! - **Spatial Indexing**: R-tree and Quadtree provide O(log n) query performance
-//! - **Bulk Loading**: Efficient bulk loading using Hilbert curve ordering
-//! - **Parallel Processing**: Thread-safe indexes for concurrent access
-//! - **Memory Efficiency**: Zero-copy serialization where possible
-//!
-//! ## Oracle Spatial Compatibility
-//!
-//! This implementation aims for compatibility with Oracle Spatial features:
-//!
-//! | Feature | Oracle Spatial | RustyDB Spatial | Status |
-//! |---------|---------------|-----------------|--------|
-//! | Geometry Types | SDO_GEOMETRY | Geometry enum | ✓ Full |
-//! | WKT/WKB | Supported | Supported | ✓ Full |
-//! | Spatial Indexing | R-tree | R-tree, Quadtree | ✓ Full |
-//! | Topological Ops | SDO_RELATE | TopologicalOps | ✓ Full |
-//! | Distance Ops | SDO_DISTANCE | DistanceOps | ✓ Full |
-//! | Coordinate Systems | SRID | SRS Registry | ✓ Full |
-//! | Network Analysis | Network Data Model | Network module | ✓ Full |
-//! | Raster Support | GeoRaster | Raster module | ✓ Partial |
-//!
-//! ## SQL Integration
-//!
-//! The spatial engine integrates with RustyDB's SQL layer:
-//!
-//! ```sql
-//! -- Create a spatial table
-//! CREATE TABLE locations (
-//!     id INTEGER PRIMARY KEY,
-//!     name VARCHAR(100),
-//!     geom GEOMETRY
-//! );
-//!
-//! -- Create spatial index
-//! CREATE SPATIAL INDEX idx_locations_geom ON locations(geom);
-//!
-//! -- Spatial queries
-//! SELECT name FROM locations
-//! WHERE ST_Within(geom, ST_MakePolygon(...));
-//!
-//! -- Distance queries
-//! SELECT name, ST_Distance(geom, ST_Point(-122.4194, 37.7749))
-//! FROM locations
-//! ORDER BY ST_Distance(geom, ST_Point(-122.4194, 37.7749))
-//! LIMIT 10;
-//! ```
-//!
-//! ## Best Practices
-//!
-//! ### Choosing an Index Type
-//!
-//! - **R-tree**: Best for general-purpose spatial data with varying sizes
-//! - **Quadtree**: Optimal for point data with uniform distribution
-//! - **Grid Index**: Fast for uniformly distributed data with known bounds
-//!
-//! ### Performance Optimization
-//!
-//! 1. Use bulk loading for large datasets
-//! 2. Create spatial indexes before running queries
-//! 3. Use bounding box filters before precise geometric tests
-//! 4. Consider pyramid levels for large rasters
-//! 5. Use appropriate coordinate systems for your data
-//!
-//! ### Memory Management
-//!
-//! ```rust,no_run
-//! use rusty_db::spatial::indexes::{SpatialIndexBuilder, IndexType};
-//! use rusty_db::spatial::geometry::BoundingBox;
-//!
-//! // Bulk loading is more memory efficient
-//! let mut builder = SpatialIndexBuilder::new(
-//!     IndexType::RTree { max_entries: 8, min_entries: 3 }
-//! );
-//!
-//! for _i in 0..1000 {
-//!     let bbox = BoundingBox::new(i as f64, i as f64, i as f64 + 1.0, i as f64 + 1.0);
-//!     builder.add(i, bbox);
-//! }
-//!
-//! let index = builder.build().unwrap();
-//! ```
-//!
-//! ## Roadmap
-//!
-//! Planned enhancements:
-//!
-//! - [ ] 3D spatial indexing (R-tree with Z dimension)
-//! - [ ] Curved geometry support (NURBS)
-//! - [ ] Topology validation and repair
-//! - [ ] Spatial ETL operations
-//! - [ ] Integration with external formats (Shapefile, GeoTIFF)
-//! - [ ] GPU acceleration for raster operations
-//! - [ ] Distributed spatial queries
-//!
-//! ## References
-//!
-//! - Oracle Spatial and Graph Developer's Guide
-//! - OGC Simple Features Specification
-//! - PostGIS Documentation
-//! - "Computational Geometry: Algorithms and Applications" by de Berg et al.
+// # Spatial Database Engine
+//
+// Oracle Spatial-compatible geospatial database engine for RustyDB.
+//
+// This module provides comprehensive spatial data management including:
+// - Multiple geometry types (Point, Polygon, etc.)
+// - Spatial indexing (R-tree, Quadtree, Grid)
+// - Topological operators and spatial analysis
+// - Coordinate reference systems and transformations
+// - Raster data support
+// - Network analysis and routing
+//
+// ## Overview
+//
+// The spatial engine is designed to provide Oracle Spatial-level functionality
+// for managing, querying, and analyzing geographic data. It supports both vector
+// and raster data types, with efficient spatial indexing and a wide range of
+// analytical operations.
+//
+// ## Architecture
+//
+// ### Geometry System
+//
+// The geometry module provides a complete implementation of the Simple Features
+// specification with extensions for Oracle Spatial compatibility:
+//
+// ```rust,no_run
+// use rusty_db::spatial::geometry::{Point, Coordinate, Polygon};
+//
+// // Create a point
+// let point = Point::new(Coordinate::new(-122.4194, 37.7749));
+//
+// // Create a linestring
+// let coords = vec![
+//     Coordinate::new(0.0, 0.0),
+//     Coordinate::new(1.0, 1.0),
+//     Coordinate::new(2.0, 0.0),
+// ];
+// let linestring = LineString::new(coords).unwrap();
+//
+// // Convert to WKT
+// println!("Point WKT: {}", point.to_wkt());
+// println!("LineString WKT: {}", linestring.to_wkt());
+// ```
+//
+// ### Spatial Indexing
+//
+// Multiple spatial index types are supported for different use cases:
+//
+// ```rust,no_run
+// use rusty_db::spatial::indexes::{RTree, Quadtree, GridIndex, SpatialIndex};
+// use rusty_db::spatial::geometry::BoundingBox;
+//
+// // Create an R-tree index
+// let mut rtree = RTree::new();
+//
+// // Insert geometries
+// let bbox = BoundingBox::new(0.0, 0.0, 1.0, 1.0);
+// rtree.insert(1, bbox).unwrap();
+//
+// // Query the index
+// let query_box = BoundingBox::new(-0.5, -0.5, 2.0, 2.0);
+// let results = rtree.search(&query_box);
+// ```
+//
+// ### Spatial Operators
+//
+// Comprehensive topological and geometric operations:
+//
+// ```rust,no_run
+// use rusty_db::spatial::operators::{TopologicalOps, DistanceOps, BufferOps};
+// use rusty_db::spatial::geometry::{Geometry, Point, Coordinate};
+//
+// // Check if geometries intersect
+// # let geom1 = Geometry::Point(Point::new(Coordinate::new(0.0, 0.0)));
+// # let geom2 = Geometry::Point(Point::new(Coordinate::new(1.0, 1.0)));
+// let intersects = TopologicalOps::intersects(&geom1, &geom2).unwrap();
+//
+// // Calculate distance
+// let distance = DistanceOps::distance(&geom1, &geom2).unwrap();
+//
+// // Create buffer
+// let buffered = BufferOps::buffer(&geom1, 10.0).unwrap();
+// ```
+//
+// ### Spatial Analysis
+//
+// Advanced analytical capabilities including clustering and statistics:
+//
+// ```rust,no_run
+// use rusty_db::spatial::analysis::{DbscanClusterer, KMeansClusterer};
+// use rusty_db::spatial::geometry::Coordinate;
+//
+// let points = vec![
+//     (1, Coordinate::new(0.0, 0.0)),
+//     (2, Coordinate::new(1.0, 1.0)),
+//     (3, Coordinate::new(10.0, 10.0)),
+// ];
+//
+// // DBSCAN clustering
+// let dbscan = DbscanClusterer::new(2.0, 2);
+// let clusters = dbscan.cluster(&points);
+//
+// // K-means clustering
+// let kmeans = KMeansClusterer::new(2, 100);
+// let clusters = kmeans.cluster(&points);
+// ```
+//
+// ### Coordinate Systems
+//
+// Full support for coordinate transformations and geodetic calculations:
+//
+// ```rust,no_run
+// use rusty_db::spatial::srs::{SrsRegistry, CoordinateTransformer, well_known_srid};
+// use rusty_db::spatial::geometry::Coordinate;
+// use std::sync::Arc;
+//
+// let registry = Arc::new(SrsRegistry::new());
+// let transformer = CoordinateTransformer::new(registry);
+//
+// // Transform from WGS84 to Web Mercator
+// let wgs84_coord = Coordinate::new(-122.4194, 37.7749);
+// let mercator = transformer.transform(
+//     &wgs84_coord,
+//     well_known_srid::WGS84,
+//     well_known_srid::WEB_MERCATOR
+// ).unwrap();
+// ```
+//
+// ### Raster Support
+//
+// Raster data management and analysis:
+//
+// ```rust,no_run
+// use rusty_db::spatial::raster::{Raster, PixelType, GeoTransform, RasterAlgebra};
+//
+// // Create a raster
+// let geo_transform = GeoTransform::new(0.0, 100.0, 1.0, -1.0);
+// let raster = Raster::new(100, 100, 3, PixelType::UInt8, geo_transform);
+//
+// // Perform raster algebra
+// # let raster2 = raster.clone();
+// let _result = RasterAlgebra::add(&raster, &raster2).unwrap();
+// ```
+//
+// ### Network Analysis
+//
+// Routing and network optimization:
+//
+// ```rust,no_run
+// use rusty_db::spatial::network::{Network, Node, Edge, DijkstraRouter};
+// use rusty_db::spatial::geometry::Coordinate;
+//
+// let mut network = Network::new();
+//
+// // Add nodes
+// network.add_node(Node::new(1, Coordinate::new(0.0, 0.0)));
+// network.add_node(Node::new(2, Coordinate::new(1.0, 0.0)));
+//
+// // Add edges
+// network.add_edge(Edge::new(1, 1, 2, 1.0)).unwrap();
+//
+// // Find shortest path
+// let router = DijkstraRouter::new(&network);
+// let path = router.shortest_path(1, 2).unwrap();
+// ```
+//
+// ## Performance
+//
+// The spatial engine is optimized for performance:
+//
+// - **Spatial Indexing**: R-tree and Quadtree provide O(log n) query performance
+// - **Bulk Loading**: Efficient bulk loading using Hilbert curve ordering
+// - **Parallel Processing**: Thread-safe indexes for concurrent access
+// - **Memory Efficiency**: Zero-copy serialization where possible
+//
+// ## Oracle Spatial Compatibility
+//
+// This implementation aims for compatibility with Oracle Spatial features:
+//
+// | Feature | Oracle Spatial | RustyDB Spatial | Status |
+// |---------|---------------|-----------------|--------|
+// | Geometry Types | SDO_GEOMETRY | Geometry enum | ✓ Full |
+// | WKT/WKB | Supported | Supported | ✓ Full |
+// | Spatial Indexing | R-tree | R-tree, Quadtree | ✓ Full |
+// | Topological Ops | SDO_RELATE | TopologicalOps | ✓ Full |
+// | Distance Ops | SDO_DISTANCE | DistanceOps | ✓ Full |
+// | Coordinate Systems | SRID | SRS Registry | ✓ Full |
+// | Network Analysis | Network Data Model | Network module | ✓ Full |
+// | Raster Support | GeoRaster | Raster module | ✓ Partial |
+//
+// ## SQL Integration
+//
+// The spatial engine integrates with RustyDB's SQL layer:
+//
+// ```sql
+// -- Create a spatial table
+// CREATE TABLE locations (
+//     id INTEGER PRIMARY KEY,
+//     name VARCHAR(100),
+//     geom GEOMETRY
+// );
+//
+// -- Create spatial index
+// CREATE SPATIAL INDEX idx_locations_geom ON locations(geom);
+//
+// -- Spatial queries
+// SELECT name FROM locations
+// WHERE ST_Within(geom, ST_MakePolygon(...));
+//
+// -- Distance queries
+// SELECT name, ST_Distance(geom, ST_Point(-122.4194, 37.7749))
+// FROM locations
+// ORDER BY ST_Distance(geom, ST_Point(-122.4194, 37.7749))
+// LIMIT 10;
+// ```
+//
+// ## Best Practices
+//
+// ### Choosing an Index Type
+//
+// - **R-tree**: Best for general-purpose spatial data with varying sizes
+// - **Quadtree**: Optimal for point data with uniform distribution
+// - **Grid Index**: Fast for uniformly distributed data with known bounds
+//
+// ### Performance Optimization
+//
+// 1. Use bulk loading for large datasets
+// 2. Create spatial indexes before running queries
+// 3. Use bounding box filters before precise geometric tests
+// 4. Consider pyramid levels for large rasters
+// 5. Use appropriate coordinate systems for your data
+//
+// ### Memory Management
+//
+// ```rust,no_run
+// use rusty_db::spatial::indexes::{SpatialIndexBuilder, IndexType};
+// use rusty_db::spatial::geometry::BoundingBox;
+//
+// // Bulk loading is more memory efficient
+// let mut builder = SpatialIndexBuilder::new(
+//     IndexType::RTree { max_entries: 8, min_entries: 3 }
+// );
+//
+// for _i in 0..1000 {
+//     let bbox = BoundingBox::new(i as f64, i as f64, i as f64 + 1.0, i as f64 + 1.0);
+//     builder.add(i, bbox);
+// }
+//
+// let index = builder.build().unwrap();
+// ```
+//
+// ## Roadmap
+//
+// Planned enhancements:
+//
+// - [ ] 3D spatial indexing (R-tree with Z dimension)
+// - [ ] Curved geometry support (NURBS)
+// - [ ] Topology validation and repair
+// - [ ] Spatial ETL operations
+// - [ ] Integration with external formats (Shapefile, GeoTIFF)
+// - [ ] GPU acceleration for raster operations
+// - [ ] Distributed spatial queries
+//
+// ## References
+//
+// - Oracle Spatial and Graph Developer's Guide
+// - OGC Simple Features Specification
+// - PostGIS Documentation
+// - "Computational Geometry: Algorithms and Applications" by de Berg et al.
 
 pub mod analysis;
 pub mod geometry;
@@ -495,5 +495,3 @@ mod tests {
         assert!(caps.has_topology);
     }
 }
-
-

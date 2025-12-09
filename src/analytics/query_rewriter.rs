@@ -1,29 +1,29 @@
-//! Query Rewriting and Incremental View Maintenance
-//!
-//! This module provides query transformation and optimization through
-//! semantic-preserving rewrites, along with incremental maintenance
-//! of materialized views using delta tables.
-//!
-//! # Architecture
-//!
-//! Query rewriting applies transformation rules in priority order:
-//! - Predicate pushdown
-//! - Join reordering
-//! - Subquery elimination
-//! - View substitution
-//!
-//! Incremental view maintenance tracks changes through delta tables
-//! and applies efficient partial updates rather than full refreshes.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! use crate::analytics::query_rewriter::{QueryRewriter, RewriteRule};
-//!
-//! let mut rewriter = QueryRewriter::new();
-//! rewriter.add_rule(RewriteRule::predicate_pushdown());
-//! let optimized = rewriter.rewrite(query);
-//! ```
+// Query Rewriting and Incremental View Maintenance
+//
+// This module provides query transformation and optimization through
+// semantic-preserving rewrites, along with incremental maintenance
+// of materialized views using delta tables.
+//
+// # Architecture
+//
+// Query rewriting applies transformation rules in priority order:
+// - Predicate pushdown
+// - Join reordering
+// - Subquery elimination
+// - View substitution
+//
+// Incremental view maintenance tracks changes through delta tables
+// and applies efficient partial updates rather than full refreshes.
+//
+// # Example
+//
+// ```rust,ignore
+// use crate::analytics::query_rewriter::{QueryRewriter, RewriteRule};
+//
+// let mut rewriter = QueryRewriter::new();
+// rewriter.add_rule(RewriteRule::predicate_pushdown());
+// let optimized = rewriter.rewrite(query);
+// ```
 
 use parking_lot::RwLock;
 use std::collections::HashMap;

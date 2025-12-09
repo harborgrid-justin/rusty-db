@@ -1,25 +1,25 @@
-//! # Metering, Billing, and Quota Enforcement
-//!
-//! Resource usage tracking, per-tenant metrics, usage reports,
-//! billing integration hooks, and quota enforcement.
-//!
-//! ## Features
-//!
-//! - **Resource Usage Tracking**: Monitor all tenant resource consumption
-//! - **Per-Tenant Metrics**: Detailed metrics per tenant
-//! - **Usage Reports**: Generate billing-ready usage reports
-//! - **Billing Integration**: Hooks for external billing systems
-//! - **Quota Enforcement**: Enforce resource quotas
-//! - **Cost Estimation**: Predict costs based on usage patterns
-//! - **Usage Alerts**: Notify when approaching limits
-//!
-//! ## Architecture
-//!
-//! Metering runs continuously in the background:
-//! - Collectors: Gather metrics from various subsystems
-//! - Aggregators: Roll up metrics into time windows
-//! - Exporters: Send data to billing systems
-//! - Enforcers: Apply quota limits
+// # Metering, Billing, and Quota Enforcement
+//
+// Resource usage tracking, per-tenant metrics, usage reports,
+// billing integration hooks, and quota enforcement.
+//
+// ## Features
+//
+// - **Resource Usage Tracking**: Monitor all tenant resource consumption
+// - **Per-Tenant Metrics**: Detailed metrics per tenant
+// - **Usage Reports**: Generate billing-ready usage reports
+// - **Billing Integration**: Hooks for external billing systems
+// - **Quota Enforcement**: Enforce resource quotas
+// - **Cost Estimation**: Predict costs based on usage patterns
+// - **Usage Alerts**: Notify when approaching limits
+//
+// ## Architecture
+//
+// Metering runs continuously in the background:
+// - Collectors: Gather metrics from various subsystems
+// - Aggregators: Roll up metrics into time windows
+// - Exporters: Send data to billing systems
+// - Enforcers: Apply quota limits
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -695,5 +695,3 @@ mod tests {
         assert!(cost > 0.0);
     }
 }
-
-

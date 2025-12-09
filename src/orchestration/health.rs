@@ -1,26 +1,27 @@
-//! # Health Aggregation and Monitoring
-//!
-//! This module provides comprehensive health checking and aggregation
-//! for all RustyDB components with cascading failure prevention.
-//!
-//! ## Features
-//!
-//! - **Health Checks**: Liveness and readiness probes
-//! - **Health Aggregation**: Combine health status from multiple components
-//! - **Cascading Prevention**: Detect and prevent cascading failures
-//! - **Health History**: Track health status over time
-//! - **Custom Checks**: Define custom health check logic
-//! - **Dependency Awareness**: Consider component dependencies
-//!
-//! ## Health States
-//!
-//! ```text
-//! HEALTHY → All checks pass
-//! DEGRADED → Some non-critical checks fail
-//! UNHEALTHY → Critical checks fail
-//! UNKNOWN → Health status cannot be determined
-//! ```
+// # Health Aggregation and Monitoring
+//
+// This module provides comprehensive health checking and aggregation
+// for all RustyDB components with cascading failure prevention.
+//
+// ## Features
+//
+// - **Health Checks**: Liveness and readiness probes
+// - **Health Aggregation**: Combine health status from multiple components
+// - **Cascading Prevention**: Detect and prevent cascading failures
+// - **Health History**: Track health status over time
+// - **Custom Checks**: Define custom health check logic
+// - **Dependency Awareness**: Consider component dependencies
+//
+// ## Health States
+//
+// ```text
+// HEALTHY → All checks pass
+// DEGRADED → Some non-critical checks fail
+// UNHEALTHY → Critical checks fail
+// UNKNOWN → Health status cannot be determined
+// ```
 
+use std::time::Instant;
 use std::collections::HashMap;
 
 use std::sync::Arc;
@@ -705,5 +706,3 @@ mod tests {
         assert!(!is_cascading);
     }
 }
-
-

@@ -1,7 +1,7 @@
-//! # SQL/JSON Integration
-//!
-//! Oracle-like SQL/JSON functions including JSON_TABLE, JSON_QUERY, JSON_VALUE,
-//! JSON_EXISTS, IS JSON predicate, and JSON generation functions.
+// # SQL/JSON Integration
+//
+// Oracle-like SQL/JSON functions including JSON_TABLE, JSON_QUERY, JSON_VALUE,
+// JSON_EXISTS, IS JSON predicate, and JSON generation functions.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -803,5 +803,3 @@ mod tests {
         assert_eq!(result["city"], "NYC");
     }
 }
-
-

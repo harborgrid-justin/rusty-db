@@ -7,6 +7,8 @@
 // - Memory pressure handling
 // - Repopulation after modifications
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::collections::{HashMap, BinaryHeap};

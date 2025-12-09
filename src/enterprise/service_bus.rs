@@ -1,42 +1,43 @@
-//! # Enterprise Service Bus
-//!
-//! Provides a high-performance, async message routing system for inter-subsystem communication.
-//! Implements an event-driven architecture using Tokio channels with priority queuing,
-//! dead letter queue handling, and service discovery.
-//!
-//! ## Features
-//!
-//! - **Async Message Routing**: Non-blocking message delivery between subsystems
-//! - **Priority Queuing**: Critical operations get higher priority
-//! - **Dead Letter Queue**: Failed messages are captured for analysis
-//! - **Service Discovery**: Dynamic registration and discovery of services
-//! - **Message Patterns**: Support for pub/sub, request/reply, and fire-and-forget
-//! - **Backpressure Handling**: Automatic flow control to prevent system overload
-//!
-//! ## Example
-//!
-//! ```rust,no_run
-//! use rusty_db::enterprise::service_bus::{ServiceBus, Message, MessagePriority};
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!     let bus = ServiceBus::new(1000);
-//!
-//!     // Subscribe to events
-//!     let mut receiver = bus.subscribe("transaction.commit").await;
-//!
-//!     // Publish message
-//!     let msg = Message::new("transaction.commit", vec![1, 2, 3])
-//!         .with_priority(MessagePriority::High);
-//!     bus.publish(msg).await.unwrap();
-//!
-//!     // Receive message
-//!     if let Some(msg) = receiver.recv().await {
-//!         println!("Received: {:?}", msg);
-//!     }
-//! }
-//! ```
+// # Enterprise Service Bus
+//
+// Provides a high-performance, async message routing system for inter-subsystem communication.
+// Implements an event-driven architecture using Tokio channels with priority queuing,
+// dead letter queue handling, and service discovery.
+//
+// ## Features
+//
+// - **Async Message Routing**: Non-blocking message delivery between subsystems
+// - **Priority Queuing**: Critical operations get higher priority
+// - **Dead Letter Queue**: Failed messages are captured for analysis
+// - **Service Discovery**: Dynamic registration and discovery of services
+// - **Message Patterns**: Support for pub/sub, request/reply, and fire-and-forget
+// - **Backpressure Handling**: Automatic flow control to prevent system overload
+//
+// ## Example
+//
+// ```rust,no_run
+// use rusty_db::enterprise::service_bus::{ServiceBus, Message, MessagePriority};
+//
+// #[tokio::main]
+// async fn main() {
+//     let bus = ServiceBus::new(1000);
+//
+//     // Subscribe to events
+//     let mut receiver = bus.subscribe("transaction.commit").await;
+//
+//     // Publish message
+//     let msg = Message::new("transaction.commit", vec![1, 2, 3])
+//         .with_priority(MessagePriority::High);
+//     bus.publish(msg).await.unwrap();
+//
+//     // Receive message
+//     if let Some(msg) = receiver.recv().await {
+//         println!("Received: {:?}", msg);
+//     }
+// }
+// ```
 
+use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
@@ -662,5 +663,3 @@ mod tests {
         assert_eq!(dlq[0].message.payload, vec![1, 2, 3]);
     }
 }
-
-

@@ -1,12 +1,14 @@
-//! Adaptive Query Execution - Runtime plan adaptation and correction
-//!
-//! Implements Oracle-like adaptive query execution with:
-//! - Runtime statistics feedback
-//! - Adaptive join methods
-//! - Automatic plan correction
-//! - Cardinality feedback loop
-//! - SQL Plan Directives
+// Adaptive Query Execution - Runtime plan adaptation and correction
+//
+// Implements Oracle-like adaptive query execution with:
+// - Runtime statistics feedback
+// - Adaptive join methods
+// - Automatic plan correction
+// - Cardinality feedback loop
+// - SQL Plan Directives
 
+use std::time::SystemTime;
+use std::time::Instant;
 use crate::common::{TableId, IndexId, Value};
 use crate::error::Result;
 use crate::optimizer_pro::{
@@ -860,5 +862,3 @@ mod tests {
         );
     }
 }
-
-

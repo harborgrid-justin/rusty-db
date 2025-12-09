@@ -3,6 +3,8 @@
 // Implements continuous query processing with incremental view maintenance,
 // checkpointing, state management, and query optimization for streaming data.
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use super::{Event, EventValue, StreamState, Watermark};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

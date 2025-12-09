@@ -1,44 +1,46 @@
-//! # RustyDB Core Integration Layer
-//!
-//! Comprehensive integration and orchestration layer that coordinates all core database subsystems.
-//! This module provides the central initialization, configuration, and lifecycle management for:
-//!
-//! - Buffer pool initialization and management
-//! - I/O thread pool setup and configuration
-//! - Worker thread pools for query execution
-//! - Memory arena initialization and allocation
-//! - Cross-cutting concerns (metrics, tracing, health checks)
-//! - Graceful startup and shutdown coordination
-//!
-//! ## Architecture
-//!
-//! The core layer implements a hierarchical initialization model:
-//!
-//! 1. **Bootstrap Phase**: Load configuration, initialize logging
-//! 2. **Foundation Phase**: Memory arenas, I/O subsystem
-//! 3. **Storage Phase**: Buffer pool, disk manager, WAL
-//! 4. **Execution Phase**: Worker pools, query engine
-//! 5. **Service Phase**: Network listeners, monitoring
-//!
-//! ## Usage
-//!
-//! ```rust,no_run
-//! use rusty_db::core::{DatabaseCore, CoreConfig};
-//!
-//! #[tokio::main]
-//! async fn main() -> rusty_db::Result<()> {
-//!     let config = CoreConfig::default();
-//!     let core = DatabaseCore::initialize(config).await?;
-//!
-//!     // Database is now ready
-//!     core.run().await?;
-//!
-//!     // Graceful shutdown
-//!     core.shutdown().await?;
-//!     Ok(())
-//! }
-//! ```
+// # RustyDB Core Integration Layer
+//
+// Comprehensive integration and orchestration layer that coordinates all core database subsystems.
+// This module provides the central initialization, configuration, and lifecycle management for:
+//
+// - Buffer pool initialization and management
+// - I/O thread pool setup and configuration
+// - Worker thread pools for query execution
+// - Memory arena initialization and allocation
+// - Cross-cutting concerns (metrics, tracing, health checks)
+// - Graceful startup and shutdown coordination
+//
+// ## Architecture
+//
+// The core layer implements a hierarchical initialization model:
+//
+// 1. **Bootstrap Phase**: Load configuration, initialize logging
+// 2. **Foundation Phase**: Memory arenas, I/O subsystem
+// 3. **Storage Phase**: Buffer pool, disk manager, WAL
+// 4. **Execution Phase**: Worker pools, query engine
+// 5. **Service Phase**: Network listeners, monitoring
+//
+// ## Usage
+//
+// ```rust,no_run
+// use rusty_db::core::{DatabaseCore, CoreConfig};
+//
+// #[tokio::main]
+// async fn main() -> rusty_db::Result<()> {
+//     let config = CoreConfig::default();
+//     let core = DatabaseCore::initialize(config).await?;
+//
+//     // Database is now ready
+//     core.run().await?;
+//
+//     // Graceful shutdown
+//     core.shutdown().await?;
+//     Ok(())
+// }
+// ```
 
+use std::time::Instant;
+use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration};
@@ -1117,5 +1119,3 @@ mod tests {
         assert_eq!(core.get_state(), CoreState::Running);
     }
 }
-
-

@@ -1,34 +1,35 @@
-//! # Dependency Graph Resolution
-//!
-//! This module provides dependency graph resolution with cycle detection
-//! for managing complex service dependencies in RustyDB.
-//!
-//! ## Features
-//!
-//! - **Dependency Tracking**: Build and maintain dependency graphs
-//! - **Cycle Detection**: Detect and prevent circular dependencies
-//! - **Topological Sorting**: Determine correct initialization order
-//! - **Dependency Validation**: Verify all dependencies can be satisfied
-//! - **Impact Analysis**: Determine which services are affected by changes
-//! - **Visualization**: Generate dependency graph representations
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌────────────────────────────────────────────────┐
-//! │        Dependency Graph                        │
-//! ├────────────────────────────────────────────────┤
-//! │                                                │
-//! │  Service A → [Service B, Service C]           │
-//! │  Service B → [Service D]                      │
-//! │  Service C → [Service D]                      │
-//! │  Service D → []                               │
-//! │                                                │
-//! │  Initialization Order: D, B, C, A             │
-//! │                                                │
-//! └────────────────────────────────────────────────┘
-//! ```
+// # Dependency Graph Resolution
+//
+// This module provides dependency graph resolution with cycle detection
+// for managing complex service dependencies in RustyDB.
+//
+// ## Features
+//
+// - **Dependency Tracking**: Build and maintain dependency graphs
+// - **Cycle Detection**: Detect and prevent circular dependencies
+// - **Topological Sorting**: Determine correct initialization order
+// - **Dependency Validation**: Verify all dependencies can be satisfied
+// - **Impact Analysis**: Determine which services are affected by changes
+// - **Visualization**: Generate dependency graph representations
+//
+// ## Architecture
+//
+// ```text
+// ┌────────────────────────────────────────────────┐
+// │        Dependency Graph                        │
+// ├────────────────────────────────────────────────┤
+// │                                                │
+// │  Service A → [Service B, Service C]           │
+// │  Service B → [Service D]                      │
+// │  Service C → [Service D]                      │
+// │  Service D → []                               │
+// │                                                │
+// │  Initialization Order: D, B, C, A             │
+// │                                                │
+// └────────────────────────────────────────────────┘
+// ```
 
+use std::collections::HashSet;
 use std::collections::{HashMap};
 
 
@@ -703,5 +704,3 @@ mod tests {
         assert!(!stats.has_cycles);
     }
 }
-
-

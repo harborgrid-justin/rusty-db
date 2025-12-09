@@ -1,21 +1,21 @@
-//! Write-Ahead Log (WAL) management.
-//!
-//! This module provides the WAL infrastructure for ensuring durability
-//! and enabling crash recovery using the ARIES protocol.
-//!
-//! # Key Concepts
-//!
-//! - **Write-Ahead Logging**: All modifications are logged before being applied.
-//! - **Log Sequence Number (LSN)**: Monotonically increasing identifier for log entries.
-//! - **Force-at-Commit**: Log is flushed to disk before commit returns.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let wal = WALManager::new("./wal/", 100, true)?;
-//! let lsn = wal.append(WALEntry::Begin { txn_id: 1, ... })?;
-//! wal.flush()?;
-//! ```
+// Write-Ahead Log (WAL) management.
+//
+// This module provides the WAL infrastructure for ensuring durability
+// and enabling crash recovery using the ARIES protocol.
+//
+// # Key Concepts
+//
+// - **Write-Ahead Logging**: All modifications are logged before being applied.
+// - **Log Sequence Number (LSN)**: Monotonically increasing identifier for log entries.
+// - **Force-at-Commit**: Log is flushed to disk before commit returns.
+//
+// # Example
+//
+// ```rust,ignore
+// let wal = WALManager::new("./wal/", 100, true)?;
+// let lsn = wal.append(WALEntry::Begin { txn_id: 1, ... })?;
+// wal.flush()?;
+// ```
 
 use std::collections::VecDeque;
 use std::fs::{File, OpenOptions};

@@ -1,31 +1,32 @@
-//! Data Profiling and Column Analysis
-//!
-//! This module provides comprehensive data profiling capabilities for analyzing
-//! column characteristics, inferring data types, and building bitmap indexes
-//! for efficient query processing.
-//!
-//! # Architecture
-//!
-//! The profiler follows a streaming analysis pattern:
-//! - Single-pass column scanning for basic statistics
-//! - Pattern-based type inference
-//! - Bitmap index construction for low-cardinality columns
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! use crate::analytics::data_profiler::{DataProfiler, InferredType};
-//!
-//! let mut profiler = DataProfiler::new();
-//! let profile = profiler.profile_column("user_id", &values);
-//!
-//! match profile.inferred_type {
-//!     InferredType::Integer => println!("Column contains integers"),
-//!     InferredType::Email => println!("Column contains email addresses"),
-//!     _ => {}
-//! }
-//! ```
+// Data Profiling and Column Analysis
+//
+// This module provides comprehensive data profiling capabilities for analyzing
+// column characteristics, inferring data types, and building bitmap indexes
+// for efficient query processing.
+//
+// # Architecture
+//
+// The profiler follows a streaming analysis pattern:
+// - Single-pass column scanning for basic statistics
+// - Pattern-based type inference
+// - Bitmap index construction for low-cardinality columns
+//
+// # Example
+//
+// ```rust,ignore
+// use crate::analytics::data_profiler::{DataProfiler, InferredType};
+//
+// let mut profiler = DataProfiler::new();
+// let profile = profiler.profile_column("user_id", &values);
+//
+// match profile.inferred_type {
+//     InferredType::Integer => println!("Column contains integers"),
+//     InferredType::Email => println!("Column contains email addresses"),
+//     _ => {}
+// }
+// ```
 
+use std::collections::HashSet;
 use std::collections::HashMap;
 
 /// Inferred data type from column analysis.

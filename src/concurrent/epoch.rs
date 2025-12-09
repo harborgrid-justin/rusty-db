@@ -7,6 +7,7 @@
 // by Hoffman et al. It allows safe reclamation of memory in lock-free structures
 // by tracking which threads are accessing which epoch.
 
+use std::sync::Mutex;
 use std::cell::{Cell, RefCell};
 use std::marker::PhantomData;
 use std::mem::{self};

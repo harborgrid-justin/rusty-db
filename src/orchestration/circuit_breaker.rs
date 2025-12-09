@@ -1,39 +1,40 @@
-//! # Circuit Breaker Pattern Implementation
-//!
-//! This module provides a robust circuit breaker implementation for fault tolerance
-//! and preventing cascading failures in RustyDB.
-//!
-//! ## Features
-//!
-//! - **State Management**: Closed, Open, and Half-Open states
-//! - **Failure Tracking**: Configurable failure thresholds
-//! - **Automatic Recovery**: Half-open state for testing recovery
-//! - **Timeout Detection**: Identify slow calls as failures
-//! - **Metrics Collection**: Track success/failure rates
-//! - **Custom Fallbacks**: Define fallback behavior when circuit is open
-//!
-//! ## State Transitions
-//!
-//! ```text
-//! ┌─────────┐
-//! │ CLOSED  │ ◄──────────┐
-//! └────┬────┘            │
-//!      │                 │
-//!      │ Failures >= Threshold
-//!      │                 │
-//!      ▼                 │
-//! ┌─────────┐       Success
-//! │  OPEN   │            │
-//! └────┬────┘            │
-//!      │                 │
-//!      │ After Timeout   │
-//!      │                 │
-//!      ▼                 │
-//! ┌──────────┐           │
-//! │HALF-OPEN │───────────┘
-//! └──────────┘
-//! ```
+// # Circuit Breaker Pattern Implementation
+//
+// This module provides a robust circuit breaker implementation for fault tolerance
+// and preventing cascading failures in RustyDB.
+//
+// ## Features
+//
+// - **State Management**: Closed, Open, and Half-Open states
+// - **Failure Tracking**: Configurable failure thresholds
+// - **Automatic Recovery**: Half-open state for testing recovery
+// - **Timeout Detection**: Identify slow calls as failures
+// - **Metrics Collection**: Track success/failure rates
+// - **Custom Fallbacks**: Define fallback behavior when circuit is open
+//
+// ## State Transitions
+//
+// ```text
+// ┌─────────┐
+// │ CLOSED  │ ◄──────────┐
+// └────┬────┘            │
+//      │                 │
+//      │ Failures >= Threshold
+//      │                 │
+//      ▼                 │
+// ┌─────────┐       Success
+// │  OPEN   │            │
+// └────┬────┘            │
+//      │                 │
+//      │ After Timeout   │
+//      │                 │
+//      ▼                 │
+// ┌──────────┐           │
+// │HALF-OPEN │───────────┘
+// └──────────┘
+// ```
 
+use std::time::Instant;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -656,5 +657,3 @@ mod tests {
         assert!((success_rate - 0.666).abs() < 0.01);
     }
 }
-
-

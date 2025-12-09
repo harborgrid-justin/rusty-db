@@ -1,24 +1,24 @@
-//! # Plugin Architecture
-//!
-//! This module provides a comprehensive plugin system for extending RustyDB
-//! functionality without modifying core code.
-//!
-//! ## Features
-//!
-//! - **Dynamic Loading**: Load plugins at runtime
-//! - **Lifecycle Management**: Initialize, start, stop plugins
-//! - **Dependency Resolution**: Handle plugin dependencies
-//! - **Sandboxing**: Isolate plugin execution
-//! - **Event Hooks**: Subscribe to system events
-//! - **Configuration**: Per-plugin configuration
-//!
-//! ## Plugin Lifecycle
-//!
-//! ```text
-//! REGISTERED → INITIALIZED → STARTED → RUNNING
-//!                                ↓
-//!                            STOPPED → UNLOADED
-//! ```
+// # Plugin Architecture
+//
+// This module provides a comprehensive plugin system for extending RustyDB
+// functionality without modifying core code.
+//
+// ## Features
+//
+// - **Dynamic Loading**: Load plugins at runtime
+// - **Lifecycle Management**: Initialize, start, stop plugins
+// - **Dependency Resolution**: Handle plugin dependencies
+// - **Sandboxing**: Isolate plugin execution
+// - **Event Hooks**: Subscribe to system events
+// - **Configuration**: Per-plugin configuration
+//
+// ## Plugin Lifecycle
+//
+// ```text
+// REGISTERED → INITIALIZED → STARTED → RUNNING
+//                                ↓
+//                            STOPPED → UNLOADED
+// ```
 
 use std::any::Any;
 use std::collections::HashMap;
@@ -752,5 +752,3 @@ mod tests {
         assert_eq!(received.source, "test-source");
     }
 }
-
-

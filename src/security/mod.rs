@@ -1,76 +1,76 @@
-//! # Security Module
-//!
-//! Comprehensive enterprise-grade security system for RustyDB providing authentication,
-//! authorization, encryption, auditing, and mandatory access control.
-//!
-//! ## Architecture
-//!
-//! The security module is organized into seven core submodules:
-//!
-//! ### 1. Role-Based Access Control (RBAC)
-//! Hierarchical role definitions with inheritance, dynamic activation, and separation
-//! of duties constraints. See [`rbac`] module for details.
-//!
-//! ### 2. Fine-Grained Access Control (FGAC)
-//! Row-level security policies, column-level masking, virtual private database patterns,
-//! and predicate injection. See [`fgac`] module for details.
-//!
-//! ### 3. Encryption Services
-//! Transparent Data Encryption (TDE), column-level encryption, key rotation without
-//! downtime, and HSM integration. See [`encryption`] module for details.
-//!
-//! ### 4. Audit System
-//! Statement and object-level auditing with fine-grained conditions and tamper
-//! protection. See [`audit`] module for details.
-//!
-//! ### 5. Authentication Framework
-//! Password policies, multi-factor authentication, LDAP/AD integration, and OAuth2/OIDC
-//! support. See [`authentication`] module for details.
-//!
-//! ### 6. Privilege Management
-//! System and object privileges, GRANT/REVOKE operations with admin option, and
-//! privilege inheritance. See [`privileges`] module for details.
-//!
-//! ### 7. Security Labels
-//! Mandatory access control, multi-level security, compartment-based security, and
-//! label-based filtering. See [`labels`] module for details.
-//!
-//! ### 8. Buffer Overflow Protection
-//! Comprehensive bounds checking, stack canaries, integer overflow guards, and safe
-//! memory operations. See [`bounds_protection`] module for details.
-//!
-//! ### 9. Secure Garbage Collection
-//! Memory sanitization, secure deallocation, cryptographic erasure, and heap spray
-//! prevention. See [`secure_gc`] module for details.
-//!
-//! ## Usage Example
-//!
-//! ```rust,no_run
-//! use rusty_db::security::*;
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! // Create integrated security manager
-//! let security = IntegratedSecurityManager::new();
-//!
-//! // Authenticate user
-//! let session = security.authenticate("username", "password")?;
-//!
-//! // Check permissions
-//! let can_select = security.check_permission(
-//!     &session.session_id,
-//!     "SELECT",
-//!     "employees",
-//! )?;
-//!
-//! // Apply row-level security
-//! let filtered_rows = security.filter_rows(
-//!     &session.session_id,
-//!     "employees",
-//!     vec!["row1".to_string(), "row2".to_string()],
-//! )?;
-//! # Ok(())
-//! # }
-//! ```
+// # Security Module
+//
+// Comprehensive enterprise-grade security system for RustyDB providing authentication,
+// authorization, encryption, auditing, and mandatory access control.
+//
+// ## Architecture
+//
+// The security module is organized into seven core submodules:
+//
+// ### 1. Role-Based Access Control (RBAC)
+// Hierarchical role definitions with inheritance, dynamic activation, and separation
+// of duties constraints. See [`rbac`] module for details.
+//
+// ### 2. Fine-Grained Access Control (FGAC)
+// Row-level security policies, column-level masking, virtual private database patterns,
+// and predicate injection. See [`fgac`] module for details.
+//
+// ### 3. Encryption Services
+// Transparent Data Encryption (TDE), column-level encryption, key rotation without
+// downtime, and HSM integration. See [`encryption`] module for details.
+//
+// ### 4. Audit System
+// Statement and object-level auditing with fine-grained conditions and tamper
+// protection. See [`audit`] module for details.
+//
+// ### 5. Authentication Framework
+// Password policies, multi-factor authentication, LDAP/AD integration, and OAuth2/OIDC
+// support. See [`authentication`] module for details.
+//
+// ### 6. Privilege Management
+// System and object privileges, GRANT/REVOKE operations with admin option, and
+// privilege inheritance. See [`privileges`] module for details.
+//
+// ### 7. Security Labels
+// Mandatory access control, multi-level security, compartment-based security, and
+// label-based filtering. See [`labels`] module for details.
+//
+// ### 8. Buffer Overflow Protection
+// Comprehensive bounds checking, stack canaries, integer overflow guards, and safe
+// memory operations. See [`bounds_protection`] module for details.
+//
+// ### 9. Secure Garbage Collection
+// Memory sanitization, secure deallocation, cryptographic erasure, and heap spray
+// prevention. See [`secure_gc`] module for details.
+//
+// ## Usage Example
+//
+// ```rust,no_run
+// use rusty_db::security::*;
+//
+// # fn example() -> rusty_db::Result<()> {
+// // Create integrated security manager
+// let security = IntegratedSecurityManager::new();
+//
+// // Authenticate user
+// let session = security.authenticate("username", "password")?;
+//
+// // Check permissions
+// let can_select = security.check_permission(
+//     &session.session_id,
+//     "SELECT",
+//     "employees",
+// )?;
+//
+// // Apply row-level security
+// let filtered_rows = security.filter_rows(
+//     &session.session_id,
+//     "employees",
+//     vec!["row1".to_string(), "row2".to_string()],
+// )?;
+// # Ok(())
+// # }
+// ```
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -590,5 +590,3 @@ pub use security_core::{
     SecurityPostureScore, PenTestReport, PenTestSummary,
     DashboardView, ExecutiveSummary, SecurityStatus,
 };
-
-

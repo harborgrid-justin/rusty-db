@@ -1,7 +1,8 @@
-//! # Collection Management
-//!
-//! Oracle SODA-like collection management with schema validation, statistics, and metadata.
+// # Collection Management
+//
+// Oracle SODA-like collection management with schema validation, statistics, and metadata.
 
+use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
@@ -965,5 +966,3 @@ mod tests {
         assert!(!manager.collection_exists("users"));
     }
 }
-
-

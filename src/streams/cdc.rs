@@ -1,9 +1,12 @@
-//! # Change Data Capture (CDC) Engine
-//!
-//! Provides enterprise-grade change data capture from the Write-Ahead Log.
-//! Captures INSERT, UPDATE, and DELETE operations with before/after images,
-//! column-level tracking, and low-latency event delivery.
+// # Change Data Capture (CDC) Engine
+//
+// Provides enterprise-grade change data capture from the Write-Ahead Log.
+// Captures INSERT, UPDATE, and DELETE operations with before/after images,
+// column-level tracking, and low-latency event delivery.
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::Duration;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
@@ -1020,5 +1023,3 @@ mod tests {
         assert_eq!(engine.get_state(), CaptureState::Stopped);
     }
 }
-
-

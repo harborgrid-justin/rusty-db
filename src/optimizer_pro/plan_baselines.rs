@@ -1,12 +1,14 @@
-//! SQL Plan Management - Plan baselines and stability
-//!
-//! Implements Oracle-like SQL Plan Management with:
-//! - SQL Plan Baselines
-//! - Plan capture and evolution
-//! - Plan stability guarantees
-//! - Plan history and comparison
-//! - Automatic plan regression detection
+// SQL Plan Management - Plan baselines and stability
+//
+// Implements Oracle-like SQL Plan Management with:
+// - SQL Plan Baselines
+// - Plan capture and evolution
+// - Plan stability guarantees
+// - Plan history and comparison
+// - Automatic plan regression detection
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use crate::error::Result;
 use crate::optimizer_pro::{PhysicalPlan, PlanId, QueryFingerprint};
 use std::collections::HashMap;
@@ -704,5 +706,3 @@ mod tests {
         }
     }
 }
-
-

@@ -1,8 +1,9 @@
-//! # Async I/O Engine
-//!
-//! Core asynchronous I/O engine providing completion-based I/O abstraction
-//! across Windows IOCP and Unix io_uring.
+// # Async I/O Engine
+//
+// Core asynchronous I/O engine providing completion-based I/O abstraction
+// across Windows IOCP and Unix io_uring.
 
+use std::time::Instant;
 use crate::error::Result;
 use std::sync::atomic::{AtomicU8, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -707,5 +708,3 @@ mod tests {
         assert!(valid.is_valid());
     }
 }
-
-

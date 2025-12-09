@@ -1,10 +1,10 @@
-//! OLAP Operations and Multidimensional Analysis
-//!
-//! This module provides OLAP (Online Analytical Processing) capabilities:
-//!
-//! - **Cube Building**: Create multidimensional cubes
-//! - **OLAP Operations**: Drill-down, roll-up, slice, dice
-//! - **Aggregation Cubes**: Pre-computed aggregates
+// OLAP Operations and Multidimensional Analysis
+//
+// This module provides OLAP (Online Analytical Processing) capabilities:
+//
+// - **Cube Building**: Create multidimensional cubes
+// - **OLAP Operations**: Drill-down, roll-up, slice, dice
+// - **Aggregation Cubes**: Pre-computed aggregates
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -20,10 +20,10 @@ use super::aggregates::AggregateFunction;
 pub struct OlapCubeBuilder {
     /// Dimension columns
     dimensions: Vec<String>,
-    
+
     /// Measure columns
     measures: Vec<String>,
-    
+
     /// Aggregation functions for measures
     aggregations: Vec<AggregateFunction>,
 }
@@ -37,30 +37,30 @@ impl OlapCubeBuilder {
             aggregations: Vec::new(),
         }
     }
-    
+
     /// Add a dimension to the cube.
     pub fn add_dimension(&mut self, dimension: String) -> &mut Self {
         self.dimensions.push(dimension);
         self
     }
-    
+
     /// Add a measure with an aggregation function.
     pub fn add_measure(&mut self, measure: String, aggregation: AggregateFunction) -> &mut Self {
         self.measures.push(measure);
         self.aggregations.push(aggregation);
         self
     }
-    
+
     /// Get the dimensions.
     pub fn dimensions(&self) -> &[String] {
         &self.dimensions
     }
-    
+
     /// Get the measures.
     pub fn measures(&self) -> &[String] {
         &self.measures
     }
-    
+
     /// Build the cube from data.
     ///
     /// In production, this would compute aggregates for all dimension combinations.
@@ -89,10 +89,10 @@ impl Default for OlapCubeBuilder {
 pub struct OlapCube {
     /// Dimension column names
     dimensions: Vec<String>,
-    
+
     /// Measure column names
     measures: Vec<String>,
-    
+
     /// Cube cells: dimension values -> measure values
     cells: HashMap<Vec<String>, Vec<f64>>,
 }
@@ -106,12 +106,12 @@ impl OlapCube {
             cells: HashMap::new(),
         }
     }
-    
+
     /// Insert a cell value.
     pub fn insert_cell(&mut self, dimension_values: Vec<String>, measure_values: Vec<f64>) {
         self.cells.insert(dimension_values, measure_values);
     }
-    
+
     /// Query the cube with dimension filters.
     pub fn query(&self, dimension_filters: &HashMap<String, String>) -> Vec<Vec<f64>> {
         self.cells
@@ -130,7 +130,7 @@ impl OlapCube {
             .map(|(_, values)| values.clone())
             .collect()
     }
-    
+
     /// Drill down to a more detailed level.
     ///
     /// Returns a new cube with the additional dimension.
@@ -142,7 +142,7 @@ impl OlapCube {
             cells: self.cells.clone(),
         })
     }
-    
+
     /// Roll up to a less detailed level.
     ///
     /// Returns a new cube with aggregated values.
@@ -154,12 +154,12 @@ impl OlapCube {
             cells: HashMap::new(),
         })
     }
-    
+
     /// Slice the cube by fixing one dimension value.
     pub fn slice(&self, dimension: &str, value: &str) -> Result<OlapCube> {
         let mut filters = HashMap::new();
         filters.insert(dimension.to_string(), value.to_string());
-        
+
         let filtered_cells: HashMap<_, _> = self
             .cells
             .iter()
@@ -172,14 +172,14 @@ impl OlapCube {
             })
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
-        
+
         Ok(OlapCube {
             dimensions: self.dimensions.clone(),
             measures: self.measures.clone(),
             cells: filtered_cells,
         })
     }
-    
+
     /// Dice the cube by filtering on multiple dimensions.
     pub fn dice(&self, filters: &HashMap<String, Vec<String>>) -> Result<OlapCube> {
         let filtered_cells: HashMap<_, _> = self
@@ -199,29 +199,29 @@ impl OlapCube {
             })
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
-        
+
         Ok(OlapCube {
             dimensions: self.dimensions.clone(),
             measures: self.measures.clone(),
             cells: filtered_cells,
         })
     }
-    
+
     /// Get a specific cell value.
     pub fn get_cell(&self, coordinates: &[String]) -> Option<&Vec<f64>> {
         self.cells.get(coordinates)
     }
-    
+
     /// Get the total number of cells.
     pub fn total_cells(&self) -> usize {
         self.cells.len()
     }
-    
+
     /// Get the dimensions.
     pub fn dimensions(&self) -> &[String] {
         &self.dimensions
     }
-    
+
     /// Get the measures.
     pub fn measures(&self) -> &[String] {
         &self.measures
@@ -236,10 +236,10 @@ impl OlapCube {
 pub struct MultidimensionalAggregator {
     /// Dimension column indices
     dimensions: Vec<usize>,
-    
+
     /// Measure column indices
     measures: Vec<usize>,
-    
+
     /// Aggregation functions
     aggregations: Vec<AggregateFunction>,
 }
@@ -257,11 +257,11 @@ impl MultidimensionalAggregator {
             aggregations,
         }
     }
-    
+
     /// Compute a CUBE (all possible groupings).
     pub fn compute_cube(&self, data: &[Vec<String>]) -> AggregationCube {
         let mut cube = AggregationCube::new();
-        
+
         // Generate all possible dimension combinations (power set)
         let num_dims = self.dimensions.len();
         for _i in 0..(1 << num_dims) {
@@ -271,26 +271,26 @@ impl MultidimensionalAggregator {
                     active_dims.push(self.dimensions[j]);
                 }
             }
-            
+
             self.aggregate_by_dimensions(data, &active_dims, &mut cube);
         }
-        
+
         cube
     }
-    
+
     /// Compute a ROLLUP (hierarchical groupings).
     pub fn compute_rollup(&self, data: &[Vec<String>]) -> AggregationCube {
         let mut cube = AggregationCube::new();
-        
+
         // Generate prefix combinations
         for _i in 0..=self.dimensions.len() {
             let active_dims: Vec<_> = self.dimensions[0..i].to_vec();
             self.aggregate_by_dimensions(data, &active_dims, &mut cube);
         }
-        
+
         cube
     }
-    
+
     /// Aggregate by specific dimensions.
     fn aggregate_by_dimensions(
         &self,
@@ -300,7 +300,7 @@ impl MultidimensionalAggregator {
     ) {
         // Group data by dimension values
         let mut groups: HashMap<Vec<String>, Vec<&Vec<String>>> = HashMap::new();
-        
+
         for row in data {
             let key: Vec<String> = dim_indices
                 .iter()
@@ -308,18 +308,18 @@ impl MultidimensionalAggregator {
                 .collect();
             groups.entry(key).or_default().push(row);
         }
-        
+
         // Compute aggregates for each group
         for (key, group) in groups {
             let mut values = Vec::new();
-            
+
             for (measure_idx, agg) in self.measures.iter().zip(&self.aggregations) {
                 let measure_values: Vec<f64> = group
                     .iter()
                     .filter_map(|row| row.get(*measure_idx))
                     .filter_map(|v| v.parse::<f64>().ok())
                     .collect();
-                
+
                 let agg_value = match agg {
                     AggregateFunction::Sum => measure_values.iter().sum(),
                     AggregateFunction::Count => measure_values.len() as f64,
@@ -338,10 +338,10 @@ impl MultidimensionalAggregator {
                     }
                     _ => 0.0,
                 };
-                
+
                 values.push(agg_value);
             }
-            
+
             cube.cells.insert(key, values);
         }
     }
@@ -365,17 +365,17 @@ impl AggregationCube {
             cells: HashMap::new(),
         }
     }
-    
+
     /// Get a cell value.
     pub fn get_cell(&self, coordinates: &[String]) -> Option<&Vec<f64>> {
         self.cells.get(coordinates)
     }
-    
+
     /// Get the total number of cells.
     pub fn total_cells(&self) -> usize {
         self.cells.len()
     }
-    
+
     /// Get all cells.
     pub fn all_cells(&self) -> impl Iterator<Item = (&Vec<String>, &Vec<f64>)> {
         self.cells.iter()
@@ -395,7 +395,7 @@ impl Default for AggregationCube {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_cube_builder() {
         let mut builder = OlapCubeBuilder::new();
@@ -403,44 +403,44 @@ mod tests {
             .add_dimension("region".to_string())
             .add_dimension("product".to_string())
             .add_measure("sales".to_string(), AggregateFunction::Sum);
-        
+
         assert_eq!(builder.dimensions().len(), 2);
         assert_eq!(builder.measures().len(), 1);
     }
-    
+
     #[test]
     fn test_olap_cube_slice() {
         let mut cube = OlapCube::new(
             vec!["region".to_string(), "product".to_string()],
             vec!["sales".to_string()],
         );
-        
+
         cube.insert_cell(vec!["East".to_string(), "A".to_string()], vec![100.0]);
         cube.insert_cell(vec!["West".to_string(), "A".to_string()], vec![200.0]);
         cube.insert_cell(vec!["East".to_string(), "B".to_string()], vec![150.0]);
-        
+
         let sliced = cube.slice("region", "East").unwrap();
         assert_eq!(sliced.total_cells(), 2);
     }
-    
+
     #[test]
     fn test_olap_cube_query() {
         let mut cube = OlapCube::new(
             vec!["region".to_string()],
             vec!["sales".to_string()],
         );
-        
+
         cube.insert_cell(vec!["East".to_string()], vec![100.0]);
         cube.insert_cell(vec!["West".to_string()], vec![200.0]);
-        
+
         let mut filters = HashMap::new();
         filters.insert("region".to_string(), "East".to_string());
-        
+
         let results = cube.query(&filters);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0][0], 100.0);
     }
-    
+
     #[test]
     fn test_multidimensional_aggregator() {
         let aggregator = MultidimensionalAggregator::new(
@@ -448,24 +448,24 @@ mod tests {
             vec![1], // Measure column
             vec![AggregateFunction::Sum],
         );
-        
+
         let data = vec![
             vec!["A".to_string(), "10".to_string()],
             vec!["A".to_string(), "20".to_string()],
             vec!["B".to_string(), "30".to_string()],
         ];
-        
+
         let cube = aggregator.compute_cube(&data);
-        
+
         // Should have cells for: {}, {A}, {B}
         assert!(cube.total_cells() > 0);
     }
-    
+
     #[test]
     fn test_aggregation_cube() {
         let mut cube = AggregationCube::new();
         cube.cells.insert(vec!["A".to_string()], vec![100.0]);
-        
+
         let cell = cube.get_cell(&vec!["A".to_string()]);
         assert!(cell.is_some());
         assert_eq!(cell.unwrap()[0], 100.0);

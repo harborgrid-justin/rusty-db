@@ -1,13 +1,14 @@
-//! Query Transformations - SQL query rewriting and optimization
-//!
-//! Implements Oracle-like query transformations:
-//! - Predicate pushdown
-//! - Join predicate pushdown
-//! - OR expansion
-//! - Star transformation
-//! - Materialized view rewrite
-//! - Common subexpression elimination
+// Query Transformations - SQL query rewriting and optimization
+//
+// Implements Oracle-like query transformations:
+// - Predicate pushdown
+// - Join predicate pushdown
+// - OR expansion
+// - Star transformation
+// - Materialized view rewrite
+// - Common subexpression elimination
 
+use std::collections::HashSet;
 use crate::common::TableId;
 use crate::error::Result;
 use crate::optimizer_pro::{Expression, BinaryOperator, UnaryOperator, Query};
@@ -809,5 +810,3 @@ mod tests {
         assert_eq!(tables.len(), 1);
     }
 }
-
-

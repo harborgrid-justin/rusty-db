@@ -1,93 +1,93 @@
-//! # Multi-Tenant Architecture Engine
-//!
-//! Oracle-compatible Pluggable Database (PDB) and Container Database (CDB) architecture
-//! with complete tenant isolation, resource governance, hot cloning, and self-service provisioning.
-//!
-//! ## Overview
-//!
-//! This module implements a comprehensive multi-tenant database architecture inspired by
-//! Oracle's Multitenant option, allowing multiple isolated database instances (PDBs) to
-//! run within a single container database (CDB) while sharing common infrastructure.
-//!
-//! ## Key Features
-//!
-//! - **Container Database (CDB)**: Root container managing multiple PDBs
-//! - **Pluggable Databases (PDB)**: Fully isolated tenant databases
-//! - **Resource Isolation**: Per-tenant CPU, memory, I/O, and storage limits
-//! - **Hot Cloning**: Online PDB cloning with copy-on-write
-//! - **PDB Relocation**: Live migration with minimal downtime
-//! - **Shared Services**: Common users, undo, and temp spaces
-//! - **Metering & Billing**: Resource usage tracking and quota enforcement
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────┐
-//! │                  Container Database (CDB)                    │
-//! │  ┌──────────────────────────────────────────────────────┐   │
-//! │  │              CDB Root Container                      │   │
-//! │  │  - System Metadata                                   │   │
-//! │  │  - Shared Memory Pools                              │   │
-//! │  │  - Background Processes                             │   │
-//! │  │  - Container Registry                               │   │
-//! │  └──────────────────────────────────────────────────────┘   │
-//! │                                                              │
-//! │  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
-//! │  │   PDB 1    │  │   PDB 2    │  │   PDB 3    │  ...      │
-//! │  │  (Tenant)  │  │  (Tenant)  │  │  (Tenant)  │           │
-//! │  │            │  │            │  │            │           │
-//! │  │ - Data     │  │ - Data     │  │ - Data     │           │
-//! │  │ - Schema   │  │ - Schema   │  │ - Schema   │           │
-//! │  │ - Users    │  │ - Users    │  │ - Users    │           │
-//! │  │ - Limits   │  │ - Limits   │  │ - Limits   │           │
-//! │  └────────────┘  └────────────┘  └────────────┘           │
-//! │                                                              │
-//! │  ┌──────────────────────────────────────────────────────┐   │
-//! │  │              Shared Services                         │   │
-//! │  │  - Undo Tablespace                                   │   │
-//! │  │  - Temp Tablespace                                   │   │
-//! │  │  - Common Users/Roles                                │   │
-//! │  │  - Background Workers                                │   │
-//! │  └──────────────────────────────────────────────────────┘   │
-//! └─────────────────────────────────────────────────────────────┘
-//! ```
-//!
-//! ## Usage Example
-//!
-//! ```rust,no_run
-//! use rusty_db::multitenant::{ContainerDatabase, PdbConfig, PdbLifecycleState};
-//! use rusty_db::Result;
-//!
-//! async fn example() -> Result<()> {
-//!     // Create a Container Database
-//!     let mut cdb = ContainerDatabase::new("PROD_CDB").await?;
-//!
-//!     // Create a Pluggable Database for a tenant
-//!     let pdb_config = PdbConfig::builder()
-//!         .name("TENANT1_PDB")
-//!         .admin_user("admin")
-//!         .admin_password("secure_password")
-//!         .storage_quota(10 * 1024 * 1024 * 1024) // 10 GB
-//!         .build();
-//!
-//!     let pdb_id = cdb.create_pdb(pdb_config).await?;
-//!
-//!     // Open the PDB
-//!     cdb.open_pdb(pdb_id).await?;
-//!
-//!     // Clone the PDB (hot clone)
-//!     let clone_id = cdb.clone_pdb(pdb_id, "TENANT1_DEV").await?;
-//!
-//!     Ok(())
-//! }
-//! ```
-//!
-//! ## Innovations
-//!
-//! - **Kubernetes-Native**: Seamless integration with Kubernetes operators
-//! - **Serverless Scaling**: Auto-scale PDBs based on workload
-//! - **Cross-Cloud Portability**: Migrate PDBs across cloud providers
-//! - **AI-Driven Optimization**: ML-based resource allocation and consolidation
+// # Multi-Tenant Architecture Engine
+//
+// Oracle-compatible Pluggable Database (PDB) and Container Database (CDB) architecture
+// with complete tenant isolation, resource governance, hot cloning, and self-service provisioning.
+//
+// ## Overview
+//
+// This module implements a comprehensive multi-tenant database architecture inspired by
+// Oracle's Multitenant option, allowing multiple isolated database instances (PDBs) to
+// run within a single container database (CDB) while sharing common infrastructure.
+//
+// ## Key Features
+//
+// - **Container Database (CDB)**: Root container managing multiple PDBs
+// - **Pluggable Databases (PDB)**: Fully isolated tenant databases
+// - **Resource Isolation**: Per-tenant CPU, memory, I/O, and storage limits
+// - **Hot Cloning**: Online PDB cloning with copy-on-write
+// - **PDB Relocation**: Live migration with minimal downtime
+// - **Shared Services**: Common users, undo, and temp spaces
+// - **Metering & Billing**: Resource usage tracking and quota enforcement
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────┐
+// │                  Container Database (CDB)                    │
+// │  ┌──────────────────────────────────────────────────────┐   │
+// │  │              CDB Root Container                      │   │
+// │  │  - System Metadata                                   │   │
+// │  │  - Shared Memory Pools                              │   │
+// │  │  - Background Processes                             │   │
+// │  │  - Container Registry                               │   │
+// │  └──────────────────────────────────────────────────────┘   │
+// │                                                              │
+// │  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
+// │  │   PDB 1    │  │   PDB 2    │  │   PDB 3    │  ...      │
+// │  │  (Tenant)  │  │  (Tenant)  │  │  (Tenant)  │           │
+// │  │            │  │            │  │            │           │
+// │  │ - Data     │  │ - Data     │  │ - Data     │           │
+// │  │ - Schema   │  │ - Schema   │  │ - Schema   │           │
+// │  │ - Users    │  │ - Users    │  │ - Users    │           │
+// │  │ - Limits   │  │ - Limits   │  │ - Limits   │           │
+// │  └────────────┘  └────────────┘  └────────────┘           │
+// │                                                              │
+// │  ┌──────────────────────────────────────────────────────┐   │
+// │  │              Shared Services                         │   │
+// │  │  - Undo Tablespace                                   │   │
+// │  │  - Temp Tablespace                                   │   │
+// │  │  - Common Users/Roles                                │   │
+// │  │  - Background Workers                                │   │
+// │  └──────────────────────────────────────────────────────┘   │
+// └─────────────────────────────────────────────────────────────┘
+// ```
+//
+// ## Usage Example
+//
+// ```rust,no_run
+// use rusty_db::multitenant::{ContainerDatabase, PdbConfig, PdbLifecycleState};
+// use rusty_db::Result;
+//
+// async fn example() -> Result<()> {
+//     // Create a Container Database
+//     let mut cdb = ContainerDatabase::new("PROD_CDB").await?;
+//
+//     // Create a Pluggable Database for a tenant
+//     let pdb_config = PdbConfig::builder()
+//         .name("TENANT1_PDB")
+//         .admin_user("admin")
+//         .admin_password("secure_password")
+//         .storage_quota(10 * 1024 * 1024 * 1024) // 10 GB
+//         .build();
+//
+//     let pdb_id = cdb.create_pdb(pdb_config).await?;
+//
+//     // Open the PDB
+//     cdb.open_pdb(pdb_id).await?;
+//
+//     // Clone the PDB (hot clone)
+//     let clone_id = cdb.clone_pdb(pdb_id, "TENANT1_DEV").await?;
+//
+//     Ok(())
+// }
+// ```
+//
+// ## Innovations
+//
+// - **Kubernetes-Native**: Seamless integration with Kubernetes operators
+// - **Serverless Scaling**: Auto-scale PDBs based on workload
+// - **Cross-Cloud Portability**: Migrate PDBs across cloud providers
+// - **AI-Driven Optimization**: ML-based resource allocation and consolidation
 
 // ============================================================================
 // Module Declarations
@@ -439,5 +439,3 @@ mod tests {
         assert!(result.is_ok());
     }
 }
-
-

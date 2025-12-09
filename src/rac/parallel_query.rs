@@ -1,22 +1,25 @@
-//! # Parallel Query Coordination
-//!
-//! Oracle RAC-like parallel query execution across cluster instances with
-//! sophisticated work distribution, data flow operators, and result aggregation.
-//!
-//! ## Key Components
-//!
-//! - **Query Coordinator**: Distributes work across cluster instances
-//! - **Parallel Execution Servers**: Execute query fragments in parallel
-//! - **Data Flow Operators**: Producer/consumer pipelines for data exchange
-//! - **Result Aggregation**: Combine results from multiple instances
-//!
-//! ## Architecture
-//!
-//! Queries are decomposed into fragments that can execute in parallel across
-//! multiple instances. The coordinator assigns work based on data locality,
-//! instance load, and network topology. Results are streamed back through
-//! efficient data flow operators and aggregated at the coordinator.
+// # Parallel Query Coordination
+//
+// Oracle RAC-like parallel query execution across cluster instances with
+// sophisticated work distribution, data flow operators, and result aggregation.
+//
+// ## Key Components
+//
+// - **Query Coordinator**: Distributes work across cluster instances
+// - **Parallel Execution Servers**: Execute query fragments in parallel
+// - **Data Flow Operators**: Producer/consumer pipelines for data exchange
+// - **Result Aggregation**: Combine results from multiple instances
+//
+// ## Architecture
+//
+// Queries are decomposed into fragments that can execute in parallel across
+// multiple instances. The coordinator assigns work based on data locality,
+// instance load, and network topology. Results are streamed back through
+// efficient data flow operators and aggregated at the coordinator.
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::Instant;
 use crate::error::Result;
 use crate::common::{NodeId, TableId, Value, Tuple};
 use crate::rac::interconnect::{ClusterInterconnect, MessageType, MessagePriority};
@@ -1032,5 +1035,3 @@ mod tests {
         assert_eq!(frag.fragment_type, FragmentType::TableScan);
     }
 }
-
-

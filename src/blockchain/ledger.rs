@@ -1,18 +1,19 @@
-//! # Blockchain Table Ledger
-//!
-//! This module implements immutable ledger tables with cryptographic verification:
-//! - Insert-only semantics (no updates or deletes)
-//! - Row chaining with cryptographic hashes
-//! - Block creation and finalization
-//! - Merkle tree for block integrity
-//! - Cross-row hash dependencies
-//! - Tamper-evident design
-//! - Historical row versioning
+// # Blockchain Table Ledger
+//
+// This module implements immutable ledger tables with cryptographic verification:
+// - Insert-only semantics (no updates or deletes)
+// - Row chaining with cryptographic hashes
+// - Block creation and finalization
+// - Merkle tree for block integrity
+// - Cross-row hash dependencies
+// - Tamper-evident design
+// - Historical row versioning
 
+use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::common::{Value, RowId, TableId};
 use crate::Result;
 use crate::error::DbError;
@@ -873,5 +874,3 @@ mod tests {
         assert!(!filter2.matches(&row));
     }
 }
-
-

@@ -1,8 +1,13 @@
-//! Session Control for Resource Management
-//!
-//! This module implements maximum active sessions, idle timeout management,
-//! long-running query limits, automatic session termination, and priority boosting.
+// Session Control for Resource Management
+//
+// This module implements maximum active sessions, idle timeout management,
+// long-running query limits, automatic session termination, and priority boosting.
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::collections::HashSet;
+use std::time::Instant;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
@@ -733,5 +738,3 @@ mod tests {
         assert_eq!(session.state, SessionState::Terminated);
     }
 }
-
-

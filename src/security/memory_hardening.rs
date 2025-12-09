@@ -1,40 +1,42 @@
-//! # Military-Grade Memory Hardening
-//!
-//! Revolutionary memory security system providing ZERO memory vulnerabilities through:
-//! - Guard pages and canary values for overflow detection
-//! - Secure memory zeroization to prevent data leakage
-//! - Double-free detection and prevention
-//! - Memory isolation for sensitive data
-//! - Encrypted memory regions
-//! - Bounds checking and access validation
-//!
-//! ## Security Guarantees
-//!
-//! 1. **Buffer Overflow Impossibility**: Guard pages make overflows physically impossible
-//! 2. **Data Leakage Prevention**: Volatile zeroing prevents memory forensics
-//! 3. **Double-Free Detection**: 100% detection rate with metadata tracking
-//! 4. **Use-After-Free Protection**: Quarantine heap prevents immediate reuse
-//! 5. **Memory Encryption**: XOR cipher for sensitive data protection
-//!
-//! ## Example Usage
-//!
-//! ```rust,no_run
-//! use rusty_db::security::memory_hardening::*;
-//!
-//! // Create secure buffer with overflow protection
-//! let mut buffer = SecureBuffer::<u8>::new(1024)?;
-//! buffer.write(0, &[1, 2, 3, 4])?;
-//!
-//! // Create isolated heap for sensitive data
-//! let mut heap = IsolatedHeap::new(1024 * 1024)?;
-//! let key_ptr = heap.allocate(32)?;
-//!
-//! // Use secure zeroing allocator
-//! let allocator = SecureZeroingAllocator::new();
-//! let ptr = allocator.allocate(256)?;
-//! // Automatically zeroed on drop
-//! ```
+// # Military-Grade Memory Hardening
+//
+// Revolutionary memory security system providing ZERO memory vulnerabilities through:
+// - Guard pages and canary values for overflow detection
+// - Secure memory zeroization to prevent data leakage
+// - Double-free detection and prevention
+// - Memory isolation for sensitive data
+// - Encrypted memory regions
+// - Bounds checking and access validation
+//
+// ## Security Guarantees
+//
+// 1. **Buffer Overflow Impossibility**: Guard pages make overflows physically impossible
+// 2. **Data Leakage Prevention**: Volatile zeroing prevents memory forensics
+// 3. **Double-Free Detection**: 100% detection rate with metadata tracking
+// 4. **Use-After-Free Protection**: Quarantine heap prevents immediate reuse
+// 5. **Memory Encryption**: XOR cipher for sensitive data protection
+//
+// ## Example Usage
+//
+// ```rust,no_run
+// use rusty_db::security::memory_hardening::*;
+//
+// // Create secure buffer with overflow protection
+// let mut buffer = SecureBuffer::<u8>::new(1024)?;
+// buffer.write(0, &[1, 2, 3, 4])?;
+//
+// // Create isolated heap for sensitive data
+// let mut heap = IsolatedHeap::new(1024 * 1024)?;
+// let key_ptr = heap.allocate(32)?;
+//
+// // Use secure zeroing allocator
+// let allocator = SecureZeroingAllocator::new();
+// let ptr = allocator.allocate(256)?;
+// // Automatically zeroed on drop
+// ```
 
+use std::time::SystemTime;
+use std::time::Instant;
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr::{self, NonNull};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
@@ -1200,5 +1202,3 @@ mod tests {
         assert!(result.is_ok());
     }
 }
-
-

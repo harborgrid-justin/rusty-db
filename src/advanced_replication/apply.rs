@@ -1,9 +1,11 @@
-//! # Apply Engine
-//!
-//! Parallel apply with dependency tracking, transaction grouping,
-//! and automatic error handling and retry logic.
-//! Optimized with lock-free ring buffers for maximum throughput.
+// # Apply Engine
+//
+// Parallel apply with dependency tracking, transaction grouping,
+// and automatic error handling and retry logic.
+// Optimized with lock-free ring buffers for maximum throughput.
 
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -707,5 +709,3 @@ mod tests {
         assert_eq!(stats.changes_applied, 1);
     }
 }
-
-

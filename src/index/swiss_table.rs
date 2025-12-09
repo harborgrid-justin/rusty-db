@@ -1,36 +1,36 @@
-//! Swiss Table - High-Performance SIMD Hash Table
-//!
-//! Google's Swiss table design with AVX2 SIMD acceleration.
-//! Provides 10x faster lookups than standard HashMap.
-//!
-//! ## Key Features
-//! - SIMD control bytes: Probe 16 slots in parallel
-//! - Flat memory layout: Single allocation, cache-friendly
-//! - Quadratic probing: H2 hash for secondary probe sequence
-//! - 87.5% load factor: Optimal balance of space and speed
-//! - Tombstone deletion: O(1) removal
-//!
-//! ## Memory Layout
-//! ```text
-//! [Control Group 0: 16 bytes] [Control Group 1: 16 bytes] ...
-//! [Slot 0: K,V] [Slot 1: K,V] ... [Slot 15: K,V] [Slot 16: K,V] ...
-//! ```
-//!
-//! ## Control Byte States
-//! - 0b1111_1111 (0xFF): Empty slot
-//! - 0b1111_1110 (0xFE): Tombstone (deleted)
-//! - 0b0xxx_xxxx (0-127): H2 hash tag (7 bits)
-//!
-//! ## Complexity Analysis
-//! - Insert: O(1) average, O(log n) worst case
-//! - Lookup: O(1) average, 1.1 probes expected at 87.5% load
-//! - Delete: O(1) with tombstone marking
-//! - Space: n / 0.875 * (sizeof(K) + sizeof(V) + 1) + padding
-//!
-//! ## Performance
-//! - Expected probes: 1.1 at 87.5% load factor
-//! - Cache lines per operation: 1.2 average
-//! - Throughput: 10-15x faster than std::HashMap
+// Swiss Table - High-Performance SIMD Hash Table
+//
+// Google's Swiss table design with AVX2 SIMD acceleration.
+// Provides 10x faster lookups than standard HashMap.
+//
+// ## Key Features
+// - SIMD control bytes: Probe 16 slots in parallel
+// - Flat memory layout: Single allocation, cache-friendly
+// - Quadratic probing: H2 hash for secondary probe sequence
+// - 87.5% load factor: Optimal balance of space and speed
+// - Tombstone deletion: O(1) removal
+//
+// ## Memory Layout
+// ```text
+// [Control Group 0: 16 bytes] [Control Group 1: 16 bytes] ...
+// [Slot 0: K,V] [Slot 1: K,V] ... [Slot 15: K,V] [Slot 16: K,V] ...
+// ```
+//
+// ## Control Byte States
+// - 0b1111_1111 (0xFF): Empty slot
+// - 0b1111_1110 (0xFE): Tombstone (deleted)
+// - 0b0xxx_xxxx (0-127): H2 hash tag (7 bits)
+//
+// ## Complexity Analysis
+// - Insert: O(1) average, O(log n) worst case
+// - Lookup: O(1) average, 1.1 probes expected at 87.5% load
+// - Delete: O(1) with tombstone marking
+// - Space: n / 0.875 * (sizeof(K) + sizeof(V) + 1) + padding
+//
+// ## Performance
+// - Expected probes: 1.1 at 87.5% load factor
+// - Cache lines per operation: 1.2 average
+// - Throughput: 10-15x faster than std::HashMap
 
 use std::arch::x86_64::*;
 use std::mem::{self, MaybeUninit};
@@ -667,5 +667,3 @@ mod tests {
         assert!(lf > 0.0 && lf < 1.0);
     }
 }
-
-

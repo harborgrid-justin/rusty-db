@@ -1,17 +1,17 @@
-//! Transaction statistics and monitoring.
-//!
-//! This module provides statistics collection for transaction operations,
-//! enabling performance monitoring and capacity planning.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let _stats = TransactionStatistics::new();
-//! stats.record_begin();
-//! // ... transaction operations ...
-//! stats.record_commit(latency_ms);
-//! let summary = stats.get_summary();
-//! ```
+// Transaction statistics and monitoring.
+//
+// This module provides statistics collection for transaction operations,
+// enabling performance monitoring and capacity planning.
+//
+// # Example
+//
+// ```rust,ignore
+// let _stats = TransactionStatistics::new();
+// stats.record_begin();
+// // ... transaction operations ...
+// stats.record_commit(latency_ms);
+// let summary = stats.get_summary();
+// ```
 
 use std::sync::Arc;
 

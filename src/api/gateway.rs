@@ -1,32 +1,37 @@
-//! # API Gateway & Security Layer
-//!
-//! Enterprise-grade API gateway providing comprehensive security, authentication,
-//! authorization, rate limiting, and request routing for RustyDB.
-//!
-//! ## Features
-//!
-//! - **Multi-Protocol Support**: HTTP/REST, gRPC, WebSocket
-//! - **Authentication**: JWT, OAuth 2.0, OIDC, mTLS, API Keys
-//! - **Authorization**: RBAC, ABAC, Policy-based (OPA-compatible)
-//! - **Rate Limiting**: Token bucket, sliding window, adaptive throttling
-//! - **Security**: Request validation, SQL injection prevention, XSS protection
-//! - **Audit Logging**: Comprehensive security event tracking
-//! - **Service Discovery**: Dynamic backend routing
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────┐
-//! │                     API Gateway Layer                        │
-//! ├─────────────────────────────────────────────────────────────┤
-//! │  Request Router  │  Auth  │  Authz  │  Rate Limit │  WAF    │
-//! ├─────────────────────────────────────────────────────────────┤
-//! │            Protocol Translation & Transformation             │
-//! ├─────────────────────────────────────────────────────────────┤
-//! │                    Backend Services                          │
-//! └─────────────────────────────────────────────────────────────┘
-//! ```
+// # API Gateway & Security Layer
+//
+// Enterprise-grade API gateway providing comprehensive security, authentication,
+// authorization, rate limiting, and request routing for RustyDB.
+// //
+// ## Features
+//
+// - **Multi-Protocol Support**: HTTP/REST, gRPC, WebSocket
+// - **Authentication**: JWT, OAuth 2.0, OIDC, mTLS, API Keys
+// - **Authorization**: RBAC, ABAC, Policy-based (OPA-compatible)
+// - **Rate Limiting**: Token bucket, sliding window, adaptive throttling
+// - **Security**: Request validation, SQL injection prevention, XSS protection
+// - **Audit Logging**: Comprehensive security event tracking
+// - **Service Discovery**: Dynamic backend routing
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────┐
+// │                     API Gateway Layer                        │
+// ├─────────────────────────────────────────────────────────────┤
+// │  Request Router  │  Auth  │  Authz  │  Rate Limit │  WAF    │
+// ├─────────────────────────────────────────────────────────────┤
+// │            Protocol Translation & Transformation             │
+// ├─────────────────────────────────────────────────────────────┤
+// │                    Backend Services                          │
+// └─────────────────────────────────────────────────────────────┘
+// ```
 
+use std::collections::VecDeque;
+use std::collections::HashSet;
+use std::sync::Mutex;
+use std::time::Instant;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::net::IpAddr;
 use std::sync::Arc;
@@ -94,9 +99,9 @@ pub struct ServiceDiscoveryConfig {
     /// Service registry address
     pub registry_address: Option<String>,
     /// Health check interval (seconds)
-    pub health_check_interval: u64,
+    pub health_check_interval: u64;
     /// Health check timeout (seconds)
-    pub health_check_timeout: u64,
+    pub health_check_timeout: u64;
 }
 
 /// Service discovery mechanism
@@ -2764,5 +2769,3 @@ mod tests {
         assert!(!rbac.has_permission("user1", "delete"));
     }
 }
-
-

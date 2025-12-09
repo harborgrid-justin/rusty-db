@@ -1,41 +1,43 @@
-//! # Feature Flag System
-//!
-//! Provides runtime feature toggles, A/B testing support for query optimization strategies,
-//! gradual rollout capabilities, and feature dependency/conflict resolution.
-//!
-//! ## Features
-//!
-//! - **Runtime Toggles**: Enable/disable features without redeployment
-//! - **A/B Testing**: Test different implementations with traffic splitting
-//! - **Gradual Rollout**: Progressive rollout with percentage-based targeting
-//! - **User Targeting**: Target features to specific users or groups
-//! - **Dependency Management**: Define feature dependencies and conflicts
-//! - **Metrics Collection**: Track feature usage and performance impact
-//!
-//! ## Example
-//!
-//! ```rust,no_run
-//! use rusty_db::enterprise::feature_flags::{FeatureFlagManager, Feature, RolloutStrategy};
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!     let manager = FeatureFlagManager::new();
-//!
-//!     // Create a feature flag
-//!     let feature = Feature::new("new_query_optimizer")
-//!         .with_description("New cost-based optimizer")
-//!         .with_rollout(RolloutStrategy::Percentage(10)); // 10% rollout
-//!
-//!     manager.register(feature).await.unwrap();
-//!
-//!     // Check if feature is enabled
-//!     let _context = Default::default();
-//!     if manager.is_enabled("new_query_optimizer", &context).await {
-//!         // Use new optimizer
-//!     }
-//! }
-//! ```
+// # Feature Flag System
+//
+// Provides runtime feature toggles, A/B testing support for query optimization strategies,
+// gradual rollout capabilities, and feature dependency/conflict resolution.
+//
+// ## Features
+//
+// - **Runtime Toggles**: Enable/disable features without redeployment
+// - **A/B Testing**: Test different implementations with traffic splitting
+// - **Gradual Rollout**: Progressive rollout with percentage-based targeting
+// - **User Targeting**: Target features to specific users or groups
+// - **Dependency Management**: Define feature dependencies and conflicts
+// - **Metrics Collection**: Track feature usage and performance impact
+//
+// ## Example
+//
+// ```rust,no_run
+// use rusty_db::enterprise::feature_flags::{FeatureFlagManager, Feature, RolloutStrategy};
+//
+// #[tokio::main]
+// async fn main() {
+//     let manager = FeatureFlagManager::new();
+//
+//     // Create a feature flag
+//     let feature = Feature::new("new_query_optimizer")
+//         .with_description("New cost-based optimizer")
+//         .with_rollout(RolloutStrategy::Percentage(10)); // 10% rollout
+//
+//     manager.register(feature).await.unwrap();
+//
+//     // Check if feature is enabled
+//     let _context = Default::default();
+//     if manager.is_enabled("new_query_optimizer", &context).await {
+//         // Use new optimizer
+//     }
+// }
+// ```
 
+use std::time::Duration;
+use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{SystemTime};
@@ -685,5 +687,3 @@ mod tests {
         assert!(result.variant.is_some());
     }
 }
-
-

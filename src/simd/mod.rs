@@ -1,57 +1,57 @@
-//! # SIMD-Optimized Scan Engine
-//!
-//! High-performance vectorized query execution engine using AVX2 SIMD instructions
-//! for processing 8-16 elements per instruction with zero-allocation scan loops.
-//!
-//! ## Architecture
-//!
-//! The SIMD engine provides vectorized operations for:
-//! - **Filter Operations**: Predicate evaluation with SIMD comparisons
-//! - **Columnar Scanning**: Sequential and random access with late materialization
-//! - **Aggregate Operations**: Vectorized SUM, COUNT, MIN, MAX, AVG
-//! - **String Operations**: Vectorized string comparison and pattern matching
-//!
-//! ## Performance Characteristics
-//!
-//! - Processes 8-16 elements per SIMD instruction
-//! - Zero allocations in the scan loop
-//! - Automatic fallback for non-AVX2 CPUs
-//! - Cache-oblivious algorithms
-//! - Explicit prefetch instructions for sequential access
-//!
-//! ## Example Usage
-//!
-//! ```rust,no_run
-//! use rusty_db::simd::{ColumnScan, FilterOp, SimdAggregator};
-//!
-//! # fn example() -> rusty_db::Result<()> {
-//! let data: Vec<i32> = vec![1, 2, 3, 4, 5, 6, 7, 8];
-//! let mut result = vec![0u8; (data.len() + 7) / 8];
-//!
-//! // SIMD-accelerated filtering
-//! unsafe {
-//!     rusty_db::simd::filter::filter_i32_eq_avx2(&data, 5, &mut result);
-//! }
-//!
-//! // Vectorized aggregation
-//! let f64_data: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];
-//! let sum = unsafe {
-//!     rusty_db::simd::aggregate::sum_f64_avx2(&f64_data)
-//! };
-//!
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ## Safety
-//!
-//! SIMD operations are inherently `unsafe` as they require:
-//! - CPU feature detection (AVX2 support)
-//! - Proper memory alignment
-//! - Valid pointer arithmetic
-//!
-//! The engine automatically detects CPU capabilities and falls back to scalar
-//! implementations when SIMD is not available.
+// # SIMD-Optimized Scan Engine
+//
+// High-performance vectorized query execution engine using AVX2 SIMD instructions
+// for processing 8-16 elements per instruction with zero-allocation scan loops.
+//
+// ## Architecture
+//
+// The SIMD engine provides vectorized operations for:
+// - **Filter Operations**: Predicate evaluation with SIMD comparisons
+// - **Columnar Scanning**: Sequential and random access with late materialization
+// - **Aggregate Operations**: Vectorized SUM, COUNT, MIN, MAX, AVG
+// - **String Operations**: Vectorized string comparison and pattern matching
+//
+// ## Performance Characteristics
+//
+// - Processes 8-16 elements per SIMD instruction
+// - Zero allocations in the scan loop
+// - Automatic fallback for non-AVX2 CPUs
+// - Cache-oblivious algorithms
+// - Explicit prefetch instructions for sequential access
+//
+// ## Example Usage
+//
+// ```rust,no_run
+// use rusty_db::simd::{ColumnScan, FilterOp, SimdAggregator};
+//
+// # fn example() -> rusty_db::Result<()> {
+// let data: Vec<i32> = vec![1, 2, 3, 4, 5, 6, 7, 8];
+// let mut result = vec![0u8; (data.len() + 7) / 8];
+//
+// // SIMD-accelerated filtering
+// unsafe {
+//     rusty_db::simd::filter::filter_i32_eq_avx2(&data, 5, &mut result);
+// }
+//
+// // Vectorized aggregation
+// let f64_data: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];
+// let sum = unsafe {
+//     rusty_db::simd::aggregate::sum_f64_avx2(&f64_data)
+// };
+//
+// # Ok(())
+// # }
+// ```
+//
+// ## Safety
+//
+// SIMD operations are inherently `unsafe` as they require:
+// - CPU feature detection (AVX2 support)
+// - Proper memory alignment
+// - Valid pointer arithmetic
+//
+// The engine automatically detects CPU capabilities and falls back to scalar
+// implementations when SIMD is not available.
 
 /// SIMD filter operations
 pub mod filter;
@@ -570,5 +570,3 @@ mod tests {
         println!("Vector width: {}", ctx.vector_width());
     }
 }
-
-

@@ -1,6 +1,8 @@
 // Metrics Collection System
 // Prometheus-compatible metrics exposition with custom metric registration
 
+use std::time::SystemTime;
+use std::time::Instant;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;

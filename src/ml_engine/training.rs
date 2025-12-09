@@ -1,7 +1,7 @@
-//! # Training Infrastructure
-//!
-//! Model training coordination with mini-batch training, distributed training,
-//! early stopping, learning rate scheduling, and progress monitoring.
+// # Training Infrastructure
+//
+// Model training coordination with mini-batch training, distributed training,
+// early stopping, learning rate scheduling, and progress monitoring.
 
 use crate::error::Result;
 use super::{Algorithm, Dataset, Hyperparameters, TrainingStats, EvaluationMetrics, GpuConfig};
@@ -896,5 +896,3 @@ mod tests {
         assert!(progress.should_stop_early(&config));
     }
 }
-
-

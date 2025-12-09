@@ -1,73 +1,73 @@
-//! # Memory System Core Types
-//! 
-//! This module provides fundamental types, identifiers, and data structures
-//! used throughout the enterprise memory allocation system. It defines
-//! strong typing patterns with newtypes and comprehensive validation.
-//! 
-//! ## Key Features
-//! 
-//! - **Strong Typing**: Extensive use of newtypes for type safety
-//! - **Memory Management Types**: Allocation tracking, pressure levels, and statistics
-//! - **Configuration Types**: Comprehensive configuration structures for all allocators
-//! - **Statistics Types**: Detailed metrics and performance monitoring structures
-//! - **Error Types**: Specific error types for memory allocation failures
-//! - **Validation**: Input validation for all public types
-//! 
-//! ## Type Categories
-//! 
-//! ### Identifiers
-//! - **MemoryContextId**: Unique identifier for memory contexts
-//! - **AllocationId**: Tracking ID for individual allocations
-//! - **SourceComponent**: Component that requested the allocation
-//! 
-//! ### Configuration Types
-//! - **AllocatorConfig**: Configuration for different allocator types
-//! - **PressureConfig**: Memory pressure monitoring configuration
-//! - **DebugConfig**: Memory debugging and profiling configuration
-//! 
-//! ### Statistics Types
-//! - **MemoryStats**: Comprehensive memory usage statistics
-//! - **AllocatorStats**: Per-allocator performance metrics
-//! - **ContextStats**: Memory context usage tracking
-//! 
-//! ## Usage Example
-//! 
-//! ```rust
-//! use crate::memory::types::*;
-//! 
-//! # fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! // Create a memory context identifier
-//! let context_id = MemoryContextId::new("query_executor_001")?;
-//! 
-//! // Configure slab allocator
-//! let slab_config = SlabConfig {
-//!     num_size_classes: 64,
-//!     magazine_capacity: 64,
-//!     max_slab_size: 32 * 1024, // 32KB
-//!     enable_thread_caching: true,
-//!     enable_coloring: true,
-//!     color_count: 8,
-//!     ..Default::default()
-//! };
-//! 
-//! // Set memory pressure thresholds
-//! let pressure_config = PressureConfig {
-//!     warning_threshold: 0.80, // 80% of total memory
-//!     critical_threshold: 0.90, // 90% of total memory
-//!     emergency_threshold: 0.95, // 95% of total memory
-//!     enable_monitoring: true,
-//!     check_interval: Duration::from_secs(5),
-//!     ..Default::default()
-//! };
-//! 
-//! // Track allocation source
-//! let _source = AllocationSource::Query {
-//!     query_id: "SELECT_001".to_string(),
-//!     operation: "hash_join".to_string(),
-//! };
-//! # Ok(())
-//! # }
-//! ```
+// # Memory System Core Types
+//
+// This module provides fundamental types, identifiers, and data structures
+// used throughout the enterprise memory allocation system. It defines
+// strong typing patterns with newtypes and comprehensive validation.
+//
+// ## Key Features
+//
+// - **Strong Typing**: Extensive use of newtypes for type safety
+// - **Memory Management Types**: Allocation tracking, pressure levels, and statistics
+// - **Configuration Types**: Comprehensive configuration structures for all allocators
+// - **Statistics Types**: Detailed metrics and performance monitoring structures
+// - **Error Types**: Specific error types for memory allocation failures
+// - **Validation**: Input validation for all public types
+//
+// ## Type Categories
+//
+// ### Identifiers
+// - **MemoryContextId**: Unique identifier for memory contexts
+// - **AllocationId**: Tracking ID for individual allocations
+// - **SourceComponent**: Component that requested the allocation
+//
+// ### Configuration Types
+// - **AllocatorConfig**: Configuration for different allocator types
+// - **PressureConfig**: Memory pressure monitoring configuration
+// - **DebugConfig**: Memory debugging and profiling configuration
+//
+// ### Statistics Types
+// - **MemoryStats**: Comprehensive memory usage statistics
+// - **AllocatorStats**: Per-allocator performance metrics
+// - **ContextStats**: Memory context usage tracking
+//
+// ## Usage Example
+//
+// ```rust
+// use crate::memory::types::*;
+//
+// # fn example() -> Result<(), Box<dyn std::error::Error>> {
+// // Create a memory context identifier
+// let context_id = MemoryContextId::new("query_executor_001")?;
+//
+// // Configure slab allocator
+// let slab_config = SlabConfig {
+//     num_size_classes: 64,
+//     magazine_capacity: 64,
+//     max_slab_size: 32 * 1024, // 32KB
+//     enable_thread_caching: true,
+//     enable_coloring: true,
+//     color_count: 8,
+//     ..Default::default()
+// };
+//
+// // Set memory pressure thresholds
+// let pressure_config = PressureConfig {
+//     warning_threshold: 0.80, // 80% of total memory
+//     critical_threshold: 0.90, // 90% of total memory
+//     emergency_threshold: 0.95, // 95% of total memory
+//     enable_monitoring: true,
+//     check_interval: Duration::from_secs(5),
+//     ..Default::default()
+// };
+//
+// // Track allocation source
+// let _source = AllocationSource::Query {
+//     query_id: "SELECT_001".to_string(),
+//     operation: "hash_join".to_string(),
+// };
+// # Ok(())
+// # }
+// ```
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -83,34 +83,34 @@ use uuid::Uuid;
 pub enum MemoryError {
     #[error("Out of memory: {reason}")]
     OutOfMemory { reason: String },
-    
+
     #[error("Invalid allocation size: {size} bytes - {reason}")]
     InvalidSize { size: usize, reason: String },
-    
+
     #[error("Invalid alignment: {alignment} - {reason}")]
     InvalidAlignment { alignment: usize, reason: String },
-    
+
     #[error("Memory context not found: {context_id}")]
     ContextNotFound { context_id: String },
-    
+
     #[error("Memory pressure critical: current {current_usage}, limit {limit}")]
     PressureCritical { current_usage: u64, limit: u64 },
-    
+
     #[error("Allocation corruption detected at {address:#x}: {reason}")]
     CorruptionDetected { address: usize, reason: String },
-    
+
     #[error("Memory leak detected: {leak_count} allocations totaling {total_bytes} bytes")]
     LeakDetected { leak_count: usize, total_bytes: u64 },
-    
+
     #[error("Double free detected at {address:#x}")]
     DoubleFree { address: usize },
-    
+
     #[error("Use after free detected at {address:#x}")]
     UseAfterFree { address: usize },
-    
+
     #[error("Zone overflow: requested {requested}, available {available} in zone '{zone_name}'")]
     ZoneOverflow { zone_name: String, requested: usize, available: usize },
-    
+
     #[error("Configuration invalid: {field} - {reason}")]
     InvalidConfiguration { field: String, reason: String },
 }
@@ -119,55 +119,55 @@ pub enum MemoryError {
 pub mod constants {
     /// Minimum allocation size (16 bytes for alignment)
     pub const MIN_ALLOC_SIZE: usize = 16;
-    
+
     /// Maximum size for slab allocation (anything larger goes to large object allocator)
     pub const MAX_SLAB_SIZE: usize = 32 * 1024; // 32KB
-    
+
     /// Number of size classes in the slab allocator
     pub const NUM_SIZE_CLASSES: usize = 64;
-    
+
     /// Slab size (typically 2MB for huge page alignment)
     pub const SLAB_SIZE: usize = 2 * 1024 * 1024;
-    
+
     /// Magazine capacity (number of objects cached per CPU)
     pub const MAGAZINE_CAPACITY: usize = 64;
-    
+
     /// Number of colors for cache line optimization
     pub const NUM_COLORS: usize = 8;
-    
+
     /// Large object threshold (use mmap directly)
     pub const LARGE_OBJECT_THRESHOLD: usize = 256 * 1024; // 256KB
-    
+
     /// Huge page size (2MB)
     pub const HUGE_PAGE_2MB: usize = 2 * 1024 * 1024;
-    
+
     /// Huge page size (1GB)
     pub const HUGE_PAGE_1GB: usize = 1024 * 1024 * 1024;
-    
+
     /// Memory pressure warning threshold (80% of total)
     pub const MEMORY_PRESSURE_WARNING: f64 = 0.80;
-    
+
     /// Memory pressure critical threshold (90% of total)
     pub const MEMORY_PRESSURE_CRITICAL: f64 = 0.90;
-    
+
     /// Memory pressure emergency threshold (95% of total)
     pub const MEMORY_PRESSURE_EMERGENCY: f64 = 0.95;
-    
+
     /// Maximum number of stack frames to capture for leak detection
     pub const MAX_STACK_FRAMES: usize = 32;
-    
+
     /// Memory guard pattern for corruption detection
     pub const GUARD_PATTERN: u64 = 0xDEADBEEFCAFEBABE;
-    
+
     /// Default arena size
     pub const DEFAULT_ARENA_SIZE: usize = 64 * 1024; // 64KB
-    
+
     /// Default memory limit
     pub const DEFAULT_MEMORY_LIMIT: u64 = 1024 * 1024 * 1024; // 1GB
 }
 
 /// Memory context identifier
-/// 
+///
 /// Provides type-safe identification for memory contexts with validation.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct MemoryContextId(String);
@@ -176,21 +176,21 @@ impl MemoryContextId {
     /// Creates a new memory context ID with validation
     pub fn new(id: impl Into<String>) -> Result<Self, MemoryError> {
         let id = id.into();
-        
+
         if id.trim().is_empty() {
             return Err(MemoryError::InvalidConfiguration {
                 field: "context_id".to_string(),
                 reason: "Memory context ID cannot be empty".to_string(),
             });
         }
-        
+
         if id.len() > 255 {
             return Err(MemoryError::InvalidConfiguration {
                 field: "context_id".to_string(),
                 reason: "Memory context ID too long (max 255 characters)".to_string(),
             });
         }
-        
+
         // Check for valid characters
         if !id.chars().all(|c| c.is_ascii_alphanumeric() || "_-:.".contains(c)) {
             return Err(MemoryError::InvalidConfiguration {
@@ -198,15 +198,15 @@ impl MemoryContextId {
                 reason: "Memory context ID contains invalid characters".to_string(),
             });
         }
-        
+
         Ok(Self(id))
     }
-    
+
     /// Generates a new unique memory context ID
     pub fn generate() -> Self {
         Self(Uuid::new_v4().to_string())
     }
-    
+
     /// Returns the context ID as a string
     pub fn as_str(&self) -> &str {
         &self.0
@@ -220,7 +220,7 @@ impl fmt::Display for MemoryContextId {
 }
 
 /// Allocation identifier for tracking
-/// 
+///
 /// Unique identifier for individual memory allocations.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct AllocationId(u64);
@@ -230,14 +230,14 @@ impl AllocationId {
     pub fn new(id: u64) -> Self {
         Self(id)
     }
-    
+
     /// Generates a new unique allocation ID
     pub fn generate() -> Self {
         use std::sync::atomic::{AtomicU64, Ordering};
         static COUNTER: AtomicU64 = AtomicU64::new(1);
         Self(COUNTER.fetch_add(1, Ordering::Relaxed))
     }
-    
+
     /// Returns the allocation ID value
     pub fn value(&self) -> u64 {
         self.0
@@ -251,7 +251,7 @@ impl fmt::Display for AllocationId {
 }
 
 /// Memory allocation source component
-/// 
+///
 /// Identifies which database component requested a memory allocation
 /// for tracking and debugging purposes.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -497,7 +497,7 @@ impl Default for HugePageType {
 }
 
 /// Memory allocation statistics
-/// 
+///
 /// Comprehensive statistics for memory allocation tracking and monitoring.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryStats {
@@ -556,7 +556,7 @@ impl Default for MemoryStats {
 }
 
 /// Slab allocator configuration
-/// 
+///
 /// Configuration parameters for the slab allocator including size classes,
 /// caching behavior, and performance optimizations.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -607,7 +607,7 @@ impl Default for SlabConfig {
 }
 
 /// Arena allocator configuration
-/// 
+///
 /// Configuration for arena-based bump allocators used for
 /// per-query and per-transaction memory contexts.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -652,7 +652,7 @@ impl Default for ArenaConfig {
 }
 
 /// Large object allocator configuration
-/// 
+///
 /// Configuration for allocations that exceed slab allocator limits
 /// and require direct memory mapping.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -694,7 +694,7 @@ impl Default for LargeObjectConfig {
 }
 
 /// Memory pressure monitoring configuration
-/// 
+///
 /// Configuration for monitoring memory usage and triggering
 /// pressure callbacks when thresholds are exceeded.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -752,7 +752,7 @@ pub enum PressureCalculationMethod {
 }
 
 /// Memory debugging configuration
-/// 
+///
 /// Configuration for memory debugging features including
 /// leak detection, corruption detection, and profiling.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -803,7 +803,7 @@ impl Default for DebugConfig {
 }
 
 /// Memory zone configuration
-/// 
+///
 /// Configuration for memory zones that provide specialized
 /// allocation patterns and isolation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -844,7 +844,7 @@ impl Default for ZoneAllocationPolicy {
 }
 
 /// Component memory statistics
-/// 
+///
 /// Per-component memory usage statistics for tracking
 /// which parts of the system are consuming memory.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -890,25 +890,25 @@ impl ComponentMemoryStats {
             last_activity: SystemTime::now(),
         }
     }
-    
+
     /// Updates statistics after allocation
     pub fn record_allocation(&mut self, size: u64) {
         self.allocations += 1;
         self.bytes_allocated += size;
         self.active_allocations += 1;
         self.active_bytes += size;
-        
+
         if self.active_allocations > self.peak_allocations {
             self.peak_allocations = self.active_allocations;
         }
         if self.active_bytes > self.peak_bytes {
             self.peak_bytes = self.active_bytes;
         }
-        
+
         self.avg_allocation_size = self.bytes_allocated as f64 / self.allocations as f64;
         self.last_activity = SystemTime::now();
     }
-    
+
     /// Updates statistics after deallocation
     pub fn record_deallocation(&mut self, size: u64) {
         self.deallocations += 1;
@@ -926,7 +926,7 @@ impl Default for ComponentMemoryStats {
 }
 
 /// Memory leak report
-/// 
+///
 /// Information about detected memory leaks including
 /// allocation details and stack traces.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -948,7 +948,7 @@ pub struct LeakReport {
 }
 
 /// Memory pressure event information
-/// 
+///
 /// Details about memory pressure events including trigger
 /// conditions and response actions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -974,7 +974,7 @@ pub struct MemoryPressureEvent {
 }
 
 /// Memory context statistics
-/// 
+///
 /// Statistics for individual memory contexts including
 /// usage patterns and lifecycle information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1013,21 +1013,21 @@ impl MemoryContextId {
                 reason: "Memory context ID cannot be empty".to_string(),
             });
         }
-        
+
         if id.len() > 255 {
             return Err(MemoryError::InvalidConfiguration {
                 field: "context_id".to_string(),
                 reason: "Memory context ID too long (max 255 characters)".to_string(),
             });
         }
-        
+
         if !id.chars().all(|c| c.is_ascii_alphanumeric() || "_-:.".contains(c)) {
             return Err(MemoryError::InvalidConfiguration {
                 field: "context_id".to_string(),
                 reason: "Memory context ID contains invalid characters".to_string(),
             });
         }
-        
+
         Ok(())
     }
 }
@@ -1051,14 +1051,14 @@ pub fn validate_allocation_size(size: usize) -> Result<(), MemoryError> {
             reason: "Allocation size cannot be zero".to_string(),
         });
     }
-    
+
     if size > constants::HUGE_PAGE_1GB {
         return Err(MemoryError::InvalidSize {
             size,
             reason: "Allocation size exceeds maximum limit".to_string(),
         });
     }
-    
+
     Ok(())
 }
 
@@ -1070,21 +1070,21 @@ pub fn validate_alignment(alignment: usize) -> Result<(), MemoryError> {
             reason: "Alignment cannot be zero".to_string(),
         });
     }
-    
+
     if !alignment.is_power_of_two() {
         return Err(MemoryError::InvalidAlignment {
             alignment,
             reason: "Alignment must be a power of two".to_string(),
         });
     }
-    
+
     if alignment > 4096 {
         return Err(MemoryError::InvalidAlignment {
             alignment,
             reason: "Alignment exceeds maximum supported value".to_string(),
         });
     }
-    
+
     Ok(())
 }
 
@@ -1098,13 +1098,13 @@ mod tests {
         assert!(MemoryContextId::new("valid_context").is_ok());
         assert!(MemoryContextId::new("context-123").is_ok());
         assert!(MemoryContextId::new("query:executor.001").is_ok());
-        
+
         // Invalid IDs
         assert!(MemoryContextId::new("").is_err()); // Empty
         assert!(MemoryContextId::new("   ").is_err()); // Whitespace only
         assert!(MemoryContextId::new("context with spaces").is_err()); // Spaces
         assert!(MemoryContextId::new("context@invalid").is_err()); // Invalid chars
-        
+
         // Too long
         let long_id = "a".repeat(256);
         assert!(MemoryContextId::new(long_id).is_err());
@@ -1126,7 +1126,7 @@ mod tests {
             operation: "hash_join".to_string(),
         };
         assert_eq!(source.to_string(), "Query[SELECT_001:hash_join]");
-        
+
         let unknown = AllocationSource::Unknown;
         assert_eq!(unknown.to_string(), "Unknown");
     }
@@ -1167,7 +1167,7 @@ mod tests {
         let mut stats = ComponentMemoryStats::new();
         assert_eq!(stats.allocations, 0);
         assert_eq!(stats.active_allocations, 0);
-        
+
         stats.record_allocation(1024);
         assert_eq!(stats.allocations, 1);
         assert_eq!(stats.active_allocations, 1);
@@ -1175,7 +1175,7 @@ mod tests {
         assert_eq!(stats.active_bytes, 1024);
         assert_eq!(stats.peak_allocations, 1);
         assert_eq!(stats.peak_bytes, 1024);
-        
+
         stats.record_deallocation(1024);
         assert_eq!(stats.deallocations, 1);
         assert_eq!(stats.active_allocations, 0);

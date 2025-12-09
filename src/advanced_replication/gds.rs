@@ -1,8 +1,9 @@
-//! # Global Data Services (GDS)
-//!
-//! Region-aware routing, load balancing, service failover,
-//! and latency-based routing for global database deployments.
+// # Global Data Services (GDS)
+//
+// Region-aware routing, load balancing, service failover,
+// and latency-based routing for global database deployments.
 
+use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -697,5 +698,3 @@ mod tests {
         assert!(retrieved.is_some());
     }
 }
-
-

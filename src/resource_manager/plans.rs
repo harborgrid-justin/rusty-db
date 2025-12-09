@@ -1,8 +1,9 @@
-//! Resource Plans for Workload Management
-//!
-//! This module implements Oracle-like resource plans with directives, sub-plans,
-//! time-based switching, and maintenance windows.
+// Resource Plans for Workload Management
+//
+// This module implements Oracle-like resource plans with directives, sub-plans,
+// time-based switching, and maintenance windows.
 
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
@@ -868,5 +869,3 @@ mod tests {
         assert!(switched || manager.get_active_plan() == Some(plan_id));
     }
 }
-
-

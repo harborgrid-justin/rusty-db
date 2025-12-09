@@ -1,12 +1,13 @@
-//! # Property Graph Implementation
-//!
-//! Provides a comprehensive property graph data structure with support for:
-//! - Vertices and edges with properties
-//! - Multi-graph (multiple edges between nodes)
-//! - Hypergraph extensions
-//! - Graph partitioning for distributed storage
-//! - Efficient ID generation and management
+// # Property Graph Implementation
+//
+// Provides a comprehensive property graph data structure with support for:
+// - Vertices and edges with properties
+// - Multi-graph (multiple edges between nodes)
+// - Hypergraph extensions
+// - Graph partitioning for distributed storage
+// - Efficient ID generation and management
 
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
@@ -1200,5 +1201,3 @@ mod tests {
         }
     }
 }
-
-

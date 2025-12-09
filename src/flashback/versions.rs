@@ -1,27 +1,29 @@
-//! # Row Version Tracking and Management
-//!
-//! Implements Oracle-like VERSIONS BETWEEN queries and row version management.
-//! Tracks all historical versions of rows with efficient storage and retrieval.
-//!
-//! ## Features
-//!
-//! - VERSIONS BETWEEN SCN/TIMESTAMP queries
-//! - Version retention policies and TTL
-//! - Automatic version garbage collection
-//! - Undo-based versioning for rollback
-//! - Version metadata and change tracking
-//! - Cross-version joins and comparisons
-//! - Pseudocolumn support (VERSIONS_STARTSCN, VERSIONS_ENDSCN, etc.)
-//!
-//! ## Example
-//!
-//! ```sql
-//! SELECT versions_xid, versions_startscn, versions_endscn, salary
-//! FROM employees
-//! VERSIONS BETWEEN SCN 1000 AND 2000
-//! WHERE employee_id = 100;
-//! ```
+// # Row Version Tracking and Management
+//
+// Implements Oracle-like VERSIONS BETWEEN queries and row version management.
+// Tracks all historical versions of rows with efficient storage and retrieval.
+//
+// ## Features
+//
+// - VERSIONS BETWEEN SCN/TIMESTAMP queries
+// - Version retention policies and TTL
+// - Automatic version garbage collection
+// - Undo-based versioning for rollback
+// - Version metadata and change tracking
+// - Cross-version joins and comparisons
+// - Pseudocolumn support (VERSIONS_STARTSCN, VERSIONS_ENDSCN, etc.)
+//
+// ## Example
+//
+// ```sql
+// SELECT versions_xid, versions_startscn, versions_endscn, salary
+// FROM employees
+// VERSIONS BETWEEN SCN 1000 AND 2000
+// WHERE employee_id = 100;
+// ```
 
+use std::time::Duration;
+use std::collections::VecDeque;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -979,5 +981,3 @@ mod tests {
         assert_eq!(comparison.changed_columns[0].column_index, 0);
     }
 }
-
-

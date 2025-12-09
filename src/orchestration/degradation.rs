@@ -1,23 +1,23 @@
-//! # Graceful Degradation Strategies
-//!
-//! This module provides graceful degradation strategies for RustyDB,
-//! allowing the system to continue operating at reduced capacity when
-//! components fail or resources are constrained.
-//!
-//! ## Features
-//!
-//! - **Feature Toggles**: Disable non-essential features under load
-//! - **Quality Reduction**: Reduce quality of service to maintain availability
-//! - **Load Shedding**: Reject low-priority requests under pressure
-//! - **Failover Strategies**: Switch to backup implementations
-//! - **Rate Limiting**: Throttle requests to protect resources
-//! - **Caching Strategies**: Serve stale data when necessary
-//!
-//! ## Degradation Levels
-//!
-//! ```text
-//! NORMAL → DEGRADED_L1 → DEGRADED_L2 → DEGRADED_L3 → CRITICAL
-//! ```
+// # Graceful Degradation Strategies
+//
+// This module provides graceful degradation strategies for RustyDB,
+// allowing the system to continue operating at reduced capacity when
+// components fail or resources are constrained.
+//
+// ## Features
+//
+// - **Feature Toggles**: Disable non-essential features under load
+// - **Quality Reduction**: Reduce quality of service to maintain availability
+// - **Load Shedding**: Reject low-priority requests under pressure
+// - **Failover Strategies**: Switch to backup implementations
+// - **Rate Limiting**: Throttle requests to protect resources
+// - **Caching Strategies**: Serve stale data when necessary
+//
+// ## Degradation Levels
+//
+// ```text
+// NORMAL → DEGRADED_L1 → DEGRADED_L2 → DEGRADED_L3 → CRITICAL
+// ```
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -636,5 +636,3 @@ mod tests {
         assert!(stats.last_change.is_some());
     }
 }
-
-

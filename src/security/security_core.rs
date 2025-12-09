@@ -1,20 +1,22 @@
-//! # Security Core Module
-//!
-//! Unified security architecture providing defense-in-depth orchestration,
-//! threat intelligence integration, compliance validation, and real-time
-//! security monitoring.
-//!
-//! ## Components
-//!
-//! - **SecurityPolicyEngine**: Central policy management and decision point
-//! - **DefenseOrchestrator**: Coordinates all defense mechanisms
-//! - **SecurityEventCorrelator**: Correlates events to detect attacks
-//! - **ThreatIntelligence**: External threat feeds and IoC management
-//! - **ComplianceValidator**: Continuous compliance validation
-//! - **SecurityMetrics**: Comprehensive security KPIs
-//! - **PenetrationTestHarness**: Automated security testing
-//! - **SecurityDashboard**: Real-time security visualization
+// # Security Core Module
+//
+// Unified security architecture providing defense-in-depth orchestration,
+// threat intelligence integration, compliance validation, and real-time
+// security monitoring.
+//
+// ## Components
+//
+// - **SecurityPolicyEngine**: Central policy management and decision point
+// - **DefenseOrchestrator**: Coordinates all defense mechanisms
+// - **SecurityEventCorrelator**: Correlates events to detect attacks
+// - **ThreatIntelligence**: External threat feeds and IoC management
+// - **ComplianceValidator**: Continuous compliance validation
+// - **SecurityMetrics**: Comprehensive security KPIs
+// - **PenetrationTestHarness**: Automated security testing
+// - **SecurityDashboard**: Real-time security visualization
 
+use std::time::Duration;
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use parking_lot::RwLock;
@@ -1847,5 +1849,3 @@ mod tests {
         assert_eq!(value, Some(42.0));
     }
 }
-
-

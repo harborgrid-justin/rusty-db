@@ -1,24 +1,25 @@
-//! # Encryption Engine - Military-Grade Cryptographic Implementation
-//!
-//! This module provides production-ready implementations of cryptographic operations
-//! using industry-standard algorithms and best practices.
-//!
-//! ## Features
-//!
-//! - **AES-256-GCM**: Hardware-accelerated authenticated encryption
-//! - **ChaCha20-Poly1305**: Software-optimized authenticated encryption
-//! - **Ed25519**: Fast digital signatures
-//! - **Secure Random**: Hardware-backed RNG when available
-//! - **Key Derivation**: HKDF and Argon2id support
-//! - **Memory Protection**: Secure key storage and wiping
-//!
-//! ## Security Guarantees
-//!
-//! - FIPS 140-2 compliant algorithms
-//! - Authenticated encryption (confidentiality + integrity)
-//! - Timing attack resistance
-//! - Side-channel attack mitigation
+// # Encryption Engine - Military-Grade Cryptographic Implementation
+//
+// This module provides production-ready implementations of cryptographic operations
+// using industry-standard algorithms and best practices.
+//
+// ## Features
+//
+// - **AES-256-GCM**: Hardware-accelerated authenticated encryption
+// - **ChaCha20-Poly1305**: Software-optimized authenticated encryption
+// - **Ed25519**: Fast digital signatures
+// - **Secure Random**: Hardware-backed RNG when available
+// - **Key Derivation**: HKDF and Argon2id support
+// - **Memory Protection**: Secure key storage and wiping
+//
+// ## Security Guarantees
+//
+// - FIPS 140-2 compliant algorithms
+// - Authenticated encryption (confidentiality + integrity)
+// - Timing attack resistance
+// - Side-channel attack mitigation
 
+use std::sync::Mutex;
 use aes_gcm::{
     aead::{Aead, KeyInit, Payload},
     Aes256Gcm, Nonce as AesNonce,
@@ -1276,5 +1277,3 @@ mod tests {
         assert_ne!(token1, token3);
     }
 }
-
-

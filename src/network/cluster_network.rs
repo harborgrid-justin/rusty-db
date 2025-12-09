@@ -1,6 +1,10 @@
 // Enterprise-grade Network Clustering & High Availability Architecture
 // Comprehensive cluster management, inter-node communication, and failover systems
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::collections::HashSet;
+use std::time::Instant;
 use crate::error::Result;
 use async_trait::async_trait;
 use bincode;

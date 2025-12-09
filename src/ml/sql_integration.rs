@@ -1,33 +1,33 @@
-//! # SQL Integration for Machine Learning
-//!
-//! This module provides SQL syntax extensions for ML operations, enabling
-//! seamless integration of machine learning into SQL queries.
-//!
-//! ## Supported SQL Syntax
-//!
-//! - `CREATE MODEL`: Train a new ML model
-//! - `DROP MODEL`: Remove a model
-//! - `PREDICT()`: Make predictions using a trained model
-//! - `MODEL_INFO()`: Get model metadata
-//! - `MODEL_METRICS()`: Get model performance metrics
-//! - `RETRAIN MODEL`: Retrain an existing model
-//!
-//! ## Examples
-//!
-//! ```sql
-//! -- Train a model
-//! CREATE MODEL customer_churn
-//! USING logistic_regression
-//! WITH (learning_rate=0.01, max_iterations=1000)
-//! AS SELECT age, balance, products, churn FROM customers;
-//!
-//! -- Make predictions
-//! SELECT customer_id, PREDICT(customer_churn, age, balance, products) as churn_prob
-//! FROM new_customers;
-//!
-//! -- Get model info
-//! SELECT MODEL_INFO('customer_churn');
-//! ```
+// # SQL Integration for Machine Learning
+//
+// This module provides SQL syntax extensions for ML operations, enabling
+// seamless integration of machine learning into SQL queries.
+//
+// ## Supported SQL Syntax
+//
+// - `CREATE MODEL`: Train a new ML model
+// - `DROP MODEL`: Remove a model
+// - `PREDICT()`: Make predictions using a trained model
+// - `MODEL_INFO()`: Get model metadata
+// - `MODEL_METRICS()`: Get model performance metrics
+// - `RETRAIN MODEL`: Retrain an existing model
+//
+// ## Examples
+//
+// ```sql
+// -- Train a model
+// CREATE MODEL customer_churn
+// USING logistic_regression
+// WITH (learning_rate=0.01, max_iterations=1000)
+// AS SELECT age, balance, products, churn FROM customers;
+//
+// -- Make predictions
+// SELECT customer_id, PREDICT(customer_churn, age, balance, products) as churn_prob
+// FROM new_customers;
+//
+// -- Get model info
+// SELECT MODEL_INFO('customer_churn');
+// ```
 
 use crate::error::Result;
 use super::{
@@ -657,5 +657,3 @@ mod tests {
         assert!(sql.contains("PREDICT"));
     }
 }
-
-

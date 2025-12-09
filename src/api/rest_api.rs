@@ -1,17 +1,18 @@
-//! # REST API Management Layer
-//!
-//! Comprehensive REST API server exposing all database functionality via HTTP endpoints.
-//!
-//! This module provides a production-ready REST API with:
-//! - Full database operations (queries, transactions, CRUD)
-//! - Administration and maintenance endpoints
-//! - Real-time monitoring and metrics
-//! - Connection pool management
-//! - Cluster coordination
-//! - OpenAPI/Swagger documentation
-//! - Rate limiting, CORS, and security
-//! - WebSocket support for real-time streaming
+// # REST API Management Layer
+//
+// Comprehensive REST API server exposing all database functionality via HTTP endpoints.
+//
+// This module provides a production-ready REST API with:
+// - Full database operations (queries, transactions, CRUD)
+// - Administration and maintenance endpoints
+// - Real-time monitoring and metrics
+// - Connection pool management
+// - Cluster coordination
+// - OpenAPI/Swagger documentation
+// - Rate limiting, CORS, and security
+// - WebSocket support for real-time streaming
 
+use std::time::SystemTime;
 use axum::{
     Router,
     routing::{get, post, put, delete},
@@ -3459,5 +3460,3 @@ mod extended_tests {
         assert_eq!(status, HealthStatus::Degraded);
     }
 }
-
-

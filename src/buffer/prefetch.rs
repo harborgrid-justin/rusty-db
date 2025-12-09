@@ -1,29 +1,29 @@
-//! # Asynchronous Prefetching Infrastructure
-//!
-//! Intelligent prefetching system that detects access patterns and proactively
-//! loads pages before they are requested, dramatically reducing I/O latency.
-//!
-//! ## Access Pattern Detection
-//!
-//! Detects multiple access patterns:
-//! - **Sequential**: Forward/backward sequential scans (e.g., 1,2,3,4...)
-//! - **Strided**: Regular stride access (e.g., 1,5,9,13... with stride=4)
-//! - **Random**: No discernible pattern
-//! - **Temporal**: Same pages accessed repeatedly
-//!
-//! ## Adaptive Prefetch Window
-//!
-//! Dynamically adjusts prefetch window size based on:
-//! - Hit rate of prefetched pages
-//! - Available memory
-//! - I/O bandwidth utilization
-//! - Access pattern confidence
-//!
-//! ## Performance Benefits
-//!
-//! - Sequential scans: 80-95% I/O reduction
-//! - Strided access: 60-85% I/O reduction
-//! - Read latency: <10us (prefetched) vs ~100us (SSD) or ~10ms (HDD)
+// # Asynchronous Prefetching Infrastructure
+//
+// Intelligent prefetching system that detects access patterns and proactively
+// loads pages before they are requested, dramatically reducing I/O latency.
+//
+// ## Access Pattern Detection
+//
+// Detects multiple access patterns:
+// - **Sequential**: Forward/backward sequential scans (e.g., 1,2,3,4...)
+// - **Strided**: Regular stride access (e.g., 1,5,9,13... with stride=4)
+// - **Random**: No discernible pattern
+// - **Temporal**: Same pages accessed repeatedly
+//
+// ## Adaptive Prefetch Window
+//
+// Dynamically adjusts prefetch window size based on:
+// - Hit rate of prefetched pages
+// - Available memory
+// - I/O bandwidth utilization
+// - Access pattern confidence
+//
+// ## Performance Benefits
+//
+// - Sequential scans: 80-95% I/O reduction
+// - Strided access: 60-85% I/O reduction
+// - Read latency: <10us (prefetched) vs ~100us (SSD) or ~10ms (HDD)
 
 use crate::common::PageId;
 use std::collections::{HashMap, VecDeque};
@@ -733,5 +733,3 @@ mod tests {
         assert!(!engine.should_throttle(0.7));
     }
 }
-
-

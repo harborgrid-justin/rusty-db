@@ -1,8 +1,9 @@
-//! # Change Streams
-//!
-//! Real-time document change notifications with change stream cursors,
-//! resume tokens, filtered streams, and document diff generation.
+// # Change Streams
+//
+// Real-time document change notifications with change stream cursors,
+// resume tokens, filtered streams, and document diff generation.
 
+use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{HashMap};
@@ -767,5 +768,3 @@ mod tests {
         assert!(!filter.matches(&delete_event));
     }
 }
-
-

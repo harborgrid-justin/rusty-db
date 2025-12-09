@@ -1,7 +1,7 @@
-//! # Model Store and Management
-//!
-//! Model versioning, serialization, registry, and deployment pipeline.
-//! Supports A/B testing and production model management.
+// # Model Store and Management
+//
+// Model versioning, serialization, registry, and deployment pipeline.
+// Supports A/B testing and production model management.
 
 use crate::error::Result;
 use super::{Algorithm, ModelId, Hyperparameters, TrainingStats, EvaluationMetrics};
@@ -701,5 +701,3 @@ mod tests {
         assert_eq!(latest.id, id2);
     }
 }
-
-

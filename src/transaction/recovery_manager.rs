@@ -1,22 +1,23 @@
-//! Recovery management for transaction durability.
-//!
-//! This module implements ARIES-style recovery for ensuring
-//! database consistency after crashes.
-//!
-//! # Recovery Phases
-//!
-//! 1. **Analysis**: Scan log to identify active transactions at crash.
-//! 2. **Redo**: Replay all logged operations from last checkpoint.
-//! 3. **Undo**: Rollback incomplete transactions.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let recovery_mgr = RecoveryManager::new(wal_manager, version_store);
-//! recovery_mgr.recover()?;
-//! recovery_mgr.create_checkpoint(active_txns)?;
-//! ```
+// Recovery management for transaction durability.
+//
+// This module implements ARIES-style recovery for ensuring
+// database consistency after crashes.
+//
+// # Recovery Phases
+//
+// 1. **Analysis**: Scan log to identify active transactions at crash.
+// 2. **Redo**: Replay all logged operations from last checkpoint.
+// 3. **Undo**: Rollback incomplete transactions.
+//
+// # Example
+//
+// ```rust,ignore
+// let recovery_mgr = RecoveryManager::new(wal_manager, version_store);
+// recovery_mgr.recover()?;
+// recovery_mgr.create_checkpoint(active_txns)?;
+// ```
 
+use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
@@ -306,9 +307,9 @@ mod tests {
         let wal_path = temp_wal_path();
         let wal = Arc::new(WALManager::new(wal_path.clone(), 10, true).unwrap());
         let vs = Arc::new(VersionStore::new());
-        
+
         let rm = RecoveryManager::new(wal, vs::from_secs(300));
-        
+
         assert_eq!(rm.stats().entries_analyzed, 0);
         let _ = std::fs::remove_file(wal_path);
     }
@@ -318,9 +319,9 @@ mod tests {
         let wal_path = temp_wal_path();
         let wal = Arc::new(WALManager::new(wal_path.clone(), 10, true).unwrap());
         let vs = Arc::new(VersionStore::new());
-        
+
         let rm = RecoveryManager::new(wal, vs::from_secs(300));
-        
+
         let _result = rm.recover();
         assert!(result.is_ok());
         let _ = std::fs::remove_file(wal_path);

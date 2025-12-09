@@ -8,6 +8,8 @@
 /// - Query timeout management
 /// - Resource pools and allocation
 
+use std::time::SystemTime;
+use std::time::Instant;
 use crate::Result;
 use crate::error::DbError;
 use std::sync::Arc;

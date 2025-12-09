@@ -1,11 +1,11 @@
-//! # Model Quantization for Fast Inference
-//!
-//! This module provides 8-bit quantization for ML models, reducing memory usage
-//! by 4x and inference latency by 2-3x with minimal accuracy loss (<1%).
-//!
-//! Quantization converts float32 weights to int8, using the formula:
-//! quantized = round((value / scale) + zero_point)
-//! dequantized = (quantized - zero_point) * scale
+// # Model Quantization for Fast Inference
+//
+// This module provides 8-bit quantization for ML models, reducing memory usage
+// by 4x and inference latency by 2-3x with minimal accuracy loss (<1%).
+//
+// Quantization converts float32 weights to int8, using the formula:
+// quantized = round((value / scale) + zero_point)
+// dequantized = (quantized - zero_point) * scale
 
 use serde::{Serialize, Deserialize};
 use super::{Vector};
@@ -464,5 +464,3 @@ mod tests {
         assert!(compression_ratio > 3.0);
     }
 }
-
-

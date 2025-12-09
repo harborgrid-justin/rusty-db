@@ -1,37 +1,37 @@
-//! # LIRS (Low Inter-reference Recency Set) Eviction Policy
-//!
-//! Advanced cache replacement algorithm that uses Inter-Reference Recency (IRR)
-//! instead of simple recency to make eviction decisions. LIRS achieves superior
-//! scan resistance and higher hit rates than LRU, CLOCK, and even 2Q.
-//!
-//! ## Algorithm Overview
-//!
-//! LIRS classifies blocks into two categories based on IRR:
-//! - **LIR (Low IRR)**: Hot blocks with small inter-reference recency
-//! - **HIR (High IRR)**: Cold blocks with large inter-reference recency
-//!
-//! LIRS maintains:
-//! - **LIRS Stack (S)**: Contains all LIR blocks + recent HIR blocks
-//! - **HIR List (Q)**: FIFO queue of resident HIR blocks
-//!
-//! ## Key Advantages
-//!
-//! - **Superior scan resistance**: Better than 2Q and LRU-K
-//! - **Low overhead**: Simpler than ARC, more efficient than LRU-K
-//! - **High hit rates**: Consistently outperforms LRU by 10-45%
-//! - **Adaptiv**: Automatically adjusts to workload patterns
-//!
-//! ## IRR (Inter-Reference Recency)
-//!
-//! IRR is the number of distinct pages accessed between two consecutive
-//! references to the same page. Pages with small IRR are "hot" and should
-//! be kept in cache.
-//!
-//! ## References
-//!
-//! Jiang, S., & Zhang, X. (2002). "LIRS: An Efficient Low Inter-reference
-//! Recency Set Replacement Policy to Improve Buffer Cache Performance".
-//! ACM SIGMETRICS 2002.
+// # LIRS (Low Inter-reference Recency Set) Eviction Policy
+//
+// Advanced cache replacement algorithm that uses Inter-Reference Recency (IRR)
+// instead of simple recency to make eviction decisions. LIRS achieves superior
+// scan resistance and higher hit rates than LRU, CLOCK, and even 2Q.
+//
+// ## Algorithm Overview
+//
+// LIRS classifies blocks into two categories based on IRR:
+// - **LIR (Low IRR)**: Hot blocks with small inter-reference recency
+// - **HIR (High IRR)**: Cold blocks with large inter-reference recency
+//
+// LIRS maintains:
+// - **LIRS Stack (S)**: Contains all LIR blocks + recent HIR blocks
+// - **HIR List (Q)**: FIFO queue of resident HIR blocks
+//
+// ## Key Advantages
+//
+// - **Superior scan resistance**: Better than 2Q and LRU-K
+// - **Low overhead**: Simpler than ARC, more efficient than LRU-K
+// - **High hit rates**: Consistently outperforms LRU by 10-45%
+// - **Adaptiv**: Automatically adjusts to workload patterns
+//
+// ## IRR (Inter-Reference Recency)
+//
+// IRR is the number of distinct pages accessed between two consecutive
+// references to the same page. Pages with small IRR are "hot" and should
+// be kept in cache.
+//
+// ## References
+//
+// Jiang, S., & Zhang, X. (2002). "LIRS: An Efficient Low Inter-reference
+// Recency Set Replacement Policy to Improve Buffer Cache Performance".
+// ACM SIGMETRICS 2002.
 
 use crate::buffer::eviction::{EvictionPolicy, EvictionStats};
 use crate::buffer::page_cache::{BufferFrame, FrameId};
@@ -653,5 +653,3 @@ mod tests {
         }
     }
 }
-
-

@@ -1,32 +1,32 @@
-//! Analytics Manager - Core Coordination
-//!
-//! This module provides the central `AnalyticsManager` that coordinates
-//! all analytics subsystems including caching, statistics, OLAP operations,
-//! and query optimization.
-//!
-//! # Architecture
-//!
-//! The AnalyticsManager follows a facade pattern, providing a unified
-//! interface to:
-//! - Query caching and result reuse
-//! - Statistics collection and histogram management
-//! - Cost-based query optimization
-//! - Parallel query execution
-//! - Data profiling and quality analysis
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! use crate::analytics::manager::AnalyticsManager;
-//!
-//! let manager = AnalyticsManager::new();
-//!
-//! // Execute with caching
-//! let _result = manager.execute_cached("SELECT * FROM users WHERE active = true");
-//!
-//! // Analyze workload patterns
-//! let recommendations = manager.analyze_workload();
-//! ```
+// Analytics Manager - Core Coordination
+//
+// This module provides the central `AnalyticsManager` that coordinates
+// all analytics subsystems including caching, statistics, OLAP operations,
+// and query optimization.
+//
+// # Architecture
+//
+// The AnalyticsManager follows a facade pattern, providing a unified
+// interface to:
+// - Query caching and result reuse
+// - Statistics collection and histogram management
+// - Cost-based query optimization
+// - Parallel query execution
+// - Data profiling and quality analysis
+//
+// # Example
+//
+// ```rust,ignore
+// use crate::analytics::manager::AnalyticsManager;
+//
+// let manager = AnalyticsManager::new();
+//
+// // Execute with caching
+// let _result = manager.execute_cached("SELECT * FROM users WHERE active = true");
+//
+// // Analyze workload patterns
+// let recommendations = manager.analyze_workload();
+// ```
 
 use parking_lot::RwLock;
 use std::collections::HashMap;
@@ -233,7 +233,7 @@ impl AnalyticsManager {
     pub fn record_query(&self, query: &str, execution_time_ms: u64) {
         if self.config.statistics_enabled {
             self.statistics_tracker.record_query(query, execution_time_ms);
-            
+
             let query_hash = Self::hash_query(query);
             self.performance_tracker.record(query_hash, execution_time_ms);
         }

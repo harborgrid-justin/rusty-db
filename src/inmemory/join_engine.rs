@@ -6,6 +6,7 @@
 // - Partitioned parallel joins
 // - Memory-efficient algorithms
 
+use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::hash::{Hash, Hasher};

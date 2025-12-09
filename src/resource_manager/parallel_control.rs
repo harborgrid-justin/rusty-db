@@ -1,8 +1,13 @@
-//! Parallel Execution Control for Resource Management
-//!
-//! This module implements parallel degree limits, parallel statement queuing,
-//! auto DOP calculation, parallel downgrade, and cross-instance coordination.
+// Parallel Execution Control for Resource Management
+//
+// This module implements parallel degree limits, parallel statement queuing,
+// auto DOP calculation, parallel downgrade, and cross-instance coordination.
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::collections::HashSet;
+use std::time::SystemTime;
+use std::time::Instant;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
@@ -688,5 +693,3 @@ mod tests {
         assert!(query_id > 0);
     }
 }
-
-

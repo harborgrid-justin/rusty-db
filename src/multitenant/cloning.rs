@@ -1,23 +1,23 @@
-//! # Hot Cloning Capabilities
-//!
-//! Online PDB cloning with copy-on-write, thin cloning, snapshot cloning,
-//! refreshable clones, and cloning from backup.
-//!
-//! ## Features
-//!
-//! - **Online Cloning**: Clone PDBs without downtime
-//! - **Copy-on-Write**: Efficient thin cloning with CoW
-//! - **Snapshot Cloning**: Clone from PDB snapshots
-//! - **Refreshable Clones**: Periodically sync with source
-//! - **Clone from Backup**: Restore and clone from backups
-//! - **Sparse Cloning**: Clone with minimal initial storage
-//!
-//! ## Architecture
-//!
-//! Uses a layered storage approach similar to Docker/container images:
-//! - Base layer: Original PDB data (read-only)
-//! - CoW layer: Modified blocks for the clone
-//! - Metadata layer: Tracks block ownership and deltas
+// # Hot Cloning Capabilities
+//
+// Online PDB cloning with copy-on-write, thin cloning, snapshot cloning,
+// refreshable clones, and cloning from backup.
+//
+// ## Features
+//
+// - **Online Cloning**: Clone PDBs without downtime
+// - **Copy-on-Write**: Efficient thin cloning with CoW
+// - **Snapshot Cloning**: Clone from PDB snapshots
+// - **Refreshable Clones**: Periodically sync with source
+// - **Clone from Backup**: Restore and clone from backups
+// - **Sparse Cloning**: Clone with minimal initial storage
+//
+// ## Architecture
+//
+// Uses a layered storage approach similar to Docker/container images:
+// - Base layer: Original PDB data (read-only)
+// - CoW layer: Modified blocks for the clone
+// - Metadata layer: Tracks block ownership and deltas
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -657,5 +657,3 @@ mod tests {
         assert_eq!(read_data, block_data);
     }
 }
-
-

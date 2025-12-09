@@ -1,10 +1,10 @@
-//! Optimizer Hints System - Oracle-compatible optimizer hints
-//!
-//! Implements:
-//! - Optimizer hints parsing
-//! - Hint validation
-//! - Conflicting hint resolution
-//! - Hint reporting
+// Optimizer Hints System - Oracle-compatible optimizer hints
+//
+// Implements:
+// - Optimizer hints parsing
+// - Hint validation
+// - Conflicting hint resolution
+// - Hint reporting
 
 use crate::error::Result;
 use std::collections::{HashMap};
@@ -815,5 +815,3 @@ mod tests {
         assert!(parser.get_hint_definition("USE_HASH").is_some());
     }
 }
-
-

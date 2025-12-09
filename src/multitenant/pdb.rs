@@ -1,24 +1,24 @@
-//! # Pluggable Database (PDB) Management
-//!
-//! Implements PDB lifecycle operations including creation, cloning, plugging, opening,
-//! closing, and deletion. Supports application containers, seed PDBs, and snapshots.
-//!
-//! ## Features
-//!
-//! - **PDB Creation**: Create new PDBs from scratch, clone, or seed
-//! - **Lifecycle Management**: Open, close, mount, restrict modes
-//! - **Snapshots**: Point-in-time PDB snapshots
-//! - **Application Containers**: Multi-level container hierarchy
-//! - **Seed PDB**: Template PDB for fast provisioning
-//! - **Hot Clone**: Clone running PDBs without downtime
-//!
-//! ## PDB States
-//!
-//! - **Mounted**: PDB is mounted but not open
-//! - **Open**: PDB is open for normal operations
-//! - **OpenRestricted**: PDB is open in restricted mode
-//! - **Closed**: PDB is completely closed
-//! - **Migrating**: PDB is being migrated
+// # Pluggable Database (PDB) Management
+//
+// Implements PDB lifecycle operations including creation, cloning, plugging, opening,
+// closing, and deletion. Supports application containers, seed PDBs, and snapshots.
+//
+// ## Features
+//
+// - **PDB Creation**: Create new PDBs from scratch, clone, or seed
+// - **Lifecycle Management**: Open, close, mount, restrict modes
+// - **Snapshots**: Point-in-time PDB snapshots
+// - **Application Containers**: Multi-level container hierarchy
+// - **Seed PDB**: Template PDB for fast provisioning
+// - **Hot Clone**: Clone running PDBs without downtime
+//
+// ## PDB States
+//
+// - **Mounted**: PDB is mounted but not open
+// - **Open**: PDB is open for normal operations
+// - **OpenRestricted**: PDB is open in restricted mode
+// - **Closed**: PDB is completely closed
+// - **Migrating**: PDB is being migrated
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -858,5 +858,3 @@ mod tests {
         assert_eq!(snapshots.len(), 1);
     }
 }
-
-

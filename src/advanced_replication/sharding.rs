@@ -1,7 +1,7 @@
-//! # Sharding Engine
-//!
-//! Advanced sharding with hash, range, list, and composite strategies.
-//! Includes shard rebalancing and cross-shard query support.
+// # Sharding Engine
+//
+// Advanced sharding with hash, range, list, and composite strategies.
+// Includes shard rebalancing and cross-shard query support.
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -711,5 +711,3 @@ mod tests {
         assert_eq!(shards[0], "shard-0");
     }
 }
-
-

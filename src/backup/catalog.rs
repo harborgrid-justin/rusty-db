@@ -1,6 +1,8 @@
 // Backup Catalog - RMAN-style backup metadata repository
 // Centralized backup tracking and management across databases
 
+use std::collections::BTreeMap;
+use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::fs::{File, create_dir_all};

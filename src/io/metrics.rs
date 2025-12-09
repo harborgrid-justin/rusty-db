@@ -1,7 +1,8 @@
-//! # I/O Metrics and Performance Monitoring
-//!
-//! Comprehensive metrics collection for I/O operations.
+// # I/O Metrics and Performance Monitoring
+//
+// Comprehensive metrics collection for I/O operations.
 
+use std::time::Instant;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use parking_lot::RwLock;
@@ -737,5 +738,3 @@ mod tests {
         assert_eq!(stats.write_bytes, 4096);
     }
 }
-
-

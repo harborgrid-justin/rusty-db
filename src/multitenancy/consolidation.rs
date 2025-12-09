@@ -1,6 +1,7 @@
 // Tenant consolidation and workload management
 // Implements intelligent tenant placement, rebalancing, and consolidation planning
 
+use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use tokio::sync::RwLock;

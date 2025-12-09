@@ -8,6 +8,7 @@
 /// - Thread pool management
 /// - Query parallelization optimizer
 
+use std::collections::VecDeque;
 use crate::error::DbError;
 use crate::execution::{QueryResult, planner::PlanNode};
 use std::sync::Arc;

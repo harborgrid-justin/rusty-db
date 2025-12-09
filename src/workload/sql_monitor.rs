@@ -1,6 +1,8 @@
 // RustyDB SQL Monitor - Real-time SQL execution monitoring
 // Provides real-time monitoring of SQL execution with plan tracking and wait analysis
 
+use std::time::SystemTime;
+use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;

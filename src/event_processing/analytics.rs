@@ -3,6 +3,8 @@
 // Implements real-time analytics on event streams including anomaly detection,
 // trend analysis, predictive analytics, and alert generation with ML model serving.
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use super::{Event, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

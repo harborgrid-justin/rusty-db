@@ -1,8 +1,10 @@
-//! Predictive Analytics for Database Operations
-//!
-//! Forecasting and prediction capabilities for storage growth, query performance,
-//! resource exhaustion, and capacity planning.
+// Predictive Analytics for Database Operations
+//
+// Forecasting and prediction capabilities for storage growth, query performance,
+// resource exhaustion, and capacity planning.
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -642,5 +644,3 @@ mod tests {
         assert!(window.start_hour >= 22 || window.start_hour <= 2);
     }
 }
-
-

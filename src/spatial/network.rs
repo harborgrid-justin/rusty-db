@@ -1,12 +1,13 @@
-//! Network Analysis
-//!
-//! Oracle Spatial Network Data Model compatible operations:
-//! - Road network modeling
-//! - Shortest path algorithms (Dijkstra, A*)
-//! - Traveling salesman problem
-//! - Service area computation
-//! - Network routing and optimization
+// Network Analysis
+//
+// Oracle Spatial Network Data Model compatible operations:
+// - Road network modeling
+// - Shortest path algorithms (Dijkstra, A*)
+// - Traveling salesman problem
+// - Service area computation
+// - Network routing and optimization
 
+use std::collections::HashSet;
 use crate::error::Result;
 use crate::spatial::geometry::Coordinate;
 use std::cmp::Ordering;
@@ -797,5 +798,3 @@ mod tests {
         assert!(!area.nodes.contains(&4));
     }
 }
-
-

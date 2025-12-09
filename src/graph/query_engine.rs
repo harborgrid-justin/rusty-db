@@ -1,13 +1,14 @@
-//! # Graph Query Engine
-//!
-//! Provides PGQL-like query parsing and execution for property graphs:
-//! - Pattern matching engine
-//! - Variable-length path queries
-//! - Shortest path algorithms (Dijkstra, A*)
-//! - Graph traversal operators (BFS, DFS)
-//! - Subgraph matching
-//! - Query optimization
+// # Graph Query Engine
+//
+// Provides PGQL-like query parsing and execution for property graphs:
+// - Pattern matching engine
+// - Variable-length path queries
+// - Shortest path algorithms (Dijkstra, A*)
+// - Graph traversal operators (BFS, DFS)
+// - Subgraph matching
+// - Query optimization
 
+use std::collections::HashSet;
 use std::collections::{HashMap, BinaryHeap};
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
@@ -1155,5 +1156,3 @@ mod tests {
         assert_eq!(results.len(), 2); // Should match both vertices
     }
 }
-
-

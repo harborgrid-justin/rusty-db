@@ -1,6 +1,6 @@
-//! # Windows I/O Completion Ports (IOCP)
-//!
-//! High-performance asynchronous I/O using Windows IOCP.
+// # Windows I/O Completion Ports (IOCP)
+//
+// High-performance asynchronous I/O using Windows IOCP.
 
 use crate::error::Result;
 use crate::io::{IoRequest, IoCompletion, IoOpType, IoStatus, IoHandle};
@@ -564,5 +564,3 @@ mod tests {
         assert!(result.is_ok());
     }
 }
-
-

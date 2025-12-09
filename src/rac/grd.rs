@@ -1,22 +1,25 @@
-//! # Global Resource Directory (GRD)
-//!
-//! Oracle RAC-like Global Resource Directory for managing resource ownership,
-//! master instance tracking, and dynamic resource remastering across cluster nodes.
-//!
-//! ## Key Components
-//!
-//! - **Resource Master Tracking**: Maps each resource to its master instance
-//! - **Resource Affinity**: Tracks access patterns for intelligent placement
-//! - **Dynamic Remastering**: Automatically migrates master ownership based on load
-//! - **Lock Value Blocks**: Carries state information with lock operations
-//!
-//! ## Architecture
-//!
-//! The GRD maintains a distributed hash directory of all resources in the cluster,
-//! with each resource having a designated master instance responsible for coordinating
-//! access to that resource. The directory automatically rebalances resources to optimize
-//! for access patterns and load distribution.
+// # Global Resource Directory (GRD)
+//
+// Oracle RAC-like Global Resource Directory for managing resource ownership,
+// master instance tracking, and dynamic resource remastering across cluster nodes.
+//
+// ## Key Components
+//
+// - **Resource Master Tracking**: Maps each resource to its master instance
+// - **Resource Affinity**: Tracks access patterns for intelligent placement
+// - **Dynamic Remastering**: Automatically migrates master ownership based on load
+// - **Lock Value Blocks**: Carries state information with lock operations
+//
+// ## Architecture
+//
+// The GRD maintains a distributed hash directory of all resources in the cluster,
+// with each resource having a designated master instance responsible for coordinating
+// access to that resource. The directory automatically rebalances resources to optimize
+// for access patterns and load distribution.
 
+use std::collections::VecDeque;
+use std::collections::HashSet;
+use std::time::Instant;
 use crate::error::DbError;
 use crate::common::NodeId;
 use crate::rac::cache_fusion::{ResourceId, LockValueBlock, BlockMode};
@@ -1038,5 +1041,3 @@ mod tests {
         assert_eq!(master.unwrap(), node_id);
     }
 }
-
-

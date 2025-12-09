@@ -1,10 +1,12 @@
-//! Workload ML Analysis
-//!
-//! Machine learning models for workload classification, performance prediction,
-//! and anomaly detection using pure Rust implementations.
-//!
-//! Enhanced with SIMD acceleration for sub-millisecond inference!
+// Workload ML Analysis
+//
+// Machine learning models for workload classification, performance prediction,
+// and anomaly detection using pure Rust implementations.
+//
+// Enhanced with SIMD acceleration for sub-millisecond inference!
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -800,5 +802,3 @@ mod tests {
         assert_eq!(trend.unwrap().direction, TrendDirection::Increasing);
     }
 }
-
-

@@ -8,6 +8,8 @@
 /// - Delta propagation for efficient updates
 /// - View dependency graph management
 
+use std::collections::HashSet;
+use std::time::SystemTime;
 use crate::error::Result;
 use crate::catalog::Schema;
 use serde::{Deserialize, Serialize};

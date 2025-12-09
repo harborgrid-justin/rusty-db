@@ -1,7 +1,7 @@
-//! # RustyDB CLI
-//!
-//! Interactive SQL client for RustyDB.
-//! Connects to a RustyDB server and allows executing SQL queries.
+// # RustyDB CLI
+//
+// Interactive SQL client for RustyDB.
+// Connects to a RustyDB server and allows executing SQL queries.
 
 use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, stdin, AsyncBufReadExt, BufReader};
@@ -18,60 +18,60 @@ async fn main() -> Result<()> {
     println!("║                    Version {}                        ║", VERSION);
     println!("╚══════════════════════════════════════════════════════════╝");
     println!();
-    
+
     let addr = "127.0.0.1:5432";
     println!("Connecting to RustyDB server at {}...", addr);
-    
+
     let mut stream = TcpStream::connect(addr).await
         .map_err(|e| DbError::Network(format!("Failed to connect: {}", e)))?;
-    
+
     println!("Connected successfully!");
     println!("Type SQL commands or 'exit' to quit.");
     println!();
-    
+
     let mut reader = BufReader::new(stdin());
     let mut input = String::new();
-    
+
     loop {
         print!("rustydb> ");
         std::io::Write::flush(&mut std::io::stdout()).unwrap();
-        
+
         input.clear();
         reader.read_line(&mut input).await
             .map_err(|e| DbError::Io(e))?;
-        
+
         let cmd = input.trim();
-        
+
         if cmd.is_empty() {
             continue;
         }
-        
+
         if cmd.eq_ignore_ascii_case("exit") || cmd.eq_ignore_ascii_case("quit") {
             println!("Goodbye!");
             break;
         }
-        
+
         // Send query
         let request = Request::Query { sql: cmd.to_string() };
         let request_bytes = bincode::serialize(&request)
             .map_err(|e| DbError::Serialization(e.to_string()))?;
-        
+
         stream.write_all(&request_bytes).await
             .map_err(|e| DbError::Network(e.to_string()))?;
-        
+
         // Read response
         let mut buffer = vec![0u8; 8192];
         let n = stream.read(&mut buffer).await
             .map_err(|e| DbError::Network(e.to_string()))?;
-        
+
         if n == 0 {
             println!("Connection closed by server");
             break;
         }
-        
+
         let response: Response = bincode::deserialize(&buffer[..n])
             .map_err(|e| DbError::Serialization(e.to_string()))?;
-        
+
         match response {
             Response::QueryResult(result) => {
                 print_result(&result);
@@ -89,10 +89,10 @@ async fn main() -> Result<()> {
                 println!("PONG");
             }
         }
-        
+
         println!();
     }
-    
+
     Ok(())
 }
 
@@ -103,13 +103,13 @@ fn print_result(result: &QueryResult) {
             print!("{:20}", col);
         }
         println!();
-        
+
         // Print separator
         for _ in &result.columns {
             print!("{}", "-".repeat(20));
         }
         println!();
-        
+
         // Print rows
         for row in &result.rows {
             for value in row {
@@ -118,8 +118,6 @@ fn print_result(result: &QueryResult) {
             println!();
         }
     }
-    
+
     println!("{} row(s) affected", result.rows_affected);
 }
-
-

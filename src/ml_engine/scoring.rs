@@ -1,7 +1,7 @@
-//! # In-Database Scoring Engine
-//!
-//! Real-time and batch prediction capabilities with PMML import/export,
-//! model explanations (SHAP-like), and confidence intervals.
+// # In-Database Scoring Engine
+//
+// Real-time and batch prediction capabilities with PMML import/export,
+// model explanations (SHAP-like), and confidence intervals.
 
 use crate::error::Result;
 use super::{Prediction, Algorithm};
@@ -640,5 +640,3 @@ mod tests {
         assert!(pmml.contains("RegressionModel"));
     }
 }
-
-

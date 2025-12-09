@@ -1,38 +1,39 @@
-//! # Actor-Based Coordination System
-//!
-//! This module provides a robust actor-based coordination system for RustyDB,
-//! enabling asynchronous message passing, supervision, and fault tolerance.
-//!
-//! ## Features
-//!
-//! - **Lightweight Actors**: Efficient async actors with mailboxes
-//! - **Supervision Trees**: Hierarchical supervision with restart strategies
-//! - **Message Routing**: Pattern-based message routing and broadcasts
-//! - **Backpressure**: Automatic flow control with bounded mailboxes
-//! - **Actor Discovery**: Name-based actor registration and lookup
-//! - **Lifecycle Management**: Automatic cleanup and resource management
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────┐
-//! │           Actor System Supervisor               │
-//! └─────────────────┬───────────────────────────────┘
-//!                   │
-//!       ┌───────────┼───────────┬──────────────┐
-//!       │           │           │              │
-//!   ┌───▼───┐   ┌──▼────┐  ┌───▼────┐    ┌────▼────┐
-//!   │Actor A│   │Actor B│  │Actor C │    │Actor D  │
-//!   │(Worker)   │(Worker)  │(Worker)│    │(Supervisor)
-//!   └───────┘   └───────┘  └───────┘    └─────┬─────┘
-//!                                              │
-//!                                         ┌────┴────┐
-//!                                         │         │
-//!                                     ┌───▼───┐ ┌──▼────┐
-//!                                     │Actor E│ │Actor F│
-//!                                     └───────┘ └───────┘
-//! ```
+// # Actor-Based Coordination System
+//
+// This module provides a robust actor-based coordination system for RustyDB,
+// enabling asynchronous message passing, supervision, and fault tolerance.
+//
+// ## Features
+//
+// - **Lightweight Actors**: Efficient async actors with mailboxes
+// - **Supervision Trees**: Hierarchical supervision with restart strategies
+// - **Message Routing**: Pattern-based message routing and broadcasts
+// - **Backpressure**: Automatic flow control with bounded mailboxes
+// - **Actor Discovery**: Name-based actor registration and lookup
+// - **Lifecycle Management**: Automatic cleanup and resource management
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────┐
+// │           Actor System Supervisor               │
+// └─────────────────┬───────────────────────────────┘
+//                   │
+//       ┌───────────┼───────────┬──────────────┐
+//       │           │           │              │
+//   ┌───▼───┐   ┌──▼────┐  ┌───▼────┐    ┌────▼────┐
+//   │Actor A│   │Actor B│  │Actor C │    │Actor D  │
+//   │(Worker)   │(Worker)  │(Worker)│    │(Supervisor)
+//   └───────┘   └───────┘  └───────┘    └─────┬─────┘
+//                                              │
+//                                         ┌────┴────┐
+//                                         │         │
+//                                     ┌───▼───┐ ┌──▼────┐
+//                                     │Actor E│ │Actor F│
+//                                     └───────┘ └───────┘
+// ```
 
+use std::sync::Mutex;
 use std::any::Any;
 use std::collections::HashMap;
 
@@ -738,5 +739,3 @@ mod tests {
         system.shutdown().await.unwrap();
     }
 }
-
-

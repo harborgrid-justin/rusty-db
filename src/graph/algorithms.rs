@@ -1,12 +1,12 @@
-//! # Graph Algorithms
-//!
-//! Comprehensive graph algorithm implementations:
-//! - PageRank and centrality measures
-//! - Connected components
-//! - Community detection (Louvain algorithm)
-//! - Triangle counting and clustering
-//! - Influence maximization
-//! - Similarity measures
+// # Graph Algorithms
+//
+// Comprehensive graph algorithm implementations:
+// - PageRank and centrality measures
+// - Connected components
+// - Community detection (Louvain algorithm)
+// - Triangle counting and clustering
+// - Influence maximization
+// - Similarity measures
 
 use std::collections::{HashMap};
 use serde::{Deserialize, Serialize};
@@ -980,5 +980,3 @@ mod tests {
         assert!(ConnectedComponentsAlgorithm::same_component(&result, v1, v2));
     }
 }
-
-

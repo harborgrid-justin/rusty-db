@@ -1,12 +1,12 @@
-//! Plan Generation - Dynamic programming for optimal plan generation
-//!
-//! Implements:
-//! - Bottom-up dynamic programming
-//! - Join enumeration (bushy, left-deep, right-deep)
-//! - Access path selection
-//! - Join method selection (nested loop, hash, merge)
-//! - Subquery unnesting
-//! - View merging
+// Plan Generation - Dynamic programming for optimal plan generation
+//
+// Implements:
+// - Bottom-up dynamic programming
+// - Join enumeration (bushy, left-deep, right-deep)
+// - Access path selection
+// - Join method selection (nested loop, hash, merge)
+// - Subquery unnesting
+// - View merging
 
 use crate::common::{TableId, IndexId, Schema};
 use crate::error::Result;
@@ -1049,5 +1049,3 @@ mod tests {
         assert!(plans.is_ok());
     }
 }
-
-

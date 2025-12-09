@@ -1,38 +1,38 @@
-//! # Key Management and Key Store
-//!
-//! Hierarchical key management system with master encryption keys (MEK),
-//! data encryption keys (DEK), and envelope encryption.
-//!
-//! ## Key Hierarchy
-//!
-//! ```text
-//! ┌─────────────────────────────────────────┐
-//! │  Master Encryption Key (MEK)            │
-//! │  - Protected by password/HSM            │
-//! │  - Rarely rotated                       │
-//! └──────────────┬──────────────────────────┘
-//!                │ Encrypts
-//!                ▼
-//! ┌─────────────────────────────────────────┐
-//! │  Data Encryption Keys (DEK)             │
-//! │  - Per tablespace/column                │
-//! │  - Regular rotation                     │
-//! │  - Encrypted at rest by MEK             │
-//! └──────────────┬──────────────────────────┘
-//!                │ Encrypts
-//!                ▼
-//! ┌─────────────────────────────────────────┐
-//! │  Actual Data                            │
-//! └─────────────────────────────────────────┘
-//! ```
-//!
-//! ## Features
-//!
-//! - **Envelope Encryption**: DEKs encrypted by MEK
-//! - **Key Versioning**: Multiple versions of keys with seamless rotation
-//! - **Distributed Sync**: Key synchronization across cluster nodes
-//! - **Secure Storage**: Keys encrypted at rest
-//! - **Key Derivation**: PBKDF2/Argon2 for password-based keys
+// # Key Management and Key Store
+//
+// Hierarchical key management system with master encryption keys (MEK),
+// data encryption keys (DEK), and envelope encryption.
+//
+// ## Key Hierarchy
+//
+// ```text
+// ┌─────────────────────────────────────────┐
+// │  Master Encryption Key (MEK)            │
+// │  - Protected by password/HSM            │
+// │  - Rarely rotated                       │
+// └──────────────┬──────────────────────────┘
+//                │ Encrypts
+//                ▼
+// ┌─────────────────────────────────────────┐
+// │  Data Encryption Keys (DEK)             │
+// │  - Per tablespace/column                │
+// │  - Regular rotation                     │
+// │  - Encrypted at rest by MEK             │
+// └──────────────┬──────────────────────────┘
+//                │ Encrypts
+//                ▼
+// ┌─────────────────────────────────────────┐
+// │  Actual Data                            │
+// └─────────────────────────────────────────┘
+// ```
+//
+// ## Features
+//
+// - **Envelope Encryption**: DEKs encrypted by MEK
+// - **Key Versioning**: Multiple versions of keys with seamless rotation
+// - **Distributed Sync**: Key synchronization across cluster nodes
+// - **Secure Storage**: Keys encrypted at rest
+// - **Key Derivation**: PBKDF2/Argon2 for password-based keys
 
 use crate::{DbError, Result};
 use aes_gcm::{
@@ -776,5 +776,3 @@ mod tests {
         assert!(result.is_err());
     }
 }
-
-

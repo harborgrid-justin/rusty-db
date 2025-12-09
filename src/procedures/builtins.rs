@@ -3,6 +3,7 @@
 /// This module provides Oracle-compatible built-in packages like DBMS_OUTPUT,
 /// DBMS_SQL, UTL_FILE, and DBMS_SCHEDULER for enterprise database operations.
 
+use std::collections::VecDeque;
 use crate::{Result, DbError};
 use crate::procedures::runtime::RuntimeValue;
 use std::collections::{HashMap};

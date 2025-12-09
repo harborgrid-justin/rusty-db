@@ -1,27 +1,28 @@
-//! # PDB Relocation and Migration
-//!
-//! Online PDB relocation with minimal downtime, cross-CDB migration,
-//! connection draining, and state transfer protocol.
-//!
-//! ## Features
-//!
-//! - **Online Relocation**: Move PDBs without downtime
-//! - **Cross-CDB Migration**: Migrate PDBs between CDBs
-//! - **Connection Draining**: Graceful connection shutdown
-//! - **State Transfer**: Incremental state synchronization
-//! - **Rollback Support**: Revert failed migrations
-//! - **Zero-Downtime**: Switchover with minimal interruption
-//!
-//! ## Architecture
-//!
-//! Migration follows a phased approach:
-//! 1. **Prepare**: Validate source and target, create destination
-//! 2. **Copy**: Transfer bulk data to destination
-//! 3. **Sync**: Apply incremental changes
-//! 4. **Drain**: Gracefully close connections
-//! 5. **Switchover**: Redirect to new location
-//! 6. **Cleanup**: Remove source PDB
+// # PDB Relocation and Migration
+//
+// Online PDB relocation with minimal downtime, cross-CDB migration,
+// connection draining, and state transfer protocol.
+//
+// ## Features
+//
+// - **Online Relocation**: Move PDBs without downtime
+// - **Cross-CDB Migration**: Migrate PDBs between CDBs
+// - **Connection Draining**: Graceful connection shutdown
+// - **State Transfer**: Incremental state synchronization
+// - **Rollback Support**: Revert failed migrations
+// - **Zero-Downtime**: Switchover with minimal interruption
+//
+// ## Architecture
+//
+// Migration follows a phased approach:
+// 1. **Prepare**: Validate source and target, create destination
+// 2. **Copy**: Transfer bulk data to destination
+// 3. **Sync**: Apply incremental changes
+// 4. **Drain**: Gracefully close connections
+// 5. **Switchover**: Redirect to new location
+// 6. **Cleanup**: Remove source PDB
 
+use std::sync::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
@@ -636,5 +637,3 @@ mod tests {
         protocol.transfer_data(source_pdb_id, target_pdb_id, 1024 * 1024).await.unwrap();
     }
 }
-
-

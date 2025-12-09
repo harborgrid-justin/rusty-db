@@ -3,6 +3,9 @@
 // Implements Oracle MATCH_RECOGNIZE-like pattern matching on event streams with
 // temporal patterns, event correlation, hierarchies, and GPU-accelerated matching.
 
+use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use super::{Event, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

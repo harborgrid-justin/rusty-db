@@ -1,7 +1,7 @@
-//! # Advanced Optimization Algorithms
-//!
-//! This module provides state-of-the-art optimization algorithms for ML training,
-//! including Adam, SGD with momentum, and adaptive learning rate scheduling.
+// # Advanced Optimization Algorithms
+//
+// This module provides state-of-the-art optimization algorithms for ML training,
+// including Adam, SGD with momentum, and adaptive learning rate scheduling.
 
 use serde::{Serialize, Deserialize};
 
@@ -368,5 +368,3 @@ mod tests {
         assert!(lr_after < 1.0);
     }
 }
-
-

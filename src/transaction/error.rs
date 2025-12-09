@@ -1,15 +1,15 @@
-//! Transaction-specific error types.
-//!
-//! This module provides structured error handling for the transaction
-//! subsystem using `thiserror` for ergonomic error definitions.
-//!
-//! # Error Categories
-//!
-//! - **Locking errors**: Lock conflicts, timeouts, deadlocks
-//! - **State errors**: Invalid state transitions
-//! - **Validation errors**: Constraint violations
-//! - **I/O errors**: WAL and storage failures
-//! - **Recovery errors**: Checkpoint and recovery failures
+// Transaction-specific error types.
+//
+// This module provides structured error handling for the transaction
+// subsystem using `thiserror` for ergonomic error definitions.
+//
+// # Error Categories
+//
+// - **Locking errors**: Lock conflicts, timeouts, deadlocks
+// - **State errors**: Invalid state transitions
+// - **Validation errors**: Constraint violations
+// - **I/O errors**: WAL and storage failures
+// - **Recovery errors**: Checkpoint and recovery failures
 
 use std::io;
 use thiserror::Error;
@@ -30,7 +30,7 @@ pub enum TransactionError {
     // =========================================================================
     // Lock-related errors
     // =========================================================================
-    
+
     /// Lock acquisition timed out.
     #[error("Lock timeout: transaction {txn_id} timed out waiting for {lock_mode} lock on '{resource}'")]
     LockTimeout {

@@ -1,279 +1,279 @@
-//! # RustyDB Orchestration Framework
-//!
-//! This module provides the core orchestration framework for RustyDB, coordinating all
-//! enterprise modules and providing critical infrastructure for building a robust,
-//! fault-tolerant, and scalable database system.
-//!
-//! ## Overview
-//!
-//! The orchestration framework is the nervous system of RustyDB, providing:
-//!
-//! - **Actor-Based Coordination**: Asynchronous message passing between components
-//! - **Service Registry**: Dependency injection and service discovery
-//! - **Dependency Management**: Automatic dependency resolution and initialization
-//! - **Circuit Breakers**: Fault tolerance and cascading failure prevention
-//! - **Health Monitoring**: Comprehensive health checks and aggregation
-//! - **Plugin System**: Extensible architecture for custom functionality
-//! - **Graceful Degradation**: Maintain availability under resource constraints
-//! - **Error Recovery**: Automatic retry, fallback, and compensation
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────────┐
-//! │                  Orchestration Framework                        │
-//! ├─────────────────────────────────────────────────────────────────┤
-//! │                                                                 │
-//! │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-//! │  │Actor System  │  │   Service    │  │  Dependency  │         │
-//! │  │              │  │   Registry   │  │    Graph     │         │
-//! │  └──────────────┘  └──────────────┘  └──────────────┘         │
-//! │                                                                 │
-//! │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-//! │  │Circuit       │  │   Health     │  │   Plugin     │         │
-//! │  │Breaker       │  │ Aggregator   │  │  Registry    │         │
-//! │  └──────────────┘  └──────────────┘  └──────────────┘         │
-//! │                                                                 │
-//! │  ┌──────────────┐  ┌──────────────┐                           │
-//! │  │ Degradation  │  │   Error      │                           │
-//! │  │  Strategy    │  │  Recovery    │                           │
-//! │  └──────────────┘  └──────────────┘                           │
-//! │                                                                 │
-//! └─────────────────────────────────────────────────────────────────┘
-//!           │           │           │           │           │
-//!           ▼           ▼           ▼           ▼           ▼
-//! ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-//! │ Storage  │  │  Query   │  │Security  │  │Clustering│  │Analytics │
-//! │  Layer   │  │  Engine  │  │  Layer   │  │  Layer   │  │  Layer   │
-//! └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘
-//! ```
-//!
-//! ## Quick Start
-//!
-//! ```rust,no_run
-//! use rusty_db::orchestration::{Orchestrator, OrchestratorConfig};
-//!
-//! #[tokio::main]
-//! async fn main() -> rusty_db::Result<()> {
-//!     // Create orchestrator
-//!     let orchestrator = Orchestrator::new(OrchestratorConfig::default()).await?;
-//!
-//!     // Start all components
-//!     orchestrator.start().await?;
-//!
-//!     // Check system health
-//!     let health = orchestrator.health_check().await;
-//!     println!("System health: {:?}", health.status);
-//!
-//!     // Graceful shutdown
-//!     orchestrator.shutdown().await?;
-//!
-//!     Ok(())
-//! }
-//! ```
-//!
-//! ## Module Organization
-//!
-//! ### Core Modules
-//!
-//! - **`actor`**: Actor-based coordination with supervision trees
-//! - **`registry`**: Service registry and dependency injection
-//! - **`dependency_graph`**: Dependency resolution and topological sorting
-//!
-//! ### Resilience Modules
-//!
-//! - **`circuit_breaker`**: Circuit breaker pattern implementation
-//! - **`health`**: Health checking and aggregation
-//! - **`degradation`**: Graceful degradation strategies
-//! - **`error_recovery`**: Unified error handling and recovery
-//!
-//! ### Extensibility Modules
-//!
-//! - **`plugin`**: Plugin architecture for extensibility
-//!
-//! ## Usage Examples
-//!
-//! ### Actor-Based Communication
-//!
-//! ```rust,no_run
-//! use rusty_db::orchestration::actor::{ActorSystem, Actor, ActorContext};
-//!
-//! struct MyActor;
-//!
-//! #[async_trait::async_trait]
-//! impl Actor for MyActor {
-//!     async fn handle(&mut self, msg: Box<dyn std::any::Any + Send>, ctx: &ActorContext) -> rusty_db::Result<()> {
-//!         // Handle message
-//!         Ok(())
-//!     }
-//! }
-//!
-//! async fn example() -> rusty_db::Result<()> {
-//!     let system = ActorSystem::new();
-//!     let actor_ref = system.spawn(MyActor, Some("my-actor".into()), 100).await?;
-//!
-//!     actor_ref.send("Hello".to_string()).await?;
-//!
-//!     system.shutdown().await?;
-//!     Ok(())
-//! }
-//! ```
-//!
-//! ### Service Registry
-//!
-//! ```rust,no_run
-//! use rusty_db::orchestration::registry::{ServiceRegistry, ServiceMetadata, ServiceLifetime};
-//!
-//! async fn example() -> rusty_db::Result<()> {
-//!     let registry = ServiceRegistry::new();
-//!
-//!     // Register a service
-//!     let metadata = ServiceMetadata::new("my-service".into(), "MyService", ServiceLifetime::Singleton);
-//!     registry.register::<String, _>(
-//!         "my-service".into(),
-//!         |_| Ok("service instance".to_string()),
-//!         metadata
-//!     )?;
-//!
-//!     // Resolve the service
-//!     let instance = registry.resolve::<String>()?;
-//!
-//!     Ok(())
-//! }
-//! ```
-//!
-//! ### Circuit Breaker
-//!
-//! ```rust,no_run
-//! use rusty_db::orchestration::circuit_breaker::{CircuitBreaker, CircuitBreakerConfig};
-//!
-//! async fn example() -> rusty_db::Result<()> {
-//!     let breaker = CircuitBreaker::new("my-service".into(), CircuitBreakerConfig::default());
-//!
-//!     let _result = breaker.call(async {
-//!         // Your operation here
-//!         Ok::<_, rusty_db::DbError>(42)
-//!     }).await?;
-//!
-//!     Ok(())
-//! }
-//! ```
-//!
-//! ## Best Practices
-//!
-//! ### 1. Use Dependency Injection
-//!
-//! Register all services in the service registry rather than creating tight coupling:
-//!
-//! ```rust,ignore
-//! // Good: Loose coupling via registry
-//! let storage = registry.resolve::<StorageEngine>()?;
-//!
-//! // Avoid: Tight coupling
-//! let storage = StorageEngine::new();
-//! ```
-//!
-//! ### 2. Implement Circuit Breakers for External Dependencies
-//!
-//! Wrap all external calls with circuit breakers:
-//!
-//! ```rust,ignore
-//! let breaker = circuit_breaker_registry.get_or_create("external_api");
-//! let _result = breaker.call(|| external_api_call()).await?;
-//! ```
-//!
-//! ### 3. Define Health Checks for All Components
-//!
-//! Every major component should implement health checks:
-//!
-//! ```rust,ignore
-//! #[async_trait::async_trait]
-//! impl HealthCheck for MyComponent {
-//!     async fn check_health(&self) -> HealthCheckResult {
-//!         // Check component health
-//!         HealthCheckResult::healthy("my-component".into())
-//!     }
-//!
-//!     fn component_name(&self) -> &str {
-//!         "my-component"
-//!     }
-//! }
-//! ```
-//!
-//! ### 4. Use Actor Model for Concurrent Components
-//!
-//! For components that need concurrent access, use actors:
-//!
-//! ```rust,ignore
-//! let actor_system = ActorSystem::new();
-//! let worker = actor_system.spawn(WorkerActor::new(), Some("worker".into()), 100).await?;
-//! worker.send(WorkMessage::Process(data)).await?;
-//! ```
-//!
-//! ### 5. Enable Graceful Degradation
-//!
-//! Configure degradation triggers to maintain availability under load:
-//!
-//! ```rust,ignore
-//! let strategy = DegradationStrategy::new();
-//! let trigger = DegradationTrigger::new("high_load".into())
-//!     .with_cpu_threshold(0.8)
-//!     .with_memory_threshold(0.9);
-//! strategy.register_trigger(DegradationLevel::DegradedL1, trigger);
-//! ```
-//!
-//! ## Integration with Enterprise Layer
-//!
-//! The orchestration framework integrates seamlessly with RustyDB's enterprise layer:
-//!
-//! ```rust,ignore
-//! use rusty_db::enterprise::EnterpriseRuntime;
-//! use rusty_db::orchestration::Orchestrator;
-//!
-//! async fn integrated_startup() -> Result<()> {
-//!     // Create orchestrator
-//!     let orchestrator = Orchestrator::new(OrchestratorConfig::default()).await?;
-//!
-//!     // Create enterprise runtime
-//!     let enterprise = EnterpriseRuntime::new().await?;
-//!
-//!     // Register enterprise services with orchestrator
-//!     orchestrator.register_service_bus(enterprise.service_bus.clone());
-//!     orchestrator.register_config_manager(enterprise.config.clone());
-//!
-//!     // Start both
-//!     enterprise.start().await?;
-//!     orchestrator.start().await?;
-//!
-//!     Ok(())
-//! }
-//! ```
-//!
-//! ## Performance Considerations
-//!
-//! - **Actor System**: Lock-free message passing with bounded channels
-//! - **Service Registry**: Arc-based sharing with RwLock for concurrent access
-//! - **Circuit Breakers**: Atomic operations for state checks
-//! - **Health Checks**: Configurable intervals to balance accuracy and overhead
-//! - **Dependency Graph**: O(V + E) topological sort, cached results
-//!
-//! ## Thread Safety
-//!
-//! All components are designed to be thread-safe:
-//!
-//! - **Send + Sync**: All public types implement Send and Sync
-//! - **Arc Wrapping**: Shared ownership through Arc
-//! - **Interior Mutability**: RwLock and Mutex for safe mutation
-//! - **Atomic Operations**: Lock-free counters and flags
-//!
-//! ## Error Handling
-//!
-//! The framework uses RustyDB's unified error type and provides:
-//!
-//! - **Error Classification**: Automatic categorization of errors
-//! - **Automatic Retry**: Configurable retry with exponential backoff
-//! - **Fallback Strategies**: Multiple fallback options
-//! - **Compensation**: Undo operations on failure
+// # RustyDB Orchestration Framework
+//
+// This module provides the core orchestration framework for RustyDB, coordinating all
+// enterprise modules and providing critical infrastructure for building a robust,
+// fault-tolerant, and scalable database system.
+//
+// ## Overview
+//
+// The orchestration framework is the nervous system of RustyDB, providing:
+//
+// - **Actor-Based Coordination**: Asynchronous message passing between components
+// - **Service Registry**: Dependency injection and service discovery
+// - **Dependency Management**: Automatic dependency resolution and initialization
+// - **Circuit Breakers**: Fault tolerance and cascading failure prevention
+// - **Health Monitoring**: Comprehensive health checks and aggregation
+// - **Plugin System**: Extensible architecture for custom functionality
+// - **Graceful Degradation**: Maintain availability under resource constraints
+// - **Error Recovery**: Automatic retry, fallback, and compensation
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────────┐
+// │                  Orchestration Framework                        │
+// ├─────────────────────────────────────────────────────────────────┤
+// │                                                                 │
+// │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
+// │  │Actor System  │  │   Service    │  │  Dependency  │         │
+// │  │              │  │   Registry   │  │    Graph     │         │
+// │  └──────────────┘  └──────────────┘  └──────────────┘         │
+// │                                                                 │
+// │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
+// │  │Circuit       │  │   Health     │  │   Plugin     │         │
+// │  │Breaker       │  │ Aggregator   │  │  Registry    │         │
+// │  └──────────────┘  └──────────────┘  └──────────────┘         │
+// │                                                                 │
+// │  ┌──────────────┐  ┌──────────────┐                           │
+// │  │ Degradation  │  │   Error      │                           │
+// │  │  Strategy    │  │  Recovery    │                           │
+// │  └──────────────┘  └──────────────┘                           │
+// │                                                                 │
+// └─────────────────────────────────────────────────────────────────┘
+//           │           │           │           │           │
+//           ▼           ▼           ▼           ▼           ▼
+// ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
+// │ Storage  │  │  Query   │  │Security  │  │Clustering│  │Analytics │
+// │  Layer   │  │  Engine  │  │  Layer   │  │  Layer   │  │  Layer   │
+// └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘
+// ```
+//
+// ## Quick Start
+//
+// ```rust,no_run
+// use rusty_db::orchestration::{Orchestrator, OrchestratorConfig};
+//
+// #[tokio::main]
+// async fn main() -> rusty_db::Result<()> {
+//     // Create orchestrator
+//     let orchestrator = Orchestrator::new(OrchestratorConfig::default()).await?;
+//
+//     // Start all components
+//     orchestrator.start().await?;
+//
+//     // Check system health
+//     let health = orchestrator.health_check().await;
+//     println!("System health: {:?}", health.status);
+//
+//     // Graceful shutdown
+//     orchestrator.shutdown().await?;
+//
+//     Ok(())
+// }
+// ```
+//
+// ## Module Organization
+//
+// ### Core Modules
+//
+// - **`actor`**: Actor-based coordination with supervision trees
+// - **`registry`**: Service registry and dependency injection
+// - **`dependency_graph`**: Dependency resolution and topological sorting
+//
+// ### Resilience Modules
+//
+// - **`circuit_breaker`**: Circuit breaker pattern implementation
+// - **`health`**: Health checking and aggregation
+// - **`degradation`**: Graceful degradation strategies
+// - **`error_recovery`**: Unified error handling and recovery
+//
+// ### Extensibility Modules
+//
+// - **`plugin`**: Plugin architecture for extensibility
+//
+// ## Usage Examples
+//
+// ### Actor-Based Communication
+//
+// ```rust,no_run
+// use rusty_db::orchestration::actor::{ActorSystem, Actor, ActorContext};
+//
+// struct MyActor;
+//
+// #[async_trait::async_trait]
+// impl Actor for MyActor {
+//     async fn handle(&mut self, msg: Box<dyn std::any::Any + Send>, ctx: &ActorContext) -> rusty_db::Result<()> {
+//         // Handle message
+//         Ok(())
+//     }
+// }
+//
+// async fn example() -> rusty_db::Result<()> {
+//     let system = ActorSystem::new();
+//     let actor_ref = system.spawn(MyActor, Some("my-actor".into()), 100).await?;
+//
+//     actor_ref.send("Hello".to_string()).await?;
+//
+//     system.shutdown().await?;
+//     Ok(())
+// }
+// ```
+//
+// ### Service Registry
+//
+// ```rust,no_run
+// use rusty_db::orchestration::registry::{ServiceRegistry, ServiceMetadata, ServiceLifetime};
+//
+// async fn example() -> rusty_db::Result<()> {
+//     let registry = ServiceRegistry::new();
+//
+//     // Register a service
+//     let metadata = ServiceMetadata::new("my-service".into(), "MyService", ServiceLifetime::Singleton);
+//     registry.register::<String, _>(
+//         "my-service".into(),
+//         |_| Ok("service instance".to_string()),
+//         metadata
+//     )?;
+//
+//     // Resolve the service
+//     let instance = registry.resolve::<String>()?;
+//
+//     Ok(())
+// }
+// ```
+//
+// ### Circuit Breaker
+//
+// ```rust,no_run
+// use rusty_db::orchestration::circuit_breaker::{CircuitBreaker, CircuitBreakerConfig};
+//
+// async fn example() -> rusty_db::Result<()> {
+//     let breaker = CircuitBreaker::new("my-service".into(), CircuitBreakerConfig::default());
+//
+//     let _result = breaker.call(async {
+//         // Your operation here
+//         Ok::<_, rusty_db::DbError>(42)
+//     }).await?;
+//
+//     Ok(())
+// }
+// ```
+//
+// ## Best Practices
+//
+// ### 1. Use Dependency Injection
+//
+// Register all services in the service registry rather than creating tight coupling:
+//
+// ```rust,ignore
+// // Good: Loose coupling via registry
+// let storage = registry.resolve::<StorageEngine>()?;
+//
+// // Avoid: Tight coupling
+// let storage = StorageEngine::new();
+// ```
+//
+// ### 2. Implement Circuit Breakers for External Dependencies
+//
+// Wrap all external calls with circuit breakers:
+//
+// ```rust,ignore
+// let breaker = circuit_breaker_registry.get_or_create("external_api");
+// let _result = breaker.call(|| external_api_call()).await?;
+// ```
+//
+// ### 3. Define Health Checks for All Components
+//
+// Every major component should implement health checks:
+//
+// ```rust,ignore
+// #[async_trait::async_trait]
+// impl HealthCheck for MyComponent {
+//     async fn check_health(&self) -> HealthCheckResult {
+//         // Check component health
+//         HealthCheckResult::healthy("my-component".into())
+//     }
+//
+//     fn component_name(&self) -> &str {
+//         "my-component"
+//     }
+// }
+// ```
+//
+// ### 4. Use Actor Model for Concurrent Components
+//
+// For components that need concurrent access, use actors:
+//
+// ```rust,ignore
+// let actor_system = ActorSystem::new();
+// let worker = actor_system.spawn(WorkerActor::new(), Some("worker".into()), 100).await?;
+// worker.send(WorkMessage::Process(data)).await?;
+// ```
+//
+// ### 5. Enable Graceful Degradation
+//
+// Configure degradation triggers to maintain availability under load:
+//
+// ```rust,ignore
+// let strategy = DegradationStrategy::new();
+// let trigger = DegradationTrigger::new("high_load".into())
+//     .with_cpu_threshold(0.8)
+//     .with_memory_threshold(0.9);
+// strategy.register_trigger(DegradationLevel::DegradedL1, trigger);
+// ```
+//
+// ## Integration with Enterprise Layer
+//
+// The orchestration framework integrates seamlessly with RustyDB's enterprise layer:
+//
+// ```rust,ignore
+// use rusty_db::enterprise::EnterpriseRuntime;
+// use rusty_db::orchestration::Orchestrator;
+//
+// async fn integrated_startup() -> Result<()> {
+//     // Create orchestrator
+//     let orchestrator = Orchestrator::new(OrchestratorConfig::default()).await?;
+//
+//     // Create enterprise runtime
+//     let enterprise = EnterpriseRuntime::new().await?;
+//
+//     // Register enterprise services with orchestrator
+//     orchestrator.register_service_bus(enterprise.service_bus.clone());
+//     orchestrator.register_config_manager(enterprise.config.clone());
+//
+//     // Start both
+//     enterprise.start().await?;
+//     orchestrator.start().await?;
+//
+//     Ok(())
+// }
+// ```
+//
+// ## Performance Considerations
+//
+// - **Actor System**: Lock-free message passing with bounded channels
+// - **Service Registry**: Arc-based sharing with RwLock for concurrent access
+// - **Circuit Breakers**: Atomic operations for state checks
+// - **Health Checks**: Configurable intervals to balance accuracy and overhead
+// - **Dependency Graph**: O(V + E) topological sort, cached results
+//
+// ## Thread Safety
+//
+// All components are designed to be thread-safe:
+//
+// - **Send + Sync**: All public types implement Send and Sync
+// - **Arc Wrapping**: Shared ownership through Arc
+// - **Interior Mutability**: RwLock and Mutex for safe mutation
+// - **Atomic Operations**: Lock-free counters and flags
+//
+// ## Error Handling
+//
+// The framework uses RustyDB's unified error type and provides:
+//
+// - **Error Classification**: Automatic categorization of errors
+// - **Automatic Retry**: Configurable retry with exponential backoff
+// - **Fallback Strategies**: Multiple fallback options
+// - **Compensation**: Undo operations on failure
 
 // Module declarations
 pub mod actor;
@@ -618,5 +618,3 @@ mod tests {
         assert_eq!(stats.state, OrchestratorState::Initialized);
     }
 }
-
-

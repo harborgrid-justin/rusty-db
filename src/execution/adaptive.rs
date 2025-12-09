@@ -11,6 +11,7 @@
 /// - Dynamic operator parameter tuning
 /// - Adaptive query timeouts and resource limits
 
+use std::time::Instant;
 use crate::error::DbError;
 use crate::execution::{QueryResult, planner::PlanNode};
 use crate::parser::JoinType;

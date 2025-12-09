@@ -1,19 +1,20 @@
-//! # Role-Based Access Control (RBAC) Module
-//!
-//! Provides hierarchical role-based access control with role inheritance,
-//! composition, dynamic activation, and separation of duties constraints.
-//!
-//! ## Features
-//!
-//! - Hierarchical role definitions with parent-child relationships
-//! - Role composition and inheritance
-//! - Dynamic role activation and deactivation
-//! - Separation of Duties (SoD) constraints
-//! - Time-based role activation
-//! - Context-based role assignment
-//! - Role delegation and proxy capabilities
-//! - Fine-grained permission sets per role
+// # Role-Based Access Control (RBAC) Module
+//
+// Provides hierarchical role-based access control with role inheritance,
+// composition, dynamic activation, and separation of duties constraints.
+//
+// ## Features
+//
+// - Hierarchical role definitions with parent-child relationships
+// - Role composition and inheritance
+// - Dynamic role activation and deactivation
+// - Separation of Duties (SoD) constraints
+// - Time-based role activation
+// - Context-based role assignment
+// - Role delegation and proxy capabilities
+// - Fine-grained permission sets per role
 
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use parking_lot::RwLock;
@@ -861,5 +862,3 @@ mod tests {
         assert!(manager.assign_role(assignment2).is_err());
     }
 }
-
-

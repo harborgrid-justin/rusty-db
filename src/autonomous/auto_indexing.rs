@@ -1,8 +1,9 @@
-//! Automatic Index Management
-//!
-//! Intelligent index recommendation, creation, consolidation, and maintenance
-//! based on workload analysis and query patterns.
+// Automatic Index Management
+//
+// Intelligent index recommendation, creation, consolidation, and maintenance
+// based on workload analysis and query patterns.
 
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -716,5 +717,3 @@ mod tests {
         assert!(candidate.benefit_score > 0.0);
     }
 }
-
-

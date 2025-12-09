@@ -9,6 +9,7 @@
 /// - Slice and dice operations
 /// - Pivot table generation
 
+use std::collections::HashSet;
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};

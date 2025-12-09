@@ -1,6 +1,6 @@
-//! # Buffer Pool for I/O Operations
-//!
-//! Pre-allocated, aligned buffer pool for Direct I/O operations.
+// # Buffer Pool for I/O Operations
+//
+// Pre-allocated, aligned buffer pool for Direct I/O operations.
 
 use crate::error::Result;
 use crate::io::{PAGE_SIZE, SECTOR_SIZE};
@@ -706,5 +706,3 @@ mod tests {
         assert_eq!(pool.utilization(), 30.0);
     }
 }
-
-

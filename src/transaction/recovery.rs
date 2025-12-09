@@ -2,6 +2,7 @@
 // Implements Analysis, Redo, Undo phases for crash recovery,
 // fuzzy checkpointing, media recovery, and point-in-time recovery
 
+use std::collections::BTreeMap;
 use std::collections::{HashMap};
 use std::path::{Path, PathBuf};
 use std::io::{Write as IoWrite};

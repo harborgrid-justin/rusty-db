@@ -1,30 +1,31 @@
-//! Data Quality Analysis and Validation
-//!
-//! This module provides comprehensive data quality analysis capabilities,
-//! including completeness checks, consistency validation, and quality
-//! metrics computation.
-//!
-//! # Architecture
-//!
-//! The quality analysis system operates on multiple dimensions:
-//! - Completeness: Missing value analysis
-//! - Consistency: Pattern and constraint validation
-//! - Accuracy: Outlier and anomaly detection
-//! - Timeliness: Data freshness tracking
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! use crate::analytics::quality::{DataQualityAnalyzer, QualityMetrics};
-//!
-//! let analyzer = DataQualityAnalyzer::new();
-//! let metrics = analyzer.analyze_column("email", &values);
-//!
-//! if metrics.completeness < 0.95 {
-//!     println!("Warning: {} has significant missing values", metrics.column);
-//! }
-//! ```
+// Data Quality Analysis and Validation
+//
+// This module provides comprehensive data quality analysis capabilities,
+// including completeness checks, consistency validation, and quality
+// metrics computation.
+//
+// # Architecture
+//
+// The quality analysis system operates on multiple dimensions:
+// - Completeness: Missing value analysis
+// - Consistency: Pattern and constraint validation
+// - Accuracy: Outlier and anomaly detection
+// - Timeliness: Data freshness tracking
+//
+// # Example
+//
+// ```rust,ignore
+// use crate::analytics::quality::{DataQualityAnalyzer, QualityMetrics};
+//
+// let analyzer = DataQualityAnalyzer::new();
+// let metrics = analyzer.analyze_column("email", &values);
+//
+// if metrics.completeness < 0.95 {
+//     println!("Warning: {} has significant missing values", metrics.column);
+// }
+// ```
 
+use std::collections::HashSet;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;

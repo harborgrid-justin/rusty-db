@@ -3,6 +3,7 @@
 /// This module provides compilation, validation, semantic analysis, and dependency
 /// tracking for stored procedures, functions, packages, and triggers.
 
+use std::collections::HashSet;
 use crate::{Result, DbError};
 use crate::procedures::parser::{PlSqlParser, PlSqlBlock, Statement, Expression, PlSqlType};
 use serde::{Deserialize, Serialize};

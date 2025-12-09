@@ -1,84 +1,84 @@
-//! # RustyDB - Enterprise-Grade Database Management System
-//!
-//! RustyDB is a high-performance, Oracle-compatible database management system written in Rust.
-//! It provides ACID compliance, advanced SQL features, clustering, and enterprise-grade security.
-//!
-//! ## Architecture Overview
-//!
-//! RustyDB is organized into modular components with clear separation of concerns:
-//!
-//! ### Core Engine Modules
-//!
-//! - **storage**: Low-level data persistence, buffer management, and disk I/O
-//! - **transaction**: MVCC, transaction management, and concurrency control
-//! - **index**: Multiple index types (B-tree, LSM, spatial, full-text)
-//! - **execution**: Query execution engine with vectorization and JIT
-//! - **parser**: SQL parsing and query planning
-//! - **catalog**: System catalog and metadata management
-//!
-//! ### Enterprise Features
-//!
-//! - **security**: RBAC, encryption, authentication, and audit logging
-//! - **clustering**: Distributed consensus, sharding, and high availability
-//! - **replication**: Multi-datacenter replication and failover
-//! - **backup**: Point-in-time recovery and disaster recovery
-//! - **monitoring**: Real-time metrics, profiling, and resource governance
-//! - **analytics**: OLAP processing, columnar storage, and materialized views
-//!
-//! ### Advanced SQL Features
-//!
-//! - **procedures**: Stored procedures and user-defined functions
-//! - **triggers**: Event-driven database triggers
-//! - **constraints**: Advanced constraint checking
-//! - **operations**: Database operations and maintenance
-//!
-//! ## Quick Start
-//!
-//! ```rust,no_run
-//! use rusty_db::{Config, Result};
-//! use rusty_db::network::Server;
-//!
-//! #[tokio::main]
-//! async fn main() -> Result<()> {
-//!     let config = Config::default();
-//!     let server = Server::new();
-//!     server.run(&format!("127.0.0.1:{}", config.port)).await?;
-//!     Ok(())
-//! }
-//! ```
-//!
-//! ## Module Integration
-//!
-//! For detailed information about module interactions, API contracts, and development
-//! guidelines, see `MASTER_COORDINATION.md` in the repository root.
-//!
-//! ## Key Concepts
-//!
-//! ### Transactions
-//!
-//! ```rust,no_run
-//! # use rusty_db::common::IsolationLevel;
-//! # use rusty_db::transaction::TransactionManager;
-//! # fn example() -> rusty_db::Result<()> {
-//! let mut txn_mgr = TransactionManager::new();
-//! let txn_id = txn_mgr.begin(IsolationLevel::ReadCommitted)?;
-//! // Perform operations...
-//! txn_mgr.commit(txn_id)?;
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! ### Security
-//!
-//! ```rust,no_run
-//! # use rusty_db::security::SecurityManager;
-//! # fn example() -> rusty_db::Result<()> {
-//! let security = SecurityManager::new();
-//! let session = security.authenticate("user", "password")?;
-//! // Check permissions...
-//! # Ok(())
-//! # }
-//! ```
+// # RustyDB - Enterprise-Grade Database Management System
+//
+// RustyDB is a high-performance, Oracle-compatible database management system written in Rust.
+// It provides ACID compliance, advanced SQL features, clustering, and enterprise-grade security.
+//
+// ## Architecture Overview
+//
+// RustyDB is organized into modular components with clear separation of concerns:
+//
+// ### Core Engine Modules
+//
+// - **storage**: Low-level data persistence, buffer management, and disk I/O
+// - **transaction**: MVCC, transaction management, and concurrency control
+// - **index**: Multiple index types (B-tree, LSM, spatial, full-text)
+// - **execution**: Query execution engine with vectorization and JIT
+// - **parser**: SQL parsing and query planning
+// - **catalog**: System catalog and metadata management
+//
+// ### Enterprise Features
+//
+// - **security**: RBAC, encryption, authentication, and audit logging
+// - **clustering**: Distributed consensus, sharding, and high availability
+// - **replication**: Multi-datacenter replication and failover
+// - **backup**: Point-in-time recovery and disaster recovery
+// - **monitoring**: Real-time metrics, profiling, and resource governance
+// - **analytics**: OLAP processing, columnar storage, and materialized views
+//
+// ### Advanced SQL Features
+//
+// - **procedures**: Stored procedures and user-defined functions
+// - **triggers**: Event-driven database triggers
+// - **constraints**: Advanced constraint checking
+// - **operations**: Database operations and maintenance
+//
+// ## Quick Start
+//
+// ```rust,no_run
+// use rusty_db::{Config, Result};
+// use rusty_db::network::Server;
+//
+// #[tokio::main]
+// async fn main() -> Result<()> {
+//     let config = Config::default();
+//     let server = Server::new();
+//     server.run(&format!("127.0.0.1:{}", config.port)).await?;
+//     Ok(())
+// }
+// ```
+//
+// ## Module Integration
+//
+// For detailed information about module interactions, API contracts, and development
+// guidelines, see `MASTER_COORDINATION.md` in the repository root.
+//
+// ## Key Concepts
+//
+// ### Transactions
+//
+// ```rust,no_run
+// # use rusty_db::common::IsolationLevel;
+// # use rusty_db::transaction::TransactionManager;
+// # fn example() -> rusty_db::Result<()> {
+// let mut txn_mgr = TransactionManager::new();
+// let txn_id = txn_mgr.begin(IsolationLevel::ReadCommitted)?;
+// // Perform operations...
+// txn_mgr.commit(txn_id)?;
+// # Ok(())
+// # }
+// ```
+//
+// ### Security
+//
+// ```rust,no_run
+// # use rusty_db::security::SecurityManager;
+// # fn example() -> rusty_db::Result<()> {
+// let security = SecurityManager::new();
+// let session = security.authenticate("user", "password")?;
+// // Check permissions...
+// # Ok(())
+// # }
+// ```
 
 // ============================================================================
 // Core Modules - Foundation layer (no dependencies on other app modules)
@@ -1099,5 +1099,3 @@ pub mod core;
 ///
 /// **Target LOC:** 3,000+ lines
 pub mod api;
-
-

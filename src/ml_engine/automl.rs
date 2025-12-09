@@ -1,7 +1,7 @@
-//! # AutoML Engine
-//!
-//! Automated machine learning with algorithm selection, hyperparameter tuning,
-//! cross-validation, and model comparison.
+// # AutoML Engine
+//
+// Automated machine learning with algorithm selection, hyperparameter tuning,
+// cross-validation, and model comparison.
 
 use crate::error::Result;
 use super::{Algorithm, Dataset, Hyperparameters, HyperparamValue, MLTask, EvaluationMetrics};
@@ -701,5 +701,3 @@ mod tests {
         assert!(trial.mean_score > 0.0);
     }
 }
-
-

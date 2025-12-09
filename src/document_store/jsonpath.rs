@@ -1,7 +1,7 @@
-//! # JSONPath Engine
-//!
-//! Full JSONPath implementation for querying JSON documents with support for
-//! recursive descent, filter expressions, and array slicing.
+// # JSONPath Engine
+//
+// Full JSONPath implementation for querying JSON documents with support for
+// recursive descent, filter expressions, and array slicing.
 
 use serde_json::Value;
 use std::collections::VecDeque;
@@ -801,5 +801,3 @@ mod tests {
         assert_eq!(results.len(), 2);
     }
 }
-
-

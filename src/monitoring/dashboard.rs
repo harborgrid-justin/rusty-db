@@ -1,6 +1,9 @@
 // Real-Time Dashboard Data
 // WebSocket-ready metrics streaming, top queries, connection pool status, replication lag
 
+use std::time::Instant;
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;

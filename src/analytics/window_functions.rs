@@ -1,11 +1,11 @@
-//! Window Functions for Analytics
-//!
-//! This module provides SQL window function implementations for
-//! performing calculations across sets of rows related to the current row:
-//!
-//! - **Ranking Functions**: ROW_NUMBER, RANK, DENSE_RANK, NTILE
-//! - **Value Functions**: LEAD, LAG, FIRST_VALUE, LAST_VALUE, NTH_VALUE
-//! - **Distribution Functions**: PERCENT_RANK, CUME_DIST
+// Window Functions for Analytics
+//
+// This module provides SQL window function implementations for
+// performing calculations across sets of rows related to the current row:
+//
+// - **Ranking Functions**: ROW_NUMBER, RANK, DENSE_RANK, NTILE
+// - **Value Functions**: LEAD, LAG, FIRST_VALUE, LAST_VALUE, NTH_VALUE
+// - **Distribution Functions**: PERCENT_RANK, CUME_DIST
 
 use serde::{Deserialize, Serialize};
 use crate::error::Result;
@@ -21,13 +21,13 @@ use crate::error::Result;
 pub enum WindowFunction {
     /// Row number within the partition
     RowNumber,
-    
+
     /// Rank with gaps for ties
     Rank,
-    
+
     /// Rank without gaps for ties
     DenseRank,
-    
+
     /// Value from following row
     Lead {
         /// Number of rows to look ahead
@@ -35,7 +35,7 @@ pub enum WindowFunction {
         /// Default value if beyond partition
         default: Option<String>,
     },
-    
+
     /// Value from preceding row
     Lag {
         /// Number of rows to look back
@@ -43,28 +43,28 @@ pub enum WindowFunction {
         /// Default value if beyond partition
         default: Option<String>,
     },
-    
+
     /// First value in the window frame
     FirstValue,
-    
+
     /// Last value in the window frame
     LastValue,
-    
+
     /// Nth value in the window frame
     NthValue {
         /// Position (1-based)
         n: usize,
     },
-    
+
     /// Divide rows into N buckets
     NTile {
         /// Number of buckets
         buckets: usize,
     },
-    
+
     /// Relative rank: (rank - 1) / (total rows - 1)
     PercentRank,
-    
+
     /// Cumulative distribution: rows <= current / total rows
     CumeDist,
 }
@@ -78,10 +78,10 @@ pub enum WindowFunction {
 pub struct WindowFrame {
     /// Type of frame: ROWS, RANGE, or GROUPS
     pub frame_type: FrameType,
-    
+
     /// Start boundary of the frame
     pub start_bound: FrameBound,
-    
+
     /// End boundary of the frame
     pub end_bound: FrameBound,
 }
@@ -105,7 +105,7 @@ impl WindowFrame {
             end_bound: FrameBound::UnboundedFollowing,
         }
     }
-    
+
     /// Create a sliding window of N preceding rows.
     pub fn sliding(preceding: usize) -> Self {
         Self {
@@ -114,7 +114,7 @@ impl WindowFrame {
             end_bound: FrameBound::CurrentRow,
         }
     }
-    
+
     /// Create a centered window.
     pub fn centered(before: usize, after: usize) -> Self {
         Self {
@@ -174,22 +174,22 @@ pub fn apply_window_function(
     value_column: usize,
 ) -> Result<Vec<String>> {
     let mut result = Vec::with_capacity(data.len());
-    
+
     match function {
         WindowFunction::RowNumber => {
             for _i in 0..data.len() {
                 result.push((i + 1).to_string());
             }
         }
-        
+
         WindowFunction::Rank => {
             result = compute_rank(data, order_by, false);
         }
-        
+
         WindowFunction::DenseRank => {
             result = compute_rank(data, order_by, true);
         }
-        
+
         WindowFunction::Lead { offset, default } => {
             for _i in 0..data.len() {
                 let lead_index = i + offset;
@@ -204,7 +204,7 @@ pub fn apply_window_function(
                 result.push(value);
             }
         }
-        
+
         WindowFunction::Lag { offset, default } => {
             for _i in 0..data.len() {
                 let _value = if i >= *offset {
@@ -218,7 +218,7 @@ pub fn apply_window_function(
                 result.push(value);
             }
         }
-        
+
         WindowFunction::FirstValue => {
             let first = data
                 .first()
@@ -227,7 +227,7 @@ pub fn apply_window_function(
                 .unwrap_or_else(|| "NULL".to_string());
             result = vec![first; data.len()];
         }
-        
+
         WindowFunction::LastValue => {
             let last = data
                 .last()
@@ -236,7 +236,7 @@ pub fn apply_window_function(
                 .unwrap_or_else(|| "NULL".to_string());
             result = vec![last; data.len()];
         }
-        
+
         WindowFunction::NthValue { n } => {
             let nth = if *n > 0 && *n <= data.len() {
                 data[n - 1]
@@ -248,7 +248,7 @@ pub fn apply_window_function(
             };
             result = vec![nth; data.len()];
         }
-        
+
         WindowFunction::NTile { buckets } => {
             let bucket_size = (data.len() + buckets - 1) / buckets;
             for _i in 0..data.len() {
@@ -256,7 +256,7 @@ pub fn apply_window_function(
                 result.push(bucket.min(*buckets).to_string());
             }
         }
-        
+
         WindowFunction::PercentRank => {
             let n = data.len();
             for _i in 0..n {
@@ -268,7 +268,7 @@ pub fn apply_window_function(
                 result.push(format!("{:.6}", percent_rank));
             }
         }
-        
+
         WindowFunction::CumeDist => {
             let n = data.len();
             for _i in 0..n {
@@ -277,31 +277,31 @@ pub fn apply_window_function(
             }
         }
     }
-    
+
     Ok(result)
 }
 
 /// Compute RANK or DENSE_RANK.
 fn compute_rank(data: &[Vec<String>], order_by: &[usize], dense: bool) -> Vec<String> {
     let mut result = Vec::with_capacity(data.len());
-    
+
     if dense {
         // DENSE_RANK: no gaps
         let mut dense_rank = 1;
         let mut prev_values: Option<Vec<String>> = None;
-        
+
         for row in data {
             let current_values: Vec<String> = order_by
                 .iter()
                 .filter_map(|&i| row.get(i).cloned())
                 .collect();
-            
+
             if let Some(prev) = &prev_values {
                 if current_values != *prev {
                     dense_rank += 1;
                 }
             }
-            
+
             result.push(dense_rank.to_string());
             prev_values = Some(current_values);
         }
@@ -310,25 +310,25 @@ fn compute_rank(data: &[Vec<String>], order_by: &[usize], dense: bool) -> Vec<St
         let mut rank = 1;
         let mut current_rank = 1;
         let mut prev_values: Option<Vec<String>> = None;
-        
+
         for row in data {
             let current_values: Vec<String> = order_by
                 .iter()
                 .filter_map(|&i| row.get(i).cloned())
                 .collect();
-            
+
             if let Some(prev) = &prev_values {
                 if current_values != *prev {
                     current_rank = rank;
                 }
             }
-            
+
             result.push(current_rank.to_string());
             prev_values = Some(current_values);
             rank += 1;
         }
     }
-    
+
     result
 }
 
@@ -363,43 +363,43 @@ impl WindowFunctionBuilder {
             value_column: 0,
         }
     }
-    
+
     /// Set the window function.
     pub fn function(mut self, function: WindowFunction) -> Self {
         self.function = Some(function);
         self
     }
-    
+
     /// Set partition columns.
     pub fn partition_by(mut self, columns: Vec<usize>) -> Self {
         self.partition_by = columns;
         self
     }
-    
+
     /// Set order columns.
     pub fn order_by(mut self, columns: Vec<usize>) -> Self {
         self.order_by = columns;
         self
     }
-    
+
     /// Set the window frame.
     pub fn frame(mut self, frame: WindowFrame) -> Self {
         self.frame = frame;
         self
     }
-    
+
     /// Set the value column for LEAD/LAG/etc.
     pub fn value_column(mut self, column: usize) -> Self {
         self.value_column = column;
         self
     }
-    
+
     /// Execute the window function.
     pub fn execute(self, data: &[Vec<String>]) -> Result<Vec<String>> {
         let function = self
             .function
             .ok_or_else(|| crate::error::DbError::Execution("No window function specified".to_string()))?;
-        
+
         apply_window_function(
             data,
             &self.partition_by,
@@ -417,35 +417,35 @@ impl WindowFunctionBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     fn make_data(values: &[&[&str]]) -> Vec<Vec<String>> {
         values
             .iter()
             .map(|row| row.iter().map(|v| v.to_string()).collect())
             .collect()
     }
-    
+
     #[test]
     fn test_row_number() {
         let data = make_data(&[&["a"], &["b"], &["c"]]);
         let _result = apply_window_function(&data, &[], &[], &WindowFunction::RowNumber, 0).unwrap();
         assert_eq!(result, vec!["1", "2", "3"]);
     }
-    
+
     #[test]
     fn test_rank() {
         let data = make_data(&[&["1"], &["1"], &["2"]]);
         let _result = apply_window_function(&data, &[], &[0], &WindowFunction::Rank, 0).unwrap();
         assert_eq!(result, vec!["1", "1", "3"]);
     }
-    
+
     #[test]
     fn test_dense_rank() {
         let data = make_data(&[&["1"], &["1"], &["2"]]);
         let _result = apply_window_function(&data, &[], &[0], &WindowFunction::DenseRank, 0).unwrap();
         assert_eq!(result, vec!["1", "1", "2"]);
     }
-    
+
     #[test]
     fn test_lead() {
         let data = make_data(&[&["a"], &["b"], &["c"]]);
@@ -462,7 +462,7 @@ mod tests {
         .unwrap();
         assert_eq!(result, vec!["b", "c", "X"]);
     }
-    
+
     #[test]
     fn test_lag() {
         let data = make_data(&[&["a"], &["b"], &["c"]]);
@@ -479,7 +479,7 @@ mod tests {
         .unwrap();
         assert_eq!(result, vec!["X", "a", "b"]);
     }
-    
+
     #[test]
     fn test_ntile() {
         let data = make_data(&[&["1"], &["2"], &["3"], &["4"]]);
@@ -493,14 +493,14 @@ mod tests {
         .unwrap();
         assert_eq!(result, vec!["1", "1", "2", "2"]);
     }
-    
+
     #[test]
     fn test_window_frame() {
         let frame = WindowFrame::sliding(3);
         assert_eq!(frame.start_bound, FrameBound::Preceding(3));
         assert_eq!(frame.end_bound, FrameBound::CurrentRow);
     }
-    
+
     #[test]
     fn test_window_builder() {
         let data = make_data(&[&["1"], &["2"], &["3"]]);

@@ -1,31 +1,31 @@
-//! # Lock-Free Page Latching
-//!
-//! Provides lock-free latching mechanisms using optimistic concurrency control
-//! and atomic operations, eliminating lock contention on high-core-count systems.
-//!
-//! ## Traditional Latching Problem
-//!
-//! Traditional read/write locks (RwLock) become bottlenecks at high
-//! concurrency due to:
-//! - Lock contention and wait times
-//! - Cache line bouncing
-//! - Priority inversion
-//! - Non-deterministic latency
-//!
-//! ## Lock-Free Solution
-//!
-//! Uses optimistic concurrency control:
-//! 1. Read version number
-//! 2. Read data
-//! 3. Check version hasn't changed
-//! 4. For writes: CAS (Compare-And-Swap) to update
-//!
-//! ## Performance Characteristics
-//!
-//! - **Read latency**: ~10-30ns (vs ~50-100ns for RwLock)
-//! - **Write latency**: ~20-50ns (vs ~100-200ns for RwLock)
-//! - **Scalability**: Linear up to 100+ cores
-//! - **Contention**: Minimal (no spinning on locks)
+// # Lock-Free Page Latching
+//
+// Provides lock-free latching mechanisms using optimistic concurrency control
+// and atomic operations, eliminating lock contention on high-core-count systems.
+//
+// ## Traditional Latching Problem
+//
+// Traditional read/write locks (RwLock) become bottlenecks at high
+// concurrency due to:
+// - Lock contention and wait times
+// - Cache line bouncing
+// - Priority inversion
+// - Non-deterministic latency
+//
+// ## Lock-Free Solution
+//
+// Uses optimistic concurrency control:
+// 1. Read version number
+// 2. Read data
+// 3. Check version hasn't changed
+// 4. For writes: CAS (Compare-And-Swap) to update
+//
+// ## Performance Characteristics
+//
+// - **Read latency**: ~10-30ns (vs ~50-100ns for RwLock)
+// - **Write latency**: ~20-50ns (vs ~100-200ns for RwLock)
+// - **Scalability**: Linear up to 100+ cores
+// - **Contention**: Minimal (no spinning on locks)
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::hint::spin_loop;
@@ -613,5 +613,3 @@ mod tests {
         assert!(result.is_none()); // Should timeout
     }
 }
-
-

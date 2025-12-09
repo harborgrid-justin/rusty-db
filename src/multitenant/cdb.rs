@@ -1,26 +1,27 @@
-//! # Container Database (CDB) Management
-//!
-//! Implements the root container that manages multiple Pluggable Databases (PDBs),
-//! system-level metadata, shared memory pools, background processes, and resource governance.
-//!
-//! ## Architecture
-//!
-//! The CDB serves as the central coordinator for all PDBs, maintaining:
-//! - System catalog and metadata
-//! - Shared memory pools and buffer caches
-//! - Background processes (PMON, SMON, LGWR, DBWR, etc.)
-//! - Container registry mapping PDB IDs to instances
-//! - Resource pools for fair-share allocation
-//!
-//! ## Features
-//!
-//! - **PDB Lifecycle Management**: Create, open, close, drop PDBs
-//! - **Resource Pools**: CDB-level resource allocation and governance
-//! - **System Metadata**: Centralized metadata for all containers
-//! - **Background Processes**: Shared background workers
-//! - **Health Monitoring**: CDB and PDB health checks
-//! - **Kubernetes Integration**: Native K8s operator support
+// # Container Database (CDB) Management
+//
+// Implements the root container that manages multiple Pluggable Databases (PDBs),
+// system-level metadata, shared memory pools, background processes, and resource governance.
+//
+// ## Architecture
+//
+// The CDB serves as the central coordinator for all PDBs, maintaining:
+// - System catalog and metadata
+// - Shared memory pools and buffer caches
+// - Background processes (PMON, SMON, LGWR, DBWR, etc.)
+// - Container registry mapping PDB IDs to instances
+// - Resource pools for fair-share allocation
+//
+// ## Features
+//
+// - **PDB Lifecycle Management**: Create, open, close, drop PDBs
+// - **Resource Pools**: CDB-level resource allocation and governance
+// - **System Metadata**: Centralized metadata for all containers
+// - **Background Processes**: Shared background workers
+// - **Health Monitoring**: CDB and PDB health checks
+// - **Kubernetes Integration**: Native K8s operator support
 
+use std::sync::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
@@ -950,5 +951,3 @@ mod tests {
         assert_eq!(registry.count().await, 0);
     }
 }
-
-

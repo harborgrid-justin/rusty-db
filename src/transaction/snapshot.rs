@@ -1,18 +1,19 @@
-//! Snapshot management for snapshot isolation.
-//!
-//! This module provides snapshot creation and management for
-//! implementing snapshot isolation (SI) in MVCC.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let mgr = SnapshotManager::new();
-//! let snapshot = mgr.create_snapshot(txn_id, active_txns);
-//! if mgr.is_visible(&snapshot, other_txn_id) {
-//!     // Other transaction's writes are visible
-//! }
-//! ```
+// Snapshot management for snapshot isolation.
+//
+// This module provides snapshot creation and management for
+// implementing snapshot isolation (SI) in MVCC.
+//
+// # Example
+//
+// ```rust,ignore
+// let mgr = SnapshotManager::new();
+// let snapshot = mgr.create_snapshot(txn_id, active_txns);
+// if mgr.is_visible(&snapshot, other_txn_id) {
+//     // Other transaction's writes are visible
+// }
+// ```
 
+use std::collections::HashSet;
 use std::collections::{BTreeMap};
 use std::sync::Arc;
 use std::time::SystemTime;

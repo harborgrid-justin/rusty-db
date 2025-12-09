@@ -1,12 +1,12 @@
-//! Aggregate Functions for Analytics
-//!
-//! This module provides a comprehensive set of aggregate functions
-//! for analytical queries, including:
-//!
-//! - **Basic Aggregates**: COUNT, SUM, AVG, MIN, MAX
-//! - **Statistical Aggregates**: STDDEV, VARIANCE, MEDIAN, MODE
-//! - **Advanced Aggregates**: PERCENTILE, CORR, COVAR, REGR
-//! - **Collection Aggregates**: STRING_AGG, ARRAY_AGG, JSON_AGG
+// Aggregate Functions for Analytics
+//
+// This module provides a comprehensive set of aggregate functions
+// for analytical queries, including:
+//
+// - **Basic Aggregates**: COUNT, SUM, AVG, MIN, MAX
+// - **Statistical Aggregates**: STDDEV, VARIANCE, MEDIAN, MODE
+// - **Advanced Aggregates**: PERCENTILE, CORR, COVAR, REGR
+// - **Collection Aggregates**: STRING_AGG, ARRAY_AGG, JSON_AGG
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -34,7 +34,7 @@ pub enum AggregateFunction {
     Min,
     /// Maximum value
     Max,
-    
+
     // Statistical aggregates
     /// Sample standard deviation
     StdDev,
@@ -50,17 +50,17 @@ pub enum AggregateFunction {
     Mode,
     /// Arbitrary percentile
     Percentile { percentile: f64 },
-    
+
     // Positional aggregates
     /// First value in the group
     FirstValue,
     /// Last value in the group
     LastValue,
-    
+
     // String aggregates
     /// Concatenate strings with separator
     StringAgg { separator: String },
-    
+
     // Collection aggregates
     /// Collect values into an array
     ArrayAgg,
@@ -68,7 +68,7 @@ pub enum AggregateFunction {
     JsonAgg,
     /// Collect key-value pairs into JSON object
     JsonObjectAgg,
-    
+
     // Bitwise aggregates
     /// Bitwise AND of all values
     BitAnd,
@@ -76,7 +76,7 @@ pub enum AggregateFunction {
     BitOr,
     /// Bitwise XOR of all values
     BitXor,
-    
+
     // Boolean aggregates
     /// True if all values are true
     BoolAnd,
@@ -84,7 +84,7 @@ pub enum AggregateFunction {
     BoolOr,
     /// Alias for BoolAnd
     Every,
-    
+
     // Regression aggregates
     /// Correlation coefficient
     Corr,
@@ -121,12 +121,12 @@ pub fn compute_aggregate(
     if data.is_empty() {
         return Ok("NULL".to_string());
     }
-    
+
     match function {
         AggregateFunction::Count => {
             Ok(data.len().to_string())
         }
-        
+
         AggregateFunction::CountDistinct => {
             let distinct: std::collections::HashSet<_> = data
                 .iter()
@@ -134,7 +134,7 @@ pub fn compute_aggregate(
                 .collect();
             Ok(distinct.len().to_string())
         }
-        
+
         AggregateFunction::Sum => {
             let sum: f64 = data
                 .iter()
@@ -143,22 +143,22 @@ pub fn compute_aggregate(
                 .sum();
             Ok(format_number(sum))
         }
-        
+
         AggregateFunction::Avg => {
             let values: Vec<f64> = data
                 .iter()
                 .filter_map(|row| row.get(column_index))
                 .filter_map(|v| v.parse::<f64>().ok())
                 .collect();
-            
+
             if values.is_empty() {
                 return Ok("NULL".to_string());
             }
-            
+
             let avg = values.iter().sum::<f64>() / values.len() as f64;
             Ok(format_number(avg))
         }
-        
+
         AggregateFunction::Min => {
             data.iter()
                 .filter_map(|row| row.get(column_index))
@@ -166,7 +166,7 @@ pub fn compute_aggregate(
                 .cloned()
                 .ok_or_else(|| crate::error::DbError::Execution("No values to minimize".to_string()))
         }
-        
+
         AggregateFunction::Max => {
             data.iter()
                 .filter_map(|row| row.get(column_index))
@@ -174,37 +174,37 @@ pub fn compute_aggregate(
                 .cloned()
                 .ok_or_else(|| crate::error::DbError::Execution("No values to maximize".to_string()))
         }
-        
+
         AggregateFunction::StdDev | AggregateFunction::StdDevPop => {
             let values = extract_numeric_values(data, column_index);
             if values.is_empty() {
                 return Ok("NULL".to_string());
             }
-            
+
             let stddev = compute_stddev(&values, matches!(function, AggregateFunction::StdDevPop));
             Ok(format_number(stddev))
         }
-        
+
         AggregateFunction::Variance | AggregateFunction::VarPop => {
             let values = extract_numeric_values(data, column_index);
             if values.is_empty() {
                 return Ok("NULL".to_string());
             }
-            
+
             let variance = compute_variance(&values, matches!(function, AggregateFunction::VarPop));
             Ok(format_number(variance))
         }
-        
+
         AggregateFunction::Median => {
             let values = extract_numeric_values(data, column_index);
             if values.is_empty() {
                 return Ok("NULL".to_string());
             }
-            
+
             let median = compute_percentile(&values, 50.0);
             Ok(format_number(median))
         }
-        
+
         AggregateFunction::Mode => {
             let mut counts: HashMap<String, usize> = HashMap::new();
             for row in data {
@@ -212,68 +212,68 @@ pub fn compute_aggregate(
                     *counts.entry(value.clone()).or_insert(0) += 1;
                 }
             }
-            
+
             counts
                 .into_iter()
                 .max_by_key(|(_, count)| *count)
                 .map(|(value, _)| value)
                 .ok_or_else(|| crate::error::DbError::Execution("No mode found".to_string()))
         }
-        
+
         AggregateFunction::Percentile { percentile } => {
             let values = extract_numeric_values(data, column_index);
             if values.is_empty() {
                 return Ok("NULL".to_string());
             }
-            
+
             let _result = compute_percentile(&values, *percentile);
             Ok(format_number(result))
         }
-        
+
         AggregateFunction::FirstValue => {
             data.first()
                 .and_then(|row| row.get(column_index))
                 .cloned()
                 .ok_or_else(|| crate::error::DbError::Execution("No first value".to_string()))
         }
-        
+
         AggregateFunction::LastValue => {
             data.last()
                 .and_then(|row| row.get(column_index))
                 .cloned()
                 .ok_or_else(|| crate::error::DbError::Execution("No last value".to_string()))
         }
-        
+
         AggregateFunction::StringAgg { separator } => {
             let values: Vec<String> = data
                 .iter()
                 .filter_map(|row| row.get(column_index))
                 .cloned()
                 .collect();
-            
+
             Ok(values.join(separator))
         }
-        
+
         AggregateFunction::ArrayAgg => {
             let values: Vec<String> = data
                 .iter()
                 .filter_map(|row| row.get(column_index))
                 .cloned()
                 .collect();
-            
+
             Ok(format!("[{}]", values.join(", ")))
         }
-        
+
         AggregateFunction::JsonAgg => {
             let values: Vec<String> = data
                 .iter()
                 .filter_map(|row| row.get(column_index))
                 .map(|v| format!("\"{}\"", v))
                 .collect();
-            
+
             Ok(format!("[{}]", values.join(", ")))
         }
-        
+
         _ => {
             // For other complex aggregates, return placeholder
             Ok("0".to_string())
@@ -303,16 +303,16 @@ fn compute_variance(values: &[f64], population: bool) -> f64 {
     if values.is_empty() {
         return 0.0;
     }
-    
+
     let mean = values.iter().sum::<f64>() / values.len() as f64;
     let sum_sq = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>();
-    
+
     let divisor = if population {
         values.len() as f64
     } else {
         (values.len() - 1).max(1) as f64
     };
-    
+
     sum_sq / divisor
 }
 
@@ -321,10 +321,10 @@ fn compute_percentile(values: &[f64], percentile: f64) -> f64 {
     if values.is_empty() {
         return 0.0;
     }
-    
+
     let mut sorted = values.to_vec();
     sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-    
+
     let index = ((sorted.len() as f64 - 1.0) * percentile / 100.0) as usize;
     sorted[index.min(sorted.len() - 1)]
 }
@@ -369,22 +369,22 @@ impl AggregateState {
             values: Vec::new(),
         }
     }
-    
+
     /// Add a value to the aggregate.
     pub fn add(&mut self, value: f64) {
         self.count += 1;
         self.sum += value;
         self.sum_sq += value * value;
-        
+
         self.min = Some(self.min.map_or(value, |m| m.min(value)));
         self.max = Some(self.max.map_or(value, |m| m.max(value)));
-        
+
         // Store values for percentile/median
         if matches!(self.function, AggregateFunction::Median | AggregateFunction::Percentile { .. }) {
             self.values.push(value);
         }
     }
-    
+
     /// Get the current aggregate value.
     pub fn result(&self) -> f64 {
         match &self.function {
@@ -433,43 +433,43 @@ impl AggregateState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     fn make_data(values: &[&str]) -> Vec<Vec<String>> {
         values.iter().map(|v| vec![v.to_string()]).collect()
     }
-    
+
     #[test]
     fn test_count() {
         let data = make_data(&["1", "2", "3", "4", "5"]);
         let _result = compute_aggregate(&data, 0, &AggregateFunction::Count).unwrap();
         assert_eq!(result, "5");
     }
-    
+
     #[test]
     fn test_sum() {
         let data = make_data(&["1", "2", "3", "4", "5"]);
         let _result = compute_aggregate(&data, 0, &AggregateFunction::Sum).unwrap();
         assert_eq!(result, "15");
     }
-    
+
     #[test]
     fn test_avg() {
         let data = make_data(&["2", "4", "6"]);
         let _result = compute_aggregate(&data, 0, &AggregateFunction::Avg).unwrap();
         assert_eq!(result, "4");
     }
-    
+
     #[test]
     fn test_min_max() {
         let data = make_data(&["3", "1", "4", "1", "5"]);
-        
+
         let min = compute_aggregate(&data, 0, &AggregateFunction::Min).unwrap();
         let max = compute_aggregate(&data, 0, &AggregateFunction::Max).unwrap();
-        
+
         assert_eq!(min, "1");
         assert_eq!(max, "5");
     }
-    
+
     #[test]
     fn test_stddev() {
         let data = make_data(&["2", "4", "4", "4", "5", "5", "7", "9"]);
@@ -477,21 +477,21 @@ mod tests {
         // Standard deviation of this data is 2
         assert!(result.parse::<f64>().unwrap() - 2.0 < 0.01);
     }
-    
+
     #[test]
     fn test_median() {
         let data = make_data(&["1", "2", "3", "4", "5"]);
         let _result = compute_aggregate(&data, 0, &AggregateFunction::Median).unwrap();
         assert_eq!(result, "3");
     }
-    
+
     #[test]
     fn test_mode() {
         let data = make_data(&["a", "b", "b", "c"]);
         let _result = compute_aggregate(&data, 0, &AggregateFunction::Mode).unwrap();
         assert_eq!(result, "b");
     }
-    
+
     #[test]
     fn test_string_agg() {
         let data = make_data(&["a", "b", "c"]);
@@ -503,14 +503,14 @@ mod tests {
         .unwrap();
         assert_eq!(result, "a, b, c");
     }
-    
+
     #[test]
     fn test_incremental_aggregate() {
         let mut state = AggregateState::new(AggregateFunction::Avg);
         state.add(10.0);
         state.add(20.0);
         state.add(30.0);
-        
+
         assert_eq!(state.result(), 20.0);
     }
 }

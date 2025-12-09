@@ -8,6 +8,9 @@
 /// - Distributed cache coordination
 /// - Cache statistics and monitoring
 
+use std::time::SystemTime;
+use std::time::Instant;
+use std::collections::VecDeque;
 use crate::error::Result;
 use crate::execution::QueryResult;
 use std::collections::{HashMap};

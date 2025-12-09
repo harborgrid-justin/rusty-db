@@ -1,28 +1,30 @@
-//! # Enterprise Circuit Breaker & Resilience Patterns
-//!
-//! This module provides comprehensive resilience patterns for preventing cascading failures
-//! and ensuring graceful degradation in distributed systems.
-//!
-//! ## Core Components
-//!
-//! - **CircuitBreaker**: Three-state (Closed/Open/Half-Open) failure isolation
-//! - **Bulkhead**: Resource pool isolation to prevent resource exhaustion
-//! - **TimeoutManager**: Adaptive timeout calculation based on latency percentiles
-//! - **RetryPolicy**: Exponential backoff with jitter for transient failures
-//! - **FallbackHandler**: Graceful degradation with cached responses
-//! - **CascadePreventor**: Stop failure propagation across system boundaries
-//! - **ResilienceMetrics**: Comprehensive tracking of resilience patterns
-//! - **LoadShedder**: Priority-based admission control under load
-//!
-//! ## Architecture
-//!
-//! The resilience patterns are designed to work together:
-//! ```text
-//! Request → LoadShedder → CircuitBreaker → Bulkhead → TimeoutManager → RetryPolicy → Operation
-//!                                ↓ (on failure)
-//!                          FallbackHandler
-//! ```
+// # Enterprise Circuit Breaker & Resilience Patterns
+//
+// This module provides comprehensive resilience patterns for preventing cascading failures
+// and ensuring graceful degradation in distributed systems.
+//
+// ## Core Components
+//
+// - **CircuitBreaker**: Three-state (Closed/Open/Half-Open) failure isolation
+// - **Bulkhead**: Resource pool isolation to prevent resource exhaustion
+// - **TimeoutManager**: Adaptive timeout calculation based on latency percentiles
+// - **RetryPolicy**: Exponential backoff with jitter for transient failures
+// - **FallbackHandler**: Graceful degradation with cached responses
+// - **CascadePreventor**: Stop failure propagation across system boundaries
+// - **ResilienceMetrics**: Comprehensive tracking of resilience patterns
+// - **LoadShedder**: Priority-based admission control under load
+//
+// ## Architecture
+//
+// The resilience patterns are designed to work together:
+// ```text
+// Request → LoadShedder → CircuitBreaker → Bulkhead → TimeoutManager → RetryPolicy → Operation
+//                                ↓ (on failure)
+//                          FallbackHandler
+// ```
 
+use std::collections::VecDeque;
+use std::time::Instant;
 use crate::DbError;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -1574,5 +1576,3 @@ mod tests {
         assert_eq!(percentile(&values, 0.99), 10);
     }
 }
-
-

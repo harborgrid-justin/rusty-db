@@ -1,6 +1,9 @@
 // Cloud Backup Integration - Multi-cloud backup with S3/Azure/GCS support
 // Provides multipart upload, bandwidth throttling, and resumable transfers
 
+use std::time::Instant;
+use std::collections::VecDeque;
+use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::fs::{File, metadata};

@@ -1,37 +1,38 @@
-//! # Privilege Analysis and Management
-//!
-//! Oracle-like privilege analysis system for detecting unused privileges,
-//! analyzing privilege paths, and providing least privilege recommendations.
-//!
-//! ## Features
-//!
-//! - **Least Privilege Analysis**: Identify minimum required privileges
-//! - **Privilege Path Analysis**: Trace how users get specific privileges
-//! - **Unused Privilege Detection**: Find granted but unused privileges
-//! - **Role Mining**: Discover optimal role definitions from usage patterns
-//! - **Privilege Escalation Detection**: Identify potential privilege escalation
-//!
-//! ## Privilege Hierarchy
-//!
-//! ```text
-//! ┌─────────────────────────────────────────┐
-//! │  System Privileges                      │
-//! │  (CREATE USER, DROP ANY TABLE, etc.)    │
-//! └──────────────┬──────────────────────────┘
-//!                │
-//!                ▼
-//! ┌─────────────────────────────────────────┐
-//! │  Object Privileges                      │
-//! │  (SELECT, INSERT, UPDATE on TABLE)      │
-//! └──────────────┬──────────────────────────┘
-//!                │
-//!                ▼
-//! ┌─────────────────────────────────────────┐
-//! │  Roles                                  │
-//! │  (Collection of privileges)             │
-//! └─────────────────────────────────────────┘
-//! ```
+// # Privilege Analysis and Management
+//
+// Oracle-like privilege analysis system for detecting unused privileges,
+// analyzing privilege paths, and providing least privilege recommendations.
+//
+// ## Features
+//
+// - **Least Privilege Analysis**: Identify minimum required privileges
+// - **Privilege Path Analysis**: Trace how users get specific privileges
+// - **Unused Privilege Detection**: Find granted but unused privileges
+// - **Role Mining**: Discover optimal role definitions from usage patterns
+// - **Privilege Escalation Detection**: Identify potential privilege escalation
+//
+// ## Privilege Hierarchy
+//
+// ```text
+// ┌─────────────────────────────────────────┐
+// │  System Privileges                      │
+// │  (CREATE USER, DROP ANY TABLE, etc.)    │
+// └──────────────┬──────────────────────────┘
+//                │
+//                ▼
+// ┌─────────────────────────────────────────┐
+// │  Object Privileges                      │
+// │  (SELECT, INSERT, UPDATE on TABLE)      │
+// └──────────────┬──────────────────────────┘
+//                │
+//                ▼
+// ┌─────────────────────────────────────────┐
+// │  Roles                                  │
+// │  (Collection of privileges)             │
+// └─────────────────────────────────────────┘
+// ```
 
+use std::collections::HashSet;
 use crate::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -772,5 +773,3 @@ mod tests {
         assert!(!recommendations.is_empty());
     }
 }
-
-

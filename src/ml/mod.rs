@@ -1,60 +1,60 @@
-//! # In-Database Machine Learning Engine
-//!
-//! This module provides comprehensive machine learning capabilities directly within RustyDB,
-//! enabling model training, inference, and management without data export.
-//!
-//! ## Architecture Overview
-//!
-//! The ML engine is organized into several key components:
-//!
-//! - **engine**: Core ML engine orchestrating all ML operations, model registry, and lifecycle
-//! - **algorithms**: Pure Rust implementations of ML algorithms (regression, classification, clustering)
-//! - **preprocessing**: Data preparation, feature engineering, and transformation utilities
-//! - **inference**: Real-time and batch prediction with optimized execution paths
-//! - **sql_integration**: SQL syntax extensions for ML operations (CREATE MODEL, PREDICT, etc.)
-//!
-//! ## Key Features
-//!
-//! - Pure Rust ML implementations with no external ML library dependencies
-//! - Efficient in-database training on large datasets using streaming algorithms
-//! - Model versioning and A/B testing support
-//! - Real-time and batch inference with low latency
-//! - SQL-native syntax for ML operations
-//! - Automatic feature detection and engineering
-//! - Model performance monitoring and drift detection
-//!
-//! ## Usage Examples
-//!
-//! ### Training a Model via SQL
-//!
-//! ```sql
-//! CREATE MODEL customer_churn_predictor
-//! USING logistic_regression
-//! AS SELECT
-//!     customer_age,
-//!     account_balance,
-//!     num_products,
-//!     is_active_member,
-//!     churn as target
-//! FROM customers;
-//! ```
-//!
-//! ### Making Predictions
-//!
-//! ```sql
-//! SELECT
-//!     customer_id,
-//!     PREDICT(customer_churn_predictor,
-//!             customer_age,
-//!             account_balance,
-//!             num_products,
-//!             is_active_member) as churn_probability
-//! FROM new_customers;
-//! ```
-//!
-//! ## Module Organization
-//!
-//! **Target LOC:** 3,000+ lines across all submodules
+// # In-Database Machine Learning Engine
+//
+// This module provides comprehensive machine learning capabilities directly within RustyDB,
+// enabling model training, inference, and management without data export.
+//
+// ## Architecture Overview
+//
+// The ML engine is organized into several key components:
+//
+// - **engine**: Core ML engine orchestrating all ML operations, model registry, and lifecycle
+// - **algorithms**: Pure Rust implementations of ML algorithms (regression, classification, clustering)
+// - **preprocessing**: Data preparation, feature engineering, and transformation utilities
+// - **inference**: Real-time and batch prediction with optimized execution paths
+// - **sql_integration**: SQL syntax extensions for ML operations (CREATE MODEL, PREDICT, etc.)
+//
+// ## Key Features
+//
+// - Pure Rust ML implementations with no external ML library dependencies
+// - Efficient in-database training on large datasets using streaming algorithms
+// - Model versioning and A/B testing support
+// - Real-time and batch inference with low latency
+// - SQL-native syntax for ML operations
+// - Automatic feature detection and engineering
+// - Model performance monitoring and drift detection
+//
+// ## Usage Examples
+//
+// ### Training a Model via SQL
+//
+// ```sql
+// CREATE MODEL customer_churn_predictor
+// USING logistic_regression
+// AS SELECT
+//     customer_age,
+//     account_balance,
+//     num_products,
+//     is_active_member,
+//     churn as target
+// FROM customers;
+// ```
+//
+// ### Making Predictions
+//
+// ```sql
+// SELECT
+//     customer_id,
+//     PREDICT(customer_churn_predictor,
+//             customer_age,
+//             account_balance,
+//             num_products,
+//             is_active_member) as churn_probability
+// FROM new_customers;
+// ```
+//
+// ## Module Organization
+//
+// **Target LOC:** 3,000+ lines across all submodules
 
 pub mod engine;
 pub mod algorithms;
@@ -389,5 +389,3 @@ mod tests {
         assert_eq!(params.get_bool("verbose"), Some(true));
     }
 }
-
-

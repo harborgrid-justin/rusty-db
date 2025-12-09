@@ -1,22 +1,22 @@
-//! # Unified Error Recovery Framework
-//!
-//! This module provides a comprehensive error recovery framework for RustyDB,
-//! enabling automatic recovery from failures with minimal manual intervention.
-//!
-//! ## Features
-//!
-//! - **Automatic Retry**: Exponential backoff with jitter
-//! - **Fallback Strategies**: Multiple fallback options
-//! - **Error Classification**: Categorize errors for appropriate handling
-//! - **Recovery Actions**: Predefined and custom recovery procedures
-//! - **State Preservation**: Save and restore state during recovery
-//! - **Compensating Transactions**: Undo operations on failure
-//!
-//! ## Recovery Flow
-//!
-//! ```text
-//! Error → Classify → Retry → Fallback → Compensate → Report
-//! ```
+// # Unified Error Recovery Framework
+//
+// This module provides a comprehensive error recovery framework for RustyDB,
+// enabling automatic recovery from failures with minimal manual intervention.
+//
+// ## Features
+//
+// - **Automatic Retry**: Exponential backoff with jitter
+// - **Fallback Strategies**: Multiple fallback options
+// - **Error Classification**: Categorize errors for appropriate handling
+// - **Recovery Actions**: Predefined and custom recovery procedures
+// - **State Preservation**: Save and restore state during recovery
+// - **Compensating Transactions**: Undo operations on failure
+//
+// ## Recovery Flow
+//
+// ```text
+// Error → Classify → Retry → Fallback → Compensate → Report
+// ```
 
 use std::collections::HashMap;
 
@@ -736,5 +736,3 @@ mod tests {
         assert!(result.is_err());
     }
 }
-
-

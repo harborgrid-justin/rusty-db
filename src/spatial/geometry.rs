@@ -1,12 +1,12 @@
-//! Geometry Types and Serialization
-//!
-//! Provides Oracle Spatial-compatible geometry types with support for:
-//! - Basic 2D/3D geometries (Point, Polygon)
-//! - Multi-geometries (MultiPoint, MultiLineString, MultiPolygon)
-//! - Complex geometries (CircularString, CompoundCurveCollection)
-//! - Measured geometries (M coordinate)
-//! - WKT/WKB serialization
-//! - GeoJSON support
+// Geometry Types and Serialization
+//
+// Provides Oracle Spatial-compatible geometry types with support for:
+// - Basic 2D/3D geometries (Point, Polygon)
+// - Multi-geometries (MultiPoint, MultiLineString, MultiPolygon)
+// - Complex geometries (CircularString, CompoundCurveCollection)
+// - Measured geometries (M coordinate)
+// - WKT/WKB serialization
+// - GeoJSON support
 
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
@@ -1238,5 +1238,3 @@ mod tests {
         assert!(!bbox1.intersects(&bbox3));
     }
 }
-
-

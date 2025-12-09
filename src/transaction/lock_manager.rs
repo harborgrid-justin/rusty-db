@@ -1,21 +1,23 @@
-//! Lock management for transaction concurrency control.
-//!
-//! This module implements various locking strategies for managing
-//! concurrent access to resources:
-//!
-//! - **Two-Phase Locking (2PL)**: Standard lock manager.
-//! - **Read-Write Locks**: Optimized for read-heavy workloads.
-//! - **Lock Escalation**: Automatic upgrade from row to table locks.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let lm = LockManager::new();
-//! lm.acquire_lock(txn_id, "table.row1", LockMode::Shared)?;
-//! // ... perform operations ...
-//! lm.release_all_locks(txn_id)?;
-//! ```
+// Lock management for transaction concurrency control.
+//
+// This module implements various locking strategies for managing
+// concurrent access to resources:
+//
+// - **Two-Phase Locking (2PL)**: Standard lock manager.
+// - **Read-Write Locks**: Optimized for read-heavy workloads.
+// - **Lock Escalation**: Automatic upgrade from row to table locks.
+//
+// # Example
+//
+// ```rust,ignore
+// let lm = LockManager::new();
+// lm.acquire_lock(txn_id, "table.row1", LockMode::Shared)?;
+// // ... perform operations ...
+// lm.release_all_locks(txn_id)?;
+// ```
 
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::SystemTime;

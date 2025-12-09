@@ -1,93 +1,93 @@
-//! # Memory Pressure Management
-//! 
-//! This module provides comprehensive memory pressure monitoring and management
-//! for the database system. It monitors global memory usage, detects pressure
-//! conditions, and coordinates memory reclamation across all allocators and
-//! components to prevent out-of-memory situations.
-//! 
-//! ## Key Features
-//! 
-//! - **Global Monitoring**: Tracks system-wide memory usage and pressure levels
-//! - **Threshold Management**: Configurable warning, critical, and emergency thresholds
-//! - **Callback System**: Event-driven callbacks for pressure response actions
-//! - **Automatic Response**: Coordinated memory reclamation across allocators
-//! - **Pressure History**: Historical tracking and analysis of pressure events
-//! - **Component Integration**: Seamless integration with all memory allocators
-//! - **Real-time Metrics**: Live monitoring with configurable check intervals
-//! 
-//! ## Design Overview
-//! 
-//! The pressure manager operates as a centralized coordinator that:
-//! 1. Continuously monitors system memory usage
-//! 2. Compares usage against configured thresholds
-//! 3. Triggers appropriate responses based on pressure level
-//! 4. Coordinates memory reclamation across all allocators
-//! 5. Tracks pressure events for analysis and tuning
-//! 
-//! ### Pressure Levels
-//! 
-//! - **Normal**: Memory usage below warning threshold
-//! - **Warning**: Memory usage approaching limits (configurable, typically 80%)
-//! - **Critical**: High memory usage requiring immediate action (typically 90%)
-//! - **Emergency**: Extreme memory pressure requiring drastic measures (typically 95%)
-//! 
-//! ### Response Actions
-//! 
-//! - **Warning Level**: Cache trimming, background cleanup
-//! - **Critical Level**: Aggressive memory reclamation, query throttling
-//! - **Emergency Level**: Transaction rollback, connection dropping, service degradation
-//! 
-//! ## Usage Example
-//! 
-//! ```rust
-//! use crate::memory::pressure::*;
-//! use crate::memory::types::*;
-//! 
-//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! // Create pressure manager
-//! let config = PressureConfig {
-//!     warning_threshold: 0.75,  // 75%
-//!     critical_threshold: 0.85, // 85%
-//!     emergency_threshold: 0.95, // 95%
-//!     enable_monitoring: true,
-//!     check_interval: Duration::from_secs(5),
-//!     ..Default::default()
-//! };
-//! 
-//! let pressure_manager = MemoryPressureManager::new(config).await?;
-//! 
-//! // Register a pressure callback
-//! let callback_id = pressure_manager.register_callback(
-//!     MemoryPressureLevel::Warning,
-//!     Box::new(|level, event| {
-//!         Box::pin(async move {
-//!             println!("Memory pressure {} detected: {} MB used", 
-//!                 level, event.used_memory / 1024 / 1024);
-//!             
-//!             // Perform cleanup actions
-//!             // ... implementation specific cleanup ...
-//!             
-//!             Ok(1024 * 1024) // Freed 1MB
-//!         })
-//!     }),
-//! ).await?;
-//! 
-//! // Start monitoring
-//! pressure_manager.start_monitoring().await?;
-//! 
-//! // Manually trigger pressure check
-//! let pressure_level = pressure_manager.check_pressure().await?;
-//! println!("Current pressure level: {}", pressure_level);
-//! 
-//! // Get pressure statistics
-//! let _stats = pressure_manager.get_statistics().await;
-//! println!("Total pressure events: {}", stats.total_events);
-//! 
-//! // Stop monitoring when shutting down
-//! pressure_manager.stop_monitoring().await?;
-//! # Ok(())
-//! # }
-//! ```
+// # Memory Pressure Management
+//
+// This module provides comprehensive memory pressure monitoring and management
+// for the database system. It monitors global memory usage, detects pressure
+// conditions, and coordinates memory reclamation across all allocators and
+// components to prevent out-of-memory situations.
+//
+// ## Key Features
+//
+// - **Global Monitoring**: Tracks system-wide memory usage and pressure levels
+// - **Threshold Management**: Configurable warning, critical, and emergency thresholds
+// - **Callback System**: Event-driven callbacks for pressure response actions
+// - **Automatic Response**: Coordinated memory reclamation across allocators
+// - **Pressure History**: Historical tracking and analysis of pressure events
+// - **Component Integration**: Seamless integration with all memory allocators
+// - **Real-time Metrics**: Live monitoring with configurable check intervals
+//
+// ## Design Overview
+//
+// The pressure manager operates as a centralized coordinator that:
+// 1. Continuously monitors system memory usage
+// 2. Compares usage against configured thresholds
+// 3. Triggers appropriate responses based on pressure level
+// 4. Coordinates memory reclamation across all allocators
+// 5. Tracks pressure events for analysis and tuning
+//
+// ### Pressure Levels
+//
+// - **Normal**: Memory usage below warning threshold
+// - **Warning**: Memory usage approaching limits (configurable, typically 80%)
+// - **Critical**: High memory usage requiring immediate action (typically 90%)
+// - **Emergency**: Extreme memory pressure requiring drastic measures (typically 95%)
+//
+// ### Response Actions
+//
+// - **Warning Level**: Cache trimming, background cleanup
+// - **Critical Level**: Aggressive memory reclamation, query throttling
+// - **Emergency Level**: Transaction rollback, connection dropping, service degradation
+//
+// ## Usage Example
+//
+// ```rust
+// use crate::memory::pressure::*;
+// use crate::memory::types::*;
+//
+// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+// // Create pressure manager
+// let config = PressureConfig {
+//     warning_threshold: 0.75,  // 75%
+//     critical_threshold: 0.85, // 85%
+//     emergency_threshold: 0.95, // 95%
+//     enable_monitoring: true,
+//     check_interval: Duration::from_secs(5),
+//     ..Default::default()
+// };
+//
+// let pressure_manager = MemoryPressureManager::new(config).await?;
+//
+// // Register a pressure callback
+// let callback_id = pressure_manager.register_callback(
+//     MemoryPressureLevel::Warning,
+//     Box::new(|level, event| {
+//         Box::pin(async move {
+//             println!("Memory pressure {} detected: {} MB used",
+//                 level, event.used_memory / 1024 / 1024);
+//
+//             // Perform cleanup actions
+//             // ... implementation specific cleanup ...
+//
+//             Ok(1024 * 1024) // Freed 1MB
+//         })
+//     }),
+// ).await?;
+//
+// // Start monitoring
+// pressure_manager.start_monitoring().await?;
+//
+// // Manually trigger pressure check
+// let pressure_level = pressure_manager.check_pressure().await?;
+// println!("Current pressure level: {}", pressure_level);
+//
+// // Get pressure statistics
+// let _stats = pressure_manager.get_statistics().await;
+// println!("Total pressure events: {}", stats.total_events);
+//
+// // Stop monitoring when shutting down
+// pressure_manager.stop_monitoring().await?;
+// # Ok(())
+// # }
+// ```
 
 use crate::memory::types::*;
 use parking_lot::{Mutex, RwLock};
@@ -108,28 +108,28 @@ use uuid::Uuid;
 pub enum PressureError {
     #[error("Memory monitoring not active")]
     MonitoringNotActive,
-    
+
     #[error("Callback registration failed: {reason}")]
     CallbackRegistrationFailed { reason: String },
-    
+
     #[error("Callback execution failed: {callback_id} - {reason}")]
     CallbackExecutionFailed { callback_id: String, reason: String },
-    
+
     #[error("Pressure calculation failed: {reason}")]
     PressureCalculationFailed { reason: String },
-    
+
     #[error("System information unavailable: {reason}")]
     SystemInfoUnavailable { reason: String },
-    
+
     #[error("Threshold configuration invalid: {threshold_type} = {value}")]
     InvalidThreshold { threshold_type: String, value: f64 },
-    
+
     #[error("Memory reclamation failed: {reason}")]
     ReclamationFailed { reason: String },
 }
 
 /// Memory pressure callback function type
-/// 
+///
 /// Callbacks are async functions that receive the pressure level and event details
 /// and return the number of bytes freed during cleanup.
 pub type PressureCallback = Box<
@@ -278,7 +278,7 @@ impl fmt::Display for PressureResolution {
 }
 
 /// Main memory pressure manager
-/// 
+///
 /// Coordinates system-wide memory pressure monitoring and response.
 /// Integrates with all allocators and provides callback-based pressure handling.
 #[derive(Debug)]
@@ -327,18 +327,18 @@ impl CallbackRegistration {
             callback,
         }
     }
-    
+
     /// Records callback execution
     pub fn record_execution(&self, execution_time: Duration, bytes_freed: u64) {
         self.invocation_count.fetch_add(1, Ordering::Relaxed);
         self.total_bytes_freed.fetch_add(bytes_freed, Ordering::Relaxed);
-        
+
         let now = SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos() as u64;
         self.last_invoked.store(now, Ordering::Relaxed);
-        
+
         // Update average execution time
         let mut avg_time = self.avg_execution_time.lock();
         let count = self.invocation_count.load(Ordering::Relaxed);
@@ -349,7 +349,7 @@ impl CallbackRegistration {
             *avg_time = total_time / count as u32;
         }
     }
-    
+
     /// Gets callback statistics
     pub fn get_stats(&self) -> (u64, u64) {
         (
@@ -368,40 +368,40 @@ impl SystemMemoryInfo {
         {
             Self::collect_linux()
         }
-        
+
         #[cfg(target_os = "windows")]
         {
             Self::collect_windows()
         }
-        
+
         #[cfg(not(any(target_os = "linux", target_os = "windows")))]
         {
             // Fallback implementation
             Self::collect_fallback()
         }
     }
-    
+
     #[cfg(target_os = "linux")]
     fn collect_linux() -> Result<Self, PressureError> {
         use std::fs;
-        
+
         // Read /proc/meminfo
         let meminfo = fs::read_to_string("/proc/meminfo")
             .map_err(|e| PressureError::SystemInfoUnavailable {
                 reason: format!("Cannot read /proc/meminfo: {}", e),
             })?;
-        
+
         let mut total_memory = 0;
         let mut free_memory = 0;
         let mut available_memory = 0;
         let mut cached_memory = 0;
         let mut buffer_memory = 0;
-        
+
         for line in meminfo.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
                 let _value = parts[1].parse::<u64>().unwrap_or(0) * 1024; // Convert from KB
-                
+
                 match parts[0] {
                     "MemTotal:" => total_memory = value,
                     "MemFree:" => free_memory = value,
@@ -412,17 +412,17 @@ impl SystemMemoryInfo {
                 }
             }
         }
-        
+
         // Read process memory info
         let (process_rss, process_virtual) = Self::collect_process_memory_linux()?;
-        
+
         let used_memory = total_memory.saturating_sub(available_memory);
         let usage_ratio = if total_memory > 0 {
             used_memory as f64 / total_memory as f64
         } else {
             0.0
         };
-        
+
         Ok(Self {
             total_memory,
             available_memory,
@@ -437,19 +437,19 @@ impl SystemMemoryInfo {
             collected_at: SystemTime::now(),
         })
     }
-    
+
     #[cfg(target_os = "linux")]
     fn collect_process_memory_linux() -> Result<(u64, u64), PressureError> {
         use std::fs;
-        
+
         let status = fs::read_to_string("/proc/self/status")
             .map_err(|e| PressureError::SystemInfoUnavailable {
                 reason: format!("Cannot read /proc/self/status: {}", e),
             })?;
-        
+
         let mut rss = 0;
         let mut virtual_size = 0;
-        
+
         for line in status.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
@@ -468,24 +468,24 @@ impl SystemMemoryInfo {
                 }
             }
         }
-        
+
         Ok((rss, virtual_size))
     }
-    
+
     #[cfg(target_os = "windows")]
     fn collect_windows() -> Result<Self, PressureError> {
         // Windows-specific implementation would go here
         // For now, use fallback
         Self::collect_fallback()
     }
-    
+
     fn collect_fallback() -> Result<Self, PressureError> {
         // Simple fallback that reports fixed values
         // In a real implementation, you'd want actual system information
         let total_memory = 8 * 1024 * 1024 * 1024; // 8GB
         let used_memory = total_memory / 2; // 50% usage
         let available_memory = total_memory - used_memory;
-        
+
         Ok(Self {
             total_memory,
             available_memory,
@@ -500,7 +500,7 @@ impl SystemMemoryInfo {
             collected_at: SystemTime::now(),
         })
     }
-    
+
     /// Calculates pressure level based on usage ratio and thresholds
     pub fn calculate_pressure_level(&self, config: &PressureConfig) -> MemoryPressureLevel {
         if self.usage_ratio >= config.emergency_threshold {
@@ -525,14 +525,14 @@ impl MemoryPressureManager {
                 value: config.warning_threshold,
             });
         }
-        
+
         if config.critical_threshold >= config.emergency_threshold {
             return Err(PressureError::InvalidThreshold {
                 threshold_type: "critical vs emergency".to_string(),
                 value: config.critical_threshold,
             });
         }
-        
+
         Ok(Self {
             config,
             is_monitoring: AtomicBool::new(false),
@@ -547,7 +547,7 @@ impl MemoryPressureManager {
             callback_semaphore: Arc::new(Semaphore::new(10)), // Max 10 concurrent callbacks
         })
     }
-    
+
     /// Registers a pressure callback
     pub async fn register_callback(
         &self,
@@ -556,7 +556,7 @@ impl MemoryPressureManager {
     ) -> Result<Uuid, PressureError> {
         self.register_callback_with_priority(trigger_level, 100, callback).await
     }
-    
+
     /// Registers a pressure callback with specific priority
     pub async fn register_callback_with_priority(
         &self,
@@ -566,36 +566,36 @@ impl MemoryPressureManager {
     ) -> Result<Uuid, PressureError> {
         let registration = Arc::new(CallbackRegistration::new(trigger_level, priority, callback));
         let callback_id = registration.callback_id;
-        
+
         {
             let mut callbacks = self.callbacks.write();
             callbacks.insert(callback_id, registration);
         }
-        
+
         // Update statistics
         let mut stats = self.stats.write().await;
         stats.last_updated = SystemTime::now();
-        
+
         Ok(callback_id)
     }
-    
+
     /// Unregisters a pressure callback
     pub async fn unregister_callback(&self, callback_id: Uuid) -> Result<(), PressureError> {
         let mut callbacks = self.callbacks.write();
-        
+
         if let Some(registration) = callbacks.remove(&callback_id) {
             registration.is_active.store(false, Ordering::Relaxed);
         }
-        
+
         Ok(())
     }
-    
+
     /// Starts memory pressure monitoring
     pub async fn start_monitoring(&self) -> Result<(), PressureError> {
         if self.is_monitoring.swap(true, Ordering::Relaxed) {
             return Ok(());  // Already monitoring
         }
-        
+
         let config = self.config.clone();
         let is_monitoring = Arc::new(AtomicBool::new(true));
         let current_level = Arc::clone(&self.current_level);
@@ -604,26 +604,26 @@ impl MemoryPressureManager {
         let _stats = Arc::clone(&self.stats);
         let last_memory_info = Arc::clone(&self.last_memory_info);
         let callback_semaphore = Arc::clone(&self.callback_semaphore);
-        
+
         let handle = tokio::spawn(async move {
             let mut interval = tokio::time::interval(config.check_interval);
             let mut last_level = MemoryPressureLevel::Normal;
-            
+
             while is_monitoring.load(Ordering::Relaxed) {
                 interval.tick().await;
-                
+
                 // Collect memory information
                 match SystemMemoryInfo::collect() {
                     Ok(memory_info) => {
                         let pressure_level = memory_info.calculate_pressure_level(&config);
-                        
+
                         // Update last memory info
                         *last_memory_info.write() = Some(memory_info.clone());
-                        
+
                         // Check if pressure level changed
                         if pressure_level != last_level {
                             *current_level.write() = pressure_level;
-                            
+
                             // Trigger pressure event if above normal
                             if pressure_level > MemoryPressureLevel::Normal {
                                 Self::handle_pressure_event_internal(
@@ -636,10 +636,10 @@ impl MemoryPressureManager {
                                     &callback_semaphore,
                                 ).await;
                             }
-                            
+
                             last_level = pressure_level;
                         }
-                        
+
                         // Update current level in stats
                         let mut stats_guard = stats.write().await;
                         stats_guard.current_level = pressure_level;
@@ -652,40 +652,40 @@ impl MemoryPressureManager {
                 }
             }
         });
-        
+
         *self.monitoring_task.lock() = Some(handle);
-        
+
         Ok(())
     }
-    
+
     /// Stops memory pressure monitoring
     pub async fn stop_monitoring(&self) -> Result<(), PressureError> {
         self.is_monitoring.store(false, Ordering::Relaxed);
-        
+
         if let Some(handle) = self.monitoring_task.lock().take() {
             handle.abort();
         }
-        
+
         Ok(())
     }
-    
+
     /// Manually checks current pressure level
     pub async fn check_pressure(&self) -> Result<MemoryPressureLevel, PressureError> {
         let memory_info = SystemMemoryInfo::collect()?;
         let pressure_level = memory_info.calculate_pressure_level(&self.config);
-        
+
         // Update stored information
         *self.last_memory_info.write() = Some(memory_info.clone());
         *self.current_level.write() = pressure_level;
-        
+
         // If pressure is elevated, handle it
         if pressure_level > MemoryPressureLevel::Normal {
             self.handle_pressure_event(pressure_level, memory_info).await?;
         }
-        
+
         Ok(pressure_level)
     }
-    
+
     /// Handles a pressure event
     async fn handle_pressure_event(
         &self,
@@ -701,10 +701,10 @@ impl MemoryPressureManager {
             &self.stats,
             &self.callback_semaphore,
         ).await;
-        
+
         Ok(())
     }
-    
+
     /// Internal pressure event handling
     async fn handle_pressure_event_internal(
         level: MemoryPressureLevel,
@@ -717,7 +717,7 @@ impl MemoryPressureManager {
     ) {
         let event_start = Instant::now();
         let event_id = Uuid::new_v4();
-        
+
         // Create pressure event
         let pressure_event = MemoryPressureEvent {
             timestamp: SystemTime::now(),
@@ -730,11 +730,11 @@ impl MemoryPressureManager {
             duration: Duration::ZERO,
             emergency_actions_taken: false,
         };
-        
+
         let mut total_bytes_freed = 0;
         let mut callbacks_invoked = 0;
         let mut emergency_actions_taken = false;
-        
+
         if config.enable_callbacks {
             // Get callbacks for this pressure level and below
             let eligible_callbacks: Vec<_> = {
@@ -747,24 +747,24 @@ impl MemoryPressureManager {
                     .cloned()
                     .collect()
             };
-            
+
             // Sort by priority (lower number = higher priority)
             let mut sorted_callbacks = eligible_callbacks;
             sorted_callbacks.sort_by_key(|cb| cb.priority);
-            
+
             // Execute callbacks
             for callback_reg in sorted_callbacks {
                 let _permit = callback_semaphore.acquire().await;
-                
+
                 let callback_start = Instant::now();
-                
+
                 match (callback_reg.callback)(level, pressure_event.clone()).await {
                     Ok(bytes_freed) => {
                         let execution_time = callback_start.elapsed();
                         callback_reg.record_execution(execution_time, bytes_freed);
                         total_bytes_freed += bytes_freed;
                         callbacks_invoked += 1;
-                        
+
                         // If we've freed enough memory, stop
                         if level == MemoryPressureLevel::Warning && total_bytes_freed > 0 {
                             break;
@@ -778,15 +778,15 @@ impl MemoryPressureManager {
                 }
             }
         }
-        
+
         // Emergency actions for critical/emergency levels
         if level >= MemoryPressureLevel::Emergency && config.enable_auto_release {
             emergency_actions_taken = true;
             // Emergency actions would go here (connection dropping, transaction rollback, etc.)
         }
-        
+
         let event_duration = event_start.elapsed();
-        
+
         // Update final pressure event
         let final_pressure_event = MemoryPressureEvent {
             callbacks_invoked,
@@ -795,7 +795,7 @@ impl MemoryPressureManager {
             emergency_actions_taken,
             ..pressure_event
         };
-        
+
         // Add to event history
         {
             let mut history = event_history.write();
@@ -815,31 +815,31 @@ impl MemoryPressureManager {
                 } else {
                     PressureResolution::Failed
                 },
-                context: format!("Pressure level: {}, Memory usage: {:.2}%", 
+                context: format!("Pressure level: {}, Memory usage: {:.2}%",
                     level, memory_info.usage_ratio * 100.0),
             });
-            
+
             // Limit history size
             if history.len() > config.max_pressure_events {
                 history.pop_front();
             }
         }
-        
+
         // Update statistics
         {
             let mut stats_guard = stats.write().await;
             stats_guard.total_events += 1;
             stats_guard.total_bytes_freed += total_bytes_freed;
             stats_guard.callback_invocations += callbacks_invoked as u64;
-            
+
             if emergency_actions_taken {
                 stats_guard.emergency_actions += 1;
             }
-            
+
             // Update events by level
             let level_str = level.to_string();
             *stats_guard.events_by_level.entry(level_str.clone()).or_insert(0) += 1;
-            
+
             // Update average event duration
             if stats_guard.total_events == 1 {
                 stats_guard.avg_event_duration = event_duration;
@@ -847,25 +847,25 @@ impl MemoryPressureManager {
                 let total_duration = stats_guard.avg_event_duration * (stats_guard.total_events - 1) as u32;
                 stats_guard.avg_event_duration = (total_duration + event_duration) / stats_guard.total_events as u32;
             }
-            
+
             if event_duration > stats_guard.max_event_duration {
                 stats_guard.max_event_duration = event_duration;
             }
-            
+
             stats_guard.last_updated = SystemTime::now();
         }
     }
-    
+
     /// Gets current memory information
     pub async fn get_memory_info(&self) -> Option<SystemMemoryInfo> {
         self.last_memory_info.read().clone()
     }
-    
+
     /// Gets current pressure level
     pub async fn get_current_level(&self) -> MemoryPressureLevel {
         *self.current_level.read()
     }
-    
+
     /// Gets pressure statistics
     pub async fn get_statistics(&self) -> MemoryPressureStats {
         let mut stats = self.stats.write().await;
@@ -874,12 +874,12 @@ impl MemoryPressureManager {
             .unwrap_or_default();
         stats.clone()
     }
-    
+
     /// Gets pressure event history
     pub async fn get_event_history(&self) -> Vec<PressureEventHistory> {
         self.event_history.read().iter().cloned().collect()
     }
-    
+
     /// Gets callback statistics
     pub async fn get_callback_statistics(&self) -> HashMap<Uuid, (u64, u64)> {
         let callbacks = self.callbacks.read();
@@ -888,7 +888,7 @@ impl MemoryPressureManager {
             .map(|(id, cb)| (*id, cb.get_stats()))
             .collect()
     }
-    
+
     /// Forces memory pressure cleanup
     pub async fn force_cleanup(
         &self,
@@ -896,17 +896,17 @@ impl MemoryPressureManager {
     ) -> Result<u64, PressureError> {
         let memory_info = SystemMemoryInfo::collect()?;
         self.handle_pressure_event(target_level, memory_info).await?;
-        
+
         // Return total bytes freed from recent events
         let history = self.event_history.read();
         let recent_bytes_freed = history
             .back()
             .map(|event| event.bytes_freed)
             .unwrap_or(0);
-        
+
         Ok(recent_bytes_freed)
     }
-    
+
     /// Simulates memory pressure for testing
     #[cfg(test)]
     pub async fn simulate_pressure(
@@ -928,21 +928,21 @@ impl MemoryPressureManager {
             usage_ratio: used_memory as f64 / total_memory as f64,
             collected_at: SystemTime::now(),
         };
-        
+
         self.handle_pressure_event(level, memory_info).await?;
         Ok(())
     }
-    
+
     /// Shuts down the pressure manager gracefully
     pub async fn shutdown(&self) -> Result<(), PressureError> {
         self.stop_monitoring().await?;
-        
+
         // Disable all callbacks
         let callbacks = self.callbacks.read();
         for callback in callbacks.values() {
             callback.is_active.store(false, Ordering::Relaxed);
         }
-        
+
         Ok(())
     }
 }
@@ -955,7 +955,7 @@ impl MemoryPressureManager {
         let pressure_level = memory_info.calculate_pressure_level(&self.config);
         Ok((pressure_level, memory_info))
     }
-    
+
     /// Estimates time to next pressure level
     pub async fn estimate_time_to_pressure(
         &self,
@@ -966,7 +966,7 @@ impl MemoryPressureManager {
         let _ = target_level;
         None
     }
-    
+
     /// Gets memory efficiency score (0.0 to 1.0)
     pub async fn get_efficiency_score(&self) -> f64 {
         let _stats = self.stats.read().await;
@@ -996,7 +996,7 @@ mod tests {
         let config = PressureConfig::default();
         let manager = MemoryPressureManager::new(config).await;
         assert!(manager.is_ok());
-        
+
         let manager = manager.unwrap();
         assert!(!manager.is_monitoring.load(Ordering::Relaxed));
     }
@@ -1009,7 +1009,7 @@ mod tests {
             emergency_threshold: 0.95,
             ..Default::default()
         };
-        
+
         let manager = MemoryPressureManager::new(invalid_config).await;
         assert!(manager.is_err());
     }
@@ -1018,10 +1018,10 @@ mod tests {
     async fn test_callback_registration() {
         let config = PressureConfig::default();
         let manager = MemoryPressureManager::new(config).await.unwrap();
-        
+
         let callback_count = Arc::new(AtomicU64::new(0));
         let callback_count_clone = Arc::clone(&callback_count);
-        
+
         let callback = Box::new(move |_level, _event| {
             let count = Arc::clone(&callback_count_clone);
             Box::pin(async move {
@@ -1029,12 +1029,12 @@ mod tests {
                 Ok(1024) // Freed 1KB
             })
         });
-        
+
         let callback_id = manager.register_callback(
             MemoryPressureLevel::Warning,
             callback,
         ).await;
-        
+
         assert!(callback_id.is_ok());
     }
 
@@ -1046,7 +1046,7 @@ mod tests {
             emergency_threshold: 0.95,
             ..Default::default()
         };
-        
+
         let memory_info = SystemMemoryInfo {
             total_memory: 1000,
             used_memory: 800, // 80% usage
@@ -1060,7 +1060,7 @@ mod tests {
             usage_ratio: 0.80,
             collected_at: SystemTime::now(),
         };
-        
+
         let level = memory_info.calculate_pressure_level(&config);
         assert_eq!(level, MemoryPressureLevel::Critical);
     }
@@ -1069,10 +1069,10 @@ mod tests {
     async fn test_pressure_simulation() {
         let config = PressureConfig::default();
         let manager = MemoryPressureManager::new(config).await.unwrap();
-        
+
         let callback_invoked = Arc::new(AtomicBool::new(false));
         let callback_invoked_clone = Arc::clone(&callback_invoked);
-        
+
         let callback = Box::new(move |_level, _event| {
             let invoked = Arc::clone(&callback_invoked_clone);
             Box::pin(async move {
@@ -1080,21 +1080,21 @@ mod tests {
                 Ok(2048) // Freed 2KB
             })
         });
-        
+
         let _callback_id = manager.register_callback(
             MemoryPressureLevel::Warning,
             callback,
         ).await.unwrap();
-        
+
         // Simulate warning level pressure
         manager.simulate_pressure(
             MemoryPressureLevel::Warning,
             8 * 1024 * 1024 * 1024, // 8GB used
             10 * 1024 * 1024 * 1024, // 10GB total (80% usage)
         ).await.unwrap();
-        
+
         assert!(callback_invoked.load(Ordering::Relaxed));
-        
+
         let _stats = manager.get_statistics().await;
         assert_eq!(stats.total_events, 1);
         assert_eq!(stats.total_bytes_freed, 2048);
@@ -1104,14 +1104,14 @@ mod tests {
     async fn test_callback_priority_ordering() {
         let config = PressureConfig::default();
         let manager = MemoryPressureManager::new(config).await.unwrap();
-        
+
         let execution_order = Arc::new(Mutex::new(Vec::new()));
-        
+
         // Register callbacks with different priorities
         for (priority, name) in [(10, "high"), (50, "medium"), (5, "highest")] {
             let order = Arc::clone(&execution_order);
             let callback_name = name.to_string();
-            
+
             let callback = Box::new(move |_level, _event| {
                 let order = Arc::clone(&order);
                 let name = callback_name.clone();
@@ -1120,21 +1120,21 @@ mod tests {
                     Ok(1024)
                 })
             });
-            
+
             let _id = manager.register_callback_with_priority(
                 MemoryPressureLevel::Warning,
                 priority,
                 callback,
             ).await.unwrap();
         }
-        
+
         // Trigger pressure event
         manager.simulate_pressure(
             MemoryPressureLevel::Warning,
             8 * 1024 * 1024 * 1024,
             10 * 1024 * 1024 * 1024,
         ).await.unwrap();
-        
+
         let order = execution_order.lock();
         assert_eq!(order[0], "highest"); // Priority 5
         assert_eq!(order[1], "high");    // Priority 10
@@ -1148,7 +1148,7 @@ mod tests {
             ..Default::default()
         };
         let manager = MemoryPressureManager::new(config).await.unwrap();
-        
+
         // Simulate multiple pressure events
         for _i in 0..7 {
             manager.simulate_pressure(
@@ -1157,10 +1157,10 @@ mod tests {
                 10 * 1024 * 1024 * 1024,
             ).await.unwrap();
         }
-        
+
         let history = manager.get_event_history().await;
         assert_eq!(history.len(), 5); // Should be limited to max_pressure_events
-        
+
         let _stats = manager.get_statistics().await;
         assert_eq!(stats.total_events, 7); // Total count should still be accurate
     }
@@ -1169,7 +1169,7 @@ mod tests {
     fn test_system_memory_info_collection() {
         let memory_info = SystemMemoryInfo::collect();
         assert!(memory_info.is_ok());
-        
+
         let info = memory_info.unwrap();
         assert!(info.total_memory > 0);
         assert!(info.usage_ratio >= 0.0);

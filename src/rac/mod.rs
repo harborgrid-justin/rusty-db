@@ -1,99 +1,99 @@
-//! # Real Application Clusters (RAC) Engine
-//!
-//! Oracle RAC-like clustering technology for RustyDB, providing shared-disk clustering
-//! with Cache Fusion technology for high availability and horizontal scalability.
-//!
-//! ## Overview
-//!
-//! The RAC engine enables multiple database instances to run on different servers while
-//! accessing the same shared storage. This provides:
-//!
-//! - **High Availability**: Automatic failover if an instance fails
-//! - **Horizontal Scalability**: Add instances to increase capacity
-//! - **Load Distribution**: Distribute workload across multiple instances
-//! - **Zero Downtime**: Rolling upgrades and maintenance
-//!
-//! ## Architecture
-//!
-//! The RAC implementation consists of several integrated components:
-//!
-//! ### Cache Fusion
-//!
-//! Direct memory-to-memory block transfers between instances without disk I/O:
-//! - Global Cache Service (GCS) for block management
-//! - Global Enqueue Service (GES) for distributed locking
-//! - RDMA-like zero-copy transfers
-//! - Read-read, read-write, write-write consistency protocols
-//!
-//! ### Global Resource Directory (GRD)
-//!
-//! Distributed resource ownership and mastering:
-//! - Resource master tracking
-//! - Affinity-based placement
-//! - Dynamic remastering
-//! - Load balancing
-//!
-//! ### Cluster Interconnect
-//!
-//! High-speed communication between cluster nodes:
-//! - Low-latency message passing
-//! - Heartbeat monitoring
-//! - Split-brain detection
-//! - Network partition handling
-//!
-//! ### Instance Recovery
-//!
-//! Automatic recovery from instance failures:
-//! - Failure detection
-//! - Redo log recovery
-//! - Lock reconfiguration
-//! - Resource remastering
-//!
-//! ### Parallel Query Coordination
-//!
-//! Cross-instance parallel query execution:
-//! - Work distribution
-//! - Data flow operators
-//! - Result aggregation
-//! - Adaptive parallelism
-//!
-//! ## Usage Example
-//!
-//! ```rust,no_run
-//! use rusty_db::rac::{RacCluster, RacConfig, ClusterNode};
-//! use rusty_db::Result;
-//!
-//! # async fn example() -> std::result::Result<(), rusty_db::error::DbError> {
-//! // Create a 3-node RAC cluster
-//! let config = RacConfig::default();
-//!
-//! let cluster = RacCluster::new("rac_cluster", config).await?;
-//!
-//! // Add nodes to the cluster
-//! cluster.add_node(ClusterNode {
-//!     node_id: "node1".to_string(),
-//!     address: "192.168.1.101:5000".to_string(),
-//!     ..Default::default()
-//! }).await?;
-//!
-//! cluster.add_node(ClusterNode {
-//!     node_id: "node2".to_string(),
-//!     address: "192.168.1.102:5000".to_string(),
-//!     ..Default::default()
-//! }).await?;
-//!
-//! // Start the cluster
-//! cluster.start().await?;
-//!
-//! // Execute a parallel query across instances
-//! let results = cluster.execute_parallel_query(
-//!     "SELECT * FROM large_table WHERE condition = true",
-//!     4  // degree of parallelism
-//! ).await?;
-//!
-//! # Ok(())
-//! # }
-//! ```
+// # Real Application Clusters (RAC) Engine
+//
+// Oracle RAC-like clustering technology for RustyDB, providing shared-disk clustering
+// with Cache Fusion technology for high availability and horizontal scalability.
+//
+// ## Overview
+//
+// The RAC engine enables multiple database instances to run on different servers while
+// accessing the same shared storage. This provides:
+//
+// - **High Availability**: Automatic failover if an instance fails
+// - **Horizontal Scalability**: Add instances to increase capacity
+// - **Load Distribution**: Distribute workload across multiple instances
+// - **Zero Downtime**: Rolling upgrades and maintenance
+//
+// ## Architecture
+//
+// The RAC implementation consists of several integrated components:
+//
+// ### Cache Fusion
+//
+// Direct memory-to-memory block transfers between instances without disk I/O:
+// - Global Cache Service (GCS) for block management
+// - Global Enqueue Service (GES) for distributed locking
+// - RDMA-like zero-copy transfers
+// - Read-read, read-write, write-write consistency protocols
+//
+// ### Global Resource Directory (GRD)
+//
+// Distributed resource ownership and mastering:
+// - Resource master tracking
+// - Affinity-based placement
+// - Dynamic remastering
+// - Load balancing
+//
+// ### Cluster Interconnect
+//
+// High-speed communication between cluster nodes:
+// - Low-latency message passing
+// - Heartbeat monitoring
+// - Split-brain detection
+// - Network partition handling
+//
+// ### Instance Recovery
+//
+// Automatic recovery from instance failures:
+// - Failure detection
+// - Redo log recovery
+// - Lock reconfiguration
+// - Resource remastering
+//
+// ### Parallel Query Coordination
+//
+// Cross-instance parallel query execution:
+// - Work distribution
+// - Data flow operators
+// - Result aggregation
+// - Adaptive parallelism
+//
+// ## Usage Example
+//
+// ```rust,no_run
+// use rusty_db::rac::{RacCluster, RacConfig, ClusterNode};
+// use rusty_db::Result;
+//
+// # async fn example() -> std::result::Result<(), rusty_db::error::DbError> {
+// // Create a 3-node RAC cluster
+// let config = RacConfig::default();
+//
+// let cluster = RacCluster::new("rac_cluster", config).await?;
+//
+// // Add nodes to the cluster
+// cluster.add_node(ClusterNode {
+//     node_id: "node1".to_string(),
+//     address: "192.168.1.101:5000".to_string(),
+//     ..Default::default()
+// }).await?;
+//
+// cluster.add_node(ClusterNode {
+//     node_id: "node2".to_string(),
+//     address: "192.168.1.102:5000".to_string(),
+//     ..Default::default()
+// }).await?;
+//
+// // Start the cluster
+// cluster.start().await?;
+//
+// // Execute a parallel query across instances
+// let results = cluster.execute_parallel_query(
+//     "SELECT * FROM large_table WHERE condition = true",
+//     4  // degree of parallelism
+// ).await?;
+//
+// # Ok(())
+// # }
+// ```
 
 pub mod cache_fusion;
 pub mod grd;
@@ -766,5 +766,3 @@ mod tests {
         assert_eq!(node.role, NodeRole::Coordinator);
     }
 }
-
-

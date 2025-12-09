@@ -1,25 +1,25 @@
-//! # Transparent Data Encryption (TDE)
-//!
-//! Oracle-like transparent data encryption providing automatic encryption/decryption
-//! at tablespace and column levels with zero application changes required.
-//!
-//! ## Features
-//!
-//! - **Tablespace Encryption**: Encrypt entire tablespaces transparently
-//! - **Column Encryption**: Selective column-level encryption
-//! - **Key Rotation**: Online key rotation without downtime
-//! - **Multiple Algorithms**: AES-256-GCM, ChaCha20-Poly1305
-//! - **HSM Integration**: Hardware security module support
-//! - **Performance**: Minimal overhead with hardware acceleration
-//!
-//! ## Encryption Flow
-//!
-//! ```text
-//! Plaintext → [DEK Encrypt] → Ciphertext → [Store]
-//! [Retrieve] → Ciphertext → [DEK Decrypt] → Plaintext
-//!
-//! DEK is encrypted by MEK using envelope encryption
-//! ```
+// # Transparent Data Encryption (TDE)
+//
+// Oracle-like transparent data encryption providing automatic encryption/decryption
+// at tablespace and column levels with zero application changes required.
+//
+// ## Features
+//
+// - **Tablespace Encryption**: Encrypt entire tablespaces transparently
+// - **Column Encryption**: Selective column-level encryption
+// - **Key Rotation**: Online key rotation without downtime
+// - **Multiple Algorithms**: AES-256-GCM, ChaCha20-Poly1305
+// - **HSM Integration**: Hardware security module support
+// - **Performance**: Minimal overhead with hardware acceleration
+//
+// ## Encryption Flow
+//
+// ```text
+// Plaintext → [DEK Encrypt] → Ciphertext → [Store]
+// [Retrieve] → Ciphertext → [DEK Decrypt] → Plaintext
+//
+// DEK is encrypted by MEK using envelope encryption
+// ```
 
 use crate::{DbError, Result};
 use aes_gcm::{
@@ -948,5 +948,3 @@ mod tests {
         assert_eq!(columns.len(), 1);
     }
 }
-
-

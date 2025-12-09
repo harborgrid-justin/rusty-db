@@ -1,6 +1,6 @@
-//! # SIMD Aggregate Operations
-//!
-//! Vectorized aggregate functions (SUM, COUNT, MIN, MAX, AVG) using AVX2 SIMD instructions.
+// # SIMD Aggregate Operations
+//
+// Vectorized aggregate functions (SUM, COUNT, MIN, MAX, AVG) using AVX2 SIMD instructions.
 
 use super::{SimdContext, SimdStats};
 use crate::common::Value;
@@ -851,5 +851,3 @@ mod tests {
         assert_eq!(grouped.group_count(), 2);
     }
 }
-
-

@@ -1,64 +1,64 @@
-//! # Slab Allocator Implementation
-//! 
-//! This module provides a high-performance slab allocator for fixed-size memory allocations.
-//! The slab allocator uses a magazine layer caching system with thread-local magazines
-//! for optimal performance in multi-threaded environments.
-//! 
-//! ## Key Features
-//! 
-//! - **Size Classes**: Multiple size classes for efficient allocation
-//! - **Magazine Caching**: Thread-local magazines for lock-free fast path
-//! - **Cache Coloring**: Reduces cache line conflicts
-//! - **Statistics Tracking**: Comprehensive performance monitoring
-//! - **Thread Safety**: Lock-free operations on hot path
-//! - **Memory Efficiency**: Minimal overhead per allocation
-//! 
-//! ## Design Overview
-//! 
-//! The slab allocator organizes memory into "slabs" - large contiguous chunks
-//! divided into fixed-size objects. Each size class manages its own slabs
-//! and maintains free lists for efficient allocation and deallocation.
-//! 
-//! ### Magazine Layer
-//! 
-//! The magazine layer provides thread-local caching to minimize lock contention:
-//! - **Loaded Magazine**: Currently used magazine per thread
-//! - **Previous Magazine**: Backup magazine for quick exchange
-//! - **Depot**: Central magazine storage with lock protection
-//! 
-//! ### Cache Coloring
-//! 
-//! Objects are allocated with different cache line offsets to reduce
-//! conflicts in CPU caches, improving overall system performance.
-//! 
-//! ## Usage Example
-//! 
-//! ```rust
-//! use crate::memory::slab::*;
-//! use crate::memory::types::*;
-//! 
-//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! // Create slab allocator
-//! let config = SlabConfig::default();
-//! let allocator = SlabAllocator::new(config).await?;
-//! 
-//! // Allocate 64-byte object
-//! let ptr = allocator.allocate(64, 8).await?;
-//! 
-//! // Use the allocated memory
-//! unsafe {
-//!     std::ptr::write_bytes(ptr.as_ptr(), 0x42, 64);
-//! }
-//! 
-//! // Deallocate when done
-//! allocator.deallocate(ptr, 64).await?;
-//! 
-//! // Get statistics
-//! let _stats = allocator.get_statistics().await;
-//! println!("Allocations: {}", stats.total_allocations);
-//! # Ok(())
-//! # }
-//! ```
+// # Slab Allocator Implementation
+//
+// This module provides a high-performance slab allocator for fixed-size memory allocations.
+// The slab allocator uses a magazine layer caching system with thread-local magazines
+// for optimal performance in multi-threaded environments.
+//
+// ## Key Features
+//
+// - **Size Classes**: Multiple size classes for efficient allocation
+// - **Magazine Caching**: Thread-local magazines for lock-free fast path
+// - **Cache Coloring**: Reduces cache line conflicts
+// - **Statistics Tracking**: Comprehensive performance monitoring
+// - **Thread Safety**: Lock-free operations on hot path
+// - **Memory Efficiency**: Minimal overhead per allocation
+//
+// ## Design Overview
+//
+// The slab allocator organizes memory into "slabs" - large contiguous chunks
+// divided into fixed-size objects. Each size class manages its own slabs
+// and maintains free lists for efficient allocation and deallocation.
+//
+// ### Magazine Layer
+//
+// The magazine layer provides thread-local caching to minimize lock contention:
+// - **Loaded Magazine**: Currently used magazine per thread
+// - **Previous Magazine**: Backup magazine for quick exchange
+// - **Depot**: Central magazine storage with lock protection
+//
+// ### Cache Coloring
+//
+// Objects are allocated with different cache line offsets to reduce
+// conflicts in CPU caches, improving overall system performance.
+//
+// ## Usage Example
+//
+// ```rust
+// use crate::memory::slab::*;
+// use crate::memory::types::*;
+//
+// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+// // Create slab allocator
+// let config = SlabConfig::default();
+// let allocator = SlabAllocator::new(config).await?;
+//
+// // Allocate 64-byte object
+// let ptr = allocator.allocate(64, 8).await?;
+//
+// // Use the allocated memory
+// unsafe {
+//     std::ptr::write_bytes(ptr.as_ptr(), 0x42, 64);
+// }
+//
+// // Deallocate when done
+// allocator.deallocate(ptr, 64).await?;
+//
+// // Get statistics
+// let _stats = allocator.get_statistics().await;
+// println!("Allocations: {}", stats.total_allocations);
+// # Ok(())
+// # }
+// ```
 
 use crate::memory::types::*;
 use parking_lot::{Mutex, RwLock};
@@ -78,28 +78,28 @@ use uuid::Uuid;
 pub enum SlabError {
     #[error("Size class not found for size {size}")]
     SizeClassNotFound { size: usize },
-    
+
     #[error("Slab allocation failed: {reason}")]
     SlabAllocationFailed { reason: String },
-    
+
     #[error("Magazine creation failed: {reason}")]
     MagazineCreationFailed { reason: String },
-    
+
     #[error("Invalid object pointer: {address:#x}")]
     InvalidObjectPointer { address: usize },
-    
+
     #[error("Size class corrupted: class {class_id}")]
     SizeClassCorrupted { class_id: usize },
-    
+
     #[error("Magazine cache corrupted")]
     MagazineCacheCorrupted,
-    
+
     #[error("Thread cache initialization failed")]
     ThreadCacheInitializationFailed,
 }
 
 /// Size class definition for slab allocator
-/// 
+///
 /// Each size class manages objects of a specific size with
 /// dedicated slabs and free lists.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -146,7 +146,7 @@ pub struct SizeClassStats {
 }
 
 /// Individual slab structure
-/// 
+///
 /// A slab contains multiple objects of the same size
 /// with a free list for efficient allocation.
 #[derive(Debug)]
@@ -178,7 +178,7 @@ pub struct Slab {
 }
 
 /// Free object entry in the free list
-/// 
+///
 /// Links free objects within a slab using a simple
 /// linked list structure.
 #[repr(C)]
@@ -188,7 +188,7 @@ struct FreeObject {
 }
 
 /// Magazine structure for thread-local caching
-/// 
+///
 /// Magazines cache a fixed number of objects per thread
 /// to reduce lock contention on the global free lists.
 #[derive(Debug)]
@@ -212,7 +212,7 @@ pub struct Magazine {
 }
 
 /// Thread-local cache structure
-/// 
+///
 /// Each thread maintains a cache of magazines for
 /// different size classes to enable lock-free allocation.
 #[derive(Debug)]
@@ -255,7 +255,7 @@ pub struct ThreadCacheStats {
 }
 
 /// Magazine depot for central magazine storage
-/// 
+///
 /// The depot stores magazines that are not currently
 /// assigned to threads and manages magazine lifecycle.
 #[derive(Debug)]
@@ -296,7 +296,7 @@ pub struct DepotStats {
 }
 
 /// Main slab allocator structure
-/// 
+///
 /// Manages multiple size classes and provides the primary
 /// allocation interface with magazine-based caching.
 #[derive(Debug)]
@@ -360,7 +360,7 @@ impl SizeClass {
     /// Creates a new size class
     pub fn new(class_id: usize, object_size: usize, slab_size: usize) -> Self {
         let objects_per_slab = slab_size / object_size;
-        
+
         Self {
             class_id,
             object_size,
@@ -372,19 +372,19 @@ impl SizeClass {
             stats: Arc::new(AsyncRwLock::new(SizeClassStats::default())),
         }
     }
-    
+
     /// Gets the current utilization of this size class
     pub fn utilization(&self) -> f64 {
         let total_objects = self.slab_count.load(Ordering::Relaxed) * self.objects_per_slab;
         let free = self.free_objects.load(Ordering::Relaxed);
-        
+
         if total_objects == 0 {
             0.0
         } else {
             1.0 - (free as f64 / total_objects as f64)
         }
     }
-    
+
     /// Checks if more slabs are needed
     pub fn needs_slab(&self) -> bool {
         self.free_objects.load(Ordering::Relaxed) < self.objects_per_slab / 4
@@ -404,17 +404,17 @@ impl Slab {
             .map_err(|_| SlabError::SlabAllocationFailed {
                 reason: "Invalid layout".to_string(),
             })?;
-        
+
         let memory = unsafe { alloc_zeroed(layout) };
         if memory.is_null() {
             return Err(SlabError::SlabAllocationFailed {
                 reason: "Memory allocation failed".to_string(),
             });
         }
-        
+
         let memory = NonNull::new(memory).unwrap();
         let object_count = slab_size / object_size;
-        
+
         let slab = Arc::new(Self {
             slab_id: Uuid::new_v4(),
             memory,
@@ -429,24 +429,24 @@ impl Slab {
             is_active: AtomicBool::new(true),
             allocated_at: SystemTime::now(),
         });
-        
+
         // Initialize free list
         slab.initialize_free_list();
-        
+
         Ok(slab)
     }
-    
+
     /// Initializes the free list for this slab
     fn initialize_free_list(&self) {
         let mut current_offset = self.color_offset;
         let mut prev_object: *mut FreeObject = std::ptr::null_mut();
-        
+
         for _ in 0..self.object_count {
             if current_offset + self.object_size <= self.size {
                 let object_ptr = unsafe {
                     self.memory.as_ptr().add(current_offset) as *mut FreeObject
                 };
-                
+
                 if !prev_object.is_null() {
                     unsafe {
                         (*prev_object).next = object_ptr;
@@ -455,17 +455,17 @@ impl Slab {
                     // First object becomes the head of free list
                     self.free_list.store(object_ptr, Ordering::Relaxed);
                 }
-                
+
                 unsafe {
                     (*object_ptr).next = std::ptr::null_mut();
                 }
-                
+
                 prev_object = object_ptr;
                 current_offset += self.object_size;
             }
         }
     }
-    
+
     /// Allocates an object from this slab
     pub fn allocate_object(&self) -> Option<NonNull<u8>> {
         loop {
@@ -473,9 +473,9 @@ impl Slab {
             if free_head.is_null() {
                 return None; // No free objects
             }
-            
+
             let next = unsafe { (*free_head).next };
-            
+
             if self.free_list.compare_exchange_weak(
                 free_head,
                 next,
@@ -487,18 +487,18 @@ impl Slab {
             }
         }
     }
-    
+
     /// Deallocates an object back to this slab
     pub fn deallocate_object(&self, ptr: NonNull<u8>) {
         let free_object = ptr.as_ptr() as *mut FreeObject;
-        
+
         loop {
             let free_head = self.free_list.load(Ordering::Acquire);
-            
+
             unsafe {
                 (*free_object).next = free_head;
             }
-            
+
             if self.free_list.compare_exchange_weak(
                 free_head,
                 free_object,
@@ -510,12 +510,12 @@ impl Slab {
             }
         }
     }
-    
+
     /// Checks if the slab is empty (all objects free)
     pub fn is_empty(&self) -> bool {
         self.free_count.load(Ordering::Relaxed) == self.object_count
     }
-    
+
     /// Checks if the slab is full (no free objects)
     pub fn is_full(&self) -> bool {
         self.free_count.load(Ordering::Relaxed) == 0
@@ -540,7 +540,7 @@ impl Magazine {
                 reason: "Magazine capacity cannot be zero".to_string(),
             });
         }
-        
+
         Ok(Self {
             magazine_id: Uuid::new_v4(),
             size_class_id,
@@ -552,46 +552,46 @@ impl Magazine {
             last_access: AtomicU64::new(0),
         })
     }
-    
+
     /// Adds an object to the magazine
     pub fn add_object(&mut self, object: NonNull<u8>) -> Result<(), SlabError> {
         if self.is_full() {
             return Err(SlabError::MagazineCacheCorrupted);
         }
-        
+
         self.objects.push(object);
         self.count.store(self.objects.len(), Ordering::Relaxed);
         self.update_access_time();
         Ok(())
     }
-    
+
     /// Removes an object from the magazine
     pub fn remove_object(&mut self) -> Option<NonNull<u8>> {
         if self.is_empty() {
             return None;
         }
-        
+
         let object = self.objects.pop();
         self.count.store(self.objects.len(), Ordering::Relaxed);
         self.update_access_time();
         object
     }
-    
+
     /// Checks if the magazine is full
     pub fn is_full(&self) -> bool {
         self.count.load(Ordering::Relaxed) >= self.capacity
     }
-    
+
     /// Checks if the magazine is empty
     pub fn is_empty(&self) -> bool {
         self.count.load(Ordering::Relaxed) == 0
     }
-    
+
     /// Gets the current load of the magazine
     pub fn load(&self) -> usize {
         self.count.load(Ordering::Relaxed)
     }
-    
+
     /// Updates the last access time
     fn update_access_time(&self) {
         let now = SystemTime::now()
@@ -614,28 +614,28 @@ impl ThreadCache {
             created_at: SystemTime::now(),
         }
     }
-    
+
     /// Gets a loaded magazine for the size class
     pub fn get_loaded_magazine(&self, size_class_id: usize) -> Option<&Arc<Mutex<Magazine>>> {
         self.loaded_magazines.get(size_class_id)?.as_ref()
     }
-    
+
     /// Sets a loaded magazine for the size class
     pub fn set_loaded_magazine(&mut self, size_class_id: usize, magazine: Arc<Mutex<Magazine>>) {
         if let Some(slot) = self.loaded_magazines.get_mut(size_class_id) {
             *slot = Some(magazine);
         }
     }
-    
+
     /// Exchanges loaded and previous magazines
     pub fn exchange_magazines(&mut self, size_class_id: usize) {
         if size_class_id < self.loaded_magazines.len() {
             let loaded = self.loaded_magazines[size_class_id].take();
             let previous = self.previous_magazines[size_class_id].take();
-            
+
             self.loaded_magazines[size_class_id] = previous;
             self.previous_magazines[size_class_id] = loaded;
-            
+
             self.stats.magazine_exchanges += 1;
             self.stats.last_updated = SystemTime::now();
         }
@@ -654,7 +654,7 @@ impl MagazineDepot {
             stats: Arc::new(AsyncRwLock::new(DepotStats::default())),
         }
     }
-    
+
     /// Gets a full magazine from the depot
     pub fn get_full_magazine(&self, size_class_id: usize) -> Option<Arc<Mutex<Magazine>>> {
         let mut full_magazines = self.full_magazines.lock();
@@ -664,20 +664,20 @@ impl MagazineDepot {
             None
         }
     }
-    
+
     /// Returns a full magazine to the depot
     pub fn return_full_magazine(&self, magazine: Arc<Mutex<Magazine>>) {
         let size_class_id = magazine.lock().size_class_id;
         let mut full_magazines = self.full_magazines.lock();
-        
+
         let magazines = full_magazines.entry(size_class_id).or_insert_with(Vec::new);
-        
+
         if magazines.len() < self.max_magazines_per_class {
             magazines.push(magazine);
         }
         // If at capacity, magazine will be dropped
     }
-    
+
     /// Gets an empty magazine from the depot
     pub fn get_empty_magazine(&self, size_class_id: usize) -> Option<Arc<Mutex<Magazine>>> {
         let mut empty_magazines = self.empty_magazines.lock();
@@ -687,14 +687,14 @@ impl MagazineDepot {
             None
         }
     }
-    
+
     /// Returns an empty magazine to the depot
     pub fn return_empty_magazine(&self, magazine: Arc<Mutex<Magazine>>) {
         let size_class_id = magazine.lock().size_class_id;
         let mut empty_magazines = self.empty_magazines.lock();
-        
+
         let magazines = empty_magazines.entry(size_class_id).or_insert_with(Vec::new);
-        
+
         if magazines.len() < self.max_magazines_per_class {
             magazines.push(magazine);
         }
@@ -716,28 +716,28 @@ impl SlabAllocator {
             created_at: SystemTime::now(),
             allocator_id: Uuid::new_v4(),
         };
-        
+
         allocator.initialize_size_classes()?;
         allocator.is_initialized.store(true, Ordering::Relaxed);
-        
+
         Ok(allocator)
     }
-    
+
     /// Initializes size classes for the allocator
     fn initialize_size_classes(&mut self) -> Result<(), SlabError> {
         let mut size_classes = Vec::new();
         let mut current_size = self.config.min_object_size;
         let mut class_id = 0;
-        
+
         while current_size <= self.config.max_slab_size && class_id < self.config.num_size_classes {
             let size_class = Arc::new(SizeClass::new(
                 class_id,
                 current_size,
                 self.config.slab_size,
             ));
-            
+
             size_classes.push(size_class);
-            
+
             // Map all sizes up to next class to this class
             let next_size = (current_size as f64 * self.config.size_class_factor) as usize;
             for size in current_size..=next_size.min(self.config.max_slab_size) {
@@ -745,15 +745,15 @@ impl SlabAllocator {
                     self.size_to_class[size] = class_id;
                 }
             }
-            
+
             current_size = next_size + 1;
             class_id += 1;
         }
-        
+
         self.size_classes = size_classes;
         Ok(())
     }
-    
+
     /// Allocates memory of the given size
     pub async fn allocate(
         &self,
@@ -766,10 +766,10 @@ impl SlabAllocator {
                 reason: "Slab allocator not initialized".to_string(),
             });
         }
-        
+
         validate_allocation_size(size)?;
         validate_alignment(alignment)?;
-        
+
         // Find appropriate size class
         let effective_size = size.max(alignment);
         if effective_size > self.config.max_slab_size {
@@ -778,20 +778,20 @@ impl SlabAllocator {
                 reason: "Size exceeds slab allocator limit".to_string(),
             });
         }
-        
+
         let size_class_id = self.size_to_class[effective_size];
         let size_class = &self.size_classes[size_class_id];
-        
+
         // Try thread cache first
         if let Some(ptr) = self.try_allocate_from_cache(size_class_id).await {
             self.update_allocation_stats(size_class, size).await;
             return Ok(ptr);
         }
-        
+
         // Allocate from slab
         self.allocate_from_slab(size_class).await
     }
-    
+
     /// Deallocates memory at the given pointer
     pub async fn deallocate(
         &self,
@@ -804,22 +804,22 @@ impl SlabAllocator {
                 reason: "Slab allocator not initialized".to_string(),
             });
         }
-        
+
         validate_allocation_size(size)?;
-        
+
         let size_class_id = self.size_to_class[size.min(self.config.max_slab_size)];
         let size_class = &self.size_classes[size_class_id];
-        
+
         // Try to cache in thread cache
         if self.try_deallocate_to_cache(ptr, size_class_id).await {
             self.update_deallocation_stats(size_class, size).await;
             return Ok(());
         }
-        
+
         // Return to slab
         self.deallocate_to_slab(ptr, size_class).await
     }
-    
+
     /// Tries to allocate from thread cache
     async fn try_allocate_from_cache(
         &self,
@@ -827,10 +827,10 @@ impl SlabAllocator {
     ) -> Option<NonNull<u8>> {
         let thread_id = std::thread::current().id();
         let thread_caches = self.thread_caches.read();
-        
+
         if let Some(thread_cache) = thread_caches.get(&thread_id) {
             let mut cache = thread_cache.lock();
-            
+
             if let Some(magazine) = cache.get_loaded_magazine(size_class_id) {
                 let mut mag = magazine.lock();
                 if let Some(ptr) = mag.remove_object() {
@@ -840,13 +840,13 @@ impl SlabAllocator {
                     return Some(ptr);
                 }
             }
-            
+
             cache.stats.cache_misses += 1;
         }
-        
+
         None
     }
-    
+
     /// Tries to deallocate to thread cache
     async fn try_deallocate_to_cache(
         &self,
@@ -855,10 +855,10 @@ impl SlabAllocator {
     ) -> bool {
         let thread_id = std::thread::current().id();
         let thread_caches = self.thread_caches.read();
-        
+
         if let Some(thread_cache) = thread_caches.get(&thread_id) {
             let mut cache = thread_cache.lock();
-            
+
             if let Some(magazine) = cache.get_loaded_magazine(size_class_id) {
                 let mut mag = magazine.lock();
                 if !mag.is_full() {
@@ -870,10 +870,10 @@ impl SlabAllocator {
                 }
             }
         }
-        
+
         false
     }
-    
+
     /// Allocates directly from slab
     async fn allocate_from_slab(
         &self,
@@ -883,7 +883,7 @@ impl SlabAllocator {
         // For now, we'll use a simple implementation
         todo!("Implement slab allocation logic")
     }
-    
+
     /// Deallocates directly to slab
     async fn deallocate_to_slab(
         &self,
@@ -893,65 +893,65 @@ impl SlabAllocator {
         // This would contain the core slab deallocation logic
         todo!("Implement slab deallocation logic")
     }
-    
+
     /// Updates allocation statistics
     async fn update_allocation_stats(&self, size_class: &SizeClass, size: usize) {
         size_class.total_allocations.fetch_add(1, Ordering::Relaxed);
-        
+
         let mut stats = self.stats.write().await;
         stats.total_allocations += 1;
         stats.total_allocated += size as u64;
         stats.bytes_in_use += size as u64;
         stats.last_updated = SystemTime::now();
-        
+
         if stats.bytes_in_use > stats.peak_usage {
             stats.peak_usage = stats.bytes_in_use;
         }
-        
+
         if stats.total_allocations > 0 {
             stats.avg_allocation_size = stats.total_allocated as f64 / stats.total_allocations as f64;
         }
     }
-    
+
     /// Updates deallocation statistics
     async fn update_deallocation_stats(&self, size_class: &SizeClass, size: usize) {
         size_class.total_deallocations.fetch_add(1, Ordering::Relaxed);
-        
+
         let mut stats = self.stats.write().await;
         stats.total_deallocations += 1;
         stats.total_deallocated += size as u64;
         stats.bytes_in_use = stats.bytes_in_use.saturating_sub(size as u64);
         stats.last_updated = SystemTime::now();
     }
-    
+
     /// Gets comprehensive allocator statistics
     pub async fn get_statistics(&self) -> SlabAllocatorStats {
         let _stats = self.stats.read().await;
         let mut result = stats.clone();
-        
+
         result.uptime = SystemTime::now()
             .duration_since(self.created_at)
             .unwrap_or_default();
-        
+
         // Calculate cache hit ratio
         result.total_cache_hits = 0;
         result.total_cache_misses = 0;
-        
+
         let thread_caches = self.thread_caches.read();
         for cache in thread_caches.values() {
             let cache_stats = &cache.lock().stats;
             result.total_cache_hits += cache_stats.cache_hits;
             result.total_cache_misses += cache_stats.cache_misses;
         }
-        
+
         if result.total_cache_hits + result.total_cache_misses > 0 {
-            result.cache_hit_ratio = result.total_cache_hits as f64 
+            result.cache_hit_ratio = result.total_cache_hits as f64
                 / (result.total_cache_hits + result.total_cache_misses) as f64;
         }
-        
+
         result
     }
-    
+
     /// Gets statistics for a specific size class
     pub async fn get_size_class_statistics(&self, size_class_id: usize) -> Option<SizeClassStats> {
         if let Some(size_class) = self.size_classes.get(size_class_id) {
@@ -961,7 +961,7 @@ impl SlabAllocator {
             None
         }
     }
-    
+
     /// Checks allocator health
     pub async fn health_check(&self) -> Result<(), MemoryError> {
         if !self.is_initialized.load(Ordering::Relaxed) {
@@ -970,7 +970,7 @@ impl SlabAllocator {
                 reason: "Slab allocator not initialized".to_string(),
             });
         }
-        
+
         // Check for fragmentation issues
         let _stats = self.get_statistics().await;
         if stats.fragmentation_ratio > 0.5 {
@@ -978,26 +978,26 @@ impl SlabAllocator {
                 reason: format!("High fragmentation ratio: {:.2}", stats.fragmentation_ratio),
             });
         }
-        
+
         Ok(())
     }
-    
+
     /// Forces garbage collection of unused magazines
     pub async fn garbage_collect(&self) {
         // Implementation would clean up unused magazines and slabs
         // This is a placeholder for the actual GC logic
     }
-    
+
     /// Shuts down the allocator gracefully
     pub async fn shutdown(&self) -> Result<(), MemoryError> {
         self.is_initialized.store(false, Ordering::Relaxed);
-        
+
         // Clean up thread caches
         let mut thread_caches = self.thread_caches.write();
         for (_, cache) in thread_caches.drain() {
             cache.lock().is_active.store(false, Ordering::Relaxed);
         }
-        
+
         Ok(())
     }
 }
@@ -1013,29 +1013,29 @@ impl SlabAllocator {
         if growth_factor <= 1.0 || min_size >= max_size {
             return 1;
         }
-        
+
         let mut count = 0;
         let mut current_size = min_size as f64;
-        
+
         while (current_size as usize) <= max_size {
             count += 1;
             current_size *= growth_factor;
         }
-        
+
         count
     }
-    
+
     /// Rounds size up to the next size class
     pub fn round_up_to_size_class(size: usize, growth_factor: f64, min_size: usize) -> usize {
         if size <= min_size {
             return min_size;
         }
-        
+
         let mut class_size = min_size;
         while class_size < size {
             class_size = (class_size as f64 * growth_factor) as usize;
         }
-        
+
         class_size
     }
 }
@@ -1050,7 +1050,7 @@ mod tests {
         let config = SlabConfig::default();
         let allocator = SlabAllocator::new(config).await;
         assert!(allocator.is_ok());
-        
+
         let allocator = allocator.unwrap();
         assert!(allocator.is_initialized.load(Ordering::Relaxed));
     }
@@ -1067,7 +1067,7 @@ mod tests {
     async fn test_size_class_utilization() {
         let size_class = SizeClass::new(0, 64, 4096);
         assert_eq!(size_class.utilization(), 0.0); // Empty initially
-        
+
         size_class.slab_count.store(1, Ordering::Relaxed);
         size_class.free_objects.store(32, Ordering::Relaxed); // Half used
         assert_eq!(size_class.utilization(), 0.5);
@@ -1077,7 +1077,7 @@ mod tests {
     fn test_magazine_creation() {
         let magazine = Magazine::new(0, 64);
         assert!(magazine.is_ok());
-        
+
         let magazine = magazine.unwrap();
         assert_eq!(magazine.size_class_id, 0);
         assert_eq!(magazine.capacity, 64);
@@ -1104,7 +1104,7 @@ mod tests {
     fn test_optimal_size_classes_calculation() {
         let classes = SlabAllocator::calculate_optimal_size_classes(16, 1024, 1.5);
         assert!(classes > 0);
-        
+
         // Test edge cases
         assert_eq!(SlabAllocator::calculate_optimal_size_classes(100, 50, 1.5), 1);
         assert_eq!(SlabAllocator::calculate_optimal_size_classes(100, 100, 1.0), 1);
@@ -1115,7 +1115,7 @@ mod tests {
         let rounded = SlabAllocator::round_up_to_size_class(100, 1.5, 16);
         assert!(rounded >= 100);
         assert!(rounded >= 16);
-        
+
         let exact = SlabAllocator::round_up_to_size_class(16, 1.5, 16);
         assert_eq!(exact, 16);
     }

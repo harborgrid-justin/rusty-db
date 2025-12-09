@@ -1,47 +1,47 @@
-//! # API Layer
-//!
-//! Comprehensive API layer exposing all database functionality via multiple interfaces.
-//!
-//! ## Modules
-//!
-//! - **rest**: REST API endpoints for database operations
-//! - **graphql_api**: GraphQL API layer with real-time subscriptions
-//! - **monitoring**: Monitoring, metrics, and health check APIs
-//! - **gateway**: API gateway for request routing and management
-//! - **enterprise_integration**: Master integration layer coordinating all enterprise modules
-//!
-//! ## Features
-//!
-//! - Core database operations (queries, transactions, CRUD)
-//! - Administration endpoints (config, backup, maintenance)
-//! - Monitoring and metrics (Prometheus, health checks)
-//! - Pool and connection management
-//! - Cluster management
-//! - OpenAPI/Swagger documentation
-//! - Request validation and response pagination
-//! - Rate limiting and CORS support
-//! - API Gateway with authentication, authorization, and security
-//! - Enterprise service integration and orchestration
-//!
-//! ## Usage
-//!
-//! ```rust,no_run
-//! use rusty_db::api::rest_api::{RestApiServer, ApiConfig};
-//! use rusty_db::api::enterprise_integration::{EnterpriseIntegrator, IntegratorConfig};
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!     // Start enterprise integration layer
-//!     let integrator_config = IntegratorConfig::default();
-//!     let integrator = EnterpriseIntegrator::new(integrator_config).await.unwrap();
-//!     integrator.start().await.unwrap();
-//!
-//!     // Start REST API
-//!     let config = ApiConfig::default();
-//!     let server = RestApiServer::new(config).await.unwrap();
-//!     server.run("0.0.0.0:8080").await.unwrap();
-//! }
-//! ```
+// # API Layer
+//
+// Comprehensive API layer exposing all database functionality via multiple interfaces.
+//
+// ## Modules
+//
+// - **rest**: REST API endpoints for database operations
+// - **graphql_api**: GraphQL API layer with real-time subscriptions
+// - **monitoring**: Monitoring, metrics, and health check APIs
+// - **gateway**: API gateway for request routing and management
+// - **enterprise_integration**: Master integration layer coordinating all enterprise modules
+//
+// ## Features
+//
+// - Core database operations (queries, transactions, CRUD)
+// - Administration endpoints (config, backup, maintenance)
+// - Monitoring and metrics (Prometheus, health checks)
+// - Pool and connection management
+// - Cluster management
+// - OpenAPI/Swagger documentation
+// - Request validation and response pagination
+// - Rate limiting and CORS support
+// - API Gateway with authentication, authorization, and security
+// - Enterprise service integration and orchestration
+//
+// ## Usage
+//
+// ```rust,no_run
+// use rusty_db::api::rest_api::{RestApiServer, ApiConfig};
+// use rusty_db::api::enterprise_integration::{EnterpriseIntegrator, IntegratorConfig};
+//
+// #[tokio::main]
+// async fn main() {
+//     // Start enterprise integration layer
+//     let integrator_config = IntegratorConfig::default();
+//     let integrator = EnterpriseIntegrator::new(integrator_config).await.unwrap();
+//     integrator.start().await.unwrap();
+//
+//     // Start REST API
+//     let config = ApiConfig::default();
+//     let server = RestApiServer::new(config).await.unwrap();
+//     server.run("0.0.0.0:8080").await.unwrap();
+// }
+// ```
 
 pub mod rest_api;
 pub mod graphql_api;

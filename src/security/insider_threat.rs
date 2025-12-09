@@ -1,19 +1,21 @@
-//! # Insider Threat Detection Module
-//!
-//! Comprehensive insider threat protection system with ML-based risk scoring,
-//! behavioral analytics, anomaly detection, and real-time prevention.
-//!
-//! ## Features
-//!
-//! - Query risk scoring (0-100 threat score)
-//! - User behavior profiling and baseline establishment
-//! - Statistical anomaly detection
-//! - Mass data access prevention
-//! - Privilege escalation detection
-//! - Real-time query sanitization
-//! - Immutable forensic logging
-//! - Geographic and temporal anomaly detection
+// # Insider Threat Detection Module
+//
+// Comprehensive insider threat protection system with ML-based risk scoring,
+// behavioral analytics, anomaly detection, and real-time prevention.
+//
+// ## Features
+//
+// - Query risk scoring (0-100 threat score)
+// - User behavior profiling and baseline establishment
+// - Statistical anomaly detection
+// - Mass data access prevention
+// - Privilege escalation detection
+// - Real-time query sanitization
+// - Immutable forensic logging
+// - Geographic and temporal anomaly detection
 
+use std::collections::VecDeque;
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use parking_lot::RwLock;
@@ -1474,5 +1476,3 @@ mod tests {
         assert!(assessment.total_score < 50);
     }
 }
-
-

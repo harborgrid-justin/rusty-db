@@ -1,129 +1,129 @@
-//! # Flashback Technology Module
-//!
-//! Oracle-like time travel and point-in-time recovery capabilities for RustyDB.
-//!
-//! This module provides comprehensive flashback technology including:
-//!
-//! - **Time Travel**: AS OF TIMESTAMP/SCN queries for temporal data access
-//! - **Version Tracking**: VERSIONS BETWEEN queries and row version management
-//! - **Table Restore**: FLASHBACK TABLE to restore tables to previous states
-//! - **Database Recovery**: FLASHBACK DATABASE for point-in-time database recovery
-//! - **Transaction Analysis**: FLASHBACK TRANSACTION for analyzing and reversing transactions
-//!
-//! ## Architecture
-//!
-//! The flashback system is built on top of RustyDB's MVCC infrastructure and provides
-//! multiple levels of temporal query and recovery capabilities:
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────┐
-//! │                    Flashback Technology                      │
-//! ├─────────────────────────────────────────────────────────────┤
-//! │                                                              │
-//! │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-//! │  │ Time Travel  │  │   Versions   │  │ Transaction  │     │
-//! │  │    Engine    │  │   Manager    │  │   Flashback  │     │
-//! │  └──────────────┘  └──────────────┘  └──────────────┘     │
-//! │         │                 │                   │             │
-//! │         └─────────────────┴───────────────────┘             │
-//! │                          │                                  │
-//! │  ┌──────────────┐  ┌──────────────┐                       │
-//! │  │ Table Restore│  │  Database    │                       │
-//! │  │   Manager    │  │  Flashback   │                       │
-//! │  └──────────────┘  └──────────────┘                       │
-//! │                                                              │
-//! └─────────────────────────────────────────────────────────────┘
-//!                            │
-//!                ┌───────────┴───────────┐
-//!                │   MVCC / Storage      │
-//!                └───────────────────────┘
-//! ```
-//!
-//! ## Features
-//!
-//! ### Time Travel Queries
-//!
-//! Query historical data at specific points in time:
-//!
-//! ```sql
-//! SELECT * FROM employees AS OF TIMESTAMP '2024-01-01 12:00:00';
-//! SELECT * FROM accounts AS OF SCN 12345;
-//! SELECT * FROM orders VERSIONS BETWEEN SCN 1000 AND 2000;
-//! ```
-//!
-//! ### Table Flashback
-//!
-//! Restore tables to previous states:
-//!
-//! ```sql
-//! FLASHBACK TABLE employees TO TIMESTAMP '2024-01-01 12:00:00';
-//! FLASHBACK TABLE employees TO SCN 12345;
-//! FLASHBACK TABLE employees TO BEFORE DROP;
-//! ```
-//!
-//! ### Database Recovery
-//!
-//! Recover entire database to a point in time:
-//!
-//! ```sql
-//! FLASHBACK DATABASE TO TIMESTAMP '2024-01-01 12:00:00';
-//! FLASHBACK DATABASE TO RESTORE POINT before_migration;
-//! ALTER DATABASE OPEN RESETLOGS;
-//! ```
-//!
-//! ### Transaction Analysis
-//!
-//! Analyze and reverse transactions:
-//!
-//! ```sql
-//! SELECT * FROM FLASHBACK_TRANSACTION_QUERY WHERE xid = '0x1234';
-//! FLASHBACK TRANSACTION '0x1234' CASCADE;
-//! ```
-//!
-//! ## Usage Example
-//!
-//! ```rust,no_run
-//! use rusty_db::flashback::{TimeTravelEngine, TimeTravelConfig};
-//! use std::sync::Arc;
-//!
-//! let config = TimeTravelConfig::default();
-//! let engine = Arc::new(TimeTravelEngine::new(config));
-//!
-//! // Query historical data
-//! let historical_rows = engine.query_as_of_scn(
-//!     table_id,
-//!     target_scn,
-//!     None
-//! )?;
-//! # Ok::<(), rusty_db::error::DbError>(())
-//! ```
-//!
-//! ## Integration Points
-//!
-//! The flashback module integrates with:
-//!
-//! - **Transaction Module**: MVCC snapshot isolation and version visibility
-//! - **Storage Module**: Version chain storage and retrieval
-//! - **Backup Module**: Archive log coordination and point-in-time recovery
-//! - **Catalog Module**: Schema versioning and DDL flashback
-//! - **Index Module**: Temporal index structures for fast historical queries
-//!
-//! ## Performance Considerations
-//!
-//! - **Version Storage**: Efficient delta-based storage minimizes overhead
-//! - **Temporal Indexes**: B-tree indexes on SCN for fast range queries
-//! - **Query Cache**: LRU cache for frequently accessed historical states
-//! - **Garbage Collection**: Automatic cleanup of old versions based on retention policies
-//! - **Flashback Logs**: Optimized flashback logs for database-level recovery
-//!
-//! ## Target LOC
-//!
-//! - time_travel.rs: 800+ lines
-//! - versions.rs: 700+ lines
-//! - table_restore.rs: 600+ lines
-//! - database.rs: 500+ lines
-//! - transaction.rs: 400+ lines
-//! - **Total: 3000+ lines**
+// # Flashback Technology Module
+//
+// Oracle-like time travel and point-in-time recovery capabilities for RustyDB.
+//
+// This module provides comprehensive flashback technology including:
+//
+// - **Time Travel**: AS OF TIMESTAMP/SCN queries for temporal data access
+// - **Version Tracking**: VERSIONS BETWEEN queries and row version management
+// - **Table Restore**: FLASHBACK TABLE to restore tables to previous states
+// - **Database Recovery**: FLASHBACK DATABASE for point-in-time database recovery
+// - **Transaction Analysis**: FLASHBACK TRANSACTION for analyzing and reversing transactions
+//
+// ## Architecture
+//
+// The flashback system is built on top of RustyDB's MVCC infrastructure and provides
+// multiple levels of temporal query and recovery capabilities:
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    Flashback Technology                      │
+// ├─────────────────────────────────────────────────────────────┤
+// │                                                              │
+// │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+// │  │ Time Travel  │  │   Versions   │  │ Transaction  │     │
+// │  │    Engine    │  │   Manager    │  │   Flashback  │     │
+// │  └──────────────┘  └──────────────┘  └──────────────┘     │
+// │         │                 │                   │             │
+// │         └─────────────────┴───────────────────┘             │
+// │                          │                                  │
+// │  ┌──────────────┐  ┌──────────────┐                       │
+// │  │ Table Restore│  │  Database    │                       │
+// │  │   Manager    │  │  Flashback   │                       │
+// │  └──────────────┘  └──────────────┘                       │
+// │                                                              │
+// └─────────────────────────────────────────────────────────────┘
+//                            │
+//                ┌───────────┴───────────┐
+//                │   MVCC / Storage      │
+//                └───────────────────────┘
+// ```
+//
+// ## Features
+//
+// ### Time Travel Queries
+//
+// Query historical data at specific points in time:
+//
+// ```sql
+// SELECT * FROM employees AS OF TIMESTAMP '2024-01-01 12:00:00';
+// SELECT * FROM accounts AS OF SCN 12345;
+// SELECT * FROM orders VERSIONS BETWEEN SCN 1000 AND 2000;
+// ```
+//
+// ### Table Flashback
+//
+// Restore tables to previous states:
+//
+// ```sql
+// FLASHBACK TABLE employees TO TIMESTAMP '2024-01-01 12:00:00';
+// FLASHBACK TABLE employees TO SCN 12345;
+// FLASHBACK TABLE employees TO BEFORE DROP;
+// ```
+//
+// ### Database Recovery
+//
+// Recover entire database to a point in time:
+//
+// ```sql
+// FLASHBACK DATABASE TO TIMESTAMP '2024-01-01 12:00:00';
+// FLASHBACK DATABASE TO RESTORE POINT before_migration;
+// ALTER DATABASE OPEN RESETLOGS;
+// ```
+//
+// ### Transaction Analysis
+//
+// Analyze and reverse transactions:
+//
+// ```sql
+// SELECT * FROM FLASHBACK_TRANSACTION_QUERY WHERE xid = '0x1234';
+// FLASHBACK TRANSACTION '0x1234' CASCADE;
+// ```
+//
+// ## Usage Example
+//
+// ```rust,no_run
+// use rusty_db::flashback::{TimeTravelEngine, TimeTravelConfig};
+// use std::sync::Arc;
+//
+// let config = TimeTravelConfig::default();
+// let engine = Arc::new(TimeTravelEngine::new(config));
+//
+// // Query historical data
+// let historical_rows = engine.query_as_of_scn(
+//     table_id,
+//     target_scn,
+//     None
+// )?;
+// # Ok::<(), rusty_db::error::DbError>(())
+// ```
+//
+// ## Integration Points
+//
+// The flashback module integrates with:
+//
+// - **Transaction Module**: MVCC snapshot isolation and version visibility
+// - **Storage Module**: Version chain storage and retrieval
+// - **Backup Module**: Archive log coordination and point-in-time recovery
+// - **Catalog Module**: Schema versioning and DDL flashback
+// - **Index Module**: Temporal index structures for fast historical queries
+//
+// ## Performance Considerations
+//
+// - **Version Storage**: Efficient delta-based storage minimizes overhead
+// - **Temporal Indexes**: B-tree indexes on SCN for fast range queries
+// - **Query Cache**: LRU cache for frequently accessed historical states
+// - **Garbage Collection**: Automatic cleanup of old versions based on retention policies
+// - **Flashback Logs**: Optimized flashback logs for database-level recovery
+//
+// ## Target LOC
+//
+// - time_travel.rs: 800+ lines
+// - versions.rs: 700+ lines
+// - table_restore.rs: 600+ lines
+// - database.rs: 500+ lines
+// - transaction.rs: 400+ lines
+// - **Total: 3000+ lines**
 
 // ============================================================================
 // Module Declarations
@@ -376,5 +376,3 @@ mod tests {
         assert!(coordinator.time_travel().get_current_scn() >= 0);
     }
 }
-
-

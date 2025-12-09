@@ -1,13 +1,15 @@
-//! # Graph Analytics Engine
-//!
-//! Advanced graph analytics capabilities:
-//! - Graph-relational integration
-//! - MATCH clause execution
-//! - Path enumeration
-//! - Temporal graph analysis
-//! - Graph machine learning features
-//! - Recommendation engine basics
+// # Graph Analytics Engine
+//
+// Advanced graph analytics capabilities:
+// - Graph-relational integration
+// - MATCH clause execution
+// - Path enumeration
+// - Temporal graph analysis
+// - Graph machine learning features
+// - Recommendation engine basics
 
+use std::collections::BTreeMap;
+use std::collections::HashSet;
 use std::collections::{HashMap};
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};
@@ -812,5 +814,3 @@ mod tests {
         assert!(temporal.get_closest_snapshot(150).is_some());
     }
 }
-
-

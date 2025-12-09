@@ -1,49 +1,49 @@
-//! # In-Database Machine Learning Engine
-//!
-//! Production-grade machine learning engine integrated directly with RustyDB's query engine.
-//! Provides zero-copy data access, GPU acceleration, federated learning, and incremental updates.
-//!
-//! ## Architecture
-//!
-//! The ML Engine follows a layered architecture:
-//!
-//! 1. **Algorithm Layer** - Core ML algorithms (regression, classification, clustering, etc.)
-//! 2. **Feature Engineering** - Preprocessing, normalization, encoding
-//! 3. **Training Infrastructure** - Distributed training, mini-batch, early stopping
-//! 4. **Model Store** - Versioning, serialization, A/B testing
-//! 5. **Scoring Engine** - Real-time and batch predictions
-//! 6. **AutoML** - Automated model selection and tuning
-//! 7. **Time Series** - Forecasting and anomaly detection
-//!
-//! ## Key Innovations
-//!
-//! - **Zero-Copy Integration**: Direct access to RustyDB's buffer pool without serialization
-//! - **GPU Acceleration**: CUDA/OpenCL integration for tensor operations
-//! - **Federated Learning**: Privacy-preserving distributed training
-//! - **Incremental Updates**: Online learning without full retraining
-//! - **SQL Integration**: ML operations via standard SQL syntax
-//!
-//! ## Example Usage
-//!
-//! ```sql
-//! -- Train a model
-//! CREATE MODEL churn_predictor
-//! USING random_forest
-//! FROM customer_data
-//! TARGET churn_flag
-//! WITH (max_depth=10, n_estimators=100);
-//!
-//! -- Make predictions
-//! SELECT customer_id, PREDICT(churn_predictor, *) as churn_prob
-//! FROM new_customers;
-//!
-//! -- AutoML
-//! CREATE MODEL best_model
-//! USING automl
-//! FROM training_data
-//! TARGET outcome
-//! WITH (time_budget=3600, metric='auc');
-//! ```
+// # In-Database Machine Learning Engine
+//
+// Production-grade machine learning engine integrated directly with RustyDB's query engine.
+// Provides zero-copy data access, GPU acceleration, federated learning, and incremental updates.
+//
+// ## Architecture
+//
+// The ML Engine follows a layered architecture:
+//
+// 1. **Algorithm Layer** - Core ML algorithms (regression, classification, clustering, etc.)
+// 2. **Feature Engineering** - Preprocessing, normalization, encoding
+// 3. **Training Infrastructure** - Distributed training, mini-batch, early stopping
+// 4. **Model Store** - Versioning, serialization, A/B testing
+// 5. **Scoring Engine** - Real-time and batch predictions
+// 6. **AutoML** - Automated model selection and tuning
+// 7. **Time Series** - Forecasting and anomaly detection
+//
+// ## Key Innovations
+//
+// - **Zero-Copy Integration**: Direct access to RustyDB's buffer pool without serialization
+// - **GPU Acceleration**: CUDA/OpenCL integration for tensor operations
+// - **Federated Learning**: Privacy-preserving distributed training
+// - **Incremental Updates**: Online learning without full retraining
+// - **SQL Integration**: ML operations via standard SQL syntax
+//
+// ## Example Usage
+//
+// ```sql
+// -- Train a model
+// CREATE MODEL churn_predictor
+// USING random_forest
+// FROM customer_data
+// TARGET churn_flag
+// WITH (max_depth=10, n_estimators=100);
+//
+// -- Make predictions
+// SELECT customer_id, PREDICT(churn_predictor, *) as churn_prob
+// FROM new_customers;
+//
+// -- AutoML
+// CREATE MODEL best_model
+// USING automl
+// FROM training_data
+// TARGET outcome
+// WITH (time_budget=3600, metric='auc');
+// ```
 
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
@@ -671,5 +671,3 @@ mod tests {
         assert_eq!(models.len(), 0);
     }
 }
-
-

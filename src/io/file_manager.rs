@@ -1,7 +1,7 @@
-//! # File Manager
-//!
-//! High-performance file manager with batched operations, Direct I/O,
-//! and buffer pooling.
+// # File Manager
+//
+// High-performance file manager with batched operations, Direct I/O,
+// and buffer pooling.
 
 use crate::error::Result;
 use crate::io::{
@@ -765,5 +765,3 @@ mod tests {
         assert!(sync_opts.sync);
     }
 }
-
-

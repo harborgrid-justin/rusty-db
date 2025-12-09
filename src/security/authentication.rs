@@ -1,16 +1,16 @@
-//! # Authentication Framework Module
-//!
-//! Provides comprehensive authentication mechanisms including password policies,
-//! multi-factor authentication, LDAP/AD integration, and OAuth2/OIDC support.
-//!
-//! ## Features
-//!
-//! - Password policies and Argon2 hashing
-//! - Multi-factor authentication (TOTP, SMS, Email)
-//! - LDAP/Active Directory integration
-//! - OAuth2/OIDC authentication
-//! - Session management
-//! - Account lockout and brute-force protection
+// # Authentication Framework Module
+//
+// Provides comprehensive authentication mechanisms including password policies,
+// multi-factor authentication, LDAP/AD integration, and OAuth2/OIDC support.
+//
+// ## Features
+//
+// - Password policies and Argon2 hashing
+// - Multi-factor authentication (TOTP, SMS, Email)
+// - LDAP/Active Directory integration
+// - OAuth2/OIDC authentication
+// - Session management
+// - Account lockout and brute-force protection
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -946,5 +946,3 @@ mod tests {
         assert!(matches!(result, LoginResult::Success { .. }));
     }
 }
-
-

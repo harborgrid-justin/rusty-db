@@ -1,43 +1,45 @@
-//! # Secure Garbage Collection & Memory Sanitization
-//!
-//! Provides comprehensive memory sanitization and secure deallocation mechanisms
-//! to ensure ZERO sensitive data remnants in memory after deallocation.
-//!
-//! ## Features
-//!
-//! - **SecureDrop<T>**: Automatic memory zeroing on drop
-//! - **SensitiveData<T>**: Auto-sanitizing wrapper for sensitive data
-//! - **SecurePool**: Sanitizing memory pool with guard pages
-//! - **CryptoErase**: Cryptographic erasure for provable security
-//! - **MemorySanitizer**: Multi-pass overwrite engine
-//! - **ReferenceTracker**: Dangling pointer prevention
-//! - **DelayedSanitizer**: Deferred secure cleanup
-//! - **HeapGuard**: Heap spray attack prevention
-//!
-//! ## Security Guarantees
-//!
-//! 1. **Zero Remnants**: No sensitive data in memory after deallocation
-//! 2. **Multi-Pass Overwrite**: 3+ passes prevent forensic recovery
-//! 3. **Cryptographic Erasure**: Protection against statistical analysis
-//! 4. **Panic Safety**: Sanitization occurs even during unwinding
-//! 5. **Compiler Barrier**: Prevents optimization-induced leaks
-//! 6. **SIMD Acceleration**: Fast sanitization (1-5 GB/s)
-//! 7. **Reference Safety**: Dangling pointers detected/prevented
-//! 8. **Heap Spray Resistance**: Randomized allocation patterns
-//!
-//! ## Example
-//!
-//! ```rust,no_run
-//! use rusty_db::security::secure_gc::{SensitiveData, SecureDrop, MemorySanitizer};
-//!
-//! // Automatically sanitized on drop
-//! let password = SensitiveData::new("secret_password".to_string());
-//!
-//! // Manually sanitize a buffer
-//! let mut key_material = vec![1, 2, 3, 4];
-//! MemorySanitizer::sanitize_slice(&mut key_material);
-//! ```
+// # Secure Garbage Collection & Memory Sanitization
+//
+// Provides comprehensive memory sanitization and secure deallocation mechanisms
+// to ensure ZERO sensitive data remnants in memory after deallocation.
+//
+// ## Features
+//
+// - **SecureDrop<T>**: Automatic memory zeroing on drop
+// - **SensitiveData<T>**: Auto-sanitizing wrapper for sensitive data
+// - **SecurePool**: Sanitizing memory pool with guard pages
+// - **CryptoErase**: Cryptographic erasure for provable security
+// - **MemorySanitizer**: Multi-pass overwrite engine
+// - **ReferenceTracker**: Dangling pointer prevention
+// - **DelayedSanitizer**: Deferred secure cleanup
+// - **HeapGuard**: Heap spray attack prevention
+//
+// ## Security Guarantees
+//
+// 1. **Zero Remnants**: No sensitive data in memory after deallocation
+// 2. **Multi-Pass Overwrite**: 3+ passes prevent forensic recovery
+// 3. **Cryptographic Erasure**: Protection against statistical analysis
+// 4. **Panic Safety**: Sanitization occurs even during unwinding
+// 5. **Compiler Barrier**: Prevents optimization-induced leaks
+// 6. **SIMD Acceleration**: Fast sanitization (1-5 GB/s)
+// 7. **Reference Safety**: Dangling pointers detected/prevented
+// 8. **Heap Spray Resistance**: Randomized allocation patterns
+//
+// ## Example
+//
+// ```rust,no_run
+// use rusty_db::security::secure_gc::{SensitiveData, SecureDrop, MemorySanitizer};
+//
+// // Automatically sanitized on drop
+// let password = SensitiveData::new("secret_password".to_string());
+//
+// // Manually sanitize a buffer
+// let mut key_material = vec![1, 2, 3, 4];
+// MemorySanitizer::sanitize_slice(&mut key_material);
+// ```
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
 use std::ops::{Deref, DerefMut};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Weak};
@@ -977,5 +979,3 @@ mod tests {
         assert!(data.iter().all(|&b| b == 0));
     }
 }
-
-

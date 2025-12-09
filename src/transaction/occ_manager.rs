@@ -1,24 +1,24 @@
-//! Optimistic Concurrency Control (OCC) implementation.
-//!
-//! This module provides optimistic concurrency control as an alternative
-//! to traditional locking. Transactions proceed without locks and validate
-//! at commit time.
-//!
-//! # OCC Phases
-//!
-//! 1. **Read Phase**: Execute transaction, tracking read/write sets.
-//! 2. **Validation Phase**: Check for conflicts with other transactions.
-//! 3. **Write Phase**: Apply changes if validation succeeds.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let occ = OptimisticConcurrencyControl::new();
-//! occ.read(txn_id, "key1".to_string())?;
-//! if occ.validate(txn_id) {
-//!     occ.write(txn_id, "key1".to_string())?;
-//! }
-//! ```
+// Optimistic Concurrency Control (OCC) implementation.
+//
+// This module provides optimistic concurrency control as an alternative
+// to traditional locking. Transactions proceed without locks and validate
+// at commit time.
+//
+// # OCC Phases
+//
+// 1. **Read Phase**: Execute transaction, tracking read/write sets.
+// 2. **Validation Phase**: Check for conflicts with other transactions.
+// 3. **Write Phase**: Apply changes if validation succeeds.
+//
+// # Example
+//
+// ```rust,ignore
+// let occ = OptimisticConcurrencyControl::new();
+// occ.read(txn_id, "key1".to_string())?;
+// if occ.validate(txn_id) {
+//     occ.write(txn_id, "key1".to_string())?;
+// }
+// ```
 
 use std::collections::HashMap;
 use std::sync::Arc;

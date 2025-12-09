@@ -1,40 +1,40 @@
-//! # Common Types and Traits
-//!
-//! This module defines shared types, traits, and interfaces used across all RustyDB modules.
-//! It serves as the foundation for inter-module communication and ensures consistency.
-//!
-//! ## Core Concepts
-//!
-//! - **Component Traits**: Standardized lifecycle and behavior interfaces
-//! - **Shared Types**: Common data structures (identifiers, values, schemas)
-//! - **Integration Contracts**: Well-defined APIs for module interaction
-//!
-//! ## Usage
-//!
-//! ```rust
-//! use rusty_db::common::*;
-//! use rusty_db::Result;
-//!
-//! struct MyComponent {
-//!     // ...
-//! }
-//!
-//! impl Component for MyComponent {
-//!     fn initialize(&mut self) -> Result<()> {
-//!         // Initialization logic
-//!         Ok(())
-//!     }
-//!
-//!     fn shutdown(&mut self) -> Result<()> {
-//!         // Cleanup logic
-//!         Ok(())
-//!     }
-//!
-//!     fn health_check(&self) -> HealthStatus {
-//!         HealthStatus::Healthy
-//!     }
-//! }
-//! ```
+// # Common Types and Traits
+//
+// This module defines shared types, traits, and interfaces used across all RustyDB modules.
+// It serves as the foundation for inter-module communication and ensures consistency.
+//
+// ## Core Concepts
+//
+// - **Component Traits**: Standardized lifecycle and behavior interfaces
+// - **Shared Types**: Common data structures (identifiers, values, schemas)
+// - **Integration Contracts**: Well-defined APIs for module interaction
+//
+// ## Usage
+//
+// ```rust
+// use rusty_db::common::*;
+// use rusty_db::Result;
+//
+// struct MyComponent {
+//     // ...
+// }
+//
+// impl Component for MyComponent {
+//     fn initialize(&mut self) -> Result<()> {
+//         // Initialization logic
+//         Ok(())
+//     }
+//
+//     fn shutdown(&mut self) -> Result<()> {
+//         // Cleanup logic
+//         Ok(())
+//     }
+//
+//     fn health_check(&self) -> HealthStatus {
+//         HealthStatus::Healthy
+//     }
+// }
+// ```
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -899,5 +899,3 @@ mod tests {
         assert!(!snapshot.is_visible(100)); // After snapshot
     }
 }
-
-

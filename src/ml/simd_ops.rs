@@ -1,9 +1,9 @@
-//! # SIMD-Accelerated Operations
-//!
-//! This module provides SIMD (Single Instruction Multiple Data) optimized operations
-//! for machine learning algorithms. Provides 4-8x speedup on modern CPUs.
-//!
-//! Supports: SSE2, AVX2, and falls back to scalar for other architectures.
+// # SIMD-Accelerated Operations
+//
+// This module provides SIMD (Single Instruction Multiple Data) optimized operations
+// for machine learning algorithms. Provides 4-8x speedup on modern CPUs.
+//
+// Supports: SSE2, AVX2, and falls back to scalar for other architectures.
 
 use super::Vector;
 
@@ -535,5 +535,3 @@ mod tests {
         assert!((result - 15.0).abs() < 1e-10);
     }
 }
-
-

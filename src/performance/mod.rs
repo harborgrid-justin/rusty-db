@@ -10,6 +10,8 @@
 /// - Automatic index recommendation system
 /// - Query performance regression detection
 
+use std::time::Duration;
+use std::collections::VecDeque;
 use crate::Result;
 use crate::error::DbError;
 use std::collections::{HashMap};

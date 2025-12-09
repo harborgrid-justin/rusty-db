@@ -1,8 +1,9 @@
-//! # Aggregation Pipeline
-//!
-//! MongoDB-style aggregation pipeline with stages like $match, $project, $group,
-//! $sort, $limit, $skip, $unwind, $lookup, and $facet.
+// # Aggregation Pipeline
+//
+// MongoDB-style aggregation pipeline with stages like $match, $project, $group,
+// $sort, $limit, $skip, $unwind, $lookup, and $facet.
 
+use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{HashMap};
@@ -771,5 +772,3 @@ mod tests {
         assert_eq!(results[1]["tags"], "database");
     }
 }
-
-

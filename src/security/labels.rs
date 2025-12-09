@@ -1,18 +1,19 @@
-//! # Security Labels Module
-//!
-//! Provides mandatory access control (MAC) through security labels,
-//! data classification levels, compartment-based security, and
-//! label-based row filtering.
-//!
-//! ## Features
-//!
-//! - Mandatory Access Control (MAC)
-//! - Multi-Level Security (MLS)
-//! - Compartment-based security
-//! - Label-based row filtering
-//! - Label dominance comparison
-//! - Label composition and decomposition
+// # Security Labels Module
+//
+// Provides mandatory access control (MAC) through security labels,
+// data classification levels, compartment-based security, and
+// label-based row filtering.
+//
+// ## Features
+//
+// - Mandatory Access Control (MAC)
+// - Multi-Level Security (MLS)
+// - Compartment-based security
+// - Label-based row filtering
+// - Label dominance comparison
+// - Label composition and decomposition
 
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use parking_lot::RwLock;
@@ -724,5 +725,3 @@ mod tests {
         assert!(combined.compartments.contains("B"));
     }
 }
-
-

@@ -1,8 +1,11 @@
-//! # Logical Replication
-//!
-//! Logical replication using CDC for table-level replication with transformations,
-//! conflict detection and resolution, bidirectional replication, and monitoring.
+// # Logical Replication
+//
+// Logical replication using CDC for table-level replication with transformations,
+// conflict detection and resolution, bidirectional replication, and monitoring.
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::Duration;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
@@ -693,5 +696,3 @@ mod tests {
         assert_eq!(repl.get_rules().len(), 0);
     }
 }
-
-

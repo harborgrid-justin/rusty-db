@@ -3,6 +3,8 @@
 // Implements various windowing strategies (tumbling, sliding, session, hopping)
 // with watermark-based late arrival handling and custom triggers.
 
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use super::{Event, EventValue, Watermark};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

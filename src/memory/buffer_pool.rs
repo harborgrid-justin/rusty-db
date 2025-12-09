@@ -1,38 +1,38 @@
-//! # Enterprise Buffer Pool Management System
-//!
-//! Comprehensive multi-tier buffer pool implementation with advanced caching,
-//! replacement policies, and dirty page management for high-performance database operations.
-//!
-//! ## Architecture Overview
-//!
-//! ```text
-//! ┌──────────────────────────────────────────────────────────────────────┐
-//! │                    Multi-Tier Buffer Pool System                      │
-//! │                                                                        │
-//! │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                  │
-//! │  │  Hot Tier   │  │  Warm Tier  │  │  Cold Tier  │                  │
-//! │  │  (SSD-like) │  │  (Memory)   │  │  (Evict)    │                  │
-//! │  └─────────────┘  └─────────────┘  └─────────────┘                  │
-//! │         │                 │                 │                         │
-//! │         └─────────────────┴─────────────────┘                         │
-//! │                           │                                           │
-//! │  ┌────────────────────────┴─────────────────────────┐                │
-//! │  │         Adaptive Replacement Cache (ARC)         │                │
-//! │  │  T1 (Recent)  │  T2 (Frequent)  │  B1  │  B2    │                │
-//! │  └──────────────────────────────────────────────────┘                │
-//! │                                                                        │
-//! │  ┌────────────────────────────────────────────────┐                  │
-//! │  │        Buffer Replacement Policies              │                  │
-//! │  │  Clock-Sweep │ LRU-K │ 2Q │ Cost-Aware         │                  │
-//! │  └────────────────────────────────────────────────┘                  │
-//! │                                                                        │
-//! │  ┌────────────────────────────────────────────────┐                  │
-//! │  │         Dirty Page Management                   │                  │
-//! │  │  Checkpoint Queue │ Background Writer │ Double  │                  │
-//! │  │  Write Buffer     │ Flush Lists       │ Write   │                  │
-//! │  └────────────────────────────────────────────────┘                  │
-//! └──────────────────────────────────────────────────────────────────────┘
-//! ```
+// # Enterprise Buffer Pool Management System
+//
+// Comprehensive multi-tier buffer pool implementation with advanced caching,
+// replacement policies, and dirty page management for high-performance database operations.
+//
+// ## Architecture Overview
+//
+// ```text
+// ┌──────────────────────────────────────────────────────────────────────┐
+// │                    Multi-Tier Buffer Pool System                      │
+// │                                                                        │
+// │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                  │
+// │  │  Hot Tier   │  │  Warm Tier  │  │  Cold Tier  │                  │
+// │  │  (SSD-like) │  │  (Memory)   │  │  (Evict)    │                  │
+// │  └─────────────┘  └─────────────┘  └─────────────┘                  │
+// │         │                 │                 │                         │
+// │         └─────────────────┴─────────────────┘                         │
+// │                           │                                           │
+// │  ┌────────────────────────┴─────────────────────────┐                │
+// │  │         Adaptive Replacement Cache (ARC)         │                │
+// │  │  T1 (Recent)  │  T2 (Frequent)  │  B1  │  B2    │                │
+// │  └──────────────────────────────────────────────────┘                │
+// │                                                                        │
+// │  ┌────────────────────────────────────────────────┐                  │
+// │  │        Buffer Replacement Policies              │                  │
+// │  │  Clock-Sweep │ LRU-K │ 2Q │ Cost-Aware         │                  │
+// │  └────────────────────────────────────────────────┘                  │
+// │                                                                        │
+// │  ┌────────────────────────────────────────────────┐                  │
+// │  │         Dirty Page Management                   │                  │
+// │  │  Checkpoint Queue │ Background Writer │ Double  │                  │
+// │  │  Write Buffer     │ Flush Lists       │ Write   │                  │
+// │  └────────────────────────────────────────────────┘                  │
+// └──────────────────────────────────────────────────────────────────────┘
+// ```
 
 use std::collections::{HashMap, VecDeque, BTreeMap};
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
@@ -3070,5 +3070,3 @@ mod tests {
         assert_eq!(queue.dirty_count(), 1);
     }
 }
-
-

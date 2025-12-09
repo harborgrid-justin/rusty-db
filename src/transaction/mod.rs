@@ -1,70 +1,70 @@
-//! Enterprise Transaction Management Module
-//!
-//! This module provides comprehensive transaction management capabilities
-//! for a database system, including:
-//!
-//! - **ACID Transactions**: Full ACID compliance with multiple isolation levels.
-//! - **MVCC**: Multi-Version Concurrency Control for non-blocking reads.
-//! - **2PL**: Two-Phase Locking for serializable isolation.
-//! - **WAL**: Write-Ahead Logging for durability and crash recovery.
-//! - **Deadlock Detection**: Automatic deadlock detection and resolution.
-//! - **Distributed Transactions**: Two-Phase Commit (2PC) protocol.
-//! - **OCC**: Optimistic Concurrency Control for low-contention workloads.
-//!
-//! # Module Organization
-//!
-//! The transaction module is organized into focused submodules:
-//!
-//! | Module | Responsibility |
-//! |--------|----------------|
-//! | [`types`] | Core types: `Transaction`, `IsolationLevel`, `LockMode` |
-//! | [`error`] | Transaction-specific error types |
-//! | [`manager`] | Transaction lifecycle management |
-//! | [`lock_manager`] | Lock acquisition and release |
-//! | [`wal_manager`] | Write-ahead log operations |
-//! | [`version_store`] | MVCC version storage |
-//! | [`deadlock`] | Deadlock detection and resolution |
-//! | [`snapshot`] | Snapshot isolation management |
-//! | [`recovery_manager`] | Crash recovery and checkpointing |
-//! | [`two_phase_commit`] | Distributed transaction coordination |
-//! | [`occ_manager`] | Optimistic concurrency control |
-//! | [`statistics`] | Performance metrics and monitoring |
-//! | [`timeout`] | Transaction timeout management |
-//! | [`traits`] | Extensibility traits |
-//!
-//! # Quick Start
-//!
-//! ```rust,ignore
-//! use rusty_db::transaction::{TransactionManager, IsolationLevel, LockMode};
-//!
-//! // Create a transaction manager
-//! let manager = TransactionManager::new();
-//!
-//! // Begin a transaction
-//! let txn_id = manager.begin()?;
-//!
-//! // Acquire locks and perform operations
-//! let lock_manager = manager.get_lock_manager();
-//! lock_manager.acquire_lock(txn_id, "table.row1".to_string(), LockMode::Exclusive)?;
-//!
-//! // Commit the transaction
-//! manager.commit(txn_id)?;
-//! ```
-//!
-//! # Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────┐
-//! │                    TransactionManager                        │
-//! │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-//! │  │ LockManager │  │ WALManager  │  │ DeadlockDetector    │  │
-//! │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
-//! │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-//! │  │VersionStore │  │ Snapshot    │  │ RecoveryManager     │  │
-//! │  │             │  │ Manager     │  │                     │  │
-//! │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
-//! └─────────────────────────────────────────────────────────────┘
-//! ```
+// Enterprise Transaction Management Module
+//
+// This module provides comprehensive transaction management capabilities
+// for a database system, including:
+//
+// - **ACID Transactions**: Full ACID compliance with multiple isolation levels.
+// - **MVCC**: Multi-Version Concurrency Control for non-blocking reads.
+// - **2PL**: Two-Phase Locking for serializable isolation.
+// - **WAL**: Write-Ahead Logging for durability and crash recovery.
+// - **Deadlock Detection**: Automatic deadlock detection and resolution.
+// - **Distributed Transactions**: Two-Phase Commit (2PC) protocol.
+// - **OCC**: Optimistic Concurrency Control for low-contention workloads.
+//
+// # Module Organization
+//
+// The transaction module is organized into focused submodules:
+//
+// | Module | Responsibility |
+// |--------|----------------|
+// | [`types`] | Core types: `Transaction`, `IsolationLevel`, `LockMode` |
+// | [`error`] | Transaction-specific error types |
+// | [`manager`] | Transaction lifecycle management |
+// | [`lock_manager`] | Lock acquisition and release |
+// | [`wal_manager`] | Write-ahead log operations |
+// | [`version_store`] | MVCC version storage |
+// | [`deadlock`] | Deadlock detection and resolution |
+// | [`snapshot`] | Snapshot isolation management |
+// | [`recovery_manager`] | Crash recovery and checkpointing |
+// | [`two_phase_commit`] | Distributed transaction coordination |
+// | [`occ_manager`] | Optimistic concurrency control |
+// | [`statistics`] | Performance metrics and monitoring |
+// | [`timeout`] | Transaction timeout management |
+// | [`traits`] | Extensibility traits |
+//
+// # Quick Start
+//
+// ```rust,ignore
+// use rusty_db::transaction::{TransactionManager, IsolationLevel, LockMode};
+//
+// // Create a transaction manager
+// let manager = TransactionManager::new();
+//
+// // Begin a transaction
+// let txn_id = manager.begin()?;
+//
+// // Acquire locks and perform operations
+// let lock_manager = manager.get_lock_manager();
+// lock_manager.acquire_lock(txn_id, "table.row1".to_string(), LockMode::Exclusive)?;
+//
+// // Commit the transaction
+// manager.commit(txn_id)?;
+// ```
+//
+// # Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    TransactionManager                        │
+// │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+// │  │ LockManager │  │ WALManager  │  │ DeadlockDetector    │  │
+// │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+// │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+// │  │VersionStore │  │ Snapshot    │  │ RecoveryManager     │  │
+// │  │             │  │ Manager     │  │                     │  │
+// │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+// └─────────────────────────────────────────────────────────────┘
+// ```
 
 // =============================================================================
 // Submodule declarations

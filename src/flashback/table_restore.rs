@@ -1,27 +1,27 @@
-//! # FLASHBACK TABLE Implementation
-//!
-//! Oracle-like FLASHBACK TABLE to restore tables to a previous state.
-//! Includes recycle bin for dropped tables and point-in-time table recovery.
-//!
-//! ## Features
-//!
-//! - FLASHBACK TABLE TO TIMESTAMP/SCN
-//! - FLASHBACK TABLE TO BEFORE DROP (recycle bin)
-//! - Table state reconstruction from version history
-//! - Dependent object restoration (indexes, triggers, constraints)
-//! - Constraint re-validation after flashback
-//! - Index rebuilding and optimization
-//! - Partition-level flashback
-//! - Recycle bin management and purge
-//!
-//! ## Example
-//!
-//! ```sql
-//! FLASHBACK TABLE employees TO TIMESTAMP '2024-01-01 12:00:00';
-//! FLASHBACK TABLE employees TO SCN 12345;
-//! FLASHBACK TABLE employees TO BEFORE DROP;
-//! FLASHBACK TABLE employees TO BEFORE DROP RENAME TO employees_recovered;
-//! ```
+// # FLASHBACK TABLE Implementation
+//
+// Oracle-like FLASHBACK TABLE to restore tables to a previous state.
+// Includes recycle bin for dropped tables and point-in-time table recovery.
+//
+// ## Features
+//
+// - FLASHBACK TABLE TO TIMESTAMP/SCN
+// - FLASHBACK TABLE TO BEFORE DROP (recycle bin)
+// - Table state reconstruction from version history
+// - Dependent object restoration (indexes, triggers, constraints)
+// - Constraint re-validation after flashback
+// - Index rebuilding and optimization
+// - Partition-level flashback
+// - Recycle bin management and purge
+//
+// ## Example
+//
+// ```sql
+// FLASHBACK TABLE employees TO TIMESTAMP '2024-01-01 12:00:00';
+// FLASHBACK TABLE employees TO SCN 12345;
+// FLASHBACK TABLE employees TO BEFORE DROP;
+// FLASHBACK TABLE employees TO BEFORE DROP RENAME TO employees_recovered;
+// ```
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -722,5 +722,3 @@ mod tests {
         assert!(result.is_err());
     }
 }
-
-

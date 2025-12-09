@@ -1,6 +1,9 @@
 // Query Profiler
 // Captures execution plans, row counts, time per operator, and wait events
 
+use std::time::Instant;
+use std::collections::VecDeque;
+use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;

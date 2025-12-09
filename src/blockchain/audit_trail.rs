@@ -1,14 +1,15 @@
-//! # Audit Trail for Blockchain Tables
-//!
-//! This module provides comprehensive audit logging for blockchain operations:
-//! - Complete audit logging
-//! - User action tracking
-//! - Query logging with results
-//! - Change attribution
-//! - Audit report generation
-//! - Export to compliance formats
-//! - Audit log protection
+// # Audit Trail for Blockchain Tables
+//
+// This module provides comprehensive audit logging for blockchain operations:
+// - Complete audit logging
+// - User action tracking
+// - Query logging with results
+// - Change attribution
+// - Audit report generation
+// - Export to compliance formats
+// - Audit log protection
 
+use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
@@ -729,5 +730,3 @@ mod tests {
         assert_eq!(queries.len(), 1);
     }
 }
-
-

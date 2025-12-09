@@ -1,26 +1,28 @@
-//! Deadlock detection for transactions.
-//!
-//! This module implements deadlock detection using a wait-for graph.
-//! It can detect cycles in the dependency graph between transactions
-//! and select victims for resolution.
-//!
-//! # Algorithm
-//!
-//! Uses depth-first search (DFS) to detect cycles in the wait-for graph.
-//! When a deadlock is detected, a victim is selected based on configurable
-//! policies.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let detector = DeadlockDetector::new(Duration::from_secs(1));
-//! detector.add_wait(txn1, txn2);  // txn1 is waiting for txn2
-//! if let Some(cycle) = detector.detect_deadlock() {
-//!     let victim = detector.select_victim(&cycle);
-//!     // Abort the victim transaction
-//! }
-//! ```
+// Deadlock detection for transactions.
+//
+// This module implements deadlock detection using a wait-for graph.
+// It can detect cycles in the dependency graph between transactions
+// and select victims for resolution.
+//
+// # Algorithm
+//
+// Uses depth-first search (DFS) to detect cycles in the wait-for graph.
+// When a deadlock is detected, a victim is selected based on configurable
+// policies.
+//
+// # Example
+//
+// ```rust,ignore
+// let detector = DeadlockDetector::new(Duration::from_secs(1));
+// detector.add_wait(txn1, txn2);  // txn1 is waiting for txn2
+// if let Some(cycle) = detector.detect_deadlock() {
+//     let victim = detector.select_victim(&cycle);
+//     // Abort the victim transaction
+// }
+// ```
 
+use std::collections::HashSet;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};

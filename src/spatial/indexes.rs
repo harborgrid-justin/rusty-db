@@ -1,11 +1,11 @@
-//! Spatial Indexing Structures
-//!
-//! Provides high-performance spatial indexing with:
-//! - R-tree and R*-tree for general spatial data
-//! - Quadtree for point data
-//! - Grid-based indexing for uniform distributions
-//! - Hilbert curve ordering for locality preservation
-//! - Bulk loading and dynamic maintenance
+// Spatial Indexing Structures
+//
+// Provides high-performance spatial indexing with:
+// - R-tree and R*-tree for general spatial data
+// - Quadtree for point data
+// - Grid-based indexing for uniform distributions
+// - Hilbert curve ordering for locality preservation
+// - Bulk loading and dynamic maintenance
 
 use crate::error::Result;
 use crate::spatial::geometry::{BoundingBox, Coordinate};
@@ -1000,5 +1000,3 @@ mod tests {
         assert!(!results.contains(&2));
     }
 }
-
-

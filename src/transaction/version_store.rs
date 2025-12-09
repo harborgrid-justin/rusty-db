@@ -1,23 +1,24 @@
-//! MVCC Version Store implementation.
-//!
-//! This module provides the version storage mechanism for Multi-Version
-//! Concurrency Control (MVCC), enabling non-blocking reads and consistent
-//! snapshots.
-//!
-//! # Key Concepts
-//!
-//! - Each data item can have multiple versions.
-//! - Readers see a consistent snapshot based on transaction timestamp.
-//! - Old versions are garbage collected when no longer needed.
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! let store = VersionStore::new();
-//! store.add_version("key1".to_string(), version);
-//! let visible = store.get_version("key1", txn_id, snapshot_time);
-//! ```
+// MVCC Version Store implementation.
+//
+// This module provides the version storage mechanism for Multi-Version
+// Concurrency Control (MVCC), enabling non-blocking reads and consistent
+// snapshots.
+//
+// # Key Concepts
+//
+// - Each data item can have multiple versions.
+// - Readers see a consistent snapshot based on transaction timestamp.
+// - Old versions are garbage collected when no longer needed.
+//
+// # Example
+//
+// ```rust,ignore
+// let store = VersionStore::new();
+// store.add_version("key1".to_string(), version);
+// let visible = store.get_version("key1", txn_id, snapshot_time);
+// ```
 
+use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
@@ -343,7 +344,7 @@ mod tests {
     #[test]
     fn test_version_store_add_and_get() {
         let store = VersionStore::new();
-        
+
         let v1 = make_version(1, b"value1");
         store.add_version("key1".to_string(), v1);
 

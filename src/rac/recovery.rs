@@ -1,21 +1,26 @@
-//! # Instance Recovery
-//!
-//! Oracle RAC-like automatic instance recovery for handling node failures,
-//! redo log recovery, lock reconfiguration, and resource remastering.
-//!
-//! ## Key Components
-//!
-//! - **Failure Detection**: Automatic detection of failed instances
-//! - **Redo Recovery**: Apply redo logs from failed instances
-//! - **Lock Reconfiguration**: Reclaim locks from failed instances
-//! - **Resource Remastering**: Redistribute resources after failure
-//!
-//! ## Architecture
-//!
-//! When an instance fails, surviving instances automatically detect the failure
-//! and coordinate recovery. One instance is elected as the recovery coordinator
-//! to apply redo logs, release locks, and remaster resources from the failed instance.
+// # Instance Recovery
+//
+// Oracle RAC-like automatic instance recovery for handling node failures,
+// redo log recovery, lock reconfiguration, and resource remastering.
+//
+// ## Key Components
+//
+// - **Failure Detection**: Automatic detection of failed instances
+// - **Redo Recovery**: Apply redo logs from failed instances
+// - **Lock Reconfiguration**: Reclaim locks from failed instances
+// - **Resource Remastering**: Redistribute resources after failure
+//
+// ## Architecture
+//
+// When an instance fails, surviving instances automatically detect the failure
+// and coordinate recovery. One instance is elected as the recovery coordinator
+// to apply redo logs, release locks, and remaster resources from the failed instance.
 
+use std::sync::Mutex;
+use std::collections::VecDeque;
+use std::time::Instant;
+use std::collections::HashSet;
+use std::time::SystemTime;
 use crate::error::DbError;
 use crate::common::{NodeId, TransactionId, LogSequenceNumber};
 use crate::rac::cache_fusion::ResourceId;
@@ -929,5 +934,3 @@ mod tests {
         assert_eq!(RecoveryPhase::Detecting as u8, 0);
     }
 }
-
-

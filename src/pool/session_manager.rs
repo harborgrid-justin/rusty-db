@@ -1,64 +1,68 @@
-//! # Session Management & Pool Lifecycle System
-//!
-//! Enterprise-grade session management system for RustyDB with Oracle-like capabilities.
-//! This module provides comprehensive session lifecycle management, authentication,
-//! resource control, connection pooling, and event handling.
-//!
-//! ## Key Features
-//!
-//! - **Session State Management**: Complete session context preservation including
-//!   variables, settings, transaction state, cursors, and prepared statements
-//! - **Multi-Method Authentication**: LDAP, Kerberos, SAML, token-based authentication
-//!   with privilege caching and role activation
-//! - **Resource Control**: Per-session memory quotas, CPU limits, I/O throttling,
-//!   and parallel execution control
-//! - **Connection Pooling**: DRCP-like connection pooling with session multiplexing,
-//!   tag-based selection, and session affinity
-//! - **Lifecycle Events**: Login/logoff triggers, state change callbacks, idle timeouts,
-//!   and session migration
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────────────────────────────────────────────────────────────┐
-//! │                    Session Manager (Public API)                 │
-//! ├─────────────────────────────────────────────────────────────────┤
-//! │  Session State  │  Authentication │  Resource Control  │ Events │
-//! ├─────────────────┼─────────────────┼───────────────────┼────────┤
-//! │  • Variables    │  • LDAP         │  • Memory Quota   │ • Login│
-//! │  • Settings     │  • Kerberos     │  • CPU Limits     │ • Logoff│
-//! │  • Transactions │  • SAML         │  • I/O Throttle   │ • Idle │
-//! │  • Cursors      │  • Tokens       │  • Temp Space     │ • Kill │
-//! │  • Statements   │  • Roles        │  • Parallel DOP   │ • Migrate│
-//! │  • Temp Tables  │  • Privileges   │  • Consumer Groups│ • Failover│
-//! └─────────────────┴─────────────────┴───────────────────┴────────┘
-//! ```
-//!
-//! ## Usage Example
-//!
-//! ```rust,no_run
-//! use rusty_db::pool::session_manager::{SessionManager, SessionConfig};
-//! use rusty_db::Result;
-//!
-//! async fn example() -> Result<()> {
-//!     let mut manager = SessionManager::new(SessionConfig::default());
-//!
-//!     // Create and authenticate session
-//!     let session_id = manager.create_session("user", "password", None).await?;
-//!
-//!     // Set session variables
-//!     manager.set_session_variable(session_id, "TIMEZONE", "UTC").await?;
-//!
-//!     // Execute with resource limits
-//!     manager.set_cpu_limit(session_id, 60000).await?;
-//!
-//!     // Cleanup
-//!     manager.terminate_session(session_id, false).await?;
-//!
-//!     Ok(())
-//! }
-//! ```
+// # Session Management & Pool Lifecycle System
+//
+// Enterprise-grade session management system for RustyDB with Oracle-like capabilities.
+// This module provides comprehensive session lifecycle management, authentication,
+// resource control, connection pooling, and event handling.
+//
+// ## Key Features
+//
+// - **Session State Management**: Complete session context preservation including
+//   variables, settings, transaction state, cursors, and prepared statements
+// - **Multi-Method Authentication**: LDAP, Kerberos, SAML, token-based authentication
+//   with privilege caching and role activation
+// - **Resource Control**: Per-session memory quotas, CPU limits, I/O throttling,
+//   and parallel execution control
+// - **Connection Pooling**: DRCP-like connection pooling with session multiplexing,
+//   tag-based selection, and session affinity
+// - **Lifecycle Events**: Login/logoff triggers, state change callbacks, idle timeouts,
+//   and session migration
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────────┐
+// │                    Session Manager (Public API)                 │
+// ├─────────────────────────────────────────────────────────────────┤
+// │  Session State  │  Authentication │  Resource Control  │ Events │
+// ├─────────────────┼─────────────────┼───────────────────┼────────┤
+// │  • Variables    │  • LDAP         │  • Memory Quota   │ • Login│
+// │  • Settings     │  • Kerberos     │  • CPU Limits     │ • Logoff│
+// │  • Transactions │  • SAML         │  • I/O Throttle   │ • Idle │
+// │  • Cursors      │  • Tokens       │  • Temp Space     │ • Kill │
+// │  • Statements   │  • Roles        │  • Parallel DOP   │ • Migrate│
+// │  • Temp Tables  │  • Privileges   │  • Consumer Groups│ • Failover│
+// └─────────────────┴─────────────────┴───────────────────┴────────┘
+// ```
+//
+// ## Usage Example
+//
+// ```rust,no_run
+// use rusty_db::pool::session_manager::{SessionManager, SessionConfig};
+// use rusty_db::Result;
+//
+// async fn example() -> Result<()> {
+//     let mut manager = SessionManager::new(SessionConfig::default());
+//
+//     // Create and authenticate session
+//     let session_id = manager.create_session("user", "password", None).await?;
+//
+//     // Set session variables
+//     manager.set_session_variable(session_id, "TIMEZONE", "UTC").await?;
+//
+//     // Execute with resource limits
+//     manager.set_cpu_limit(session_id, 60000).await?;
+//
+//     // Cleanup
+//     manager.terminate_session(session_id, false).await?;
+//
+//     Ok(())
+// }
+// ```
 
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::time::SystemTime;
+use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -3357,5 +3361,3 @@ mod advanced_tests {
         assert_eq!(cached.session_id, session.session_id);
     }
 }
-
-

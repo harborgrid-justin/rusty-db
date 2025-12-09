@@ -4,6 +4,7 @@
 /// and INSTEAD OF triggers at both ROW and STATEMENT levels, with dependency
 /// tracking and ordering capabilities.
 
+use std::collections::HashSet;
 use crate::{Result, DbError};
 use crate::procedures::parser::PlSqlBlock;
 use crate::procedures::runtime::{RuntimeExecutor, RuntimeValue, ExecutionContext};

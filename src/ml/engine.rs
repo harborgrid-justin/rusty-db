@@ -1,7 +1,7 @@
-//! # ML Engine - Core Orchestration
-//!
-//! This module provides the main ML engine that orchestrates all machine learning operations,
-//! including model training, versioning, deployment, and lifecycle management.
+// # ML Engine - Core Orchestration
+//
+// This module provides the main ML engine that orchestrates all machine learning operations,
+// including model training, versioning, deployment, and lifecycle management.
 
 use crate::error::Result;
 use super::{
@@ -869,5 +869,3 @@ mod tests {
         assert_eq!(engine.registry().count(), 1);
     }
 }
-
-

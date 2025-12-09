@@ -1,7 +1,7 @@
-//! # Feature Engineering
-//!
-//! Advanced feature preprocessing, transformation, and selection for ML models.
-//! Supports automatic feature extraction from SQL tables and zero-copy transformations.
+// # Feature Engineering
+//
+// Advanced feature preprocessing, transformation, and selection for ML models.
+// Supports automatic feature extraction from SQL tables and zero-copy transformations.
 
 use crate::error::Result;
 use super::Dataset;
@@ -984,5 +984,3 @@ impl Default for FeatureEngine {
         Self::new()
     }
 }
-
-

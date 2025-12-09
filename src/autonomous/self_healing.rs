@@ -1,8 +1,11 @@
-//! Self-Healing Database Engine
-//!
-//! Provides autonomous detection and repair of database issues including
-//! corruption, deadlocks, memory leaks, and connection problems.
+// Self-Healing Database Engine
+//
+// Provides autonomous detection and repair of database issues including
+// corruption, deadlocks, memory leaks, and connection problems.
 
+use std::collections::VecDeque;
+use std::collections::HashSet;
+use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -907,5 +910,3 @@ mod tests {
         assert_eq!(report.total_issues, 0);
     }
 }
-
-
