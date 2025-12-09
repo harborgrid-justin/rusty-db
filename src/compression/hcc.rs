@@ -1,6 +1,7 @@
 // Hybrid Columnar Compression (HCC) - Oracle-like Implementation
 // Provides columnar compression for OLAP workloads with excellent compression ratios
 
+use std::collections::HashSet;
 use super::*;
 use super::algorithms::*;
 use std::collections::HashMap;
@@ -122,7 +123,6 @@ impl HCCEngine {
 
     /// Compress column using type-specific encoding (NEW!)
     pub fn compress_column_typed(&self, column: &[u8], col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
-        use super::algorithms::*;
 
         match col_type {
             ColumnDataType::Integer | ColumnDataType::BigInt => {
@@ -219,7 +219,6 @@ impl HCCEngine {
 
     /// Decompress column using type-specific encoding (NEW!)
     pub fn decompress_column_typed(&self, compressed: &[u8], col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
-        use super::algorithms::*;
 
         if compressed.is_empty() {
             return Ok(Vec::new());
@@ -291,7 +290,6 @@ impl HCCEngine {
         }
 
         let num_columns = column_types.len();
-        let num_rows = rows.len();
         let mut columns = vec![Vec::new(); num_columns];
 
         // Transform row-major to column-major
@@ -858,14 +856,13 @@ impl Default for HCCAdvisor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_hcc_compression() {
         let engine = HCCEngine::new(HCCStrategy::QueryHigh);
 
         let mut rows = Vec::new();
-        for _i in 0..1000 {
+        for i in 0..1000 {
             let row = vec![
                 (i % 256) as u8, ((i / 256) % 256) as u8,
                 (i % 100) as u8, ((i / 100) % 256) as u8,
@@ -979,5 +976,3 @@ mod tests {
         assert!(ratio > 8.0, "Should achieve >8:1 on repetitive booleans");
     }
 }
-
-

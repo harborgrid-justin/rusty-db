@@ -233,7 +233,7 @@ impl<T: 'static> LockFreeQueue<T> {
 
                         // Take the data from the node
                         // Safety: We own this node now (we just dequeued it)
-                        let _result = unsafe {
+                        let result = unsafe {
                             let node_ptr = next.as_ptr();
                             let node_ref = &mut *node_ptr;
                             node_ref.data.take()
@@ -543,7 +543,7 @@ mod tests {
         let mut handles = vec![];
 
         // Enqueuers
-        for _i in 0..5 {
+        for i in 0..5 {
             let q = queue.clone();
             handles.push(thread::spawn(move || {
                 for j in 0..1000 {
@@ -580,7 +580,7 @@ mod tests {
         let items = vec![1, 2, 3, 4, 5];
 
         queue.enqueue_batch(items.clone());
-        let _result = queue.dequeue_batch(5);
+        let result = queue.dequeue_batch(5);
 
         assert_eq!(result, items);
         assert!(queue.is_empty());
@@ -611,7 +611,7 @@ mod tests {
         queue.enqueue(2);
         queue.dequeue();
 
-        let _stats = queue.stats();
+        let stats = queue.stats();
         assert_eq!(stats.enqueue_count, 2);
         assert_eq!(stats.dequeue_count, 1);
     }

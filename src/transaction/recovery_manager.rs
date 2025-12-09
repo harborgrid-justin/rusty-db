@@ -17,6 +17,7 @@
 // recovery_mgr.create_checkpoint(active_txns)?;
 // ```
 
+use std::fmt;
 use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -322,7 +323,7 @@ mod tests {
 
         let rm = RecoveryManager::new(wal, vs::from_secs(300));
 
-        let _result = rm.recover();
+        let result = rm.recover();
         assert!(result.is_ok());
         let _ = std::fs::remove_file(wal_path);
     }

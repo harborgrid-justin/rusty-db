@@ -44,7 +44,7 @@ pub struct RestApiServer {
 impl RestApiServer {
     /// Create a new REST API server with injected dependencies
     pub async fn new(config: ApiConfig) -> std::result::Result<Self, DbError> {
-        let _state = Arc::new(ApiState {
+        let state = Arc::new(ApiState {
             config: config.clone(),
             connection_semaphore: Arc::new(Semaphore::new(config.max_connections)),
             active_queries: Arc::new(RwLock::new(HashMap::new())),

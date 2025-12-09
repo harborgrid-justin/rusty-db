@@ -1,6 +1,8 @@
 // Container Database (CDB) implementation with Pluggable Database (PDB) management
 // Oracle-like architecture for multi-tenant databases
 
+use tokio::time::sleep;
+use std::fmt;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::path::PathBuf;
@@ -923,7 +925,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_pdb() {
         let cdb = ContainerDatabase::new("CDB1".to_string(), 10);
-        let _result = cdb.create_pdb(
+        let result = cdb.create_pdb(
             "PDB1".to_string(),
             "admin".to_string(),
             "password".to_string(),
@@ -968,7 +970,7 @@ mod tests {
             "password".to_string(),
         ).await.unwrap();
 
-        let _result = cdb.open_pdb("PDB1".to_string(), OpenMode::ReadWrite).await;
+        let result = cdb.open_pdb("PDB1".to_string(), OpenMode::ReadWrite).await;
         assert!(result.is_ok());
 
         let pdb = cdb.get_pdb("PDB1").await.unwrap();
@@ -976,7 +978,7 @@ mod tests {
         assert_eq!(config.state, PdbState::Open);
         drop(config);
 
-        let _result = cdb.close_pdb("PDB1".to_string()).await;
+        let result = cdb.close_pdb("PDB1".to_string()).await;
         assert!(result.is_ok());
 
         let config = pdb.read().await;

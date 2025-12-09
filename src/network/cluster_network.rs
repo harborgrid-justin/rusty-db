@@ -1,6 +1,9 @@
 // Enterprise-grade Network Clustering & High Availability Architecture
 // Comprehensive cluster management, inter-node communication, and failover systems
 
+use tokio::sync::oneshot;
+use tokio::time::sleep;
+use std::fmt;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::VecDeque;
 use std::sync::Mutex;
@@ -1045,7 +1048,7 @@ impl NodeConnectionPool {
         let mut results = Vec::new();
 
         for (node_id, addr) in targets {
-            let _result = self.send_message(node_id, addr, message.clone()).await;
+            let result = self.send_message(node_id, addr, message.clone()).await;
             results.push(result);
         }
 
@@ -1139,7 +1142,7 @@ impl NodeConnection {
     async fn sender_loop(&self) {
         loop {
             // Sort by priority and send
-            let _message = {
+            let message = {
                 let mut queue = self.send_queue.lock();
                 if queue.is_empty() {
                     None
@@ -1989,7 +1992,7 @@ impl RaftLeaderElection {
 
     async fn election_loop(&self) {
         loop {
-            let _state = *self.state.read();
+            let state = *self.state.read();
 
             match state {
                 RaftState::Follower => {

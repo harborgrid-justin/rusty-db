@@ -730,7 +730,7 @@ mod tests {
         metrics.record_write(4096, Duration::from_micros(200));
         metrics.record_sync(Duration::from_micros(1000));
 
-        let _stats = metrics.stats();
+        let stats = metrics.stats();
         assert_eq!(stats.read_count, 1);
         assert_eq!(stats.write_count, 1);
         assert_eq!(stats.sync_count, 1);

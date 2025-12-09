@@ -47,7 +47,7 @@ pub unsafe fn sum_f64_avx2(data: &[f64]) -> f64 {
     let chunks = len / 4;
 
     // Process 4 elements at a time
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_pd(data.as_ptr().add(offset));
         acc = _mm256_add_pd(acc, vec);
@@ -58,7 +58,7 @@ pub unsafe fn sum_f64_avx2(data: &[f64]) -> f64 {
 
     // Handle remainder
     let mut remainder_sum = 0.0;
-    for _i in (chunks * 4)..len {
+    for i in (chunks * 4)..len {
         remainder_sum += data[i];
     }
 
@@ -78,7 +78,7 @@ pub unsafe fn min_f64_avx2(data: &[f64]) -> f64 {
     let len = data.len();
     let chunks = len / 4;
 
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_pd(data.as_ptr().add(offset));
         min_vec = _mm256_min_pd(min_vec, vec);
@@ -88,7 +88,7 @@ pub unsafe fn min_f64_avx2(data: &[f64]) -> f64 {
     let mut min_val = horizontal_min_pd(min_vec);
 
     // Handle remainder
-    for _i in (chunks * 4)..len {
+    for i in (chunks * 4)..len {
         if data[i] < min_val {
             min_val = data[i];
         }
@@ -110,7 +110,7 @@ pub unsafe fn max_f64_avx2(data: &[f64]) -> f64 {
     let len = data.len();
     let chunks = len / 4;
 
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_pd(data.as_ptr().add(offset));
         max_vec = _mm256_max_pd(max_vec, vec);
@@ -120,7 +120,7 @@ pub unsafe fn max_f64_avx2(data: &[f64]) -> f64 {
     let mut max_val = horizontal_max_pd(max_vec);
 
     // Handle remainder
-    for _i in (chunks * 4)..len {
+    for i in (chunks * 4)..len {
         if data[i] > max_val {
             max_val = data[i];
         }
@@ -155,7 +155,7 @@ pub unsafe fn sum_f32_avx2(data: &[f32]) -> f32 {
     let len = data.len();
     let chunks = len / 8;
 
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_ps(data.as_ptr().add(offset));
         acc = _mm256_add_ps(acc, vec);
@@ -166,7 +166,7 @@ pub unsafe fn sum_f32_avx2(data: &[f32]) -> f32 {
 
     // Handle remainder
     let mut remainder_sum = 0.0;
-    for _i in (chunks * 8)..len {
+    for i in (chunks * 8)..len {
         remainder_sum += data[i];
     }
 
@@ -186,7 +186,7 @@ pub unsafe fn min_f32_avx2(data: &[f32]) -> f32 {
     let len = data.len();
     let chunks = len / 8;
 
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_ps(data.as_ptr().add(offset));
         min_vec = _mm256_min_ps(min_vec, vec);
@@ -196,7 +196,7 @@ pub unsafe fn min_f32_avx2(data: &[f32]) -> f32 {
     let mut min_val = horizontal_min_ps(min_vec);
 
     // Handle remainder
-    for _i in (chunks * 8)..len {
+    for i in (chunks * 8)..len {
         if data[i] < min_val {
             min_val = data[i];
         }
@@ -218,7 +218,7 @@ pub unsafe fn max_f32_avx2(data: &[f32]) -> f32 {
     let len = data.len();
     let chunks = len / 8;
 
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_ps(data.as_ptr().add(offset));
         max_vec = _mm256_max_ps(max_vec, vec);
@@ -228,7 +228,7 @@ pub unsafe fn max_f32_avx2(data: &[f32]) -> f32 {
     let mut max_val = horizontal_max_ps(max_vec);
 
     // Handle remainder
-    for _i in (chunks * 8)..len {
+    for i in (chunks * 8)..len {
         if data[i] > max_val {
             max_val = data[i];
         }
@@ -250,7 +250,7 @@ pub unsafe fn sum_i32_avx2(data: &[i32]) -> i64 {
     let len = data.len();
     let chunks = len / 8;
 
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         acc = _mm256_add_epi32(acc, vec);
@@ -261,7 +261,7 @@ pub unsafe fn sum_i32_avx2(data: &[i32]) -> i64 {
 
     // Handle remainder
     let mut remainder_sum = 0i64;
-    for _i in (chunks * 8)..len {
+    for i in (chunks * 8)..len {
         remainder_sum += data[i] as i64;
     }
 
@@ -281,7 +281,7 @@ pub unsafe fn min_i32_avx2(data: &[i32]) -> i32 {
     let len = data.len();
     let chunks = len / 8;
 
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         min_vec = _mm256_min_epi32(min_vec, vec);
@@ -291,7 +291,7 @@ pub unsafe fn min_i32_avx2(data: &[i32]) -> i32 {
     let mut min_val = horizontal_min_epi32(min_vec);
 
     // Handle remainder
-    for _i in (chunks * 8)..len {
+    for i in (chunks * 8)..len {
         if data[i] < min_val {
             min_val = data[i];
         }
@@ -313,7 +313,7 @@ pub unsafe fn max_i32_avx2(data: &[i32]) -> i32 {
     let len = data.len();
     let chunks = len / 8;
 
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 8;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         max_vec = _mm256_max_epi32(max_vec, vec);
@@ -323,7 +323,7 @@ pub unsafe fn max_i32_avx2(data: &[i32]) -> i32 {
     let mut max_val = horizontal_max_epi32(max_vec);
 
     // Handle remainder
-    for _i in (chunks * 8)..len {
+    for i in (chunks * 8)..len {
         if data[i] > max_val {
             max_val = data[i];
         }
@@ -345,7 +345,7 @@ pub unsafe fn sum_i64_avx2(data: &[i64]) -> i64 {
     let len = data.len();
     let chunks = len / 4;
 
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 4;
         let vec = _mm256_loadu_si256(data.as_ptr().add(offset) as *const __m256i);
         acc = _mm256_add_epi64(acc, vec);
@@ -356,7 +356,7 @@ pub unsafe fn sum_i64_avx2(data: &[i64]) -> i64 {
 
     // Handle remainder
     let mut remainder_sum = 0i64;
-    for _i in (chunks * 4)..len {
+    for i in (chunks * 4)..len {
         remainder_sum += data[i];
     }
 
@@ -574,7 +574,7 @@ impl SimdAggregator {
 
     /// Compute aggregate on f64 column
     pub fn aggregate_f64(&mut self, data: &[f64], op: AggregateOp) -> Result<f64> {
-        let _result = if self.context.has_avx2() {
+        let result = if self.context.has_avx2() {
             unsafe {
                 match op {
                     AggregateOp::Sum => sum_f64_avx2(data),
@@ -606,7 +606,7 @@ impl SimdAggregator {
 
     /// Compute aggregate on f32 column
     pub fn aggregate_f32(&mut self, data: &[f32], op: AggregateOp) -> Result<f32> {
-        let _result = if self.context.has_avx2() {
+        let result = if self.context.has_avx2() {
             unsafe {
                 match op {
                     AggregateOp::Sum => sum_f32_avx2(data),
@@ -641,7 +641,7 @@ impl SimdAggregator {
 
     /// Compute aggregate on i32 column
     pub fn aggregate_i32(&mut self, data: &[i32], op: AggregateOp) -> Result<i64> {
-        let _result = if self.context.has_avx2() {
+        let result = if self.context.has_avx2() {
             unsafe {
                 match op {
                     AggregateOp::Sum => sum_i32_avx2(data),
@@ -671,7 +671,7 @@ impl SimdAggregator {
 
     /// Compute aggregate on i64 column
     pub fn aggregate_i64(&mut self, data: &[i64], op: AggregateOp) -> Result<i64> {
-        let _result = if self.context.has_avx2() {
+        let result = if self.context.has_avx2() {
             unsafe {
                 match op {
                     AggregateOp::Sum => sum_i64_avx2(data),
@@ -777,7 +777,7 @@ mod tests {
     fn test_f64_sum() {
         let data = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0];
         let mut agg = SimdAggregator::new();
-        let _result = agg.aggregate_f64(&data, AggregateOp::Sum).unwrap();
+        let result = agg.aggregate_f64(&data, AggregateOp::Sum).unwrap();
         assert_eq!(result, 36.0);
     }
 
@@ -785,7 +785,7 @@ mod tests {
     fn test_f64_avg() {
         let data = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0];
         let mut agg = SimdAggregator::new();
-        let _result = agg.aggregate_f64(&data, AggregateOp::Avg).unwrap();
+        let result = agg.aggregate_f64(&data, AggregateOp::Avg).unwrap();
         assert_eq!(result, 4.5);
     }
 
@@ -805,7 +805,7 @@ mod tests {
     fn test_i32_sum() {
         let data = vec![1, 2, 3, 4, 5, 6, 7, 8];
         let mut agg = SimdAggregator::new();
-        let _result = agg.aggregate_i32(&data, AggregateOp::Sum).unwrap();
+        let result = agg.aggregate_i32(&data, AggregateOp::Sum).unwrap();
         assert_eq!(result, 36);
     }
 
@@ -829,7 +829,7 @@ mod tests {
         }
 
         let data = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0];
-        let _result = unsafe { sum_f64_avx2(&data) };
+        let result = unsafe { sum_f64_avx2(&data) };
         assert_eq!(result, 36.0);
     }
 

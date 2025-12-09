@@ -280,7 +280,6 @@ impl KeyStore {
 
         // Generate random DEK
         let mut key_material = vec![0u8; 32];
-        use rand::RngCore;
         rand::thread_rng().fill_bytes(&mut key_material);
 
         // Encrypt DEK with MEK (envelope encryption)
@@ -333,7 +332,6 @@ impl KeyStore {
 
         // Generate new key material
         let mut key_material = vec![0u8; 32];
-        use rand::RngCore;
         rand::thread_rng().fill_bytes(&mut key_material);
 
         // Encrypt with current MEK
@@ -401,7 +399,6 @@ impl KeyStore {
 
         // Generate nonce
         let mut nonce_bytes = vec![0u8; 12];
-        use rand::RngCore;
         rand::thread_rng().fill_bytes(&mut nonce_bytes);
 
         let nonce = Nonce::from_slice(&nonce_bytes);
@@ -420,7 +417,6 @@ impl KeyStore {
         nonce: &[u8],
         ciphertext: &[u8],
     ) -> Result<Vec<u8>> {
-        use aes_gcm::aead::generic_array::GenericArray;
 
         let cipher = Aes256Gcm::new(GenericArray::from_slice(&mek.key_material));
         let nonce = Nonce::from_slice(nonce);
@@ -686,7 +682,7 @@ mod tests {
 
         keystore.initialize_mek("test_password", None).unwrap();
 
-        let _stats = keystore.get_stats();
+        let stats = keystore.get_stats();
         assert_eq!(stats.mek_version, 1);
     }
 
@@ -699,7 +695,7 @@ mod tests {
         let dek = keystore.generate_dek("test_tablespace", "AES256GCM").unwrap();
         assert_eq!(dek.len(), 32);
 
-        let _stats = keystore.get_stats();
+        let stats = keystore.get_stats();
         assert_eq!(stats.total_deks, 1);
         assert_eq!(stats.active_deks, 1);
     }
@@ -742,7 +738,7 @@ mod tests {
         // Rotate MEK
         keystore.generate_mek().unwrap();
 
-        let _stats = keystore.get_stats();
+        let stats = keystore.get_stats();
         assert_eq!(stats.mek_version, 2);
 
         // Re-encrypt all DEKs
@@ -772,7 +768,7 @@ mod tests {
         keystore.generate_dek("test_key", "AES256GCM").unwrap();
         keystore.deactivate_dek("test_key").unwrap();
 
-        let _result = keystore.get_dek("test_key");
+        let result = keystore.get_dek("test_key");
         assert!(result.is_err());
     }
 }

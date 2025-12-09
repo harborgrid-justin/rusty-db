@@ -12,6 +12,7 @@
 // - Rate limiting, CORS, and security
 // - WebSocket support for real-time streaming
 
+use crate::error::DbError;
 use std::time::SystemTime;
 use axum::{
     Router,
@@ -883,7 +884,7 @@ impl<T> PaginatedResponse<T> {
 impl RestApiServer {
     /// Create a new REST API server
     pub async fn new(config: ApiConfig) -> std::result::Result<Self, DbError> {
-        let _state = Arc::new(ApiState {
+        let state = Arc::new(ApiState {
             config: config.clone(),
             connection_semaphore: Arc::new(Semaphore::new(config.max_connections)),
             active_queries: Arc::new(RwLock::new(HashMap::new())),
@@ -1940,7 +1941,7 @@ async fn get_pool_stats(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<String>,
 ) -> ApiResult<AxumJson<PoolStatsResponse>> {
-    let _stats = PoolStatsResponse {
+    let stats = PoolStatsResponse {
         pool_id: id,
         active_connections: 25,
         idle_connections: 15,
@@ -2687,7 +2688,7 @@ impl ApiTransactionManager {
             .unwrap()
             .as_micros() as TransactionId;
 
-        let _state = TransactionState {
+        let state = TransactionState {
             transaction_id: txn_id,
             isolation_level: isolation,
             read_only,
@@ -3289,7 +3290,6 @@ impl ResponseFormatter {
 
 #[cfg(test)]
 mod extended_tests {
-    use super::*;
 
     #[test]
     fn test_query_execution_context() {
@@ -3339,13 +3339,13 @@ mod extended_tests {
             .await
             .unwrap();
 
-        let _state = manager.get_transaction_state(txn_id).await;
+        let state = manager.get_transaction_state(txn_id).await;
         assert!(state.is_some());
         assert_eq!(state.unwrap().status, TransactionStatus::Active);
 
         manager.commit_transaction(txn_id).await.unwrap();
 
-        let _state = manager.get_transaction_state(txn_id).await;
+        let state = manager.get_transaction_state(txn_id).await;
         assert_eq!(state.unwrap().status, TransactionStatus::Committed);
     }
 

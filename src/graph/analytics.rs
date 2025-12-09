@@ -322,7 +322,7 @@ impl<'a> PathEnumerator<'a> {
 
             let (prev_path, _) = &paths[k_idx - 1];
 
-            for _i in 0..(prev_path.len() - 1) {
+            for i in 0..(prev_path.len() - 1) {
                 let spur_node = prev_path[i];
                 let root_path = &prev_path[0..=i];
 
@@ -586,7 +586,7 @@ impl GraphEmbedding {
     /// Generate PageRank-based features
     pub fn pagerank_features(graph: &PropertyGraph) -> Result<HashMap<VertexId, Vec<f64>>> {
         let config = PageRankConfig::default();
-        let _result = PageRank::compute(graph, &config)?;
+        let result = PageRank::compute(graph, &config)?;
 
         let mut features = HashMap::new();
         for (vertex_id, score) in result.scores {
@@ -806,7 +806,7 @@ mod tests {
         let mut temporal = TemporalGraph::new();
 
         let mut graph1 = PropertyGraph::new();
-        let _v1 = graph1.add_vertex(vec![], Properties::new()).unwrap();
+        let v1 = graph1.add_vertex(vec![], Properties::new()).unwrap();
 
         temporal.add_snapshot(100, graph1);
 

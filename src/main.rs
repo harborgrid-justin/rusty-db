@@ -60,7 +60,7 @@ async fn main() -> Result<()> {
     println!();
 
     // Run server (blocks until shutdown)
-    let _result = server.run(&addr).await;
+    let result = server.run(&addr).await;
 
     if let Err(ref e) = result {
         warn!("Server stopped with error: {}", e);

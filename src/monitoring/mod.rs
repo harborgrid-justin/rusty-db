@@ -150,7 +150,7 @@ impl MonitoringSystem {
     }
 
     pub fn get_query_stats(&self, limit: usize) -> Vec<QueryStats> {
-        let _stats = self.query_stats.read();
+        let stats = self.query_stats.read();
         stats.iter().rev().take(limit).cloned().collect()
     }
 }
@@ -368,7 +368,7 @@ mod tests {
     #[test]
     fn test_monitoring_system() {
         let monitor = MonitoringSystem::new();
-        let _stats = QueryStats {
+        let stats = QueryStats {
             query_id: 1,
             sql: "SELECT * FROM users".to_string(),
             execution_time_ms: 50,

@@ -753,7 +753,7 @@ mod tests {
         assert_eq!(frame.pin_count(), 0);
 
         {
-            let _guard = FrameGuard::new(frame.clone());
+            let guard = FrameGuard::new(frame.clone());
             assert_eq!(frame.pin_count(), 1);
         }
 

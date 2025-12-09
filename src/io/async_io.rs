@@ -3,6 +3,8 @@
 // Core asynchronous I/O engine providing completion-based I/O abstraction
 // across Windows IOCP and Unix io_uring.
 
+use tokio::sync::oneshot;
+use tokio::time::sleep;
 use std::time::Instant;
 use crate::error::Result;
 use std::sync::atomic::{AtomicU8, AtomicU64, AtomicUsize, Ordering};
@@ -561,7 +563,7 @@ impl AsyncIoEngine {
 
         // Spawn worker threads
         let mut workers = Vec::new();
-        for _i in 0..config.worker_threads {
+        for i in 0..config.worker_threads {
             let cp = completion_port.clone();
             let sd = shutdown.clone();
 

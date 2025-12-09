@@ -38,7 +38,7 @@
 // buffer.write_slice(10, &[1, 2, 3, 4])?;
 //
 // // Safe reads
-// let _value = buffer.read(0)?;
+// let value = buffer.read(0)?;
 // let slice = buffer.read_slice(10, 4)?;
 //
 // // Integer overflow protection
@@ -54,6 +54,7 @@
 // # }
 // ```
 
+use std::fmt;
 use crate::{Result, error::DbError};
 
 use std::marker::PhantomData;
@@ -86,7 +87,7 @@ impl StackCanary {
     pub fn new() -> Self {
         // Use atomic counter + thread ID for entropy
         static CANARY_COUNTER: AtomicU64 = AtomicU64::new(0xDEADBEEFCAFEBABE);
-        let _value = CANARY_COUNTER.fetch_add(1, Ordering::SeqCst)
+        let value = CANARY_COUNTER.fetch_add(1, Ordering::SeqCst)
             ^ fastrand::u64(..);
 
         Self {

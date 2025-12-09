@@ -7,6 +7,7 @@
 /// - Node replacement and recovery
 /// - Split-brain prevention
 
+use std::fmt;
 use std::time::Duration;
 use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo, NodeStatus};
@@ -291,7 +292,7 @@ mod tests {
         let config = FailoverConfig::default();
         let manager = ClusterFailoverManager::new(cluster_state, config);
 
-        let _result = manager.check_and_failover().unwrap();
+        let result = manager.check_and_failover().unwrap();
         assert!(result.is_some());
         
         let event = result.unwrap();

@@ -21,6 +21,7 @@
 // let original = compressor.decompress(&compressed);
 // ```
 
+use std::collections::HashSet;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -213,7 +214,7 @@ impl QueryResultCompressor {
             _ => self.simple_encode(data),
         };
 
-        let _result = CompressedResult {
+        let result = CompressedResult {
             algorithm,
             compressed_size: compressed_data.len(),
             data: compressed_data,
@@ -245,7 +246,7 @@ impl QueryResultCompressor {
             self.varint_encode(data)
         };
 
-        let _result = CompressedResult {
+        let result = CompressedResult {
             algorithm: if is_sorted {
                 CompressionAlgorithm::Delta
             } else {
@@ -271,7 +272,7 @@ impl QueryResultCompressor {
     pub fn decompress_strings(&self, compressed: &CompressedResult) -> Vec<String> {
         let start = std::time::Instant::now();
 
-        let _result = match compressed.algorithm {
+        let result = match compressed.algorithm {
             CompressionAlgorithm::Dictionary => {
                 self.dictionary_decode(compressed)
             }
@@ -290,7 +291,7 @@ impl QueryResultCompressor {
     pub fn decompress_numbers(&self, compressed: &CompressedResult) -> Vec<i64> {
         let start = std::time::Instant::now();
 
-        let _result = match compressed.algorithm {
+        let result = match compressed.algorithm {
             CompressionAlgorithm::Delta => self.delta_decode(compressed),
             _ => self.varint_decode(compressed),
         };
@@ -316,7 +317,7 @@ impl QueryResultCompressor {
 
         // Check for runs
         let mut run_count = 1;
-        for _i in 1..data.len() {
+        for i in 1..data.len() {
             if data[i] != data[i - 1] {
                 run_count += 1;
             }
@@ -421,7 +422,7 @@ impl QueryResultCompressor {
         let mut i = 0;
 
         while i < data.len() {
-            let _value = &data[i];
+            let value = &data[i];
             let mut count = 1u32;
 
             while (i + count as usize) < data.len() && data[i + count as usize] == *value {
@@ -470,7 +471,7 @@ impl QueryResultCompressor {
                 break;
             }
 
-            let _value = String::from_utf8_lossy(&data[offset..offset + len]).to_string();
+            let value = String::from_utf8_lossy(&data[offset..offset + len]).to_string();
             offset += len;
 
             for _ in 0..count {
@@ -516,7 +517,7 @@ impl QueryResultCompressor {
                 break;
             }
 
-            let _value = String::from_utf8_lossy(&data[offset..offset + len]).to_string();
+            let value = String::from_utf8_lossy(&data[offset..offset + len]).to_string();
             result.push(value);
             offset += len;
         }
@@ -630,7 +631,7 @@ impl QueryResultCompressor {
         let mut offset = 0;
 
         while offset + 8 <= data.len() {
-            let _value = i64::from_le_bytes([
+            let value = i64::from_le_bytes([
                 data[offset],
                 data[offset + 1],
                 data[offset + 2],
@@ -716,7 +717,7 @@ mod tests {
         let data = vec!["test".to_string(); 100];
         let _ = compressor.compress_strings(&data);
 
-        let _stats = compressor.stats();
+        let stats = compressor.stats();
         assert!(stats.operations > 0);
         assert!(stats.bytes_in > 0);
     }

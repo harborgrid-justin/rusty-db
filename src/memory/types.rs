@@ -61,7 +61,7 @@
 // };
 //
 // // Track allocation source
-// let _source = AllocationSource::Query {
+// let source = AllocationSource::Query {
 //     query_id: "SELECT_001".to_string(),
 //     operation: "hash_join".to_string(),
 // };
@@ -69,6 +69,7 @@
 // # }
 // ```
 
+use std::fmt;
 use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -1122,7 +1123,7 @@ mod tests {
 
     #[test]
     fn test_allocation_source_display() {
-        let _source = AllocationSource::Query {
+        let source = AllocationSource::Query {
             query_id: "SELECT_001".to_string(),
             operation: "hash_join".to_string(),
         };

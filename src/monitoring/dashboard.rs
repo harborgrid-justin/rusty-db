@@ -609,7 +609,7 @@ mod tests {
 
     #[test]
     fn test_connection_pool_stats() {
-        let _stats = ConnectionPoolStats::new(100);
+        let stats = ConnectionPoolStats::new(100);
         assert_eq!(stats.utilization_percent(), 0.0);
         assert!(!stats.is_saturated());
     }

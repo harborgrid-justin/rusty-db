@@ -624,7 +624,7 @@ mod tests {
         collector.register_sql(sql);
         collector.update_sql_stats(1, 1000, 500, 10);
 
-        let _stats = collector.get_sql_stats(1).unwrap();
+        let stats = collector.get_sql_stats(1).unwrap();
         assert_eq!(stats.executions, 1);
         assert_eq!(stats.elapsed_time_us, 1000);
     }

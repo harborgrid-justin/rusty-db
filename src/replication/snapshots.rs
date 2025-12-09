@@ -47,7 +47,7 @@
 // let manager = SnapshotManager::new(config)?;
 //
 // // Create a full snapshot
-// let _replica_id = ReplicaId::new("replica-01")?;
+// let replica_id = ReplicaId::new("replica-01")?;
 // let snapshot_id = manager.create_full_snapshot(&replica_id).await?;
 //
 // // Create incremental snapshot
@@ -65,6 +65,7 @@
 // # }
 // ```
 
+use std::fmt;
 use std::collections::HashSet;
 use std::time::SystemTime;
 use crate::error::DbError;
@@ -1201,7 +1202,7 @@ impl SnapshotManager for FileSnapshotManager {
         }
 
         // Decompress data
-        let _data = self.decompress_data(&compressed_data, &metadata.compression).await?;
+        let data = self.decompress_data(&compressed_data, &metadata.compression).await?;
 
         // In a real implementation, would restore the data to the replica
         // For now, we just simulate success
@@ -1242,7 +1243,7 @@ impl SnapshotManager for FileSnapshotManager {
 
     async fn apply_retention_policy(&self, replica_id: &ReplicaId) -> Result<Vec<SnapshotId>, SnapshotError> {
         let mut deleted_snapshots = Vec::new();
-        let _policy = &self.config.retention_policy;
+        let policy = &self.config.retention_policy;
 
         let snapshots = self.list_snapshots(replica_id).await?;
         if snapshots.is_empty() {
@@ -1334,7 +1335,7 @@ impl SnapshotManager for FileSnapshotManager {
             })
         } else {
             // Return system-wide statistics
-            let _stats = self.statistics.read();
+            let stats = self.statistics.read();
             Ok(stats.clone())
         }
     }
@@ -1383,14 +1384,14 @@ mod tests {
     async fn test_snapshot_manager_creation() {
         let (manager, _temp_dir) = create_test_manager().await;
 
-        let _stats = manager.get_statistics(None).await.unwrap();
+        let stats = manager.get_statistics(None).await.unwrap();
         assert_eq!(stats.total_snapshots, 0);
     }
 
     #[tokio::test]
     async fn test_full_snapshot_creation() {
         let (manager, _temp_dir) = create_test_manager().await;
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
 
         let snapshot_id = manager.create_full_snapshot(&replica_id).await.unwrap();
         assert!(!snapshot_id.as_str().is_empty());
@@ -1404,7 +1405,7 @@ mod tests {
     #[tokio::test]
     async fn test_incremental_snapshot_creation() {
         let (manager, _temp_dir) = create_test_manager().await;
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
 
         // Create parent snapshot first
         let parent_id = manager.create_full_snapshot(&replica_id).await.unwrap();
@@ -1420,7 +1421,7 @@ mod tests {
     #[tokio::test]
     async fn test_snapshot_listing() {
         let (manager, _temp_dir) = create_test_manager().await;
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
 
         // Create multiple snapshots
         let _full1 = manager.create_full_snapshot(&replica_id).await.unwrap();
@@ -1438,7 +1439,7 @@ mod tests {
     #[tokio::test]
     async fn test_snapshot_deletion() {
         let (manager, _temp_dir) = create_test_manager().await;
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
 
         let snapshot_id = manager.create_full_snapshot(&replica_id).await.unwrap();
 
@@ -1455,7 +1456,7 @@ mod tests {
     #[tokio::test]
     async fn test_snapshot_verification() {
         let (manager, _temp_dir) = create_test_manager().await;
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
 
         let snapshot_id = manager.create_full_snapshot(&replica_id).await.unwrap();
 
@@ -1466,18 +1467,18 @@ mod tests {
     #[tokio::test]
     async fn test_snapshot_restore() {
         let (manager, _temp_dir) = create_test_manager().await;
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
 
         let snapshot_id = manager.create_full_snapshot(&replica_id).await.unwrap();
 
-        let _result = manager.restore_snapshot(&replica_id, &snapshot_id).await;
+        let result = manager.restore_snapshot(&replica_id, &snapshot_id).await;
         assert!(result.is_ok());
     }
 
     #[tokio::test]
     async fn test_retention_policy() {
         let (manager, _temp_dir) = create_test_manager().await;
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
 
         // Create multiple snapshots
         for _ in 0..5 {
@@ -1487,7 +1488,7 @@ mod tests {
         let snapshots_before = manager.list_snapshots(&replica_id).await.unwrap();
         assert_eq!(snapshots_before.len(), 5);
 
-        let _deleted = manager.apply_retention_policy(&replica_id).await.unwrap();
+        let deleted = manager.apply_retention_policy(&replica_id).await.unwrap();
 
         let snapshots_after = manager.list_snapshots(&replica_id).await.unwrap();
         assert!(snapshots_after.len() <= snapshots_before.len());
@@ -1496,12 +1497,12 @@ mod tests {
     #[tokio::test]
     async fn test_statistics_collection() {
         let (manager, _temp_dir) = create_test_manager().await;
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
 
         // Create snapshots
-        let _full = manager.create_full_snapshot(&replica_id).await.unwrap();
+        let full = manager.create_full_snapshot(&replica_id).await.unwrap();
 
-        let _stats = manager.get_statistics(Some(&replica_id)).await.unwrap();
+        let stats = manager.get_statistics(Some(&replica_id)).await.unwrap();
         assert_eq!(stats.total_snapshots, 1);
         assert_eq!(stats.full_snapshots, 1);
         assert_eq!(stats.incremental_snapshots, 0);

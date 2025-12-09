@@ -46,6 +46,7 @@
 // - **Aggregations**: SUM, AVG, MIN, MAX operations
 // - **String Operations**: Pattern matching and comparisons
 
+use tokio::time::sleep;
 use std::sync::Arc;
 use std::time::{Instant, Duration};
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
@@ -303,7 +304,7 @@ pub struct MockBufferPool {
 impl MockBufferPool {
     pub fn new(config: BenchConfig) -> Self {
         let mut pages = Vec::with_capacity(config.buffer_pool_size);
-        for _i in 0..config.buffer_pool_size {
+        for i in 0..config.buffer_pool_size {
             pages.push(Arc::new(Page::new(i as u32)));
         }
 
@@ -324,7 +325,7 @@ impl MockBufferPool {
         let start = Instant::now();
 
         let table = self.page_table.read();
-        let _result = if let Some(&idx) = table.get(&page_id) {
+        let result = if let Some(&idx) = table.get(&page_id) {
             self.metrics.record_cache_hit();
             let page = self.pages[idx].clone();
             page.pin();
@@ -372,7 +373,7 @@ impl<T> MockLockFreeQueue<T> {
 
     pub fn pop(&self) -> Option<T> {
         let start = Instant::now();
-        let _result = self.queue.pop();
+        let result = self.queue.pop();
         let latency = start.elapsed().as_nanos() as u64;
         self.metrics.record_op(latency, size_of::<T>() as u64);
         result
@@ -492,17 +493,17 @@ pub fn bench_btree_lookup(config: &BenchConfig) -> BenchMetrics {
     let mut btree = BTreeMap::new();
 
     // Populate index
-    for _i in 0..config.num_pages {
+    for i in 0..config.num_pages {
         btree.insert(i as u64, vec![i as u32]);
     }
 
     let start = Instant::now();
 
-    for _i in 0..config.iterations {
+    for i in 0..config.iterations {
         let key = (i % config.num_pages) as u64;
         let lookup_start = Instant::now();
 
-        let _result = btree.get(&key);
+        let result = btree.get(&key);
         black_box(result);
 
         let latency = lookup_start.elapsed().as_nanos() as u64;
@@ -525,17 +526,17 @@ pub fn bench_hash_lookup(config: &BenchConfig) -> BenchMetrics {
     let mut hash_map = HashMap::new();
 
     // Populate index
-    for _i in 0..config.num_pages {
+    for i in 0..config.num_pages {
         hash_map.insert(i as u64, vec![i as u32]);
     }
 
     let start = Instant::now();
 
-    for _i in 0..config.iterations {
+    for i in 0..config.iterations {
         let key = (i % config.num_pages) as u64;
         let lookup_start = Instant::now();
 
-        let _result = hash_map.get(&key);
+        let result = hash_map.get(&key);
         black_box(result);
 
         let latency = lookup_start.elapsed().as_nanos() as u64;
@@ -554,27 +555,26 @@ pub fn bench_hash_lookup(config: &BenchConfig) -> BenchMetrics {
 
 /// Range scan benchmark (B-tree)
 pub fn bench_range_scan(config: &BenchConfig) -> BenchMetrics {
-    use std::collections::BTreeMap;
 
     let metrics = BenchMetrics::default();
     let mut btree = BTreeMap::new();
 
     // Populate index
-    for _i in 0..config.num_pages {
+    for i in 0..config.num_pages {
         btree.insert(i as u64, vec![i as u32]);
     }
 
     let start = Instant::now();
     let range_size = 100;
 
-    for _i in 0..(config.iterations / range_size) {
+    for i in 0..(config.iterations / range_size) {
         let start_key = ((i * range_size) % config.num_pages) as u64;
         let end_key = start_key + range_size as u64;
 
         let scan_start = Instant::now();
 
         let mut count = 0;
-        for (_key, _value) in btree.range(start_key..end_key) {
+        for (_key, value) in btree.range(start_key..end_key) {
             count += 1;
         }
         black_box(count);
@@ -597,7 +597,7 @@ pub fn bench_pin_unpin_cycles(config: &BenchConfig) -> BenchMetrics {
 
     let start = Instant::now();
 
-    for _i in 0..config.iterations {
+    for i in 0..config.iterations {
         let page_id = (i % config.buffer_pool_size) as u32;
 
         if let Some(page) = buffer_pool.pin_page(page_id) {
@@ -628,7 +628,7 @@ pub fn bench_concurrent_buffer_access(config: &BenchConfig) -> BenchMetrics {
         let buffer_size = config.buffer_pool_size;
 
         let handle = thread::spawn(move || {
-            for _i in 0..iterations_per_thread {
+            for i in 0..iterations_per_thread {
                 let page_id = ((thread_id * 1000 + i) % buffer_size) as u32;
 
                 if let Some(page) = pool.pin_page(page_id) {
@@ -658,7 +658,7 @@ pub fn bench_buffer_eviction(config: &BenchConfig) -> BenchMetrics {
 
     let start = Instant::now();
 
-    for _i in 0..config.iterations {
+    for i in 0..config.iterations {
         let page_id = (i % num_unique_pages) as u32;
 
         if let Some(page) = buffer_pool.pin_page(page_id) {
@@ -686,7 +686,7 @@ pub fn bench_queue_single_threaded(config: &BenchConfig) -> BenchMetrics {
     let start = Instant::now();
 
     // Push phase
-    for _i in 0..config.iterations {
+    for i in 0..config.iterations {
         queue.push(i as u64);
     }
 
@@ -702,7 +702,6 @@ pub fn bench_queue_single_threaded(config: &BenchConfig) -> BenchMetrics {
 
 /// Multi-threaded queue operations (producer-consumer)
 pub fn bench_queue_multi_threaded(config: &BenchConfig) -> BenchMetrics {
-    use std::thread;
 
     let queue = Arc::new(MockLockFreeQueue::<u64>::new());
     let num_producers = config.num_threads / 2;
@@ -716,7 +715,7 @@ pub fn bench_queue_multi_threaded(config: &BenchConfig) -> BenchMetrics {
     for _ in 0..num_producers {
         let q = queue.clone();
         let handle = thread::spawn(move || {
-            for _i in 0..items_per_producer {
+            for i in 0..items_per_producer {
                 q.push(i as u64);
             }
         });
@@ -940,7 +939,7 @@ pub fn bench_mvcc_traversal(config: &BenchConfig) -> BenchMetrics {
     };
 
     // Build chain of 10 versions
-    for _i in 0..10 {
+    for i in 0..10 {
         head = Version {
             txn_id: 100 - i,
             data: [i as u8; 128],
@@ -1157,7 +1156,6 @@ mod criterion_benches {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_bench_config_default() {

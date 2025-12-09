@@ -245,7 +245,7 @@ impl CrdtType {
             CrdtType::PnCounter { positive, negative } => {
                 let pos_sum: u64 = positive.values().sum();
                 let neg_sum: u64 = negative.values().sum();
-                let _result = pos_sum.saturating_sub(neg_sum);
+                let result = pos_sum.saturating_sub(neg_sum);
                 Ok(result.to_le_bytes().to_vec())
             }
             CrdtType::GSet(set) => {
@@ -377,7 +377,7 @@ impl ConflictResolver {
     fn select_shard(&self, conflict_id: &str) -> &ConflictShard {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         Hash::hash(conflict_id, &mut hasher);
-        let _hash = Hasher::finish(&hasher);
+        let hash = Hasher::finish(&hasher);
         let index = (hash as usize) % NUM_SHARDS;
         &self.shards[index]
     }
@@ -609,7 +609,7 @@ impl ConflictResolver {
 
     /// Custom handler resolution
     fn resolve_custom(&self, conflict: &Conflict, handler_name: &str) -> Result<ConflictResolution> {
-        let _handlers = self.custom_handlers.read();
+        let handlers = self.custom_handlers.read();
         let handler = handlers.get(handler_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Custom handler '{}' not found", handler_name)
@@ -620,7 +620,7 @@ impl ConflictResolver {
 
     /// CRDT-based resolution
     fn resolve_crdt(&self, conflict: &Conflict) -> Result<ConflictResolution> {
-        let key = format!("{}:{}", conflict.local_change.table,
+        let key = format!("{}:{}", conflict.local_change.table;
                          String::from_utf8_lossy(&conflict.local_change.row_key));
 
         let mut crdt_state = self.crdt_state.write();

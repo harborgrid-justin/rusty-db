@@ -293,7 +293,7 @@ impl SubqueryDecorrelator {
         }
     }
     
-    fn decorrelate_exists(_subquery: &SubqueryExpr) -> Option<PlanNode> {
+    fn decorrelate_exists(subquery: &SubqueryExpr) -> Option<PlanNode> {
         // Convert EXISTS correlated subquery to semi-join
         // Example:
         // SELECT * FROM orders o
@@ -307,13 +307,13 @@ impl SubqueryDecorrelator {
         None
     }
     
-    fn decorrelate_in(_subquery: &SubqueryExpr) -> Option<PlanNode> {
+    fn decorrelate_in(subquery: &SubqueryExpr) -> Option<PlanNode> {
         // Convert IN correlated subquery to join
         // Similar to EXISTS but returns matching values
         None
     }
     
-    fn decorrelate_scalar(_subquery: &SubqueryExpr) -> Option<PlanNode> {
+    fn decorrelate_scalar(subquery: &SubqueryExpr) -> Option<PlanNode> {
         // Convert scalar correlated subquery to LEFT JOIN with aggregation
         None
     }
@@ -331,7 +331,7 @@ impl SubqueryDecorrelator {
         }
     }
     
-    fn has_simple_aggregation(_plan: &PlanNode) -> bool {
+    fn has_simple_aggregation(plan: &PlanNode) -> bool {
         // Check if plan has a simple aggregation (MAX, MIN, etc.)
         // that can be converted to a join
         false // Placeholder
@@ -503,7 +503,7 @@ mod tests {
     
     #[test]
     fn test_exists_evaluator() {
-        let _result = QueryResult::new(
+        let result = QueryResult::new(
             vec!["id".to_string()],
             vec![vec!["1".to_string()]],
         );
@@ -518,7 +518,7 @@ mod tests {
     
     #[test]
     fn test_in_evaluator() {
-        let _result = QueryResult::new(
+        let result = QueryResult::new(
             vec!["value".to_string()],
             vec![
                 vec!["1".to_string()],
@@ -535,17 +535,17 @@ mod tests {
     #[test]
     fn test_scalar_subquery_evaluator() {
         // Valid scalar subquery
-        let _result = QueryResult::new(
+        let result = QueryResult::new(
             vec!["count".to_string()],
             vec![vec!["42".to_string()]],
         );
         
-        let _value = ScalarSubqueryEvaluator::evaluate(&result).unwrap();
+        let value = ScalarSubqueryEvaluator::evaluate(&result).unwrap();
         assert_eq!(value, Some("42".to_string()));
         
         // Empty result (NULL)
         let empty = QueryResult::empty();
-        let _value = ScalarSubqueryEvaluator::evaluate(&empty).unwrap();
+        let value = ScalarSubqueryEvaluator::evaluate(&empty).unwrap();
         assert_eq!(value, None);
         
         // Too many rows - should error
@@ -562,7 +562,7 @@ mod tests {
     
     #[test]
     fn test_quantified_comparison() {
-        let _result = QueryResult::new(
+        let result = QueryResult::new(
             vec!["value".to_string()],
             vec![
                 vec!["10".to_string()],
@@ -612,7 +612,7 @@ mod tests {
     fn test_subquery_cache() {
         let mut cache = SubqueryCache::new(10);
         
-        let _result = QueryResult::new(
+        let result = QueryResult::new(
             vec!["id".to_string()],
             vec![vec!["1".to_string()]],
         );

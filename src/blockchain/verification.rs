@@ -10,6 +10,7 @@
 // - Verification reports and alerts
 // - Recovery procedures for detected issues
 
+use std::collections::HashSet;
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

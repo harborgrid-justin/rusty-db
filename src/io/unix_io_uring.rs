@@ -506,7 +506,7 @@ impl IoUringEngine {
 
 #[cfg(not(target_os = "linux"))]
 impl IoUringEngine {
-    pub fn new(_config: IoUringConfig) -> Result<Self> {
+    pub fn new(config: IoUringConfig) -> Result<Self> {
         Ok(Self {
             config: _config,
             sq_head: Arc::new(AtomicU32::new(0)),

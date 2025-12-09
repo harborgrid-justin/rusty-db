@@ -21,6 +21,7 @@
 // - I/O: Token bucket algorithm for bandwidth limiting
 // - Storage: Quota enforcement at tablespace level
 
+use tokio::time::sleep;
 use std::time::Instant;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -915,7 +916,7 @@ mod tests {
         let pdb_id = PdbId::new(1);
 
         allocator.register(pdb_id, 100 * 1024 * 1024).await.unwrap();
-        let _result = allocator.try_consume(pdb_id, 1024).await.unwrap();
+        let result = allocator.try_consume(pdb_id, 1024).await.unwrap();
         assert!(result);
     }
 }

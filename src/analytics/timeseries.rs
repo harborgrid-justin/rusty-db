@@ -147,7 +147,7 @@ impl TimeSeriesAnalyzer {
                     point_index += 1;
                 } else {
                     // Gap - interpolate
-                    let _value = self.interpolate_value(current_time, &method)?;
+                    let value = self.interpolate_value(current_time, &method)?;
                     filled_points.push(TimeSeriesPoint {
                         timestamp: current_time,
                         value,
@@ -156,7 +156,7 @@ impl TimeSeriesAnalyzer {
                 }
             } else {
                 // Beyond last point - extrapolate or use method
-                let _value = self.interpolate_value(current_time, &method)?;
+                let value = self.interpolate_value(current_time, &method)?;
                 filled_points.push(TimeSeriesPoint {
                     timestamp: current_time,
                     value,
@@ -265,7 +265,7 @@ impl TimeSeriesAnalyzer {
         let mut downsampled_points = Vec::new();
         for (bucket_key, values) in buckets {
             let timestamp = UNIX_EPOCH + Duration::from_secs(bucket_key);
-            let _value = self.aggregate_values(&values, &aggregation)?;
+            let value = self.aggregate_values(&values, &aggregation)?;
 
             downsampled_points.push(TimeSeriesPoint {
                 timestamp,
@@ -313,7 +313,7 @@ impl TimeSeriesAnalyzer {
             return Ok(0.0);
         }
 
-        let _result = match method {
+        let result = match method {
             AggregationMethod::Mean => {
                 values.iter().sum::<f64>() / values.len() as f64
             }
@@ -357,7 +357,7 @@ impl TimeSeriesAnalyzer {
 
         match ma_type {
             MovingAverageType::Simple { window_size } => {
-                for _i in 0..self.series.points.len() {
+                for i in 0..self.series.points.len() {
                     let start = if i >= window_size { i - window_size + 1 } else { 0 };
                     let window = &self.series.points[start..=i];
                     let avg = window.iter().map(|p| p.value).sum::<f64>() / window.len() as f64;
@@ -387,7 +387,7 @@ impl TimeSeriesAnalyzer {
                 }
             }
             MovingAverageType::Weighted { weights } => {
-                for _i in 0..self.series.points.len() {
+                for i in 0..self.series.points.len() {
                     let start = if i >= weights.len() { i - weights.len() + 1 } else { 0 };
                     let window = &self.series.points[start..=i];
 
@@ -478,7 +478,7 @@ impl TimeSeriesAnalyzer {
         let mut numerator = 0.0;
         let mut denominator = 0.0;
 
-        for _i in 0..n {
+        for i in 0..n {
             numerator += (values[i] - mean) * (values[i + lag] - mean);
         }
 
@@ -532,7 +532,7 @@ impl TimeSeriesAnalyzer {
     fn calculate_trend(&self, values: &[f64], window_size: usize) -> Vec<f64> {
         let mut trend = Vec::new();
 
-        for _i in 0..values.len() {
+        for i in 0..values.len() {
             let start = if i >= window_size / 2 { i - window_size / 2 } else { 0 };
             let end = (i + window_size / 2).min(values.len());
             let window = &values[start..end];
@@ -548,7 +548,7 @@ impl TimeSeriesAnalyzer {
         let mut period_averages = vec![0.0; period];
 
         // Calculate average for each position in period
-        for _i in 0..period {
+        for i in 0..period {
             let mut sum = 0.0;
             let mut count = 0;
 
@@ -561,7 +561,7 @@ impl TimeSeriesAnalyzer {
         }
 
         // Apply seasonal pattern
-        for _i in 0..detrended.len() {
+        for i in 0..detrended.len() {
             seasonal[i] = period_averages[i % period];
         }
 
@@ -578,7 +578,7 @@ impl TimeSeriesAnalyzer {
         }
 
         // Simple threshold-based detection
-        for _i in 1..values.len() - 1 {
+        for i in 1..values.len() - 1 {
             let change = (values[i] - values[i - 1]).abs();
             if change > threshold {
                 change_points.push(i);
@@ -665,7 +665,7 @@ mod tests {
         let mut points = Vec::new();
         let start = UNIX_EPOCH + Duration::from_secs(1000000);
 
-        for _i in 0..100 {
+        for i in 0..100 {
             points.push(TimeSeriesPoint {
                 timestamp: start + Duration::from_secs(i * 3600),
                 value: (i as f64).sin() * 10.0 + 50.0,

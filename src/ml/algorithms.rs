@@ -187,7 +187,7 @@ impl Algorithm for LinearRegression {
             let mut weight_gradients = vec![0.0; n_features];
             let mut intercept_gradient = 0.0;
 
-            for _i in 0..n_samples {
+            for i in 0..n_samples {
                 let error = predictions[i] - target[i];
                 for j in 0..n_features {
                     weight_gradients[j] += error * dataset.features[i][j];
@@ -308,7 +308,7 @@ impl LinearRegression {
                 let mut weight_gradients = vec![0.0; n_features];
                 let mut intercept_gradient = 0.0;
 
-                for _i in batch_start..batch_end {
+                for i in batch_start..batch_end {
                     let prediction = self.predict_single(&dataset.features[i]);
                     let error = prediction - target[i];
                     epoch_loss += error * error;
@@ -477,7 +477,7 @@ impl Algorithm for LogisticRegression {
             let mut weight_gradients = vec![0.0; n_features];
             let mut intercept_gradient = 0.0;
 
-            for _i in 0..n_samples {
+            for i in 0..n_samples {
                 let error = predictions[i] - target[i];
                 for j in 0..n_features {
                     weight_gradients[j] += error * dataset.features[i][j];
@@ -643,7 +643,7 @@ impl DecisionTree {
 
     /// Create a leaf node
     fn create_leaf(&self, targets: &Vector, indices: &[usize]) -> TreeNode {
-        let _value = if self.is_classifier {
+        let value = if self.is_classifier {
             // Mode (most common class)
             self.mode(targets, indices)
         } else {
@@ -883,7 +883,7 @@ impl Algorithm for RandomForest {
         self.trees.clear();
 
         // Train each tree on a bootstrap sample
-        for _i in 0..self.n_estimators {
+        for i in 0..self.n_estimators {
             let bootstrap_indices = self.bootstrap_sample(dataset.num_samples());
 
             // Create bootstrap dataset

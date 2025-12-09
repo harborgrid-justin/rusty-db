@@ -177,7 +177,7 @@ pub fn apply_window_function(
 
     match function {
         WindowFunction::RowNumber => {
-            for _i in 0..data.len() {
+            for i in 0..data.len() {
                 result.push((i + 1).to_string());
             }
         }
@@ -191,9 +191,9 @@ pub fn apply_window_function(
         }
 
         WindowFunction::Lead { offset, default } => {
-            for _i in 0..data.len() {
+            for i in 0..data.len() {
                 let lead_index = i + offset;
-                let _value = if lead_index < data.len() {
+                let value = if lead_index < data.len() {
                     data[lead_index]
                         .get(value_column)
                         .cloned()
@@ -206,8 +206,8 @@ pub fn apply_window_function(
         }
 
         WindowFunction::Lag { offset, default } => {
-            for _i in 0..data.len() {
-                let _value = if i >= *offset {
+            for i in 0..data.len() {
+                let value = if i >= *offset {
                     data[i - offset]
                         .get(value_column)
                         .cloned()
@@ -251,7 +251,7 @@ pub fn apply_window_function(
 
         WindowFunction::NTile { buckets } => {
             let bucket_size = (data.len() + buckets - 1) / buckets;
-            for _i in 0..data.len() {
+            for i in 0..data.len() {
                 let bucket = (i / bucket_size) + 1;
                 result.push(bucket.min(*buckets).to_string());
             }
@@ -259,7 +259,7 @@ pub fn apply_window_function(
 
         WindowFunction::PercentRank => {
             let n = data.len();
-            for _i in 0..n {
+            for i in 0..n {
                 let percent_rank = if n > 1 {
                     i as f64 / (n - 1) as f64
                 } else {
@@ -271,7 +271,7 @@ pub fn apply_window_function(
 
         WindowFunction::CumeDist => {
             let n = data.len();
-            for _i in 0..n {
+            for i in 0..n {
                 let cume_dist = (i + 1) as f64 / n as f64;
                 result.push(format!("{:.6}", cume_dist));
             }
@@ -428,28 +428,28 @@ mod tests {
     #[test]
     fn test_row_number() {
         let data = make_data(&[&["a"], &["b"], &["c"]]);
-        let _result = apply_window_function(&data, &[], &[], &WindowFunction::RowNumber, 0).unwrap();
+        let result = apply_window_function(&data, &[], &[], &WindowFunction::RowNumber, 0).unwrap();
         assert_eq!(result, vec!["1", "2", "3"]);
     }
 
     #[test]
     fn test_rank() {
         let data = make_data(&[&["1"], &["1"], &["2"]]);
-        let _result = apply_window_function(&data, &[], &[0], &WindowFunction::Rank, 0).unwrap();
+        let result = apply_window_function(&data, &[], &[0], &WindowFunction::Rank, 0).unwrap();
         assert_eq!(result, vec!["1", "1", "3"]);
     }
 
     #[test]
     fn test_dense_rank() {
         let data = make_data(&[&["1"], &["1"], &["2"]]);
-        let _result = apply_window_function(&data, &[], &[0], &WindowFunction::DenseRank, 0).unwrap();
+        let result = apply_window_function(&data, &[], &[0], &WindowFunction::DenseRank, 0).unwrap();
         assert_eq!(result, vec!["1", "1", "2"]);
     }
 
     #[test]
     fn test_lead() {
         let data = make_data(&[&["a"], &["b"], &["c"]]);
-        let _result = apply_window_function(
+        let result = apply_window_function(
             &data,
             &[],
             &[],
@@ -466,7 +466,7 @@ mod tests {
     #[test]
     fn test_lag() {
         let data = make_data(&[&["a"], &["b"], &["c"]]);
-        let _result = apply_window_function(
+        let result = apply_window_function(
             &data,
             &[],
             &[],
@@ -483,7 +483,7 @@ mod tests {
     #[test]
     fn test_ntile() {
         let data = make_data(&[&["1"], &["2"], &["3"], &["4"]]);
-        let _result = apply_window_function(
+        let result = apply_window_function(
             &data,
             &[],
             &[],
@@ -504,7 +504,7 @@ mod tests {
     #[test]
     fn test_window_builder() {
         let data = make_data(&[&["1"], &["2"], &["3"]]);
-        let _result = WindowFunctionBuilder::new()
+        let result = WindowFunctionBuilder::new()
             .function(WindowFunction::RowNumber)
             .execute(&data)
             .unwrap();

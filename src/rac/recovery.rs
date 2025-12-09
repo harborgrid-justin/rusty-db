@@ -519,7 +519,7 @@ impl InstanceRecoveryManager {
         }
 
         // Create recovery state
-        let _state = RecoveryState {
+        let state = RecoveryState {
             phase: RecoveryPhase::Detecting,
             coordinator: None,
             failed_instance: failed_instance.clone(),
@@ -560,7 +560,7 @@ impl InstanceRecoveryManager {
             .clone();
 
         // Broadcast coordinator
-        let _message = RecoveryMessage::CoordinatorElected {
+        let message = RecoveryMessage::CoordinatorElected {
             failed_instance: failed_instance.clone(),
             coordinator: coordinator.clone(),
         };
@@ -642,7 +642,7 @@ impl InstanceRecoveryManager {
         }
 
         // Notify completion
-        let _message = RecoveryMessage::RecoveryComplete {
+        let message = RecoveryMessage::RecoveryComplete {
             failed_instance,
             success: true,
         };
@@ -679,7 +679,7 @@ impl InstanceRecoveryManager {
 
         // Get redo logs from buffer
         let buffer = self.redo_buffer.lock();
-        let _logs = buffer.get_entries_after(0);
+        let logs = buffer.get_entries_after(0);
         drop(buffer);
 
         if self.config.enable_parallel {
@@ -720,7 +720,7 @@ impl InstanceRecoveryManager {
         let mut handles = Vec::new();
 
         for (partition_id, partition_logs) in partitions {
-            let _stats = self.stats.clone();
+            let stats = self.stats.clone();
             let recoveries = self.active_recoveries.clone();
             let failed_instance = failed_instance.clone();
 
@@ -842,7 +842,7 @@ impl InstanceRecoveryManager {
         from_lsn: LogSequenceNumber,
     ) -> Result<(), DbError> {
         let buffer = self.redo_buffer.lock();
-        let _logs = buffer.get_entries_after(from_lsn);
+        let logs = buffer.get_entries_after(from_lsn);
         drop(buffer);
 
         // Send logs back

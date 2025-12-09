@@ -240,7 +240,7 @@ impl ColumnScan {
         let mut selection = SelectionVector::with_capacity(row_count);
 
         // Initialize with all rows selected
-        for _i in 0..row_count {
+        for i in 0..row_count {
             selection.add(i);
         }
 
@@ -336,7 +336,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let _value = match &filter.values[0] {
+        let value = match &filter.values[0] {
             Value::Integer(v) => *v as i32,
             _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
         };
@@ -387,7 +387,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let _value = match &filter.values[0] {
+        let value = match &filter.values[0] {
             Value::Integer(v) => *v,
             _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
         };
@@ -427,7 +427,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let _value = match &filter.values[0] {
+        let value = match &filter.values[0] {
             Value::Float(v) => *v as f32,
             _ => return Err(DbError::InvalidArgument("Expected float value".to_string())),
         };
@@ -464,7 +464,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let _value = match &filter.values[0] {
+        let value = match &filter.values[0] {
             Value::Float(v) => *v,
             _ => return Err(DbError::InvalidArgument("Expected float value".to_string())),
         };
@@ -501,7 +501,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let _value = match &filter.values[0] {
+        let value = match &filter.values[0] {
             Value::Text(v) => v,
             _ => return Err(DbError::InvalidArgument("Expected text value".to_string())),
         };
@@ -537,7 +537,7 @@ impl ColumnScan {
             return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
         }
 
-        let _value = match &filter.values[0] {
+        let value = match &filter.values[0] {
             Value::Boolean(v) => *v,
             _ => return Err(DbError::InvalidArgument("Expected boolean value".to_string())),
         };
@@ -585,7 +585,7 @@ impl ColumnScan {
                     return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
                 }
 
-                let _value = match &filter.values[0] {
+                let value = match &filter.values[0] {
                     Value::Integer(v) => *v as i32,
                     _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
                 };

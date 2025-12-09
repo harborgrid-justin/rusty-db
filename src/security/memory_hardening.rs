@@ -950,7 +950,7 @@ impl IsolatedHeap {
 
         unsafe {
             let ptr = self.base_ptr.as_ptr().add(offset);
-            for _i in 0..size {
+            for i in 0..size {
                 let byte_ptr = ptr.add(i);
                 let encrypted = *byte_ptr ^ ((self.encryption_key >> (i % 8)) as u8);
                 ptr::write_volatile(byte_ptr, encrypted);
@@ -1138,7 +1138,7 @@ mod tests {
         let mut buffer = SecureBuffer::<u8>::new(10).unwrap();
 
         let too_much_data = vec![0u8; 20];
-        let _result = buffer.write(0, &too_much_data);
+        let result = buffer.write(0, &too_much_data);
         assert!(result.is_err());
     }
 
@@ -1149,13 +1149,13 @@ mod tests {
         let ptr = allocator.allocate(1024).unwrap();
         assert!(!ptr.as_ptr().is_null());
 
-        let _stats = allocator.stats();
+        let stats = allocator.stats();
         assert_eq!(stats.active_allocations, 1);
         assert_eq!(stats.bytes_allocated, 1024);
 
         allocator.deallocate(ptr, 1024).unwrap();
 
-        let _stats = allocator.stats();
+        let stats = allocator.stats();
         assert_eq!(stats.active_allocations, 0);
     }
 
@@ -1167,10 +1167,10 @@ mod tests {
         allocator.deallocate(ptr, 256).unwrap();
 
         // Attempt double-free
-        let _result = allocator.deallocate(ptr, 256);
+        let result = allocator.deallocate(ptr, 256);
         assert!(result.is_err());
 
-        let _stats = allocator.stats();
+        let stats = allocator.stats();
         assert_eq!(stats.double_free_detected, 1);
     }
 
@@ -1184,7 +1184,7 @@ mod tests {
         let ptr2 = heap.allocate(512).unwrap();
         assert!(!ptr2.as_ptr().is_null());
 
-        let _stats = heap.stats();
+        let stats = heap.stats();
         assert_eq!(stats.total_allocations, 2);
         assert_eq!(stats.bytes_allocated, 768);
     }
@@ -1194,11 +1194,11 @@ mod tests {
         let heap = IsolatedHeap::new(4096).unwrap();
 
         // Encrypt a region
-        let _result = heap.encrypt_region(0, 256);
+        let result = heap.encrypt_region(0, 256);
         assert!(result.is_ok());
 
         // Decrypt the same region
-        let _result = heap.decrypt_region(0, 256);
+        let result = heap.decrypt_region(0, 256);
         assert!(result.is_ok());
     }
 }

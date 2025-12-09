@@ -154,7 +154,7 @@
 // monitor.start_monitoring().await?;
 //
 // // Add replica for monitoring
-// let _replica_id = ReplicaId::new("replica-001")?;
+// let replica_id = ReplicaId::new("replica-001")?;
 // monitor.add_replica(replica_id.clone()).await?;
 //
 // // Get comprehensive health report
@@ -201,7 +201,7 @@
 // let manager = FileSnapshotManager::new(snapshot_config).await?;
 //
 // // Create full baseline snapshot
-// let _replica_id = ReplicaId::new("replica-001")?;
+// let replica_id = ReplicaId::new("replica-001")?;
 // let full_snapshot_id = manager.create_full_snapshot(&replica_id).await?;
 // println!("Created full snapshot: {}", full_snapshot_id);
 //
@@ -284,6 +284,7 @@
 // # }
 // ```
 
+use tokio::time::sleep;
 use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -613,7 +614,7 @@ impl ReplicationManager {
             ));
         }
 
-        let _replica_id = replica.id.clone();
+        let replica_id = replica.id.clone();
         let address = replica.address.clone();
 
         let mut replicas = self.replicas.write();
@@ -1035,7 +1036,7 @@ impl ReplicationManager {
     }
 
     /// Register this node for discovery
-    pub fn register_for_discovery(&self, _port: u16) -> Result<()> {
+    pub fn register_for_discovery(&self, port: u16) -> Result<()> {
         // In real implementation, this would:
         // 1. Start a discovery service on the specified port
         // 2. Respond to discovery requests
@@ -1550,7 +1551,7 @@ impl ReplicationManager {
 
     /// Get comprehensive replication report
     pub fn get_replication_report(&self) -> ReplicationReport {
-        let _stats = self.get_replication_stats();
+        let stats = self.get_replication_stats();
         let health_statuses = self.get_all_replica_health();
         let lag_monitors = self.get_all_lag_monitors();
         let conflicts = self.get_unresolved_conflicts();
@@ -1954,7 +1955,7 @@ mod tests {
             last_sync: 0,
         };
 
-        let _result = rm.add_replica(replica);
+        let result = rm.add_replica(replica);
         assert!(result.is_err());
 
         Ok(())
@@ -1965,7 +1966,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Synchronous, true);
 
         // Add WAL entries
-        for _i in 1..=5 {
+        for i in 1..=5 {
             let entry = WALEntry {
                 lsn: i,
                 transaction_id: Some(i),
@@ -2089,7 +2090,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Synchronous, true);
 
         // Add multiple replicas
-        for _i in 1..=3 {
+        for i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("replica-stats-{}", i),
                 address: format!("127.0.0.1:544{}", i),
@@ -2111,7 +2112,7 @@ mod tests {
             rm.update_replica_health(health)?;
         }
 
-        let _stats = rm.get_replication_stats();
+        let stats = rm.get_replication_stats();
         assert_eq!(stats.total_replicas, 3);
         assert_eq!(stats.healthy_replicas, 2);
         assert_eq!(stats.lagging_replicas, 1);
@@ -2315,7 +2316,7 @@ mod tests {
         };
 
         // Should fail because topology is not Cascading
-        let _result = rm.add_cascading_replica("parent", child);
+        let result = rm.add_cascading_replica("parent", child);
         assert!(result.is_err());
     }
 
@@ -2324,7 +2325,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Asynchronous, true);
 
         // Add multiple replicas with different health statuses
-        for _i in 1..=3 {
+        for i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("replica-{}", i),
                 address: format!("127.0.0.1:550{}", i),
@@ -2360,7 +2361,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::MultiMaster, true);
 
         // Create multiple conflicts
-        for _i in 1..=5 {
+        for i in 1..=5 {
             rm.detect_conflict(
                 i,
                 "test".to_string(),
@@ -2375,7 +2376,7 @@ mod tests {
         assert_eq!(rm.get_conflict_count(), 5);
 
         // Resolve first 3
-        for _i in 1..=3 {
+        for i in 1..=3 {
             rm.resolve_conflict(i)?;
         }
 
@@ -2486,7 +2487,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Asynchronous, false);
 
         // Add some WAL entries
-        for _i in 1..=10 {
+        for i in 1..=10 {
             let entry = WALEntry {
                 lsn: i,
                 transaction_id: Some(i),
@@ -2592,7 +2593,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::SemiSync, true);
 
         // Add replicas
-        for _i in 1..=3 {
+        for i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("replica-{}", i),
                 address: format!("127.0.0.1:553{}", i),
@@ -2620,7 +2621,7 @@ mod tests {
         assert_eq!(rm.check_overall_health(), OverallHealth::NoReplicas);
 
         // Add healthy replicas
-        for _i in 1..=3 {
+        for i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("replica-{}", i),
                 address: format!("127.0.0.1:554{}", i),
@@ -2654,7 +2655,7 @@ mod tests {
         rm.create_logical_slot("test".to_string(), "plugin".to_string())?;
         rm.advance_logical_slot("test", 100)?;
 
-        let _result = rm.advance_logical_slot("test", 50);
+        let result = rm.advance_logical_slot("test", 50);
         assert!(result.is_err());
 
         Ok(())
@@ -2665,7 +2666,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::Asynchronous, true);
 
         rm.create_logical_slot("dup_slot".to_string(), "plugin".to_string())?;
-        let _result = rm.create_logical_slot("dup_slot".to_string(), "plugin".to_string());
+        let result = rm.create_logical_slot("dup_slot".to_string(), "plugin".to_string());
         assert!(result.is_err());
 
         Ok(())
@@ -2767,7 +2768,7 @@ mod tests {
     fn test_all_lag_monitors() -> Result<()> {
         let rm = ReplicationManager::new(ReplicationMode::SemiSync, true);
 
-        for _i in 1..=3 {
+        for i in 1..=3 {
             let replica = ReplicaNode {
                 id: format!("r{}", i),
                 address: format!("127.0.0.1:557{}", i),
@@ -2812,7 +2813,7 @@ mod tests {
         rm.add_replica(replica)?;
 
         // Add measurements
-        for _i in 1..=5 {
+        for i in 1..=5 {
             rm.update_lag("history-test", i * 100)?;
         }
 
@@ -2837,7 +2838,7 @@ mod tests {
         rm.add_replica(replica)?;
 
         // Add more than 100 measurements
-        for _i in 1..=150 {
+        for i in 1..=150 {
             rm.update_lag("limit-test", i)?;
         }
 
@@ -2859,7 +2860,7 @@ mod tests {
         rm.checkpoints.write().push(checkpoint.clone());
 
         // Attempt to restore should fail
-        let _result = tokio_test::block_on(rm.restore_from_checkpoint(&checkpoint.checkpoint_id));
+        let result = tokio_test::block_on(rm.restore_from_checkpoint(&checkpoint.checkpoint_id));
         assert!(result.is_err());
 
         Ok(())
@@ -2934,7 +2935,7 @@ mod tests {
         assert_eq!(rm.active_replica_count(), 0);
 
         // Add replicas with different statuses
-        for _i in 1..=5 {
+        for i in 1..=5 {
             let status = if i <= 3 {
                 ReplicaStatus::Active
             } else {
@@ -2962,7 +2963,7 @@ mod tests {
     fn test_average_and_max_lag() -> Result<()> {
         let rm = ReplicationManager::new(ReplicationMode::SemiSync, true);
 
-        for _i in 1..=5 {
+        for i in 1..=5 {
             let replica = ReplicaNode {
                 id: format!("r{}", i),
                 address: format!("127.0.0.1:561{}", i),
@@ -3017,7 +3018,7 @@ mod tests {
     fn test_get_unhealthy_and_critical_replicas() -> Result<()> {
         let rm = ReplicationManager::new(ReplicationMode::Asynchronous, true);
 
-        for _i in 1..=4 {
+        for i in 1..=4 {
             let replica = ReplicaNode {
                 id: format!("r{}", i),
                 address: format!("127.0.0.1:563{}", i),
@@ -3086,7 +3087,7 @@ mod tests {
         assert_eq!(rm.total_snapshot_size(), 0);
 
         // Create multiple snapshots
-        for _i in 1..=10 {
+        for i in 1..=10 {
             let mut snapshot = rm.create_snapshot(vec![format!("table{}", i)])?;
             snapshot.size_bytes = i * 1000;
             rm.snapshots.write().pop(); // Remove auto-added
@@ -3178,7 +3179,7 @@ mod tests {
 
         rm.update_lag("uptime-test", 5000)?;
 
-        let _stats = rm.get_replica_uptime_stats("uptime-test")?;
+        let stats = rm.get_replica_uptime_stats("uptime-test")?;
         assert_eq!(stats.replica_id, "uptime-test");
         assert_eq!(stats.status, ReplicaStatus::Active);
         assert_eq!(stats.error_count, 2);
@@ -3191,7 +3192,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::SemiSync, true);
 
         // Add WAL entries
-        for _i in 1..=20 {
+        for i in 1..=20 {
             let entry = WALEntry {
                 lsn: i,
                 transaction_id: Some(i),
@@ -3264,7 +3265,7 @@ mod tests {
         let rm = ReplicationManager::new(ReplicationMode::MultiMaster, true);
 
         // Create conflicts
-        for _i in 1..=10 {
+        for i in 1..=10 {
             rm.detect_conflict(
                 i,
                 "test".to_string(),
@@ -3279,7 +3280,7 @@ mod tests {
         assert_eq!(rm.get_resolved_conflicts_count(), 0);
 
         // Resolve half
-        for _i in 1..=5 {
+        for i in 1..=5 {
             rm.resolve_conflict(i)?;
         }
 

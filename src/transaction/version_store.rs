@@ -18,6 +18,7 @@
 // let visible = store.get_version("key1", txn_id, snapshot_time);
 // ```
 
+use std::fmt;
 use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;

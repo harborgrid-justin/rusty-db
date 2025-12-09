@@ -705,7 +705,7 @@ mod tests {
     fn test_row_policy() {
         let manager = FgacManager::new();
 
-        let _policy = RowLevelPolicy {
+        let policy = RowLevelPolicy {
             id: "pol1".to_string(),
             name: "User Data Policy".to_string(),
             table_id: "users".to_string(),
@@ -767,7 +767,7 @@ mod tests {
     fn test_predicate_generation() {
         let manager = FgacManager::new();
 
-        let _policy = RowLevelPolicy {
+        let policy = RowLevelPolicy {
             id: "pol1".to_string(),
             name: "Department Policy".to_string(),
             table_id: "employees".to_string(),
@@ -783,7 +783,7 @@ mod tests {
 
         manager.add_row_policy(policy).unwrap();
 
-        let _context = SecurityContext {
+        let context = SecurityContext {
             user_id: "user1".to_string(),
             roles: HashSet::new(),
             session_attributes: HashMap::new(),

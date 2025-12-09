@@ -97,6 +97,7 @@
 ///
 /// Provides the root container that manages multiple Pluggable Databases (PDBs),
 /// system-level metadata, shared memory pools, and background processes.
+use std::fmt;
 pub mod cdb;
 
 /// Pluggable Database (PDB) management
@@ -435,7 +436,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_multitenant_database_creation() {
-        let _result = MultiTenantDatabase::new("TEST_CDB").await;
+        let result = MultiTenantDatabase::new("TEST_CDB").await;
         assert!(result.is_ok());
     }
 }

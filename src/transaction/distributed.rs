@@ -488,7 +488,7 @@ impl SagaCoordinator {
         Ok(false)
     }
 
-    async fn execute_saga_step(&self, _step: &SagaStep) -> std::result::Result<bool, DbError> {
+    async fn execute_saga_step(&self, step: &SagaStep) -> std::result::Result<bool, DbError> {
         // Simulate step execution
         Ok(true)
     }

@@ -29,7 +29,7 @@
 //
 //     // Use circuit breaker
 //     let breaker = CircuitBreaker::new("external_api", 5, 60);
-//     let _result = breaker.call(async {
+//     let result = breaker.call(async {
 //         // Make external call
 //         Ok::<_, rusty_db::DbError>(42)
 //     }).await;
@@ -42,6 +42,8 @@
 // }
 // ```
 
+use tokio::time::sleep;
+use std::fmt;
 use std::time::Instant;
 use std::sync::Mutex;
 use std::time::SystemTime;
@@ -378,7 +380,7 @@ impl CircuitBreaker {
 
     /// Check if we should attempt the call
     async fn should_attempt(&self) -> bool {
-        let _state = *self.state.read().await;
+        let state = *self.state.read().await;
 
         match state {
             CircuitState::Closed => true,
@@ -402,7 +404,7 @@ impl CircuitBreaker {
 
     /// Handle successful call
     async fn on_success(&self) {
-        let _state = *self.state.read().await;
+        let state = *self.state.read().await;
 
         match state {
             CircuitState::Closed => {
@@ -434,7 +436,7 @@ impl CircuitBreaker {
 
     /// Handle failed call
     async fn on_failure(&self) {
-        let _state = *self.state.read().await;
+        let state = *self.state.read().await;
 
         match state {
             CircuitState::Closed => {
@@ -811,7 +813,7 @@ mod tests {
 
         assert_eq!(bulkhead.available_permits(), 2);
 
-        let _result = bulkhead.execute(async {
+        let result = bulkhead.execute(async {
             Ok::<_, DbError>(42)
         }).await;
 

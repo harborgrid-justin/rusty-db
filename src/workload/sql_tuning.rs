@@ -786,8 +786,6 @@ impl SqlTuningAdvisor {
 
     /// Compute plan hash
     fn compute_plan_hash(&self, sql_text: &str) -> u64 {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         sql_text.hash(&mut hasher);

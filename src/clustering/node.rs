@@ -3,6 +3,7 @@
 /// This module provides types and functionality for managing cluster nodes,
 /// including node identification, roles, status, and basic operations.
 
+use std::fmt;
 use std::time::SystemTime;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};

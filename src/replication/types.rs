@@ -18,7 +18,7 @@
 // use crate::replication::types::*;
 //
 // // Create strongly-typed replica ID
-// let _replica_id = ReplicaId::new("replica-01")?;
+// let replica_id = ReplicaId::new("replica-01")?;
 //
 // // Create replica node with validation
 // let replica = ReplicaNode::new(
@@ -36,6 +36,7 @@
 // )?;
 // ```
 
+use std::fmt;
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -989,7 +990,7 @@ mod tests {
 
     #[test]
     fn test_display_implementations() {
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
         assert_eq!(format!("{}", replica_id), "test-replica");
 
         let address = ReplicaAddress::new("127.0.0.1:5432").unwrap();

@@ -691,7 +691,7 @@ impl PatternMatcher {
 
                     // Compute measures
                     for measure in &context.pattern.measures {
-                        let _value = measure.compute(&[event]);
+                        let value = measure.compute(&[event]);
                         pattern_match.measures.insert(measure.name.clone(), value);
                     }
 
@@ -1117,7 +1117,7 @@ impl NFA {
                     continue;
                 }
 
-                let _state = &self.states[state_id];
+                let state = &self.states[state_id];
 
                 // Try all transitions
                 for transition in &state.transitions {
@@ -1240,7 +1240,7 @@ impl NFAPatternMatcher {
                 PatternElement::new("dummy", Condition::Custom { name: "dummy".to_string() })
             ));
 
-            let _context = MatchContext::new(Arc::new(pattern));
+            let context = MatchContext::new(Arc::new(pattern));
             let matches = nfa.match_events(&events, &context);
             all_matches.extend(matches);
         }
@@ -1317,7 +1317,7 @@ mod tests {
         let condition = Condition::EventType("test".to_string());
         let event = Event::new("test");
         let pattern = Pattern::new("test", PatternSpec::Element(PatternElement::new("A", condition.clone())));
-        let _context = MatchContext::new(Arc::new(pattern));
+        let context = MatchContext::new(Arc::new(pattern));
 
         assert!(condition.evaluate(&event, &context));
     }

@@ -9,6 +9,7 @@
 // - Tamper-evident design
 // - Historical row versioning
 
+use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -286,7 +287,6 @@ impl Block {
     /// Compute hash for this block
     fn compute_block_hash(&self) -> Hash256 {
         let mut hasher = sha2::Sha256::new();
-        use sha2::Digest;
 
         hasher.update(&self.block_id.to_le_bytes());
         hasher.update(&self.table_id.to_le_bytes());
@@ -294,7 +294,7 @@ impl Block {
         hasher.update(&self.merkle_root);
         hasher.update(&self.created_at.to_le_bytes());
 
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         let mut hash = [0u8; 32];
         hash.copy_from_slice(&result);
         hash
@@ -314,7 +314,7 @@ impl Block {
         }
 
         // Verify row chain
-        for _i in 1..self.rows.len() {
+        for i in 1..self.rows.len() {
             if !self.rows[i].verify_chain(&self.rows[i - 1]) {
                 return Ok(false);
             }

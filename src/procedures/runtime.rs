@@ -314,7 +314,7 @@ impl RuntimeExecutor {
         }
 
         // Prepare result
-        let _result = ExecutionResult {
+        let result = ExecutionResult {
             return_value: ctx.get_return().cloned(),
             output_params: ctx.get_outputs().clone(),
             rows_affected: 0, // TODO: Track actual rows affected
@@ -326,7 +326,7 @@ impl RuntimeExecutor {
 
     /// Execute a declaration
     fn execute_declaration(&self, ctx: &mut ExecutionContext, decl: &Declaration) -> Result<()> {
-        let _value = if let Some(init_expr) = &decl.initial_value {
+        let value = if let Some(init_expr) = &decl.initial_value {
             self.evaluate_expression(ctx, init_expr)?
         } else {
             RuntimeValue::Null
@@ -453,7 +453,7 @@ impl RuntimeExecutor {
                     (start_val..=end_val).collect()
                 };
 
-                for _i in range {
+                for i in range {
                     ctx.set_variable(iterator.clone(), RuntimeValue::Integer(i));
 
                     for s in statements {
@@ -904,7 +904,7 @@ impl RuntimeExecutor {
                 }
                 let s = args[0].as_string();
                 let start = (args[1].as_integer()? - 1).max(0) as usize;
-                let _result = if args.len() == 3 {
+                let result = if args.len() == 3 {
                     let len = args[2].as_integer()?.max(0) as usize;
                     s.chars().skip(start).take(len).collect()
                 } else {
@@ -999,7 +999,7 @@ mod tests {
     #[test]
     fn test_execute_simple_assignment() -> Result<()> {
         let mut parser = PlSqlParser::new();
-        let _source = r#"
+        let source = r#"
             DECLARE
                 x INTEGER := 10;
                 y INTEGER;
@@ -1010,7 +1010,7 @@ mod tests {
 
         let block = parser.parse(source)?;
         let executor = RuntimeExecutor::new();
-        let _result = executor.execute(&block)?;
+        let result = executor.execute(&block)?;
 
         assert!(result.return_value.is_none());
 
@@ -1020,7 +1020,7 @@ mod tests {
     #[test]
     fn test_execute_if_statement() -> Result<()> {
         let mut parser = PlSqlParser::new();
-        let _source = r#"
+        let source = r#"
             DECLARE
                 x INTEGER := 15;
                 result VARCHAR2(10);
@@ -1037,7 +1037,7 @@ mod tests {
 
         let block = parser.parse(source)?;
         let executor = RuntimeExecutor::new();
-        let _result = executor.execute(&block)?;
+        let result = executor.execute(&block)?;
 
         assert!(result.return_value.is_none());
 
@@ -1047,7 +1047,7 @@ mod tests {
     #[test]
     fn test_execute_loop() -> Result<()> {
         let mut parser = PlSqlParser::new();
-        let _source = r#"
+        let source = r#"
             DECLARE
                 counter INTEGER := 0;
             BEGIN
@@ -1060,7 +1060,7 @@ mod tests {
 
         let block = parser.parse(source)?;
         let executor = RuntimeExecutor::new();
-        let _result = executor.execute(&block)?;
+        let result = executor.execute(&block)?;
 
         assert!(result.return_value.is_none());
 

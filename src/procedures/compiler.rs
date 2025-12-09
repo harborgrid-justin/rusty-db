@@ -519,7 +519,7 @@ impl PlSqlCompiler {
             if obj.status == CompilationStatus::Invalid || obj.status == CompilationStatus::NeedsRecompilation {
                 // TODO: Get source code for object and recompile
                 // For now, create a placeholder result
-                let _result = CompilationResult::new();
+                let result = CompilationResult::new();
                 results.insert(name.clone(), result);
             }
         }
@@ -671,7 +671,7 @@ mod tests {
     fn test_compile_simple_block() -> Result<()> {
         let mut compiler = PlSqlCompiler::new();
 
-        let _source = r#"
+        let source = r#"
             DECLARE
                 x INTEGER := 10;
             BEGIN
@@ -679,7 +679,7 @@ mod tests {
             END;
         "#;
 
-        let _result = compiler.compile(source)?;
+        let result = compiler.compile(source)?;
 
         assert!(result.success);
         assert_eq!(result.errors.len(), 0);
@@ -691,13 +691,13 @@ mod tests {
     fn test_undefined_variable_error() -> Result<()> {
         let mut compiler = PlSqlCompiler::new();
 
-        let _source = r#"
+        let source = r#"
             BEGIN
                 y := x + 5;
             END;
         "#;
 
-        let _result = compiler.compile(source)?;
+        let result = compiler.compile(source)?;
 
         assert!(!result.success);
         assert!(result.errors.iter().any(|e| e.error_type == ErrorType::UndefinedVariable));

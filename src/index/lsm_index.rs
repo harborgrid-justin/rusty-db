@@ -16,6 +16,7 @@
 /// - Space: 10-15 bits per key for bloom filters
 /// - Write amplification: 5-10x (vs 20-50x for naive LSM)
 
+use tokio::time::sleep;
 use crate::Result;
 use crate::error::DbError;
 use parking_lot::RwLock;
@@ -830,7 +831,7 @@ mod tests {
     fn test_lsm_range() {
         let lsm: LSMTreeIndex<i32, String> = LSMTreeIndex::new(LSMConfig::default());
 
-        for _i in 1..=10 {
+        for i in 1..=10 {
             lsm.insert(i, format!("value_{}", i)).unwrap();
         }
 

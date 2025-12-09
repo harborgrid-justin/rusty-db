@@ -115,7 +115,7 @@ impl ParallelExecutor {
     ) -> Result<QueryResult, DbError> {
         // Execute left and right in parallel
         let left_handle = {
-            let _left = left.clone();
+            let left = left.clone();
             tokio::spawn(async move {
                 // Placeholder: execute left plan
                 QueryResult::empty()
@@ -123,7 +123,7 @@ impl ParallelExecutor {
         };
         
         let right_handle = {
-            let _right = right.clone();
+            let right = right.clone();
             tokio::spawn(async move {
                 // Placeholder: execute right plan
                 QueryResult::empty()
@@ -319,7 +319,7 @@ impl ParallelExecutor {
         let mut partitions = vec![Vec::new(); num_partitions];
         
         for (i, row) in rows.iter().enumerate() {
-            let _partition_id = i % num_partitions;
+            let partition_id = i % num_partitions;
             partitions[partition_id].push(row.clone());
         }
         

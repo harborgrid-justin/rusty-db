@@ -3,6 +3,7 @@
 /// This module handles the core session state including variables, settings,
 /// transactions, cursors, and prepared statements.
 
+use std::fmt;
 use std::collections::HashSet;
 use super::types::{SessionId, CursorId, StatementId, Username, SchemaName};
 use crate::common::{TransactionId, Value};
@@ -169,7 +170,7 @@ impl SessionState {
 
     /// Remove session variable
     pub fn remove_variable(&mut self, name: &str) -> Option<Value> {
-        let _result = self.session_variables.remove(name);
+        let result = self.session_variables.remove(name);
         self.touch();
         result
     }

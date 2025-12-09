@@ -312,7 +312,7 @@ impl ConnectionPoolManager {
     }
 
     pub fn should_recover(&self) -> bool {
-        let _stats = self.pool_stats.read();
+        let stats = self.pool_stats.read();
         let utilization = stats.active_connections as f64 / stats.total_connections as f64;
         let failure_rate = stats.failed_connections as f64 / stats.total_connections.max(1) as f64;
 
@@ -803,7 +803,7 @@ impl SelfHealingEngine {
     async fn execute_healing(&self, issue_id: u64, action: HealingAction) -> Result<()> {
         tracing::info!("Executing healing action: {:?}", action);
 
-        let _result = match &action {
+        let result = match &action {
             HealingAction::RepairDataBlock { page_id, .. } => {
                 self.corruption_detector.repair_page(*page_id, &[]).await
             }
@@ -886,7 +886,7 @@ mod tests {
         let detector = MemoryLeakDetector::new(5.0);
 
         // Add increasing memory snapshots
-        for _i in 0..20 {
+        for i in 0..20 {
             detector.record_snapshot(MemorySnapshot {
                 timestamp: SystemTime::now(),
                 total_memory_mb: 1000 + i * 10,

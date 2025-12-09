@@ -250,7 +250,7 @@ impl MaterializedViewManager {
 
         let start = SystemTime::now();
 
-        let _result = match &view.maintenance_mode {
+        let result = match &view.maintenance_mode {
             MaintenanceMode::Complete => self.complete_refresh(view)?,
             MaintenanceMode::Incremental { .. } => self.incremental_refresh(view)?,
             MaintenanceMode::Fast { .. } => self.fast_refresh(view)?,
@@ -272,7 +272,7 @@ impl MaterializedViewManager {
     }
 
     /// Complete refresh - rebuild entire view
-    fn complete_refresh(&self, _view: &MaterializedView) -> Result<RefreshResult> {
+    fn complete_refresh(&self, view: &MaterializedView) -> Result<RefreshResult> {
         // In production, would execute view query and replace data
         Ok(RefreshResult {
             rows_inserted: 1000,
@@ -641,7 +641,7 @@ impl QueryRewriter {
             .ok_or_else(|| DbError::Internal("No candidates".to_string()))
     }
 
-    fn apply_rewrite(&self, _query: &str, view_name: &str) -> Result<String> {
+    fn apply_rewrite(&self, query: &str, view_name: &str) -> Result<String> {
         // Rewrite query to use materialized view
         Ok(format!("SELECT * FROM {}", view_name))
     }
@@ -735,7 +735,7 @@ mod tests {
             ],
         };
 
-        let _result = manager.create_view(
+        let result = manager.create_view(
             "test_mv".to_string(),
             "SELECT id FROM users".to_string(),
             schema,
@@ -787,7 +787,7 @@ mod tests {
             },
         ).unwrap();
 
-        let _result = manager.record_base_table_change(
+        let result = manager.record_base_table_change(
             "users",
             DeltaOperation::Insert,
             "1".to_string(),
@@ -818,7 +818,7 @@ mod tests {
             ],
         };
 
-        let _result = manager.create_view(
+        let result = manager.create_view(
             "test_mv".to_string(),
             "SELECT id FROM users".to_string(),
             schema,
@@ -849,7 +849,7 @@ mod tests {
             ],
         };
 
-        let _result = manager.create_view(
+        let result = manager.create_view(
             "test_mv".to_string(),
             "SELECT c, COUNT(*) FROM orders GROUP BY c".to_string(),
             schema,

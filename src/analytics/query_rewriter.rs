@@ -591,7 +591,7 @@ mod tests {
             "NEW_TABLE",
         ));
 
-        let _result = rewriter.rewrite("SELECT * FROM OLD_TABLE");
+        let result = rewriter.rewrite("SELECT * FROM OLD_TABLE");
 
         assert!(result.was_rewritten());
         assert!(result.rewritten.contains("NEW_TABLE"));

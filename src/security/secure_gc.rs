@@ -38,6 +38,7 @@
 // MemorySanitizer::sanitize_slice(&mut key_material);
 // ```
 
+use std::fmt;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::ops::{Deref, DerefMut};
@@ -907,13 +908,13 @@ mod tests {
         let block1 = pool.allocate().unwrap();
         let block2 = pool.allocate().unwrap();
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert_eq!(stats.used_blocks, 2);
 
         drop(block1);
         drop(block2);
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert_eq!(stats.used_blocks, 0);
     }
 
@@ -941,12 +942,12 @@ mod tests {
             sanitizer.queue_sanitization(ptr, data.len(), Pattern::Zero);
         }
 
-        let _stats = sanitizer.stats();
+        let stats = sanitizer.stats();
         assert_eq!(stats.queue_size, 1);
 
         sanitizer.flush();
 
-        let _stats = sanitizer.stats();
+        let stats = sanitizer.stats();
         assert_eq!(stats.queue_size, 0);
 
         // Prevent data from being dropped
@@ -961,13 +962,13 @@ mod tests {
         let slice = block.as_mut_slice();
         slice[0] = 42;
 
-        let _stats = guard.stats();
+        let stats = guard.stats();
         assert_eq!(stats.active_regions, 1);
         assert_eq!(stats.anomalies_detected, 0);
 
         drop(block);
 
-        let _stats = guard.stats();
+        let stats = guard.stats();
         assert_eq!(stats.active_regions, 0);
     }
 

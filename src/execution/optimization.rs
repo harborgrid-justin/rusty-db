@@ -468,7 +468,7 @@ impl EnhancedCostModel {
         }
     }
     
-    fn estimate_filter_selectivity(&self, _predicate: &str) -> f64 {
+    fn estimate_filter_selectivity(&self, predicate: &str) -> f64 {
         // Simplified: return default selectivity
         // In a full implementation, would parse predicate and use column statistics
         0.3
@@ -521,7 +521,7 @@ impl JoinOrderOptimizer {
             let mut best_cost = f64::MAX;
             
             // Find best pair to join
-            for _i in 0..tables.len() {
+            for i in 0..tables.len() {
                 for j in (i + 1)..tables.len() {
                     let cost = self.estimate_join_cost(&tables[i], &tables[j]);
                     if cost < best_cost {
@@ -641,7 +641,7 @@ mod tests {
         let cached = cache.get("query1");
         assert!(cached.is_some());
         
-        let _stats = cache.stats();
+        let stats = cache.stats();
         assert_eq!(stats.hits, 1);
         assert_eq!(stats.misses, 0);
     }
@@ -652,7 +652,7 @@ mod tests {
         
         collector.collect_table_stats("users".to_string(), 1000, 1024000);
         
-        let _stats = collector.get_table_stats("users");
+        let stats = collector.get_table_stats("users");
         assert!(stats.is_some());
         assert_eq!(stats.unwrap().row_count, 1000);
         

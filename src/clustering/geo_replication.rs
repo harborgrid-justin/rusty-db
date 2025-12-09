@@ -158,8 +158,6 @@ impl ReplicatedValue {
 
     /// Verify checksum
     pub fn verify_checksum(&self) -> bool {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         self.data.hash(&mut hasher);

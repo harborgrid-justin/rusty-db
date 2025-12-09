@@ -19,6 +19,7 @@
 // NORMAL → DEGRADED_L1 → DEGRADED_L2 → DEGRADED_L3 → CRITICAL
 // ```
 
+use std::fmt;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -596,7 +597,7 @@ mod tests {
         shedder.set_rejection_rate(0.5);
 
         // Check multiple requests
-        let mut _accepted = 0;
+        let mut accepted = 0;
         let mut rejected = 0;
         for _ in 0..1000 {
             if shedder.should_accept(5) {
@@ -630,7 +631,7 @@ mod tests {
         strategy.set_level(DegradationLevel::DegradedL1);
         strategy.set_level(DegradationLevel::DegradedL2);
 
-        let _stats = strategy.statistics();
+        let stats = strategy.statistics();
         assert_eq!(stats.current_level, DegradationLevel::DegradedL2);
         assert_eq!(stats.level_changes, 2);
         assert!(stats.last_change.is_some());

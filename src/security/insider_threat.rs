@@ -1036,7 +1036,7 @@ impl ForensicLogger {
         };
 
         // Calculate integrity hash
-        let _hash = self.calculate_hash(&record);
+        let hash = self.calculate_hash(&record);
         record.integrity_hash = hash.clone();
 
         // Update previous hash
@@ -1461,7 +1461,7 @@ mod tests {
     fn test_insider_threat_manager() {
         let manager = InsiderThreatManager::new();
 
-        let _result = manager.assess_query(
+        let result = manager.assess_query(
             &"user1".to_string(),
             Some("session1".to_string()),
             "SELECT id, name FROM employees WHERE department = 'Engineering' LIMIT 100",

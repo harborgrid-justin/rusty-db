@@ -23,6 +23,8 @@
 // FLASHBACK TRANSACTION 0500120000AB0001 CASCADE;
 // ```
 
+use std::collections::VecDeque;
+use std::fmt;
 use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};

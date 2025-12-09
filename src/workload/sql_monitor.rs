@@ -643,8 +643,6 @@ impl SqlMonitor {
 
     /// Compute hash
     fn compute_hash(&self, text: &str) -> u64 {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         text.hash(&mut hasher);
@@ -706,7 +704,7 @@ mod tests {
     fn test_execution_statistics() {
         let monitor = SqlMonitor::new();
 
-        for _i in 0..10 {
+        for i in 0..10 {
             let exec_id = monitor
                 .start_execution(
                     format!("SELECT * FROM users WHERE id = {}", i),
@@ -719,7 +717,7 @@ mod tests {
             monitor.complete_execution(exec_id, ExecutionStatus::Completed).unwrap();
         }
 
-        let _stats = monitor.get_execution_statistics();
+        let stats = monitor.get_execution_statistics();
         assert_eq!(stats.completed_executions, 10);
         assert_eq!(stats.active_executions, 0);
     }

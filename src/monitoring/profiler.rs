@@ -1,6 +1,8 @@
 // Query Profiler
 // Captures execution plans, row counts, time per operator, and wait events
 
+use tokio::time::sleep;
+use std::fmt;
 use std::time::Instant;
 use std::collections::VecDeque;
 use std::time::SystemTime;

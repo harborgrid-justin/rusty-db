@@ -3,6 +3,7 @@
 // Kafka-like event publishing with topics, partitions, ordering guarantees,
 // acknowledgments, and backpressure management.
 
+use tokio::time::sleep;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -234,7 +235,7 @@ impl Topic {
                 // Hash-based partitioning for key ordering
                 let mut hasher = std::collections::hash_map::DefaultHasher::new();
                 k.hash(&mut hasher);
-                let _hash = hasher.finish();
+                let hash = hasher.finish();
                 (hash % self.config.num_partitions as u64) as u32
             }
             (_, OrderingGuarantee::GloballyOrdered) => {
@@ -415,7 +416,7 @@ impl EventPublisher {
         event.id = self.next_event_id.fetch_add(1, Ordering::SeqCst);
 
         // Select partition
-        let _partition_id = if event.partition > 0 {
+        let partition_id = if event.partition > 0 {
             event.partition
         } else {
             topic.select_partition(event.key.as_deref())

@@ -706,7 +706,7 @@ impl RaftNode {
             let start = (next_index - base_offset - 1) as usize;
             let end = (start + self.config.max_entries_per_append).min(persistent.log.len());
 
-            for _i in start..end {
+            for i in start..end {
                 if let Some(entry) = persistent.log.get(i) {
                     entries.push(entry.clone());
                 }
@@ -787,7 +787,7 @@ impl RaftNode {
 
     /// Append command to log (leader only)
     pub fn append_command(&self, command: Vec<u8>) -> Result<LogIndex, DbError> {
-        let _state = self.state.read().unwrap();
+        let state = self.state.read().unwrap();
         if *state != RaftState::Leader {
             return Err(DbError::Internal("Not a leader".into()));
         }
@@ -880,7 +880,7 @@ impl RaftNode {
 
     /// Begin membership change (joint consensus)
     pub fn begin_membership_change(&self, new_members: Vec<RaftNodeId>) -> Result<(), DbError> {
-        let _state = self.state.read().unwrap();
+        let state = self.state.read().unwrap();
         if *state != RaftState::Leader {
             return Err(DbError::Internal("Not a leader".into()));
         }
@@ -901,7 +901,7 @@ impl RaftNode {
 
     /// Finalize membership change
     pub fn finalize_membership_change(&self) -> Result<(), DbError> {
-        let _state = self.state.read().unwrap();
+        let state = self.state.read().unwrap();
         if *state != RaftState::Leader {
             return Err(DbError::Internal("Not a leader".into()));
         }

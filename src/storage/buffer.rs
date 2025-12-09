@@ -647,7 +647,7 @@ mod tests {
         let page = bp.new_page()?;
         assert_eq!(page.id, 0);
 
-        let _stats = bp.stats();
+        let stats = bp.stats();
         assert_eq!(stats.pool_size, 10);
 
         Ok(())

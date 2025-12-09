@@ -205,7 +205,7 @@ impl CubeBuilder {
         sets.push(columns.to_vec());
 
         // Add progressive rollups
-        for _i in (0..columns.len()).rev() {
+        for i in (0..columns.len()).rev() {
             if i > 0 {
                 sets.push(columns[..i].to_vec());
             }
@@ -224,7 +224,7 @@ impl CubeBuilder {
         let num_sets = 1 << n; // 2^n
         let mut sets = Vec::new();
 
-        for _i in 0..num_sets {
+        for i in 0..num_sets {
             let mut set = Vec::new();
             for (j, col) in columns.iter().enumerate() {
                 if (i & (1 << j)) != 0 {
@@ -272,8 +272,8 @@ impl CubeBuilder {
             let mut measure_values = HashMap::new();
 
             for measure in &self.cube.measures {
-                let _value = self.compute_aggregate(measure, &group_rows)?;
-                measure_values.insert(measure.name.clone(), _value);
+                let value = self.compute_aggregate(measure, &group_rows)?;
+                measure_values.insert(measure.name.clone(), value);
             }
 
             let grouping_key = GroupingKey {
@@ -281,7 +281,7 @@ impl CubeBuilder {
                 grouping_id: set_id,
             };
 
-            let _result = AggregationResult {
+            let result = AggregationResult {
                 measure_values,
                 row_count: group_rows.len() as u64,
             };
@@ -309,7 +309,7 @@ impl CubeBuilder {
             return Ok(0.0);
         }
 
-        let _result = match measure.aggregation {
+        let result = match measure.aggregation {
             AggregationType::Sum => values.iter().sum(),
             AggregationType::Avg => values.iter().sum::<f64>() / values.len() as f64,
             AggregationType::Count => values.len() as f64,
@@ -543,7 +543,7 @@ impl CubeQuery {
                 .position(|d| &d.name == dim_name)
                 .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dim_name)))?;
 
-            let _value = key.values.get(dim_index)
+            let value = key.values.get(dim_index)
                 .and_then(|v| v.clone())
                 .unwrap_or_else(|| "ALL".to_string());
 

@@ -155,7 +155,7 @@ impl TableRestoreManager {
         let recycle_name = dropped_table.recycle_name.clone();
 
         // Restore table from recycle bin
-        let _result = self.restore_from_recycle_bin(&dropped_table, restore_name)?;
+        let result = self.restore_from_recycle_bin(&dropped_table, restore_name)?;
 
         // Remove from recycle bin
         recycle_bin.remove(&recycle_name);
@@ -175,7 +175,7 @@ impl TableRestoreManager {
         target_scn: SCN,
     ) -> Result<FlashbackResult> {
         // Validate partition exists
-        let _partition_id = self.get_partition_id(table_id, partition_name)?;
+        let partition_id = self.get_partition_id(table_id, partition_name)?;
 
         // Reconstruct partition state
         let partition_state = self.reconstruct_partition_state(
@@ -718,7 +718,7 @@ mod tests {
         );
 
         // Cannot flashback to future
-        let _result = manager.validate_flashback(1, u64::MAX);
+        let result = manager.validate_flashback(1, u64::MAX);
         assert!(result.is_err());
     }
 }

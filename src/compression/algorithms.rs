@@ -1,6 +1,7 @@
 // Compression Algorithms - LZ4, Zstandard-like, Dictionary, Arithmetic, Huffman
 // Implements various compression algorithms from scratch
 
+use std::collections::HashSet;
 use super::*;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -1813,7 +1814,6 @@ impl Default for CascadedCompressor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_lz4_compression() {

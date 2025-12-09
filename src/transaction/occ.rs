@@ -15,6 +15,7 @@
 //
 // Scalability: Near-linear to 128+ cores for read-heavy workloads
 
+use crate::error::DbError;
 use std::collections::HashSet;
 use parking_lot::RwLock;
 use std::collections::HashMap;
@@ -317,7 +318,7 @@ impl OccManager {
         // Read from database
         let db = self.database.read();
         if let Some(data) = db.get(key) {
-            let _value = data.value.clone();
+            let value = data.value.clone();
             let version = data.version;
 
             // Record the read
@@ -601,7 +602,7 @@ mod tests {
         occ.commit(txn1).unwrap();
 
         let txn2 = occ.begin_transaction();
-        let _value = occ.read(txn2, &"key1".to_string()).unwrap();
+        let value = occ.read(txn2, &"key1".to_string()).unwrap();
         assert_eq!(value, Some(b"value1".to_vec()));
     }
 
@@ -617,7 +618,7 @@ mod tests {
         occ.read(txn2, &"key1".to_string()).unwrap();
         occ.commit(txn2).unwrap();
 
-        let _stats = occ.get_stats();
+        let stats = occ.get_stats();
         assert_eq!(stats.read_only_txns, 1);
     }
 

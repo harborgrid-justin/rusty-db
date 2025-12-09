@@ -2,6 +2,9 @@
 // Provides MVCC, distributed transactions, WAL, lock management, and ARIES recovery
 
 // Sub-modules for enterprise transaction features
+use std::collections::HashSet;
+use std::collections::BTreeMap;
+use std::collections::VecDeque;
 pub mod mvcc;
 pub mod distributed;
 pub mod wal;
@@ -79,7 +82,6 @@ impl LockMode {
     
     /// Get the strength/priority of the lock
     pub fn strength(&self) -> u8 {
-        use LockMode::*;
         match self {
             Shared => 1,
             IntentShared => 2,
@@ -2649,7 +2651,6 @@ impl Default for TransactionClusterManager {
 
 /// Transaction testing utilities
 pub mod test_utils {
-    use super::*;
     
     /// Create a test transaction with specified parameters
     pub fn create_test_transaction(id: TransactionId, isolation_level: IsolationLevel) -> Transaction {
@@ -2851,7 +2852,6 @@ impl EnterpriseTransactionManager {
 
 /// Transaction benchmarking and profiling tools
 pub mod benchmarking {
-    use super::*;
     
     pub struct TransactionBenchmark {
         pub name: String,
@@ -2921,7 +2921,6 @@ pub mod benchmarking {
 
 /// Transaction debugging utilities
 pub mod debugging {
-    use super::*;
     
     /// Debug printer for transaction state
     pub fn print_transaction_state(txn: &Transaction) {
@@ -2989,7 +2988,6 @@ pub mod debugging {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     
     #[test]
     fn test_transaction_lifecycle() -> Result<()> {

@@ -16,6 +16,7 @@
 // by allowing direct transfer of cached blocks from one instance's memory to another's,
 // maintaining strict consistency guarantees through sophisticated locking protocols.
 
+use tokio::sync::oneshot;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Instant;
@@ -538,7 +539,7 @@ impl GlobalCacheService {
             .push(request);
 
         // Send message to master
-        let _message = CacheFusionMessage::BlockRequest {
+        let message = CacheFusionMessage::BlockRequest {
             resource_id,
             requested_mode: mode,
             requestor: self.node_id.clone(),
@@ -606,7 +607,7 @@ impl GlobalCacheService {
         let mut cache = self.local_cache.write();
 
         // Get or create block state
-        let _state = cache.entry(resource_id.clone()).or_insert_with(|| {
+        let state = cache.entry(resource_id.clone()).or_insert_with(|| {
             BlockState {
                 resource_id: resource_id.clone(),
                 mode: BlockMode::Null,
@@ -660,7 +661,7 @@ impl GlobalCacheService {
         }
 
         // Create transfer message
-        let _message = CacheFusionMessage::BlockTransfer {
+        let message = CacheFusionMessage::BlockTransfer {
             resource_id: resource_id.clone(),
             block_data,
             source_mode,
@@ -698,7 +699,7 @@ impl GlobalCacheService {
         let holder = self.find_past_image_holder(&resource_id, as_of_scn).await?;
 
         // Request past image
-        let _message = CacheFusionMessage::PastImageRequest {
+        let message = CacheFusionMessage::PastImageRequest {
             resource_id: resource_id.clone(),
             as_of_scn,
             requestor: self.node_id.clone(),
@@ -715,7 +716,7 @@ impl GlobalCacheService {
 
     /// Invalidate block across all instances
     pub async fn invalidate_block(&self, resource_id: ResourceId, new_scn: u64) -> Result<(), DbError> {
-        let _message = CacheFusionMessage::BlockInvalidate {
+        let message = CacheFusionMessage::BlockInvalidate {
             resource_id: resource_id.clone(),
             new_scn,
             invalidator: self.node_id.clone(),
@@ -848,7 +849,7 @@ impl GlobalCacheService {
             transaction_id,
         ).await?;
 
-        let _message = CacheFusionMessage::BlockGrant {
+        let message = CacheFusionMessage::BlockGrant {
             resource_id: grant.resource_id,
             granted_mode: grant.granted_mode,
             block_data: grant.block_data,
@@ -873,7 +874,7 @@ impl GlobalCacheService {
     ) -> Result<(), DbError> {
         let mut cache = self.local_cache.write();
 
-        let _state = cache.entry(resource_id.clone()).or_insert_with(|| {
+        let state = cache.entry(resource_id.clone()).or_insert_with(|| {
             BlockState {
                 resource_id: resource_id.clone(),
                 mode: BlockMode::Null,
@@ -1050,7 +1051,7 @@ impl GlobalEnqueueService {
     ) -> Result<Option<LockGrant>, DbError> {
         let mut registry = self.lock_registry.write();
 
-        let _state = registry.entry(resource_id.clone()).or_insert_with(|| {
+        let state = registry.entry(resource_id.clone()).or_insert_with(|| {
             LockState {
                 resource_id: resource_id.clone(),
                 lock_type: LockType::Null,

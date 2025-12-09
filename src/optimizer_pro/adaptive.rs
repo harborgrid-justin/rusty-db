@@ -7,6 +7,7 @@
 // - Cardinality feedback loop
 // - SQL Plan Directives
 
+use std::collections::VecDeque;
 use std::time::SystemTime;
 use std::time::Instant;
 use crate::common::{TableId, IndexId, Value};
@@ -246,7 +247,7 @@ impl AdaptiveExecutor {
     ) -> Result<Vec<Vec<Value>>> {
         self.stats_collector.record_operator_start(execution_id, "HashJoin");
 
-        let _left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
+        let left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
         let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
 
         // Simulate join execution
@@ -269,7 +270,7 @@ impl AdaptiveExecutor {
     ) -> Result<Vec<Vec<Value>>> {
         self.stats_collector.record_operator_start(execution_id, "MergeJoin");
 
-        let _left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
+        let left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
         let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
 
         // Simulate join execution
@@ -359,7 +360,7 @@ impl RuntimeStatsCollector {
     pub fn start_execution(&self, plan_id: PlanId) -> ExecutionId {
         let execution_id = ExecutionId(rand::random());
 
-        let _stats = ExecutionStats {
+        let stats = ExecutionStats {
             execution_id,
             plan_id,
             start_time: Instant::now(),
@@ -831,7 +832,7 @@ mod tests {
         collector.record_operator_start(&execution_id, "SeqScan");
         collector.record_operator_end(&execution_id, "SeqScan", 100);
 
-        let _stats = collector.stop_execution(execution_id);
+        let stats = collector.stop_execution(execution_id);
         assert_eq!(stats.plan_id, plan_id);
     }
 

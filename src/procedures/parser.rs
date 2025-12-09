@@ -979,7 +979,7 @@ impl PlSqlParser {
     fn parse_return_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Return, "Expected RETURN")?;
 
-        let _value = if !self.check(&Token::Semicolon) {
+        let value = if !self.check(&Token::Semicolon) {
             Some(self.parse_expression()?)
         } else {
             None
@@ -1111,7 +1111,7 @@ impl PlSqlParser {
         loop {
             let column = self.consume_identifier("Expected column name")?;
             self.consume(&Token::Equal, "Expected '='")?;
-            let _value = self.parse_expression()?;
+            let value = self.parse_expression()?;
             assignments.push((column, value));
 
             if !self.match_token(&Token::Comma) {
@@ -1255,7 +1255,7 @@ impl PlSqlParser {
 
         if self.match_token(&Token::Assign) {
             // Assignment
-            let _value = self.parse_expression()?;
+            let value = self.parse_expression()?;
             self.consume(&Token::Semicolon, "Expected semicolon")?;
             Ok(Statement::Assignment {
                 target: name,
@@ -1551,7 +1551,7 @@ impl PlSqlParser {
 
     fn consume_identifier(&mut self, message: &str) -> Result<String> {
         if let Token::Identifier(name) = self.peek() {
-            let _result = name.clone();
+            let result = name.clone();
             self.advance();
             Ok(result)
         } else {
@@ -1561,7 +1561,7 @@ impl PlSqlParser {
 
     fn consume_integer(&mut self, message: &str) -> Result<i64> {
         if let Token::IntegerLit(val) = self.peek() {
-            let _result = *val;
+            let result = *val;
             self.advance();
             Ok(result)
         } else {
@@ -1587,7 +1587,7 @@ mod tests {
     #[test]
     fn test_parse_simple_block() -> Result<()> {
         let mut parser = PlSqlParser::new();
-        let _source = r#"
+        let source = r#"
             BEGIN
                 NULL;
             END;
@@ -1603,7 +1603,7 @@ mod tests {
     #[test]
     fn test_parse_declarations() -> Result<()> {
         let mut parser = PlSqlParser::new();
-        let _source = r#"
+        let source = r#"
             DECLARE
                 x INTEGER;
                 y VARCHAR2(100) := 'hello';
@@ -1621,7 +1621,7 @@ mod tests {
     #[test]
     fn test_parse_if_statement() -> Result<()> {
         let mut parser = PlSqlParser::new();
-        let _source = r#"
+        let source = r#"
             BEGIN
                 IF x > 10 THEN
                     y := 1;

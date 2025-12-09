@@ -21,6 +21,7 @@
 // - **Health Monitoring**: CDB and PDB health checks
 // - **Kubernetes Integration**: Native K8s operator support
 
+use tokio::time::sleep;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::Mutex;
 use std::collections::HashMap;
@@ -461,7 +462,7 @@ impl BackgroundProcessManager {
     /// Start all background processes
     pub async fn start_all(&self) -> Result<()> {
         // Start DBWR processes
-        for _i in 0..self.config.dbwr_processes {
+        for i in 0..self.config.dbwr_processes {
             self.start_process(
                 format!("DBWR{}", i),
                 BackgroundProcessType::DatabaseWriter,
@@ -469,7 +470,7 @@ impl BackgroundProcessManager {
         }
 
         // Start LGWR processes
-        for _i in 0..self.config.lgwr_processes {
+        for i in 0..self.config.lgwr_processes {
             self.start_process(
                 format!("LGWR{}", i),
                 BackgroundProcessType::LogWriter,
@@ -477,7 +478,7 @@ impl BackgroundProcessManager {
         }
 
         // Start CKPT processes
-        for _i in 0..self.config.ckpt_processes {
+        for i in 0..self.config.ckpt_processes {
             self.start_process(
                 format!("CKPT{}", i),
                 BackgroundProcessType::Checkpoint,
@@ -509,7 +510,7 @@ impl BackgroundProcessManager {
         }
 
         // Start recovery processes
-        for _i in 0..self.config.recovery_processes {
+        for i in 0..self.config.recovery_processes {
             self.start_process(
                 format!("RECO{}", i),
                 BackgroundProcessType::Recoverer,
@@ -526,7 +527,7 @@ impl BackgroundProcessManager {
             .unwrap()
             .as_secs();
 
-        let _state = BackgroundProcessState {
+        let state = BackgroundProcessState {
             name: name.clone(),
             process_type,
             started_at: now,
@@ -775,7 +776,7 @@ impl ContainerDatabase {
     /// Clone a PDB
     pub async fn clone_pdb(&self, source_pdb_id: PdbId, clone_name: &str) -> Result<PdbId> {
         let source_arc = self.registry.get(source_pdb_id).await?;
-        let _source = source_arc.read().await;
+        let source = source_arc.read().await;
 
         // Create clone config based on source
         let clone_config = PdbConfig {

@@ -39,6 +39,7 @@
 // }
 // ```
 
+use tokio::time::sleep;
 use std::time::Instant;
 use std::sync::Mutex;
 use std::sync::Arc;
@@ -324,7 +325,7 @@ impl DatabaseCore {
     /// Initialize the database core with the given configuration
     pub async fn initialize(config: CoreConfig) -> Result<Arc<Self>> {
         let start = Instant::now();
-        let _state = Arc::new(RwLock::new(CoreState::Bootstrapping));
+        let state = Arc::new(RwLock::new(CoreState::Bootstrapping));
 
         println!("╔════════════════════════════════════════════════════════╗");
         println!("║         RustyDB Core Initialization                   ║");
@@ -683,7 +684,7 @@ impl BufferPoolManager {
             }
 
             // Second pass: clear reference bits
-            for _i in 0..self.num_pages {
+            for i in 0..self.num_pages {
                 let mut frame = self.frames[i].lock();
                 frame.reference_bit = false;
             }
@@ -756,7 +757,7 @@ pub struct IoStats {
 impl IoEngine {
     pub fn new(config: IoConfig) -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
-        let _stats = IoStats {
+        let stats = IoStats {
             reads: AtomicU64::new(0),
             writes: AtomicU64::new(0),
             bytes_read: AtomicU64::new(0),
@@ -765,7 +766,7 @@ impl IoEngine {
 
         // Spawn I/O worker threads
         let mut thread_pool = Vec::new();
-        for _i in 0..config.num_io_threads {
+        for i in 0..config.num_io_threads {
             let shutdown_clone = shutdown.clone();
             let handle = std::thread::Builder::new()
                 .name(format!("io-worker-{}", i))
@@ -840,7 +841,7 @@ impl WorkerPool {
     pub fn new(config: WorkerConfig) -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
         let task_queue = Arc::new(crossbeam::queue::SegQueue::<Box<dyn Fn() + Send>>::new());
-        let _stats = WorkerStats {
+        let stats = WorkerStats {
             tasks_executed: AtomicU64::new(0),
             tasks_queued: AtomicU64::new(0),
             idle_time_ns: AtomicU64::new(0),
@@ -1091,14 +1092,14 @@ mod tests {
         let arena = MemoryArena::new(config);
 
         // Allocate memory
-        let _result = arena.allocate(1024);
+        let result = arena.allocate(1024);
         assert!(result.is_ok());
 
         let usage = arena.get_usage();
         assert_eq!(usage.allocated_bytes, 1024);
 
         // Test memory limit
-        let _result = arena.allocate(2 * 1024 * 1024);
+        let result = arena.allocate(2 * 1024 * 1024);
         assert!(result.is_err());
     }
 

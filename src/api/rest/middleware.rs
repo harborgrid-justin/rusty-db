@@ -3,6 +3,7 @@
 // Middleware functions for request processing, authentication, rate limiting, and logging.
 // Implements proper error handling and dependency injection.
 
+use crate::error::DbError;
 use axum::{
     extract::State,
     http::{HeaderMap, Request},
@@ -121,7 +122,7 @@ impl AuthMiddleware for DefaultAuthMiddleware {
         }
     }
 
-    async fn extract_user(&self, _headers: &HeaderMap) -> Result<Option<UserInfo>> {
+    async fn extract_user(&self, headers: &HeaderMap) -> Result<Option<UserInfo>> {
         // TODO: Implement user extraction from headers
         Ok(None)
     }

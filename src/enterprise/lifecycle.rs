@@ -37,6 +37,7 @@
 // }
 // ```
 
+use tokio::time::sleep;
 use std::collections::HashSet;
 use std::sync::Mutex;
 use std::time::SystemTime;
@@ -683,7 +684,7 @@ impl LifecycleManager {
 
     /// Get current system state
     pub async fn get_system_state(&self) -> ComponentState {
-        let _state = self.system_state.read().await;
+        let state = self.system_state.read().await;
         *state
     }
 

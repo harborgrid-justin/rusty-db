@@ -14,7 +14,7 @@ use std::time::Instant;
 use std::collections::{HashMap, BinaryHeap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
-use std::time::{Duration};
+use std::time::Duration;
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
@@ -478,7 +478,7 @@ impl IoScheduler {
 
         // Create group queue
         let mut queues = self.group_queues.write().unwrap();
-        queues.insert(group_id::new());
+        queues.insert(group_id, VecDeque::new());
 
         Ok(())
     }

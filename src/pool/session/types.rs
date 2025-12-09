@@ -3,6 +3,7 @@
 /// This module provides newtype wrappers for session-related identifiers
 /// to prevent type confusion and enable compile-time safety.
 
+use std::fmt;
 use serde::{Deserialize, Serialize};
 
 

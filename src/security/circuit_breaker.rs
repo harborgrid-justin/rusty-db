@@ -23,6 +23,7 @@
 //                          FallbackHandler
 // ```
 
+use tokio::time::sleep;
 use std::time::{SystemTime};
 use std::collections::VecDeque;
 use std::time::Instant;
@@ -199,7 +200,7 @@ impl CircuitBreaker {
 
         // Execute operation
         let start = Instant::now();
-        let _result = operation.await;
+        let result = operation.await;
         let duration = start.elapsed();
 
         // Record outcome
@@ -213,7 +214,7 @@ impl CircuitBreaker {
 
     /// Check if request should be allowed
     fn allow_request(&self) -> bool {
-        let _state = *self.state.read();
+        let state = *self.state.read();
 
         match state {
             CircuitState::Closed => true,
@@ -249,7 +250,7 @@ impl CircuitBreaker {
         // Add to sliding window
         self.record_outcome(CallOutcome::Success);
 
-        let _state = *self.state.read();
+        let state = *self.state.read();
 
         match state {
             CircuitState::Closed => {
@@ -278,7 +279,7 @@ impl CircuitBreaker {
         // Add to sliding window
         self.record_outcome(CallOutcome::Failure);
 
-        let _state = *self.state.read();
+        let state = *self.state.read();
 
         match state {
             CircuitState::Closed => {
@@ -549,7 +550,7 @@ impl Bulkhead {
 
         // Execute operation
         let start = Instant::now();
-        let _result = operation.await;
+        let result = operation.await;
         let duration = start.elapsed();
 
         self.metrics.record_call(duration);
@@ -714,7 +715,7 @@ impl TimeoutManager {
         let timeout_duration = self.calculate_timeout(endpoint);
 
         let start = Instant::now();
-        let _result = match timeout(timeout_duration, operation).await {
+        let result = match timeout(timeout_duration, operation).await {
             Ok(result) => {
                 let duration = start.elapsed();
                 self.record_latency(endpoint, duration);
@@ -1535,7 +1536,7 @@ mod tests {
         let retry = RetryPolicy::new(config);
 
         let mut attempt = 0;
-        let _result = retry.call(|| async {
+        let result = retry.call(|| async {
             attempt += 1;
             if attempt < 3 {
                 Err::<(), DbError>(DbError::Network("temporary failure".to_string()))

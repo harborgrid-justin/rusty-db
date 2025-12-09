@@ -22,6 +22,7 @@
 // WHERE employee_id = 100;
 // ```
 
+use std::fmt;
 use std::time::Duration;
 use std::collections::VecDeque;
 use std::collections::{HashMap};
@@ -186,7 +187,7 @@ impl VersionManager {
         let mut gc = self.gc.write().unwrap();
         let mut store = self.store.write().unwrap();
 
-        let _result = gc.collect(&mut *store, &policies)?;
+        let result = gc.collect(&mut *store, &policies)?;
 
         let mut stats = self.stats.write().unwrap();
         stats.active_versions = stats.active_versions.saturating_sub(result.versions_removed as u64);
@@ -628,7 +629,7 @@ impl VersionGarbageCollector {
         };
 
         for (table_id, table_versions) in store.versions.iter_mut() {
-            let _policy = policies.get(table_id)
+            let policy = policies.get(table_id)
                 .cloned()
                 .unwrap_or_default();
 
@@ -661,7 +662,7 @@ impl VersionGarbageCollector {
             return 0;
         }
 
-        let _now = current_timestamp();
+        let now = current_timestamp();
         let mut to_remove = Vec::new();
 
         for (i, version) in versions.iter().enumerate() {
@@ -906,7 +907,7 @@ mod tests {
         let manager = VersionManager::new(config);
 
         // Add multiple versions
-        for _i in 0..5 {
+        for i in 0..5 {
             let version = RowVersion {
                 values: vec![Value::Integer(i as i64)],
                 scn_created: 1000 + (i * 100),

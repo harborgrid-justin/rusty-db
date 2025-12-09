@@ -1740,7 +1740,7 @@ mod tests {
         let mut headers = HashMap::new();
         headers.insert("Host".to_string(), "example.com".to_string());
 
-        let _result = manager.check_request(ip, "GET", "/test", &headers, 100);
+        let result = manager.check_request(ip, "GET", "/test", &headers, 100);
         assert!(result.is_ok());
     }
 }

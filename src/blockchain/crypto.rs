@@ -10,6 +10,7 @@
 // - Key derivation functions
 // - Secure random generation
 
+use std::fmt;
 use sha2::{Sha256, Sha512, Digest};
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
@@ -79,7 +80,7 @@ impl fmt::Display for HashAlgorithm {
 pub fn sha256(data: &[u8]) -> Hash256 {
     let mut hasher = Sha256::new();
     hasher.update(data);
-    let _result = hasher.finalize();
+    let result = hasher.finalize();
     let mut hash = [0u8; 32];
     hash.copy_from_slice(&result);
     hash
@@ -89,7 +90,7 @@ pub fn sha256(data: &[u8]) -> Hash256 {
 pub fn sha512(data: &[u8]) -> Hash512 {
     let mut hasher = Sha512::new();
     hasher.update(data);
-    let _result = hasher.finalize();
+    let result = hasher.finalize();
     let mut hash = [0u8; 64];
     hash.copy_from_slice(&result);
     hash
@@ -102,7 +103,7 @@ pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<Hash256> {
     let mut mac = HmacSha256::new_from_slice(key)
         .map_err(|e| DbError::Internal(format!("HMAC key error: {}", e)))?;
     mac.update(data);
-    let _result = mac.finalize();
+    let result = mac.finalize();
     let bytes = result.into_bytes();
 
     let mut hash = [0u8; 32];
@@ -164,7 +165,7 @@ impl ChainLink {
         hasher.update(data_hash);
         hasher.update(&timestamp.to_le_bytes());
 
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         let mut hash = [0u8; 32];
         hash.copy_from_slice(&result);
         hash
@@ -239,7 +240,7 @@ impl HashChain {
         }
 
         // Verify remaining links
-        for _i in 1..self.links.len() {
+        for i in 1..self.links.len() {
             if !self.links[i].verify() {
                 return Ok(false);
             }
@@ -303,7 +304,7 @@ impl MerkleNode {
         let mut hasher = Sha256::new();
         hasher.update(&left_hash);
         hasher.update(&right_hash);
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         let mut hash = [0u8; 32];
         hash.copy_from_slice(&result);
 
@@ -340,7 +341,7 @@ impl MerkleProof {
                 hasher.update(&current_hash);
                 hasher.update(sibling_hash);
             }
-            let _result = hasher.finalize();
+            let result = hasher.finalize();
             current_hash.copy_from_slice(&result);
         }
 
@@ -376,7 +377,7 @@ impl MerkleTree {
         while current_level.len() > 1 {
             let mut next_level = Vec::new();
 
-            for _i in (0..current_level.len()).step_by(2) {
+            for i in (0..current_level.len()).step_by(2) {
                 let left = current_level[i];
                 let right = if i + 1 < current_level.len() {
                     current_level[i + 1]
@@ -550,7 +551,7 @@ impl Accumulator {
         let mut hasher = Sha256::new();
         hasher.update(&self.value);
         hasher.update(&element_hash);
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         self.value.copy_from_slice(&result);
 
         self.elements.push(element_hash);
@@ -585,14 +586,14 @@ impl Accumulator {
         let mut hasher = Sha256::new();
         hasher.update(&value);
         hasher.update(&element_hash);
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         value.copy_from_slice(&result);
 
         for proof_hash in proof {
             hasher = Sha256::new();
             hasher.update(&value);
             hasher.update(proof_hash);
-            let _result = hasher.finalize();
+            let result = hasher.finalize();
             value.copy_from_slice(&result);
         }
 
@@ -616,7 +617,7 @@ pub fn derive_key(master_key: &[u8], context: &[u8], index: u64) -> Hash256 {
     hasher.update(master_key);
     hasher.update(context);
     hasher.update(&index.to_le_bytes());
-    let _result = hasher.finalize();
+    let result = hasher.finalize();
     let mut key = [0u8; 32];
     key.copy_from_slice(&result);
     key
@@ -632,7 +633,7 @@ pub fn hkdf_expand(prk: &[u8], info: &[u8], output_len: usize) -> Vec<u8> {
         hasher.update(prk);
         hasher.update(info);
         hasher.update(&[counter]);
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
 
         let bytes_needed = output_len - output.len();
         let bytes_to_copy = bytes_needed.min(32);
@@ -661,7 +662,6 @@ impl Commitment {
     /// Create a commitment to a value
     pub fn commit(value: &[u8]) -> (Self, Hash256) {
         // Generate random blinding factor
-        use rand::RngCore;
         let mut rng = rand::thread_rng();
         let mut blinding = [0u8; 32];
         rng.fill_bytes(&mut blinding);
@@ -670,7 +670,7 @@ impl Commitment {
         let mut hasher = Sha256::new();
         hasher.update(value);
         hasher.update(&blinding);
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         let mut commitment_value = [0u8; 32];
         commitment_value.copy_from_slice(&result);
 
@@ -687,7 +687,7 @@ impl Commitment {
         let mut hasher = Sha256::new();
         hasher.update(value);
         hasher.update(blinding);
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         let mut computed = [0u8; 32];
         computed.copy_from_slice(&result);
 
@@ -717,7 +717,7 @@ impl RangeProof {
         hasher.update(&value.to_le_bytes());
         hasher.update(&min.to_le_bytes());
         hasher.update(&max.to_le_bytes());
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
 
         Ok(Self {
             min,
@@ -739,7 +739,6 @@ impl RangeProof {
 
 /// Generate secure random bytes
 pub fn secure_random(size: usize) -> Vec<u8> {
-    use rand::RngCore;
     let mut rng = rand::thread_rng();
     let mut bytes = vec![0u8; size];
     rng.fill_bytes(&mut bytes);
@@ -778,7 +777,7 @@ pub fn hex_to_hash(hex: &str) -> Result<Vec<u8>> {
     }
 
     let mut bytes = Vec::with_capacity(hex.len() / 2);
-    for _i in (0..hex.len()).step_by(2) {
+    for i in (0..hex.len()).step_by(2) {
         let byte = u8::from_str_radix(&hex[i..i + 2], 16)
             .map_err(|e| DbError::InvalidInput(format!("Invalid hex string: {}", e)))?;
         bytes.push(byte);
@@ -812,7 +811,7 @@ mod tests {
     #[test]
     fn test_sha256() {
         let data = b"Hello, World!";
-        let _hash = sha256(data);
+        let hash = sha256(data);
         assert_eq!(hash.len(), 32);
     }
 
@@ -842,7 +841,7 @@ mod tests {
     #[test]
     fn test_key_pair() {
         let keypair = KeyPair::generate();
-        let _message = b"test message";
+        let message = b"test message";
 
         let signature = keypair.sign(message);
         assert!(verify_signature(&keypair.public_key, message, &signature));
@@ -862,7 +861,7 @@ mod tests {
 
     #[test]
     fn test_commitment() {
-        let _value = b"secret value";
+        let value = b"secret value";
         let (commitment, blinding) = Commitment::commit(value);
 
         assert!(commitment.verify(value, &blinding));

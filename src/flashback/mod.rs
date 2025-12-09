@@ -129,6 +129,7 @@
 // Module Declarations
 // ============================================================================
 
+use crate::error::DbError;
 pub mod time_travel;
 pub mod versions;
 pub mod table_restore;
@@ -357,7 +358,7 @@ mod tests {
     #[test]
     fn test_flashback_coordinator_creation() {
         let coordinator = FlashbackCoordinator::new();
-        let _stats = coordinator.get_stats();
+        let stats = coordinator.get_stats();
 
         assert_eq!(stats.time_travel.queries_executed, 0);
         assert_eq!(stats.versions.total_versions, 0);

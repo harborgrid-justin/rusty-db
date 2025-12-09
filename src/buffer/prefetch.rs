@@ -25,6 +25,7 @@
 // - Strided access: 60-85% I/O reduction
 // - Read latency: <10us (prefetched) vs ~100us (SSD) or ~10ms (HDD)
 
+use std::collections::HashSet;
 use crate::common::PageId;
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -629,7 +630,7 @@ mod tests {
         let mut detector = PatternDetector::new(20, Duration::from_secs(1));
 
         // Sequential forward pattern
-        for _i in 1..=10 {
+        for i in 1..=10 {
             detector.record_access(i);
         }
 
@@ -643,7 +644,7 @@ mod tests {
         let mut detector = PatternDetector::new(20, Duration::from_secs(1));
 
         // Sequential backward pattern
-        for _i in (1..=10).rev() {
+        for i in (1..=10).rev() {
             detector.record_access(i);
         }
 
@@ -656,7 +657,7 @@ mod tests {
         let mut detector = PatternDetector::new(20, Duration::from_secs(1));
 
         // Strided pattern with stride=5
-        for _i in 0..10 {
+        for i in 0..10 {
             detector.record_access(i * 5);
         }
 
@@ -674,7 +675,7 @@ mod tests {
 
         // Temporal pattern (repeating 1,2,3)
         for _ in 0..3 {
-            for _i in 1..=3 {
+            for i in 1..=3 {
                 detector.record_access(i);
             }
         }
@@ -710,11 +711,11 @@ mod tests {
         let engine = PrefetchEngine::new(config);
 
         // Sequential access
-        for _i in 1..=10 {
+        for i in 1..=10 {
             engine.record_access("test_table", i);
         }
 
-        let _stats = engine.stats();
+        let stats = engine.stats();
         assert!(stats.total_requests > 0);
     }
 

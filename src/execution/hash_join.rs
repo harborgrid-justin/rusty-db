@@ -245,7 +245,7 @@ impl HashJoinExecutor {
         // First pass: determine partition sizes
         for row in &build_side.rows {
             if let Some(key) = row.get(build_key_col) {
-                let _partition_id = self.hash_partition(key);
+                let partition_id = self.hash_partition(key);
                 partition_sizes[partition_id] += 1;
             }
         }
@@ -262,7 +262,7 @@ impl HashJoinExecutor {
 
         for row in &build_side.rows {
             if let Some(key) = row.get(build_key_col) {
-                let _partition_id = self.hash_partition(key);
+                let partition_id = self.hash_partition(key);
                 partitions[partition_id].push(row.clone());
             }
         }
@@ -293,7 +293,7 @@ impl HashJoinExecutor {
         // Partition probe side
         for row in &probe_side.rows {
             if let Some(key) = row.get(probe_key_col) {
-                let _partition_id = self.hash_partition(key);
+                let partition_id = self.hash_partition(key);
                 probe_partitions[partition_id].push(row.clone());
             }
         }
@@ -361,7 +361,7 @@ impl HashJoinExecutor {
         let mut partition_writers: Vec<BufWriter<File>> = Vec::new();
 
         // Create partition files
-        for _i in 0..self.config.num_partitions {
+        for i in 0..self.config.num_partitions {
             let path = self.config.temp_dir.join(format!("{}_{}.part", prefix, i));
             let file = File::create(&path)
                 .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -372,7 +372,7 @@ impl HashJoinExecutor {
         // Write rows to appropriate partitions
         for row in &data.rows {
             if let Some(key) = row.get(key_col) {
-                let _partition_id = self.hash_partition(key);
+                let partition_id = self.hash_partition(key);
                 let writer = &mut partition_writers[partition_id];
 
                 // Serialize row (simple CSV format)
@@ -449,7 +449,7 @@ impl HashJoinExecutor {
     /// Now uses xxHash3-AVX2 for 10x faster partitioning
     fn hash_partition(&self, key: &str) -> usize {
         use crate::simd::hash::hash_str;
-        let _hash = hash_str(key);
+        let hash = hash_str(key);
         (hash as usize) % self.config.num_partitions
     }
 
@@ -577,7 +577,7 @@ mod tests {
             ],
         );
 
-        let _result = executor.simple_hash_join(build, probe, 0, 0).unwrap();
+        let result = executor.simple_hash_join(build, probe, 0, 0).unwrap();
         assert_eq!(result.rows.len(), 2);
     }
 

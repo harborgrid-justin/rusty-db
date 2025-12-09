@@ -383,7 +383,7 @@ impl ConfigManager {
     /// Get a configuration value
     pub async fn get(&self, key: &str) -> Result<ConfigValue> {
         let config = self.config.read().await;
-        let _value = config.get(key)
+        let value = config.get(key)
             .ok_or_else(|| DbError::NotFound(format!("Config key not found: {}", key)))?
             .clone();
 
@@ -663,7 +663,7 @@ mod tests {
         let config = ConfigManager::new(Environment::Development);
         config.set("test.key", ConfigValue::String("value".to_string())).await.unwrap();
 
-        let _value = config.get("test.key").await.unwrap();
+        let value = config.get("test.key").await.unwrap();
         assert_eq!(value.as_string(), Some("value"));
     }
 
@@ -693,7 +693,7 @@ mod tests {
         assert!(stored.is_encrypted());
 
         // Verify we can decrypt it
-        let _value = config.get("database.password").await.unwrap();
+        let value = config.get("database.password").await.unwrap();
         assert_eq!(value.as_string(), Some("secret123"));
     }
 
@@ -727,7 +727,7 @@ mod tests {
 
         config.set("test.watched", ConfigValue::Integer(42)).await.unwrap();
 
-        let _value = watcher.recv().await.unwrap();
+        let value = watcher.recv().await.unwrap();
         assert_eq!(value.as_integer(), Some(42));
     }
 
@@ -744,7 +744,7 @@ mod tests {
 
         config.restore_snapshot(&snapshot_id).await.unwrap();
 
-        let _value = config.get("key1").await.unwrap();
+        let value = config.get("key1").await.unwrap();
         assert_eq!(value.as_string(), Some("value1"));
     }
 }

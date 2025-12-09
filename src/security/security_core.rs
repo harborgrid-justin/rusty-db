@@ -15,6 +15,7 @@
 // - **PenetrationTestHarness**: Automated security testing
 // - **SecurityDashboard**: Real-time security visualization
 
+use std::collections::VecDeque;
 use std::time::Duration;
 use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
@@ -1441,7 +1442,7 @@ impl PenetrationTestHarness {
         let mut results = Vec::new();
 
         for scenario in scenarios.iter().filter(|s| s.enabled) {
-            let _result = self.run_test(scenario)?;
+            let result = self.run_test(scenario)?;
             results.push(result);
         }
 
@@ -1683,11 +1684,11 @@ impl UnifiedSecurityCore {
     /// Initialize security core
     pub fn initialize(&self) -> Result<()> {
         // Run initial security assessment
-        let _coverage = self.defense_orchestrator.validate_coverage();
+        let coverage = self.defense_orchestrator.validate_coverage();
 
         // Run initial compliance checks
         for framework in &["SOC2", "HIPAA", "PCI-DSS"] {
-            let _score = self.compliance_validator.calculate_framework_score(framework)?;
+            let score = self.compliance_validator.calculate_framework_score(framework)?;
         }
 
         // Record initial metrics
@@ -1772,7 +1773,7 @@ mod tests {
     fn test_policy_engine() {
         let engine = SecurityPolicyEngine::new();
 
-        let _policy = SecurityPolicy {
+        let policy = SecurityPolicy {
             id: "pol1".to_string(),
             name: "Test Policy".to_string(),
             policy_type: PolicyType::AccessControl,
@@ -1796,7 +1797,7 @@ mod tests {
 
         engine.add_policy(policy).unwrap();
 
-        let _context = EvaluationContext {
+        let context = EvaluationContext {
             user_id: "admin".to_string(),
             roles: HashSet::new(),
             resource: "table1".to_string(),
@@ -1845,7 +1846,7 @@ mod tests {
         let metrics = SecurityMetrics::new();
 
         metrics.record("test_metric", 42.0);
-        let _value = metrics.get("test_metric");
+        let value = metrics.get("test_metric");
         assert_eq!(value, Some(42.0));
     }
 }

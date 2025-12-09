@@ -7,6 +7,7 @@
 // - Graph partitioning for distributed storage
 // - Efficient ID generation and management
 
+use std::fmt;
 use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -547,7 +548,7 @@ impl GraphPartitioner {
     /// Create a new partitioner
     pub fn new(strategy: PartitioningStrategy, num_partitions: u32) -> Self {
         let mut partitions = Vec::with_capacity(num_partitions as usize);
-        for _i in 0..num_partitions {
+        for i in 0..num_partitions {
             partitions.push(GraphPartition::new(i));
         }
 
@@ -560,7 +561,7 @@ impl GraphPartitioner {
 
     /// Assign a vertex to a partition
     pub fn assign_vertex(&mut self, vertex_id: VertexId) -> PartitionId {
-        let _partition_id = match self.strategy {
+        let partition_id = match self.strategy {
             PartitioningStrategy::Hash => {
                 (vertex_id % self.num_partitions as u64) as PartitionId
             }

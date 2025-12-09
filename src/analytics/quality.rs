@@ -750,7 +750,7 @@ mod tests {
     fn test_performance_tracker() {
         let tracker = QueryPerformanceTracker::new();
 
-        for _i in 0..50 {
+        for i in 0..50 {
             tracker.record(123, 50 + i);
         }
 

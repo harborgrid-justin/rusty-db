@@ -15,6 +15,7 @@
 // assert_eq!(txn.state, TransactionState::Active);
 // ```
 
+use std::fmt;
 use std::time::SystemTime;
 use std::collections::HashSet;
 use std::time::{Duration};
@@ -192,7 +193,6 @@ impl LockMode {
     ///
     /// A value from 1 (weakest) to 6 (strongest).
     pub fn strength(&self) -> u8 {
-        use LockMode::*;
         match self {
             Shared => 1,
             IntentShared => 2,

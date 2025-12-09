@@ -648,7 +648,7 @@ mod tests {
         let mut memtable = MemTable::new(1024, 0);
 
         let key = b"test_key".to_vec();
-        let _value = LsmValue::new(b"test_value".to_vec());
+        let value = LsmValue::new(b"test_value".to_vec());
 
         assert!(memtable.put(key.clone(), value));
         assert!(memtable.get(&key).is_some());
@@ -659,7 +659,7 @@ mod tests {
         let lsm = LsmTree::new(1024, 5);
 
         let key = b"key1".to_vec();
-        let _value = b"value1".to_vec();
+        let value = b"value1".to_vec();
 
         lsm.put(key.clone(), value.clone()).unwrap();
 
@@ -672,7 +672,7 @@ mod tests {
         let lsm = LsmTree::new(1024, 5);
 
         let key = b"key1".to_vec();
-        let _value = b"value1".to_vec();
+        let value = b"value1".to_vec();
 
         lsm.put(key.clone(), value).unwrap();
         lsm.delete(key.clone()).unwrap();
@@ -698,13 +698,13 @@ mod tests {
         let lsm = LsmTree::new(128, 5); // Small memtable
 
         // Fill memtable
-        for _i in 0..20 {
+        for i in 0..20 {
             let key = format!("key{:02}", i).into_bytes();
-            let _value = b"value".to_vec();
+            let value = b"value".to_vec();
             lsm.put(key, value).unwrap();
         }
 
-        let _stats = lsm.get_stats();
+        let stats = lsm.get_stats();
         assert!(stats.writes >= 20);
     }
 }

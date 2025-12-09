@@ -134,7 +134,7 @@ impl OlapCube {
     /// Drill down to a more detailed level.
     ///
     /// Returns a new cube with the additional dimension.
-    pub fn drill_down(&self, _dimension: &str) -> Result<OlapCube> {
+    pub fn drill_down(&self, dimension: &str) -> Result<OlapCube> {
         // In production, this would add a new dimension level
         Ok(OlapCube {
             dimensions: self.dimensions.clone(),
@@ -146,7 +146,7 @@ impl OlapCube {
     /// Roll up to a less detailed level.
     ///
     /// Returns a new cube with aggregated values.
-    pub fn roll_up(&self, _dimension: &str) -> Result<OlapCube> {
+    pub fn roll_up(&self, dimension: &str) -> Result<OlapCube> {
         // In production, this would aggregate out a dimension
         Ok(OlapCube {
             dimensions: self.dimensions.clone(),
@@ -264,7 +264,7 @@ impl MultidimensionalAggregator {
 
         // Generate all possible dimension combinations (power set)
         let num_dims = self.dimensions.len();
-        for _i in 0..(1 << num_dims) {
+        for i in 0..(1 << num_dims) {
             let mut active_dims = Vec::new();
             for j in 0..num_dims {
                 if i & (1 << j) != 0 {
@@ -283,7 +283,7 @@ impl MultidimensionalAggregator {
         let mut cube = AggregationCube::new();
 
         // Generate prefix combinations
-        for _i in 0..=self.dimensions.len() {
+        for i in 0..=self.dimensions.len() {
             let active_dims: Vec<_> = self.dimensions[0..i].to_vec();
             self.aggregate_by_dimensions(data, &active_dims, &mut cube);
         }

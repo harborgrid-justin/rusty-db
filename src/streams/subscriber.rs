@@ -3,6 +3,7 @@
 // Event subscription with consumer groups, offset tracking, at-least-once
 // and exactly-once delivery semantics, subscription filtering, and replay.
 
+use tokio::time::sleep;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Mutex;
@@ -505,12 +506,12 @@ impl EventSubscriber {
     }
 
     /// Pause consumption from partitions
-    pub fn pause(&self, _partitions: Vec<u32>) {
+    pub fn pause(&self, partitions: Vec<u32>) {
         // Implementation would mark partitions as paused
     }
 
     /// Resume consumption from partitions
-    pub fn resume(&self, _partitions: Vec<u32>) {
+    pub fn resume(&self, partitions: Vec<u32>) {
         // Implementation would mark partitions as resumed
     }
 

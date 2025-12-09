@@ -253,7 +253,7 @@ mod tests {
 
     #[test]
     fn test_statistics() {
-        let _stats = TransactionStatistics::new();
+        let stats = TransactionStatistics::new();
 
         stats.record_begin();
         stats.record_commit(10);

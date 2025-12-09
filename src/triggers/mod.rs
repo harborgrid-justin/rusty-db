@@ -124,14 +124,14 @@ impl TriggerManager {
     }
     
     /// Evaluate a trigger condition
-    fn evaluate_condition(&self, _condition: &str, _context: &TriggerContext) -> Result<bool> {
+    fn evaluate_condition(&self, condition: &str, _context: &TriggerContext) -> Result<bool> {
         // TODO: Implement condition evaluation
         // For now, always return true
         Ok(true)
     }
     
     /// Execute a trigger action
-    fn execute_action(&self, _action: &str, _context: &TriggerContext) -> Result<()> {
+    fn execute_action(&self, action: &str, _context: &TriggerContext) -> Result<()> {
         // TODO: Implement action execution
         // This would typically parse and execute SQL statements
         Ok(())

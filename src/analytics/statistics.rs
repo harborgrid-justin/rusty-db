@@ -7,6 +7,7 @@
 // - **Histograms**: Value distribution for selectivity estimation
 // - **Most Common Values**: Frequency tracking for skewed data
 
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::SystemTime;
@@ -349,7 +350,7 @@ impl HistogramManager {
 
         let bucket_size = data.len() / num_buckets;
 
-        for _i in 0..num_buckets {
+        for i in 0..num_buckets {
             let start = i * bucket_size;
             let end = if i == num_buckets - 1 {
                 data.len()
@@ -452,7 +453,7 @@ mod tests {
 
     #[test]
     fn test_column_statistics_creation() {
-        let _stats = ColumnStatistics::new("users".to_string(), "age".to_string());
+        let stats = ColumnStatistics::new("users".to_string(), "age".to_string());
         assert_eq!(stats.table_name, "users");
         assert_eq!(stats.column_name, "age");
         assert_eq!(stats.selectivity(), 1.0);
@@ -479,7 +480,7 @@ mod tests {
 
     #[test]
     fn test_selectivity() {
-        let _stats = ColumnStatistics {
+        let stats = ColumnStatistics {
             table_name: "users".to_string(),
             column_name: "age".to_string(),
             distinct_count: 50,

@@ -105,7 +105,7 @@ impl ColumnBatch {
         for row_idx in 0..self.row_count {
             let mut row = Vec::with_capacity(self.schema.len());
             for col_idx in 0..self.schema.len() {
-                let _value = self.columns[col_idx].get(row_idx)
+                let value = self.columns[col_idx].get(row_idx)
                     .map(|v| v.to_string())
                     .unwrap_or_else(|| "NULL".to_string());
                 row.push(value);
@@ -379,7 +379,7 @@ impl VectorizedExecutor {
                 // Extract aggregate value
                 if let Some(col) = batch.get_column(agg_col) {
                     if let Some(value) = col.get(row_idx) {
-                        let _state = groups.entry(group_key).or_insert_with(AggregateState::new);
+                        let state = groups.entry(group_key).or_insert_with(AggregateState::new);
                         state.update(value, agg_type);
                     }
                 }
@@ -416,7 +416,7 @@ impl VectorizedExecutor {
 
     /// Adaptive batch size adjustment based on memory pressure
     pub fn adjust_batch_size(&mut self, memory_pressure: f64) {
-        let _stats = self.stats.read();
+        let stats = self.stats.read();
         let avg_row_size = stats.avg_row_size();
         drop(stats);
 
@@ -624,7 +624,7 @@ impl VectorizedHashTable {
                 })
                 .collect();
 
-            let _hash = self.hash_values(&key_values);
+            let hash = self.hash_values(&key_values);
             let bucket_idx = (hash as usize) % self.num_buckets;
 
             let row_values: Vec<ColumnValue> = batch.columns.iter()
@@ -652,7 +652,7 @@ impl VectorizedHashTable {
                 })
                 .collect();
 
-            let _hash = self.hash_values(&key_values);
+            let hash = self.hash_values(&key_values);
             let bucket_idx = (hash as usize) % self.num_buckets;
 
             let probe_row: Vec<ColumnValue> = batch.columns.iter()

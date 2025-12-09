@@ -2,6 +2,7 @@
 //
 // Pre-allocated, aligned buffer pool for Direct I/O operations.
 
+use std::fmt;
 use crate::error::Result;
 use crate::io::{PAGE_SIZE, SECTOR_SIZE};
 use std::alloc::{alloc, dealloc, Layout};
@@ -413,7 +414,7 @@ impl BufferPool {
     }
 
     /// Return a buffer to the pool
-    fn return_buffer(&self, ptr: *mut u8, _size: usize, _layout: Layout) {
+    fn return_buffer(&self, ptr: *mut u8, size: usize, _layout: Layout) {
         let mut buffers = self.buffers.lock();
 
         for buffer in buffers.iter_mut() {
@@ -619,14 +620,14 @@ mod tests {
         })
         .unwrap();
 
-        let _buf1 = pool.allocate(PAGE_SIZE).unwrap();
-        let _buf2 = pool.allocate(PAGE_SIZE).unwrap();
+        let buf1 = pool.allocate(PAGE_SIZE).unwrap();
+        let buf2 = pool.allocate(PAGE_SIZE).unwrap();
 
         // Pool is exhausted, should allocate new
         let buf3 = pool.allocate(PAGE_SIZE).unwrap();
         assert!(buf3.len() > 0);
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert_eq!(stats.pool_hits, 2);
         assert_eq!(stats.pool_misses, 1);
     }
@@ -642,7 +643,7 @@ mod tests {
         .unwrap();
 
         // PoolOrNew strategy
-        let _buf1 = pool
+        let buf1 = pool
             .allocate_with_strategy(PAGE_SIZE, BufferAllocationStrategy::PoolOrNew)
             .unwrap();
 
@@ -653,11 +654,11 @@ mod tests {
         assert!(buf2.len() > 0);
 
         // Exhaust pool
-        let _buf3 = pool.allocate(PAGE_SIZE).unwrap();
+        let buf3 = pool.allocate(PAGE_SIZE).unwrap();
         let _buf4 = pool.allocate(PAGE_SIZE).unwrap();
 
         // PoolOnly should fail when exhausted
-        let _result = pool.allocate_with_strategy(PAGE_SIZE, BufferAllocationStrategy::PoolOnly);
+        let result = pool.allocate_with_strategy(PAGE_SIZE, BufferAllocationStrategy::PoolOnly);
         assert!(result.is_err());
     }
 
@@ -671,10 +672,10 @@ mod tests {
         })
         .unwrap();
 
-        let _buf1 = pool.allocate(PAGE_SIZE).unwrap();
-        let _buf2 = pool.allocate(PAGE_SIZE).unwrap();
+        let buf1 = pool.allocate(PAGE_SIZE).unwrap();
+        let buf2 = pool.allocate(PAGE_SIZE).unwrap();
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert_eq!(stats.allocations, 2);
         assert_eq!(stats.pool_hits, 2);
         assert_eq!(stats.hit_rate(), 100.0);
@@ -682,7 +683,7 @@ mod tests {
         drop(_buf1);
         drop(_buf2);
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert_eq!(stats.deallocations, 2);
         assert_eq!(stats.outstanding(), 0);
     }
@@ -699,9 +700,9 @@ mod tests {
 
         assert_eq!(pool.utilization(), 0.0);
 
-        let _buf1 = pool.allocate(PAGE_SIZE).unwrap();
-        let _buf2 = pool.allocate(PAGE_SIZE).unwrap();
-        let _buf3 = pool.allocate(PAGE_SIZE).unwrap();
+        let buf1 = pool.allocate(PAGE_SIZE).unwrap();
+        let buf2 = pool.allocate(PAGE_SIZE).unwrap();
+        let buf3 = pool.allocate(PAGE_SIZE).unwrap();
 
         assert_eq!(pool.utilization(), 30.0);
     }

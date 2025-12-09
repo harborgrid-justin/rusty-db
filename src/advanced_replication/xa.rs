@@ -3,6 +3,7 @@
 // Two-phase commit protocol for distributed transactions across multiple databases.
 // Implements XA transaction management with heuristic completion support.
 
+use tokio::time::sleep;
 use std::collections::VecDeque;
 use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
@@ -343,7 +344,7 @@ impl XaTransactionManager {
     async fn send_prepare(&self, rm_id: &str, _xid: &Xid) -> Result<Vote> {
         let rms = self.resource_managers.read();
 
-        let _rm = rms.get(rm_id)
+        let rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
             ))?;
@@ -483,7 +484,7 @@ impl XaTransactionManager {
     async fn send_commit(&self, rm_id: &str, _xid: &Xid) -> Result<()> {
         let rms = self.resource_managers.read();
 
-        let _rm = rms.get(rm_id)
+        let rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
             ))?;
@@ -553,7 +554,7 @@ impl XaTransactionManager {
     async fn send_rollback(&self, rm_id: &str, _xid: &Xid) -> Result<()> {
         let rms = self.resource_managers.read();
 
-        let _rm = rms.get(rm_id)
+        let rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
             ))?;
@@ -771,7 +772,7 @@ mod tests {
         // Commit (one-phase)
         xa_mgr.xa_commit(&xid, true).await.unwrap();
 
-        let _stats = xa_mgr.get_stats();
+        let stats = xa_mgr.get_stats();
         assert_eq!(stats.total_transactions, 1);
     }
 }

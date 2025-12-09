@@ -4,6 +4,7 @@
 // innovations including out-of-order event handling, GPU-accelerated pattern matching,
 // and ML model serving in streams.
 
+use std::fmt;
 use std::time::SystemTime;
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

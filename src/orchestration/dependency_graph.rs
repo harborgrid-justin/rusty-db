@@ -29,6 +29,8 @@
 // └────────────────────────────────────────────────┘
 // ```
 
+use std::collections::VecDeque;
+use std::fmt;
 use std::collections::HashSet;
 use std::collections::{HashMap};
 
@@ -697,7 +699,7 @@ mod tests {
             .add_edge(DependencyEdge::new("a".into(), "b".into(), DependencyType::Hard))
             .unwrap();
 
-        let _stats = graph.statistics();
+        let stats = graph.statistics();
         assert_eq!(stats.total_nodes, 2);
         assert_eq!(stats.total_edges, 1);
         assert_eq!(stats.hard_edges, 1);

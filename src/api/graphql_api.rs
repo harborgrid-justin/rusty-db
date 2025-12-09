@@ -26,6 +26,7 @@
 // └─────────────────────────────────────────────────────────┘
 // ```
 
+use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::collections::HashSet;
 use std::time::Instant;
@@ -1913,7 +1914,7 @@ impl ComplexityAnalyzer {
         Ok(())
     }
 
-    fn calculate_field_complexity(&self, _field: &async_graphql::parser::types::Field) -> usize {
+    fn calculate_field_complexity(&self, field: &async_graphql::parser::types::Field) -> usize {
         // Base complexity of 1 for each field
         // Could be enhanced to use field-specific weights
         1
@@ -2246,7 +2247,7 @@ impl Extension for PerformanceExtensionImpl {
 
         let response = next.run(ctx, operation_name).await;
 
-        let _elapsed = start.elapsed();
+        let elapsed = start.elapsed();
         // Note: extensions require specific async_graphql types
         // Performance data is logged instead
 
@@ -2495,7 +2496,7 @@ impl GraphQLEngine {
         })
     }
 
-    pub async fn commit_transaction(&self, _transaction_id: &str) -> GqlResult<TransactionResult> {
+    pub async fn commit_transaction(&self, transaction_id: &str) -> GqlResult<TransactionResult> {
         Ok(TransactionResult {
             transaction_id: _transaction_id.to_string(),
             status: "COMMITTED".to_string(),
@@ -2503,7 +2504,7 @@ impl GraphQLEngine {
         })
     }
 
-    pub async fn rollback_transaction(&self, _transaction_id: &str) -> GqlResult<TransactionResult> {
+    pub async fn rollback_transaction(&self, transaction_id: &str) -> GqlResult<TransactionResult> {
         Ok(TransactionResult {
             transaction_id: _transaction_id.to_string(),
             status: "ROLLED_BACK".to_string(),
@@ -3388,7 +3389,7 @@ mod tests {
     #[tokio::test]
     async fn test_request_validator() {
         let validator = RequestValidator::new(10000);
-        let _result = validator.validate("{ users { id name } }");
+        let result = validator.validate("{ users { id name } }");
         assert!(result.is_ok());
     }
 

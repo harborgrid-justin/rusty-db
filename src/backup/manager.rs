@@ -465,7 +465,7 @@ impl BackupManager {
         let mut total_size = 0u64;
         let num_files = 10; // Simulate 10 data files
 
-        for _i in 0..num_files {
+        for i in 0..num_files {
             let file_size = 1024 * 1024 * 100; // 100MB per file
             total_size += file_size;
 
@@ -527,7 +527,7 @@ impl BackupManager {
 
         // Create change map for this backup
         let mut change_map = BlockChangeMap::new(parent.scn, 10000);
-        for _i in 0..num_changed {
+        for i in 0..num_changed {
             change_map.mark_block_changed(
                 i as u64,
                 0,

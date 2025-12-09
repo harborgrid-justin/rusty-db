@@ -298,7 +298,7 @@ impl PredictFunction {
         inference_engine: &InferenceEngine,
         feature_values: &Matrix,
     ) -> Result<Vector> {
-        let _result = inference_engine.predict(
+        let result = inference_engine.predict(
             &self.model_name,
             self.model_version,
             feature_values,
@@ -451,7 +451,7 @@ impl MLSqlParser {
     fn execute_create_model(&self, sql: &str) -> Result<MLExecutionResult> {
         let stmt = CreateModelStatement::parse(sql)?;
         let model_type = stmt.get_model_type()?;
-        let _hyperparameters = stmt.get_hyperparameters();
+        let hyperparameters = stmt.get_hyperparameters();
 
         // In production, this would execute the training query to get data
         // For now, return a placeholder result

@@ -20,6 +20,7 @@
 //                            STOPPED → UNLOADED
 // ```
 
+use std::fmt;
 use std::any::Any;
 use std::collections::HashMap;
 
@@ -334,7 +335,7 @@ impl PluginRegistry {
         }
 
         // Create plugin context
-        let _context = Arc::new(PluginContext::new(
+        let context = Arc::new(PluginContext::new(
             name.clone(),
             config,
             Arc::clone(&self.event_bus),
@@ -679,7 +680,7 @@ mod tests {
         let config = HashMap::new();
         assert!(registry.register(plugin, config).is_ok());
 
-        let _state = registry.get_state("test-plugin").unwrap();
+        let state = registry.get_state("test-plugin").unwrap();
         assert_eq!(state, PluginState::Registered);
     }
 
@@ -722,7 +723,7 @@ mod tests {
     async fn test_plugin_list() {
         let registry = PluginRegistry::new();
 
-        for _i in 0..3 {
+        for i in 0..3 {
             let plugin = Box::new(TestPlugin {
                 name: format!("plugin-{}", i),
             });

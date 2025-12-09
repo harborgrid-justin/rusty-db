@@ -1,3 +1,4 @@
+use crate::error::DbError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
@@ -102,7 +103,7 @@ impl ConstraintManager {
             for fk in constraints {
                 // Check if foreign key columns are present in values
                 for col in &fk.columns {
-                    if let Some(_value) = values.get(col) {
+                    if let Some(value) = values.get(col) {
                         // TODO: In production, this would:
                         // 1. Look up the referenced table
                         // 2. Check if the value exists in the referenced column(s)

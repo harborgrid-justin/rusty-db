@@ -72,6 +72,7 @@
 // # }
 // ```
 
+use std::collections::HashSet;
 use std::collections::HashMap;
 use std::sync::Arc;
 use crate::Result;
@@ -195,7 +196,7 @@ impl IntegratedSecurityManager {
             user_agent: None,
         };
 
-        let _result = self.authentication.login(credentials)?;
+        let result = self.authentication.login(credentials)?;
 
         match result {
             LoginResult::Success { session } => {
@@ -273,7 +274,7 @@ impl IntegratedSecurityManager {
         };
 
         // Check privilege
-        let _result = self.privileges.check_object_privilege(
+        let result = self.privileges.check_object_privilege(
             &session.user_id,
             &privilege,
             &privileges::PrivilegeObjectType::Table,
@@ -459,7 +460,7 @@ mod tests {
         }
 
         // Test authentication
-        let _result = security.authenticate("testuser", "TestPassword123!");
+        let result = security.authenticate("testuser", "TestPassword123!");
         assert!(result.is_ok());
     }
 
@@ -468,7 +469,7 @@ mod tests {
         let security = IntegratedSecurityManager::new();
 
         // Grant system privilege
-        let _grant_id = security.privileges.grant_system_privilege(
+        let grant_id = security.privileges.grant_system_privilege(
             "SYSTEM".to_string(),
             "user1".to_string(),
             SystemPrivilege::CreateTable,
@@ -476,7 +477,7 @@ mod tests {
         ).unwrap();
 
         // Check privilege
-        let _result = security.privileges.check_system_privilege(
+        let result = security.privileges.check_system_privilege(
             &"user1".to_string(),
             &SystemPrivilege::CreateTable,
         );
@@ -552,7 +553,7 @@ mod tests {
     fn test_fgac_policy() {
         let security = IntegratedSecurityManager::new();
 
-        let _policy = RowLevelPolicy {
+        let policy = RowLevelPolicy {
             id: "pol1".to_string(),
             name: "Test Policy".to_string(),
             table_id: "employees".to_string(),

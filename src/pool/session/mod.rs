@@ -42,7 +42,7 @@
 ///     password: "password123".to_string(),
 /// };
 ///
-/// let _result = auth.authenticate(&creds).await?;
+/// let result = auth.authenticate(&creds).await?;
 /// println!("Authenticated: {}", result.username);
 /// ```
 ///

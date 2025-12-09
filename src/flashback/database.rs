@@ -97,7 +97,7 @@ impl DatabaseFlashbackManager {
 
         // 3. Execute flashback
         let mut recovery = self.recovery.write().unwrap();
-        let _result = recovery.execute_database_flashback(&flashback_plan)?;
+        let result = recovery.execute_database_flashback(&flashback_plan)?;
 
         // 4. Create new incarnation
         let mut incarnations = self.incarnations.write().unwrap();
@@ -195,7 +195,7 @@ impl DatabaseFlashbackManager {
 
     /// Get flashback window (oldest SCN we can flashback to)
     pub fn get_flashback_window(&self) -> Result<(SCN, SCN)> {
-        let _logs = self.flashback_logs.read().unwrap();
+        let logs = self.flashback_logs.read().unwrap();
         let oldest_scn = logs.get_oldest_scn()?;
         let newest_scn = self.time_travel.get_current_scn();
 
@@ -213,7 +213,7 @@ impl DatabaseFlashbackManager {
         }
 
         // Check if flashback logs cover the target SCN
-        let _logs = self.flashback_logs.read().unwrap();
+        let logs = self.flashback_logs.read().unwrap();
         if !logs.covers_scn(target_scn) {
             return Err(DbError::Validation(
                 format!("Flashback logs do not cover SCN {}", target_scn)
@@ -225,7 +225,7 @@ impl DatabaseFlashbackManager {
 
     /// Create flashback execution plan
     fn create_flashback_plan(&self, from_scn: SCN, to_scn: SCN) -> Result<FlashbackPlan> {
-        let _logs = self.flashback_logs.read().unwrap();
+        let logs = self.flashback_logs.read().unwrap();
         let log_sequence = logs.get_logs_between(to_scn, from_scn)?;
 
         Ok(FlashbackPlan {
@@ -531,7 +531,7 @@ impl RecoveryOrchestrator {
         // 3. Restore each table state
         // 4. Validate consistency
 
-        let _result = RecoveryResult {
+        let result = RecoveryResult {
             tables_recovered: 0,
             rows_affected: 0,
         };

@@ -412,7 +412,7 @@ impl ApproximateQueryProcessor {
         let mut matches = 0usize;
         let num_rows = sample.columns.values().next().map(|v| v.len()).unwrap_or(0);
 
-        for _i in 0..num_rows {
+        for i in 0..num_rows {
             let mut row: HashMap<String, f64> = HashMap::new();
             for (col, values) in &sample.columns {
                 if let Some(val) = values.get(i) {
@@ -524,7 +524,7 @@ mod tests {
         let data: Vec<f64> = (0..1000).map(|x| x as f64).collect();
         let mut sampler = QueryResultSampler::new(SamplingMethod::Random, 0.1);
 
-        let _result = sampler.sample(&data);
+        let result = sampler.sample(&data);
 
         assert!(result.sample_size > 50 && result.sample_size < 200);
         assert_eq!(result.population_size, 1000);
@@ -535,7 +535,7 @@ mod tests {
         let data: Vec<i32> = (0..100).collect();
         let mut sampler = QueryResultSampler::new(SamplingMethod::Systematic, 0.1);
 
-        let _result = sampler.sample(&data);
+        let result = sampler.sample(&data);
 
         assert_eq!(result.sample_size, 10);
     }
@@ -554,7 +554,7 @@ mod tests {
 
     #[test]
     fn test_approximate_result() {
-        let _result = ApproximateResult {
+        let result = ApproximateResult {
             estimate: 1000.0,
             lower_bound: 900.0,
             upper_bound: 1100.0,

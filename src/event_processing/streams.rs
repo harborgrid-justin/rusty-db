@@ -4,6 +4,7 @@
 // partitioning, retention, compaction, and consumer group coordination with
 // exactly-once processing semantics.
 
+use std::fmt;
 use std::sync::Mutex;
 use std::time::SystemTime;
 use super::{
@@ -165,7 +166,7 @@ impl PartitionStrategy {
             PartitionStrategy::Hash { num_partitions } => {
                 let id_string = event.id.to_string();
                 let key = event.partition_key.as_ref().unwrap_or(&id_string);
-                let _hash = Self::hash_string(key);
+                let hash = Self::hash_string(key);
                 hash % num_partitions
             }
             PartitionStrategy::RoundRobin { num_partitions } => {
@@ -285,7 +286,7 @@ impl EventStream {
         let config = Arc::new(config);
 
         let mut partitions = Vec::new();
-        for _i in 0..num_partitions {
+        for i in 0..num_partitions {
             partitions.push(Arc::new(Mutex::new(StreamPartition::new(
                 i,
                 config.clone(),
@@ -306,7 +307,7 @@ impl EventStream {
     /// Publish an event to the stream
     pub fn publish(&self, mut event: Event) -> Result<StreamPosition> {
         // Check state
-        let _state = self.state.read().unwrap();
+        let state = self.state.read().unwrap();
         if *state != StreamLifecycleState::Active {
             return Err(crate::error::DbError::InvalidOperation(format!(
                 "Stream {} is not active (state: {:?})",
@@ -317,7 +318,7 @@ impl EventStream {
 
         // Determine partition
         let mut counter = self.partition_counter.lock().unwrap();
-        let _partition_id = self.config.partition_strategy.get_partition(&event, &mut counter);
+        let partition_id = self.config.partition_strategy.get_partition(&event, &mut counter);
         drop(counter);
 
         // Set ingestion time
@@ -1155,7 +1156,7 @@ mod tests {
 
     #[test]
     fn test_retention_policy() {
-        let _policy = RetentionPolicy::TimeBased {
+        let policy = RetentionPolicy::TimeBased {
             retention: Duration::from_secs(60),
         };
 

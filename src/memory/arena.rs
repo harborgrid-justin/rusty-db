@@ -46,7 +46,7 @@
 //
 // // Create a query context
 // let query_context_id = MemoryContextId::new("query_001")?;
-// let _context = allocator.create_context(
+// let context = allocator.create_context(
 //     query_context_id,
 //     ContextType::Query,
 //     None, // No parent
@@ -612,7 +612,7 @@ impl ArenaAllocator {
         }
 
         // Create the context
-        let _context = Arc::new(MemoryContext::new(id.clone(), context_type, parent.clone(), memory_limit));
+        let context = Arc::new(MemoryContext::new(id.clone(), context_type, parent.clone(), memory_limit));
 
         // Add to parent's children list
         if let Some(parent_id) = &parent {
@@ -635,12 +635,12 @@ impl ArenaAllocator {
 
     /// Destroys a memory context and all its children
     pub async fn destroy_context(&self, context_id: &MemoryContextId) -> Result<(), ArenaError> {
-        let _context = {
+        let context = {
             let mut contexts = self.contexts.write();
             contexts.remove(context_id)
         };
 
-        let _context = context.ok_or_else(|| ArenaError::ContextNotFound {
+        let context = context.ok_or_else(|| ArenaError::ContextNotFound {
             context_id: context_id.to_string(),
         })?;
 
@@ -681,7 +681,7 @@ impl ArenaAllocator {
         validate_alignment(alignment)?;
 
         let contexts = self.contexts.read();
-        let _context = contexts.get(context_id)
+        let context = contexts.get(context_id)
             .ok_or_else(|| MemoryError::ContextNotFound {
                 context_id: context_id.to_string(),
             })?;
@@ -754,7 +754,7 @@ impl ArenaAllocator {
 
     /// Calculates appropriate block size for allocation
     async fn calculate_block_size(&self, context: &MemoryContext, min_size: usize) -> usize {
-        let _stats = context.stats.read().await;
+        let stats = context.stats.read().await;
 
         // Start with configured initial size or previous average
         let base_size = if stats.avg_allocation_size > 0.0 {
@@ -796,7 +796,7 @@ impl ArenaAllocator {
     /// Resets a memory context (clears all allocations)
     pub async fn reset_context(&self, context_id: &MemoryContextId) -> Result<(), ArenaError> {
         let contexts = self.contexts.read();
-        let _context = contexts.get(context_id)
+        let context = contexts.get(context_id)
             .ok_or_else(|| ArenaError::ContextNotFound {
                 context_id: context_id.to_string(),
             })?;
@@ -861,7 +861,7 @@ impl ArenaAllocator {
         context_id: &MemoryContextId,
     ) -> Result<ContextStats, ArenaError> {
         let contexts = self.contexts.read();
-        let _context = contexts.get(context_id)
+        let context = contexts.get(context_id)
             .ok_or_else(|| ArenaError::ContextNotFound {
                 context_id: context_id.to_string(),
             })?;
@@ -970,7 +970,7 @@ impl ArenaAllocator {
         context_id: &MemoryContextId,
     ) -> Result<f64, ArenaError> {
         let contexts = self.contexts.read();
-        let _context = contexts.get(context_id)
+        let context = contexts.get(context_id)
             .ok_or_else(|| ArenaError::ContextNotFound {
                 context_id: context_id.to_string(),
             })?;
@@ -1018,7 +1018,7 @@ mod tests {
         let allocator = ArenaAllocator::new(config).await.unwrap();
 
         let context_id = MemoryContextId::new("test_context").unwrap();
-        let _context = allocator.create_context(
+        let context = allocator.create_context(
             context_id.clone(),
             ContextType::Query,
             None,
@@ -1026,7 +1026,7 @@ mod tests {
         ).await;
 
         assert!(context.is_ok());
-        let _context = context.unwrap();
+        let context = context.unwrap();
         assert_eq!(context.id, context_id);
         assert!(context.is_active.load(Ordering::Relaxed));
     }
@@ -1092,7 +1092,7 @@ mod tests {
         let allocator = ArenaAllocator::new(config).await.unwrap();
 
         let context_id = MemoryContextId::new("limited").unwrap();
-        let _context = allocator.create_context(
+        let context = allocator.create_context(
             context_id.clone(),
             ContextType::Temporary,
             None,
@@ -1110,7 +1110,7 @@ mod tests {
         let allocator = ArenaAllocator::new(config).await.unwrap();
 
         let context_id = MemoryContextId::new("reset_test").unwrap();
-        let _context = allocator.create_context(
+        let context = allocator.create_context(
             context_id.clone(),
             ContextType::Query,
             None,
@@ -1118,8 +1118,8 @@ mod tests {
         ).await.unwrap();
 
         // Allocate some memory
-        let _ptr1 = allocator.allocate_in_context(&context_id, 256, 8).await.unwrap();
-        let _ptr2 = allocator.allocate_in_context(&context_id, 512, 8).await.unwrap();
+        let ptr1 = allocator.allocate_in_context(&context_id, 256, 8).await.unwrap();
+        let ptr2 = allocator.allocate_in_context(&context_id, 512, 8).await.unwrap();
 
         // Check usage before reset
         let stats_before = allocator.get_context_statistics(&context_id).await.unwrap();
@@ -1130,7 +1130,7 @@ mod tests {
 
         // Check usage after reset
         let contexts = allocator.contexts.read();
-        let _context = contexts.get(&context_id).unwrap();
+        let context = contexts.get(&context_id).unwrap();
         assert_eq!(context.current_usage(), 0);
     }
 
@@ -1140,7 +1140,7 @@ mod tests {
         let allocator = ArenaAllocator::new(config).await.unwrap();
 
         let context_id = MemoryContextId::new("stats_test").unwrap();
-        let _context = allocator.create_context(
+        let context = allocator.create_context(
             context_id.clone(),
             ContextType::Query,
             None,
@@ -1148,10 +1148,10 @@ mod tests {
         ).await.unwrap();
 
         // Make some allocations
-        let _ptr1 = allocator.allocate_in_context(&context_id, 100, 8).await.unwrap();
-        let _ptr2 = allocator.allocate_in_context(&context_id, 200, 8).await.unwrap();
+        let ptr1 = allocator.allocate_in_context(&context_id, 100, 8).await.unwrap();
+        let ptr2 = allocator.allocate_in_context(&context_id, 200, 8).await.unwrap();
 
-        let _stats = allocator.get_statistics().await;
+        let stats = allocator.get_statistics().await;
         assert_eq!(stats.total_allocations, 2);
         assert_eq!(stats.total_allocated, 300);
         assert_eq!(stats.active_contexts, 1);

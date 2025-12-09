@@ -7,6 +7,7 @@
 // - Hilbert curve ordering for locality preservation
 // - Bulk loading and dynamic maintenance
 
+use std::collections::HashSet;
 use crate::error::Result;
 use crate::spatial::geometry::{BoundingBox, Coordinate};
 use std::collections::{HashMap};
@@ -243,7 +244,7 @@ impl RTree {
         let mut seed2_idx = 1;
 
         // Find pair with maximum waste
-        for _i in 0..entries.len() {
+        for i in 0..entries.len() {
             for j in (i + 1)..entries.len() {
                 let bbox1 = entries[i].bbox();
                 let bbox2 = entries[j].bbox();

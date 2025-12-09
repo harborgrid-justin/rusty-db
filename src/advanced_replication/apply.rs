@@ -4,6 +4,7 @@
 // and automatic error handling and retry logic.
 // Optimized with lock-free ring buffers for maximum throughput.
 
+use tokio::time::sleep;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
@@ -366,7 +367,7 @@ impl ApplyEngine {
 
         // Create checkpoint if needed
         if self.config.enable_checkpointing {
-            let _stats = self.stats.read();
+            let stats = self.stats.read();
             if stats.changes_applied % self.config.checkpoint_interval == 0 {
                 drop(stats);
                 self.create_checkpoint()?;
@@ -591,7 +592,7 @@ impl ApplyEngine {
 
     /// Create a checkpoint
     fn create_checkpoint(&self) -> Result<()> {
-        let _stats = self.stats.read();
+        let stats = self.stats.read();
 
         let checkpoint = ApplyCheckpoint {
             id: format!("checkpoint-{}", uuid::Uuid::new_v4()),
@@ -683,7 +684,7 @@ mod tests {
 
         engine.queue_change(change).unwrap();
 
-        let _stats = engine.get_stats();
+        let stats = engine.get_stats();
         assert_eq!(stats.total_changes, 1);
     }
 
@@ -705,7 +706,7 @@ mod tests {
         engine.queue_change(change).unwrap();
         engine.process_changes().await.unwrap();
 
-        let _stats = engine.get_stats();
+        let stats = engine.get_stats();
         assert_eq!(stats.changes_applied, 1);
     }
 }

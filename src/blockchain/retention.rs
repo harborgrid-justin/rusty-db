@@ -9,6 +9,7 @@
 // - Retention inheritance
 // - Compliance reporting
 
+use std::fmt;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -689,7 +690,7 @@ mod tests {
 
     #[test]
     fn test_retention_policy() {
-        let _policy = RetentionPolicy::new(
+        let policy = RetentionPolicy::new(
             "policy1".to_string(),
             "30 Day Retention".to_string(),
             RetentionPeriod::Days(30),
@@ -725,7 +726,7 @@ mod tests {
     fn test_retention_manager() {
         let manager = RetentionManager::new();
 
-        let _policy = RetentionPolicy::new(
+        let policy = RetentionPolicy::new(
             "policy1".to_string(),
             "Test Policy".to_string(),
             RetentionPeriod::Days(30),

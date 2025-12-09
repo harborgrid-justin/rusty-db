@@ -257,7 +257,7 @@ impl CircuitBreaker {
     }
 
     fn can_attempt(&self) -> bool {
-        let _state = *self.state.read().unwrap();
+        let state = *self.state.read().unwrap();
 
         match state {
             CircuitState::Closed => true,
@@ -286,7 +286,7 @@ impl CircuitBreaker {
     }
 
     fn record_success(&self) {
-        let _state = *self.state.read().unwrap();
+        let state = *self.state.read().unwrap();
 
         match state {
             CircuitState::Closed => {

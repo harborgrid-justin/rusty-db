@@ -842,7 +842,7 @@ mod tests {
     #[test]
     fn test_repository_creation() {
         let repo = WorkloadRepository::new();
-        let _stats = repo.get_repository_stats();
+        let stats = repo.get_repository_stats();
         assert_eq!(stats.total_snapshots, 0);
         assert_eq!(stats.total_baselines, 0);
     }

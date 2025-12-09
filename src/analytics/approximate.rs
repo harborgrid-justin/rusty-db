@@ -56,7 +56,7 @@ impl HyperLogLog {
     pub fn add<T: Hash>(&mut self, element: &T) {
         let mut hasher = DefaultHasher::new();
         element.hash(&mut hasher);
-        let _hash = hasher.finish();
+        let hash = hasher.finish();
 
         // Extract register index from first p bits
         let register_index = (hash & ((1 << self.precision) - 1)) as usize;
@@ -112,7 +112,7 @@ impl HyperLogLog {
             ));
         }
 
-        for _i in 0..self.num_registers {
+        for i in 0..self.num_registers {
             self.registers[i] = self.registers[i].max(other.registers[i]);
         }
 
@@ -181,7 +181,7 @@ impl CountMinSketch {
     /// Add element with count
     pub fn add<T: Hash>(&mut self, element: &T, count: u64) {
         for (i, seed) in self.seeds.iter().enumerate() {
-            let _hash = self.hash_with_seed(element, *seed);
+            let hash = self.hash_with_seed(element, *seed);
             let index = (hash % self.width as u64) as usize;
             self.counters[i][index] += count;
         }
@@ -192,7 +192,7 @@ impl CountMinSketch {
         let mut min_count = u64::MAX;
 
         for (i, seed) in self.seeds.iter().enumerate() {
-            let _hash = self.hash_with_seed(element, *seed);
+            let hash = self.hash_with_seed(element, *seed);
             let index = (hash % self.width as u64) as usize;
             min_count = min_count.min(self.counters[i][index]);
         }
@@ -208,7 +208,7 @@ impl CountMinSketch {
             ));
         }
 
-        for _i in 0..self.depth {
+        for i in 0..self.depth {
             for j in 0..self.width {
                 self.counters[i][j] += other.counters[i][j];
             }
@@ -604,7 +604,7 @@ mod tests {
         let mut hll = HyperLogLog::new(10).unwrap();
 
         // Add 10,000 distinct elements
-        for _i in 0..10000 {
+        for i in 0..10000 {
             hll.add(&i);
         }
 
@@ -620,7 +620,7 @@ mod tests {
         let mut cms = CountMinSketch::new(0.01, 0.01).unwrap();
 
         // Add elements with different frequencies
-        for _i in 0..100 {
+        for i in 0..100 {
             cms.add(&"common", i);
         }
         cms.add(&"rare", 1);
@@ -638,7 +638,7 @@ mod tests {
         let mut sampler = ReservoirSampler::new(100);
 
         // Add 1000 items
-        for _i in 0..1000 {
+        for i in 0..1000 {
             sampler.add(i);
         }
 
@@ -662,7 +662,7 @@ mod tests {
     fn test_online_variance() {
         let mut variance = OnlineVariance::new();
 
-        for _i in 0..100 {
+        for i in 0..100 {
             variance.add(i as f64);
         }
 
@@ -679,11 +679,11 @@ mod tests {
 
         executor.create_distinct_estimator("user_id".to_string(), 10).unwrap();
 
-        for _i in 0..1000 {
+        for i in 0..1000 {
             executor.add_to_distinct("user_id", &i.to_string()).unwrap();
         }
 
-        let _result = executor.estimate_distinct("user_id").unwrap();
+        let result = executor.estimate_distinct("user_id").unwrap();
         assert!(result.value > 900.0);
         assert!(result.value < 1100.0);
     }

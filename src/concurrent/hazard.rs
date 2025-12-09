@@ -166,7 +166,7 @@ impl HazardList {
             let record = unsafe { &*current };
 
             if record.active.load(Ordering::Acquire) {
-                for _i in 0..MAX_HAZARDS_PER_THREAD {
+                for i in 0..MAX_HAZARDS_PER_THREAD {
                     let ptr = record.get_hazard(i);
                     if !ptr.is_null() {
                         protected.push(ptr);
@@ -502,7 +502,7 @@ mod tests {
 
     #[test]
     fn test_hazard_guard() {
-        let _value = Box::into_raw(Box::new(42));
+        let value = Box::into_raw(Box::new(42));
         let guard = HazardGuard::new(value);
 
         unsafe {
@@ -517,10 +517,10 @@ mod tests {
 
     #[test]
     fn test_retire() {
-        let _value = Box::into_raw(Box::new(42));
+        let value = Box::into_raw(Box::new(42));
 
         // Protect with hazard pointer
-        let _guard = HazardGuard::new(value);
+        let guard = HazardGuard::new(value);
 
         // Retire the pointer
         retire(value);
@@ -546,15 +546,15 @@ mod tests {
 
     #[test]
     fn test_concurrent() {
-        let _value = Arc::new(AtomicPtr::new(Box::into_raw(Box::new(0))));
+        let value = Arc::new(AtomicPtr::new(Box::into_raw(Box::new(0))));
         let mut handles = vec![];
 
-        for _i in 0..10 {
-            let _value = Arc::clone(&value);
+        for i in 0..10 {
+            let value = Arc::clone(&value);
             handles.push(thread::spawn(move || {
                 for j in 0..100 {
                     let ptr = value.load(Ordering::Acquire);
-                    let _guard = HazardGuard::new(ptr);
+                    let guard = HazardGuard::new(ptr);
 
                     // Simulate work
                     unsafe {

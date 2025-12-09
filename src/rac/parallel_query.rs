@@ -17,6 +17,7 @@
 // instance load, and network topology. Results are streamed back through
 // efficient data flow operators and aggregated at the coordinator.
 
+use tokio::sync::oneshot;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Instant;
@@ -404,7 +405,7 @@ struct WorkerInfo {
 impl WorkerPool {
     fn new(max_workers: usize) -> Self {
         let mut available = VecDeque::new();
-        for _i in 0..max_workers {
+        for i in 0..max_workers {
             available.push_back(i);
         }
 
@@ -616,7 +617,7 @@ impl ParallelQueryCoordinator {
         // Create execution state
         let (completion_tx, completion_rx) = oneshot::channel();
 
-        let _state = QueryExecutionState {
+        let state = QueryExecutionState {
             query_id,
             status: ExecutionStatus::Initializing,
             started_at: start,
@@ -634,7 +635,7 @@ impl ParallelQueryCoordinator {
         self.start_query_execution(plan).await?;
 
         // Wait for completion
-        let _result = match completion_rx.await {
+        let result = match completion_rx.await {
             Ok(Ok(tuples)) => {
                 self.stats.write().successful_queries += 1;
                 Ok(tuples)
@@ -746,13 +747,13 @@ impl ParallelQueryCoordinator {
         };
 
         let worker_pool = self.worker_pool.clone();
-        let _stats = self.stats.clone();
+        let stats = self.stats.clone();
         let enable_speculation = self.config.enable_speculation;
         let speculation_threshold = self.config.speculation_threshold;
 
         tokio::spawn(async move {
             let start = Instant::now();
-            let _result = Self::execute_fragment_work(fragment.clone()).await;
+            let result = Self::execute_fragment_work(fragment.clone()).await;
 
             // NEW: Check if this is taking too long (straggler detection)
             let elapsed = start.elapsed().as_millis() as f64;
@@ -801,7 +802,7 @@ impl ParallelQueryCoordinator {
     /// NEW: Work stealing implementation
     /// Idle workers can steal work from busy workers' queues
     async fn try_steal_work(&self, _thief_worker_id: WorkerId) -> Option<QueryFragment> {
-        let _active_workers = self.worker_pool.active_workers.read();
+        let active_workers = self.worker_pool.active_workers.read();
 
         // Find busiest worker (most work remaining)
         // In production, would maintain per-worker work queues
@@ -819,7 +820,7 @@ impl ParallelQueryCoordinator {
         fragment: QueryFragment,
         instance: NodeId,
     ) -> std::result::Result<(), DbError> {
-        let _message = QueryMessage::ExecuteFragment {
+        let message = QueryMessage::ExecuteFragment {
             query_id,
             fragment_id,
             fragment,

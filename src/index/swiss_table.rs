@@ -129,7 +129,7 @@ where
     {
         self.reserve(1);
 
-        let _hash = self.hash_key(&key);
+        let hash = self.hash_key(&key);
         let h1 = hash;
         let h2 = (hash >> 57) as u8; // Top 7 bits as tag
 
@@ -219,7 +219,7 @@ where
             return None;
         }
 
-        let _hash = self.hash_key(key);
+        let hash = self.hash_key(key);
         let h1 = hash;
         let h2 = (hash >> 57) as u8;
 
@@ -265,7 +265,7 @@ where
             return None;
         }
 
-        let _hash = self.hash_key(key);
+        let hash = self.hash_key(key);
         let h1 = hash;
         let h2 = (hash >> 57) as u8;
 
@@ -286,7 +286,7 @@ where
                         self.ctrl[slot_idx] = TOMBSTONE;
 
                         // Extract value
-                        let _value = unsafe {
+                        let value = unsafe {
                             let slot = ptr::read(self.slots[slot_idx].as_ptr());
                             slot.value
                         };
@@ -375,7 +375,7 @@ where
         self.occupied = 0;
 
         // Rehash all entries
-        for _i in 0..old_capacity {
+        for i in 0..old_capacity {
             let ctrl_byte = old_ctrl[i];
             if ctrl_byte != EMPTY && ctrl_byte != TOMBSTONE {
                 let slot = unsafe { old_slots[i].assume_init_read() };
@@ -422,7 +422,7 @@ where
 impl<K, V> Drop for SwissTable<K, V> {
     fn drop(&mut self) {
         // Drop all initialized slots
-        for _i in 0..self.capacity {
+        for i in 0..self.capacity {
             let ctrl_byte = self.ctrl[i];
             if ctrl_byte != EMPTY && ctrl_byte != TOMBSTONE {
                 unsafe {
@@ -477,7 +477,7 @@ impl Group {
     fn match_byte(&self, byte: u8) -> BitMask {
         unsafe {
             let cmp = _mm_set1_epi8(byte as i8);
-            let _result = _mm_cmpeq_epi8(self.data, cmp);
+            let result = _mm_cmpeq_epi8(self.data, cmp);
             let mask = _mm_movemask_epi8(result) as u16;
             BitMask { mask }
         }
@@ -603,13 +603,13 @@ mod tests {
     fn test_many_insertions() {
         let mut table = SwissTable::new();
 
-        for _i in 0..1000 {
+        for i in 0..1000 {
             table.insert(format!("key_{}", i), i);
         }
 
         assert_eq!(table.len(), 1000);
 
-        for _i in 0..1000 {
+        for i in 0..1000 {
             assert_eq!(table.get(&format!("key_{}", i)), Some(&i));
         }
     }
@@ -618,14 +618,14 @@ mod tests {
     fn test_resize() {
         let mut table = SwissTable::with_capacity(16);
 
-        for _i in 0..100 {
+        for i in 0..100 {
             table.insert(format!("key_{}", i), i);
         }
 
         assert!(table.capacity() > 16);
         assert_eq!(table.len(), 100);
 
-        for _i in 0..100 {
+        for i in 0..100 {
             assert_eq!(table.get(&format!("key_{}", i)), Some(&i));
         }
     }
@@ -659,7 +659,7 @@ mod tests {
     fn test_load_factor() {
         let mut table = SwissTable::with_capacity(16);
 
-        for _i in 0..10 {
+        for i in 0..10 {
             table.insert(format!("key_{}", i), i);
         }
 

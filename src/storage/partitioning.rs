@@ -775,7 +775,7 @@ mod tests {
             1024000,
         );
         
-        let _stats = stats_mgr.get_stats("sales", "p_2023");
+        let stats = stats_mgr.get_stats("sales", "p_2023");
         assert!(stats.is_some());
         assert_eq!(stats.unwrap().row_count, 1000);
     }
@@ -783,7 +783,6 @@ mod tests {
 
 /// Advanced Partition Pruning Engine
 pub mod pruning {
-    use super::*;
 
     /// Partition pruning optimizer
     pub struct PartitionPruningOptimizer {
@@ -901,7 +900,6 @@ pub mod pruning {
 
 /// Automatic Partition Management
 pub mod auto_management {
-    use super::*;
     use std::time::Duration;
 
     /// Automatic partition creator
@@ -1006,7 +1004,7 @@ pub mod auto_management {
             to_archive
         }
         
-        fn partition_older_than(&self, _partition: &str, _cutoff: SystemTime) -> bool {
+        fn partition_older_than(&self, partition: &str, cutoff: SystemTime) -> bool {
             // Placeholder: parse partition name and compare with cutoff
             false
         }
@@ -1088,7 +1086,6 @@ pub mod auto_management {
 
 /// Partition-Wise Operations
 pub mod partition_wise {
-    use super::*;
 
     /// Partition-wise join executor
     pub struct PartitionWiseJoinExecutor {
@@ -1242,7 +1239,6 @@ pub mod partition_wise {
 
 /// Dynamic Partition Operations
 pub mod dynamic {
-    use super::*;
 
     /// Dynamic partition splitter
     pub struct PartitionSplitter;
@@ -1352,7 +1348,6 @@ pub mod dynamic {
 
 /// Partition Cost Model and Optimizer
 pub mod optimizer {
-    use super::*;
 
     /// Partition access cost estimator
     pub struct PartitionCostEstimator {
@@ -1479,7 +1474,6 @@ pub mod optimizer {
 
 /// Partition Parallel Execution Engine
 pub mod parallel {
-    use super::*;
     use std::sync::Arc;
 
     /// Parallel partition scanner
@@ -1603,8 +1597,6 @@ pub mod parallel {
 
 /// Partition Monitoring and Health Checks
 pub mod monitoring {
-    use super::*;
-    use std::time::Duration;
 
     /// Partition health monitor
     pub struct PartitionHealthMonitor {
@@ -1851,7 +1843,6 @@ pub mod monitoring {
 
 /// Partition Data Distribution and Balancing
 pub mod balancing {
-    use super::*;
 
     /// Partition load balancer
     pub struct PartitionLoadBalancer {
@@ -1974,7 +1965,6 @@ pub mod balancing {
 
 /// Partition Compression and Storage Optimization
 pub mod compression {
-    use super::*;
 
     /// Partition compressor
     pub struct PartitionCompressor {
@@ -2046,7 +2036,6 @@ pub mod compression {
 
 /// Partition Query Router
 pub mod routing {
-    use super::*;
 
     /// Smart partition router
     pub struct PartitionRouter {
@@ -2116,14 +2105,12 @@ mod advanced_tests {
     use super::partition_wise::*;
     use super::pruning::*;
     use super::routing::*;
-    use super::*;
-    use std::time::SystemTime;
 
     #[test]
     fn test_partition_pruning_optimizer() {
         let mut optimizer = PartitionPruningOptimizer::new();
         
-        let _stats = PartitionStatistics {
+        let stats = PartitionStatistics {
             partition_name: "p_2023".to_string(),
             row_count: 1000,
             data_size: 1024000,
@@ -2159,7 +2146,7 @@ mod advanced_tests {
         let start = SystemTime::now();
         let end = start + std::time::Duration::from_secs(86400 * 90); // 90 days
         
-        let _result = creator.create_partitions_for_range("sales".to_string(), start, end);
+        let result = creator.create_partitions_for_range("sales".to_string(), start, end);
         assert!(result.is_ok());
     }
     
@@ -2170,7 +2157,7 @@ mod advanced_tests {
         let left_partitions = vec!["p1".to_string(), "p2".to_string()];
         let right_partitions = vec!["p1".to_string(), "p2".to_string()];
         
-        let _result = executor.execute_join(
+        let result = executor.execute_join(
             "orders",
             "customers",
             &left_partitions,
@@ -2184,7 +2171,7 @@ mod advanced_tests {
     #[test]
     fn test_partition_splitter() {
         let split_points = vec!["500".to_string(), "1000".to_string()];
-        let _result = dynamic::PartitionSplitter::split_partition("sales", "p_2023", split_points);
+        let result = dynamic::PartitionSplitter::split_partition("sales", "p_2023", split_points);
         
         assert!(result.is_ok());
         assert_eq!(result.unwrap().len(), 2);
@@ -2261,7 +2248,7 @@ mod advanced_tests {
     fn test_partition_compressor() {
         let compressor = PartitionCompressor::new(CompressionAlgorithm::Zstd);
         
-        let _result = compressor.compress_partition("sales", "p_2023");
+        let result = compressor.compress_partition("sales", "p_2023");
         assert!(result.is_ok());
         
         let compression_result = result.unwrap();
@@ -2287,7 +2274,6 @@ mod advanced_tests {
 
 /// Partition Integration Utilities
 pub mod integration {
-    use super::*;
 
     /// Partition SQL generator
     pub struct PartitionSqlGenerator;

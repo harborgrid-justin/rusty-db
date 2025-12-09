@@ -533,7 +533,7 @@ mod tests {
         let latch = OptimisticLatch::new();
 
         {
-            let _guard = WriteGuard::new(&latch);
+            let guard = WriteGuard::new(&latch);
             // Latch should be locked
             assert!(latch.is_locked());
         }
@@ -587,7 +587,7 @@ mod tests {
 
             handles.push(thread::spawn(move || {
                 for _ in 0..100 {
-                    let _guard = WriteGuard::new(&latch_clone);
+                    let guard = WriteGuard::new(&latch_clone);
                     counter_clone.fetch_add(1, Ordering::SeqCst);
                 }
             }));
@@ -606,7 +606,7 @@ mod tests {
         let latch = OptimisticLatch::new();
 
         // Lock for write
-        let _guard = WriteGuard::new(&latch);
+        let guard = WriteGuard::new(&latch);
 
         // Try to acquire read with timeout
         let result = ReadGuard::try_new(&latch, Duration::from_millis(10));

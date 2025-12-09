@@ -555,7 +555,7 @@ mod tests {
         index.insert("tag2".to_string(), 1).unwrap();
         index.insert("tag2".to_string(), 2).unwrap();
 
-        let _result = index.and(&"tag1".to_string(), &"tag2".to_string()).unwrap();
+        let result = index.and(&"tag1".to_string(), &"tag2".to_string()).unwrap();
         assert_eq!(result, vec![1]);
     }
 
@@ -567,7 +567,7 @@ mod tests {
         index.insert("tag1".to_string(), 1).unwrap();
         index.insert("tag2".to_string(), 2).unwrap();
 
-        let _result = index.or(&"tag1".to_string(), &"tag2".to_string()).unwrap();
+        let result = index.or(&"tag1".to_string(), &"tag2".to_string()).unwrap();
         assert!(result.contains(&0));
         assert!(result.contains(&1));
         assert!(result.contains(&2));

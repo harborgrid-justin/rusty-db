@@ -150,7 +150,7 @@ impl InputSanitizer {
 
     /// Remove BOM (Byte Order Mark) characters
     fn remove_bom(&self, input: &str) -> String {
-        let _result = input.trim_start_matches('\u{FEFF}');
+        let result = input.trim_start_matches('\u{FEFF}');
         if result.len() != input.len() {
             let mut stats = self.stats.write();
             stats.bom_removed += 1;
@@ -1154,7 +1154,7 @@ mod tests {
     fn test_zero_width_removal() {
         let sanitizer = InputSanitizer::new();
         let input = "SELECT\u{200B}* FROM users";
-        let _result = sanitizer.sanitize(input).unwrap();
+        let result = sanitizer.sanitize(input).unwrap();
         assert!(!result.contains('\u{200B}'));
     }
 

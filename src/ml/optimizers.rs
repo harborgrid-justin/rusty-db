@@ -60,7 +60,7 @@ impl Optimizer for SGDMomentum {
     fn step(&mut self, weights: &mut [f64], gradients: &[f64]) {
         self.ensure_velocity(weights.len());
 
-        for _i in 0..weights.len() {
+        for i in 0..weights.len() {
             // Update velocity: v = momentum * v - lr * gradient
             self.velocity[i] = self.momentum * self.velocity[i] - self.learning_rate * gradients[i];
 
@@ -149,7 +149,7 @@ impl Optimizer for AdamOptimizer {
         let bias_correction1 = 1.0 - self.beta1.powf(t_f64);
         let bias_correction2 = 1.0 - self.beta2.powf(t_f64);
 
-        for _i in 0..weights.len() {
+        for i in 0..weights.len() {
             // Update biased first moment estimate
             self.m[i] = self.beta1 * self.m[i] + (1.0 - self.beta1) * gradients[i];
 

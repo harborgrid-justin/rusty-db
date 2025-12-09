@@ -2,6 +2,8 @@
 // Enterprise-grade wire protocol with comprehensive features
 // 3000+ lines of production-ready network protocol implementation
 
+use tokio::sync::oneshot;
+use tokio::time::sleep;
 use std::time::Instant;
 use std::time::SystemTime;
 use std::collections::{HashMap, VecDeque};
@@ -371,7 +373,7 @@ impl WireCodec {
         }
 
         // Deserialize
-        let _message = bincode::deserialize(&payload)
+        let message = bincode::deserialize(&payload)
             .map_err(|e| ProtocolError::DeserializationError(e.to_string()))?;
 
         self.metrics.record_decode(start.elapsed(), payload.len());
@@ -1210,7 +1212,7 @@ impl RequestResponsePipeline {
 
         // Wait for response with timeout
         let timeout_duration = request.timeout.unwrap_or(Duration::from_secs(30));
-        let _result = timeout(timeout_duration, response_rx).await;
+        let result = timeout(timeout_duration, response_rx).await;
 
         drop(permit);
 
@@ -2421,7 +2423,7 @@ impl CircuitBreaker {
     }
 
     pub fn can_execute(&self) -> bool {
-        let _state = *self.state.read();
+        let state = *self.state.read();
 
         match state {
             CircuitState::Closed => true,
@@ -2445,7 +2447,7 @@ impl CircuitBreaker {
     }
 
     pub fn record_success(&self) {
-        let _state = *self.state.read();
+        let state = *self.state.read();
         self.success_count.fetch_add(1, Ordering::Relaxed);
         self.metrics.record_success();
 
@@ -2469,7 +2471,7 @@ impl CircuitBreaker {
     }
 
     pub fn record_failure(&self) {
-        let _state = *self.state.read();
+        let state = *self.state.read();
         self.failure_count.fetch_add(1, Ordering::Relaxed);
         self.metrics.record_failure();
 
@@ -3135,7 +3137,7 @@ mod tests {
         assert!(buffer.capacity() >= 1024);
         pool.release(buffer);
 
-        let _stats = pool.get_metrics();
+        let stats = pool.get_metrics();
         assert_eq!(stats.acquired_new, 1);
         assert_eq!(stats.released_to_pool, 1);
     }

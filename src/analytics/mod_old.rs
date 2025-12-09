@@ -1,4 +1,7 @@
 // Module exports
+use std::collections::HashSet;
+use std::collections::BTreeMap;
+use std::collections::VecDeque;
 pub mod caching;
 pub mod materialized_views;
 pub mod approximate;
@@ -418,7 +421,7 @@ impl QueryStatisticsTracker {
         let pattern = Self::extract_query_pattern(&execution.query);
         
         // Update statistics
-        let _stats = self.query_stats.entry(pattern.clone()).or_insert(QueryStats {
+        let stats = self.query_stats.entry(pattern.clone()).or_insert(QueryStats {
             query_pattern: pattern,
             execution_count: 0,
             total_time_ms: 0.0,
@@ -645,7 +648,7 @@ impl HistogramManager {
         // For simplicity with strings, we'll create buckets based on lexicographic order
         let bucket_size = data.len() / num_buckets;
         
-        for _i in 0..num_buckets {
+        for i in 0..num_buckets {
             let start = i * bucket_size;
             let end = if i == num_buckets - 1 { data.len() } else { (i + 1) * bucket_size };
             
@@ -910,7 +913,7 @@ impl AnalyticsManager {
             .and_then(|t| t.get(column).cloned())
     }
     
-    pub fn analyze_table(&self, _table: &str, _sample_rate: f64) -> Result<()> {
+    pub fn analyze_table(&self, table: &str, _sample_rate: f64) -> Result<()> {
         // In production, this would:
         // 1. Sample the table data
         // 2. Compute statistics for each column
@@ -1136,7 +1139,7 @@ impl AnalyticsManager {
         
         match function {
             WindowFunction::RowNumber => {
-                for _i in 0..data.len() {
+                for i in 0..data.len() {
                     result.push((i + 1).to_string());
                 }
             }
@@ -1182,9 +1185,9 @@ impl AnalyticsManager {
                 }
             }
             WindowFunction::Lead { offset, default } => {
-                for _i in 0..data.len() {
+                for i in 0..data.len() {
                     let lead_index = i + offset;
-                    let _value = if lead_index < data.len() {
+                    let value = if lead_index < data.len() {
                         data[lead_index].get(0).cloned().unwrap_or_else(|| "NULL".to_string())
                     } else {
                         default.clone().unwrap_or_else(|| "NULL".to_string())
@@ -1193,8 +1196,8 @@ impl AnalyticsManager {
                 }
             }
             WindowFunction::Lag { offset, default } => {
-                for _i in 0..data.len() {
-                    let _value = if i >= *offset {
+                for i in 0..data.len() {
+                    let value = if i >= *offset {
                         data[i - offset].get(0).cloned().unwrap_or_else(|| "NULL".to_string())
                     } else {
                         default.clone().unwrap_or_else(|| "NULL".to_string())
@@ -1220,14 +1223,14 @@ impl AnalyticsManager {
             }
             WindowFunction::NTile { buckets } => {
                 let bucket_size = (data.len() + buckets - 1) / buckets;
-                for _i in 0..data.len() {
+                for i in 0..data.len() {
                     let bucket = (i / bucket_size) + 1;
                     result.push(bucket.min(*buckets).to_string());
                 }
             }
             WindowFunction::PercentRank => {
                 let n = data.len();
-                for _i in 0..n {
+                for i in 0..n {
                     let percent_rank = if n > 1 {
                         i as f64 / (n - 1) as f64
                     } else {
@@ -1238,7 +1241,7 @@ impl AnalyticsManager {
             }
             WindowFunction::CumeDist => {
                 let n = data.len();
-                for _i in 0..n {
+                for i in 0..n {
                     let cume_dist = (i + 1) as f64 / n as f64;
                     result.push(cume_dist.to_string());
                 }
@@ -1543,7 +1546,7 @@ impl ParallelQueryExecutor {
         
         for row in data {
             if let Some(key) = row.get(key_index) {
-                let _hash = self.hash_string(key);
+                let hash = self.hash_string(key);
                 let partition = (hash as usize) % num_partitions;
                 partitions[partition].push(row);
             }
@@ -1629,7 +1632,7 @@ impl OlapCube {
         })
     }
     
-    pub fn slice(&self, _dimension: &str, _value: &str) -> Result<OlapCube> {
+    pub fn slice(&self, dimension: &str, _value: &str) -> Result<OlapCube> {
         // Filter on one dimension
         Ok(OlapCube {
             dimensions: self.dimensions.clone(),
@@ -1661,7 +1664,7 @@ impl TimeSeriesAnalyzer {
     pub fn moving_average(&self, data: &[f64]) -> Vec<f64> {
         let mut result = Vec::new();
         
-        for _i in 0..data.len() {
+        for i in 0..data.len() {
             let start = if i >= self.window_size { i - self.window_size + 1 } else { 0 };
             let window = &data[start..=i];
             let avg = window.iter().sum::<f64>() / window.len() as f64;
@@ -1678,7 +1681,7 @@ impl TimeSeriesAnalyzer {
         
         let mut result = vec![data[0]];
         
-        for _i in 1..data.len() {
+        for i in 1..data.len() {
             let ema = alpha * data[i] + (1.0 - alpha) * result[i - 1];
             result.push(ema);
         }
@@ -1694,7 +1697,7 @@ impl TimeSeriesAnalyzer {
         let mut increases = 0;
         let mut decreases = 0;
         
-        for _i in 1..data.len() {
+        for i in 1..data.len() {
             if data[i] > data[i - 1] {
                 increases += 1;
             } else if data[i] < data[i - 1] {
@@ -1729,7 +1732,7 @@ impl TimeSeriesAnalyzer {
         let mut autocorr = 0.0;
         let n = data.len() - period;
         
-        for _i in 0..n {
+        for i in 0..n {
             autocorr += (data[i] - mean) * (data[i + period] - mean);
         }
         
@@ -2500,7 +2503,7 @@ impl MultidimensionalAggregator {
         
         // Generate all possible dimension combinations (power set)
         let num_dims = self.dimensions.len();
-        for _i in 0..(1 << num_dims) {
+        for i in 0..(1 << num_dims) {
             let mut active_dims = Vec::new();
             for j in 0..num_dims {
                 if i & (1 << j) != 0 {
@@ -2879,7 +2882,7 @@ mod tests {
     fn test_query_cache() {
         let cache = QueryCache::new(100);
         let query = "SELECT * FROM users";
-        let _result = vec![vec!["1".to_string(), "Alice".to_string()]];
+        let result = vec![vec!["1".to_string(), "Alice".to_string()]];
         
         cache.put(query.to_string(), result.clone(), 60);
         assert!(cache.get(query).is_some());
@@ -2901,7 +2904,7 @@ mod tests {
     
     #[test]
     fn test_column_statistics() {
-        let _stats = ColumnStatistics {
+        let stats = ColumnStatistics {
             table_name: "users".to_string(),
             column_name: "age".to_string(),
             distinct_count: 50,

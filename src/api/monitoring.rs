@@ -447,7 +447,7 @@ impl MetricAggregator {
         let sum: f64 = recent_points.iter().sum();
         let min = recent_points.iter().cloned().fold(f64::INFINITY, f64::min);
         let max = recent_points.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-        let _value = sum / count as f64;
+        let value = sum / count as f64;
 
         let point = AggregatedMetricPoint {
             timestamp: now,
@@ -1501,7 +1501,7 @@ impl SelfHealingTrigger {
     }
 
     pub fn check_and_heal(&self) -> std::result::Result<(), DbError> {
-        let _result = self.health_checker.check();
+        let result = self.health_checker.check();
 
         if !result.status.is_healthy() {
             let failures = self.consecutive_failures.fetch_add(1, Ordering::SeqCst) + 1;
@@ -1745,7 +1745,7 @@ impl ThresholdAlertRule {
             // Check if duration threshold met
             if let Ok(elapsed) = SystemTime::now().duration_since(*trigger_time) {
                 if elapsed >= self.duration {
-                    let _message = format!(
+                    let message = format!(
                         "{} {} {} (current: {})",
                         self.metric_name,
                         match self.operator {
@@ -1830,7 +1830,7 @@ impl MultiConditionAlertRule {
         };
 
         if triggered {
-            let _message = format!("Multi-condition alert: {}", self.name);
+            let message = format!("Multi-condition alert: {}", self.name);
             let mut alert = Alert::new(
                 self.name.clone(),
                 self.severity,
@@ -2522,7 +2522,7 @@ impl MetricsExporter {
     }
 
     pub fn export(&self, query: TimeSeriesQuery, format: ExportFormat) -> std::result::Result<String, DbError> {
-        let _result = self.tsdb.query(query);
+        let result = self.tsdb.query(query);
 
         match format {
             ExportFormat::Json => self.export_json(&result),
@@ -2834,7 +2834,7 @@ mod tests {
 
         coordinator.add_checker(liveness.clone());
 
-        let _result = coordinator.check_all();
+        let result = coordinator.check_all();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].status, HealthStatus::Healthy);
     }

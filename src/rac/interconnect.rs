@@ -16,6 +16,7 @@
 // cluster nodes using multiple transport protocols (TCP, UDP, RDMA-like) with
 // automatic failover and adaptive routing based on network conditions.
 
+use tokio::sync::oneshot;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::VecDeque;
 use std::sync::Mutex;
@@ -661,8 +662,8 @@ impl ClusterInterconnect {
         // Accept connections
         let connections = self.connections.clone();
         let node_health = self.node_health.clone();
-        let _handlers = self.message_handlers.clone();
-        let _stats = self.stats.clone();
+        let handlers = self.message_handlers.clone();
+        let stats = self.stats.clone();
         let mut shutdown_rx = self.shutdown_tx.subscribe();
 
         tokio::spawn(async move {
@@ -743,7 +744,7 @@ impl ClusterInterconnect {
         let message_id = self.next_message_id();
         let sequence = self.next_sequence();
 
-        let _message = Message {
+        let message = Message {
             message_id,
             source: self.node_id.clone(),
             destination: destination.clone(),
@@ -769,7 +770,7 @@ impl ClusterInterconnect {
         let message_id = self.next_message_id();
         let sequence = self.next_sequence();
 
-        let _message = Message {
+        let message = Message {
             message_id,
             source: self.node_id.clone(),
             destination: destination.clone(),
@@ -836,7 +837,7 @@ impl ClusterInterconnect {
     async fn start_heartbeat_monitor(&self) {
         let node_health = self.node_health.clone();
         let connections = self.connections.clone();
-        let _stats = self.stats.clone();
+        let stats = self.stats.clone();
         let interval = self.config.heartbeat_interval;
         let node_id = self.node_id.clone();
         let mut shutdown_rx = self.shutdown_tx.subscribe();
@@ -856,7 +857,7 @@ impl ClusterInterconnect {
                         };
 
                         for (remote_node, conn) in conns_to_ping {
-                            let _message = Message {
+                            let message = Message {
                                 message_id: 0,
                                 source: node_id.clone(),
                                 destination: remote_node.clone(),

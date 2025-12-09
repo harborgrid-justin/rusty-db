@@ -21,6 +21,7 @@
 // }
 // ```
 
+use std::fmt;
 use std::collections::HashSet;
 use std::time::SystemTime;
 use std::collections::{HashMap};
@@ -483,7 +484,7 @@ mod tests {
 
         let _ = detector.force_detect();
 
-        let _stats = detector.stats();
+        let stats = detector.stats();
         assert_eq!(stats.detection_runs, 1);
         assert_eq!(stats.deadlocks_found, 1);
     }

@@ -676,7 +676,7 @@ mod tests {
             ascending: true,
         }];
 
-        let _result = sorter.in_memory_sort(data, &order_by).unwrap();
+        let result = sorter.in_memory_sort(data, &order_by).unwrap();
         assert_eq!(result.rows[0][0], "1");
         assert_eq!(result.rows[2][0], "3");
     }
@@ -699,7 +699,7 @@ mod tests {
             ascending: true,
         }];
 
-        let _result = TopKSelector::select_top_k(data, 3, &order_by).unwrap();
+        let result = TopKSelector::select_top_k(data, 3, &order_by).unwrap();
         assert_eq!(result.rows.len(), 3);
     }
 
@@ -721,7 +721,7 @@ mod tests {
             ],
         );
 
-        let _result = SortMergeJoin::execute(left, right, 0, 0).unwrap();
+        let result = SortMergeJoin::execute(left, right, 0, 0).unwrap();
         assert_eq!(result.rows.len(), 2);
     }
 }

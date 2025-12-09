@@ -37,6 +37,7 @@
 // }
 // ```
 
+use tokio::time::sleep;
 use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -349,7 +350,7 @@ impl ServiceBus {
         }
 
         // Acquire backpressure permit
-        let _permit = self.backpressure.acquire().await
+        let permit = self.backpressure.acquire().await
             .map_err(|e| DbError::Internal(format!("Backpressure acquire failed: {}", e)))?;
 
         // Update statistics

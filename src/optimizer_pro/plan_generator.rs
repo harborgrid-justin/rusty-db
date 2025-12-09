@@ -624,7 +624,7 @@ impl PlanGenerator {
     }
 
     /// Parse query into logical plan
-    fn parse_query(&self, _query: &Query) -> Result<LogicalPlan> {
+    fn parse_query(&self, query: &Query) -> Result<LogicalPlan> {
         // Simplified query parsing - in production this would be more sophisticated
         Ok(LogicalPlan::Scan {
             table: 1,
@@ -881,7 +881,7 @@ impl JoinEnumerator {
 
         let mut result = Vec::new();
 
-        for _i in 0..tables.len() {
+        for i in 0..tables.len() {
             let mut remaining = tables.to_vec();
             let item = remaining.remove(i);
 
@@ -903,7 +903,7 @@ impl JoinEnumerator {
         let mut result = Vec::new();
         let n = tables.len();
 
-        for _i in 1..(1 << n) {
+        for i in 1..(1 << n) {
             let mut subset = Vec::new();
             let mut complement = Vec::new();
 

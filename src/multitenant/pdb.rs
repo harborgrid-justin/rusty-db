@@ -20,6 +20,7 @@
 // - **Closed**: PDB is completely closed
 // - **Migrating**: PDB is being migrated
 
+use std::fmt;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -528,7 +529,7 @@ impl PluggableDatabase {
     /// Create a new PDB
     pub async fn create(config: PdbConfig) -> Result<Self> {
         let metadata = Arc::new(RwLock::new(PdbMetadata::new()));
-        let _state = Arc::new(RwLock::new(PdbLifecycleState::Creating));
+        let state = Arc::new(RwLock::new(PdbLifecycleState::Creating));
 
         let pdb = Self {
             config: config.clone(),

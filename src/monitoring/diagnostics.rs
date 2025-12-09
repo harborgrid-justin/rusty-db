@@ -1,6 +1,7 @@
 // Diagnostic Dumps
 // Automatic diagnostic repository, incident packaging, core dump analysis, health checks
 
+use std::fmt;
 use std::collections::VecDeque;
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};

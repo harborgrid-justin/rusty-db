@@ -403,7 +403,7 @@ impl VoronoiDiagram {
         let mut vertices = Vec::new();
 
         // Sample points around the boundary
-        for _i in 0..resolution {
+        for i in 0..resolution {
             let t = i as f64 / resolution as f64;
 
             // Top edge
@@ -828,7 +828,7 @@ impl SpatialAutocorrelation {
         let mut denominator = 0.0;
         let mut sum_weights = 0.0;
 
-        for _i in 0..self.points.len() {
+        for i in 0..self.points.len() {
             let (_, coord_i, value_i) = &self.points[i];
             let dev_i = value_i - mean;
 

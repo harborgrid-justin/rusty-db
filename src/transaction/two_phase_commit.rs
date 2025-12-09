@@ -20,6 +20,7 @@
 // }
 // ```
 
+use std::fmt;
 use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -324,7 +325,7 @@ mod tests {
         let p2 = ParticipantInfo::new("node2".to_string());
         coord.register_participants(1, vec![p1, p2]);
 
-        let _result = coord.prepare_phase(1);
+        let result = coord.prepare_phase(1);
         assert!(result.is_ok());
         assert!(result.unwrap());
     }
@@ -342,7 +343,7 @@ mod tests {
         // Transaction should be cleaned up
         assert_eq!(coord.active_count(), 0);
 
-        let _stats = coord.stats();
+        let stats = coord.stats();
         assert_eq!(stats.committed, 1);
     }
 
@@ -357,7 +358,7 @@ mod tests {
 
         assert_eq!(coord.active_count(), 0);
 
-        let _stats = coord.stats();
+        let stats = coord.stats();
         assert_eq!(stats.aborted, 1);
     }
 }

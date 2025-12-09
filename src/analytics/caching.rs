@@ -430,8 +430,8 @@ impl CacheWarmer {
         for warming_query in &self.warming_queries {
             // In real implementation, would execute query
             // and cache the result
-            let _query = &warming_query.query;
-            // let _result = executor.execute(query).await?;
+            let query = &warming_query.query;
+            // let result = executor.execute(query).await?;
             // self.cache.put(query.clone(), result);
         }
         Ok(())
@@ -646,7 +646,7 @@ mod tests {
     fn test_multi_level_cache() {
         let cache = MultiLevelCache::new(10, 50, 200);
         
-        let _result = QueryResult::new(
+        let result = QueryResult::new(
             vec!["id".to_string(), "name".to_string()],
             vec![vec!["1".to_string(), "Alice".to_string()]],
         );
@@ -656,7 +656,7 @@ mod tests {
         let cached = cache.get("query1");
         assert!(cached.is_some());
         
-        let _stats = cache.get_stats();
+        let stats = cache.get_stats();
         assert_eq!(stats.l1_hits, 1);
         assert_eq!(stats.total_hits(), 1);
     }
@@ -665,7 +665,7 @@ mod tests {
     fn test_dependency_aware_cache() {
         let cache = DependencyAwareCache::new();
         
-        let _result = QueryResult::new(vec!["id".to_string()], vec![]);
+        let result = QueryResult::new(vec!["id".to_string()], vec![]);
         
         cache.cache_query(
             "SELECT * FROM users".to_string(),
@@ -994,7 +994,6 @@ pub enum InvalidationType {
 
 #[cfg(test)]
 mod semantic_tests {
-    use super::*;
 
     #[test]
     fn test_query_normalization() {
@@ -1014,7 +1013,7 @@ mod semantic_tests {
     fn test_semantic_cache() {
         let cache = SemanticQueryCache::new();
 
-        let _result = QueryResult::new(
+        let result = QueryResult::new(
             vec!["id".to_string()],
             vec![vec!["1".to_string()]],
         );

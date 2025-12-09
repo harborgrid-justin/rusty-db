@@ -2,6 +2,7 @@
 /// Optimized for analytical (OLAP) workloads
 /// Features: Dictionary encoding, run-length encoding, delta encoding, SIMD decompression
 
+use std::collections::HashSet;
 use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;

@@ -22,12 +22,13 @@
 // let manager = AnalyticsManager::new();
 //
 // // Execute with caching
-// let _result = manager.execute_cached("SELECT * FROM users WHERE active = true");
+// let result = manager.execute_cached("SELECT * FROM users WHERE active = true");
 //
 // // Analyze workload patterns
 // let recommendations = manager.analyze_workload();
 // ```
 
+use tokio::time::sleep;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -494,7 +495,7 @@ mod tests {
         manager.record_query("SELECT * FROM users", 50);
         manager.record_query("SELECT * FROM users", 60);
 
-        let _stats = manager.stats();
+        let stats = manager.stats();
         assert_eq!(stats.total_queries_tracked, 2);
     }
 
@@ -502,7 +503,7 @@ mod tests {
     fn test_cache_operations() {
         let manager = AnalyticsManager::new();
 
-        let _result = CachedResult {
+        let result = CachedResult {
             query: "".to_string(),
             result: vec![],
             timestamp: (),

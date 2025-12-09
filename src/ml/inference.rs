@@ -354,7 +354,7 @@ impl ModelCache {
 
     /// Get cache statistics
     pub fn stats(&self) -> (u64, u64, u64) {
-        let _stats = self.stats.lock();
+        let stats = self.stats.lock();
         (stats.hits, stats.misses, stats.evictions)
     }
 
@@ -696,7 +696,7 @@ impl InferenceEngine {
 
     /// Get average inference time
     pub fn average_inference_time(&self) -> Duration {
-        let _logs = self.prediction_logs.lock();
+        let logs = self.prediction_logs.lock();
         if logs.is_empty() {
             Duration::from_micros(0)
         } else {
@@ -726,7 +726,7 @@ mod tests {
         cache.put("test:1.0.0".to_string(), &model);
         assert_eq!(cache.count(), 1);
 
-        let _result = cache.get("test:1.0.0");
+        let result = cache.get("test:1.0.0");
         assert!(result.is_some());
 
         let (hits, misses, _) = cache.stats();

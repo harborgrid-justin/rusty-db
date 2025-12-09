@@ -865,7 +865,7 @@ mod tests {
     #[test]
     fn test_clock_policy() {
         let frames = create_test_frames(10);
-        let _policy = ClockEvictionPolicy::new(10);
+        let policy = ClockEvictionPolicy::new(10);
 
         // All frames unpinned, should find a victim
         let victim = policy.find_victim(&frames);
@@ -884,10 +884,10 @@ mod tests {
     #[test]
     fn test_lru_policy() {
         let frames = create_test_frames(5);
-        let _policy = LruEvictionPolicy::new(5);
+        let policy = LruEvictionPolicy::new(5);
 
         // Access frames in order: 0, 1, 2, 3, 4
-        for _i in 0..5 {
+        for i in 0..5 {
             policy.record_access(i);
         }
 
@@ -899,7 +899,7 @@ mod tests {
     #[test]
     fn test_2q_policy() {
         let frames = create_test_frames(10);
-        let _policy = TwoQEvictionPolicy::new(10);
+        let policy = TwoQEvictionPolicy::new(10);
 
         // First access to frame 0 - goes to A1in
         policy.record_access(0);
@@ -907,14 +907,14 @@ mod tests {
         // Second access - should move to Am
         policy.record_access(0);
 
-        let _stats = policy.stats();
+        let stats = policy.stats();
         assert!(stats.evictions == 0 || stats.victim_searches >= 0);
     }
 
     #[test]
     fn test_lru_k_policy() {
         let frames = create_test_frames(5);
-        let _policy = LruKEvictionPolicy::new(5, 2);
+        let policy = LruKEvictionPolicy::new(5, 2);
 
         // Access frame 0 twice
         policy.record_access(0);
@@ -930,16 +930,16 @@ mod tests {
 
     #[test]
     fn test_policy_factory() {
-        let _policy = create_eviction_policy(EvictionPolicyType::Clock, 100);
+        let policy = create_eviction_policy(EvictionPolicyType::Clock, 100);
         assert_eq!(policy.name(), "CLOCK");
 
-        let _policy = create_eviction_policy(EvictionPolicyType::Lru, 100);
+        let policy = create_eviction_policy(EvictionPolicyType::Lru, 100);
         assert_eq!(policy.name(), "LRU");
 
-        let _policy = create_eviction_policy(EvictionPolicyType::TwoQ, 100);
+        let policy = create_eviction_policy(EvictionPolicyType::TwoQ, 100);
         assert_eq!(policy.name(), "2Q");
 
-        let _policy = create_eviction_policy(EvictionPolicyType::LruK(2), 100);
+        let policy = create_eviction_policy(EvictionPolicyType::LruK(2), 100);
         assert_eq!(policy.name(), "LRU-K");
     }
 }

@@ -20,6 +20,7 @@
 // - Background maintenance thread for housekeeping
 // - Per-partition statistics for reduced contention
 
+use tokio::time::sleep;
 use std::time::SystemTime;
 use std::collections::BTreeMap;
 use std::collections::VecDeque;
@@ -603,7 +604,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         let config = Arc::clone(&self.config);
         let closed = Arc::new(AtomicBool::new(self.closed.load(Ordering::Relaxed)));
         let total_destroyed = Arc::new(AtomicU64::new(self.total_destroyed.load(Ordering::Relaxed)));
-        let _stats = Arc::clone(&self.stats);
+        let stats = Arc::clone(&self.stats);
 
         let handle = tokio::spawn(async move {
             let mut interval = tokio::time::interval(config.maintenance_interval);
@@ -687,7 +688,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         self.stats.record_acquire_attempt();
 
         // Try to get connection with timeout
-        let _result = timeout(
+        let result = timeout(
             self.config.acquire_timeout,
             self.acquire_inner()
         ).await;
@@ -784,7 +785,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     async fn validate_connection(&self, conn: &mut PooledConnection<C>) -> std::result::Result<(), PoolError> {
         conn.state = ConnectionState::Validating;
 
-        let _result = timeout(
+        let result = timeout(
             self.config.validation_timeout,
             self.factory.validate(&conn.connection)
         ).await;
@@ -1023,7 +1024,7 @@ impl StateResetManager {
     }
 
     /// Reset connection state (placeholder - would integrate with actual connection)
-    pub async fn reset_state<C>(&self, _connection: &mut C) -> Result<()> {
+    pub async fn reset_state<C>(&self, connection: &mut C) -> Result<()> {
         // In a real implementation, this would execute the necessary SQL
         // commands to reset the connection state
 
@@ -1044,7 +1045,7 @@ impl StateResetManager {
         }
 
         // Execute custom reset queries
-        for _query in &self.custom_reset_queries {
+        for query in &self.custom_reset_queries {
             // Execute query
         }
 
@@ -2467,7 +2468,7 @@ impl DashboardProvider {
 
     /// Get real-time dashboard data
     pub fn get_dashboard_data(&self) -> DashboardData {
-        let _stats = self.pool_stats.snapshot();
+        let stats = self.pool_stats.snapshot();
 
         DashboardData {
             timestamp: SystemTime::now(),
@@ -2598,7 +2599,7 @@ impl MonitoringExporter {
 
     /// Export metrics in configured format
     pub fn export(&self) -> String {
-        let _stats = self.stats.snapshot();
+        let stats = self.stats.snapshot();
 
         match self.export_format {
             ExportFormat::Json => {
@@ -2727,7 +2728,6 @@ pub struct PoolSizeInfo {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_pool_config_validation() {
@@ -2757,7 +2757,7 @@ mod tests {
     #[test]
     fn test_aging_policy() {
         // Test time-based aging
-        let _policy = AgingPolicy::TimeBased {
+        let policy = AgingPolicy::TimeBased {
             max_lifetime: Duration::from_secs(60),
         };
 
@@ -2774,7 +2774,7 @@ mod tests {
 
     #[test]
     fn test_pool_statistics() {
-        let _stats = PoolStatistics::new();
+        let stats = PoolStatistics::new();
         stats.record_connection_created();
         stats.record_acquire_success(Duration::from_millis(10));
 

@@ -82,10 +82,10 @@ impl<T> Buffer<T> {
         let new_buffer = Buffer::new(new_capacity);
 
         // Copy elements from old buffer to new buffer
-        for _i in old_top..old_bottom {
+        for i in old_top..old_bottom {
             // Safety: These elements are initialized and we have exclusive access
             unsafe {
-                let _value = self.get(i);
+                let value = self.get(i);
                 let ptr = value as *const T;
                 new_buffer.put(i, ptr::read(ptr));
             }
@@ -208,7 +208,7 @@ impl<T> WorkStealingDeque<T> {
 
         if top <= new_bottom {
             // Non-empty deque
-            let _value = unsafe { buffer.take(new_bottom) };
+            let value = unsafe { buffer.take(new_bottom) };
 
             if top == new_bottom {
                 // Last element, race with stealers
@@ -257,7 +257,7 @@ impl<T> WorkStealingDeque<T> {
         let buffer = unsafe { &*self.buffer.load(Ordering::Acquire) };
 
         // Safety: Protected by the CAS below
-        let _value = unsafe { buffer.get(top) };
+        let value = unsafe { buffer.get(top) };
         let value_ptr = value as *const T;
 
         // Try to increment top
@@ -499,7 +499,7 @@ impl<T> WorkStealingPool<T> {
         let mut total_size = 0;
 
         for worker in &self.workers {
-            let _stats = worker.stats();
+            let stats = worker.stats();
             total_push += stats.push_count;
             total_pop += stats.pop_count;
             total_steal += stats.steal_count;
@@ -582,7 +582,7 @@ mod tests {
         let deque = Arc::new(WorkStealingDeque::new());
 
         // Push many items
-        for _i in 0..1000 {
+        for i in 0..1000 {
             deque.push(i);
         }
 
@@ -637,7 +637,7 @@ mod tests {
         let worker = workers.pop().unwrap();
 
         // Push work
-        for _i in 0..100 {
+        for i in 0..100 {
             worker.push(i);
         }
 
@@ -667,15 +667,15 @@ mod tests {
         let deque = WorkStealingDeque::new();
 
         // Push more than initial capacity
-        for _i in 0..100 {
+        for i in 0..100 {
             deque.push(i);
         }
 
-        let _stats = deque.stats();
+        let stats = deque.stats();
         assert!(stats.grow_count > 0);
 
         // Pop all
-        for _i in (0..100).rev() {
+        for i in (0..100).rev() {
             assert_eq!(deque.pop(), Some(i));
         }
     }

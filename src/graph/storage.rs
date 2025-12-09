@@ -432,7 +432,7 @@ impl GraphCompression {
         let mut compressed = Vec::with_capacity(sorted_ids.len());
         compressed.push(sorted_ids[0]);
 
-        for _i in 1..sorted_ids.len() {
+        for i in 1..sorted_ids.len() {
             let gap = sorted_ids[i] - sorted_ids[i - 1];
             compressed.push(gap);
         }
@@ -449,7 +449,7 @@ impl GraphCompression {
         let mut ids = Vec::with_capacity(compressed.len());
         ids.push(compressed[0]);
 
-        for _i in 1..compressed.len() {
+        for i in 1..compressed.len() {
             ids.push(ids[i - 1] + compressed[i]);
         }
 
@@ -569,7 +569,7 @@ impl GraphStorageManager {
         // Add vertices
         for (vertex_id, vertex_data) in &adj_list.vertices {
             // Note: This is a simplified conversion; in practice, we'd need to handle ID generation
-            let _vertex = Vertex::with_properties(
+            let vertex = Vertex::with_properties(
                 *vertex_id,
                 vertex_data.labels.clone(),
                 vertex_data.properties.clone(),
@@ -598,7 +598,7 @@ impl GraphStorageManager {
 
         // Add vertices
         for (idx, &_vertex_id) in csr.vertex_map.iter().enumerate() {
-            let _properties = csr.vertex_properties.get(idx)
+            let properties = csr.vertex_properties.get(idx)
                 .cloned()
                 .unwrap_or_else(Properties::new);
             // Simplified conversion

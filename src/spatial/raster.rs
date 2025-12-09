@@ -105,7 +105,7 @@ impl RasterBand {
 
         let idx = (y * self.width + x) * self.pixel_type.size_bytes();
 
-        let _value = match self.pixel_type {
+        let value = match self.pixel_type {
             PixelType::UInt8 => PixelValue::UInt8(self.data[idx]),
             PixelType::UInt16 => {
                 let bytes = [self.data[idx], self.data[idx + 1]];
@@ -145,7 +145,7 @@ impl RasterBand {
             }
             (PixelType::Float32, PixelValue::Float32(v)) => {
                 let bytes = v.to_le_bytes();
-                for _i in 0..4 {
+                for i in 0..4 {
                     self.data[idx + i] = bytes[i];
                 }
             }
@@ -787,7 +787,7 @@ mod tests {
         let mut band = RasterBand::new(10, 10, PixelType::UInt8);
 
         band.set_pixel(5, 5, PixelValue::UInt8(255)).unwrap();
-        let _value = band.get_pixel(5, 5).unwrap();
+        let value = band.get_pixel(5, 5).unwrap();
 
         assert_eq!(value, PixelValue::UInt8(255));
     }
@@ -814,8 +814,8 @@ mod tests {
         raster1.bands[0].set_pixel(0, 0, PixelValue::UInt8(10)).unwrap();
         raster2.bands[0].set_pixel(0, 0, PixelValue::UInt8(5)).unwrap();
 
-        let _result = RasterAlgebra::add(&raster1, &raster2).unwrap();
-        let _value = result.bands[0].get_pixel(0, 0).unwrap();
+        let result = RasterAlgebra::add(&raster1, &raster2).unwrap();
+        let value = result.bands[0].get_pixel(0, 0).unwrap();
 
         assert_eq!(value.to_f64(), Some(15.0));
     }

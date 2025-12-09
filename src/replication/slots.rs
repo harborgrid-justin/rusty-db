@@ -72,6 +72,9 @@
 // # }
 // ```
 
+use std::collections::HashSet;
+use tokio::time::sleep;
+use std::fmt;
 use std::time::SystemTime;
 use crate::error::DbError;
 use crate::replication::types::*;
@@ -1404,7 +1407,7 @@ mod tests {
         assert_eq!(stream.status(), SlotStatus::Active);
 
         // Try to get a change (may timeout in test)
-        let _result = tokio::time::timeout(
+        let result = tokio::time::timeout(
             Duration::from_millis(200),
             stream.next_change()
         ).await;
@@ -1456,7 +1459,7 @@ mod tests {
 
         let slot_id = manager.create_slot(&slot_name, config).await.unwrap();
 
-        let _stats = manager.get_slot_statistics(&slot_id).await.unwrap();
+        let stats = manager.get_slot_statistics(&slot_id).await.unwrap();
         assert_eq!(stats.changes_processed, 0);
         assert_eq!(stats.bytes_consumed, 0);
 

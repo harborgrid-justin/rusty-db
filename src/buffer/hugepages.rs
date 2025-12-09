@@ -308,7 +308,7 @@ impl HugePageAllocator {
         #[cfg(target_os = "linux")]
         {
             unsafe {
-                let _result = libc::madvise(
+                let result = libc::madvise(
                     ptr as *mut libc::c_void,
                     aligned_size,
                     libc::MADV_HUGEPAGE,
@@ -607,7 +607,7 @@ mod tests {
         if let Ok(alloc) = alloc {
             assert!(alloc.size() >= size);
 
-            let _stats = allocator.stats();
+            let stats = allocator.stats();
             assert!(stats.total_requests > 0);
         }
         // If huge pages not available, that's OK (test environment)
@@ -622,7 +622,7 @@ mod tests {
         let _ = allocator.allocate(PAGE_SIZE_4K, PAGE_SIZE_4K);
         let _ = allocator.allocate(PAGE_SIZE_2M * 10, PAGE_SIZE_2M);
 
-        let _stats = allocator.stats();
+        let stats = allocator.stats();
         assert!(stats.total_requests >= 2);
         assert!(stats.estimated_tlb_miss_rate >= 0.0);
         assert!(stats.estimated_tlb_miss_rate <= 1.0);

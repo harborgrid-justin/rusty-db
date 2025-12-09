@@ -698,7 +698,7 @@ mod tests {
         let retrieved = manager.get_page(1).unwrap();
         assert_eq!(retrieved.id, 1);
 
-        let _stats = manager.get_stats();
+        let stats = manager.get_stats();
         assert!(stats.hot_pages + stats.warm_pages + stats.cold_pages > 0);
     }
 
@@ -721,7 +721,7 @@ mod tests {
         // Run maintenance to trigger migration
         manager.maintenance().unwrap();
 
-        let _stats = manager.get_stats();
+        let stats = manager.get_stats();
         assert!(stats.total_migrations > 0 || stats.hot_pages > 0);
     }
 }

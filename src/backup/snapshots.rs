@@ -361,7 +361,7 @@ impl SnapshotManager {
         purpose: ClonePurpose,
     ) -> Result<String> {
         // Verify parent snapshot exists
-        let _parent = self.snapshots.read().get(parent_snapshot_id).cloned()
+        let parent = self.snapshots.read().get(parent_snapshot_id).cloned()
             .ok_or_else(|| DbError::BackupError("Parent snapshot not found".to_string()))?;
 
         let clone_id = self.generate_clone_id();
@@ -469,7 +469,7 @@ impl SnapshotManager {
             if schedule.is_due() {
                 // Create snapshot for each database in the schedule
                 for database_name in &schedule.databases {
-                    let snapshot_name = format!("{}-{}", schedule.name,
+                    let snapshot_name = format!("{}-{}", schedule.name;
                         SystemTime::now().duration_since(UNIX_EPOCH)
                             .unwrap_or_default().as_secs());
 

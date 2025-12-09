@@ -35,6 +35,7 @@
 /// - Space: O(1)
 /// - Expected collisions: ~2^-64 for uniform distribution
 #[inline]
+use std::collections::HashSet;
 pub fn xxhash3_avx2(data: &[u8], seed: u64) -> u64 {
     if is_x86_feature_detected!("avx2") {
         unsafe { xxhash3_avx2_impl(data, seed) }
@@ -65,7 +66,7 @@ unsafe fn xxhash3_avx2_impl(data: &[u8], seed: u64) -> u64 {
         let ptr = data.as_ptr();
 
         // Process 32-byte chunks with AVX2
-        for _i in 0..chunks {
+        for i in 0..chunks {
             let offset = i * 32;
 
             // Load 32 bytes (4x u64)
@@ -361,14 +362,14 @@ mod tests {
 
     #[test]
     fn test_xxhash3_empty() {
-        let _hash = xxhash3_avx2(&[], 0);
+        let hash = xxhash3_avx2(&[], 0);
         assert_ne!(hash, 0, "Empty input should still produce non-zero hash");
     }
 
     #[test]
     fn test_xxhash3_long() {
         let data = vec![0u8; 1000];
-        let _hash = xxhash3_avx2(&data, 0);
+        let hash = xxhash3_avx2(&data, 0);
         assert_ne!(hash, 0);
     }
 
@@ -443,7 +444,7 @@ mod tests {
     fn test_hash_distribution() {
         // Test that hashes are well-distributed
         let mut hashes = Vec::new();
-        for _i in 0..1000 {
+        for i in 0..1000 {
             let data = format!("key_{}", i);
             hashes.push(hash_str(&data));
         }

@@ -59,6 +59,7 @@
 // }
 // ```
 
+use std::fmt;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::SystemTime;
@@ -668,7 +669,7 @@ impl AuthenticationProvider {
         password: &str,
     ) -> Result<AuthenticationResult> {
         // Hash password and verify against stored hash
-        let _hash = self.hash_password(password);
+        let hash = self.hash_password(password);
 
         // In production, this would check against user database
         // For now, simulate successful authentication
@@ -806,7 +807,7 @@ impl AuthenticationProvider {
         let data = format!("{}-{}-{}", username, uuid, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
         let mut hasher = Sha256::new();
         hasher.update(data.as_bytes());
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         general_purpose::STANDARD.encode(result)
     }
 
@@ -820,7 +821,7 @@ impl AuthenticationProvider {
     fn hash_password(&self, password: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(password.as_bytes());
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         general_purpose::STANDARD.encode(result)
     }
 
@@ -2532,7 +2533,7 @@ mod tests {
         controller.allocate_memory(session_id, 512 * 1024).unwrap();
 
         // Should fail
-        let _result = controller.allocate_memory(session_id, 1024 * 1024);
+        let result = controller.allocate_memory(session_id, 1024 * 1024);
         assert!(result.is_err());
     }
 
@@ -2591,7 +2592,7 @@ impl SessionMigrationCoordinator {
             ));
         }
 
-        let _state = MigrationState {
+        let state = MigrationState {
             session_id,
             from_node: from_node.clone(),
             to_node: to_node.clone(),
@@ -3140,7 +3141,7 @@ impl SessionStatisticsAggregator {
     pub fn update_session_stats(&self, session: &SessionState) {
         // Update user statistics
         let mut user_stats = self.user_stats.write();
-        let _stats = user_stats.entry(session.username.clone())
+        let stats = user_stats.entry(session.username.clone())
             .or_insert_with(UserSessionStatistics::default);
 
         stats.total_sessions += 1;
@@ -3303,7 +3304,6 @@ pub struct CacheStats {
 
 #[cfg(test)]
 mod advanced_tests {
-    use super::*;
 
     #[tokio::test]
     async fn test_session_migration() {
@@ -3326,7 +3326,7 @@ mod advanced_tests {
     async fn test_session_health_check() {
         let checker = SessionHealthChecker::new();
 
-        let _policy = HealthCheckPolicy {
+        let policy = HealthCheckPolicy {
             name: "test".to_string(),
             max_idle_time: Some(Duration::from_secs(60)),
             max_session_age: Some(Duration::from_secs(3600)),
@@ -3337,7 +3337,7 @@ mod advanced_tests {
         checker.add_policy(policy);
 
         let session = SessionState::new(1, "testuser".to_string(), "testdb".to_string());
-        let _result = checker.check_health(&session).await.unwrap();
+        let result = checker.check_health(&session).await.unwrap();
 
         assert!(result.healthy);
     }

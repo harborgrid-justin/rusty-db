@@ -75,7 +75,7 @@
 // allocator.deallocate(ptr.allocation_id).await?;
 //
 // // Get statistics
-// let _stats = allocator.get_statistics().await;
+// let stats = allocator.get_statistics().await;
 // println!("Total large allocations: {}", stats.total_allocations);
 // # Ok(())
 // # }
@@ -720,7 +720,7 @@ impl LargeObjectAllocator {
     ) -> Result<(), MemoryError> {
         #[cfg(unix)]
         {
-            let _result = unsafe {
+            let result = unsafe {
                 munmap(ptr.as_ptr() as *mut libc::c_void, size)
             };
 
@@ -755,7 +755,7 @@ impl LargeObjectAllocator {
     ) -> Result<(), LargeObjectError> {
         #[cfg(unix)]
         {
-            let _result = unsafe {
+            let result = unsafe {
                 madvise(
                     ptr.as_ptr() as *mut libc::c_void,
                     size,
@@ -1005,12 +1005,12 @@ mod tests {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
 
-        let _source = AllocationSource::Query {
+        let source = AllocationSource::Query {
             query_id: "test_query".to_string(),
             operation: "sort_buffer".to_string(),
         };
 
-        let _result = allocator.allocate(
+        let result = allocator.allocate(
             1024 * 1024, // 1MB
             4096,
             source,
@@ -1028,10 +1028,10 @@ mod tests {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
 
-        let _source = AllocationSource::Unknown;
+        let source = AllocationSource::Unknown;
 
         // Try to allocate below threshold
-        let _result = allocator.allocate(1024, 8, source, false).await;
+        let result = allocator.allocate(1024, 8, source, false).await;
         assert!(result.is_err());
     }
 
@@ -1040,8 +1040,8 @@ mod tests {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
 
-        let _source = AllocationSource::Unknown;
-        let _result = allocator.allocate(
+        let source = AllocationSource::Unknown;
+        let result = allocator.allocate(
             512 * 1024, // 512KB
             4096,
             source,
@@ -1068,8 +1068,8 @@ mod tests {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
 
-        let _source = AllocationSource::Unknown;
-        let _result = allocator.allocate(
+        let source = AllocationSource::Unknown;
+        let result = allocator.allocate(
             1024 * 1024,
             4096,
             source,
@@ -1089,7 +1089,7 @@ mod tests {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
 
-        let _source = AllocationSource::Unknown;
+        let source = AllocationSource::Unknown;
         let _result1 = allocator.allocate(
             1024 * 1024,
             4096,
@@ -1104,7 +1104,7 @@ mod tests {
             true, // Try huge pages
         ).await.unwrap();
 
-        let _stats = allocator.get_statistics().await;
+        let stats = allocator.get_statistics().await;
         assert_eq!(stats.total_allocations, 2);
         assert_eq!(stats.active_allocations, 2);
         assert_eq!(stats.total_bytes_allocated, 3 * 1024 * 1024);

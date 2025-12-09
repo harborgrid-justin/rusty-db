@@ -367,7 +367,7 @@ impl TdeEngine {
             )));
         }
 
-        let _result = self.encrypt_internal(
+        let result = self.encrypt_internal(
             &ts_enc.config.algorithm,
             &ts_enc.dek,
             plaintext,
@@ -441,7 +441,7 @@ impl TdeEngine {
         // Use table.column as AAD for additional security
         let aad = format!("{}.{}", table_name, column_name);
 
-        let _result = self.encrypt_internal(
+        let result = self.encrypt_internal(
             &col_enc.config.algorithm,
             &col_enc.dek,
             plaintext,
@@ -515,7 +515,7 @@ impl TdeEngine {
 
         // Amortize setup cost by reusing cipher instance
         for plaintext in plaintexts {
-            let _result = self.encrypt_internal(
+            let result = self.encrypt_internal(
                 &ts_enc.config.algorithm,
                 &ts_enc.dek,
                 plaintext,
@@ -701,7 +701,6 @@ impl TdeEngine {
         ciphertext: &[u8],
         aad: Option<&[u8]>,
     ) -> Result<Vec<u8>> {
-        use aes_gcm::aead::generic_array::GenericArray;
 
         let cipher = Aes256Gcm::new(GenericArray::from_slice(key));
         let nonce = Nonce::from_slice(nonce);
@@ -758,7 +757,6 @@ impl TdeEngine {
         ciphertext: &[u8],
         aad: Option<&[u8]>,
     ) -> Result<Vec<u8>> {
-        use chacha20poly1305::aead::generic_array::GenericArray;
 
         let cipher = ChaCha20Poly1305::new(GenericArray::from_slice(key));
         let nonce = GenericArray::from_slice(nonce);

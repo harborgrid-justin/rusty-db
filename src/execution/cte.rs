@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+use tokio::time::sleep;
 use super::planner::PlanNode;
 use super::QueryResult;
 /// Common Table Expressions (CTE) Support
@@ -183,7 +185,7 @@ impl CycleDetector {
         for row in rows {
             let mut hasher = DefaultHasher::new();
             row.hash(&mut hasher);
-            let _hash = hasher.finish();
+            let hash = hasher.finish();
             
             if self.seen_hashes.contains(&hash) {
                 return true;
@@ -194,13 +196,11 @@ impl CycleDetector {
     
     /// Add rows to the cycle detection set
     pub fn add_rows(&mut self, rows: &[Vec<String>]) {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
         
         for row in rows {
             let mut hasher = DefaultHasher::new();
             row.hash(&mut hasher);
-            let _hash = hasher.finish();
+            let hash = hasher.finish();
             self.seen_hashes.insert(hash);
         }
     }
@@ -899,7 +899,7 @@ mod tests {
     fn test_cte_materialization() {
         let mut context = CteContext::new();
         
-        let _result = QueryResult::new(
+        let result = QueryResult::new(
             vec!["id".to_string(), "name".to_string()],
             vec![
                 vec!["1".to_string(), "Alice".to_string()],
@@ -928,7 +928,7 @@ mod tests {
             columns: vec!["*".to_string()],
         };
         
-        let _result = evaluator.evaluate("test_cte", base_result, &recursive_plan);
+        let result = evaluator.evaluate("test_cte", base_result, &recursive_plan);
         assert!(result.is_ok());
     }
     
@@ -1111,7 +1111,7 @@ mod tests {
         graph.build(&[cte1.clone(), cte2.clone()]);
         assert!(graph.has_circular_dependency());
         
-        let _result = graph.topological_sort(&[cte1, cte2]);
+        let result = graph.topological_sort(&[cte1, cte2]);
         assert!(result.is_err());
     }
     
@@ -1154,7 +1154,7 @@ mod tests {
         assert!(handler.enter_nesting().is_ok());
         
         // Should fail on third nesting
-        let _result = handler.enter_nesting();
+        let result = handler.enter_nesting();
         assert!(result.is_err());
     }
     
@@ -1257,7 +1257,7 @@ impl CteExecutionEngine {
         }
         
         // Execute the CTE query
-        let _result = if cte.recursive {
+        let result = if cte.recursive {
             self.execute_recursive_cte(cte)?
         } else {
             self.execute_non_recursive_cte(cte)?
@@ -1911,7 +1911,6 @@ impl CteProfiler {
 
 #[cfg(test)]
 mod extended_tests {
-    use super::*;
 
     #[test]
     fn test_cte_execution_engine() {
@@ -1932,7 +1931,7 @@ mod extended_tests {
             columns: vec!["*".to_string()],
         };
         
-        let _result = engine.execute_with_optimization(vec![cte], main_query);
+        let result = engine.execute_with_optimization(vec![cte], main_query);
         assert!(result.is_ok());
     }
     
@@ -1985,7 +1984,7 @@ mod extended_tests {
             columns: vec!["*".to_string()],
         };
         
-        let _result = evaluator.evaluate_incremental("test_cte", base, &plan);
+        let result = evaluator.evaluate_incremental("test_cte", base, &plan);
         assert!(result.is_ok());
     }
     
@@ -2098,7 +2097,6 @@ mod extended_tests {
 
 /// Advanced CTE Optimization Framework
 pub mod optimization {
-    use super::*;
 
     /// CTE Cost Model for accurate cost estimation
     pub struct CteCostModel {
@@ -2293,7 +2291,6 @@ pub mod optimization {
 
 /// CTE Execution Monitoring and Observability
 pub mod monitoring {
-    use super::*;
     use std::time::Duration;
 
     /// CTE Execution Monitor
@@ -2454,7 +2451,6 @@ pub mod monitoring {
 
 /// CTE Advanced Features
 pub mod advanced {
-    use super::*;
 
     /// Window Function Support in CTEs
     pub struct CteWindowFunction {
@@ -2501,7 +2497,7 @@ pub mod advanced {
             vec![rows.to_vec()]
         }
         
-        fn apply_to_partition(&self, _partition: &[Vec<String>]) -> Result<(), DbError> {
+        fn apply_to_partition(&self, partition: &[Vec<String>]) -> Result<(), DbError> {
             // Placeholder: apply window function to partition
             Ok(())
         }
@@ -2666,7 +2662,6 @@ pub mod advanced {
 
 /// CTE Query Transformation and Rewriting
 pub mod transformation {
-    use super::*;
 
     /// CTE Subquery Flattening
     pub struct CteSubqueryFlattener;
@@ -2839,7 +2834,6 @@ mod optimization_tests {
     use super::monitoring::*;
     use super::optimization::*;
     use super::transformation::*;
-    use super::*;
 
     #[test]
     fn test_cost_model() {
@@ -2943,7 +2937,6 @@ mod optimization_tests {
 
 /// CTE Integration and Utilities
 pub mod integration {
-    use super::*;
 
     /// CTE SQL Generator - Generate SQL from CTE definitions
     pub struct CteSqlGenerator;

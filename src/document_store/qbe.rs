@@ -89,7 +89,7 @@ impl QueryDocument {
 
     fn evaluate_operators(&self, field_value: &Value, operators: &serde_json::Map<String, Value>) -> Result<bool> {
         for (op, value) in operators {
-            let _result = match op.as_str() {
+            let result = match op.as_str() {
                 "$eq" => self.op_eq(field_value, value),
                 "$ne" => self.op_ne(field_value, value),
                 "$gt" => self.op_gt(field_value, value),
@@ -767,7 +767,7 @@ mod tests {
             "email": "alice@example.com"
         });
 
-        let _result = projection.apply(&doc).unwrap();
+        let result = projection.apply(&doc).unwrap();
         assert!(result.get("name").is_some());
         assert!(result.get("age").is_some());
         assert!(result.get("email").is_none());

@@ -9,6 +9,7 @@
 // - Export to compliance formats
 // - Audit log protection
 
+use std::fmt;
 use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};

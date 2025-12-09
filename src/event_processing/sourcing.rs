@@ -3,6 +3,8 @@
 // Implements event sourcing patterns including event store, event replay,
 // snapshots, projection rebuilding, event versioning, and aggregate reconstruction.
 
+use std::collections::VecDeque;
+use std::fmt;
 use super::{Event, EventId, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

@@ -61,7 +61,7 @@ impl AdaptiveContext {
 
     /// Check if reoptimization is needed
     pub fn should_reoptimize(&self) -> bool {
-        let _stats = self.stats.read();
+        let stats = self.stats.read();
 
         // Reoptimize if we see significant cardinality misestimation
         for feedback in stats.cardinality_feedback.values() {
@@ -274,7 +274,7 @@ impl AdaptiveExecutor {
         }
 
         // Execute with checkpoints for adaptation
-        let _result = self.execute_with_checkpoints(current_plan)?;
+        let result = self.execute_with_checkpoints(current_plan)?;
 
         // Finalization
         {
@@ -721,7 +721,7 @@ mod tests {
     fn test_histogram() {
         let mut hist = Histogram::new("age".to_string(), 10);
 
-        for _i in 0..100 {
+        for i in 0..100 {
             hist.add_value(i as f64);
         }
 
@@ -741,7 +741,7 @@ mod tests {
             columns: vec!["*".to_string()],
         };
 
-        let _result = executor.execute_adaptive(plan);
+        let result = executor.execute_adaptive(plan);
         assert!(result.is_ok());
     }
 }

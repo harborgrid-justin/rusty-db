@@ -242,7 +242,7 @@
 //     IndexType::RTree { max_entries: 8, min_entries: 3 }
 // );
 //
-// for _i in 0..1000 {
+// for i in 0..1000 {
 //     let bbox = BoundingBox::new(i as f64, i as f64, i as f64 + 1.0, i as f64 + 1.0);
 //     builder.add(i, bbox);
 // }
@@ -481,7 +481,7 @@ mod tests {
         let engine = SpatialEngine::new();
         let rtree = engine.create_rtree();
 
-        let _stats = rtree.stats();
+        let stats = rtree.stats();
         assert_eq!(stats.num_entries, 0);
     }
 

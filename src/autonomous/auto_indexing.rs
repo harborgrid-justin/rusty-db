@@ -3,6 +3,8 @@
 // Intelligent index recommendation, creation, consolidation, and maintenance
 // based on workload analysis and query patterns.
 
+use tokio::time::sleep;
+use std::fmt;
 use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -365,7 +367,7 @@ impl IndexAdvisor {
 
         let index_list: Vec<_> = indexes.values().collect();
 
-        for _i in 0..index_list.len() {
+        for i in 0..index_list.len() {
             for j in (i + 1)..index_list.len() {
                 if index_list[i].is_redundant(index_list[j]) {
                     redundant_pairs.push((
@@ -680,7 +682,7 @@ mod tests {
 
     #[test]
     fn test_index_statistics_unused() {
-        let _stats = IndexStatistics {
+        let stats = IndexStatistics {
             index_name: "test_idx".to_string(),
             table_name: "test".to_string(),
             columns: vec!["col1".to_string()],

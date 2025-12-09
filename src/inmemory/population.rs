@@ -7,6 +7,7 @@
 // - Memory pressure handling
 // - Repopulation after modifications
 
+use tokio::time::sleep;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::VecDeque;
 use std::sync::Mutex;
@@ -370,8 +371,8 @@ impl PopulationWorker {
     fn generate_test_data(&self, column_id: u32, row_count: usize) -> Vec<u8> {
         // Generate test data for simulation
         let mut data = Vec::with_capacity(row_count * 8);
-        for _i in 0..row_count {
-            let _value = (column_id as i64 * 1000 + i as i64) % 10000;
+        for i in 0..row_count {
+            let value = (column_id as i64 * 1000 + i as i64) % 10000;
             data.extend_from_slice(&value.to_le_bytes());
         }
         data
@@ -423,7 +424,7 @@ impl PopulationManager {
         let mut workers = self.workers.write();
         let mut threads = self.worker_threads.write();
 
-        for _i in 0..num_workers {
+        for i in 0..num_workers {
             let worker = PopulationWorker::new(
                 i,
                 self.task_queue.clone(),
@@ -619,7 +620,7 @@ mod tests {
 
         manager.schedule_column("test_store".to_string(), 0, PopulationPriority::Medium);
 
-        let _stats = manager.stats();
+        let stats = manager.stats();
         assert_eq!(stats.total_tasks, 1);
         assert_eq!(stats.queued_tasks, 1);
 

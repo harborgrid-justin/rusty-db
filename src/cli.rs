@@ -3,6 +3,7 @@
 // Interactive SQL client for RustyDB.
 // Connects to a RustyDB server and allows executing SQL queries.
 
+use std::io;
 use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, stdin, AsyncBufReadExt, BufReader};
 use rusty_db::network::protocol::{Request, Response};

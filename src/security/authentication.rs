@@ -331,7 +331,7 @@ impl AuthenticationManager {
         let user_id = uuid::Uuid::new_v4().to_string();
         let now = current_timestamp();
 
-        let _policy = self.password_policy.read();
+        let policy = self.password_policy.read();
         let password_expires_at = policy.expiration_days.map(|days| {
             now + (days * 86400)
         });
@@ -415,7 +415,7 @@ impl AuthenticationManager {
             self.record_failed_login(&credentials.username);
 
             // Check if should lock account
-            let _policy = self.password_policy.read();
+            let policy = self.password_policy.read();
             if user.failed_login_attempts >= policy.max_failed_attempts {
                 user.status = AccountStatus::Locked;
                 user.locked_until = Some(
@@ -531,7 +531,7 @@ impl AuthenticationManager {
         }
 
         // Check minimum password age
-        let _policy = self.password_policy.read();
+        let policy = self.password_policy.read();
         if let Some(min_age_days) = policy.min_age_days {
             let min_age_seconds = min_age_days as i64 * 86400;
             if current_timestamp() - user.last_password_change < min_age_seconds {
@@ -677,7 +677,7 @@ impl AuthenticationManager {
     // Private helper methods
 
     fn validate_password(&self, password: &str) -> Result<()> {
-        let _policy = self.password_policy.read();
+        let policy = self.password_policy.read();
 
         if password.len() < policy.min_length {
             return Err(DbError::InvalidInput(
@@ -799,7 +799,6 @@ impl AuthenticationManager {
     }
 
     fn generate_backup_codes(&self, count: usize) -> Vec<String> {
-        use rand::Rng;
         let mut rng = rand::thread_rng();
         (0..count)
             .map(|_| {
@@ -811,7 +810,7 @@ impl AuthenticationManager {
     fn is_locked_out(&self, username: &str) -> bool {
         let failed = self.failed_logins.read();
         if let Some(attempts) = failed.get(username) {
-            let _policy = self.password_policy.read();
+            let policy = self.password_policy.read();
             let cutoff = current_timestamp() - (policy.lockout_duration_minutes as i64 * 60);
             let recent_attempts = attempts.iter().filter(|&&t| t > cutoff).count();
             recent_attempts >= policy.max_failed_attempts as usize
@@ -824,7 +823,7 @@ impl AuthenticationManager {
         let failed = self.failed_logins.read();
         if let Some(attempts) = failed.get(username) {
             if let Some(&first_attempt) = attempts.first() {
-                let _policy = self.password_policy.read();
+                let policy = self.password_policy.read();
                 return first_attempt + (policy.lockout_duration_minutes as i64 * 60);
             }
         }
@@ -837,7 +836,7 @@ impl AuthenticationManager {
         attempts.insert(0, current_timestamp());
 
         // Keep only recent attempts
-        let _policy = self.password_policy.read();
+        let policy = self.password_policy.read();
         let cutoff = current_timestamp() - (policy.lockout_duration_minutes as i64 * 60);
         attempts.retain(|&t| t > cutoff);
     }
@@ -887,7 +886,7 @@ mod tests {
     #[test]
     fn test_create_user() {
         let manager = AuthenticationManager::new();
-        let _result = manager.create_user(
+        let result = manager.create_user(
             "testuser".to_string(),
             "Test@Pass123!".to_string(),
             Some("test@example.com".to_string()),
@@ -942,7 +941,7 @@ mod tests {
             user_agent: None,
         };
 
-        let _result = manager.login(credentials).unwrap();
+        let result = manager.login(credentials).unwrap();
         assert!(matches!(result, LoginResult::Success { .. }));
     }
 }

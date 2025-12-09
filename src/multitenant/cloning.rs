@@ -19,6 +19,7 @@
 // - CoW layer: Modified blocks for the clone
 // - Metadata layer: Tracks block ownership and deltas
 
+use tokio::time::sleep;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -622,7 +623,7 @@ mod tests {
         let engine = CloningEngine::new();
         let source_pdb_id = PdbId::new(1);
 
-        let _result = engine.create_full_clone(source_pdb_id, "CLONE1", 1000).await;
+        let result = engine.create_full_clone(source_pdb_id, "CLONE1", 1000).await;
         assert!(result.is_ok());
 
         let (clone_id, _cloned_pdb_id) = result.unwrap();
@@ -635,7 +636,7 @@ mod tests {
         let engine = CloningEngine::new();
         let source_pdb_id = PdbId::new(1);
 
-        let _result = engine.create_thin_clone(source_pdb_id, "CLONE2", 1000).await;
+        let result = engine.create_thin_clone(source_pdb_id, "CLONE2", 1000).await;
         assert!(result.is_ok());
 
         let (clone_id, _cloned_pdb_id) = result.unwrap();
@@ -651,7 +652,7 @@ mod tests {
 
         engine.create_cow_layer(source_pdb_id, clone_pdb_id).await.unwrap();
 
-        let _block_data = vec![1, 2, 3, 4];
+        let block_data = vec![1, 2, 3, 4];
         engine.write_block(clone_pdb_id, 0, block_data.clone()).await.unwrap();
 
         let read_data = engine.read_block(clone_pdb_id, 0).await.unwrap();

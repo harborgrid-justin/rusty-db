@@ -99,9 +99,9 @@ pub struct ServiceDiscoveryConfig {
     /// Service registry address
     pub registry_address: Option<String>,
     /// Health check interval (seconds)
-    pub health_check_interval: u64;
+    pub health_check_interval: u64,
     /// Health check timeout (seconds)
-    pub health_check_timeout: u64;
+    pub health_check_timeout: u64,
 }
 
 /// Service discovery mechanism
@@ -1214,7 +1214,7 @@ impl JwtValidator {
         let signature = BASE64.decode(parts[2])
             .map_err(|_| DbError::InvalidOperation("Invalid JWT signature".to_string()))?;
 
-        let _message = format!("{}.{}", parts[0], parts[1]);
+        let message = format!("{}.{}", parts[0], parts[1]);
         self.verify_signature(&message, &signature)?;
 
         // Validate claims
@@ -1389,7 +1389,7 @@ impl MfaManager {
     /// Generate TOTP secret for user
     pub fn generate_totp_secret(&self, user_id: String) -> Vec<u8> {
         let mut secret = vec![0u8; 32];
-        for _i in 0..32 {
+        for i in 0..32 {
             secret[i] = rand::random();
         }
 

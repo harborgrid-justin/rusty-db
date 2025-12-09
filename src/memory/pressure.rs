@@ -80,7 +80,7 @@
 // println!("Current pressure level: {}", pressure_level);
 //
 // // Get pressure statistics
-// let _stats = pressure_manager.get_statistics().await;
+// let stats = pressure_manager.get_statistics().await;
 // println!("Total pressure events: {}", stats.total_events);
 //
 // // Stop monitoring when shutting down
@@ -89,6 +89,8 @@
 // # }
 // ```
 
+use std::collections::VecDeque;
+use std::fmt;
 use std::time::{SystemTime, UNIX_EPOCH, Instant};
 use crate::memory::types::*;
 use parking_lot::{Mutex, RwLock};
@@ -401,7 +403,7 @@ impl SystemMemoryInfo {
         for line in meminfo.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
-                let _value = parts[1].parse::<u64>().unwrap_or(0) * 1024; // Convert from KB
+                let value = parts[1].parse::<u64>().unwrap_or(0) * 1024; // Convert from KB
 
                 match parts[0] {
                     "MemTotal:" => total_memory = value,
@@ -441,7 +443,6 @@ impl SystemMemoryInfo {
 
     #[cfg(target_os = "linux")]
     fn collect_process_memory_linux() -> Result<(u64, u64), PressureError> {
-        use std::fs;
 
         let status = fs::read_to_string("/proc/self/status")
             .map_err(|e| PressureError::SystemInfoUnavailable {
@@ -602,7 +603,7 @@ impl MemoryPressureManager {
         let current_level = Arc::clone(&self.current_level);
         let callbacks = Arc::clone(&self.callbacks);
         let event_history = Arc::clone(&self.event_history);
-        let _stats = Arc::clone(&self.stats);
+        let stats = Arc::clone(&self.stats);
         let last_memory_info = Arc::clone(&self.last_memory_info);
         let callback_semaphore = Arc::clone(&self.callback_semaphore);
 
@@ -970,7 +971,7 @@ impl MemoryPressureManager {
 
     /// Gets memory efficiency score (0.0 to 1.0)
     pub async fn get_efficiency_score(&self) -> f64 {
-        let _stats = self.stats.read().await;
+        let stats = self.stats.read().await;
         if stats.total_events > 0 && stats.total_bytes_freed > 0 {
             // Calculate based on event resolution efficiency
             let successful_events = stats.events_by_level.values().sum::<u64>();
@@ -989,7 +990,6 @@ impl MemoryPressureManager {
 mod tests {
     use super::*;
     use tokio::test;
-    use std::sync::Arc;
     use std::sync::atomic::AtomicU64;
 
     #[test]
@@ -1082,7 +1082,7 @@ mod tests {
             })
         });
 
-        let _callback_id = manager.register_callback(
+        let callback_id = manager.register_callback(
             MemoryPressureLevel::Warning,
             callback,
         ).await.unwrap();
@@ -1096,7 +1096,7 @@ mod tests {
 
         assert!(callback_invoked.load(Ordering::Relaxed));
 
-        let _stats = manager.get_statistics().await;
+        let stats = manager.get_statistics().await;
         assert_eq!(stats.total_events, 1);
         assert_eq!(stats.total_bytes_freed, 2048);
     }
@@ -1122,7 +1122,7 @@ mod tests {
                 })
             });
 
-            let _id = manager.register_callback_with_priority(
+            let id = manager.register_callback_with_priority(
                 MemoryPressureLevel::Warning,
                 priority,
                 callback,
@@ -1151,7 +1151,7 @@ mod tests {
         let manager = MemoryPressureManager::new(config).await.unwrap();
 
         // Simulate multiple pressure events
-        for _i in 0..7 {
+        for i in 0..7 {
             manager.simulate_pressure(
                 MemoryPressureLevel::Warning,
                 (8 + i) * 1024 * 1024 * 1024,
@@ -1162,7 +1162,7 @@ mod tests {
         let history = manager.get_event_history().await;
         assert_eq!(history.len(), 5); // Should be limited to max_pressure_events
 
-        let _stats = manager.get_statistics().await;
+        let stats = manager.get_statistics().await;
         assert_eq!(stats.total_events, 7); // Total count should still be accurate
     }
 

@@ -1,6 +1,7 @@
 // Point-in-Time Recovery (PITR) - Oracle-style recovery capabilities
 // Supports recovery to specific timestamp, transaction, or SCN with log mining
 
+use tokio::time::sleep;
 use std::collections::HashSet;
 use std::collections::BTreeMap;
 use std::time::Duration;
@@ -260,7 +261,7 @@ impl LogMiner {
         let mut active_txns = self.active_transactions.write();
 
         // Simulate some log entries
-        for _i in 0..100 {
+        for i in 0..100 {
             let scn = log_file.start_scn + i;
             let txn_id = format!("TXN-{}", i % 10);
 
@@ -294,7 +295,7 @@ impl LogMiner {
         // Simulate finding log files
         let mut log_files = Vec::new();
 
-        for _i in 0..5 {
+        for i in 0..5 {
             let seq = LogSequence {
                 sequence_number: i,
                 file_path: self.log_directory.join(format!("redo_{:04}.log", i)),
@@ -486,7 +487,7 @@ impl PitrManager {
 
     fn restore_backup(&self, session: &mut RecoverySession) -> Result<()> {
         // Simulate restoring backup files
-        for _i in 0..10 {
+        for i in 0..10 {
             session.status = RecoveryStatus::RestoringBackup {
                 progress_pct: (i as f64 / 10.0) * 100.0,
             };
@@ -620,7 +621,6 @@ impl PitrManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
 
     #[test]
     fn test_restore_point() {

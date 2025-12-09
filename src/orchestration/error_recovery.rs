@@ -18,6 +18,7 @@
 // Error → Classify → Retry → Fallback → Compensate → Report
 // ```
 
+use std::fmt;
 use std::collections::HashMap;
 
 use std::future::Future;
@@ -353,7 +354,7 @@ impl RetryExecutor {
         Fut: Future<Output = Result<T>>,
     {
         let mut attempt = 0;
-        let _last_error = None;
+        let last_error = None;
 
         loop {
             match f().await {
@@ -491,7 +492,7 @@ impl RecoveryManager {
                 self.notify_failure(operation_name, &classified);
 
                 // Check if we have a fallback
-                let _handlers = self.fallback_handlers.read();
+                let handlers = self.fallback_handlers.read();
                 if let Some(handler) = handlers.get(operation_name) {
                     log::warn!("Primary operation failed, trying fallback for: {}", operation_name);
                     match handler.execute().await {
@@ -648,7 +649,7 @@ mod tests {
         let counter = Arc::new(AtomicUsize::new(0));
         let counter_clone = Arc::clone(&counter);
 
-        let _result = executor
+        let result = executor
             .execute(|| {
                 let counter = Arc::clone(&counter_clone);
                 async move {
@@ -680,7 +681,7 @@ mod tests {
 
         let executor = RetryExecutor::new(config, classifier);
 
-        let _result = executor
+        let result = executor
             .execute(|| async { Err::<(), _>(DbError::Internal("timeout".into())) })
             .await;
 
@@ -726,7 +727,7 @@ mod tests {
         manager.register_fallback("test_op".into(), Arc::new(TestFallback));
 
         // This will fail and use fallback
-        let _result = manager
+        let result = manager
             .execute_with_recovery("test_op", || async {
                 Err::<(), _>(DbError::Internal("failure".into()))
             })

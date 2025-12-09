@@ -252,7 +252,7 @@ impl BitVector {
         let num_words = (size + 63) / 64;
         let mut result = BitVector::new(size);
 
-        for _i in 0..num_words {
+        for i in 0..num_words {
             result.bits[i] = self.bits[i] & other.bits[i];
         }
 
@@ -266,7 +266,7 @@ impl BitVector {
         let num_words = (size + 63) / 64;
         let mut result = BitVector::new(size);
 
-        for _i in 0..num_words.min(self.bits.len()).min(other.bits.len()) {
+        for i in 0..num_words.min(self.bits.len()).min(other.bits.len()) {
             result.bits[i] = self.bits[i] | other.bits[i];
         }
 
@@ -278,7 +278,7 @@ impl BitVector {
     pub fn not(&self) -> BitVector {
         let mut result = BitVector::new(self.size);
 
-        for _i in 0..self.bits.len() {
+        for i in 0..self.bits.len() {
             result.bits[i] = !self.bits[i];
         }
 
@@ -538,7 +538,7 @@ impl DataWarehouseManager {
                 Err(DbError::NotFound("No matching partition".to_string()))
             }
             PartitioningStrategy::Hash { column: _, num_partitions } => {
-                let _hash = self.hash_value(value);
+                let hash = self.hash_value(value);
                 let partition_num = hash % num_partitions;
                 Ok(format!("partition_{}", partition_num))
             }
@@ -680,7 +680,7 @@ mod tests {
         bv2.set(10);
         bv2.set(20);
 
-        let _result = bv1.and(&bv2);
+        let result = bv1.and(&bv2);
         assert!(result.get(10));
         assert!(!result.get(5));
         assert!(!result.get(20));
@@ -694,7 +694,7 @@ mod tests {
         bv1.set(5);
         bv2.set(10);
 
-        let _result = bv1.or(&bv2);
+        let result = bv1.or(&bv2);
         assert!(result.get(5));
         assert!(result.get(10));
     }
@@ -731,7 +731,7 @@ mod tests {
             },
         };
 
-        let _result = manager.create_star_schema(schema);
+        let result = manager.create_star_schema(schema);
         assert!(result.is_ok());
     }
 }

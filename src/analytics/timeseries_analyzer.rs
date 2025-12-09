@@ -32,7 +32,7 @@ impl TimeSeriesAnalyzer {
     pub fn moving_average(&self, data: &[f64]) -> Vec<f64> {
         let mut result = Vec::with_capacity(data.len());
 
-        for _i in 0..data.len() {
+        for i in 0..data.len() {
             let start = if i >= self.window_size {
                 i - self.window_size + 1
             } else {
@@ -59,7 +59,7 @@ impl TimeSeriesAnalyzer {
         let alpha = alpha.clamp(0.0, 1.0);
         let mut result = vec![data[0]];
 
-        for _i in 1..data.len() {
+        for i in 1..data.len() {
             let ema = alpha * data[i] + (1.0 - alpha) * result[i - 1];
             result.push(ema);
         }
@@ -71,7 +71,7 @@ impl TimeSeriesAnalyzer {
     pub fn weighted_moving_average(&self, data: &[f64]) -> Vec<f64> {
         let mut result = Vec::with_capacity(data.len());
 
-        for _i in 0..data.len() {
+        for i in 0..data.len() {
             let start = if i >= self.window_size {
                 i - self.window_size + 1
             } else {
@@ -104,7 +104,7 @@ impl TimeSeriesAnalyzer {
         let mut increases = 0;
         let mut decreases = 0;
 
-        for _i in 1..data.len() {
+        for i in 1..data.len() {
             if data[i] > data[i - 1] {
                 increases += 1;
             } else if data[i] < data[i - 1] {
@@ -130,7 +130,7 @@ impl TimeSeriesAnalyzer {
         let mut increases = 0;
         let mut decreases = 0;
 
-        for _i in 1..data.len() {
+        for i in 1..data.len() {
             if data[i] > data[i - 1] {
                 increases += 1;
             } else if data[i] < data[i - 1] {
@@ -162,7 +162,7 @@ impl TimeSeriesAnalyzer {
         let n = data.len() - period;
         let mut autocorr = 0.0;
 
-        for _i in 0..n {
+        for i in 0..n {
             autocorr += (data[i] - mean) * (data[i + period] - mean);
         }
 
@@ -207,7 +207,7 @@ impl TimeSeriesAnalyzer {
         let n = data.len() - lag;
         let mut autocorr = 0.0;
 
-        for _i in 0..n {
+        for i in 0..n {
             autocorr += (data[i] - mean) * (data[i + lag] - mean);
         }
 
@@ -261,7 +261,7 @@ impl TimeSeriesAnalyzer {
 
         let mut result = vec![0.0; period];
 
-        for _i in period..data.len() {
+        for i in period..data.len() {
             let roc = if data[i - period] != 0.0 {
                 (data[i] - data[i - period]) / data[i - period] * 100.0
             } else {

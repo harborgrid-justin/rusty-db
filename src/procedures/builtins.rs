@@ -3,6 +3,7 @@
 /// This module provides Oracle-compatible built-in packages like DBMS_OUTPUT,
 /// DBMS_SQL, UTL_FILE, and DBMS_SCHEDULER for enterprise database operations.
 
+use tokio::time::sleep;
 use std::collections::VecDeque;
 use crate::{Result, DbError};
 use crate::procedures::runtime::RuntimeValue;
@@ -794,7 +795,7 @@ mod tests {
     fn test_dbms_lock() -> Result<()> {
         let lock_mgr = DbmsLock::new();
 
-        let _result = lock_mgr.request(
+        let result = lock_mgr.request(
             "my_lock".to_string(),
             "EXCLUSIVE".to_string(),
             Some(10),

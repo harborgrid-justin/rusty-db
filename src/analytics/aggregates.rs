@@ -8,6 +8,7 @@
 // - **Advanced Aggregates**: PERCENTILE, CORR, COVAR, REGR
 // - **Collection Aggregates**: STRING_AGG, ARRAY_AGG, JSON_AGG
 
+use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use crate::error::Result;
@@ -226,7 +227,7 @@ pub fn compute_aggregate(
                 return Ok("NULL".to_string());
             }
 
-            let _result = compute_percentile(&values, *percentile);
+            let result = compute_percentile(&values, *percentile);
             Ok(format_number(result))
         }
 
@@ -441,21 +442,21 @@ mod tests {
     #[test]
     fn test_count() {
         let data = make_data(&["1", "2", "3", "4", "5"]);
-        let _result = compute_aggregate(&data, 0, &AggregateFunction::Count).unwrap();
+        let result = compute_aggregate(&data, 0, &AggregateFunction::Count).unwrap();
         assert_eq!(result, "5");
     }
 
     #[test]
     fn test_sum() {
         let data = make_data(&["1", "2", "3", "4", "5"]);
-        let _result = compute_aggregate(&data, 0, &AggregateFunction::Sum).unwrap();
+        let result = compute_aggregate(&data, 0, &AggregateFunction::Sum).unwrap();
         assert_eq!(result, "15");
     }
 
     #[test]
     fn test_avg() {
         let data = make_data(&["2", "4", "6"]);
-        let _result = compute_aggregate(&data, 0, &AggregateFunction::Avg).unwrap();
+        let result = compute_aggregate(&data, 0, &AggregateFunction::Avg).unwrap();
         assert_eq!(result, "4");
     }
 
@@ -473,7 +474,7 @@ mod tests {
     #[test]
     fn test_stddev() {
         let data = make_data(&["2", "4", "4", "4", "5", "5", "7", "9"]);
-        let _result = compute_aggregate(&data, 0, &AggregateFunction::StdDevPop).unwrap();
+        let result = compute_aggregate(&data, 0, &AggregateFunction::StdDevPop).unwrap();
         // Standard deviation of this data is 2
         assert!(result.parse::<f64>().unwrap() - 2.0 < 0.01);
     }
@@ -481,21 +482,21 @@ mod tests {
     #[test]
     fn test_median() {
         let data = make_data(&["1", "2", "3", "4", "5"]);
-        let _result = compute_aggregate(&data, 0, &AggregateFunction::Median).unwrap();
+        let result = compute_aggregate(&data, 0, &AggregateFunction::Median).unwrap();
         assert_eq!(result, "3");
     }
 
     #[test]
     fn test_mode() {
         let data = make_data(&["a", "b", "b", "c"]);
-        let _result = compute_aggregate(&data, 0, &AggregateFunction::Mode).unwrap();
+        let result = compute_aggregate(&data, 0, &AggregateFunction::Mode).unwrap();
         assert_eq!(result, "b");
     }
 
     #[test]
     fn test_string_agg() {
         let data = make_data(&["a", "b", "c"]);
-        let _result = compute_aggregate(
+        let result = compute_aggregate(
             &data,
             0,
             &AggregateFunction::StringAgg { separator: ", ".to_string() },

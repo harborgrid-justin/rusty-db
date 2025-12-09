@@ -109,7 +109,7 @@
 // }
 //
 // // Get statistics
-// let _stats = buffer_pool.stats();
+// let stats = buffer_pool.stats();
 // println!("Hit rate: {:.2}%", stats.hit_rate * 100.0);
 // println!("Dirty pages: {}", stats.dirty_frames);
 // # Ok(())
@@ -249,7 +249,7 @@
 //     .build();
 //
 // // Get detailed statistics
-// let _stats = buffer_pool.stats();
+// let stats = buffer_pool.stats();
 //
 // println!("=== Buffer Pool Statistics ===");
 // println!("Total frames: {}", stats.total_frames);
@@ -427,7 +427,7 @@ mod tests {
         drop(guard);
 
         // Get stats
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert_eq!(stats.total_frames, 10);
         assert!(stats.page_reads > 0);
     }
@@ -438,11 +438,11 @@ mod tests {
 
         // Pin multiple pages
         let mut guards = Vec::new();
-        for _i in 0..5 {
+        for i in 0..5 {
             guards.push(pool.pin_page(i).unwrap());
         }
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert!(stats.pinned_frames >= 5);
     }
 
@@ -460,7 +460,7 @@ mod tests {
         // Flush all pages
         pool.flush_all().unwrap();
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert!(stats.page_writes > 0 || stats.dirty_frames == 0);
     }
 
@@ -502,7 +502,7 @@ mod tests {
         assert_eq!(frame.pin_count(), 0);
 
         {
-            let _guard = FrameGuard::new(frame.clone());
+            let guard = FrameGuard::new(frame.clone());
             assert_eq!(frame.pin_count(), 1);
         }
 
@@ -534,7 +534,7 @@ mod tests {
         let _g2 = pool.pin_page(2).unwrap();
         let _g3 = pool.pin_page(3).unwrap();
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert_eq!(stats.total_frames, 100);
         assert!(stats.pinned_frames >= 3);
         assert!(stats.lookups >= 3);
@@ -548,11 +548,11 @@ mod tests {
         // Pin and modify a page
         {
             let guard = pool.pin_page(1).unwrap();
-            let _data = guard.write_data();
+            let data = guard.write_data();
             // Writing automatically marks as dirty
         }
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert!(stats.dirty_frames > 0);
 
         let dirty_ratio = pool.dirty_page_ratio();

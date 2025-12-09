@@ -3,6 +3,7 @@
 // This module provides the main ML engine that orchestrates all machine learning operations,
 // including model training, versioning, deployment, and lifecycle management.
 
+use std::fmt;
 use crate::error::Result;
 use super::{
     Dataset, Hyperparameters, Metrics, MLError,
@@ -584,7 +585,7 @@ impl MLEngine {
         }
 
         // Train the model
-        let _result = self.train_model_internal(model_type, &dataset, &params);
+        let result = self.train_model_internal(model_type, &dataset, &params);
 
         match result {
             Ok((model_data, metrics)) => {
@@ -858,7 +859,7 @@ mod tests {
         let target = Some(vec![2.0, 4.0, 6.0]);
         let dataset = Dataset::new(features, target, vec!["x".to_string()]);
 
-        let _result = engine.train_model(
+        let result = engine.train_model(
             "test_model".to_string(),
             ModelType::LinearRegression,
             dataset,

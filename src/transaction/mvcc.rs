@@ -781,7 +781,7 @@ mod tests {
         mvcc.write("key1".to_string(), "value1".to_string(), 1, ts1).unwrap();
 
         let ts2 = mvcc.begin_snapshot(2);
-        let _value = mvcc.read(&"key1".to_string(), &ts2).unwrap();
+        let value = mvcc.read(&"key1".to_string(), &ts2).unwrap();
         assert_eq!(value, Some("value1".to_string()));
 
         mvcc.end_snapshot(1);
@@ -793,10 +793,10 @@ mod tests {
         let config = SnapshotConfig::default();
         let si = SnapshotIsolationManager::new(config);
 
-        let _ts1 = si.begin_transaction(1, false);
+        let ts1 = si.begin_transaction(1, false);
         si.record_write(1, "key1".to_string()).unwrap();
 
-        let _ts2 = si.begin_transaction(2, false);
+        let ts2 = si.begin_transaction(2, false);
         si.record_write(2, "key1".to_string()).unwrap();
 
         // Should detect write-write conflict

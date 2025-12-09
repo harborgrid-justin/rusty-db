@@ -56,6 +56,7 @@
 //
 // **Target LOC:** 3,000+ lines across all submodules
 
+use std::fmt;
 pub mod engine;
 pub mod algorithms;
 pub mod preprocessing;

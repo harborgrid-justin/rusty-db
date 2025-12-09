@@ -607,7 +607,7 @@ impl PrivilegeAnalyzer {
 
     /// Get analysis statistics
     pub fn get_stats(&self) -> (u64, u64, u64, u64) {
-        let _stats = self.stats.read();
+        let stats = self.stats.read();
         (
             stats.total_grants,
             stats.unused_privileges,
@@ -760,7 +760,7 @@ mod tests {
         let priv3 = PrivilegeType::System("CREATE INDEX".to_string());
 
         // Grant same privileges to multiple users
-        for _i in 1..=5 {
+        for i in 1..=5 {
             let user = format!("user{}", i);
             analyzer.grant_privilege(&user, priv1.clone(), "admin").unwrap();
             analyzer.grant_privilege(&user, priv2.clone(), "admin").unwrap();

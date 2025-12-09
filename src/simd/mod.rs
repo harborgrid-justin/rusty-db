@@ -159,7 +159,6 @@ pub fn prefetch_read<T>(ptr: *const T, ahead: usize) {
 pub fn prefetch_nta<T>(ptr: *const T, ahead: usize) {
     #[cfg(target_arch = "x86_64")]
     unsafe {
-        use std::arch::x86_64::_mm_prefetch;
         let prefetch_ptr = ptr.add(ahead) as *const i8;
         _mm_prefetch(prefetch_ptr, std::arch::x86_64::_MM_HINT_NTA);
     }
@@ -244,7 +243,7 @@ impl SelectionVector {
     /// Add multiple indices
     #[inline(always)]
     pub fn add_range(&mut self, start: usize, count: usize) {
-        for _i in 0..count {
+        for i in 0..count {
             self.indices.push(start + i);
         }
     }

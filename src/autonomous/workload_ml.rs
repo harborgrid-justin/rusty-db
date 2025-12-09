@@ -5,6 +5,7 @@
 //
 // Enhanced with SIMD acceleration for sub-millisecond inference!
 
+use std::fmt;
 use std::collections::VecDeque;
 use std::time::SystemTime;
 use std::collections::{HashMap};
@@ -304,7 +305,7 @@ impl PerformancePredictor {
                 let mut weight_gradients = vec![0.0; self.weights.len()];
                 let mut bias_gradient = 0.0;
 
-                for _i in batch_start..batch_end {
+                for i in batch_start..batch_end {
                     let prediction = self.predict_internal(&x_data[i]);
                     let error = prediction - y_data[i];
 
@@ -790,7 +791,7 @@ mod tests {
         let mut analyzer = TimeSeriesAnalyzer::new(10);
 
         // Add increasing values
-        for _i in 0..10 {
+        for i in 0..10 {
             analyzer.add_point(TimeSeriesPoint {
                 timestamp: SystemTime::now(),
                 value: i as f64 * 2.0,

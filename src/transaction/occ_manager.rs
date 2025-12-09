@@ -20,6 +20,7 @@
 // }
 // ```
 
+use std::fmt;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -208,7 +209,7 @@ impl Default for OptimisticConcurrencyControl {
 
 impl std::fmt::Debug for OptimisticConcurrencyControl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let _stats = self.stats();
+        let stats = self.stats();
         f.debug_struct("OptimisticConcurrencyControl")
             .field("validations", &stats.validations)
             .field("passed", &stats.validations_passed)
@@ -252,7 +253,7 @@ mod tests {
         let occ = OptimisticConcurrencyControl::new();
 
         occ.read(1, "key1".to_string()).unwrap();
-        let _result = occ.write(1, "key1".to_string());
+        let result = occ.write(1, "key1".to_string());
         assert!(result.is_ok());
 
         assert_eq!(occ.get_version("key1"), 1);
@@ -268,7 +269,7 @@ mod tests {
         occ.cleanup(1);
 
         // Stats should still show reads
-        let _stats = occ.stats();
+        let stats = occ.stats();
         assert_eq!(stats.reads, 2);
     }
 
@@ -279,7 +280,7 @@ mod tests {
         occ.read(1, "key1".to_string()).unwrap();
         occ.validate(1);
 
-        let _stats = occ.stats();
+        let stats = occ.stats();
         assert_eq!(stats.reads, 1);
         assert_eq!(stats.validations, 1);
         assert_eq!(stats.validations_passed, 1);

@@ -82,7 +82,6 @@ unsafe fn simd_dot_product_avx2(a: &[f64], b: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_dot_product_sse2(a: &[f64], b: &[f64]) -> f64 {
-    use std::arch::x86_64::*;
 
     let len = a.len();
     let mut sum = _mm_setzero_pd();
@@ -139,7 +138,7 @@ pub fn simd_vector_add(a: &[f64], b: &[f64], result: &mut [f64]) {
 
     #[cfg(not(all(target_arch = "x86_64", any(target_feature = "avx2", target_feature = "sse2"))))]
     {
-        for _i in 0..a.len() {
+        for i in 0..a.len() {
             result[i] = a[i] + b[i];
         }
     }
@@ -148,7 +147,6 @@ pub fn simd_vector_add(a: &[f64], b: &[f64], result: &mut [f64]) {
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 #[inline]
 unsafe fn simd_vector_add_avx2(a: &[f64], b: &[f64], result: &mut [f64]) {
-    use std::arch::x86_64::*;
 
     let len = a.len();
     let mut i = 0;
@@ -170,7 +168,6 @@ unsafe fn simd_vector_add_avx2(a: &[f64], b: &[f64], result: &mut [f64]) {
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_vector_add_sse2(a: &[f64], b: &[f64], result: &mut [f64]) {
-    use std::arch::x86_64::*;
 
     let len = a.len();
     let mut i = 0;
@@ -216,7 +213,7 @@ pub fn simd_scalar_multiply(scalar: f64, vector: &[f64], result: &mut [f64]) {
 
     #[cfg(not(all(target_arch = "x86_64", any(target_feature = "avx2", target_feature = "sse2"))))]
     {
-        for _i in 0..vector.len() {
+        for i in 0..vector.len() {
             result[i] = scalar * vector[i];
         }
     }
@@ -225,7 +222,6 @@ pub fn simd_scalar_multiply(scalar: f64, vector: &[f64], result: &mut [f64]) {
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 #[inline]
 unsafe fn simd_scalar_multiply_avx2(scalar: f64, vector: &[f64], result: &mut [f64]) {
-    use std::arch::x86_64::*;
 
     let len = vector.len();
     let vscalar = _mm256_set1_pd(scalar);
@@ -247,7 +243,6 @@ unsafe fn simd_scalar_multiply_avx2(scalar: f64, vector: &[f64], result: &mut [f
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_scalar_multiply_sse2(scalar: f64, vector: &[f64], result: &mut [f64]) {
-    use std::arch::x86_64::*;
 
     let len = vector.len();
     let vscalar = _mm_set1_pd(scalar);
@@ -330,7 +325,6 @@ pub fn simd_euclidean_distance(a: &[f64], b: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 #[inline]
 unsafe fn simd_euclidean_distance_avx2(a: &[f64], b: &[f64]) -> f64 {
-    use std::arch::x86_64::*;
 
     let len = a.len();
     let mut sum_sq = _mm256_setzero_pd();
@@ -361,7 +355,6 @@ unsafe fn simd_euclidean_distance_avx2(a: &[f64], b: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_euclidean_distance_sse2(a: &[f64], b: &[f64]) -> f64 {
-    use std::arch::x86_64::*;
 
     let len = a.len();
     let mut sum_sq = _mm_setzero_pd();
@@ -419,7 +412,6 @@ pub fn simd_sum(vector: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 #[inline]
 unsafe fn simd_sum_avx2(vector: &[f64]) -> f64 {
-    use std::arch::x86_64::*;
 
     let len = vector.len();
     let mut sum = _mm256_setzero_pd();
@@ -446,7 +438,6 @@ unsafe fn simd_sum_avx2(vector: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_sum_sse2(vector: &[f64]) -> f64 {
-    use std::arch::x86_64::*;
 
     let len = vector.len();
     let mut sum = _mm_setzero_pd();
@@ -479,7 +470,7 @@ mod tests {
         let a = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let b = vec![2.0, 3.0, 4.0, 5.0, 6.0];
 
-        let _result = simd_dot_product(&a, &b);
+        let result = simd_dot_product(&a, &b);
         let expected = 70.0; // 1*2 + 2*3 + 3*4 + 4*5 + 5*6
 
         assert!((result - expected).abs() < 1e-10);
@@ -511,7 +502,7 @@ mod tests {
         let a = vec![1.0, 2.0, 3.0];
         let b = vec![4.0, 6.0, 8.0];
 
-        let _result = simd_euclidean_distance(&a, &b);
+        let result = simd_euclidean_distance(&a, &b);
         let expected = (3.0_f64.powi(2) + 4.0_f64.powi(2) + 5.0_f64.powi(2)).sqrt();
 
         assert!((result - expected).abs() < 1e-10);
@@ -522,7 +513,7 @@ mod tests {
         let matrix = vec![vec![1.0, 2.0], vec![3.0, 4.0], vec![5.0, 6.0]];
         let vector = vec![2.0, 3.0];
 
-        let _result = simd_matrix_vector_multiply(&matrix, &vector);
+        let result = simd_matrix_vector_multiply(&matrix, &vector);
 
         assert_eq!(result, vec![8.0, 18.0, 28.0]);
     }
@@ -530,7 +521,7 @@ mod tests {
     #[test]
     fn test_simd_sum() {
         let vector = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        let _result = simd_sum(&vector);
+        let result = simd_sum(&vector);
 
         assert!((result - 15.0).abs() < 1e-10);
     }

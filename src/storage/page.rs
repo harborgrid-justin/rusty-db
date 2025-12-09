@@ -625,7 +625,7 @@ mod tests {
         let mut page = SlottedPage::new(1, 4096);
 
         // Insert multiple records
-        for _i in 0..10 {
+        for i in 0..10 {
             page.insert_record(format!("Record {}", i).as_bytes());
         }
 
@@ -647,7 +647,7 @@ mod tests {
         let splitter = PageSplitter::new(0.8);
 
         // Fill page
-        for _i in 0..50 {
+        for i in 0..50 {
             page.insert_record(format!("Record number {}", i).as_bytes());
         }
 

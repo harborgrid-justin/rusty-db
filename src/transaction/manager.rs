@@ -12,6 +12,7 @@
 // manager.commit(txn_id)?;
 // ```
 
+use std::fmt;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -359,7 +360,7 @@ mod tests {
     fn test_transaction_not_found() {
         let tm = TransactionManager::new();
 
-        let _result = tm.commit(999);
+        let result = tm.commit(999);
         assert!(matches!(result, Err(TransactionError::TransactionNotFound(999))));
     }
 
@@ -371,7 +372,7 @@ mod tests {
         tm.commit(txn_id).unwrap();
 
         // Transaction is removed after commit, so it's not found
-        let _result = tm.commit(txn_id);
+        let result = tm.commit(txn_id);
         assert!(matches!(result, Err(TransactionError::TransactionNotFound(_))));
     }
 
@@ -414,8 +415,8 @@ mod tests {
 
         assert!(tm.min_active_txn().is_none());
 
-        let _txn1 = tm.begin().unwrap();
-        let _txn2 = tm.begin().unwrap();
+        let txn1 = tm.begin().unwrap();
+        let txn2 = tm.begin().unwrap();
         let _txn3 = tm.begin().unwrap();
 
         assert_eq!(tm.min_active_txn(), Some(1));

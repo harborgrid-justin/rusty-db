@@ -3,6 +3,7 @@
 // High-performance, lock-free ring buffer for I/O request submission
 // and completion queues.
 
+use std::sync::Mutex;
 use crate::error::Result;
 use crate::io::{IoOpType, IoRequest, IoCompletion, IoHandle};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -164,7 +165,7 @@ impl CompletionEntry {
 
     /// Create from IoCompletion
     pub fn from_completion(completion: &IoCompletion) -> Self {
-        let _result = if completion.is_success() {
+        let result = if completion.is_success() {
             completion.bytes_transferred as i32
         } else {
             -(completion.error_code as i32)
@@ -615,7 +616,7 @@ mod tests {
         .unwrap();
 
         // Fill the buffer
-        for _i in 0..4 {
+        for i in 0..4 {
             assert!(rb.push(i));
         }
         assert!(rb.is_full());
@@ -710,7 +711,7 @@ mod tests {
         .unwrap();
 
         // Fill buffer
-        for _i in 0..4 {
+        for i in 0..4 {
             rb.push(i);
         }
         assert!(!rb.push(100)); // Should fail
@@ -721,7 +722,7 @@ mod tests {
         }
         assert!(rb.pop().is_none()); // Should fail
 
-        let _stats = rb.stats();
+        let stats = rb.stats();
         assert_eq!(stats.pushes, 4);
         assert_eq!(stats.push_failures, 1);
         assert_eq!(stats.pops, 4);

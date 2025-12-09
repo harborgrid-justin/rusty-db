@@ -39,7 +39,7 @@
 // let plan = optimizer.optimize(&query)?;
 //
 // // Execute with adaptive monitoring
-// let _result = optimizer.execute_adaptive(&plan)?;
+// let result = optimizer.execute_adaptive(&plan)?;
 // # Ok(())
 // # }
 // ```
@@ -668,7 +668,7 @@ mod tests {
         let config = OptimizerConfig::default();
         let optimizer = QueryOptimizer::new(config);
 
-        let _stats = optimizer.get_statistics();
+        let stats = optimizer.get_statistics();
         assert_eq!(stats.queries_optimized, 0);
     }
 

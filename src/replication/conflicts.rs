@@ -1028,7 +1028,7 @@ mod tests {
             ReplicationOperation::Update,
         );
 
-        let _result = resolver.resolve(&conflict).await.unwrap();
+        let result = resolver.resolve(&conflict).await.unwrap();
         assert_eq!(result, b"new data".to_vec());
     }
 
@@ -1047,7 +1047,7 @@ mod tests {
             ReplicationOperation::Update,
         );
 
-        let _result = resolver.resolve(&conflict).await.unwrap();
+        let result = resolver.resolve(&conflict).await.unwrap();
         assert_eq!(result, b"old data".to_vec());
     }
 

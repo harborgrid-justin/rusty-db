@@ -2,6 +2,7 @@
 // Comprehensive backup, point-in-time recovery, and disaster recovery capabilities
 
 // Module declarations
+use crate::error::DbError;
 pub mod manager;
 pub mod pitr;
 pub mod snapshots;
@@ -329,7 +330,7 @@ mod tests {
         assert!(!backup_id.is_empty());
 
         // Verify backup was registered
-        let _stats = system.get_system_statistics();
+        let stats = system.get_system_statistics();
         assert!(stats.backup_stats.total_backups > 0);
     }
 
@@ -348,7 +349,7 @@ mod tests {
         let snapshot_id = system.create_test_snapshot("testdb").unwrap();
         assert!(!snapshot_id.is_empty());
 
-        let _stats = system.get_system_statistics();
+        let stats = system.get_system_statistics();
         assert!(stats.snapshot_stats.total_snapshots > 0);
     }
 }

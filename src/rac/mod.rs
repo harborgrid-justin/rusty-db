@@ -95,6 +95,7 @@
 // # }
 // ```
 
+use tokio::time::sleep;
 pub mod cache_fusion;
 pub mod grd;
 pub mod interconnect;
@@ -580,7 +581,7 @@ impl RacCluster {
     /// Check cluster health
     pub fn check_health(&self) -> ClusterHealth {
         let view = self.get_cluster_view();
-        let _state = self.get_state();
+        let state = self.get_state();
 
         ClusterHealth {
             state,

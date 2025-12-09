@@ -17,6 +17,8 @@
 // access to that resource. The directory automatically rebalances resources to optimize
 // for access patterns and load distribution.
 
+use std::collections::BTreeMap;
+use std::sync::Mutex;
 use std::collections::VecDeque;
 use std::collections::HashSet;
 use std::time::Instant;
@@ -432,7 +434,7 @@ impl GlobalResourceDirectory {
 
         // Initialize hash buckets with round-robin master assignment
         let member_count = cluster_members.len().max(1);
-        for _i in 0..HASH_BUCKETS {
+        for i in 0..HASH_BUCKETS {
             let master_idx = i % member_count;
             let master = cluster_members.get(master_idx)
                 .cloned()
@@ -689,7 +691,7 @@ impl GlobalResourceDirectory {
             entry.access_stats.remote_accesses = 0;
 
             // Send remaster message
-            let _message = GrdMessage::RemasterRequest {
+            let message = GrdMessage::RemasterRequest {
                 resource_id: request.resource_id.clone(),
                 new_master: request.new_master.clone(),
                 reason: format!("{:?}", request.reason),
@@ -875,8 +877,6 @@ impl GlobalResourceDirectory {
     /// Maps resources to virtual nodes, which map to physical nodes
     /// Provides better load distribution and minimal remapping on node changes
     fn hash_resource_consistent(&self, resource_id: &ResourceId) -> usize {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
 
         // Hash the resource to a ring position
         let mut hasher = DefaultHasher::new();
@@ -1033,7 +1033,7 @@ mod tests {
             class: ResourceClass::Data,
         };
 
-        let _result = grd.register_resource(resource.clone(), node_id.clone());
+        let result = grd.register_resource(resource.clone(), node_id.clone());
         assert!(result.is_ok());
 
         let master = grd.get_master(&resource);

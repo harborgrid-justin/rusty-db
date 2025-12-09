@@ -62,22 +62,22 @@ impl Executor {
             }
             SqlStatement::Insert { table, .. } => {
                 // Validate table exists
-                let _schema = self.catalog.get_table(&table)?;
+                let schema = self.catalog.get_table(&table)?;
                 Ok(QueryResult::with_affected(1))
             }
             SqlStatement::Update { table, .. } => {
                 // Validate table exists
-                let _schema = self.catalog.get_table(&table)?;
+                let schema = self.catalog.get_table(&table)?;
                 Ok(QueryResult::with_affected(0))
             }
             SqlStatement::Delete { table, .. } => {
                 // Validate table exists
-                let _schema = self.catalog.get_table(&table)?;
+                let schema = self.catalog.get_table(&table)?;
                 Ok(QueryResult::with_affected(0))
             }
             SqlStatement::CreateIndex { name, table, columns, unique } => {
                 // Validate table exists
-                let _schema = self.catalog.get_table(&table)?;
+                let schema = self.catalog.get_table(&table)?;
                 // Index creation would go here
                 Ok(QueryResult::with_affected(0))
             }
@@ -151,7 +151,7 @@ impl Executor {
         Ok(QueryResult::new(result_columns, Vec::new()))
     }
     
-    fn execute_filter(&self, input: QueryResult, _predicate: &str) -> Result<QueryResult, DbError> {
+    fn execute_filter(&self, input: QueryResult, predicate: &str) -> Result<QueryResult, DbError> {
         // TODO: Implement actual filtering based on predicate
         // For now, just pass through the input
         Ok(input)
@@ -184,7 +184,7 @@ impl Executor {
         // TODO: Implement proper condition parsing and evaluation
         // For now, we perform a cross join (all combinations)
         // In production, this should parse the condition and evaluate it
-        let _matches_condition = |_left_row: &[String], _right_row: &[String]| -> bool {
+        let matches_condition = |_left_row: &[String], _right_row: &[String]| -> bool {
             // Placeholder: always return true for cross join behavior
             // Real implementation would parse condition like "t1.id = t2.id"
             // and evaluate it against the row values
@@ -309,7 +309,7 @@ impl Executor {
                 result_columns.push(agg.column.clone());
                 
                 // Calculate aggregate value
-                let _value = match agg.function {
+                let value = match agg.function {
                     AggregateFunction::Count => input.rows.len().to_string(),
                     AggregateFunction::Sum => "0".to_string(),  // TODO: Implement
                     AggregateFunction::Avg => "0".to_string(),  // TODO: Implement
@@ -374,7 +374,7 @@ mod tests {
         let parser = SqlParser::new();
         let stmts = parser.parse("CREATE TABLE users (id INT, name VARCHAR(255))")?;
         
-        let _result = executor.execute(stmts[0].clone())?;
+        let result = executor.execute(stmts[0].clone())?;
         assert_eq!(result.rows_affected, 0);
         
         Ok(())

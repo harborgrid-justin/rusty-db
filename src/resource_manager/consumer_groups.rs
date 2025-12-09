@@ -4,7 +4,7 @@
 // user-to-group mapping, dynamic group switching, and priority management.
 
 use std::time::SystemTime;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 use serde::{Deserialize, Serialize};

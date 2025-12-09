@@ -442,7 +442,7 @@ impl WorkloadAnalyzer {
 
     /// Analyzes the workload and generates recommendations.
     pub fn analyze(&self, tracker: &QueryStatisticsTracker) -> WorkloadAnalysisResult {
-        let _stats = tracker.get_all_stats();
+        let stats = tracker.get_all_stats();
 
         let mut table_access: HashMap<String, u64> = HashMap::new();
         let mut slow_queries: Vec<QueryStats> = Vec::new();
@@ -626,7 +626,7 @@ mod tests {
         let exec1 = QueryExecution::new("SELECT 1", 10);
         let mut stats = QueryStats::new(&exec1);
 
-        for _i in 1..100 {
+        for i in 1..100 {
             let exec = QueryExecution::new("SELECT 1", i);
             stats.update(&exec);
         }
@@ -646,7 +646,7 @@ mod tests {
         }
 
         let analyzer = WorkloadAnalyzer::new();
-        let _result = analyzer.analyze(&tracker);
+        let result = analyzer.analyze(&tracker);
 
         assert!(!result.slow_queries.is_empty());
     }

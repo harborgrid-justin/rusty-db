@@ -82,7 +82,7 @@ impl ParallelQueryExecutor {
 
         for row in data {
             if let Some(key) = row.get(key_index) {
-                let _hash = self.hash_string(key);
+                let hash = self.hash_string(key);
                 let partition = (hash as usize) % num_partitions;
                 partitions[partition].push(row);
             }
@@ -278,7 +278,7 @@ mod tests {
             ],
         ];
 
-        let _stats = PartitionStats::compute(&partitions);
+        let stats = PartitionStats::compute(&partitions);
 
         assert_eq!(stats.num_partitions, 3);
         assert_eq!(stats.min_size, 1);
@@ -293,7 +293,7 @@ mod tests {
             vec![vec!["3".to_string()], vec!["4".to_string()]],
         ];
 
-        let _stats = PartitionStats::compute(&balanced);
+        let stats = PartitionStats::compute(&balanced);
         assert!(stats.is_balanced(1.5));
     }
 }

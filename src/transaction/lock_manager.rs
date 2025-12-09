@@ -16,6 +16,7 @@
 // lm.release_all_locks(txn_id)?;
 // ```
 
+use std::fmt;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::collections::{HashMap};
@@ -568,7 +569,7 @@ mod tests {
         assert!(lm.acquire_lock(1, "r1".to_string(), LockMode::Exclusive).is_ok());
 
         // Another transaction cannot acquire
-        let _result = lm.acquire_lock(2, "r1".to_string(), LockMode::Shared);
+        let result = lm.acquire_lock(2, "r1".to_string(), LockMode::Shared);
         assert!(result.is_err());
     }
 

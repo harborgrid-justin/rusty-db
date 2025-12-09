@@ -6,6 +6,7 @@
 /// - Result aggregation and merging
 /// - Cross-shard join strategies
 
+use std::fmt;
 use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo};
 use std::collections::HashMap;
@@ -48,7 +49,7 @@ impl DistributedQueryProcessor for DistributedQueryExecutor {
         let mut results = HashMap::new();
         
         for shard_plan in plan.shards {
-            let _result = self.execute_shard(&shard_plan)?;
+            let result = self.execute_shard(&shard_plan)?;
             results.insert(shard_plan.node_id.clone(), result);
         }
         
@@ -205,7 +206,7 @@ mod tests {
         let coordinator = Arc::new(MockCoordinator { nodes });
         let executor = DistributedQueryExecutor::new(coordinator);
         
-        let _result = executor.execute_query("SELECT * FROM test");
+        let result = executor.execute_query("SELECT * FROM test");
         assert!(result.is_ok());
         
         let query_result = result.unwrap();

@@ -199,7 +199,7 @@ pub unsafe fn string_eq_avx2(s1: &[u8], s2: &[u8]) -> bool {
     let chunks = len / 32;
 
     // Compare 32 bytes at a time
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 32;
         let v1 = _mm256_loadu_si256(s1.as_ptr().add(offset) as *const __m256i);
         let v2 = _mm256_loadu_si256(s2.as_ptr().add(offset) as *const __m256i);
@@ -214,7 +214,7 @@ pub unsafe fn string_eq_avx2(s1: &[u8], s2: &[u8]) -> bool {
 
     // Compare remainder
     let remainder_start = chunks * 32;
-    for _i in remainder_start..len {
+    for i in remainder_start..len {
         if s1[i] != s2[i] {
             return false;
         }
@@ -268,7 +268,7 @@ pub unsafe fn string_contains_avx2(haystack: &[u8], needle: &[u8]) -> bool {
 
     // Search for first byte using SIMD
     let chunks = search_len / 32;
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 32;
         let vec = _mm256_loadu_si256(haystack.as_ptr().add(offset) as *const __m256i);
         let cmp = _mm256_cmpeq_epi8(vec, first_byte);
@@ -291,7 +291,7 @@ pub unsafe fn string_contains_avx2(haystack: &[u8], needle: &[u8]) -> bool {
 
     // Check remainder with scalar search
     let remainder_start = chunks * 32;
-    for _i in remainder_start..search_len {
+    for i in remainder_start..search_len {
         if haystack[i] == needle[0] {
             if i + needle.len() <= haystack.len() {
                 if &haystack[i..i + needle.len()] == needle {
@@ -320,7 +320,7 @@ pub unsafe fn hash_fnv1a_avx2(data: &[u8]) -> u32 {
 
     // Process 32 bytes at a time
     let chunks = data.len() / 32;
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 32;
         let bytes = &data[offset..offset + 32];
 
@@ -356,7 +356,7 @@ pub unsafe fn hash_xxh3_avx2(data: &[u8]) -> u64 {
 
     // Process 32 bytes at a time
     let chunks = data.len() / 32;
-    for _i in 0..chunks {
+    for i in 0..chunks {
         let offset = i * 32;
 
         // Load 4 x u64 values
@@ -708,7 +708,7 @@ impl StringHashBuilder {
         let mut table = std::collections::HashMap::new();
 
         for (i, text) in strings.iter().enumerate() {
-            let _hash = self.hash_string(text);
+            let hash = self.hash_string(text);
             table.entry(hash).or_insert_with(Vec::new).push(i);
         }
 
@@ -732,7 +732,7 @@ impl CaseInsensitiveComparator {
     /// Create new case-insensitive comparator
     pub fn new() -> Self {
         let mut table = [0u8; 256];
-        for _i in 0..256 {
+        for i in 0..256 {
             table[i] = (i as u8).to_ascii_lowercase();
         }
 

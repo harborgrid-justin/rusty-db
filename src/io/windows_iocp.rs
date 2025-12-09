@@ -263,9 +263,8 @@ impl WindowsIocp {
 
     /// Associate a file handle with the IOCP
     pub fn associate_file(&self, file_handle: IoHandle, completion_key: usize) -> Result<()> {
-        use windows_sys::Win32::System::IO::CreateIoCompletionPort;
 
-        let _result = unsafe {
+        let result = unsafe {
             CreateIoCompletionPort(
                 file_handle.0 as isize,
                 self.iocp_handle.into(),
@@ -317,7 +316,7 @@ impl WindowsIocp {
         let mut bytes_read = 0u32;
         let buffer_ptr = SendPtr::new(request.buffer as *mut std::ffi::c_void);
 
-        let _result = unsafe {
+        let result = unsafe {
             ReadFile(
                 request.file_handle.0 as isize,
                 buffer_ptr.as_ptr() as *mut u8,
@@ -344,7 +343,7 @@ impl WindowsIocp {
         let mut bytes_written = 0u32;
         let buffer_ptr = SendPtr::new(request.buffer as *mut std::ffi::c_void);
 
-        let _result = unsafe {
+        let result = unsafe {
             WriteFile(
                 request.file_handle.0 as isize,
                 buffer_ptr.as_ptr() as *const u8,
@@ -368,7 +367,7 @@ impl WindowsIocp {
     fn submit_sync(&self, request: &IoRequest) -> Result<()> {
         use windows_sys::Win32::Storage::FileSystem::FlushFileBuffers;
 
-        let _result = unsafe { FlushFileBuffers(request.file_handle.0 as isize) };
+        let result = unsafe { FlushFileBuffers(request.file_handle.0 as isize) };
 
         if result == 0 {
             let error = unsafe { windows_sys::Win32::Foundation::GetLastError() };
@@ -407,7 +406,7 @@ impl WindowsIocp {
             let mut completion_key = 0usize;
             let mut overlapped_ptr: *mut windows_sys::Win32::System::IO::OVERLAPPED = ptr::null_mut();
 
-            let _result = unsafe {
+            let result = unsafe {
                 GetQueuedCompletionStatus(
                     self.iocp_handle.into(),
                     &mut bytes_transferred,
@@ -427,7 +426,7 @@ impl WindowsIocp {
 
             // Get the overlapped structure
             let overlapped = unsafe {
-                let _offset = overlapped_ptr as usize - overlapped_ptr as usize;
+                let offset = overlapped_ptr as usize - overlapped_ptr as usize;
                 &*(overlapped_ptr as *const OverlappedIo)
             };
 
@@ -560,7 +559,7 @@ mod tests {
     #[test]
     fn test_iocp_creation() {
         let config = IocpConfig::default();
-        let _result = WindowsIocp::new(config);
+        let result = WindowsIocp::new(config);
         assert!(result.is_ok());
     }
 }

@@ -3,6 +3,7 @@
 // Logical replication using CDC for table-level replication with transformations,
 // conflict detection and resolution, bidirectional replication, and monitoring.
 
+use tokio::time::sleep;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -553,7 +554,7 @@ impl LogicalReplication {
     fn spawn_replication_worker(&self) {
         let cdc_engine = self.cdc_engine.clone();
         let rules = self.rules.clone();
-        let _stats = self.stats.clone();
+        let stats = self.stats.clone();
         let shutdown = self.shutdown.clone();
 
         tokio::spawn(async move {
@@ -583,7 +584,7 @@ impl LogicalReplication {
     }
 
     fn spawn_lag_monitor(&self) {
-        let _stats = self.stats.clone();
+        let stats = self.stats.clone();
         let config = self.config.clone();
         let shutdown = self.shutdown.clone();
 
@@ -608,7 +609,7 @@ impl LogicalReplication {
 
     fn spawn_conflict_resolver(&self) {
         let conflicts = self.conflicts.clone();
-        let _stats = self.stats.clone();
+        let stats = self.stats.clone();
         let shutdown = self.shutdown.clone();
         let resolution = self.config.conflict_resolution;
 

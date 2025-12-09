@@ -1,6 +1,8 @@
 // Resource Manager
 // CPU resource groups, memory allocation limits, I/O bandwidth quotas, query timeout enforcement
 
+use tokio::time::sleep;
+use std::fmt;
 use std::time::Instant;
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
@@ -645,7 +647,7 @@ mod tests {
 
         assert!(manager.assign_session_to_group(1, "high_priority"));
 
-        let _result = manager.start_query(1001, 1, Some(Duration::from_secs(30)));
+        let result = manager.start_query(1001, 1, Some(Duration::from_secs(30)));
         assert!(result.is_ok());
 
         let usage = manager.get_query_usage(1001);
@@ -669,7 +671,7 @@ mod tests {
     fn test_resource_planner() {
         let planner = ResourcePlanner::new(100);
 
-        let _stats = ResourceGroupStatistics {
+        let stats = ResourceGroupStatistics {
             name: "test".to_string(),
             priority: 100,
             active_sessions: 5,

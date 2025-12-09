@@ -6,6 +6,8 @@
 /// - Node addition/removal
 /// - Partition reorganization
 
+use tokio::time::sleep;
+use std::fmt;
 use std::collections::VecDeque;
 use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo};
@@ -61,7 +63,7 @@ impl DataMigrationManager {
         };
 
         if let Some(task) = task {
-            let _result = self.execute_migration(&task)?;
+            let result = self.execute_migration(&task)?;
             
             // Move from active to completed
             {
@@ -329,7 +331,7 @@ mod tests {
             created_at: SystemTime::now(),
         };
 
-        let _result = migration_mgr.execute_migration(&task);
+        let result = migration_mgr.execute_migration(&task);
         assert!(result.is_ok());
         
         let migration_result = result.unwrap();

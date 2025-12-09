@@ -392,7 +392,7 @@ mod tests {
     fn test_cache_put_get() {
         let cache = QueryCache::new(100);
         let query = "SELECT * FROM users";
-        let _result = vec![vec!["1".to_string(), "Alice".to_string()]];
+        let result = vec![vec!["1".to_string(), "Alice".to_string()]];
 
         cache.put(query.to_string(), result.clone(), 60);
 
@@ -470,7 +470,7 @@ mod tests {
         cache.get("query1"); // Hit
         cache.get("query2"); // Miss
 
-        let _stats = cache.get_stats();
+        let stats = cache.get_stats();
         assert_eq!(stats.size, 1);
         assert_eq!(stats.hit_count, 1);
         assert_eq!(stats.miss_count, 1);
@@ -485,7 +485,7 @@ mod tests {
 
         cache.clear();
 
-        let _stats = cache.get_stats();
+        let stats = cache.get_stats();
         assert_eq!(stats.size, 0);
         assert_eq!(stats.memory_bytes, 0);
     }

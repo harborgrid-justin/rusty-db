@@ -59,7 +59,7 @@
 // println!("Alice knows {} people", neighbors.len());
 //
 // // Get graph statistics
-// let _stats = graph.get_stats();
+// let stats = graph.get_stats();
 // println!("Graph has {} vertices and {} edges", stats.num_vertices, stats.num_edges);
 // # Ok(())
 // # }
@@ -93,7 +93,7 @@
 // # fn example(graph: &PropertyGraph) -> rusty_db::Result<()> {
 // // Compute PageRank
 // let config = PageRankConfig::default();
-// let _result = PageRank::compute(graph, &config)?;
+// let result = PageRank::compute(graph, &config)?;
 //
 // // Get top-k vertices by PageRank
 // let top_vertices = PageRank::top_k(&result, 10);
@@ -324,7 +324,7 @@ mod tests {
         assert_eq!(graph.vertex_count(), 2);
 
         // Add edge
-        let _edge = graph.add_edge(
+        let edge = graph.add_edge(
             v1,
             v2,
             "KNOWS".to_string(),
@@ -351,7 +351,7 @@ mod tests {
         graph.add_edge(v1, v2, "KNOWS".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
         graph.add_edge(v2, v3, "KNOWS".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
 
-        let _stats = graph.get_stats();
+        let stats = graph.get_stats();
         assert_eq!(stats.num_vertices, 3);
         assert_eq!(stats.num_edges, 2);
         assert!(stats.avg_degree > 0.0);
@@ -370,7 +370,7 @@ mod tests {
         graph.add_edge(v3, v1, "link".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
 
         let config = PageRankConfig::default();
-        let _result = PageRank::compute(&graph, &config).unwrap();
+        let result = PageRank::compute(&graph, &config).unwrap();
 
         assert!(result.converged);
         assert_eq!(result.scores.len(), 3);
@@ -394,7 +394,7 @@ mod tests {
         graph.add_edge(v1, v2, "link".to_string(), Properties::new(), EdgeDirection::Undirected).unwrap();
         graph.add_edge(v3, v4, "link".to_string(), Properties::new(), EdgeDirection::Undirected).unwrap();
 
-        let _result = ConnectedComponentsAlgorithm::compute(&graph).unwrap();
+        let result = ConnectedComponentsAlgorithm::compute(&graph).unwrap();
 
         assert_eq!(result.num_components, 2);
         assert!(ConnectedComponentsAlgorithm::same_component(&result, v1, v2));

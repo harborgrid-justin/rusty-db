@@ -76,7 +76,7 @@ impl StorageGrowthPredictor {
         let mut forecasts = Vec::new();
         let next_index = data.len();
 
-        for _i in 0..days_ahead {
+        for i in 0..days_ahead {
             let x = (next_index + i) as f64;
             let predicted = slope * x + intercept;
 
@@ -584,7 +584,7 @@ mod tests {
         let predictor = StorageGrowthPredictor::new(100);
 
         // Record increasing storage
-        for _i in 0..10 {
+        for i in 0..10 {
             predictor.record_storage_size(100.0 + i as f64 * 5.0);
         }
 
@@ -602,7 +602,7 @@ mod tests {
 
         let query_hash = 12345u64;
 
-        for _i in 0..10 {
+        for i in 0..10 {
             predictor.record_execution(query_hash, 100.0 + i as f64);
         }
 
@@ -618,7 +618,7 @@ mod tests {
         let mut forecaster = ResourceExhaustionForecaster::new(100);
 
         // Record increasing CPU usage
-        for _i in 0..10 {
+        for i in 0..10 {
             forecaster.record_cpu_usage(70.0 + i as f64 * 2.0);
         }
 

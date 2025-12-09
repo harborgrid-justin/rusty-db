@@ -130,7 +130,7 @@ impl MultiTenantDatabase {
 
         // Resume tenant if suspended
         let tenant = self.tenant_manager.get_tenant(&tenant_id).await?;
-        let _state = *tenant.state.read().await;
+        let state = *tenant.state.read().await;
 
         if state == TenantState::Suspended {
             tenant.resume().await?;
@@ -219,7 +219,7 @@ mod tests {
     async fn test_multi_tenant_database() {
         let mtdb = MultiTenantDatabase::new("CDB_PROD".to_string(), 100);
 
-        let _result = mtdb.provision_tenant(
+        let result = mtdb.provision_tenant(
             "tenant1".to_string(),
             "admin".to_string(),
             "password".to_string(),
@@ -240,7 +240,7 @@ mod tests {
             ServiceTier::bronze(),
         ).await.unwrap();
 
-        let _result = mtdb.activate_tenant(tenant_id).await;
+        let result = mtdb.activate_tenant(tenant_id).await;
         assert!(result.is_ok());
     }
 
@@ -248,7 +248,7 @@ mod tests {
     async fn test_system_stats() {
         let mtdb = MultiTenantDatabase::new("CDB_PROD".to_string(), 100);
 
-        let _stats = mtdb.get_system_stats().await;
+        let stats = mtdb.get_system_stats().await;
         assert_eq!(stats.cdb_stats.total_pdbs, 0);
     }
 }

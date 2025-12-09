@@ -6,7 +6,7 @@
 // # Example
 //
 // ```rust,ignore
-// let _stats = TransactionStatistics::new();
+// let stats = TransactionStatistics::new();
 // stats.record_begin();
 // // ... transaction operations ...
 // stats.record_commit(latency_ms);
@@ -288,7 +288,7 @@ mod tests {
 
     #[test]
     fn test_transaction_statistics() {
-        let _stats = TransactionStatistics::new();
+        let stats = TransactionStatistics::new();
 
         stats.record_begin();
         stats.record_begin();
@@ -304,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_lock_statistics() {
-        let _stats = LockStatistics::new();
+        let stats = LockStatistics::new();
 
         stats.record_request();
         stats.record_request();
@@ -319,7 +319,7 @@ mod tests {
 
     #[test]
     fn test_reset_statistics() {
-        let _stats = TransactionStatistics::new();
+        let stats = TransactionStatistics::new();
 
         stats.record_begin();
         stats.record_commit(10);

@@ -3,6 +3,7 @@
 // High-performance file manager with batched operations, Direct I/O,
 // and buffer pooling.
 
+use std::sync::Mutex;
 use crate::error::Result;
 use crate::io::{
     AsyncIoEngine, IoRequest, IoOpType, IoHandle, AlignedBuffer, BufferPool,
@@ -374,7 +375,6 @@ impl DirectIoFile {
             FlushMode::Data => {
                 #[cfg(unix)]
                 {
-                    use std::os::unix::io::AsRawFd;
                     unsafe {
                         if libc::fdatasync(self.file.as_raw_fd()) != 0 {
                             return Err(DbError::Internal("fdatasync failed".to_string()));
@@ -403,7 +403,6 @@ impl DirectIoFile {
     pub fn preallocate(&self, size: u64) -> Result<()> {
         #[cfg(unix)]
         {
-            use std::os::unix::io::AsRawFd;
             unsafe {
                 if libc::posix_fallocate(self.file.as_raw_fd(), 0, size as i64) != 0 {
                     return Err(DbError::Internal("fallocate failed".to_string()));

@@ -254,7 +254,7 @@ impl ForAll {
         let mut rows_affected = 0;
         let mut exceptions = Vec::new();
 
-        for _i in self.lower_bound..=self.upper_bound {
+        for i in self.lower_bound..=self.upper_bound {
             // TODO: Execute DML statement with index variable = i
             // For now, simulate execution
             rows_affected += 1;
@@ -356,7 +356,7 @@ impl CursorManager {
     pub fn fetch_cursor(&self, cursor_name: &str) -> Result<Option<CursorRow>> {
         let mut cursor_states = self.cursor_states.write();
 
-        let _state = cursor_states.get_mut(cursor_name).ok_or_else(||
+        let state = cursor_states.get_mut(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found or not open", cursor_name))
         )?;
 
@@ -373,7 +373,7 @@ impl CursorManager {
     pub fn close_cursor(&self, cursor_name: &str) -> Result<()> {
         let mut cursor_states = self.cursor_states.write();
 
-        let _state = cursor_states.get_mut(cursor_name).ok_or_else(||
+        let state = cursor_states.get_mut(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
         )?;
 
@@ -391,7 +391,7 @@ impl CursorManager {
     pub fn get_attributes(&self, cursor_name: &str) -> Result<CursorAttributes> {
         let cursor_states = self.cursor_states.read();
 
-        let _state = cursor_states.get(cursor_name).ok_or_else(||
+        let state = cursor_states.get(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
         )?;
 
@@ -495,7 +495,7 @@ impl CursorManager {
     ) -> Result<Vec<CursorRow>> {
         let mut cursor_states = self.cursor_states.write();
 
-        let _state = cursor_states.get_mut(cursor_name).ok_or_else(||
+        let state = cursor_states.get_mut(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
         )?;
 
@@ -704,7 +704,7 @@ mod tests {
 
         // Create test rows
         let mut rows = Vec::new();
-        for _i in 0..10 {
+        for i in 0..10 {
             let mut row = CursorRow::new();
             row.set("id".to_string(), RuntimeValue::Integer(i));
             rows.push(row);
@@ -723,7 +723,7 @@ mod tests {
     #[test]
     fn test_cursor_operations() {
         let mut rows = Vec::new();
-        for _i in 0..5 {
+        for i in 0..5 {
             let mut row = CursorRow::new();
             row.set("id".to_string(), RuntimeValue::Integer(i));
             row.set("name".to_string(), RuntimeValue::String(format!("name{}", i)));

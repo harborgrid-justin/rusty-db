@@ -61,7 +61,7 @@
 // // Track an allocation
 // let ptr = std::ptr::NonNull::<u8>::dangling(); // Placeholder
 // let allocation_id = AllocationId::generate();
-// let _source = AllocationSource::Query {
+// let source = AllocationSource::Query {
 //     query_id: "SELECT_001".to_string(),
 //     operation: "hash_table".to_string(),
 // };
@@ -94,6 +94,8 @@
 // # }
 // ```
 
+use std::collections::BTreeMap;
+use std::collections::VecDeque;
 use std::time::{SystemTime};
 use crate::memory::types::*;
 use backtrace::Backtrace;
@@ -1000,7 +1002,7 @@ impl MemoryDebugger {
 
     /// Starts background monitoring task
     async fn start_monitoring_task(&self) {
-        let _stats = Arc::clone(&self.stats);
+        let stats = Arc::clone(&self.stats);
         let profiling_data = Arc::clone(&self.profiling_data);
         let component_stats = Arc::clone(&self.component_stats);
         let is_active = Arc::new(AtomicBool::new(true));
@@ -1041,7 +1043,7 @@ impl MemoryDebugger {
                     let mut top_allocators = Vec::new();
 
                     for (source_str, comp_stats) in component_stats_guard.iter() {
-                        let _source = AllocationSource::Unknown; // Simplified for example
+                        let source = AllocationSource::Unknown; // Simplified for example
 
                         let source_profile = SourceProfile {
                             source,
@@ -1112,7 +1114,7 @@ impl MemoryDebugger {
 impl MemoryDebugger {
     /// Creates a debugging report
     pub async fn create_debug_report(&self) -> Result<String, DebugError> {
-        let _stats = self.get_statistics().await;
+        let stats = self.get_statistics().await;
         let leak_report = self.generate_leak_report().await?;
         let profile = self.get_profile().await;
 
@@ -1186,9 +1188,9 @@ mod tests {
 
         let allocation_id = AllocationId::generate();
         let ptr = NonNull::dangling();
-        let _source = AllocationSource::Unknown;
+        let source = AllocationSource::Unknown;
 
-        let _result = debugger.track_allocation(
+        let result = debugger.track_allocation(
             allocation_id.clone(),
             ptr,
             1024,
@@ -1198,7 +1200,7 @@ mod tests {
 
         assert!(result.is_ok());
 
-        let _stats = debugger.get_statistics().await;
+        let stats = debugger.get_statistics().await;
         assert_eq!(stats.total_tracked_allocations, 1);
         assert_eq!(stats.current_allocated_bytes, 1024);
     }
@@ -1214,7 +1216,7 @@ mod tests {
 
         let allocation_id = AllocationId::generate();
         let ptr = NonNull::dangling();
-        let _source = AllocationSource::Unknown;
+        let source = AllocationSource::Unknown;
 
         // Track allocation
         debugger.track_allocation(
@@ -1246,7 +1248,7 @@ mod tests {
 
         let allocation_id = AllocationId::generate();
         let ptr = NonNull::dangling();
-        let _source = AllocationSource::Query {
+        let source = AllocationSource::Query {
             query_id: "test".to_string(),
             operation: "test_op".to_string(),
         };
@@ -1280,7 +1282,7 @@ mod tests {
 
         let allocation_id = AllocationId::generate();
         let ptr = NonNull::dangling();
-        let _source = AllocationSource::Unknown;
+        let source = AllocationSource::Unknown;
 
         debugger.track_allocation(
             allocation_id.clone(),
@@ -1300,7 +1302,7 @@ mod tests {
     fn test_allocation_metadata() {
         let allocation_id = AllocationId::generate();
         let ptr = NonNull::dangling();
-        let _source = AllocationSource::Unknown;
+        let source = AllocationSource::Unknown;
 
         let mut metadata = AllocationMetadata::new(
             allocation_id,
@@ -1346,7 +1348,7 @@ mod tests {
 
         let allocation_id = AllocationId::generate();
         let ptr = NonNull::dangling();
-        let _source = AllocationSource::Unknown;
+        let source = AllocationSource::Unknown;
 
         debugger.track_allocation(
             allocation_id.clone(),

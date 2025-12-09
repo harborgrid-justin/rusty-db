@@ -334,7 +334,7 @@ impl AuditManager {
 
         // Add tamper protection if enabled
         if self.config.read().tamper_protection {
-            let _hash = self.calculate_integrity_hash(&record);
+            let hash = self.calculate_integrity_hash(&record);
             record.integrity_hash = Some(hash);
         }
 
@@ -569,7 +569,7 @@ impl AuditManager {
         top_users.sort_by(|a, b| b.1.cmp(&a.1));
         top_users.truncate(10);
 
-        let _stats = AuditStatistics {
+        let stats = AuditStatistics {
             total_records,
             records_today,
             failed_actions_today,
@@ -696,7 +696,7 @@ impl AuditManager {
 
         let mut hasher = Sha256::new();
         hasher.update(data.as_bytes());
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         format!("{:x}", result)
     }
 
@@ -799,7 +799,7 @@ mod tests {
         let mut actions = HashSet::new();
         actions.insert(AuditAction::Select);
 
-        let _policy = AuditPolicy {
+        let policy = AuditPolicy {
             id: "pol1".to_string(),
             name: "Select Policy".to_string(),
             enabled: true,

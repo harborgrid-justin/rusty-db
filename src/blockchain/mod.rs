@@ -48,7 +48,7 @@
 //
 // // Set up retention policy
 // let retention_mgr = RetentionManager::new();
-// let _policy = RetentionPolicy::new(
+// let policy = RetentionPolicy::new(
 //     "policy1".to_string(),
 //     "7 Year Retention".to_string(),
 //     RetentionPeriod::Years(7),

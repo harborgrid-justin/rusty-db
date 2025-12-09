@@ -17,6 +17,7 @@
 // wal.flush()?;
 // ```
 
+use std::fmt;
 use std::collections::VecDeque;
 use std::fs::{File, OpenOptions};
 use std::io::{Read};
@@ -427,7 +428,6 @@ impl std::fmt::Debug for WALManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::SystemTime;
 
     fn temp_log_path() -> PathBuf {
         let id: u64 = rand::random();

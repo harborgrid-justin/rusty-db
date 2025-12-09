@@ -346,7 +346,7 @@ impl HierarchicalLockManager {
         self.acquire_intent_locks(txn_id, &resource, mode)?;
 
         // Now acquire the actual lock
-        let _result = self.acquire_lock_internal(txn_id, resource.clone(), mode);
+        let result = self.acquire_lock_internal(txn_id, resource.clone(), mode);
 
         // Update statistics
         if result.is_ok() {

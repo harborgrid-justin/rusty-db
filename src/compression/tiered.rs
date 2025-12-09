@@ -458,7 +458,6 @@ pub struct MigrationStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_temperature_classification() {
@@ -528,7 +527,7 @@ mod tests {
     #[test]
     fn test_tier_stats() {
         let manager = TieredCompressor::default();
-        let _stats = manager.tier_stats();
+        let stats = manager.tier_stats();
 
         assert_eq!(stats.hot_blocks, 0);
         assert_eq!(stats.migrations_performed, 0);

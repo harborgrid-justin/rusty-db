@@ -362,7 +362,7 @@ impl LabelManager {
         };
 
         // Get policy for table
-        let _policy = self.get_table_policy(table_id)?;
+        let policy = self.get_table_policy(table_id)?;
 
         match policy.read_policy {
             LabelAccessPolicy::ReadDown => {
@@ -398,7 +398,7 @@ impl LabelManager {
             None => return Ok(true),
         };
 
-        let _policy = self.get_table_policy(table_id)?;
+        let policy = self.get_table_policy(table_id)?;
 
         match policy.write_policy {
             LabelAccessPolicy::ReadDown => {
@@ -425,7 +425,7 @@ impl LabelManager {
         row_ids: Vec<String>,
     ) -> Result<Vec<String>> {
         let clearance = self.get_user_clearance(user_id)?;
-        let _policy = self.get_table_policy(table_id)?;
+        let policy = self.get_table_policy(table_id)?;
 
         let row_labels = self.row_labels.read();
         let table_labels = row_labels.get(table_id);
@@ -681,7 +681,7 @@ mod tests {
         manager.set_user_clearance(clearance).unwrap();
 
         // Create policy
-        let _policy = LabelPolicy {
+        let policy = LabelPolicy {
             id: "pol1".to_string(),
             name: "Test Policy".to_string(),
             table_id: "table1".to_string(),

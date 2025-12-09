@@ -322,7 +322,7 @@ impl BTreeIndex {
     /// Look up documents by exact key with statistics
     pub fn lookup(&self, key: &IndexKey) -> HashSet<DocumentId> {
         self.stats.lookups.fetch_add(1, AtomicOrdering::Relaxed);
-        let _result = self.entries.get(key).cloned().unwrap_or_default();
+        let result = self.entries.get(key).cloned().unwrap_or_default();
         if !result.is_empty() {
             self.stats.cache_hits.fetch_add(1, AtomicOrdering::Relaxed);
         }

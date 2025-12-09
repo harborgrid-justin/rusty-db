@@ -3,6 +3,7 @@
 // MongoDB-style aggregation pipeline with stages like $match, $project, $group,
 // $sort, $limit, $skip, $unwind, $lookup, and $facet.
 
+use std::collections::HashSet;
 use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -164,7 +165,7 @@ impl PipelineStage {
                         } else {
                             // Expression-based projection
                             let expr = Expression::from_value(value.clone());
-                            let _result = expr.evaluate(&Value::Object(obj.clone()))?;
+                            let result = expr.evaluate(&Value::Object(obj.clone()))?;
                             projected.insert(key.clone(), result);
                         }
                     }
@@ -194,7 +195,7 @@ impl PipelineStage {
             result.insert("_id".to_string(), key);
 
             for (field, accumulator) in &group_spec.accumulators {
-                let _value = accumulator.compute(&group_docs)?;
+                let value = accumulator.compute(&group_docs)?;
                 result.insert(field.clone(), value);
             }
 
@@ -290,7 +291,7 @@ impl PipelineStage {
         for doc in documents {
             if let Value::Object(mut obj) = doc {
                 for (field, expr) in fields {
-                    let _value = expr.evaluate(&Value::Object(obj.clone()))?;
+                    let value = expr.evaluate(&Value::Object(obj.clone()))?;
                     obj.insert(field.clone(), value);
                 }
                 results.push(Value::Object(obj));
@@ -432,7 +433,7 @@ impl ComplexExpression {
             ComplexExpression::Divide { dividend, divisor } => {
                 let num = dividend.evaluate(doc)?.as_f64().unwrap_or(0.0);
                 let den = divisor.evaluate(doc)?.as_f64().unwrap_or(1.0);
-                let _result = if den != 0.0 { num / den } else { 0.0 };
+                let result = if den != 0.0 { num / den } else { 0.0 };
                 Ok(Value::Number(serde_json::Number::from_f64(result).unwrap()))
             }
             ComplexExpression::Concat { values } => {

@@ -85,7 +85,7 @@ impl<K, V> Node<K, V> {
         let mut next: [Atomic<Node<K, V>>; MAX_HEIGHT] = unsafe {
             std::mem::MaybeUninit::uninit().assume_init()
         };
-        for _i in 0..MAX_HEIGHT {
+        for i in 0..MAX_HEIGHT {
             next[i] = Atomic::null();
         }
 
@@ -248,7 +248,7 @@ where
                 }
 
                 // Try to CAS predecessor's next pointer
-                let _result = pred_node.next[level].compare_exchange(
+                let result = pred_node.next[level].compare_exchange(
                     succ,
                     new_node_ptr,
                     Ordering::Release,
@@ -603,7 +603,7 @@ mod tests {
         let list = Arc::new(LockFreeSkipList::new());
         let mut handles = vec![];
 
-        for _i in 0..10 {
+        for i in 0..10 {
             let list = Arc::clone(&list);
             handles.push(thread::spawn(move || {
                 for j in 0..100 {
@@ -624,7 +624,7 @@ mod tests {
         let list = Arc::new(LockFreeSkipList::new());
 
         // Pre-populate
-        for _i in 0..1000 {
+        for i in 0..1000 {
             list.insert(i, i);
         }
 
@@ -634,7 +634,7 @@ mod tests {
         for _ in 0..5 {
             let list = Arc::clone(&list);
             handles.push(thread::spawn(move || {
-                for _i in 0..1000 {
+                for i in 0..1000 {
                     list.find(&i);
                 }
             }));
@@ -644,7 +644,7 @@ mod tests {
         for _ in 0..5 {
             let list = Arc::clone(&list);
             handles.push(thread::spawn(move || {
-                for _i in 0..100 {
+                for i in 0..100 {
                     list.insert(1000 + i, 1000 + i);
                     list.delete(&i);
                 }

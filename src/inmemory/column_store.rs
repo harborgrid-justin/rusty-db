@@ -594,7 +594,7 @@ impl ColumnStore {
                 }
             } else {
                 // Scalar path for other types
-                for _i in 0..segment.row_count {
+                for i in 0..segment.row_count {
                     if !segment.is_null(i) {
                         if let Ok(val) = segment.read_int64(i) {
                             if predicate(&ColumnValue::Int64(val)) {

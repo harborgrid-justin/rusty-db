@@ -527,7 +527,6 @@ impl<'g, T> Eq for Shared<'g, T> {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
     use std::thread;
 
     #[test]
@@ -561,7 +560,7 @@ mod tests {
         let current = atomic.load(Ordering::SeqCst, &guard);
         let new_value = Owned::new(100).into_shared();
 
-        let _result = atomic.compare_exchange(
+        let result = atomic.compare_exchange(
             current,
             new_value,
             Ordering::SeqCst,
@@ -579,7 +578,7 @@ mod tests {
         let atomic = Arc::new(Atomic::new(0));
         let mut handles = vec![];
 
-        for _i in 0..10 {
+        for i in 0..10 {
             let atomic = atomic.clone();
             handles.push(thread::spawn(move || {
                 for _ in 0..100 {

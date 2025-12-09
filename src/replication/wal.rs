@@ -63,7 +63,7 @@
 // let lsn = wal_manager.append(entry).await?;
 //
 // // Stream to replica
-// let _replica_id = ReplicaId::new("replica-01")?;
+// let replica_id = ReplicaId::new("replica-01")?;
 // wal_manager.stream_to_replica(&replica_id, lsn).await?;
 // # Ok(())
 // # }
@@ -1002,7 +1002,7 @@ mod tests {
         let mut config = WalConfig::default();
         config.max_wal_size = 0; // Invalid
 
-        let _result = WalManager::new(config, temp_dir.path()).await;
+        let result = WalManager::new(config, temp_dir.path()).await;
         assert!(result.is_err());
         match result.unwrap_err() {
             WalError::InvalidConfiguration { .. } => (),
@@ -1024,7 +1024,7 @@ mod tests {
             b"test data".to_vec(),
         ).unwrap();
 
-        let _result = wal_manager.append(entry).await;
+        let result = wal_manager.append(entry).await;
         assert!(result.is_ok());
 
         let lsn = result.unwrap();
@@ -1037,7 +1037,7 @@ mod tests {
         let config = WalConfig::default();
         let wal_manager = WalManager::new(config, temp_dir.path()).await.unwrap();
 
-        let _stats = wal_manager.get_stats().await.unwrap();
+        let stats = wal_manager.get_stats().await.unwrap();
         assert_eq!(stats.total_entries, 0);
         assert_eq!(stats.size_bytes, 0);
     }
@@ -1048,16 +1048,16 @@ mod tests {
         let config = WalConfig::default();
         let wal_manager = WalManager::new(config, temp_dir.path()).await.unwrap();
 
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
         let from_lsn = LogSequenceNumber::new(100);
 
-        let _result = wal_manager.stream_to_replica(&replica_id, from_lsn).await;
+        let result = wal_manager.stream_to_replica(&replica_id, from_lsn).await;
         assert!(result.is_ok());
 
-        let _state = wal_manager.get_streaming_state(&replica_id);
+        let state = wal_manager.get_streaming_state(&replica_id);
         assert!(state.is_some());
 
-        let _state = state.unwrap();
+        let state = state.unwrap();
         assert!(state.active);
         assert_eq!(state.last_sent_lsn, from_lsn);
     }

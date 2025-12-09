@@ -564,7 +564,7 @@ impl BackupCatalog {
         let databases = self.databases.read();
         let sets = self.backup_sets.read();
         let pieces = self.backup_pieces.read();
-        let _logs = self.archived_logs.read();
+        let logs = self.archived_logs.read();
 
         let total_backups = sets.len();
         let obsolete_backups = sets.values().filter(|s| s.is_obsolete()).count();

@@ -1,6 +1,7 @@
 // Tenant management with isolation guarantees and resource governance
 // Provides tenant-level isolation, resource controls, and SLA enforcement
 
+use std::fmt;
 use std::collections::BTreeMap;
 use std::collections::VecDeque;
 use std::collections::{HashMap};
@@ -907,7 +908,7 @@ mod tests {
         );
 
         assert_eq!(tenant.tenant_id, "tenant1");
-        let _state = tenant.state.read().await;
+        let state = tenant.state.read().await;
         assert_eq!(*state, TenantState::Active);
     }
 
@@ -920,17 +921,17 @@ mod tests {
             ServiceTier::bronze(),
         );
 
-        let _result = tenant.suspend("Testing".to_string()).await;
+        let result = tenant.suspend("Testing".to_string()).await;
         assert!(result.is_ok());
 
-        let _state = tenant.state.read().await;
+        let state = tenant.state.read().await;
         assert_eq!(*state, TenantState::Suspended);
         drop(state);
 
-        let _result = tenant.resume().await;
+        let result = tenant.resume().await;
         assert!(result.is_ok());
 
-        let _state = tenant.state.read().await;
+        let state = tenant.state.read().await;
         assert_eq!(*state, TenantState::Active);
     }
 
@@ -943,10 +944,10 @@ mod tests {
             ServiceTier::bronze(),
         );
 
-        let _result = tenant.check_resource_quota(ResourceType::Memory, 1024).await;
+        let result = tenant.check_resource_quota(ResourceType::Memory, 1024).await;
         assert!(result.is_ok());
 
-        let _result = tenant.check_resource_quota(ResourceType::Memory, 10000).await;
+        let result = tenant.check_resource_quota(ResourceType::Memory, 10000).await;
         assert!(result.is_err());
     }
 
@@ -961,7 +962,7 @@ mod tests {
             ServiceTier::silver(),
         ));
 
-        let _result = manager.register_tenant(tenant1).await;
+        let result = manager.register_tenant(tenant1).await;
         assert!(result.is_ok());
 
         let tenant = manager.get_tenant("tenant1").await;

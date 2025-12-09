@@ -565,7 +565,6 @@ impl Default for CrossTableDedup {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_chunk_boundaries() {
@@ -626,7 +625,7 @@ mod tests {
         let data = b"test".repeat(100);
         engine.deduplicate(&data).unwrap();
 
-        let _stats = engine.stats();
+        let stats = engine.stats();
         assert!(stats.total_bytes_processed > 0);
         assert!(stats.dedup_ratio() > 0.0);
     }

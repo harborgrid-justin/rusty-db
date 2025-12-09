@@ -36,6 +36,7 @@
 // }
 // ```
 
+use std::fmt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};

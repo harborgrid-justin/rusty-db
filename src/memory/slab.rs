@@ -54,7 +54,7 @@
 // allocator.deallocate(ptr, 64).await?;
 //
 // // Get statistics
-// let _stats = allocator.get_statistics().await;
+// let stats = allocator.get_statistics().await;
 // println!("Allocations: {}", stats.total_allocations);
 // # Ok(())
 // # }
@@ -927,7 +927,7 @@ impl SlabAllocator {
 
     /// Gets comprehensive allocator statistics
     pub async fn get_statistics(&self) -> SlabAllocatorStats {
-        let _stats = self.stats.read().await;
+        let stats = self.stats.read().await;
         let mut result = stats.clone();
 
         result.uptime = SystemTime::now()
@@ -956,7 +956,7 @@ impl SlabAllocator {
     /// Gets statistics for a specific size class
     pub async fn get_size_class_statistics(&self, size_class_id: usize) -> Option<SizeClassStats> {
         if let Some(size_class) = self.size_classes.get(size_class_id) {
-            let _stats = size_class.stats.read().await;
+            let stats = size_class.stats.read().await;
             Some(stats.clone())
         } else {
             None
@@ -973,7 +973,7 @@ impl SlabAllocator {
         }
 
         // Check for fragmentation issues
-        let _stats = self.get_statistics().await;
+        let stats = self.get_statistics().await;
         if stats.fragmentation_ratio > 0.5 {
             return Err(MemoryError::OutOfMemory {
                 reason: format!("High fragmentation ratio: {:.2}", stats.fragmentation_ratio),

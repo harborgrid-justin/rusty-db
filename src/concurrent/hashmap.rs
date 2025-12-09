@@ -173,12 +173,12 @@ where
     where
         K: Clone,
     {
-        let _hash = self.hash(&key);
+        let hash = self.hash(&key);
         let idx = self.bucket_index(hash);
         let bucket = &self.buckets[idx];
 
         bucket.lock();
-        let _result = self.insert_in_bucket(bucket, key, value, hash);
+        let result = self.insert_in_bucket(bucket, key, value, hash);
         bucket.unlock();
 
         self.insert_count.fetch_add(1, Ordering::Relaxed);
@@ -231,12 +231,12 @@ where
     where
         V: Clone,
     {
-        let _hash = self.hash(key);
+        let hash = self.hash(key);
         let idx = self.bucket_index(hash);
         let bucket = &self.buckets[idx];
 
         bucket.lock();
-        let _result = self.get_from_bucket(bucket, key, hash);
+        let result = self.get_from_bucket(bucket, key, hash);
         bucket.unlock();
 
         self.get_count.fetch_add(1, Ordering::Relaxed);
@@ -267,12 +267,12 @@ where
     ///
     /// Returns the value if the key existed.
     pub fn remove(&self, key: &K) -> Option<V> {
-        let _hash = self.hash(key);
+        let hash = self.hash(key);
         let idx = self.bucket_index(hash);
         let bucket = &self.buckets[idx];
 
         bucket.lock();
-        let _result = self.remove_from_bucket(bucket, key, hash);
+        let result = self.remove_from_bucket(bucket, key, hash);
         bucket.unlock();
 
         self.remove_count.fetch_add(1, Ordering::Relaxed);
@@ -309,7 +309,7 @@ where
 
                 // Extract value
                 // Safety: We're removing this entry, protected by bucket lock
-                let _value = unsafe {
+                let value = unsafe {
                     let entry_ptr = current.as_ptr();
                     let entry_mut = &mut *entry_ptr;
                     std::ptr::read(&entry_mut.value)
@@ -330,7 +330,7 @@ where
 
     /// Check if the map contains a key
     pub fn contains_key(&self, key: &K) -> bool {
-        let _hash = self.hash(key);
+        let hash = self.hash(key);
         let idx = self.bucket_index(hash);
         let bucket = &self.buckets[idx];
 
@@ -435,7 +435,7 @@ where
         K: Clone,
         V: Clone,
     {
-        let _hash = self.hash(&key);
+        let hash = self.hash(&key);
         let idx = self.bucket_index(hash);
         let bucket = &self.buckets[idx];
 
@@ -652,7 +652,7 @@ mod tests {
         let map = Arc::new(ConcurrentHashMap::new());
         let mut handles = vec![];
 
-        for _i in 0..10 {
+        for i in 0..10 {
             let m = map.clone();
             handles.push(thread::spawn(move || {
                 for j in 0..100 {
@@ -673,7 +673,7 @@ mod tests {
         let map = Arc::new(ConcurrentHashMap::new());
 
         // Pre-populate
-        for _i in 0..1000 {
+        for i in 0..1000 {
             map.insert(i, i);
         }
 
@@ -683,7 +683,7 @@ mod tests {
         for _ in 0..5 {
             let m = map.clone();
             handles.push(thread::spawn(move || {
-                for _i in 0..1000 {
+                for i in 0..1000 {
                     m.get(&i);
                 }
             }));
@@ -693,7 +693,7 @@ mod tests {
         for _ in 0..5 {
             let m = map.clone();
             handles.push(thread::spawn(move || {
-                for _i in 0..1000 {
+                for i in 0..1000 {
                     m.insert(i, i * 2);
                 }
             }));

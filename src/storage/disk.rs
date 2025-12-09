@@ -317,7 +317,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
     // Process 8 bytes at a time for maximum throughput
     while remaining >= 8 {
         let _value = (ptr as *const u64).read_unaligned();
-        crc = _mm_crc32_u64(crc as u64, _value) as u32;
+        crc = _mm_crc32_u64(crc as u64, value) as u32;
         ptr = ptr.add(8);
         remaining -= 8;
     }
@@ -325,7 +325,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
     // Process remaining bytes
     while remaining > 0 {
         let _value = *ptr;
-        crc = _mm_crc32_u8(crc, _value);
+        crc = _mm_crc32_u8(crc, value);
         ptr = ptr.add(1);
         remaining -= 1;
     }
@@ -1083,11 +1083,11 @@ mod tests {
         }
 
         // Read sequentially to trigger read-ahead
-        for _i in 0..5 {
+        for i in 0..5 {
             dm.read_page(i)?;
         }
 
-        let _stats = dm.get_stats();
+        let stats = dm.get_stats();
         assert!(stats.read_ahead_hits > 0);
 
         Ok(())
@@ -1104,7 +1104,7 @@ mod tests {
 
         dm.write_page(&page)?;
 
-        let _stats = dm.get_stats();
+        let stats = dm.get_stats();
         assert!(stats.write_behind_hits > 0);
 
         Ok(())

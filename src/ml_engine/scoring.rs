@@ -180,7 +180,7 @@ impl ScoringEngine {
         for _model_data in models {
             // In production, deserialize and score each model
             // For now, using placeholder
-            for _i in 0..n_samples {
+            for i in 0..n_samples {
                 aggregated_predictions[i] += 0.5; // Placeholder
                 prediction_counts[i] += 1;
             }
@@ -343,7 +343,7 @@ impl ScoringEngine {
         let baseline_pred = self.predict(model, vec![sample.to_vec()])?;
         let baseline_value = baseline_pred[0].value;
 
-        for _i in 0..sample.len() {
+        for i in 0..sample.len() {
             let mut perturbed = sample.to_vec();
             perturbed[i] = 0.0; // Perturbation: zero out feature
 

@@ -569,7 +569,6 @@ pub struct CompressionRecommendation {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_oltp_block_compression() {
@@ -611,7 +610,7 @@ mod tests {
         let compressor = OLTPCompressor::new(CompressionLevel::Default);
 
         let mut rows = Vec::new();
-        for _i in 0..1000 {
+        for i in 0..1000 {
             rows.push(vec![i as u8; 10]);
         }
 
@@ -623,7 +622,7 @@ mod tests {
     fn test_compression_advisor() {
         let advisor = OLTPCompressionAdvisor::new();
 
-        let _stats = TableStats {
+        let stats = TableStats {
             table_id: 1,
             total_rows: 100000,
             total_size: 10_000_000,

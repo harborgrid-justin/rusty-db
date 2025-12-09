@@ -241,7 +241,7 @@ impl FunctionManager {
                 }
 
                 // Execute the function body
-                let _result = self.runtime.execute(&func.body)?;
+                let result = self.runtime.execute(&func.body)?;
 
                 // Return the result
                 result.return_value.ok_or_else(||
@@ -288,7 +288,7 @@ impl FunctionManager {
 
         match function {
             UserFunction::Aggregate(func) => {
-                let _result = self.runtime.execute(&func.initialize_body)?;
+                let result = self.runtime.execute(&func.initialize_body)?;
                 Ok(AggregateState::new())
             }
             _ => Err(DbError::InvalidInput(
@@ -309,7 +309,7 @@ impl FunctionManager {
         match function {
             UserFunction::Aggregate(func) => {
                 // TODO: Pass state and value to accumulate_body
-                let _result = self.runtime.execute(&func.accumulate_body)?;
+                let result = self.runtime.execute(&func.accumulate_body)?;
                 Ok(())
             }
             _ => Err(DbError::InvalidInput(
@@ -329,7 +329,7 @@ impl FunctionManager {
         match function {
             UserFunction::Aggregate(func) => {
                 // TODO: Pass state to finalize_body
-                let _result = self.runtime.execute(&func.finalize_body)?;
+                let result = self.runtime.execute(&func.finalize_body)?;
 
                 result.return_value.ok_or_else(||
                     DbError::Runtime(format!("Aggregate function '{}' did not return a value", name))

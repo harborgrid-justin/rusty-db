@@ -43,7 +43,7 @@
 // let monitor = ReplicationHealthMonitor::new(config)?;
 //
 // // Add replica for monitoring
-// let _replica_id = ReplicaId::new("replica-01")?;
+// let replica_id = ReplicaId::new("replica-01")?;
 // monitor.add_replica(replica_id.clone()).await?;
 //
 // // Start monitoring
@@ -1237,7 +1237,7 @@ mod tests {
         let config = HealthMonitorConfig::default();
         let monitor = ReplicationHealthMonitor::new(config).unwrap();
 
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
 
         // Add replica
         assert!(monitor.add_replica(replica_id.clone()).await.is_ok());
@@ -1263,7 +1263,7 @@ mod tests {
         let config = HealthMonitorConfig::default();
         let monitor = ReplicationHealthMonitor::new(config).unwrap();
 
-        let _replica_id = ReplicaId::new("test-replica").unwrap();
+        let replica_id = ReplicaId::new("test-replica").unwrap();
         monitor.add_replica(replica_id).await.unwrap();
 
         let start_time = SystemTime::now() - Duration::from_hours(24);

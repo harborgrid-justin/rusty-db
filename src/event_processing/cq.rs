@@ -3,6 +3,7 @@
 // Implements continuous query processing with incremental view maintenance,
 // checkpointing, state management, and query optimization for streaming data.
 
+use std::fmt;
 use std::collections::VecDeque;
 use std::time::SystemTime;
 use super::{Event, EventValue, StreamState, Watermark};
@@ -293,7 +294,7 @@ impl CQExecutor {
 
     /// Process an event
     pub fn process_event(&self, event: Event) -> Result<Vec<Event>> {
-        let _state = self.state.read().unwrap();
+        let state = self.state.read().unwrap();
         if *state != CQState::Running {
             return Ok(vec![]);
         }
@@ -604,7 +605,7 @@ impl QueryOptimizer {
         }
     }
 
-    fn optimize(&self, _query: &str) -> Result<OptimizedQuery> {
+    fn optimize(&self, query: &str) -> Result<OptimizedQuery> {
         // Simplified optimization
         // In a real implementation, this would parse and optimize the query plan
         Ok(OptimizedQuery {

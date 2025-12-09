@@ -3,6 +3,7 @@
 // JSON document representation with BSON support, versioning, and metadata management.
 // This module provides the core document abstraction for the document store engine.
 
+use std::fmt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{SystemTime};
@@ -422,7 +423,6 @@ impl DocumentChunk {
         total_chunks: u32,
         data: Vec<u8>,
     ) -> Self {
-        use sha2::{Sha256, Digest};
         let mut hasher = Sha256::new();
         hasher.update(&data);
         let checksum = format!("{:x}", hasher.finalize());
@@ -440,7 +440,6 @@ impl DocumentChunk {
 
     /// Verify chunk integrity
     pub fn verify(&self) -> bool {
-        use sha2::{Sha256, Digest};
         let mut hasher = Sha256::new();
         hasher.update(&self.data);
         let calculated_checksum = format!("{:x}", hasher.finalize());
@@ -478,7 +477,7 @@ impl LargeDocumentHandler {
         let total_chunks = (total_size + self.chunk_size - 1) / self.chunk_size;
         let mut chunks = Vec::new();
 
-        for _i in 0..total_chunks {
+        for i in 0..total_chunks {
             let start = i * self.chunk_size;
             let end = std::cmp::min(start + self.chunk_size, total_size);
             let chunk_data = bytes[start..end].to_vec();

@@ -276,6 +276,7 @@
 // - **Compensation**: Undo operations on failure
 
 // Module declarations
+use std::sync::Mutex;
 pub mod actor;
 pub mod registry;
 pub mod dependency_graph;
@@ -614,7 +615,7 @@ mod tests {
             .await
             .unwrap();
 
-        let _stats = orchestrator.statistics().await;
+        let stats = orchestrator.statistics().await;
         assert_eq!(stats.state, OrchestratorState::Initialized);
     }
 }

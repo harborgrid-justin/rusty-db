@@ -650,7 +650,7 @@ mod tests {
         let config = ResourceManagerConfig::default();
         let manager = ResourceManager::new(config).unwrap();
 
-        let _stats = manager.get_resource_stats();
+        let stats = manager.get_resource_stats();
         assert!(stats.memory_usage_pct >= 0.0);
     }
 }

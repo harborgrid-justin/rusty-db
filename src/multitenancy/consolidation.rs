@@ -1,6 +1,7 @@
 // Tenant consolidation and workload management
 // Implements intelligent tenant placement, rebalancing, and consolidation planning
 
+use std::fmt;
 use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -724,7 +725,7 @@ mod tests {
 
         planner.update_workload_profile(profile).await;
 
-        let _result = planner.place_tenant("tenant1".to_string(), None).await;
+        let result = planner.place_tenant("tenant1".to_string(), None).await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "host1");
     }
@@ -741,7 +742,7 @@ mod tests {
             is_hard: true,
         };
 
-        let _result = planner.add_affinity_rule(rule).await;
+        let result = planner.add_affinity_rule(rule).await;
         assert!(result.is_ok());
     }
 
@@ -750,7 +751,7 @@ mod tests {
         let planner = ConsolidationPlanner::new();
 
         // Add hosts
-        for _i in 0..3 {
+        for i in 0..3 {
             let host = ConsolidationHost::new(
                 format!("host{}", i),
                 16,

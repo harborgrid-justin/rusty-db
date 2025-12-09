@@ -509,7 +509,7 @@ impl PredictiveAnalyzer {
         };
 
         let mut predictions = Vec::new();
-        for _i in 0..steps_ahead {
+        for i in 0..steps_ahead {
             predictions.push(Prediction {
                 metric: "unknown".to_string(),
                 predicted_value,
@@ -536,7 +536,7 @@ impl PredictiveAnalyzer {
         }
 
         let mut predictions = Vec::new();
-        for _i in 0..steps_ahead {
+        for i in 0..steps_ahead {
             predictions.push(Prediction {
                 metric: "unknown".to_string(),
                 predicted_value: smoothed,
@@ -572,7 +572,7 @@ impl PredictiveAnalyzer {
         let intercept = (sum_y - slope * sum_x) / n;
 
         let mut predictions = Vec::new();
-        for _i in 0..steps_ahead {
+        for i in 0..steps_ahead {
             let x = (self.history.len() + i) as f64;
             let predicted_value = slope * x + intercept;
 
@@ -844,7 +844,7 @@ mod tests {
         let mut detector = AnomalyDetector::new(AnomalyDetectionAlgorithm::ZScore { threshold: 2.0 });
 
         // Add normal values
-        for _i in 0..100 {
+        for i in 0..100 {
             detector.add_value(50.0 + (i as f64 % 10.0));
         }
 
@@ -858,7 +858,7 @@ mod tests {
         let mut analyzer = TrendAnalyzer::new(10);
 
         // Add increasing values
-        for _i in 0..20 {
+        for i in 0..20 {
             analyzer.add_value(i as f64::now());
         }
 
@@ -871,7 +871,7 @@ mod tests {
     fn test_predictive_analyzer() {
         let mut analyzer = PredictiveAnalyzer::new(PredictiveModel::SimpleMovingAverage { window: 5 });
 
-        for _i in 0..10 {
+        for i in 0..10 {
             analyzer.add_value((i * 10) as f64);
         }
 
@@ -922,7 +922,7 @@ mod tests {
         engine.register_alert_rule(rule);
 
         let event = Event::new("test").with_payload("value", 50.0);
-        let _result = engine.process_event(&event).unwrap();
+        let result = engine.process_event(&event).unwrap();
 
         // Should have dashboard data
         let dashboard = engine.get_dashboard();

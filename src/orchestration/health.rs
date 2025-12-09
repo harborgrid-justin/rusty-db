@@ -21,6 +21,7 @@
 // UNKNOWN → Health status cannot be determined
 // ```
 
+use std::fmt;
 use std::time::Instant;
 use std::collections::HashMap;
 
@@ -381,7 +382,7 @@ impl HealthAggregator {
         let mut results = Vec::new();
 
         for checker in checkers {
-            let _result = checker.check_now().await;
+            let result = checker.check_now().await;
             results.push(result);
         }
 
@@ -623,7 +624,7 @@ mod tests {
 
     #[test]
     fn test_health_check_result() {
-        let _result = HealthCheckResult::healthy("test".into());
+        let result = HealthCheckResult::healthy("test".into());
         assert_eq!(result.status, HealthStatus::Healthy);
         assert_eq!(result.component, "test");
 
@@ -658,7 +659,7 @@ mod tests {
         }));
 
         let checker = HealthChecker::new(check::from_secs(1));
-        let _result = checker.check_now().await;
+        let result = checker.check_now().await;
 
         assert_eq!(result.status, HealthStatus::Healthy);
         assert!(checker.last_result().is_some());

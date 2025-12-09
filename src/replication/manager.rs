@@ -54,7 +54,7 @@
 //     .build()?;
 //
 // // Add a replica
-// let _replica_id = ReplicaId::new("replica-01")?;
+// let replica_id = ReplicaId::new("replica-01")?;
 // let replica_address = ReplicaAddress::new("127.0.0.1:5433")?;
 // manager.add_replica(replica_id, replica_address, ReplicaRole::ReadOnly).await?;
 //
@@ -69,6 +69,7 @@
 // # }
 // ```
 
+use tokio::time::sleep;
 use std::time::SystemTime;
 use crate::error::DbError;
 use crate::replication::types::*;
@@ -649,7 +650,7 @@ impl ReplicationManager {
 
         // Get active replicas
         let replicas = {
-            let _state = self.state.lock();
+            let state = self.state.lock();
             state.replicas.values()
                 .filter(|r| r.status == ReplicaStatus::Active)
                 .map(|r| r.id.clone())
@@ -717,7 +718,7 @@ impl ReplicationManager {
         loop {
             // Check if we have enough acknowledgments
             let (ack_count, is_timeout) = {
-                let _state = self.state.lock();
+                let state = self.state.lock();
                 if let Some(pending) = state.pending_operations.get(&sequence) {
                     let ack_count = pending.acknowledged_by.len();
                     let is_timeout = SystemTime::now() > pending.timeout;
@@ -791,7 +792,7 @@ impl ReplicationManager {
 
     /// Gets current replication statistics
     pub fn get_stats(&self) -> ReplicationStats {
-        let _state = self.state.lock();
+        let state = self.state.lock();
 
         let healthy_replicas = state.replicas.values()
             .filter(|r| r.status == ReplicaStatus::Active)
@@ -965,7 +966,6 @@ impl Default for ReplicationManagerBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use async_trait::async_trait;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     // Mock implementations for testing
@@ -1147,7 +1147,7 @@ mod tests {
         let mut config = ReplicationConfig::default();
         config.max_lag_bytes = 0; // Invalid
 
-        let _result = ReplicationManager::new(
+        let result = ReplicationManager::new(
             config,
             true,
             Arc::new(MockEventPublisher::new()),
@@ -1165,7 +1165,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_builder_missing_dependencies() {
-        let _result = ReplicationManagerBuilder::new()
+        let result = ReplicationManagerBuilder::new()
             .with_config(ReplicationConfig::default())
             .build();
 

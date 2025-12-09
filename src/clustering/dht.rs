@@ -13,6 +13,7 @@
 /// - Routing queries to the correct nodes
 /// - Rebalancing data across the cluster
 
+use std::collections::HashSet;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
@@ -300,7 +301,6 @@ impl DistributedHashTable {
 
     /// Hash node ID with virtual node index
     fn hash_vnode(&self, node_id: &str, vnode_index: u32) -> HashPosition {
-        use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         node_id.hash(&mut hasher);
         vnode_index.hash(&mut hasher);
@@ -337,7 +337,7 @@ impl DistributedHashTable {
         let node_id = metadata.id.clone();
 
         // Create virtual nodes
-        for _i in 0..self.config.virtual_nodes_per_node {
+        for i in 0..self.config.virtual_nodes_per_node {
             let position = self.hash_vnode(&node_id, i);
             let vnode = VirtualNode::new(position, node_id.clone(), i);
             ring.insert(position, vnode);
@@ -461,7 +461,7 @@ impl DistributedHashTable {
 
     /// Get node using consistent hashing
     fn get_node_consistent_hash(&self, key: &[u8]) -> Result<DhtNodeId, DbError> {
-        let _hash = self.hash_key(key);
+        let hash = self.hash_key(key);
         let ring = self.hash_ring.read().unwrap();
 
         if ring.is_empty() {
@@ -483,7 +483,7 @@ impl DistributedHashTable {
 
     /// Get node using range-based partitioning
     fn get_node_range_based(&self, key: &[u8]) -> Result<DhtNodeId, DbError> {
-        let _hash = self.hash_key(key);
+        let hash = self.hash_key(key);
         let partitions = self.partitions.read().unwrap();
 
         for partition in partitions.iter() {
@@ -497,7 +497,6 @@ impl DistributedHashTable {
 
     /// Get node using rendezvous hashing
     fn get_node_rendezvous(&self, key: &[u8]) -> Result<DhtNodeId, DbError> {
-        use std::collections::hash_map::DefaultHasher;
 
         let nodes = self.nodes.read().unwrap();
         if nodes.is_empty() {
@@ -530,7 +529,7 @@ impl DistributedHashTable {
 
         match self.config.strategy {
             HashStrategy::ConsistentHash => {
-                let _hash = self.hash_key(key);
+                let hash = self.hash_key(key);
                 let ring = self.hash_ring.read().unwrap();
                 let mut seen = HashSet::new();
                 seen.insert(primary);
@@ -560,7 +559,7 @@ impl DistributedHashTable {
                 }
             }
             HashStrategy::RangeBased => {
-                let _hash = self.hash_key(key);
+                let hash = self.hash_key(key);
                 let partitions = self.partitions.read().unwrap();
 
                 for partition in partitions.iter() {
@@ -571,7 +570,6 @@ impl DistributedHashTable {
                 }
             }
             HashStrategy::RendezvousHash => {
-                use std::collections::hash_map::DefaultHasher;
                 let nodes = self.nodes.read().unwrap();
                 let mut node_weights: Vec<(DhtNodeId, u64)> = Vec::new();
 

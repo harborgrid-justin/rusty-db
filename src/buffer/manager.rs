@@ -33,6 +33,7 @@
 // └─────────────────────────────────────────────────────────┘
 // ```
 
+use tokio::time::sleep;
 use crate::buffer::eviction::{create_eviction_policy, EvictionPolicy, EvictionPolicyType};
 use crate::buffer::page_cache::{
     BufferFrame, FrameBatch, FrameGuard, FrameId, PageBuffer, PerCoreFramePool,
@@ -844,8 +845,8 @@ impl BufferPoolManager {
 
         let handle = thread::spawn(move || {
             // Stats counters (simplified since we can't easily share AtomicU64 across threads)
-            let mut _writes_count = 0u64;
-            let mut _flush_count = 0u64;
+            let mut writes_count = 0u64;
+            let mut flush_count = 0u64;
 
             while !shutdown.load(Ordering::Relaxed) {
                 thread::sleep(interval);
@@ -871,11 +872,11 @@ impl BufferPoolManager {
                     for frame in batch {
                         if frame.is_dirty() {
                             frame.set_dirty(false);
-                            _writes_count += 1;
+                            writes_count += 1;
                         }
                     }
 
-                    _flush_count += 1;
+                    flush_count += 1;
                 }
             }
         });
@@ -1287,7 +1288,6 @@ pub mod windows {
     use std::fs::File;
     use std::os::windows::io::{AsRawHandle, RawHandle};
     use std::ptr;
-    use std::collections::HashMap;
     use std::sync::atomic::AtomicU64;
 
     // Windows API constants
@@ -1826,7 +1826,6 @@ impl Default for BufferPoolBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_buffer_pool_creation() {
@@ -1891,7 +1890,7 @@ mod tests {
             .num_frames(10)
             .build();
 
-        let _stats = pool.stats();
+        let stats = pool.stats();
         assert_eq!(stats.total_frames, 10);
         assert!(stats.free_frames > 0);
     }

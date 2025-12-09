@@ -903,7 +903,7 @@ pub async fn get_pool_stats(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
 ) -> ApiResult<AxumJson<PoolStatsResponse>> {
-    let _stats = PoolStatsResponse {
+    let stats = PoolStatsResponse {
         pool_id: "default".to_string(),
         active_connections: 25,
         idle_connections: 15,

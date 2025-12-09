@@ -7,6 +7,7 @@
 /// - SAML federation
 /// - Token-based authentication
 
+use std::fmt;
 use super::types::Username;
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
@@ -215,7 +216,7 @@ impl DatabaseAuthenticator {
     /// * `username` - Username
     /// * `password` - Plain-text password (will be hashed)
     pub fn register_user(&self, username: String, password: &str) {
-        let _hash = self.hash_password(password);
+        let hash = self.hash_password(password);
         self.password_hashes.write().insert(username, hash);
     }
 
@@ -415,7 +416,7 @@ mod tests {
             password: "secret123".to_string(),
         };
 
-        let _result = auth.authenticate(&creds).await.unwrap();
+        let result = auth.authenticate(&creds).await.unwrap();
         assert!(result.authenticated);
         assert_eq!(result.username.as_str(), "alice");
         assert_eq!(result.auth_method, AuthMethod::Database);
@@ -440,7 +441,7 @@ mod tests {
         let token = auth.issue_token("carol".to_string(), std::time::Duration::from_secs(3600));
 
         let creds = Credentials::Token { token: token.clone() };
-        let _result = auth.authenticate(&creds).await.unwrap();
+        let result = auth.authenticate(&creds).await.unwrap();
 
         assert!(result.authenticated);
         assert_eq!(result.username.as_str(), "carol");

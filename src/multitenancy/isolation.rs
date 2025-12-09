@@ -1,6 +1,8 @@
 // Resource isolation mechanisms for multi-tenant environments
 // Implements memory, I/O, CPU, and network isolation using Rust ownership and resource governors
 
+use tokio::time::sleep;
+use std::fmt;
 use std::collections::VecDeque;
 use std::time::Duration;
 use std::time::Instant;
@@ -410,7 +412,7 @@ impl CpuScheduler {
 
     /// Check if tenant should be throttled
     pub async fn should_throttle(&self, tenant_id: &str, requested_ns: u64) -> bool {
-        let _allocation = match self.calculate_allocation(tenant_id).await {
+        let allocation = match self.calculate_allocation(tenant_id).await {
             Some(a) => a,
             None => return true,
         };
@@ -466,7 +468,7 @@ impl CpuScheduler {
         let tenant_shares = self.tenant_shares.read().await;
         let shares = tenant_shares.get(tenant_id)?;
 
-        let _elapsed = SystemTime::now()
+        let elapsed = SystemTime::now()
             .duration_since(shares.last_scheduled)
             .unwrap_or(Duration::from_secs(1));
 
@@ -687,7 +689,7 @@ impl LockContentionIsolator {
 
     async fn record_acquisition(&self, tenant_id: &str, wait_time: Duration) {
         let mut tenant_locks = self.tenant_locks.write().await;
-        let _stats = tenant_locks.entry(tenant_id.to_string())
+        let stats = tenant_locks.entry(tenant_id.to_string())
             .or_insert_with(|| TenantLockStats {
                 tenant_id: tenant_id.to_string(),
                 locks_acquired: 0,
@@ -709,7 +711,7 @@ impl LockContentionIsolator {
 
     async fn record_timeout(&self, tenant_id: &str) {
         let mut tenant_locks = self.tenant_locks.write().await;
-        let _stats = tenant_locks.entry(tenant_id.to_string())
+        let stats = tenant_locks.entry(tenant_id.to_string())
             .or_insert_with(|| TenantLockStats {
                 tenant_id: tenant_id.to_string(),
                 locks_acquired: 0,
@@ -881,7 +883,7 @@ mod tests {
         let alloc = isolator.allocate("tenant1", 50 * 1024 * 1024).await;
         assert!(alloc.is_ok());
 
-        let _stats = isolator.get_tenant_stats("tenant1").await.unwrap();
+        let stats = isolator.get_tenant_stats("tenant1").await.unwrap();
         assert_eq!(stats.allocated_bytes, 50 * 1024 * 1024);
     }
 
@@ -890,7 +892,7 @@ mod tests {
         let allocator = IoBandwidthAllocator::new();
         allocator.configure_tenant("tenant1".to_string(), 100).await;
 
-        let _result = allocator.request_bandwidth("tenant1", 1024 * 1024).await;
+        let result = allocator.request_bandwidth("tenant1", 1024 * 1024).await;
         assert!(result.is_ok());
     }
 
@@ -898,7 +900,7 @@ mod tests {
     async fn test_cpu_scheduler() {
         let scheduler = CpuScheduler::new();
 
-        let _result = scheduler.configure_tenant(
+        let result = scheduler.configure_tenant(
             "tenant1".to_string(),
             1000,
             10,
@@ -930,19 +932,19 @@ mod tests {
     async fn test_buffer_pool_partitioning() {
         let partitioner = BufferPoolPartitioner::new(1024); // 1GB
 
-        let _result = partitioner.allocate_partition(
+        let result = partitioner.allocate_partition(
             "tenant1".to_string(),
             100 * 1024 * 1024,
         ).await;
 
         assert!(result.is_ok());
 
-        let _result = partitioner.cache_page("tenant1", 8192).await;
+        let result = partitioner.cache_page("tenant1", 8192).await;
         assert!(result.is_ok());
 
         partitioner.record_hit("tenant1").await;
 
-        let _stats = partitioner.get_stats("tenant1").await;
+        let stats = partitioner.get_stats("tenant1").await;
         assert!(stats.is_some());
     }
 }

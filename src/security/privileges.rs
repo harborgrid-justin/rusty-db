@@ -830,7 +830,7 @@ mod tests {
             false,
         ).unwrap();
 
-        let _result = manager.check_system_privilege(
+        let result = manager.check_system_privilege(
             &"user1".to_string(),
             &SystemPrivilege::CreateTable,
         );
@@ -852,7 +852,7 @@ mod tests {
 
         assert!(manager.revoke_grant(&grant_id, false).is_ok());
 
-        let _result = manager.check_system_privilege(
+        let result = manager.check_system_privilege(
             &"user1".to_string(),
             &SystemPrivilege::CreateTable,
         );

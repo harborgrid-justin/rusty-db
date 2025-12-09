@@ -85,7 +85,7 @@
 //
 // // Set and get configuration
 // config.set("database.max_connections", ConfigValue::Integer(100)).await?;
-// let _value = config.get("database.max_connections").await?;
+// let value = config.get("database.max_connections").await?;
 //
 // // Watch for changes
 // let mut watcher = config.watch("database.max_connections").await;
@@ -124,7 +124,7 @@
 // manager.register(feature).await?;
 //
 // // Check if enabled for user
-// let _context = EvaluationContext::for_user("user123");
+// let context = EvaluationContext::for_user("user123");
 // if manager.is_enabled("new_optimizer", &context).await {
 //     // Use new optimizer
 // }
@@ -362,6 +362,8 @@
 // - **In-Memory Config**: No file I/O required for tests
 
 // Module declarations
+use crate::error::DbError;
+use std::sync::Mutex;
 pub mod service_bus;
 pub mod config;
 pub mod feature_flags;

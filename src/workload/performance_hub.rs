@@ -350,7 +350,7 @@ impl PerformanceHub {
 
         let mut tracker = self.top_sql_tracker.write();
 
-        let _stats = tracker.sql_lookup.entry(sql_id.clone()).or_insert_with(|| {
+        let stats = tracker.sql_lookup.entry(sql_id.clone()).or_insert_with(|| {
             SqlStats {
                 sql_id: sql_id.clone(),
                 sql_text: sql_text.clone(),
@@ -491,7 +491,7 @@ impl PerformanceHub {
 
         let duration_micros = duration.as_micros() as u64;
 
-        let _stats = analyzer.file_stats.entry(file_name.clone()).or_insert_with(|| {
+        let stats = analyzer.file_stats.entry(file_name.clone()).or_insert_with(|| {
             FileIoStats {
                 file_name: file_name.clone(),
                 file_type: file_type.clone(),

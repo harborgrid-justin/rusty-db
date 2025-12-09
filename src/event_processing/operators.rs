@@ -219,7 +219,7 @@ impl StreamOperator for AggregationOperator {
     fn process(&mut self, event: Event) -> Result<Vec<Event>> {
         let group_key = self.get_group_key(&event);
 
-        let _state = self
+        let state = self
             .state
             .entry(group_key.clone())
             .or_insert_with(|| AggregationState::new(self.aggregation_type.clone()));
@@ -321,7 +321,7 @@ impl AggregationState {
 
             AggregationType::CountDistinct(field) => {
                 if let Some(value) = event.get_payload(field) {
-                    let _hash = Self::hash_value(value);
+                    let hash = Self::hash_value(value);
                     self.distinct.insert(hash);
                 }
             }
@@ -530,7 +530,6 @@ impl DeduplicationOperator {
     }
 
     fn compute_key(&self, event: &Event) -> u64 {
-        use std::collections::hash_map::DefaultHasher;
 
         let mut hasher = DefaultHasher::new();
 
@@ -874,8 +873,6 @@ impl HyperLogLog {
 
     /// Add string value (computes hash internally)
     pub fn add_string(&mut self, s: &str) {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         s.hash(&mut hasher);
@@ -884,8 +881,6 @@ impl HyperLogLog {
 
     /// Add integer value (computes hash internally)
     pub fn add_int(&mut self, n: i64) {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         n.hash(&mut hasher);
@@ -980,8 +975,8 @@ impl CountMinSketch {
         use std::hash::{BuildHasher, Hasher};
 
         let mut seeds = Vec::new();
-        for _i in 0..depth {
-            let _state = RandomState::new();
+        for i in 0..depth {
+            let state = RandomState::new();
             let mut hasher = state.build_hasher();
             hasher.write_usize(i);
             seeds.push(hasher.finish());
@@ -998,7 +993,7 @@ impl CountMinSketch {
     /// Update count for an item - O(depth)
     pub fn update(&mut self, item: &str, count: u64) {
         for (d, seed) in self.seeds.iter().enumerate() {
-            let _hash = self.hash_with_seed(item, *seed);
+            let hash = self.hash_with_seed(item, *seed);
             let index = (hash % self.width as u64) as usize;
             self.counts[d][index] = self.counts[d][index].saturating_add(count);
         }
@@ -1015,7 +1010,7 @@ impl CountMinSketch {
         let mut min_count = u64::MAX;
 
         for (d, seed) in self.seeds.iter().enumerate() {
-            let _hash = self.hash_with_seed(item, *seed);
+            let hash = self.hash_with_seed(item, *seed);
             let index = (hash % self.width as u64) as usize;
             min_count = min_count.min(self.counts[d][index]);
         }
@@ -1025,8 +1020,6 @@ impl CountMinSketch {
 
     /// Hash with seed
     fn hash_with_seed(&self, item: &str, seed: u64) -> u64 {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         hasher.write_u64(seed);
@@ -1262,12 +1255,12 @@ mod tests {
     fn test_aggregation_operator() {
         let mut agg = AggregationOperator::new("test_agg", AggregationType::Count);
 
-        for _i in 0..10 {
+        for i in 0..10 {
             let event = Event::new("test").with_payload("value", i as i64);
             agg.process(event).unwrap();
         }
 
-        let _result = agg.get_result("__global__").unwrap();
+        let result = agg.get_result("__global__").unwrap();
         assert_eq!(result.as_i64(), Some(10));
     }
 
@@ -1296,7 +1289,7 @@ mod tests {
     fn test_topn_operator() {
         let mut topn = TopNOperator::new("test_topn", 3, "score");
 
-        for _i in 0..10 {
+        for i in 0..10 {
             let event = Event::new("test").with_payload("score", i as i64);
             topn.process(event).unwrap();
         }

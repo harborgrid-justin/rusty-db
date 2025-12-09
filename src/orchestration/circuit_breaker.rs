@@ -34,6 +34,7 @@
 // └──────────┘
 // ```
 
+use tokio::time::sleep;
 use std::time::Instant;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -151,7 +152,7 @@ impl CircuitBreaker {
 
     /// Get the current circuit state
     pub fn state(&self) -> CircuitState {
-        let _state = self.state.read();
+        let state = self.state.read();
         state.state
     }
 
@@ -178,11 +179,11 @@ impl CircuitBreaker {
 
         // Execute with timeout
         let timeout_duration = {
-            let _state = self.state.read();
+            let state = self.state.read();
             state.config.timeout
         };
 
-        let _result = timeout(timeout_duration, f).await;
+        let result = timeout(timeout_duration, f).await;
 
         match result {
             Ok(Ok(value)) => {
@@ -354,7 +355,7 @@ impl CircuitBreaker {
 
     /// Get current statistics
     pub fn statistics(&self) -> CircuitBreakerStats {
-        let _state = self.state.read();
+        let state = self.state.read();
         let mut stats = state.stats.clone();
 
         // Update with atomic counters
@@ -524,7 +525,7 @@ mod tests {
         assert_eq!(breaker.state(), CircuitState::Closed);
 
         // Successful call
-        let _result = breaker.call(async { Ok::<_, DbError>(42) }).await;
+        let result = breaker.call(async { Ok::<_, DbError>(42) }).await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 42);
         assert_eq!(breaker.state(), CircuitState::Closed);
@@ -552,7 +553,7 @@ mod tests {
         assert_eq!(breaker.state(), CircuitState::Open);
 
         // Next call should be rejected
-        let _result = breaker.call(async { Ok::<_, DbError>(42) }).await;
+        let result = breaker.call(async { Ok::<_, DbError>(42) }).await;
         assert!(result.is_err());
     }
 
@@ -607,7 +608,7 @@ mod tests {
             .await;
 
         // Use fallback
-        let _result = breaker
+        let result = breaker
             .call_with_fallback(
                 async { Ok::<_, DbError>(42) },
                 || Ok(100), // fallback value
@@ -648,7 +649,7 @@ mod tests {
             .call(async { Err::<(), _>(DbError::Internal("failure".into())) })
             .await;
 
-        let _stats = breaker.statistics();
+        let stats = breaker.statistics();
         assert_eq!(stats.total_calls, 3);
         assert_eq!(stats.successful_calls, 2);
         assert_eq!(stats.failed_calls, 1);

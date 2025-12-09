@@ -34,6 +34,7 @@
 // └──────────────────────────────────────────────────────────────────────┘
 // ```
 
+use tokio::time::sleep;
 use std::collections::{HashMap, VecDeque, BTreeMap};
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
@@ -1978,7 +1979,7 @@ impl IncrementalCheckpointer {
         let batch_size = self.batch_size;
         let queue = self.checkpoint_queue.clone();
         let running = self.running.clone();
-        let _stats = Arc::new(Mutex::new(AtomicU64::new(self.stats.incremental_checkpoints.load(Ordering::Relaxed))));
+        let stats = Arc::new(Mutex::new(AtomicU64::new(self.stats.incremental_checkpoints.load(Ordering::Relaxed))));
 
         std::thread::spawn(move || {
             while running.load(Ordering::Acquire) {
@@ -2852,7 +2853,7 @@ impl BufferPoolStatisticsTracker {
 
     /// Export metrics in JSON format
     pub fn export_json(&self) -> String {
-        let _stats = self.get_comprehensive_stats();
+        let stats = self.get_comprehensive_stats();
         serde_json::to_string_pretty(&stats).unwrap_or_default()
     }
 }
