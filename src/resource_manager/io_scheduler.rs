@@ -11,13 +11,14 @@
 
 use std::sync::Mutex;
 use std::time::Instant;
-use std::collections::{HashMap, BinaryHeap};
+use std::collections::{HashMap, BinaryHeap, VecDeque};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
 use std::time::Duration;
+use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 
 /// I/O request identifier
@@ -95,7 +96,7 @@ impl IoRequest {
     /// Create a new I/O request
     pub fn new(
         id: IoRequestId,
-        groupid: ConsumerGroupId,
+        group_id: ConsumerGroupId,
         request_type: IoRequestType,
         priority: IoPriority,
         size_bytes: u64,
@@ -333,7 +334,7 @@ pub struct IoScheduler {
     /// Priority queue for pending requests
     pending_queue: Arc<Mutex<BinaryHeap<IoRequest>>>,
     /// Per-group queues
-    group_queues: Arc<RwLock<HashMap<ConsumerGroupId<IoRequestId>>>>,
+    group_queues: Arc<RwLock<HashMap<ConsumerGroupId, VecDeque<IoRequestId>>>>,
     /// Group allocations
     group_allocations: Arc<RwLock<HashMap<ConsumerGroupId, IoGroupAllocation>>>,
     /// Bandwidth token buckets per group
@@ -769,12 +770,19 @@ impl IoScheduler {
 
     /// Update bandwidth usage metrics
     pub fn update_bandwidth_metrics(&self) {
-        let mut allocations = self.group_allocations.write().unwrap();
+        let allocations = self.group_allocations.read().unwrap();
 
-        for alloc in allocations.values_mut() {
+        for alloc in allocations.values() {
             // Exponentially weighted moving average
-            alloc.current_bandwidth = (alloc.current_bandwidth * 9 + alloc.total_bytes) / 10;
-            alloc.current_iops = ((alloc.current_iops as u64 * 9 + alloc.total_ops) / 10) as u32;
+            let current_bw = alloc.current_bandwidth.load(AtomicOrdering::Relaxed);
+            let total_bytes = alloc.total_bytes.load(AtomicOrdering::Relaxed);
+            let new_bw = (current_bw * 9 + total_bytes) / 10;
+            alloc.current_bandwidth.store(new_bw, AtomicOrdering::Relaxed);
+
+            let current_iops = alloc.current_iops.load(AtomicOrdering::Relaxed);
+            let total_ops = alloc.total_ops.load(AtomicOrdering::Relaxed);
+            let new_iops = ((current_iops as u64 * 9 + total_ops) / 10) as u32;
+            alloc.current_iops.store(new_iops, AtomicOrdering::Relaxed);
         }
     }
 }

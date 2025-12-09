@@ -19,6 +19,7 @@ use std::fmt;
 use std::time::SystemTime;
 use std::collections::HashSet;
 use std::time::{Duration};
+use std::mem::size_of;
 
 use serde::{Deserialize, Serialize};
 
@@ -194,12 +195,12 @@ impl LockMode {
     /// A value from 1 (weakest) to 6 (strongest).
     pub fn strength(&self) -> u8 {
         match self {
-            Shared => 1,
-            IntentShared => 2,
-            Update => 3,
-            IntentExclusive => 4,
-            SharedIntentExclusive => 5,
-            Exclusive => 6,
+            LockMode::Shared => 1,
+            LockMode::IntentShared => 2,
+            LockMode::Update => 3,
+            LockMode::IntentExclusive => 4,
+            LockMode::SharedIntentExclusive => 5,
+            LockMode::Exclusive => 6,
         }
     }
 

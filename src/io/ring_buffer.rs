@@ -328,7 +328,7 @@ impl<T> IoRingBuffer<T> {
             // Check if full
             if tail.wrapping_sub(head) >= self.size as u64 {
                 if self.config.enable_stats {
-                    self.stats.lock().unwrap().push_failures += 1;
+                    self.stats.lock().push_failures += 1;
                 }
                 return false;
             }
@@ -346,7 +346,7 @@ impl<T> IoRingBuffer<T> {
                 }
 
                 if self.config.enable_stats {
-                    self.stats.lock().unwrap().pushes += 1;
+                    self.stats.lock().pushes += 1;
                 }
 
                 return true;
@@ -367,7 +367,7 @@ impl<T> IoRingBuffer<T> {
             // Check if empty
             if head == tail {
                 if self.config.enable_stats {
-                    self.stats.lock().unwrap().pop_failures += 1;
+                    self.stats.lock().pop_failures += 1;
                 }
                 return None;
             }
@@ -383,7 +383,7 @@ impl<T> IoRingBuffer<T> {
                 let entry = unsafe { ptr::read(self.entries.add(index)) };
 
                 if self.config.enable_stats {
-                    self.stats.lock().unwrap().pops += 1;
+                    self.stats.lock().pops += 1;
                 }
 
                 return Some(entry);
@@ -406,8 +406,8 @@ impl<T> IoRingBuffer<T> {
         }
 
         if self.config.enable_stats && pushed > 0 {
-            self.stats.lock().unwrap().batch_pushes += 1;
-            self.stats.lock().unwrap().batch_push_total += pushed as u64;
+            self.stats.lock().batch_pushes += 1;
+            self.stats.lock().batch_push_total += pushed as u64;
         }
 
         pushed
@@ -429,8 +429,8 @@ impl<T> IoRingBuffer<T> {
         }
 
         if self.config.enable_stats && !result.is_empty() {
-            self.stats.lock().unwrap().batch_pops += 1;
-            self.stats.lock().unwrap().batch_pop_total += result.len() as u64;
+            self.stats.lock().batch_pops += 1;
+            self.stats.lock().batch_pop_total += result.len() as u64;
         }
 
         result
@@ -459,13 +459,13 @@ impl<T> IoRingBuffer<T> {
         self.tail.store(0, Ordering::Release);
 
         if self.config.enable_stats {
-            self.stats.lock().unwrap().clears += 1;
+            self.stats.lock().clears += 1;
         }
     }
 
     /// Get statistics
     pub fn stats(&self) -> RingBufferStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     /// Reset statistics

@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+use sha2::{Sha256, Digest};
 use crate::error::Result;
 
 /// Document ID types supported by the system
@@ -287,7 +288,6 @@ impl DocumentContent {
 
     /// Calculate content hash
     pub fn hash(&self) -> String {
-        use sha2::{Sha256, Digest};
         let bytes = match self {
             DocumentContent::Json(v) => serde_json::to_vec(v).unwrap_or_default(),
             DocumentContent::Bson(doc) => {
@@ -319,7 +319,7 @@ impl Document {
     pub fn from_json(
         id: DocumentId,
         collection: String,
-        json: serdejson::Value,
+        json: serde_json::Value,
     ) -> Result<Self> {
         let content = DocumentContent::Json(json);
         let content_hash = content.hash();
@@ -558,7 +558,7 @@ impl DocumentBuilder {
     }
 
     /// Set JSON content
-    pub fn json(mut self, json: serdejson::Value) -> Self {
+    pub fn json(mut self, json: serde_json::Value) -> Self {
         self.content = Some(DocumentContent::Json(json));
         self.format = DocumentFormat::Json;
         self
@@ -592,6 +592,7 @@ impl DocumentBuilder {
     /// Build the document
     pub fn build(self) -> Result<Document> {
         let content = self.content.ok_or_else(|| {
+            crate::error::DbError::InvalidInput("Document content not set".to_string())
         })?;
 
         let id = self.id.unwrap_or_else(DocumentId::new_uuid);

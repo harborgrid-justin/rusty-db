@@ -10,7 +10,7 @@
 /// - Change point detection
 
 use std::collections::BTreeMap;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::error::{Result, DbError};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -119,7 +119,7 @@ impl TimeSeriesAnalyzer {
     /// Fill gaps in time series
     pub fn fill_gaps(
         &self,
-        expectedinterval: Duration,
+        expected_interval: Duration,
         method: InterpolationMethod,
     ) -> Result<TimeSeries> {
         if self.series.points.is_empty() {

@@ -30,7 +30,7 @@ use std::time::{Duration};
 use parking_lot::{RwLock};
 use tokio::sync::{mpsc, broadcast};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::io::{AsyncReadExt};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use bytes::{Bytes, BytesMut, Buf, BufMut};
 
 // ============================================================================
@@ -377,7 +377,7 @@ impl Connection {
 
         match TcpStream::connect(address).await {
             Ok(stream) => {
-                *self.stream.lock().unwrap().await = Some(stream);
+                *self.stream.lock().await = Some(stream);
                 *self.state.write() = ConnectionState::Connected;
                 Ok(())
             }
@@ -399,12 +399,12 @@ impl Connection {
     async fn flush_queue(&self) -> Result<(), DbError> {
         // Extract messages from queue before acquiring stream lock
         let messages_to_send: Vec<Message> = {
-            let mut queue = self.send_queue.lock();
+            let mut queue = self.send_queue.lock().unwrap();
             queue.drain(..).collect()
         };
 
         // Now process messages with stream lock (using tokio::sync::Mutex)
-        let mut stream_guard = self.stream.lock().unwrap().await;
+        let mut stream_guard = self.stream.lock().await;
 
         if let Some(stream) = stream_guard.as_mut() {
             for message in messages_to_send {
@@ -433,7 +433,7 @@ impl Connection {
 
     async fn receive_message(&self) -> Result<Message, DbError> {
         // Use tokio::sync::Mutex which can be held across await
-        let mut stream_guard = self.stream.lock().unwrap().await;
+        let mut stream_guard = self.stream.lock().await;
 
         if let Some(stream) = stream_guard.as_mut() {
             // Read length prefix
@@ -465,7 +465,7 @@ impl Connection {
     }
 
     fn record_latency(&self, latency_us: u64) {
-        let mut samples = self.latency_samples.lock();
+        let mut samples = self.latency_samples.lock().unwrap();
         samples.push_back(latency_us);
 
         if samples.len() > LATENCY_WINDOW_SIZE {
@@ -474,7 +474,7 @@ impl Connection {
     }
 
     fn average_latency(&self) -> u64 {
-        let samples = self.latency_samples.lock();
+        let samples = self.latency_samples.lock().unwrap();
 
         if samples.is_empty() {
             return 0;
@@ -676,7 +676,7 @@ impl ClusterInterconnect {
                             let remote_node = format!("node_{}", addr);
 
                             let conn = Arc::new(Connection::new(remote_node.clone()));
-                            *conn.stream.lock().unwrap().await = Some(stream);
+                            *conn.stream.lock().await = Some(stream);
                             *conn.state.write() = ConnectionState::Connected;
 
                             connections.write().insert(remote_node.clone(), conn.clone());
@@ -954,7 +954,7 @@ impl ClusterInterconnect {
     }
 
     fn next_sequence(&self) -> u64 {
-        let mut seq = self.sequence_counter.lock();
+        let mut seq = self.sequence_counter.lock().unwrap();
         *seq += 1;
         *seq
     }

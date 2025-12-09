@@ -41,14 +41,14 @@
 
 use tokio::time::sleep;
 use std::time::Instant;
-use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration};
-use parking_lot::{RwLock};
+use parking_lot::{RwLock, Mutex};
 use std::collections::HashMap;
+use rand::RngCore;
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 // ============================================================================
 // Core Configuration
@@ -395,9 +395,10 @@ impl DatabaseCore {
     fn bootstrap_phase(config: &CoreConfig) -> Result<()> {
         // Initialize tracing subscriber
         if config.monitoring.tracing_enabled {
-            tracing_subscriber::fmt()
-                .with_max_level(tracing::Level::INFO)
-                .init();
+            // Tracing is optional - skip if not needed
+            // tracing_subscriber::fmt()
+            //     .with_max_level(tracing::Level::INFO)
+            //     .init();
         }
 
         // Create data directory if it doesn't exist
@@ -820,7 +821,7 @@ pub struct WorkerPool {
     workers: Vec<Worker>,
     task_queue: Arc<crossbeam::queue::SegQueue<Task>>,
     shutdown: Arc<AtomicBool>,
-    stats: WorkerStats,
+    stats: Arc<WorkerStats>,
 }
 
 struct Worker {
@@ -840,23 +841,19 @@ pub struct WorkerStats {
 impl WorkerPool {
     pub fn new(config: WorkerConfig) -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
-        let task_queue = Arc::new(crossbeam::queue::SegQueue::<Box<dyn Fn() + Send>>::new());
-        let stats = WorkerStats {
+        let task_queue = Arc::new(crossbeam::queue::SegQueue::<Task>::new());
+        let stats = Arc::new(WorkerStats {
             tasks_executed: AtomicU64::new(0),
             tasks_queued: AtomicU64::new(0),
             idle_time_ns: AtomicU64::new(0),
-        };
+        });
 
         let mut workers = Vec::new();
 
         for id in 0..config.num_workers {
             let queue = task_queue.clone();
             let shutdown_clone = shutdown.clone();
-            let stats_clone = WorkerStats {
-                tasks_executed: AtomicU64::new(0),
-                tasks_queued: AtomicU64::new(0),
-                idle_time_ns: AtomicU64::new(0),
-            };
+            let stats_clone = Arc::clone(&stats);
 
             let handle = std::thread::Builder::new()
                 .name(format!("worker-{}", id))
@@ -900,8 +897,8 @@ impl WorkerPool {
         self.shutdown.store(true, Ordering::Relaxed);
     }
 
-    pub fn get_stats(&self) -> &WorkerStats {
-        &self.stats
+    pub fn get_stats(&self) -> Arc<WorkerStats> {
+        Arc::clone(&self.stats)
     }
 }
 
@@ -1048,7 +1045,7 @@ impl CoreMetrics {
     }
 
     pub fn get_samples(&self) -> Vec<MetricsSample> {
-        self.samples.lock().unwrap().clone()
+        self.samples.lock().clone()
     }
 }
 

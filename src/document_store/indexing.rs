@@ -599,7 +599,7 @@ impl FullTextIndex {
         false
     }
 
-    fn extract_text(&self, json: &serdejson::Value) -> Result<String> {
+    fn extract_text(&self, json: &serde_json::Value) -> Result<String> {
         let mut texts = Vec::new();
 
         for field in &self.definition.fields {

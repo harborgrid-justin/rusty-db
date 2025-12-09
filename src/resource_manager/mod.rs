@@ -72,7 +72,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 // Module declarations
 pub mod consumer_groups;
@@ -547,8 +547,8 @@ pub struct RebalancingReport {
 /// Comprehensive resource statistics
 #[derive(Debug, Clone)]
 pub struct ResourceStats {
-    pub cpu_stats: cpu_scheduler::SchedulerStats,
-    pub io_stats: io_scheduler::IoStats,
+    pub cpu_stats: cpu_scheduler::SchedulerStatsSnapshot,
+    pub io_stats: io_scheduler::IoStatsSnapshot,
     pub memory_stats: memory_manager::MemoryStats,
     pub parallel_stats: parallel_control::ParallelStats,
     pub session_stats: session_control::SessionStats,

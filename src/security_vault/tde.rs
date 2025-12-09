@@ -23,15 +23,15 @@
 
 use crate::{DbError, Result};
 use aes_gcm::{
-    aead::{Aead, KeyInit},
+    aead::{Aead, KeyInit, generic_array::GenericArray},
     Aes256Gcm, Nonce,
 };
 use chacha20poly1305::ChaCha20Poly1305;
-use generic_array::GenericArray;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use sha2::{Digest, Sha256};
+use rand::RngCore;
 
 /// Cache-aligned crypto buffer for high-performance encryption
 /// Aligned to 64 bytes (typical cache line size) to avoid false sharing
@@ -670,8 +670,6 @@ impl TdeEngine {
         plaintext: &[u8],
         aad: Option<&[u8]>,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
-        use aes_gcm::aead::generic_array::GenericArray;
-
         let cipher = Aes256Gcm::new(GenericArray::from_slice(key));
 
         // Generate random nonce

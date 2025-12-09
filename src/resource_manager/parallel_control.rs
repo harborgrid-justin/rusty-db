@@ -11,9 +11,10 @@ use std::time::Instant;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
+use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 use super::session_control::SessionId;
 
@@ -200,9 +201,9 @@ impl AutoDopCalculator {
     /// Calculate automatic DOP for a query
     pub fn calculate_dop(
         &self,
-        estimatedcost: Option<f64>,
+        estimated_cost: Option<f64>,
         estimated_rows: Option<u64>,
-        availableservers: u32,
+        available_servers: u32,
     ) -> DegreeOfParallelism {
         // Base DOP on number of CPUs
         let mut dop = self.cpu_cores;
@@ -313,8 +314,8 @@ impl ParallelExecutionController {
     pub fn create_server_pool(
         &self,
         name: String,
-        minservers: u32,
-        maxservers: u32,
+        min_servers: u32,
+        max_servers: u32,
     ) -> Result<ServerPoolId> {
         let pool_id = {
             let pools = self.server_pools.read().unwrap();
@@ -343,7 +344,7 @@ impl ParallelExecutionController {
     }
 
     /// Create a parallel server
-    fn create_server(&self, poolid: ServerPoolId, server_type: ServerType) -> Result<ServerId> {
+    fn create_server(&self, pool_id: ServerPoolId, server_type: ServerType) -> Result<ServerId> {
         let server_id = {
             let mut next_id = self.next_server_id.write().unwrap();
             let id = *next_id;
@@ -378,8 +379,8 @@ impl ParallelExecutionController {
     /// Request parallel execution
     pub fn request_parallel_execution(
         &self,
-        sessionid: SessionId,
-        groupid: ConsumerGroupId,
+        session_id: SessionId,
+        group_id: ConsumerGroupId,
         requested_dop: DegreeOfParallelism,
         mode: ParallelMode,
         estimated_cost: Option<f64>,

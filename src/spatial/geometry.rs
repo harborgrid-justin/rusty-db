@@ -8,7 +8,7 @@
 // - WKT/WKB serialization
 // - GeoJSON support
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use serde::{Deserialize, Serialize};
 
 

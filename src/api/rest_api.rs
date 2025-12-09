@@ -13,7 +13,7 @@
 // - WebSocket support for real-time streaming
 
 use crate::error::DbError;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 use axum::{
     Router,
     routing::{get, post, put, delete},
@@ -802,7 +802,7 @@ struct RateLimiter {
 }
 
 impl RateLimiter {
-    fn new(maxrequests: u64, window_secs: u64) -> Self {
+    fn new(max_requests: u64, window_secs: u64) -> Self {
         Self {
             requests: HashMap::new(),
             window_secs,
@@ -2615,7 +2615,7 @@ impl QueryResultBuilder {
         self.columns.push(column);
     }
 
-    pub fn add_warning(&self, &mut selfing: String) {
+    pub fn add_warning(&mut self, warning: String) {
         self.warnings.push(warning);
     }
 
@@ -2779,7 +2779,7 @@ pub struct QueryCache {
 }
 
 impl QueryCache {
-    pub fn new(maxentries: usize, default_ttl: Duration) -> Self {
+    pub fn new(max_entries: usize, default_ttl: Duration) -> Self {
         Self {
             entries: Arc::new(RwLock::new(HashMap::new())),
             max_entries,
@@ -2949,7 +2949,7 @@ impl PoolHealthChecker {
             }
         }
 
-        statusings
+        (status, warnings)
     }
 }
 

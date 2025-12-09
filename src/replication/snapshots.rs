@@ -1039,7 +1039,7 @@ impl SnapshotManager for FileSnapshotManager {
     async fn create_incremental_snapshot(
         &self,
         replica_id: &ReplicaId,
-        parentsnapshot: &SnapshotId,
+        parent_snapshot: &SnapshotId,
     ) -> Result<SnapshotId, SnapshotError> {
         // Verify parent snapshot exists
         {
@@ -1109,7 +1109,7 @@ impl SnapshotManager for FileSnapshotManager {
     async fn create_differential_snapshot(
         &self,
         replica_id: &ReplicaId,
-        basesnapshot: &SnapshotId,
+        base_snapshot: &SnapshotId,
     ) -> Result<SnapshotId, SnapshotError> {
         // Similar to incremental but tracks changes from base full snapshot
         self.create_incremental_snapshot(replica_id, base_snapshot).await

@@ -539,8 +539,23 @@ where
 
 impl<K, V, S> Drop for ConcurrentHashMap<K, V, S> {
     fn drop(&mut self) {
-        // Clear will properly drop all entries
-        self.clear();
+        // Clear all entries - we have exclusive access so no locking needed
+        for bucket in self.buckets.iter() {
+            let guard = Epoch::pin();
+            let head = bucket.head.load(Ordering::Acquire, &guard);
+
+            let mut current = head;
+            while !current.is_null() {
+                // Safety: We have exclusive access during drop
+                unsafe {
+                    let entry = current.as_ref().unwrap();
+                    let next = entry.next.load(Ordering::Acquire, &guard);
+                    // Don't defer - just drop immediately since we're shutting down
+                    drop(Box::from_raw(current.as_ptr()));
+                    current = next;
+                }
+            }
+        }
     }
 }
 

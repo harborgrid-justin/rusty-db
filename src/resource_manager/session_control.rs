@@ -13,7 +13,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 
 /// Session identifier
@@ -291,9 +291,9 @@ impl SessionController {
     /// Create a new session
     pub fn create_session(
         &self,
-        userid: UserId,
+        user_id: UserId,
         username: String,
-        groupid: ConsumerGroupId,
+        group_id: ConsumerGroupId,
     ) -> Result<SessionId> {
         // Check global max sessions
         if let Some(max) = self.global_max_sessions {

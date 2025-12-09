@@ -324,8 +324,8 @@ impl PrivilegeManager {
         // Add to object index
         self.object_index.write()
             .entry(object_id)
-            .or_insert_with(HashSet::new)
-            .insert(grant_id.clone());
+            .or_insert_with(Vec::new)
+            .push(grant_id.clone());
 
         self.add_grant(grant)?;
 
@@ -624,13 +624,13 @@ impl PrivilegeManager {
 
         self.grantee_index.write()
             .entry(grantee)
-            .or_insert_with(HashSet::new)
-            .insert(grant_id.clone());
+            .or_insert_with(Vec::new)
+            .push(grant_id.clone());
 
         self.grantor_index.write()
             .entry(grantor)
-            .or_insert_with(HashSet::new)
-            .insert(grant_id);
+            .or_insert_with(Vec::new)
+            .push(grant_id);
 
         Ok(())
     }
@@ -644,16 +644,16 @@ impl PrivilegeManager {
 
         // Remove from indexes
         if let Some(grantee_grants) = self.grantee_index.write().get_mut(&grant.grantee) {
-            grantee_grants.remove(grant_id);
+            grantee_grants.retain(|id| id != grant_id);
         }
 
         if let Some(grantor_grants) = self.grantor_index.write().get_mut(&grant.grantor) {
-            grantor_grants.remove(grant_id);
+            grantor_grants.retain(|id| id != grant_id);
         }
 
         if let PrivilegeType::Object { ref object_id, .. } = grant.privilege_type {
             if let Some(object_grants) = self.object_index.write().get_mut(object_id) {
-                object_grants.remove(grant_id);
+                object_grants.retain(|id| id != grant_id);
             }
         }
 

@@ -182,7 +182,7 @@ impl BufferFrame {
 
     /// Get time since last access
     pub fn idle_time(&self) -> Duration {
-        self.last_access.lock().unwrap().elapsed()
+        self.last_access.lock().elapsed()
     }
 }
 
@@ -786,8 +786,8 @@ impl AdaptiveReplacementCache {
         drop(dir);
 
         // New page, add to T1
-        let t1_len = self.t1.lock().unwrap().len();
-        let t2_len = self.t2.lock().unwrap().len();
+        let t1_len = self.t1.lock().len();
+        let t2_len = self.t2.lock().len();
 
         if t1_len + t2_len >= self.c {
             self.replace(page_id, CacheLocation::T1);
@@ -799,7 +799,7 @@ impl AdaptiveReplacementCache {
     /// ARC replacement algorithm
     fn replace(&self, page_id: PageId, hit_location: CacheLocation) {
         let p = self.p.load(Ordering::Relaxed);
-        let t1_len = self.t1.lock().unwrap().len();
+        let t1_len = self.t1.lock().len();
 
         let evict_from_t1 = if t1_len > 0 {
             if t1_len > p || (hit_location == CacheLocation::B2 && t1_len == p) {
@@ -844,8 +844,8 @@ impl AdaptiveReplacementCache {
 
     /// Adapt parameter p on B1 hit
     fn adapt_on_b1_hit(&self) {
-        let b1_len = self.b1.lock().unwrap().len();
-        let b2_len = self.b2.lock().unwrap().len();
+        let b1_len = self.b1.lock().len();
+        let b2_len = self.b2.lock().len();
 
         let delta = if b1_len >= b2_len {
             1
@@ -860,8 +860,8 @@ impl AdaptiveReplacementCache {
 
     /// Adapt parameter p on B2 hit
     fn adapt_on_b2_hit(&self) {
-        let b1_len = self.b1.lock().unwrap().len();
-        let b2_len = self.b2.lock().unwrap().len();
+        let b1_len = self.b1.lock().len();
+        let b2_len = self.b2.lock().len();
 
         let delta = if b2_len >= b1_len {
             1
@@ -973,10 +973,10 @@ impl AdaptiveReplacementCache {
             evictions: self.stats.evictions.load(Ordering::Relaxed),
             ghost_hits_b1: self.stats.ghost_hits_b1.load(Ordering::Relaxed),
             ghost_hits_b2: self.stats.ghost_hits_b2.load(Ordering::Relaxed),
-            t1_size: self.t1.lock().unwrap().len(),
-            t2_size: self.t2.lock().unwrap().len(),
-            b1_size: self.b1.lock().unwrap().len(),
-            b2_size: self.b2.lock().unwrap().len(),
+            t1_size: self.t1.lock().len(),
+            t2_size: self.t2.lock().len(),
+            b1_size: self.b1.lock().len(),
+            b2_size: self.b2.lock().len(),
             p_value: self.p.load(Ordering::Relaxed),
         }
     }
@@ -1226,9 +1226,9 @@ impl TwoQCache {
             misses: self.stats.misses.load(Ordering::Relaxed),
             promotions: self.stats.promotions.load(Ordering::Relaxed),
             evictions: self.stats.evictions.load(Ordering::Relaxed),
-            a1in_size: self.a1in.lock().unwrap().len(),
-            a1out_size: self.a1out.lock().unwrap().len(),
-            am_size: self.am.lock().unwrap().len(),
+            a1in_size: self.a1in.lock().len(),
+            a1out_size: self.a1out.lock().len(),
+            am_size: self.am.lock().len(),
         }
     }
 }
@@ -2266,7 +2266,7 @@ pub struct DoubleWriteStatsSnapshot {
 /// Flush list manager
 pub struct FlushListManager {
     /// Flush lists per tablespace
-    flush_lists: PRwLock<HashMap<u32, VecDeque<DirtyPage>>>,
+    flush_lists: PRwLock<HashMap<u32, Mutex<VecDeque<DirtyPage>>>>,
     /// Flush batch size
     batch_size: usize,
     /// Statistics
@@ -2699,12 +2699,12 @@ impl RealtimeMetrics {
 
     /// Get current metrics
     pub fn get(&self) -> MetricsSnapshot {
-        self.current.lock().unwrap().clone()
+        self.current.lock().clone()
     }
 
     /// Check if metrics are stale
     pub fn is_stale(&self) -> bool {
-        self.last_update.lock().unwrap().elapsed() > self.interval * 2
+        self.last_update.lock().elapsed() > self.interval * 2
     }
 }
 

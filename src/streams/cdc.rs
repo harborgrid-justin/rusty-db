@@ -253,7 +253,7 @@ impl CaptureFilter {
         }
 
         // Check change type
-        if !self.change_types.contains(change_type) {
+        if !self.change_types.contains(changetype) {
             return false;
         }
 
@@ -720,7 +720,7 @@ impl CDCEngine {
         let _ = self.event_tx.send(event.clone());
 
         // Add to batch
-        let mut batch = self.current_batch.lock();
+        let mut batch = self.current_batch.lock().unwrap();
         batch.add_event(event);
 
         // Check if batch should be flushed
@@ -889,7 +889,7 @@ impl CDCEngine {
                 }
 
                 let completed = {
-                    let mut batch = current_batch.lock();
+                    let mut batch = current_batch.lock().unwrap();
                     if !batch.is_empty() {
                         Some(std::mem::replace(
                             &mut *batch,

@@ -542,7 +542,7 @@ impl EventSubscriber {
                 topic.to_string(),
             ))));
 
-        let mut group = group.lock();
+        let mut group = group.lock().unwrap();
         group.add_member(self.config.consumer_id.clone());
         group.rebalance(10); // TODO: Get actual partition count
         Ok(())
@@ -551,7 +551,7 @@ impl EventSubscriber {
     async fn leave_consumer_group(&self, group_id: &str, _topic: &str) -> Result<()> {
         let groups = self.groups.read();
         if let Some(group) = groups.get(group_id) {
-            let mut group = group.lock();
+            let mut group = group.lock().unwrap();
             group.remove_member(&self.config.consumer_id);
             group.rebalance(10);
         }
@@ -608,7 +608,7 @@ impl EventSubscriber {
                 // Send heartbeat
                 let groups = groups.read();
                 if let Some(group) = groups.get(&group_id) {
-                    let mut group = group.lock();
+                    let mut group = group.lock().unwrap();
                     if let Some(member) = group.members.get_mut(&consumer_id) {
                         member.last_heartbeat = SystemTime::now();
                     }

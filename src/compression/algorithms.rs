@@ -135,7 +135,7 @@ impl Compressor for LZ4Compressor {
 
         output[..compressed.len()].copy_from_slice(&compressed);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += input.len();
         stats.compressed_size += compressed.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -198,7 +198,7 @@ impl Compressor for LZ4Compressor {
             }
         }
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.decompression_time_us += start.elapsed().as_micros() as u64;
         stats.blocks_decompressed += 1;
 
@@ -218,11 +218,11 @@ impl Compressor for LZ4Compressor {
     }
 
     fn stats(&self) -> CompressionStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     fn reset_stats(&mut self) {
-        *self.stats.lock().unwrap() = CompressionStats::new();
+        *self.stats.lock() = CompressionStats::new();
     }
 }
 
@@ -380,7 +380,7 @@ impl Compressor for ZstdCompressor {
 
         output[..compressed.len()].copy_from_slice(&compressed);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += input.len();
         stats.compressed_size += compressed.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -399,7 +399,7 @@ impl Compressor for ZstdCompressor {
 
         output[..decoded.len()].copy_from_slice(&decoded);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.decompression_time_us += start.elapsed().as_micros() as u64;
         stats.blocks_decompressed += 1;
 
@@ -419,11 +419,11 @@ impl Compressor for ZstdCompressor {
     }
 
     fn stats(&self) -> CompressionStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     fn reset_stats(&mut self) {
-        *self.stats.lock().unwrap() = CompressionStats::new();
+        *self.stats.lock() = CompressionStats::new();
     }
 }
 
@@ -518,7 +518,7 @@ impl DictionaryCompressor {
             } else {
                 return Err(CompressionError::DecompressionFailed(
                     format!("Invalid code: {}", code)
-                ).into());
+                ));
             };
 
             result.extend_from_slice(&entry);
@@ -553,7 +553,7 @@ impl Compressor for DictionaryCompressor {
 
         output[..compressed.len()].copy_from_slice(&compressed);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += input.len();
         stats.compressed_size += compressed.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -572,7 +572,7 @@ impl Compressor for DictionaryCompressor {
 
         output[..decoded.len()].copy_from_slice(&decoded);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.decompression_time_us += start.elapsed().as_micros() as u64;
         stats.blocks_decompressed += 1;
 
@@ -592,11 +592,11 @@ impl Compressor for DictionaryCompressor {
     }
 
     fn stats(&self) -> CompressionStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     fn reset_stats(&mut self) {
-        *self.stats.lock().unwrap() = CompressionStats::new();
+        *self.stats.lock() = CompressionStats::new();
     }
 }
 
@@ -755,7 +755,7 @@ impl Compressor for HuffmanCompressor {
 
         output[..compressed.len()].copy_from_slice(&compressed);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += input.len();
         stats.compressed_size += compressed.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -813,7 +813,7 @@ impl Compressor for HuffmanCompressor {
 
         output[..decoded.len()].copy_from_slice(&decoded);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.decompression_time_us += start.elapsed().as_micros() as u64;
         stats.blocks_decompressed += 1;
 
@@ -833,11 +833,11 @@ impl Compressor for HuffmanCompressor {
     }
 
     fn stats(&self) -> CompressionStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     fn reset_stats(&mut self) {
-        *self.stats.lock().unwrap() = CompressionStats::new();
+        *self.stats.lock() = CompressionStats::new();
     }
 }
 
@@ -903,7 +903,7 @@ impl Compressor for AdaptiveCompressor {
         // Compress with selected algorithm
         let compressed_size = self.compressors[compressor_idx].compress(input, &mut output[1..])?;
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += input.len();
         stats.compressed_size += compressed_size + 1;
         stats.blocks_compressed += 1;
@@ -921,12 +921,12 @@ impl Compressor for AdaptiveCompressor {
         if compressor_idx >= self.compressors.len() {
             return Err(CompressionError::UnsupportedAlgorithm(
                 format!("Invalid algorithm index: {}", compressor_idx)
-            ).into());
+            ));
         }
 
         let decompressed_size = self.compressors[compressor_idx].decompress(&input[1..], output)?;
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.blocks_decompressed += 1;
 
         Ok(decompressed_size)
@@ -945,11 +945,11 @@ impl Compressor for AdaptiveCompressor {
     }
 
     fn stats(&self) -> CompressionStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     fn reset_stats(&mut self) {
-        *self.stats.lock().unwrap() = CompressionStats::new();
+        *self.stats.lock() = CompressionStats::new();
     }
 }
 
@@ -1172,7 +1172,7 @@ impl FOREncoder {
         let packed = packer.pack_u32(&relative_values, bit_width);
         encoded.extend_from_slice(&packed);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += values.len() * 4;
         stats.compressed_size += encoded.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -1206,7 +1206,7 @@ impl FOREncoder {
             .map(|&v| v.saturating_add(min_val))
             .collect();
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.decompression_time_us += start.elapsed().as_micros() as u64;
         stats.blocks_decompressed += 1;
 
@@ -1267,7 +1267,7 @@ impl DeltaEncoder {
         let packed = packer.pack_u32(&deltas, bit_width);
         encoded.extend_from_slice(&packed);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += values.len() * 4;
         stats.compressed_size += encoded.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -1308,7 +1308,7 @@ impl DeltaEncoder {
             values.push(prev.wrapping_add(delta));
         }
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.decompression_time_us += start.elapsed().as_micros() as u64;
         stats.blocks_decompressed += 1;
 
@@ -1361,7 +1361,7 @@ impl DeltaEncoder {
         let packed = packer.pack_u32(&delta_deltas, bit_width);
         encoded.extend_from_slice(&packed);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += values.len() * 8;
         stats.compressed_size += encoded.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -1419,7 +1419,7 @@ impl RLEEncoder {
             i += run_length;
         }
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += data.len();
         stats.compressed_size += encoded.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -1447,7 +1447,7 @@ impl RLEEncoder {
             decoded.extend(std::iter::repeat(value).take(run_length));
         }
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.decompression_time_us += start.elapsed().as_micros() as u64;
         stats.blocks_decompressed += 1;
 
@@ -1484,7 +1484,7 @@ impl RLEEncoder {
             i += run_length;
         }
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += values.len() * 4;
         stats.compressed_size += encoded.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -1517,7 +1517,7 @@ impl RLEEncoder {
             pos += 6;
         }
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.decompression_time_us += start.elapsed().as_micros() as u64;
         stats.blocks_decompressed += 1;
 
@@ -1588,7 +1588,7 @@ impl EnhancedDictionaryEncoder {
         let packed_indices = packer.pack_u32(&indices, bit_width);
         encoded.extend_from_slice(&packed_indices);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += data.iter().map(|v| v.len()).sum::<usize>();
         stats.compressed_size += encoded.len();
         stats.compression_time_us += start.elapsed().as_micros() as u64;
@@ -1648,12 +1648,12 @@ impl EnhancedDictionaryEncoder {
             if index as usize >= dict_entries.len() {
                 return Err(CompressionError::DecompressionFailed(
                     format!("Invalid dictionary index: {}", index)
-                ).into());
+                ));
             }
             data.push(dict_entries[index as usize].clone());
         }
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.decompression_time_us += start.elapsed().as_micros() as u64;
         stats.blocks_decompressed += 1;
 
@@ -1759,7 +1759,7 @@ impl CascadedCompressor {
 
         result.extend_from_slice(&compressed);
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.uncompressed_size += values.len() * 4;
         stats.compressed_size += result.len();
         stats.blocks_compressed += 1;
@@ -1796,10 +1796,10 @@ impl CascadedCompressor {
             }
             _ => return Err(CompressionError::UnsupportedAlgorithm(
                 format!("Unknown encoding: {}", encoding)
-            ).into()),
+            )),
         };
 
-        let mut stats = self.stats.lock().unwrap();
+        let mut stats = self.stats.lock();
         stats.blocks_decompressed += 1;
 
         Ok(values)

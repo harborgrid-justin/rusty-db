@@ -291,8 +291,8 @@ use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use crate::error::Result;
-use std::time::{Duration};
+use crate::error::{Result, DbError};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::path::PathBuf;
 
 /// Replication mode
@@ -778,7 +778,7 @@ impl ReplicationManager {
     }
 
     /// Get WAL entries starting from a specific LSN
-    pub fn get_wal_entries(&self, fromlsn: u64, limit: usize) -> Vec<WALEntry> {
+    pub fn get_wal_entries(&self, from_lsn: u64, limit: usize) -> Vec<WALEntry> {
         let wal = self.wal.read();
         wal.iter()
             .filter(|entry| entry.lsn >= from_lsn)
@@ -1069,7 +1069,7 @@ impl ReplicationManager {
         drop(replicas);
 
         // Add child replica
-        self.add_replica(child_replica)?;
+        self.add_replica(childreplica)?;
 
         Ok(())
     }
@@ -2869,8 +2869,6 @@ mod tests {
     #[tokio::test]
     async fn test_event_notification() -> Result<()> {
         use std::sync::Mutex;
-use std::time::UNIX_EPOCH;
-use std::time::SystemTime;
 
         struct TestListener {
             events: Arc<Mutex<Vec<ReplicationEvent>>>,

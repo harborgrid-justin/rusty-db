@@ -660,7 +660,7 @@ impl StreamingResultSet {
 
     pub async fn receive_chunk(&self) -> Result<Option<StreamChunk>, ProtocolError> {
         let start = Instant::now();
-        let chunk = self.receiver.lock().unwrap().recv().await;
+        let chunk = self.receiver.lock().recv().await;
 
         if let Some(ref c) = chunk {
             self.metrics.record_receive(start.elapsed(), c.data.len());
@@ -840,22 +840,22 @@ impl ConnectionStateMachine {
     pub fn transition_to(&self, newstate: ConnectionState) -> Result<(), ProtocolError> {
         let mut state = self.state.write();
 
-        if !state.can_transition_to(new_state) {
+        if !state.can_transition_to(newstate) {
             return Err(ProtocolError::InvalidStateTransition {
                 from: *state,
-                to: new_state,
+                to: newstate,
             });
         }
 
         let old_state = *state;
-        *state = new_state;
+        *state = newstate;
 
-        self.record_transition(old_state, new_state);
+        self.record_transition(old_state, newstate);
         self.update_activity();
 
         info!(
             "Connection {} transitioned from {:?} to {:?}",
-            self.connection_id, old_state, new_state
+            self.connection_id, old_state, newstate
         );
 
         Ok(())
@@ -1365,10 +1365,10 @@ pub struct PriorityRequestQueue {
 impl PriorityRequestQueue {
     pub fn new() -> Self {
         let mut queues = HashMap::new();
-        queues.insert(Low, VecDeque::new());
-        queues.insert(Normal, VecDeque::new());
-        queues.insert(High, VecDeque::new());
-        queues.insert(Critical, VecDeque::new());
+        queues.insert(RequestPriority::Low, VecDeque::new());
+        queues.insert(RequestPriority::Normal, VecDeque::new());
+        queues.insert(RequestPriority::High, VecDeque::new());
+        queues.insert(RequestPriority::Critical, VecDeque::new());
 
         Self {
             queues: Arc::new(RwLock::new(queues)),
@@ -1494,7 +1494,7 @@ impl BufferPool {
     pub fn with_config(config: BufferPoolConfig) -> Self {
         let mut pools = HashMap::new();
         for &size in &config.standard_sizes {
-            pools.insert(size::new());
+            pools.insert(size, VecDeque::new());
         }
 
         Self {
@@ -1765,7 +1765,7 @@ impl LargeObjectStream {
     }
 
     pub async fn receive_chunk(&self) -> Option<Bytes> {
-        self.receiver.lock().unwrap().recv().await
+        self.receiver.lock().recv().await
     }
 
     pub fn progress(&self) -> f64 {
@@ -1793,7 +1793,7 @@ impl MemoryMappedTransfer {
             file_path,
             size,
             offset: 0,
-            chunk_size,
+            chunk_size: chunksize,
         }
     }
 
@@ -2957,7 +2957,7 @@ impl ProtocolMetricsAggregator {
     pub fn new(maxsnapshots: usize, snapshot_interval: Duration) -> Self {
         Self {
             snapshots: Arc::new(RwLock::new(VecDeque::new())),
-            max_snapshots,
+            max_snapshots: maxsnapshots,
             snapshot_interval,
         }
     }

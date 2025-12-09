@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
+use base64::{Engine as _, engine::general_purpose};
 use crate::Result;
 use crate::error::DbError;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
@@ -333,7 +334,7 @@ impl AuthenticationManager {
 
         let policy = self.password_policy.read();
         let password_expires_at = policy.expiration_days.map(|days| {
-            now + (days * 86400)
+            now + (days as i64 * 86400)
         });
 
         let user = UserAccount {
@@ -563,7 +564,7 @@ impl AuthenticationManager {
 
         // Update expiration
         user.password_expires_at = policy.expiration_days.map(|days| {
-            current_timestamp() + (days * 86400)
+            current_timestamp() + (days as i64 * 86400)
         });
 
         // Update status if password change was required
@@ -791,10 +792,11 @@ impl AuthenticationManager {
         use rand::Rng;
         let mut rng = rand::thread_rng();
         let bytes: Vec<u8> = (0..20).map(|_| rng.gen()).collect();
-        base64::encode(&bytes)
+        general_purpose::STANDARD.encode(&bytes)
     }
 
     fn generate_backup_codes(&self, count: usize) -> Vec<String> {
+        use rand::Rng;
         let mut rng = rand::thread_rng();
         (0..count)
             .map(|_| {

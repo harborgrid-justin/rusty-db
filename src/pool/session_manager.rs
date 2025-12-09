@@ -62,7 +62,7 @@
 use std::fmt;
 use std::collections::VecDeque;
 use std::sync::Mutex;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -1332,7 +1332,7 @@ pub struct SessionPool {
     connection_classes: Arc<RwLock<HashMap<String, ConnectionClass>>>,
 
     /// Tag-based session index
-    tag_index: Arc<RwLock<HashMap<String<SID>>>>,
+    tag_index: Arc<RwLock<HashMap<String, HashSet<SID>>>>,
 
     /// Pool statistics
     stats: Arc<RwLock<PoolStatistics>>,
@@ -1378,7 +1378,7 @@ impl SessionPool {
         }
 
         // Try to get from available pool
-        if let Some(mut session) = self.available.lock().unwrap().pop_front() {
+        if let Some(mut session) = self.available.lock().pop_front() {
             // Apply purity level
             match request.purity {
                 PurityLevel::New => {
@@ -1436,7 +1436,7 @@ impl SessionPool {
                     .insert(session_id);
             }
 
-            self.available.lock().unwrap().push_back(session);
+            self.available.lock().push_back(session);
             self.stats.write().record_release();
         }
 
@@ -3217,7 +3217,7 @@ pub struct GlobalSessionStatistics {
 #[derive(Debug)]
 pub struct SessionCache {
     /// LRU cache of session states
-    cache: Arc<RwLock<HashMap<SID, (SessionState)>>>,
+    cache: Arc<RwLock<HashMap<SID, (SessionState, SystemTime)>>>,
 
     /// Cache size limit
     max_size: usize,
@@ -3245,7 +3245,7 @@ impl SessionCache {
             self.evict_oldest(&mut cache);
         }
 
-        cache.insert(session.session_id, session::now());
+        cache.insert(session.session_id, (session, SystemTime::now()));
     }
 
     /// Get session from cache
@@ -3275,7 +3275,7 @@ impl SessionCache {
     }
 
     /// Evict oldest entry
-    fn evict_oldest(&self, cache: &mut HashMap<SID, (SessionState)>) {
+    fn evict_oldest(&self, cache: &mut HashMap<SID, (SessionState, SystemTime)>) {
         if let Some(oldest_sid) = cache.iter()
             .min_by_key(|(_, (_, cached_at))| cached_at)
             .map(|(sid, _)| *sid)
