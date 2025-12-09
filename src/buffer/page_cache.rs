@@ -652,7 +652,7 @@ impl PerCoreFramePool {
     /// Try to allocate a frame from this core's pool
     #[inline]
     pub fn try_allocate(&self) -> Option<FrameId> {
-        let frame = self.free_frames.lock().pop();
+        let frame = self.free_frames.lock().unwrap().pop();
         if frame.is_some() {
             self.allocations.fetch_add(1, Ordering::Relaxed);
         }
@@ -681,7 +681,7 @@ impl PerCoreFramePool {
     /// Get number of free frames
     #[inline]
     pub fn free_count(&self) -> usize {
-        self.free_frames.lock().len()
+        self.free_frames.lock().unwrap().len()
     }
 
     /// Get statistics

@@ -599,7 +599,7 @@ impl MetricsRegistry {
         let metric_id = MetricId::new(name, labels);
 
         // Check cardinality
-        if let CardinalityCheckResult::Drop = self.cardinality_manager.lock().check(&metric_id) {
+        if let CardinalityCheckResult::Drop = self.cardinality_manager.lock().unwrap().check(&metric_id) {
             // Return a dummy counter that doesn't persist
             return Arc::new(CounterMetric::new("dropped"));
         }
@@ -624,7 +624,7 @@ impl MetricsRegistry {
     ) -> Arc<GaugeMetric> {
         let metric_id = MetricId::new(name, labels);
 
-        if let CardinalityCheckResult::Drop = self.cardinality_manager.lock().check(&metric_id) {
+        if let CardinalityCheckResult::Drop = self.cardinality_manager.lock().unwrap().check(&metric_id) {
             return Arc::new(GaugeMetric::new("dropped"));
         }
 
@@ -649,7 +649,7 @@ impl MetricsRegistry {
     ) -> Arc<HistogramMetric> {
         let metric_id = MetricId::new(name, labels);
 
-        if let CardinalityCheckResult::Drop = self.cardinality_manager.lock().check(&metric_id) {
+        if let CardinalityCheckResult::Drop = self.cardinality_manager.lock().unwrap().check(&metric_id) {
             return Arc::new(HistogramMetric::new("dropped", buckets));
         }
 

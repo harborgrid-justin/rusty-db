@@ -913,7 +913,7 @@ impl ReplicationSlotManager {
             }
         });
 
-        self.background_tasks.lock().push(handle);
+        self.background_tasks.lock().unwrap().push(handle);
     }
 
     /// Starts cleanup background task
@@ -975,7 +975,7 @@ impl ReplicationSlotManager {
             }
         });
 
-        self.background_tasks.lock().push(handle);
+        self.background_tasks.lock().unwrap().push(handle);
     }
 
     /// Creates a consumption stream for a slot

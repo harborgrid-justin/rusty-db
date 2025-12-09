@@ -30,7 +30,7 @@ use std::time::SystemTime;
 use std::path::PathBuf;
 
 use crate::common::TableId;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::time_travel::{SCN, Timestamp, TimeTravelEngine, current_timestamp};
 
 // ============================================================================

@@ -4,7 +4,7 @@
 // trend analysis, predictive analytics, and alert generation with ML model serving.
 
 use std::collections::VecDeque;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 use super::{Event, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

@@ -665,7 +665,7 @@ impl MemoryPressureManager {
     pub async fn stop_monitoring(&self) -> Result<(), PressureError> {
         self.is_monitoring.store(false, Ordering::Relaxed);
 
-        if let Some(handle) = self.monitoring_task.lock().take() {
+        if let Some(handle) = self.monitoring_task.lock().unwrap().take() {
             handle.abort();
         }
 
@@ -1116,7 +1116,7 @@ mod tests {
                 let order = Arc::clone(&order);
                 let name = callback_name.clone();
                 Box::pin(async move {
-                    order.lock().push(name);
+                    order.lock().unwrap().push(name);
                     Ok(1024)
                 })
             });

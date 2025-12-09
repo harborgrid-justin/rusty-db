@@ -9,7 +9,7 @@ use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::collections::HashSet;
 use std::time::Instant;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use async_trait::async_trait;
 use bincode;
 use bytes::{Bytes, BytesMut};
@@ -171,7 +171,7 @@ pub struct ClusterTopologyManager {
     event_tx: broadcast::Sender<MembershipEvent>,
     udp_socket: Arc<UdpSocket>,
     protocol_seq: Arc<RwLock<u64>>,
-    pending_acks: Arc<RwLock<HashMap<u64::Sender<bool>>>>,
+    pending_acks: Arc<RwLock<HashMap<u64, oneshot::Sender<bool>>>>,
     multicast_groups: Arc<RwLock<Vec<IpAddr>>>,
     quorum_config: Arc<RwLock<QuorumConfig>>,
     partition_detector: Arc<PartitionDetector>,
@@ -1057,7 +1057,7 @@ impl NodeConnectionPool {
 
     /// Receive messages from any node
     pub async fn receive_message(&self) -> Option<(NodeId, ClusterMessage)> {
-        self.message_rx.lock().recv().await
+        self.message_rx.lock().unwrap().recv().await
     }
 
     /// Get connection metrics
@@ -1133,7 +1133,7 @@ impl NodeConnection {
         let data = bincode::serialize(&message)
             .map_err(|e| DbError::Serialization(e.to_string()))?;
 
-        self.send_queue.lock().push_back((priority, data));
+        self.send_queue.lock().unwrap().push_back((priority, data));
         *self.last_activity.write() = Instant::now();
 
         Ok(())
@@ -1695,7 +1695,7 @@ impl LocalityMap {
 
 /// Hot-spot detection and mitigation
 pub struct HotspotDetector {
-    query_counts: Arc<RwLock<HashMap<NodeId<(Instant, usize)>>>>,
+    query_counts: Arc<RwLock<HashMap<NodeId, (Instant, usize)>>>,
     threshold_qps: usize,
     window_size: Duration,
 }
@@ -2125,11 +2125,11 @@ impl SessionMigrationManager {
         info!("Found {} sessions to migrate", sessions_to_migrate.len());
 
         for session in sessions_to_migrate {
-            self.migration_queue.lock().push_back(session.session_id);
+            self.migration_queue.lock().unwrap().push_back(session.session_id);
         }
 
         // Process migrations
-        while let Some(session_id) = self.migration_queue.lock().pop_front() {
+        while let Some(session_id) = self.migration_queue.lock().unwrap().pop_front() {
             if let Err(e) = self.migrate_session(session_id).await {
                 error!("Failed to migrate session {}: {}", session_id, e);
             }
@@ -2580,7 +2580,7 @@ pub struct HealthCheckResult {
 
 /// Latency tracking for nodes
 pub struct LatencyTracker {
-    measurements: Arc<RwLock<HashMap<NodeId<(Instant)>>>>,
+    measurements: Arc<RwLock<HashMap<NodeId, VecDeque<(Instant, Duration)>>>>,
     window_size: usize,
 }
 

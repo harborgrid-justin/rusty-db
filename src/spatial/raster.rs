@@ -7,8 +7,8 @@
 // - Pyramids and overviews for performance
 // - Tile-based storage for large rasters
 
-use crate::error::Result;
-use crate::spatial::geometry::{BoundingBox, Coordinate, LinearRing, Polygon};
+use crate::error::{DbError, Result};
+use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, LinearRing, Polygon};
 use std::collections::HashMap;
 
 /// Pixel data types

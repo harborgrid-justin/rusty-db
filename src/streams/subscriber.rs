@@ -16,7 +16,7 @@ use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, broadcast};
 use tokio::time::interval;
-use crate::{Result, DbError};
+use crate::error::{DbError, Result};
 use super::publisher::PublishedEvent;
 
 /// Delivery semantics
@@ -378,7 +378,7 @@ impl EventSubscriber {
 
         while start.elapsed() < timeout && consumed.len() < self.config.max_poll_records {
             // Try to get event from buffer
-            if let Some(event) = self.event_buffer.lock().pop_front() {
+            if let Some(event) = self.event_buffer.lock().unwrap().pop_front() {
                 // Apply filter if configured
                 if let Some(filter) = &self.config.filter {
                     if !filter.matches(&event.event) {
@@ -436,12 +436,12 @@ impl EventSubscriber {
             attempt: 1,
         };
 
-        self.event_buffer.lock().push_back(consumed);
+        self.event_buffer.lock().unwrap().push_back(consumed);
     }
 
     /// Commit offsets synchronously
     pub async fn commit_sync(&self) -> Result<()> {
-        let pending = self.pending_commits.lock().drain(..).collect::<Vec<_>>();
+        let pending = self.pending_commits.lock().unwrap().drain(..).collect::<Vec<_>>();
 
         for offset in pending {
             // Update position
@@ -465,7 +465,7 @@ impl EventSubscriber {
     /// Store offset for later commit
     pub async fn store_offset(&self, topic: &str, partition: u32, offset: u64) -> Result<()> {
         if self.config.enable_auto_offset_store {
-            self.pending_commits.lock().push_back(PartitionOffset::new(partition, offset));
+            self.pending_commits.lock().unwrap().push_back(PartitionOffset::new(partition, offset));
         }
         Ok(())
     }
@@ -499,7 +499,7 @@ impl EventSubscriber {
         if let Some(group_id) = &self.config.group_id {
             let groups = self.groups.read();
             if let Some(group) = groups.get(group_id) {
-                return group.lock().get_assigned_partitions(&self.config.consumer_id);
+                return group.lock().unwrap().get_assigned_partitions(&self.config.consumer_id);
             }
         }
         Vec::new()
@@ -517,12 +517,12 @@ impl EventSubscriber {
 
     /// Get dead letter queue events
     pub fn get_dlq_events(&self) -> Vec<ConsumedEvent> {
-        self.dlq.lock().iter().cloned().collect()
+        self.dlq.lock().unwrap().iter().cloned().collect()
     }
 
     /// Send event to dead letter queue
     pub fn send_to_dlq(&self, event: ConsumedEvent) {
-        self.dlq.lock().push_back(event);
+        self.dlq.lock().unwrap().push_back(event);
         self.stats.write().dlq_size += 1;
     }
 
@@ -576,7 +576,7 @@ impl EventSubscriber {
                 interval.tick().await;
 
                 // Commit pending offsets
-                let pending = pending_commits.lock().drain(..).collect::<Vec<_>>();
+                let pending = pending_commits.lock().unwrap().drain(..).collect::<Vec<_>>();
                 for offset in pending {
                     if let Some(topic) = topics.first() {
                         positions.write()

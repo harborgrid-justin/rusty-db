@@ -9,8 +9,8 @@
 // - Hot spot analysis
 
 use std::collections::HashSet;
-use crate::error::Result;
-use crate::spatial::geometry::{BoundingBox, Coordinate, Point, Polygon, LinearRing};
+use crate::error::{DbError, Result};
+use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, Point, Polygon, LinearRing};
 use crate::spatial::indexes::SpatialIndex;
 use crate::spatial::operators::{SetOps, ConvexHullOps, TransformOps};
 use std::collections::{HashMap};
@@ -25,11 +25,11 @@ pub struct NearestNeighborResult {
 /// K-nearest neighbors searcher
 pub struct KNearestNeighbors {
     index: Box<dyn SpatialIndex>,
-    geometries: HashMap<u64>,
+    geometries: HashMap<u64, Geometry>,
 }
 
 impl KNearestNeighbors {
-    pub fn new(index: Box<dyn SpatialIndex>, geometries: HashMap<u64>) -> Self {
+    pub fn new(index: Box<dyn SpatialIndex>, geometries: HashMap<u64, Geometry>) -> Self {
         Self { index, geometries }
     }
 

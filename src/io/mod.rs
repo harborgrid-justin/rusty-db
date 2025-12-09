@@ -55,7 +55,7 @@
 // # }
 // ```
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use std::sync::Arc;
 
 // ============================================================================

@@ -37,7 +37,7 @@ use std::collections::{HashMap};
 
 use tracing::{debug, info};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 /// Node in the dependency graph
 #[derive(Debug, Clone, PartialEq, Eq)]

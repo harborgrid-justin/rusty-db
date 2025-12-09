@@ -796,14 +796,14 @@ impl DiskManager {
     /// Async read operation (simulated - would use io_uring in production)
     pub fn read_page_async(&self, page_id: PageId, priority: IoPriority) -> Result<()> {
         let op = IoOperation::new(IoOpType::Read, page_id, priority);
-        self.scheduler.lock().schedule(op);
+        self.scheduler.lock().unwrap().schedule(op);
         Ok(())
     }
 
     /// Async write operation (simulated - would use io_uring in production)
     pub fn write_page_async(&self, page: &Page, priority: IoPriority) -> Result<()> {
         let op = IoOperation::new(IoOpType::Write, page.id, priority);
-        self.scheduler.lock().schedule(op);
+        self.scheduler.lock().unwrap().schedule(op);
 
         // Buffer the write
         self.write_behind.lock()

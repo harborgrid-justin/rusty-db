@@ -26,7 +26,7 @@ use std::sync::Arc;
 use std::time::{Duration};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::pdb::{PdbId, PdbSnapshot};
 
 /// Clone type

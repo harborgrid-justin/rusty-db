@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::hash::DefaultHasher;
 use tokio::time::sleep;
 use super::planner::PlanNode;
 use super::QueryResult;
@@ -2298,7 +2299,7 @@ use std::time::SystemTime;
     /// CTE Execution Monitor
     pub struct CteExecutionMonitor {
         executions: Vec<CteExecution>,
-        active_executions: HashMap<String>,
+        active_executions: HashMap<String, Instant>,
     }
     
     #[derive(Debug, Clone)]
@@ -2321,7 +2322,7 @@ use std::time::SystemTime;
         
         /// Start monitoring a CTE execution
         pub fn start_execution(&mut self, cte_name: String) {
-            self.active_executions.insert(cte_name::now());
+            self.active_executions.insert(cte_name, Instant::now());
         }
         
         /// End monitoring and record results
@@ -2453,6 +2454,9 @@ use std::time::SystemTime;
 
 /// CTE Advanced Features
 pub mod advanced {
+    use crate::error::DbError;
+    use crate::execution::{CteContext, CteDefinition, QueryResult};
+    use crate::execution::planner::PlanNode;
 
     /// Window Function Support in CTEs
     pub struct CteWindowFunction {

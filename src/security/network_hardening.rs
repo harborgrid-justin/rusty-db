@@ -188,7 +188,7 @@ impl SlidingWindow {
         Self {
             window_duration,
             requests: VecDeque::new(),
-            max_requests,
+            max_requests: maxrequests,
         }
     }
 
@@ -886,7 +886,7 @@ impl ProtocolValidator {
         }
 
         // Validate body size
-        if body_size > rules.max_request_size {
+        if bodysize > rules.max_request_size {
             stats.validation_failed += 1;
             stats.size_violations += 1;
             return Err(DbError::InvalidOperation("Request body too large".to_string()));
@@ -1121,7 +1121,7 @@ impl MetricsTimeSeries {
         self.request_rates.push_back((now, request_rate));
         self.response_times.push_back((now, response_time));
         self.error_rates.push_back((now, error_rate));
-        self.payload_sizes.push_back((now, payload_size));
+        self.payload_sizes.push_back((now, payloadsize));
 
         // Keep window size
         if self.request_rates.len() > ANOMALY_WINDOW_SIZE {

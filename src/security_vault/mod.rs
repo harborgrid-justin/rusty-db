@@ -300,7 +300,7 @@ impl SecurityVaultManager {
         algorithm: &str,
     ) -> Result<()> {
         // Generate data encryption key
-        let mut key_store = self.key_store.lock().await;
+        let mut key_store = self.key_store.lock().unwrap().await;
         let dek = key_store.generate_dek(tablespace_name, algorithm)?;
         drop(key_store);
 
@@ -309,7 +309,7 @@ impl SecurityVaultManager {
         tde.enable_tablespace_encryption(tablespace_name, algorithm, &dek)?;
 
         // Audit the operation
-        let mut audit = self.audit_vault.lock().await;
+        let mut audit = self.audit_vault.lock().unwrap().await;
         audit.log_security_event(
             "SYSTEM",
             "ENABLE_TDE",
@@ -329,7 +329,7 @@ impl SecurityVaultManager {
         let key_id = format!("{}:{}", table_name, column_name);
 
         // Generate column encryption key
-        let mut key_store = self.key_store.lock().await;
+        let mut key_store = self.key_store.lock().unwrap().await;
         let dek = key_store.generate_dek(&key_id, algorithm)?;
         drop(key_store);
 
@@ -351,7 +351,7 @@ impl SecurityVaultManager {
         masking.create_policy(policy_name, column_pattern, masking_type)?;
 
         // Audit
-        let mut audit = self.audit_vault.lock().await;
+        let mut audit = self.audit_vault.lock().unwrap().await;
         audit.log_security_event(
             "SYSTEM",
             "CREATE_MASKING_POLICY",
@@ -371,7 +371,7 @@ impl SecurityVaultManager {
         vpd.create_policy(table_name, predicate)?;
 
         // Audit
-        let mut audit = self.audit_vault.lock().await;
+        let mut audit = self.audit_vault.lock().unwrap().await;
         audit.log_security_event(
             "SYSTEM",
             "CREATE_VPD_POLICY",
@@ -383,13 +383,13 @@ impl SecurityVaultManager {
 
     /// Rotate encryption keys
     pub async fn rotate_keys(&mut self) -> Result<usize> {
-        let mut key_store = self.key_store.lock().await;
+        let mut key_store = self.key_store.lock().unwrap().await;
         let rotated = key_store.rotate_expired_deks()?;
 
         self.encryption_stats.write().key_rotations += rotated as u64;
 
         // Audit
-        let mut audit = self.audit_vault.lock().await;
+        let mut audit = self.audit_vault.lock().unwrap().await;
         audit.log_security_event(
             "SYSTEM",
             "KEY_ROTATION",
@@ -406,7 +406,7 @@ impl SecurityVaultManager {
         start_date: i64,
         end_date: i64,
     ) -> Result<ComplianceReport> {
-        let audit = self.audit_vault.lock().await;
+        let audit = self.audit_vault.lock().unwrap().await;
         audit.generate_compliance_report(regulation, start_date, end_date)
     }
 
@@ -428,7 +428,7 @@ impl SecurityVaultManager {
 
     /// Verify audit integrity
     pub async fn verify_audit_integrity(&self) -> Result<bool> {
-        let audit = self.audit_vault.lock().await;
+        let audit = self.audit_vault.lock().unwrap().await;
         audit.verify_integrity()
     }
 

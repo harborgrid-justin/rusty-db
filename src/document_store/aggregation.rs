@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::cmp::Ordering;
 use std::collections::{HashMap};
 use crate::error::Result;
 use super::document::{Document, DocumentId};

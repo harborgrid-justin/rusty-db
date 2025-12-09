@@ -234,10 +234,10 @@ impl TwoPhaseCommitCoordinator {
 
         // Log prepare outcome
         if all_yes {
-            self.txn_log.lock().log_prepared(global_txn_id);
+            self.txn_log.lock().unwrap().log_prepared(global_txn_id);
         } else if self.config.presumed_abort {
             // With presumed abort, we don't need to log abort
-            self.txn_log.lock().log_aborted(global_txn_id);
+            self.txn_log.lock().unwrap().log_aborted(global_txn_id);
         }
 
         Ok(all_yes)
@@ -266,7 +266,7 @@ impl TwoPhaseCommitCoordinator {
             }
 
             txn.state = TwoPhaseCommitState::Committed;
-            self.txn_log.lock().log_committed(global_txn_id);
+            self.txn_log.lock().unwrap().log_committed(global_txn_id);
             self.stats.write().committed_transactions += 1;
         } else {
             txn.state = TwoPhaseCommitState::Aborting;
@@ -553,9 +553,9 @@ pub struct DeadlockStats {
 #[derive(Debug, Clone)]
 pub struct WaitForGraph {
     /// Edges: txn_id -> set of transactions it's waiting for
-    edges: HashMap<TransactionId<TransactionId>>,
+    edges: HashMap<TransactionId, HashSet<TransactionId>>,
     /// Transaction timestamps for victim selection
-    timestamps: HashMap<TransactionId>,
+    timestamps: HashMap<TransactionId, SystemTime>,
 }
 
 impl WaitForGraph {

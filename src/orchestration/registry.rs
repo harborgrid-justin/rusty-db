@@ -34,7 +34,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use tracing::{debug, info};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 /// Service lifetime scope
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -35,7 +35,7 @@ impl CompilationResult {
         self.errors.push(error);
     }
 
-    pub fn add_warning(&self, &mut selfing: CompilationWarning) {
+    pub fn add_warning(&mut self, warning: CompilationWarning) {
         self.warnings.push(warning);
     }
 
@@ -195,7 +195,7 @@ impl PlSqlCompiler {
     fn analyze_statement(
         &self,
         stmt: &Statement,
-        symboltable: &mut SymbolTable,
+        symbol_table: &mut SymbolTable,
         result: &mut CompilationResult,
     ) -> Result<()> {
         match stmt {
@@ -589,7 +589,7 @@ impl Default for SymbolTable {
 
 /// Dependency graph
 pub struct DependencyGraph {
-    graph: Arc<RwLock<HashMap<String<String>>>>,
+    graph: Arc<RwLock<HashMap<String, HashSet<String>>>>,
 }
 
 impl DependencyGraph {

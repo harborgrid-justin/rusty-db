@@ -6,7 +6,10 @@
 // - Cache-conscious algorithms
 // - Branch-free conditional operations
 
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+#[cfg(target_arch = "x86")]
+use std::arch::x86::*;
 use crate::inmemory::column_store::ColumnDataType;
 
 /// Cache line size for alignment

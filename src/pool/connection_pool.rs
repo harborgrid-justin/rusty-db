@@ -36,7 +36,7 @@ use tokio::time::timeout;
 use async_trait::async_trait;
 use serde::{Serialize, Deserialize};
 use thiserror::Error;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 // ============================================================================
 // SECTION 1: POOL CORE ENGINE (700+ lines)
@@ -550,7 +550,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         while created < target {
             match self.create_connection().await {
                 Ok(conn) => {
-                    self.idle.lock().push_back(conn);
+                    self.idle.lock().unwrap().push_back(conn);
                     created += 1;
                 }
                 Err(e) => {
@@ -632,7 +632,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
             }
         });
 
-        *self.maintenance_handle.lock() = Some(handle);
+        *self.maintenance_handle.lock().unwrap() = Some(handle);
     }
 
     /// Perform maintenance tasks
@@ -643,7 +643,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         total_destroyed: &AtomicU64,
         stats: &Arc<PoolStatistics>,
     ) {
-        let mut idle_conns = idle.lock();
+        let mut idle_conns = idle.lock().unwrap();
         let active_conns = active.read();
 
         // Remove expired connections
@@ -713,7 +713,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     async fn acquire_inner(&self) -> std::result::Result<PooledConnectionGuard<C>, PoolError> {
         loop {
             // Try to get idle connection
-            if let Some(mut conn) = self.idle.lock().pop_front() {
+            if let Some(mut conn) = self.idle.lock().unwrap().pop_front() {
                 // Validate if required
                 if self.config.validate_on_acquire {
                     if let Err(e) = self.validate_connection(&mut conn).await {
@@ -812,12 +812,12 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
 
     /// Get current pool size
     pub fn size(&self) -> usize {
-        self.idle.lock().len() + self.active.read().len()
+        self.idle.lock().unwrap().len() + self.active.read().len()
     }
 
     /// Get number of idle connections
     pub fn idle_count(&self) -> usize {
-        self.idle.lock().len()
+        self.idle.lock().unwrap().len()
     }
 
     /// Get number of active connections
@@ -835,12 +835,12 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         self.closed.store(true, Ordering::SeqCst);
 
         // Cancel maintenance task
-        if let Some(handle) = self.maintenance_handle.lock().take() {
+        if let Some(handle) = self.maintenance_handle.lock().unwrap().take() {
             handle.abort();
         }
 
         // Close all idle connections
-        let mut idle = self.idle.lock();
+        let mut idle = self.idle.lock().unwrap();
         idle.clear();
 
         // Wait for active connections to be returned
@@ -898,7 +898,7 @@ impl<C> Drop for PooledConnectionGuard<C> {
             conn.acquired_at = None;
 
             // Return to idle pool
-            self.pool.idle.lock().push_back(conn);
+            self.pool.idle.lock().unwrap().push_back(conn);
 
             self.pool.stats.record_connection_released();
         }
@@ -1412,7 +1412,7 @@ impl WaitQueue {
 
     /// Enqueue with priority
     pub async fn enqueue_with_priority(&self, priority: QueuePriority) -> std::result::Result<(), PoolError> {
-        let mut queue = self.entries.lock();
+        let mut queue = self.entries.lock().unwrap();
 
         if queue.len() >= self.max_size {
             return Err(PoolError::WaitQueueFull {
@@ -1446,7 +1446,7 @@ impl WaitQueue {
 
     /// Notify next waiter
     pub fn notify_one(&self) {
-        let mut queue = self.entries.lock();
+        let mut queue = self.entries.lock().unwrap();
 
         if let Some(entry) = queue.pop_front() {
             let wait_time = entry.enqueued_at.elapsed();
@@ -1461,7 +1461,7 @@ impl WaitQueue {
 
     /// Notify all waiters
     pub fn notify_all(&self) {
-        let mut queue = self.entries.lock();
+        let mut queue = self.entries.lock().unwrap();
 
         while let Some(entry) = queue.pop_front() {
             let wait_time = entry.enqueued_at.elapsed();
@@ -1476,18 +1476,18 @@ impl WaitQueue {
 
     /// Get queue position for a waiter
     pub fn queue_position(&self, waiter_id: u64) -> Option<usize> {
-        let queue = self.entries.lock();
+        let queue = self.entries.lock().unwrap();
         queue.iter().position(|e| e.id == waiter_id)
     }
 
     /// Get current queue length
     pub fn len(&self) -> usize {
-        self.entries.lock().len()
+        self.entries.lock().unwrap().len()
     }
 
     /// Check if queue is empty
     pub fn is_empty(&self) -> bool {
-        self.entries.lock().is_empty()
+        self.entries.lock().unwrap().is_empty()
     }
 
     /// Record wait time
@@ -1575,7 +1575,7 @@ impl DeadlockDetector {
             return false;
         }
 
-        let entries = queue.entries.lock();
+        let entries = queue.entries.lock().unwrap();
 
         // Simple heuristic: if oldest waiter has been waiting too long
         if let Some(oldest) = entries.front() {
@@ -1628,7 +1628,7 @@ impl StarvationPrevention {
 
     /// Check for starvation and boost priority if needed
     pub fn check_and_boost(&self, queue: &WaitQueue) {
-        let mut entries = queue.entries.lock();
+        let mut entries = queue.entries.lock().unwrap();
 
         for entry in entries.iter_mut() {
             if entry.enqueued_at.elapsed() > self.max_wait_time {

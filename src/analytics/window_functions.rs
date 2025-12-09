@@ -8,7 +8,7 @@
 // - **Distribution Functions**: PERCENT_RANK, CUME_DIST
 
 use serde::{Deserialize, Serialize};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 // =============================================================================
 // Window Function Types

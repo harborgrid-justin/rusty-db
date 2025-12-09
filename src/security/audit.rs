@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 
@@ -315,7 +315,7 @@ impl AuditManager {
             id,
             timestamp: current_timestamp_micros(),
             username,
-            session_id,
+            session_id: sessionid,
             action,
             object_name,
             object_type,
@@ -370,7 +370,7 @@ impl AuditManager {
 
         let id = self.log_event(
             username,
-            Some(session_id),
+            Some(sessionid),
             action,
             None,
             None,

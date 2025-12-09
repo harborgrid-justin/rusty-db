@@ -1378,7 +1378,7 @@ impl SessionPool {
         }
 
         // Try to get from available pool
-        if let Some(mut session) = self.available.lock().pop_front() {
+        if let Some(mut session) = self.available.lock().unwrap().pop_front() {
             // Apply purity level
             match request.purity {
                 PurityLevel::New => {
@@ -1436,7 +1436,7 @@ impl SessionPool {
                     .insert(session_id);
             }
 
-            self.available.lock().push_back(session);
+            self.available.lock().unwrap().push_back(session);
             self.stats.write().record_release();
         }
 

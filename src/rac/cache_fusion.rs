@@ -1025,7 +1025,7 @@ impl GlobalEnqueueService {
             response_tx,
         };
 
-        self.wait_queue.lock().push_back(waiter);
+        self.wait_queue.lock().unwrap().push_back(waiter);
 
         // Wait for grant with timeout
         match tokio::time::timeout(LOCK_CONVERSION_TIMEOUT, response_rx).await {

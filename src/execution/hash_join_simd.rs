@@ -147,7 +147,7 @@ impl SimdHashJoin {
     /// Phase 1: Partition build side and create hash tables
     fn partition_and_build(
         &self,
-        buildside: &QueryResult,
+        build_side: &QueryResult,
         key_col: usize,
     ) -> Result<Vec<Partition>, DbError> {
         let num_partitions = self.config.num_partitions;
@@ -207,7 +207,7 @@ impl SimdHashJoin {
     /// Phase 2: Probe with SIMD acceleration
     fn probe_with_simd(
         &self,
-        probeside: &QueryResult,
+        probe_side: &QueryResult,
         key_col: usize,
         partitions: &[Partition],
     ) -> Result<Vec<Match>, DbError> {

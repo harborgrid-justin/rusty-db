@@ -26,7 +26,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{SystemTime};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 // ============================================================================
 // Type Aliases

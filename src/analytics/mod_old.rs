@@ -11,10 +11,11 @@ pub mod timeseries;
 pub mod warehouse;
 
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::catalog::Schema;
 use std::time::{Duration, SystemTime};
 

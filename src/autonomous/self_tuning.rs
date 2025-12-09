@@ -386,7 +386,7 @@ impl RegressionDetector {
 /// Statistics gatherer for automatic statistics collection
 pub struct StatisticsGatherer {
     table_stats: HashMap<String, TableStatistics>,
-    last_gather_time: HashMap<String>,
+    last_gather_time: HashMap<String, Instant>,
     auto_gather_threshold: f64,  // Percentage of data change
 }
 

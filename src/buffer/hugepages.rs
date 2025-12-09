@@ -42,8 +42,7 @@
 // - Requires `SeLockMemoryPrivilege`
 // - Not as mature as Linux support
 
-use crate::error::Result;
-use crate::DbError;
+use crate::error::{DbError, Result};
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -208,7 +207,7 @@ impl HugePageAllocator {
 
     /// Allocate memory with huge page support
     pub fn allocate(&self, size: usize, alignment: usize) -> Result<HugePageAllocation> {
-        self.stats.lock().total_requests += 1;
+        self.stats.lock().unwrap().total_requests += 1;
 
         // Check if we should use huge pages
         if !self.config.enabled || size < self.config.min_allocation_size {
@@ -253,7 +252,7 @@ impl HugePageAllocator {
 
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {
-            self.stats.lock().failed_allocations += 1;
+            self.stats.lock().unwrap().failed_allocations += 1;
             return Err(DbError::Internal("Allocation failed".into()));
         }
 
@@ -350,7 +349,7 @@ impl HugePageAllocator {
 
     /// Get allocation statistics
     pub fn stats(&self) -> HugePageStats {
-        let mut stats = self.stats.lock().clone();
+        let mut stats = self.stats.lock().unwrap().clone();
 
         // Calculate estimated TLB miss rate
         let total_bytes = stats.huge_page_bytes + stats.standard_page_bytes;

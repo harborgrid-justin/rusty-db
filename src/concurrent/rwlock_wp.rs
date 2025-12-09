@@ -336,6 +336,7 @@ impl<T> RwLockWP<T> {
     fn wake_writers(&self) {
         #[cfg(target_os = "linux")]
         {
+            use std::sync::atomic::AtomicI32;
 
             let futex = &self.state as *const AtomicU32 as *const AtomicI32;
             unsafe {
@@ -359,6 +360,7 @@ impl<T> RwLockWP<T> {
     fn wake_readers(&self) {
         #[cfg(target_os = "linux")]
         {
+            use std::sync::atomic::AtomicI32;
 
             let futex = &self.state as *const AtomicU32 as *const AtomicI32;
             unsafe {

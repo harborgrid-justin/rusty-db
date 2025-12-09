@@ -8,7 +8,7 @@ use super::{
     SimdStats, BATCH_SIZE,
 };
 use crate::common::Value;
-use crate::error::Result;
+use crate::error::{DbError, Result};
 
 /// Scan strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

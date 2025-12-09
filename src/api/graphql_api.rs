@@ -2243,7 +2243,7 @@ impl Extension for PerformanceExtensionImpl {
         next: NextExecute<'_>,
     ) -> async_graphql::Response {
         let start = Instant::now();
-        *self.start.lock().await = Some(start);
+        *self.start.lock().unwrap().await = Some(start);
 
         let response = next.run(ctx, operation_name).await;
 

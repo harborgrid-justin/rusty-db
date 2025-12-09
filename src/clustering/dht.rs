@@ -14,6 +14,7 @@
 /// - Rebalancing data across the cluster
 
 use std::collections::HashSet;
+use std::collections::hash_map::DefaultHasher;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
@@ -293,7 +294,6 @@ impl DistributedHashTable {
 
     /// Hash a key to a position on the ring
     fn hash_key(&self, key: &[u8]) -> HashPosition {
-        use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         key.hash(&mut hasher);
         hasher.finish()

@@ -357,7 +357,7 @@ impl LirsEvictionPolicy {
 
     /// Get status change count (indicates adaptation)
     pub fn status_changes(&self) -> u64 {
-        self.state.lock().status_changes
+        self.state.lock().unwrap().status_changes
     }
 }
 
@@ -490,7 +490,7 @@ impl EvictionPolicy for LirsEvictionPolicy {
     }
 
     fn reset(&self) {
-        let capacity = self.state.lock().capacity;
+        let capacity = self.state.lock().unwrap().capacity;
         *self.state.lock() = LirsState::new(capacity);
         self.victim_searches.store(0, Ordering::Relaxed);
         self.total_accesses.store(0, Ordering::Relaxed);

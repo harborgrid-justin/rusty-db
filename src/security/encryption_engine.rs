@@ -35,7 +35,7 @@ use serde::{Deserialize, Serialize};
 use parking_lot::{RwLock};
 use std::sync::Arc;
 use std::collections::HashMap;
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 
@@ -542,7 +542,7 @@ impl KeyManager {
             *counter
         };
 
-        let id = key_id.unwrap_or_else(|| {
+        let id = keyid.unwrap_or_else(|| {
             format!("KEY_{:08X}_{}", version, uuid::Uuid::new_v4())
         });
 
@@ -558,7 +558,7 @@ impl KeyManager {
 
         self.keys.write().insert(id.clone(), key);
 
-        if let Some(parent_id) = parent_key_id {
+        if let Some(parent_id) = parent_keyid {
             self.hierarchy.write().insert(id.clone(), parent_id);
         }
 
@@ -579,7 +579,7 @@ impl KeyManager {
         };
 
         let key = SecureKey {
-            id: key_id.clone(),
+            id: keyid.clone(),
             key_material: SecureKeyMaterial::new(key_material),
             algorithm,
             created_at: current_timestamp(),
@@ -588,7 +588,7 @@ impl KeyManager {
             is_active: true,
         };
 
-        self.keys.write().insert(key_id, key);
+        self.keys.write().insert(keyid, key);
         Ok(())
     }
 
@@ -662,10 +662,10 @@ pub struct KeyDerivation;
 impl KeyDerivation {
     /// HKDF-Expand (simplified)
     pub fn hkdf_expand(prk: &[u8], info: &[u8], outputlen: usize) -> Result<Vec<u8>> {
-        let mut output = Vec::with_capacity(output_len);
+        let mut output = Vec::with_capacity(outputlen);
         let mut counter = 1u8;
 
-        while output.len() < output_len {
+        while output.len() < outputlen {
             let mut mac = HmacSha256::new_from_slice(prk)
                 .map_err(|e| DbError::Internal(format!("HKDF error: {}", e)))?;
 
@@ -678,7 +678,7 @@ impl KeyDerivation {
             let result = mac.finalize();
             let bytes = result.into_bytes();
 
-            let bytes_needed = output_len - output.len();
+            let bytes_needed = outputlen - output.len();
             let bytes_to_copy = bytes_needed.min(32);
             output.extend_from_slice(&bytes[..bytes_to_copy]);
 
@@ -718,7 +718,7 @@ impl KeyDerivation {
     /// Simple key derivation for deterministic encryption
     pub fn derive_deterministic(basekey: &[u8], context: &[u8]) -> Result<KeyMaterial> {
         let mut hasher = Sha256::new();
-        hasher.update(base_key);
+        hasher.update(basekey);
         hasher.update(context);
         let result = hasher.finalize();
 
@@ -1016,7 +1016,7 @@ impl EncryptedIndex {
         // Hash the value with the token key
         let mut mac = HmacSha256::new_from_slice(&token_key)
             .map_err(|e| DbError::Internal(format!("Token generation error: {}", e)))?;
-        mac.update(search_value);
+        mac.update(searchvalue);
         let result = mac.finalize();
 
         Ok(result.into_bytes().to_vec())

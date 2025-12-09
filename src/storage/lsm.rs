@@ -8,8 +8,7 @@ use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::Result;
-use crate::DbError;
+use crate::error::{DbError, Result};
 
 /// LSM key type
 pub type LsmKey = Vec<u8>;
@@ -522,7 +521,7 @@ impl LsmTree {
         };
 
         // Add to immutable queue
-        self.immutable_memtables.lock().push_back(Arc::new(old_memtable));
+        self.immutable_memtables.lock().unwrap().push_back(Arc::new(old_memtable));
 
         // Trigger flush
         self.trigger_flush()?;
@@ -564,7 +563,7 @@ impl LsmTree {
         let sstables = levels[level].sstables.clone();
         let task = CompactionTask::new(level, sstables, self.compaction_strategy);
 
-        self.compaction_queue.lock().push_back(task);
+        self.compaction_queue.lock().unwrap().push_back(task);
 
         Ok(())
     }

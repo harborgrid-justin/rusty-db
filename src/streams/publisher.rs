@@ -16,7 +16,7 @@ use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, Semaphore};
 use tokio::time::interval;
-use crate::{Result, DbError};
+use crate::error::{DbError, Result};
 
 /// Event serialization format
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -182,7 +182,7 @@ impl PartitionState {
     }
 
     fn enqueue(&self, event: PublishedEvent) {
-        self.event_queue.lock().push_back(event);
+        self.event_queue.lock().unwrap().push_back(event);
     }
 
     fn dequeue_batch(&self, max_size: usize) -> Vec<PublishedEvent> {

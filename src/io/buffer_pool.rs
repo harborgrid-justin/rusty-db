@@ -3,7 +3,7 @@
 // Pre-allocated, aligned buffer pool for Direct I/O operations.
 
 use std::fmt;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::io::{PAGE_SIZE, SECTOR_SIZE};
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr;
@@ -320,7 +320,7 @@ impl BufferPool {
         if size > self.config.buffer_size {
             // Size exceeds pool buffer size, allocate new
             if self.config.enable_stats {
-                self.stats.lock().oversized_allocations += 1;
+                self.stats.lock().unwrap().oversized_allocations += 1;
             }
             return AlignedBuffer::new(size, self.config.alignment);
         }
@@ -406,7 +406,7 @@ impl BufferPool {
             }
             BufferAllocationStrategy::AlwaysNew => {
                 if self.config.enable_stats {
-                    self.stats.lock().direct_allocations += 1;
+                    self.stats.lock().unwrap().direct_allocations += 1;
                 }
                 AlignedBuffer::new(size, self.config.alignment)
             }
@@ -430,7 +430,7 @@ impl BufferPool {
                 self.available.fetch_add(1, Ordering::Relaxed);
 
                 if self.config.enable_stats {
-                    self.stats.lock().deallocations += 1;
+                    self.stats.lock().unwrap().deallocations += 1;
                 }
 
                 return;
@@ -467,7 +467,7 @@ impl BufferPool {
 
     /// Get statistics
     pub fn stats(&self) -> BufferPoolStats {
-        self.stats.lock().clone()
+        self.stats.lock().unwrap().clone()
     }
 
     /// Reset statistics

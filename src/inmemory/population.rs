@@ -460,7 +460,7 @@ impl PopulationManager {
             PopulationStrategy::Priority,
         );
 
-        self.task_queue.lock().push(task.clone());
+        self.task_queue.lock().unwrap().push(task.clone());
 
         let mut stats = self.stats.write();
         stats.total_tasks += 1;
@@ -478,7 +478,7 @@ impl PopulationManager {
             PopulationStrategy::OnDemand,
         );
 
-        self.task_queue.lock().push(task);
+        self.task_queue.lock().unwrap().push(task);
 
         let mut stats = self.stats.write();
         stats.total_tasks += 1;
@@ -516,7 +516,7 @@ impl PopulationManager {
     pub fn stats(&self) -> PopulationStats {
         let mut stats = self.stats.read().clone();
 
-        stats.queued_tasks = self.task_queue.lock().len();
+        stats.queued_tasks = self.task_queue.lock().unwrap().len();
         stats.running_tasks = self.progress_tracker.read().len();
 
         stats

@@ -410,7 +410,7 @@ pub struct AnalyticsReport {
     /// Report generation timestamp
     pub generated_at: SystemTime,
     /// Time period covered by report
-    pub time_period: (SystemTime),
+    pub time_period: (SystemTime, SystemTime),
     /// Number of replicas analyzed
     pub replica_count: usize,
     /// Overall system health score
@@ -491,7 +491,7 @@ pub struct ReplicationHealthMonitor {
     /// Replica monitoring state
     replica_monitors: Arc<RwLock<HashMap<ReplicaId, ReplicaMonitorState>>>,
     /// Metrics history
-    metrics_history: Arc<RwLock<HashMap<ReplicaId<MetricDataPoint>>>>,
+    metrics_history: Arc<RwLock<HashMap<ReplicaId, Vec<MetricDataPoint>>>>,
     /// Active alerts
     active_alerts: Arc<RwLock<HashMap<Uuid, HealthAlert>>>,
     /// Alert history
@@ -960,7 +960,7 @@ impl ReplicationHealthMonitor {
             }
         });
 
-        self.task_handles.lock().push(health_check_handle);
+        self.task_handles.lock().unwrap().push(health_check_handle);
     }
 }
 
@@ -973,7 +973,7 @@ impl HealthMonitor for ReplicationHealthMonitor {
 
     async fn stop_monitoring(&self) -> Result<(), HealthMonitorError> {
         // Send shutdown signal
-        if let Some(sender) = self.shutdown_sender.lock().take() {
+        if let Some(sender) = self.shutdown_sender.lock().unwrap().take() {
             let _ = sender.send(());
         }
 

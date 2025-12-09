@@ -32,7 +32,10 @@
 // - Cache lines per operation: 1.2 average
 // - Throughput: 10-15x faster than std::HashMap
 
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+#[cfg(target_arch = "x86")]
+use std::arch::x86::*;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
 use crate::simd::hash::xxhash3_avx2;

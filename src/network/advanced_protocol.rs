@@ -660,7 +660,7 @@ impl StreamingResultSet {
 
     pub async fn receive_chunk(&self) -> Result<Option<StreamChunk>, ProtocolError> {
         let start = Instant::now();
-        let chunk = self.receiver.lock().recv().await;
+        let chunk = self.receiver.lock().unwrap().recv().await;
 
         if let Some(ref c) = chunk {
             self.metrics.record_receive(start.elapsed(), c.data.len());
@@ -925,7 +925,7 @@ impl ConnectionStateMachine {
     }
 
     pub fn get_state_history(&self) -> Vec<StateTransition> {
-        self.state_history.lock().iter().cloned().collect()
+        self.state_history.lock().unwrap().iter().cloned().collect()
     }
 
     pub fn get_metrics(&self) -> ConnectionStats {
@@ -1480,7 +1480,7 @@ pub struct QueueStats {
 
 /// Zero-copy buffer pool for efficient memory management
 pub struct BufferPool {
-    pools: Arc<RwLock<HashMap<usize<BytesMut>>>>,
+    pools: Arc<RwLock<HashMap<usize, VecDeque<BytesMut>>>>,
     standard_sizes: Vec<usize>,
     max_buffers_per_size: usize,
     metrics: Arc<BufferPoolMetrics>,
@@ -1765,7 +1765,7 @@ impl LargeObjectStream {
     }
 
     pub async fn receive_chunk(&self) -> Option<Bytes> {
-        self.receiver.lock().recv().await
+        self.receiver.lock().unwrap().recv().await
     }
 
     pub fn progress(&self) -> f64 {

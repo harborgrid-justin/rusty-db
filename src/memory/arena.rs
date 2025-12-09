@@ -524,16 +524,16 @@ impl MemoryContext {
     /// Resets the context (clears all allocations)
     pub fn reset(&self) {
         // Reset all blocks in the chain
-        if let Some(first_block) = self.first_block.lock().as_ref() {
+        if let Some(first_block) = self.first_block.lock().unwrap().as_ref() {
             let mut current_block = Some(Arc::clone(first_block));
             while let Some(block) = current_block {
                 block.reset();
-                current_block = block.next.lock().clone();
+                current_block = block.next.lock().unwrap().clone();
             }
         }
 
         // Reset current block to first block
-        if let Some(first_block) = self.first_block.lock().as_ref() {
+        if let Some(first_block) = self.first_block.lock().unwrap().as_ref() {
             *self.current_block.lock() = Some(Arc::clone(first_block));
         }
 
@@ -947,7 +947,7 @@ impl ArenaAllocator {
         self.is_active.store(false, Ordering::Relaxed);
 
         // Stop cleanup task
-        if let Some(handle) = self.cleanup_handle.lock().take() {
+        if let Some(handle) = self.cleanup_handle.lock().unwrap().take() {
             handle.abort();
         }
 
@@ -978,13 +978,13 @@ impl ArenaAllocator {
         let mut used_block_size = 0;
 
         // Walk the block chain
-        if let Some(first_block) = context.first_block.lock().as_ref() {
+        if let Some(first_block) = context.first_block.lock().unwrap().as_ref() {
             let mut current_block = Some(Arc::clone(first_block));
 
             while let Some(block) = current_block {
                 total_block_size += block.size;
                 used_block_size += block.size - block.available_space();
-                current_block = block.next.lock().clone();
+                current_block = block.next.lock().unwrap().clone();
             }
         }
 

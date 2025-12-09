@@ -1074,7 +1074,7 @@ impl MemoryDebugger {
         self.is_active.store(false, Ordering::Relaxed);
 
         // Stop monitoring task
-        if let Some(handle) = self.monitoring_task.lock().take() {
+        if let Some(handle) = self.monitoring_task.lock().unwrap().take() {
             handle.abort();
         }
 

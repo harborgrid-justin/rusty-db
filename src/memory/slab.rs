@@ -667,7 +667,7 @@ impl MagazineDepot {
 
     /// Returns a full magazine to the depot
     pub fn return_full_magazine(&self, magazine: Arc<Mutex<Magazine>>) {
-        let size_class_id = magazine.lock().size_class_id;
+        let size_class_id = magazine.lock().unwrap().size_class_id;
         let mut full_magazines = self.full_magazines.lock();
 
         let magazines = full_magazines.entry(size_class_id).or_insert_with(Vec::new);
@@ -690,7 +690,7 @@ impl MagazineDepot {
 
     /// Returns an empty magazine to the depot
     pub fn return_empty_magazine(&self, magazine: Arc<Mutex<Magazine>>) {
-        let size_class_id = magazine.lock().size_class_id;
+        let size_class_id = magazine.lock().unwrap().size_class_id;
         let mut empty_magazines = self.empty_magazines.lock();
 
         let magazines = empty_magazines.entry(size_class_id).or_insert_with(Vec::new);
@@ -939,7 +939,7 @@ impl SlabAllocator {
 
         let thread_caches = self.thread_caches.read();
         for cache in thread_caches.values() {
-            let cache_stats = &cache.lock().stats;
+            let cache_stats = &cache.lock().unwrap().stats;
             result.total_cache_hits += cache_stats.cache_hits;
             result.total_cache_misses += cache_stats.cache_misses;
         }
@@ -995,7 +995,7 @@ impl SlabAllocator {
         // Clean up thread caches
         let mut thread_caches = self.thread_caches.write();
         for (_, cache) in thread_caches.drain() {
-            cache.lock().is_active.store(false, Ordering::Relaxed);
+            cache.lock().unwrap().is_active.store(false, Ordering::Relaxed);
         }
 
         Ok(())

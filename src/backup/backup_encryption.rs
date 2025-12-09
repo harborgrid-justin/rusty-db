@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::fs::{File, create_dir_all};
-use std::io::{Read};
+use std::io::{Read, Write};
 use std::time::{Duration, SystemTime};
 use std::collections::HashMap;
 use parking_lot::{Mutex, RwLock};
@@ -349,12 +349,12 @@ impl KeyManager {
                 result,
             };
 
-            self.audit_log.lock().push(entry);
+            self.audit_log.lock().unwrap().push(entry);
         }
     }
 
     pub fn get_audit_log(&self) -> Vec<KeyAuditEntry> {
-        self.audit_log.lock().clone()
+        self.audit_log.lock().unwrap().clone()
     }
 }
 

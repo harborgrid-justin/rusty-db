@@ -521,7 +521,7 @@ impl WalManager {
     /// Stops WAL streaming and background tasks
     pub async fn stop_streaming(&self) -> Result<(), WalError> {
         // Send shutdown signal
-        if let Some(sender) = self.shutdown_sender.lock().take() {
+        if let Some(sender) = self.shutdown_sender.lock().unwrap().take() {
             let _ = sender.send(());
         }
 
@@ -863,7 +863,7 @@ impl WalManager {
             }
         });
 
-        self.task_handles.lock().push(handle);
+        self.task_handles.lock().unwrap().push(handle);
     }
 
     /// Starts the cleanup task
@@ -885,7 +885,7 @@ impl WalManager {
             }
         });
 
-        self.task_handles.lock().push(handle);
+        self.task_handles.lock().unwrap().push(handle);
     }
 
     /// Starts the archive task
@@ -917,7 +917,7 @@ impl WalManager {
             }
         });
 
-        self.task_handles.lock().push(handle);
+        self.task_handles.lock().unwrap().push(handle);
     }
 
     /// Starts streaming task for a specific replica
@@ -952,7 +952,7 @@ impl WalManager {
             }
         });
 
-        self.task_handles.lock().push(handle);
+        self.task_handles.lock().unwrap().push(handle);
     }
 
     /// Gets streaming state for a replica

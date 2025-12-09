@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::error::Result;
 use super::document::{Document, DocumentId};
 use super::jsonpath::{JsonPath, JsonPathEvaluator};

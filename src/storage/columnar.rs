@@ -7,8 +7,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use crate::error::Result;
-use crate::DbError;
+use crate::error::{DbError, Result};
 
 /// Column data type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

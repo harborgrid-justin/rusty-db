@@ -9,7 +9,7 @@
 
 use std::collections::VecDeque;
 use std::time::SystemTime;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::optimizer_pro::{PhysicalPlan, PlanId, QueryFingerprint};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};

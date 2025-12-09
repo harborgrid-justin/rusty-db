@@ -475,7 +475,7 @@ impl WALManager {
         // Group commit handling
         if self.config.enable_group_commit {
             let (tx, rx) = tokio::sync::oneshot::channel();
-            self.commit_buffer.lock().add(entry, tx);
+            self.commit_buffer.lock().unwrap().add(entry, tx);
 
             // Check if we should flush
             self.maybe_flush_buffer().await?;
