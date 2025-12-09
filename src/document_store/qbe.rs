@@ -6,28 +6,28 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::cmp::Ordering;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use crate::error::{Result, DbError};
 use super::document::{Document, DocumentId};
 use super::jsonpath::JsonPathEvaluator;
 
-/// Query document for Query By Example
+// Query document for Query By Example
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryDocument {
-    /// Query conditions
+    // Query conditions
     #[serde(flatten)]
     pub conditions: HashMap<String, Value>,
 }
 
 impl QueryDocument {
-    /// Create a new empty query
+    // Create a new empty query
     pub fn new() -> Self {
         Self {
             conditions: HashMap::new(),
         }
     }
 
-    /// Create from JSON value
+    // Create from JSON value
     pub fn from_json(value: Value) -> Result<Self> {
         if let Value::Object(obj) = value {
             Ok(Self {
@@ -40,18 +40,18 @@ impl QueryDocument {
         }
     }
 
-    /// Add a condition
+    // Add a condition
     pub fn add_condition(&mut self, field: String, value: Value) {
         self.conditions.insert(field, value);
     }
 
-    /// Evaluate query against a document
+    // Evaluate query against a document
     pub fn matches(&self, doc: &Document) -> Result<bool> {
         let json = doc.as_json()?;
         self.matches_value(&json)
     }
 
-    /// Evaluate query against a JSON value
+    // Evaluate query against a JSON value
     pub fn matches_value(&self, value: &Value) -> Result<bool> {
         for (field, condition) in &self.conditions {
             if !self.evaluate_condition(field, condition, value)? {
@@ -343,7 +343,7 @@ impl Default for QueryDocument {
     }
 }
 
-/// Compare two JSON values
+// Compare two JSON values
 fn compare_values(a: &Value, b: &Value) -> Option<Ordering> {
     match (a, b) {
         (Value::Number(n1), Value::Number(n2)) => {
@@ -357,11 +357,11 @@ fn compare_values(a: &Value, b: &Value) -> Option<Ordering> {
     }
 }
 
-/// Query executor for executing queries on collections
+// Query executor for executing queries on collections
 pub struct QueryExecutor;
 
 impl QueryExecutor {
-    /// Execute a query on a collection of documents
+    // Execute a query on a collection of documents
     pub fn execute(
         query: &QueryDocument,
         documents: &HashMap<DocumentId, Document>,
@@ -377,7 +377,7 @@ impl QueryExecutor {
         Ok(results)
     }
 
-    /// Execute a query with projection
+    // Execute a query with projection
     pub fn execute_with_projection(
         query: &QueryDocument,
         documents: &HashMap<DocumentId, Document>,
@@ -397,22 +397,22 @@ impl QueryExecutor {
     }
 }
 
-/// Projection specification
+// Projection specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Projection {
-    /// Fields to include (true) or exclude (false)
+    // Fields to include (true) or exclude (false)
     pub fields: HashMap<String, bool>,
 }
 
 impl Projection {
-    /// Create a new projection
+    // Create a new projection
     pub fn new() -> Self {
         Self {
             fields: HashMap::new(),
         }
     }
 
-    /// Create from JSON value
+    // Create from JSON value
     pub fn from_json(value: Value) -> Result<Self> {
         if let Value::Object(obj) = value {
             let mut fields = HashMap::new();
@@ -431,17 +431,17 @@ impl Projection {
         }
     }
 
-    /// Include a field
+    // Include a field
     pub fn include(&mut self, field: String) {
         self.fields.insert(field, true);
     }
 
-    /// Exclude a field
+    // Exclude a field
     pub fn exclude(&mut self, field: String) {
         self.fields.insert(field, false);
     }
 
-    /// Apply projection to a JSON value
+    // Apply projection to a JSON value
     pub fn apply(&self, value: &Value) -> Result<Value> {
         if self.fields.is_empty() {
             return Ok(value.clone());
@@ -484,32 +484,32 @@ impl Default for Projection {
     }
 }
 
-/// Geospatial query support
+// Geospatial query support
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GeoQuery {
-    /// Query type
+    // Query type
     pub query_type: GeoQueryType,
-    /// Coordinates
+    // Coordinates
     pub coordinates: Vec<f64>,
-    /// Maximum distance (for $near)
+    // Maximum distance (for $near)
     pub max_distance: Option<f64>,
-    /// Minimum distance (for $near)
+    // Minimum distance (for $near)
     pub min_distance: Option<f64>,
 }
 
-/// Geospatial query types
+// Geospatial query types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GeoQueryType {
-    /// Find points near a location
+    // Find points near a location
     Near,
-    /// Find points within a bounding box
+    // Find points within a bounding box
     Within,
-    /// Find points that intersect with a geometry
+    // Find points that intersect with a geometry
     Intersects,
 }
 
 impl GeoQuery {
-    /// Create a $near query
+    // Create a $near query
     pub fn near(longitude: f64, latitude: f64) -> Self {
         Self {
             query_type: GeoQueryType::Near,
@@ -519,19 +519,19 @@ impl GeoQuery {
         }
     }
 
-    /// Set maximum distance
+    // Set maximum distance
     pub fn max_distance(mut self, distance: f64) -> Self {
         self.max_distance = Some(distance);
         self
     }
 
-    /// Set minimum distance
+    // Set minimum distance
     pub fn min_distance(mut self, distance: f64) -> Self {
         self.min_distance = Some(distance);
         self
     }
 
-    /// Check if a point matches this geospatial query
+    // Check if a point matches this geospatial query
     pub fn matches(&self, point: &[f64]) -> bool {
         if point.len() < 2 {
             return false;
@@ -559,7 +559,7 @@ impl GeoQuery {
         }
     }
 
-    /// Calculate Haversine distance in meters
+    // Calculate Haversine distance in meters
     fn haversine_distance(&self, point: &[f64]) -> f64 {
         const EARTH_RADIUS_METERS: f64 = 6371000.0;
 
@@ -579,26 +579,26 @@ impl GeoQuery {
     }
 }
 
-/// Query builder for fluent query construction
+// Query builder for fluent query construction
 pub struct QueryBuilder {
     query: QueryDocument,
 }
 
 impl QueryBuilder {
-    /// Create a new query builder
+    // Create a new query builder
     pub fn new() -> Self {
         Self {
             query: QueryDocument::new(),
         }
     }
 
-    /// Add equality condition
+    // Add equality condition
     pub fn eq(mut self, field: impl Into<String>, value: Value) -> Self {
         self.query.add_condition(field.into(), value);
         self
     }
 
-    /// Add not-equal condition
+    // Add not-equal condition
     pub fn ne(mut self, field: impl Into<String>, value: Value) -> Self {
         self.query.add_condition(
             field.into(),
@@ -607,7 +607,7 @@ impl QueryBuilder {
         self
     }
 
-    /// Add greater-than condition
+    // Add greater-than condition
     pub fn gt(mut self, field: impl Into<String>, value: Value) -> Self {
         self.query.add_condition(
             field.into(),
@@ -616,7 +616,7 @@ impl QueryBuilder {
         self
     }
 
-    /// Add greater-than-or-equal condition
+    // Add greater-than-or-equal condition
     pub fn gte(mut self, field: impl Into<String>, value: Value) -> Self {
         self.query.add_condition(
             field.into(),
@@ -625,7 +625,7 @@ impl QueryBuilder {
         self
     }
 
-    /// Add less-than condition
+    // Add less-than condition
     pub fn lt(mut self, field: impl Into<String>, value: Value) -> Self {
         self.query.add_condition(
             field.into(),
@@ -634,7 +634,7 @@ impl QueryBuilder {
         self
     }
 
-    /// Add less-than-or-equal condition
+    // Add less-than-or-equal condition
     pub fn lte(mut self, field: impl Into<String>, value: Value) -> Self {
         self.query.add_condition(
             field.into(),
@@ -643,7 +643,7 @@ impl QueryBuilder {
         self
     }
 
-    /// Add in-array condition
+    // Add in-array condition
     pub fn in_array(mut self, field: impl Into<String>, values: Vec<Value>) -> Self {
         self.query.add_condition(
             field.into(),
@@ -652,7 +652,7 @@ impl QueryBuilder {
         self
     }
 
-    /// Add regex condition
+    // Add regex condition
     pub fn regex(mut self, field: impl Into<String>, pattern: impl Into<String>) -> Self {
         self.query.add_condition(
             field.into(),
@@ -661,7 +661,7 @@ impl QueryBuilder {
         self
     }
 
-    /// Add exists condition
+    // Add exists condition
     pub fn exists(mut self, field: impl Into<String>, exists: bool) -> Self {
         self.query.add_condition(
             field.into(),
@@ -670,7 +670,7 @@ impl QueryBuilder {
         self
     }
 
-    /// Build the query
+    // Build the query
     pub fn build(self) -> QueryDocument {
         self.query
     }

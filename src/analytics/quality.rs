@@ -30,25 +30,25 @@ use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Quality dimension for analysis.
+// Quality dimension for analysis.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum QualityDimension {
-    /// Percentage of non-null values
+    // Percentage of non-null values
     Completeness,
-    /// Percentage of unique values
+    // Percentage of unique values
     Uniqueness,
-    /// Percentage of values matching expected pattern
+    // Percentage of values matching expected pattern
     Validity,
-    /// Consistency across related data
+    // Consistency across related data
     Consistency,
-    /// Accuracy compared to reference
+    // Accuracy compared to reference
     Accuracy,
-    /// Data freshness/timeliness
+    // Data freshness/timeliness
     Timeliness,
 }
 
 impl QualityDimension {
-    /// Returns the weight for overall quality calculation.
+    // Returns the weight for overall quality calculation.
     pub fn default_weight(&self) -> f64 {
         match self {
             QualityDimension::Completeness => 0.25,
@@ -61,37 +61,37 @@ impl QualityDimension {
     }
 }
 
-/// Quality metrics for a column or table.
+// Quality metrics for a column or table.
 #[derive(Debug, Clone)]
 pub struct QualityMetrics {
-    /// Column or table name
+    // Column or table name
     pub name: String,
-    /// Completeness score (0.0 to 1.0)
+    // Completeness score (0.0 to 1.0)
     pub completeness: f64,
-    /// Uniqueness score (0.0 to 1.0)
+    // Uniqueness score (0.0 to 1.0)
     pub uniqueness: f64,
-    /// Validity score (0.0 to 1.0)
+    // Validity score (0.0 to 1.0)
     pub validity: f64,
-    /// Consistency score (0.0 to 1.0)
+    // Consistency score (0.0 to 1.0)
     pub consistency: f64,
-    /// Accuracy score (0.0 to 1.0)
+    // Accuracy score (0.0 to 1.0)
     pub accuracy: f64,
-    /// Timeliness score (0.0 to 1.0)
+    // Timeliness score (0.0 to 1.0)
     pub timeliness: f64,
-    /// Overall quality score
+    // Overall quality score
     pub overall_score: f64,
-    /// Number of rows analyzed
+    // Number of rows analyzed
     pub row_count: usize,
-    /// Number of issues found
+    // Number of issues found
     pub issue_count: usize,
-    /// Detailed issues
+    // Detailed issues
     pub issues: Vec<QualityIssue>,
-    /// Timestamp of analysis
+    // Timestamp of analysis
     pub analyzed_at: std::time::Instant,
 }
 
 impl QualityMetrics {
-    /// Creates new quality metrics with default values.
+    // Creates new quality metrics with default values.
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
@@ -109,7 +109,7 @@ impl QualityMetrics {
         }
     }
 
-    /// Calculates the overall quality score.
+    // Calculates the overall quality score.
     pub fn calculate_overall(&mut self) {
         self.overall_score = self.completeness * QualityDimension::Completeness.default_weight()
             + self.uniqueness * QualityDimension::Uniqueness.default_weight()
@@ -121,12 +121,12 @@ impl QualityMetrics {
         self.issue_count = self.issues.len();
     }
 
-    /// Returns whether quality meets the threshold.
+    // Returns whether quality meets the threshold.
     pub fn meets_threshold(&self, threshold: f64) -> bool {
         self.overall_score >= threshold
     }
 
-    /// Returns the lowest dimension score.
+    // Returns the lowest dimension score.
     pub fn weakest_dimension(&self) -> (QualityDimension, f64) {
         let dimensions = [
             (QualityDimension::Completeness, self.completeness),
@@ -143,59 +143,59 @@ impl QualityMetrics {
             .unwrap()
     }
 
-    /// Adds an issue to the metrics.
+    // Adds an issue to the metrics.
     pub fn add_issue(&mut self, issue: QualityIssue) {
         self.issues.push(issue);
         self.issue_count = self.issues.len();
     }
 }
 
-/// A data quality issue.
+// A data quality issue.
 #[derive(Debug, Clone)]
 pub struct QualityIssue {
-    /// Issue type/category
+    // Issue type/category
     pub issue_type: QualityIssueType,
-    /// Severity (1-5, higher = more severe)
+    // Severity (1-5, higher = more severe)
     pub severity: u8,
-    /// Human-readable description
+    // Human-readable description
     pub description: String,
-    /// Affected column(s)
+    // Affected column(s)
     pub columns: Vec<String>,
-    /// Number of affected rows
+    // Number of affected rows
     pub affected_rows: usize,
-    /// Example problematic values
+    // Example problematic values
     pub examples: Vec<String>,
-    /// Suggested fix
+    // Suggested fix
     pub suggested_fix: Option<String>,
 }
 
-/// Types of quality issues.
+// Types of quality issues.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QualityIssueType {
-    /// Missing/null values
+    // Missing/null values
     MissingValues,
-    /// Duplicate values where uniqueness expected
+    // Duplicate values where uniqueness expected
     Duplicates,
-    /// Values not matching expected pattern
+    // Values not matching expected pattern
     InvalidFormat,
-    /// Values outside expected range
+    // Values outside expected range
     OutOfRange,
-    /// Inconsistent values across related columns
+    // Inconsistent values across related columns
     Inconsistency,
-    /// Orphaned foreign key references
+    // Orphaned foreign key references
     OrphanedReference,
-    /// Stale or outdated data
+    // Stale or outdated data
     StaleData,
-    /// Outlier values
+    // Outlier values
     Outlier,
-    /// Data type mismatch
+    // Data type mismatch
     TypeMismatch,
-    /// Constraint violation
+    // Constraint violation
     ConstraintViolation,
 }
 
 impl QualityIssueType {
-    /// Returns the default severity for this issue type.
+    // Returns the default severity for this issue type.
     pub fn default_severity(&self) -> u8 {
         match self {
             QualityIssueType::MissingValues => 3,
@@ -212,50 +212,50 @@ impl QualityIssueType {
     }
 }
 
-/// Validation rule for data quality.
+// Validation rule for data quality.
 #[derive(Debug, Clone)]
 pub struct ValidationRule {
-    /// Rule identifier
+    // Rule identifier
     pub id: String,
-    /// Rule name
+    // Rule name
     pub name: String,
-    /// Target column
+    // Target column
     pub column: String,
-    /// Rule type
+    // Rule type
     pub rule_type: ValidationRuleType,
-    /// Parameters for the rule
+    // Parameters for the rule
     pub parameters: HashMap<String, String>,
-    /// Whether rule is enabled
+    // Whether rule is enabled
     pub enabled: bool,
 }
 
-/// Types of validation rules.
+// Types of validation rules.
 #[derive(Debug, Clone)]
 pub enum ValidationRuleType {
-    /// Value must not be null
+    // Value must not be null
     NotNull,
-    /// Value must be unique
+    // Value must be unique
     Unique,
-    /// Value must match regex pattern
+    // Value must match regex pattern
     Pattern(String),
-    /// Value must be in range
+    // Value must be in range
     Range { min: f64, max: f64 },
-    /// Value must be in allowed list
+    // Value must be in allowed list
     AllowedValues(Vec<String>),
-    /// Value must reference existing value in another column
+    // Value must reference existing value in another column
     ForeignKey { table: String, column: String },
-    /// Custom SQL expression
+    // Custom SQL expression
     CustomExpression(String),
 }
 
-/// Data quality analyzer.
+// Data quality analyzer.
 #[derive(Debug)]
 pub struct DataQualityAnalyzer {
-    /// Validation rules
+    // Validation rules
     rules: Vec<ValidationRule>,
-    /// Quality thresholds by dimension
+    // Quality thresholds by dimension
     thresholds: HashMap<QualityDimension, f64>,
-    /// Cached results
+    // Cached results
     cache: Arc<RwLock<HashMap<String, QualityMetrics>>>,
 }
 
@@ -266,7 +266,7 @@ impl Default for DataQualityAnalyzer {
 }
 
 impl DataQualityAnalyzer {
-    /// Creates a new data quality analyzer.
+    // Creates a new data quality analyzer.
     pub fn new() -> Self {
         let mut thresholds = HashMap::new();
         thresholds.insert(QualityDimension::Completeness, 0.95);
@@ -283,17 +283,17 @@ impl DataQualityAnalyzer {
         }
     }
 
-    /// Adds a validation rule.
+    // Adds a validation rule.
     pub fn add_rule(&mut self, rule: ValidationRule) {
         self.rules.push(rule);
     }
 
-    /// Sets a quality threshold.
+    // Sets a quality threshold.
     pub fn set_threshold(&mut self, dimension: QualityDimension, threshold: f64) {
         self.thresholds.insert(dimension, threshold);
     }
 
-    /// Analyzes a column for data quality.
+    // Analyzes a column for data quality.
     pub fn analyze_column(
         &self,
         column_name: &str,
@@ -413,7 +413,7 @@ impl DataQualityAnalyzer {
         metrics
     }
 
-    /// Counts values that violate a rule.
+    // Counts values that violate a rule.
     fn count_invalid_by_rule(&self, rule: &ValidationRule, values: &[Option<String>]) -> usize {
         match &rule.rule_type {
             ValidationRuleType::NotNull => {
@@ -450,7 +450,7 @@ impl DataQualityAnalyzer {
         }
     }
 
-    /// Detects outliers using IQR method.
+    // Detects outliers using IQR method.
     fn detect_outliers(&self, values: &[f64]) -> Vec<f64> {
         if values.len() < 4 {
             return Vec::new();
@@ -476,7 +476,7 @@ impl DataQualityAnalyzer {
             .collect()
     }
 
-    /// Analyzes multiple columns and returns aggregate metrics.
+    // Analyzes multiple columns and returns aggregate metrics.
     pub fn analyze_table(
         &self,
         columns: &[(&str, &[Option<String>])],
@@ -509,36 +509,36 @@ impl DataQualityAnalyzer {
         }
     }
 
-    /// Returns cached metrics for a column.
+    // Returns cached metrics for a column.
     pub fn get_cached(&self, column: &str) -> Option<QualityMetrics> {
         self.cache.read().get(column).cloned()
     }
 
-    /// Clears the cache.
+    // Clears the cache.
     pub fn clear_cache(&self) {
         self.cache.write().clear();
     }
 }
 
-/// Quality report for an entire table.
+// Quality report for an entire table.
 #[derive(Debug)]
 pub struct TableQualityReport {
-    /// Metrics per column
+    // Metrics per column
     pub column_metrics: Vec<QualityMetrics>,
-    /// Overall quality score
+    // Overall quality score
     pub overall_score: f64,
-    /// Total issues found
+    // Total issues found
     pub total_issues: usize,
-    /// Number of critical (severity >= 4) issues
+    // Number of critical (severity >= 4) issues
     pub critical_issues: usize,
-    /// All issues across columns
+    // All issues across columns
     pub issues: Vec<QualityIssue>,
-    /// Timestamp of analysis
+    // Timestamp of analysis
     pub analyzed_at: std::time::Instant,
 }
 
 impl TableQualityReport {
-    /// Returns columns below quality threshold.
+    // Returns columns below quality threshold.
     pub fn failing_columns(&self, threshold: f64) -> Vec<&QualityMetrics> {
         self.column_metrics
             .iter()
@@ -546,7 +546,7 @@ impl TableQualityReport {
             .collect()
     }
 
-    /// Returns issues by severity.
+    // Returns issues by severity.
     pub fn issues_by_severity(&self, minseverity: u8) -> Vec<&QualityIssue> {
         self.issues
             .iter()
@@ -555,14 +555,14 @@ impl TableQualityReport {
     }
 }
 
-/// Query performance tracker for monitoring query execution.
+// Query performance tracker for monitoring query execution.
 #[derive(Debug)]
 pub struct QueryPerformanceTracker {
-    /// Execution times by query hash
+    // Execution times by query hash
     execution_times: Arc<RwLock<HashMap<u64, Vec<u64>>>>,
-    /// Slow query threshold in milliseconds
+    // Slow query threshold in milliseconds
     slow_threshold_ms: u64,
-    /// Maximum entries per query
+    // Maximum entries per query
     max_samples: usize,
 }
 
@@ -573,7 +573,7 @@ impl Default for QueryPerformanceTracker {
 }
 
 impl QueryPerformanceTracker {
-    /// Creates a new performance tracker.
+    // Creates a new performance tracker.
     pub fn new() -> Self {
         Self {
             execution_times: Arc::new(RwLock::new(HashMap::new())),
@@ -582,13 +582,13 @@ impl QueryPerformanceTracker {
         }
     }
 
-    /// Sets the slow query threshold.
+    // Sets the slow query threshold.
     pub fn with_slow_threshold(mut self, threshold_ms: u64) -> Self {
         self.slow_threshold_ms = threshold_ms;
         self
     }
 
-    /// Records a query execution.
+    // Records a query execution.
     pub fn record(&self, query_hash: u64, execution_time_ms: u64) {
         let mut times = self.execution_times.write();
         let samples = times.entry(query_hash).or_insert_with(Vec::new);
@@ -600,7 +600,7 @@ impl QueryPerformanceTracker {
         }
     }
 
-    /// Returns performance metrics for a query.
+    // Returns performance metrics for a query.
     pub fn get_metrics(&self, query_hash: u64) -> Option<PerformanceMetrics> {
         let times = self.execution_times.read();
         let samples = times.get(&query_hash)?;
@@ -640,7 +640,7 @@ impl QueryPerformanceTracker {
         })
     }
 
-    /// Returns all slow queries.
+    // Returns all slow queries.
     pub fn get_slow_queries(&self) -> Vec<(u64, PerformanceMetrics)> {
         let times = self.execution_times.read();
 
@@ -657,34 +657,34 @@ impl QueryPerformanceTracker {
             .collect()
     }
 
-    /// Clears all recorded metrics.
+    // Clears all recorded metrics.
     pub fn clear(&self) {
         self.execution_times.write().clear();
     }
 }
 
-/// Performance metrics for a query.
+// Performance metrics for a query.
 #[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
-    /// Query hash
+    // Query hash
     pub query_hash: u64,
-    /// Number of samples
+    // Number of samples
     pub sample_count: usize,
-    /// Average execution time
+    // Average execution time
     pub avg_time_ms: f64,
-    /// Minimum execution time
+    // Minimum execution time
     pub min_time_ms: u64,
-    /// Maximum execution time
+    // Maximum execution time
     pub max_time_ms: u64,
-    /// Median execution time
+    // Median execution time
     pub p50_time_ms: u64,
-    /// 95th percentile
+    // 95th percentile
     pub p95_time_ms: u64,
-    /// 99th percentile
+    // 99th percentile
     pub p99_time_ms: u64,
-    /// Standard deviation
+    // Standard deviation
     pub stddev_ms: f64,
-    /// Count of executions exceeding slow threshold
+    // Count of executions exceeding slow threshold
     pub slow_count: usize,
 }
 

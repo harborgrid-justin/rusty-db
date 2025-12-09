@@ -1,6 +1,6 @@
-/// Query Result Cache Implementation
-///
-/// Provides intelligent caching of query results with LRU eviction
+// Query Result Cache Implementation
+//
+// Provides intelligent caching of query results with LRU eviction
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::SystemTime;
 
-/// Query result cache with LRU eviction policy
+// Query result cache with LRU eviction policy
 pub struct QueryCache {
     cache: Arc<RwLock<HashMap<String, CachedResult>>>,
     lru_queue: Arc<RwLock<VecDeque<String>>>,
@@ -196,7 +196,7 @@ impl QueryCache {
     }
 }
 
-/// Cache statistics
+// Cache statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheStats {
     pub size: usize,

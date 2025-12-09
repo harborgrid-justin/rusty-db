@@ -1,10 +1,10 @@
-/// Distributed Transaction Coordination
-///
-/// This module provides distributed transaction coordination across cluster nodes:
-/// - Two-phase commit (2PC) protocol
-/// - Distributed deadlock detection
-/// - Transaction isolation levels
-/// - Cross-shard transaction management
+// Distributed Transaction Coordination
+//
+// This module provides distributed transaction coordination across cluster nodes:
+// - Two-phase commit (2PC) protocol
+// - Distributed deadlock detection
+// - Transaction isolation levels
+// - Cross-shard transaction management
 
 use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo};
@@ -13,7 +13,7 @@ use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 
-/// Trait for distributed transaction coordination
+// Trait for distributed transaction coordination
 pub trait DistributedTransactionManager {
     fn begin_transaction(&self, nodes: Vec<NodeId>) -> Result<TransactionId, DbError>;
     fn prepare(&self, txn_id: &TransactionId) -> Result<bool, DbError>;
@@ -21,14 +21,14 @@ pub trait DistributedTransactionManager {
     fn abort(&self, txn_id: &TransactionId) -> Result<(), DbError>;
 }
 
-/// Trait for transaction participant
+// Trait for transaction participant
 pub trait TransactionParticipant {
     fn prepare_transaction(&self, txn_id: &TransactionId) -> Result<bool, DbError>;
     fn commit_transaction(&self, txn_id: &TransactionId) -> Result<(), DbError>;
     fn abort_transaction(&self, txn_id: &TransactionId) -> Result<(), DbError>;
 }
 
-/// Distributed transaction coordinator
+// Distributed transaction coordinator
 pub struct ClusterTransactionCoordinator {
     coordinator: Arc<dyn ClusterAccess>,
     active_transactions: Arc<RwLock<HashMap<TransactionId, DistributedTransaction>>>,
@@ -229,11 +229,11 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
     }
 }
 
-/// Transaction identifier
+// Transaction identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TransactionId(pub String);
 
-/// Distributed transaction state
+// Distributed transaction state
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DistributedTransaction {
     pub id: TransactionId,
@@ -244,7 +244,7 @@ pub struct DistributedTransaction {
     pub isolation_level: IsolationLevel,
 }
 
-/// Transaction status
+// Transaction status
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum TransactionStatus {
     Active,
@@ -253,7 +253,7 @@ pub enum TransactionStatus {
     Aborted,
 }
 
-/// Transaction isolation levels
+// Transaction isolation levels
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum IsolationLevel {
     ReadUncommitted,
@@ -262,7 +262,7 @@ pub enum IsolationLevel {
     Serializable,
 }
 
-/// Transaction log entry
+// Transaction log entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionLogEntry {
     pub txn_id: TransactionId,
@@ -271,7 +271,7 @@ pub struct TransactionLogEntry {
     pub node_id: NodeId,
 }
 
-/// Transaction events
+// Transaction events
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum TransactionEvent {
     Started,
@@ -280,7 +280,7 @@ pub enum TransactionEvent {
     Aborted,
 }
 
-/// Trait for cluster access
+// Trait for cluster access
 pub trait ClusterAccess {
     fn get_local_node_id(&self) -> Result<NodeId, DbError>;
     fn get_nodes(&self) -> Result<Vec<NodeInfo>, DbError>;

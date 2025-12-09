@@ -10,7 +10,7 @@
 
 use std::collections::HashSet;
 use std::collections::VecDeque;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use crate::error::Result;
 use super::property_graph::{PropertyGraph, VertexId};
@@ -19,19 +19,19 @@ use super::property_graph::{PropertyGraph, VertexId};
 // PageRank Algorithm
 // ============================================================================
 
-/// PageRank configuration
+// PageRank configuration
 #[derive(Debug, Clone)]
 pub struct PageRankConfig {
-    /// Damping factor (typically 0.85)
+    // Damping factor (typically 0.85)
     pub damping_factor: f64,
 
-    /// Maximum number of iterations
+    // Maximum number of iterations
     pub max_iterations: usize,
 
-    /// Convergence threshold
+    // Convergence threshold
     pub tolerance: f64,
 
-    /// Personalization vector (for personalized PageRank)
+    // Personalization vector (for personalized PageRank)
     pub personalization: Option<HashMap<VertexId, f64>>,
 }
 
@@ -46,24 +46,24 @@ impl Default for PageRankConfig {
     }
 }
 
-/// PageRank results
+// PageRank results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PageRankResult {
-    /// PageRank scores for each vertex
+    // PageRank scores for each vertex
     pub scores: HashMap<VertexId, f64>,
 
-    /// Number of iterations performed
+    // Number of iterations performed
     pub iterations: usize,
 
-    /// Whether the algorithm converged
+    // Whether the algorithm converged
     pub converged: bool,
 }
 
-/// PageRank algorithm implementation
+// PageRank algorithm implementation
 pub struct PageRank;
 
 impl PageRank {
-    /// Compute PageRank scores for all vertices
+    // Compute PageRank scores for all vertices
     pub fn compute(graph: &PropertyGraph, config: &PageRankConfig) -> Result<PageRankResult> {
         let vertices: Vec<VertexId> = graph.vertices().map(|v| v.id).collect();
         let n = vertices.len();
@@ -138,7 +138,7 @@ impl PageRank {
         })
     }
 
-    /// Get top-k vertices by PageRank score
+    // Get top-k vertices by PageRank score
     pub fn top_k(result: &PageRankResult, k: usize) -> Vec<(VertexId, f64)> {
         let mut entries: Vec<_> = result.scores.iter()
             .map(|(&id, &score)| (id, score))
@@ -154,27 +154,27 @@ impl PageRank {
 // Connected Components
 // ============================================================================
 
-/// Connected component information
+// Connected component information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectedComponents {
-    /// Component ID for each vertex
+    // Component ID for each vertex
     pub component_map: HashMap<VertexId, usize>,
 
-    /// Number of components
+    // Number of components
     pub num_components: usize,
 
-    /// Size of each component
+    // Size of each component
     pub component_sizes: HashMap<usize, usize>,
 
-    /// Largest component size
+    // Largest component size
     pub largest_component_size: usize,
 }
 
-/// Connected components algorithm
+// Connected components algorithm
 pub struct ConnectedComponentsAlgorithm;
 
 impl ConnectedComponentsAlgorithm {
-    /// Find all connected components in the graph
+    // Find all connected components in the graph
     pub fn compute(graph: &PropertyGraph) -> Result<ConnectedComponents> {
         let mut component_map = HashMap::new();
         let mut component_sizes = HashMap::new();
@@ -240,7 +240,7 @@ impl ConnectedComponentsAlgorithm {
         Ok(size)
     }
 
-    /// Check if two vertices are in the same component
+    // Check if two vertices are in the same component
     pub fn same_component(result: &ConnectedComponents, v1: VertexId, v2: VertexId) -> bool {
         result.component_map.get(&v1) == result.component_map.get(&v2)
     }
@@ -250,19 +250,19 @@ impl ConnectedComponentsAlgorithm {
 // Centrality Measures
 // ============================================================================
 
-/// Betweenness centrality results
+// Betweenness centrality results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BetweennessCentrality {
     pub scores: HashMap<VertexId, f64>,
 }
 
-/// Closeness centrality results
+// Closeness centrality results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClosenessCentrality {
     pub scores: HashMap<VertexId, f64>,
 }
 
-/// Degree centrality results
+// Degree centrality results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DegreeCentrality {
     pub in_degree: HashMap<VertexId, usize>,
@@ -270,11 +270,11 @@ pub struct DegreeCentrality {
     pub total_degree: HashMap<VertexId, usize>,
 }
 
-/// Centrality algorithms
+// Centrality algorithms
 pub struct CentralityAlgorithms;
 
 impl CentralityAlgorithms {
-    /// Compute betweenness centrality using Brandes' algorithm
+    // Compute betweenness centrality using Brandes' algorithm
     pub fn betweenness_centrality(graph: &PropertyGraph) -> Result<BetweennessCentrality> {
         let vertices: Vec<VertexId> = graph.vertices().map(|v| v.id).collect();
         let mut scores: HashMap<VertexId, f64> = vertices.iter()
@@ -343,7 +343,7 @@ impl CentralityAlgorithms {
         Ok(BetweennessCentrality { scores })
     }
 
-    /// Compute closeness centrality
+    // Compute closeness centrality
     pub fn closeness_centrality(graph: &PropertyGraph) -> Result<ClosenessCentrality> {
         let vertices: Vec<VertexId> = graph.vertices().map(|v| v.id).collect();
         let mut scores: HashMap<VertexId, f64> = HashMap::new();
@@ -364,7 +364,7 @@ impl CentralityAlgorithms {
         Ok(ClosenessCentrality { scores })
     }
 
-    /// Compute degree centrality
+    // Compute degree centrality
     pub fn degree_centrality(graph: &PropertyGraph) -> Result<DegreeCentrality> {
         let mut in_degree = HashMap::new();
         let mut out_degree = HashMap::new();
@@ -413,24 +413,24 @@ impl CentralityAlgorithms {
 // Community Detection (Louvain Algorithm)
 // ============================================================================
 
-/// Community detection result
+// Community detection result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommunityDetectionResult {
-    /// Community ID for each vertex
+    // Community ID for each vertex
     pub communities: HashMap<VertexId, usize>,
 
-    /// Number of communities found
+    // Number of communities found
     pub num_communities: usize,
 
-    /// Modularity score
+    // Modularity score
     pub modularity: f64,
 }
 
-/// Louvain community detection algorithm
+// Louvain community detection algorithm
 pub struct LouvainAlgorithm;
 
 impl LouvainAlgorithm {
-    /// Detect communities using the Louvain algorithm
+    // Detect communities using the Louvain algorithm
     pub fn detect(graph: &PropertyGraph, max_iterations: usize) -> Result<CommunityDetectionResult> {
         let vertices: Vec<VertexId> = graph.vertices().map(|v| v.id).collect();
 
@@ -563,21 +563,21 @@ impl LouvainAlgorithm {
 // Triangle Counting
 // ============================================================================
 
-/// Triangle counting results
+// Triangle counting results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TriangleCountResult {
-    /// Total number of triangles in the graph
+    // Total number of triangles in the graph
     pub total_triangles: usize,
 
-    /// Number of triangles each vertex participates in
+    // Number of triangles each vertex participates in
     pub vertex_triangles: HashMap<VertexId, usize>,
 }
 
-/// Triangle counting algorithm
+// Triangle counting algorithm
 pub struct TriangleCounting;
 
 impl TriangleCounting {
-    /// Count all triangles in the graph
+    // Count all triangles in the graph
     pub fn count(graph: &PropertyGraph) -> Result<TriangleCountResult> {
         let mut total_triangles = 0;
         let mut vertex_triangles: HashMap<VertexId, usize> = HashMap::new();
@@ -623,24 +623,24 @@ impl TriangleCounting {
 // Clustering Coefficient
 // ============================================================================
 
-/// Clustering coefficient results
+// Clustering coefficient results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClusteringCoefficient {
-    /// Global clustering coefficient
+    // Global clustering coefficient
     pub global_coefficient: f64,
 
-    /// Local clustering coefficient for each vertex
+    // Local clustering coefficient for each vertex
     pub local_coefficients: HashMap<VertexId, f64>,
 
-    /// Average clustering coefficient
+    // Average clustering coefficient
     pub average_coefficient: f64,
 }
 
-/// Clustering coefficient algorithm
+// Clustering coefficient algorithm
 pub struct ClusteringCoefficientAlgorithm;
 
 impl ClusteringCoefficientAlgorithm {
-    /// Compute clustering coefficients
+    // Compute clustering coefficients
     pub fn compute(graph: &PropertyGraph) -> Result<ClusteringCoefficient> {
         let mut local_coefficients = HashMap::new();
         let mut sum_coefficients = 0.0;
@@ -719,7 +719,7 @@ impl ClusteringCoefficientAlgorithm {
 // Similarity Measures
 // ============================================================================
 
-/// Jaccard similarity between two vertices
+// Jaccard similarity between two vertices
 pub fn jaccard_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Result<f64> {
     let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
         .into_iter()
@@ -739,7 +739,7 @@ pub fn jaccard_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> 
     }
 }
 
-/// Cosine similarity between two vertices (based on neighbor sets)
+// Cosine similarity between two vertices (based on neighbor sets)
 pub fn cosine_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Result<f64> {
     let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
         .into_iter()
@@ -760,7 +760,7 @@ pub fn cosine_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> R
     }
 }
 
-/// Common neighbor count
+// Common neighbor count
 pub fn common_neighbors(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Result<usize> {
     let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
         .into_iter()
@@ -777,21 +777,21 @@ pub fn common_neighbors(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Re
 // Influence Maximization
 // ============================================================================
 
-/// Influence propagation model
+// Influence propagation model
 #[derive(Debug, Clone, Copy)]
 pub enum InfluenceModel {
-    /// Independent Cascade model
+    // Independent Cascade model
     IndependentCascade,
 
-    /// Linear Threshold model
+    // Linear Threshold model
     LinearThreshold,
 }
 
-/// Influence maximization using greedy algorithm
+// Influence maximization using greedy algorithm
 pub struct InfluenceMaximization;
 
 impl InfluenceMaximization {
-    /// Find k most influential vertices using greedy algorithm
+    // Find k most influential vertices using greedy algorithm
     pub fn greedy_selection(
         graph: &PropertyGraph,
         k: usize,

@@ -4,14 +4,14 @@
 use std::fmt;
 use std::collections::BTreeMap;
 use std::collections::VecDeque;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::path::PathBuf;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime};
 
-/// Tenant-specific errors
+// Tenant-specific errors
 #[derive(Debug, Clone)]
 pub enum TenantError {
     TenantNotFound(String),
@@ -45,7 +45,7 @@ impl std::error::Error for TenantError {}
 
 pub type TenantResult<T> = Result<T, TenantError>;
 
-/// Tenant operational state
+// Tenant operational state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TenantState {
     Active,
@@ -55,7 +55,7 @@ pub enum TenantState {
     Terminated,
 }
 
-/// Tenant priority levels for resource allocation
+// Tenant priority levels for resource allocation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum TenantPriority {
     Critical = 4,    // Highest priority, guaranteed resources
@@ -65,7 +65,7 @@ pub enum TenantPriority {
     BestEffort = 0,  // Lowest priority, use spare resources only
 }
 
-/// Service tier defining resource allocation and SLA
+// Service tier defining resource allocation and SLA
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceTier {
     pub tier_name: String,
@@ -147,7 +147,7 @@ impl ServiceTier {
     }
 }
 
-/// Resource quota enforcement
+// Resource quota enforcement
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceQuota {
     pub cpu_percent: u32,
@@ -159,7 +159,7 @@ pub struct ResourceQuota {
     pub max_transactions_per_sec: u32,
 }
 
-/// Current resource usage
+// Current resource usage
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceUsage {
     pub cpu_percent: f64,
@@ -187,7 +187,7 @@ impl Default for ResourceUsage {
     }
 }
 
-/// Tenant-specific tablespace
+// Tenant-specific tablespace
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantTablespace {
     pub tablespace_name: String,
@@ -200,7 +200,7 @@ pub struct TenantTablespace {
     pub is_encrypted: bool,
 }
 
-/// Tenant-specific schema
+// Tenant-specific schema
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantSchema {
     pub schema_name: String,
@@ -211,7 +211,7 @@ pub struct TenantSchema {
     pub size_mb: u64,
 }
 
-/// SLA metrics and compliance tracking
+// SLA metrics and compliance tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlaMetrics {
     pub uptime_percent: f64,
@@ -241,7 +241,7 @@ pub enum ViolationSeverity {
     Low,
 }
 
-/// Tenant metadata and configuration
+// Tenant metadata and configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantMetadata {
     pub tenant_id: String,
@@ -256,7 +256,7 @@ pub struct TenantMetadata {
     pub last_modified: SystemTime,
 }
 
-/// Tenant statistics
+// Tenant statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantStatistics {
     pub total_queries: u64,
@@ -288,7 +288,7 @@ impl Default for TenantStatistics {
     }
 }
 
-/// Query history for cross-tenant prevention
+// Query history for cross-tenant prevention
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryHistoryEntry {
     pub query_id: u64,
@@ -307,7 +307,7 @@ pub enum QueryStatus {
     Blocked,
 }
 
-/// Tenant structure with complete isolation
+// Tenant structure with complete isolation
 pub struct Tenant {
     pub tenant_id: String,
     pub metadata: Arc<RwLock<TenantMetadata>>,
@@ -326,7 +326,7 @@ pub struct Tenant {
     pub resource_governor: Arc<RwLock<ResourceGovernor>>,
 }
 
-/// Resource governor for fine-grained control
+// Resource governor for fine-grained control
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceGovernor {
     pub cpu_allocation: CpuAllocation,
@@ -362,7 +362,7 @@ pub struct IoAllocation {
 }
 
 impl Tenant {
-    /// Create a new tenant with specified tier
+    // Create a new tenant with specified tier
     pub fn new(
         tenant_id: String,
         tenant_name: String,
@@ -446,7 +446,7 @@ impl Tenant {
         }
     }
 
-    /// Suspend tenant operations
+    // Suspend tenant operations
     pub async fn suspend(&self, reason: String) -> TenantResult<()> {
         let mut state = self.state.write().await;
 
@@ -462,7 +462,7 @@ impl Tenant {
         Ok(())
     }
 
-    /// Resume tenant operations
+    // Resume tenant operations
     pub async fn resume(&self) -> TenantResult<()> {
         let mut state = self.state.write().await;
 
@@ -477,7 +477,7 @@ impl Tenant {
         Ok(())
     }
 
-    /// Create tenant-specific tablespace
+    // Create tenant-specific tablespace
     pub async fn create_tablespace(
         &self,
         tablespace_name: String,
@@ -515,7 +515,7 @@ impl Tenant {
         Ok(())
     }
 
-    /// Create tenant-specific schema
+    // Create tenant-specific schema
     pub async fn create_schema(
         &self,
         schema_name: String,
@@ -550,7 +550,7 @@ impl Tenant {
         Ok(())
     }
 
-    /// Validate query doesn't access other tenants' data
+    // Validate query doesn't access other tenants' data
     pub async fn validate_query(&self, query: &str, schemas_accessed: &[String]) -> TenantResult<()> {
         let allowed = self.allowed_schemas.read().await;
 
@@ -565,7 +565,7 @@ impl Tenant {
         Ok(())
     }
 
-    /// Check if resource allocation is within quota
+    // Check if resource allocation is within quota
     pub async fn check_resource_quota(&self, resource_type: ResourceType, amount: u64) -> TenantResult<bool> {
         let quota = self.quota.read().await;
         let usage = self.usage.read().await;
@@ -597,7 +597,7 @@ impl Tenant {
         Ok(true)
     }
 
-    /// Update resource usage
+    // Update resource usage
     pub async fn update_usage(&self, cpu: f64, memory: u64, iops: u32, sessions: u32) {
         let mut usage = self.usage.write().await;
         usage.cpu_percent = cpu;
@@ -607,7 +607,7 @@ impl Tenant {
         usage.last_updated = SystemTime::now();
     }
 
-    /// Record query in history
+    // Record query in history
     pub async fn record_query(
         &self,
         query_text: String,
@@ -651,7 +651,7 @@ impl Tenant {
         }
     }
 
-    /// Check SLA compliance
+    // Check SLA compliance
     pub async fn check_sla_compliance(&self) -> TenantResult<bool> {
         let sla_metrics = self.sla_metrics.read().await;
         let service_tier = self.service_tier.read().await;
@@ -700,7 +700,7 @@ impl Tenant {
         Ok(compliant)
     }
 
-    /// Upgrade service tier
+    // Upgrade service tier
     pub async fn upgrade_tier(&self, new_tier: ServiceTier) -> TenantResult<()> {
         let current_tier = self.service_tier.read().await;
 
@@ -729,7 +729,7 @@ impl Tenant {
         Ok(())
     }
 
-    /// Set tenant priority
+    // Set tenant priority
     pub async fn set_priority(&self, priority: TenantPriority) -> TenantResult<()> {
         let mut current_priority = self.priority.write().await;
         *current_priority = priority;
@@ -737,17 +737,17 @@ impl Tenant {
         Ok(())
     }
 
-    /// Get tenant statistics
+    // Get tenant statistics
     pub async fn get_statistics(&self) -> TenantStatistics {
         self.statistics.read().await.clone()
     }
 
-    /// Get SLA metrics
+    // Get SLA metrics
     pub async fn get_sla_metrics(&self) -> SlaMetrics {
         self.sla_metrics.read().await.clone()
     }
 
-    /// Export tenant configuration
+    // Export tenant configuration
     pub async fn export_config(&self) -> TenantConfig {
         TenantConfig {
             tenant_id: self.tenant_id.clone(),
@@ -759,7 +759,7 @@ impl Tenant {
         }
     }
 
-    /// Terminate tenant
+    // Terminate tenant
     pub async fn terminate(&self) -> TenantResult<()> {
         let mut state = self.state.write().await;
         *state = TenantState::Terminated;
@@ -775,7 +775,7 @@ impl Tenant {
     }
 }
 
-/// Resource type enumeration
+// Resource type enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResourceType {
     Cpu,
@@ -785,7 +785,7 @@ pub enum ResourceType {
     Sessions,
 }
 
-/// Tenant configuration for export/import
+// Tenant configuration for export/import
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantConfig {
     pub tenant_id: String,
@@ -796,7 +796,7 @@ pub struct TenantConfig {
     pub quota: ResourceQuota,
 }
 
-/// Tenant manager for managing multiple tenants
+// Tenant manager for managing multiple tenants
 pub struct TenantManager {
     tenants: Arc<RwLock<HashMap<String, Arc<Tenant>>>>,
     tenant_index: Arc<RwLock<BTreeMap<TenantPriority, Vec<String>>>>,
@@ -810,7 +810,7 @@ impl TenantManager {
         }
     }
 
-    /// Register a new tenant
+    // Register a new tenant
     pub async fn register_tenant(&self, tenant: Arc<Tenant>) -> TenantResult<()> {
         let tenant_id = tenant.tenant_id.clone();
         let priority = *tenant.priority.read().await;
@@ -832,7 +832,7 @@ impl TenantManager {
         Ok(())
     }
 
-    /// Get tenant by ID
+    // Get tenant by ID
     pub async fn get_tenant(&self, tenant_id: &str) -> TenantResult<Arc<Tenant>> {
         let tenants = self.tenants.read().await;
         tenants
@@ -841,7 +841,7 @@ impl TenantManager {
             .ok_or_else(|| TenantError::TenantNotFound(tenant_id.to_string()))
     }
 
-    /// Remove tenant
+    // Remove tenant
     pub async fn remove_tenant(&self, tenant_id: &str) -> TenantResult<()> {
         let mut tenants = self.tenants.write().await;
 
@@ -861,19 +861,19 @@ impl TenantManager {
         Ok(())
     }
 
-    /// List all tenants
+    // List all tenants
     pub async fn list_tenants(&self) -> Vec<String> {
         let tenants = self.tenants.read().await;
         tenants.keys().cloned().collect()
     }
 
-    /// List tenants by priority
+    // List tenants by priority
     pub async fn list_by_priority(&self, priority: TenantPriority) -> Vec<String> {
         let index = self.tenant_index.read().await;
         index.get(&priority).cloned().unwrap_or_default()
     }
 
-    /// Get active tenant count
+    // Get active tenant count
     pub async fn active_count(&self) -> usize {
         let tenants = self.tenants.read().await;
         let mut count = 0;
@@ -973,5 +973,3 @@ use std::time::UNIX_EPOCH;
         assert_eq!(count, 1);
     }
 }
-
-

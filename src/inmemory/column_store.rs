@@ -12,7 +12,7 @@ use fastrand::usize;
 use crate::inmemory::compression::{CompressionType, HybridCompressor, CompressionStats};
 use crate::inmemory::vectorized_ops::{VectorizedFilter, VectorizedAggregator, VectorBatch};
 
-/// Column store configuration
+// Column store configuration
 #[derive(Debug, Clone)]
 pub struct ColumnStoreConfig {
     pub name: String,
@@ -21,7 +21,7 @@ pub struct ColumnStoreConfig {
     pub cache_line_size: usize,
 }
 
-/// Metadata for a single column
+// Metadata for a single column
 #[derive(Debug, Clone)]
 pub struct ColumnMetadata {
     pub name: String,
@@ -32,7 +32,7 @@ pub struct ColumnMetadata {
     pub cardinality: Option<usize>,
 }
 
-/// Column data types
+// Column data types
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColumnDataType {
     Int8,
@@ -71,7 +71,7 @@ pub fn size_bytes(&self) -> usize {
     }
 }
 
-/// Statistics about column data
+// Statistics about column data
 #[derive(Debug, Clone)]
 pub struct ColumnStats {
     pub row_count: usize,
@@ -99,7 +99,7 @@ impl Default for ColumnStats {
     }
 }
 
-/// Generic column value
+// Generic column value
 #[derive(Debug, Clone, PartialEq)]
 pub enum ColumnValue {
     Int8(i8),
@@ -120,7 +120,7 @@ pub enum ColumnValue {
     Null,
 }
 
-/// Column segment - unit of columnar storage
+// Column segment - unit of columnar storage
 pub struct ColumnSegment {
     pub segment_id: u64,
     pub column_id: u32,
@@ -150,7 +150,7 @@ pub struct ColumnSegment {
     pub stats: RwLock<ColumnStats>,
 }
 
-/// Cache-line aligned buffer for SIMD operations
+// Cache-line aligned buffer for SIMD operations
 #[repr(align(64))]
 pub struct AlignedBuffer {
     data: Vec<u8>,
@@ -377,19 +377,19 @@ impl ColumnSegment {
     }
 }
 
-/// Dual-format storage: row-oriented + column-oriented
+// Dual-format storage: row-oriented + column-oriented
 pub struct DualFormat {
-    /// Row-oriented storage (original format)
+    // Row-oriented storage (original format)
     pub row_store: RwLock<Vec<Vec<ColumnValue>>>,
 
-    /// Column-oriented storage (in-memory format)
+    // Column-oriented storage (in-memory format)
     pub column_segments: RwLock<HashMap<u32, Vec<Arc<ColumnSegment>>>>,
 
-    /// Synchronization metadata
+    // Synchronization metadata
     pub sync_version: std::sync::atomic::AtomicU64,
     pub last_sync: RwLock<u64>,
 
-    /// Configuration
+    // Configuration
     pub rows_per_segment: usize,
 }
 
@@ -427,7 +427,7 @@ impl DualFormat {
     }
 }
 
-/// In-memory area containing columnar data
+// In-memory area containing columnar data
 pub struct InMemoryArea {
     pub segments: RwLock<HashMap<u32, Vec<Arc<ColumnSegment>>>>,
     pub total_memory: std::sync::atomic::AtomicUsize,
@@ -501,7 +501,7 @@ impl Default for InMemoryArea {
     }
 }
 
-/// Main column store structure
+// Main column store structure
 pub struct ColumnStore {
     config: ColumnStoreConfig,
     schema: Vec<ColumnMetadata>,
@@ -712,7 +712,7 @@ impl ColumnStore {
     }
 }
 
-/// Aggregate operations
+// Aggregate operations
 #[derive(Debug, Clone, Copy)]
 pub enum AggregateOp {
     Sum,
@@ -830,5 +830,3 @@ use std::time::UNIX_EPOCH;
         assert_eq!(segments.len(), 1);
     }
 }
-
-

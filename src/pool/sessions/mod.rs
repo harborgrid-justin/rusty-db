@@ -1,12 +1,12 @@
-//! Session management module
-//!
-//! This module provides comprehensive session management including:
-//! - Session state management
-//! - Authentication
-//! - Resource control
-//! - Pool coordination
-//! - Lifecycle events
-//! - Main session manager
+// Session management module
+//
+// This module provides comprehensive session management including:
+// - Session state management
+// - Authentication
+// - Resource control
+// - Pool coordination
+// - Lifecycle events
+// - Main session manager
 
 pub mod state;
 pub mod auth;

@@ -1,20 +1,20 @@
-/// Cluster Membership Management using SWIM Protocol
-///
-/// This module implements the SWIM (Scalable Weakly-consistent Infection-style
-/// Process Group Membership) protocol for cluster membership and failure detection.
-///
-/// Features:
-/// - Gossip-based membership propagation
-/// - Failure detection with configurable timeouts
-/// - Suspicion mechanism to reduce false positives
-/// - Protocol buffers-style node metadata
-/// - Graceful node addition/removal
-/// - Split-brain prevention with quorum checks
-///
-/// SWIM provides:
-/// - Scalability to large clusters
-/// - Low overhead failure detection
-/// - Eventually consistent membership view
+// Cluster Membership Management using SWIM Protocol
+//
+// This module implements the SWIM (Scalable Weakly-consistent Infection-style
+// Process Group Membership) protocol for cluster membership and failure detection.
+//
+// Features:
+// - Gossip-based membership propagation
+// - Failure detection with configurable timeouts
+// - Suspicion mechanism to reduce false positives
+// - Protocol buffers-style node metadata
+// - Graceful node addition/removal
+// - Split-brain prevention with quorum checks
+//
+// SWIM provides:
+// - Scalability to large clusters
+// - Low overhead failure detection
+// - Eventually consistent membership view
 
 use std::time::SystemTime;
 use crate::error::DbError;
@@ -26,41 +26,41 @@ use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 
-/// Member identifier
+// Member identifier
 pub type MemberId = String;
 
-/// Incarnation number for suspicion mechanism
+// Incarnation number for suspicion mechanism
 pub type Incarnation = u64;
 
-/// Member state in the cluster
+// Member state in the cluster
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub enum MemberState {
-    /// Member is alive and healthy
+    // Member is alive and healthy
     Alive,
-    /// Member is suspected of failure
+    // Member is suspected of failure
     Suspect,
-    /// Member has failed
+    // Member has failed
     Failed,
-    /// Member has left gracefully
+    // Member has left gracefully
     Left,
 }
 
-/// Member information
+// Member information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Member {
-    /// Unique member ID
+    // Unique member ID
     pub id: MemberId,
-    /// Network address
+    // Network address
     pub addr: SocketAddr,
-    /// Current state
+    // Current state
     pub state: MemberState,
-    /// Incarnation number (for suspicion mechanism)
+    // Incarnation number (for suspicion mechanism)
     pub incarnation: Incarnation,
-    /// Metadata (tags, version, etc.)
+    // Metadata (tags, version, etc.)
     pub metadata: MemberMetadata,
-    /// State update timestamp
+    // State update timestamp
     pub state_changed_at: SystemTime,
-    /// Last time we heard from this member
+    // Last time we heard from this member
     pub last_seen: SystemTime,
 }
 
@@ -77,17 +77,17 @@ impl Member {
         }
     }
 
-    /// Check if member is active (alive or suspect)
+    // Check if member is active (alive or suspect)
     pub fn is_active(&self) -> bool {
         matches!(self.state, MemberState::Alive | MemberState::Suspect)
     }
 
-    /// Check if member has failed or left
+    // Check if member has failed or left
     pub fn is_down(&self) -> bool {
         matches!(self.state, MemberState::Failed | MemberState::Left)
     }
 
-    /// Refute a suspicion by incrementing incarnation
+    // Refute a suspicion by incrementing incarnation
     pub fn refute_suspicion(&mut self) {
         self.incarnation += 1;
         self.state = MemberState::Alive;
@@ -95,20 +95,20 @@ impl Member {
     }
 }
 
-/// Member metadata (protocol buffers style)
+// Member metadata (protocol buffers style)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemberMetadata {
-    /// Node version
+    // Node version
     pub version: String,
-    /// Datacenter/zone
+    // Datacenter/zone
     pub datacenter: String,
-    /// Rack identifier
+    // Rack identifier
     pub rack: Option<String>,
-    /// Custom tags
+    // Custom tags
     pub tags: HashMap<String, String>,
-    /// Capabilities/features
+    // Capabilities/features
     pub capabilities: Vec<String>,
-    /// Role (primary, replica, etc.)
+    // Role (primary, replica, etc.)
     pub role: String,
 }
 
@@ -125,41 +125,41 @@ impl Default for MemberMetadata {
     }
 }
 
-/// SWIM protocol message types
+// SWIM protocol message types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SwimMessage {
-    /// Ping message for direct health check
+    // Ping message for direct health check
     Ping {
         from: MemberId,
         sequence: u64,
     },
-    /// Ack response to ping
+    // Ack response to ping
     Ack {
         from: MemberId,
         sequence: u64,
     },
-    /// Indirect ping request (ask another node to ping)
+    // Indirect ping request (ask another node to ping)
     PingReq {
         from: MemberId,
         target: MemberId,
         sequence: u64,
     },
-    /// Membership update (gossip)
+    // Membership update (gossip)
     Gossip {
         from: MemberId,
         updates: Vec<MembershipUpdate>,
     },
-    /// Join request
+    // Join request
     Join {
         member: Member,
     },
-    /// Leave notification
+    // Leave notification
     Leave {
         member_id: MemberId,
     },
 }
 
-/// Membership update for gossip
+// Membership update for gossip
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MembershipUpdate {
     pub member_id: MemberId,
@@ -181,26 +181,26 @@ impl MembershipUpdate {
     }
 }
 
-/// SWIM configuration
+// SWIM configuration
 #[derive(Debug, Clone)]
 pub struct SwimConfig {
-    /// Protocol period (time between rounds)
+    // Protocol period (time between rounds)
     pub protocol_period: Duration,
-    /// Number of members to ping-req on timeout
+    // Number of members to ping-req on timeout
     pub indirect_ping_nodes: usize,
-    /// Timeout for ping response
+    // Timeout for ping response
     pub ping_timeout: Duration,
-    /// Timeout for indirect ping response
+    // Timeout for indirect ping response
     pub indirect_ping_timeout: Duration,
-    /// Number of members to gossip with per round
+    // Number of members to gossip with per round
     pub gossip_fanout: usize,
-    /// Suspicion timeout before marking as failed
+    // Suspicion timeout before marking as failed
     pub suspicion_timeout: Duration,
-    /// Number of gossip rounds to propagate a message
+    // Number of gossip rounds to propagate a message
     pub gossip_to_the_dead: usize,
-    /// Enable split-brain prevention
+    // Enable split-brain prevention
     pub enable_split_brain_prevention: bool,
-    /// Minimum cluster size for quorum
+    // Minimum cluster size for quorum
     pub min_quorum_size: usize,
 }
 
@@ -220,7 +220,7 @@ impl Default for SwimConfig {
     }
 }
 
-/// Pending ping request tracking
+// Pending ping request tracking
 #[derive(Debug, Clone)]
 struct PendingPing {
     target: MemberId,
@@ -229,21 +229,21 @@ struct PendingPing {
     indirect: bool,
 }
 
-/// SWIM membership manager
+// SWIM membership manager
 pub struct SwimMembership {
-    /// Configuration
+    // Configuration
     config: SwimConfig,
-    /// This node's ID
+    // This node's ID
     local_id: MemberId,
-    /// This node's member info
+    // This node's member info
     local_member: Arc<RwLock<Member>>,
-    /// All cluster members
+    // All cluster members
     members: Arc<RwLock<HashMap<MemberId, Member>>>,
-    /// Pending pings
+    // Pending pings
     pending_pings: Arc<RwLock<HashMap<u64, PendingPing>>>,
-    /// Sequence number for messages
+    // Sequence number for messages
     sequence: Arc<RwLock<u64>>,
-    /// Gossip counters (how many times we've gossiped each update)
+    // Gossip counters (how many times we've gossiped each update)
     gossip_counters: Arc<RwLock<HashMap<String, usize>>>,
 }
 
@@ -263,28 +263,28 @@ impl SwimMembership {
         }
     }
 
-    /// Get next sequence number
+    // Get next sequence number
     fn next_sequence(&self) -> u64 {
         let mut seq = self.sequence.write().unwrap();
         *seq += 1;
         *seq
     }
 
-    /// Add a new member to the cluster
+    // Add a new member to the cluster
     pub fn add_member(&self, member: Member) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
         members.insert(member.id.clone(), member);
         Ok(())
     }
 
-    /// Remove a member from the cluster
+    // Remove a member from the cluster
     pub fn remove_member(&self, member_id: &str) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
         members.remove(member_id);
         Ok(())
     }
 
-    /// Get all active members
+    // Get all active members
     pub fn get_active_members(&self) -> Vec<Member> {
         self.members
             .read()
@@ -295,17 +295,17 @@ impl SwimMembership {
             .collect()
     }
 
-    /// Get all members
+    // Get all members
     pub fn get_all_members(&self) -> Vec<Member> {
         self.members.read().unwrap().values().cloned().collect()
     }
 
-    /// Get member by ID
+    // Get member by ID
     pub fn get_member(&self, id: &str) -> Option<Member> {
         self.members.read().unwrap().get(id).cloned()
     }
 
-    /// Select random member for ping
+    // Select random member for ping
     pub fn select_ping_target(&self) -> Option<MemberId> {
         let members = self.members.read().unwrap();
         let active: Vec<&Member> = members
@@ -317,7 +317,7 @@ impl SwimMembership {
         active.choose(&mut rng).map(|m| m.id.clone())
     }
 
-    /// Create ping message
+    // Create ping message
     pub fn create_ping(&self, target: MemberId) -> (SwimMessage, u64) {
         let sequence = self.next_sequence();
         let msg = SwimMessage::Ping {
@@ -337,7 +337,7 @@ impl SwimMembership {
         (msg, sequence)
     }
 
-    /// Create indirect ping request
+    // Create indirect ping request
     pub fn create_ping_req(&self, target: MemberId) -> Vec<(MemberId, SwimMessage)> {
         let sequence = self.next_sequence();
         let members = self.members.read().unwrap();
@@ -378,7 +378,7 @@ impl SwimMembership {
         messages
     }
 
-    /// Handle received ping
+    // Handle received ping
     pub fn handle_ping(&self, from: MemberId, sequence: u64) -> SwimMessage {
         // Update last_seen for sender
         if let Some(member) = self.members.write().unwrap().get_mut(&from) {
@@ -391,7 +391,7 @@ impl SwimMembership {
         }
     }
 
-    /// Handle received ack
+    // Handle received ack
     pub fn handle_ack(&self, from: MemberId, sequence: u64) -> Result<(), DbError> {
         // Remove from pending pings
         self.pending_pings.write().unwrap().remove(&sequence);
@@ -408,7 +408,7 @@ impl SwimMembership {
         Ok(())
     }
 
-    /// Handle timeout for ping
+    // Handle timeout for ping
     pub fn handle_ping_timeout(&self, sequence: u64) -> Result<Vec<(MemberId, SwimMessage)>, DbError> {
         let pending = {
             let pings = self.pending_pings.read().unwrap();
@@ -429,7 +429,7 @@ impl SwimMembership {
         Ok(Vec::new())
     }
 
-    /// Mark member as suspect
+    // Mark member as suspect
     fn mark_suspect(&self, member_id: &str) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
         if let Some(member) = members.get_mut(member_id) {
@@ -445,7 +445,7 @@ impl SwimMembership {
         Ok(())
     }
 
-    /// Check for suspected members that should be marked as failed
+    // Check for suspected members that should be marked as failed
     pub fn check_suspected_members(&self) -> Result<Vec<MemberId>, DbError> {
         let mut failed = Vec::new();
         let mut members = self.members.write().unwrap();
@@ -469,7 +469,7 @@ impl SwimMembership {
         Ok(failed)
     }
 
-    /// Create gossip message
+    // Create gossip message
     pub fn create_gossip(&self) -> Vec<(MemberId, SwimMessage)> {
         let members = self.members.read().unwrap();
         let mut counters = self.gossip_counters.write().unwrap();
@@ -510,7 +510,7 @@ impl SwimMembership {
         messages
     }
 
-    /// Handle received gossip
+    // Handle received gossip
     pub fn handle_gossip(&self, updates: Vec<MembershipUpdate>) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
 
@@ -562,7 +562,7 @@ impl SwimMembership {
         Ok(())
     }
 
-    /// Check if one state supersedes another
+    // Check if one state supersedes another
     fn state_supersedes(&self, new_state: MemberState, old_state: MemberState) -> bool {
         match (old_state, new_state) {
             (MemberState::Alive, MemberState::Suspect) => true,
@@ -573,7 +573,7 @@ impl SwimMembership {
         }
     }
 
-    /// Handle join request
+    // Handle join request
     pub fn handle_join(&self, member: Member) -> Result<Vec<Member>, DbError> {
         let mut members = self.members.write().unwrap();
         members.insert(member.id.clone(), member);
@@ -582,7 +582,7 @@ impl SwimMembership {
         Ok(members.values().cloned().collect())
     }
 
-    /// Handle leave notification
+    // Handle leave notification
     pub fn handle_leave(&self, member_id: MemberId) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
         if let Some(member) = members.get_mut(&member_id) {
@@ -592,7 +592,7 @@ impl SwimMembership {
         Ok(())
     }
 
-    /// Gracefully leave the cluster
+    // Gracefully leave the cluster
     pub fn leave(&self) -> Vec<(MemberId, SwimMessage)> {
         let members = self.members.read().unwrap();
         let msg = SwimMessage::Leave {
@@ -606,7 +606,7 @@ impl SwimMembership {
             .collect()
     }
 
-    /// Check for split-brain scenario
+    // Check for split-brain scenario
     pub fn check_split_brain(&self) -> bool {
         if !self.config.enable_split_brain_prevention {
             return false;
@@ -616,7 +616,7 @@ impl SwimMembership {
         active_count < self.config.min_quorum_size
     }
 
-    /// Get cluster health summary
+    // Get cluster health summary
     pub fn get_health_summary(&self) -> ClusterHealth {
         let members = self.members.read().unwrap();
         let mut alive = 0;
@@ -644,7 +644,7 @@ impl SwimMembership {
     }
 }
 
-/// Cluster health summary
+// Cluster health summary
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClusterHealth {
     pub total_members: usize,
@@ -694,5 +694,3 @@ mod tests {
         assert_eq!(member.incarnation, old_incarnation + 1);
     }
 }
-
-

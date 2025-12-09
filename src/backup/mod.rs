@@ -57,7 +57,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use crate::Result;
 
-/// Unified backup system integrating all modules
+// Unified backup system integrating all modules
 pub struct BackupSystem {
     backup_manager: Arc<BackupManager>,
     pitr_manager: Arc<PitrManager>,
@@ -120,52 +120,52 @@ impl BackupSystem {
         })
     }
 
-    /// Enable cloud backup integration
+    // Enable cloud backup integration
     pub fn enable_cloud_backup(&mut self, cloud_config: CloudStorageConfig) {
         self.cloud_manager = Some(Arc::new(CloudBackupManager::new(cloud_config)));
     }
 
-    /// Access backup manager
+    // Access backup manager
     pub fn backup_manager(&self) -> Arc<BackupManager> {
         Arc::clone(&self.backup_manager)
     }
 
-    /// Access PITR manager
+    // Access PITR manager
     pub fn pitr_manager(&self) -> Arc<PitrManager> {
         Arc::clone(&self.pitr_manager)
     }
 
-    /// Access snapshot manager
+    // Access snapshot manager
     pub fn snapshot_manager(&self) -> Arc<SnapshotManager> {
         Arc::clone(&self.snapshot_manager)
     }
 
-    /// Access cloud backup manager
+    // Access cloud backup manager
     pub fn cloud_manager(&self) -> Option<Arc<CloudBackupManager>> {
         self.cloud_manager.as_ref().map(Arc::clone)
     }
 
-    /// Access encryption manager
+    // Access encryption manager
     pub fn encryption_manager(&self) -> Arc<BackupEncryptionManager> {
         Arc::clone(&self.encryption_manager)
     }
 
-    /// Access disaster recovery manager
+    // Access disaster recovery manager
     pub fn dr_manager(&self) -> Arc<DisasterRecoveryManager> {
         Arc::clone(&self.dr_manager)
     }
 
-    /// Access verification manager
+    // Access verification manager
     pub fn verification_manager(&self) -> Arc<VerificationManager> {
         Arc::clone(&self.verification_manager)
     }
 
-    /// Access backup catalog
+    // Access backup catalog
     pub fn catalog(&self) -> Arc<BackupCatalog> {
         Arc::clone(&self.catalog)
     }
 
-    /// Perform a complete backup workflow
+    // Perform a complete backup workflow
     pub fn perform_full_backup(&self, database_name: &str) -> Result<String> {
         // Create full backup
         let backup_id = self.backup_manager.create_full_backup(database_name)?;
@@ -201,7 +201,7 @@ impl BackupSystem {
         Ok(backup_id)
     }
 
-    /// Perform point-in-time recovery
+    // Perform point-in-time recovery
     pub fn perform_pitr(
         &self,
         database_name: &str,
@@ -238,7 +238,7 @@ impl BackupSystem {
         Ok(session_id)
     }
 
-    /// Create a snapshot for testing
+    // Create a snapshot for testing
     pub fn create_test_snapshot(&self, database_name: &str) -> Result<String> {
         let snapshot_id = self.snapshot_manager.create_snapshot(
             format!("{}-snapshot", database_name),
@@ -249,7 +249,7 @@ impl BackupSystem {
         Ok(snapshot_id)
     }
 
-    /// Trigger disaster recovery failover
+    // Trigger disaster recovery failover
     pub fn trigger_failover(&self, target_standby: &str) -> Result<String> {
         let event_id = self.dr_manager.trigger_failover(
             FailoverTrigger::Manual,
@@ -259,7 +259,7 @@ impl BackupSystem {
         Ok(event_id)
     }
 
-    /// Get comprehensive backup system statistics
+    // Get comprehensive backup system statistics
     pub fn get_system_statistics(&self) -> BackupSystemStatistics {
         let backup_stats = self.backup_manager.get_statistics();
         let catalog_stats = self.catalog.get_statistics();
@@ -275,7 +275,7 @@ impl BackupSystem {
     }
 }
 
-/// Comprehensive backup system statistics
+// Comprehensive backup system statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupSystemStatistics {
     pub backup_stats: BackupStatistics,

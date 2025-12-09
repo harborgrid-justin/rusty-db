@@ -22,12 +22,12 @@ use super::algorithms::{PageRank, PageRankConfig};
 // Graph-Relational Integration
 // ============================================================================
 
-/// Graph-relational bridge for integrating graph and relational data
+// Graph-relational bridge for integrating graph and relational data
 pub struct GraphRelationalBridge {
-    /// Mapping from relational table to graph vertices
+    // Mapping from relational table to graph vertices
     table_vertex_map: HashMap<String, HashMap<Value, VertexId>>,
 
-    /// Mapping from relational foreign keys to graph edges
+    // Mapping from relational foreign keys to graph edges
     fk_edge_map: HashMap<(String, String), Vec<EdgeId>>,
 }
 
@@ -39,7 +39,7 @@ impl GraphRelationalBridge {
         }
     }
 
-    /// Map a relational table to graph vertices
+    // Map a relational table to graph vertices
     pub fn map_table_to_vertices(
         &mut self,
         table_name: String,
@@ -66,7 +66,7 @@ impl GraphRelationalBridge {
         Ok(())
     }
 
-    /// Map foreign key relationships to edges
+    // Map foreign key relationships to edges
     pub fn map_foreign_key_to_edges(
         &mut self,
         source_table: String,
@@ -103,7 +103,7 @@ impl GraphRelationalBridge {
         Ok(())
     }
 
-    /// Execute a graph query and return results in relational format
+    // Execute a graph query and return results in relational format
     pub fn graph_to_relational(&self, query_result: &QueryResult) -> Vec<Tuple> {
         let mut tuples = Vec::new();
 
@@ -130,7 +130,7 @@ impl GraphRelationalBridge {
         tuples
     }
 
-    /// Get vertex ID from table primary key
+    // Get vertex ID from table primary key
     pub fn get_vertex_from_pk(&self, table_name: &str, pk_value: &Value) -> Option<VertexId> {
         self.table_vertex_map
             .get(table_name)
@@ -148,7 +148,7 @@ impl Default for GraphRelationalBridge {
 // MATCH Clause Executor
 // ============================================================================
 
-/// Advanced MATCH clause executor with optimizations
+// Advanced MATCH clause executor with optimizations
 pub struct MatchExecutor<'a> {
     graph: &'a PropertyGraph,
     pattern_matcher: PatternMatcher<'a>,
@@ -162,7 +162,7 @@ impl<'a> MatchExecutor<'a> {
         }
     }
 
-    /// Execute a MATCH query with cost-based optimization
+    // Execute a MATCH query with cost-based optimization
     pub fn execute_match(&self, query: &GraphQuery) -> Result<Vec<VariableBindings>> {
         let mut all_bindings = vec![VariableBindings::new()];
 
@@ -182,7 +182,7 @@ impl<'a> MatchExecutor<'a> {
         Ok(all_bindings)
     }
 
-    /// Optimize pattern matching order based on selectivity
+    // Optimize pattern matching order based on selectivity
     fn optimize_pattern(
         &self,
         pattern: &super::query_engine::GraphPattern,
@@ -193,7 +193,7 @@ impl<'a> MatchExecutor<'a> {
         Ok(pattern.clone())
     }
 
-    /// Merge two sets of bindings
+    // Merge two sets of bindings
     fn merge_bindings(
         &self,
         existing: Vec<VariableBindings>,
@@ -232,7 +232,7 @@ impl<'a> MatchExecutor<'a> {
 // Path Enumeration
 // ============================================================================
 
-/// Path enumeration with constraints
+// Path enumeration with constraints
 pub struct PathEnumerator<'a> {
     graph: &'a PropertyGraph,
 }
@@ -242,7 +242,7 @@ impl<'a> PathEnumerator<'a> {
         Self { graph }
     }
 
-    /// Enumerate all simple paths between two vertices
+    // Enumerate all simple paths between two vertices
     pub fn enumerate_simple_paths(
         &self,
         start: VertexId,
@@ -300,7 +300,7 @@ impl<'a> PathEnumerator<'a> {
         Ok(())
     }
 
-    /// Enumerate k-shortest paths
+    // Enumerate k-shortest paths
     pub fn enumerate_k_shortest_paths(
         &self,
         start: VertexId,
@@ -452,17 +452,17 @@ impl<'a> PathEnumerator<'a> {
 // Temporal Graph Analysis
 // ============================================================================
 
-/// Temporal graph for time-varying networks
+// Temporal graph for time-varying networks
 #[derive(Debug, Clone)]
 pub struct TemporalGraph {
-    /// Snapshots of the graph at different time points
+    // Snapshots of the graph at different time points
     snapshots: BTreeMap<i64, PropertyGraph>,
 
-    /// Event log for incremental updates
+    // Event log for incremental updates
     event_log: Vec<TemporalEvent>,
 }
 
-/// Temporal event (vertex/edge addition or removal)
+// Temporal event (vertex/edge addition or removal)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TemporalEvent {
     AddVertex { timestamp: i64, vertex_id: VertexId, labels: Vec<String> },
@@ -479,27 +479,27 @@ impl TemporalGraph {
         }
     }
 
-    /// Add a snapshot at a specific time
+    // Add a snapshot at a specific time
     pub fn add_snapshot(&mut self, timestamp: i64, graph: PropertyGraph) {
         self.snapshots.insert(timestamp, graph);
     }
 
-    /// Get snapshot at a specific time
+    // Get snapshot at a specific time
     pub fn get_snapshot(&self, timestamp: i64) -> Option<&PropertyGraph> {
         self.snapshots.get(&timestamp)
     }
 
-    /// Get snapshot closest to a timestamp
+    // Get snapshot closest to a timestamp
     pub fn get_closest_snapshot(&self, timestamp: i64) -> Option<&PropertyGraph> {
         self.snapshots.range(..=timestamp).next_back().map(|(_, graph)| graph)
     }
 
-    /// Record a temporal event
+    // Record a temporal event
     pub fn record_event(&mut self, event: TemporalEvent) {
         self.event_log.push(event);
     }
 
-    /// Get events in a time range
+    // Get events in a time range
     pub fn get_events(&self, start: i64, end: i64) -> Vec<&TemporalEvent> {
         self.event_log.iter()
             .filter(|event| {
@@ -514,7 +514,7 @@ impl TemporalGraph {
             .collect()
     }
 
-    /// Compute temporal metrics
+    // Compute temporal metrics
     pub fn compute_temporal_metrics(&self, vertex: VertexId) -> Result<TemporalMetrics> {
         let mut appearance_count = 0;
         let mut first_appearance = None;
@@ -550,7 +550,7 @@ impl Default for TemporalGraph {
     }
 }
 
-/// Temporal metrics for a vertex
+// Temporal metrics for a vertex
 #[derive(Debug, Clone)]
 pub struct TemporalMetrics {
     pub vertex_id: VertexId,
@@ -564,11 +564,11 @@ pub struct TemporalMetrics {
 // Graph Machine Learning Features
 // ============================================================================
 
-/// Graph embedding generator
+// Graph embedding generator
 pub struct GraphEmbedding;
 
 impl GraphEmbedding {
-    /// Generate simple degree-based features
+    // Generate simple degree-based features
     pub fn degree_features(graph: &PropertyGraph) -> HashMap<VertexId, Vec<f64>> {
         let mut features = HashMap::new();
 
@@ -583,7 +583,7 @@ impl GraphEmbedding {
         features
     }
 
-    /// Generate PageRank-based features
+    // Generate PageRank-based features
     pub fn pagerank_features(graph: &PropertyGraph) -> Result<HashMap<VertexId, Vec<f64>>> {
         let config = PageRankConfig::default();
         let result = PageRank::compute(graph, &config)?;
@@ -596,7 +596,7 @@ impl GraphEmbedding {
         Ok(features)
     }
 
-    /// Generate local clustering coefficient features
+    // Generate local clustering coefficient features
     pub fn clustering_features(graph: &PropertyGraph) -> HashMap<VertexId, Vec<f64>> {
         let mut features = HashMap::new();
 
@@ -637,7 +637,7 @@ impl GraphEmbedding {
 // Recommendation Engine
 // ============================================================================
 
-/// Graph-based recommendation engine
+// Graph-based recommendation engine
 pub struct RecommendationEngine<'a> {
     graph: &'a PropertyGraph,
 }
@@ -647,7 +647,7 @@ impl<'a> RecommendationEngine<'a> {
         Self { graph }
     }
 
-    /// Collaborative filtering recommendations
+    // Collaborative filtering recommendations
     pub fn collaborative_filtering(
         &self,
         user_vertex: VertexId,
@@ -684,7 +684,7 @@ impl<'a> RecommendationEngine<'a> {
         Ok(recommendations)
     }
 
-    /// Content-based recommendations using property similarity
+    // Content-based recommendations using property similarity
     pub fn content_based(
         &self,
         item_vertex: VertexId,
@@ -714,7 +714,7 @@ impl<'a> RecommendationEngine<'a> {
         Ok(recommendations)
     }
 
-    /// Random walk with restart for recommendations
+    // Random walk with restart for recommendations
     pub fn random_walk_with_restart(
         &self,
         start_vertex: VertexId,

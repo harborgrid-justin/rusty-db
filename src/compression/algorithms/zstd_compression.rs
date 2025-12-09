@@ -1,4 +1,4 @@
-/// Zstandard-like and Huffman Compression Implementation
+// Zstandard-like and Huffman Compression Implementation
 
 use crate::compression::{Compressor, CompressionLevel, CompressionAlgorithm, CompressionResult, CompressionStats, CompressionError};
 use parking_lot::Mutex;

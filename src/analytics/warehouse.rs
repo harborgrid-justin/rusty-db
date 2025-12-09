@@ -1,13 +1,13 @@
-/// Data Warehouse Features
-///
-/// This module provides enterprise data warehousing capabilities:
-/// - Star schema and snowflake schema optimization
-/// - Bitmap indexes for dimension filtering
-/// - Fact table partitioning strategies
-/// - Slowly Changing Dimension (SCD) support
-/// - ETL pipeline integration points
-/// - Data quality and validation
-/// - Aggregate awareness and query rewriting
+// Data Warehouse Features
+//
+// This module provides enterprise data warehousing capabilities:
+// - Star schema and snowflake schema optimization
+// - Bitmap indexes for dimension filtering
+// - Fact table partitioning strategies
+// - Slowly Changing Dimension (SCD) support
+// - ETL pipeline integration points
+// - Data quality and validation
+// - Aggregate awareness and query rewriting
 
 use crate::error::{Result, DbError};
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::SystemTime;
 
-/// Star schema definition
+// Star schema definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StarSchema {
     pub name: String,
@@ -25,7 +25,7 @@ pub struct StarSchema {
     pub metadata: SchemaMetadata,
 }
 
-/// Fact table containing measures and foreign keys to dimensions
+// Fact table containing measures and foreign keys to dimensions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FactTable {
     pub name: String,
@@ -66,7 +66,7 @@ pub enum AggregationFunction {
     DistinctCount,
 }
 
-/// Dimension key (foreign key to dimension table)
+// Dimension key (foreign key to dimension table)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DimensionKey {
     pub dimension_name: String,
@@ -74,7 +74,7 @@ pub struct DimensionKey {
     pub nullable: bool,
 }
 
-/// Fact table index
+// Fact table index
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FactIndex {
     pub name: String,
@@ -90,7 +90,7 @@ pub enum FactIndexType {
     Composite,
 }
 
-/// Compression strategy for fact table
+// Compression strategy for fact table
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CompressionStrategy {
     None,
@@ -101,7 +101,7 @@ pub enum CompressionStrategy {
     Hybrid,
 }
 
-/// Fact table statistics
+// Fact table statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FactTableStatistics {
     pub row_count: u64,
@@ -113,7 +113,7 @@ pub struct FactTableStatistics {
     pub distinct_counts: HashMap<String, u64>,
 }
 
-/// Dimension table
+// Dimension table
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DimensionTable {
     pub name: String,
@@ -148,7 +148,7 @@ pub enum Cardinality {
     High,
 }
 
-/// Dimension hierarchy (e.g., Country > State > City)
+// Dimension hierarchy (e.g., Country > State > City)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DimensionHierarchy {
     pub name: String,
@@ -162,34 +162,34 @@ pub struct HierarchyLevel {
     pub order: usize,
 }
 
-/// Slowly Changing Dimension type
+// Slowly Changing Dimension type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SlowlyChangingDimensionType {
-    /// Type 0: No changes allowed
+    // Type 0: No changes allowed
     Type0,
-    /// Type 1: Overwrite old values
+    // Type 1: Overwrite old values
     Type1,
-    /// Type 2: Add new row with version
+    // Type 2: Add new row with version
     Type2 {
         version_column: String,
         effective_date_column: String,
         end_date_column: String,
         current_flag_column: String,
     },
-    /// Type 3: Add new column for previous value
+    // Type 3: Add new column for previous value
     Type3 {
         current_column: String,
         previous_column: String,
     },
-    /// Type 4: Separate history table
+    // Type 4: Separate history table
     Type4 {
         history_table: String,
     },
-    /// Type 6: Hybrid (1+2+3)
+    // Type 6: Hybrid (1+2+3)
     Type6,
 }
 
-/// Bitmap index for low-cardinality dimension attributes
+// Bitmap index for low-cardinality dimension attributes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BitmapIndex {
     pub name: String,
@@ -198,14 +198,14 @@ pub struct BitmapIndex {
     pub statistics: BitmapIndexStatistics,
 }
 
-/// Bit vector for bitmap index
+// Bit vector for bitmap index
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BitVector {
-    /// Packed bits (each u64 holds 64 bits)
+    // Packed bits (each u64 holds 64 bits)
     pub bits: Vec<u64>,
-    /// Number of bits
+    // Number of bits
     pub size: usize,
-    /// Number of set bits
+    // Number of set bits
     pub cardinality: usize,
 }
 
@@ -219,7 +219,7 @@ impl BitVector {
         }
     }
 
-    /// Set bit at position
+    // Set bit at position
     pub fn set(&mut self, position: usize) {
         if position >= self.size {
             return;
@@ -234,7 +234,7 @@ impl BitVector {
         }
     }
 
-    /// Get bit at position
+    // Get bit at position
     pub fn get(&self, position: usize) -> bool {
         if position >= self.size {
             return false;
@@ -246,7 +246,7 @@ impl BitVector {
         (self.bits[word] & (1 << bit)) != 0
     }
 
-    /// AND operation
+    // AND operation
     pub fn and(&self, other: &BitVector) -> BitVector {
         let size = self.size.min(other.size);
         let num_words = (size + 63) / 64;
@@ -260,7 +260,7 @@ impl BitVector {
         result
     }
 
-    /// OR operation
+    // OR operation
     pub fn or(&self, other: &BitVector) -> BitVector {
         let size = self.size.max(other.size);
         let num_words = (size + 63) / 64;
@@ -274,7 +274,7 @@ impl BitVector {
         result
     }
 
-    /// NOT operation
+    // NOT operation
     pub fn not(&self) -> BitVector {
         let mut result = BitVector::new(self.size);
 
@@ -293,7 +293,7 @@ impl BitVector {
         result
     }
 
-    /// Count set bits
+    // Count set bits
     fn count_bits(&self) -> usize {
         self.bits.iter().map(|word| word.count_ones() as usize).sum()
     }
@@ -307,25 +307,25 @@ pub struct BitmapIndexStatistics {
     pub avg_bitmap_density: f64,
 }
 
-/// Partitioning strategy for fact tables
+// Partitioning strategy for fact tables
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PartitioningStrategy {
-    /// Range partitioning (e.g., by date)
+    // Range partitioning (e.g., by date)
     Range {
         column: String,
         partitions: Vec<RangePartition>,
     },
-    /// Hash partitioning
+    // Hash partitioning
     Hash {
         column: String,
         num_partitions: usize,
     },
-    /// List partitioning
+    // List partitioning
     List {
         column: String,
         partitions: Vec<ListPartition>,
     },
-    /// Composite partitioning
+    // Composite partitioning
     Composite {
         primary: Box<PartitioningStrategy>,
         secondary: Box<PartitioningStrategy>,
@@ -347,7 +347,7 @@ pub struct ListPartition {
     pub row_count: u64,
 }
 
-/// Schema metadata
+// Schema metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SchemaMetadata {
     pub created_at: SystemTime,
@@ -356,7 +356,7 @@ pub struct SchemaMetadata {
     pub description: String,
 }
 
-/// Data warehouse manager
+// Data warehouse manager
 pub struct DataWarehouseManager {
     schemas: Arc<RwLock<HashMap<String, StarSchema>>>,
     etl_pipelines: Arc<RwLock<Vec<EtlPipeline>>>,
@@ -370,7 +370,7 @@ impl DataWarehouseManager {
         }
     }
 
-    /// Create star schema
+    // Create star schema
     pub fn create_star_schema(&self, schema: StarSchema) -> Result<()> {
         let mut schemas = self.schemas.write();
 
@@ -385,7 +385,7 @@ impl DataWarehouseManager {
         Ok(())
     }
 
-    /// Create bitmap index on dimension
+    // Create bitmap index on dimension
     pub fn create_bitmap_index(
         &self,
         schema_name: &str,
@@ -417,7 +417,7 @@ impl DataWarehouseManager {
         Ok(())
     }
 
-    /// Add dimension value to bitmap index
+    // Add dimension value to bitmap index
     pub fn add_to_bitmap_index(
         &self,
         schema_name: &str,
@@ -447,7 +447,7 @@ impl DataWarehouseManager {
         Ok(())
     }
 
-    /// Query using bitmap indexes
+    // Query using bitmap indexes
     pub fn query_with_bitmap(
         &self,
         schema_name: &str,
@@ -473,7 +473,7 @@ impl DataWarehouseManager {
         Ok(bitmap.clone())
     }
 
-    /// Handle slowly changing dimension update
+    // Handle slowly changing dimension update
     pub fn update_scd(
         &self,
         schema_name: &str,
@@ -510,12 +510,12 @@ impl DataWarehouseManager {
         }
     }
 
-    /// Register ETL pipeline
+    // Register ETL pipeline
     pub fn register_etl_pipeline(&self, pipeline: EtlPipeline) {
         self.etl_pipelines.write().push(pipeline);
     }
 
-    /// Get partition for value
+    // Get partition for value
     pub fn get_partition(
         &self,
         strategy: &PartitioningStrategy,
@@ -567,7 +567,7 @@ impl DataWarehouseManager {
     }
 }
 
-/// ETL pipeline definition
+// ETL pipeline definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EtlPipeline {
     pub name: String,
@@ -736,5 +736,3 @@ use std::time::Duration;
         assert!(result.is_ok());
     }
 }
-
-

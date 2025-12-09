@@ -9,7 +9,7 @@ use std::time::{Duration, SystemTime};
 
 use super::errors::SlotError;
 
-/// Unique slot identifier
+// Unique slot identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SlotId(String);
 
@@ -36,7 +36,7 @@ impl std::fmt::Display for SlotId {
     }
 }
 
-/// Slot name (human-readable identifier)
+// Slot name (human-readable identifier)
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SlotName(String);
 
@@ -73,85 +73,85 @@ impl std::fmt::Display for SlotName {
     }
 }
 
-/// Replication slot information
+// Replication slot information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlotInfo {
-    /// Unique slot identifier
+    // Unique slot identifier
     pub slot_id: SlotId,
-    /// Human-readable slot name
+    // Human-readable slot name
     pub slot_name: SlotName,
-    /// Associated replica ID
+    // Associated replica ID
     pub replica_id: ReplicaId,
-    /// Slot type
+    // Slot type
     pub slot_type: SlotType,
-    /// Current LSN position
+    // Current LSN position
     pub current_lsn: LogSequenceNumber,
-    /// Restart LSN (minimum required)
+    // Restart LSN (minimum required)
     pub restart_lsn: LogSequenceNumber,
-    /// Confirmed flush LSN
+    // Confirmed flush LSN
     pub confirmed_flush_lsn: Option<LogSequenceNumber>,
-    /// Slot status
+    // Slot status
     pub status: SlotStatus,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: SystemTime,
-    /// Last active timestamp
+    // Last active timestamp
     pub last_active: SystemTime,
-    /// Whether the slot is active
+    // Whether the slot is active
     pub active: bool,
-    /// Active process PID (if any)
+    // Active process PID (if any)
     pub active_pid: Option<u32>,
-    /// Slot configuration
+    // Slot configuration
     pub config: SlotConfig,
-    /// Custom metadata
+    // Custom metadata
     pub metadata: HashMap<String, String>,
-    /// Slot statistics
+    // Slot statistics
     pub statistics: SlotStatistics,
 }
 
-/// Types of replication slots
+// Types of replication slots
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SlotType {
-    /// Physical replication slot (WAL-based)
+    // Physical replication slot (WAL-based)
     Physical,
-    /// Logical replication slot (logical decoding)
+    // Logical replication slot (logical decoding)
     Logical,
-    /// Custom slot type
+    // Custom slot type
     Custom(String),
 }
 
-/// Slot status
+// Slot status
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SlotStatus {
-    /// Slot is active and consuming
+    // Slot is active and consuming
     Active,
-    /// Slot is inactive but retained
+    // Slot is inactive but retained
     Inactive,
-    /// Slot is being created
+    // Slot is being created
     Creating,
-    /// Slot is being dropped
+    // Slot is being dropped
     Dropping,
-    /// Slot encountered an error
+    // Slot encountered an error
     Error,
-    /// Slot has been invalidated
+    // Slot has been invalidated
     Invalid,
 }
 
-/// Slot configuration
+// Slot configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlotConfig {
-    /// Whether to retain WAL for this slot
+    // Whether to retain WAL for this slot
     pub retain_wal: bool,
-    /// Maximum lag before warning
+    // Maximum lag before warning
     pub max_lag_bytes: u64,
-    /// Maximum age before warning
+    // Maximum age before warning
     pub max_age: Duration,
-    /// Whether to automatically advance on inactivity
+    // Whether to automatically advance on inactivity
     pub auto_advance: bool,
-    /// Restart on error
+    // Restart on error
     pub restart_on_error: bool,
-    /// Snapshot behavior
+    // Snapshot behavior
     pub snapshot_action: SnapshotAction,
-    /// Custom options
+    // Custom options
     pub custom_options: HashMap<String, String>,
 }
 
@@ -169,37 +169,37 @@ impl Default for SlotConfig {
     }
 }
 
-/// Snapshot behavior for slots
+// Snapshot behavior for slots
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SnapshotAction {
-    /// Export snapshot
+    // Export snapshot
     Export,
-    /// Use existing snapshot
+    // Use existing snapshot
     Use,
-    /// No snapshot
+    // No snapshot
     NoSnapshot,
 }
 
-/// Slot statistics
+// Slot statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlotStatistics {
-    /// Total bytes consumed
+    // Total bytes consumed
     pub bytes_consumed: u64,
-    /// Total records consumed
+    // Total records consumed
     pub records_consumed: u64,
-    /// Consumption rate (bytes/sec)
+    // Consumption rate (bytes/sec)
     pub consumption_rate: f64,
-    /// Current lag in bytes
+    // Current lag in bytes
     pub lag_bytes: u64,
-    /// Current lag in time
+    // Current lag in time
     pub lag_time: Duration,
-    /// Number of restarts
+    // Number of restarts
     pub restart_count: u64,
-    /// Number of errors
+    // Number of errors
     pub error_count: u64,
-    /// Last error message
+    // Last error message
     pub last_error: Option<String>,
-    /// Last error timestamp
+    // Last error timestamp
     pub last_error_time: Option<SystemTime>,
 }
 
@@ -219,18 +219,18 @@ impl Default for SlotStatistics {
     }
 }
 
-/// Slot advance request
+// Slot advance request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlotAdvance {
-    /// Slot to advance
+    // Slot to advance
     pub slot_name: SlotName,
-    /// Target LSN
+    // Target LSN
     pub target_lsn: LogSequenceNumber,
-    /// Whether to wait for advance
+    // Whether to wait for advance
     pub wait: bool,
 }
 
-/// Slot health status
+// Slot health status
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SlotHealthStatus {
     Healthy,
@@ -239,7 +239,7 @@ pub enum SlotHealthStatus {
     Critical,
 }
 
-/// Slot health check result
+// Slot health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlotHealth {
     pub slot_name: SlotName,
@@ -251,22 +251,22 @@ pub struct SlotHealth {
     pub recommendations: Vec<String>,
 }
 
-/// Slot consumption record
+// Slot consumption record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsumptionRecord {
-    /// LSN of this record
+    // LSN of this record
     pub lsn: LogSequenceNumber,
-    /// Transaction ID
+    // Transaction ID
     pub xid: Option<u64>,
-    /// Timestamp of the record
+    // Timestamp of the record
     pub timestamp: SystemTime,
-    /// Record data
+    // Record data
     pub data: Vec<u8>,
-    /// Record metadata
+    // Record metadata
     pub metadata: HashMap<String, String>,
 }
 
-/// Atomic slot metrics for lock-free updates
+// Atomic slot metrics for lock-free updates
 #[derive(Debug)]
 pub struct AtomicSlotMetrics {
     pub bytes_consumed: Arc<AtomicU64>,

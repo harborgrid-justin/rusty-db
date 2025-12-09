@@ -14,58 +14,58 @@ use crate::error::{Result, DbError};
 // Window Function Types
 // =============================================================================
 
-/// Window function specification.
-///
-/// Defines the type of window function and its parameters.
+// Window function specification.
+//
+// Defines the type of window function and its parameters.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum WindowFunction {
-    /// Row number within the partition
+    // Row number within the partition
     RowNumber,
 
-    /// Rank with gaps for ties
+    // Rank with gaps for ties
     Rank,
 
-    /// Rank without gaps for ties
+    // Rank without gaps for ties
     DenseRank,
 
-    /// Value from following row
+    // Value from following row
     Lead {
-        /// Number of rows to look ahead
+        // Number of rows to look ahead
         offset: usize,
-        /// Default value if beyond partition
+        // Default value if beyond partition
         default: Option<String>,
     },
 
-    /// Value from preceding row
+    // Value from preceding row
     Lag {
-        /// Number of rows to look back
+        // Number of rows to look back
         offset: usize,
-        /// Default value if beyond partition
+        // Default value if beyond partition
         default: Option<String>,
     },
 
-    /// First value in the window frame
+    // First value in the window frame
     FirstValue,
 
-    /// Last value in the window frame
+    // Last value in the window frame
     LastValue,
 
-    /// Nth value in the window frame
+    // Nth value in the window frame
     NthValue {
-        /// Position (1-based)
+        // Position (1-based)
         n: usize,
     },
 
-    /// Divide rows into N buckets
+    // Divide rows into N buckets
     NTile {
-        /// Number of buckets
+        // Number of buckets
         buckets: usize,
     },
 
-    /// Relative rank: (rank - 1) / (total rows - 1)
+    // Relative rank: (rank - 1) / (total rows - 1)
     PercentRank,
 
-    /// Cumulative distribution: rows <= current / total rows
+    // Cumulative distribution: rows <= current / total rows
     CumeDist,
 }
 
@@ -73,16 +73,16 @@ pub enum WindowFunction {
 // Window Frame Specification
 // =============================================================================
 
-/// Window frame specification defining the range of rows.
+// Window frame specification defining the range of rows.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct WindowFrame {
-    /// Type of frame: ROWS, RANGE, or GROUPS
+    // Type of frame: ROWS, RANGE, or GROUPS
     pub frame_type: FrameType,
 
-    /// Start boundary of the frame
+    // Start boundary of the frame
     pub start_bound: FrameBound,
 
-    /// End boundary of the frame
+    // End boundary of the frame
     pub end_bound: FrameBound,
 }
 
@@ -97,7 +97,7 @@ impl Default for WindowFrame {
 }
 
 impl WindowFrame {
-    /// Create a frame covering the entire partition.
+    // Create a frame covering the entire partition.
     pub fn whole_partition() -> Self {
         Self {
             frame_type: FrameType::Rows,
@@ -106,7 +106,7 @@ impl WindowFrame {
         }
     }
 
-    /// Create a sliding window of N preceding rows.
+    // Create a sliding window of N preceding rows.
     pub fn sliding(preceding: usize) -> Self {
         Self {
             frame_type: FrameType::Rows,
@@ -115,7 +115,7 @@ impl WindowFrame {
         }
     }
 
-    /// Create a centered window.
+    // Create a centered window.
     pub fn centered(before: usize, after: usize) -> Self {
         Self {
             frame_type: FrameType::Rows,
@@ -125,29 +125,29 @@ impl WindowFrame {
     }
 }
 
-/// Frame type determining how boundaries are interpreted.
+// Frame type determining how boundaries are interpreted.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum FrameType {
-    /// Physical row offsets
+    // Physical row offsets
     Rows,
-    /// Logical value ranges
+    // Logical value ranges
     Range,
-    /// Groups of peers
+    // Groups of peers
     Groups,
 }
 
-/// Frame boundary specification.
+// Frame boundary specification.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum FrameBound {
-    /// Start of partition
+    // Start of partition
     UnboundedPreceding,
-    /// N rows/values before current
+    // N rows/values before current
     Preceding(usize),
-    /// Current row
+    // Current row
     CurrentRow,
-    /// N rows/values after current
+    // N rows/values after current
     Following(usize),
-    /// End of partition
+    // End of partition
     UnboundedFollowing,
 }
 
@@ -155,17 +155,17 @@ pub enum FrameBound {
 // Window Function Execution
 // =============================================================================
 
-/// Apply a window function to data.
-///
-/// # Arguments
-/// * `data` - The input data rows
-/// * `partition_by` - Column indices for partitioning
-/// * `order_by` - Column indices for ordering
-/// * `function` - The window function to apply
-/// * `value_column` - Column index for value-based functions (LEAD, LAG, etc.)
-///
-/// # Returns
-/// A vector of computed values, one per input row.
+// Apply a window function to data.
+//
+// # Arguments
+// * `data` - The input data rows
+// * `partition_by` - Column indices for partitioning
+// * `order_by` - Column indices for ordering
+// * `function` - The window function to apply
+// * `value_column` - Column index for value-based functions (LEAD, LAG, etc.)
+//
+// # Returns
+// A vector of computed values, one per input row.
 pub fn apply_window_function(
     data: &[Vec<String>],
     _partition_by: &[usize],
@@ -281,7 +281,7 @@ pub fn apply_window_function(
     Ok(result)
 }
 
-/// Compute RANK or DENSE_RANK.
+// Compute RANK or DENSE_RANK.
 fn compute_rank(data: &[Vec<String>], order_by: &[usize], dense: bool) -> Vec<String> {
     let mut result = Vec::with_capacity(data.len());
 
@@ -336,7 +336,7 @@ fn compute_rank(data: &[Vec<String>], order_by: &[usize], dense: bool) -> Vec<St
 // Window Function Builder
 // =============================================================================
 
-/// Builder for constructing window function specifications.
+// Builder for constructing window function specifications.
 #[derive(Debug, Clone)]
 pub struct WindowFunctionBuilder {
     function: Option<WindowFunction>,
@@ -353,7 +353,7 @@ impl Default for WindowFunctionBuilder {
 }
 
 impl WindowFunctionBuilder {
-    /// Create a new builder.
+    // Create a new builder.
     pub fn new() -> Self {
         Self {
             function: None,
@@ -364,37 +364,37 @@ impl WindowFunctionBuilder {
         }
     }
 
-    /// Set the window function.
+    // Set the window function.
     pub fn function(mut self, function: WindowFunction) -> Self {
         self.function = Some(function);
         self
     }
 
-    /// Set partition columns.
+    // Set partition columns.
     pub fn partition_by(mut self, columns: Vec<usize>) -> Self {
         self.partition_by = columns;
         self
     }
 
-    /// Set order columns.
+    // Set order columns.
     pub fn order_by(mut self, columns: Vec<usize>) -> Self {
         self.order_by = columns;
         self
     }
 
-    /// Set the window frame.
+    // Set the window frame.
     pub fn frame(mut self, frame: WindowFrame) -> Self {
         self.frame = frame;
         self
     }
 
-    /// Set the value column for LEAD/LAG/etc.
+    // Set the value column for LEAD/LAG/etc.
     pub fn value_column(mut self, column: usize) -> Self {
         self.value_column = column;
         self
     }
 
-    /// Execute the window function.
+    // Execute the window function.
     pub fn execute(self, data: &[Vec<String>]) -> Result<Vec<String>> {
         let function = self
             .function

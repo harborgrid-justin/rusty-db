@@ -14,20 +14,20 @@ use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
-/// Verification type
+// Verification type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum VerificationType {
-    /// Quick verification - checksum only
+    // Quick verification - checksum only
     Quick,
-    /// Standard verification - checksum + basic structure
+    // Standard verification - checksum + basic structure
     Standard,
-    /// Full verification - checksum + full structure validation
+    // Full verification - checksum + full structure validation
     Full,
-    /// Restore test - actual restore to verify recoverability
+    // Restore test - actual restore to verify recoverability
     RestoreTest,
 }
 
-/// Verification status
+// Verification status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum VerificationStatus {
     Pending,
@@ -37,7 +37,7 @@ pub enum VerificationStatus {
     Warning { warnings: Vec<String> },
 }
 
-/// Verification result
+// Verification result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationResult {
     pub verification_id: String,
@@ -83,7 +83,7 @@ impl VerificationResult {
     }
 }
 
-/// Corrupted block information
+// Corrupted block information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CorruptedBlock {
     pub file_id: u32,
@@ -102,7 +102,7 @@ pub enum CorruptionType {
     MissingBlock,
 }
 
-/// Checksum algorithm
+// Checksum algorithm
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ChecksumAlgorithm {
     CRC32,
@@ -111,7 +111,7 @@ pub enum ChecksumAlgorithm {
     XXHash,
 }
 
-/// Block checksum metadata
+// Block checksum metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BlockChecksum {
     pub file_id: u32,
@@ -149,7 +149,7 @@ impl BlockChecksum {
     }
 }
 
-/// Restore test configuration
+// Restore test configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RestoreTestConfig {
     pub test_directory: PathBuf,
@@ -171,7 +171,7 @@ impl Default for RestoreTestConfig {
     }
 }
 
-/// Restore test result
+// Restore test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RestoreTestResult {
     pub test_id: String,
@@ -185,7 +185,7 @@ pub struct RestoreTestResult {
     pub errors: Vec<String>,
 }
 
-/// Verification schedule
+// Verification schedule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationSchedule {
     pub schedule_id: String,
@@ -218,7 +218,7 @@ impl VerificationSchedule {
     }
 }
 
-/// Backup verification manager
+// Backup verification manager
 pub struct VerificationManager {
     checksums: Arc<RwLock<HashMap<String, Vec<BlockChecksum>>>>,
     verification_results: Arc<RwLock<BTreeMap<String, VerificationResult>>>,
@@ -238,7 +238,7 @@ impl VerificationManager {
         }
     }
 
-    /// Compute checksums for a backup
+    // Compute checksums for a backup
     pub fn compute_checksums(
         &self,
         backup_id: String,
@@ -268,7 +268,7 @@ impl VerificationManager {
         Ok(checksums)
     }
 
-    /// Verify backup integrity
+    // Verify backup integrity
     pub fn verify_backup(
         &self,
         backup_id: String,
@@ -435,7 +435,7 @@ impl VerificationManager {
         Ok(corrupted)
     }
 
-    /// Perform restore test
+    // Perform restore test
     pub fn perform_restore_test(
         &self,
         backup_id: String,
@@ -505,14 +505,14 @@ impl VerificationManager {
         Ok(true)
     }
 
-    /// Add verification schedule
+    // Add verification schedule
     pub fn add_schedule(&self, schedule: VerificationSchedule) -> Result<()> {
         let schedule_id = schedule.schedule_id.clone();
         self.schedules.write().insert(schedule_id, schedule);
         Ok(())
     }
 
-    /// Execute due scheduled verifications
+    // Execute due scheduled verifications
     pub fn execute_schedules(&self) -> Result<Vec<String>> {
         let mut verification_ids = Vec::new();
         let mut schedules = self.schedules.write();
@@ -540,27 +540,27 @@ impl VerificationManager {
         Ok(verification_ids)
     }
 
-    /// Get verification result
+    // Get verification result
     pub fn get_verification_result(&self, verification_id: &str) -> Option<VerificationResult> {
         self.verification_results.read().get(verification_id).cloned()
     }
 
-    /// List all verification results
+    // List all verification results
     pub fn list_verification_results(&self) -> Vec<VerificationResult> {
         self.verification_results.read().values().cloned().collect()
     }
 
-    /// Get restore test result
+    // Get restore test result
     pub fn get_restore_test_result(&self, test_id: &str) -> Option<RestoreTestResult> {
         self.restore_tests.read().get(test_id).cloned()
     }
 
-    /// List all restore test results
+    // List all restore test results
     pub fn list_restore_tests(&self) -> Vec<RestoreTestResult> {
         self.restore_tests.read().values().cloned().collect()
     }
 
-    /// Get verification statistics
+    // Get verification statistics
     pub fn get_statistics(&self) -> VerificationStatistics {
         let results = self.verification_results.read();
         let restore_tests = self.restore_tests.read();
@@ -598,7 +598,7 @@ impl VerificationManager {
     }
 }
 
-/// Verification statistics
+// Verification statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationStatistics {
     pub total_verifications: usize,
@@ -653,5 +653,3 @@ mod tests {
         assert!(schedule.next_execution.is_some());
     }
 }
-
-

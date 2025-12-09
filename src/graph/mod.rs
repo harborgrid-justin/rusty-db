@@ -148,19 +148,19 @@
 // Module Declarations
 // ============================================================================
 
-/// Property graph data structure
+// Property graph data structure
 pub mod property_graph;
 
-/// Query engine with PGQL-like support
+// Query engine with PGQL-like support
 pub mod query_engine;
 
-/// Graph algorithms
+// Graph algorithms
 pub mod algorithms;
 
-/// Storage formats and persistence
+// Storage formats and persistence
 pub mod storage;
 
-/// Advanced analytics and ML features
+// Advanced analytics and ML features
 pub mod analytics;
 
 // ============================================================================
@@ -251,12 +251,12 @@ pub use analytics::{
 // Module-level Functions
 // ============================================================================
 
-/// Create a new property graph instance
+// Create a new property graph instance
 pub fn new_graph() -> PropertyGraph {
     PropertyGraph::new()
 }
 
-/// Create a property graph with partitioning
+// Create a property graph with partitioning
 pub fn new_partitioned_graph(
     strategy: PartitioningStrategy,
     num_partitions: u32,
@@ -268,27 +268,27 @@ pub fn new_partitioned_graph(
 // Version Information
 // ============================================================================
 
-/// Graph database engine version
+// Graph database engine version
 pub const VERSION: &str = "1.0.0";
 
-/// Feature flags
+// Feature flags
 pub mod features {
-    /// Multi-graph support enabled
+    // Multi-graph support enabled
     pub const MULTI_GRAPH: bool = true;
 
-    /// Hypergraph support enabled
+    // Hypergraph support enabled
     pub const HYPERGRAPH: bool = true;
 
-    /// Temporal graph support enabled
+    // Temporal graph support enabled
     pub const TEMPORAL: bool = true;
 
-    /// Graph partitioning enabled
+    // Graph partitioning enabled
     pub const PARTITIONING: bool = true;
 
-    /// Graph compression enabled
+    // Graph compression enabled
     pub const COMPRESSION: bool = true;
 
-    /// Machine learning features enabled
+    // Machine learning features enabled
     pub const ML_FEATURES: bool = true;
 }
 

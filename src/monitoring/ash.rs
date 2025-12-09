@@ -11,7 +11,7 @@ use parking_lot::RwLock;
 use std::time::{Duration};
 
 
-/// Session state at the time of sampling
+// Session state at the time of sampling
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SessionState {
     Active,
@@ -35,7 +35,7 @@ impl fmt::Display for SessionState {
     }
 }
 
-/// Wait class categorization
+// Wait class categorization
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum WaitClass {
     UserIO,
@@ -67,7 +67,7 @@ impl fmt::Display for WaitClass {
     }
 }
 
-/// Active session sample - a snapshot of a session at a specific time
+// Active session sample - a snapshot of a session at a specific time
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AshSample {
     pub sample_id: u64,
@@ -162,7 +162,7 @@ impl AshSample {
     }
 }
 
-/// SQL statistics aggregated from ASH samples
+// SQL statistics aggregated from ASH samples
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SqlStatistics {
     pub sql_id: u64,
@@ -214,7 +214,7 @@ impl SqlStatistics {
     }
 }
 
-/// Session statistics aggregated from ASH samples
+// Session statistics aggregated from ASH samples
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionStatistics {
     pub session_id: u64,
@@ -259,7 +259,7 @@ impl SessionStatistics {
     }
 }
 
-/// Active Session History repository
+// Active Session History repository
 pub struct ActiveSessionHistory {
     samples: Arc<RwLock<VecDeque<AshSample>>>,
     max_samples: usize,
@@ -473,7 +473,7 @@ impl Default for ActiveSessionHistory {
     }
 }
 
-/// ASH report generator
+// ASH report generator
 pub struct AshReportGenerator<'a> {
     ash: &'a ActiveSessionHistory,
 }
@@ -636,5 +636,3 @@ mod tests {
         assert_eq!(top_sql[0].sql_id, 1001); // More DB time
     }
 }
-
-

@@ -10,7 +10,7 @@ use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime};
 
-/// Error types for container operations
+// Error types for container operations
 #[derive(Debug, Clone)]
 pub enum ContainerError {
     PdbAlreadyExists(String),
@@ -48,7 +48,7 @@ impl std::error::Error for ContainerError {}
 
 pub type ContainerResult<T> = Result<T, ContainerError>;
 
-/// PDB state enumeration
+// PDB state enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub enum PdbState {
     Mounted,      // PDB is mounted but not open
@@ -61,7 +61,7 @@ pub enum PdbState {
     Restricted,   // PDB is in restricted mode
 }
 
-/// PDB open mode
+// PDB open mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OpenMode {
     ReadWrite,
@@ -70,7 +70,7 @@ pub enum OpenMode {
     Upgrade,
 }
 
-/// Clone type for PDB cloning
+// Clone type for PDB cloning
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CloneType {
     Full,           // Full clone with data copy
@@ -79,7 +79,7 @@ pub enum CloneType {
     ThinClone,      // Thin clone with shared storage
 }
 
-/// Container parameter configuration
+// Container parameter configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContainerParameter {
     pub name: String,
@@ -89,7 +89,7 @@ pub struct ContainerParameter {
     pub description: String,
 }
 
-/// Pluggable Database configuration
+// Pluggable Database configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdbConfig {
     pub pdb_id: u64,
@@ -157,7 +157,7 @@ impl PdbConfig {
     }
 }
 
-/// Shared undo tablespace for CDB
+// Shared undo tablespace for CDB
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UndoTablespace {
     pub tablespace_name: String,
@@ -168,7 +168,7 @@ pub struct UndoTablespace {
     pub retention_seconds: u64,
 }
 
-/// Redo log group for CDB
+// Redo log group for CDB
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedoLogGroup {
     pub group_id: u32,
@@ -187,7 +187,7 @@ pub enum RedoLogStatus {
     Unused,
 }
 
-/// Snapshot metadata for copy-on-write cloning
+// Snapshot metadata for copy-on-write cloning
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdbSnapshot {
     pub snapshot_id: u64,
@@ -199,7 +199,7 @@ pub struct PdbSnapshot {
     pub is_thin: bool,
 }
 
-/// Clone operation metadata
+// Clone operation metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloneOperation {
     pub operation_id: u64,
@@ -223,7 +223,7 @@ pub enum CloneStatus {
     Failed,
 }
 
-/// Relocation operation for moving PDB between CDBs
+// Relocation operation for moving PDB between CDBs
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelocationOperation {
     pub operation_id: u64,
@@ -246,7 +246,7 @@ pub enum RelocationStatus {
     RolledBack,
 }
 
-/// Container Database (CDB) - Root container
+// Container Database (CDB) - Root container
 pub struct ContainerDatabase {
     pub cdb_name: String,
     pub cdb_id: u64,
@@ -264,7 +264,7 @@ pub struct ContainerDatabase {
 }
 
 impl ContainerDatabase {
-    /// Create a new Container Database
+    // Create a new Container Database
     pub fn new(cdb_name: String, maxpdbs: u32) -> Self {
         let cdb_id = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
@@ -358,7 +358,7 @@ impl ContainerDatabase {
         ]
     }
 
-    /// Create a new Pluggable Database
+    // Create a new Pluggable Database
     pub async fn create_pdb(
         &self,
         pdb_name: String,
@@ -406,7 +406,7 @@ impl ContainerDatabase {
         Ok(pdb_arc)
     }
 
-    /// Clone a PDB with specified clone type
+    // Clone a PDB with specified clone type
     pub async fn clone_pdb(
         &self,
         source_pdb_name: String,
@@ -465,7 +465,7 @@ impl ContainerDatabase {
         Ok(operation_id)
     }
 
-    /// Execute clone operation asynchronously
+    // Execute clone operation asynchronously
     async fn execute_clone(&self, operation_id: u64) -> ContainerResult<()> {
         let mut active_clones = self.active_clones.write().await;
         let clone_op = active_clones.get_mut(&operation_id)
@@ -503,7 +503,7 @@ impl ContainerDatabase {
         Ok(())
     }
 
-    /// Snapshot-based clone using copy-on-write
+    // Snapshot-based clone using copy-on-write
     async fn execute_snapshot_clone(
         &self,
         source_name: &str,
@@ -553,7 +553,7 @@ impl ContainerDatabase {
         Ok(())
     }
 
-    /// Hot clone with minimal downtime
+    // Hot clone with minimal downtime
     async fn execute_hot_clone(
         &self,
         source_name: &str,
@@ -594,7 +594,7 @@ impl ContainerDatabase {
         Ok(())
     }
 
-    /// Full clone with complete data copy
+    // Full clone with complete data copy
     async fn execute_full_clone(
         &self,
         source_name: &str,
@@ -629,7 +629,7 @@ impl ContainerDatabase {
         Ok(())
     }
 
-    /// Thin clone with shared storage
+    // Thin clone with shared storage
     async fn execute_thin_clone(
         &self,
         source_name: &str,
@@ -649,7 +649,7 @@ impl ContainerDatabase {
         }
     }
 
-    /// Unplug a PDB (export metadata and data files)
+    // Unplug a PDB (export metadata and data files)
     pub async fn unplug_pdb(&self, pdb_name: String) -> ContainerResult<PathBuf> {
         let pdbs = self.pdbs.read().await;
         let pdb = pdbs.get(&pdb_name)
@@ -684,7 +684,7 @@ impl ContainerDatabase {
         Ok(xml_path)
     }
 
-    /// Plug in a PDB from XML metadata
+    // Plug in a PDB from XML metadata
     pub async fn plug_pdb(
         &self,
         pdb_name: String,
@@ -718,7 +718,7 @@ impl ContainerDatabase {
         Ok(pdb_arc)
     }
 
-    /// Drop a PDB permanently
+    // Drop a PDB permanently
     pub async fn drop_pdb(&self, pdb_name: String, including_datafiles: bool) -> ContainerResult<()> {
         let mut pdbs = self.pdbs.write().await;
 
@@ -735,7 +735,7 @@ impl ContainerDatabase {
         Ok(())
     }
 
-    /// Open a PDB
+    // Open a PDB
     pub async fn open_pdb(&self, pdb_name: String, mode: OpenMode) -> ContainerResult<()> {
         let pdbs = self.pdbs.read().await;
         let pdb = pdbs.get(&pdb_name)
@@ -763,7 +763,7 @@ impl ContainerDatabase {
         Ok(())
     }
 
-    /// Close a PDB
+    // Close a PDB
     pub async fn close_pdb(&self, pdb_name: String) -> ContainerResult<()> {
         let pdbs = self.pdbs.read().await;
         let pdb = pdbs.get(&pdb_name)
@@ -777,7 +777,7 @@ impl ContainerDatabase {
         Ok(())
     }
 
-    /// Relocate PDB to another CDB
+    // Relocate PDB to another CDB
     pub async fn relocate_pdb(
         &self,
         pdb_name: String,
@@ -802,7 +802,7 @@ impl ContainerDatabase {
         Ok(operation_id)
     }
 
-    /// Get PDB configuration
+    // Get PDB configuration
     pub async fn get_pdb(&self, pdb_name: &str) -> ContainerResult<Arc<RwLock<PdbConfig>>> {
         let pdbs = self.pdbs.read().await;
         pdbs.get(pdb_name)
@@ -810,13 +810,13 @@ impl ContainerDatabase {
             .ok_or_else(|| ContainerError::PdbNotFound(pdb_name.to_string()))
     }
 
-    /// List all PDBs
+    // List all PDBs
     pub async fn list_pdbs(&self) -> Vec<String> {
         let pdbs = self.pdbs.read().await;
         pdbs.keys().cloned().collect()
     }
 
-    /// Get CDB statistics
+    // Get CDB statistics
     pub async fn get_statistics(&self) -> CdbStatistics {
         let pdbs = self.pdbs.read().await;
         let mut total_size_mb = 0;
@@ -907,7 +907,7 @@ impl Clone for ContainerDatabase {
     }
 }
 
-/// CDB statistics
+// CDB statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CdbStatistics {
     pub total_pdbs: u32,

@@ -31,7 +31,7 @@ pub use neural_networks::NeuralNetwork;
 // Common Types and Traits
 // ============================================================================
 
-/// Supported model types
+// Supported model types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ModelType {
     LinearRegression,
@@ -43,7 +43,7 @@ pub enum ModelType {
 }
 
 impl ModelType {
-    /// Get default hyperparameters for this model type
+    // Get default hyperparameters for this model type
     pub fn default_hyperparameters(&self) -> Hyperparameters {
         let mut params = Hyperparameters::new();
         match self {
@@ -88,24 +88,24 @@ impl ModelType {
     }
 }
 
-/// Common trait for all ML algorithms
+// Common trait for all ML algorithms
 pub trait Algorithm: Send + Sync {
-    /// Train the model on the given dataset
+    // Train the model on the given dataset
     fn fit(&mut self, dataset: &Dataset, params: &Hyperparameters) -> Result<()>;
 
-    /// Make predictions on new data
+    // Make predictions on new data
     fn predict(&self, features: &Matrix) -> Result<Vector>;
 
-    /// Get model type
+    // Get model type
     fn model_type(&self) -> ModelType;
 
-    /// Serialize model to bytes
+    // Serialize model to bytes
     fn serialize(&self) -> Result<Vec<u8>>;
 
-    /// Deserialize model from bytes
+    // Deserialize model from bytes
     fn deserialize(bytes: &[u8]) -> Result<Self> where Self: Sized;
 
-    /// Calculate feature importance (if supported)
+    // Calculate feature importance (if supported)
     fn feature_importance(&self) -> Option<Vector> {
         None
     }

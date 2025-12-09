@@ -22,52 +22,52 @@ use super::{TenantId, ResourceConsumption};
 use super::pdb::{PdbId, PdbConfig, PdbCreateMode};
 use super::isolation::ResourceLimits;
 
-/// Tenant configuration
+// Tenant configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantConfig {
-    /// Tenant name (unique identifier)
+    // Tenant name (unique identifier)
     pub name: String,
 
-    /// Display name
+    // Display name
     pub display_name: String,
 
-    /// Organization/company name
+    // Organization/company name
     pub organization: String,
 
-    /// Tenant tier (free, basic, premium, enterprise)
+    // Tenant tier (free, basic, premium, enterprise)
     pub tier: TenantTier,
 
-    /// Resource limits
+    // Resource limits
     pub resource_limits: ResourceLimits,
 
-    /// Contact information
+    // Contact information
     pub contact_email: String,
 
-    /// Contact phone
+    // Contact phone
     pub contact_phone: Option<String>,
 
-    /// Billing account ID
+    // Billing account ID
     pub billing_account_id: Option<String>,
 
-    /// Custom properties
+    // Custom properties
     pub properties: HashMap<String, String>,
 
-    /// Region/datacenter preference
+    // Region/datacenter preference
     pub region: String,
 
-    /// Compliance requirements
+    // Compliance requirements
     pub compliance: Vec<ComplianceRequirement>,
 
-    /// Enable audit logging
+    // Enable audit logging
     pub audit_logging: bool,
 
-    /// Enable encryption at rest
+    // Enable encryption at rest
     pub encryption_at_rest: bool,
 
-    /// Backup retention days
+    // Backup retention days
     pub backup_retention_days: u32,
 
-    /// Allow cross-tenant queries
+    // Allow cross-tenant queries
     pub allow_cross_tenant_queries: bool,
 }
 
@@ -93,23 +93,23 @@ impl Default for TenantConfig {
     }
 }
 
-/// Tenant tier
+// Tenant tier
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TenantTier {
-    /// Free tier with limited resources
+    // Free tier with limited resources
     Free,
-    /// Basic tier with standard resources
+    // Basic tier with standard resources
     Basic,
-    /// Premium tier with enhanced resources
+    // Premium tier with enhanced resources
     Premium,
-    /// Enterprise tier with dedicated resources
+    // Enterprise tier with dedicated resources
     Enterprise,
-    /// Custom tier with negotiated resources
+    // Custom tier with negotiated resources
     Custom,
 }
 
 impl TenantTier {
-    /// Get default resource limits for tier
+    // Get default resource limits for tier
     pub fn default_limits(&self) -> ResourceLimits {
         match self {
             TenantTier::Free => ResourceLimits {
@@ -150,7 +150,7 @@ impl TenantTier {
         }
     }
 
-    /// Get pricing multiplier
+    // Get pricing multiplier
     pub fn pricing_multiplier(&self) -> f64 {
         match self {
             TenantTier::Free => 0.0,
@@ -162,92 +162,92 @@ impl TenantTier {
     }
 }
 
-/// Compliance requirement
+// Compliance requirement
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ComplianceRequirement {
-    /// GDPR compliance
+    // GDPR compliance
     GDPR,
-    /// HIPAA compliance
+    // HIPAA compliance
     HIPAA,
-    /// SOC2 compliance
+    // SOC2 compliance
     SOC2,
-    /// PCI-DSS compliance
+    // PCI-DSS compliance
     PCIDSS,
-    /// ISO 27001
+    // ISO 27001
     ISO27001,
 }
 
-/// Tenant metadata
+// Tenant metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantMetadata {
-    /// Tenant ID
+    // Tenant ID
     pub tenant_id: TenantId,
 
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: u64,
 
-    /// Last modified timestamp
+    // Last modified timestamp
     pub modified_at: u64,
 
-    /// Last login timestamp
+    // Last login timestamp
     pub last_login_at: Option<u64>,
 
-    /// Tenant status
+    // Tenant status
     pub status: TenantStatus,
 
-    /// Associated PDB ID
+    // Associated PDB ID
     pub pdb_id: PdbId,
 
-    /// Number of users
+    // Number of users
     pub user_count: u32,
 
-    /// Number of databases/schemas
+    // Number of databases/schemas
     pub database_count: u32,
 
-    /// Total data size
+    // Total data size
     pub data_size_bytes: u64,
 
-    /// Total backup size
+    // Total backup size
     pub backup_size_bytes: u64,
 
-    /// API key
+    // API key
     pub api_key: String,
 
-    /// Tags
+    // Tags
     pub tags: HashMap<String, String>,
 }
 
-/// Tenant status
+// Tenant status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TenantStatus {
-    /// Tenant is being provisioned
+    // Tenant is being provisioned
     Provisioning,
-    /// Tenant is active and operational
+    // Tenant is active and operational
     Active,
-    /// Tenant is suspended (non-payment, violations, etc.)
+    // Tenant is suspended (non-payment, violations, etc.)
     Suspended,
-    /// Tenant is being deprovisioned
+    // Tenant is being deprovisioned
     Deprovisioning,
-    /// Tenant has been deleted
+    // Tenant has been deleted
     Deleted,
-    /// Tenant is in maintenance mode
+    // Tenant is in maintenance mode
     Maintenance,
 }
 
-/// Tenant instance
+// Tenant instance
 pub struct Tenant {
-    /// Tenant configuration
+    // Tenant configuration
     config: Arc<RwLock<TenantConfig>>,
 
-    /// Tenant metadata
+    // Tenant metadata
     metadata: Arc<RwLock<TenantMetadata>>,
 
-    /// Resource consumption history
+    // Resource consumption history
     consumption_history: Arc<RwLock<Vec<ResourceConsumption>>>,
 }
 
 impl Tenant {
-    /// Create a new tenant
+    // Create a new tenant
     pub fn new(tenant_id: TenantId, pdb_id: PdbId, config: TenantConfig) -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -276,7 +276,7 @@ impl Tenant {
         }
     }
 
-    /// Generate a random API key
+    // Generate a random API key
     fn generate_api_key() -> String {
         use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
@@ -287,22 +287,22 @@ impl Tenant {
         format!("tk_{:x}", hasher.finish())
     }
 
-    /// Get tenant ID
+    // Get tenant ID
     pub async fn id(&self) -> TenantId {
         self.metadata.read().await.tenant_id
     }
 
-    /// Get tenant name
+    // Get tenant name
     pub async fn name(&self) -> String {
         self.config.read().await.name.clone()
     }
 
-    /// Get tenant status
+    // Get tenant status
     pub async fn status(&self) -> TenantStatus {
         self.metadata.read().await.status
     }
 
-    /// Set tenant status
+    // Set tenant status
     pub async fn set_status(&self, status: TenantStatus) -> Result<()> {
         let mut metadata = self.metadata.write().await;
         metadata.status = status;
@@ -313,22 +313,22 @@ impl Tenant {
         Ok(())
     }
 
-    /// Get PDB ID
+    // Get PDB ID
     pub async fn pdb_id(&self) -> PdbId {
         self.metadata.read().await.pdb_id
     }
 
-    /// Record resource consumption
+    // Record resource consumption
     pub async fn record_consumption(&self, consumption: ResourceConsumption) {
         self.consumption_history.write().await.push(consumption);
     }
 
-    /// Get consumption history
+    // Get consumption history
     pub async fn consumption_history(&self) -> Vec<ResourceConsumption> {
         self.consumption_history.read().await.clone()
     }
 
-    /// Get total consumption
+    // Get total consumption
     pub async fn total_consumption(&self) -> ResourceConsumption {
         let history = self.consumption_history.read().await;
         let mut total = ResourceConsumption::zero();
@@ -340,7 +340,7 @@ impl Tenant {
         total
     }
 
-    /// Update configuration
+    // Update configuration
     pub async fn update_config<F>(&self, f: F) -> Result<()>
     where
         F: FnOnce(&mut TenantConfig),
@@ -354,31 +354,31 @@ impl Tenant {
         Ok(())
     }
 
-    /// Get configuration
+    // Get configuration
     pub async fn config(&self) -> TenantConfig {
         self.config.read().await.clone()
     }
 
-    /// Get metadata
+    // Get metadata
     pub async fn metadata(&self) -> TenantMetadata {
         self.metadata.read().await.clone()
     }
 }
 
-/// Tenant provisioning service
+// Tenant provisioning service
 pub struct TenantProvisioningService {
-    /// Active tenants
+    // Active tenants
     tenants: Arc<RwLock<HashMap<TenantId, Arc<Tenant>>>>,
 
-    /// Next tenant ID
+    // Next tenant ID
     next_id: Arc<RwLock<u64>>,
 
-    /// Onboarding workflows
+    // Onboarding workflows
     workflows: Arc<RwLock<HashMap<TenantId, TenantOnboardingWorkflow>>>,
 }
 
 impl TenantProvisioningService {
-    /// Create a new provisioning service
+    // Create a new provisioning service
     pub fn new() -> Self {
         Self {
             tenants: Arc::new(RwLock::new(HashMap::new())),
@@ -387,7 +387,7 @@ impl TenantProvisioningService {
         }
     }
 
-    /// Provision a new tenant
+    // Provision a new tenant
     pub async fn provision_tenant(&self, config: TenantConfig) -> Result<TenantId> {
         // Generate tenant ID
         let mut next_id = self.next_id.write().await;
@@ -417,7 +417,7 @@ impl TenantProvisioningService {
         Ok(tenant_id)
     }
 
-    /// Deprovision a tenant
+    // Deprovision a tenant
     pub async fn deprovision_tenant(&self, tenant_id: TenantId) -> Result<()> {
         let tenants = self.tenants.read().await;
 
@@ -440,7 +440,7 @@ impl TenantProvisioningService {
         }
     }
 
-    /// Get a tenant
+    // Get a tenant
     pub async fn get_tenant(&self, tenant_id: TenantId) -> Result<Arc<Tenant>> {
         self.tenants
             .read()
@@ -450,18 +450,18 @@ impl TenantProvisioningService {
             .ok_or_else(|| DbError::NotFound(format!("Tenant not found: {:?}", tenant_id)))
     }
 
-    /// List all tenants
+    // List all tenants
     pub async fn list_tenants(&self) -> Vec<TenantId> {
         self.tenants.read().await.keys().copied().collect()
     }
 
-    /// Get tenant count
+    // Get tenant count
     pub async fn tenant_count(&self) -> usize {
         self.tenants.read().await.len()
     }
 }
 
-/// Tenant onboarding workflow
+// Tenant onboarding workflow
 #[derive(Debug, Clone)]
 pub struct TenantOnboardingWorkflow {
     tenant_id: TenantId,
@@ -483,7 +483,7 @@ enum OnboardingStep {
 }
 
 impl TenantOnboardingWorkflow {
-    /// Create a new onboarding workflow
+    // Create a new onboarding workflow
     pub fn new(tenant_id: TenantId, config: TenantConfig) -> Self {
         let steps = vec![
             OnboardingStep::ValidateConfig,
@@ -504,7 +504,7 @@ impl TenantOnboardingWorkflow {
         }
     }
 
-    /// Execute the workflow
+    // Execute the workflow
     pub async fn execute(&self) -> Result<PdbId> {
         // Step 1: Validate configuration
         self.validate_config()?;
@@ -582,9 +582,9 @@ impl TenantOnboardingWorkflow {
     }
 }
 
-/// Tenant backup manager
+// Tenant backup manager
 pub struct TenantBackupManager {
-    /// Backup metadata
+    // Backup metadata
     backups: Arc<RwLock<HashMap<TenantId, Vec<TenantBackup>>>>,
 }
 
@@ -615,14 +615,14 @@ pub enum BackupStatus {
 }
 
 impl TenantBackupManager {
-    /// Create a new backup manager
+    // Create a new backup manager
     pub fn new() -> Self {
         Self {
             backups: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    /// Create a backup
+    // Create a backup
     pub async fn create_backup(
         &self,
         tenant_id: TenantId,
@@ -657,7 +657,7 @@ impl TenantBackupManager {
         Ok(backup_id)
     }
 
-    /// List backups for a tenant
+    // List backups for a tenant
     pub async fn list_backups(&self, tenant_id: TenantId) -> Vec<TenantBackup> {
         self.backups
             .read()
@@ -668,21 +668,21 @@ impl TenantBackupManager {
     }
 }
 
-/// Cross-tenant query engine
+// Cross-tenant query engine
 pub struct CrossTenantQueryEngine {
-    /// Allowed cross-tenant query pairs
+    // Allowed cross-tenant query pairs
     permissions: Arc<RwLock<HashMap<TenantId, Vec<TenantId>>>>,
 }
 
 impl CrossTenantQueryEngine {
-    /// Create a new cross-tenant query engine
+    // Create a new cross-tenant query engine
     pub fn new() -> Self {
         Self {
             permissions: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    /// Grant cross-tenant query permission
+    // Grant cross-tenant query permission
     pub async fn grant_permission(&self, from_tenant: TenantId, to_tenant: TenantId) -> Result<()> {
         self.permissions
             .write()
@@ -693,7 +693,7 @@ impl CrossTenantQueryEngine {
         Ok(())
     }
 
-    /// Check if cross-tenant query is allowed
+    // Check if cross-tenant query is allowed
     pub async fn is_allowed(&self, from_tenant: TenantId, to_tenant: TenantId) -> bool {
         self.permissions
             .read()
@@ -703,7 +703,7 @@ impl CrossTenantQueryEngine {
             .unwrap_or(false)
     }
 
-    /// Execute cross-tenant query
+    // Execute cross-tenant query
     pub async fn execute_query(
         &self,
         from_tenant: TenantId,

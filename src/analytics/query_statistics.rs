@@ -28,37 +28,37 @@ use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// A single query execution record.
+// A single query execution record.
 #[derive(Debug, Clone)]
 pub struct QueryExecution {
-    /// Query identifier (hash of normalized query)
+    // Query identifier (hash of normalized query)
     pub query_id: u64,
-    /// Original SQL text
+    // Original SQL text
     pub sql: String,
-    /// Normalized SQL (parameters replaced)
+    // Normalized SQL (parameters replaced)
     pub normalized_sql: String,
-    /// Execution time in milliseconds
+    // Execution time in milliseconds
     pub execution_time_ms: u64,
-    /// Number of rows examined
+    // Number of rows examined
     pub rows_examined: u64,
-    /// Number of rows returned
+    // Number of rows returned
     pub rows_returned: u64,
-    /// Bytes read
+    // Bytes read
     pub bytes_read: u64,
-    /// Whether query used an index
+    // Whether query used an index
     pub used_index: bool,
-    /// Index names used
+    // Index names used
     pub indexes_used: Vec<String>,
-    /// Tables accessed
+    // Tables accessed
     pub tables_accessed: Vec<String>,
-    /// Execution timestamp
+    // Execution timestamp
     pub executed_at: std::time::Instant,
-    /// User/connection identifier
+    // User/connection identifier
     pub user_id: Option<String>,
 }
 
 impl QueryExecution {
-    /// Creates a new query execution record.
+    // Creates a new query execution record.
     pub fn new(sql: impl Into<String>, execution_time_ms: u64) -> Self {
         let sql_str = sql.into();
         let normalized = Self::normalize_sql(&sql_str);
@@ -80,7 +80,7 @@ impl QueryExecution {
         }
     }
 
-    /// Normalizes SQL by replacing literal values with placeholders.
+    // Normalizes SQL by replacing literal values with placeholders.
     fn normalize_sql(sql: &str) -> String {
         // Simple normalization: replace numbers and quoted strings
         let mut result = sql.to_string();
@@ -110,7 +110,7 @@ impl QueryExecution {
         normalized.join(" ")
     }
 
-    /// Generates a hash for the normalized query.
+    // Generates a hash for the normalized query.
     fn hash_query(sql: &str) -> u64 {
         let mut hash: u64 = 0;
         for byte in sql.bytes() {
@@ -119,64 +119,64 @@ impl QueryExecution {
         hash
     }
 
-    /// Sets the row statistics.
+    // Sets the row statistics.
     pub fn with_rows(mut self, examined: u64, returned: u64) -> Self {
         self.rows_examined = examined;
         self.rows_returned = returned;
         self
     }
 
-    /// Sets the index usage.
+    // Sets the index usage.
     pub fn with_index(mut self, index_name: impl Into<String>) -> Self {
         self.used_index = true;
         self.indexes_used.push(index_name.into());
         self
     }
 
-    /// Sets the tables accessed.
+    // Sets the tables accessed.
     pub fn with_tables(mut self, tables: Vec<String>) -> Self {
         self.tables_accessed = tables;
         self
     }
 }
 
-/// Aggregated statistics for a query pattern.
+// Aggregated statistics for a query pattern.
 #[derive(Debug, Clone)]
 pub struct QueryStats {
-    /// Query identifier
+    // Query identifier
     pub query_id: u64,
-    /// Normalized SQL
+    // Normalized SQL
     pub normalized_sql: String,
-    /// Total execution count
+    // Total execution count
     pub execution_count: u64,
-    /// Total execution time
+    // Total execution time
     pub total_time_ms: u64,
-    /// Minimum execution time
+    // Minimum execution time
     pub min_time_ms: u64,
-    /// Maximum execution time
+    // Maximum execution time
     pub max_time_ms: u64,
-    /// Average execution time
+    // Average execution time
     pub avg_time_ms: f64,
-    /// Standard deviation of execution time
+    // Standard deviation of execution time
     pub stddev_time_ms: f64,
-    /// Total rows examined
+    // Total rows examined
     pub total_rows_examined: u64,
-    /// Total rows returned
+    // Total rows returned
     pub total_rows_returned: u64,
-    /// Percentage of executions using index
+    // Percentage of executions using index
     pub index_usage_percent: f64,
-    /// First seen timestamp
+    // First seen timestamp
     pub first_seen: std::time::Instant,
-    /// Last seen timestamp
+    // Last seen timestamp
     pub last_seen: std::time::Instant,
-    /// Tables accessed
+    // Tables accessed
     pub tables: Vec<String>,
-    /// Execution times for percentile calculation
+    // Execution times for percentile calculation
     execution_times: Vec<u64>,
 }
 
 impl QueryStats {
-    /// Creates new statistics from an execution.
+    // Creates new statistics from an execution.
     fn new(execution: &QueryExecution) -> Self {
         Self {
             query_id: execution.query_id,
@@ -197,7 +197,7 @@ impl QueryStats {
         }
     }
 
-    /// Updates statistics with a new execution.
+    // Updates statistics with a new execution.
     fn update(&mut self, execution: &QueryExecution) {
         self.execution_count += 1;
         self.total_time_ms += execution.execution_time_ms;
@@ -224,7 +224,7 @@ impl QueryStats {
         self.update_stddev();
     }
 
-    /// Updates standard deviation calculation.
+    // Updates standard deviation calculation.
     fn update_stddev(&mut self) {
         if self.execution_times.len() < 2 {
             self.stddev_time_ms = 0.0;
@@ -242,17 +242,17 @@ impl QueryStats {
         self.stddev_time_ms = variance.sqrt();
     }
 
-    /// Returns the p95 execution time.
+    // Returns the p95 execution time.
     pub fn p95_time_ms(&self) -> u64 {
         self.percentile(95)
     }
 
-    /// Returns the p99 execution time.
+    // Returns the p99 execution time.
     pub fn p99_time_ms(&self) -> u64 {
         self.percentile(99)
     }
 
-    /// Calculates a percentile of execution times.
+    // Calculates a percentile of execution times.
     fn percentile(&self, p: usize) -> u64 {
         if self.execution_times.is_empty() {
             return 0;
@@ -265,7 +265,7 @@ impl QueryStats {
         sorted[idx.min(sorted.len() - 1)]
     }
 
-    /// Returns selectivity (rows returned / rows examined).
+    // Returns selectivity (rows returned / rows examined).
     pub fn selectivity(&self) -> f64 {
         if self.total_rows_examined == 0 {
             return 1.0;
@@ -274,16 +274,16 @@ impl QueryStats {
     }
 }
 
-/// Tracks query execution statistics.
+// Tracks query execution statistics.
 #[derive(Debug)]
 pub struct QueryStatisticsTracker {
-    /// Statistics by query ID
+    // Statistics by query ID
     stats: Arc<RwLock<HashMap<u64, QueryStats>>>,
-    /// Recent executions for time-based analysis
+    // Recent executions for time-based analysis
     recent_executions: Arc<RwLock<VecDeque<QueryExecution>>>,
-    /// Maximum recent executions to keep
+    // Maximum recent executions to keep
     max_recent: usize,
-    /// Total queries tracked
+    // Total queries tracked
     total_queries: Arc<RwLock<u64>>,
 }
 
@@ -294,7 +294,7 @@ impl Default for QueryStatisticsTracker {
 }
 
 impl QueryStatisticsTracker {
-    /// Creates a new query statistics tracker.
+    // Creates a new query statistics tracker.
     pub fn new() -> Self {
         Self {
             stats: Arc::new(RwLock::new(HashMap::new())),
@@ -304,7 +304,7 @@ impl QueryStatisticsTracker {
         }
     }
 
-    /// Records a query execution.
+    // Records a query execution.
     pub fn record_execution(&self, execution: QueryExecution) {
         let query_id = execution.query_id;
 
@@ -325,36 +325,36 @@ impl QueryStatisticsTracker {
         *self.total_queries.write() += 1;
     }
 
-    /// Records a simple query with just SQL and time.
+    // Records a simple query with just SQL and time.
     pub fn record_query(&self, sql: &str, execution_time_ms: u64) {
         self.record_execution(QueryExecution::new(sql, execution_time_ms));
     }
 
-    /// Returns statistics for a specific query.
+    // Returns statistics for a specific query.
     pub fn get_stats(&self, query_id: u64) -> Option<QueryStats> {
         self.stats.read().get(&query_id).cloned()
     }
 
-    /// Returns all query statistics.
+    // Returns all query statistics.
     pub fn get_all_stats(&self) -> Vec<QueryStats> {
         self.stats.read().values().cloned().collect()
     }
 
-    /// Returns the top N slowest queries by average time.
+    // Returns the top N slowest queries by average time.
     pub fn top_slow_queries(&self, n: usize) -> Vec<QueryStats> {
         let mut stats: Vec<QueryStats> = self.get_all_stats();
         stats.sort_by(|a, b| b.avg_time_ms.partial_cmp(&a.avg_time_ms).unwrap());
         stats.into_iter().take(n).collect()
     }
 
-    /// Returns the top N most frequent queries.
+    // Returns the top N most frequent queries.
     pub fn top_frequent_queries(&self, n: usize) -> Vec<QueryStats> {
         let mut stats: Vec<QueryStats> = self.get_all_stats();
         stats.sort_by(|a, b| b.execution_count.cmp(&a.execution_count));
         stats.into_iter().take(n).collect()
     }
 
-    /// Returns queries with low index usage.
+    // Returns queries with low index usage.
     pub fn queries_needing_indexes(&self, threshold: f64) -> Vec<QueryStats> {
         self.get_all_stats()
             .into_iter()
@@ -362,17 +362,17 @@ impl QueryStatisticsTracker {
             .collect()
     }
 
-    /// Returns the total number of unique queries tracked.
+    // Returns the total number of unique queries tracked.
     pub fn unique_query_count(&self) -> usize {
         self.stats.read().len()
     }
 
-    /// Returns the total execution count.
+    // Returns the total execution count.
     pub fn total_execution_count(&self) -> u64 {
         *self.total_queries.read()
     }
 
-    /// Clears all statistics.
+    // Clears all statistics.
     pub fn clear(&self) {
         self.stats.write().clear();
         self.recent_executions.write().clear();
@@ -380,48 +380,48 @@ impl QueryStatisticsTracker {
     }
 }
 
-/// Query workload pattern.
+// Query workload pattern.
 #[derive(Debug, Clone)]
 pub struct WorkloadQuery {
-    /// Query pattern
+    // Query pattern
     pub pattern: String,
-    /// Columns used in WHERE clauses
+    // Columns used in WHERE clauses
     pub filter_columns: Vec<String>,
-    /// Columns used in ORDER BY
+    // Columns used in ORDER BY
     pub order_columns: Vec<String>,
-    /// Columns used in GROUP BY
+    // Columns used in GROUP BY
     pub group_columns: Vec<String>,
-    /// Columns used in JOIN conditions
+    // Columns used in JOIN conditions
     pub join_columns: Vec<String>,
-    /// Frequency weight
+    // Frequency weight
     pub frequency: f64,
-    /// Average execution time
+    // Average execution time
     pub avg_time_ms: f64,
 }
 
-/// Index recommendation from workload analysis.
+// Index recommendation from workload analysis.
 #[derive(Debug, Clone)]
 pub struct IndexRecommendation {
-    /// Table name
+    // Table name
     pub table: String,
-    /// Columns for the index
+    // Columns for the index
     pub columns: Vec<String>,
-    /// Recommended index type
+    // Recommended index type
     pub index_type: String,
-    /// Estimated improvement
+    // Estimated improvement
     pub estimated_improvement: f64,
-    /// Reasoning for the recommendation
+    // Reasoning for the recommendation
     pub reason: String,
-    /// Priority (1-10, higher = more important)
+    // Priority (1-10, higher = more important)
     pub priority: u8,
 }
 
-/// Workload analyzer for query pattern analysis.
+// Workload analyzer for query pattern analysis.
 #[derive(Debug)]
 pub struct WorkloadAnalyzer {
-    /// Minimum frequency for pattern consideration
+    // Minimum frequency for pattern consideration
     min_frequency: u64,
-    /// Time window for analysis (seconds)
+    // Time window for analysis (seconds)
     time_window_secs: u64,
 }
 
@@ -432,7 +432,7 @@ impl Default for WorkloadAnalyzer {
 }
 
 impl WorkloadAnalyzer {
-    /// Creates a new workload analyzer.
+    // Creates a new workload analyzer.
     pub fn new() -> Self {
         Self {
             min_frequency: 10,
@@ -440,7 +440,7 @@ impl WorkloadAnalyzer {
         }
     }
 
-    /// Analyzes the workload and generates recommendations.
+    // Analyzes the workload and generates recommendations.
     pub fn analyze(&self, tracker: &QueryStatisticsTracker) -> WorkloadAnalysisResult {
         let stats = tracker.get_all_stats();
 
@@ -489,7 +489,7 @@ impl WorkloadAnalyzer {
         }
     }
 
-    /// Extracts filter columns from a SQL query (simplified).
+    // Extracts filter columns from a SQL query (simplified).
     fn extract_filter_columns(&self, sql: &str) -> Vec<String> {
         let mut columns = Vec::new();
         let upper = sql.to_uppercase();
@@ -518,7 +518,7 @@ impl WorkloadAnalyzer {
         columns.into_iter().take(3).collect()
     }
 
-    /// Calculates recommendation priority.
+    // Calculates recommendation priority.
     fn calculate_priority(&self, stats: &QueryStats) -> u8 {
         let freq_score = (stats.execution_count as f64).log10() * 2.0;
         let time_score = (stats.avg_time_ms / 100.0).min(5.0);
@@ -526,7 +526,7 @@ impl WorkloadAnalyzer {
         score.min(10.0).max(1.0) as u8
     }
 
-    /// Calculates average query time.
+    // Calculates average query time.
     fn calculate_avg_time(&self, stats: &[QueryStats]) -> f64 {
         if stats.is_empty() {
             return 0.0;
@@ -543,25 +543,25 @@ impl WorkloadAnalyzer {
     }
 }
 
-/// Result of workload analysis.
+// Result of workload analysis.
 #[derive(Debug)]
 pub struct WorkloadAnalysisResult {
-    /// Total queries analyzed
+    // Total queries analyzed
     pub total_queries: u64,
-    /// Number of unique query patterns
+    // Number of unique query patterns
     pub unique_patterns: usize,
-    /// Slow queries identified
+    // Slow queries identified
     pub slow_queries: Vec<QueryStats>,
-    /// Index recommendations
+    // Index recommendations
     pub recommendations: Vec<IndexRecommendation>,
-    /// Table access frequency
+    // Table access frequency
     pub table_access_frequency: HashMap<String, u64>,
-    /// Average query time across all queries
+    // Average query time across all queries
     pub avg_query_time_ms: f64,
 }
 
 impl WorkloadAnalysisResult {
-    /// Returns the hottest tables by access frequency.
+    // Returns the hottest tables by access frequency.
     pub fn hot_tables(&self, n: usize) -> Vec<(String, u64)> {
         let mut tables: Vec<(String, u64)> = self.table_access_frequency.clone().into_iter().collect();
         tables.sort_by(|a, b| b.1.cmp(&a.1));
@@ -569,30 +569,30 @@ impl WorkloadAnalysisResult {
     }
 }
 
-/// Performance report for a time period.
+// Performance report for a time period.
 #[derive(Debug, Clone)]
 pub struct PerformanceReport {
-    /// Report period start
+    // Report period start
     pub period_start: std::time::Instant,
-    /// Report period end
+    // Report period end
     pub period_end: std::time::Instant,
-    /// Total queries executed
+    // Total queries executed
     pub total_queries: u64,
-    /// Queries per second
+    // Queries per second
     pub qps: f64,
-    /// Average latency
+    // Average latency
     pub avg_latency_ms: f64,
-    /// P50 latency
+    // P50 latency
     pub p50_latency_ms: u64,
-    /// P95 latency
+    // P95 latency
     pub p95_latency_ms: u64,
-    /// P99 latency
+    // P99 latency
     pub p99_latency_ms: u64,
-    /// Error rate percentage
+    // Error rate percentage
     pub error_rate: f64,
-    /// Slow query count
+    // Slow query count
     pub slow_query_count: u64,
-    /// Slow query threshold used
+    // Slow query threshold used
     pub slow_threshold_ms: u64,
 }
 

@@ -1,19 +1,19 @@
-/// Log-Structured Merge Tree (LSM) for RustyDB
-/// Optimized for write-heavy and time-series workloads
-/// Features: Bloom filters, leveled compaction, concurrent memtable switching
+// Log-Structured Merge Tree (LSM) for RustyDB
+// Optimized for write-heavy and time-series workloads
+// Features: Bloom filters, leveled compaction, concurrent memtable switching
 
 use std::collections::{BTreeMap, VecDeque};
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
-use parking_lot::{RwLock};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::error::{DbError, Result};
 
-/// LSM key type
+// LSM key type
 pub type LsmKey = Vec<u8>;
 
-/// LSM value with timestamp for MVCC
+// LSM value with timestamp for MVCC
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LsmValue {
     data: Vec<u8>,
@@ -51,7 +51,7 @@ impl LsmValue {
     }
 }
 
-/// Bloom filter for fast negative lookups
+// Bloom filter for fast negative lookups
 struct BloomFilter {
     bits: Vec<bool>,
     num_hashes: usize,
@@ -113,7 +113,7 @@ impl BloomFilter {
     }
 }
 
-/// In-memory write buffer (memtable)
+// In-memory write buffer (memtable)
 struct MemTable {
     data: BTreeMap<LsmKey, LsmValue>,
     size_bytes: usize,
@@ -165,7 +165,7 @@ impl MemTable {
     }
 }
 
-/// SSTable (Sorted String Table) on disk
+// SSTable (Sorted String Table) on disk
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct SSTable {
     id: u64,
@@ -229,7 +229,7 @@ impl SSTable {
     }
 }
 
-/// Level in the LSM tree
+// Level in the LSM tree
 struct Level {
     id: usize,
     sstables: Vec<Arc<SSTable>>,
@@ -269,7 +269,7 @@ impl Level {
     }
 }
 
-/// Compaction strategy
+// Compaction strategy
 #[derive(Debug, Clone, Copy)]
 pub enum CompactionStrategy {
     Leveled,      // Standard leveled compaction
@@ -277,7 +277,7 @@ pub enum CompactionStrategy {
     TimeWindow,   // For time-series data
 }
 
-/// Compaction task
+// Compaction task
 struct CompactionTask {
     level: usize,
     sstables: Vec<Arc<SSTable>>,
@@ -323,7 +323,7 @@ impl CompactionTask {
     }
 }
 
-/// LSM Tree main structure
+// LSM Tree main structure
 pub struct LsmTree {
     // Active memtable for writes
     active_memtable: Arc<RwLock<MemTable>>,
@@ -390,7 +390,7 @@ impl LsmTree {
         }
     }
 
-    /// Put a key-value pair
+    // Put a key-value pair
     pub fn put(&self, key: LsmKey, value: Vec<u8>) -> Result<()> {
         let lsm_value = LsmValue::new(value);
 
@@ -411,7 +411,7 @@ impl LsmTree {
         Ok(())
     }
 
-    /// Get a value by key
+    // Get a value by key
     pub fn get(&self, key: &LsmKey) -> Result<Option<Vec<u8>>> {
         self.stats.write().reads += 1;
 
@@ -461,7 +461,7 @@ impl LsmTree {
         Ok(None)
     }
 
-    /// Delete a key
+    // Delete a key
     pub fn delete(&self, key: LsmKey) -> Result<()> {
         // Insert tombstone
         let inserted = self.active_memtable.write().delete(key.clone());
@@ -474,7 +474,7 @@ impl LsmTree {
         Ok(())
     }
 
-    /// Range scan
+    // Range scan
     pub fn scan(&self, start_key: &LsmKey, end_key: &LsmKey) -> Result<Vec<(LsmKey, Vec<u8>)>> {
         let mut results = BTreeMap::new();
 
@@ -511,7 +511,7 @@ impl LsmTree {
         Ok(results.into_iter().collect())
     }
 
-    /// Switch active memtable to immutable
+    // Switch active memtable to immutable
     fn switch_memtable(&self) -> Result<()> {
         let old_memtable = {
             let mut active = self.active_memtable.write();
@@ -529,7 +529,7 @@ impl LsmTree {
         Ok(())
     }
 
-    /// Flush memtable to L0
+    // Flush memtable to L0
     fn trigger_flush(&self) -> Result<()> {
         let memtable = {
             let mut immutables = self.immutable_memtables.lock().unwrap();
@@ -553,7 +553,7 @@ impl LsmTree {
         Ok(())
     }
 
-    /// Schedule a compaction task
+    // Schedule a compaction task
     fn schedule_compaction(&self, level: usize) -> Result<()> {
         let levels = self.levels.read();
         if level >= levels.len() {
@@ -568,7 +568,7 @@ impl LsmTree {
         Ok(())
     }
 
-    /// Process compaction queue
+    // Process compaction queue
     pub fn run_compaction(&self, max_tasks: usize) -> Result<usize> {
         if !self.compaction_running.compare_exchange(
             false,
@@ -707,5 +707,3 @@ mod tests {
         assert!(stats.writes >= 20);
     }
 }
-
-

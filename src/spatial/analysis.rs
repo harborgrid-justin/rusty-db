@@ -13,17 +13,17 @@ use crate::error::{DbError, Result};
 use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, Point, Polygon, LinearRing};
 use crate::spatial::indexes::SpatialIndex;
 use crate::spatial::operators::{SetOps, ConvexHullOps, TransformOps};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use crate::concurrent;
 
-/// Nearest neighbor search results
+// Nearest neighbor search results
 #[derive(Debug, Clone)]
 pub struct NearestNeighborResult {
     pub id: u64,
     pub distance: f64,
 }
 
-/// K-nearest neighbors searcher
+// K-nearest neighbors searcher
 pub struct KNearestNeighbors {
     index: Box<dyn SpatialIndex>,
     geometries: HashMap<u64, Geometry>,
@@ -34,7 +34,7 @@ impl KNearestNeighbors {
         Self { index, geometries }
     }
 
-    /// Find k nearest neighbors to a point
+    // Find k nearest neighbors to a point
     pub fn search(&self, point: &Coordinate, k: usize) -> Vec<NearestNeighborResult> {
         let mut candidates = Vec::new();
 
@@ -71,7 +71,7 @@ impl KNearestNeighbors {
         candidates
     }
 
-    /// Find all neighbors within a distance
+    // Find all neighbors within a distance
     pub fn search_radius(&self, point: &Coordinate, radius: f64) -> Vec<NearestNeighborResult> {
         let bbox = BoundingBox::new(
             point.x - radius,
@@ -119,7 +119,7 @@ impl KNearestNeighbors {
     }
 }
 
-/// DBSCAN clustering algorithm for spatial data
+// DBSCAN clustering algorithm for spatial data
 pub struct DbscanClusterer {
     epsilon: f64,
     min_points: usize,
@@ -137,7 +137,7 @@ impl DbscanClusterer {
         Self { epsilon, min_points }
     }
 
-    /// Perform DBSCAN clustering on points
+    // Perform DBSCAN clustering on points
     pub fn cluster(&self, points: &[(u64, Coordinate)]) -> Vec<Cluster> {
         let mut visited = HashSet::new();
         let mut clusters = Vec::new();
@@ -240,7 +240,7 @@ impl DbscanClusterer {
     }
 }
 
-/// K-means clustering for spatial data
+// K-means clustering for spatial data
 pub struct KMeansClusterer {
     k: usize,
     max_iterations: usize,
@@ -251,7 +251,7 @@ impl KMeansClusterer {
         Self { k, max_iterations }
     }
 
-    /// Perform K-means clustering
+    // Perform K-means clustering
     pub fn cluster(&self, points: &[(u64, Coordinate)]) -> Vec<Cluster> {
         if points.len() < self.k {
             return Vec::new();
@@ -362,7 +362,7 @@ impl KMeansClusterer {
     }
 }
 
-/// Voronoi diagram computation
+// Voronoi diagram computation
 pub struct VoronoiDiagram {
     sites: Vec<Coordinate>,
     bounds: BoundingBox,
@@ -379,7 +379,7 @@ impl VoronoiDiagram {
         Self { sites, bounds }
     }
 
-    /// Compute Voronoi diagram (simplified using Fortune's algorithm concept)
+    // Compute Voronoi diagram (simplified using Fortune's algorithm concept)
     pub fn compute(&self) -> Result<Vec<VoronoiCell>> {
         let mut cells = Vec::new();
 
@@ -471,7 +471,7 @@ impl VoronoiDiagram {
     }
 }
 
-/// Delaunay triangulation
+// Delaunay triangulation
 pub struct DelaunayTriangulation {
     points: Vec<Coordinate>,
 }
@@ -488,7 +488,7 @@ impl Triangle {
         }
     }
 
-    /// Check if a point is inside the circumcircle of this triangle
+    // Check if a point is inside the circumcircle of this triangle
     pub fn in_circumcircle(&self, point: &Coordinate) -> bool {
         let ax = self.vertices[0].x - point.x;
         let ay = self.vertices[0].y - point.y;
@@ -504,7 +504,7 @@ impl Triangle {
         det > 0.0
     }
 
-    /// Get triangle edges
+    // Get triangle edges
     pub fn edges(&self) -> [(Coordinate, Coordinate); 3] {
         [
             (self.vertices[0], self.vertices[1]),
@@ -519,7 +519,7 @@ impl DelaunayTriangulation {
         Self { points }
     }
 
-    /// Compute Delaunay triangulation using Bowyer-Watson algorithm
+    // Compute Delaunay triangulation using Bowyer-Watson algorithm
     pub fn triangulate(&self) -> Result<Vec<Triangle>> {
         if self.points.len() < 3 {
             return Err(DbError::InvalidInput(
@@ -610,11 +610,11 @@ impl DelaunayTriangulation {
     }
 }
 
-/// Spatial aggregation operations
+// Spatial aggregation operations
 pub struct SpatialAggregation;
 
 impl SpatialAggregation {
-    /// Calculate spatial extent (bounding box) of geometries
+    // Calculate spatial extent (bounding box) of geometries
     pub fn extent(geometries: &[Geometry]) -> Option<BoundingBox> {
         if geometries.is_empty() {
             return None;
@@ -631,7 +631,7 @@ impl SpatialAggregation {
         Some(bbox)
     }
 
-    /// Calculate union of all geometries
+    // Calculate union of all geometries
     pub fn union_all(geometries: &[Geometry]) -> Result<Geometry> {
         if geometries.is_empty() {
             return Err(DbError::InvalidInput("No geometries to union".to_string()));
@@ -646,7 +646,7 @@ impl SpatialAggregation {
         Ok(result)
     }
 
-    /// Calculate convex hull of all geometries
+    // Calculate convex hull of all geometries
     pub fn convex_hull_all(geometries: &[Geometry]) -> Result<Geometry> {
         let mut all_coords = Vec::new();
 
@@ -666,7 +666,7 @@ impl SpatialAggregation {
         ConvexHullOps::convex_hull(&all_coords)
     }
 
-    /// Calculate centroid of multiple geometries
+    // Calculate centroid of multiple geometries
     pub fn centroid_all(geometries: &[Geometry]) -> Result<Point> {
         if geometries.is_empty() {
             return Err(DbError::InvalidInput("No geometries provided".to_string()));
@@ -695,7 +695,7 @@ impl SpatialAggregation {
     }
 }
 
-/// Hot spot analysis (Getis-Ord Gi*)
+// Hot spot analysis (Getis-Ord Gi*)
 pub struct HotSpotAnalysis {
     points: Vec<(u64, Coordinate, f64)>, // id, coordinate, value
     distance_threshold: f64,
@@ -719,7 +719,7 @@ impl HotSpotAnalysis {
         }
     }
 
-    /// Compute Getis-Ord Gi* statistic for each point
+    // Compute Getis-Ord Gi* statistic for each point
     pub fn analyze(&self) -> Vec<HotSpot> {
         let mut results = Vec::new();
 
@@ -805,7 +805,7 @@ impl HotSpotAnalysis {
     }
 }
 
-/// Spatial autocorrelation (Moran's I)
+// Spatial autocorrelation (Moran's I)
 pub struct SpatialAutocorrelation {
     points: Vec<(u64, Coordinate, f64)>,
     distance_threshold: f64,
@@ -819,7 +819,7 @@ impl SpatialAutocorrelation {
         }
     }
 
-    /// Calculate Moran's I statistic
+    // Calculate Moran's I statistic
     pub fn morans_i(&self) -> f64 {
         let n = self.points.len() as f64;
         let values: Vec<f64> = self.points.iter().map(|(_, _, v)| *v).collect();

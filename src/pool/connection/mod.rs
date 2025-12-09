@@ -1,11 +1,11 @@
-//! Connection pool module
-//!
-//! This module provides enterprise-grade connection pooling with:
-//! - Dynamic pool sizing
-//! - Connection lifecycle management
-//! - Wait queue management
-//! - Pool partitioning
-//! - Comprehensive statistics and monitoring
+// Connection pool module
+//
+// This module provides enterprise-grade connection pooling with:
+// - Dynamic pool sizing
+// - Connection lifecycle management
+// - Wait queue management
+// - Pool partitioning
+// - Comprehensive statistics and monitoring
 
 pub mod core;
 pub mod lifecycle;

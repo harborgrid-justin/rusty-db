@@ -1,4 +1,4 @@
-/// Partition Operations - Auto-management, Partition-wise, Dynamic
+// Partition Operations - Auto-management, Partition-wise, Dynamic
 
 use super::types::*;
 use crate::error::{DbError, Result};
@@ -9,7 +9,7 @@ use std::time::{Duration, SystemTime};
 // Automatic Partition Management
 // ============================================================================
 
-/// Automatic partition creator
+// Automatic partition creator
 pub struct AutoPartitionCreator {
     config: AutoPartitionConfig,
     created_partitions: HashMap<String, Vec<String>>,
@@ -109,7 +109,7 @@ impl AutoPartitionCreator {
     }
 }
 
-/// Partition maintenance scheduler
+// Partition maintenance scheduler
 pub struct PartitionMaintenanceScheduler {
     tasks: Vec<MaintenanceTask>,
     last_run: HashMap<String, SystemTime>,

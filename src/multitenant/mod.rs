@@ -93,53 +93,53 @@
 // Module Declarations
 // ============================================================================
 
-/// Container Database (CDB) management
-///
-/// Provides the root container that manages multiple Pluggable Databases (PDBs),
-/// system-level metadata, shared memory pools, and background processes.
+// Container Database (CDB) management
+//
+// Provides the root container that manages multiple Pluggable Databases (PDBs),
+// system-level metadata, shared memory pools, and background processes.
 use std::fmt;
 pub mod cdb;
 
-/// Pluggable Database (PDB) management
-///
-/// Implements PDB lifecycle operations including creation, cloning, plugging,
-/// opening, closing, and deletion. Supports application containers and seed PDBs.
+// Pluggable Database (PDB) management
+//
+// Implements PDB lifecycle operations including creation, cloning, plugging,
+// opening, closing, and deletion. Supports application containers and seed PDBs.
 pub mod pdb;
 
-/// Resource isolation and governance
-///
-/// Per-tenant resource limits including memory, CPU, I/O bandwidth, connections,
-/// temp space, and storage quotas. Enforces fair-share scheduling and QoS.
+// Resource isolation and governance
+//
+// Per-tenant resource limits including memory, CPU, I/O bandwidth, connections,
+// temp space, and storage quotas. Enforces fair-share scheduling and QoS.
 pub mod isolation;
 
-/// Tenant management and provisioning
-///
-/// High-level tenant lifecycle management including onboarding workflows,
-/// metadata management, configuration, backup/restore, and cross-tenant queries.
+// Tenant management and provisioning
+//
+// High-level tenant lifecycle management including onboarding workflows,
+// metadata management, configuration, backup/restore, and cross-tenant queries.
 pub mod tenant;
 
-/// Hot cloning capabilities
-///
-/// Online PDB cloning with copy-on-write, thin cloning, snapshot cloning,
-/// refreshable clones, and cloning from backup.
+// Hot cloning capabilities
+//
+// Online PDB cloning with copy-on-write, thin cloning, snapshot cloning,
+// refreshable clones, and cloning from backup.
 pub mod cloning;
 
-/// PDB relocation and migration
-///
-/// Online PDB relocation with minimal downtime, cross-CDB migration,
-/// connection draining, and state transfer protocol.
+// PDB relocation and migration
+//
+// Online PDB relocation with minimal downtime, cross-CDB migration,
+// connection draining, and state transfer protocol.
 pub mod relocation;
 
-/// Shared services and common objects
-///
-/// Shared undo tablespace, temp tablespace, common users and roles,
-/// application common objects, and lockdown profiles.
+// Shared services and common objects
+//
+// Shared undo tablespace, temp tablespace, common users and roles,
+// application common objects, and lockdown profiles.
 pub mod shared;
 
-/// Metering, billing, and quota enforcement
-///
-/// Resource usage tracking, per-tenant metrics, usage reports,
-/// billing integration hooks, and quota enforcement.
+// Metering, billing, and quota enforcement
+//
+// Resource usage tracking, per-tenant metrics, usage reports,
+// billing integration hooks, and quota enforcement.
 pub mod metering;
 
 // ============================================================================
@@ -197,17 +197,17 @@ use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use crate::error::Result;
 
-/// Unique identifier for a tenant
+// Unique identifier for a tenant
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TenantId(pub u64);
 
 impl TenantId {
-    /// Create a new tenant ID
+    // Create a new tenant ID
     pub fn new(id: u64) -> Self {
         Self(id)
     }
 
-    /// Get the underlying ID value
+    // Get the underlying ID value
     pub fn value(&self) -> u64 {
         self.0
     }
@@ -219,52 +219,52 @@ impl fmt::Display for TenantId {
     }
 }
 
-/// Multi-tenant capability trait
-///
-/// Types implementing this trait support multi-tenant operations
+// Multi-tenant capability trait
+//
+// Types implementing this trait support multi-tenant operations
 pub trait MultiTenant {
-    /// Get the tenant ID associated with this instance
+    // Get the tenant ID associated with this instance
     fn tenant_id(&self) -> TenantId;
 
-    /// Check if this instance belongs to a specific tenant
+    // Check if this instance belongs to a specific tenant
     fn belongs_to(&self, tenant_id: TenantId) -> bool {
         self.tenant_id() == tenant_id
     }
 
-    /// Isolate resources for this tenant
+    // Isolate resources for this tenant
     fn isolate_resources(&mut self) -> Result<()>;
 
-    /// Get tenant-specific configuration
+    // Get tenant-specific configuration
     fn tenant_config(&self) -> &dyn std::any::Any;
 }
 
-/// Resource consumption metrics
+// Resource consumption metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceConsumption {
-    /// Memory usage in bytes
+    // Memory usage in bytes
     pub memory_bytes: u64,
 
-    /// CPU time in microseconds
+    // CPU time in microseconds
     pub cpu_micros: u64,
 
-    /// I/O bytes read
+    // I/O bytes read
     pub io_read_bytes: u64,
 
-    /// I/O bytes written
+    // I/O bytes written
     pub io_write_bytes: u64,
 
-    /// Number of active connections
+    // Number of active connections
     pub active_connections: u32,
 
-    /// Storage used in bytes
+    // Storage used in bytes
     pub storage_bytes: u64,
 
-    /// Temporary space used in bytes
+    // Temporary space used in bytes
     pub temp_bytes: u64,
 }
 
 impl ResourceConsumption {
-    /// Create a new resource consumption metric with zero values
+    // Create a new resource consumption metric with zero values
     pub fn zero() -> Self {
         Self {
             memory_bytes: 0,
@@ -277,7 +277,7 @@ impl ResourceConsumption {
         }
     }
 
-    /// Add another consumption metric to this one
+    // Add another consumption metric to this one
     pub fn add(&mut self, other: &ResourceConsumption) {
         self.memory_bytes += other.memory_bytes;
         self.cpu_micros += other.cpu_micros;
@@ -289,29 +289,29 @@ impl ResourceConsumption {
     }
 }
 
-/// Multi-tenant database instance
-///
-/// Main entry point for the multi-tenant architecture engine
+// Multi-tenant database instance
+//
+// Main entry point for the multi-tenant architecture engine
 #[derive(Clone)]
 pub struct MultiTenantDatabase {
-    /// The container database instance
+    // The container database instance
     cdb: Arc<RwLock<ContainerDatabase>>,
 
-    /// Tenant provisioning service
+    // Tenant provisioning service
     provisioning: Arc<TenantProvisioningService>,
 
-    /// Resource isolation manager
+    // Resource isolation manager
     isolation: Arc<ResourceIsolator>,
 
-    /// Metering engine
+    // Metering engine
     metering: Arc<MeteringEngine>,
 
-    /// Shared services
+    // Shared services
     shared: Arc<SharedServices>,
 }
 
 impl MultiTenantDatabase {
-    /// Create a new multi-tenant database instance
+    // Create a new multi-tenant database instance
     pub async fn new(name: &str) -> Result<Self> {
         let cdb = Arc::new(RwLock::new(ContainerDatabase::new(name).await?));
         let provisioning = Arc::new(TenantProvisioningService::new());
@@ -328,42 +328,42 @@ impl MultiTenantDatabase {
         })
     }
 
-    /// Get the container database
+    // Get the container database
     pub fn cdb(&self) -> Arc<RwLock<ContainerDatabase>> {
         self.cdb.clone()
     }
 
-    /// Get the provisioning service
+    // Get the provisioning service
     pub fn provisioning(&self) -> Arc<TenantProvisioningService> {
         self.provisioning.clone()
     }
 
-    /// Get the isolation manager
+    // Get the isolation manager
     pub fn isolation(&self) -> Arc<ResourceIsolator> {
         self.isolation.clone()
     }
 
-    /// Get the metering engine
+    // Get the metering engine
     pub fn metering(&self) -> Arc<MeteringEngine> {
         self.metering.clone()
     }
 
-    /// Get shared services
+    // Get shared services
     pub fn shared(&self) -> Arc<SharedServices> {
         self.shared.clone()
     }
 
-    /// Create a new tenant
+    // Create a new tenant
     pub async fn create_tenant(&self, config: TenantConfig) -> Result<TenantId> {
         self.provisioning.provision_tenant(config).await
     }
 
-    /// Delete a tenant
+    // Delete a tenant
     pub async fn delete_tenant(&self, tenant_id: TenantId) -> Result<()> {
         self.provisioning.deprovision_tenant(tenant_id).await
     }
 
-    /// Get tenant metrics
+    // Get tenant metrics
     pub async fn tenant_metrics(&self, tenant_id: TenantId) -> Result<TenantMetrics> {
         self.metering.get_tenant_metrics(tenant_id).await
     }
@@ -373,28 +373,28 @@ impl MultiTenantDatabase {
 // Constants
 // ============================================================================
 
-/// Maximum number of PDBs per CDB
+// Maximum number of PDBs per CDB
 pub const MAX_PDBS_PER_CDB: usize = 4096;
 
-/// Default memory allocation per PDB (512 MB)
+// Default memory allocation per PDB (512 MB)
 pub const DEFAULT_PDB_MEMORY_MB: u64 = 512;
 
-/// Default storage quota per PDB (10 GB)
+// Default storage quota per PDB (10 GB)
 pub const DEFAULT_PDB_STORAGE_GB: u64 = 10;
 
-/// Default CPU shares per PDB
+// Default CPU shares per PDB
 pub const DEFAULT_CPU_SHARES: u32 = 100;
 
-/// Default connection limit per PDB
+// Default connection limit per PDB
 pub const DEFAULT_CONNECTION_LIMIT: u32 = 100;
 
-/// Default I/O bandwidth limit per PDB (100 MB/s)
+// Default I/O bandwidth limit per PDB (100 MB/s)
 pub const DEFAULT_IO_BANDWIDTH_MBPS: u32 = 100;
 
-/// Seed PDB name
+// Seed PDB name
 pub const SEED_PDB_NAME: &str = "PDB$SEED";
 
-/// Root container name
+// Root container name
 pub const ROOT_CONTAINER_NAME: &str = "CDB$ROOT";
 
 // ============================================================================

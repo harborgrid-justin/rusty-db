@@ -1,7 +1,7 @@
-//! Enterprise Buffer Pool Management System
-//!
-//! Comprehensive multi-tier buffer pool implementation with advanced caching,
-//! replacement policies, and dirty page management for high-performance database operations.
+// Enterprise Buffer Pool Management System
+//
+// Comprehensive multi-tier buffer pool implementation with advanced caching,
+// replacement policies, and dirty page management for high-performance database operations.
 
 // Internal modules
 pub(crate) mod common;

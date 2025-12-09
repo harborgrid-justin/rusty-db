@@ -9,17 +9,17 @@ use std::collections::HashMap;
 use crate::error::Result;
 use super::jsonpath::{JsonPathParser, JsonPathEvaluator};
 
-/// JSON_TABLE function result
+// JSON_TABLE function result
 #[derive(Debug, Clone)]
 pub struct JsonTableResult {
-    /// Column names
+    // Column names
     pub columns: Vec<String>,
-    /// Rows of data
+    // Rows of data
     pub rows: Vec<Vec<Value>>,
 }
 
 impl JsonTableResult {
-    /// Create a new result
+    // Create a new result
     pub fn new(columns: Vec<String>) -> Self {
         Self {
             columns,
@@ -27,39 +27,39 @@ impl JsonTableResult {
         }
     }
 
-    /// Add a row
+    // Add a row
     pub fn add_row(&mut self, row: Vec<Value>) {
         self.rows.push(row);
     }
 
-    /// Get row count
+    // Get row count
     pub fn row_count(&self) -> usize {
         self.rows.len()
     }
 
-    /// Get column count
+    // Get column count
     pub fn column_count(&self) -> usize {
         self.columns.len()
     }
 }
 
-/// JSON_TABLE column definition
+// JSON_TABLE column definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonTableColumn {
-    /// Column name
+    // Column name
     pub name: String,
-    /// JSONPath expression
+    // JSONPath expression
     pub path: String,
-    /// Data type
+    // Data type
     pub data_type: JsonDataType,
-    /// Error handling
+    // Error handling
     pub on_error: ErrorHandling,
-    /// Empty handling
+    // Empty handling
     pub on_empty: ErrorHandling,
 }
 
 impl JsonTableColumn {
-    /// Create a new column definition
+    // Create a new column definition
     pub fn new(name: impl Into<String>, path: impl Into<String>, data_type: JsonDataType) -> Self {
         Self {
             name: name.into(),
@@ -70,66 +70,66 @@ impl JsonTableColumn {
         }
     }
 
-    /// Set error handling
+    // Set error handling
     pub fn on_error(mut self, handling: ErrorHandling) -> Self {
         self.on_error = handling;
         self
     }
 
-    /// Set empty handling
+    // Set empty handling
     pub fn on_empty(mut self, handling: ErrorHandling) -> Self {
         self.on_empty = handling;
         self
     }
 }
 
-/// JSON data types
+// JSON data types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum JsonDataType {
-    /// String/VARCHAR
+    // String/VARCHAR
     String,
-    /// Number/INTEGER
+    // Number/INTEGER
     Integer,
-    /// Number/FLOAT
+    // Number/FLOAT
     Float,
-    /// Boolean
+    // Boolean
     Boolean,
-    /// JSON (returns nested JSON)
+    // JSON (returns nested JSON)
     Json,
-    /// Date
+    // Date
     Date,
-    /// Timestamp
+    // Timestamp
     Timestamp,
 }
 
-/// Error handling strategies
+// Error handling strategies
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ErrorHandling {
-    /// Return NULL
+    // Return NULL
     Null,
-    /// Return default value
+    // Return default value
     Default(Value),
-    /// Raise error
+    // Raise error
     Error,
 }
 
-/// JSON_TABLE function implementation
+// JSON_TABLE function implementation
 pub struct JsonTableFunction;
 
 impl JsonTableFunction {
-    /// Execute JSON_TABLE function
-    ///
-    /// # Example
-    /// ```ignore
-    /// JSON_TABLE(
-    ///     json_doc,
-    ///     '$.store.books[*]',
-    ///     COLUMNS(
-    ///         title VARCHAR PATH '$.title',
-    ///         price FLOAT PATH '$.price'
-    ///     )
-    /// )
-    /// ```
+    // Execute JSON_TABLE function
+    //
+    // # Example
+    // ```ignore
+    // JSON_TABLE(
+    //     json_doc,
+    //     '$.store.books[*]',
+    //     COLUMNS(
+    //         title VARCHAR PATH '$.title',
+    //         price FLOAT PATH '$.price'
+    //     )
+    // )
+    // ```
     pub fn execute(
         json: &Value,
         rowpath: &str,
@@ -243,13 +243,13 @@ impl JsonTableFunction {
     }
 }
 
-/// JSON_QUERY function - extract JSON fragments
+// JSON_QUERY function - extract JSON fragments
 pub struct JsonQueryFunction;
 
 impl JsonQueryFunction {
-    /// Execute JSON_QUERY
-    ///
-    /// Extracts a JSON fragment from a JSON document
+    // Execute JSON_QUERY
+    //
+    // Extracts a JSON fragment from a JSON document
     pub fn execute(
         json: &Value,
         path: &str,
@@ -295,26 +295,26 @@ impl JsonQueryFunction {
     }
 }
 
-/// JSON wrapper options
+// JSON wrapper options
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JsonWrapper {
-    /// No wrapper specification
+    // No wrapper specification
     None,
-    /// Always wrap in array
+    // Always wrap in array
     WithWrapper,
-    /// Never wrap (error if multiple values)
+    // Never wrap (error if multiple values)
     WithoutWrapper,
-    /// Wrap only if multiple values
+    // Wrap only if multiple values
     WithConditionalWrapper,
 }
 
-/// JSON_VALUE function - extract scalar value
+// JSON_VALUE function - extract scalar value
 pub struct JsonValueFunction;
 
 impl JsonValueFunction {
-    /// Execute JSON_VALUE
-    ///
-    /// Extracts a scalar value from a JSON document
+    // Execute JSON_VALUE
+    //
+    // Extracts a scalar value from a JSON document
     pub fn execute(
         json: &Value,
         path: &str,
@@ -352,13 +352,13 @@ impl JsonValueFunction {
     }
 }
 
-/// JSON_EXISTS function - check if path exists
+// JSON_EXISTS function - check if path exists
 pub struct JsonExistsFunction;
 
 impl JsonExistsFunction {
-    /// Execute JSON_EXISTS
-    ///
-    /// Returns true if the path exists in the JSON document
+    // Execute JSON_EXISTS
+    //
+    // Returns true if the path exists in the JSON document
     pub fn execute(json: &Value, path: &str) -> Result<bool> {
         let mut parser = JsonPathParser::new(path.to_string());
         let json_path = parser.parse()?;
@@ -368,7 +368,7 @@ impl JsonExistsFunction {
         Ok(!results.is_empty())
     }
 
-    /// Execute JSON_EXISTS with filter
+    // Execute JSON_EXISTS with filter
     pub fn execute_with_filter(
         json: &Value,
         path: &str,
@@ -379,16 +379,16 @@ impl JsonExistsFunction {
     }
 }
 
-/// IS JSON predicate
+// IS JSON predicate
 pub struct IsJsonPredicate;
 
 impl IsJsonPredicate {
-    /// Check if string is valid JSON
+    // Check if string is valid JSON
     pub fn is_json(text: &str) -> bool {
         serde_json::from_str::<Value>(text).is_ok()
     }
 
-    /// Check if string is valid JSON object
+    // Check if string is valid JSON object
     pub fn is_json_object(text: &str) -> bool {
         if let Ok(Value::Object(_)) = serde_json::from_str::<Value>(text) {
             true
@@ -397,7 +397,7 @@ impl IsJsonPredicate {
         }
     }
 
-    /// Check if string is valid JSON array
+    // Check if string is valid JSON array
     pub fn is_json_array(text: &str) -> bool {
         if let Ok(Value::Array(_)) = serde_json::from_str::<Value>(text) {
             true
@@ -406,7 +406,7 @@ impl IsJsonPredicate {
         }
     }
 
-    /// Check if string is valid JSON scalar
+    // Check if string is valid JSON scalar
     pub fn is_json_scalar(text: &str) -> bool {
         if let Ok(value) = serde_json::from_str::<Value>(text) {
             !value.is_object() && !value.is_array()
@@ -416,16 +416,16 @@ impl IsJsonPredicate {
     }
 }
 
-/// JSON generation functions
+// JSON generation functions
 pub struct JsonGenerationFunctions;
 
 impl JsonGenerationFunctions {
-    /// JSON_OBJECT - create JSON object from key-value pairs
-    ///
-    /// # Example
-    /// ```ignore
-    /// JSON_OBJECT('name' : 'Alice', 'age' : 30)
-    /// ```
+    // JSON_OBJECT - create JSON object from key-value pairs
+    //
+    // # Example
+    // ```ignore
+    // JSON_OBJECT('name' : 'Alice', 'age' : 30)
+    // ```
     pub fn json_object(pairs: Vec<(String, Value)>) -> Value {
         let mut obj = serde_json::Map::new();
         for (key, value) in pairs {
@@ -434,17 +434,17 @@ impl JsonGenerationFunctions {
         Value::Object(obj)
     }
 
-    /// JSON_ARRAY - create JSON array from values
-    ///
-    /// # Example
-    /// ```ignore
-    /// JSON_ARRAY(1, 2, 3, 'four')
-    /// ```
+    // JSON_ARRAY - create JSON array from values
+    //
+    // # Example
+    // ```ignore
+    // JSON_ARRAY(1, 2, 3, 'four')
+    // ```
     pub fn json_array(values: Vec<Value>) -> Value {
         Value::Array(values)
     }
 
-    /// JSON_OBJECTAGG - aggregate into JSON object
+    // JSON_OBJECTAGG - aggregate into JSON object
     pub fn json_objectagg(key_value_pairs: Vec<(Value, Value)>) -> Result<Value> {
         let mut obj = serde_json::Map::new();
 
@@ -460,12 +460,12 @@ impl JsonGenerationFunctions {
         Ok(Value::Object(obj))
     }
 
-    /// JSON_ARRAYAGG - aggregate into JSON array
+    // JSON_ARRAYAGG - aggregate into JSON array
     pub fn json_arrayagg(values: Vec<Value>) -> Value {
         Value::Array(values)
     }
 
-    /// JSON_MERGEPATCH - merge JSON documents (RFC 7396)
+    // JSON_MERGEPATCH - merge JSON documents (RFC 7396)
     pub fn json_mergepatch(target: &Value, patch: &Value) -> Value {
         match (target, patch) {
             (Value::Object(target_obj), Value::Object(patch_obj)) => {
@@ -491,7 +491,7 @@ impl JsonGenerationFunctions {
         }
     }
 
-    /// JSON_TRANSFORM - transform JSON using operations
+    // JSON_TRANSFORM - transform JSON using operations
     pub fn json_transform(json: &Value, operations: Vec<TransformOperation>) -> Result<Value> {
         let mut result = json.clone();
 
@@ -503,23 +503,23 @@ impl JsonGenerationFunctions {
     }
 }
 
-/// Transform operation for JSON_TRANSFORM
+// Transform operation for JSON_TRANSFORM
 #[derive(Debug, Clone)]
 pub enum TransformOperation {
-    /// Set a value at path
+    // Set a value at path
     Set { path: String, value: Value },
-    /// Remove a path
+    // Remove a path
     Remove { path: String },
-    /// Rename a field
+    // Rename a field
     Rename { from: String, to: String },
-    /// Keep only specified paths
+    // Keep only specified paths
     Keep { paths: Vec<String> },
-    /// Remove specified paths
+    // Remove specified paths
     RemovePaths { paths: Vec<String> },
 }
 
 impl TransformOperation {
-    /// Apply transformation
+    // Apply transformation
     pub fn apply(&self, json: &Value) -> Result<Value> {
         match self {
             TransformOperation::Set { path, value } => {
@@ -630,11 +630,11 @@ impl TransformOperation {
     }
 }
 
-/// SQL/JSON function registry
+// SQL/JSON function registry
 pub struct SqlJsonFunctions;
 
 impl SqlJsonFunctions {
-    /// Execute JSON_TABLE
+    // Execute JSON_TABLE
     pub fn json_table(
         json: &Value,
         row_path: &str,
@@ -643,7 +643,7 @@ impl SqlJsonFunctions {
         JsonTableFunction::execute(json, row_path, columns)
     }
 
-    /// Execute JSON_QUERY
+    // Execute JSON_QUERY
     pub fn json_query(
         json: &Value,
         path: &str,
@@ -652,7 +652,7 @@ impl SqlJsonFunctions {
         JsonQueryFunction::execute(json, path, wrapper)
     }
 
-    /// Execute JSON_VALUE
+    // Execute JSON_VALUE
     pub fn json_value(
         json: &Value,
         path: &str,
@@ -661,27 +661,27 @@ impl SqlJsonFunctions {
         JsonValueFunction::execute(json, path, returning_type)
     }
 
-    /// Execute JSON_EXISTS
+    // Execute JSON_EXISTS
     pub fn json_exists(json: &Value, path: &str) -> Result<bool> {
         JsonExistsFunction::execute(json, path)
     }
 
-    /// Check IS JSON
+    // Check IS JSON
     pub fn is_json(text: &str) -> bool {
         IsJsonPredicate::is_json(text)
     }
 
-    /// Create JSON object
+    // Create JSON object
     pub fn json_object(pairs: Vec<(String, Value)>) -> Value {
         JsonGenerationFunctions::json_object(pairs)
     }
 
-    /// Create JSON array
+    // Create JSON array
     pub fn json_array(values: Vec<Value>) -> Value {
         JsonGenerationFunctions::json_array(values)
     }
 
-    /// Merge JSON patches
+    // Merge JSON patches
     pub fn json_mergepatch(target: &Value, patch: &Value) -> Value {
         JsonGenerationFunctions::json_mergepatch(target, patch)
     }

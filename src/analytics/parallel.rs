@@ -10,19 +10,19 @@
 // Parallel Query Executor
 // =============================================================================
 
-/// Parallel query executor for analytics workloads.
-///
-/// Manages parallel execution of query operations across multiple workers.
+// Parallel query executor for analytics workloads.
+//
+// Manages parallel execution of query operations across multiple workers.
 pub struct ParallelQueryExecutor {
-    /// Number of worker threads
+    // Number of worker threads
     num_workers: usize,
 
-    /// Maximum parallelism allowed
+    // Maximum parallelism allowed
     max_parallelism: usize,
 }
 
 impl ParallelQueryExecutor {
-    /// Create a new parallel executor with the given worker count.
+    // Create a new parallel executor with the given worker count.
     pub fn new(num_workers: usize) -> Self {
         Self {
             num_workers,
@@ -30,7 +30,7 @@ impl ParallelQueryExecutor {
         }
     }
 
-    /// Create an executor using all available CPU cores.
+    // Create an executor using all available CPU cores.
     pub fn with_all_cores() -> Self {
         let cores = std::thread::available_parallelism()
             .map(|p| p.get())
@@ -38,9 +38,9 @@ impl ParallelQueryExecutor {
         Self::new(cores)
     }
 
-    /// Estimate the optimal parallelism for an operation.
-    ///
-    /// Returns a value between 1 and `max_parallelism`.
+    // Estimate the optimal parallelism for an operation.
+    //
+    // Returns a value between 1 and `max_parallelism`.
     pub fn estimate_parallelism(&self, cardinality: u64, operation: &str) -> usize {
         let base_parallelism = match operation {
             "scan" => (cardinality / 10000).min(self.max_parallelism as u64) as usize,
@@ -53,7 +53,7 @@ impl ParallelQueryExecutor {
         base_parallelism.max(1).min(self.num_workers)
     }
 
-    /// Partition data using round-robin distribution.
+    // Partition data using round-robin distribution.
     pub fn partition_data(
         &self,
         data: Vec<Vec<String>>,
@@ -68,10 +68,10 @@ impl ParallelQueryExecutor {
         partitions
     }
 
-    /// Partition data using hash partitioning on a key column.
-    ///
-    /// This ensures rows with the same key go to the same partition,
-    /// which is useful for parallel joins and aggregations.
+    // Partition data using hash partitioning on a key column.
+    //
+    // This ensures rows with the same key go to the same partition,
+    // which is useful for parallel joins and aggregations.
     pub fn hash_partition(
         &self,
         data: Vec<Vec<String>>,
@@ -91,9 +91,9 @@ impl ParallelQueryExecutor {
         partitions
     }
 
-    /// Partition data by range on a key column.
-    ///
-    /// Assumes data is sorted by the key column.
+    // Partition data by range on a key column.
+    //
+    // Assumes data is sorted by the key column.
     pub fn range_partition(
         &self,
         data: Vec<Vec<String>>,
@@ -106,23 +106,23 @@ impl ParallelQueryExecutor {
             .collect()
     }
 
-    /// Simple hash function for string keys.
+    // Simple hash function for string keys.
     fn hash_string(&self, s: &str) -> u64 {
         s.bytes()
             .fold(0u64, |acc, b| acc.wrapping_mul(31).wrapping_add(b as u64))
     }
 
-    /// Get the number of workers.
+    // Get the number of workers.
     pub fn num_workers(&self) -> usize {
         self.num_workers
     }
 
-    /// Get the maximum parallelism.
+    // Get the maximum parallelism.
     pub fn max_parallelism(&self) -> usize {
         self.max_parallelism
     }
 
-    /// Set the maximum parallelism.
+    // Set the maximum parallelism.
     pub fn set_max_parallelism(&mut self, max: usize) {
         self.max_parallelism = max;
     }
@@ -138,30 +138,30 @@ impl Default for ParallelQueryExecutor {
 // Partition Statistics
 // =============================================================================
 
-/// Statistics about data partitions.
+// Statistics about data partitions.
 #[derive(Debug, Clone)]
 pub struct PartitionStats {
-    /// Number of partitions
+    // Number of partitions
     pub num_partitions: usize,
 
-    /// Rows per partition
+    // Rows per partition
     pub rows_per_partition: Vec<usize>,
 
-    /// Minimum partition size
+    // Minimum partition size
     pub min_size: usize,
 
-    /// Maximum partition size
+    // Maximum partition size
     pub max_size: usize,
 
-    /// Average partition size
+    // Average partition size
     pub avg_size: f64,
 
-    /// Skew ratio (max/avg)
+    // Skew ratio (max/avg)
     pub skew_ratio: f64,
 }
 
 impl PartitionStats {
-    /// Compute statistics for partitions.
+    // Compute statistics for partitions.
     pub fn compute(partitions: &[Vec<Vec<String>>]) -> Self {
         let rows_per_partition: Vec<usize> = partitions.iter().map(|p| p.len()).collect();
 
@@ -190,7 +190,7 @@ impl PartitionStats {
         }
     }
 
-    /// Check if partitions are well-balanced.
+    // Check if partitions are well-balanced.
     pub fn is_balanced(&self, threshold: f64) -> bool {
         self.skew_ratio <= threshold
     }

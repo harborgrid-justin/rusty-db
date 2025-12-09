@@ -49,40 +49,40 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::Result;
 
-/// Autonomous database configuration
+// Autonomous database configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutonomousConfig {
-    /// Enable automatic tuning
+    // Enable automatic tuning
     pub enable_auto_tuning: bool,
 
-    /// Enable self-healing
+    // Enable self-healing
     pub enable_self_healing: bool,
 
-    /// Enable automatic indexing
+    // Enable automatic indexing
     pub enable_auto_indexing: bool,
 
-    /// Aggressiveness level for tuning
+    // Aggressiveness level for tuning
     pub tuning_aggressiveness: AggressivenessLevel,
 
-    /// Minimum benefit score for index creation
+    // Minimum benefit score for index creation
     pub min_index_benefit_score: f64,
 
-    /// Enable automatic index creation
+    // Enable automatic index creation
     pub auto_create_indexes: bool,
 
-    /// Enable automatic index dropping
+    // Enable automatic index dropping
     pub auto_drop_indexes: bool,
 
-    /// Days threshold for unused index detection
+    // Days threshold for unused index detection
     pub unused_index_threshold_days: u64,
 
-    /// Enable ML workload analysis
+    // Enable ML workload analysis
     pub enable_ml_analysis: bool,
 
-    /// Minimum pattern occurrences for recognition
+    // Minimum pattern occurrences for recognition
     pub min_pattern_occurrences: usize,
 
-    /// Enable predictive analytics
+    // Enable predictive analytics
     pub enable_predictive_analytics: bool,
 }
 
@@ -104,7 +104,7 @@ impl Default for AutonomousConfig {
     }
 }
 
-/// Unified autonomous database manager
+// Unified autonomous database manager
 pub struct AutonomousDatabase {
     config: Arc<RwLock<AutonomousConfig>>,
     auto_tuner: Arc<AutoTuner>,
@@ -115,7 +115,7 @@ pub struct AutonomousDatabase {
 }
 
 impl AutonomousDatabase {
-    /// Create a new autonomous database manager
+    // Create a new autonomous database manager
     pub fn new(config: AutonomousConfig) -> Self {
         let mut auto_tuner = AutoTuner::new(config.tuning_aggressiveness);
         let mut healing_engine = SelfHealingEngine::new();
@@ -150,7 +150,7 @@ impl AutonomousDatabase {
         }
     }
 
-    /// Start all autonomous operations
+    // Start all autonomous operations
     pub async fn start(self: Arc<Self>) {
         let config = self.config.read().clone();
 
@@ -183,42 +183,42 @@ impl AutonomousDatabase {
         }
     }
 
-    /// Get auto-tuner component
+    // Get auto-tuner component
     pub fn auto_tuner(&self) -> &Arc<AutoTuner> {
         &self.auto_tuner
     }
 
-    /// Get self-healing engine
+    // Get self-healing engine
     pub fn healing_engine(&self) -> &Arc<SelfHealingEngine> {
         &self.healing_engine
     }
 
-    /// Get ML analyzer
+    // Get ML analyzer
     pub fn ml_analyzer(&self) -> &Arc<WorkloadMLAnalyzer> {
         &self.ml_analyzer
     }
 
-    /// Get auto-indexing engine
+    // Get auto-indexing engine
     pub fn auto_indexing(&self) -> &Arc<AutoIndexingEngine> {
         &self.auto_indexing
     }
 
-    /// Get capacity planner
+    // Get capacity planner
     pub fn capacity_planner(&self) -> &Arc<CapacityPlanner> {
         &self.capacity_planner
     }
 
-    /// Update configuration
+    // Update configuration
     pub fn update_config(&self, config: AutonomousConfig) {
         *self.config.write() = config;
     }
 
-    /// Get current configuration
+    // Get current configuration
     pub fn get_config(&self) -> AutonomousConfig {
         self.config.read().clone()
     }
 
-    /// Generate comprehensive autonomous operations report
+    // Generate comprehensive autonomous operations report
     pub fn generate_report(&self, current_capacity_gb: f64) -> Result<AutonomousReport> {
         let tuning_report = self.auto_tuner.get_tuning_report();
         let healing_report = self.healing_engine.get_healing_report();
@@ -237,7 +237,7 @@ impl AutonomousDatabase {
     }
 }
 
-/// Comprehensive autonomous operations report
+// Comprehensive autonomous operations report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutonomousReport {
     pub tuning: TuningReport,

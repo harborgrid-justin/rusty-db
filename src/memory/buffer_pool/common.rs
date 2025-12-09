@@ -49,7 +49,7 @@ pub use parking_lot::{Mutex, RwLock as PRwLock};
 // SECTION 1: MULTI-TIER BUFFER POOL (700+ lines)
 // ============================================================================
 
-/// Page identifier combining tablespace and page number
+// Page identifier combining tablespace and page number
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PageId {
     pub tablespace_id: u32,
@@ -62,50 +62,50 @@ impl PageId {
     }
 }
 
-/// Buffer tier classification
+// Buffer tier classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BufferTier {
-    /// Hottest pages - frequently accessed, pinned in memory
+    // Hottest pages - frequently accessed, pinned in memory
     Hot,
-    /// Moderately accessed pages
+    // Moderately accessed pages
     Warm,
-    /// Rarely accessed pages - candidates for eviction
+    // Rarely accessed pages - candidates for eviction
     Cold,
 }
 
-/// Buffer pool type configuration
+// Buffer pool type configuration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PoolType {
-    /// Default buffer pool for general operations
+    // Default buffer pool for general operations
     Default,
-    /// Keep pool for pinned pages that should not be evicted
+    // Keep pool for pinned pages that should not be evicted
     Keep,
-    /// Recycle pool for sequential scans
+    // Recycle pool for sequential scans
     Recycle,
-    /// Per-tablespace dedicated pool
+    // Per-tablespace dedicated pool
     Tablespace(u32),
 }
 
-/// Buffer frame containing page data and metadata
+// Buffer frame containing page data and metadata
 #[derive(Debug)]
 pub struct BufferFrame {
-    /// Page identifier
+    // Page identifier
     pub(crate) page_id: Option<PageId>,
-    /// Actual page data (typically 8KB, 16KB, or 32KB)
+    // Actual page data (typically 8KB, 16KB, or 32KB)
     data: Vec<u8>,
-    /// Pin count - number of active references
+    // Pin count - number of active references
     pin_count: AtomicUsize,
-    /// Dirty flag - has been modified
+    // Dirty flag - has been modified
     pub(crate) dirty: AtomicBool,
-    /// Access count for replacement policy
+    // Access count for replacement policy
     access_count: AtomicU64,
-    /// Last access timestamp
+    // Last access timestamp
     last_access: Mutex<Instant>,
-    /// Current tier assignment
+    // Current tier assignment
     tier: Mutex<BufferTier>,
-    /// LSN (Log Sequence Number) of last modification
+    // LSN (Log Sequence Number) of last modification
     lsn: AtomicU64,
-    /// Lock for page content modifications
+    // Lock for page content modifications
     page_lock: PRwLock<()>,
 }
 
@@ -124,7 +124,7 @@ impl BufferFrame {
         }
     }
 
-    /// Pin the buffer frame (increment reference count)
+    // Pin the buffer frame (increment reference count)
     pub fn pin(&self) -> usize {
         let count = self.pin_count.fetch_add(1, Ordering::AcqRel) + 1;
         self.access_count.fetch_add(1, Ordering::Relaxed);
@@ -132,7 +132,7 @@ impl BufferFrame {
         count
     }
 
-    /// Unpin the buffer frame (decrement reference count)
+    // Unpin the buffer frame (decrement reference count)
     pub fn unpin(&self) -> usize {
         let prev = self.pin_count.fetch_sub(1, Ordering::AcqRel);
         if prev == 0 {
@@ -141,54 +141,54 @@ impl BufferFrame {
         prev - 1
     }
 
-    /// Get current pin count
+    // Get current pin count
     pub fn pin_count(&self) -> usize {
         self.pin_count.load(Ordering::Acquire)
     }
 
-    /// Mark page as dirty
+    // Mark page as dirty
     pub fn mark_dirty(&self, lsn: u64) {
         self.dirty.store(true, Ordering::Release);
         self.lsn.store(lsn, Ordering::Release);
     }
 
-    /// Check if page is dirty
+    // Check if page is dirty
     pub fn is_dirty(&self) -> bool {
         self.dirty.load(Ordering::Acquire)
     }
 
-    /// Get page data (read-only)
+    // Get page data (read-only)
     pub fn read_data(&self) -> &[u8] {
         &self.data
     }
 
-    /// Get mutable page data
+    // Get mutable page data
     pub fn write_data(&mut self) -> &mut [u8] {
         &mut self.data
     }
 
-    /// Get current tier
+    // Get current tier
     pub fn tier(&self) -> BufferTier {
         *self.tier.lock()
     }
 
-    /// Set tier
+    // Set tier
     pub fn set_tier(&self, new_tier: BufferTier) {
         *self.tier.lock() = new_tier;
     }
 
-    /// Get access count
+    // Get access count
     pub fn access_count(&self) -> u64 {
         self.access_count.load(Ordering::Relaxed)
     }
 
-    /// Get time since last access
+    // Get time since last access
     pub fn idle_time(&self) -> Duration {
         self.last_access.lock().elapsed()
     }
 }
 
-/// Guard type for automatic unpinning of buffer frames
+// Guard type for automatic unpinning of buffer frames
 pub struct BufferFrameGuard {
     frame: Arc<BufferFrame>,
 }
@@ -210,7 +210,7 @@ impl Drop for BufferFrameGuard {
     }
 }
 
-/// NUMA node configuration
+// NUMA node configuration
 #[derive(Debug, Clone)]
 pub struct NumaNode {
     pub node_id: u32,
@@ -219,30 +219,30 @@ pub struct NumaNode {
     pub memory_size: usize,
 }
 
-/// Multi-tier buffer pool configuration
+// Multi-tier buffer pool configuration
 #[derive(Debug, Clone)]
 pub struct BufferPoolConfig {
-    /// Total buffer pool size in bytes
+    // Total buffer pool size in bytes
     pub total_size: usize,
-    /// Page size in bytes (typically 8192, 16384, or 32768)
+    // Page size in bytes (typically 8192, 16384, or 32768)
     pub page_size: usize,
-    /// Hot tier percentage (0.0 - 1.0)
+    // Hot tier percentage (0.0 - 1.0)
     pub hot_tier_ratio: f64,
-    /// Warm tier percentage (0.0 - 1.0)
+    // Warm tier percentage (0.0 - 1.0)
     pub warm_tier_ratio: f64,
-    /// NUMA-aware allocation enabled
+    // NUMA-aware allocation enabled
     pub numa_aware: bool,
-    /// NUMA node configurations
+    // NUMA node configurations
     pub numa_nodes: Vec<NumaNode>,
-    /// Per-tablespace pool configurations
+    // Per-tablespace pool configurations
     pub tablespace_pools: HashMap<u32, usize>,
-    /// Keep pool size in bytes
+    // Keep pool size in bytes
     pub keep_pool_size: usize,
-    /// Recycle pool size in bytes
+    // Recycle pool size in bytes
     pub recycle_pool_size: usize,
-    /// Promotion threshold (access count)
+    // Promotion threshold (access count)
     pub promotion_threshold: u64,
-    /// Demotion threshold (idle time in seconds)
+    // Demotion threshold (idle time in seconds)
     pub demotion_threshold_secs: u64,
 }
 

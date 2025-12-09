@@ -1,4 +1,4 @@
-//! Main session manager
+// Main session manager
 use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;

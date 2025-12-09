@@ -14,22 +14,22 @@ use std::collections::HashMap;
 // AutoML Configuration
 // ============================================================================
 
-/// AutoML configuration and search space
+// AutoML configuration and search space
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoMLConfig {
-    /// Maximum time budget in seconds
+    // Maximum time budget in seconds
     pub time_budget: u64,
-    /// Evaluation metric to optimize
+    // Evaluation metric to optimize
     pub metric: OptimizationMetric,
-    /// Cross-validation folds
+    // Cross-validation folds
     pub cv_folds: usize,
-    /// Hyperparameter search strategy
+    // Hyperparameter search strategy
     pub search_strategy: SearchStrategy,
-    /// Algorithms to consider
+    // Algorithms to consider
     pub algorithms: Vec<Algorithm>,
-    /// Early stopping patience
+    // Early stopping patience
     pub early_stopping_patience: usize,
-    /// Maximum number of trials
+    // Maximum number of trials
     pub max_trials: usize,
 }
 
@@ -78,7 +78,7 @@ impl AutoMLConfig {
     }
 }
 
-/// Optimization metrics
+// Optimization metrics
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OptimizationMetric {
     // Classification metrics
@@ -132,18 +132,18 @@ impl OptimizationMetric {
     }
 }
 
-/// Hyperparameter search strategies
+// Hyperparameter search strategies
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SearchStrategy {
-    /// Grid search over all combinations
+    // Grid search over all combinations
     GridSearch,
-    /// Random search sampling
+    // Random search sampling
     RandomSearch,
-    /// Bayesian optimization
+    // Bayesian optimization
     BayesianOptimization,
-    /// Successive Halving
+    // Successive Halving
     SuccessiveHalving,
-    /// Hyperband
+    // Hyperband
     Hyperband,
 }
 
@@ -151,10 +151,10 @@ pub enum SearchStrategy {
 // Hyperparameter Search Space
 // ============================================================================
 
-/// Hyperparameter search space definition
+// Hyperparameter search space definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HyperparameterSpace {
-    /// Parameter ranges
+    // Parameter ranges
     ranges: HashMap<String, ParameterRange>,
 }
 
@@ -287,7 +287,7 @@ impl Default for HyperparameterSpace {
     }
 }
 
-/// Parameter range definition
+// Parameter range definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ParameterRange {
     Integer {
@@ -308,7 +308,7 @@ pub enum ParameterRange {
 // Trial and Results
 // ============================================================================
 
-/// Single trial in hyperparameter search
+// Single trial in hyperparameter search
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Trial {
     pub trial_id: usize,
@@ -363,7 +363,7 @@ pub enum TrialStatus {
     Pruned,
 }
 
-/// AutoML results
+// AutoML results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoMLResults {
     pub best_trial: Trial,
@@ -387,11 +387,11 @@ pub struct LeaderboardEntry {
 // AutoML Engine
 // ============================================================================
 
-/// Main AutoML coordinator
+// Main AutoML coordinator
 pub struct AutoMLEngine {
-    /// Training engine
+    // Training engine
     training_engine: TrainingEngine,
-    /// Current configuration
+    // Current configuration
     config: Option<AutoMLConfig>,
 }
 
@@ -403,7 +403,7 @@ impl AutoMLEngine {
         }
     }
 
-    /// Find the best model using AutoML
+    // Find the best model using AutoML
     pub fn find_best_model(
         &self,
         dataset: Dataset,
@@ -419,7 +419,7 @@ impl AutoMLEngine {
         self.find_best_model_with_config(dataset, config)
     }
 
-    /// Find the best model with custom configuration
+    // Find the best model with custom configuration
     pub fn find_best_model_with_config(
         &self,
         dataset: Dataset,
@@ -431,7 +431,7 @@ impl AutoMLEngine {
             .ok_or_else(|| crate::DbError::Internal("No valid model found".into()))
     }
 
-    /// Run AutoML search
+    // Run AutoML search
     pub fn run_automl(&self, dataset: &Dataset, config: &AutoMLConfig) -> Result<AutoMLResults> {
         let start_time = std::time::Instant::now();
         let mut trials = Vec::new();
@@ -522,7 +522,7 @@ impl AutoMLEngine {
         })
     }
 
-    /// Perform cross-validation
+    // Perform cross-validation
     fn cross_validate(
         &self,
         dataset: &Dataset,
@@ -564,7 +564,7 @@ impl AutoMLEngine {
         Ok((cv_scores, total_time))
     }
 
-    /// Split dataset into train and validation
+    // Split dataset into train and validation
     fn split_dataset(
         &self,
         dataset: &Dataset,
@@ -599,7 +599,7 @@ impl AutoMLEngine {
         Ok((train, val))
     }
 
-    /// Evaluate model on validation set
+    // Evaluate model on validation set
     fn evaluate_model(
         &self,
         _model: &Model,
@@ -615,7 +615,7 @@ impl AutoMLEngine {
         })
     }
 
-    /// Build leaderboard from trials
+    // Build leaderboard from trials
     fn build_leaderboard(&self, trials: &[Trial], config: &AutoMLConfig) -> Vec<LeaderboardEntry> {
         let mut entries: Vec<_> = trials.iter()
             .filter(|t| t.status == TrialStatus::Completed)
@@ -646,7 +646,7 @@ impl AutoMLEngine {
         entries
     }
 
-    /// Get feature importance from best model
+    // Get feature importance from best model
     pub fn get_feature_importance(&self, _model: &Model) -> Vec<(String, f64)> {
         // Simplified feature importance
         vec![

@@ -36,7 +36,7 @@ pub use provisioning::{
 
 use std::sync::Arc;
 
-/// Unified multi-tenant database manager integrating all components
+// Unified multi-tenant database manager integrating all components
 pub struct MultiTenantDatabase {
     pub container_db: Arc<ContainerDatabase>,
     pub tenant_manager: Arc<TenantManager>,
@@ -49,7 +49,7 @@ pub struct MultiTenantDatabase {
 }
 
 impl MultiTenantDatabase {
-    /// Create a new multi-tenant database instance
+    // Create a new multi-tenant database instance
     pub fn new(cdb_name: String, max_pdbs: u32) -> Self {
         Self {
             container_db: Arc::new(ContainerDatabase::new(cdb_name, max_pdbs)),
@@ -63,7 +63,7 @@ impl MultiTenantDatabase {
         }
     }
 
-    /// Provision a new tenant with full isolation
+    // Provision a new tenant with full isolation
     pub async fn provision_tenant(
         &self,
         tenant_name: String,
@@ -120,7 +120,7 @@ impl MultiTenantDatabase {
         Ok(tenant_id)
     }
 
-    /// Open a PDB and activate tenant
+    // Open a PDB and activate tenant
     pub async fn activate_tenant(
         &self,
         tenant_id: String,
@@ -139,7 +139,7 @@ impl MultiTenantDatabase {
         Ok(())
     }
 
-    /// Suspend a tenant
+    // Suspend a tenant
     pub async fn suspend_tenant(
         &self,
         tenant_id: String,
@@ -155,7 +155,7 @@ impl MultiTenantDatabase {
         Ok(())
     }
 
-    /// Get comprehensive tenant statistics
+    // Get comprehensive tenant statistics
     pub async fn get_tenant_stats(&self, tenant_id: &str) -> Option<TenantStats> {
         let tenant = self.tenant_manager.get_tenant(tenant_id).await.ok()?;
 
@@ -175,7 +175,7 @@ impl MultiTenantDatabase {
         })
     }
 
-    /// Get overall system statistics
+    // Get overall system statistics
     pub async fn get_system_stats(&self) -> SystemStats {
         let cdb_stats = self.container_db.get_statistics().await;
         let consolidation_metrics = self.consolidation_planner.get_metrics().await;
@@ -191,7 +191,7 @@ impl MultiTenantDatabase {
     }
 }
 
-/// Comprehensive tenant statistics
+// Comprehensive tenant statistics
 #[derive(Debug, Clone)]
 pub struct TenantStats {
     pub tenant_id: String,
@@ -202,7 +202,7 @@ pub struct TenantStats {
     pub network_stats: Option<isolation::NetworkConfig>,
 }
 
-/// System-wide statistics
+// System-wide statistics
 #[derive(Debug, Clone)]
 pub struct SystemStats {
     pub cdb_stats: CdbStatistics,
@@ -252,5 +252,3 @@ mod tests {
         assert_eq!(stats.cdb_stats.total_pdbs, 0);
     }
 }
-
-

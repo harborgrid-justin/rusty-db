@@ -10,20 +10,20 @@ use super::pressure_manager::{MemoryPressureManager, MemoryPressureStats, Memory
 use super::debugger::{MemoryDebugger, MemoryDebuggerStats};
 
 pub struct MemoryManager {
-    /// Slab allocator for small objects
+    // Slab allocator for small objects
     slab_allocator: Arc<SlabAllocator>,
-    /// Arena allocator for query contexts
+    // Arena allocator for query contexts
     arena_allocator: Arc<ArenaAllocator>,
-    /// Large object allocator
+    // Large object allocator
     large_object_allocator: Arc<LargeObjectAllocator>,
-    /// Memory pressure manager
+    // Memory pressure manager
     pressure_manager: Arc<MemoryPressureManager>,
-    /// Memory debugger
+    // Memory debugger
     debugger: Arc<MemoryDebugger>,
 }
 
 impl MemoryManager {
-    /// Create a new unified memory manager
+    // Create a new unified memory manager
     pub fn new(total_memory: u64) -> Self {
         let manager = Self {
             slab_allocator: Arc::new(SlabAllocator::new()),
@@ -39,7 +39,7 @@ impl MemoryManager {
         manager
     }
 
-    /// Setup pressure callbacks for memory release
+    // Setup pressure callbacks for memory release
     fn setup_pressure_callbacks(&self) {
         let arena = Arc::clone(&self.arena_allocator);
 
@@ -60,7 +60,7 @@ impl MemoryManager {
         }));
     }
 
-    /// Allocate memory using the appropriate allocator
+    // Allocate memory using the appropriate allocator
     pub fn allocate(&self, size: usize, source: AllocationSource) -> Result<NonNull<u8>> {
         // Check memory pressure
         self.pressure_manager.check_allocation(size as u64)?;
@@ -90,7 +90,7 @@ impl MemoryManager {
         Ok(ptr)
     }
 
-    /// Deallocate memory
+    // Deallocate memory
     pub fn deallocate(&self, ptr: NonNull<u8>, size: usize) -> Result<()> {
         // Track deallocation
         self.debugger.track_deallocation(ptr.as_ptr() as usize)?;
@@ -110,7 +110,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Create a memory context
+    // Create a memory context
     pub fn create_context(
         &self,
         name: String,
@@ -120,7 +120,7 @@ impl MemoryManager {
         self.arena_allocator.create_context(name, limit)
     }
 
-    /// Get comprehensive statistics
+    // Get comprehensive statistics
     pub fn get_comprehensive_stats(&self) -> ComprehensiveMemoryStats {
         ComprehensiveMemoryStats {
             slab_stats: self.slab_allocator.get_stats(),
@@ -132,18 +132,18 @@ impl MemoryManager {
         }
     }
 
-    /// Get memory debugger
+    // Get memory debugger
     pub fn debugger(&self) -> &Arc<MemoryDebugger> {
         &self.debugger
     }
 
-    /// Get pressure manager
+    // Get pressure manager
     pub fn pressure_manager(&self) -> &Arc<MemoryPressureManager> {
         &self.pressure_manager
     }
 }
 
-/// Comprehensive memory statistics
+// Comprehensive memory statistics
 #[derive(Debug, Clone)]
 pub struct ComprehensiveMemoryStats {
     pub slab_stats: SlabAllocatorStats,

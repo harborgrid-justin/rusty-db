@@ -1,4 +1,4 @@
-/// Partition Execution - Parallel, Monitoring, Balancing
+// Partition Execution - Parallel, Monitoring, Balancing
 
 use super::types::*;
 use crate::error::Result;

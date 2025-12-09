@@ -61,40 +61,40 @@ use crate::{Result, DbError};
 // Distributed Tracing
 // ============================================================================
 
-/// Tracing span representing a unit of work
+// Tracing span representing a unit of work
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Span {
-    /// Unique span identifier
+    // Unique span identifier
     pub span_id: String,
-    /// Parent span ID (if any)
+    // Parent span ID (if any)
     pub parent_span_id: Option<String>,
-    /// Trace ID for correlation
+    // Trace ID for correlation
     pub trace_id: String,
-    /// Span name/operation
+    // Span name/operation
     pub name: String,
-    /// Start time
+    // Start time
     pub start_time: SystemTime,
-    /// End time (if completed)
+    // End time (if completed)
     pub end_time: Option<SystemTime>,
-    /// Span tags/attributes
+    // Span tags/attributes
     pub tags: HashMap<String, String>,
-    /// Span events/logs
+    // Span events/logs
     pub events: Vec<SpanEvent>,
 }
 
-/// Event within a span
+// Event within a span
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpanEvent {
-    /// Event name
+    // Event name
     pub name: String,
-    /// Event timestamp
+    // Event timestamp
     pub timestamp: SystemTime,
-    /// Event attributes
+    // Event attributes
     pub attributes: HashMap<String, String>,
 }
 
 impl Span {
-    /// Create a new root span
+    // Create a new root span
     pub fn new(name: impl Into<String>) -> Self {
         let trace_id = Uuid::new_v4().to_string();
         Self {
@@ -109,7 +109,7 @@ impl Span {
         }
     }
 
-    /// Create a child span
+    // Create a child span
     pub fn child(&self, name: impl Into<String>) -> Self {
         Self {
             span_id: Uuid::new_v4().to_string(),
@@ -123,13 +123,13 @@ impl Span {
         }
     }
 
-    /// Add a tag to the span
+    // Add a tag to the span
     pub fn tag(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.tags.insert(key.into(), value.into());
         self
     }
 
-    /// Add an event to the span
+    // Add an event to the span
     pub fn event(&mut self, name: impl Into<String>, attributes: HashMap<String, String>) {
         self.events.push(SpanEvent {
             name: name.into(),
@@ -138,12 +138,12 @@ impl Span {
         });
     }
 
-    /// Complete the span
+    // Complete the span
     pub fn finish(&mut self) {
         self.end_time = Some(SystemTime::now());
     }
 
-    /// Get span duration
+    // Get span duration
     pub fn duration(&self) -> Option<Duration> {
         if let Some(end) = self.end_time {
             end.duration_since(self.start_time).ok()
@@ -153,17 +153,17 @@ impl Span {
     }
 }
 
-/// Tracing context for distributed tracing
+// Tracing context for distributed tracing
 #[derive(Debug, Clone)]
 pub struct TracingContext {
-    /// Current span stack
+    // Current span stack
     spans: Arc<RwLock<Vec<Span>>>,
-    /// Completed spans
+    // Completed spans
     completed: Arc<RwLock<Vec<Span>>>,
 }
 
 impl TracingContext {
-    /// Create a new tracing context
+    // Create a new tracing context
     pub fn new() -> Self {
         Self {
             spans: Arc::new(RwLock::new(Vec::new())),
@@ -171,7 +171,7 @@ impl TracingContext {
         }
     }
 
-    /// Start a new span
+    // Start a new span
     pub async fn start_span(&self, name: impl Into<String>) -> String {
         let mut spans = self.spans.write().await;
 
@@ -186,7 +186,7 @@ impl TracingContext {
         span_id
     }
 
-    /// End the current span
+    // End the current span
     pub async fn end_span(&self) {
         let mut spans = self.spans.write().await;
         if let Some(mut span) = spans.pop() {
@@ -196,7 +196,7 @@ impl TracingContext {
         }
     }
 
-    /// Add a tag to current span
+    // Add a tag to current span
     pub async fn tag(&self, key: impl Into<String>, value: impl Into<String>) {
         let mut spans = self.spans.write().await;
         if let Some(span) = spans.last_mut() {
@@ -204,7 +204,7 @@ impl TracingContext {
         }
     }
 
-    /// Add an event to current span
+    // Add an event to current span
     pub async fn event(&self, name: impl Into<String>, attributes: HashMap<String, String>) {
         let mut spans = self.spans.write().await;
         if let Some(span) = spans.last_mut() {
@@ -212,13 +212,13 @@ impl TracingContext {
         }
     }
 
-    /// Get current trace ID
+    // Get current trace ID
     pub async fn trace_id(&self) -> Option<String> {
         let spans = self.spans.read().await;
         spans.first().map(|s| s.trace_id.clone())
     }
 
-    /// Get all completed spans
+    // Get all completed spans
     pub async fn get_completed_spans(&self) -> Vec<Span> {
         let completed = self.completed.read().await;
         completed.clone()
@@ -235,27 +235,27 @@ impl Default for TracingContext {
 // Request Context
 // ============================================================================
 
-/// Request context for propagating metadata
+// Request context for propagating metadata
 #[derive(Debug, Clone)]
 pub struct RequestContext {
-    /// Request ID
+    // Request ID
     pub request_id: String,
-    /// Trace ID
+    // Trace ID
     pub trace_id: String,
-    /// User ID (if authenticated)
+    // User ID (if authenticated)
     pub user_id: Option<String>,
-    /// Session ID
+    // Session ID
     pub session_id: Option<String>,
-    /// Request timestamp
+    // Request timestamp
     pub timestamp: SystemTime,
-    /// Custom metadata
+    // Custom metadata
     pub metadata: HashMap<String, String>,
-    /// Tracing context
+    // Tracing context
     pub tracing: TracingContext,
 }
 
 impl RequestContext {
-    /// Create a new request context
+    // Create a new request context
     pub fn new() -> Self {
         Self {
             request_id: Uuid::new_v4().to_string(),
@@ -268,25 +268,25 @@ impl RequestContext {
         }
     }
 
-    /// Set user ID
+    // Set user ID
     pub fn with_user(mut self, user_id: impl Into<String>) -> Self {
         self.user_id = Some(user_id.into());
         self
     }
 
-    /// Set trace ID
+    // Set trace ID
     pub fn with_trace_id(mut self, trace_id: impl Into<String>) -> Self {
         self.trace_id = trace_id.into();
         self
     }
 
-    /// Set session ID
+    // Set session ID
     pub fn with_session(mut self, session_id: impl Into<String>) -> Self {
         self.session_id = Some(session_id.into());
         self
     }
 
-    /// Add metadata
+    // Add metadata
     pub fn with_metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
@@ -303,39 +303,39 @@ impl Default for RequestContext {
 // Circuit Breaker
 // ============================================================================
 
-/// Circuit breaker state
+// Circuit breaker state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CircuitState {
-    /// Circuit is closed, requests pass through
+    // Circuit is closed, requests pass through
     Closed,
-    /// Circuit is open, requests are rejected
+    // Circuit is open, requests are rejected
     Open,
-    /// Circuit is half-open, testing if service recovered
+    // Circuit is half-open, testing if service recovered
     HalfOpen,
 }
 
-/// Circuit breaker implementation
+// Circuit breaker implementation
 pub struct CircuitBreaker {
-    /// Circuit name
+    // Circuit name
     name: String,
-    /// Current state
+    // Current state
     state: Arc<RwLock<CircuitState>>,
-    /// Failure count
+    // Failure count
     failure_count: Arc<Mutex<u32>>,
-    /// Failure threshold before opening
+    // Failure threshold before opening
     failure_threshold: u32,
-    /// Timeout before attempting recovery (seconds)
+    // Timeout before attempting recovery (seconds)
     timeout: u64,
-    /// Last failure time
+    // Last failure time
     last_failure: Arc<Mutex<Option<Instant>>>,
-    /// Success count in half-open state
+    // Success count in half-open state
     success_count: Arc<Mutex<u32>>,
-    /// Required successes to close circuit
+    // Required successes to close circuit
     success_threshold: u32,
 }
 
 impl CircuitBreaker {
-    /// Create a new circuit breaker
+    // Create a new circuit breaker
     pub fn new(name: impl Into<String>, failure_threshold: u32, timeout_secs: u64) -> Self {
         Self {
             name: name.into(),
@@ -349,7 +349,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Execute a function through the circuit breaker
+    // Execute a function through the circuit breaker
     pub async fn call<F, T, E>(&self, f: F) -> Result<T>
     where
         F: Future<Output = std::result::Result<T, E>>,
@@ -378,7 +378,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Check if we should attempt the call
+    // Check if we should attempt the call
     async fn should_attempt(&self) -> bool {
         let state = *self.state.read().await;
 
@@ -402,7 +402,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Handle successful call
+    // Handle successful call
     async fn on_success(&self) {
         let state = *self.state.read().await;
 
@@ -434,7 +434,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Handle failed call
+    // Handle failed call
     async fn on_failure(&self) {
         let state = *self.state.read().await;
 
@@ -468,12 +468,12 @@ impl CircuitBreaker {
         }
     }
 
-    /// Get current state
+    // Get current state
     pub async fn state(&self) -> CircuitState {
         *self.state.read().await
     }
 
-    /// Reset circuit breaker
+    // Reset circuit breaker
     pub async fn reset(&self) {
         let mut state = self.state.write().await;
         *state = CircuitState::Closed;
@@ -490,15 +490,15 @@ impl CircuitBreaker {
 // Rate Limiter
 // ============================================================================
 
-/// Token bucket for rate limiting
+// Token bucket for rate limiting
 struct TokenBucket {
-    /// Maximum tokens
+    // Maximum tokens
     capacity: u32,
-    /// Current tokens
+    // Current tokens
     tokens: f64,
-    /// Refill rate (tokens per second)
+    // Refill rate (tokens per second)
     refill_rate: f64,
-    /// Last refill time
+    // Last refill time
     last_refill: Instant,
 }
 
@@ -531,20 +531,20 @@ impl TokenBucket {
     }
 }
 
-/// Rate limiter using token bucket algorithm
+// Rate limiter using token bucket algorithm
 pub struct RateLimiter {
-    /// Per-key token buckets
+    // Per-key token buckets
     buckets: Arc<Mutex<HashMap<String, TokenBucket>>>,
-    /// Bucket capacity
+    // Bucket capacity
     capacity: u32,
-    /// Refill rate (tokens per second)
+    // Refill rate (tokens per second)
     refill_rate: f64,
 }
 
 impl RateLimiter {
-    /// Create a new rate limiter
-    /// - capacity: Maximum requests
-    /// - window_secs: Time window in seconds
+    // Create a new rate limiter
+    // - capacity: Maximum requests
+    // - window_secs: Time window in seconds
     pub fn new(capacity: u32, window_secs: u64) -> Self {
         let refill_rate = capacity as f64 / window_secs as f64;
 
@@ -555,12 +555,12 @@ impl RateLimiter {
         }
     }
 
-    /// Check if a request is allowed
+    // Check if a request is allowed
     pub async fn allow(&self, key: impl Into<String>) -> bool {
         self.allow_n(key, 1).await
     }
 
-    /// Check if N requests are allowed
+    // Check if N requests are allowed
     pub async fn allow_n(&self, key: impl Into<String>, n: u32) -> bool {
         let key = key.into();
         let mut buckets = self.buckets.lock().unwrap();
@@ -572,7 +572,7 @@ impl RateLimiter {
         bucket.consume(n)
     }
 
-    /// Reset rate limit for a key
+    // Reset rate limit for a key
     pub async fn reset(&self, key: &str) {
         let mut buckets = self.buckets.lock().unwrap();
         buckets.remove(key);
@@ -583,16 +583,16 @@ impl RateLimiter {
 // Retry Logic
 // ============================================================================
 
-/// Retry policy configuration
+// Retry policy configuration
 #[derive(Debug, Clone)]
 pub struct RetryPolicy {
-    /// Maximum retry attempts
+    // Maximum retry attempts
     pub max_attempts: u32,
-    /// Initial delay
+    // Initial delay
     pub initial_delay: Duration,
-    /// Maximum delay
+    // Maximum delay
     pub max_delay: Duration,
-    /// Backoff multiplier
+    // Backoff multiplier
     pub multiplier: f64,
 }
 
@@ -607,7 +607,7 @@ impl Default for RetryPolicy {
     }
 }
 
-/// Execute a function with retry logic
+// Execute a function with retry logic
 pub async fn retry_with_backoff<F, Fut, T, E>(
     policy: &RetryPolicy,
     mut f: F,
@@ -642,16 +642,16 @@ where
 // Bulkhead Pattern
 // ============================================================================
 
-/// Bulkhead for resource isolation
+// Bulkhead for resource isolation
 pub struct Bulkhead {
-    /// Semaphore for limiting concurrent operations
+    // Semaphore for limiting concurrent operations
     semaphore: Arc<Semaphore>,
-    /// Maximum concurrent operations
+    // Maximum concurrent operations
     max_concurrent: usize,
 }
 
 impl Bulkhead {
-    /// Create a new bulkhead
+    // Create a new bulkhead
     pub fn new(max_concurrent: usize) -> Self {
         Self {
             semaphore: Arc::new(Semaphore::new(max_concurrent)),
@@ -659,7 +659,7 @@ impl Bulkhead {
         }
     }
 
-    /// Execute a function with bulkhead protection
+    // Execute a function with bulkhead protection
     pub async fn execute<F, T>(&self, f: F) -> Result<T>
     where
         F: Future<Output = Result<T>>,
@@ -670,7 +670,7 @@ impl Bulkhead {
         f.await
     }
 
-    /// Get available permits
+    // Get available permits
     pub fn available_permits(&self) -> usize {
         self.semaphore.available_permits()
     }
@@ -680,32 +680,32 @@ impl Bulkhead {
 // Error Recovery
 // ============================================================================
 
-/// Recovery strategy for errors
+// Recovery strategy for errors
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RecoveryStrategy {
-    /// Retry the operation
+    // Retry the operation
     Retry,
-    /// Fail fast and propagate error
+    // Fail fast and propagate error
     FailFast,
-    /// Use fallback value/behavior
+    // Use fallback value/behavior
     Fallback,
-    /// Ignore the error
+    // Ignore the error
     Ignore,
 }
 
-/// Error handler with recovery strategies
+// Error handler with recovery strategies
 pub struct ErrorHandler {
-    /// Retry policy
+    // Retry policy
     retry_policy: RetryPolicy,
 }
 
 impl ErrorHandler {
-    /// Create a new error handler
+    // Create a new error handler
     pub fn new(retry_policy: RetryPolicy) -> Self {
         Self { retry_policy }
     }
 
-    /// Handle an error with the given strategy
+    // Handle an error with the given strategy
     pub async fn handle<F, Fut, T>(
         &self,
         strategy: RecoveryStrategy,

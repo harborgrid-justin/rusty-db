@@ -48,26 +48,26 @@ type Result<T> = std::result::Result<T, DbError>;
 // SECTION 1: UNIFIED SERVICE REGISTRY (600+ lines)
 // ============================================================================
 
-/// Service lifecycle states
+// Service lifecycle states
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ServiceState {
-    /// Service is being initialized
+    // Service is being initialized
     Initializing,
-    /// Service is ready but not started
+    // Service is ready but not started
     Ready,
-    /// Service is running
+    // Service is running
     Running,
-    /// Service is paused
+    // Service is paused
     Paused,
-    /// Service is shutting down
+    // Service is shutting down
     ShuttingDown,
-    /// Service has stopped
+    // Service has stopped
     Stopped,
-    /// Service is in error state
+    // Service is in error state
     Failed,
 }
 
-/// Service metadata
+// Service metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceMetadata {
     pub id: String,
@@ -86,7 +86,7 @@ pub struct ServiceMetadata {
     pub last_heartbeat: SystemTime,
 }
 
-/// Service endpoint information
+// Service endpoint information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceEndpoint {
     pub name: String,
@@ -95,44 +95,44 @@ pub struct ServiceEndpoint {
     pub health_check_path: Option<String>,
 }
 
-/// Service registration request
+// Service registration request
 pub struct ServiceRegistration {
     pub metadata: ServiceMetadata,
     pub lifecycle_handler: Arc<dyn ServiceLifecycleHandler>,
     pub health_check: Arc<dyn HealthCheck>,
 }
 
-/// Trait for service lifecycle management
+// Trait for service lifecycle management
 pub trait ServiceLifecycleHandler: Send + Sync {
-    /// Initialize the service
+    // Initialize the service
     fn initialize(&self) -> std::result::Result<(), DbError>;
 
-    /// Start the service
+    // Start the service
     fn start(&self) -> std::result::Result<(), DbError>;
 
-    /// Pause the service
+    // Pause the service
     fn pause(&self) -> std::result::Result<(), DbError>;
 
-    /// Resume the service
+    // Resume the service
     fn resume(&self) -> std::result::Result<(), DbError>;
 
-    /// Stop the service gracefully
+    // Stop the service gracefully
     fn stop(&self) -> std::result::Result<(), DbError>;
 
-    /// Get service configuration
+    // Get service configuration
     fn get_config(&self) -> std::result::Result<HashMap<String, String>, DbError>;
 
-    /// Update service configuration
+    // Update service configuration
     fn update_config(&self, config: HashMap<String, String>) -> std::result::Result<(), DbError>;
 }
 
-/// Health check trait
+// Health check trait
 pub trait HealthCheck: Send + Sync {
-    /// Perform health check
+    // Perform health check
     fn check(&self) -> std::result::Result<HealthCheckStatus, DbError>;
 }
 
-/// Health check status
+// Health check status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckStatus {
     pub healthy: bool,
@@ -141,7 +141,7 @@ pub struct HealthCheckStatus {
     pub timestamp: SystemTime,
 }
 
-/// Dependency injection container
+// Dependency injection container
 pub struct DependencyContainer {
     services: Arc<RwLock<HashMap<String, Arc<dyn std::any::Any + Send + Sync>>>>,
     factories: Arc<RwLock<HashMap<String, Box<dyn Fn() -> Box<dyn std::any::Any + Send + Sync> + Send + Sync>>>>,
@@ -155,13 +155,13 @@ impl DependencyContainer {
         }
     }
 
-    /// Register a singleton service
+    // Register a singleton service
     pub fn register_singleton<T: Send + Sync + 'static>(&self, name: &str, service: T) {
         let mut services = self.services.write().unwrap();
         services.insert(name.to_string(), Arc::new(service));
     }
 
-    /// Register a factory for transient services
+    // Register a factory for transient services
     pub fn register_factory<T, F>(&self, name: &str, factory: F)
     where
         T: Send + Sync + 'static,
@@ -174,13 +174,13 @@ impl DependencyContainer {
         );
     }
 
-    /// Resolve a service by name
+    // Resolve a service by name
     pub fn resolve<T: Send + Sync + 'static>(&self, name: &str) -> Option<Arc<T>> {
         let services = self.services.read().unwrap();
         services.get(name).and_then(|s| s.clone().downcast::<T>().ok())
     }
 
-    /// Create a new instance from factory
+    // Create a new instance from factory
     pub fn create<T: Send + Sync + 'static>(&self, name: &str) -> Option<Box<T>> {
         let factories = self.factories.read().unwrap();
         factories.get(name).and_then(|f| {
@@ -190,7 +190,7 @@ impl DependencyContainer {
     }
 }
 
-/// Feature flag manager
+// Feature flag manager
 pub struct FeatureFlagManager {
     flags: Arc<RwLock<HashMap<String, FeatureFlag>>>,
     evaluators: Arc<RwLock<HashMap<String, Box<dyn FeatureFlagEvaluator>>>>,
@@ -291,7 +291,7 @@ impl FeatureFlagManager {
     }
 }
 
-/// Version compatibility checker
+// Version compatibility checker
 pub struct VersionCompatibilityChecker {
     compatibility_matrix: Arc<RwLock<HashMap<String, Vec<VersionConstraint>>>>,
 }
@@ -341,7 +341,7 @@ impl VersionCompatibilityChecker {
     }
 }
 
-/// Configuration aggregator
+// Configuration aggregator
 pub struct ConfigurationAggregator {
     configs: Arc<RwLock<HashMap<String, HashMap<String, String>>>>,
     watchers: Arc<RwLock<Vec<Box<dyn ConfigWatcher>>>>,
@@ -388,7 +388,7 @@ impl ConfigurationAggregator {
     }
 }
 
-/// Unified service registry
+// Unified service registry
 pub struct ServiceRegistry {
     services: Arc<RwLock<HashMap<String, ServiceRegistration>>>,
     metadata_index: Arc<RwLock<HashMap<String, ServiceMetadata>>>,
@@ -399,7 +399,7 @@ pub struct ServiceRegistry {
     event_bus: Arc<ServiceEventBus>,
 }
 
-/// Service event bus
+// Service event bus
 pub struct ServiceEventBus {
     subscribers: Arc<RwLock<HashMap<String, Vec<Box<dyn ServiceEventHandler>>>>>,
 }
@@ -465,7 +465,7 @@ impl ServiceRegistry {
         }
     }
 
-    /// Register a new service
+    // Register a new service
     pub fn register(&self, registration: ServiceRegistration) -> std::result::Result<(), DbError> {
         let service_id = registration.metadata.id.clone();
 
@@ -502,7 +502,7 @@ impl ServiceRegistry {
         Ok(())
     }
 
-    /// Unregister a service
+    // Unregister a service
     pub fn unregister(&self, service_id: &str) -> std::result::Result<(), DbError> {
         {
             let mut services = self.services.write().unwrap();
@@ -515,19 +515,19 @@ impl ServiceRegistry {
         Ok(())
     }
 
-    /// Get service metadata
+    // Get service metadata
     pub fn get_metadata(&self, service_id: &str) -> Option<ServiceMetadata> {
         let metadata = self.metadata_index.read().unwrap();
         metadata.get(service_id).cloned()
     }
 
-    /// List all services
+    // List all services
     pub fn list_services(&self) -> Vec<ServiceMetadata> {
         let metadata = self.metadata_index.read().unwrap();
         metadata.values().cloned().collect()
     }
 
-    /// Check if all dependencies are satisfied
+    // Check if all dependencies are satisfied
     fn check_dependencies(&self, dependencies: &[String]) -> std::result::Result<(), DbError> {
         let metadata = self.metadata_index.read().unwrap();
         for dep in dependencies {
@@ -541,7 +541,7 @@ impl ServiceRegistry {
         Ok(())
     }
 
-    /// Start a service
+    // Start a service
     pub fn start_service(&self, service_id: &str) -> std::result::Result<(), DbError> {
         let services = self.services.read().unwrap();
         if let Some(registration) = services.get(service_id) {
@@ -569,7 +569,7 @@ impl ServiceRegistry {
         }
     }
 
-    /// Stop a service
+    // Stop a service
     pub fn stop_service(&self, service_id: &str) -> std::result::Result<(), DbError> {
         let services = self.services.read().unwrap();
         if let Some(registration) = services.get(service_id) {
@@ -597,17 +597,17 @@ impl ServiceRegistry {
         }
     }
 
-    /// Get dependency container
+    // Get dependency container
     pub fn container(&self) -> &Arc<DependencyContainer> {
         &self.dependency_container
     }
 
-    /// Get feature flag manager
+    // Get feature flag manager
     pub fn feature_flags(&self) -> &Arc<FeatureFlagManager> {
         &self.feature_flags
     }
 
-    /// Get configuration aggregator
+    // Get configuration aggregator
     pub fn config_aggregator(&self) -> &Arc<ConfigurationAggregator> {
         &self.config_aggregator
     }
@@ -617,7 +617,7 @@ impl ServiceRegistry {
 // ENTERPRISE INTEGRATOR
 // ============================================================================
 
-/// Enterprise integrator configuration
+// Enterprise integrator configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IntegratorConfig {
     pub service_discovery_enabled: bool,
@@ -639,7 +639,7 @@ impl Default for IntegratorConfig {
     }
 }
 
-/// System health status
+// System health status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemHealthStatus {
     pub overall_status: String,
@@ -649,7 +649,7 @@ pub struct SystemHealthStatus {
     pub timestamp: SystemTime,
 }
 
-/// Resource usage snapshot
+// Resource usage snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceUsageSnapshot {
     pub memory_used: usize,
@@ -661,7 +661,7 @@ pub struct ResourceUsageSnapshot {
     pub cpu_usage: f32,
 }
 
-/// Enterprise integrator - main coordinator for all enterprise modules
+// Enterprise integrator - main coordinator for all enterprise modules
 pub struct EnterpriseIntegrator {
     config: IntegratorConfig,
     service_registry: Arc<ServiceRegistry>,
@@ -711,4 +711,3 @@ impl EnterpriseIntegrator {
         &self.service_registry
     }
 }
-

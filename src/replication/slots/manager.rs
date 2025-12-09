@@ -12,10 +12,10 @@ use super::config::SlotManagerConfig;
 use super::errors::SlotError;
 use super::types::*;
 
-/// Slot manager trait
+// Slot manager trait
 #[async_trait]
 pub trait SlotManager: Send + Sync {
-    /// Create a new replication slot
+    // Create a new replication slot
     async fn create_slot(
         &self,
         slot_name: SlotName,
@@ -24,46 +24,46 @@ pub trait SlotManager: Send + Sync {
         config: Option<SlotConfig>,
     ) -> Result<SlotId, SlotError>;
 
-    /// Drop a replication slot
+    // Drop a replication slot
     async fn drop_slot(&self, slot_name: &SlotName) -> Result<(), SlotError>;
 
-    /// Get slot information
+    // Get slot information
     async fn get_slot_info(&self, slot_name: &SlotName) -> Result<SlotInfo, SlotError>;
 
-    /// List all slots
+    // List all slots
     async fn list_slots(&self) -> Result<Vec<SlotInfo>, SlotError>;
 
-    /// Advance slot position
+    // Advance slot position
     async fn advance_slot(
         &self,
         slot_name: &SlotName,
         target_lsn: LogSequenceNumber,
     ) -> Result<(), SlotError>;
 
-    /// Get slot health status
+    // Get slot health status
     async fn get_slot_health(&self, slot_name: &SlotName) -> Result<SlotHealth, SlotError>;
 
-    /// Check all slots health
+    // Check all slots health
     async fn check_all_slots_health(&self) -> Result<Vec<SlotHealth>, SlotError>;
 }
 
-/// Replication slot manager implementation
+// Replication slot manager implementation
 pub struct ReplicationSlotManager {
-    /// Configuration
+    // Configuration
     pub(crate) config: Arc<SlotManagerConfig>,
-    /// Slots storage
+    // Slots storage
     pub(crate) slots: Arc<RwLock<HashMap<SlotName, Arc<RwLock<SlotInfo>>>>>,
-    /// Active slots tracking
+    // Active slots tracking
     pub(crate) active_slots: Arc<RwLock<HashSet<SlotName>>>,
-    /// Slot metrics
+    // Slot metrics
     pub(crate) metrics: Arc<RwLock<HashMap<SlotName, AtomicSlotMetrics>>>,
-    /// Background task handles
+    // Background task handles
     cleanup_handle: Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
     monitoring_handle: Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
 }
 
 impl ReplicationSlotManager {
-    /// Create a new slot manager
+    // Create a new slot manager
     pub async fn new(config: SlotManagerConfig) -> Result<Self, SlotError> {
         Self::validate_config(&config)?;
         Self::create_directories(&config).await?;

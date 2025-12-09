@@ -1,4 +1,4 @@
-//! Replication manager
+// Replication manager
 use crate::error::Result;
 use super::types::*;
 

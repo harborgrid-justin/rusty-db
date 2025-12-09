@@ -23,32 +23,32 @@ use super::publisher::{PublishedEvent, EventPublisher};
 // Outbox Pattern Implementation
 // ============================================================================
 
-/// Outbox entry for transactional outbox pattern
+// Outbox entry for transactional outbox pattern
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OutboxEntry {
-    /// Entry ID
+    // Entry ID
     pub id: u64,
-    /// Aggregate ID
+    // Aggregate ID
     pub aggregate_id: String,
-    /// Aggregate type
+    // Aggregate type
     pub aggregate_type: String,
-    /// Event type
+    // Event type
     pub event_type: String,
-    /// Event payload
+    // Event payload
     pub payload: Vec<u8>,
-    /// Event metadata
+    // Event metadata
     pub metadata: HashMap<String, String>,
-    /// Transaction ID that created this entry
+    // Transaction ID that created this entry
     pub txn_id: TransactionId,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: SystemTime,
-    /// Processed flag
+    // Processed flag
     pub processed: bool,
-    /// Processed timestamp
+    // Processed timestamp
     pub processed_at: Option<SystemTime>,
-    /// Retry count
+    // Retry count
     pub retry_count: u32,
-    /// Last error
+    // Last error
     pub last_error: Option<String>,
 }
 
@@ -81,18 +81,18 @@ impl OutboxEntry {
     }
 }
 
-/// Outbox processor configuration
+// Outbox processor configuration
 #[derive(Debug, Clone)]
 pub struct OutboxConfig {
-    /// Polling interval
+    // Polling interval
     pub poll_interval: Duration,
-    /// Batch size
+    // Batch size
     pub batch_size: usize,
-    /// Max retry attempts
+    // Max retry attempts
     pub max_retries: u32,
-    /// Retry delay
+    // Retry delay
     pub retry_delay: Duration,
-    /// Delete processed entries after
+    // Delete processed entries after
     pub retention_period: Duration,
 }
 
@@ -108,20 +108,20 @@ impl Default for OutboxConfig {
     }
 }
 
-/// Outbox pattern implementation
+// Outbox pattern implementation
 pub struct OutboxProcessor {
-    /// Configuration
+    // Configuration
     config: OutboxConfig,
-    /// Outbox table (in-memory for this implementation)
+    // Outbox table (in-memory for this implementation)
     outbox: Arc<Mutex<VecDeque<OutboxEntry>>>,
-    /// Next entry ID
+    // Next entry ID
     next_id: Arc<AtomicU64>,
-    /// Event publisher
+    // Event publisher
     publisher: Arc<EventPublisher>,
-    /// Statistics
+    // Statistics
     processed_count: Arc<AtomicU64>,
     failed_count: Arc<AtomicU64>,
-    /// Shutdown flag
+    // Shutdown flag
     shutdown: Arc<AtomicBool>,
 }
 
@@ -138,7 +138,7 @@ impl OutboxProcessor {
         }
     }
 
-    /// Add entry to outbox
+    // Add entry to outbox
     pub fn add_entry(&self, mut entry: OutboxEntry) -> Result<u64> {
         entry.id = self.next_id.fetch_add(1, Ordering::SeqCst);
         entry.created_at = SystemTime::now();
@@ -147,7 +147,7 @@ impl OutboxProcessor {
         Ok(entry.id)
     }
 
-    /// Start processing outbox entries
+    // Start processing outbox entries
     pub fn start(&self) {
         let outbox = self.outbox.clone();
         let publisher = self.publisher.clone();
@@ -211,12 +211,12 @@ impl OutboxProcessor {
         });
     }
 
-    /// Stop processing
+    // Stop processing
     pub fn stop(&self) {
         self.shutdown.store(true, Ordering::SeqCst);
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> (u64, u64) {
         (
             self.processed_count.load(Ordering::SeqCst),
@@ -229,28 +229,28 @@ impl OutboxProcessor {
 // Event Sourcing Support
 // ============================================================================
 
-/// Domain event for event sourcing
+// Domain event for event sourcing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DomainEvent {
-    /// Event ID
+    // Event ID
     pub event_id: u64,
-    /// Aggregate ID
+    // Aggregate ID
     pub aggregate_id: String,
-    /// Aggregate type
+    // Aggregate type
     pub aggregate_type: String,
-    /// Event type
+    // Event type
     pub event_type: String,
-    /// Event version
+    // Event version
     pub version: u64,
-    /// Event data
+    // Event data
     pub data: HashMap<String, Value>,
-    /// Event metadata
+    // Event metadata
     pub metadata: HashMap<String, String>,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
-    /// Causation ID (which command caused this event)
+    // Causation ID (which command caused this event)
     pub causation_id: Option<String>,
-    /// Correlation ID (for distributed tracing)
+    // Correlation ID (for distributed tracing)
     pub correlation_id: Option<String>,
 }
 
@@ -281,13 +281,13 @@ impl DomainEvent {
     }
 }
 
-/// Event store for event sourcing
+// Event store for event sourcing
 pub struct EventStore {
-    /// Events indexed by aggregate ID
+    // Events indexed by aggregate ID
     events: Arc<RwLock<HashMap<String, Vec<DomainEvent>>>>,
-    /// Next event ID
+    // Next event ID
     next_event_id: Arc<AtomicU64>,
-    /// Snapshots
+    // Snapshots
     snapshots: Arc<RwLock<HashMap<String, AggregateSnapshot>>>,
 }
 
@@ -300,7 +300,7 @@ impl EventStore {
         }
     }
 
-    /// Append event to stream
+    // Append event to stream
     pub fn append_event(&self, mut event: DomainEvent) -> Result<u64> {
         event.event_id = self.next_event_id.fetch_add(1, Ordering::SeqCst);
 
@@ -320,7 +320,7 @@ impl EventStore {
         Ok(event.event_id)
     }
 
-    /// Get events for aggregate
+    // Get events for aggregate
     pub fn get_events(&self, aggregate_id: &str) -> Vec<DomainEvent> {
         self.events.read()
             .get(aggregate_id)
@@ -328,7 +328,7 @@ impl EventStore {
             .unwrap_or_default()
     }
 
-    /// Get events from version
+    // Get events from version
     pub fn get_events_from_version(&self, aggregate_id: &str, from_version: u64) -> Vec<DomainEvent> {
         self.get_events(aggregate_id)
             .into_iter()
@@ -336,18 +336,18 @@ impl EventStore {
             .collect()
     }
 
-    /// Save snapshot
+    // Save snapshot
     pub fn save_snapshot(&self, snapshot: AggregateSnapshot) {
         self.snapshots.write().insert(snapshot.aggregate_id.clone(), snapshot);
     }
 
-    /// Load snapshot
+    // Load snapshot
     pub fn load_snapshot(&self, aggregate_id: &str) -> Option<AggregateSnapshot> {
         self.snapshots.read().get(aggregate_id).cloned()
     }
 }
 
-/// Aggregate snapshot for optimization
+// Aggregate snapshot for optimization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregateSnapshot {
     pub aggregate_id: String,
@@ -361,41 +361,41 @@ pub struct AggregateSnapshot {
 // CQRS Integration
 // ============================================================================
 
-/// Command for CQRS pattern
+// Command for CQRS pattern
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Command {
-    /// Command ID
+    // Command ID
     pub id: String,
-    /// Command type
+    // Command type
     pub command_type: String,
-    /// Target aggregate ID
+    // Target aggregate ID
     pub aggregate_id: String,
-    /// Command payload
+    // Command payload
     pub payload: HashMap<String, Value>,
-    /// Metadata
+    // Metadata
     pub metadata: HashMap<String, String>,
-    /// Issued timestamp
+    // Issued timestamp
     pub issued_at: SystemTime,
 }
 
-/// Query for CQRS pattern
+// Query for CQRS pattern
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Query {
-    /// Query ID
+    // Query ID
     pub id: String,
-    /// Query type
+    // Query type
     pub query_type: String,
-    /// Query parameters
+    // Query parameters
     pub parameters: HashMap<String, Value>,
-    /// Issued timestamp
+    // Issued timestamp
     pub issued_at: SystemTime,
 }
 
-/// CQRS coordinator
+// CQRS coordinator
 pub struct CQRSCoordinator {
-    /// Event store
+    // Event store
     event_store: Arc<EventStore>,
-    /// Read model projections
+    // Read model projections
     projections: Arc<RwLock<HashMap<String, ReadModelProjection>>>,
 }
 
@@ -407,7 +407,7 @@ impl CQRSCoordinator {
         }
     }
 
-    /// Execute command (write side)
+    // Execute command (write side)
     pub async fn execute_command(&self, command: Command) -> Result<Vec<DomainEvent>> {
         // Load aggregate from event store
         let events = self.event_store.get_events(&command.aggregate_id);
@@ -426,7 +426,7 @@ impl CQRSCoordinator {
         Ok(new_events)
     }
 
-    /// Execute query (read side)
+    // Execute query (read side)
     pub async fn execute_query(&self, query: Query) -> Result<QueryResult> {
         // Query from read models/projections
         let projection_name = &query.query_type;
@@ -439,7 +439,7 @@ impl CQRSCoordinator {
         }
     }
 
-    /// Register a read model projection
+    // Register a read model projection
     pub fn register_projection(&self, name: String, projection: ReadModelProjection) {
         self.projections.write().insert(name, projection);
     }
@@ -460,7 +460,7 @@ impl CQRSCoordinator {
     }
 }
 
-/// Read model projection
+// Read model projection
 #[derive(Debug, Clone)]
 pub struct ReadModelProjection {
     pub name: String,
@@ -494,7 +494,7 @@ impl ReadModelProjection {
     }
 }
 
-/// Query result
+// Query result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryResult {
     pub query_id: String,
@@ -506,19 +506,19 @@ pub struct QueryResult {
 // External System Connectors
 // ============================================================================
 
-/// External system connector
+// External system connector
 pub trait ExternalConnector: Send + Sync {
-    /// Send event to external system
+    // Send event to external system
     fn send_event(&self, event: &ChangeEvent) -> Result<()>;
 
-    /// Get connector name
+    // Get connector name
     fn name(&self) -> &str;
 
-    /// Health check
+    // Health check
     fn health_check(&self) -> Result<bool>;
 }
 
-/// HTTP webhook connector
+// HTTP webhook connector
 pub struct WebhookConnector {
     name: String,
     url: String,
@@ -570,7 +570,7 @@ impl ExternalConnector for WebhookConnector {
     }
 }
 
-/// Kafka connector
+// Kafka connector
 pub struct KafkaConnector {
     name: String,
     bootstrap_servers: Vec<String>,
@@ -609,26 +609,26 @@ impl ExternalConnector for KafkaConnector {
 // Event Schema Registry
 // ============================================================================
 
-/// Event schema definition
+// Event schema definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventSchema {
-    /// Schema ID
+    // Schema ID
     pub id: u64,
-    /// Event type
+    // Event type
     pub event_type: String,
-    /// Schema version
+    // Schema version
     pub version: u32,
-    /// Schema format (JSON Schema, Avro, etc.)
+    // Schema format (JSON Schema, Avro, etc.)
     pub format: String,
-    /// Schema definition
+    // Schema definition
     pub schema: String,
-    /// Compatibility mode
+    // Compatibility mode
     pub compatibility: SchemaCompatibility,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: SystemTime,
 }
 
-/// Schema compatibility mode
+// Schema compatibility mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SchemaCompatibility {
     None,
@@ -637,13 +637,13 @@ pub enum SchemaCompatibility {
     Full,
 }
 
-/// Schema registry
+// Schema registry
 pub struct SchemaRegistry {
-    /// Schemas indexed by (event_type, version)
+    // Schemas indexed by (event_type, version)
     schemas: Arc<RwLock<HashMap<(String, u32), EventSchema>>>,
-    /// Latest version per event type
+    // Latest version per event type
     latest_versions: Arc<RwLock<HashMap<String, u32>>>,
-    /// Next schema ID
+    // Next schema ID
     next_id: Arc<AtomicU64>,
 }
 
@@ -656,7 +656,7 @@ impl SchemaRegistry {
         }
     }
 
-    /// Register a new schema
+    // Register a new schema
     pub fn register_schema(&self, mut schema: EventSchema) -> Result<u64> {
         schema.id = self.next_id.fetch_add(1, Ordering::SeqCst);
 
@@ -685,19 +685,19 @@ impl SchemaRegistry {
         Ok(schema.id)
     }
 
-    /// Get schema by event type and version
+    // Get schema by event type and version
     pub fn get_schema(&self, event_type: &str, version: u32) -> Option<EventSchema> {
         let key = (event_type.to_string(), version);
         self.schemas.read().get(&key).cloned()
     }
 
-    /// Get latest schema for event type
+    // Get latest schema for event type
     pub fn get_latest_schema(&self, event_type: &str) -> Option<EventSchema> {
         let version = *self.latest_versions.read().get(event_type)?;
         self.get_schema(event_type, version)
     }
 
-    /// Validate event against schema
+    // Validate event against schema
     pub fn validate_event(&self, event_type: &str, event_data: &[u8]) -> Result<bool> {
         let schema = self.get_latest_schema(event_type)
             .ok_or_else(|| DbError::NotFound(format!("Schema for '{}' not found", event_type)))?;

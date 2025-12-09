@@ -62,7 +62,7 @@ pub mod training;
 // Core Types
 // ============================================================================
 
-/// Unique identifier for a machine learning model
+// Unique identifier for a machine learning model
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ModelId(pub u64);
 
@@ -72,26 +72,26 @@ impl ModelId {
     }
 }
 
-/// Machine learning task types
+// Machine learning task types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MLTask {
-    /// Binary or multi-class classification
+    // Binary or multi-class classification
     Classification,
-    /// Continuous value prediction
+    // Continuous value prediction
     Regression,
-    /// Grouping similar data points
+    // Grouping similar data points
     Clustering,
-    /// Time series forecasting
+    // Time series forecasting
     TimeSeries,
-    /// Anomaly detection
+    // Anomaly detection
     AnomalyDetection,
-    /// Recommendation systems
+    // Recommendation systems
     Recommendation,
-    /// Dimensionality reduction
+    // Dimensionality reduction
     DimensionalityReduction,
 }
 
-/// Supported ML algorithms
+// Supported ML algorithms
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Algorithm {
     LinearRegression,
@@ -109,7 +109,7 @@ pub enum Algorithm {
 }
 
 impl Algorithm {
-    /// Get the primary task type for this algorithm
+    // Get the primary task type for this algorithm
     pub fn task_type(&self) -> MLTask {
         match self {
             Algorithm::LinearRegression => MLTask::Regression,
@@ -123,7 +123,7 @@ impl Algorithm {
     }
 }
 
-/// Model hyperparameters
+// Model hyperparameters
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hyperparameters {
     params: HashMap<String, HyperparamValue>,
@@ -175,7 +175,7 @@ impl Default for Hyperparameters {
     }
 }
 
-/// Hyperparameter value types
+// Hyperparameter value types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum HyperparamValue {
     Int(i64),
@@ -186,18 +186,18 @@ pub enum HyperparamValue {
     FloatList(Vec<f64>),
 }
 
-/// Training dataset representation
+// Training dataset representation
 #[derive(Debug, Clone)]
 pub struct Dataset {
-    /// Feature matrix (rows = samples, columns = features)
+    // Feature matrix (rows = samples, columns = features)
     pub features: Vec<Vec<f64>>,
-    /// Target values (for supervised learning)
+    // Target values (for supervised learning)
     pub targets: Option<Vec<f64>>,
-    /// Feature names
+    // Feature names
     pub feature_names: Vec<String>,
-    /// Target name (for supervised learning)
+    // Target name (for supervised learning)
     pub target_name: Option<String>,
-    /// Sample weights
+    // Sample weights
     pub weights: Option<Vec<f64>>,
 }
 
@@ -244,51 +244,51 @@ impl Dataset {
     }
 }
 
-/// Model training statistics
+// Model training statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingStats {
-    /// Number of training samples
+    // Number of training samples
     pub num_samples: usize,
-    /// Number of features
+    // Number of features
     pub num_features: usize,
-    /// Training time in seconds
+    // Training time in seconds
     pub training_time: f64,
-    /// Number of iterations/epochs
+    // Number of iterations/epochs
     pub iterations: usize,
-    /// Final training loss
+    // Final training loss
     pub final_loss: f64,
-    /// Validation metrics
+    // Validation metrics
     pub validation_metrics: HashMap<String, f64>,
-    /// Convergence information
+    // Convergence information
     pub converged: bool,
 }
 
-/// Model evaluation metrics
+// Model evaluation metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EvaluationMetrics {
-    /// Mean Squared Error (regression)
+    // Mean Squared Error (regression)
     pub mse: Option<f64>,
-    /// Root Mean Squared Error (regression)
+    // Root Mean Squared Error (regression)
     pub rmse: Option<f64>,
-    /// R² score (regression)
+    // R² score (regression)
     pub r2: Option<f64>,
-    /// Mean Absolute Error (regression)
+    // Mean Absolute Error (regression)
     pub mae: Option<f64>,
-    /// Accuracy (classification)
+    // Accuracy (classification)
     pub accuracy: Option<f64>,
-    /// Precision (classification)
+    // Precision (classification)
     pub precision: Option<f64>,
-    /// Recall (classification)
+    // Recall (classification)
     pub recall: Option<f64>,
-    /// F1 Score (classification)
+    // F1 Score (classification)
     pub f1: Option<f64>,
-    /// AUC-ROC (classification)
+    // AUC-ROC (classification)
     pub auc: Option<f64>,
-    /// Log Loss (classification)
+    // Log Loss (classification)
     pub log_loss: Option<f64>,
-    /// Silhouette Score (clustering)
+    // Silhouette Score (clustering)
     pub silhouette: Option<f64>,
-    /// Davies-Bouldin Index (clustering)
+    // Davies-Bouldin Index (clustering)
     pub davies_bouldin: Option<f64>,
 }
 
@@ -331,16 +331,16 @@ impl Default for EvaluationMetrics {
     }
 }
 
-/// GPU acceleration configuration
+// GPU acceleration configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GpuConfig {
-    /// Enable GPU acceleration
+    // Enable GPU acceleration
     pub enabled: bool,
-    /// CUDA device ID
+    // CUDA device ID
     pub device_id: i32,
-    /// Batch size for GPU operations
+    // Batch size for GPU operations
     pub batch_size: usize,
-    /// Use mixed precision (FP16)
+    // Use mixed precision (FP16)
     pub mixed_precision: bool,
 }
 
@@ -355,28 +355,28 @@ impl Default for GpuConfig {
     }
 }
 
-/// Federated learning configuration
+// Federated learning configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FederatedConfig {
-    /// Enable federated learning
+    // Enable federated learning
     pub enabled: bool,
-    /// Number of federated nodes
+    // Number of federated nodes
     pub num_nodes: usize,
-    /// Aggregation strategy
+    // Aggregation strategy
     pub aggregation: AggregationStrategy,
-    /// Differential privacy epsilon
+    // Differential privacy epsilon
     pub dp_epsilon: Option<f64>,
-    /// Communication rounds
+    // Communication rounds
     pub rounds: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AggregationStrategy {
-    /// Federated Averaging
+    // Federated Averaging
     FedAvg,
-    /// Federated Proximal
+    // Federated Proximal
     FedProx,
-    /// Secure Aggregation
+    // Secure Aggregation
     SecureAgg,
 }
 
@@ -392,18 +392,18 @@ impl Default for FederatedConfig {
     }
 }
 
-/// Model prediction result
+// Model prediction result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Prediction {
-    /// Predicted value or class
+    // Predicted value or class
     pub value: f64,
-    /// Prediction confidence/probability
+    // Prediction confidence/probability
     pub confidence: f64,
-    /// Class probabilities (for classification)
+    // Class probabilities (for classification)
     pub class_probabilities: Option<Vec<f64>>,
-    /// Prediction interval (for regression)
+    // Prediction interval (for regression)
     pub prediction_interval: Option<(f64, f64)>,
-    /// Feature contributions (SHAP-like)
+    // Feature contributions (SHAP-like)
     pub feature_contributions: Option<HashMap<String, f64>>,
 }
 
@@ -443,28 +443,28 @@ impl Prediction {
 // ML Engine Orchestrator
 // ============================================================================
 
-/// Main ML Engine coordinator
+// Main ML Engine coordinator
 pub struct MLEngine {
-    /// Model registry
+    // Model registry
     model_store: Arc<RwLock<model_store::ModelStore>>,
-    /// Feature engineering pipeline
+    // Feature engineering pipeline
     feature_engine: Arc<RwLock<features::FeatureEngine>>,
-    /// Training coordinator
+    // Training coordinator
     training_engine: Arc<RwLock<training::TrainingEngine>>,
-    /// Scoring engine
+    // Scoring engine
     scoring_engine: Arc<RwLock<scoring::ScoringEngine>>,
-    /// AutoML coordinator
+    // AutoML coordinator
     automl_engine: Arc<RwLock<automl::AutoMLEngine>>,
-    /// Time series analyzer
+    // Time series analyzer
     timeseries_engine: Arc<RwLock<timeseries::TimeSeriesEngine>>,
-    /// GPU configuration
+    // GPU configuration
     gpu_config: GpuConfig,
-    /// Federated learning configuration
+    // Federated learning configuration
     federated_config: FederatedConfig,
 }
 
 impl MLEngine {
-    /// Create a new ML Engine instance
+    // Create a new ML Engine instance
     pub fn new() -> Self {
         Self {
             model_store: Arc::new(RwLock::new(model_store::ModelStore::new())),
@@ -478,19 +478,19 @@ impl MLEngine {
         }
     }
 
-    /// Configure GPU acceleration
+    // Configure GPU acceleration
     pub fn with_gpu(mut self, config: GpuConfig) -> Self {
         self.gpu_config = config;
         self
     }
 
-    /// Configure federated learning
+    // Configure federated learning
     pub fn with_federated(mut self, config: FederatedConfig) -> Self {
         self.federated_config = config;
         self
     }
 
-    /// Train a new model
+    // Train a new model
     pub fn train_model(
         &self,
         algorithm: Algorithm,
@@ -508,7 +508,7 @@ impl MLEngine {
         model_store.register_model(model)
     }
 
-    /// Make predictions using a trained model
+    // Make predictions using a trained model
     pub fn predict(&self, model_id: ModelId, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         let model_store = self.model_store.read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
@@ -521,7 +521,7 @@ impl MLEngine {
         scoring_engine.predict(model, features)
     }
 
-    /// Perform AutoML to find the best model
+    // Perform AutoML to find the best model
     pub fn automl(
         &self,
         dataset: Dataset,
@@ -539,7 +539,7 @@ impl MLEngine {
         model_store.register_model(best_model)
     }
 
-    /// Perform time series forecasting
+    // Perform time series forecasting
     pub fn forecast(
         &self,
         series: Vec<f64>,
@@ -552,7 +552,7 @@ impl MLEngine {
         timeseries_engine.forecast(series, horizon, algorithm)
     }
 
-    /// Get model information
+    // Get model information
     pub fn get_model_info(&self, model_id: ModelId) -> Result<model_store::ModelMetadata> {
         let model_store = self.model_store.read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
@@ -560,7 +560,7 @@ impl MLEngine {
         model_store.get_metadata(model_id)
     }
 
-    /// List all models
+    // List all models
     pub fn list_models(&self) -> Result<Vec<model_store::ModelMetadata>> {
         let model_store = self.model_store.read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
@@ -568,7 +568,7 @@ impl MLEngine {
         Ok(model_store.list_models())
     }
 
-    /// Delete a model
+    // Delete a model
     pub fn delete_model(&self, model_id: ModelId) -> Result<()> {
         let mut model_store = self.model_store.write()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
@@ -576,7 +576,7 @@ impl MLEngine {
         model_store.delete_model(model_id)
     }
 
-    /// Export model to PMML
+    // Export model to PMML
     pub fn export_pmml(&self, model_id: ModelId) -> Result<String> {
         let scoring_engine = self.scoring_engine.read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire scoring engine lock".into()))?;
@@ -589,7 +589,7 @@ impl MLEngine {
         scoring_engine.export_pmml(model)
     }
 
-    /// Import model from PMML
+    // Import model from PMML
     pub fn import_pmml(&self, pmml: &str) -> Result<ModelId> {
         let scoring_engine = self.scoring_engine.read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire scoring engine lock".into()))?;

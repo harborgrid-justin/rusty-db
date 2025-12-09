@@ -50,112 +50,112 @@ use std::fs;
 use std::sync::Arc;
 use rand::RngCore;
 
-/// Key version number
+// Key version number
 pub type KeyVersion = u32;
 
-/// Master Encryption Key (MEK)
+// Master Encryption Key (MEK)
 #[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MasterKey {
-    /// Key identifier
+    // Key identifier
     pub id: String,
-    /// Key material (encrypted when serialized)
+    // Key material (encrypted when serialized)
     #[serde(skip)]
     pub key_material: Vec<u8>,
-    /// Encrypted key material (for persistence)
+    // Encrypted key material (for persistence)
     pub encrypted_material: Vec<u8>,
-    /// Nonce used for encryption
+    // Nonce used for encryption
     pub nonce: Vec<u8>,
-    /// Key version
+    // Key version
     pub version: KeyVersion,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: i64,
-    /// Activation timestamp
+    // Activation timestamp
     pub activated_at: Option<i64>,
-    /// Deactivation timestamp
+    // Deactivation timestamp
     pub deactivated_at: Option<i64>,
-    /// Key status
+    // Key status
     pub status: KeyStatus,
-    /// Algorithm used
+    // Algorithm used
     pub algorithm: String,
 }
 
-/// Data Encryption Key (DEK)
+// Data Encryption Key (DEK)
 #[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataEncryptionKey {
-    /// Key identifier (e.g., tablespace name, column name)
+    // Key identifier (e.g., tablespace name, column name)
     pub id: String,
-    /// Key material (decrypted, in memory only)
+    // Key material (decrypted, in memory only)
     #[serde(skip)]
     pub key_material: Vec<u8>,
-    /// Encrypted key material (encrypted by MEK)
+    // Encrypted key material (encrypted by MEK)
     pub encrypted_material: Vec<u8>,
-    /// MEK version used to encrypt this DEK
+    // MEK version used to encrypt this DEK
     pub mek_version: KeyVersion,
-    /// DEK version
+    // DEK version
     pub version: KeyVersion,
-    /// Nonce for encryption
+    // Nonce for encryption
     pub nonce: Vec<u8>,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: i64,
-    /// Expiration timestamp (for rotation)
+    // Expiration timestamp (for rotation)
     pub expires_at: Option<i64>,
-    /// Key status
+    // Key status
     pub status: KeyStatus,
-    /// Algorithm used with this key
+    // Algorithm used with this key
     pub algorithm: String,
-    /// Usage count
+    // Usage count
     pub usage_count: u64,
 }
 
-/// Key status enumeration
+// Key status enumeration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum KeyStatus {
-    /// Key is active and can be used
+    // Key is active and can be used
     Active,
-    /// Key is deactivated but can still decrypt
+    // Key is deactivated but can still decrypt
     Deactivated,
-    /// Key is compromised and should not be used
+    // Key is compromised and should not be used
     Compromised,
-    /// Key is pending activation
+    // Key is pending activation
     Pending,
-    /// Key is expired
+    // Key is expired
     Expired,
 }
 
-/// Key metadata for persistence
+// Key metadata for persistence
 #[derive(Debug, Serialize, Deserialize)]
 struct KeyStoreMetadata {
-    /// MEK ID
+    // MEK ID
     mek_id: String,
-    /// MEK version
+    // MEK version
     mek_version: KeyVersion,
-    /// Last rotation timestamp
+    // Last rotation timestamp
     last_rotation: i64,
-    /// Total DEKs
+    // Total DEKs
     total_deks: usize,
 }
 
-/// Main Key Store
+// Main Key Store
 pub struct KeyStore {
-    /// Storage directory
+    // Storage directory
     data_dir: PathBuf,
-    /// Master Encryption Key (current)
+    // Master Encryption Key (current)
     current_mek: RwLock<Option<Arc<MasterKey>>>,
-    /// Historical MEKs (for decryption)
+    // Historical MEKs (for decryption)
     historical_meks: RwLock<HashMap<KeyVersion, Arc<MasterKey>>>,
-    /// Data Encryption Keys
+    // Data Encryption Keys
     deks: RwLock<HashMap<String, DataEncryptionKey>>,
-    /// KEK (Key Encryption Key) for protecting MEK
+    // KEK (Key Encryption Key) for protecting MEK
     #[allow(dead_code)]
     kek: RwLock<Option<Vec<u8>>>,
-    /// Metadata
+    // Metadata
     metadata: RwLock<KeyStoreMetadata>,
 }
 
 impl KeyStore {
-    /// Create a new key store
+    // Create a new key store
     pub fn new<P: AsRef<Path>>(data_dir: P) -> Result<Self> {
         let data_dir = data_dir.as_ref().to_path_buf();
         fs::create_dir_all(&data_dir)
@@ -176,7 +176,7 @@ impl KeyStore {
         })
     }
 
-    /// Initialize MEK from password using Argon2
+    // Initialize MEK from password using Argon2
     pub fn initialize_mek(&self, password: &str, salt: Option<&str>) -> Result<()> {
         // Generate or use provided salt
         let salt_str = if let Some(s) = salt {
@@ -231,7 +231,7 @@ impl KeyStore {
         Ok(())
     }
 
-    /// Generate a new MEK (for rotation)
+    // Generate a new MEK (for rotation)
     pub fn generate_mek(&self) -> Result<()> {
         // Generate random 256-bit key
         let mut key_material = vec![0u8; 32];
@@ -271,7 +271,7 @@ impl KeyStore {
         Ok(())
     }
 
-    /// Generate a Data Encryption Key
+    // Generate a Data Encryption Key
     #[inline]
     pub fn generate_dek(&mut self, id: &str, algorithm: &str) -> Result<Vec<u8>> {
         let mek = self.current_mek.read()
@@ -308,7 +308,7 @@ impl KeyStore {
         Ok(key_material)
     }
 
-    /// Get a Data Encryption Key
+    // Get a Data Encryption Key
     #[inline]
     pub fn get_dek(&self, id: &str) -> Result<Vec<u8>> {
         let deks = self.deks.read();
@@ -324,7 +324,7 @@ impl KeyStore {
         Ok(dek.key_material.clone())
     }
 
-    /// Rotate a Data Encryption Key
+    // Rotate a Data Encryption Key
     pub fn rotate_dek(&mut self, id: &str) -> Result<Vec<u8>> {
         let mek = self.current_mek.read()
             .as_ref()
@@ -352,7 +352,7 @@ impl KeyStore {
         Ok(key_material)
     }
 
-    /// Rotate all expired DEKs
+    // Rotate all expired DEKs
     pub fn rotate_expired_deks(&mut self) -> Result<usize> {
         let now = chrono::Utc::now().timestamp();
         let expired_ids: Vec<String> = self.deks.read()
@@ -375,7 +375,7 @@ impl KeyStore {
         Ok(count)
     }
 
-    /// Set DEK expiration
+    // Set DEK expiration
     pub fn set_dek_expiration(&mut self, id: &str, days: u32) -> Result<()> {
         let mut deks = self.deks.write();
         let dek = deks.get_mut(id)
@@ -387,7 +387,7 @@ impl KeyStore {
         Ok(())
     }
 
-    /// Encrypt data with MEK (envelope encryption)
+    // Encrypt data with MEK (envelope encryption)
     #[inline]
     fn encrypt_with_mek(
         &self,
@@ -408,7 +408,7 @@ impl KeyStore {
         Ok((nonce_bytes, ciphertext))
     }
 
-    /// Decrypt data with MEK
+    // Decrypt data with MEK
     #[inline]
     fn decrypt_with_mek(
         &self,
@@ -426,7 +426,7 @@ impl KeyStore {
         Ok(plaintext)
     }
 
-    /// Re-encrypt all DEKs with new MEK (after MEK rotation)
+    // Re-encrypt all DEKs with new MEK (after MEK rotation)
     pub fn reencrypt_all_deks(&mut self) -> Result<usize> {
         let mek = self.current_mek.read()
             .as_ref()
@@ -450,7 +450,7 @@ impl KeyStore {
         Ok(count)
     }
 
-    /// Deactivate a DEK
+    // Deactivate a DEK
     pub fn deactivate_dek(&mut self, id: &str) -> Result<()> {
         let mut deks = self.deks.write();
         let dek = deks.get_mut(id)
@@ -460,7 +460,7 @@ impl KeyStore {
         Ok(())
     }
 
-    /// Mark DEK as compromised
+    // Mark DEK as compromised
     pub fn mark_dek_compromised(&mut self, id: &str) -> Result<()> {
         let mut deks = self.deks.write();
         let dek = deks.get_mut(id)
@@ -470,12 +470,12 @@ impl KeyStore {
         Ok(())
     }
 
-    /// List all DEKs
+    // List all DEKs
     pub fn list_deks(&self) -> Vec<String> {
         self.deks.read().keys().cloned().collect()
     }
 
-    /// Get DEK metadata
+    // Get DEK metadata
     pub fn get_dek_metadata(&self, id: &str) -> Option<DekMetadata> {
         self.deks.read().get(id).map(|dek| DekMetadata {
             id: dek.id.clone(),
@@ -489,7 +489,7 @@ impl KeyStore {
         })
     }
 
-    /// Get key store statistics
+    // Get key store statistics
     pub fn get_stats(&self) -> KeyStoreStats {
         let metadata = self.metadata.read();
         let deks = self.deks.read();
@@ -509,7 +509,7 @@ impl KeyStore {
         }
     }
 
-    /// Persist key store to disk
+    // Persist key store to disk
     pub fn persist(&self) -> Result<()> {
         let metadata_path = self.data_dir.join("metadata.json");
         let metadata = self.metadata.read();
@@ -531,7 +531,7 @@ impl KeyStore {
         Ok(())
     }
 
-    /// Load key store from disk
+    // Load key store from disk
     pub fn load(&mut self, password: &str) -> Result<()> {
         // Load metadata
         let metadata_path = self.data_dir.join("metadata.json");
@@ -560,7 +560,7 @@ impl KeyStore {
     }
 }
 
-/// DEK metadata (without sensitive key material)
+// DEK metadata (without sensitive key material)
 #[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DekMetadata {
@@ -574,8 +574,8 @@ pub struct DekMetadata {
     pub usage_count: u64,
 }
 
-/// Structure-of-Arrays layout for DEK metadata (cache-friendly)
-/// Improves iteration performance by keeping similar data together
+// Structure-of-Arrays layout for DEK metadata (cache-friendly)
+// Improves iteration performance by keeping similar data together
 #[derive(Debug)]
 struct DekMetadataSoA {
     // Parallel arrays for better cache locality
@@ -637,7 +637,7 @@ impl DekMetadataSoA {
         self.ids.len()
     }
 
-    /// Batch update usage counts - cache-friendly operation
+    // Batch update usage counts - cache-friendly operation
     #[inline]
     fn batch_increment_usage(&mut self, indices: &[usize]) {
         for &idx in indices {
@@ -647,7 +647,7 @@ impl DekMetadataSoA {
         }
     }
 
-    /// Find expired DEKs - cache-friendly scan
+    // Find expired DEKs - cache-friendly scan
     #[inline]
     fn find_expired(&self, now: i64) -> Vec<usize> {
         self.expires_ats
@@ -660,7 +660,7 @@ impl DekMetadataSoA {
     }
 }
 
-/// Key store statistics
+// Key store statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyStoreStats {
     pub mek_version: KeyVersion,

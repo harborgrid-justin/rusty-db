@@ -1,19 +1,19 @@
-/// Spatial Index Implementation (R-Tree)
-///
-/// This module provides spatial indexing for:
-/// - 2D and 3D bounding box queries
-/// - Nearest neighbor search
-/// - Spatial joins
-/// - Point, line, and polygon indexing
-///
-/// Uses R-tree data structure for efficient spatial queries
+// Spatial Index Implementation (R-Tree)
+//
+// This module provides spatial indexing for:
+// - 2D and 3D bounding box queries
+// - Nearest neighbor search
+// - Spatial joins
+// - Point, line, and polygon indexing
+//
+// Uses R-tree data structure for efficient spatial queries
 
 use crate::error::{DbError, Result};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use std::cmp::Ordering;
 
-/// R-Tree Spatial Index
+// R-Tree Spatial Index
 pub struct RTree<T: Clone> {
     root: Arc<RwLock<Option<NodeRef<T>>>>,
     max_entries: usize,
@@ -31,12 +31,12 @@ impl<T: Clone> Clone for RTree<T> {
 }
 
 impl<T: Clone> RTree<T> {
-    /// Create a new R-tree with default parameters
+    // Create a new R-tree with default parameters
     pub fn new() -> Self {
         Self::with_capacity(8)
     }
 
-    /// Create a new R-tree with specified node capacity
+    // Create a new R-tree with specified node capacity
     pub fn with_capacity(max_entries: usize) -> Self {
         let min_entries = max_entries / 2;
         Self {
@@ -46,7 +46,7 @@ impl<T: Clone> RTree<T> {
         }
     }
 
-    /// Insert a bounding box with associated data
+    // Insert a bounding box with associated data
     pub fn insert(&self, bbox: BoundingBox, data: T) -> Result<()> {
         let mut root_lock = self.root.write();
 
@@ -83,7 +83,7 @@ impl<T: Clone> RTree<T> {
         Ok(())
     }
 
-    /// Search for all entries intersecting a bounding box
+    // Search for all entries intersecting a bounding box
     pub fn search(&self, query_bbox: &BoundingBox) -> Result<Vec<(BoundingBox, T)>> {
         let root_lock = self.root.read();
 
@@ -97,7 +97,7 @@ impl<T: Clone> RTree<T> {
         }
     }
 
-    /// Recursive search
+    // Recursive search
     fn search_recursive(
         &self,
         node_ref: NodeRef<T>,
@@ -129,7 +129,7 @@ impl<T: Clone> RTree<T> {
         Ok(results)
     }
 
-    /// Find k nearest neighbors to a point
+    // Find k nearest neighbors to a point
     pub fn nearest_neighbors(&self, point: &Point, k: usize) -> Result<Vec<(BoundingBox, T)>> {
         let root_lock = self.root.read();
 
@@ -188,7 +188,7 @@ impl<T: Clone> RTree<T> {
         }
     }
 
-    /// Choose the best leaf node to insert a new bounding box
+    // Choose the best leaf node to insert a new bounding box
     fn choose_leaf(&self, node_ref: NodeRef<T>, bbox: &BoundingBox) -> Result<NodeRef<T>> {
         let node = node_ref.read();
 
@@ -226,7 +226,7 @@ impl<T: Clone> RTree<T> {
         self.choose_leaf(child, bbox)
     }
 
-    /// Split a node when it overflows
+    // Split a node when it overflows
     fn split_node(&self, node_ref: NodeRef<T>) -> Result<()> {
         let node = node_ref.write();
         let mut entries = node.entries.write().clone();
@@ -267,7 +267,7 @@ impl<T: Clone> RTree<T> {
         Ok(())
     }
 
-    /// Quadratic split algorithm
+    // Quadratic split algorithm
     fn quadratic_split(&self, entries: &mut Vec<Entry<T>>) -> Result<(Vec<Entry<T>>, Vec<Entry<T>>)> {
         if entries.len() < 2 {
             return Err(DbError::Internal("Not enough entries to split".into()));
@@ -306,7 +306,7 @@ impl<T: Clone> RTree<T> {
         Ok((group1, group2))
     }
 
-    /// Pick the two entries that would waste most space if grouped together
+    // Pick the two entries that would waste most space if grouped together
     fn pick_seeds(&self, entries: &[Entry<T>]) -> (usize, usize) {
         let mut max_waste = 0.0;
         let mut seed1 = 0;
@@ -330,7 +330,7 @@ impl<T: Clone> RTree<T> {
         (seed1, seed2)
     }
 
-    /// Compute minimum bounding rectangle for a set of entries
+    // Compute minimum bounding rectangle for a set of entries
     fn compute_mbr(entries: &[Entry<T>]) -> BoundingBox {
         if entries.is_empty() {
             return BoundingBox::empty();
@@ -346,7 +346,7 @@ impl<T: Clone> RTree<T> {
 
 type NodeRef<T> = Arc<RwLock<Node<T>>>;
 
-/// R-tree node
+// R-tree node
 struct Node<T: Clone> {
     is_leaf: bool,
     entries: Arc<RwLock<Vec<Entry<T>>>>,
@@ -368,21 +368,21 @@ impl<T: Clone> Node<T> {
     }
 }
 
-/// Entry in an R-tree node
+// Entry in an R-tree node
 #[derive(Clone)]
 struct Entry<T: Clone> {
     bbox: BoundingBox,
     data: EntryData<T>,
 }
 
-/// Entry data - either actual data (leaf) or child node (internal)
+// Entry data - either actual data (leaf) or child node (internal)
 #[derive(Clone)]
 enum EntryData<T: Clone> {
     Data(T),
     Child(NodeRef<T>),
 }
 
-/// 2D Bounding Box
+// 2D Bounding Box
 #[derive(Debug, Clone, PartialEq)]
 pub struct BoundingBox {
     pub min_x: f64,
@@ -392,7 +392,7 @@ pub struct BoundingBox {
 }
 
 impl BoundingBox {
-    /// Create a new bounding box
+    // Create a new bounding box
     pub fn new(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> Self {
         Self {
             min_x,
@@ -402,7 +402,7 @@ impl BoundingBox {
         }
     }
 
-    /// Create an empty bounding box
+    // Create an empty bounding box
     pub fn empty() -> Self {
         Self {
             min_x: f64::INFINITY,
@@ -412,7 +412,7 @@ impl BoundingBox {
         }
     }
 
-    /// Create a bounding box from a point
+    // Create a bounding box from a point
     pub fn from_point(point: &Point) -> Self {
         Self {
             min_x: point.x,
@@ -422,7 +422,7 @@ impl BoundingBox {
         }
     }
 
-    /// Check if this box intersects another
+    // Check if this box intersects another
     pub fn intersects(&self, other: &BoundingBox) -> bool {
         !(self.max_x < other.min_x
             || self.min_x > other.max_x
@@ -430,7 +430,7 @@ impl BoundingBox {
             || self.min_y > other.max_y)
     }
 
-    /// Check if this box contains a point
+    // Check if this box contains a point
     pub fn contains_point(&self, point: &Point) -> bool {
         point.x >= self.min_x
             && point.x <= self.max_x
@@ -438,7 +438,7 @@ impl BoundingBox {
             && point.y <= self.max_y
     }
 
-    /// Calculate union of two bounding boxes
+    // Calculate union of two bounding boxes
     pub fn union(&self, other: &BoundingBox) -> BoundingBox {
         BoundingBox {
             min_x: self.min_x.min(other.min_x),
@@ -448,18 +448,18 @@ impl BoundingBox {
         }
     }
 
-    /// Calculate area of bounding box
+    // Calculate area of bounding box
     pub fn area(&self) -> f64 {
         (self.max_x - self.min_x) * (self.max_y - self.min_y)
     }
 
-    /// Calculate enlargement needed to include another box
+    // Calculate enlargement needed to include another box
     pub fn enlargement_needed(&self, other: &BoundingBox) -> f64 {
         let union = self.union(other);
         union.area() - self.area()
     }
 
-    /// Calculate distance from bounding box to a point
+    // Calculate distance from bounding box to a point
     pub fn distance_to_point(&self, point: &Point) -> f64 {
         let dx = if point.x < self.min_x {
             self.min_x - point.x
@@ -481,7 +481,7 @@ impl BoundingBox {
     }
 }
 
-/// 2D Point
+// 2D Point
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point {
     pub x: f64,
@@ -493,7 +493,7 @@ impl Point {
         Self { x, y }
     }
 
-    /// Calculate Euclidean distance to another point
+    // Calculate Euclidean distance to another point
     pub fn distance_to(&self, other: &Point) -> f64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
@@ -501,7 +501,7 @@ impl Point {
     }
 }
 
-/// Search entry for nearest neighbor search
+// Search entry for nearest neighbor search
 struct SearchEntry<T: Clone> {
     distance: f64,
     node: Option<NodeRef<T>>,
@@ -529,19 +529,19 @@ impl<T: Clone> Ord for SearchEntry<T> {
     }
 }
 
-/// Polygon for spatial indexing
+// Polygon for spatial indexing
 #[derive(Debug, Clone)]
 pub struct Polygon {
     pub vertices: Vec<Point>,
 }
 
 impl Polygon {
-    /// Create a new polygon
+    // Create a new polygon
     pub fn new(vertices: Vec<Point>) -> Self {
         Self { vertices }
     }
 
-    /// Get bounding box of polygon
+    // Get bounding box of polygon
     pub fn bounding_box(&self) -> BoundingBox {
         if self.vertices.is_empty() {
             return BoundingBox::empty();
@@ -562,7 +562,7 @@ impl Polygon {
         BoundingBox::new(min_x, min_y, max_x, max_y)
     }
 
-    /// Check if polygon contains a point
+    // Check if polygon contains a point
     pub fn contains_point(&self, point: &Point) -> bool {
         // Ray casting algorithm
         let mut inside = false;
@@ -673,5 +673,3 @@ mod tests {
         assert_eq!(bbox.max_y, 5.0);
     }
 }
-
-

@@ -7,11 +7,11 @@
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Duration;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Instant, SystemTime};
-use parking_lot::{RwLock};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 use tokio::time::interval;
@@ -19,7 +19,7 @@ use crate::error::{DbError, Result};
 use crate::common::{TransactionId, TableId, RowId, Value, LogSequenceNumber};
 use crate::transaction::wal::{LogRecord, WALEntry};
 
-/// Change event type
+// Change event type
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ChangeType {
     Insert,
@@ -28,18 +28,18 @@ pub enum ChangeType {
     Truncate,
 }
 
-/// Column-level change information
+// Column-level change information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnChange {
-    /// Column name
+    // Column name
     pub column_name: String,
-    /// Column index in schema
+    // Column index in schema
     pub column_index: usize,
-    /// Old value (for UPDATE and DELETE)
+    // Old value (for UPDATE and DELETE)
     pub old_value: Option<Value>,
-    /// New value (for INSERT and UPDATE)
+    // New value (for INSERT and UPDATE)
     pub new_value: Option<Value>,
-    /// Whether this column was modified
+    // Whether this column was modified
     pub modified: bool,
 }
 
@@ -70,34 +70,34 @@ impl ColumnChange {
     }
 }
 
-/// Change data capture event
+// Change data capture event
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChangeEvent {
-    /// Unique event identifier
+    // Unique event identifier
     pub event_id: u64,
-    /// Log Sequence Number from WAL
+    // Log Sequence Number from WAL
     pub lsn: LogSequenceNumber,
-    /// Transaction ID that made this change
+    // Transaction ID that made this change
     pub txn_id: TransactionId,
-    /// Table that was modified
+    // Table that was modified
     pub table_id: TableId,
-    /// Table name
+    // Table name
     pub table_name: String,
-    /// Type of change
+    // Type of change
     pub change_type: ChangeType,
-    /// Row identifier
+    // Row identifier
     pub row_id: RowId,
-    /// Before image (full row before change)
+    // Before image (full row before change)
     pub before_image: Option<HashMap<String, Value>>,
-    /// After image (full row after change)
+    // After image (full row after change)
     pub after_image: Option<HashMap<String, Value>>,
-    /// Column-level changes
+    // Column-level changes
     pub column_changes: Vec<ColumnChange>,
-    /// Timestamp when change occurred
+    // Timestamp when change occurred
     pub timestamp: SystemTime,
-    /// Commit timestamp
+    // Commit timestamp
     pub commit_timestamp: Option<SystemTime>,
-    /// Additional metadata
+    // Additional metadata
     pub metadata: HashMap<String, String>,
 }
 
@@ -127,14 +127,14 @@ impl ChangeEvent {
         }
     }
 
-    /// Check if a specific column was modified
+    // Check if a specific column was modified
     pub fn column_modified(&self, column_name: &str) -> bool {
         self.column_changes
             .iter()
             .any(|c| c.column_name == column_name && c.modified)
     }
 
-    /// Get list of modified column names
+    // Get list of modified column names
     pub fn modified_columns(&self) -> Vec<&str> {
         self.column_changes
             .iter()
@@ -143,26 +143,26 @@ impl ChangeEvent {
             .collect()
     }
 
-    /// Get change for a specific column
+    // Get change for a specific column
     pub fn get_column_change(&self, column_name: &str) -> Option<&ColumnChange> {
         self.column_changes.iter().find(|c| c.column_name == column_name)
     }
 }
 
-/// Change event batch for efficient processing
+// Change event batch for efficient processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChangeEventBatch {
-    /// Batch identifier
+    // Batch identifier
     pub batch_id: u64,
-    /// Events in this batch
+    // Events in this batch
     pub events: Vec<ChangeEvent>,
-    /// First LSN in batch
+    // First LSN in batch
     pub start_lsn: LogSequenceNumber,
-    /// Last LSN in batch
+    // Last LSN in batch
     pub end_lsn: LogSequenceNumber,
-    /// Batch creation time
+    // Batch creation time
     pub created_at: SystemTime,
-    /// Number of transactions in batch
+    // Number of transactions in batch
     pub txn_count: usize,
 }
 
@@ -200,22 +200,22 @@ impl ChangeEventBatch {
     }
 }
 
-/// CDC capture filter for selective change capture
+// CDC capture filter for selective change capture
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaptureFilter {
-    /// Tables to capture changes from
+    // Tables to capture changes from
     pub included_tables: Option<Vec<TableId>>,
-    /// Tables to exclude from capture
+    // Tables to exclude from capture
     pub excluded_tables: Vec<TableId>,
-    /// Capture only specific change types
+    // Capture only specific change types
     pub change_types: Vec<ChangeType>,
-    /// Minimum transaction ID to capture
+    // Minimum transaction ID to capture
     pub min_txn_id: Option<TransactionId>,
-    /// Capture column-level changes
+    // Capture column-level changes
     pub capture_column_changes: bool,
-    /// Capture before images
+    // Capture before images
     pub capture_before_image: bool,
-    /// Capture after images
+    // Capture after images
     pub capture_after_image: bool,
 }
 
@@ -260,7 +260,7 @@ impl CaptureFilter {
     }
 }
 
-/// CDC capture process state
+// CDC capture process state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CaptureState {
     Stopped,
@@ -271,33 +271,33 @@ pub enum CaptureState {
     Failed,
 }
 
-/// CDC capture statistics
+// CDC capture statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CaptureStatistics {
-    /// Total events captured
+    // Total events captured
     pub total_events: u64,
-    /// Events captured per change type
+    // Events captured per change type
     pub events_by_type: HashMap<String, u64>,
-    /// Total batches created
+    // Total batches created
     pub total_batches: u64,
-    /// Average batch size
+    // Average batch size
     pub avg_batch_size: f64,
-    /// Total bytes processed
+    // Total bytes processed
     pub total_bytes: u64,
-    /// Capture latency (time from WAL write to capture)
+    // Capture latency (time from WAL write to capture)
     pub avg_capture_latency_ms: f64,
     pub p50_capture_latency_ms: f64,
     pub p95_capture_latency_ms: f64,
     pub p99_capture_latency_ms: f64,
-    /// Processing rate (events/second)
+    // Processing rate (events/second)
     pub events_per_second: f64,
-    /// Last processed LSN
+    // Last processed LSN
     pub last_lsn: LogSequenceNumber,
-    /// Lag behind current WAL (in LSNs)
+    // Lag behind current WAL (in LSNs)
     pub lag_lsn: u64,
-    /// Number of filtered events
+    // Number of filtered events
     pub filtered_events: u64,
-    /// Number of errors
+    // Number of errors
     pub error_count: u64,
 }
 
@@ -320,22 +320,22 @@ impl CaptureStatistics {
     }
 }
 
-/// CDC Engine Configuration
+// CDC Engine Configuration
 #[derive(Debug, Clone)]
 pub struct CDCConfig {
-    /// Batch size for change events
+    // Batch size for change events
     pub batch_size: usize,
-    /// Maximum batch wait time
+    // Maximum batch wait time
     pub batch_timeout: Duration,
-    /// Buffer size for pending events
+    // Buffer size for pending events
     pub event_buffer_size: usize,
-    /// Enable compression for event storage
+    // Enable compression for event storage
     pub enable_compression: bool,
-    /// Capture filter
+    // Capture filter
     pub filter: CaptureFilter,
-    /// Enable metrics collection
+    // Enable metrics collection
     pub enable_metrics: bool,
-    /// Checkpoint interval (persist capture position)
+    // Checkpoint interval (persist capture position)
     pub checkpoint_interval: Duration,
 }
 
@@ -353,52 +353,52 @@ impl Default for CDCConfig {
     }
 }
 
-/// Capture position checkpoint for recovery
+// Capture position checkpoint for recovery
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaptureCheckpoint {
-    /// Last processed LSN
+    // Last processed LSN
     pub lsn: LogSequenceNumber,
-    /// Last event ID
+    // Last event ID
     pub event_id: u64,
-    /// Checkpoint timestamp
+    // Checkpoint timestamp
     pub timestamp: SystemTime,
-    /// Transaction table state
+    // Transaction table state
     pub active_transactions: Vec<TransactionId>,
 }
 
-/// CDC Engine for capturing database changes
+// CDC Engine for capturing database changes
 pub struct CDCEngine {
-    /// Engine configuration
+    // Engine configuration
     config: CDCConfig,
-    /// Current capture state
+    // Current capture state
     state: Arc<RwLock<CaptureState>>,
-    /// Next event ID
+    // Next event ID
     next_event_id: Arc<AtomicU64>,
-    /// Next batch ID
+    // Next batch ID
     next_batch_id: Arc<AtomicU64>,
-    /// Current LSN position
+    // Current LSN position
     current_lsn: Arc<AtomicU64>,
-    /// Pending change events
+    // Pending change events
     event_buffer: Arc<Mutex<VecDeque<ChangeEvent>>>,
-    /// Current batch being built
+    // Current batch being built
     current_batch: Arc<Mutex<ChangeEventBatch>>,
-    /// Event broadcast channel
+    // Event broadcast channel
     event_tx: broadcast::Sender<ChangeEvent>,
-    /// Batch broadcast channel
+    // Batch broadcast channel
     batch_tx: broadcast::Sender<ChangeEventBatch>,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<CaptureStatistics>>,
-    /// Table metadata cache
+    // Table metadata cache
     table_metadata: Arc<RwLock<HashMap<TableId, TableMetadata>>>,
-    /// Active transactions being tracked
+    // Active transactions being tracked
     active_txns: Arc<RwLock<HashMap<TransactionId, TransactionContext>>>,
-    /// Last checkpoint
+    // Last checkpoint
     last_checkpoint: Arc<RwLock<Option<CaptureCheckpoint>>>,
-    /// Shutdown flag
+    // Shutdown flag
     shutdown: Arc<AtomicBool>,
 }
 
-/// Table metadata for CDC
+// Table metadata for CDC
 #[derive(Debug, Clone)]
 struct TableMetadata {
     table_id: TableId,
@@ -408,7 +408,7 @@ struct TableMetadata {
     primary_key_columns: Vec<usize>,
 }
 
-/// Transaction context for CDC
+// Transaction context for CDC
 #[derive(Debug, Clone)]
 struct TransactionContext {
     txn_id: TransactionId,
@@ -418,7 +418,7 @@ struct TransactionContext {
 }
 
 impl CDCEngine {
-    /// Create a new CDC engine
+    // Create a new CDC engine
     pub fn new(config: CDCConfig) -> Self {
         let (event_tx, _) = broadcast::channel(config.event_buffer_size);
         let (batch_tx, _) = broadcast::channel(100);
@@ -441,7 +441,7 @@ impl CDCEngine {
         }
     }
 
-    /// Start the CDC capture process
+    // Start the CDC capture process
     pub async fn start(&self) -> Result<()> {
         let mut state = self.state.write();
         if *state != CaptureState::Stopped {
@@ -461,7 +461,7 @@ impl CDCEngine {
         Ok(())
     }
 
-    /// Stop the CDC capture process
+    // Stop the CDC capture process
     pub async fn stop(&self) -> Result<()> {
         *self.state.write() = CaptureState::Stopping;
         self.shutdown.store(true, Ordering::SeqCst);
@@ -473,19 +473,19 @@ impl CDCEngine {
         Ok(())
     }
 
-    /// Pause the CDC capture
+    // Pause the CDC capture
     pub fn pause(&self) -> Result<()> {
         *self.state.write() = CaptureState::Paused;
         Ok(())
     }
 
-    /// Resume the CDC capture
+    // Resume the CDC capture
     pub fn resume(&self) -> Result<()> {
         *self.state.write() = CaptureState::Running;
         Ok(())
     }
 
-    /// Process a WAL entry and generate change events
+    // Process a WAL entry and generate change events
     pub async fn process_wal_entry(&self, entry: &WALEntry) -> Result<Vec<ChangeEvent>> {
         let state = *self.state.read();
         if state != CaptureState::Running {
@@ -538,7 +538,7 @@ impl CDCEngine {
         Ok(events)
     }
 
-    /// Process an INSERT operation
+    // Process an INSERT operation
     async fn process_insert(
         &self,
         txn_id: TransactionId,
@@ -584,7 +584,7 @@ impl CDCEngine {
         Ok(Some(event))
     }
 
-    /// Process an UPDATE operation
+    // Process an UPDATE operation
     async fn process_update(
         &self,
         txn_id: TransactionId,
@@ -640,7 +640,7 @@ impl CDCEngine {
         Ok(Some(event))
     }
 
-    /// Process a DELETE operation
+    // Process a DELETE operation
     async fn process_delete(
         &self,
         txn_id: TransactionId,
@@ -684,7 +684,7 @@ impl CDCEngine {
         Ok(Some(event))
     }
 
-    /// Process transaction commit
+    // Process transaction commit
     async fn process_commit(&self, txn_id: TransactionId, timestamp: SystemTime) -> Result<()> {
         let mut active_txns = self.active_txns.write();
         if let Some(mut txn_ctx) = active_txns.remove(&txn_id) {
@@ -696,14 +696,14 @@ impl CDCEngine {
         Ok(())
     }
 
-    /// Process transaction abort
+    // Process transaction abort
     async fn process_abort(&self, txn_id: TransactionId) -> Result<()> {
         let mut active_txns = self.active_txns.write();
         active_txns.remove(&txn_id);
         Ok(())
     }
 
-    /// Add event to buffer
+    // Add event to buffer
     async fn add_event(&self, event: ChangeEvent) -> Result<()> {
         let start_time = Instant::now();
 
@@ -736,7 +736,7 @@ impl CDCEngine {
         Ok(())
     }
 
-    /// Flush a completed batch
+    // Flush a completed batch
     async fn flush_batch(&self, batch: ChangeEventBatch) -> Result<()> {
         if batch.is_empty() {
             return Ok(());
@@ -750,7 +750,7 @@ impl CDCEngine {
         Ok(())
     }
 
-    /// Generate column-level changes
+    // Generate column-level changes
     fn generate_column_changes(
         &self,
         before: Option<&HashMap<String, Value>>,
@@ -780,27 +780,27 @@ impl CDCEngine {
         changes
     }
 
-    /// Subscribe to change events
+    // Subscribe to change events
     pub fn subscribe_events(&self) -> broadcast::Receiver<ChangeEvent> {
         self.event_tx.subscribe()
     }
 
-    /// Subscribe to batches
+    // Subscribe to batches
     pub fn subscribe_batches(&self) -> broadcast::Receiver<ChangeEventBatch> {
         self.batch_tx.subscribe()
     }
 
-    /// Get current statistics
+    // Get current statistics
     pub fn get_statistics(&self) -> CaptureStatistics {
         self.stats.read().clone()
     }
 
-    /// Get current state
+    // Get current state
     pub fn get_state(&self) -> CaptureState {
         *self.state.read()
     }
 
-    /// Create a checkpoint
+    // Create a checkpoint
     pub async fn checkpoint(&self) -> Result<CaptureCheckpoint> {
         let checkpoint = CaptureCheckpoint {
             lsn: self.current_lsn.load(Ordering::SeqCst),
@@ -813,7 +813,7 @@ impl CDCEngine {
         Ok(checkpoint)
     }
 
-    /// Restore from checkpoint
+    // Restore from checkpoint
     pub async fn restore_from_checkpoint(&self, checkpoint: &CaptureCheckpoint) -> Result<()> {
         self.current_lsn.store(checkpoint.lsn, Ordering::SeqCst);
         self.next_event_id.store(checkpoint.event_id, Ordering::SeqCst);

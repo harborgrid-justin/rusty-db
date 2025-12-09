@@ -1,28 +1,28 @@
-/// Expression Evaluation Engine for RustyDB
-///
-/// This module provides comprehensive expression evaluation with:
-///
-/// 1. **Compiled Expression Trees** - AST-based evaluation with JIT opportunities
-///    - Constant folding and simplification
-///    - Common subexpression elimination
-///    - Expression tree optimization
-///
-/// 2. **Three-Valued Logic** - Proper NULL handling
-///    - SQL-compliant NULL semantics
-///    - NULL propagation rules
-///    - IS NULL / IS NOT NULL operators
-///
-/// 3. **Type Coercion** - Automatic type conversion
-///    - Numeric promotions
-///    - String to number conversions
-///    - Date/time handling
-///
-/// 4. **Rich Operator Support**
-///    - Arithmetic: +, -, *, /, %
-///    - Comparison: =, <>, <, <=, >, >=
-///    - Logical: AND, OR, NOT
-///    - String: LIKE, CONCAT, SUBSTRING
-///    - Aggregate: SUM, COUNT, AVG, MIN, MAX
+// Expression Evaluation Engine for RustyDB
+//
+// This module provides comprehensive expression evaluation with:
+//
+// 1. **Compiled Expression Trees** - AST-based evaluation with JIT opportunities
+//    - Constant folding and simplification
+//    - Common subexpression elimination
+//    - Expression tree optimization
+//
+// 2. **Three-Valued Logic** - Proper NULL handling
+//    - SQL-compliant NULL semantics
+//    - NULL propagation rules
+//    - IS NULL / IS NOT NULL operators
+//
+// 3. **Type Coercion** - Automatic type conversion
+//    - Numeric promotions
+//    - String to number conversions
+//    - Date/time handling
+//
+// 4. **Rich Operator Support**
+//    - Arithmetic: +, -, *, /, %
+//    - Comparison: =, <>, <, <=, >, >=
+//    - Logical: AND, OR, NOT
+//    - String: LIKE, CONCAT, SUBSTRING
+//    - Aggregate: SUM, COUNT, AVG, MIN, MAX
 
 use std::fmt;
 use crate::error::DbError;
@@ -30,7 +30,7 @@ use crate::catalog::DataType;
 use std::collections::HashMap;
 
 
-/// Expression value with NULL support
+// Expression value with NULL support
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExprValue {
     Null,
@@ -67,7 +67,7 @@ impl ExprValue {
         }
     }
 
-    /// Coerce to boolean (for WHERE clauses)
+    // Coerce to boolean (for WHERE clauses)
     pub fn to_bool(&self) -> bool {
         match self {
             ExprValue::Null => false,
@@ -79,7 +79,7 @@ impl ExprValue {
         }
     }
 
-    /// Coerce to integer
+    // Coerce to integer
     pub fn to_integer(&self) -> Result<i64, DbError> {
         match self {
             ExprValue::Null => Ok(0),
@@ -92,7 +92,7 @@ impl ExprValue {
         }
     }
 
-    /// Coerce to float
+    // Coerce to float
     pub fn to_float(&self) -> Result<f64, DbError> {
         match self {
             ExprValue::Null => Ok(0.0),
@@ -105,7 +105,7 @@ impl ExprValue {
         }
     }
 
-    /// Coerce to string
+    // Coerce to string
     pub fn to_string(&self) -> String {
         match self {
             ExprValue::Null => "NULL".to_string(),
@@ -125,47 +125,47 @@ impl fmt::Display for ExprValue {
     }
 }
 
-/// Expression AST node
+// Expression AST node
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
-    /// Literal value
+    // Literal value
     Literal(ExprValue),
 
-    /// Column reference
+    // Column reference
     ColumnRef(String),
 
-    /// Binary operation
+    // Binary operation
     BinaryOp {
         left: Box<Expr>,
         op: BinaryOperator,
         right: Box<Expr>,
     },
 
-    /// Unary operation
+    // Unary operation
     UnaryOp {
         op: UnaryOperator,
         expr: Box<Expr>,
     },
 
-    /// Function call
+    // Function call
     Function {
         name: String,
         args: Vec<Expr>,
     },
 
-    /// CASE expression
+    // CASE expression
     Case {
         conditions: Vec<(Expr, Expr)>,
         else_expr: Option<Box<Expr>>,
     },
 
-    /// IN expression
+    // IN expression
     In {
         expr: Box<Expr>,
         values: Vec<Expr>,
     },
 
-    /// BETWEEN expression
+    // BETWEEN expression
     Between {
         expr: Box<Expr>,
         low: Box<Expr>,
@@ -173,7 +173,7 @@ pub enum Expr {
     },
 }
 
-/// Binary operators
+// Binary operators
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BinaryOperator {
     // Arithmetic
@@ -200,7 +200,7 @@ pub enum BinaryOperator {
     Concat,
 }
 
-/// Unary operators
+// Unary operators
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum UnaryOperator {
     Not,
@@ -209,9 +209,9 @@ pub enum UnaryOperator {
     IsNotNull,
 }
 
-/// Expression evaluator
+// Expression evaluator
 pub struct ExpressionEvaluator {
-    /// Registered user-defined functions
+    // Registered user-defined functions
     udfs: HashMap<String, Box<dyn Fn(Vec<ExprValue>) -> Result<ExprValue, DbError>>>,
 }
 
@@ -222,7 +222,7 @@ impl ExpressionEvaluator {
         }
     }
 
-    /// Register a user-defined function
+    // Register a user-defined function
     pub fn register_udf<F>(&mut self, name: String, func: F)
     where
         F: Fn(Vec<ExprValue>) -> Result<ExprValue, DbError> + 'static,
@@ -230,7 +230,7 @@ impl ExpressionEvaluator {
         self.udfs.insert(name, Box::new(func));
     }
 
-    /// Evaluate expression with given row context
+    // Evaluate expression with given row context
     pub fn eval(&self, expr: &Expr, row: &HashMap<String, ExprValue>) -> Result<ExprValue, DbError> {
         match expr {
             Expr::Literal(val) => Ok(val.clone()),
@@ -300,7 +300,7 @@ impl ExpressionEvaluator {
         }
     }
 
-    /// Evaluate binary operation with NULL handling
+    // Evaluate binary operation with NULL handling
     fn eval_binary_op(
         &self,
         left: &ExprValue,
@@ -411,7 +411,7 @@ impl ExpressionEvaluator {
         }
     }
 
-    /// Evaluate unary operation
+    // Evaluate unary operation
     fn eval_unary_op(&self, op: UnaryOperator, val: &ExprValue) -> Result<ExprValue, DbError> {
         match op {
             UnaryOperator::Not => {
@@ -438,7 +438,7 @@ impl ExpressionEvaluator {
         }
     }
 
-    /// Evaluate function call
+    // Evaluate function call
     fn eval_function(&self, name: &str, args: Vec<ExprValue>) -> Result<ExprValue, DbError> {
         // Check for UDF first
         if let Some(udf) = self.udfs.get(name) {
@@ -517,7 +517,7 @@ impl ExpressionEvaluator {
         }
     }
 
-    /// Compare two values
+    // Compare two values
     fn compare_values(&self, left: &ExprValue, right: &ExprValue) -> Result<i32, DbError> {
         if left.is_null() || right.is_null() {
             return Ok(0); // NULL comparison is undefined
@@ -534,7 +534,7 @@ impl ExpressionEvaluator {
         Ok(if l < r { -1 } else if l > r { 1 } else { 0 })
     }
 
-    /// Check value equality
+    // Check value equality
     fn values_equal(&self, left: &ExprValue, right: &ExprValue) -> Result<ExprValue, DbError> {
         if left.is_null() || right.is_null() {
             return Ok(ExprValue::Null);
@@ -543,7 +543,7 @@ impl ExpressionEvaluator {
         Ok(ExprValue::Boolean(self.compare_values(left, right)? == 0))
     }
 
-    /// LIKE pattern matching
+    // LIKE pattern matching
     fn like_match(&self, text: &str, pattern: &str) -> bool {
         let mut text_chars = text.chars().peekable();
         let mut pattern_chars = pattern.chars().peekable();
@@ -593,18 +593,18 @@ impl ExpressionEvaluator {
     }
 }
 
-/// Expression optimizer
+// Expression optimizer
 pub struct ExpressionOptimizer;
 
 impl ExpressionOptimizer {
-    /// Optimize expression tree
+    // Optimize expression tree
     pub fn optimize(expr: Expr) -> Expr {
         let expr = Self::constant_folding(expr);
         let expr = Self::simplify(expr);
         expr
     }
 
-    /// Constant folding
+    // Constant folding
     fn constant_folding(expr: Expr) -> Expr {
         match expr {
             Expr::BinaryOp { left, op, right } => {
@@ -644,7 +644,7 @@ impl ExpressionOptimizer {
         }
     }
 
-    /// Simplify expression
+    // Simplify expression
     fn simplify(expr: Expr) -> Expr {
         match expr {
             Expr::BinaryOp { left, op, right } => {
@@ -756,5 +756,3 @@ mod tests {
         assert_eq!(result.to_integer().unwrap(), 4);
     }
 }
-
-

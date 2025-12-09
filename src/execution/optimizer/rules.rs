@@ -13,38 +13,38 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
-/// Join ordering strategy
+// Join ordering strategy
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum JoinOrderingStrategy {
-    /// Left-deep trees only
+    // Left-deep trees only
     LeftDeep,
-    /// Dynamic programming (optimal but expensive)
+    // Dynamic programming (optimal but expensive)
     DynamicProgramming,
-    /// Greedy heuristic
+    // Greedy heuristic
     Greedy,
 }
 
-/// Cost-based query optimizer with Cascades/Volcano framework and advanced cardinality estimation
-///
-/// Implements revolutionary optimization techniques:
-/// - Memoization with equivalence classes (Cascades framework)
-/// - Dynamic programming join enumeration with DPccp algorithm (O(n * 2^n) -> practical O(n^3))
-/// - Multi-dimensional histogram-based cardinality estimation
-/// - Common subexpression elimination (CSE)
-/// - Materialized view matching
-/// - Adaptive re-optimization with runtime feedback
+// Cost-based query optimizer with Cascades/Volcano framework and advanced cardinality estimation
+//
+// Implements revolutionary optimization techniques:
+// - Memoization with equivalence classes (Cascades framework)
+// - Dynamic programming join enumeration with DPccp algorithm (O(n * 2^n) -> practical O(n^3))
+// - Multi-dimensional histogram-based cardinality estimation
+// - Common subexpression elimination (CSE)
+// - Materialized view matching
+// - Adaptive re-optimization with runtime feedback
 pub struct Optimizer {
-    /// Table statistics for cardinality estimation
+    // Table statistics for cardinality estimation
     statistics: Arc<RwLock<TableStatistics>>,
-    /// Join ordering strategy
+    // Join ordering strategy
     join_strategy: JoinOrderingStrategy,
-    /// Cascades memo table for plan memoization
+    // Cascades memo table for plan memoization
     memo_table: Arc<RwLock<MemoTable>>,
-    /// Materialized view registry
+    // Materialized view registry
     materialized_views: Arc<RwLock<Vec<MaterializedView>>>,
-    /// Common subexpression cache
+    // Common subexpression cache
     cse_cache: Arc<RwLock<HashMap<ExpressionHash, PlanNode>>>,
-    /// Adaptive statistics feedback
+    // Adaptive statistics feedback
     adaptive_stats: Arc<RwLock<AdaptiveStatistics>>,
 }
 
@@ -71,19 +71,19 @@ impl Optimizer {
         }
     }
 
-    /// Optimize a query plan using Cascades/Volcano framework with revolutionary techniques
-    ///
-    /// Optimization pipeline:
-    /// 1. Check memo table for cached plans
-    /// 2. Try materialized view matching
-    /// 3. Common subexpression elimination (CSE)
-    /// 4. Advanced predicate pushdown/pullup
-    /// 5. Subquery decorrelation
-    /// 6. View merging
-    /// 7. Dynamic programming join enumeration with DPccp
-    /// 8. Access path selection with multi-dimensional histograms
-    /// 9. Cost-based plan selection
-    /// 10. Memoize result
+    // Optimize a query plan using Cascades/Volcano framework with revolutionary techniques
+    //
+    // Optimization pipeline:
+    // 1. Check memo table for cached plans
+    // 2. Try materialized view matching
+    // 3. Common subexpression elimination (CSE)
+    // 4. Advanced predicate pushdown/pullup
+    // 5. Subquery decorrelation
+    // 6. View merging
+    // 7. Dynamic programming join enumeration with DPccp
+    // 8. Access path selection with multi-dimensional histograms
+    // 9. Cost-based plan selection
+    // 10. Memoize result
     pub fn optimize(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // 1. Check memo table for cached equivalent plan
         let plan_hash = self.hash_plan(&plan);
@@ -133,7 +133,7 @@ impl Optimizer {
         Ok(optimized)
     }
 
-    /// Push filters down closer to table scans for early data reduction
+    // Push filters down closer to table scans for early data reduction
     pub fn push_down_predicates(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
             PlanNode::Filter { input, predicate } => {
@@ -190,13 +190,13 @@ impl Optimizer {
         }
     }
 
-    /// Push down projections to eliminate unnecessary columns early
+    // Push down projections to eliminate unnecessary columns early
     fn push_down_projections(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // Simplified implementation - in production would track required columns
         Ok(plan)
     }
 
-    /// Reorder joins based on estimated costs using dynamic programming
+    // Reorder joins based on estimated costs using dynamic programming
     pub fn reorder_joins(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
             PlanNode::Join { join_type, left, right, condition } => {
@@ -244,7 +244,7 @@ impl Optimizer {
         }
     }
 
-    /// Select optimal access paths (index vs table scan)
+    // Select optimal access paths (index vs table scan)
     fn select_access_paths(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
             PlanNode::TableScan { table, columns } => {
@@ -268,19 +268,19 @@ impl Optimizer {
         }
     }
 
-    /// Perform constant folding and expression simplification
+    // Perform constant folding and expression simplification
     fn constant_folding(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // For now, just pass through - could implement expression evaluation
         Ok(plan)
     }
 
-    /// Merge adjacent operators when beneficial
+    // Merge adjacent operators when beneficial
     fn merge_operators(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // Could merge consecutive filters, combine limits, etc.
         Ok(plan)
     }
 
-    /// Estimate the cost of executing a plan node
+    // Estimate the cost of executing a plan node
     pub fn estimate_cost(&self, plan: &PlanNode) -> f64 {
         let cardinality = self.estimate_cardinality(plan);
         let cpu_cost = self.estimate_cpu_cost(plan, cardinality);
@@ -290,7 +290,7 @@ impl Optimizer {
         cpu_cost + (io_cost * 10.0)
     }
 
-    /// Estimate CPU cost for an operator
+    // Estimate CPU cost for an operator
     fn estimate_cpu_cost(&self, plan: &PlanNode, cardinality: f64) -> f64 {
         match plan {
             PlanNode::TableScan { .. } => cardinality * 0.1,
@@ -302,7 +302,7 @@ impl Optimizer {
         }
     }
 
-    /// Estimate I/O cost for an operator
+    // Estimate I/O cost for an operator
     fn estimate_io_cost(&self, plan: &PlanNode, cardinality: f64) -> f64 {
         match plan {
             PlanNode::TableScan { table, .. } => {
@@ -317,7 +317,7 @@ impl Optimizer {
         }
     }
 
-    /// Estimate output cardinality of a plan node
+    // Estimate output cardinality of a plan node
     pub fn estimate_cardinality(&self, plan: &PlanNode) -> f64 {
         match plan {
             PlanNode::TableScan { table, .. } => {
@@ -370,19 +370,19 @@ impl Optimizer {
         }
     }
 
-    /// Estimate filter selectivity
+    // Estimate filter selectivity
     fn estimate_filter_selectivity(&self, predicate: &str) -> f64 {
         // Simplified - in production would parse predicate and use histograms
         0.1 // Default 10% selectivity
     }
 
-    /// Estimate join selectivity
+    // Estimate join selectivity
     fn estimate_join_selectivity(&self, _condition: &str) -> f64 {
         // Simplified - would analyze join keys and compute selectivity
         0.01 // Default 1% selectivity
     }
 
-    /// Estimate cost of a specific join
+    // Estimate cost of a specific join
     pub fn estimate_join_cost(&self, left: &PlanNode, right: &PlanNode, join_type: &JoinType) -> f64 {
         let left_card = self.estimate_cardinality(left);
         let right_card = self.estimate_cardinality(right);
@@ -405,7 +405,7 @@ impl Optimizer {
         }
     }
 
-    /// Select the best index for a table scan (if available)
+    // Select the best index for a table scan (if available)
     pub fn select_index(&self, table: &str, _filter: Option<&str>) -> Option<String> {
         let stats = self.statistics.read();
         if let Some(table_stats) = stats.tables.get(table) {
@@ -417,7 +417,7 @@ impl Optimizer {
         None
     }
 
-    /// Update statistics for a table
+    // Update statistics for a table
     pub fn update_statistics(&self, table: String, stats: SingleTableStatistics) {
         let mut statistics = self.statistics.write();
         statistics.tables.insert(table, stats);

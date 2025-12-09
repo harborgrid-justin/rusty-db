@@ -18,7 +18,7 @@ use parking_lot::RwLock;
 // Recovery Types and Enums
 // ============================================================================
 
-/// Failure severity level
+// Failure severity level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum FailureSeverity {
     Low = 0,
@@ -27,7 +27,7 @@ pub enum FailureSeverity {
     Critical = 3,
 }
 
-/// Type of failure detected
+// Type of failure detected
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum FailureType {
     ProcessCrash,
@@ -43,7 +43,7 @@ pub enum FailureType {
     HealthCheckFailure,
 }
 
-/// Recovery state
+// Recovery state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RecoveryState {
     Idle,
@@ -55,7 +55,7 @@ pub enum RecoveryState {
     Failed,
 }
 
-/// Recovery strategy
+// Recovery strategy
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RecoveryStrategy {
     Restart,
@@ -69,7 +69,7 @@ pub enum RecoveryStrategy {
     RestoreFromSnapshot,
 }
 
-/// Detected failure
+// Detected failure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DetectedFailure {
     pub id: u64,
@@ -81,7 +81,7 @@ pub struct DetectedFailure {
     pub context: HashMap<String, String>,
 }
 
-/// Recovery plan
+// Recovery plan
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecoveryPlan {
     pub id: u64,
@@ -92,7 +92,7 @@ pub struct RecoveryPlan {
     pub steps: Vec<String>,
 }
 
-/// Recovery execution result
+// Recovery execution result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecoveryResult {
     pub failure_id: u64,

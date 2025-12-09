@@ -1,4 +1,4 @@
-//! Session pool coordination module
+// Session pool coordination module
 use serde::{Serialize, Deserialize};
 use std::time::Duration;
 
@@ -8,7 +8,7 @@ pub struct SessionAffinity;
 pub struct PooledSession;
 pub struct SessionSelector;
 
-/// Pool configuration for session pooling
+// Pool configuration for session pooling
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PoolConfig {
     pub min_pool_size: usize,
@@ -32,7 +32,7 @@ impl Default for PoolConfig {
     }
 }
 
-/// Pool statistics for monitoring
+// Pool statistics for monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PoolStatistics {
     pub active_sessions: usize,

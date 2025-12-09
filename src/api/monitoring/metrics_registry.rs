@@ -86,7 +86,7 @@ impl MetricAggregator {
     }
 }
 
-/// Cardinality tracker for preventing metric explosion
+// Cardinality tracker for preventing metric explosion
 pub struct CardinalityManager {
     cardinality_limits: HashMap<String, usize>,
     current_cardinality: Arc<RwLock<HashMap<String, usize>>>,
@@ -155,7 +155,7 @@ pub enum CardinalityCheckResult {
     Drop,
 }
 
-/// Metric retention policy
+// Metric retention policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetentionPolicy {
     pub raw_data_retention: Duration,
@@ -177,7 +177,7 @@ impl Default for RetentionPolicy {
     }
 }
 
-/// Core metrics registry
+// Core metrics registry
 pub struct MetricsRegistry {
     metrics: Arc<RwLock<HashMap<MetricId, MetricType>>>,
     aggregators: Arc<RwLock<HashMap<String, MetricAggregator>>>,

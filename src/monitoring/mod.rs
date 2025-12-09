@@ -60,7 +60,7 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 use std::time::{Duration};
 
-/// Query statistics and performance metrics (legacy compatibility)
+// Query statistics and performance metrics (legacy compatibility)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryStats {
     pub query_id: u64,
@@ -74,7 +74,7 @@ pub struct QueryStats {
     pub timestamp: SystemTime,
 }
 
-/// System metrics (legacy compatibility)
+// System metrics (legacy compatibility)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMetrics {
     pub active_connections: usize,
@@ -87,7 +87,7 @@ pub struct SystemMetrics {
     pub disk_writes: u64,
 }
 
-/// Slow query record (legacy compatibility)
+// Slow query record (legacy compatibility)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlowQuery {
     pub query: String,
@@ -95,7 +95,7 @@ pub struct SlowQuery {
     pub timestamp: SystemTime,
 }
 
-/// Legacy monitoring system for backward compatibility
+// Legacy monitoring system for backward compatibility
 pub struct MonitoringSystem {
     query_stats: Arc<RwLock<Vec<QueryStats>>>,
     slow_queries: Arc<RwLock<Vec<SlowQuery>>>,
@@ -161,7 +161,7 @@ impl Default for MonitoringSystem {
     }
 }
 
-/// Comprehensive monitoring hub that integrates all monitoring components
+// Comprehensive monitoring hub that integrates all monitoring components
 pub struct MonitoringHub {
     // Core components
     pub metrics_registry: Arc<MetricRegistry>,
@@ -192,7 +192,7 @@ impl MonitoringHub {
         }
     }
 
-    /// Initialize default metrics
+    // Initialize default metrics
     pub fn initialize_default_metrics(&self) {
         // Register core metrics
         self.metrics_registry.register_counter("queries_total", "Total number of queries executed");
@@ -251,7 +251,7 @@ impl MonitoringHub {
         self.diagnostics.register_health_check(mem_check);
     }
 
-    /// Record a query execution for comprehensive monitoring
+    // Record a query execution for comprehensive monitoring
     pub fn record_query_execution(
         &self,
         query_id: u64,
@@ -331,7 +331,7 @@ impl MonitoringHub {
         self.legacy_monitoring.record_query(legacy_stats);
     }
 
-    /// Get comprehensive system status
+    // Get comprehensive system status
     pub fn get_system_status(&self) -> SystemStatus {
         SystemStatus {
             active_alerts: self.alert_manager.get_active_alert_count(),
@@ -350,7 +350,7 @@ impl Default for MonitoringHub {
     }
 }
 
-/// System status summary
+// System status summary
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemStatus {
     pub active_alerts: usize,
@@ -406,5 +406,3 @@ mod tests {
         assert_eq!(status.active_sessions, 0); // No sessions registered yet
     }
 }
-
-

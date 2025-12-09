@@ -314,10 +314,10 @@ pub use srs::{
     SpatialReferenceSystem, SridType, SrsRegistry, UtmProjection, well_known_srid,
 };
 
-/// Spatial engine version
+// Spatial engine version
 pub const VERSION: &str = "1.0.0";
 
-/// Spatial capabilities flags
+// Spatial capabilities flags
 #[derive(Debug, Clone, Copy)]
 pub struct SpatialCapabilities {
     pub has_geometry: bool,
@@ -339,12 +339,12 @@ impl Default for SpatialCapabilities {
     }
 }
 
-/// Get spatial engine capabilities
+// Get spatial engine capabilities
 pub fn get_capabilities() -> SpatialCapabilities {
     SpatialCapabilities::default()
 }
 
-/// Spatial engine configuration
+// Spatial engine configuration
 #[derive(Debug, Clone)]
 pub struct SpatialConfig {
     pub default_srid: SridType,
@@ -366,19 +366,19 @@ impl Default for SpatialConfig {
     }
 }
 
-/// Spatial engine manager
+// Spatial engine manager
 pub struct SpatialEngine {
     config: SpatialConfig,
     srs_registry: std::sync::Arc<SrsRegistry>,
 }
 
 impl SpatialEngine {
-    /// Create a new spatial engine with default configuration
+    // Create a new spatial engine with default configuration
     pub fn new() -> Self {
         Self::with_config(SpatialConfig::default())
     }
 
-    /// Create a new spatial engine with custom configuration
+    // Create a new spatial engine with custom configuration
     pub fn with_config(config: SpatialConfig) -> Self {
         Self {
             config,
@@ -386,47 +386,47 @@ impl SpatialEngine {
         }
     }
 
-    /// Get the SRS registry
+    // Get the SRS registry
     pub fn srs_registry(&self) -> &std::sync::Arc<SrsRegistry> {
         &self.srs_registry
     }
 
-    /// Get the configuration
+    // Get the configuration
     pub fn config(&self) -> &SpatialConfig {
         &self.config
     }
 
-    /// Create a coordinate transformer
+    // Create a coordinate transformer
     pub fn transformer(&self) -> CoordinateTransformer {
         CoordinateTransformer::new(self.srs_registry.clone())
     }
 
-    /// Create an R-tree index with engine configuration
+    // Create an R-tree index with engine configuration
     pub fn create_rtree(&self) -> RTree {
         RTree::with_capacity(self.config.rtree_max_entries, self.config.rtree_min_entries)
     }
 
-    /// Create a quadtree index with engine configuration
+    // Create a quadtree index with engine configuration
     pub fn create_quadtree(&self, bounds: BoundingBox) -> Quadtree {
         Quadtree::with_params(bounds, self.config.quadtree_max_depth, 4)
     }
 
-    /// Parse WKT geometry
+    // Parse WKT geometry
     pub fn parse_wkt(&self, wkt: &str) -> crate::error::Result<Geometry> {
         WktParser::parse(wkt)
     }
 
-    /// Parse WKB geometry
+    // Parse WKB geometry
     pub fn parse_wkb(&self, wkb: &[u8]) -> crate::error::Result<Geometry> {
         WkbParser::parse(wkb)
     }
 
-    /// Get version information
+    // Get version information
     pub fn version(&self) -> &str {
         VERSION
     }
 
-    /// Get capabilities
+    // Get capabilities
     pub fn capabilities(&self) -> SpatialCapabilities {
         get_capabilities()
     }

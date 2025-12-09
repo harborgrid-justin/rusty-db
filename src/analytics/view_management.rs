@@ -1,6 +1,6 @@
-/// View Management Module
-///
-/// Provides management for regular views and materialized views
+// View Management Module
+//
+// Provides management for regular views and materialized views
 
 use crate::{Result, error::DbError, catalog::Schema};
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::{Duration, SystemTime};
 
-/// View definition
+// View definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct View {
     pub name: String,
@@ -19,14 +19,14 @@ pub struct View {
     pub check_option: Option<CheckOption>,
 }
 
-/// Check option for updatable views
+// Check option for updatable views
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CheckOption {
     Local,
     Cascaded,
 }
 
-/// Materialized view definition
+// Materialized view definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaterializedView {
     pub name: String,
@@ -39,7 +39,7 @@ pub struct MaterializedView {
     pub statistics: ViewStatistics,
 }
 
-/// Refresh schedule for materialized views
+// Refresh schedule for materialized views
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefreshSchedule {
     pub interval: Duration,
@@ -47,7 +47,7 @@ pub struct RefreshSchedule {
     pub auto_refresh: bool,
 }
 
-/// Index on a materialized view
+// Index on a materialized view
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaterializedViewIndex {
     pub name: String,
@@ -55,7 +55,7 @@ pub struct MaterializedViewIndex {
     pub unique: bool,
 }
 
-/// Statistics for a view or materialized view
+// Statistics for a view or materialized view
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ViewStatistics {
     pub row_count: u64,
@@ -77,7 +77,7 @@ impl Default for ViewStatistics {
     }
 }
 
-/// View manager for handling view operations
+// View manager for handling view operations
 pub struct ViewManager {
     views: Arc<RwLock<HashMap<String, View>>>,
     materialized_views: Arc<RwLock<HashMap<String, MaterializedView>>>,

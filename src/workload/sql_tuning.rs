@@ -3,59 +3,59 @@
 
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
 use parking_lot::RwLock;
 use crate::Result;
 use crate::error::DbError;
 
-/// SQL Tuning Advisor for automated query optimization
+// SQL Tuning Advisor for automated query optimization
 pub struct SqlTuningAdvisor {
-    /// Tuning task repository
+    // Tuning task repository
     tasks: Arc<RwLock<HashMap<TaskId, TuningTask>>>,
 
-    /// SQL profiles storage
+    // SQL profiles storage
     profiles: Arc<RwLock<HashMap<String, SqlProfile>>>,
 
-    /// Tuning recommendations cache
+    // Tuning recommendations cache
     recommendations: Arc<RwLock<HashMap<TaskId, Vec<TuningRecommendation>>>>,
 
-    /// Configuration
+    // Configuration
     config: Arc<RwLock<TuningConfig>>,
 
-    /// Statistics for plan costing
+    // Statistics for plan costing
     statistics: Arc<RwLock<OptimizerStatistics>>,
 
-    /// Next task ID
+    // Next task ID
     next_task_id: Arc<RwLock<TaskId>>,
 }
 
-/// Unique identifier for a tuning task
+// Unique identifier for a tuning task
 pub type TaskId = u64;
 
-/// SQL Tuning Advisor configuration
+// SQL Tuning Advisor configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TuningConfig {
-    /// Maximum execution time for tuning analysis (seconds)
+    // Maximum execution time for tuning analysis (seconds)
     pub max_analysis_time_secs: u64,
 
-    /// Enable automatic SQL profile creation
+    // Enable automatic SQL profile creation
     pub auto_profile_creation: bool,
 
-    /// Enable alternative plan generation
+    // Enable alternative plan generation
     pub enable_alternative_plans: bool,
 
-    /// Maximum number of alternative plans to generate
+    // Maximum number of alternative plans to generate
     pub max_alternative_plans: usize,
 
-    /// Enable index recommendations
+    // Enable index recommendations
     pub enable_index_recommendations: bool,
 
-    /// Enable SQL rewrite recommendations
+    // Enable SQL rewrite recommendations
     pub enable_sql_rewrite: bool,
 
-    /// Minimum improvement threshold (%) to recommend changes
+    // Minimum improvement threshold (%) to recommend changes
     pub min_improvement_pct: f64,
 }
 
@@ -73,7 +73,7 @@ impl Default for TuningConfig {
     }
 }
 
-/// SQL tuning task
+// SQL tuning task
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TuningTask {
     pub task_id: TaskId,
@@ -88,7 +88,7 @@ pub struct TuningTask {
     pub time_limit_secs: u64,
 }
 
-/// Task status
+// Task status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TaskStatus {
     Created,
@@ -98,16 +98,16 @@ pub enum TaskStatus {
     Interrupted,
 }
 
-/// Tuning scope
+// Tuning scope
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TuningScope {
-    /// Tune a single SQL statement
+    // Tune a single SQL statement
     Limited,
-    /// Comprehensive tuning including multiple alternatives
+    // Comprehensive tuning including multiple alternatives
     Comprehensive,
 }
 
-/// SQL tuning recommendation
+// SQL tuning recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TuningRecommendation {
     pub recommendation_id: u32,
@@ -119,37 +119,37 @@ pub struct TuningRecommendation {
     pub details: RecommendationDetails,
 }
 
-/// Type of recommendation
+// Type of recommendation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum RecommendationType {
-    /// SQL profile recommendation
+    // SQL profile recommendation
     SqlProfile,
-    /// Index creation/modification
+    // Index creation/modification
     Index,
-    /// SQL statement restructuring
+    // SQL statement restructuring
     Restructure,
-    /// Statistics collection
+    // Statistics collection
     Statistics,
-    /// Alternative plan
+    // Alternative plan
     AlternativePlan,
-    /// Miscellaneous
+    // Miscellaneous
     Miscellaneous,
 }
 
-/// Benefit type
+// Benefit type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum BenefitType {
-    /// Improved CPU usage
+    // Improved CPU usage
     CpuTime,
-    /// Reduced I/O
+    // Reduced I/O
     IoReduction,
-    /// Better memory usage
+    // Better memory usage
     MemoryUsage,
-    /// Overall execution time
+    // Overall execution time
     ExecutionTime,
 }
 
-/// Recommendation details
+// Recommendation details
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RecommendationDetails {
     SqlProfile(SqlProfileDetails),
@@ -159,7 +159,7 @@ pub enum RecommendationDetails {
     AlternativePlan(AlternativePlanDetails),
 }
 
-/// SQL profile details
+// SQL profile details
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SqlProfileDetails {
     pub profile_name: String,
@@ -169,7 +169,7 @@ pub struct SqlProfileDetails {
     pub plan_hash_new: u64,
 }
 
-/// Index recommendation
+// Index recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexRecommendation {
     pub table_name: String,
@@ -180,7 +180,7 @@ pub struct IndexRecommendation {
     pub usage_description: String,
 }
 
-/// SQL restructuring recommendation
+// SQL restructuring recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RestructureRecommendation {
     pub original_sql: String,
@@ -189,7 +189,7 @@ pub struct RestructureRecommendation {
     pub explanation: String,
 }
 
-/// Type of SQL rewrite
+// Type of SQL rewrite
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RewriteType {
     SubqueryToJoin,
@@ -203,7 +203,7 @@ pub enum RewriteType {
     ViewMerging,
 }
 
-/// Statistics recommendation
+// Statistics recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatisticsRecommendation {
     pub object_name: String,
@@ -212,7 +212,7 @@ pub struct StatisticsRecommendation {
     pub reason: String,
 }
 
-/// Alternative plan details
+// Alternative plan details
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlternativePlanDetails {
     pub plan_description: String,
@@ -222,7 +222,7 @@ pub struct AlternativePlanDetails {
     pub key_differences: Vec<String>,
 }
 
-/// SQL profile for plan stability
+// SQL profile for plan stability
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SqlProfile {
     pub profile_name: String,
@@ -236,14 +236,14 @@ pub struct SqlProfile {
     pub force_matching: bool,
 }
 
-/// SQL profile status
+// SQL profile status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ProfileStatus {
     Enabled,
     Disabled,
 }
 
-/// Optimizer statistics for cost estimation
+// Optimizer statistics for cost estimation
 #[derive(Debug, Default)]
 pub struct OptimizerStatistics {
     table_stats: HashMap<String, TableStatistics>,
@@ -251,7 +251,7 @@ pub struct OptimizerStatistics {
     column_stats: HashMap<String, ColumnStatistics>,
 }
 
-/// Table statistics
+// Table statistics
 #[derive(Debug, Clone)]
 pub struct TableStatistics {
     pub table_name: String,
@@ -261,7 +261,7 @@ pub struct TableStatistics {
     pub last_analyzed: Option<SystemTime>,
 }
 
-/// Index statistics
+// Index statistics
 #[derive(Debug, Clone)]
 pub struct IndexStatistics {
     pub index_name: String,
@@ -272,7 +272,7 @@ pub struct IndexStatistics {
     pub clustering_factor: u64,
 }
 
-/// Column statistics
+// Column statistics
 #[derive(Debug, Clone)]
 pub struct ColumnStatistics {
     pub column_name: String,
@@ -284,14 +284,14 @@ pub struct ColumnStatistics {
     pub histogram: Option<Histogram>,
 }
 
-/// Histogram for column data distribution
+// Histogram for column data distribution
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Histogram {
     pub histogram_type: HistogramType,
     pub buckets: Vec<HistogramBucket>,
 }
 
-/// Histogram type
+// Histogram type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum HistogramType {
     Frequency,
@@ -299,14 +299,14 @@ pub enum HistogramType {
     Hybrid,
 }
 
-/// Histogram bucket
+// Histogram bucket
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistogramBucket {
     pub endpoint_value: String,
     pub endpoint_number: u64,
 }
 
-/// Query plan analysis
+// Query plan analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlanAnalysis {
     pub plan_hash: u64,
@@ -317,7 +317,7 @@ pub struct PlanAnalysis {
     pub access_paths: Vec<AccessPath>,
 }
 
-/// Plan operation
+// Plan operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlanOperation {
     pub id: u32,
@@ -330,7 +330,7 @@ pub struct PlanOperation {
     pub partition_stop: Option<String>,
 }
 
-/// Plan issue
+// Plan issue
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlanIssue {
     pub severity: IssueSeverity,
@@ -339,7 +339,7 @@ pub struct PlanIssue {
     pub affected_operation_id: Option<u32>,
 }
 
-/// Issue severity
+// Issue severity
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum IssueSeverity {
     Info,
@@ -347,7 +347,7 @@ pub enum IssueSeverity {
     Critical,
 }
 
-/// Issue type
+// Issue type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IssueType {
     CardinalityMismatch,
@@ -360,7 +360,7 @@ pub enum IssueType {
     BindVariablePeeking,
 }
 
-/// Access path (how data is accessed)
+// Access path (how data is accessed)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccessPath {
     pub table_name: String,
@@ -370,7 +370,7 @@ pub struct AccessPath {
     pub estimated_rows: u64,
 }
 
-/// Access type
+// Access type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AccessType {
     FullTableScan,
@@ -382,12 +382,12 @@ pub enum AccessType {
 }
 
 impl SqlTuningAdvisor {
-    /// Create a new SQL Tuning Advisor
+    // Create a new SQL Tuning Advisor
     pub fn new() -> Self {
         Self::with_config(TuningConfig::default())
     }
 
-    /// Create a new SQL Tuning Advisor with custom configuration
+    // Create a new SQL Tuning Advisor with custom configuration
     pub fn with_config(config: TuningConfig) -> Self {
         Self {
             tasks: Arc::new(RwLock::new(HashMap::new())),
@@ -399,7 +399,7 @@ impl SqlTuningAdvisor {
         }
     }
 
-    /// Create a new tuning task
+    // Create a new tuning task
     pub fn create_tuning_task(
         &self,
         task_name: String,
@@ -435,7 +435,7 @@ impl SqlTuningAdvisor {
         Ok(task_id)
     }
 
-    /// Execute a tuning task
+    // Execute a tuning task
     pub fn execute_tuning_task(&self, task_id: TaskId) -> Result<()> {
         // Update task status
         {
@@ -466,7 +466,7 @@ impl SqlTuningAdvisor {
         Ok(())
     }
 
-    /// Analyze SQL and generate recommendations
+    // Analyze SQL and generate recommendations
     fn analyze_sql(&self, task_id: TaskId) -> Result<Vec<TuningRecommendation>> {
         let task = {
             let tasks = self.tasks.read();
@@ -545,7 +545,7 @@ impl SqlTuningAdvisor {
         Ok(recommendations)
     }
 
-    /// Analyze execution plan
+    // Analyze execution plan
     fn analyze_plan(&self, sql_text: &str) -> Result<PlanAnalysis> {
         // Simplified plan analysis
         let mut issues = Vec::new();
@@ -606,7 +606,7 @@ impl SqlTuningAdvisor {
         })
     }
 
-    /// Recommend index creation
+    // Recommend index creation
     fn recommend_index(&self, sql_text: &str, rec_id: u32) -> Result<TuningRecommendation> {
         Ok(TuningRecommendation {
             recommendation_id: rec_id,
@@ -626,7 +626,7 @@ impl SqlTuningAdvisor {
         })
     }
 
-    /// Recommend SQL profile
+    // Recommend SQL profile
     fn recommend_sql_profile(&self, sql_text: &str, rec_id: u32) -> Result<TuningRecommendation> {
         let sql_id = self.compute_sql_id(sql_text);
 
@@ -650,7 +650,7 @@ impl SqlTuningAdvisor {
         })
     }
 
-    /// Recommend statistics collection
+    // Recommend statistics collection
     fn recommend_statistics_collection(&self, rec_id: u32) -> Result<TuningRecommendation> {
         Ok(TuningRecommendation {
             recommendation_id: rec_id,
@@ -668,7 +668,7 @@ impl SqlTuningAdvisor {
         })
     }
 
-    /// Generate alternative execution plans
+    // Generate alternative execution plans
     fn generate_alternative_plans(&self, sql_text: &str) -> Result<Vec<AlternativePlanDetails>> {
         let mut plans = Vec::new();
 
@@ -693,7 +693,7 @@ impl SqlTuningAdvisor {
         Ok(plans)
     }
 
-    /// Suggest SQL rewrites
+    // Suggest SQL rewrites
     fn suggest_sql_rewrites(&self, sql_text: &str) -> Result<Vec<RestructureRecommendation>> {
         let mut rewrites = Vec::new();
 
@@ -720,7 +720,7 @@ impl SqlTuningAdvisor {
         Ok(rewrites)
     }
 
-    /// Create SQL profile
+    // Create SQL profile
     pub fn create_sql_profile(
         &self,
         profile_name: String,
@@ -746,22 +746,22 @@ impl SqlTuningAdvisor {
         Ok(())
     }
 
-    /// Get recommendations for a task
+    // Get recommendations for a task
     pub fn get_recommendations(&self, task_id: TaskId) -> Option<Vec<TuningRecommendation>> {
         self.recommendations.read().get(&task_id).cloned()
     }
 
-    /// Get task details
+    // Get task details
     pub fn get_task(&self, task_id: TaskId) -> Option<TuningTask> {
         self.tasks.read().get(&task_id).cloned()
     }
 
-    /// List all tasks
+    // List all tasks
     pub fn list_tasks(&self) -> Vec<TuningTask> {
         self.tasks.read().values().cloned().collect()
     }
 
-    /// Delete a task
+    // Delete a task
     pub fn delete_task(&self, task_id: TaskId) -> Result<()> {
         let mut tasks = self.tasks.write();
         let mut recommendations = self.recommendations.write();
@@ -774,7 +774,7 @@ impl SqlTuningAdvisor {
         }
     }
 
-    /// Compute SQL ID (hash of SQL text)
+    // Compute SQL ID (hash of SQL text)
     fn compute_sql_id(&self, sql_text: &str) -> String {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
@@ -784,7 +784,7 @@ impl SqlTuningAdvisor {
         format!("{:x}", hasher.finish())
     }
 
-    /// Compute plan hash
+    // Compute plan hash
     fn compute_plan_hash(&self, sql_text: &str) -> u64 {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
@@ -859,5 +859,3 @@ mod tests {
         assert_eq!(advisor.profiles.read().len(), 1);
     }
 }
-
-

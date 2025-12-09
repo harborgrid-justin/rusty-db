@@ -6,13 +6,13 @@ use std::fmt;
 use std::collections::VecDeque;
 use std::time::Duration;
 use std::time::Instant;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime};
 
-/// Isolation error types
+// Isolation error types
 #[derive(Debug, Clone)]
 pub enum IsolationError {
     ResourceExhausted(String),
@@ -40,7 +40,7 @@ impl std::error::Error for IsolationError {}
 
 pub type IsolationResult<T> = Result<T, IsolationError>;
 
-/// Memory isolation using Rust ownership and resource tracking
+// Memory isolation using Rust ownership and resource tracking
 pub struct MemoryIsolator {
     tenant_allocations: Arc<RwLock<HashMap<String, TenantMemoryAllocation>>>,
     global_memory_limit: u64,
@@ -68,7 +68,7 @@ impl MemoryIsolator {
         }
     }
 
-    /// Allocate memory for a tenant
+    // Allocate memory for a tenant
     pub async fn allocate(
         &self,
         tenant_id: &str,
@@ -123,7 +123,7 @@ impl MemoryIsolator {
         })
     }
 
-    /// Deallocate memory for a tenant
+    // Deallocate memory for a tenant
     pub async fn deallocate(&self, allocation: MemoryAllocation) -> IsolationResult<()> {
         let mut allocations = self.tenant_allocations.write().await;
         let mut global_allocated = self.global_allocated.write().await;
@@ -138,7 +138,7 @@ impl MemoryIsolator {
         Ok(())
     }
 
-    /// Set memory quota for tenant
+    // Set memory quota for tenant
     pub async fn set_quota(&self, tenant_id: &str, quota_bytes: u64) -> IsolationResult<()> {
         let mut allocations = self.tenant_allocations.write().await;
 
@@ -159,13 +159,13 @@ impl MemoryIsolator {
         Ok(())
     }
 
-    /// Get tenant memory statistics
+    // Get tenant memory statistics
     pub async fn get_tenant_stats(&self, tenant_id: &str) -> Option<TenantMemoryAllocation> {
         let allocations = self.tenant_allocations.read().await;
         allocations.get(tenant_id).cloned()
     }
 
-    /// Get global memory statistics
+    // Get global memory statistics
     pub async fn get_global_stats(&self) -> MemoryGlobalStats {
         let global_allocated = *self.global_allocated.read().await;
         let allocations = self.tenant_allocations.read().await;
@@ -179,7 +179,7 @@ impl MemoryIsolator {
     }
 }
 
-/// Memory allocation handle
+// Memory allocation handle
 pub struct MemoryAllocation {
     tenant_id: String,
     size_bytes: u64,
@@ -194,7 +194,7 @@ pub struct MemoryGlobalStats {
     pub tenant_count: usize,
 }
 
-/// I/O bandwidth allocation using token bucket algorithm
+// I/O bandwidth allocation using token bucket algorithm
 pub struct IoBandwidthAllocator {
     tenant_buckets: Arc<RwLock<HashMap<String, TokenBucket>>>,
 }
@@ -253,13 +253,13 @@ impl IoBandwidthAllocator {
         }
     }
 
-    /// Configure I/O bandwidth for tenant
+    // Configure I/O bandwidth for tenant
     pub async fn configure_tenant(&self, tenant_id: String, bandwidth_mbps: u32) {
         let mut buckets = self.tenant_buckets.write().await;
         buckets.insert(tenant_id.clone(), TokenBucket::new(tenant_id, bandwidth_mbps));
     }
 
-    /// Request I/O bandwidth
+    // Request I/O bandwidth
     pub async fn request_bandwidth(
         &self,
         tenant_id: &str,
@@ -281,7 +281,7 @@ impl IoBandwidthAllocator {
         }
     }
 
-    /// Wait for bandwidth availability
+    // Wait for bandwidth availability
     pub async fn wait_for_bandwidth(
         &self,
         tenant_id: &str,
@@ -305,7 +305,7 @@ impl IoBandwidthAllocator {
         }
     }
 
-    /// Get available bandwidth
+    // Get available bandwidth
     pub async fn get_available(&self, tenant_id: &str) -> Option<u64> {
         let mut buckets = self.tenant_buckets.write().await;
         buckets.get_mut(tenant_id).map(|b| b.available())
@@ -318,7 +318,7 @@ impl Default for IoBandwidthAllocator {
     }
 }
 
-/// CPU scheduler using fair share scheduling
+// CPU scheduler using fair share scheduling
 pub struct CpuScheduler {
     tenant_shares: Arc<RwLock<HashMap<String, CpuShares>>>,
     total_shares: Arc<RwLock<u64>>,
@@ -353,7 +353,7 @@ impl CpuScheduler {
         }
     }
 
-    /// Configure CPU shares for tenant
+    // Configure CPU shares for tenant
     pub async fn configure_tenant(
         &self,
         tenant_id: String,
@@ -391,7 +391,7 @@ impl CpuScheduler {
         Ok(())
     }
 
-    /// Calculate fair CPU allocation
+    // Calculate fair CPU allocation
     pub async fn calculate_allocation(&self, tenant_id: &str) -> Option<f64> {
         let tenant_shares = self.tenant_shares.read().await;
         let total_shares = *self.total_shares.read().await;
@@ -410,7 +410,7 @@ impl CpuScheduler {
         Some(allocation)
     }
 
-    /// Check if tenant should be throttled
+    // Check if tenant should be throttled
     pub async fn should_throttle(&self, tenant_id: &str, requested_ns: u64) -> bool {
         let allocation = match self.calculate_allocation(tenant_id).await {
             Some(a) => a,
@@ -434,7 +434,7 @@ impl CpuScheduler {
         usage_percent > shares.max_percent as f64
     }
 
-    /// Record CPU usage
+    // Record CPU usage
     pub async fn record_usage(&self, tenant_id: &str, cpu_time_ns: u64, was_throttled: bool) {
         let mut tenant_shares = self.tenant_shares.write().await;
 
@@ -463,7 +463,7 @@ impl CpuScheduler {
         }
     }
 
-    /// Get tenant CPU statistics
+    // Get tenant CPU statistics
     pub async fn get_tenant_stats(&self, tenant_id: &str) -> Option<CpuStats> {
         let tenant_shares = self.tenant_shares.read().await;
         let shares = tenant_shares.get(tenant_id)?;
@@ -497,7 +497,7 @@ pub struct CpuStats {
     pub allocation_percent: f64,
 }
 
-/// Network isolation with tenant-specific ports and bandwidth
+// Network isolation with tenant-specific ports and bandwidth
 pub struct NetworkIsolator {
     tenant_ports: Arc<RwLock<HashMap<String, NetworkConfig>>>,
     port_allocator: Arc<RwLock<PortAllocator>>,
@@ -552,7 +552,7 @@ impl NetworkIsolator {
         }
     }
 
-    /// Allocate network resources for tenant
+    // Allocate network resources for tenant
     pub async fn allocate_tenant(
         &self,
         tenant_id: String,
@@ -581,7 +581,7 @@ impl NetworkIsolator {
         Ok(port)
     }
 
-    /// Check if tenant can accept new connection
+    // Check if tenant can accept new connection
     pub async fn can_accept_connection(&self, tenant_id: &str) -> IsolationResult<bool> {
         let tenant_ports = self.tenant_ports.read().await;
         let config = tenant_ports.get(tenant_id)
@@ -592,7 +592,7 @@ impl NetworkIsolator {
         Ok(config.current_connections < config.max_connections)
     }
 
-    /// Increment connection count
+    // Increment connection count
     pub async fn increment_connections(&self, tenant_id: &str) -> IsolationResult<()> {
         let mut tenant_ports = self.tenant_ports.write().await;
         let config = tenant_ports.get_mut(tenant_id)
@@ -608,7 +608,7 @@ impl NetworkIsolator {
         Ok(())
     }
 
-    /// Decrement connection count
+    // Decrement connection count
     pub async fn decrement_connections(&self, tenant_id: &str) -> IsolationResult<()> {
         let mut tenant_ports = self.tenant_ports.write().await;
         if let Some(config) = tenant_ports.get_mut(tenant_id) {
@@ -617,7 +617,7 @@ impl NetworkIsolator {
         Ok(())
     }
 
-    /// Record network traffic
+    // Record network traffic
     pub async fn record_traffic(&self, tenant_id: &str, bytes_sent: u64, bytes_received: u64) {
         let mut tenant_ports = self.tenant_ports.write().await;
         if let Some(config) = tenant_ports.get_mut(tenant_id) {
@@ -626,14 +626,14 @@ impl NetworkIsolator {
         }
     }
 
-    /// Get network statistics
+    // Get network statistics
     pub async fn get_stats(&self, tenant_id: &str) -> Option<NetworkConfig> {
         let tenant_ports = self.tenant_ports.read().await;
         tenant_ports.get(tenant_id).cloned()
     }
 }
 
-/// Lock contention isolation to prevent one tenant from blocking others
+// Lock contention isolation to prevent one tenant from blocking others
 pub struct LockContentionIsolator {
     tenant_locks: Arc<RwLock<HashMap<String, TenantLockStats>>>,
     max_wait_time: Duration,
@@ -657,7 +657,7 @@ impl LockContentionIsolator {
         }
     }
 
-    /// Acquire lock with timeout to prevent indefinite blocking
+    // Acquire lock with timeout to prevent indefinite blocking
     pub async fn acquire_lock(
         &self,
         tenant_id: &str,
@@ -724,7 +724,7 @@ impl LockContentionIsolator {
         stats.lock_timeouts += 1;
     }
 
-    /// Get lock statistics
+    // Get lock statistics
     pub async fn get_stats(&self, tenant_id: &str) -> Option<TenantLockStats> {
         let tenant_locks = self.tenant_locks.read().await;
         tenant_locks.get(tenant_id).cloned()
@@ -737,7 +737,7 @@ pub struct LockHandle {
     acquired_at: Instant,
 }
 
-/// Buffer pool partitioning per tenant
+// Buffer pool partitioning per tenant
 pub struct BufferPoolPartitioner {
     tenant_partitions: Arc<RwLock<HashMap<String, BufferPartition>>>,
     total_buffer_size: u64,
@@ -763,7 +763,7 @@ impl BufferPoolPartitioner {
         }
     }
 
-    /// Allocate buffer partition for tenant
+    // Allocate buffer partition for tenant
     pub async fn allocate_partition(
         &self,
         tenant_id: String,
@@ -797,7 +797,7 @@ impl BufferPoolPartitioner {
         Ok(())
     }
 
-    /// Cache page for tenant
+    // Cache page for tenant
     pub async fn cache_page(&self, tenant_id: &str, page_size: u64) -> IsolationResult<()> {
         let mut partitions = self.tenant_partitions.write().await;
 
@@ -819,7 +819,7 @@ impl BufferPoolPartitioner {
         Ok(())
     }
 
-    /// Record cache hit
+    // Record cache hit
     pub async fn record_hit(&self, tenant_id: &str) {
         let mut partitions = self.tenant_partitions.write().await;
         if let Some(partition) = partitions.get_mut(tenant_id) {
@@ -827,7 +827,7 @@ impl BufferPoolPartitioner {
         }
     }
 
-    /// Record cache miss
+    // Record cache miss
     pub async fn record_miss(&self, tenant_id: &str) {
         let mut partitions = self.tenant_partitions.write().await;
         if let Some(partition) = partitions.get_mut(tenant_id) {
@@ -835,7 +835,7 @@ impl BufferPoolPartitioner {
         }
     }
 
-    /// Get buffer statistics
+    // Get buffer statistics
     pub async fn get_stats(&self, tenant_id: &str) -> Option<BufferStats> {
         let partitions = self.tenant_partitions.read().await;
         let partition = partitions.get(tenant_id)?;
@@ -948,5 +948,3 @@ mod tests {
         assert!(stats.is_some());
     }
 }
-
-

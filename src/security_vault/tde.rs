@@ -33,8 +33,8 @@ use parking_lot::RwLock;
 use sha2::{Digest, Sha256};
 use rand::RngCore;
 
-/// Cache-aligned crypto buffer for high-performance encryption
-/// Aligned to 64 bytes (typical cache line size) to avoid false sharing
+// Cache-aligned crypto buffer for high-performance encryption
+// Aligned to 64 bytes (typical cache line size) to avoid false sharing
 #[repr(C, align(64))]
 #[derive(Clone)]
 pub struct CryptoBuffer {
@@ -84,17 +84,17 @@ impl CryptoBuffer {
     }
 }
 
-/// Encryption algorithm types
+// Encryption algorithm types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum EncryptionAlgorithm {
-    /// AES-256-GCM (NIST approved)
+    // AES-256-GCM (NIST approved)
     Aes256Gcm,
-    /// ChaCha20-Poly1305 (modern, software-optimized)
+    // ChaCha20-Poly1305 (modern, software-optimized)
     ChaCha20Poly1305,
 }
 
 impl EncryptionAlgorithm {
-    /// Parse algorithm from string
+    // Parse algorithm from string
     pub fn from_str(s: &str) -> Result<Self> {
         match s.to_uppercase().as_str() {
             "AES256GCM" | "AES-256-GCM" | "AES256" => Ok(Self::Aes256Gcm),
@@ -103,7 +103,7 @@ impl EncryptionAlgorithm {
         }
     }
 
-    /// Get key size in bytes
+    // Get key size in bytes
     pub fn key_size(&self) -> usize {
         match self {
             Self::Aes256Gcm => 32,
@@ -111,7 +111,7 @@ impl EncryptionAlgorithm {
         }
     }
 
-    /// Get nonce size in bytes
+    // Get nonce size in bytes
     pub fn nonce_size(&self) -> usize {
         match self {
             Self::Aes256Gcm => 12,
@@ -120,27 +120,27 @@ impl EncryptionAlgorithm {
     }
 }
 
-/// TDE configuration for a tablespace or column
+// TDE configuration for a tablespace or column
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TdeConfig {
-    /// Encryption algorithm
+    // Encryption algorithm
     pub algorithm: EncryptionAlgorithm,
-    /// Key identifier
+    // Key identifier
     pub key_id: String,
-    /// Key version
+    // Key version
     pub key_version: u32,
-    /// Compressed before encryption
+    // Compressed before encryption
     pub compress_before_encrypt: bool,
-    /// Enabled flag
+    // Enabled flag
     pub enabled: bool,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: i64,
-    /// Last rotation timestamp
+    // Last rotation timestamp
     pub last_rotated: Option<i64>,
 }
 
 impl TdeConfig {
-    /// Create new TDE configuration
+    // Create new TDE configuration
     pub fn new(algorithm: EncryptionAlgorithm, key_id: String) -> Self {
         Self {
             algorithm,
@@ -154,62 +154,62 @@ impl TdeConfig {
     }
 }
 
-/// Encrypted data container
+// Encrypted data container
 #[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedData {
-    /// Algorithm used
+    // Algorithm used
     pub algorithm: EncryptionAlgorithm,
-    /// Key version used
+    // Key version used
     pub key_version: u32,
-    /// Nonce/IV
+    // Nonce/IV
     pub nonce: Vec<u8>,
-    /// Encrypted ciphertext (includes auth tag for AEAD)
+    // Encrypted ciphertext (includes auth tag for AEAD)
     pub ciphertext: Vec<u8>,
-    /// Optional additional authenticated data
+    // Optional additional authenticated data
     pub aad: Option<Vec<u8>>,
 }
 
-/// Tablespace encryption configuration
+// Tablespace encryption configuration
 #[derive(Debug, Clone)]
 struct TablespaceEncryption {
-    /// Tablespace name
+    // Tablespace name
     name: String,
-    /// TDE configuration
+    // TDE configuration
     config: TdeConfig,
-    /// Data encryption key (in memory, encrypted at rest)
+    // Data encryption key (in memory, encrypted at rest)
     dek: Vec<u8>,
 }
 
-/// Column encryption configuration
+// Column encryption configuration
 #[derive(Debug, Clone)]
 struct ColumnEncryption {
-    /// Table name
+    // Table name
     table_name: String,
-    /// Column name
+    // Column name
     column_name: String,
-    /// TDE configuration
+    // TDE configuration
     config: TdeConfig,
-    /// Data encryption key
+    // Data encryption key
     dek: Vec<u8>,
 }
 
-/// HSM (Hardware Security Module) interface
+// HSM (Hardware Security Module) interface
 pub trait HsmProvider: Send + Sync {
-    /// Encrypt data using HSM
+    // Encrypt data using HSM
     fn hsm_encrypt(&self, key_id: &str, plaintext: &[u8]) -> Result<Vec<u8>>;
 
-    /// Decrypt data using HSM
+    // Decrypt data using HSM
     fn hsm_decrypt(&self, key_id: &str, ciphertext: &[u8]) -> Result<Vec<u8>>;
 
-    /// Generate key in HSM
+    // Generate key in HSM
     fn hsm_generate_key(&self, key_id: &str, algorithm: &str) -> Result<()>;
 
-    /// Check HSM availability
+    // Check HSM availability
     fn is_available(&self) -> bool;
 }
 
-/// Mock HSM provider for testing
+// Mock HSM provider for testing
 pub struct MockHsmProvider;
 
 impl HsmProvider for MockHsmProvider {
@@ -232,35 +232,35 @@ impl HsmProvider for MockHsmProvider {
     }
 }
 
-/// Main TDE Engine
+// Main TDE Engine
 pub struct TdeEngine {
-    /// Tablespace encryption configurations
+    // Tablespace encryption configurations
     tablespace_configs: RwLock<HashMap<String, TablespaceEncryption>>,
-    /// Column encryption configurations
+    // Column encryption configurations
     column_configs: RwLock<HashMap<String, ColumnEncryption>>,
-    /// HSM provider (optional)
+    // HSM provider (optional)
     hsm_provider: Option<Box<dyn HsmProvider>>,
-    /// Performance metrics
+    // Performance metrics
     metrics: RwLock<TdeMetrics>,
 }
 
-/// TDE performance metrics
+// TDE performance metrics
 #[derive(Debug, Default)]
 struct TdeMetrics {
-    /// Total encryptions
+    // Total encryptions
     total_encryptions: u64,
-    /// Total decryptions
+    // Total decryptions
     total_decryptions: u64,
-    /// Total bytes encrypted
+    // Total bytes encrypted
     bytes_encrypted: u64,
-    /// Total bytes decrypted
+    // Total bytes decrypted
     bytes_decrypted: u64,
-    /// Failed operations
+    // Failed operations
     failed_operations: u64,
 }
 
 impl TdeEngine {
-    /// Create a new TDE engine
+    // Create a new TDE engine
     pub fn new() -> Result<Self> {
         Ok(Self {
             tablespace_configs: RwLock::new(HashMap::new()),
@@ -270,7 +270,7 @@ impl TdeEngine {
         })
     }
 
-    /// Create with HSM provider
+    // Create with HSM provider
     pub fn with_hsm(hsm_provider: Box<dyn HsmProvider>) -> Result<Self> {
         Ok(Self {
             tablespace_configs: RwLock::new(HashMap::new()),
@@ -280,7 +280,7 @@ impl TdeEngine {
         })
     }
 
-    /// Enable tablespace-level encryption
+    // Enable tablespace-level encryption
     pub fn enable_tablespace_encryption(
         &mut self,
         tablespace_name: &str,
@@ -313,7 +313,7 @@ impl TdeEngine {
         Ok(())
     }
 
-    /// Enable column-level encryption
+    // Enable column-level encryption
     pub fn enable_column_encryption(
         &mut self,
         table_name: &str,
@@ -349,7 +349,7 @@ impl TdeEngine {
         Ok(())
     }
 
-    /// Encrypt data for a tablespace
+    // Encrypt data for a tablespace
     #[inline]
     pub fn encrypt_tablespace_data(
         &self,
@@ -389,7 +389,7 @@ impl TdeEngine {
         })
     }
 
-    /// Decrypt data for a tablespace
+    // Decrypt data for a tablespace
     #[inline]
     pub fn decrypt_tablespace_data(
         &self,
@@ -418,7 +418,7 @@ impl TdeEngine {
         Ok(plaintext)
     }
 
-    /// Encrypt column data
+    // Encrypt column data
     #[inline]
     pub fn encrypt_column_data(
         &self,
@@ -462,7 +462,7 @@ impl TdeEngine {
         })
     }
 
-    /// Decrypt column data
+    // Decrypt column data
     #[inline]
     pub fn decrypt_column_data(
         &self,
@@ -492,8 +492,8 @@ impl TdeEngine {
         Ok(plaintext)
     }
 
-    /// Batch encrypt multiple data blocks for a tablespace
-    /// Amortizes cipher setup costs across multiple operations
+    // Batch encrypt multiple data blocks for a tablespace
+    // Amortizes cipher setup costs across multiple operations
     #[inline]
     pub fn batch_encrypt_tablespace_data(
         &self,
@@ -540,8 +540,8 @@ impl TdeEngine {
         Ok(results)
     }
 
-    /// Batch decrypt multiple data blocks for a tablespace
-    /// Amortizes cipher setup costs across multiple operations
+    // Batch decrypt multiple data blocks for a tablespace
+    // Amortizes cipher setup costs across multiple operations
     #[inline]
     pub fn batch_decrypt_tablespace_data(
         &self,
@@ -575,7 +575,7 @@ impl TdeEngine {
         Ok(results)
     }
 
-    /// Rotate encryption key for a tablespace
+    // Rotate encryption key for a tablespace
     pub fn rotate_tablespace_key(
         &mut self,
         tablespace_name: &str,
@@ -598,7 +598,7 @@ impl TdeEngine {
         Ok(())
     }
 
-    /// Rotate encryption key for a column
+    // Rotate encryption key for a column
     pub fn rotate_column_key(
         &mut self,
         table_name: &str,
@@ -623,7 +623,7 @@ impl TdeEngine {
         Ok(())
     }
 
-    /// Internal encryption implementation
+    // Internal encryption implementation
     #[inline]
     fn encrypt_internal(
         &self,
@@ -642,7 +642,7 @@ impl TdeEngine {
         }
     }
 
-    /// Internal decryption implementation
+    // Internal decryption implementation
     #[inline]
     fn decrypt_internal(
         &self,
@@ -662,7 +662,7 @@ impl TdeEngine {
         }
     }
 
-    /// Encrypt using AES-256-GCM
+    // Encrypt using AES-256-GCM
     #[inline]
     fn encrypt_aes_gcm(
         &self,
@@ -691,7 +691,7 @@ impl TdeEngine {
         Ok((nonce_bytes, ciphertext))
     }
 
-    /// Decrypt using AES-256-GCM
+    // Decrypt using AES-256-GCM
     #[inline]
     fn decrypt_aes_gcm(
         &self,
@@ -717,7 +717,7 @@ impl TdeEngine {
             .map_err(|e| DbError::Encryption(format!("AES-GCM decryption failed: {}", e)))
     }
 
-    /// Encrypt using ChaCha20-Poly1305
+    // Encrypt using ChaCha20-Poly1305
     #[inline]
     fn encrypt_chacha20(
         &self,
@@ -746,7 +746,7 @@ impl TdeEngine {
         Ok((nonce_bytes, ciphertext))
     }
 
-    /// Decrypt using ChaCha20-Poly1305
+    // Decrypt using ChaCha20-Poly1305
     #[inline]
     fn decrypt_chacha20(
         &self,
@@ -772,7 +772,7 @@ impl TdeEngine {
             .map_err(|e| DbError::Encryption(format!("ChaCha20 decryption failed: {}", e)))
     }
 
-    /// Generate cryptographically secure nonce
+    // Generate cryptographically secure nonce
     fn generate_nonce(&self, size: usize) -> Vec<u8> {
         use rand::RngCore;
         let mut nonce = vec![0u8; size];
@@ -780,23 +780,23 @@ impl TdeEngine {
         nonce
     }
 
-    /// Get tablespace encryption status
+    // Get tablespace encryption status
     pub fn is_tablespace_encrypted(&self, tablespace_name: &str) -> bool {
         self.tablespace_configs.read().contains_key(tablespace_name)
     }
 
-    /// Get column encryption status
+    // Get column encryption status
     pub fn is_column_encrypted(&self, table_name: &str, column_name: &str) -> bool {
         let key = format!("{}:{}", table_name, column_name);
         self.column_configs.read().contains_key(&key)
     }
 
-    /// List all encrypted tablespaces
+    // List all encrypted tablespaces
     pub fn list_encrypted_tablespaces(&self) -> Vec<String> {
         self.tablespace_configs.read().keys().cloned().collect()
     }
 
-    /// List all encrypted columns
+    // List all encrypted columns
     pub fn list_encrypted_columns(&self) -> Vec<(String, String)> {
         self.column_configs.read()
             .values()
@@ -804,13 +804,13 @@ impl TdeEngine {
             .collect()
     }
 
-    /// Get encryption metrics
+    // Get encryption metrics
     pub fn get_metrics(&self) -> (u64, u64, u64, u64) {
         let m = self.metrics.read();
         (m.total_encryptions, m.total_decryptions, m.bytes_encrypted, m.bytes_decrypted)
     }
 
-    /// Disable tablespace encryption (must re-encrypt data first)
+    // Disable tablespace encryption (must re-encrypt data first)
     pub fn disable_tablespace_encryption(&mut self, tablespace_name: &str) -> Result<()> {
         self.tablespace_configs.write().remove(tablespace_name)
             .ok_or_else(|| DbError::NotFound(format!(
@@ -819,7 +819,7 @@ impl TdeEngine {
         Ok(())
     }
 
-    /// Disable column encryption
+    // Disable column encryption
     pub fn disable_column_encryption(
         &mut self,
         table_name: &str,

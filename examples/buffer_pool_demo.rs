@@ -1,7 +1,7 @@
-//! Buffer Pool Management Demo
-//!
-//! This example demonstrates the comprehensive buffer pool management system
-//! including multi-tier pools, caching, replacement policies, and dirty page management.
+// Buffer Pool Management Demo
+//
+// This example demonstrates the comprehensive buffer pool management system
+// including multi-tier pools, caching, replacement policies, and dirty page management.
 
 use rusty_db::memory::buffer_pool::{
     BufferPoolManager,

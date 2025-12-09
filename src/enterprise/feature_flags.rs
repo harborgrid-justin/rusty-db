@@ -49,38 +49,38 @@ use futures::future::BoxFuture;
 
 use crate::{Result, DbError};
 
-/// Feature flag state
+// Feature flag state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FeatureState {
-    /// Feature is enabled for all users
+    // Feature is enabled for all users
     Enabled,
-    /// Feature is disabled for all users
+    // Feature is disabled for all users
     Disabled,
-    /// Feature is in conditional rollout
+    // Feature is in conditional rollout
     Conditional,
 }
 
-/// Rollout strategy for gradual feature deployment
+// Rollout strategy for gradual feature deployment
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum RolloutStrategy {
-    /// Enable for all users
+    // Enable for all users
     All,
-    /// Disable for all users
+    // Disable for all users
     None,
-    /// Enable for specific percentage of users (0-100)
+    // Enable for specific percentage of users (0-100)
     Percentage(u8),
-    /// Enable for specific user IDs
+    // Enable for specific user IDs
     UserIds(HashSet<String>),
-    /// Enable for specific user groups
+    // Enable for specific user groups
     Groups(HashSet<String>),
-    /// Enable based on custom attributes
+    // Enable based on custom attributes
     Attributes(HashMap<String, Vec<String>>),
-    /// Time-based rollout (start time, end time)
+    // Time-based rollout (start time, end time)
     TimeBased(SystemTime, SystemTime),
 }
 
 impl RolloutStrategy {
-    /// Check if rollout applies to the given context
+    // Check if rollout applies to the given context
     pub fn applies(&self, context: &EvaluationContext) -> bool {
         match self {
             RolloutStrategy::All => true,
@@ -106,7 +106,7 @@ impl RolloutStrategy {
         }
     }
 
-    /// Calculate hash-based percentage for consistent bucketing
+    // Calculate hash-based percentage for consistent bucketing
     fn hash_percentage(user_id: &str) -> u8 {
         let mut hasher = Sha256::new();
         hasher.update(user_id.as_bytes());
@@ -116,23 +116,23 @@ impl RolloutStrategy {
     }
 }
 
-/// Evaluation context for feature flag decisions
+// Evaluation context for feature flag decisions
 #[derive(Debug, Clone, Default)]
 pub struct EvaluationContext {
-    /// User identifier
+    // User identifier
     pub user_id: String,
-    /// User groups/roles
+    // User groups/roles
     pub groups: HashSet<String>,
-    /// Custom attributes
+    // Custom attributes
     pub attributes: HashMap<String, String>,
-    /// Session identifier
+    // Session identifier
     pub session_id: Option<String>,
-    /// Request timestamp
+    // Request timestamp
     pub timestamp: Option<SystemTime>,
 }
 
 impl EvaluationContext {
-    /// Create a new context for a user
+    // Create a new context for a user
     pub fn for_user(user_id: impl Into<String>) -> Self {
         Self {
             user_id: user_id.into(),
@@ -143,50 +143,50 @@ impl EvaluationContext {
         }
     }
 
-    /// Add a group to the context
+    // Add a group to the context
     pub fn with_group(mut self, group: impl Into<String>) -> Self {
         self.groups.insert(group.into());
         self
     }
 
-    /// Add an attribute to the context
+    // Add an attribute to the context
     pub fn with_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.attributes.insert(key.into(), value.into());
         self
     }
 }
 
-/// Feature flag definition
+// Feature flag definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Feature {
-    /// Unique feature identifier
+    // Unique feature identifier
     pub id: String,
-    /// Feature name
+    // Feature name
     pub name: String,
-    /// Feature description
+    // Feature description
     pub description: String,
-    /// Current state
+    // Current state
     pub state: FeatureState,
-    /// Rollout strategy
+    // Rollout strategy
     pub rollout: RolloutStrategy,
-    /// Feature dependencies (must be enabled)
+    // Feature dependencies (must be enabled)
     pub dependencies: HashSet<String>,
-    /// Feature conflicts (cannot be enabled together)
+    // Feature conflicts (cannot be enabled together)
     pub conflicts: HashSet<String>,
-    /// Feature tags for organization
+    // Feature tags for organization
     pub tags: HashSet<String>,
-    /// Feature owner
+    // Feature owner
     pub owner: String,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: SystemTime,
-    /// Last updated timestamp
+    // Last updated timestamp
     pub updated_at: SystemTime,
-    /// Feature metadata
+    // Feature metadata
     pub metadata: HashMap<String, String>,
 }
 
 impl Feature {
-    /// Create a new feature flag
+    // Create a new feature flag
     pub fn new(name: impl Into<String>) -> Self {
         let name = name.into();
         Self {
@@ -205,106 +205,106 @@ impl Feature {
         }
     }
 
-    /// Set feature description
+    // Set feature description
     pub fn with_description(mut self, description: impl Into<String>) -> Self {
         self.description = description.into();
         self
     }
 
-    /// Set feature state
+    // Set feature state
     pub fn with_state(mut self, state: FeatureState) -> Self {
         self.state = state;
         self
     }
 
-    /// Set rollout strategy
+    // Set rollout strategy
     pub fn with_rollout(mut self, rollout: RolloutStrategy) -> Self {
         self.rollout = rollout;
         self.state = FeatureState::Conditional;
         self
     }
 
-    /// Add a dependency
+    // Add a dependency
     pub fn with_dependency(mut self, feature: impl Into<String>) -> Self {
         self.dependencies.insert(feature.into());
         self
     }
 
-    /// Add a conflict
+    // Add a conflict
     pub fn with_conflict(mut self, feature: impl Into<String>) -> Self {
         self.conflicts.insert(feature.into());
         self
     }
 
-    /// Add a tag
+    // Add a tag
     pub fn with_tag(mut self, tag: impl Into<String>) -> Self {
         self.tags.insert(tag.into());
         self
     }
 
-    /// Set owner
+    // Set owner
     pub fn with_owner(mut self, owner: impl Into<String>) -> Self {
         self.owner = owner.into();
         self
     }
 }
 
-/// Feature flag evaluation result
+// Feature flag evaluation result
 #[derive(Debug, Clone)]
 pub struct EvaluationResult {
-    /// Whether the feature is enabled
+    // Whether the feature is enabled
     pub enabled: bool,
-    /// Reason for the decision
+    // Reason for the decision
     pub reason: String,
-    /// Variant for A/B testing (if applicable)
+    // Variant for A/B testing (if applicable)
     pub variant: Option<String>,
 }
 
-/// Feature usage statistics
+// Feature usage statistics
 #[derive(Debug, Clone, Default)]
 pub struct FeatureStats {
-    /// Total evaluations
+    // Total evaluations
     pub total_evaluations: u64,
-    /// Enabled count
+    // Enabled count
     pub enabled_count: u64,
-    /// Disabled count
+    // Disabled count
     pub disabled_count: u64,
-    /// Unique users evaluated
+    // Unique users evaluated
     pub unique_users: HashSet<String>,
-    /// Last evaluation time
+    // Last evaluation time
     pub last_evaluated: Option<SystemTime>,
 }
 
-/// A/B test variant configuration
+// A/B test variant configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Variant {
-    /// Variant name
+    // Variant name
     pub name: String,
-    /// Variant weight (for distribution)
+    // Variant weight (for distribution)
     pub weight: u8,
-    /// Variant configuration
+    // Variant configuration
     pub config: HashMap<String, String>,
 }
 
-/// A/B test definition
+// A/B test definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ABTest {
-    /// Test identifier
+    // Test identifier
     pub id: String,
-    /// Feature being tested
+    // Feature being tested
     pub feature_id: String,
-    /// Test name
+    // Test name
     pub name: String,
-    /// Test variants
+    // Test variants
     pub variants: Vec<Variant>,
-    /// Test duration
+    // Test duration
     pub duration: Duration,
-    /// Test start time
+    // Test start time
     pub started_at: SystemTime,
 }
 
 impl ABTest {
-    /// Select a variant for the given user
+    // Select a variant for the given user
     pub fn select_variant(&self, user_id: &str) -> Option<&Variant> {
         if self.variants.is_empty() {
             return None;
@@ -335,20 +335,20 @@ impl ABTest {
     }
 }
 
-/// Feature flag manager
+// Feature flag manager
 pub struct FeatureFlagManager {
-    /// All registered features
+    // All registered features
     features: Arc<RwLock<HashMap<String, Feature>>>,
-    /// Feature usage statistics
+    // Feature usage statistics
     stats: Arc<RwLock<HashMap<String, FeatureStats>>>,
-    /// Active A/B tests
+    // Active A/B tests
     ab_tests: Arc<RwLock<HashMap<String, ABTest>>>,
-    /// Overrides for testing (feature_id -> enabled)
+    // Overrides for testing (feature_id -> enabled)
     overrides: Arc<RwLock<HashMap<String, bool>>>,
 }
 
 impl FeatureFlagManager {
-    /// Create a new feature flag manager
+    // Create a new feature flag manager
     pub fn new() -> Self {
         Self {
             features: Arc::new(RwLock::new(HashMap::new())),
@@ -358,7 +358,7 @@ impl FeatureFlagManager {
         }
     }
 
-    /// Register a new feature
+    // Register a new feature
     pub async fn register(&self, feature: Feature) -> Result<()> {
         // Check for conflicts with existing features
         {
@@ -381,7 +381,7 @@ impl FeatureFlagManager {
         Ok(())
     }
 
-    /// Unregister a feature
+    // Unregister a feature
     pub async fn unregister(&self, name: &str) -> Result<()> {
         let mut features = self.features.write().await;
         features.remove(name)
@@ -390,12 +390,12 @@ impl FeatureFlagManager {
         Ok(())
     }
 
-    /// Check if a feature is enabled for the given context
+    // Check if a feature is enabled for the given context
     pub async fn is_enabled(&self, name: &str, context: &EvaluationContext) -> bool {
         self.evaluate(name, context).await.map(|r| r.enabled).unwrap_or(false)
     }
 
-    /// Evaluate a feature flag
+    // Evaluate a feature flag
     pub fn evaluate<'a>(&'a self, name: &'a str, context: &'a EvaluationContext) -> BoxFuture<'a, Result<EvaluationResult>> {
         Box::pin(async move {
             // Check for overrides first (for testing)
@@ -464,7 +464,7 @@ impl FeatureFlagManager {
         })
     }
 
-    /// Record feature evaluation for statistics
+    // Record feature evaluation for statistics
     async fn record_evaluation(&self, name: &str, context: &EvaluationContext, enabled: bool) {
         let mut stats = self.stats.write().await;
         let stat = stats.entry(name.to_string()).or_insert_with(FeatureStats::default);
@@ -479,7 +479,7 @@ impl FeatureFlagManager {
         stat.last_evaluated = Some(SystemTime::now());
     }
 
-    /// Update a feature
+    // Update a feature
     pub async fn update(&self, name: &str, updater: impl FnOnce(&mut Feature)) -> Result<()> {
         let mut features = self.features.write().await;
         let feature = features.get_mut(name)
@@ -491,17 +491,17 @@ impl FeatureFlagManager {
         Ok(())
     }
 
-    /// Enable a feature
+    // Enable a feature
     pub async fn enable(&self, name: &str) -> Result<()> {
         self.update(name, |f| f.state = FeatureState::Enabled).await
     }
 
-    /// Disable a feature
+    // Disable a feature
     pub async fn disable(&self, name: &str) -> Result<()> {
         self.update(name, |f| f.state = FeatureState::Disabled).await
     }
 
-    /// Set feature rollout percentage
+    // Set feature rollout percentage
     pub async fn set_rollout_percentage(&self, name: &str, percentage: u8) -> Result<()> {
         if percentage > 100 {
             return Err(DbError::InvalidInput("Percentage must be 0-100".to_string()));
@@ -513,19 +513,19 @@ impl FeatureFlagManager {
         }).await
     }
 
-    /// Get feature by name
+    // Get feature by name
     pub async fn get(&self, name: &str) -> Option<Feature> {
         let features = self.features.read().await;
         features.get(name).cloned()
     }
 
-    /// Get all features
+    // Get all features
     pub async fn list(&self) -> Vec<Feature> {
         let features = self.features.read().await;
         features.values().cloned().collect()
     }
 
-    /// Get features by tag
+    // Get features by tag
     pub async fn list_by_tag(&self, tag: &str) -> Vec<Feature> {
         let features = self.features.read().await;
         features.values()
@@ -534,13 +534,13 @@ impl FeatureFlagManager {
             .collect()
     }
 
-    /// Get feature statistics
+    // Get feature statistics
     pub async fn get_stats(&self, name: &str) -> Option<FeatureStats> {
         let stats = self.stats.read().await;
         stats.get(name).cloned()
     }
 
-    /// Create an A/B test
+    // Create an A/B test
     pub async fn create_ab_test(&self, test: ABTest) -> Result<()> {
         // Verify feature exists
         {
@@ -558,25 +558,25 @@ impl FeatureFlagManager {
         Ok(())
     }
 
-    /// Get A/B test
+    // Get A/B test
     pub async fn get_ab_test(&self, id: &str) -> Option<ABTest> {
         let tests = self.ab_tests.read().await;
         tests.get(id).cloned()
     }
 
-    /// Set override for testing
+    // Set override for testing
     pub async fn set_override(&self, name: impl Into<String>, enabled: bool) {
         let mut overrides = self.overrides.write().await;
         overrides.insert(name.into(), enabled);
     }
 
-    /// Clear override
+    // Clear override
     pub async fn clear_override(&self, name: &str) {
         let mut overrides = self.overrides.write().await;
         overrides.remove(name);
     }
 
-    /// Clear all overrides
+    // Clear all overrides
     pub async fn clear_all_overrides(&self) {
         let mut overrides = self.overrides.write().await;
         overrides.clear();

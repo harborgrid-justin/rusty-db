@@ -134,55 +134,55 @@ pub struct Module<T> {
 
 ### Module Documentation
 ```rust
-//! # Module Name
-//!
-//! Brief description of what this module provides.
-//!
-//! ## Overview
-//!
-//! This module implements [feature] for [purpose].
-//!
-//! ## Architecture
-//!
-//! ```text
-//! ┌─────────┐     ┌─────────┐
-//! │ TypeA   │────▶│ TypeB   │
-//! └─────────┘     └─────────┘
-//!       │
-//!       ▼
-//! ┌─────────┐
-//! │ TypeC   │
-//! └─────────┘
-//! ```
-//!
-//! ## Quick Start
-//!
-//! ```rust
-//! use rusty_db::module::{TypeA, TypeB};
-//!
-//! // Initialize
-//! let a = TypeA::new();
-//!
-//! // Use
-//! let result = a.operation()?;
-//! ```
-//!
-//! ## Features
-//!
-//! - **Feature 1**: Description
-//! - **Feature 2**: Description
-//!
-//! ## Configuration
-//!
-//! | Option | Default | Description |
-//! |--------|---------|-------------|
-//! | `opt1` | `100`   | Controls X  |
-//! | `opt2` | `true`  | Enables Y   |
-//!
-//! ## See Also
-//!
-//! - [`other_module`] - Related functionality
-//! - [External Resource](https://example.com)
+// # Module Name
+//
+// Brief description of what this module provides.
+//
+// ## Overview
+//
+// This module implements [feature] for [purpose].
+//
+// ## Architecture
+//
+// ```text
+// ┌─────────┐     ┌─────────┐
+// │ TypeA   │────▶│ TypeB   │
+// └─────────┘     └─────────┘
+//       │
+//       ▼
+// ┌─────────┐
+// │ TypeC   │
+// └─────────┘
+// ```
+//
+// ## Quick Start
+//
+// ```rust
+// use rusty_db::module::{TypeA, TypeB};
+//
+// // Initialize
+// let a = TypeA::new();
+//
+// // Use
+// let result = a.operation()?;
+// ```
+//
+// ## Features
+//
+// - **Feature 1**: Description
+// - **Feature 2**: Description
+//
+// ## Configuration
+//
+// | Option | Default | Description |
+// |--------|---------|-------------|
+// | `opt1` | `100`   | Controls X  |
+// | `opt2` | `true`  | Enables Y   |
+//
+// ## See Also
+//
+// - [`other_module`] - Related functionality
+// - [External Resource](https://example.com)
 ```
 
 ## Example Synthesis Patterns

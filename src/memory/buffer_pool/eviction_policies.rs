@@ -1,19 +1,19 @@
-//! Buffer Replacement Policies
-//!
-//! Clock-Sweep, LRU-K, Touch Count Optimizer, and Cost-Aware replacement.
+// Buffer Replacement Policies
+//
+// Clock-Sweep, LRU-K, Touch Count Optimizer, and Cost-Aware replacement.
 
 use super::common::*;
 use serde::{Serialize, Deserialize};
 
-/// Clock-Sweep (Second-Chance) algorithm implementation
+// Clock-Sweep (Second-Chance) algorithm implementation
 pub struct ClockSweepPolicy {
-    /// Clock hand position
+    // Clock hand position
     hand: AtomicUsize,
-    /// Buffer frames
+    // Buffer frames
     frames: Vec<Arc<BufferFrame>>,
-    /// Reference bits
+    // Reference bits
     reference_bits: Vec<AtomicBool>,
-    /// Statistics
+    // Statistics
     stats: ClockStats,
 }
 
@@ -46,7 +46,7 @@ impl ClockSweepPolicy {
         }
     }
 
-    /// Find victim page for eviction
+    // Find victim page for eviction
     pub fn find_victim(&self) -> Option<usize> {
         let capacity = self.frames.len();
         let mut current_hand = self.hand.load(Ordering::Relaxed);
@@ -76,19 +76,19 @@ impl ClockSweepPolicy {
         }
     }
 
-    /// Set reference bit for a frame
+    // Set reference bit for a frame
     pub fn set_reference(&self, frame_idx: usize) {
         if frame_idx < self.reference_bits.len() {
             self.reference_bits[frame_idx].store(true, Ordering::Relaxed);
         }
     }
 
-    /// Get frame at index
+    // Get frame at index
     pub fn get_frame(&self, idx: usize) -> Option<Arc<BufferFrame>> {
         self.frames.get(idx).cloned()
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> ClockStatsSnapshot {
         ClockStatsSnapshot {
             sweeps: self.stats.sweeps.load(Ordering::Relaxed),
@@ -105,15 +105,15 @@ pub struct ClockStatsSnapshot {
     pub second_chances: u64,
 }
 
-/// LRU-K (K = 2) implementation - tracks K most recent accesses
+// LRU-K (K = 2) implementation - tracks K most recent accesses
 pub struct LruKPolicy {
-    /// K value (typically 2)
+    // K value (typically 2)
     k: usize,
-    /// Access history for each page
+    // Access history for each page
     history: PRwLock<HashMap<PageId, VecDeque<Instant>>>,
-    /// Correlation period for history
+    // Correlation period for history
     corr_period: Duration,
-    /// Statistics
+    // Statistics
     stats: LruKStats,
 }
 
@@ -138,7 +138,7 @@ impl LruKPolicy {
         }
     }
 
-    /// Record page access
+    // Record page access
     pub fn access(&self, page_id: PageId) {
         self.stats.accesses.fetch_add(1, Ordering::Relaxed);
 
@@ -154,7 +154,7 @@ impl LruKPolicy {
         }
     }
 
-    /// Calculate backward K-distance for a page
+    // Calculate backward K-distance for a page
     pub fn backward_k_distance(&self, page_id: PageId) -> Option<Duration> {
         let history = self.history.read();
         if let Some(page_history) = history.get(&page_id) {
@@ -171,7 +171,7 @@ impl LruKPolicy {
         None
     }
 
-    /// Find victim page (largest backward K-distance)
+    // Find victim page (largest backward K-distance)
     pub fn find_victim(&self, candidates: &[PageId]) -> Option<PageId> {
         let mut max_distance = Duration::ZERO;
         let mut victim = None;
@@ -195,7 +195,7 @@ impl LruKPolicy {
         victim
     }
 
-    /// Clean old history entries
+    // Clean old history entries
     pub fn clean_old_history(&self) {
         let mut history = self.history.write();
         let cutoff = Instant::now() - self.corr_period;
@@ -206,7 +206,7 @@ impl LruKPolicy {
         });
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> LruKStatsSnapshot {
         LruKStatsSnapshot {
             accesses: self.stats.accesses.load(Ordering::Relaxed),
@@ -225,13 +225,13 @@ pub struct LruKStatsSnapshot {
     pub history_entries: usize,
 }
 
-/// Touch count optimization for hot pages
+// Touch count optimization for hot pages
 pub struct TouchCountOptimizer {
-    /// Touch counts per page
+    // Touch counts per page
     touch_counts: PRwLock<HashMap<PageId, AtomicU64>>,
-    /// Hot threshold
+    // Hot threshold
     hot_threshold: u64,
-    /// Statistics
+    // Statistics
     stats: TouchCountStats,
 }
 
@@ -257,7 +257,7 @@ impl TouchCountOptimizer {
         }
     }
 
-    /// Record page touch
+    // Record page touch
     pub fn touch(&self, page_id: PageId) {
         self.stats.total_touches.fetch_add(1, Ordering::Relaxed);
 
@@ -271,7 +271,7 @@ impl TouchCountOptimizer {
         }
     }
 
-    /// Get touch count for a page
+    // Get touch count for a page
     pub fn get_count(&self, page_id: PageId) -> u64 {
         let counts = self.touch_counts.read();
         counts.get(&page_id)
@@ -279,7 +279,7 @@ impl TouchCountOptimizer {
             .unwrap_or(0)
     }
 
-    /// Determine page temperature
+    // Determine page temperature
     pub fn temperature(&self, page_id: PageId) -> BufferTier {
         let count = self.get_count(page_id);
 
@@ -292,7 +292,7 @@ impl TouchCountOptimizer {
         }
     }
 
-    /// Reset touch count for a page
+    // Reset touch count for a page
     pub fn reset(&self, page_id: PageId) {
         let counts = self.touch_counts.read();
         if let Some(count) = counts.get(&page_id) {
@@ -300,7 +300,7 @@ impl TouchCountOptimizer {
         }
     }
 
-    /// Decay all touch counts (age out old activity)
+    // Decay all touch counts (age out old activity)
     pub fn decay_all(&self, factor: f64) {
         let counts = self.touch_counts.read();
         for (_, count) in counts.iter() {
@@ -310,7 +310,7 @@ impl TouchCountOptimizer {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> TouchCountStatsSnapshot {
         let counts = self.touch_counts.read();
         let mut hot = 0u64;
@@ -345,16 +345,16 @@ pub struct TouchCountStatsSnapshot {
     pub cold_pages: u64,
 }
 
-/// Alias for TouchCountStatsSnapshot for compatibility
+// Alias for TouchCountStatsSnapshot for compatibility
 pub type TouchOptimizerStatsSnapshot = TouchCountStatsSnapshot;
 
-/// Cost-aware replacement policy
+// Cost-aware replacement policy
 pub struct CostAwareReplacement {
-    /// Cost per page (based on load time, etc.)
+    // Cost per page (based on load time, etc.)
     page_costs: PRwLock<HashMap<PageId, f64>>,
-    /// Access frequency
+    // Access frequency
     access_freq: PRwLock<HashMap<PageId, AtomicU64>>,
-    /// Statistics
+    // Statistics
     stats: CostAwareStats,
 }
 
@@ -376,13 +376,13 @@ impl CostAwareReplacement {
         }
     }
 
-    /// Set page load cost
+    // Set page load cost
     pub fn set_cost(&self, page_id: PageId, cost: f64) {
         let mut costs = self.page_costs.write();
         costs.insert(page_id, cost);
     }
 
-    /// Record page access
+    // Record page access
     pub fn access(&self, page_id: PageId) {
         let freq = self.access_freq.read();
         if let Some(count) = freq.get(&page_id) {
@@ -394,7 +394,7 @@ impl CostAwareReplacement {
         }
     }
 
-    /// Calculate replacement value (higher = keep, lower = evict)
+    // Calculate replacement value (higher = keep, lower = evict)
     pub fn replacement_value(&self, page_id: PageId) -> f64 {
         self.stats.cost_calculations.fetch_add(1, Ordering::Relaxed);
 
@@ -410,7 +410,7 @@ impl CostAwareReplacement {
         cost * frequency
     }
 
-    /// Find victim page (lowest replacement value)
+    // Find victim page (lowest replacement value)
     pub fn find_victim(&self, candidates: &[PageId]) -> Option<PageId> {
         let mut min_value = f64::MAX;
         let mut victim = None;
@@ -430,7 +430,7 @@ impl CostAwareReplacement {
         victim
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> CostAwareStatsSnapshot {
         CostAwareStatsSnapshot {
             cost_calculations: self.stats.cost_calculations.load(Ordering::Relaxed),
@@ -446,4 +446,3 @@ pub struct CostAwareStatsSnapshot {
     pub evictions: u64,
     pub tracked_pages: usize,
 }
-

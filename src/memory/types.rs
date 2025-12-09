@@ -80,7 +80,7 @@ use std::time::{Duration};
 use thiserror::Error;
 use uuid::Uuid;
 
-/// Memory allocator specific errors
+// Memory allocator specific errors
 #[derive(Error, Debug)]
 pub enum MemoryError {
     #[error("Out of memory: {reason}")]
@@ -117,65 +117,65 @@ pub enum MemoryError {
     InvalidConfiguration { field: String, reason: String },
 }
 
-/// Constants for memory management
+// Constants for memory management
 pub mod constants {
-    /// Minimum allocation size (16 bytes for alignment)
+    // Minimum allocation size (16 bytes for alignment)
     pub const MIN_ALLOC_SIZE: usize = 16;
 
-    /// Maximum size for slab allocation (anything larger goes to large object allocator)
+    // Maximum size for slab allocation (anything larger goes to large object allocator)
     pub const MAX_SLAB_SIZE: usize = 32 * 1024; // 32KB
 
-    /// Number of size classes in the slab allocator
+    // Number of size classes in the slab allocator
     pub const NUM_SIZE_CLASSES: usize = 64;
 
-    /// Slab size (typically 2MB for huge page alignment)
+    // Slab size (typically 2MB for huge page alignment)
     pub const SLAB_SIZE: usize = 2 * 1024 * 1024;
 
-    /// Magazine capacity (number of objects cached per CPU)
+    // Magazine capacity (number of objects cached per CPU)
     pub const MAGAZINE_CAPACITY: usize = 64;
 
-    /// Number of colors for cache line optimization
+    // Number of colors for cache line optimization
     pub const NUM_COLORS: usize = 8;
 
-    /// Large object threshold (use mmap directly)
+    // Large object threshold (use mmap directly)
     pub const LARGE_OBJECT_THRESHOLD: usize = 256 * 1024; // 256KB
 
-    /// Huge page size (2MB)
+    // Huge page size (2MB)
     pub const HUGE_PAGE_2MB: usize = 2 * 1024 * 1024;
 
-    /// Huge page size (1GB)
+    // Huge page size (1GB)
     pub const HUGE_PAGE_1GB: usize = 1024 * 1024 * 1024;
 
-    /// Memory pressure warning threshold (80% of total)
+    // Memory pressure warning threshold (80% of total)
     pub const MEMORY_PRESSURE_WARNING: f64 = 0.80;
 
-    /// Memory pressure critical threshold (90% of total)
+    // Memory pressure critical threshold (90% of total)
     pub const MEMORY_PRESSURE_CRITICAL: f64 = 0.90;
 
-    /// Memory pressure emergency threshold (95% of total)
+    // Memory pressure emergency threshold (95% of total)
     pub const MEMORY_PRESSURE_EMERGENCY: f64 = 0.95;
 
-    /// Maximum number of stack frames to capture for leak detection
+    // Maximum number of stack frames to capture for leak detection
     pub const MAX_STACK_FRAMES: usize = 32;
 
-    /// Memory guard pattern for corruption detection
+    // Memory guard pattern for corruption detection
     pub const GUARD_PATTERN: u64 = 0xDEADBEEFCAFEBABE;
 
-    /// Default arena size
+    // Default arena size
     pub const DEFAULT_ARENA_SIZE: usize = 64 * 1024; // 64KB
 
-    /// Default memory limit
+    // Default memory limit
     pub const DEFAULT_MEMORY_LIMIT: u64 = 1024 * 1024 * 1024; // 1GB
 }
 
-/// Memory context identifier
-///
-/// Provides type-safe identification for memory contexts with validation.
+// Memory context identifier
+//
+// Provides type-safe identification for memory contexts with validation.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct MemoryContextId(String);
 
 impl MemoryContextId {
-    /// Creates a new memory context ID with validation
+    // Creates a new memory context ID with validation
     pub fn new(id: impl Into<String>) -> Result<Self, MemoryError> {
         let id = id.into();
 
@@ -204,12 +204,12 @@ impl MemoryContextId {
         Ok(Self(id))
     }
 
-    /// Generates a new unique memory context ID
+    // Generates a new unique memory context ID
     pub fn generate() -> Self {
         Self(Uuid::new_v4().to_string())
     }
 
-    /// Returns the context ID as a string
+    // Returns the context ID as a string
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -221,26 +221,26 @@ impl fmt::Display for MemoryContextId {
     }
 }
 
-/// Allocation identifier for tracking
-///
-/// Unique identifier for individual memory allocations.
+// Allocation identifier for tracking
+//
+// Unique identifier for individual memory allocations.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct AllocationId(u64);
 
 impl AllocationId {
-    /// Creates a new allocation ID
+    // Creates a new allocation ID
     pub fn new(id: u64) -> Self {
         Self(id)
     }
 
-    /// Generates a new unique allocation ID
+    // Generates a new unique allocation ID
     pub fn generate() -> Self {
 use std::sync::atomic::{Ordering};
         static COUNTER: AtomicU64 = AtomicU64::new(1);
         Self(COUNTER.fetch_add(1, Ordering::Relaxed))
     }
 
-    /// Returns the allocation ID value
+    // Returns the allocation ID value
     pub fn value(&self) -> u64 {
         self.0
     }
@@ -252,62 +252,62 @@ impl fmt::Display for AllocationId {
     }
 }
 
-/// Memory allocation source component
-///
-/// Identifies which database component requested a memory allocation
-/// for tracking and debugging purposes.
+// Memory allocation source component
+//
+// Identifies which database component requested a memory allocation
+// for tracking and debugging purposes.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AllocationSource {
-    /// Storage engine allocation
+    // Storage engine allocation
     Storage {
         component: String,
         operation: String,
     },
-    /// Query execution allocation
+    // Query execution allocation
     Query {
         query_id: String,
         operation: String,
     },
-    /// Index operation allocation
+    // Index operation allocation
     Index {
         index_name: String,
         operation: String,
     },
-    /// Transaction management allocation
+    // Transaction management allocation
     Transaction {
         txn_id: String,
         operation: String,
     },
-    /// Buffer pool allocation
+    // Buffer pool allocation
     BufferPool {
         pool_id: String,
         operation: String,
     },
-    /// WAL (Write-Ahead Log) allocation
+    // WAL (Write-Ahead Log) allocation
     Wal {
         segment_id: String,
         operation: String,
     },
-    /// Replication system allocation
+    // Replication system allocation
     Replication {
         replica_id: String,
         operation: String,
     },
-    /// Network communication allocation
+    // Network communication allocation
     Network {
         connection_id: String,
         operation: String,
     },
-    /// Catalog system allocation
+    // Catalog system allocation
     Catalog {
         object_type: String,
         operation: String,
     },
-    /// Administrative operation allocation
+    // Administrative operation allocation
     Admin {
         admin_operation: String,
     },
-    /// Unknown or system allocation
+    // Unknown or system allocation
     Unknown,
 }
 
@@ -355,30 +355,30 @@ impl fmt::Display for AllocationSource {
     }
 }
 
-/// Memory context types for different allocation patterns
+// Memory context types for different allocation patterns
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ContextType {
-    /// Global top-level context
+    // Global top-level context
     TopLevel,
-    /// Per-connection context
+    // Per-connection context
     Connection,
-    /// Per-transaction context
+    // Per-transaction context
     Transaction,
-    /// Per-query context
+    // Per-query context
     Query,
-    /// Per-statement context
+    // Per-statement context
     Statement,
-    /// Per-operator context (join, sort, etc.)
+    // Per-operator context (join, sort, etc.)
     Operator,
-    /// Temporary context for short-lived allocations
+    // Temporary context for short-lived allocations
     Temporary,
-    /// Cache context for cached data
+    // Cache context for cached data
     Cache,
-    /// Index context for index operations
+    // Index context for index operations
     Index,
-    /// Buffer context for I/O buffers
+    // Buffer context for I/O buffers
     Buffer,
-    /// Custom context type
+    // Custom context type
     Custom(String),
 }
 
@@ -406,16 +406,16 @@ impl fmt::Display for ContextType {
     }
 }
 
-/// Memory pressure levels
+// Memory pressure levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum MemoryPressureLevel {
-    /// Normal memory usage
+    // Normal memory usage
     Normal,
-    /// Memory usage approaching limits (warning level)
+    // Memory usage approaching limits (warning level)
     Warning,
-    /// High memory usage (critical level)
+    // High memory usage (critical level)
     Critical,
-    /// Emergency memory usage (immediate action required)
+    // Emergency memory usage (immediate action required)
     Emergency,
 }
 
@@ -436,16 +436,16 @@ impl fmt::Display for MemoryPressureLevel {
     }
 }
 
-/// Allocator type classification
+// Allocator type classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AllocatorType {
-    /// Slab allocator for small fixed-size allocations
+    // Slab allocator for small fixed-size allocations
     Slab,
-    /// Arena allocator for bump allocation
+    // Arena allocator for bump allocation
     Arena,
-    /// Large object allocator for huge allocations
+    // Large object allocator for huge allocations
     LargeObject,
-    /// System allocator fallback
+    // System allocator fallback
     System,
 }
 
@@ -460,18 +460,18 @@ impl fmt::Display for AllocatorType {
     }
 }
 
-/// Memory zone types for specialized allocation patterns
+// Memory zone types for specialized allocation patterns
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ZoneType {
-    /// Normal zone for general allocations
+    // Normal zone for general allocations
     Normal,
-    /// DMA zone for device I/O
+    // DMA zone for device I/O
     Dma,
-    /// High memory zone
+    // High memory zone
     HighMem,
-    /// Movable zone for compaction
+    // Movable zone for compaction
     Movable,
-    /// Custom zone type
+    // Custom zone type
     Custom,
 }
 
@@ -481,14 +481,14 @@ impl Default for ZoneType {
     }
 }
 
-/// Huge page type for large allocations
+// Huge page type for large allocations
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HugePageType {
-    /// No huge pages
+    // No huge pages
     None,
-    /// 2MB huge pages
+    // 2MB huge pages
     Page2MB,
-    /// 1GB huge pages
+    // 1GB huge pages
     Page1GB,
 }
 
@@ -498,40 +498,40 @@ impl Default for HugePageType {
     }
 }
 
-/// Memory allocation statistics
-///
-/// Comprehensive statistics for memory allocation tracking and monitoring.
+// Memory allocation statistics
+//
+// Comprehensive statistics for memory allocation tracking and monitoring.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryStats {
-    /// Total bytes allocated since start
+    // Total bytes allocated since start
     pub total_allocated: u64,
-    /// Total bytes freed since start
+    // Total bytes freed since start
     pub total_freed: u64,
-    /// Current bytes in use
+    // Current bytes in use
     pub bytes_in_use: u64,
-    /// Number of active allocations
+    // Number of active allocations
     pub allocation_count: u64,
-    /// Peak memory usage
+    // Peak memory usage
     pub peak_usage: u64,
-    /// Number of total allocations
+    // Number of total allocations
     pub total_allocations: u64,
-    /// Number of total deallocations
+    // Number of total deallocations
     pub total_deallocations: u64,
-    /// Fragmentation ratio (0.0 to 1.0)
+    // Fragmentation ratio (0.0 to 1.0)
     pub fragmentation_ratio: f64,
-    /// Allocations per second
+    // Allocations per second
     pub allocations_per_sec: f64,
-    /// Average allocation size
+    // Average allocation size
     pub avg_allocation_size: u64,
-    /// Largest allocation size
+    // Largest allocation size
     pub largest_allocation: u64,
-    /// Smallest allocation size
+    // Smallest allocation size
     pub smallest_allocation: u64,
-    /// Memory overhead percentage
+    // Memory overhead percentage
     pub overhead_percentage: f64,
-    /// Cache hit ratio (for cached allocators)
+    // Cache hit ratio (for cached allocators)
     pub cache_hit_ratio: f64,
-    /// Last updated timestamp
+    // Last updated timestamp
     pub last_updated: SystemTime,
 }
 
@@ -557,35 +557,35 @@ impl Default for MemoryStats {
     }
 }
 
-/// Slab allocator configuration
-///
-/// Configuration parameters for the slab allocator including size classes,
-/// caching behavior, and performance optimizations.
+// Slab allocator configuration
+//
+// Configuration parameters for the slab allocator including size classes,
+// caching behavior, and performance optimizations.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlabConfig {
-    /// Number of size classes
+    // Number of size classes
     pub num_size_classes: usize,
-    /// Magazine capacity per thread
+    // Magazine capacity per thread
     pub magazine_capacity: usize,
-    /// Maximum object size for slab allocation
+    // Maximum object size for slab allocation
     pub max_slab_size: usize,
-    /// Size of each slab
+    // Size of each slab
     pub slab_size: usize,
-    /// Enable thread-local caching
+    // Enable thread-local caching
     pub enable_thread_caching: bool,
-    /// Enable cache coloring for better performance
+    // Enable cache coloring for better performance
     pub enable_coloring: bool,
-    /// Number of colors for cache optimization
+    // Number of colors for cache optimization
     pub color_count: usize,
-    /// Enable statistics collection
+    // Enable statistics collection
     pub enable_statistics: bool,
-    /// Enable debugging features
+    // Enable debugging features
     pub enable_debugging: bool,
-    /// Minimum object size
+    // Minimum object size
     pub min_object_size: usize,
-    /// Size class growth factor
+    // Size class growth factor
     pub size_class_factor: f64,
-    /// Magazine exchange threshold
+    // Magazine exchange threshold
     pub magazine_exchange_threshold: usize,
 }
 
@@ -608,31 +608,31 @@ impl Default for SlabConfig {
     }
 }
 
-/// Arena allocator configuration
-///
-/// Configuration for arena-based bump allocators used for
-/// per-query and per-transaction memory contexts.
+// Arena allocator configuration
+//
+// Configuration for arena-based bump allocators used for
+// per-query and per-transaction memory contexts.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArenaConfig {
-    /// Default arena size
+    // Default arena size
     pub default_arena_size: usize,
-    /// Maximum arena size
+    // Maximum arena size
     pub max_arena_size: usize,
-    /// Arena size growth factor
+    // Arena size growth factor
     pub growth_factor: f64,
-    /// Maximum number of arenas per context
+    // Maximum number of arenas per context
     pub max_arenas_per_context: usize,
-    /// Enable memory mapping for large arenas
+    // Enable memory mapping for large arenas
     pub enable_mmap: bool,
-    /// Enable huge pages
+    // Enable huge pages
     pub enable_huge_pages: bool,
-    /// Huge page type preference
+    // Huge page type preference
     pub huge_page_type: HugePageType,
-    /// Enable statistics collection
+    // Enable statistics collection
     pub enable_statistics: bool,
-    /// Enable memory zeroing
+    // Enable memory zeroing
     pub enable_zeroing: bool,
-    /// Alignment for allocations
+    // Alignment for allocations
     pub default_alignment: usize,
 }
 
@@ -653,29 +653,29 @@ impl Default for ArenaConfig {
     }
 }
 
-/// Large object allocator configuration
-///
-/// Configuration for allocations that exceed slab allocator limits
-/// and require direct memory mapping.
+// Large object allocator configuration
+//
+// Configuration for allocations that exceed slab allocator limits
+// and require direct memory mapping.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LargeObjectConfig {
-    /// Threshold size for large objects
+    // Threshold size for large objects
     pub threshold_size: usize,
-    /// Enable memory mapping
+    // Enable memory mapping
     pub enable_mmap: bool,
-    /// Enable huge pages for large objects
+    // Enable huge pages for large objects
     pub enable_huge_pages: bool,
-    /// Preferred huge page type
+    // Preferred huge page type
     pub huge_page_type: HugePageType,
-    /// Enable memory prefaulting
+    // Enable memory prefaulting
     pub enable_prefault: bool,
-    /// Enable memory advice (MADV_*)
+    // Enable memory advice (MADV_*)
     pub enable_memory_advice: bool,
-    /// Memory advice flags
+    // Memory advice flags
     pub memory_advice: Vec<String>,
-    /// Enable statistics collection
+    // Enable statistics collection
     pub enable_statistics: bool,
-    /// Enable object tracking
+    // Enable object tracking
     pub enable_tracking: bool,
 }
 
@@ -695,31 +695,31 @@ impl Default for LargeObjectConfig {
     }
 }
 
-/// Memory pressure monitoring configuration
-///
-/// Configuration for monitoring memory usage and triggering
-/// pressure callbacks when thresholds are exceeded.
+// Memory pressure monitoring configuration
+//
+// Configuration for monitoring memory usage and triggering
+// pressure callbacks when thresholds are exceeded.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PressureConfig {
-    /// Warning threshold (ratio of total memory)
+    // Warning threshold (ratio of total memory)
     pub warning_threshold: f64,
-    /// Critical threshold (ratio of total memory)
+    // Critical threshold (ratio of total memory)
     pub critical_threshold: f64,
-    /// Emergency threshold (ratio of total memory)
+    // Emergency threshold (ratio of total memory)
     pub emergency_threshold: f64,
-    /// Enable pressure monitoring
+    // Enable pressure monitoring
     pub enable_monitoring: bool,
-    /// Check interval for pressure monitoring
+    // Check interval for pressure monitoring
     pub check_interval: Duration,
-    /// Maximum number of pressure events to retain
+    // Maximum number of pressure events to retain
     pub max_pressure_events: usize,
-    /// Enable callback invocation
+    // Enable callback invocation
     pub enable_callbacks: bool,
-    /// Enable automatic memory release
+    // Enable automatic memory release
     pub enable_auto_release: bool,
-    /// Memory release percentage during pressure
+    // Memory release percentage during pressure
     pub release_percentage: f64,
-    /// Pressure calculation method
+    // Pressure calculation method
     pub calculation_method: PressureCalculationMethod,
 }
 
@@ -740,48 +740,48 @@ impl Default for PressureConfig {
     }
 }
 
-/// Memory pressure calculation methods
+// Memory pressure calculation methods
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PressureCalculationMethod {
-    /// Based on resident set size
+    // Based on resident set size
     Rss,
-    /// Based on virtual memory size
+    // Based on virtual memory size
     Virtual,
-    /// Based on committed memory
+    // Based on committed memory
     Committed,
-    /// Custom calculation
+    // Custom calculation
     Custom,
 }
 
-/// Memory debugging configuration
-///
-/// Configuration for memory debugging features including
-/// leak detection, corruption detection, and profiling.
+// Memory debugging configuration
+//
+// Configuration for memory debugging features including
+// leak detection, corruption detection, and profiling.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DebugConfig {
-    /// Enable memory leak detection
+    // Enable memory leak detection
     pub enable_leak_detection: bool,
-    /// Enable corruption detection with guard patterns
+    // Enable corruption detection with guard patterns
     pub enable_guards: bool,
-    /// Enable use-after-free detection
+    // Enable use-after-free detection
     pub enable_uaf_detection: bool,
-    /// Enable double-free detection
+    // Enable double-free detection
     pub enable_double_free_detection: bool,
-    /// Enable stack trace capture
+    // Enable stack trace capture
     pub enable_stack_traces: bool,
-    /// Maximum stack frames to capture
+    // Maximum stack frames to capture
     pub max_stack_frames: usize,
-    /// Enable allocation tracking
+    // Enable allocation tracking
     pub enable_tracking: bool,
-    /// Enable profiling
+    // Enable profiling
     pub enable_profiling: bool,
-    /// Profiling sample rate (0.0 to 1.0)
+    // Profiling sample rate (0.0 to 1.0)
     pub profiling_sample_rate: f64,
-    /// Enable component-wise statistics
+    // Enable component-wise statistics
     pub enable_component_stats: bool,
-    /// Memory pattern to use for freed memory
+    // Memory pattern to use for freed memory
     pub free_pattern: u8,
-    /// Memory pattern to use for allocated memory
+    // Memory pattern to use for allocated memory
     pub alloc_pattern: u8,
 }
 
@@ -804,38 +804,38 @@ impl Default for DebugConfig {
     }
 }
 
-/// Memory zone configuration
-///
-/// Configuration for memory zones that provide specialized
-/// allocation patterns and isolation.
+// Memory zone configuration
+//
+// Configuration for memory zones that provide specialized
+// allocation patterns and isolation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ZoneConfig {
-    /// Zone name
+    // Zone name
     pub name: String,
-    /// Zone type
+    // Zone type
     pub zone_type: ZoneType,
-    /// Zone size
+    // Zone size
     pub size: usize,
-    /// Enable zone isolation
+    // Enable zone isolation
     pub enable_isolation: bool,
-    /// Enable zone statistics
+    // Enable zone statistics
     pub enable_statistics: bool,
-    /// Zone allocation policy
+    // Zone allocation policy
     pub allocation_policy: ZoneAllocationPolicy,
-    /// Zone memory advice
+    // Zone memory advice
     pub memory_advice: Vec<String>,
 }
 
-/// Zone allocation policies
+// Zone allocation policies
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ZoneAllocationPolicy {
-    /// First-fit allocation
+    // First-fit allocation
     FirstFit,
-    /// Best-fit allocation
+    // Best-fit allocation
     BestFit,
-    /// Worst-fit allocation
+    // Worst-fit allocation
     WorstFit,
-    /// Buddy system allocation
+    // Buddy system allocation
     Buddy,
 }
 
@@ -845,38 +845,38 @@ impl Default for ZoneAllocationPolicy {
     }
 }
 
-/// Component memory statistics
-///
-/// Per-component memory usage statistics for tracking
-/// which parts of the system are consuming memory.
+// Component memory statistics
+//
+// Per-component memory usage statistics for tracking
+// which parts of the system are consuming memory.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentMemoryStats {
-    /// Total allocations for this component
+    // Total allocations for this component
     pub allocations: u64,
-    /// Total deallocations for this component
+    // Total deallocations for this component
     pub deallocations: u64,
-    /// Total bytes allocated
+    // Total bytes allocated
     pub bytes_allocated: u64,
-    /// Total bytes deallocated
+    // Total bytes deallocated
     pub bytes_deallocated: u64,
-    /// Current active allocations
+    // Current active allocations
     pub active_allocations: u64,
-    /// Current active bytes
+    // Current active bytes
     pub active_bytes: u64,
-    /// Peak allocations
+    // Peak allocations
     pub peak_allocations: u64,
-    /// Peak bytes
+    // Peak bytes
     pub peak_bytes: u64,
-    /// Average allocation size
+    // Average allocation size
     pub avg_allocation_size: f64,
-    /// Allocation rate (per second)
+    // Allocation rate (per second)
     pub allocation_rate: f64,
-    /// Last activity timestamp
+    // Last activity timestamp
     pub last_activity: SystemTime,
 }
 
 impl ComponentMemoryStats {
-    /// Creates a new component memory statistics instance
+    // Creates a new component memory statistics instance
     pub fn new() -> Self {
         Self {
             allocations: 0,
@@ -893,7 +893,7 @@ impl ComponentMemoryStats {
         }
     }
 
-    /// Updates statistics after allocation
+    // Updates statistics after allocation
     pub fn record_allocation(&mut self, size: u64) {
         self.allocations += 1;
         self.bytes_allocated += size;
@@ -911,7 +911,7 @@ impl ComponentMemoryStats {
         self.last_activity = SystemTime::now();
     }
 
-    /// Updates statistics after deallocation
+    // Updates statistics after deallocation
     pub fn record_deallocation(&mut self, size: u64) {
         self.deallocations += 1;
         self.bytes_deallocated += size;
@@ -927,87 +927,87 @@ impl Default for ComponentMemoryStats {
     }
 }
 
-/// Memory leak report
-///
-/// Information about detected memory leaks including
-/// allocation details and stack traces.
+// Memory leak report
+//
+// Information about detected memory leaks including
+// allocation details and stack traces.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LeakReport {
-    /// Memory address of the leak
+    // Memory address of the leak
     pub address: usize,
-    /// Size of the leaked allocation
+    // Size of the leaked allocation
     pub size: usize,
-    /// Source component that allocated the memory
+    // Source component that allocated the memory
     pub source: AllocationSource,
-    /// When the allocation was made
+    // When the allocation was made
     pub allocated_at: SystemTime,
-    /// Stack trace at allocation time
+    // Stack trace at allocation time
     pub stack_trace: String,
-    /// Age of the allocation
+    // Age of the allocation
     pub age: Duration,
-    /// Allocation ID
+    // Allocation ID
     pub allocation_id: AllocationId,
 }
 
-/// Memory pressure event information
-///
-/// Details about memory pressure events including trigger
-/// conditions and response actions.
+// Memory pressure event information
+//
+// Details about memory pressure events including trigger
+// conditions and response actions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryPressureEvent {
-    /// Event timestamp
+    // Event timestamp
     pub timestamp: SystemTime,
-    /// Pressure level that triggered the event
+    // Pressure level that triggered the event
     pub level: MemoryPressureLevel,
-    /// Total memory available
+    // Total memory available
     pub total_memory: u64,
-    /// Memory currently in use
+    // Memory currently in use
     pub used_memory: u64,
-    /// Memory available for allocation
+    // Memory available for allocation
     pub available_memory: u64,
-    /// Number of pressure callbacks invoked
+    // Number of pressure callbacks invoked
     pub callbacks_invoked: usize,
-    /// Total bytes freed by callbacks
+    // Total bytes freed by callbacks
     pub bytes_freed: u64,
-    /// Duration of pressure event
+    // Duration of pressure event
     pub duration: Duration,
-    /// Whether emergency actions were taken
+    // Whether emergency actions were taken
     pub emergency_actions_taken: bool,
 }
 
-/// Memory context statistics
-///
-/// Statistics for individual memory contexts including
-/// usage patterns and lifecycle information.
+// Memory context statistics
+//
+// Statistics for individual memory contexts including
+// usage patterns and lifecycle information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryContextStats {
-    /// Context identifier
+    // Context identifier
     pub context_id: MemoryContextId,
-    /// Context type
+    // Context type
     pub context_type: ContextType,
-    /// Current bytes allocated
+    // Current bytes allocated
     pub bytes_allocated: usize,
-    /// Peak memory usage
+    // Peak memory usage
     pub peak_usage: usize,
-    /// Number of allocations made
+    // Number of allocations made
     pub allocations: u64,
-    /// Number of context resets
+    // Number of context resets
     pub resets: u64,
-    /// Age of the context
+    // Age of the context
     pub age: Duration,
-    /// Number of child contexts
+    // Number of child contexts
     pub child_count: usize,
-    /// Whether context is active
+    // Whether context is active
     pub is_active: bool,
-    /// Parent context ID (if any)
+    // Parent context ID (if any)
     pub parent_id: Option<MemoryContextId>,
-    /// Memory limit for this context
+    // Memory limit for this context
     pub memory_limit: Option<usize>,
 }
 
-/// Utility functions for type validation and conversion
+// Utility functions for type validation and conversion
 impl MemoryContextId {
-    /// Validates that a string can be used as a context ID
+    // Validates that a string can be used as a context ID
     pub fn validate(id: &str) -> Result<(), MemoryError> {
         if id.trim().is_empty() {
             return Err(MemoryError::InvalidConfiguration {
@@ -1034,7 +1034,7 @@ impl MemoryContextId {
     }
 }
 
-/// Allocation size classification
+// Allocation size classification
 pub fn classify_allocation_size(size: usize) -> AllocatorType {
     if size <= constants::MAX_SLAB_SIZE {
         AllocatorType::Slab
@@ -1045,7 +1045,7 @@ pub fn classify_allocation_size(size: usize) -> AllocatorType {
     }
 }
 
-/// Check if size is valid for allocation
+// Check if size is valid for allocation
 pub fn validate_allocation_size(size: usize) -> Result<(), MemoryError> {
     if size == 0 {
         return Err(MemoryError::InvalidSize {
@@ -1064,7 +1064,7 @@ pub fn validate_allocation_size(size: usize) -> Result<(), MemoryError> {
     Ok(())
 }
 
-/// Check if alignment is valid
+// Check if alignment is valid
 pub fn validate_alignment(alignment: usize) -> Result<(), MemoryError> {
     if alignment == 0 {
         return Err(MemoryError::InvalidAlignment {

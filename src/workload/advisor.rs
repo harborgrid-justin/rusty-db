@@ -9,49 +9,49 @@ use parking_lot::RwLock;
 use crate::Result;
 use crate::error::DbError;
 
-/// Automatic Database Diagnostic Monitor
+// Automatic Database Diagnostic Monitor
 pub struct DiagnosticAdvisor {
-    /// Analysis runs
+    // Analysis runs
     analysis_runs: Arc<RwLock<HashMap<AnalysisId, AnalysisRun>>>,
 
-    /// Findings repository
+    // Findings repository
     findings: Arc<RwLock<HashMap<AnalysisId, Vec<Finding>>>>,
 
-    /// Recommendations repository
+    // Recommendations repository
     recommendations: Arc<RwLock<HashMap<AnalysisId, Vec<Recommendation>>>>,
 
-    /// Performance baselines for comparison
+    // Performance baselines for comparison
     baselines: Arc<RwLock<HashMap<String, PerformanceBaseline>>>,
 
-    /// Configuration
+    // Configuration
     config: Arc<RwLock<AdvisorConfig>>,
 
-    /// Next analysis ID
+    // Next analysis ID
     next_analysis_id: Arc<RwLock<AnalysisId>>,
 }
 
-/// Unique identifier for an analysis run
+// Unique identifier for an analysis run
 pub type AnalysisId = u64;
 
-/// Advisor configuration
+// Advisor configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvisorConfig {
-    /// Minimum finding severity to report
+    // Minimum finding severity to report
     pub min_severity: FindingSeverity,
 
-    /// Enable automatic analysis
+    // Enable automatic analysis
     pub auto_analysis_enabled: bool,
 
-    /// Analysis interval (seconds)
+    // Analysis interval (seconds)
     pub analysis_interval_secs: u64,
 
-    /// Maximum findings to report per analysis
+    // Maximum findings to report per analysis
     pub max_findings: usize,
 
-    /// Minimum impact threshold (% of DB time)
+    // Minimum impact threshold (% of DB time)
     pub min_impact_pct: f64,
 
-    /// Enable impact estimation
+    // Enable impact estimation
     pub enable_impact_estimation: bool,
 }
 
@@ -68,7 +68,7 @@ impl Default for AdvisorConfig {
     }
 }
 
-/// Analysis run
+// Analysis run
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisRun {
     pub analysis_id: AnalysisId,
@@ -82,7 +82,7 @@ pub struct AnalysisRun {
     pub analysis_scope: AnalysisScope,
 }
 
-/// Analysis status
+// Analysis status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AnalysisStatus {
     Pending,
@@ -91,20 +91,20 @@ pub enum AnalysisStatus {
     Failed,
 }
 
-/// Analysis scope
+// Analysis scope
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AnalysisScope {
-    /// Full database analysis
+    // Full database analysis
     Database,
-    /// SQL-specific analysis
+    // SQL-specific analysis
     Sql(String),
-    /// Session-specific analysis
+    // Session-specific analysis
     Session(u64),
-    /// Custom scope
+    // Custom scope
     Custom,
 }
 
-/// Diagnostic finding
+// Diagnostic finding
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Finding {
     pub finding_id: u32,
@@ -120,32 +120,32 @@ pub struct Finding {
     pub time_period_end: SystemTime,
 }
 
-/// Finding type
+// Finding type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum FindingType {
-    /// CPU bottleneck
+    // CPU bottleneck
     CpuBottleneck,
-    /// I/O bottleneck
+    // I/O bottleneck
     IoBottleneck,
-    /// Memory bottleneck
+    // Memory bottleneck
     MemoryBottleneck,
-    /// Lock contention
+    // Lock contention
     LockContention,
-    /// Suboptimal SQL
+    // Suboptimal SQL
     SuboptimalSql,
-    /// Configuration issue
+    // Configuration issue
     ConfigurationIssue,
-    /// Resource contention
+    // Resource contention
     ResourceContention,
-    /// Wait event
+    // Wait event
     WaitEvent,
-    /// Inefficient schema design
+    // Inefficient schema design
     SchemaDesign,
-    /// Connection pool exhaustion
+    // Connection pool exhaustion
     ConnectionExhaustion,
 }
 
-/// Finding severity
+// Finding severity
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FindingSeverity {
     Low,
@@ -154,22 +154,22 @@ pub enum FindingSeverity {
     Critical,
 }
 
-/// Impact type
+// Impact type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ImpactType {
-    /// Impact on DB time
+    // Impact on DB time
     DbTime,
-    /// Impact on CPU
+    // Impact on CPU
     Cpu,
-    /// Impact on I/O
+    // Impact on I/O
     Io,
-    /// Impact on memory
+    // Impact on memory
     Memory,
-    /// Impact on throughput
+    // Impact on throughput
     Throughput,
 }
 
-/// Evidence supporting a finding
+// Evidence supporting a finding
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Evidence {
     pub evidence_type: EvidenceType,
@@ -179,7 +179,7 @@ pub struct Evidence {
     pub threshold_value: f64,
 }
 
-/// Evidence type
+// Evidence type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EvidenceType {
     Metric,
@@ -189,7 +189,7 @@ pub enum EvidenceType {
     Configuration,
 }
 
-/// Recommendation
+// Recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Recommendation {
     pub recommendation_id: u32,
@@ -206,7 +206,7 @@ pub struct Recommendation {
     pub validation_steps: Vec<String>,
 }
 
-/// Recommendation priority
+// Recommendation priority
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RecommendationPriority {
     Low,
@@ -215,7 +215,7 @@ pub enum RecommendationPriority {
     Critical,
 }
 
-/// Recommendation category
+// Recommendation category
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RecommendationCategory {
     SqlTuning,
@@ -227,7 +227,7 @@ pub enum RecommendationCategory {
     Maintenance,
 }
 
-/// Implementation effort
+// Implementation effort
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ImplementationEffort {
     Low,
@@ -235,7 +235,7 @@ pub enum ImplementationEffort {
     High,
 }
 
-/// Performance baseline
+// Performance baseline
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceBaseline {
     pub baseline_name: String,
@@ -243,7 +243,7 @@ pub struct PerformanceBaseline {
     pub created_time: SystemTime,
 }
 
-/// Baseline metrics
+// Baseline metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BaselineMetrics {
     pub avg_cpu_usage_pct: f64,
@@ -254,7 +254,7 @@ pub struct BaselineMetrics {
     pub avg_buffer_hit_ratio: f64,
 }
 
-/// Analysis summary
+// Analysis summary
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisSummary {
     pub analysis_id: AnalysisId,
@@ -268,12 +268,12 @@ pub struct AnalysisSummary {
 }
 
 impl DiagnosticAdvisor {
-    /// Create a new Diagnostic Advisor
+    // Create a new Diagnostic Advisor
     pub fn new() -> Self {
         Self::with_config(AdvisorConfig::default())
     }
 
-    /// Create a new Diagnostic Advisor with custom configuration
+    // Create a new Diagnostic Advisor with custom configuration
     pub fn with_config(config: AdvisorConfig) -> Self {
         Self {
             analysis_runs: Arc::new(RwLock::new(HashMap::new())),
@@ -285,7 +285,7 @@ impl DiagnosticAdvisor {
         }
     }
 
-    /// Create a new analysis run
+    // Create a new analysis run
     pub fn create_analysis(
         &self,
         name: String,
@@ -315,7 +315,7 @@ impl DiagnosticAdvisor {
         Ok(analysis_id)
     }
 
-    /// Execute an analysis
+    // Execute an analysis
     pub fn execute_analysis(&self, analysis_id: AnalysisId) -> Result<()> {
         // Update status
         {
@@ -348,7 +348,7 @@ impl DiagnosticAdvisor {
         Ok(())
     }
 
-    /// Analyze performance and identify issues
+    // Analyze performance and identify issues
     fn analyze_performance(&self, analysis_id: AnalysisId) -> Result<Vec<Finding>> {
         let mut findings = Vec::new();
         let mut finding_id = 1;
@@ -478,7 +478,7 @@ impl DiagnosticAdvisor {
         Ok(findings)
     }
 
-    /// Generate recommendations based on findings
+    // Generate recommendations based on findings
     fn generate_recommendations(&self, findings: &[Finding]) -> Result<Vec<Recommendation>> {
         let mut recommendations = Vec::new();
         let mut rec_id = 1;
@@ -577,7 +577,7 @@ impl DiagnosticAdvisor {
         Ok(recommendations)
     }
 
-    /// Detect CPU bottleneck
+    // Detect CPU bottleneck
     fn detect_cpu_bottleneck(&self) -> Result<Option<f64>> {
         // Simplified detection - in real implementation, would analyze actual metrics
         let cpu_usage = 85.0; // Simulated high CPU usage
@@ -588,7 +588,7 @@ impl DiagnosticAdvisor {
         }
     }
 
-    /// Detect I/O bottleneck
+    // Detect I/O bottleneck
     fn detect_io_bottleneck(&self) -> Result<Option<f64>> {
         let io_wait_pct = 35.0; // Simulated I/O wait percentage
         if io_wait_pct > 30.0 {
@@ -598,7 +598,7 @@ impl DiagnosticAdvisor {
         }
     }
 
-    /// Detect memory pressure
+    // Detect memory pressure
     fn detect_memory_pressure(&self) -> Result<Option<f64>> {
         let memory_usage = 92.0; // Simulated memory usage
         if memory_usage > 90.0 {
@@ -608,7 +608,7 @@ impl DiagnosticAdvisor {
         }
     }
 
-    /// Detect lock contention
+    // Detect lock contention
     fn detect_lock_contention(&self) -> Result<Option<f64>> {
         let lock_wait_pct = 12.0; // Simulated lock wait percentage
         if lock_wait_pct > 10.0 {
@@ -618,23 +618,23 @@ impl DiagnosticAdvisor {
         }
     }
 
-    /// Detect suboptimal SQL
+    // Detect suboptimal SQL
     fn detect_suboptimal_sql(&self) -> Result<Option<Vec<f64>>> {
         // Return impact percentages for suboptimal SQL statements
         Ok(Some(vec![15.0, 8.0, 6.5]))
     }
 
-    /// Get findings for an analysis
+    // Get findings for an analysis
     pub fn get_findings(&self, analysis_id: AnalysisId) -> Option<Vec<Finding>> {
         self.findings.read().get(&analysis_id).cloned()
     }
 
-    /// Get recommendations for an analysis
+    // Get recommendations for an analysis
     pub fn get_recommendations(&self, analysis_id: AnalysisId) -> Option<Vec<Recommendation>> {
         self.recommendations.read().get(&analysis_id).cloned()
     }
 
-    /// Get analysis summary
+    // Get analysis summary
     pub fn get_analysis_summary(&self, analysis_id: AnalysisId) -> Result<AnalysisSummary> {
         let findings = self.findings.read();
         let recommendations = self.recommendations.read();
@@ -678,7 +678,7 @@ impl DiagnosticAdvisor {
         })
     }
 
-    /// Create performance baseline
+    // Create performance baseline
     pub fn create_baseline(&self, name: String, metrics: BaselineMetrics) -> Result<()> {
         let baseline = PerformanceBaseline {
             baseline_name: name.clone(),
@@ -690,7 +690,7 @@ impl DiagnosticAdvisor {
         Ok(())
     }
 
-    /// Get all analysis runs
+    // Get all analysis runs
     pub fn list_analyses(&self) -> Vec<AnalysisRun> {
         self.analysis_runs.read().values().cloned().collect()
     }
@@ -762,5 +762,3 @@ mod tests {
         assert!(summary.total_recommendations > 0);
     }
 }
-
-

@@ -42,28 +42,28 @@ use super::query_rewriter::{QueryRewriter, RewriteResult};
 use super::query_statistics::{QueryStatisticsTracker, WorkloadAnalysisResult, WorkloadAnalyzer};
 use super::statistics::{ColumnStatistics, HistogramManager};
 
-/// Configuration for the analytics manager.
+// Configuration for the analytics manager.
 #[derive(Debug, Clone)]
 pub struct AnalyticsConfig {
-    /// Enable query caching
+    // Enable query caching
     pub cache_enabled: bool,
-    /// Maximum cache size in bytes
+    // Maximum cache size in bytes
     pub max_cache_size: usize,
-    /// Cache TTL in seconds
+    // Cache TTL in seconds
     pub cache_ttl_secs: u64,
-    /// Enable query rewriting
+    // Enable query rewriting
     pub rewrite_enabled: bool,
-    /// Enable parallel execution
+    // Enable parallel execution
     pub parallel_enabled: bool,
-    /// Number of parallel workers
+    // Number of parallel workers
     pub parallel_workers: usize,
-    /// Enable result compression
+    // Enable result compression
     pub compression_enabled: bool,
-    /// Compression algorithm
+    // Compression algorithm
     pub compression_algorithm: CompressionAlgorithm,
-    /// Enable statistics collection
+    // Enable statistics collection
     pub statistics_enabled: bool,
-    /// Slow query threshold in milliseconds
+    // Slow query threshold in milliseconds
     pub slow_query_threshold_ms: u64,
 }
 
@@ -84,44 +84,44 @@ impl Default for AnalyticsConfig {
     }
 }
 
-/// Returns the number of available CPUs.
+// Returns the number of available CPUs.
 fn num_cpus() -> usize {
     std::thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(4)
 }
 
-/// Central analytics manager coordinating all subsystems.
+// Central analytics manager coordinating all subsystems.
 pub struct AnalyticsManager {
-    /// Configuration
+    // Configuration
     config: AnalyticsConfig,
-    /// Query cache
+    // Query cache
     cache: Arc<QueryCache>,
-    /// Query statistics tracker
+    // Query statistics tracker
     statistics_tracker: Arc<QueryStatisticsTracker>,
-    /// Query rewriter
+    // Query rewriter
     rewriter: Arc<RwLock<QueryRewriter>>,
-    /// Cost model for optimization
+    // Cost model for optimization
     cost_model: Arc<CostModel>,
-    /// Cardinality estimator
+    // Cardinality estimator
     cardinality_estimator: Arc<CardinalityEstimator>,
-    /// Histogram manager
+    // Histogram manager
     histogram_manager: Arc<RwLock<HistogramManager>>,
-    /// Parallel executor
+    // Parallel executor
     parallel_executor: Arc<ParallelQueryExecutor>,
-    /// Result compressor
+    // Result compressor
     compressor: Arc<QueryResultCompressor>,
-    /// Data profiler
+    // Data profiler
     profiler: Arc<RwLock<DataProfiler>>,
-    /// Quality analyzer
+    // Quality analyzer
     quality_analyzer: Arc<RwLock<DataQualityAnalyzer>>,
-    /// Performance tracker
+    // Performance tracker
     performance_tracker: Arc<QueryPerformanceTracker>,
-    /// Workload analyzer
+    // Workload analyzer
     workload_analyzer: Arc<WorkloadAnalyzer>,
-    /// Column statistics cache
+    // Column statistics cache
     column_stats: Arc<RwLock<HashMap<String, ColumnStatistics>>>,
-    /// Manager start time
+    // Manager start time
     started_at: std::time::Instant,
 }
 
@@ -132,12 +132,12 @@ impl Default for AnalyticsManager {
 }
 
 impl AnalyticsManager {
-    /// Creates a new analytics manager with default configuration.
+    // Creates a new analytics manager with default configuration.
     pub fn new() -> Self {
         Self::with_config(AnalyticsConfig::default())
     }
 
-    /// Creates an analytics manager with custom configuration.
+    // Creates an analytics manager with custom configuration.
     pub fn with_config(config: AnalyticsConfig) -> Self {
         let cache = Arc::new(QueryCache::new(config.max_cache_size));
         let rewriter = if config.rewrite_enabled {
@@ -168,7 +168,7 @@ impl AnalyticsManager {
         }
     }
 
-    /// Returns the current configuration.
+    // Returns the current configuration.
     pub fn config(&self) -> &AnalyticsConfig {
         &self.config
     }
@@ -177,7 +177,7 @@ impl AnalyticsManager {
     // Cache Operations
     // ========================================================================
 
-    /// Checks the cache for a query result.
+    // Checks the cache for a query result.
     pub fn get_cached(&self, query: &str) -> Option<Vec<Vec<String>>> {
         if !self.config.cache_enabled {
             return None;
@@ -185,24 +185,24 @@ impl AnalyticsManager {
         self.cache.get(query)
     }
 
-    /// Stores a result in the cache.
+    // Stores a result in the cache.
     pub fn cache_result(&self, query: &str, result: CachedResult) {
         if self.config.cache_enabled {
             self.cache.put(String::from(query), result.result, result.ttl_seconds);
         }
     }
 
-    /// Invalidates cache entries for a table.
+    // Invalidates cache entries for a table.
     pub fn invalidate_table(&self, table: &str) {
         self.cache.invalidate_table(table);
     }
 
-    /// Returns cache statistics.
+    // Returns cache statistics.
     pub fn cache_stats(&self) -> CacheStats {
         self.cache.get_stats()
     }
 
-    /// Clears the entire cache.
+    // Clears the entire cache.
     pub fn clear_cache(&self) {
         self.cache.clear();
     }
@@ -211,7 +211,7 @@ impl AnalyticsManager {
     // Query Rewriting
     // ========================================================================
 
-    /// Rewrites a query for optimization.
+    // Rewrites a query for optimization.
     pub fn rewrite_query(&self, query: &str) -> RewriteResult {
         if !self.config.rewrite_enabled {
             return RewriteResult {
@@ -228,7 +228,7 @@ impl AnalyticsManager {
     // Statistics & Cost Model
     // ========================================================================
 
-    /// Records query execution statistics.
+    // Records query execution statistics.
     pub fn record_query(&self, query: &str, execution_time_ms: u64) {
         if self.config.statistics_enabled {
             self.statistics_tracker.record_query(query, execution_time_ms);
@@ -238,13 +238,13 @@ impl AnalyticsManager {
         }
     }
 
-    /// Estimates the cost of a query.
+    // Estimates the cost of a query.
     pub fn estimate_cost(&self, _query: &str) -> f64 {
         // Use a basic cost estimate based on typical query patterns
         self.cost_model.cost_seq_scan(1000)
     }
 
-    /// Estimates the cardinality for a table.
+    // Estimates the cardinality for a table.
     pub fn estimate_cardinality(&self, table: &str) -> usize {
         // Use table statistics if available
         if let Some(stats) = self.column_stats.read().get(table) {
@@ -254,12 +254,12 @@ impl AnalyticsManager {
         }
     }
 
-    /// Updates column statistics.
+    // Updates column statistics.
     pub fn update_column_stats(&self, column: &str, stats: ColumnStatistics) {
         self.column_stats.write().insert(column.to_string(), stats);
     }
 
-    /// Gets column statistics.
+    // Gets column statistics.
     pub fn get_column_stats(&self, column: &str) -> Option<ColumnStatistics> {
         self.column_stats.read().get(column).cloned()
     }
@@ -268,17 +268,17 @@ impl AnalyticsManager {
     // Workload Analysis
     // ========================================================================
 
-    /// Analyzes the current workload and returns recommendations.
+    // Analyzes the current workload and returns recommendations.
     pub fn analyze_workload(&self) -> WorkloadAnalysisResult {
         self.workload_analyzer.analyze(&self.statistics_tracker)
     }
 
-    /// Returns the top N slowest queries.
+    // Returns the top N slowest queries.
     pub fn top_slow_queries(&self, n: usize) -> Vec<super::query_statistics::QueryStats> {
         self.statistics_tracker.top_slow_queries(n)
     }
 
-    /// Returns the top N most frequent queries.
+    // Returns the top N most frequent queries.
     pub fn top_frequent_queries(&self, n: usize) -> Vec<super::query_statistics::QueryStats> {
         self.statistics_tracker.top_frequent_queries(n)
     }
@@ -287,7 +287,7 @@ impl AnalyticsManager {
     // Data Quality
     // ========================================================================
 
-    /// Analyzes data quality for a column.
+    // Analyzes data quality for a column.
     pub fn analyze_quality(
         &self,
         column: &str,
@@ -296,7 +296,7 @@ impl AnalyticsManager {
         self.quality_analyzer.write().analyze_column(column, values)
     }
 
-    /// Profiles a column.
+    // Profiles a column.
     pub fn profile_column(
         &self,
         column: &str,
@@ -309,7 +309,7 @@ impl AnalyticsManager {
     // Histograms
     // ========================================================================
 
-    /// Gets the histogram manager for advanced operations.
+    // Gets the histogram manager for advanced operations.
     pub fn histogram_manager(&self) -> &Arc<RwLock<HistogramManager>> {
         &self.histogram_manager
     }
@@ -318,12 +318,12 @@ impl AnalyticsManager {
     // Parallel Execution
     // ========================================================================
 
-    /// Gets the parallel executor.
+    // Gets the parallel executor.
     pub fn parallel_executor(&self) -> &Arc<ParallelQueryExecutor> {
         &self.parallel_executor
     }
 
-    /// Checks if parallel execution is enabled.
+    // Checks if parallel execution is enabled.
     pub fn is_parallel_enabled(&self) -> bool {
         self.config.parallel_enabled
     }
@@ -332,12 +332,12 @@ impl AnalyticsManager {
     // Compression
     // ========================================================================
 
-    /// Gets the result compressor.
+    // Gets the result compressor.
     pub fn compressor(&self) -> &Arc<QueryResultCompressor> {
         &self.compressor
     }
 
-    /// Checks if compression is enabled.
+    // Checks if compression is enabled.
     pub fn is_compression_enabled(&self) -> bool {
         self.config.compression_enabled
     }
@@ -346,12 +346,12 @@ impl AnalyticsManager {
     // Manager Status
     // ========================================================================
 
-    /// Returns the manager uptime.
+    // Returns the manager uptime.
     pub fn uptime(&self) -> std::time::Duration {
         self.started_at.elapsed()
     }
 
-    /// Returns comprehensive manager statistics.
+    // Returns comprehensive manager statistics.
     pub fn stats(&self) -> ManagerStats {
         ManagerStats {
             uptime_secs: self.started_at.elapsed().as_secs(),
@@ -363,7 +363,7 @@ impl AnalyticsManager {
         }
     }
 
-    /// Resets all statistics.
+    // Resets all statistics.
     pub fn reset_stats(&self) {
         self.statistics_tracker.clear();
         self.performance_tracker.clear();
@@ -371,7 +371,7 @@ impl AnalyticsManager {
         self.rewriter.write().reset_stats();
     }
 
-    /// Simple query hash function.
+    // Simple query hash function.
     fn hash_query(query: &str) -> u64 {
         let mut hash: u64 = 0;
         for byte in query.bytes() {
@@ -381,90 +381,90 @@ impl AnalyticsManager {
     }
 }
 
-/// Comprehensive statistics for the analytics manager.
+// Comprehensive statistics for the analytics manager.
 #[derive(Debug, Clone)]
 pub struct ManagerStats {
-    /// Manager uptime in seconds
+    // Manager uptime in seconds
     pub uptime_secs: u64,
-    /// Cache statistics
+    // Cache statistics
     pub cache_stats: CacheStats,
-    /// Total queries tracked
+    // Total queries tracked
     pub total_queries_tracked: u64,
-    /// Unique query patterns
+    // Unique query patterns
     pub unique_query_patterns: usize,
-    /// Column statistics entries
+    // Column statistics entries
     pub column_stats_count: usize,
-    /// Compression statistics
+    // Compression statistics
     pub compression_stats: super::compression::CompressionStats,
 }
 
-/// Builder for creating an AnalyticsManager with custom settings.
+// Builder for creating an AnalyticsManager with custom settings.
 #[derive(Debug, Default)]
 pub struct AnalyticsManagerBuilder {
     config: AnalyticsConfig,
 }
 
 impl AnalyticsManagerBuilder {
-    /// Creates a new builder with default configuration.
+    // Creates a new builder with default configuration.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Sets whether caching is enabled.
+    // Sets whether caching is enabled.
     pub fn cache_enabled(mut self, enabled: bool) -> Self {
         self.config.cache_enabled = enabled;
         self
     }
 
-    /// Sets the maximum cache size.
+    // Sets the maximum cache size.
     pub fn max_cache_size(mut self, size: usize) -> Self {
         self.config.max_cache_size = size;
         self
     }
 
-    /// Sets the cache TTL.
+    // Sets the cache TTL.
     pub fn cache_ttl(mut self, secs: u64) -> Self {
         self.config.cache_ttl_secs = secs;
         self
     }
 
-    /// Sets whether query rewriting is enabled.
+    // Sets whether query rewriting is enabled.
     pub fn rewrite_enabled(mut self, enabled: bool) -> Self {
         self.config.rewrite_enabled = enabled;
         self
     }
 
-    /// Sets whether parallel execution is enabled.
+    // Sets whether parallel execution is enabled.
     pub fn parallel_enabled(mut self, enabled: bool) -> Self {
         self.config.parallel_enabled = enabled;
         self
     }
 
-    /// Sets the number of parallel workers.
+    // Sets the number of parallel workers.
     pub fn parallel_workers(mut self, workers: usize) -> Self {
         self.config.parallel_workers = workers;
         self
     }
 
-    /// Sets whether compression is enabled.
+    // Sets whether compression is enabled.
     pub fn compression_enabled(mut self, enabled: bool) -> Self {
         self.config.compression_enabled = enabled;
         self
     }
 
-    /// Sets the compression algorithm.
+    // Sets the compression algorithm.
     pub fn compression_algorithm(mut self, algorithm: CompressionAlgorithm) -> Self {
         self.config.compression_algorithm = algorithm;
         self
     }
 
-    /// Sets the slow query threshold.
+    // Sets the slow query threshold.
     pub fn slow_query_threshold(mut self, threshold_ms: u64) -> Self {
         self.config.slow_query_threshold_ms = threshold_ms;
         self
     }
 
-    /// Builds the AnalyticsManager.
+    // Builds the AnalyticsManager.
     pub fn build(self) -> AnalyticsManager {
         AnalyticsManager::with_config(self.config)
     }

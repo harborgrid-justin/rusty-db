@@ -14,21 +14,21 @@ use super::{Algorithm, ModelType};
 // Linear Regression
 // ============================================================================
 
-/// Linear regression using gradient descent
+// Linear regression using gradient descent
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LinearRegression {
-    /// Model coefficients (weights)
+    // Model coefficients (weights)
     pub weights: Vector,
-    /// Intercept term
+    // Intercept term
     pub intercept: f64,
-    /// Whether the model has been trained
+    // Whether the model has been trained
     trained: bool,
-    /// Training metrics
+    // Training metrics
     metrics: HashMap<String, f64>,
 }
 
 impl LinearRegression {
-    /// Create a new linear regression model
+    // Create a new linear regression model
     pub fn new() -> Self {
         Self {
             weights: Vec::new(),
@@ -38,7 +38,7 @@ impl LinearRegression {
         }
     }
 
-    /// Compute predictions with current weights (SIMD-accelerated)
+    // Compute predictions with current weights (SIMD-accelerated)
     fn predict_internal(&self, features: &Matrix) -> Vector {
         features.iter().map(|sample| {
             // Use SIMD dot product for faster computation
@@ -47,12 +47,12 @@ impl LinearRegression {
         }).collect()
     }
 
-    /// Compute predictions for a single sample (SIMD-accelerated)
+    // Compute predictions for a single sample (SIMD-accelerated)
     fn predict_single(&self, sample: &[f64]) -> f64 {
         simd_dot_product(&self.weights, sample) + self.intercept
     }
 
-    /// Compute mean squared error
+    // Compute mean squared error
     fn mse(&self, predictions: &Vector, targets: &Vector) -> f64 {
         predictions.iter()
             .zip(targets.iter())
@@ -60,7 +60,7 @@ impl LinearRegression {
             .sum::<f64>() / predictions.len() as f64
     }
 
-    /// Compute R² score
+    // Compute R² score
     fn r2_score(&self, predictions: &Vector, targets: &Vector) -> f64 {
         let mean_target = targets.iter().sum::<f64>() / targets.len() as f64;
         let ss_tot: f64 = targets.iter().map(|&y| (y - mean_target).powi(2)).sum();
@@ -71,10 +71,10 @@ impl LinearRegression {
         1.0 - (ss_res / ss_tot)
     }
 
-    /// Train with advanced optimizer (Adam/SGD+Momentum) and learning rate scheduling
-    ///
-    /// This method provides significantly faster convergence (3-6x) compared to basic SGD
-    /// by using Adam optimizer with adaptive learning rates and mini-batch processing.
+    // Train with advanced optimizer (Adam/SGD+Momentum) and learning rate scheduling
+    //
+    // This method provides significantly faster convergence (3-6x) compared to basic SGD
+    // by using Adam optimizer with adaptive learning rates and mini-batch processing.
     pub fn fit_with_optimizer(
         &mut self,
         dataset: &Dataset,

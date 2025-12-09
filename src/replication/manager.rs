@@ -83,7 +83,7 @@ use thiserror::Error;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-/// Replication manager specific errors
+// Replication manager specific errors
 #[derive(Error, Debug)]
 pub enum ReplicationManagerError {
     #[error("Invalid configuration: {reason}")]
@@ -108,35 +108,35 @@ pub enum ReplicationManagerError {
     DependencyInjectionFailed { component: String },
 }
 
-/// Comprehensive replication configuration
-///
-/// Contains all configurable parameters for the replication system
-/// with sensible defaults for production use.
+// Comprehensive replication configuration
+//
+// Contains all configurable parameters for the replication system
+// with sensible defaults for production use.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationConfig {
-    /// Replication mode (sync, async, semi-sync)
+    // Replication mode (sync, async, semi-sync)
     pub mode: ReplicationMode,
-    /// Network topology configuration
+    // Network topology configuration
     pub topology: ReplicationTopology,
-    /// Conflict resolution strategy
+    // Conflict resolution strategy
     pub conflict_strategy: ConflictResolutionStrategy,
-    /// Maximum allowed lag in bytes before alerting
+    // Maximum allowed lag in bytes before alerting
     pub max_lag_bytes: u64,
-    /// Heartbeat interval for health checking
+    // Heartbeat interval for health checking
     pub heartbeat_interval: Duration,
-    /// Timeout for synchronous replication
+    // Timeout for synchronous replication
     pub sync_timeout: Duration,
-    /// Maximum WAL size before forced cleanup
+    // Maximum WAL size before forced cleanup
     pub max_wal_size: usize,
-    /// Number of connection retries
+    // Number of connection retries
     pub connection_retries: u32,
-    /// Buffer size for replication queues
+    // Buffer size for replication queues
     pub queue_buffer_size: usize,
-    /// Enable compression for replication traffic
+    // Enable compression for replication traffic
     pub enable_compression: bool,
-    /// Enable encryption for replication traffic
+    // Enable encryption for replication traffic
     pub enable_encryption: bool,
-    /// Batch size for replication operations
+    // Batch size for replication operations
     pub batch_size: usize,
 }
 
@@ -159,110 +159,110 @@ impl Default for ReplicationConfig {
     }
 }
 
-/// Replication event for monitoring and alerting
-///
-/// Events are published throughout the replication lifecycle to enable
-/// comprehensive monitoring, alerting, and operational visibility.
+// Replication event for monitoring and alerting
+//
+// Events are published throughout the replication lifecycle to enable
+// comprehensive monitoring, alerting, and operational visibility.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ReplicationEvent {
-    /// Replica was added to the replication set
+    // Replica was added to the replication set
     ReplicaAdded { replica_id: String, address: String, role: ReplicaRole },
-    /// Replica was removed from the replication set
+    // Replica was removed from the replication set
     ReplicaRemoved { replica_id: String, reason: String },
-    /// Replica status changed
+    // Replica status changed
     ReplicaStatusChanged { replica_id: String, old_status: ReplicaStatus, new_status: ReplicaStatus },
-    /// Replication conflict detected
+    // Replication conflict detected
     ConflictDetected { conflict_id: u64, table: String, replica_id: String },
-    /// Replication conflict resolved
+    // Replication conflict resolved
     ConflictResolved { conflict_id: u64, strategy: ConflictResolutionStrategy },
-    /// Snapshot was created
+    // Snapshot was created
     SnapshotCreated { snapshot_id: String, tables: Vec<String>, size_bytes: u64 },
-    /// Snapshot restore completed
+    // Snapshot restore completed
     SnapshotRestored { snapshot_id: String, replica_id: String },
-    /// Replication lag warning
+    // Replication lag warning
     LagWarning { replica_id: String, lag_bytes: u64, threshold_bytes: u64 },
-    /// Failover initiated
+    // Failover initiated
     FailoverInitiated { old_primary: String, new_primary: String },
-    /// Failover completed
+    // Failover completed
     FailoverCompleted { new_primary: String, duration_ms: u64 },
-    /// Synchronization completed
+    // Synchronization completed
     SyncCompleted { replica_id: String, lsn: LogSequenceNumber },
-    /// Connection established with replica
+    // Connection established with replica
     ConnectionEstablished { replica_id: String, address: String },
-    /// Connection lost with replica
+    // Connection lost with replica
     ConnectionLost { replica_id: String, reason: String },
 }
 
-/// Event publisher trait for dependency injection
-///
-/// Allows pluggable event publishing implementations for different
-/// monitoring and alerting systems.
+// Event publisher trait for dependency injection
+//
+// Allows pluggable event publishing implementations for different
+// monitoring and alerting systems.
 #[async_trait]
 pub trait EventPublisher: Send + Sync {
-    /// Publish a replication event
+    // Publish a replication event
     async fn publish(&self, event: ReplicationEvent) -> Result<(), DbError>;
 
-    /// Subscribe to all events (filtering done by receiver)
+    // Subscribe to all events (filtering done by receiver)
     async fn subscribe(&self) -> Result<mpsc::Receiver<ReplicationEvent>, DbError>;
 
-    /// Get event publisher name for diagnostics
+    // Get event publisher name for diagnostics
     fn name(&self) -> &str;
 }
 
-/// Replica service trait for managing replica connections
-///
-/// Abstracts replica management operations for easier testing
-/// and different implementation strategies.
+// Replica service trait for managing replica connections
+//
+// Abstracts replica management operations for easier testing
+// and different implementation strategies.
 #[async_trait]
 pub trait ReplicaService: Send + Sync {
-    /// Add a new replica to the service
+    // Add a new replica to the service
     async fn add_replica(&self, replica: ReplicaNode) -> Result<(), DbError>;
 
-    /// Remove a replica from the service
+    // Remove a replica from the service
     async fn remove_replica(&self, replica_id: &ReplicaId) -> Result<(), DbError>;
 
-    /// Get all replicas managed by this service
+    // Get all replicas managed by this service
     async fn get_replicas(&self) -> Result<Vec<ReplicaNode>, DbError>;
 
-    /// Get a specific replica by ID
+    // Get a specific replica by ID
     async fn get_replica(&self, replica_id: &ReplicaId) -> Result<ReplicaNode, DbError>;
 
-    /// Update replica status
+    // Update replica status
     async fn update_status(&self, replica_id: &ReplicaId, status: ReplicaStatus) -> Result<(), DbError>;
 
-    /// Send data to a specific replica
+    // Send data to a specific replica
     async fn send_to_replica(&self, replica_id: &ReplicaId, data: Vec<u8>) -> Result<(), DbError>;
 
-    /// Broadcast data to all active replicas
+    // Broadcast data to all active replicas
     async fn broadcast(&self, data: Vec<u8>) -> Result<Vec<String>, DbError>;
 
-    /// Check if replica is reachable
+    // Check if replica is reachable
     async fn ping_replica(&self, replica_id: &ReplicaId) -> Result<Duration, DbError>;
 }
 
-/// WAL service trait for write-ahead log management
+// WAL service trait for write-ahead log management
 #[async_trait]
 pub trait WalService: Send + Sync {
-    /// Append an entry to the WAL
+    // Append an entry to the WAL
     async fn append(&self, entry: WalEntry) -> Result<LogSequenceNumber, DbError>;
 
-    /// Get WAL entries starting from a specific LSN
+    // Get WAL entries starting from a specific LSN
     async fn get_entries(&self, from_lsn: LogSequenceNumber, limit: usize) -> Result<Vec<WalEntry>, DbError>;
 
-    /// Truncate WAL up to a specific LSN
+    // Truncate WAL up to a specific LSN
     async fn truncate(&self, up_to_lsn: LogSequenceNumber) -> Result<(), DbError>;
 
-    /// Get the latest LSN in the WAL
+    // Get the latest LSN in the WAL
     async fn get_latest_lsn(&self) -> Result<LogSequenceNumber, DbError>;
 
-    /// Get WAL size statistics
+    // Get WAL size statistics
     async fn get_stats(&self) -> Result<WalStats, DbError>;
 
-    /// Stream WAL entries to a replica
+    // Stream WAL entries to a replica
     async fn stream_to_replica(&self, replica_id: &ReplicaId, from_lsn: LogSequenceNumber) -> Result<(), DbError>;
 }
 
-/// WAL statistics for monitoring
+// WAL statistics for monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalStats {
     pub total_entries: usize,
@@ -272,26 +272,26 @@ pub struct WalStats {
     pub entries_per_second: f64,
 }
 
-/// Health monitor trait for replica monitoring
+// Health monitor trait for replica monitoring
 #[async_trait]
 pub trait HealthMonitor: Send + Sync {
-    /// Check health of all replicas
+    // Check health of all replicas
     async fn check_all_replicas(&self) -> Result<Vec<ReplicaHealthStatus>, DbError>;
 
-    /// Check health of a specific replica
+    // Check health of a specific replica
     async fn check_replica(&self, replica_id: &ReplicaId) -> Result<ReplicaHealthStatus, DbError>;
 
-    /// Start continuous health monitoring
+    // Start continuous health monitoring
     async fn start_monitoring(&self) -> Result<(), DbError>;
 
-    /// Stop health monitoring
+    // Stop health monitoring
     async fn stop_monitoring(&self) -> Result<(), DbError>;
 
-    /// Get health monitoring statistics
+    // Get health monitoring statistics
     async fn get_stats(&self) -> Result<HealthStats, DbError>;
 }
 
-/// Replica health status
+// Replica health status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicaHealthStatus {
     pub replica_id: ReplicaId,
@@ -304,7 +304,7 @@ pub struct ReplicaHealthStatus {
     pub network_latency_ms: Option<u64>,
 }
 
-/// Health monitoring statistics
+// Health monitoring statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthStats {
     pub total_replicas: usize,
@@ -316,51 +316,51 @@ pub struct HealthStats {
     pub failed_health_checks: u64,
 }
 
-/// Main replication manager implementation
-///
-/// Orchestrates all replication activities using dependency injection
-/// for maximum flexibility and testability.
+// Main replication manager implementation
+//
+// Orchestrates all replication activities using dependency injection
+// for maximum flexibility and testability.
 pub struct ReplicationManager {
-    /// Unique manager instance ID
+    // Unique manager instance ID
     id: Uuid,
-    /// Replication configuration
+    // Replication configuration
     config: Arc<ReplicationConfig>,
-    /// Whether this node is the primary
+    // Whether this node is the primary
     is_primary: bool,
-    /// Current replication state
+    // Current replication state
     state: Arc<Mutex<ReplicationState>>,
-    /// Event publisher for monitoring
+    // Event publisher for monitoring
     event_publisher: Arc<dyn EventPublisher>,
-    /// Replica service for connection management
+    // Replica service for connection management
     replica_service: Arc<dyn ReplicaService>,
-    /// WAL service for log management
+    // WAL service for log management
     wal_service: Arc<dyn WalService>,
-    /// Health monitor for replica monitoring
+    // Health monitor for replica monitoring
     health_monitor: Arc<dyn HealthMonitor>,
-    /// Sequence number for operations
+    // Sequence number for operations
     sequence_counter: Arc<Mutex<u64>>,
-    /// Shutdown signal
+    // Shutdown signal
     shutdown_sender: Arc<Mutex<Option<mpsc::UnboundedSender<()>>>>,
 }
 
-/// Internal replication state
+// Internal replication state
 #[derive(Debug, Clone)]
 struct ReplicationState {
-    /// Current replication mode
+    // Current replication mode
     mode: ReplicationMode,
-    /// Active replicas
+    // Active replicas
     replicas: HashMap<ReplicaId, ReplicaNode>,
-    /// Pending operations
+    // Pending operations
     pending_operations: HashMap<u64, PendingOperation>,
-    /// Last health check time
+    // Last health check time
     last_health_check: SystemTime,
-    /// Total operations replicated
+    // Total operations replicated
     total_operations: u64,
-    /// Failed operations count
+    // Failed operations count
     failed_operations: u64,
 }
 
-/// Pending replication operation
+// Pending replication operation
 #[derive(Debug, Clone)]
 struct PendingOperation {
     sequence: u64,
@@ -374,21 +374,21 @@ struct PendingOperation {
 }
 
 impl ReplicationManager {
-    /// Creates a new replication manager with dependency injection
-    ///
-    /// # Arguments
-    ///
-    /// * `config` - Replication configuration
-    /// * `is_primary` - Whether this node is the primary
-    /// * `event_publisher` - Event publishing service
-    /// * `replica_service` - Replica management service
-    /// * `wal_service` - WAL management service
-    /// * `health_monitor` - Health monitoring service
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ReplicationManager)` - Configured manager
-    /// * `Err(ReplicationManagerError)` - Configuration failed
+    // Creates a new replication manager with dependency injection
+    //
+    // # Arguments
+    //
+    // * `config` - Replication configuration
+    // * `is_primary` - Whether this node is the primary
+    // * `event_publisher` - Event publishing service
+    // * `replica_service` - Replica management service
+    // * `wal_service` - WAL management service
+    // * `health_monitor` - Health monitoring service
+    //
+    // # Returns
+    //
+    // * `Ok(ReplicationManager)` - Configured manager
+    // * `Err(ReplicationManagerError)` - Configuration failed
     pub fn new(
         config: ReplicationConfig,
         is_primary: bool,
@@ -425,7 +425,7 @@ impl ReplicationManager {
         Ok(manager)
     }
 
-    /// Validates the replication configuration
+    // Validates the replication configuration
     fn validate_config(config: &ReplicationConfig) -> Result<(), ReplicationManagerError> {
         if config.max_lag_bytes == 0 {
             return Err(ReplicationManagerError::InvalidConfiguration {
@@ -454,10 +454,10 @@ impl ReplicationManager {
         Ok(())
     }
 
-    /// Starts the replication manager
-    ///
-    /// Initializes background tasks for health monitoring, WAL streaming,
-    /// and event processing.
+    // Starts the replication manager
+    //
+    // Initializes background tasks for health monitoring, WAL streaming,
+    // and event processing.
     pub async fn start(&self) -> Result<(), ReplicationManagerError> {
         // Start health monitoring
         self.health_monitor.start_monitoring().await
@@ -484,9 +484,9 @@ impl ReplicationManager {
         Ok(())
     }
 
-    /// Stops the replication manager
-    ///
-    /// Gracefully shuts down all background tasks and connections.
+    // Stops the replication manager
+    //
+    // Gracefully shuts down all background tasks and connections.
     pub async fn stop(&self) -> Result<(), ReplicationManagerError> {
         // Send shutdown signal
         if let Some(sender) = self.shutdown_sender.lock().take() {
@@ -502,18 +502,18 @@ impl ReplicationManager {
         Ok(())
     }
 
-    /// Adds a replica to the replication set
-    ///
-    /// # Arguments
-    ///
-    /// * `replica_id` - Unique replica identifier
-    /// * `address` - Network address for the replica
-    /// * `role` - Role of the replica in the topology
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - Replica added successfully
-    /// * `Err(ReplicationManagerError)` - Failed to add replica
+    // Adds a replica to the replication set
+    //
+    // # Arguments
+    //
+    // * `replica_id` - Unique replica identifier
+    // * `address` - Network address for the replica
+    // * `role` - Role of the replica in the topology
+    //
+    // # Returns
+    //
+    // * `Ok(())` - Replica added successfully
+    // * `Err(ReplicationManagerError)` - Failed to add replica
     pub async fn add_replica(
         &self,
         replica_id: ReplicaId,
@@ -558,17 +558,17 @@ impl ReplicationManager {
         Ok(())
     }
 
-    /// Removes a replica from the replication set
-    ///
-    /// # Arguments
-    ///
-    /// * `replica_id` - ID of replica to remove
-    /// * `reason` - Reason for removal (for auditing)
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - Replica removed successfully
-    /// * `Err(ReplicationManagerError)` - Failed to remove replica
+    // Removes a replica from the replication set
+    //
+    // # Arguments
+    //
+    // * `replica_id` - ID of replica to remove
+    // * `reason` - Reason for removal (for auditing)
+    //
+    // # Returns
+    //
+    // * `Ok(())` - Replica removed successfully
+    // * `Err(ReplicationManagerError)` - Failed to remove replica
     pub async fn remove_replica(
         &self,
         replica_id: &ReplicaId,
@@ -604,18 +604,18 @@ impl ReplicationManager {
         Ok(())
     }
 
-    /// Replicates an operation to all configured replicas
-    ///
-    /// # Arguments
-    ///
-    /// * `operation` - Type of operation to replicate
-    /// * `table_name` - Table affected by the operation
-    /// * `data` - Operation payload data
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - Operation replicated successfully
-    /// * `Err(ReplicationManagerError)` - Replication failed
+    // Replicates an operation to all configured replicas
+    //
+    // # Arguments
+    //
+    // * `operation` - Type of operation to replicate
+    // * `table_name` - Table affected by the operation
+    // * `data` - Operation payload data
+    //
+    // # Returns
+    //
+    // * `Ok(())` - Operation replicated successfully
+    // * `Err(ReplicationManagerError)` - Replication failed
     pub async fn replicate_operation(
         &self,
         operation: ReplicationOperation,
@@ -706,7 +706,7 @@ impl ReplicationManager {
         }
     }
 
-    /// Waits for replication acknowledgments
+    // Waits for replication acknowledgments
     async fn wait_for_acknowledgments(
         &self,
         sequence: u64,
@@ -746,7 +746,7 @@ impl ReplicationManager {
         }
     }
 
-    /// Handles replication acknowledgment from a replica
+    // Handles replication acknowledgment from a replica
     pub async fn handle_acknowledgment(
         &self,
         replica_id: &ReplicaId,
@@ -763,34 +763,34 @@ impl ReplicationManager {
         Ok(())
     }
 
-    /// Starts background health check task
+    // Starts background health check task
     async fn start_health_check_task(&self) -> Result<(), ReplicationManagerError> {
         // Implementation would spawn a background task
         // For now, just return Ok
         Ok(())
     }
 
-    /// Starts background operation timeout task
+    // Starts background operation timeout task
     async fn start_operation_timeout_task(&self) -> Result<(), ReplicationManagerError> {
         // Implementation would spawn a background task
         // For now, just return Ok
         Ok(())
     }
 
-    /// Cleans up a pending operation
+    // Cleans up a pending operation
     fn cleanup_pending_operation(&self, sequence: u64) {
         let mut state = self.state.lock();
         state.pending_operations.remove(&sequence);
     }
 
-    /// Updates operation counters
+    // Updates operation counters
     fn update_operation_count(&self, successful: u64, failed: u64) {
         let mut state = self.state.lock();
         state.total_operations += successful;
         state.failed_operations += failed;
     }
 
-    /// Gets current replication statistics
+    // Gets current replication statistics
     pub fn get_stats(&self) -> ReplicationStats {
         let state = self.state.lock();
 
@@ -822,23 +822,23 @@ impl ReplicationManager {
         }
     }
 
-    /// Gets the manager's unique ID
+    // Gets the manager's unique ID
     pub fn id(&self) -> &Uuid {
         &self.id
     }
 
-    /// Gets the current configuration
+    // Gets the current configuration
     pub fn config(&self) -> &ReplicationConfig {
         &self.config
     }
 
-    /// Checks if this manager is for a primary node
+    // Checks if this manager is for a primary node
     pub fn is_primary(&self) -> bool {
         self.is_primary
     }
 }
 
-/// Replication statistics for monitoring
+// Replication statistics for monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationStats {
     pub total_replicas: usize,
@@ -851,10 +851,10 @@ pub struct ReplicationStats {
     pub latest_lsn: LogSequenceNumber,
 }
 
-/// Builder pattern for ReplicationManager construction
-///
-/// Provides a fluent interface for configuring and constructing
-/// ReplicationManager instances with dependency injection.
+// Builder pattern for ReplicationManager construction
+//
+// Provides a fluent interface for configuring and constructing
+// ReplicationManager instances with dependency injection.
 pub struct ReplicationManagerBuilder {
     config: Option<ReplicationConfig>,
     is_primary: bool,
@@ -865,7 +865,7 @@ pub struct ReplicationManagerBuilder {
 }
 
 impl ReplicationManagerBuilder {
-    /// Creates a new builder
+    // Creates a new builder
     pub fn new() -> Self {
         Self {
             config: None,
@@ -877,48 +877,48 @@ impl ReplicationManagerBuilder {
         }
     }
 
-    /// Sets the replication configuration
+    // Sets the replication configuration
     pub fn with_config(mut self, config: ReplicationConfig) -> Self {
         self.config = Some(config);
         self
     }
 
-    /// Sets whether this is a primary node
+    // Sets whether this is a primary node
     pub fn with_primary(mut self, is_primary: bool) -> Self {
         self.is_primary = is_primary;
         self
     }
 
-    /// Sets the event publisher
+    // Sets the event publisher
     pub fn with_event_publisher(mut self, publisher: Arc<dyn EventPublisher>) -> Self {
         self.event_publisher = Some(publisher);
         self
     }
 
-    /// Sets the replica service
+    // Sets the replica service
     pub fn with_replica_service(mut self, service: Arc<dyn ReplicaService>) -> Self {
         self.replica_service = Some(service);
         self
     }
 
-    /// Sets the WAL service
+    // Sets the WAL service
     pub fn with_wal_service(mut self, service: Arc<dyn WalService>) -> Self {
         self.wal_service = Some(service);
         self
     }
 
-    /// Sets the health monitor
+    // Sets the health monitor
     pub fn with_health_monitor(mut self, monitor: Arc<dyn HealthMonitor>) -> Self {
         self.health_monitor = Some(monitor);
         self
     }
 
-    /// Builds the ReplicationManager
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ReplicationManager)` - Successfully configured manager
-    /// * `Err(ReplicationManagerError)` - Missing required dependencies
+    // Builds the ReplicationManager
+    //
+    // # Returns
+    //
+    // * `Ok(ReplicationManager)` - Successfully configured manager
+    // * `Err(ReplicationManagerError)` - Missing required dependencies
     pub fn build(self) -> Result<ReplicationManager, ReplicationManagerError> {
         let config = self.config.unwrap_or_default();
 

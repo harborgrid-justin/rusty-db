@@ -1,7 +1,7 @@
-/// PL/SQL Compiler with Dependency Tracking
-///
-/// This module provides compilation, validation, semantic analysis, and dependency
-/// tracking for stored procedures, functions, packages, and triggers.
+// PL/SQL Compiler with Dependency Tracking
+//
+// This module provides compilation, validation, semantic analysis, and dependency
+// tracking for stored procedures, functions, packages, and triggers.
 
 use std::collections::HashSet;
 use crate::{Result, DbError};
@@ -11,7 +11,7 @@ use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 
-/// Compilation result
+// Compilation result
 #[derive(Debug, Clone)]
 pub struct CompilationResult {
     pub success: bool,
@@ -50,7 +50,7 @@ impl Default for CompilationResult {
     }
 }
 
-/// Compilation error
+// Compilation error
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompilationError {
     pub line: usize,
@@ -59,7 +59,7 @@ pub struct CompilationError {
     pub error_type: ErrorType,
 }
 
-/// Error types
+// Error types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ErrorType {
     SyntaxError,
@@ -71,7 +71,7 @@ pub enum ErrorType {
     CircularDependency,
 }
 
-/// Compilation warning
+// Compilation warning
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompilationWarning {
     pub line: usize,
@@ -80,7 +80,7 @@ pub struct CompilationWarning {
     pub warning_type: WarningType,
 }
 
-/// Warning types
+// Warning types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum WarningType {
     UnusedVariable,
@@ -89,7 +89,7 @@ pub enum WarningType {
     DeprecatedFeature,
 }
 
-/// Object type for dependency tracking
+// Object type for dependency tracking
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ObjectType {
     Procedure,
@@ -100,7 +100,7 @@ pub enum ObjectType {
     View,
 }
 
-/// Database object metadata
+// Database object metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatabaseObject {
     pub name: String,
@@ -111,7 +111,7 @@ pub struct DatabaseObject {
     pub last_compiled: String,
 }
 
-/// Compilation status
+// Compilation status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum CompilationStatus {
     Valid,
@@ -119,7 +119,7 @@ pub enum CompilationStatus {
     NeedsRecompilation,
 }
 
-/// PL/SQL Compiler
+// PL/SQL Compiler
 pub struct PlSqlCompiler {
     parser: PlSqlParser,
     objects: Arc<RwLock<HashMap<String, DatabaseObject>>>,
@@ -135,7 +135,7 @@ impl PlSqlCompiler {
         }
     }
 
-    /// Compile a PL/SQL block
+    // Compile a PL/SQL block
     pub fn compile(&mut self, source: &str) -> Result<CompilationResult> {
         let mut result = CompilationResult::new();
 
@@ -165,7 +165,7 @@ impl PlSqlCompiler {
         Ok(result)
     }
 
-    /// Perform semantic analysis
+    // Perform semantic analysis
     fn analyze_semantics(&self, block: &PlSqlBlock, result: &mut CompilationResult) -> Result<()> {
         let mut symbol_table = self.symbol_table.write();
 
@@ -191,7 +191,7 @@ impl PlSqlCompiler {
         Ok(())
     }
 
-    /// Analyze a statement
+    // Analyze a statement
     fn analyze_statement(
         &self,
         stmt: &Statement,
@@ -322,7 +322,7 @@ impl PlSqlCompiler {
         Ok(())
     }
 
-    /// Analyze an expression
+    // Analyze an expression
     fn analyze_expression(
         &self,
         expr: &Expression,
@@ -379,7 +379,7 @@ impl PlSqlCompiler {
         Ok(())
     }
 
-    /// Type checking
+    // Type checking
     fn check_types(&self, block: &PlSqlBlock, result: &mut CompilationResult) -> Result<()> {
         let symbol_table = self.symbol_table.read();
 
@@ -396,7 +396,7 @@ impl PlSqlCompiler {
         Ok(())
     }
 
-    /// Analyze dependencies
+    // Analyze dependencies
     fn analyze_dependencies(&self, block: &PlSqlBlock, result: &mut CompilationResult) -> Result<()> {
         // Dependencies were collected during semantic analysis
         // Here we could perform additional dependency-related checks
@@ -407,7 +407,7 @@ impl PlSqlCompiler {
         Ok(())
     }
 
-    /// Check for circular dependencies
+    // Check for circular dependencies
     fn check_circular_dependencies(&self, result: &CompilationResult) -> Result<()> {
         let objects = self.objects.read();
 
@@ -468,13 +468,13 @@ impl PlSqlCompiler {
         false
     }
 
-    /// Register a database object
+    // Register a database object
     pub fn register_object(&self, object: DatabaseObject) {
         let mut objects = self.objects.write();
         objects.insert(object.name.clone(), object);
     }
 
-    /// Get objects that depend on a given object
+    // Get objects that depend on a given object
     pub fn get_dependents(&self, object_name: &str) -> Vec<String> {
         let objects = self.objects.read();
 
@@ -485,7 +485,7 @@ impl PlSqlCompiler {
         }
     }
 
-    /// Mark objects for recompilation
+    // Mark objects for recompilation
     pub fn mark_for_recompilation(&self, object_name: &str) -> Result<Vec<String>> {
         let mut objects = self.objects.write();
         let mut to_recompile = Vec::new();
@@ -510,7 +510,7 @@ impl PlSqlCompiler {
         Ok(to_recompile)
     }
 
-    /// Recompile all invalid objects
+    // Recompile all invalid objects
     pub fn recompile_invalid(&mut self) -> Result<HashMap<String, CompilationResult>> {
         let objects = self.objects.read();
         let mut results = HashMap::new();
@@ -534,7 +534,7 @@ impl Default for PlSqlCompiler {
     }
 }
 
-/// Symbol table for variable and type tracking
+// Symbol table for variable and type tracking
 pub struct SymbolTable {
     variables: HashMap<String, PlSqlType>,
     types: HashMap<String, PlSqlType>,
@@ -587,7 +587,7 @@ impl Default for SymbolTable {
     }
 }
 
-/// Dependency graph
+// Dependency graph
 pub struct DependencyGraph {
     graph: Arc<RwLock<HashMap<String, HashSet<String>>>>,
 }
@@ -599,7 +599,7 @@ impl DependencyGraph {
         }
     }
 
-    /// Add a dependency edge
+    // Add a dependency edge
     pub fn add_dependency(&self, from: String, to: String) {
         let mut graph = self.graph.write();
         graph.entry(from)
@@ -607,13 +607,13 @@ impl DependencyGraph {
             .insert(to);
     }
 
-    /// Get all dependencies of an object
+    // Get all dependencies of an object
     pub fn get_dependencies(&self, object: &str) -> HashSet<String> {
         let graph = self.graph.read();
         graph.get(object).cloned().unwrap_or_default()
     }
 
-    /// Get topological order for compilation
+    // Get topological order for compilation
     pub fn topological_sort(&self) -> Result<Vec<String>> {
         let graph = self.graph.read();
         let mut in_degree: HashMap<String, usize> = HashMap::new();
@@ -735,5 +735,3 @@ mod tests {
         assert!(!table.is_defined("x"));
     }
 }
-
-

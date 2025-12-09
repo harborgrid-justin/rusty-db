@@ -1,10 +1,10 @@
-/// Data Migration and Rebalancing
-///
-/// This module handles data migration between nodes during:
-/// - Cluster topology changes
-/// - Load rebalancing operations
-/// - Node addition/removal
-/// - Partition reorganization
+// Data Migration and Rebalancing
+//
+// This module handles data migration between nodes during:
+// - Cluster topology changes
+// - Load rebalancing operations
+// - Node addition/removal
+// - Partition reorganization
 
 use tokio::time::sleep;
 use std::fmt;
@@ -16,7 +16,7 @@ use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 
-/// Trait for data migration coordination
+// Trait for data migration coordination
 pub trait MigrationCoordinator {
     fn schedule_migration(&self, task: MigrationTask) -> Result<(), DbError>;
     fn execute_migration(&self, task: &MigrationTask) -> Result<MigrationResult, DbError>;
@@ -24,14 +24,14 @@ pub trait MigrationCoordinator {
     fn get_migration_status(&self, task_id: &str) -> Result<MigrationStatus, DbError>;
 }
 
-/// Trait for migration execution strategy
+// Trait for migration execution strategy
 pub trait MigrationStrategy {
     fn estimate_migration_time(&self, task: &MigrationTask) -> Result<Duration, DbError>;
     fn transfer_data(&self, task: &MigrationTask) -> Result<TransferResult, DbError>;
     fn verify_migration(&self, task: &MigrationTask) -> Result<bool, DbError>;
 }
 
-/// Data migration manager
+// Data migration manager
 pub struct DataMigrationManager {
     coordinator: Arc<dyn ClusterCoordinator>,
     migration_queue: Arc<RwLock<VecDeque<MigrationTask>>>,
@@ -64,14 +64,14 @@ impl DataMigrationManager {
 
         if let Some(task) = task {
             let result = self.execute_migration(&task)?;
-            
+
             // Move from active to completed
             {
                 let mut active = self.active_migrations.write()
                     .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
                 active.remove(&task.id);
             }
-            
+
             {
                 let mut completed = self.completed_migrations.write()
                     .map_err(|_| DbError::LockError("Failed to acquire completed migrations lock".to_string()))?;
@@ -122,7 +122,7 @@ impl MigrationCoordinator for DataMigrationManager {
     fn schedule_migration(&self, task: MigrationTask) -> Result<(), DbError> {
         let mut queue = self.migration_queue.write()
             .map_err(|_| DbError::LockError("Failed to acquire migration queue lock".to_string()))?;
-        
+
         queue.push_back(task);
         Ok(())
     }
@@ -137,10 +137,10 @@ impl MigrationCoordinator for DataMigrationManager {
 
         // Execute the migration (simplified implementation)
         let start_time = SystemTime::now();
-        
+
         // Simulate migration work
         std::thread::sleep(Duration::from_millis(100));
-        
+
         let end_time = SystemTime::now();
         let duration = end_time.duration_since(start_time)
             .map_err(|_| DbError::Internal("Invalid time calculation".to_string()))?;
@@ -161,7 +161,7 @@ impl MigrationCoordinator for DataMigrationManager {
     fn cancel_migration(&self, task_id: &str) -> Result<(), DbError> {
         let mut active = self.active_migrations.write()
             .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
-        
+
         if active.remove(task_id).is_some() {
             Ok(())
         } else {
@@ -201,7 +201,7 @@ impl MigrationCoordinator for DataMigrationManager {
     }
 }
 
-/// Migration task definition
+// Migration task definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MigrationTask {
     pub id: String,
@@ -213,7 +213,7 @@ pub struct MigrationTask {
     pub created_at: SystemTime,
 }
 
-/// Migration priority levels
+// Migration priority levels
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum MigrationPriority {
     Low,
@@ -222,7 +222,7 @@ pub enum MigrationPriority {
     Critical,
 }
 
-/// Migration execution result
+// Migration execution result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MigrationResult {
     pub task_id: String,
@@ -236,7 +236,7 @@ pub struct MigrationResult {
     pub error: Option<String>,
 }
 
-/// Migration status
+// Migration status
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum MigrationStatus {
     Pending,
@@ -246,7 +246,7 @@ pub enum MigrationStatus {
     Cancelled,
 }
 
-/// Migration progress tracking
+// Migration progress tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MigrationProgress {
     pub pending_count: usize,
@@ -255,7 +255,7 @@ pub struct MigrationProgress {
     pub total_data_migrated_gb: f64,
 }
 
-/// Transfer operation result
+// Transfer operation result
 #[derive(Debug, Clone)]
 pub struct TransferResult {
     pub bytes_transferred: usize,
@@ -263,7 +263,7 @@ pub struct TransferResult {
     pub checksum: Option<String>,
 }
 
-/// Trait for cluster coordination access
+// Trait for cluster coordination access
 pub trait ClusterCoordinator {
     fn get_nodes(&self) -> Result<Vec<NodeInfo>, DbError>;
     fn get_node_load(&self, node_id: &NodeId) -> Result<f64, DbError>;
@@ -311,7 +311,7 @@ mod tests {
         };
 
         assert!(migration_mgr.schedule_migration(task).is_ok());
-        
+
         let pending = migration_mgr.get_pending_migrations().unwrap();
         assert_eq!(pending.len(), 1);
     }
@@ -333,7 +333,7 @@ mod tests {
 
         let result = migration_mgr.execute_migration(&task);
         assert!(result.is_ok());
-        
+
         let migration_result = result.unwrap();
         assert_eq!(migration_result.task_id, "task1");
         assert!(migration_result.success);

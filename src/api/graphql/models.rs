@@ -18,19 +18,19 @@ use super::GraphQLEngine;
 
 #[derive(SimpleObject, Clone, Debug)]
 pub struct DatabaseSchema {
-    /// Schema name
+    // Schema name
     pub name: String,
-    /// Tables in this schema
+    // Tables in this schema
     pub tables: Vec<TableType>,
-    /// Total number of tables
+    // Total number of tables
     pub table_count: i32,
-    /// Schema creation time
+    // Schema creation time
     pub created_at: DateTime,
-    /// Schema description/comment
+    // Schema description/comment
     pub description: Option<String>,
 }
 
-/// Table metadata and structure
+// Table metadata and structure
 #[derive(Clone, Debug)]
 pub struct TableType {
     pub id: ID,
@@ -102,20 +102,20 @@ impl TableType {
         &self.constraints
     }
 
-    /// Get table statistics
+    // Get table statistics
     async fn statistics(&self, ctx: &Context<'_>) -> GqlResult<TableStatistics> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_table_statistics(&self.name).await
     }
 
-    /// Get sample rows from the table
+    // Get sample rows from the table
     async fn sample_rows(&self, ctx: &Context<'_>, limit: Option<i32>) -> GqlResult<Vec<RowType>> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_sample_rows(&self.name, limit.unwrap_or(10)).await
     }
 }
 
-/// Column metadata
+// Column metadata
 #[derive(Clone, Debug)]
 pub struct ColumnType {
     pub id: ID,
@@ -177,14 +177,14 @@ impl ColumnType {
         &self.description
     }
 
-    /// Get column statistics (distinct values, null count, etc.)
+    // Get column statistics (distinct values, null count, etc.)
     async fn statistics(&self, ctx: &Context<'_>) -> GqlResult<ColumnStatistics> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_column_statistics(&self.table_name, &self.name).await
     }
 }
 
-/// Row data representation
+// Row data representation
 #[derive(Clone, Debug)]
 pub struct RowType {
     pub id: ID,
@@ -231,13 +231,13 @@ impl RowType {
         self.version
     }
 
-    /// Get specific field value
+    // Get specific field value
     async fn get_field(&self, name: String) -> Option<&FieldValue> {
         self.fields.get(&name)
     }
 }
 
-/// Field value in a row
+// Field value in a row
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FieldValue {
     pub column_name: String,
@@ -276,7 +276,7 @@ impl FieldValue {
     }
 }
 
-/// Index information
+// Index information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct IndexInfo {
     pub name: String,
@@ -287,7 +287,7 @@ pub struct IndexInfo {
     pub created_at: DateTime,
 }
 
-/// Constraint information
+// Constraint information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct ConstraintInfo {
     pub name: String,
@@ -297,7 +297,7 @@ pub struct ConstraintInfo {
     pub referenced_columns: Option<Vec<String>>,
 }
 
-/// Table statistics
+// Table statistics
 #[derive(SimpleObject, Clone, Debug)]
 pub struct TableStatistics {
     pub row_count: BigInt,
@@ -308,7 +308,7 @@ pub struct TableStatistics {
     pub last_modified: Option<DateTime>,
 }
 
-/// Column statistics
+// Column statistics
 #[derive(SimpleObject, Clone, Debug)]
 pub struct ColumnStatistics {
     pub distinct_count: BigInt,
@@ -319,7 +319,7 @@ pub struct ColumnStatistics {
     pub histogram: Option<Vec<HistogramBucket>>,
 }
 
-/// Histogram bucket for column statistics
+// Histogram bucket for column statistics
 #[derive(SimpleObject, Clone, Debug)]
 pub struct HistogramBucket {
     pub range_start: String,
@@ -328,14 +328,14 @@ pub struct HistogramBucket {
     pub frequency: f64,
 }
 
-/// Query result union type
+// Query result union type
 #[derive(Union)]
 pub enum QueryResult {
     Success(QuerySuccess),
     Error(QueryError),
 }
 
-/// Successful query result
+// Successful query result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct QuerySuccess {
     pub rows: Vec<RowType>,
@@ -344,7 +344,7 @@ pub struct QuerySuccess {
     pub has_more: bool,
 }
 
-/// Query error result
+// Query error result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct QueryError {
     pub message: String,
@@ -352,14 +352,14 @@ pub struct QueryError {
     pub details: Option<String>,
 }
 
-/// Mutation result union type
+// Mutation result union type
 #[derive(Union)]
 pub enum MutationResult {
     Success(MutationSuccess),
     Error(MutationError),
 }
 
-/// Successful mutation result
+// Successful mutation result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct MutationSuccess {
     pub affected_rows: i32,
@@ -367,7 +367,7 @@ pub struct MutationSuccess {
     pub execution_time_ms: f64,
 }
 
-/// Mutation error result
+// Mutation error result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct MutationError {
     pub message: String,
@@ -375,7 +375,7 @@ pub struct MutationError {
     pub details: Option<String>,
 }
 
-/// Input type for filtering
+// Input type for filtering
 #[derive(InputObject, Clone, Debug)]
 pub struct FilterCondition {
     pub field: String,
@@ -384,7 +384,7 @@ pub struct FilterCondition {
     pub values: Option<Vec<Json>>,
 }
 
-/// Input type for complex WHERE clauses
+// Input type for complex WHERE clauses
 #[derive(InputObject, Clone, Debug)]
 pub struct WhereClause {
     pub and: Option<Vec<WhereClause>>,
@@ -393,14 +393,14 @@ pub struct WhereClause {
     pub condition: Option<FilterCondition>,
 }
 
-/// Input type for sorting
+// Input type for sorting
 #[derive(InputObject, Clone, Debug)]
 pub struct OrderBy {
     pub field: String,
     pub order: SortOrder,
 }
 
-/// Input type for aggregations
+// Input type for aggregations
 #[derive(InputObject, Clone, Debug)]
 pub struct AggregateInput {
     pub function: AggregateFunc,
@@ -408,7 +408,7 @@ pub struct AggregateInput {
     pub alias: Option<String>,
 }
 
-/// Aggregation result
+// Aggregation result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct AggregateResult {
     pub field: String,
@@ -416,7 +416,7 @@ pub struct AggregateResult {
     pub value: Json,
 }
 
-/// Pagination cursor
+// Pagination cursor
 #[derive(SimpleObject, Clone, Debug)]
 pub struct PageInfo {
     pub has_next_page: bool,
@@ -426,14 +426,14 @@ pub struct PageInfo {
     pub total_count: BigInt,
 }
 
-/// Edge type for cursor-based pagination
+// Edge type for cursor-based pagination
 #[derive(SimpleObject, Clone, Debug)]
 pub struct RowEdge {
     pub cursor: String,
     pub node: RowType,
 }
 
-/// Connection type for cursor-based pagination
+// Connection type for cursor-based pagination
 #[derive(SimpleObject, Clone, Debug)]
 pub struct RowConnection {
     pub edges: Vec<RowEdge>,

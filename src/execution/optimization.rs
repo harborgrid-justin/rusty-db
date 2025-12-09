@@ -1,12 +1,12 @@
-/// Advanced Query Optimization Techniques
-///
-/// This module provides enterprise-grade query optimization:
-/// - Query plan caching for repeated queries
-/// - Adaptive query optimization based on runtime statistics
-/// - Materialized view automatic rewrite
-/// - Enhanced cost model with statistics
-/// - Join order optimization with dynamic programming
-/// - Index selection optimization
+// Advanced Query Optimization Techniques
+//
+// This module provides enterprise-grade query optimization:
+// - Query plan caching for repeated queries
+// - Adaptive query optimization based on runtime statistics
+// - Materialized view automatic rewrite
+// - Enhanced cost model with statistics
+// - Join order optimization with dynamic programming
+// - Index selection optimization
 
 use std::time::SystemTime;
 use crate::error::DbError;
@@ -17,7 +17,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 
-/// Query plan cache
+// Query plan cache
 pub struct PlanCache {
     cache: Arc<RwLock<HashMap<String, CachedPlan>>>,
     max_size: usize,
@@ -34,8 +34,8 @@ impl PlanCache {
             miss_count: Arc::new(RwLock::new(0)),
         }
     }
-    
-    /// Get cached plan for query
+
+    // Get cached plan for query
     pub fn get(&self, query_hash: &str) -> Option<PlanNode> {
         let cache = self.cache.read();
         if let Some(cached) = cache.get(query_hash) {
@@ -48,11 +48,11 @@ impl PlanCache {
         *self.miss_count.write() += 1;
         None
     }
-    
-    /// Cache a query plan
+
+    // Cache a query plan
     pub fn put(&self, query_hash: String, plan: PlanNode, ttl: Duration) {
         let mut cache = self.cache.write();
-        
+
         // Evict if at capacity
         if cache.len() >= self.max_size {
             // Simple LRU: remove oldest entry
@@ -60,7 +60,7 @@ impl PlanCache {
                 cache.remove(&oldest_key);
             }
         }
-        
+
         cache.insert(
             query_hash,
             CachedPlan {
@@ -71,8 +71,8 @@ impl PlanCache {
             },
         );
     }
-    
-    /// Get cache statistics
+
+    // Get cache statistics
     pub fn stats(&self) -> CacheStats {
         let hits = *self.hit_count.read();
         let misses = *self.miss_count.read();
@@ -82,7 +82,7 @@ impl PlanCache {
         } else {
             0.0
         };
-        
+
         CacheStats {
             hits,
             misses,
@@ -90,14 +90,14 @@ impl PlanCache {
             size: self.cache.read().len(),
         }
     }
-    
-    /// Clear cache
+
+    // Clear cache
     pub fn clear(&self) {
         self.cache.write().clear();
     }
 }
 
-/// Cached plan entry
+// Cached plan entry
 #[derive(Debug, Clone)]
 struct CachedPlan {
     plan: PlanNode,
@@ -116,7 +116,7 @@ impl CachedPlan {
     }
 }
 
-/// Cache statistics
+// Cache statistics
 #[derive(Debug, Clone)]
 pub struct CacheStats {
     pub hits: u64,
@@ -125,11 +125,11 @@ pub struct CacheStats {
     pub size: usize,
 }
 
-/// Statistics collector for query optimization
+// Statistics collector for query optimization
 pub struct StatisticsCollector {
-    /// Table statistics: table name -> stats
+    // Table statistics: table name -> stats
     table_stats: Arc<RwLock<HashMap<String, TableStatistics>>>,
-    /// Column statistics: (table, column) -> stats
+    // Column statistics: (table, column) -> stats
     column_stats: Arc<RwLock<HashMap<(String, String), ColumnStatistics>>>,
 }
 
@@ -140,8 +140,8 @@ impl StatisticsCollector {
             column_stats: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-    
-    /// Collect statistics for a table
+
+    // Collect statistics for a table
     pub fn collect_table_stats(&self, table_name: String, row_count: u64, size_bytes: u64) {
         let mut stats = self.table_stats.write();
         stats.insert(
@@ -154,8 +154,8 @@ impl StatisticsCollector {
             },
         );
     }
-    
-    /// Collect statistics for a column
+
+    // Collect statistics for a column
     pub fn collect_column_stats(
         &self,
         table_name: String,
@@ -179,21 +179,21 @@ impl StatisticsCollector {
             },
         );
     }
-    
-    /// Get table statistics
+
+    // Get table statistics
     pub fn get_table_stats(&self, table_name: &str) -> Option<TableStatistics> {
         self.table_stats.read().get(table_name).cloned()
     }
-    
-    /// Get column statistics
+
+    // Get column statistics
     pub fn get_column_stats(&self, table_name: &str, column_name: &str) -> Option<ColumnStatistics> {
         self.column_stats
             .read()
             .get(&(table_name.to_string(), column_name.to_string()))
             .cloned()
     }
-    
-    /// Estimate selectivity of a predicate
+
+    // Estimate selectivity of a predicate
     pub fn estimate_selectivity(&self, table: &str, column: &str, predicate: &str) -> f64 {
         if let Some(col_stats) = self.get_column_stats(table, column) {
             if let Some(table_stats) = self.get_table_stats(table) {
@@ -207,13 +207,13 @@ impl StatisticsCollector {
                 }
             }
         }
-        
+
         // Default selectivity
         0.1
     }
 }
 
-/// Table statistics
+// Table statistics
 #[derive(Debug, Clone)]
 pub struct TableStatistics {
     pub table_name: String,
@@ -222,7 +222,7 @@ pub struct TableStatistics {
     pub last_updated: SystemTime,
 }
 
-/// Column statistics
+// Column statistics
 #[derive(Debug, Clone)]
 pub struct ColumnStatistics {
     pub table_name: String,
@@ -234,12 +234,12 @@ pub struct ColumnStatistics {
     pub last_updated: SystemTime,
 }
 
-/// Adaptive query optimizer
-/// Learns from query execution patterns to improve future plans
+// Adaptive query optimizer
+// Learns from query execution patterns to improve future plans
 pub struct AdaptiveOptimizer {
-    /// Query execution history
+    // Query execution history
     execution_history: Arc<RwLock<Vec<ExecutionRecord>>>,
-    /// Learned join orders
+    // Learned join orders
     join_order_hints: Arc<RwLock<HashMap<String, Vec<String>>>>,
 }
 
@@ -250,8 +250,8 @@ impl AdaptiveOptimizer {
             join_order_hints: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-    
-    /// Record query execution
+
+    // Record query execution
     pub fn record_execution(
         &self,
         query_hash: String,
@@ -267,25 +267,25 @@ impl AdaptiveOptimizer {
             rows_returned,
             timestamp: SystemTime::now(),
         });
-        
+
         // Keep history bounded
         if history.len() > 1000 {
             history.remove(0);
         }
     }
-    
-    /// Get optimal join order based on history
+
+    // Get optimal join order based on history
     pub fn suggest_join_order(&self, tables: &[String]) -> Option<Vec<String>> {
         let hints = self.join_order_hints.read();
         let key = tables.join(",");
         hints.get(&key).cloned()
     }
-    
-    /// Learn join order from execution history
+
+    // Learn join order from execution history
     pub fn learn_join_orders(&self) {
         let history = self.execution_history.read();
         let mut hints = self.join_order_hints.write();
-        
+
         // Analyze execution records to find optimal join orders
         // This is a simplified implementation
         for record in history.iter() {
@@ -295,7 +295,7 @@ impl AdaptiveOptimizer {
             }
         }
     }
-    
+
     fn extract_tables(plan: &PlanNode) -> Option<Vec<String>> {
         match plan {
             PlanNode::Join { left, right, .. } => {
@@ -318,7 +318,7 @@ impl AdaptiveOptimizer {
     }
 }
 
-/// Execution record for adaptive optimization
+// Execution record for adaptive optimization
 #[derive(Debug, Clone)]
 struct ExecutionRecord {
     query_hash: String,
@@ -328,10 +328,10 @@ struct ExecutionRecord {
     timestamp: SystemTime,
 }
 
-/// Materialized view rewriter
-/// Automatically rewrites queries to use materialized views when beneficial
+// Materialized view rewriter
+// Automatically rewrites queries to use materialized views when beneficial
 pub struct MaterializedViewRewriter {
-    /// Available materialized views: name -> definition
+    // Available materialized views: name -> definition
     views: Arc<RwLock<HashMap<String, MaterializedViewDef>>>,
 }
 
@@ -341,8 +341,8 @@ impl MaterializedViewRewriter {
             views: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-    
-    /// Register a materialized view
+
+    // Register a materialized view
     pub fn register_view(&self, name: String, query: String, base_tables: Vec<String>) {
         let mut views = self.views.write();
         views.insert(
@@ -355,14 +355,14 @@ impl MaterializedViewRewriter {
             },
         );
     }
-    
-    /// Try to rewrite query to use materialized views
+
+    // Try to rewrite query to use materialized views
     pub fn rewrite_query(&self, plan: &PlanNode) -> Option<PlanNode> {
         let views = self.views.read();
-        
+
         // Extract tables from query
         let query_tables = Self::get_query_tables(plan);
-        
+
         // Find matching materialized view
         for view in views.values() {
             if Self::tables_match(&query_tables, &view.base_tables) {
@@ -373,10 +373,10 @@ impl MaterializedViewRewriter {
                 });
             }
         }
-        
+
         None
     }
-    
+
     fn get_query_tables(plan: &PlanNode) -> Vec<String> {
         match plan {
             PlanNode::TableScan { table, .. } => vec![table.clone()],
@@ -393,22 +393,22 @@ impl MaterializedViewRewriter {
             PlanNode::Subquery { plan, .. } => Self::get_query_tables(plan),
         }
     }
-    
+
     fn tables_match(query_tables: &[String], view_tables: &[String]) -> bool {
         if query_tables.len() != view_tables.len() {
             return false;
         }
-        
+
         let mut query_sorted = query_tables.to_vec();
         let mut view_sorted = view_tables.to_vec();
         query_sorted.sort();
         view_sorted.sort();
-        
+
         query_sorted == view_sorted
     }
 }
 
-/// Materialized view definition
+// Materialized view definition
 #[derive(Debug, Clone)]
 struct MaterializedViewDef {
     name: String,
@@ -417,7 +417,7 @@ struct MaterializedViewDef {
     last_refresh: SystemTime,
 }
 
-/// Enhanced cost model with statistics
+// Enhanced cost model with statistics
 pub struct EnhancedCostModel {
     stats_collector: Arc<StatisticsCollector>,
 }
@@ -426,8 +426,8 @@ impl EnhancedCostModel {
     pub fn new(stats_collector: Arc<StatisticsCollector>) -> Self {
         Self { stats_collector }
     }
-    
-    /// Estimate cost of a plan node
+
+    // Estimate cost of a plan node
     pub fn estimate_cost(&self, plan: &PlanNode) -> f64 {
         match plan {
             PlanNode::TableScan { table, .. } => {
@@ -467,7 +467,7 @@ impl EnhancedCostModel {
             }
         }
     }
-    
+
     fn estimate_filter_selectivity(&self, predicate: &str) -> f64 {
         // Simplified: return default selectivity
         // In a full implementation, would parse predicate and use column statistics
@@ -475,7 +475,7 @@ impl EnhancedCostModel {
     }
 }
 
-/// Join order optimizer using dynamic programming
+// Join order optimizer using dynamic programming
 pub struct JoinOrderOptimizer {
     cost_model: Arc<EnhancedCostModel>,
 }
@@ -484,22 +484,22 @@ impl JoinOrderOptimizer {
     pub fn new(cost_model: Arc<EnhancedCostModel>) -> Self {
         Self { cost_model }
     }
-    
-    /// Find optimal join order for a set of tables
+
+    // Find optimal join order for a set of tables
     pub fn optimize_join_order(&self, tables: Vec<PlanNode>) -> Result<PlanNode, DbError> {
         if tables.is_empty() {
             return Err(DbError::InvalidInput("No tables to join".to_string()));
         }
-        
+
         if tables.len() == 1 {
             return Ok(tables[0].clone());
         }
-        
+
         // For 2 tables, simple comparison
         if tables.len() == 2 {
             let left = &tables[0];
             let right = &tables[1];
-            
+
             let cost_lr = self.estimate_join_cost(left, right);
             let cost_rl = self.estimate_join_cost(right, left);
 
@@ -509,17 +509,17 @@ impl JoinOrderOptimizer {
                 Ok(self.create_join(right.clone(), left.clone()))
             }
         }
-        
+
         // For more tables, use dynamic programming (simplified)
         // In production, would implement full DP algorithm
         self.greedy_join_order(tables)
     }
-    
+
     fn greedy_join_order(&self, mut tables: Vec<PlanNode>) -> Result<PlanNode, DbError> {
         while tables.len() > 1 {
             let mut best_pair = (0, 1);
             let mut best_cost = f64::MAX;
-            
+
             // Find best pair to join
             for i in 0..tables.len() {
                 for j in (i + 1)..tables.len() {
@@ -530,7 +530,7 @@ impl JoinOrderOptimizer {
                     }
                 }
             }
-            
+
             // Join best pair
             let (i, j) = best_pair;
             let left = tables.remove(j); // Remove larger index first
@@ -538,16 +538,16 @@ impl JoinOrderOptimizer {
             let joined = self.create_join(right, left);
             tables.push(joined);
         }
-        
+
         Ok(tables.pop().unwrap())
     }
-    
+
     fn estimate_join_cost(&self, left: &PlanNode, right: &PlanNode) -> f64 {
         let left_cost = self.cost_model.estimate_cost(left);
         let right_cost = self.cost_model.estimate_cost(right);
         left_cost * right_cost * 0.1
     }
-    
+
     fn create_join(&self, left: PlanNode, right: PlanNode) -> PlanNode {
         PlanNode::Join {
             join_type: crate::parser::JoinType::Inner,
@@ -558,9 +558,9 @@ impl JoinOrderOptimizer {
     }
 }
 
-/// Index selection optimizer
+// Index selection optimizer
 pub struct IndexSelector {
-    /// Available indexes: table -> column -> index type
+    // Available indexes: table -> column -> index type
     indexes: Arc<RwLock<HashMap<String, HashMap<String, IndexType>>>>,
 }
 
@@ -570,8 +570,8 @@ impl IndexSelector {
             indexes: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-    
-    /// Register an index
+
+    // Register an index
     pub fn register_index(&self, table: String, column: String, index_type: IndexType) {
         let mut indexes = self.indexes.write();
         indexes
@@ -579,11 +579,11 @@ impl IndexSelector {
             .or_insert_with(HashMap::new)
             .insert(column, index_type);
     }
-    
-    /// Select best index for a query
+
+    // Select best index for a query
     pub fn select_index(&self, table: &str, column: &str, predicate: &str) -> Option<IndexType> {
         let indexes = self.indexes.read();
-        
+
         if let Some(table_indexes) = indexes.get(table) {
             if let Some(index_type) = table_indexes.get(column) {
                 // Check if index is suitable for predicate
@@ -592,10 +592,10 @@ impl IndexSelector {
                 }
             }
         }
-        
+
         None
     }
-    
+
     fn is_index_suitable(index_type: &IndexType, predicate: &str) -> bool {
         match index_type {
             IndexType::BTree => {
@@ -614,7 +614,7 @@ impl IndexSelector {
     }
 }
 
-/// Index type enum
+// Index type enum
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum IndexType {
     BTree,
@@ -629,33 +629,33 @@ mod tests {
     #[test]
     fn test_plan_cache() {
         let cache = PlanCache::new(10);
-        
+
         let plan = PlanNode::TableScan {
             table: "users".to_string(),
             columns: vec!["*".to_string()],
         };
-        
+
         let ttl = Duration::from_secs(60);
         cache.put("query1".to_string(), plan.clone(), ttl);
-        
+
         let cached = cache.get("query1");
         assert!(cached.is_some());
-        
+
         let stats = cache.stats();
         assert_eq!(stats.hits, 1);
         assert_eq!(stats.misses, 0);
     }
-    
+
     #[test]
     fn test_statistics_collector() {
         let collector = StatisticsCollector::new();
-        
+
         collector.collect_table_stats("users".to_string(), 1000, 1024000);
-        
+
         let stats = collector.get_table_stats("users");
         assert!(stats.is_some());
         assert_eq!(stats.unwrap().row_count, 1000);
-        
+
         collector.collect_column_stats(
             "users".to_string(),
             "email".to_string(),
@@ -664,68 +664,66 @@ mod tests {
             None,
             None,
         );
-        
+
         let col_stats = collector.get_column_stats("users", "email");
         assert!(col_stats.is_some());
         assert_eq!(col_stats.unwrap().distinct_count, 950);
     }
-    
+
     #[test]
     fn test_adaptive_optimizer() {
         let optimizer = AdaptiveOptimizer::new();
-        
+
         let plan = PlanNode::TableScan {
             table: "users".to_string(),
             columns: vec!["*".to_string()],
         };
-        
+
         optimizer.record_execution("query1".to_string(), &plan, 100, 500);
-        
+
         // Learning should not crash
         optimizer.learn_join_orders();
     }
-    
+
     #[test]
     fn test_materialized_view_rewriter() {
         let rewriter = MaterializedViewRewriter::new();
-        
+
         rewriter.register_view(
             "mv_users".to_string(),
             "SELECT * FROM users".to_string(),
             vec!["users".to_string()],
         );
-        
+
         let plan = PlanNode::TableScan {
             table: "users".to_string(),
             columns: vec!["*".to_string()],
         };
-        
+
         let rewritten = rewriter.rewrite_query(&plan);
         assert!(rewritten.is_some());
     }
-    
+
     #[test]
     fn test_index_selector() {
         let selector = IndexSelector::new();
-        
+
         selector.register_index(
             "users".to_string(),
             "id".to_string(),
             IndexType::BTree,
         );
-        
+
         selector.register_index(
             "users".to_string(),
             "email".to_string(),
             IndexType::Hash,
         );
-        
+
         let index = selector.select_index("users", "id", "id > 100");
         assert_eq!(index, Some(IndexType::BTree));
-        
+
         let hash_index = selector.select_index("users", "email", "email = 'test@example.com'");
         assert_eq!(hash_index, Some(IndexType::Hash));
     }
 }
-
-

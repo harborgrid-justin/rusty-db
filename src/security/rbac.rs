@@ -23,44 +23,44 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 
-/// Role identifier type
+// Role identifier type
 pub type RoleId = String;
 
-/// User identifier type
+// User identifier type
 pub type UserId = String;
 
-/// Permission identifier type
+// Permission identifier type
 pub type PermissionId = String;
 
-/// Represents a role in the RBAC system
+// Represents a role in the RBAC system
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Role {
-    /// Unique role identifier
+    // Unique role identifier
     pub id: RoleId,
-    /// Human-readable role name
+    // Human-readable role name
     pub name: String,
-    /// Role description
+    // Role description
     pub description: Option<String>,
-    /// Parent roles for inheritance
+    // Parent roles for inheritance
     pub parent_roles: Vec<RoleId>,
-    /// Direct permissions assigned to this role
+    // Direct permissions assigned to this role
     pub permissions: HashSet<PermissionId>,
-    /// Custom attributes for the role
+    // Custom attributes for the role
     pub attributes: HashMap<String, String>,
-    /// Whether the role is active
+    // Whether the role is active
     pub is_active: bool,
-    /// Role creation timestamp
+    // Role creation timestamp
     pub created_at: i64,
-    /// Role modification timestamp
+    // Role modification timestamp
     pub updated_at: i64,
-    /// Role owner/creator
+    // Role owner/creator
     pub owner: Option<UserId>,
-    /// Role priority (higher values take precedence)
+    // Role priority (higher values take precedence)
     pub priority: i32,
 }
 
 impl Role {
-    /// Create a new role with the given ID and name
+    // Create a new role with the given ID and name
     pub fn new(id: RoleId, name: String) -> Self {
         let now = current_timestamp();
         Self {
@@ -78,7 +78,7 @@ impl Role {
         }
     }
 
-    /// Add a parent role for inheritance
+    // Add a parent role for inheritance
     pub fn add_parent(&mut self, parent_id: RoleId) {
         if !self.parent_roles.contains(&parent_id) {
             self.parent_roles.push(parent_id);
@@ -86,167 +86,167 @@ impl Role {
         }
     }
 
-    /// Remove a parent role
+    // Remove a parent role
     pub fn remove_parent(&mut self, parent_id: &RoleId) {
         self.parent_roles.retain(|id| id != parent_id);
         self.updated_at = current_timestamp();
     }
 
-    /// Add a permission to the role
+    // Add a permission to the role
     pub fn add_permission(&mut self, permission: PermissionId) {
         self.permissions.insert(permission);
         self.updated_at = current_timestamp();
     }
 
-    /// Remove a permission from the role
+    // Remove a permission from the role
     pub fn remove_permission(&mut self, permission: &PermissionId) {
         self.permissions.remove(permission);
         self.updated_at = current_timestamp();
     }
 
-    /// Check if role has a specific permission (direct only)
+    // Check if role has a specific permission (direct only)
     pub fn has_permission(&self, permission: &PermissionId) -> bool {
         self.permissions.contains(permission)
     }
 }
 
-/// Represents a user's role assignment
+// Represents a user's role assignment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoleAssignment {
-    /// Assignment ID
+    // Assignment ID
     pub id: String,
-    /// User ID
+    // User ID
     pub user_id: UserId,
-    /// Role ID
+    // Role ID
     pub role_id: RoleId,
-    /// Whether this role is currently activated
+    // Whether this role is currently activated
     pub is_activated: bool,
-    /// When the assignment was created
+    // When the assignment was created
     pub assigned_at: i64,
-    /// When the assignment expires (None = never)
+    // When the assignment expires (None = never)
     pub expires_at: Option<i64>,
-    /// Who assigned this role
+    // Who assigned this role
     pub assigned_by: Option<UserId>,
-    /// Conditions for role activation
+    // Conditions for role activation
     pub activation_conditions: Vec<ActivationCondition>,
 }
 
-/// Condition that must be met for role activation
+// Condition that must be met for role activation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ActivationCondition {
-    /// Time-based activation (only active during certain hours)
+    // Time-based activation (only active during certain hours)
     TimeWindow {
         start_hour: u8,
         end_hour: u8,
     },
-    /// Day of week restriction
+    // Day of week restriction
     DayOfWeek {
         allowed_days: Vec<u8>, // 0 = Sunday, 6 = Saturday
     },
-    /// IP address restriction
+    // IP address restriction
     IpAddress {
         allowed_ips: Vec<String>,
     },
-    /// Location-based restriction
+    // Location-based restriction
     Location {
         allowed_locations: Vec<String>,
     },
-    /// Requires MFA to be completed
+    // Requires MFA to be completed
     RequiresMfa,
-    /// Custom condition with a predicate expression
+    // Custom condition with a predicate expression
     Custom {
         expression: String,
     },
 }
 
-/// Separation of Duties (SoD) constraint
+// Separation of Duties (SoD) constraint
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SeparationOfDutiesConstraint {
-    /// Constraint ID
+    // Constraint ID
     pub id: String,
-    /// Constraint name
+    // Constraint name
     pub name: String,
-    /// Description of the constraint
+    // Description of the constraint
     pub description: Option<String>,
-    /// Type of SoD constraint
+    // Type of SoD constraint
     pub constraint_type: SoDType,
-    /// Conflicting roles that cannot be assigned together
+    // Conflicting roles that cannot be assigned together
     pub conflicting_roles: Vec<RoleId>,
-    /// Whether the constraint is active
+    // Whether the constraint is active
     pub is_active: bool,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: i64,
 }
 
-/// Type of Separation of Duties constraint
+// Type of Separation of Duties constraint
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SoDType {
-    /// Static SoD - roles cannot be assigned to the same user
+    // Static SoD - roles cannot be assigned to the same user
     Static,
-    /// Dynamic SoD - roles cannot be activated simultaneously
+    // Dynamic SoD - roles cannot be activated simultaneously
     Dynamic,
-    /// Object-level SoD - roles cannot perform certain operations on the same object
+    // Object-level SoD - roles cannot perform certain operations on the same object
     ObjectLevel,
 }
 
-/// Role delegation allowing a user to delegate their role to another
+// Role delegation allowing a user to delegate their role to another
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoleDelegation {
-    /// Delegation ID
+    // Delegation ID
     pub id: String,
-    /// User delegating the role
+    // User delegating the role
     pub delegator: UserId,
-    /// User receiving the delegated role
+    // User receiving the delegated role
     pub delegate: UserId,
-    /// Role being delegated
+    // Role being delegated
     pub role_id: RoleId,
-    /// When delegation starts
+    // When delegation starts
     pub valid_from: i64,
-    /// When delegation ends
+    // When delegation ends
     pub valid_until: i64,
-    /// Can the delegate further delegate this role?
+    // Can the delegate further delegate this role?
     pub can_redelegate: bool,
-    /// Is this delegation currently active?
+    // Is this delegation currently active?
     pub is_active: bool,
 }
 
-/// Session context for role activation
+// Session context for role activation
 #[derive(Debug, Clone)]
 pub struct SessionContext {
-    /// User ID
+    // User ID
     pub user_id: UserId,
-    /// Currently activated roles
+    // Currently activated roles
     pub activated_roles: HashSet<RoleId>,
-    /// Session IP address
+    // Session IP address
     pub ip_address: Option<String>,
-    /// Session location
+    // Session location
     pub location: Option<String>,
-    /// Session start time
+    // Session start time
     pub session_start: i64,
-    /// MFA completed in this session
+    // MFA completed in this session
     pub mfa_completed: bool,
-    /// Custom context attributes
+    // Custom context attributes
     pub attributes: HashMap<String, String>,
 }
 
-/// RBAC Manager - main interface for role-based access control
+// RBAC Manager - main interface for role-based access control
 pub struct RbacManager {
-    /// All defined roles
+    // All defined roles
     roles: Arc<RwLock<HashMap<RoleId, Role>>>,
-    /// User role assignments
+    // User role assignments
     assignments: Arc<RwLock<HashMap<UserId, Vec<RoleAssignment>>>>,
-    /// Separation of duties constraints
+    // Separation of duties constraints
     sod_constraints: Arc<RwLock<Vec<SeparationOfDutiesConstraint>>>,
-    /// Role delegations
+    // Role delegations
     delegations: Arc<RwLock<Vec<RoleDelegation>>>,
-    /// Active sessions
+    // Active sessions
     sessions: Arc<RwLock<HashMap<String, SessionContext>>>,
-    /// Role hierarchy cache (role -> all inherited permissions)
+    // Role hierarchy cache (role -> all inherited permissions)
     permission_cache: Arc<RwLock<HashMap<RoleId, HashSet<PermissionId>>>>,
 }
 
 impl RbacManager {
-    /// Create a new RBAC manager
+    // Create a new RBAC manager
     pub fn new() -> Self {
         Self {
             roles: Arc::new(RwLock::new(HashMap::new())),
@@ -258,7 +258,7 @@ impl RbacManager {
         }
     }
 
-    /// Create a new role
+    // Create a new role
     pub fn create_role(&self, role: Role) -> Result<()> {
         let mut roles = self.roles.write();
 
@@ -286,7 +286,7 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Update an existing role
+    // Update an existing role
     pub fn update_role(&self, role: Role) -> Result<()> {
         let mut roles = self.roles.write();
 
@@ -314,7 +314,7 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Delete a role
+    // Delete a role
     pub fn delete_role(&self, role_id: &RoleId) -> Result<()> {
         let mut roles = self.roles.write();
 
@@ -345,7 +345,7 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Get a role by ID
+    // Get a role by ID
     pub fn get_role(&self, role_id: &RoleId) -> Result<Role> {
         self.roles.read()
             .get(role_id)
@@ -353,12 +353,12 @@ impl RbacManager {
             .ok_or_else(|| DbError::NotFound(format!("Role {} not found", role_id)))
     }
 
-    /// Get all roles
+    // Get all roles
     pub fn get_all_roles(&self) -> Vec<Role> {
         self.roles.read().values().cloned().collect()
     }
 
-    /// Assign a role to a user
+    // Assign a role to a user
     pub fn assign_role(&self, assignment: RoleAssignment) -> Result<()> {
         // Verify role exists
         if !self.roles.read().contains_key(&assignment.role_id) {
@@ -382,7 +382,7 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Revoke a role from a user
+    // Revoke a role from a user
     pub fn revoke_role(&self, user_id: &UserId, role_id: &RoleId) -> Result<()> {
         let mut assignments = self.assignments.write();
 
@@ -402,7 +402,7 @@ impl RbacManager {
         }
     }
 
-    /// Get all role assignments for a user
+    // Get all role assignments for a user
     pub fn get_user_roles(&self, user_id: &UserId) -> Vec<RoleAssignment> {
         self.assignments.read()
             .get(user_id)
@@ -410,7 +410,7 @@ impl RbacManager {
             .unwrap_or_default()
     }
 
-    /// Activate a role in a session
+    // Activate a role in a session
     pub fn activate_role(&self, session_id: &str, role_id: &RoleId) -> Result<()> {
         let mut sessions = self.sessions.write();
         let session = sessions.get_mut(session_id)
@@ -435,7 +435,7 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Deactivate a role in a session
+    // Deactivate a role in a session
     pub fn deactivate_role(&self, session_id: &str, role_id: &RoleId) -> Result<()> {
         let mut sessions = self.sessions.write();
         let session = sessions.get_mut(session_id)
@@ -445,7 +445,7 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Get all effective permissions for a user (including inherited)
+    // Get all effective permissions for a user (including inherited)
     pub fn get_effective_permissions(&self, user_id: &UserId) -> HashSet<PermissionId> {
         let assignments = self.assignments.read();
         let user_assignments = assignments.get(user_id);
@@ -475,7 +475,7 @@ impl RbacManager {
         permissions
     }
 
-    /// Get all permissions for a role including inherited permissions
+    // Get all permissions for a role including inherited permissions
     pub fn get_role_permissions(&self, role_id: &RoleId) -> HashSet<PermissionId> {
         // Check cache first
         {
@@ -496,12 +496,12 @@ impl RbacManager {
         permissions
     }
 
-    /// Check if a user has a specific permission (through any role)
+    // Check if a user has a specific permission (through any role)
     pub fn has_permission(&self, user_id: &UserId, permission: &PermissionId) -> bool {
         self.get_effective_permissions(user_id).contains(permission)
     }
 
-    /// Add a Separation of Duties constraint
+    // Add a Separation of Duties constraint
     pub fn add_sod_constraint(&self, constraint: SeparationOfDutiesConstraint) -> Result<()> {
         // Validate that all roles in the constraint exist
         let roles = self.roles.read();
@@ -515,7 +515,7 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Remove a Separation of Duties constraint
+    // Remove a Separation of Duties constraint
     pub fn remove_sod_constraint(&self, constraint_id: &str) -> Result<()> {
         let mut constraints = self.sod_constraints.write();
         let original_len = constraints.len();
@@ -528,12 +528,12 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Get all SoD constraints
+    // Get all SoD constraints
     pub fn get_sod_constraints(&self) -> Vec<SeparationOfDutiesConstraint> {
         self.sod_constraints.read().clone()
     }
 
-    /// Create a role delegation
+    // Create a role delegation
     pub fn create_delegation(&self, delegation: RoleDelegation) -> Result<()> {
         // Verify the delegator has the role
         let assignments = self.assignments.read();
@@ -553,7 +553,7 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Revoke a role delegation
+    // Revoke a role delegation
     pub fn revoke_delegation(&self, delegation_id: &str) -> Result<()> {
         let mut delegations = self.delegations.write();
         let original_len = delegations.len();
@@ -566,7 +566,7 @@ impl RbacManager {
         Ok(())
     }
 
-    /// Get active delegations for a user
+    // Get active delegations for a user
     pub fn get_user_delegations(&self, user_id: &UserId) -> Vec<RoleDelegation> {
         let now = current_timestamp();
         self.delegations.read()
@@ -760,7 +760,7 @@ impl Default for RbacManager {
     }
 }
 
-/// Get current timestamp in seconds since Unix epoch
+// Get current timestamp in seconds since Unix epoch
 fn current_timestamp() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

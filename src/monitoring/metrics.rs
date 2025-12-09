@@ -10,7 +10,7 @@ use parking_lot::RwLock;
 use std::time::{Duration};
 
 
-/// Metric types supported by the system
+// Metric types supported by the system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MetricType {
     Counter,
@@ -19,7 +19,7 @@ pub enum MetricType {
     Summary,
 }
 
-/// Counter metric - monotonically increasing value
+// Counter metric - monotonically increasing value
 #[derive(Debug, Clone)]
 pub struct Counter {
     name: String,
@@ -76,7 +76,7 @@ impl Counter {
     }
 }
 
-/// Gauge metric - value that can go up and down
+// Gauge metric - value that can go up and down
 #[derive(Debug, Clone)]
 pub struct Gauge {
     name: String,
@@ -139,14 +139,14 @@ impl Gauge {
     }
 }
 
-/// Histogram bucket
+// Histogram bucket
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistogramBucket {
     pub upper_bound: f64,
     pub count: u64,
 }
 
-/// Histogram metric - samples observations and counts them in buckets
+// Histogram metric - samples observations and counts them in buckets
 #[derive(Debug, Clone)]
 pub struct Histogram {
     name: String,
@@ -227,14 +227,14 @@ impl Histogram {
     }
 }
 
-/// Summary quantile
+// Summary quantile
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Quantile {
     pub quantile: f64,
     pub value: f64,
 }
 
-/// Summary metric - similar to histogram but calculates quantiles
+// Summary metric - similar to histogram but calculates quantiles
 #[derive(Debug, Clone)]
 pub struct Summary {
     name: String,
@@ -304,7 +304,7 @@ impl Summary {
     }
 }
 
-/// Metric wrapper for different metric types
+// Metric wrapper for different metric types
 #[derive(Debug, Clone)]
 pub enum Metric {
     Counter(Counter),
@@ -333,7 +333,7 @@ impl Metric {
     }
 }
 
-/// Metric registry for managing all metrics
+// Metric registry for managing all metrics
 pub struct MetricRegistry {
     metrics: Arc<RwLock<HashMap<String, Metric>>>,
     prefix: String,
@@ -431,7 +431,7 @@ impl MetricRegistry {
         self.metrics.read().keys().cloned().collect()
     }
 
-    /// Expose metrics in Prometheus text format
+    // Expose metrics in Prometheus text format
     pub fn expose_prometheus(&self) -> String {
         let mut output = String::new();
         let metrics = self.metrics.read();
@@ -544,7 +544,7 @@ impl Default for MetricRegistry {
     }
 }
 
-/// Metrics aggregator for rolling up metrics over time windows
+// Metrics aggregator for rolling up metrics over time windows
 pub struct MetricAggregator {
     window_size: Duration,
     aggregations: Arc<RwLock<HashMap<String, Vec<(SystemTime, f64)>>>>,
@@ -720,5 +720,3 @@ mod tests {
         assert_eq!(aggregator.get_percentile("latency", 0.5), Some(20.0));
     }
 }
-
-

@@ -20,82 +20,82 @@ use super::types::*;
 // Security Features - Request Validation, Threat Detection
 // ============================================================================
 
-/// Security filter
+// Security filter
 pub struct SecurityFilter {
-    /// Request validator
+    // Request validator
     validator: Arc<RequestValidator>,
-    /// Threat detector
+    // Threat detector
     threat_detector: Arc<ThreatDetector>,
-    /// IP filter
+    // IP filter
     ip_filter: Arc<IpFilter>,
-    /// CSRF manager
+    // CSRF manager
     csrf_manager: Arc<CsrfManager>,
 }
 
-/// Request validator
+// Request validator
 pub struct RequestValidator {
-    /// Maximum path length
+    // Maximum path length
     max_path_length: usize,
-    /// Maximum header size
+    // Maximum header size
     max_header_size: usize,
-    /// Allowed content types
+    // Allowed content types
     allowed_content_types: HashSet<String>,
 }
 
-/// Threat detector
+// Threat detector
 pub struct ThreatDetector {
-    /// SQL injection patterns
+    // SQL injection patterns
     sql_injection_patterns: Vec<regex::Regex>,
-    /// XSS patterns
+    // XSS patterns
     xss_patterns: Vec<regex::Regex>,
-    /// Path traversal patterns
+    // Path traversal patterns
     path_traversal_patterns: Vec<regex::Regex>,
-    /// Suspicious patterns
+    // Suspicious patterns
     suspicious_patterns: Vec<regex::Regex>,
 }
 
-/// IP filter
+// IP filter
 pub struct IpFilter {
-    /// Whitelist
+    // Whitelist
     whitelist: Arc<RwLock<HashSet<IpAddr>>>,
-    /// Blacklist
+    // Blacklist
     blacklist: Arc<RwLock<HashSet<IpAddr>>>,
-    /// Mode
+    // Mode
     mode: IpFilterMode,
 }
 
-/// IP filter mode
+// IP filter mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IpFilterMode {
-    /// Allow all except blacklisted
+    // Allow all except blacklisted
     Blacklist,
-    /// Deny all except whitelisted
+    // Deny all except whitelisted
     Whitelist,
-    /// No filtering
+    // No filtering
     None,
 }
 
-/// CSRF manager
+// CSRF manager
 pub struct CsrfManager {
-    /// CSRF tokens
+    // CSRF tokens
     tokens: Arc<RwLock<HashMap<String, CsrfToken>>>,
-    /// Token timeout (seconds)
+    // Token timeout (seconds)
     token_timeout: u64,
 }
 
-/// CSRF token
+// CSRF token
 #[derive(Debug, Clone)]
 pub struct CsrfToken {
-    /// Token value
+    // Token value
     pub value: String,
-    /// Created at
+    // Created at
     pub created_at: Instant,
-    /// User session ID
+    // User session ID
     pub session_id: String,
 }
 
 impl SecurityFilter {
-    /// Create new security filter
+    // Create new security filter
     pub fn new() -> Self {
         Self {
             validator: Arc::new(RequestValidator::new()),
@@ -105,7 +105,7 @@ impl SecurityFilter {
         }
     }
 
-    /// Validate request
+    // Validate request
     pub fn validate_request(&self, request: &ApiRequest) -> Result<(), DbError> {
         // IP filtering
         self.ip_filter.check_ip(request.client_ip)?;
@@ -119,12 +119,12 @@ impl SecurityFilter {
         Ok(())
     }
 
-    /// Get IP filter
+    // Get IP filter
     pub fn get_ip_filter(&self) -> Arc<IpFilter> {
         Arc::clone(&self.ip_filter)
     }
 
-    /// Get CSRF manager
+    // Get CSRF manager
     pub fn get_csrf_manager(&self) -> Arc<CsrfManager> {
         Arc::clone(&self.csrf_manager)
     }
@@ -145,7 +145,7 @@ impl RequestValidator {
         }
     }
 
-    /// Validate request
+    // Validate request
     fn validate(&self, request: &ApiRequest) -> Result<(), DbError> {
         // Check path length
         if request.path.len() > self.max_path_length {
@@ -203,7 +203,7 @@ impl ThreatDetector {
         }
     }
 
-    /// Detect threats in request
+    // Detect threats in request
     fn detect_threats(&self, request: &ApiRequest) -> Result<(), DbError> {
         // Check path
         self.check_path_traversal(&request.path)?;
@@ -228,7 +228,7 @@ impl ThreatDetector {
         Ok(())
     }
 
-    /// Check for SQL injection
+    // Check for SQL injection
     pub(crate) fn check_sql_injection(&self, input: &str) -> Result<(), DbError> {
         for pattern in &self.sql_injection_patterns {
             if pattern.is_match(input) {
@@ -238,7 +238,7 @@ impl ThreatDetector {
         Ok(())
     }
 
-    /// Check for XSS
+    // Check for XSS
     pub(crate) fn check_xss(&self, input: &str) -> Result<(), DbError> {
         for pattern in &self.xss_patterns {
             if pattern.is_match(input) {
@@ -248,7 +248,7 @@ impl ThreatDetector {
         Ok(())
     }
 
-    /// Check for path traversal
+    // Check for path traversal
     fn check_path_traversal(&self, input: &str) -> Result<(), DbError> {
         for pattern in &self.path_traversal_patterns {
             if pattern.is_match(input) {
@@ -268,7 +268,7 @@ impl IpFilter {
         }
     }
 
-    /// Check IP address
+    // Check IP address
     pub(crate) fn check_ip(&self, ip: IpAddr) -> Result<(), DbError> {
         match self.mode {
             IpFilterMode::None => Ok(()),
@@ -291,31 +291,31 @@ impl IpFilter {
         }
     }
 
-    /// Add to whitelist
+    // Add to whitelist
     pub fn add_to_whitelist(&self, ip: IpAddr) {
         let mut whitelist = self.whitelist.write();
         whitelist.insert(ip);
     }
 
-    /// Remove from whitelist
+    // Remove from whitelist
     pub fn remove_from_whitelist(&self, ip: IpAddr) -> bool {
         let mut whitelist = self.whitelist.write();
         whitelist.remove(&ip)
     }
 
-    /// Add to blacklist
+    // Add to blacklist
     pub fn add_to_blacklist(&self, ip: IpAddr) {
         let mut blacklist = self.blacklist.write();
         blacklist.insert(ip);
     }
 
-    /// Remove from blacklist
+    // Remove from blacklist
     pub fn remove_from_blacklist(&self, ip: IpAddr) -> bool {
         let mut blacklist = self.blacklist.write();
         blacklist.remove(&ip)
     }
 
-    /// Set filter mode
+    // Set filter mode
     pub fn set_mode(&mut self, mode: IpFilterMode) {
         self.mode = mode;
     }
@@ -329,7 +329,7 @@ impl CsrfManager {
         }
     }
 
-    /// Generate CSRF token
+    // Generate CSRF token
     pub fn generate_token(&self, session_id: String) -> String {
         let token_value = Uuid::new_v4().to_string();
 
@@ -345,7 +345,7 @@ impl CsrfManager {
         token_value
     }
 
-    /// Validate CSRF token
+    // Validate CSRF token
     pub fn validate_token(&self, token_value: &str, session_id: &str) -> bool {
         let tokens = self.tokens.read();
 
@@ -367,7 +367,7 @@ impl CsrfManager {
         }
     }
 
-    /// Cleanup expired tokens
+    // Cleanup expired tokens
     pub fn cleanup_expired_tokens(&self) {
         let mut tokens = self.tokens.write();
         let timeout = Duration::from_secs(self.token_timeout);

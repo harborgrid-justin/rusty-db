@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use crate::execution::QueryResult;
 
-/// Client request
+// Client request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Request {
     Query { sql: String },
@@ -11,7 +11,7 @@ pub enum Request {
     Ping,
 }
 
-/// Server response
+// Server response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Response {
     QueryResult(QueryResult),
@@ -20,5 +20,3 @@ pub enum Response {
     Error(String),
     Pong,
 }
-
-

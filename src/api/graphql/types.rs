@@ -69,7 +69,7 @@ type Result<T> = std::result::Result<T, DbError>;
 // PART 1: SCHEMA & TYPE SYSTEM (700+ lines)
 // ============================================================================
 
-/// Custom scalar type for DateTime values
+// Custom scalar type for DateTime values
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DateTime(ChronoDateTime<Utc>);
 
@@ -100,7 +100,7 @@ impl DateTime {
     }
 }
 
-/// Custom scalar type for JSON values
+// Custom scalar type for JSON values
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Json(pub serde_json::Value);
 
@@ -118,7 +118,7 @@ impl async_graphql::ScalarType for Json {
     }
 }
 
-/// Custom scalar type for Binary data
+// Custom scalar type for Binary data
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Binary(Vec<u8>);
 
@@ -139,7 +139,7 @@ impl async_graphql::ScalarType for Binary {
     }
 }
 
-/// Custom scalar type for large integers
+// Custom scalar type for large integers
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BigInt(pub i64);
 
@@ -164,7 +164,7 @@ impl async_graphql::ScalarType for BigInt {
     }
 }
 
-/// GraphQL representation of database data types
+// GraphQL representation of database data types
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum DataType {
     Null,
@@ -181,14 +181,14 @@ pub enum DataType {
     Uuid,
 }
 
-/// Sort order for query results
+// Sort order for query results
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum SortOrder {
     Asc,
     Desc,
 }
 
-/// Filter operations for WHERE clauses
+// Filter operations for WHERE clauses
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum FilterOp {
     Eq,
@@ -209,7 +209,7 @@ pub enum FilterOp {
     EndsWith,
 }
 
-/// Aggregate functions
+// Aggregate functions
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum AggregateFunc {
     Count,
@@ -221,7 +221,7 @@ pub enum AggregateFunc {
     Variance,
 }
 
-/// Join types for multi-table queries
+// Join types for multi-table queries
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum JoinType {
     Inner,
@@ -231,7 +231,7 @@ pub enum JoinType {
     Cross,
 }
 
-/// Transaction isolation levels
+// Transaction isolation levels
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum IsolationLevel {
     ReadUncommitted,
@@ -240,7 +240,7 @@ pub enum IsolationLevel {
     Serializable,
 }
 
-/// Node interface - all objects with an ID implement this
+// Node interface - all objects with an ID implement this
 // FIXME: Interface derive disabled due to trait bound issues
 // #[derive(Interface)]
 // #[graphql(field(name = "id", ty = "&ID"))]
@@ -250,7 +250,7 @@ pub enum IsolationLevel {
 //     Row(RowType),
 // }
 
-/// Timestamped interface - objects with creation/modification timestamps
+// Timestamped interface - objects with creation/modification timestamps
 // FIXME: Interface derive disabled due to trait bound issues
 // #[derive(Interface)]
 // #[graphql(
@@ -262,7 +262,7 @@ pub enum IsolationLevel {
 //     Row(RowType),
 // }
 
-/// Auditable interface - objects with audit trail
+// Auditable interface - objects with audit trail
 // FIXME: Interface derive disabled due to trait bound issues
 // #[derive(Interface)]
 // #[graphql(
@@ -274,15 +274,15 @@ pub enum IsolationLevel {
 //     Row(RowType),
 // }
 
-/// Database schema information
+// Database schema information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct DatabaseSchema {
-    /// Schema name
+    // Schema name
     pub name: String,
-    /// Schema owner
+    // Schema owner
     pub owner: String,
-    /// Tables in this schema
+    // Tables in this schema
     pub tables: Vec<String>,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: DateTime,
 }

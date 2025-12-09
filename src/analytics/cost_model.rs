@@ -14,17 +14,17 @@ use std::collections::HashMap;
 // Cardinality Estimator
 // =============================================================================
 
-/// Estimates the cardinality (row count) of query plan operators.
+// Estimates the cardinality (row count) of query plan operators.
 pub struct CardinalityEstimator {
-    /// Known table cardinalities
+    // Known table cardinalities
     table_cardinalities: HashMap<String, u64>,
 
-    /// Cached selectivity estimates
+    // Cached selectivity estimates
     selectivity_cache: HashMap<String, f64>,
 }
 
 impl CardinalityEstimator {
-    /// Create a new cardinality estimator.
+    // Create a new cardinality estimator.
     pub fn new() -> Self {
         Self {
             table_cardinalities: HashMap::new(),
@@ -32,19 +32,19 @@ impl CardinalityEstimator {
         }
     }
 
-    /// Set the cardinality for a table.
+    // Set the cardinality for a table.
     pub fn set_table_cardinality(&mut self, table: String, cardinality: u64) {
         self.table_cardinalities.insert(table, cardinality);
     }
 
-    /// Estimate cardinality for a table scan.
+    // Estimate cardinality for a table scan.
     pub fn estimate_scan(&self, table: &str) -> u64 {
         self.table_cardinalities.get(table).copied().unwrap_or(1000)
     }
 
-    /// Estimate cardinality after a filter operation.
-    ///
-    /// Uses default selectivity of 0.1 (10%) if not cached.
+    // Estimate cardinality after a filter operation.
+    //
+    // Uses default selectivity of 0.1 (10%) if not cached.
     pub fn estimate_filter(&self, input_card: u64, predicate: &str) -> u64 {
         let selectivity = self
             .selectivity_cache
@@ -55,7 +55,7 @@ impl CardinalityEstimator {
         (input_card as f64 * selectivity).max(1.0) as u64
     }
 
-    /// Estimate cardinality for a join operation.
+    // Estimate cardinality for a join operation.
     pub fn estimate_join(&self, left_card: u64, right_card: u64, join_type: JoinType) -> u64 {
         match join_type {
             JoinType::Inner => {
@@ -69,7 +69,7 @@ impl CardinalityEstimator {
         }
     }
 
-    /// Estimate cardinality for an aggregate operation.
+    // Estimate cardinality for an aggregate operation.
     pub fn estimate_aggregate(&self, input_card: u64, group_by_cols: usize) -> u64 {
         if group_by_cols == 0 {
             return 1; // Single row result for no GROUP BY
@@ -80,13 +80,13 @@ impl CardinalityEstimator {
         distinct_per_col.powi(group_by_cols as i32).min(input_card as f64) as u64
     }
 
-    /// Estimate cardinality for a DISTINCT operation.
+    // Estimate cardinality for a DISTINCT operation.
     pub fn estimate_distinct(&self, input_card: u64, _columns: &[String]) -> u64 {
         // Assume 50% distinct values by default
         (input_card / 2).max(1)
     }
 
-    /// Cache a selectivity estimate.
+    // Cache a selectivity estimate.
     pub fn cache_selectivity(&mut self, predicate: String, selectivity: f64) {
         self.selectivity_cache.insert(predicate, selectivity.clamp(0.0, 1.0));
     }
@@ -102,35 +102,35 @@ impl Default for CardinalityEstimator {
 // Cost Model
 // =============================================================================
 
-/// Cost model for query optimization.
-///
-/// Provides cost estimates for various query plan operators based on
-/// configurable cost factors.
+// Cost model for query optimization.
+//
+// Provides cost estimates for various query plan operators based on
+// configurable cost factors.
 pub struct CostModel {
-    /// Cost factor for sequential scan per row
+    // Cost factor for sequential scan per row
     pub seq_scan_cost_factor: f64,
 
-    /// Cost factor for index scan per row
+    // Cost factor for index scan per row
     pub index_scan_cost_factor: f64,
 
-    /// Cost factor for hash join per row
+    // Cost factor for hash join per row
     pub hash_join_cost_factor: f64,
 
-    /// Cost factor for merge join per row
+    // Cost factor for merge join per row
     pub merge_join_cost_factor: f64,
 
-    /// Cost factor for nested loop join per row
+    // Cost factor for nested loop join per row
     pub nested_loop_cost_factor: f64,
 
-    /// Cost factor for sorting per row
+    // Cost factor for sorting per row
     pub sort_cost_factor: f64,
 
-    /// Cost factor for hash aggregate per row
+    // Cost factor for hash aggregate per row
     pub hash_aggregate_cost_factor: f64,
 }
 
 impl CostModel {
-    /// Create a new cost model with default factors.
+    // Create a new cost model with default factors.
     pub fn new() -> Self {
         Self {
             seq_scan_cost_factor: 1.0,
@@ -143,7 +143,7 @@ impl CostModel {
         }
     }
 
-    /// Create a cost model optimized for in-memory operations.
+    // Create a cost model optimized for in-memory operations.
     pub fn in_memory() -> Self {
         Self {
             seq_scan_cost_factor: 0.1,
@@ -156,17 +156,17 @@ impl CostModel {
         }
     }
 
-    /// Cost of a sequential scan.
+    // Cost of a sequential scan.
     pub fn cost_seq_scan(&self, cardinality: u64) -> f64 {
         cardinality as f64 * self.seq_scan_cost_factor
     }
 
-    /// Cost of an index scan.
+    // Cost of an index scan.
     pub fn cost_index_scan(&self, cardinality: u64) -> f64 {
         cardinality as f64 * self.index_scan_cost_factor
     }
 
-    /// Cost of a hash join.
+    // Cost of a hash join.
     pub fn cost_hash_join(&self, left_card: u64, right_card: u64) -> f64 {
         // Build cost + probe cost
         let build_cost = right_card as f64 * self.hash_join_cost_factor;
@@ -174,28 +174,28 @@ impl CostModel {
         build_cost + probe_cost
     }
 
-    /// Cost of a merge join.
+    // Cost of a merge join.
     pub fn cost_merge_join(&self, left_card: u64, right_card: u64) -> f64 {
         (left_card + right_card) as f64 * self.merge_join_cost_factor
     }
 
-    /// Cost of a nested loop join.
+    // Cost of a nested loop join.
     pub fn cost_nested_loop(&self, left_card: u64, right_card: u64) -> f64 {
         (left_card * right_card) as f64 * self.nested_loop_cost_factor
     }
 
-    /// Cost of a sort operation.
+    // Cost of a sort operation.
     pub fn cost_sort(&self, cardinality: u64) -> f64 {
         let n = cardinality as f64;
         n * n.log2().max(1.0) * self.sort_cost_factor
     }
 
-    /// Cost of a hash aggregate.
+    // Cost of a hash aggregate.
     pub fn cost_hash_aggregate(&self, cardinality: u64) -> f64 {
         cardinality as f64 * self.hash_aggregate_cost_factor
     }
 
-    /// Choose the best join algorithm based on cost.
+    // Choose the best join algorithm based on cost.
     pub fn choose_join_algorithm(&self, left_card: u64, right_card: u64) -> JoinAlgorithm {
         let hash_cost = self.cost_hash_join(left_card, right_card);
         let merge_cost = self.cost_merge_join(left_card, right_card);
@@ -210,12 +210,12 @@ impl CostModel {
         }
     }
 
-    /// Estimate total plan cost.
+    // Estimate total plan cost.
     pub fn estimate_plan_cost(&self, operations: &[PlanOperation]) -> f64 {
         operations.iter().map(|op| self.cost_operation(op)).sum()
     }
 
-    /// Cost a single operation.
+    // Cost a single operation.
     fn cost_operation(&self, op: &PlanOperation) -> f64 {
         match op {
             PlanOperation::SeqScan { cardinality } => self.cost_seq_scan(*cardinality),
@@ -248,33 +248,33 @@ impl Default for CostModel {
 // Supporting Types
 // =============================================================================
 
-/// Join algorithm types.
+// Join algorithm types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum JoinAlgorithm {
-    /// Hash join (good for large unsorted inputs)
+    // Hash join (good for large unsorted inputs)
     Hash,
-    /// Merge join (good for sorted inputs)
+    // Merge join (good for sorted inputs)
     Merge,
-    /// Nested loop join (good for small inputs or index lookups)
+    // Nested loop join (good for small inputs or index lookups)
     NestedLoop,
 }
 
-/// Join types.
+// Join types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum JoinType {
-    /// Inner join
+    // Inner join
     Inner,
-    /// Left outer join
+    // Left outer join
     Left,
-    /// Right outer join
+    // Right outer join
     Right,
-    /// Full outer join
+    // Full outer join
     Full,
-    /// Cross join (Cartesian product)
+    // Cross join (Cartesian product)
     Cross,
 }
 
-/// Query plan operations for cost estimation.
+// Query plan operations for cost estimation.
 #[derive(Debug, Clone)]
 pub enum PlanOperation {
     SeqScan { cardinality: u64 },
@@ -286,40 +286,40 @@ pub enum PlanOperation {
     HashAggregate { cardinality: u64 },
 }
 
-/// Optimizer hints for query execution.
-///
-/// Allows users to influence the query optimizer's decisions.
+// Optimizer hints for query execution.
+//
+// Allows users to influence the query optimizer's decisions.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OptimizerHints {
-    /// Force use of specific indexes
+    // Force use of specific indexes
     pub use_index: Option<Vec<String>>,
 
-    /// Force a specific join order
+    // Force a specific join order
     pub join_order: Option<Vec<String>>,
 
-    /// Set degree of parallelism
+    // Set degree of parallelism
     pub parallelism: Option<usize>,
 
-    /// Force use of a materialized view
+    // Force use of a materialized view
     pub materialized_view: Option<String>,
 
-    /// Disable result caching
+    // Disable result caching
     pub no_cache: bool,
 
-    /// Force a specific join algorithm
+    // Force a specific join algorithm
     pub join_algorithm: Option<JoinAlgorithm>,
 
-    /// Force sequential scan (disable index usage)
+    // Force sequential scan (disable index usage)
     pub seq_scan: bool,
 }
 
 impl OptimizerHints {
-    /// Create empty hints.
+    // Create empty hints.
     pub fn none() -> Self {
         Self::default()
     }
 
-    /// Create hints to use a specific index.
+    // Create hints to use a specific index.
     pub fn use_index(index_name: &str) -> Self {
         Self {
             use_index: Some(vec![index_name.to_string()]),
@@ -327,7 +327,7 @@ impl OptimizerHints {
         }
     }
 
-    /// Create hints for parallel execution.
+    // Create hints for parallel execution.
     pub fn parallel(degree: usize) -> Self {
         Self {
             parallelism: Some(degree),
@@ -335,7 +335,7 @@ impl OptimizerHints {
         }
     }
 
-    /// Check if any hints are specified.
+    // Check if any hints are specified.
     pub fn has_hints(&self) -> bool {
         self.use_index.is_some()
             || self.join_order.is_some()

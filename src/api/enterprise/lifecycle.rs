@@ -17,7 +17,7 @@ use super::registry::*;
 // SECTION 5: SYSTEM LIFECYCLE MANAGEMENT (600+ lines)
 // ============================================================================
 
-/// System state
+// System state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SystemState {
     Initializing,
@@ -29,7 +29,7 @@ pub enum SystemState {
     Failed,
 }
 
-/// Startup phase
+// Startup phase
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum StartupPhase {
     PreInit,
@@ -41,7 +41,7 @@ pub enum StartupPhase {
     Ready,
 }
 
-/// Shutdown phase
+// Shutdown phase
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ShutdownPhase {
     GracefulStart,
@@ -53,7 +53,7 @@ pub enum ShutdownPhase {
     Complete,
 }
 
-/// Startup sequence orchestrator
+// Startup sequence orchestrator
 pub struct StartupOrchestrator {
     phases: Arc<RwLock<Vec<StartupPhaseHandler>>>,
     current_phase: Arc<RwLock<StartupPhase>>,
@@ -128,7 +128,7 @@ impl StartupOrchestrator {
     }
 }
 
-/// Graceful shutdown coordinator
+// Graceful shutdown coordinator
 pub struct ShutdownCoordinator {
     phases: Arc<RwLock<Vec<ShutdownPhaseHandler>>>,
     current_phase: Arc<RwLock<ShutdownPhase>>,
@@ -217,7 +217,7 @@ impl ShutdownCoordinator {
     }
 }
 
-/// Hot reload manager
+// Hot reload manager
 pub struct HotReloadManager {
     reload_handlers: Arc<RwLock<HashMap<String, Box<dyn ReloadHandler>>>>,
     reload_history: Arc<RwLock<Vec<ReloadEvent>>>,
@@ -283,7 +283,7 @@ impl HotReloadManager {
     }
 }
 
-/// Rolling upgrade coordinator
+// Rolling upgrade coordinator
 pub struct RollingUpgradeCoordinator {
     upgrade_plan: Arc<RwLock<Option<UpgradePlan>>>,
     current_step: Arc<RwLock<usize>>,
@@ -382,7 +382,7 @@ impl RollingUpgradeCoordinator {
     }
 }
 
-/// State persistence manager
+// State persistence manager
 pub struct StatePersistenceManager {
     state_storage: Arc<RwLock<HashMap<String, Vec<u8>>>>,
     persistence_handlers: Arc<RwLock<HashMap<String, Box<dyn PersistenceHandler>>>>,
@@ -442,7 +442,7 @@ impl StatePersistenceManager {
     }
 }
 
-/// Recovery orchestrator
+// Recovery orchestrator
 pub struct RecoveryOrchestrator {
     recovery_strategies: Arc<RwLock<HashMap<String, Box<dyn RecoveryStrategy>>>>,
     recovery_history: Arc<RwLock<Vec<RecoveryEvent>>>,
@@ -511,7 +511,7 @@ impl RecoveryOrchestrator {
     }
 }
 
-/// System lifecycle manager
+// System lifecycle manager
 pub struct SystemLifecycleManager {
     startup_orchestrator: Arc<StartupOrchestrator>,
     shutdown_coordinator: Arc<ShutdownCoordinator>,
@@ -595,4 +595,3 @@ impl SystemLifecycleManager {
         &self.recovery_orchestrator
     }
 }
-

@@ -20,12 +20,12 @@ use super::GraphQLEngine;
 // PART 4: SUBSCRIPTION SYSTEM (600+ lines)
 // ============================================================================
 
-/// Root subscription type
+// Root subscription type
 pub struct SubscriptionRoot;
 
 #[Subscription]
 impl SubscriptionRoot {
-    /// Subscribe to all changes on a table
+    // Subscribe to all changes on a table
     async fn table_changes<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -43,7 +43,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to row insertions
+    // Subscribe to row insertions
     async fn row_inserted<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -61,7 +61,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to row updates
+    // Subscribe to row updates
     async fn row_updated<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -79,7 +79,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to row deletions
+    // Subscribe to row deletions
     async fn row_deleted<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -97,7 +97,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to specific row changes by ID
+    // Subscribe to specific row changes by ID
     async fn row_changes<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -115,7 +115,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to aggregation changes
+    // Subscribe to aggregation changes
     async fn aggregate_changes<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -146,7 +146,7 @@ impl SubscriptionRoot {
         }
     }
 
-    /// Subscribe to query result changes
+    // Subscribe to query result changes
     async fn query_changes<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -193,7 +193,7 @@ impl SubscriptionRoot {
         }
     }
 
-    /// Heartbeat subscription for connection keepalive
+    // Heartbeat subscription for connection keepalive
     async fn heartbeat<'ctx>(
         &self,
         interval_seconds: Option<i32>,
@@ -217,7 +217,7 @@ impl SubscriptionRoot {
     }
 }
 
-/// Table change event (union of all change types)
+// Table change event (union of all change types)
 #[derive(Clone, Debug)]
 pub struct TableChange {
     pub table: String,
@@ -250,7 +250,7 @@ impl TableChange {
     }
 }
 
-/// Change type enum
+// Change type enum
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ChangeType {
     Insert,
@@ -258,7 +258,7 @@ pub enum ChangeType {
     Delete,
 }
 
-/// Row inserted event
+// Row inserted event
 #[derive(Clone, Debug)]
 pub struct RowInserted {
     pub table: String,
@@ -281,7 +281,7 @@ impl RowInserted {
     }
 }
 
-/// Row updated event
+// Row updated event
 #[derive(Clone, Debug)]
 pub struct RowUpdated {
     pub table: String,
@@ -314,7 +314,7 @@ impl RowUpdated {
     }
 }
 
-/// Row deleted event
+// Row deleted event
 #[derive(Clone, Debug)]
 pub struct RowDeleted {
     pub table: String,
@@ -342,7 +342,7 @@ impl RowDeleted {
     }
 }
 
-/// Row change event (for specific row subscriptions)
+// Row change event (for specific row subscriptions)
 #[derive(Clone, Debug)]
 pub struct RowChange {
     pub table: String,
@@ -380,7 +380,7 @@ impl RowChange {
     }
 }
 
-/// Aggregate change event
+// Aggregate change event
 #[derive(SimpleObject, Clone, Debug)]
 pub struct AggregateChange {
     pub table: String,
@@ -388,7 +388,7 @@ pub struct AggregateChange {
     pub timestamp: DateTime,
 }
 
-/// Query change event
+// Query change event
 #[derive(SimpleObject, Clone, Debug)]
 pub struct QueryChange {
     pub table: String,
@@ -397,14 +397,14 @@ pub struct QueryChange {
     pub timestamp: DateTime,
 }
 
-/// Heartbeat event
+// Heartbeat event
 #[derive(SimpleObject, Clone, Debug)]
 pub struct Heartbeat {
     pub sequence: u64,
     pub timestamp: DateTime,
 }
 
-/// Subscription manager for tracking active subscriptions
+// Subscription manager for tracking active subscriptions
 pub struct SubscriptionManager {
     subscriptions: Arc<RwLock<HashMap<String, SubscriptionInfo>>>,
     event_bus: Arc<RwLock<HashMap<String, Vec<broadcast::Sender<TableChange>>>>>,
@@ -458,7 +458,7 @@ impl SubscriptionManager {
     }
 }
 
-/// Subscription information
+// Subscription information
 #[derive(Clone, Debug)]
 pub struct SubscriptionInfo {
     pub id: String,

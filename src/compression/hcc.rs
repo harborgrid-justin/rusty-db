@@ -10,8 +10,8 @@ use std::time::Instant;
 use std::time::UNIX_EPOCH;
 use std::time::SystemTime;
 
-/// Compression Unit (CU) - basic unit of HCC compression
-/// Contains multiple rows organized in columnar format
+// Compression Unit (CU) - basic unit of HCC compression
+// Contains multiple rows organized in columnar format
 #[derive(Debug, Clone)]
 pub struct CompressionUnit {
     pub cu_id: u64,
@@ -24,7 +24,7 @@ pub struct CompressionUnit {
     pub last_accessed: u64,
 }
 
-/// Metadata for each column in a CU
+// Metadata for each column in a CU
 #[derive(Debug, Clone)]
 pub struct ColumnMetadata {
     pub column_id: usize,
@@ -68,7 +68,7 @@ impl ColumnDataType {
     }
 }
 
-/// HCC Compression Strategy
+// HCC Compression Strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HCCStrategy {
     QueryLow,    // Optimized for query performance
@@ -97,7 +97,7 @@ impl HCCStrategy {
     }
 }
 
-/// Hybrid Columnar Compression Engine
+// Hybrid Columnar Compression Engine
 pub struct HCCEngine {
     strategy: HCCStrategy,
     stats: Arc<RwLock<CompressionStats>>,
@@ -123,7 +123,7 @@ impl HCCEngine {
         }
     }
 
-    /// Compress column using type-specific encoding (NEW!)
+    // Compress column using type-specific encoding (NEW!)
     pub fn compress_column_typed(&self, column: &[u8], col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
 
         match col_type {
@@ -219,7 +219,7 @@ impl HCCEngine {
         }
     }
 
-    /// Decompress column using type-specific encoding (NEW!)
+    // Decompress column using type-specific encoding (NEW!)
     pub fn decompress_column_typed(&self, compressed: &[u8], col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
 
         if compressed.is_empty() {
@@ -282,7 +282,7 @@ impl HCCEngine {
         Self::new(strategy)
     }
 
-    /// Transform row-major data to columnar format for compression
+    // Transform row-major data to columnar format for compression
     pub fn transform_to_columnar(&self, rows: &[Vec<u8>], column_types: &Vec<ColumnDataType>)
         -> CompressionResult<Vec<Vec<u8>>> {
 
@@ -314,7 +314,7 @@ impl HCCEngine {
         Ok(columns)
     }
 
-    /// Transform columnar data back to row-major format
+    // Transform columnar data back to row-major format
     pub fn transform_to_rows(&self, columns: &[Vec<u8>], column_types: &Vec<ColumnDataType>,
                              numrows: usize) -> CompressionResult<Vec<Vec<u8>>> {
 
@@ -334,7 +334,7 @@ impl HCCEngine {
         Ok(rows)
     }
 
-    /// Create a Compression Unit from rows
+    // Create a Compression Unit from rows
     pub fn create_cu(&self, rows: Vec<Vec<u8>>, column_types: Vec<ColumnDataType>)
         -> CompressionResult<CompressionUnit> {
 
@@ -399,7 +399,7 @@ impl HCCEngine {
         Ok(cu)
     }
 
-    /// Compress a single column with optimal algorithm and metadata
+    // Compress a single column with optimal algorithm and metadata
     fn compress_column_with_metadata(&self, column: &[u8], col_type: &ColumnDataType, col_idx: usize)
         -> CompressionResult<(Vec<u8>, ColumnMetadata)> {
 
@@ -448,7 +448,7 @@ impl HCCEngine {
         Ok((compressed, metadata))
     }
 
-    /// Decompress a Compression Unit
+    // Decompress a Compression Unit
     pub fn decompress_cu(&self, cu: &CompressionUnit) -> CompressionResult<Vec<Vec<u8>>> {
         let start = Instant::now();
         let mut decompressed_columns = Vec::new();
@@ -491,7 +491,7 @@ impl HCCEngine {
         Ok(decompressed_columns)
     }
 
-    /// Query-aware decompression - decompress only requested columns
+    // Query-aware decompression - decompress only requested columns
     pub fn decompress_columns(&self, cu: &CompressionUnit, column_indices: &[usize])
         -> CompressionResult<Vec<Vec<u8>>> {
 
@@ -534,7 +534,7 @@ impl HCCEngine {
         Ok(decompressed_columns)
     }
 
-    /// Select optimal compression algorithm for a column
+    // Select optimal compression algorithm for a column
     fn select_column_algorithm(&self, column: &[u8], col_type: &ColumnDataType)
         -> CompressionAlgorithm {
 
@@ -560,7 +560,7 @@ impl HCCEngine {
         }
     }
 
-    /// Direct path load optimization - bulk load data into HCC format
+    // Direct path load optimization - bulk load data into HCC format
     pub fn direct_path_load(&self, rows: Vec<Vec<u8>>, column_types: Vec<ColumnDataType>)
         -> CompressionResult<Vec<u64>> {
 
@@ -576,13 +576,13 @@ impl HCCEngine {
         Ok(cu_ids)
     }
 
-    /// Get CU by ID from cache or storage
+    // Get CU by ID from cache or storage
     pub fn get_cu(&self, cu_id: u64) -> Option<CompressionUnit> {
         let cache = self.cu_cache.read().unwrap();
         cache.get(&cu_id).cloned()
     }
 
-    /// Get compression ratio for a CU
+    // Get compression ratio for a CU
     pub fn get_cu_compression_ratio(&self, cu_id: u64) -> Option<f64> {
         self.get_cu(cu_id).map(|cu| {
             let total_uncompressed: usize = cu.column_metadata.iter()
@@ -598,7 +598,7 @@ impl HCCEngine {
         })
     }
 
-    /// Get CU statistics
+    // Get CU statistics
     pub fn get_cu_stats(&self, cu_id: u64) -> Option<CUStats> {
         self.get_cu(cu_id).map(|cu| {
             let total_uncompressed: usize = cu.column_metadata.iter()
@@ -759,7 +759,7 @@ impl ColumnarCompressor for HCCEngine {
     }
 }
 
-/// Statistics for a Compression Unit
+// Statistics for a Compression Unit
 #[derive(Debug, Clone)]
 pub struct CUStats {
     pub cu_id: u64,
@@ -771,7 +771,7 @@ pub struct CUStats {
     pub column_stats: Vec<ColumnStats>,
 }
 
-/// Statistics for a single column
+// Statistics for a single column
 #[derive(Debug, Clone)]
 pub struct ColumnStats {
     pub column_id: usize,
@@ -782,7 +782,7 @@ pub struct ColumnStats {
     pub algorithm: CompressionAlgorithm,
 }
 
-/// HCC Compression Advisor - recommends optimal strategy
+// HCC Compression Advisor - recommends optimal strategy
 pub struct HCCAdvisor {
     sample_size: usize,
 }
@@ -794,7 +794,7 @@ impl HCCAdvisor {
         }
     }
 
-    /// Analyze data and recommend HCC strategy
+    // Analyze data and recommend HCC strategy
     pub fn recommend_strategy(&self, rows: &[Vec<u8>], column_types: &Vec<ColumnDataType>)
         -> HCCStrategy {
 
@@ -834,7 +834,7 @@ impl HCCAdvisor {
         total_compressibility / rows.len().min(100) as f64
     }
 
-    /// Recommend CU size based on data characteristics
+    // Recommend CU size based on data characteristics
     pub fn recommend_cu_size(&self, avg_row_size: usize, query_selectivity: f64) -> usize {
         if query_selectivity < 0.1 {
             // Highly selective queries - smaller CUs
@@ -857,8 +857,7 @@ impl Default for HCCAdvisor {
 
 #[cfg(test)]
 mod tests {
-    use crate::compression::hcc::{HCCAdvisor, HCCEngine, HCCStrategy};
-    use crate::inmemory::column_store::ColumnDataType;
+    use crate::compression::hcc::{HCCAdvisor, HCCEngine, HCCStrategy, ColumnDataType};
 
     #[test]
     fn test_hcc_compression() {

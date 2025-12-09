@@ -490,8 +490,8 @@ cargo check
 
 ## Documentation
 
-- Use `///` for public API documentation
-- Use `//!` for module-level documentation
+- Use `//` for public API documentation
+- Use `//` for module-level documentation
 - Include examples in doc comments
 - Run `cargo doc --open` to view generated documentation
 

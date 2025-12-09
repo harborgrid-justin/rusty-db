@@ -53,65 +53,65 @@ use rand::Rng;
 // Constants and Configuration
 // ============================================================================
 
-/// Page size for guard pages (4KB)
+// Page size for guard pages (4KB)
 pub const PAGE_SIZE: usize = 4096;
 
-/// Canary size (8 bytes)
+// Canary size (8 bytes)
 pub const CANARY_SIZE: usize = 8;
 
-/// Magic value for allocated memory
+// Magic value for allocated memory
 const ALLOC_MAGIC: u64 = 0xABCDEF0123456789;
 
-/// Magic value for freed memory
+// Magic value for freed memory
 const FREE_MAGIC: u64 = 0xDEADDEADDEADDEAD;
 
-/// Poison pattern for freed memory
+// Poison pattern for freed memory
 const POISON_PATTERN: u8 = 0xFE;
 
-/// Red zone size (128 bytes)
+// Red zone size (128 bytes)
 const RED_ZONE_SIZE: usize = 128;
 
 // ============================================================================
 // Memory Hardening Configuration
 // ============================================================================
 
-/// Configuration for memory hardening features
+// Configuration for memory hardening features
 #[derive(Debug, Clone)]
 pub struct MemoryHardeningConfig {
-    /// Enable guard pages (recommended: true)
+    // Enable guard pages (recommended: true)
     pub enable_guard_pages: bool,
 
-    /// Enable canary values (recommended: true)
+    // Enable canary values (recommended: true)
     pub enable_canaries: bool,
 
-    /// Enable memory zeroing on deallocation (recommended: true)
+    // Enable memory zeroing on deallocation (recommended: true)
     pub enable_zeroing: bool,
 
-    /// Enable double-free detection (recommended: true)
+    // Enable double-free detection (recommended: true)
     pub enable_double_free_detection: bool,
 
-    /// Enable memory encryption for sensitive data (overhead: ~5%)
+    // Enable memory encryption for sensitive data (overhead: ~5%)
     pub enable_encryption: bool,
 
-    /// Enable isolated heap for sensitive allocations
+    // Enable isolated heap for sensitive allocations
     pub enable_isolated_heap: bool,
 
-    /// Enable quarantine heap (prevents use-after-free)
+    // Enable quarantine heap (prevents use-after-free)
     pub enable_quarantine: bool,
 
-    /// Canary check frequency
+    // Canary check frequency
     pub canary_check_frequency: CanaryCheckFrequency,
 
-    /// Guard page size (multiple of PAGE_SIZE)
+    // Guard page size (multiple of PAGE_SIZE)
     pub guard_page_size: usize,
 
-    /// Quarantine duration before memory reuse
+    // Quarantine duration before memory reuse
     pub quarantine_duration: Duration,
 
-    /// Enable bounds checking (overhead: ~1%)
+    // Enable bounds checking (overhead: ~1%)
     pub enable_bounds_checking: bool,
 
-    /// Enable memory access logging (debug only)
+    // Enable memory access logging (debug only)
     pub enable_access_logging: bool,
 }
 
@@ -134,14 +134,14 @@ impl Default for MemoryHardeningConfig {
     }
 }
 
-/// Frequency of canary validation checks
+// Frequency of canary validation checks
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CanaryCheckFrequency {
-    /// Check on every access (maximum security, ~2% overhead)
+    // Check on every access (maximum security, ~2% overhead)
     Always,
-    /// Check periodically (balanced security, ~0.5% overhead)
+    // Check periodically (balanced security, ~0.5% overhead)
     Periodic,
-    /// Check only on explicit validation (minimum overhead)
+    // Check only on explicit validation (minimum overhead)
     Manual,
 }
 
@@ -149,19 +149,19 @@ pub enum CanaryCheckFrequency {
 // Memory Canary - Corruption Detection
 // ============================================================================
 
-/// Memory canary for detecting buffer overflows and corruption
+// Memory canary for detecting buffer overflows and corruption
 #[derive(Debug, Clone)]
 pub struct MemoryCanary {
-    /// Random canary value (cryptographically secure)
+    // Random canary value (cryptographically secure)
     value: u64,
-    /// XOR mask derived from address
+    // XOR mask derived from address
     xor_mask: u64,
-    /// Creation timestamp
+    // Creation timestamp
     created_at: Instant,
 }
 
 impl MemoryCanary {
-    /// Create a new random canary
+    // Create a new random canary
     #[inline]
     pub fn new(address: usize) -> Self {
         let mut rng = rand::thread_rng();
@@ -175,7 +175,7 @@ impl MemoryCanary {
         }
     }
 
-    /// Derive XOR mask from memory address (ASLR enhancement)
+    // Derive XOR mask from memory address (ASLR enhancement)
     #[inline]
     fn derive_xor_mask(address: usize) -> u64 {
         // Mix address bits with a random seed
@@ -188,25 +188,25 @@ impl MemoryCanary {
         hash
     }
 
-    /// Get encoded canary value for storage
+    // Get encoded canary value for storage
     #[inline]
     pub fn encode(&self) -> u64 {
         self.value ^ self.xor_mask
     }
 
-    /// Verify canary integrity
+    // Verify canary integrity
     #[inline]
     pub fn verify(&self, stored_value: u64) -> bool {
         stored_value == self.encode()
     }
 
-    /// Check if canary is corrupted
+    // Check if canary is corrupted
     #[inline]
     pub fn is_corrupted(&self, stored_value: u64) -> bool {
         !self.verify(stored_value)
     }
 
-    /// Get age of canary
+    // Get age of canary
     #[inline]
     pub fn age(&self) -> Duration {
         self.created_at.elapsed()
@@ -217,26 +217,26 @@ impl MemoryCanary {
 // Guarded Memory - Memory with Guard Pages
 // ============================================================================
 
-/// Memory allocation with guard pages for overflow protection
+// Memory allocation with guard pages for overflow protection
 pub struct GuardedMemory {
-    /// Pointer to actual data (between guard pages)
+    // Pointer to actual data (between guard pages)
     data_ptr: NonNull<u8>,
-    /// Size of data region
+    // Size of data region
     data_size: usize,
-    /// Total allocation size (including guard pages)
+    // Total allocation size (including guard pages)
     total_size: usize,
-    /// Front guard page pointer
+    // Front guard page pointer
     front_guard: NonNull<u8>,
-    /// Back guard page pointer
+    // Back guard page pointer
     back_guard: NonNull<u8>,
-    /// Guard page size
+    // Guard page size
     guard_size: usize,
-    /// Allocation metadata
+    // Allocation metadata
     metadata: AllocationMetadata,
 }
 
 impl GuardedMemory {
-    /// Create new guarded memory allocation
+    // Create new guarded memory allocation
     pub fn new(size: usize, guardsize: usize) -> Result<Self> {
         if size == 0 {
             return Err(DbError::Other("Cannot allocate zero-sized memory".into()));
@@ -310,25 +310,25 @@ impl GuardedMemory {
         })
     }
 
-    /// Get pointer to data
+    // Get pointer to data
     #[inline]
     pub fn as_ptr(&self) -> *const u8 {
         self.data_ptr.as_ptr()
     }
 
-    /// Get mutable pointer to data
+    // Get mutable pointer to data
     #[inline]
     pub fn as_mut_ptr(&mut self) -> *mut u8 {
         self.data_ptr.as_ptr()
     }
 
-    /// Get size of data region
+    // Get size of data region
     #[inline]
     pub fn size(&self) -> usize {
         self.data_size
     }
 
-    /// Verify guard pages are intact
+    // Verify guard pages are intact
     pub fn verify_guards(&self) -> Result<()> {
         // In production, we would check if guard pages are still protected
         // For now, we just verify the allocation is still valid
@@ -338,7 +338,7 @@ impl GuardedMemory {
         Ok(())
     }
 
-    /// Write data with bounds checking
+    // Write data with bounds checking
     pub fn write(&mut self, offset: usize, data: &[u8]) -> Result<()> {
         if offset + data.len() > self.data_size {
             return Err(DbError::Other("Write would overflow buffer".into()));
@@ -355,7 +355,7 @@ impl GuardedMemory {
         Ok(())
     }
 
-    /// Read data with bounds checking
+    // Read data with bounds checking
     pub fn read(&self, offset: usize, len: usize) -> Result<Vec<u8>> {
         if offset + len > self.data_size {
             return Err(DbError::Other("Read would overflow buffer".into()));
@@ -411,24 +411,24 @@ use libc::{PROT_READ, PROT_WRITE};
 // Secure Buffer - Overflow-Protected Buffer
 // ============================================================================
 
-/// Secure buffer with overflow protection, canaries, and automatic zeroing
+// Secure buffer with overflow protection, canaries, and automatic zeroing
 pub struct SecureBuffer<T> {
-    /// Underlying guarded memory
+    // Underlying guarded memory
     memory: GuardedMemory,
-    /// Front canary
+    // Front canary
     front_canary: MemoryCanary,
-    /// Back canary
+    // Back canary
     back_canary: MemoryCanary,
-    /// Number of elements
+    // Number of elements
     capacity: usize,
-    /// Current length
+    // Current length
     length: AtomicUsize,
-    /// Phantom data for type safety
+    // Phantom data for type safety
     _phantom: std::marker::PhantomData<T>,
 }
 
 impl<T> SecureBuffer<T> {
-    /// Create a new secure buffer with specified capacity
+    // Create a new secure buffer with specified capacity
     pub fn new(capacity: usize) -> Result<Self> {
         let size = capacity * size_of::<T>();
         let total_size = size + 2 * CANARY_SIZE; // Add space for canaries
@@ -457,25 +457,25 @@ impl<T> SecureBuffer<T> {
         })
     }
 
-    /// Get capacity
+    // Get capacity
     #[inline]
     pub fn capacity(&self) -> usize {
         self.capacity
     }
 
-    /// Get current length
+    // Get current length
     #[inline]
     pub fn len(&self) -> usize {
         self.length.load(Ordering::Acquire)
     }
 
-    /// Check if buffer is empty
+    // Check if buffer is empty
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
-    /// Verify canary integrity
+    // Verify canary integrity
     pub fn verify_canaries(&self) -> Result<()> {
         // Read front canary
         let front_bytes = self.memory.read(0, CANARY_SIZE)?;
@@ -497,7 +497,7 @@ impl<T> SecureBuffer<T> {
         Ok(())
     }
 
-    /// Write data at index with bounds checking
+    // Write data at index with bounds checking
     pub fn write(&mut self, index: usize, data: &[T]) -> Result<()>
     where
         T: Copy,
@@ -529,7 +529,7 @@ impl<T> SecureBuffer<T> {
         Ok(())
     }
 
-    /// Read data at index with bounds checking
+    // Read data at index with bounds checking
     pub fn read(&self, index: usize, count: usize) -> Result<Vec<T>>
     where
         T: Copy + Default,
@@ -557,25 +557,25 @@ impl<T> SecureBuffer<T> {
         Ok(result)
     }
 
-    /// Get pointer to data (unsafe)
-    ///
-    /// # Safety
-    /// Caller must ensure proper bounds checking
+    // Get pointer to data (unsafe)
+    //
+    // # Safety
+    // Caller must ensure proper bounds checking
     #[inline]
     pub unsafe fn as_ptr(&self) -> *const T {
         self.memory.as_ptr().add(CANARY_SIZE) as *const T
     }
 
-    /// Get mutable pointer to data (unsafe)
-    ///
-    /// # Safety
-    /// Caller must ensure proper bounds checking
+    // Get mutable pointer to data (unsafe)
+    //
+    // # Safety
+    // Caller must ensure proper bounds checking
     #[inline]
     pub unsafe fn as_mut_ptr(&mut self) -> *mut T {
         self.memory.as_mut_ptr().add(CANARY_SIZE) as *mut T
     }
 
-    /// Clear buffer (zero all data)
+    // Clear buffer (zero all data)
     pub fn clear(&mut self) {
         let offset = CANARY_SIZE;
         let size = self.capacity * size_of::<T>();
@@ -601,22 +601,22 @@ impl<T> Drop for SecureBuffer<T> {
 // Allocation Metadata
 // ============================================================================
 
-/// Metadata for tracking allocations
+// Metadata for tracking allocations
 #[derive(Debug)]
 struct AllocationMetadata {
-    /// Magic value for validation
+    // Magic value for validation
     magic: AtomicU64,
-    /// Size of allocation
+    // Size of allocation
     size: usize,
-    /// Address of allocation
+    // Address of allocation
     address: usize,
-    /// Timestamp of allocation
+    // Timestamp of allocation
     allocated_at: SystemTime,
-    /// Timestamp of last access
+    // Timestamp of last access
     last_accessed: AtomicU64,
-    /// Access count
+    // Access count
     access_count: AtomicU64,
-    /// Is this allocation freed?
+    // Is this allocation freed?
     is_freed: AtomicBool,
 }
 
@@ -676,23 +676,23 @@ impl AllocationMetadata {
 // Secure Zeroing Allocator
 // ============================================================================
 
-/// Allocator that automatically zeros memory on deallocation
+// Allocator that automatically zeros memory on deallocation
 pub struct SecureZeroingAllocator {
-    /// Active allocations
+    // Active allocations
     allocations: Arc<RwLock<HashMap<usize, AllocationMetadata>>>,
-    /// Statistics
+    // Statistics
     stats: Arc<AllocatorStats>,
-    /// Configuration
+    // Configuration
     config: MemoryHardeningConfig,
 }
 
 impl SecureZeroingAllocator {
-    /// Create a new secure zeroing allocator
+    // Create a new secure zeroing allocator
     pub fn new() -> Self {
         Self::with_config(MemoryHardeningConfig::default())
     }
 
-    /// Create with custom configuration
+    // Create with custom configuration
     pub fn with_config(config: MemoryHardeningConfig) -> Self {
         Self {
             allocations: Arc::new(RwLock::new(HashMap::new())),
@@ -701,7 +701,7 @@ impl SecureZeroingAllocator {
         }
     }
 
-    /// Allocate memory with security features
+    // Allocate memory with security features
     pub fn allocate(&self, size: usize) -> Result<NonNull<u8>> {
         if size == 0 {
             return Err(DbError::Other("Cannot allocate zero bytes".into()));
@@ -739,7 +739,7 @@ impl SecureZeroingAllocator {
             .ok_or_else(|| DbError::Other("Invalid allocation pointer".into()))
     }
 
-    /// Deallocate memory with secure zeroing
+    // Deallocate memory with secure zeroing
     pub fn deallocate(&self, ptr: NonNull<u8>, size: usize) -> Result<()> {
         let address = ptr.as_ptr() as usize;
 
@@ -791,12 +791,12 @@ impl SecureZeroingAllocator {
         Ok(())
     }
 
-    /// Get allocator statistics
+    // Get allocator statistics
     pub fn stats(&self) -> AllocatorStatsSnapshot {
         self.stats.snapshot()
     }
 
-    /// Verify no memory leaks
+    // Verify no memory leaks
     pub fn verify_no_leaks(&self) -> bool {
         self.allocations.read().is_empty()
     }
@@ -812,7 +812,7 @@ impl Default for SecureZeroingAllocator {
 // Allocator Statistics
 // ============================================================================
 
-/// Statistics for allocator operations
+// Statistics for allocator operations
 struct AllocatorStats {
     total_allocations: AtomicU64,
     total_deallocations: AtomicU64,
@@ -852,7 +852,7 @@ impl AllocatorStats {
     }
 }
 
-/// Snapshot of allocator statistics
+// Snapshot of allocator statistics
 #[derive(Debug, Clone)]
 pub struct AllocatorStatsSnapshot {
     pub total_allocations: u64,
@@ -869,24 +869,24 @@ pub struct AllocatorStatsSnapshot {
 // Isolated Heap - Separate Heap for Sensitive Data
 // ============================================================================
 
-/// Isolated heap for sensitive data with encryption
+// Isolated heap for sensitive data with encryption
 pub struct IsolatedHeap {
-    /// Base pointer of heap region
+    // Base pointer of heap region
     base_ptr: NonNull<u8>,
-    /// Total heap size
+    // Total heap size
     total_size: usize,
-    /// Current offset in heap
+    // Current offset in heap
     offset: AtomicUsize,
-    /// Allocated blocks
+    // Allocated blocks
     blocks: Arc<RwLock<Vec<IsolatedBlock>>>,
-    /// Encryption key for this heap
+    // Encryption key for this heap
     encryption_key: u64,
-    /// Statistics
+    // Statistics
     stats: Arc<IsolatedHeapStats>,
 }
 
 impl IsolatedHeap {
-    /// Create a new isolated heap
+    // Create a new isolated heap
     pub fn new(size: usize) -> Result<Self> {
         // Allocate heap region
         let layout = Layout::from_size_align(size, PAGE_SIZE)
@@ -912,7 +912,7 @@ impl IsolatedHeap {
         })
     }
 
-    /// Allocate from isolated heap
+    // Allocate from isolated heap
     pub fn allocate(&mut self, size: usize) -> Result<NonNull<u8>> {
         let current_offset = self.offset.load(Ordering::Acquire);
         let new_offset = current_offset + size;
@@ -944,7 +944,7 @@ impl IsolatedHeap {
             .ok_or_else(|| DbError::Other("Invalid allocation pointer".into()))
     }
 
-    /// Encrypt data in heap
+    // Encrypt data in heap
     pub fn encrypt_region(&self, offset: usize, size: usize) -> Result<()> {
         if offset + size > self.total_size {
             return Err(DbError::Other("Region out of bounds".into()));
@@ -962,13 +962,13 @@ impl IsolatedHeap {
         Ok(())
     }
 
-    /// Decrypt data in heap
+    // Decrypt data in heap
     pub fn decrypt_region(&self, offset: usize, size: usize) -> Result<()> {
         // XOR cipher is symmetric, so decrypt is same as encrypt
         self.encrypt_region(offset, size)
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn stats(&self) -> IsolatedHeapStatsSnapshot {
         self.stats.snapshot()
     }
@@ -989,7 +989,7 @@ impl Drop for IsolatedHeap {
     }
 }
 
-/// Block within isolated heap
+// Block within isolated heap
 #[derive(Debug, Clone)]
 struct IsolatedBlock {
     offset: usize,
@@ -997,7 +997,7 @@ struct IsolatedBlock {
     allocated_at: Instant,
 }
 
-/// Statistics for isolated heap
+// Statistics for isolated heap
 struct IsolatedHeapStats {
     total_allocations: AtomicU64,
     bytes_allocated: AtomicU64,
@@ -1022,7 +1022,7 @@ impl IsolatedHeapStats {
     }
 }
 
-/// Snapshot of isolated heap statistics
+// Snapshot of isolated heap statistics
 #[derive(Debug, Clone)]
 pub struct IsolatedHeapStatsSnapshot {
     pub total_allocations: u64,
@@ -1034,13 +1034,13 @@ pub struct IsolatedHeapStatsSnapshot {
 // Utility Functions
 // ============================================================================
 
-/// Align size up to alignment boundary
+// Align size up to alignment boundary
 #[inline]
 fn align_up(size: usize, alignment: usize) -> usize {
     (size + alignment - 1) & !(alignment - 1)
 }
 
-/// Align size down to alignment boundary
+// Align size down to alignment boundary
 #[inline]
 #[allow(dead_code)]
 fn align_down(size: usize, alignment: usize) -> usize {
@@ -1051,25 +1051,25 @@ fn align_down(size: usize, alignment: usize) -> usize {
 // Security Metrics
 // ============================================================================
 
-/// Comprehensive security metrics for memory hardening
+// Comprehensive security metrics for memory hardening
 #[derive(Debug, Clone)]
 pub struct SecurityMetrics {
-    /// Number of buffer overflows prevented
+    // Number of buffer overflows prevented
     pub overflows_prevented: u64,
-    /// Number of canary corruptions detected
+    // Number of canary corruptions detected
     pub corruptions_detected: u64,
-    /// Number of double-frees prevented
+    // Number of double-frees prevented
     pub double_frees_prevented: u64,
-    /// Number of invalid frees prevented
+    // Number of invalid frees prevented
     pub invalid_frees_prevented: u64,
-    /// Total bytes securely zeroed
+    // Total bytes securely zeroed
     pub bytes_zeroed: u64,
-    /// Number of guard page violations
+    // Number of guard page violations
     pub guard_violations: u64,
 }
 
 impl SecurityMetrics {
-    /// Create new security metrics
+    // Create new security metrics
     pub fn new() -> Self {
         Self {
             overflows_prevented: 0,

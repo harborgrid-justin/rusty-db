@@ -1,46 +1,46 @@
 //\! Memory Debugging and Profiling
-//\! 
+//\!
 //\! Leak detection and memory profiling capabilities.
 
 use super::common::*;
 
 
-/// Allocation tracking entry
+// Allocation tracking entry
 #[derive(Debug, Clone)]
 struct AllocationEntry {
-    /// Allocation address
+    // Allocation address
     address: usize,
-    /// Allocation size
+    // Allocation size
     size: usize,
-    /// Allocation source
+    // Allocation source
     source: AllocationSource,
-    /// Allocation timestamp
+    // Allocation timestamp
     timestamp: Instant,
-    /// Stack trace (simplified)
+    // Stack trace (simplified)
     stack_trace: String,
-    /// Guard before allocation
+    // Guard before allocation
     guard_before: u64,
-    /// Guard after allocation
+    // Guard after allocation
     guard_after: u64,
 }
 
-/// Memory debugger and profiler
+// Memory debugger and profiler
 pub struct MemoryDebugger {
-    /// Tracking enabled
+    // Tracking enabled
     tracking_enabled: AtomicBool,
-    /// Active allocations
+    // Active allocations
     allocations: RwLock<HashMap<usize, AllocationEntry>>,
-    /// Per-component statistics
+    // Per-component statistics
     component_stats: RwLock<HashMap<AllocationSource, ComponentMemoryStats>>,
-    /// Leak detection enabled
+    // Leak detection enabled
     leak_detection_enabled: AtomicBool,
-    /// Use-after-free detection enabled
+    // Use-after-free detection enabled
     uaf_detection_enabled: AtomicBool,
-    /// Memory guards enabled
+    // Memory guards enabled
     guards_enabled: AtomicBool,
-    /// Stack trace capture enabled
+    // Stack trace capture enabled
     stack_traces_enabled: AtomicBool,
-    /// Statistics
+    // Statistics
     stats: DebugStats,
 }
 
@@ -66,7 +66,7 @@ impl DebugStats {
     }
 }
 
-/// Per-component memory statistics
+// Per-component memory statistics
 #[derive(Debug, Clone)]
 struct ComponentMemoryStats {
     allocations: u64,
@@ -95,7 +95,7 @@ impl ComponentMemoryStats {
 }
 
 impl MemoryDebugger {
-    /// Create a new memory debugger
+    // Create a new memory debugger
     pub fn new() -> Self {
         Self {
             tracking_enabled: AtomicBool::new(false),
@@ -109,41 +109,41 @@ impl MemoryDebugger {
         }
     }
 
-    /// Enable tracking
+    // Enable tracking
     pub fn enable_tracking(&self) {
         self.tracking_enabled.store(true, Ordering::Relaxed);
     }
 
-    /// Disable tracking
+    // Disable tracking
     pub fn disable_tracking(&self) {
         self.tracking_enabled.store(false, Ordering::Relaxed);
     }
 
-    /// Enable leak detection
+    // Enable leak detection
     pub fn enable_leak_detection(&self) {
         self.leak_detection_enabled.store(true, Ordering::Relaxed);
         self.enable_tracking();
     }
 
-    /// Enable use-after-free detection
+    // Enable use-after-free detection
     pub fn enable_uaf_detection(&self) {
         self.uaf_detection_enabled.store(true, Ordering::Relaxed);
         self.enable_tracking();
     }
 
-    /// Enable memory guards
+    // Enable memory guards
     pub fn enable_guards(&self) {
         self.guards_enabled.store(true, Ordering::Relaxed);
         self.enable_tracking();
     }
 
-    /// Enable stack trace capture
+    // Enable stack trace capture
     pub fn enable_stack_traces(&self) {
         self.stack_traces_enabled.store(true, Ordering::Relaxed);
         self.stats.stack_traces_captured.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Track allocation
+    // Track allocation
     pub fn track_allocation(
         &self,
         address: usize,
@@ -191,7 +191,7 @@ impl MemoryDebugger {
         }
     }
 
-    /// Track deallocation
+    // Track deallocation
     pub fn track_deallocation(&self, address: usize) -> Result<()> {
         if !self.tracking_enabled.load(Ordering::Relaxed) {
             return Ok(());
@@ -232,14 +232,14 @@ impl MemoryDebugger {
         }
     }
 
-    /// Capture stack trace
+    // Capture stack trace
     fn capture_stack_trace(&self) -> String {
         // Note: Backtrace::capture() is nightly-only
         // For stable builds, we use a simple placeholder
         String::from("<stack trace not available in stable build>")
     }
 
-    /// Detect memory leaks
+    // Detect memory leaks
     pub fn detect_leaks(&self, min_age: Duration) -> Vec<LeakReport> {
         if !self.leak_detection_enabled.load(Ordering::Relaxed) {
             return Vec::new();
@@ -267,17 +267,17 @@ impl MemoryDebugger {
         leaks
     }
 
-    /// Get component statistics
+    // Get component statistics
     pub fn get_component_stats(&self, source: AllocationSource) -> Option<ComponentMemoryStats> {
         self.component_stats.read().unwrap().get(&source).cloned()
     }
 
-    /// Get all component statistics
+    // Get all component statistics
     pub fn get_all_component_stats(&self) -> HashMap<AllocationSource, ComponentMemoryStats> {
         self.component_stats.read().unwrap().clone()
     }
 
-    /// Generate memory usage report
+    // Generate memory usage report
     pub fn generate_report(&self) -> MemoryReport {
         let allocations = self.allocations.read().unwrap();
         let component_stats = self.component_stats.read().unwrap();
@@ -313,7 +313,7 @@ impl MemoryDebugger {
         }
     }
 
-    /// Get debugger statistics
+    // Get debugger statistics
     pub fn get_stats(&self) -> MemoryDebuggerStats {
         MemoryDebuggerStats {
             tracking_enabled: self.tracking_enabled.load(Ordering::Relaxed),
@@ -329,14 +329,14 @@ impl MemoryDebugger {
         }
     }
 
-    /// Clear all tracked allocations (use with caution)
+    // Clear all tracked allocations (use with caution)
     pub fn clear_tracking(&self) {
         self.allocations.write().unwrap().clear();
         self.component_stats.write().unwrap().clear();
     }
 }
 
-/// Memory usage report
+// Memory usage report
 #[derive(Debug, Clone)]
 pub struct MemoryReport {
     pub timestamp: SystemTime,
@@ -350,7 +350,7 @@ pub struct MemoryReport {
     pub corruption_detected: u64,
 }
 
-/// Component memory breakdown
+// Component memory breakdown
 #[derive(Debug, Clone)]
 pub struct ComponentBreakdown {
     pub source: AllocationSource,
@@ -362,7 +362,7 @@ pub struct ComponentBreakdown {
     pub total_deallocations: u64,
 }
 
-/// Memory debugger statistics
+// Memory debugger statistics
 #[derive(Debug, Clone)]
 pub struct MemoryDebuggerStats {
     pub tracking_enabled: bool,

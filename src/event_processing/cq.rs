@@ -11,7 +11,7 @@ use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
 
 /// Continuous Query identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

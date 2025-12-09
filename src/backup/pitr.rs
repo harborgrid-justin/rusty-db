@@ -15,38 +15,38 @@ use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
-/// Recovery target specification
+// Recovery target specification
 #[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RecoveryTarget {
-    /// Recover to a specific point in time
+    // Recover to a specific point in time
     Timestamp(SystemTime),
-    /// Recover to a specific System Change Number (SCN)
+    // Recover to a specific System Change Number (SCN)
     Scn(u64),
-    /// Recover to a specific transaction ID
+    // Recover to a specific transaction ID
     Transaction(String),
-    /// Recover to a named restore point
+    // Recover to a named restore point
     RestorePoint(String),
-    /// Recover to the latest available point
+    // Recover to the latest available point
     Latest,
 }
 
-/// Recovery mode
+// Recovery mode
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum RecoveryMode {
-    /// Complete database recovery
+    // Complete database recovery
     Complete,
-    /// Incomplete recovery (PITR)
+    // Incomplete recovery (PITR)
     Incomplete,
-    /// Tablespace recovery
+    // Tablespace recovery
     Tablespace(String),
-    /// Individual datafile recovery
+    // Individual datafile recovery
     Datafile(PathBuf),
-    /// Block-level recovery
+    // Block-level recovery
     BlockLevel { file_id: u32, block_id: u64 },
 }
 
-/// Recovery status
+// Recovery status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum RecoveryStatus {
     Initializing,
@@ -58,7 +58,7 @@ pub enum RecoveryStatus {
     RolledBack,
 }
 
-/// Recovery session metadata
+// Recovery session metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecoverySession {
     pub session_id: String,
@@ -108,7 +108,7 @@ impl RecoverySession {
     }
 }
 
-/// Log sequence for recovery
+// Log sequence for recovery
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogSequence {
     pub sequence_number: u64,
@@ -119,7 +119,7 @@ pub struct LogSequence {
     pub size_bytes: u64,
 }
 
-/// Transaction log entry for log mining
+// Transaction log entry for log mining
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionLogEntry {
     pub scn: u64,
@@ -143,7 +143,7 @@ pub enum LogOperation {
     Rollback,
 }
 
-/// Flashback query simulation for accessing historical data
+// Flashback query simulation for accessing historical data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlashbackQuery {
     pub query_id: String,
@@ -198,7 +198,7 @@ impl FlashbackQuery {
     }
 }
 
-/// Restore point for named recovery targets
+// Restore point for named recovery targets
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RestorePoint {
     pub name: String,
@@ -222,7 +222,7 @@ impl RestorePoint {
     }
 }
 
-/// Log miner for analyzing transaction logs
+// Log miner for analyzing transaction logs
 pub struct LogMiner {
     log_directory: PathBuf,
     log_entries: Arc<RwLock<BTreeMap<u64, TransactionLogEntry>>>,
@@ -240,7 +240,7 @@ impl LogMiner {
         }
     }
 
-    /// Start log mining session
+    // Start log mining session
     pub fn start_mining(&self, start_scn: u64, end_scn: Option<u64>) -> Result<()> {
         // Scan log files in the range
         let log_files = self.find_log_files(start_scn, end_scn)?;
@@ -252,7 +252,7 @@ impl LogMiner {
         Ok(())
     }
 
-    /// Parse a log file and extract entries
+    // Parse a log file and extract entries
     fn parse_log_file(&self, logfile: &LogSequence) -> Result<()> {
         // Simulate parsing log file
         // In a real implementation, this would read the binary log format
@@ -290,7 +290,7 @@ impl LogMiner {
         Ok(())
     }
 
-    /// Find log files covering the SCN range
+    // Find log files covering the SCN range
     fn find_log_files(&self, start_scn: u64, end_scn: Option<u64>) -> Result<Vec<LogSequence>> {
         // Simulate finding log files
         let mut log_files = Vec::new();
@@ -317,7 +317,7 @@ impl LogMiner {
         Ok(log_files)
     }
 
-    /// Get all log entries until a specific SCN
+    // Get all log entries until a specific SCN
     pub fn get_entries_until_scn(&self, scn: u64) -> Vec<TransactionLogEntry> {
         self.log_entries.read()
             .range(..=scn)
@@ -325,7 +325,7 @@ impl LogMiner {
             .collect()
     }
 
-    /// Get entries for a specific transaction
+    // Get entries for a specific transaction
     pub fn get_transaction_entries(&self, transaction_id: &str) -> Vec<TransactionLogEntry> {
         self.active_transactions.read()
             .get(transaction_id)
@@ -333,7 +333,7 @@ impl LogMiner {
             .unwrap_or_default()
     }
 
-    /// Mark transaction as committed
+    // Mark transaction as committed
     pub fn commit_transaction(&self, transaction_id: &str, commit_scn: u64) -> Result<()> {
         let mut entries = self.log_entries.write();
         let mut committed = self.committed_transactions.write();
@@ -351,7 +351,7 @@ impl LogMiner {
         Ok(())
     }
 
-    /// Extract committed transactions in SCN range
+    // Extract committed transactions in SCN range
     pub fn extract_committed_transactions(&self, start_scn: u64, end_scn: u64) -> Vec<String> {
         let entries = self.log_entries.read();
         let mut committed_txns = HashSet::new();
@@ -366,7 +366,7 @@ impl LogMiner {
     }
 }
 
-/// Point-in-Time Recovery Manager
+// Point-in-Time Recovery Manager
 pub struct PitrManager {
     log_miner: Arc<LogMiner>,
     restore_points: Arc<RwLock<HashMap<String, RestorePoint>>>,
@@ -384,7 +384,7 @@ impl PitrManager {
         }
     }
 
-    /// Create a restore point
+    // Create a restore point
     pub fn create_restore_point(&self, name: String, guaranteed: bool) -> Result<RestorePoint> {
         let scn = self.get_current_scn();
         let restore_point = RestorePoint::new(name.clone(), scn, guaranteed);
@@ -398,7 +398,7 @@ impl PitrManager {
         Ok(restore_point)
     }
 
-    /// Drop a restore point
+    // Drop a restore point
     pub fn drop_restore_point(&self, name: &str) -> Result<()> {
         let mut restore_points = self.restore_points.write();
         restore_points.remove(name)
@@ -406,12 +406,12 @@ impl PitrManager {
         Ok(())
     }
 
-    /// List all restore points
+    // List all restore points
     pub fn list_restore_points(&self) -> Vec<RestorePoint> {
         self.restore_points.read().values().cloned().collect()
     }
 
-    /// Start a recovery session
+    // Start a recovery session
     pub fn start_recovery(
         &self,
         backup_id: String,
@@ -453,7 +453,7 @@ impl PitrManager {
         Ok(session_id)
     }
 
-    /// Perform the recovery
+    // Perform the recovery
     pub fn perform_recovery(&self, session_id: &str) -> Result<()> {
         let mut sessions = self.active_sessions.write();
         let session = sessions.get_mut(session_id)
@@ -548,7 +548,7 @@ impl PitrManager {
         Ok(())
     }
 
-    /// Cancel a recovery session
+    // Cancel a recovery session
     pub fn cancel_recovery(&self, session_id: &str) -> Result<()> {
         let mut sessions = self.active_sessions.write();
         if let Some(session) = sessions.get_mut(session_id) {
@@ -558,12 +558,12 @@ impl PitrManager {
         Ok(())
     }
 
-    /// Get recovery session status
+    // Get recovery session status
     pub fn get_session_status(&self, session_id: &str) -> Option<RecoverySession> {
         self.active_sessions.read().get(session_id).cloned()
     }
 
-    /// Perform flashback query
+    // Perform flashback query
     pub fn flashback_query(&self, table_name: String, target: RecoveryTarget) -> Result<FlashbackQuery> {
         let (target_time, target_scn) = match target {
             RecoveryTarget::Timestamp(ts) => {
@@ -582,7 +582,7 @@ impl PitrManager {
         Ok(query)
     }
 
-    /// Convert timestamp to SCN
+    // Convert timestamp to SCN
     fn timestamp_to_scn(&self, timestamp: SystemTime) -> Result<Option<u64>> {
         // In a real implementation, this would query the SCN-to-timestamp mapping
         // For simulation, we'll approximate
@@ -597,7 +597,7 @@ impl PitrManager {
         Ok(Some(target_scn))
     }
 
-    /// Convert transaction ID to SCN
+    // Convert transaction ID to SCN
     fn transaction_to_scn(&self, transaction_id: &str) -> Result<Option<u64>> {
         let entries = self.log_miner.get_transaction_entries(transaction_id);
 

@@ -21,200 +21,200 @@ use super::property_graph::{PropertyGraph, VertexId, EdgeId, Edge, Properties};
 // Query AST (Abstract Syntax Tree)
 // ============================================================================
 
-/// Graph query representation
+// Graph query representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphQuery {
-    /// MATCH clauses
+    // MATCH clauses
     pub match_clauses: Vec<MatchClause>,
 
-    /// WHERE clause (filter conditions)
+    // WHERE clause (filter conditions)
     pub where_clause: Option<WhereClause>,
 
-    /// RETURN clause (projection)
+    // RETURN clause (projection)
     pub return_clause: ReturnClause,
 
-    /// ORDER BY clause
+    // ORDER BY clause
     pub order_by: Option<OrderByClause>,
 
-    /// LIMIT clause
+    // LIMIT clause
     pub limit: Option<usize>,
 
-    /// SKIP clause
+    // SKIP clause
     pub skip: Option<usize>,
 }
 
-/// MATCH clause for pattern matching
+// MATCH clause for pattern matching
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MatchClause {
-    /// Graph patterns to match
+    // Graph patterns to match
     pub patterns: Vec<GraphPattern>,
 
-    /// Optional flag (OPTIONAL MATCH)
+    // Optional flag (OPTIONAL MATCH)
     pub optional: bool,
 }
 
-/// Graph pattern (vertex-edge-vertex sequences)
+// Graph pattern (vertex-edge-vertex sequences)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphPattern {
-    /// Pattern elements (vertices and edges)
+    // Pattern elements (vertices and edges)
     pub elements: Vec<PatternElement>,
 }
 
-/// Pattern element (vertex or edge)
+// Pattern element (vertex or edge)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PatternElement {
-    /// Vertex pattern
+    // Vertex pattern
     Vertex(VertexPattern),
 
-    /// Edge pattern
+    // Edge pattern
     Edge(EdgePattern),
 }
 
-/// Vertex pattern in a query
+// Vertex pattern in a query
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VertexPattern {
-    /// Variable name for this vertex
+    // Variable name for this vertex
     pub variable: String,
 
-    /// Labels to match
+    // Labels to match
     pub labels: Vec<String>,
 
-    /// Property constraints
+    // Property constraints
     pub properties: HashMap<String, PropertyConstraint>,
 
-    /// Whether this is an existing binding
+    // Whether this is an existing binding
     pub is_bound: bool,
 }
 
-/// Edge pattern in a query
+// Edge pattern in a query
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EdgePattern {
-    /// Variable name for this edge
+    // Variable name for this edge
     pub variable: Option<String>,
 
-    /// Edge labels to match
+    // Edge labels to match
     pub labels: Vec<String>,
 
-    /// Property constraints
+    // Property constraints
     pub properties: HashMap<String, PropertyConstraint>,
 
-    /// Direction (true = outgoing, false = incoming, None = undirected)
+    // Direction (true = outgoing, false = incoming, None = undirected)
     pub direction: Option<bool>,
 
-    /// Path length constraints (for variable-length paths)
+    // Path length constraints (for variable-length paths)
     pub length: PathLength,
 }
 
-/// Path length specification
+// Path length specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PathLength {
-    /// Exactly one hop
+    // Exactly one hop
     Single,
 
-    /// Fixed number of hops
+    // Fixed number of hops
     Fixed(usize),
 
-    /// Range of hops (min, max)
+    // Range of hops (min, max)
     Range(usize, Option<usize>),
 
-    /// Any length (Kleene star)
+    // Any length (Kleene star)
     Any,
 }
 
-/// Property constraint
+// Property constraint
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PropertyConstraint {
-    /// Equality constraint
+    // Equality constraint
     Equals(Value),
 
-    /// Not equals constraint
+    // Not equals constraint
     NotEquals(Value),
 
-    /// Greater than
+    // Greater than
     GreaterThan(Value),
 
-    /// Less than
+    // Less than
     LessThan(Value),
 
-    /// In list
+    // In list
     In(Vec<Value>),
 
-    /// Pattern matching (for strings)
+    // Pattern matching (for strings)
     Like(String),
 
-    /// Null check
+    // Null check
     IsNull,
 
-    /// Not null check
+    // Not null check
     IsNotNull,
 }
 
-/// WHERE clause for filtering
+// WHERE clause for filtering
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WhereClause {
-    /// Filter expressions
+    // Filter expressions
     pub conditions: Vec<FilterExpression>,
 }
 
-/// Filter expression
+// Filter expression
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FilterExpression {
-    /// Property comparison
+    // Property comparison
     PropertyComparison {
         variable: String,
         property: String,
         constraint: PropertyConstraint,
     },
 
-    /// AND condition
+    // AND condition
     And(Box<FilterExpression>, Box<FilterExpression>),
 
-    /// OR condition
+    // OR condition
     Or(Box<FilterExpression>, Box<FilterExpression>),
 
-    /// NOT condition
+    // NOT condition
     Not(Box<FilterExpression>),
 
-    /// Path exists
+    // Path exists
     PathExists(GraphPattern),
 }
 
-/// RETURN clause for projection
+// RETURN clause for projection
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReturnClause {
-    /// Items to return
+    // Items to return
     pub items: Vec<ReturnItem>,
 
-    /// DISTINCT flag
+    // DISTINCT flag
     pub distinct: bool,
 }
 
-/// Return item
+// Return item
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ReturnItem {
-    /// Return entire vertex
+    // Return entire vertex
     Vertex(String),
 
-    /// Return entire edge
+    // Return entire edge
     Edge(String),
 
-    /// Return vertex property
+    // Return vertex property
     VertexProperty(String, String),
 
-    /// Return edge property
+    // Return edge property
     EdgeProperty(String, String),
 
-    /// Aggregate function
+    // Aggregate function
     Aggregate(AggregateFunction),
 
-    /// Count
+    // Count
     Count(bool), // true for COUNT(*), false for COUNT(DISTINCT)
 
-    /// Path
+    // Path
     Path(String),
 }
 
-/// Aggregate function
+// Aggregate function
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AggregateFunction {
     Sum(String, String),      // variable, property
@@ -224,13 +224,13 @@ pub enum AggregateFunction {
     Collect(String),          // variable
 }
 
-/// ORDER BY clause
+// ORDER BY clause
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrderByClause {
     pub items: Vec<OrderByItem>,
 }
 
-/// Order by item
+// Order by item
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrderByItem {
     pub variable: String,
@@ -242,45 +242,45 @@ pub struct OrderByItem {
 // Query Results
 // ============================================================================
 
-/// Query result set
+// Query result set
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryResult {
-    /// Column names
+    // Column names
     pub columns: Vec<String>,
 
-    /// Result rows
+    // Result rows
     pub rows: Vec<ResultRow>,
 
-    /// Execution time in milliseconds
+    // Execution time in milliseconds
     pub execution_time_ms: u64,
 
-    /// Number of rows
+    // Number of rows
     pub row_count: usize,
 }
 
-/// Single result row
+// Single result row
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResultRow {
-    /// Values for each column
+    // Values for each column
     pub values: Vec<ResultValue>,
 }
 
-/// Result value (can be vertex, edge, property, or aggregate)
+// Result value (can be vertex, edge, property, or aggregate)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ResultValue {
-    /// Vertex result
+    // Vertex result
     Vertex(VertexId, Properties),
 
-    /// Edge result
+    // Edge result
     Edge(EdgeId, VertexId, VertexId, Properties),
 
-    /// Property value
+    // Property value
     Property(Value),
 
-    /// Path result
+    // Path result
     Path(Vec<VertexId>),
 
-    /// Null value
+    // Null value
     Null,
 }
 
@@ -288,16 +288,16 @@ pub enum ResultValue {
 // Pattern Matching Engine
 // ============================================================================
 
-/// Variable bindings during pattern matching
+// Variable bindings during pattern matching
 #[derive(Debug, Clone)]
 pub struct VariableBindings {
-    /// Vertex variable bindings
+    // Vertex variable bindings
     pub vertices: HashMap<String, VertexId>,
 
-    /// Edge variable bindings
+    // Edge variable bindings
     pub edges: HashMap<String, EdgeId>,
 
-    /// Path variable bindings
+    // Path variable bindings
     pub paths: HashMap<String, Vec<VertexId>>,
 }
 
@@ -327,7 +327,7 @@ impl VariableBindings {
     }
 }
 
-/// Pattern matcher for graph patterns
+// Pattern matcher for graph patterns
 pub struct PatternMatcher<'a> {
     graph: &'a PropertyGraph,
 }
@@ -337,7 +337,7 @@ impl<'a> PatternMatcher<'a> {
         Self { graph }
     }
 
-    /// Match a graph pattern and return all matching bindings
+    // Match a graph pattern and return all matching bindings
     pub fn match_pattern(&self, pattern: &GraphPattern) -> Result<Vec<VariableBindings>> {
         let mut results = vec![VariableBindings::new()];
 
@@ -348,7 +348,7 @@ impl<'a> PatternMatcher<'a> {
         Ok(results)
     }
 
-    /// Match a single pattern element
+    // Match a single pattern element
     fn match_element(
         &self,
         element: &PatternElement,
@@ -364,7 +364,7 @@ impl<'a> PatternMatcher<'a> {
         }
     }
 
-    /// Match a vertex pattern
+    // Match a vertex pattern
     fn match_vertex_pattern(
         &self,
         pattern: &VertexPattern,
@@ -394,7 +394,7 @@ impl<'a> PatternMatcher<'a> {
         Ok(new_bindings)
     }
 
-    /// Match an edge pattern
+    // Match an edge pattern
     fn match_edge_pattern(
         &self,
         pattern: &EdgePattern,
@@ -423,7 +423,7 @@ impl<'a> PatternMatcher<'a> {
         Ok(new_bindings)
     }
 
-    /// Check if a vertex matches a pattern
+    // Check if a vertex matches a pattern
     fn vertex_matches_pattern(&self, vertex_id: VertexId, pattern: &VertexPattern) -> Result<bool> {
         let vertex = self.graph.get_vertex(vertex_id)
             .ok_or_else(|| DbError::Internal(format!("Vertex {} not found", vertex_id)))?;
@@ -447,7 +447,7 @@ impl<'a> PatternMatcher<'a> {
         Ok(true)
     }
 
-    /// Check if an edge matches a pattern
+    // Check if an edge matches a pattern
     fn edge_matches_pattern(&self, edge: &Edge, pattern: &EdgePattern) -> Result<bool> {
         // Check labels
         if !pattern.labels.is_empty() {
@@ -466,7 +466,7 @@ impl<'a> PatternMatcher<'a> {
         Ok(true)
     }
 
-    /// Find all vertices matching a pattern
+    // Find all vertices matching a pattern
     fn find_matching_vertices(&self, pattern: &VertexPattern) -> Result<Vec<VertexId>> {
         let mut candidates = Vec::new();
 
@@ -492,7 +492,7 @@ impl<'a> PatternMatcher<'a> {
         Ok(candidates)
     }
 
-    /// Check if a property value satisfies a constraint
+    // Check if a property value satisfies a constraint
     fn check_property_constraint(&self, value: Option<&Value>, constraint: &PropertyConstraint) -> bool {
         match constraint {
             PropertyConstraint::Equals(expected) => {
@@ -523,7 +523,7 @@ impl<'a> PatternMatcher<'a> {
         }
     }
 
-    /// Compare two values
+    // Compare two values
     fn compare_values(&self, a: &Value, b: &Value) -> Option<Ordering> {
         match (a, b) {
             (Value::Integer(x), Value::Integer(y)) => Some(x.cmp(y)),
@@ -542,7 +542,7 @@ impl<'a> PatternMatcher<'a> {
 // Path Finding Algorithms
 // ============================================================================
 
-/// Path finder for shortest path queries
+// Path finder for shortest path queries
 pub struct PathFinder<'a> {
     graph: &'a PropertyGraph,
 }
@@ -552,7 +552,7 @@ impl<'a> PathFinder<'a> {
         Self { graph }
     }
 
-    /// Find shortest path using BFS (unweighted)
+    // Find shortest path using BFS (unweighted)
     pub fn shortest_path_bfs(&self, start: VertexId, end: VertexId) -> Result<Option<Vec<VertexId>>> {
         let mut queue = VecDeque::new();
         let mut visited = HashSet::new();
@@ -579,7 +579,7 @@ impl<'a> PathFinder<'a> {
         Ok(None)
     }
 
-    /// Find shortest path using Dijkstra's algorithm (weighted)
+    // Find shortest path using Dijkstra's algorithm (weighted)
     pub fn shortest_path_dijkstra(&self, start: VertexId, end: VertexId) -> Result<Option<(Vec<VertexId>, f64)>> {
         let mut distances: HashMap<VertexId, f64> = HashMap::new();
         let mut parent: HashMap<VertexId, VertexId> = HashMap::new();
@@ -622,7 +622,7 @@ impl<'a> PathFinder<'a> {
         Ok(None)
     }
 
-    /// A* pathfinding with heuristic
+    // A* pathfinding with heuristic
     pub fn shortest_path_astar<F>(
         &self,
         start: VertexId,
@@ -674,7 +674,7 @@ impl<'a> PathFinder<'a> {
         Ok(None)
     }
 
-    /// Find all paths up to a certain length (variable-length path)
+    // Find all paths up to a certain length (variable-length path)
     pub fn find_variable_length_paths(
         &self,
         start: VertexId,
@@ -700,7 +700,7 @@ impl<'a> PathFinder<'a> {
         Ok(paths)
     }
 
-    /// DFS helper for variable-length paths
+    // DFS helper for variable-length paths
     fn dfs_variable_length(
         &self,
         current: VertexId,
@@ -744,7 +744,7 @@ impl<'a> PathFinder<'a> {
         Ok(())
     }
 
-    /// Reconstruct path from parent map
+    // Reconstruct path from parent map
     fn reconstruct_path(
         &self,
         parent: &HashMap<VertexId, VertexId>,
@@ -768,7 +768,7 @@ impl<'a> PathFinder<'a> {
     }
 }
 
-/// State for Dijkstra's algorithm
+// State for Dijkstra's algorithm
 #[derive(Copy, Clone)]
 struct DijkstraState {
     vertex: VertexId,
@@ -798,7 +798,7 @@ impl PartialOrd for DijkstraState {
     }
 }
 
-/// State for A* algorithm
+// State for A* algorithm
 #[derive(Copy, Clone)]
 struct AStarState {
     vertex: VertexId,
@@ -832,7 +832,7 @@ impl PartialOrd for AStarState {
 // Graph Traversal
 // ============================================================================
 
-/// Graph traversal strategies
+// Graph traversal strategies
 pub struct GraphTraversal<'a> {
     graph: &'a PropertyGraph,
 }
@@ -842,7 +842,7 @@ impl<'a> GraphTraversal<'a> {
         Self { graph }
     }
 
-    /// Breadth-first search traversal
+    // Breadth-first search traversal
     pub fn bfs<F>(&self, start: VertexId, mut visitor: F) -> Result<()>
     where
         F: FnMut(VertexId, usize) -> bool, // Returns true to continue, false to stop
@@ -875,7 +875,7 @@ impl<'a> GraphTraversal<'a> {
         Ok(())
     }
 
-    /// Depth-first search traversal
+    // Depth-first search traversal
     pub fn dfs<F>(&self, start: VertexId, visitor: &mut F) -> Result<()>
     where
         F: FnMut(VertexId, usize) -> bool,
@@ -918,7 +918,7 @@ impl<'a> GraphTraversal<'a> {
 // Query Executor
 // ============================================================================
 
-/// Main query execution engine
+// Main query execution engine
 pub struct QueryExecutor<'a> {
     graph: &'a PropertyGraph,
     pattern_matcher: PatternMatcher<'a>,
@@ -934,7 +934,7 @@ impl<'a> QueryExecutor<'a> {
         }
     }
 
-    /// Execute a graph query
+    // Execute a graph query
     pub fn execute(&self, query: &GraphQuery) -> Result<QueryResult> {
         let start_time = std::time::Instant::now();
 
@@ -1132,7 +1132,7 @@ impl<'a> QueryExecutor<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::graph::property_graph::{EdgeDirection};
+    use crate::graph::property_graph::EdgeDirection;
 use std::time::Instant;
 
     #[test]

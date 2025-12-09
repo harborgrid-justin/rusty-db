@@ -1,4 +1,4 @@
-/// Dictionary-Based Compression
+// Dictionary-Based Compression
 
 use crate::compression::{Compressor, CompressionLevel, CompressionAlgorithm, CompressionResult, CompressionStats, CompressionError};
 use parking_lot::Mutex;

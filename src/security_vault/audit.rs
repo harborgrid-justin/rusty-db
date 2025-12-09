@@ -40,47 +40,47 @@ use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::sync::Arc;
 
-/// Audit action types
+// Audit action types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AuditAction {
-    /// SELECT query
+    // SELECT query
     Select,
-    /// INSERT operation
+    // INSERT operation
     Insert,
-    /// UPDATE operation
+    // UPDATE operation
     Update,
-    /// DELETE operation
+    // DELETE operation
     Delete,
-    /// CREATE DDL
+    // CREATE DDL
     Create,
-    /// DROP DDL
+    // DROP DDL
     Drop,
-    /// ALTER DDL
+    // ALTER DDL
     Alter,
-    /// GRANT privilege
+    // GRANT privilege
     Grant,
-    /// REVOKE privilege
+    // REVOKE privilege
     Revoke,
-    /// Login attempt
+    // Login attempt
     Login,
-    /// Logout
+    // Logout
     Logout,
-    /// Failed authentication
+    // Failed authentication
     AuthFailure,
-    /// Security policy change
+    // Security policy change
     SecurityChange,
-    /// Encryption operation
+    // Encryption operation
     Encryption,
-    /// Decryption operation
+    // Decryption operation
     Decryption,
-    /// Key rotation
+    // Key rotation
     KeyRotation,
-    /// Custom action
+    // Custom action
     Custom(String),
 }
 
 impl AuditAction {
-    /// Parse action from string
+    // Parse action from string
     pub fn from_str(s: &str) -> Self {
         match s.to_uppercase().as_str() {
             "SELECT" => Self::Select,
@@ -103,7 +103,7 @@ impl AuditAction {
         }
     }
 
-    /// Get severity level
+    // Get severity level
     pub fn severity(&self) -> AuditSeverity {
         match self {
             Self::Select => AuditSeverity::Info,
@@ -120,7 +120,7 @@ impl AuditAction {
     }
 }
 
-/// Audit severity levels
+// Audit severity levels
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub enum AuditSeverity {
     Info,
@@ -128,45 +128,45 @@ pub enum AuditSeverity {
     Critical,
 }
 
-/// Audit record
+// Audit record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditRecord {
-    /// Record ID
+    // Record ID
     pub id: u64,
-    /// Timestamp (Unix timestamp)
+    // Timestamp (Unix timestamp)
     pub timestamp: i64,
-    /// User ID
+    // User ID
     pub user_id: String,
-    /// Session ID
+    // Session ID
     pub session_id: String,
-    /// Client IP address
+    // Client IP address
     pub client_ip: String,
-    /// Action performed
+    // Action performed
     pub action: AuditAction,
-    /// Object name (table, view, etc.)
+    // Object name (table, view, etc.)
     pub object_name: Option<String>,
-    /// SQL statement or description
+    // SQL statement or description
     pub statement: Option<String>,
-    /// Result (Success/Failure)
+    // Result (Success/Failure)
     pub success: bool,
-    /// Error message if failed
+    // Error message if failed
     pub error_message: Option<String>,
-    /// Affected rows
+    // Affected rows
     pub rows_affected: Option<u64>,
-    /// Policy that triggered this audit
+    // Policy that triggered this audit
     pub policy_name: Option<String>,
-    /// Additional context
+    // Additional context
     pub context: HashMap<String, String>,
-    /// Previous record hash (blockchain)
+    // Previous record hash (blockchain)
     pub previous_hash: String,
-    /// Current record hash
+    // Current record hash
     pub hash: String,
-    /// Severity level
+    // Severity level
     pub severity: AuditSeverity,
 }
 
 impl AuditRecord {
-    /// Create a new audit record
+    // Create a new audit record
     pub fn new(
         id: u64,
         userid: String,
@@ -202,7 +202,7 @@ impl AuditRecord {
         record
     }
 
-    /// Calculate hash for tamper detection
+    // Calculate hash for tamper detection
     fn calculate_hash(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(self.id.to_le_bytes());
@@ -223,36 +223,36 @@ impl AuditRecord {
         format!("{:x}", hasher.finalize())
     }
 
-    /// Verify hash integrity
+    // Verify hash integrity
     pub fn verify_hash(&self) -> bool {
         let calculated = self.calculate_hash();
         calculated == self.hash
     }
 }
 
-/// Audit policy for fine-grained auditing
+// Audit policy for fine-grained auditing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditPolicy {
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Enabled flag
+    // Enabled flag
     pub enabled: bool,
-    /// Actions to audit
+    // Actions to audit
     pub actions: Vec<AuditAction>,
-    /// Object name pattern (regex)
+    // Object name pattern (regex)
     pub object_pattern: Option<String>,
-    /// User pattern (regex)
+    // User pattern (regex)
     pub user_pattern: Option<String>,
-    /// Audit only failures
+    // Audit only failures
     pub audit_failures_only: bool,
-    /// Minimum severity to audit
+    // Minimum severity to audit
     pub min_severity: AuditSeverity,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: i64,
 }
 
 impl AuditPolicy {
-    /// Create a new audit policy
+    // Create a new audit policy
     pub fn new(name: String, actions: Vec<AuditAction>) -> Self {
         Self {
             name,
@@ -266,7 +266,7 @@ impl AuditPolicy {
         }
     }
 
-    /// Check if action should be audited
+    // Check if action should be audited
     pub fn should_audit(&self, action: &AuditAction, user: &str, object: Option<&str>) -> bool {
         if !self.enabled {
             return false;
@@ -310,75 +310,75 @@ impl AuditPolicy {
     }
 }
 
-/// Compliance regulation types
+// Compliance regulation types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ComplianceRegulation {
-    /// Sarbanes-Oxley Act
+    // Sarbanes-Oxley Act
     SOX,
-    /// Health Insurance Portability and Accountability Act
+    // Health Insurance Portability and Accountability Act
     HIPAA,
-    /// General Data Protection Regulation
+    // General Data Protection Regulation
     GDPR,
-    /// Payment Card Industry Data Security Standard
+    // Payment Card Industry Data Security Standard
     PCIDSS,
-    /// California Consumer Privacy Act
+    // California Consumer Privacy Act
     CCPA,
-    /// Custom regulation
+    // Custom regulation
     Custom(String),
 }
 
-/// Compliance report
+// Compliance report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceReport {
-    /// Regulation type
+    // Regulation type
     pub regulation: ComplianceRegulation,
-    /// Report start date
+    // Report start date
     pub start_date: i64,
-    /// Report end date
+    // Report end date
     pub end_date: i64,
-    /// Total audit records
+    // Total audit records
     pub total_records: usize,
-    /// Records by action type
+    // Records by action type
     pub by_action: HashMap<String, usize>,
-    /// Failed operations
+    // Failed operations
     pub failed_operations: usize,
-    /// Security events
+    // Security events
     pub security_events: usize,
-    /// Privileged operations
+    // Privileged operations
     pub privileged_operations: usize,
-    /// Findings and violations
+    // Findings and violations
     pub findings: Vec<String>,
-    /// Generated timestamp
+    // Generated timestamp
     pub generated_at: i64,
 }
 
-/// Main Audit Vault
+// Main Audit Vault
 pub struct AuditVault {
-    /// Storage directory
+    // Storage directory
     data_dir: PathBuf,
-    /// Audit policies
+    // Audit policies
     policies: RwLock<HashMap<String, AuditPolicy>>,
-    /// In-memory audit buffer (for performance)
+    // In-memory audit buffer (for performance)
     buffer: RwLock<Vec<AuditRecord>>,
-    /// Record counter
+    // Record counter
     record_counter: RwLock<u64>,
-    /// Last record hash (for blockchain)
+    // Last record hash (for blockchain)
     last_hash: RwLock<String>,
-    /// Retention period in days
+    // Retention period in days
     retention_days: u32,
-    /// Alert subscribers
+    // Alert subscribers
     alert_subscribers: RwLock<Vec<Arc<dyn AlertSubscriber>>>,
-    /// Statistics
+    // Statistics
     stats: RwLock<AuditStats>,
 }
 
-/// Alert subscriber trait
+// Alert subscriber trait
 pub trait AlertSubscriber: Send + Sync {
-    /// Handle an alert
+    // Handle an alert
     fn on_alert(&self, record: &AuditRecord);
 }
 
-/// Audit statistics
+// Audit statistics
 #[derive(Debug, Default)]
 struct AuditStats {
     total_records: u64,
@@ -388,7 +388,7 @@ struct AuditStats {
 }
 
 impl AuditVault {
-    /// Create a new audit vault
+    // Create a new audit vault
     pub fn new<P: AsRef<Path>>(data_dir: P, retention_days: u32) -> Result<Self> {
         let data_dir = data_dir.as_ref().to_path_buf();
         fs::create_dir_all(&data_dir)
@@ -406,20 +406,20 @@ impl AuditVault {
         })
     }
 
-    /// Create an audit policy
+    // Create an audit policy
     pub fn create_policy(&mut self, policy: AuditPolicy) -> Result<()> {
         self.policies.write().insert(policy.name.clone(), policy);
         Ok(())
     }
 
-    /// Drop an audit policy
+    // Drop an audit policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
         self.policies.write().remove(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         Ok(())
     }
 
-    /// Log an audit record
+    // Log an audit record
     pub fn log(
         &mut self,
         user_id: &str,
@@ -494,7 +494,7 @@ impl AuditVault {
         Ok(())
     }
 
-    /// Log a security event
+    // Log a security event
     pub fn log_security_event(
         &mut self,
         user_id: &str,
@@ -512,7 +512,7 @@ impl AuditVault {
         )
     }
 
-    /// Flush buffer to disk
+    // Flush buffer to disk
     pub fn flush(&self) -> Result<()> {
         let mut buffer = self.buffer.write();
         if buffer.is_empty() {
@@ -537,7 +537,7 @@ impl AuditVault {
         Ok(())
     }
 
-    /// Query audit records
+    // Query audit records
     pub fn query(
         &self,
         start_date: i64,
@@ -588,7 +588,7 @@ impl AuditVault {
         Ok(records)
     }
 
-    /// Verify audit trail integrity
+    // Verify audit trail integrity
     pub fn verify_integrity(&self) -> Result<bool> {
         self.flush()?;
 
@@ -626,7 +626,7 @@ impl AuditVault {
         Ok(true)
     }
 
-    /// Generate compliance report
+    // Generate compliance report
     pub fn generate_compliance_report(
         &self,
         regulation: &str,
@@ -699,12 +699,12 @@ impl AuditVault {
         })
     }
 
-    /// Subscribe to audit alerts
+    // Subscribe to audit alerts
     pub fn subscribe_alerts(&self, subscriber: Arc<dyn AlertSubscriber>) {
         self.alert_subscribers.write().push(subscriber);
     }
 
-    /// Send alert to subscribers
+    // Send alert to subscribers
     fn send_alert(&self, record: &AuditRecord) {
         let subscribers = self.alert_subscribers.read();
         for subscriber in subscribers.iter() {
@@ -712,13 +712,13 @@ impl AuditVault {
         }
     }
 
-    /// Get audit statistics
+    // Get audit statistics
     pub fn get_stats(&self) -> (u64, u64, HashMap<String, u64>) {
         let stats = self.stats.read();
         (stats.total_records, stats.failed_operations, stats.by_action.clone())
     }
 
-    /// Purge old audit records based on retention policy
+    // Purge old audit records based on retention policy
     pub fn purge_old_records(&self) -> Result<usize> {
         self.flush()?;
 

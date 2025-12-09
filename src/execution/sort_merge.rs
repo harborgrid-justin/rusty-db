@@ -1,26 +1,26 @@
-/// Sort-Merge Operations for RustyDB
-///
-/// This module implements various sorting and merge operations for query execution:
-///
-/// 1. **External Merge Sort** - For datasets larger than memory
-///    - Multi-way merge with replacement selection
-///    - Produces sorted runs on disk
-///    - Optimal k-way merge parameter selection
-///
-/// 2. **Sort-Merge Join** - Efficient join for sorted inputs
-///    - Leverages pre-sorted data
-///    - One-pass algorithm with minimal memory
-///    - Handles duplicate join keys correctly
-///
-/// 3. **Top-K Optimization** - Memory-efficient ORDER BY with LIMIT
-///    - Heap-based selection
-///    - Avoids full sorting when possible
-///    - Optimal for small K values
-///
-/// 4. **Sort-Based Grouping** - Memory-efficient GROUP BY
-///    - Sequential scan of sorted data
-///    - Eliminates need for hash tables
-///    - Supports streaming aggregation
+// Sort-Merge Operations for RustyDB
+//
+// This module implements various sorting and merge operations for query execution:
+//
+// 1. **External Merge Sort** - For datasets larger than memory
+//    - Multi-way merge with replacement selection
+//    - Produces sorted runs on disk
+//    - Optimal k-way merge parameter selection
+//
+// 2. **Sort-Merge Join** - Efficient join for sorted inputs
+//    - Leverages pre-sorted data
+//    - One-pass algorithm with minimal memory
+//    - Handles duplicate join keys correctly
+//
+// 3. **Top-K Optimization** - Memory-efficient ORDER BY with LIMIT
+//    - Heap-based selection
+//    - Avoids full sorting when possible
+//    - Optimal for small K values
+//
+// 4. **Sort-Based Grouping** - Memory-efficient GROUP BY
+//    - Sequential scan of sorted data
+//    - Eliminates need for hash tables
+//    - Supports streaming aggregation
 
 use crate::error::DbError;
 use crate::execution::QueryResult;
@@ -33,16 +33,16 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use parking_lot::Mutex;
 
-/// Sort configuration
+// Sort configuration
 #[derive(Debug, Clone)]
 pub struct SortConfig {
-    /// Memory budget for sorting in bytes
+    // Memory budget for sorting in bytes
     pub memory_budget: usize,
-    /// Temporary directory for external sort runs
+    // Temporary directory for external sort runs
     pub temp_dir: PathBuf,
-    /// K-way merge factor
+    // K-way merge factor
     pub merge_factor: usize,
-    /// Use replacement selection for run generation
+    // Use replacement selection for run generation
     pub use_replacement_selection: bool,
 }
 
@@ -57,7 +57,7 @@ impl Default for SortConfig {
     }
 }
 
-/// External merge sorter
+// External merge sorter
 pub struct ExternalMergeSorter {
     config: SortConfig,
     run_counter: Arc<Mutex<usize>>,
@@ -75,7 +75,7 @@ impl ExternalMergeSorter {
         Self::new(SortConfig::default())
     }
 
-    /// Sort query result using external merge sort
+    // Sort query result using external merge sort
     pub fn sort(
         &self,
         data: QueryResult,
@@ -106,7 +106,7 @@ impl ExternalMergeSorter {
         Ok(QueryResult::new(data.columns, sorted_rows))
     }
 
-    /// In-memory sort
+    // In-memory sort
     fn in_memory_sort(
         &self,
         mut data: QueryResult,
@@ -116,7 +116,7 @@ impl ExternalMergeSorter {
         Ok(data)
     }
 
-    /// Generate sorted runs that fit in memory
+    // Generate sorted runs that fit in memory
     fn generate_sorted_runs(
         &self,
         data: &QueryResult,
@@ -140,7 +140,7 @@ impl ExternalMergeSorter {
         Ok(runs)
     }
 
-    /// K-way merge of sorted runs
+    // K-way merge of sorted runs
     fn k_way_merge(
         &self,
         runs: Vec<PathBuf>,
@@ -187,7 +187,7 @@ impl ExternalMergeSorter {
         Ok(sorted_rows)
     }
 
-    /// Merge multiple sorted runs into one
+    // Merge multiple sorted runs into one
     fn merge_runs(
         &self,
         runs: &[PathBuf],
@@ -246,7 +246,7 @@ impl ExternalMergeSorter {
         Ok(output_path)
     }
 
-    /// Compare two rows based on ORDER BY clauses
+    // Compare two rows based on ORDER BY clauses
     fn compare_rows(&self, a: &[String], b: &[String], order_by: &[OrderByClause]) -> Ordering {
         for clause in order_by {
             // Find column index (simplified - assumes column name is index)
@@ -274,7 +274,7 @@ impl ExternalMergeSorter {
         Ordering::Equal
     }
 
-    /// Calculate rows per run based on memory budget
+    // Calculate rows per run based on memory budget
     fn calculate_rows_per_run(&self, rows: &[Vec<String>]) -> usize {
         if rows.is_empty() {
             return 1000; // Default
@@ -287,7 +287,7 @@ impl ExternalMergeSorter {
         (self.config.memory_budget / avg_row_size.max(1)).max(1)
     }
 
-    /// Write sorted run to disk
+    // Write sorted run to disk
     fn write_run_to_disk(&self, rows: &[Vec<String>]) -> Result<PathBuf, DbError> {
         let path = self.create_run_path()?;
         let file = File::create(&path)
@@ -303,7 +303,7 @@ impl ExternalMergeSorter {
         Ok(path)
     }
 
-    /// Read sorted run from disk
+    // Read sorted run from disk
     fn read_run_from_disk(&self, path: &Path) -> Result<Vec<Vec<String>>, DbError> {
         let file = File::open(path)
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -317,7 +317,7 @@ impl ExternalMergeSorter {
         Ok(rows)
     }
 
-    /// Write single row to file
+    // Write single row to file
     fn write_row(writer: &mut BufWriter<File>, row: &[String]) -> Result<(), DbError> {
         let line = row.join("\t") + "\n";
         writer.write_all(line.as_bytes())
@@ -325,7 +325,7 @@ impl ExternalMergeSorter {
         Ok(())
     }
 
-    /// Read single row from file
+    // Read single row from file
     fn read_row(reader: &mut BufReader<File>) -> Result<Option<Vec<String>>, DbError> {
         let mut line = String::new();
         let bytes_read = reader.read_line(&mut line)
@@ -339,7 +339,7 @@ impl ExternalMergeSorter {
         Ok(Some(row))
     }
 
-    /// Create unique run path
+    // Create unique run path
     fn create_run_path(&self) -> Result<PathBuf, DbError> {
         let mut counter = self.run_counter.lock();
         *counter += 1;
@@ -362,7 +362,7 @@ impl ExternalMergeSorter {
     }
 }
 
-/// Entry in merge heap
+// Entry in merge heap
 struct MergeEntry {
     row: Vec<String>,
     run_id: usize,
@@ -415,11 +415,11 @@ impl Ord for MergeEntry {
     }
 }
 
-/// Sort-merge join implementation
+// Sort-merge join implementation
 pub struct SortMergeJoin;
 
 impl SortMergeJoin {
-    /// Execute sort-merge join
+    // Execute sort-merge join
     pub fn execute(
         left: QueryResult,
         right: QueryResult,
@@ -475,7 +475,7 @@ impl SortMergeJoin {
     }
 }
 
-/// Top-K selector for efficient ORDER BY ... LIMIT K
+// Top-K selector for efficient ORDER BY ... LIMIT K
 pub struct TopKSelector {
     k: usize,
     heap: BinaryHeap<TopKEntry>,
@@ -489,7 +489,7 @@ impl TopKSelector {
         }
     }
 
-    /// Add row to top-K selector
+    // Add row to top-K selector
     pub fn add(&mut self, row: Vec<String>, order_by: &[OrderByClause]) {
         let entry = TopKEntry {
             row,
@@ -506,7 +506,7 @@ impl TopKSelector {
         }
     }
 
-    /// Get top K rows in sorted order
+    // Get top K rows in sorted order
     pub fn get_top_k(self) -> Vec<Vec<String>> {
         let mut results: Vec<Vec<String>> = self.heap.into_iter()
             .map(|entry| entry.row)
@@ -517,7 +517,7 @@ impl TopKSelector {
         results
     }
 
-    /// Process entire query result to get top K
+    // Process entire query result to get top K
     pub fn select_top_k(
         data: QueryResult,
         k: usize,
@@ -535,7 +535,7 @@ impl TopKSelector {
     }
 }
 
-/// Entry in top-K heap
+// Entry in top-K heap
 struct TopKEntry {
     row: Vec<String>,
     order_by: Vec<OrderByClause>,
@@ -582,11 +582,11 @@ impl Ord for TopKEntry {
     }
 }
 
-/// Sort-based grouping for GROUP BY
+// Sort-based grouping for GROUP BY
 pub struct SortBasedGrouping;
 
 impl SortBasedGrouping {
-    /// Execute GROUP BY using sort-based approach
+    // Execute GROUP BY using sort-based approach
     pub fn execute(
         data: QueryResult,
         group_by_cols: &[usize],
@@ -725,5 +725,3 @@ mod tests {
         assert_eq!(result.rows.len(), 2);
     }
 }
-
-

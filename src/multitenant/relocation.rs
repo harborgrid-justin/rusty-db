@@ -33,40 +33,40 @@ use serde::{Serialize, Deserialize};
 use crate::error::{Result, DbError};
 use super::pdb::{PdbId, PdbConfig};
 
-/// Relocation configuration
+// Relocation configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelocationConfig {
-    /// Source CDB name
+    // Source CDB name
     pub source_cdb: String,
 
-    /// Target CDB name
+    // Target CDB name
     pub target_cdb: String,
 
-    /// Source PDB ID
+    // Source PDB ID
     pub source_pdb_id: PdbId,
 
-    /// Relocation mode
+    // Relocation mode
     pub mode: RelocationMode,
 
-    /// Maximum downtime allowed (seconds)
+    // Maximum downtime allowed (seconds)
     pub max_downtime_secs: u64,
 
-    /// Enable compression during transfer
+    // Enable compression during transfer
     pub compress_transfer: bool,
 
-    /// Enable encryption during transfer
+    // Enable encryption during transfer
     pub encrypt_transfer: bool,
 
-    /// Bandwidth limit (bytes/sec, 0 = unlimited)
+    // Bandwidth limit (bytes/sec, 0 = unlimited)
     pub bandwidth_limit: u64,
 
-    /// Connection drain timeout (seconds)
+    // Connection drain timeout (seconds)
     pub drain_timeout_secs: u64,
 
-    /// Enable automatic rollback on failure
+    // Enable automatic rollback on failure
     pub auto_rollback: bool,
 
-    /// Parallel transfer threads
+    // Parallel transfer threads
     pub parallel_threads: u32,
 }
 
@@ -88,71 +88,71 @@ impl Default for RelocationConfig {
     }
 }
 
-/// Relocation mode
+// Relocation mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RelocationMode {
-    /// Online relocation (minimal downtime)
+    // Online relocation (minimal downtime)
     Online,
-    /// Offline relocation (PDB closed during migration)
+    // Offline relocation (PDB closed during migration)
     Offline,
-    /// Hot relocation (zero downtime with async replication)
+    // Hot relocation (zero downtime with async replication)
     Hot,
 }
 
-/// Relocation state
+// Relocation state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RelocationState {
-    /// Initial state
+    // Initial state
     Initializing,
-    /// Validating source and target
+    // Validating source and target
     Validating,
-    /// Preparing destination
+    // Preparing destination
     Preparing,
-    /// Copying data
+    // Copying data
     Copying,
-    /// Syncing incremental changes
+    // Syncing incremental changes
     Syncing,
-    /// Draining connections
+    // Draining connections
     Draining,
-    /// Performing switchover
+    // Performing switchover
     SwitchingOver,
-    /// Cleaning up source
+    // Cleaning up source
     CleaningUp,
-    /// Completed successfully
+    // Completed successfully
     Completed,
-    /// Failed
+    // Failed
     Failed,
-    /// Rolling back
+    // Rolling back
     RollingBack,
 }
 
-/// Relocation progress
+// Relocation progress
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelocationProgress {
-    /// Current state
+    // Current state
     pub state: RelocationState,
 
-    /// Bytes transferred
+    // Bytes transferred
     pub bytes_transferred: u64,
 
-    /// Total bytes to transfer
+    // Total bytes to transfer
     pub total_bytes: u64,
 
-    /// Progress percentage (0-100)
+    // Progress percentage (0-100)
     pub progress_percent: f64,
 
-    /// Estimated time remaining (seconds)
+    // Estimated time remaining (seconds)
     pub eta_secs: u64,
 
-    /// Current phase start time
+    // Current phase start time
     pub phase_start_at: u64,
 
-    /// Error message (if failed)
+    // Error message (if failed)
     pub error_message: Option<String>,
 }
 
 impl RelocationProgress {
-    /// Create new progress tracker
+    // Create new progress tracker
     pub fn new(total_bytes: u64) -> Self {
         Self {
             state: RelocationState::Initializing,
@@ -165,7 +165,7 @@ impl RelocationProgress {
         }
     }
 
-    /// Update progress
+    // Update progress
     pub fn update(&mut self, bytes_transferred: u64) {
         self.bytes_transferred = bytes_transferred;
         if self.total_bytes > 0 {
@@ -173,51 +173,51 @@ impl RelocationProgress {
         }
     }
 
-    /// Transition to next state
+    // Transition to next state
     pub fn transition(&mut self, state: RelocationState) {
         self.state = state;
         self.phase_start_at = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
     }
 }
 
-/// Relocation engine
+// Relocation engine
 pub struct RelocationEngine {
-    /// Active relocations
+    // Active relocations
     relocations: Arc<RwLock<HashMap<u64, RelocationJob>>>,
 
-    /// Next relocation ID
+    // Next relocation ID
     next_id: Arc<RwLock<u64>>,
 
-    /// State transfer protocol
+    // State transfer protocol
     state_transfer: Arc<StateTransferProtocol>,
 
-    /// Connection drainer
+    // Connection drainer
     connection_drainer: Arc<ConnectionDrainer>,
 }
 
 #[derive(Debug, Clone)]
 struct RelocationJob {
-    /// Job ID
+    // Job ID
     id: u64,
 
-    /// Configuration
+    // Configuration
     config: RelocationConfig,
 
-    /// Progress
+    // Progress
     progress: RelocationProgress,
 
-    /// Target PDB ID
+    // Target PDB ID
     target_pdb_id: Option<PdbId>,
 
-    /// Start time
+    // Start time
     started_at: u64,
 
-    /// End time
+    // End time
     ended_at: Option<u64>,
 }
 
 impl RelocationEngine {
-    /// Create a new relocation engine
+    // Create a new relocation engine
     pub fn new() -> Self {
         Self {
             relocations: Arc::new(RwLock::new(HashMap::new())),
@@ -227,7 +227,7 @@ impl RelocationEngine {
         }
     }
 
-    /// Start a relocation
+    // Start a relocation
     pub async fn start_relocation(&self, config: RelocationConfig) -> Result<u64> {
         // Allocate relocation ID
         let mut next_id = self.next_id.write().await;
@@ -269,7 +269,7 @@ impl RelocationEngine {
         Ok(job_id)
     }
 
-    /// Execute relocation
+    // Execute relocation
     async fn execute_relocation(
         job_id: u64,
         config: RelocationConfig,
@@ -359,7 +359,7 @@ impl RelocationEngine {
         }
     }
 
-    /// Get relocation progress
+    // Get relocation progress
     pub async fn get_progress(&self, job_id: u64) -> Result<RelocationProgress> {
         let jobs = self.relocations.read().await;
         jobs.get(&job_id)
@@ -367,7 +367,7 @@ impl RelocationEngine {
             .ok_or_else(|| DbError::NotFound(format!("Relocation job {} not found", job_id)))
     }
 
-    /// Cancel a relocation
+    // Cancel a relocation
     pub async fn cancel_relocation(&self, job_id: u64) -> Result<()> {
         let mut jobs = self.relocations.write().await;
         if let Some(job) = jobs.get_mut(&job_id) {
@@ -381,18 +381,18 @@ impl RelocationEngine {
         }
     }
 
-    /// List active relocations
+    // List active relocations
     pub async fn list_relocations(&self) -> Vec<u64> {
         self.relocations.read().await.keys().copied().collect()
     }
 }
 
-/// State transfer protocol for incremental synchronization
+// State transfer protocol for incremental synchronization
 pub struct StateTransferProtocol {
-    /// Active transfers
+    // Active transfers
     transfers: Arc<RwLock<HashMap<u64, DataTransfer>>>,
 
-    /// Next transfer ID
+    // Next transfer ID
     next_id: Arc<Mutex<u64>>,
 }
 
@@ -409,7 +409,7 @@ struct DataTransfer {
 use std::time::Instant;
 
 impl StateTransferProtocol {
-    /// Create a new state transfer protocol
+    // Create a new state transfer protocol
     pub fn new() -> Self {
         Self {
             transfers: Arc::new(RwLock::new(HashMap::new())),
@@ -417,7 +417,7 @@ impl StateTransferProtocol {
         }
     }
 
-    /// Transfer data from source to target
+    // Transfer data from source to target
     pub async fn transfer_data(
         &self,
         source_pdb_id: PdbId,
@@ -463,14 +463,14 @@ impl StateTransferProtocol {
         Ok(())
     }
 
-    /// Apply incremental changes
+    // Apply incremental changes
     pub async fn apply_incremental(&self, source_pdb_id: PdbId, target_pdb_id: PdbId) -> Result<()> {
         // Apply redo logs from source to target
         tokio::time::sleep(Duration::from_millis(50)).await;
         Ok(())
     }
 
-    /// Get transfer progress
+    // Get transfer progress
     pub async fn get_transfer_progress(&self, transfer_id: u64) -> Option<(u64, u64)> {
         let transfers = self.transfers.read().await;
         transfers
@@ -479,9 +479,9 @@ impl StateTransferProtocol {
     }
 }
 
-/// Connection drainer for graceful shutdown
+// Connection drainer for graceful shutdown
 pub struct ConnectionDrainer {
-    /// Draining status
+    // Draining status
     draining: Arc<RwLock<HashMap<PdbId, DrainingStatus>>>,
 }
 
@@ -495,14 +495,14 @@ struct DrainingStatus {
 }
 
 impl ConnectionDrainer {
-    /// Create a new connection drainer
+    // Create a new connection drainer
     pub fn new() -> Self {
         Self {
             draining: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    /// Drain connections for a PDB
+    // Drain connections for a PDB
     pub async fn drain_connections(&self, pdb_id: PdbId, timeout_secs: u64) -> Result<()> {
         let status = DrainingStatus {
             pdb_id,
@@ -546,7 +546,7 @@ impl ConnectionDrainer {
         Ok(())
     }
 
-    /// Get draining status
+    // Get draining status
     pub async fn get_status(&self, pdb_id: PdbId) -> Option<(u32, u32)> {
         let draining = self.draining.read().await;
         draining
@@ -555,20 +555,20 @@ impl ConnectionDrainer {
     }
 }
 
-/// Cross-CDB migrator
+// Cross-CDB migrator
 pub struct CrossCdbMigrator {
     relocation_engine: Arc<RelocationEngine>,
 }
 
 impl CrossCdbMigrator {
-    /// Create a new cross-CDB migrator
+    // Create a new cross-CDB migrator
     pub fn new() -> Self {
         Self {
             relocation_engine: Arc::new(RelocationEngine::new()),
         }
     }
 
-    /// Migrate a PDB to another CDB
+    // Migrate a PDB to another CDB
     pub async fn migrate(
         &self,
         source_cdb: &str,
@@ -587,12 +587,12 @@ impl CrossCdbMigrator {
         self.relocation_engine.start_relocation(config).await
     }
 
-    /// Get migration progress
+    // Get migration progress
     pub async fn get_progress(&self, job_id: u64) -> Result<RelocationProgress> {
         self.relocation_engine.get_progress(job_id).await
     }
 
-    /// Cancel migration
+    // Cancel migration
     pub async fn cancel(&self, job_id: u64) -> Result<()> {
         self.relocation_engine.cancel_relocation(job_id).await
     }

@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Block temperature tracking
+// Block temperature tracking
 #[derive(Debug, Clone)]
 pub struct BlockTemperature {
     pub block_id: u64,
@@ -31,7 +31,7 @@ impl BlockTemperature {
         }
     }
 
-    /// Calculate temperature based on access patterns
+    // Calculate temperature based on access patterns
     pub fn calculate_temperature(&self, now: u64) -> DataTemperature {
         let age_seconds = now.saturating_sub(self.creation_time);
         let time_since_access = now.saturating_sub(self.last_access);
@@ -58,7 +58,7 @@ impl BlockTemperature {
     }
 }
 
-/// Tier policy configuration
+// Tier policy configuration
 #[derive(Debug, Clone)]
 pub struct TierPolicy {
     pub hot_max_age: u64,          // Max age in seconds before cooling
@@ -82,7 +82,7 @@ impl Default for TierPolicy {
     }
 }
 
-/// Tiered Compression Manager
+// Tiered Compression Manager
 pub struct TieredCompressor {
     block_temperatures: Arc<RwLock<HashMap<u64, BlockTemperature>>>,
     policy: TierPolicy,
@@ -106,7 +106,7 @@ impl TieredCompressor {
         }
     }
 
-    /// Classify block temperature based on access patterns
+    // Classify block temperature based on access patterns
     pub fn classify_temperature(&self, block_id: u64) -> DataTemperature {
         let temperatures = self.block_temperatures.read().unwrap();
 
@@ -118,7 +118,7 @@ impl TieredCompressor {
         }
     }
 
-    /// Record an access to a block
+    // Record an access to a block
     pub fn record_access(&mut self, block_id: u64) {
         let mut temperatures = self.block_temperatures.write().unwrap();
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
@@ -138,7 +138,7 @@ impl TieredCompressor {
         }
     }
 
-    /// Compress data according to its temperature
+    // Compress data according to its temperature
     pub fn compress_by_temperature(&self, block_id: u64, data: &[u8], output: &mut [u8])
         -> CompressionResult<usize> {
 
@@ -160,7 +160,7 @@ impl TieredCompressor {
         }
     }
 
-    /// Decompress data (algorithm detected from metadata)
+    // Decompress data (algorithm detected from metadata)
     pub fn decompress(&self, temperature: DataTemperature, data: &[u8], output: &mut [u8])
         -> CompressionResult<usize> {
 
@@ -180,7 +180,7 @@ impl TieredCompressor {
         }
     }
 
-    /// Migrate a block to a new temperature tier
+    // Migrate a block to a new temperature tier
     pub fn migrate_block(&mut self, block_id: u64, new_temp: DataTemperature)
         -> CompressionResult<()> {
 
@@ -208,7 +208,7 @@ impl TieredCompressor {
         }
     }
 
-    /// Get compression recommendation for a block
+    // Get compression recommendation for a block
     pub fn get_compression_recommendation(&self, block_id: u64)
         -> (CompressionAlgorithm, CompressionLevel) {
 
@@ -216,7 +216,7 @@ impl TieredCompressor {
         (temperature.recommended_algorithm(), temperature.recommended_compression_level())
     }
 
-    /// Perform automatic tier migration for all blocks
+    // Perform automatic tier migration for all blocks
     pub fn auto_migrate_blocks(&mut self) -> usize {
         if !self.policy.enable_auto_migration {
             return 0;
@@ -248,12 +248,12 @@ impl TieredCompressor {
         migrations
     }
 
-    /// Get tier statistics
+    // Get tier statistics
     pub fn tier_stats(&self) -> TierStats {
         self.stats.read().unwrap().clone()
     }
 
-    /// Analyze compression effectiveness by tier
+    // Analyze compression effectiveness by tier
     pub fn tier_compression_analysis(&self) -> TierCompressionAnalysis {
         let temperatures = self.block_temperatures.read().unwrap();
 
@@ -303,7 +303,7 @@ impl TieredCompressor {
         }
     }
 
-    /// Estimate space savings from tiered compression
+    // Estimate space savings from tiered compression
     pub fn estimate_space_savings(&self) -> f64 {
         let analysis = self.tier_compression_analysis();
 
@@ -347,7 +347,7 @@ impl TieredCompressionManager for TieredCompressor {
     }
 }
 
-/// Analysis of compression by tier
+// Analysis of compression by tier
 #[derive(Debug, Clone, Default)]
 pub struct TierCompressionAnalysis {
     pub hot_blocks: usize,
@@ -382,7 +382,7 @@ impl TierCompressionAnalysis {
     }
 }
 
-/// Tier migration scheduler
+// Tier migration scheduler
 pub struct TierMigrationScheduler {
     manager: Arc<RwLock<TieredCompressor>>,
     last_migration: Arc<RwLock<u64>>,
@@ -398,7 +398,7 @@ impl TierMigrationScheduler {
         }
     }
 
-    /// Check if migration should run
+    // Check if migration should run
     pub fn should_run_migration(&self) -> bool {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         let last = *self.last_migration.read().unwrap();
@@ -410,7 +410,7 @@ impl TierMigrationScheduler {
         now - last >= policy.migration_interval
     }
 
-    /// Run scheduled migration
+    // Run scheduled migration
     pub fn run_migration(&self) -> usize {
         if !self.should_run_migration() {
             return 0;
@@ -427,7 +427,7 @@ impl TierMigrationScheduler {
         migrations
     }
 
-    /// Get migration statistics
+    // Get migration statistics
     pub fn migration_stats(&self) -> MigrationStats {
         let manager = self.manager.read().unwrap();
         let tier_stats = manager.tier_stats();
@@ -544,5 +544,3 @@ mod tests {
         assert_eq!(level as u8, CompressionLevel::Fast as u8);
     }
 }
-
-

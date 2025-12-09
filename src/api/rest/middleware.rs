@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use super::types::*;
 
-/// Request logger middleware that tracks and updates metrics
+// Request logger middleware that tracks and updates metrics
 pub async fn request_logger_middleware(
     State(state): State<Arc<ApiState>>,
     headers: HeaderMap,
@@ -61,7 +61,7 @@ pub async fn request_logger_middleware(
     Ok(response)
 }
 
-/// Rate limiting middleware that checks request limits
+// Rate limiting middleware that checks request limits
 pub async fn rate_limit_middleware(
     State(state): State<Arc<ApiState>>,
     headers: HeaderMap,
@@ -89,17 +89,17 @@ pub async fn rate_limit_middleware(
     Ok(next.run(req).await)
 }
 
-/// Authentication middleware trait for extensibility
+// Authentication middleware trait for extensibility
 #[async_trait::async_trait]
 pub trait AuthMiddleware: Send + Sync {
-    /// Verify authentication token
+    // Verify authentication token
     async fn verify_token(&self, token: &str) -> Result<bool, DbError>;
 
-    /// Extract user information from request
+    // Extract user information from request
     async fn extract_user(&self, headers: &HeaderMap) -> Result<Option<UserInfo>, DbError>;
 }
 
-/// Default authentication middleware implementation
+// Default authentication middleware implementation
 pub struct DefaultAuthMiddleware {
     enabled: bool,
     api_key: Option<String>,
@@ -131,7 +131,7 @@ impl AuthMiddleware for DefaultAuthMiddleware {
     }
 }
 
-/// User information extracted from authentication
+// User information extracted from authentication
 #[derive(Debug, Clone)]
 pub struct UserInfo {
     pub user_id: u64,
@@ -139,7 +139,7 @@ pub struct UserInfo {
     pub roles: Vec<String>,
 }
 
-/// CORS middleware for cross-origin requests
+// CORS middleware for cross-origin requests
 pub struct CorsMiddleware {
     allowed_origins: Vec<String>,
     allowed_methods: Vec<String>,
@@ -176,11 +176,11 @@ impl CorsMiddleware {
     }
 }
 
-/// Request validation middleware
+// Request validation middleware
 pub struct ValidationMiddleware;
 
 impl ValidationMiddleware {
-    /// Validate request size
+    // Validate request size
     pub fn check_request_size<B>(req: &Request<B>, max_size: usize) -> Result<(), DbError> {
         if let Some(content_length) = req.headers().get("content-length") {
             if let Ok(length) = content_length.to_str().unwrap_or("0").parse::<usize>() {
@@ -192,7 +192,7 @@ impl ValidationMiddleware {
         Ok(())
     }
 
-    /// Validate content type
+    // Validate content type
     pub fn check_content_type<B>(req: &Request<B>, expected: &str) -> Result<(), DbError> {
         if let Some(content_type) = req.headers().get("content-type") {
             if let Ok(ct) = content_type.to_str() {
@@ -205,7 +205,7 @@ impl ValidationMiddleware {
     }
 }
 
-/// Metrics collection middleware
+// Metrics collection middleware
 pub struct MetricsMiddleware {
     request_count: Arc<std::sync::atomic::AtomicU64>,
     error_count: Arc<std::sync::atomic::AtomicU64>,
@@ -236,7 +236,7 @@ impl MetricsMiddleware {
     }
 }
 
-/// Security headers middleware
+// Security headers middleware
 pub struct SecurityHeadersMiddleware;
 
 impl SecurityHeadersMiddleware {
@@ -273,7 +273,7 @@ impl SecurityHeadersMiddleware {
     }
 }
 
-/// Request ID middleware for tracing
+// Request ID middleware for tracing
 pub struct RequestIdMiddleware;
 
 impl RequestIdMiddleware {
@@ -296,7 +296,7 @@ impl RequestIdMiddleware {
     }
 }
 
-/// Compression middleware for response compression
+// Compression middleware for response compression
 pub struct CompressionMiddleware;
 
 impl CompressionMiddleware {
@@ -314,7 +314,7 @@ impl CompressionMiddleware {
     }
 }
 
-/// Cache control middleware
+// Cache control middleware
 pub struct CacheMiddleware;
 
 impl CacheMiddleware {
@@ -331,7 +331,7 @@ impl CacheMiddleware {
     }
 }
 
-/// Timeout middleware for request timeouts
+// Timeout middleware for request timeouts
 pub struct TimeoutMiddleware {
     timeout_duration: std::time::Duration,
 }
@@ -353,7 +353,7 @@ impl TimeoutMiddleware {
     }
 }
 
-/// Health check middleware
+// Health check middleware
 pub struct HealthCheckMiddleware;
 
 impl HealthCheckMiddleware {

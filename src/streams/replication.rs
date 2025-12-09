@@ -7,11 +7,11 @@ use tokio::time::sleep;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Duration;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Instant, SystemTime};
-use parking_lot::{RwLock};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc};
 use tokio::time::interval;
@@ -21,50 +21,50 @@ use super::cdc::{ChangeEvent, ChangeType, CDCEngine};
 use super::publisher::EventPublisher;
 use super::subscriber::EventSubscriber;
 
-/// Replication mode
+// Replication mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicationMode {
-    /// Master sends changes to slaves
+    // Master sends changes to slaves
     MasterSlave,
-    /// Peer-to-peer bidirectional replication
+    // Peer-to-peer bidirectional replication
     PeerToPeer,
-    /// Multi-master with conflict resolution
+    // Multi-master with conflict resolution
     MultiMaster,
 }
 
-/// Conflict resolution strategy
+// Conflict resolution strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConflictResolution {
-    /// Latest write wins based on timestamp
+    // Latest write wins based on timestamp
     LastWriteWins,
-    /// First write wins
+    // First write wins
     FirstWriteWins,
-    /// Master wins (for master-slave)
+    // Master wins (for master-slave)
     MasterWins,
-    /// Custom resolution function
+    // Custom resolution function
     Custom,
-    /// Manual resolution required
+    // Manual resolution required
     Manual,
 }
 
-/// Replication conflict
+// Replication conflict
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationConflict {
-    /// Conflict ID
+    // Conflict ID
     pub id: u64,
-    /// Table where conflict occurred
+    // Table where conflict occurred
     pub table_id: TableId,
-    /// Table name
+    // Table name
     pub table_name: String,
-    /// Local change event
+    // Local change event
     pub local_change: ChangeEvent,
-    /// Remote change event
+    // Remote change event
     pub remote_change: ChangeEvent,
-    /// Detected timestamp
+    // Detected timestamp
     pub detected_at: SystemTime,
-    /// Resolution status
+    // Resolution status
     pub resolved: bool,
-    /// Resolution strategy applied
+    // Resolution strategy applied
     pub resolution: Option<ConflictResolution>,
 }
 
@@ -83,22 +83,22 @@ impl ReplicationConflict {
     }
 }
 
-/// Table replication rule
+// Table replication rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationRule {
-    /// Rule ID
+    // Rule ID
     pub id: u64,
-    /// Source table
+    // Source table
     pub source_table: String,
-    /// Destination table
+    // Destination table
     pub dest_table: String,
-    /// Column mappings (source -> dest)
+    // Column mappings (source -> dest)
     pub column_mappings: HashMap<String, String>,
-    /// Filter expression (optional)
+    // Filter expression (optional)
     pub filter: Option<String>,
-    /// Transformation function (optional)
+    // Transformation function (optional)
     pub transformation: Option<String>,
-    /// Enabled flag
+    // Enabled flag
     pub enabled: bool,
 }
 
@@ -180,20 +180,20 @@ impl ReplicationRule {
     }
 }
 
-/// Replication slot (tracking position)
+// Replication slot (tracking position)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationSlot {
-    /// Slot name
+    // Slot name
     pub name: String,
-    /// Plugin/engine type
+    // Plugin/engine type
     pub plugin: String,
-    /// Current LSN position
+    // Current LSN position
     pub restart_lsn: u64,
-    /// Confirmed flush LSN
+    // Confirmed flush LSN
     pub confirmed_flush_lsn: u64,
-    /// Active flag
+    // Active flag
     pub active: bool,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: SystemTime,
 }
 
@@ -210,58 +210,58 @@ impl ReplicationSlot {
     }
 }
 
-/// Replication lag metrics
+// Replication lag metrics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ReplicationLag {
-    /// Lag in number of events
+    // Lag in number of events
     pub event_lag: u64,
-    /// Lag in bytes
+    // Lag in bytes
     pub byte_lag: u64,
-    /// Time lag (seconds)
+    // Time lag (seconds)
     pub time_lag_seconds: f64,
-    /// Current apply rate (events/sec)
+    // Current apply rate (events/sec)
     pub apply_rate: f64,
-    /// Estimated catch-up time (seconds)
+    // Estimated catch-up time (seconds)
     pub estimated_catch_up_seconds: f64,
 }
 
-/// Replication statistics
+// Replication statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ReplicationStats {
-    /// Total events replicated
+    // Total events replicated
     pub total_events: u64,
-    /// Total bytes replicated
+    // Total bytes replicated
     pub total_bytes: u64,
-    /// Events per second
+    // Events per second
     pub events_per_second: f64,
-    /// Average replication latency (ms)
+    // Average replication latency (ms)
     pub avg_latency_ms: f64,
-    /// Number of conflicts detected
+    // Number of conflicts detected
     pub conflicts_detected: u64,
-    /// Number of conflicts resolved
+    // Number of conflicts resolved
     pub conflicts_resolved: u64,
-    /// Number of errors
+    // Number of errors
     pub error_count: u64,
-    /// Current lag
+    // Current lag
     pub lag: ReplicationLag,
 }
 
-/// Replication configuration
+// Replication configuration
 #[derive(Debug, Clone)]
 pub struct ReplicationConfig {
-    /// Replication mode
+    // Replication mode
     pub mode: ReplicationMode,
-    /// Conflict resolution strategy
+    // Conflict resolution strategy
     pub conflict_resolution: ConflictResolution,
-    /// Replication batch size
+    // Replication batch size
     pub batch_size: usize,
-    /// Apply timeout
+    // Apply timeout
     pub apply_timeout: Duration,
-    /// Enable bidirectional replication
+    // Enable bidirectional replication
     pub bidirectional: bool,
-    /// Lag warning threshold (seconds)
+    // Lag warning threshold (seconds)
     pub lag_warning_threshold: f64,
-    /// Lag critical threshold (seconds)
+    // Lag critical threshold (seconds)
     pub lag_critical_threshold: f64,
 }
 
@@ -279,34 +279,34 @@ impl Default for ReplicationConfig {
     }
 }
 
-/// Logical Replication Engine
+// Logical Replication Engine
 pub struct LogicalReplication {
-    /// Configuration
+    // Configuration
     config: ReplicationConfig,
-    /// Replication rules
+    // Replication rules
     rules: Arc<RwLock<HashMap<u64, ReplicationRule>>>,
-    /// Next rule ID
+    // Next rule ID
     next_rule_id: Arc<AtomicU64>,
-    /// Replication slots
+    // Replication slots
     slots: Arc<RwLock<HashMap<String, ReplicationSlot>>>,
-    /// CDC engine
+    // CDC engine
     cdc_engine: Arc<CDCEngine>,
-    /// Event publisher (for sending changes)
+    // Event publisher (for sending changes)
     publisher: Option<Arc<EventPublisher>>,
-    /// Event subscriber (for receiving changes)
+    // Event subscriber (for receiving changes)
     subscriber: Option<Arc<EventSubscriber>>,
-    /// Detected conflicts
+    // Detected conflicts
     conflicts: Arc<Mutex<VecDeque<ReplicationConflict>>>,
-    /// Next conflict ID
+    // Next conflict ID
     next_conflict_id: Arc<AtomicU64>,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<ReplicationStats>>,
-    /// Shutdown flag
+    // Shutdown flag
     shutdown: Arc<AtomicBool>,
 }
 
 impl LogicalReplication {
-    /// Create a new logical replication engine
+    // Create a new logical replication engine
     pub fn new(config: ReplicationConfig, cdc_engine: Arc<CDCEngine>) -> Self {
         Self {
             config,
@@ -323,7 +323,7 @@ impl LogicalReplication {
         }
     }
 
-    /// Start replication
+    // Start replication
     pub async fn start(&mut self) -> Result<()> {
         // Start CDC engine
         self.cdc_engine.start().await?;
@@ -336,14 +336,14 @@ impl LogicalReplication {
         Ok(())
     }
 
-    /// Stop replication
+    // Stop replication
     pub async fn stop(&self) -> Result<()> {
         self.shutdown.store(true, Ordering::SeqCst);
         self.cdc_engine.stop().await?;
         Ok(())
     }
 
-    /// Add replication rule
+    // Add replication rule
     pub fn add_rule(&self, mut rule: ReplicationRule) -> Result<u64> {
         let rule_id = self.next_rule_id.fetch_add(1, Ordering::SeqCst);
         rule.id = rule_id;
@@ -352,19 +352,19 @@ impl LogicalReplication {
         Ok(rule_id)
     }
 
-    /// Remove replication rule
+    // Remove replication rule
     pub fn remove_rule(&self, rule_id: u64) -> Result<()> {
         self.rules.write().remove(&rule_id)
             .ok_or_else(|| DbError::NotFound(format!("Rule {} not found", rule_id)))?;
         Ok(())
     }
 
-    /// Get all rules
+    // Get all rules
     pub fn get_rules(&self) -> Vec<ReplicationRule> {
         self.rules.read().values().cloned().collect()
     }
 
-    /// Create replication slot
+    // Create replication slot
     pub fn create_slot(&self, name: String) -> Result<ReplicationSlot> {
         let slot = ReplicationSlot::new(name.clone());
 
@@ -379,19 +379,19 @@ impl LogicalReplication {
         Ok(slot)
     }
 
-    /// Drop replication slot
+    // Drop replication slot
     pub fn drop_slot(&self, name: &str) -> Result<()> {
         self.slots.write().remove(name)
             .ok_or_else(|| DbError::NotFound(format!("Slot '{}' not found", name)))?;
         Ok(())
     }
 
-    /// Get replication slot
+    // Get replication slot
     pub fn get_slot(&self, name: &str) -> Option<ReplicationSlot> {
         self.slots.read().get(name).cloned()
     }
 
-    /// Apply change event to local database
+    // Apply change event to local database
     pub async fn apply_change(&self, event: ChangeEvent) -> Result<()> {
         let start_time = Instant::now();
 
@@ -421,7 +421,7 @@ impl LogicalReplication {
         Ok(())
     }
 
-    /// Execute a change event on the local database
+    // Execute a change event on the local database
     async fn execute_change(&self, event: &ChangeEvent) -> Result<()> {
         // In production, this would execute the actual database operation
         match event.change_type {
@@ -442,7 +442,7 @@ impl LogicalReplication {
         Ok(())
     }
 
-    /// Detect conflicts between local and remote changes
+    // Detect conflicts between local and remote changes
     pub fn detect_conflict(&self, local: &ChangeEvent, remote: &ChangeEvent) -> Option<ReplicationConflict> {
         // Check if events affect the same row
         if local.table_id != remote.table_id || local.row_id != remote.row_id {
@@ -458,7 +458,7 @@ impl LogicalReplication {
         None
     }
 
-    /// Resolve a conflict
+    // Resolve a conflict
     pub async fn resolve_conflict(&self, conflict: &mut ReplicationConflict) -> Result<ChangeEvent> {
         let winner = match self.config.conflict_resolution {
             ConflictResolution::LastWriteWins => {
@@ -499,7 +499,7 @@ impl LogicalReplication {
         Ok(winner)
     }
 
-    /// Custom conflict resolution (can be overridden)
+    // Custom conflict resolution (can be overridden)
     fn custom_conflict_resolution(&self, conflict: &ReplicationConflict) -> Result<ChangeEvent> {
         // Default implementation: last write wins
         if conflict.remote_change.timestamp > conflict.local_change.timestamp {
@@ -509,12 +509,12 @@ impl LogicalReplication {
         }
     }
 
-    /// Get pending conflicts
+    // Get pending conflicts
     pub fn get_conflicts(&self) -> Vec<ReplicationConflict> {
         self.conflicts.lock().unwrap().iter().cloned().collect()
     }
 
-    /// Calculate replication lag
+    // Calculate replication lag
     pub fn calculate_lag(&self, remote_lsn: u64, remote_timestamp: SystemTime) -> ReplicationLag {
         let cdc_stats = self.cdc_engine.get_statistics();
         let local_lsn = cdc_stats.last_lsn;
@@ -544,7 +544,7 @@ impl LogicalReplication {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_statistics(&self) -> ReplicationStats {
         self.stats.read().clone()
     }

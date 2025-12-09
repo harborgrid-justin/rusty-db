@@ -12,7 +12,7 @@ use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
-/// Encryption algorithm
+// Encryption algorithm
 #[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum EncryptionAlgorithm {
@@ -22,7 +22,7 @@ pub enum EncryptionAlgorithm {
     ChaCha20Poly1305,
 }
 
-/// Key derivation function
+// Key derivation function
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum KeyDerivationFunction {
     PBKDF2 { iterations: u32 },
@@ -30,7 +30,7 @@ pub enum KeyDerivationFunction {
     Scrypt { n: u32, r: u32, p: u32 },
 }
 
-/// Encryption key metadata
+// Encryption key metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptionKey {
     pub key_id: String,
@@ -134,7 +134,7 @@ impl EncryptionKey {
     }
 }
 
-/// Encrypted backup metadata
+// Encrypted backup metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedBackup {
     pub backup_id: String,
@@ -149,7 +149,7 @@ pub struct EncryptedBackup {
     pub checksum: String,
 }
 
-/// Key storage backend
+// Key storage backend
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum KeyStorageBackend {
     LocalFile { path: PathBuf },
@@ -159,7 +159,7 @@ pub enum KeyStorageBackend {
     Custom { endpoint: String },
 }
 
-/// Key management configuration
+// Key management configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyManagementConfig {
     pub storage_backend: KeyStorageBackend,
@@ -185,7 +185,7 @@ impl Default for KeyManagementConfig {
     }
 }
 
-/// Key manager for managing encryption keys
+// Key manager for managing encryption keys
 pub struct KeyManager {
     config: KeyManagementConfig,
     keys: Arc<RwLock<HashMap<String, EncryptionKey>>>,
@@ -237,7 +237,7 @@ impl KeyManager {
         })
     }
 
-    /// Create a new encryption key
+    // Create a new encryption key
     pub fn create_key(&self, algorithm: EncryptionAlgorithm) -> Result<String> {
         let key_id = format!("KEY-{}", uuid::Uuid::new_v4());
         let key = EncryptionKey::new(key_id.clone(), algorithm.clone());
@@ -254,7 +254,7 @@ impl KeyManager {
         Ok(key_id)
     }
 
-    /// Get a key by ID
+    // Get a key by ID
     pub fn get_key(&self, key_id: &str) -> Result<EncryptionKey> {
         let key = self.keys.read().get(key_id).cloned()
             .ok_or_else(|| DbError::BackupError("Key not found".to_string()))?;
@@ -264,7 +264,7 @@ impl KeyManager {
         Ok(key)
     }
 
-    /// Rotate an encryption key
+    // Rotate an encryption key
     pub fn rotate_key(&self, key_id: &str) -> Result<String> {
         let old_key = self.get_key(key_id)?;
 
@@ -291,7 +291,7 @@ impl KeyManager {
         Ok(new_key_id)
     }
 
-    /// Get active key for an algorithm
+    // Get active key for an algorithm
     pub fn get_active_key(&self, algorithm: &EncryptionAlgorithm) -> Result<EncryptionKey> {
         let algo_key = format!("{:?}", algorithm);
         let active_keys = self.active_keys.read();
@@ -301,7 +301,7 @@ impl KeyManager {
         self.get_key(key_id)
     }
 
-    /// Check and rotate keys if needed
+    // Check and rotate keys if needed
     pub fn check_key_rotation(&self) -> Result<Vec<String>> {
         if !self.config.auto_rotation_enabled {
             return Ok(Vec::new());
@@ -322,12 +322,12 @@ impl KeyManager {
         Ok(rotated_keys)
     }
 
-    /// List all keys
+    // List all keys
     pub fn list_keys(&self) -> Vec<EncryptionKey> {
         self.keys.read().values().cloned().collect()
     }
 
-    /// Delete a key
+    // Delete a key
     pub fn delete_key(&self, key_id: &str) -> Result<()> {
         self.keys.write().remove(key_id)
             .ok_or_else(|| DbError::BackupError("Key not found".to_string()))?;
@@ -358,7 +358,7 @@ impl KeyManager {
     }
 }
 
-/// Backup encryption manager
+// Backup encryption manager
 pub struct BackupEncryptionManager {
     key_manager: Arc<KeyManager>,
     encrypted_backups: Arc<RwLock<HashMap<String, EncryptedBackup>>>,
@@ -372,7 +372,7 @@ impl BackupEncryptionManager {
         }
     }
 
-    /// Encrypt a backup file
+    // Encrypt a backup file
     pub fn encrypt_backup(
         &self,
         backup_id: String,
@@ -427,7 +427,7 @@ impl BackupEncryptionManager {
         Ok(encrypted_backup)
     }
 
-    /// Decrypt a backup file
+    // Decrypt a backup file
     pub fn decrypt_backup(
         &self,
         backup_id: &str,
@@ -468,7 +468,7 @@ impl BackupEncryptionManager {
         Ok(())
     }
 
-    /// Encrypt data in streaming mode for large files
+    // Encrypt data in streaming mode for large files
     pub fn encrypt_stream(
         &self,
         input: &mut dyn Read,
@@ -632,5 +632,3 @@ mod tests {
         assert!(key.needs_rotation());
     }
 }
-
-

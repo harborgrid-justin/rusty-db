@@ -24,23 +24,23 @@ use super::ledger::{BlockId, LedgerRow, Block};
 // Retention Period
 // ============================================================================
 
-/// Retention period specification
+// Retention period specification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RetentionPeriod {
-    /// No retention (immediate deletion allowed)
+    // No retention (immediate deletion allowed)
     None,
-    /// Days
+    // Days
     Days(u32),
-    /// Months
+    // Months
     Months(u32),
-    /// Years
+    // Years
     Years(u32),
-    /// Forever (never delete)
+    // Forever (never delete)
     Forever,
 }
 
 impl RetentionPeriod {
-    /// Convert to duration in seconds
+    // Convert to duration in seconds
     pub fn to_seconds(&self) -> Option<u64> {
         match self {
             RetentionPeriod::None => Some(0),
@@ -51,7 +51,7 @@ impl RetentionPeriod {
         }
     }
 
-    /// Check if this period is longer than another
+    // Check if this period is longer than another
     pub fn is_longer_than(&self, other: &RetentionPeriod) -> bool {
         match (self.to_seconds(), other.to_seconds()) {
             (None, _) => true, // Forever is longest
@@ -77,29 +77,29 @@ impl fmt::Display for RetentionPeriod {
 // Retention Policy
 // ============================================================================
 
-/// Retention policy for data
+// Retention policy for data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetentionPolicy {
-    /// Policy ID
+    // Policy ID
     pub policy_id: String,
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Retention period
+    // Retention period
     pub period: RetentionPeriod,
-    /// Description
+    // Description
     pub description: String,
-    /// Compliance regulations
+    // Compliance regulations
     pub regulations: Vec<String>,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: u64,
-    /// Updated timestamp
+    // Updated timestamp
     pub updated_at: u64,
-    /// Whether policy is active
+    // Whether policy is active
     pub active: bool,
 }
 
 impl RetentionPolicy {
-    /// Create a new retention policy
+    // Create a new retention policy
     pub fn new(policy_id: String, name: String, period: RetentionPeriod, description: String) -> Self {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
 
@@ -115,13 +115,13 @@ impl RetentionPolicy {
         }
     }
 
-    /// Add a regulation reference
+    // Add a regulation reference
     pub fn add_regulation(&mut self, regulation: String) {
         self.regulations.push(regulation);
         self.updated_at = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
     }
 
-    /// Check if data created at timestamp should be retained
+    // Check if data created at timestamp should be retained
     pub fn should_retain(&self, created_at: u64) -> bool {
         if !self.active {
             return false;
@@ -138,7 +138,7 @@ impl RetentionPolicy {
         }
     }
 
-    /// Get expiration timestamp for data created at timestamp
+    // Get expiration timestamp for data created at timestamp
     pub fn expiration_time(&self, created_at: u64) -> Option<u64> {
         self.period.to_seconds().map(|secs| created_at + secs)
     }
@@ -148,46 +148,46 @@ impl RetentionPolicy {
 // Legal Hold
 // ============================================================================
 
-/// Legal hold status
+// Legal hold status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LegalHoldStatus {
-    /// Active hold
+    // Active hold
     Active,
-    /// Hold released
+    // Hold released
     Released,
-    /// Hold expired
+    // Hold expired
     Expired,
 }
 
-/// Legal hold on data
+// Legal hold on data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegalHold {
-    /// Hold ID
+    // Hold ID
     pub hold_id: String,
-    /// Case/matter ID
+    // Case/matter ID
     pub case_id: String,
-    /// Description
+    // Description
     pub description: String,
-    /// Custodian/requester
+    // Custodian/requester
     pub custodian: String,
-    /// Start timestamp
+    // Start timestamp
     pub started_at: u64,
-    /// End timestamp (if released)
+    // End timestamp (if released)
     pub ended_at: Option<u64>,
-    /// Status
+    // Status
     pub status: LegalHoldStatus,
-    /// Affected tables
+    // Affected tables
     pub tables: Vec<TableId>,
-    /// Affected blocks
+    // Affected blocks
     pub blocks: Vec<BlockId>,
-    /// Affected rows
+    // Affected rows
     pub rows: Vec<RowId>,
-    /// Metadata
+    // Metadata
     pub metadata: HashMap<String, String>,
 }
 
 impl LegalHold {
-    /// Create a new legal hold
+    // Create a new legal hold
     pub fn new(hold_id: String, case_id: String, description: String, custodian: String) -> Self {
         Self {
             hold_id,
@@ -204,49 +204,49 @@ impl LegalHold {
         }
     }
 
-    /// Add a table to the hold
+    // Add a table to the hold
     pub fn add_table(&mut self, table_id: TableId) {
         if !self.tables.contains(&table_id) {
             self.tables.push(table_id);
         }
     }
 
-    /// Add a block to the hold
+    // Add a block to the hold
     pub fn add_block(&mut self, block_id: BlockId) {
         if !self.blocks.contains(&block_id) {
             self.blocks.push(block_id);
         }
     }
 
-    /// Add a row to the hold
+    // Add a row to the hold
     pub fn add_row(&mut self, row_id: RowId) {
         if !self.rows.contains(&row_id) {
             self.rows.push(row_id);
         }
     }
 
-    /// Release the hold
+    // Release the hold
     pub fn release(&mut self) {
         self.status = LegalHoldStatus::Released;
         self.ended_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
     }
 
-    /// Check if hold is active
+    // Check if hold is active
     pub fn is_active(&self) -> bool {
         self.status == LegalHoldStatus::Active
     }
 
-    /// Check if a row is under this hold
+    // Check if a row is under this hold
     pub fn covers_row(&self, row_id: RowId) -> bool {
         self.rows.contains(&row_id)
     }
 
-    /// Check if a block is under this hold
+    // Check if a block is under this hold
     pub fn covers_block(&self, block_id: BlockId) -> bool {
         self.blocks.contains(&block_id)
     }
 
-    /// Check if a table is under this hold
+    // Check if a table is under this hold
     pub fn covers_table(&self, table_id: TableId) -> bool {
         self.tables.contains(&table_id)
     }
@@ -256,22 +256,22 @@ impl LegalHold {
 // Retention Manager
 // ============================================================================
 
-/// Manages retention policies and legal holds
+// Manages retention policies and legal holds
 pub struct RetentionManager {
-    /// Active retention policies
+    // Active retention policies
     policies: Arc<RwLock<HashMap<String, RetentionPolicy>>>,
-    /// Table to policy mapping
+    // Table to policy mapping
     table_policies: Arc<RwLock<HashMap<TableId, String>>>,
-    /// Active legal holds
+    // Active legal holds
     legal_holds: Arc<RwLock<HashMap<String, LegalHold>>>,
-    /// Retention locks (row_id -> expiration)
+    // Retention locks (row_id -> expiration)
     retention_locks: Arc<RwLock<HashMap<RowId, u64>>>,
-    /// Default policy
+    // Default policy
     default_policy: Arc<RwLock<Option<String>>>,
 }
 
 impl RetentionManager {
-    /// Create a new retention manager
+    // Create a new retention manager
     pub fn new() -> Self {
         Self {
             policies: Arc::new(RwLock::new(HashMap::new())),
@@ -282,20 +282,20 @@ impl RetentionManager {
         }
     }
 
-    /// Add a retention policy
+    // Add a retention policy
     pub fn add_policy(&self, policy: RetentionPolicy) -> Result<()> {
         let mut policies = self.policies.write().unwrap();
         policies.insert(policy.policy_id.clone(), policy);
         Ok(())
     }
 
-    /// Get a policy by ID
+    // Get a policy by ID
     pub fn get_policy(&self, policy_id: &str) -> Option<RetentionPolicy> {
         let policies = self.policies.read().unwrap();
         policies.get(policy_id).cloned()
     }
 
-    /// Set default retention policy
+    // Set default retention policy
     pub fn set_default_policy(&self, policy_id: String) -> Result<()> {
         let policies = self.policies.read().unwrap();
         if !policies.contains_key(&policy_id) {
@@ -307,7 +307,7 @@ impl RetentionManager {
         Ok(())
     }
 
-    /// Assign a policy to a table
+    // Assign a policy to a table
     pub fn assign_policy_to_table(&self, table_id: TableId, policy_id: String) -> Result<()> {
         let policies = self.policies.read().unwrap();
         if !policies.contains_key(&policy_id) {
@@ -319,7 +319,7 @@ impl RetentionManager {
         Ok(())
     }
 
-    /// Get policy for a table
+    // Get policy for a table
     pub fn get_table_policy(&self, table_id: TableId) -> Option<RetentionPolicy> {
         let table_policies = self.table_policies.read().unwrap();
         let policies = self.policies.read().unwrap();
@@ -337,20 +337,20 @@ impl RetentionManager {
         None
     }
 
-    /// Add a legal hold
+    // Add a legal hold
     pub fn add_legal_hold(&self, hold: LegalHold) -> Result<()> {
         let mut holds = self.legal_holds.write().unwrap();
         holds.insert(hold.hold_id.clone(), hold);
         Ok(())
     }
 
-    /// Get a legal hold by ID
+    // Get a legal hold by ID
     pub fn get_legal_hold(&self, hold_id: &str) -> Option<LegalHold> {
         let holds = self.legal_holds.read().unwrap();
         holds.get(hold_id).cloned()
     }
 
-    /// Release a legal hold
+    // Release a legal hold
     pub fn release_legal_hold(&self, hold_id: &str) -> Result<()> {
         let mut holds = self.legal_holds.write().unwrap();
         let hold = holds.get_mut(hold_id)
@@ -359,7 +359,7 @@ impl RetentionManager {
         Ok(())
     }
 
-    /// Check if a row is under any active legal hold
+    // Check if a row is under any active legal hold
     pub fn is_under_legal_hold(&self, row_id: RowId, table_id: TableId, block_id: BlockId) -> bool {
         let holds = self.legal_holds.read().unwrap();
 
@@ -376,7 +376,7 @@ impl RetentionManager {
         false
     }
 
-    /// Check if data can be deleted
+    // Check if data can be deleted
     pub fn can_delete(&self, row: &LedgerRow) -> bool {
         // Check legal holds
         if self.is_under_legal_hold(row.row_id, row.table_id, row.block_id) {
@@ -402,19 +402,19 @@ impl RetentionManager {
         true
     }
 
-    /// Set a retention lock on a row
+    // Set a retention lock on a row
     pub fn set_retention_lock(&self, row_id: RowId, expiration: u64) {
         let mut locks = self.retention_locks.write().unwrap();
         locks.insert(row_id, expiration);
     }
 
-    /// Remove a retention lock
+    // Remove a retention lock
     pub fn remove_retention_lock(&self, row_id: RowId) {
         let mut locks = self.retention_locks.write().unwrap();
         locks.remove(&row_id);
     }
 
-    /// Get all active legal holds
+    // Get all active legal holds
     pub fn get_active_legal_holds(&self) -> Vec<LegalHold> {
         let holds = self.legal_holds.read().unwrap();
         holds.values()
@@ -423,7 +423,7 @@ impl RetentionManager {
             .collect()
     }
 
-    /// Get all policies
+    // Get all policies
     pub fn get_all_policies(&self) -> Vec<RetentionPolicy> {
         let policies = self.policies.read().unwrap();
         policies.values().cloned().collect()
@@ -440,19 +440,19 @@ impl Default for RetentionManager {
 // Retention Enforcement
 // ============================================================================
 
-/// Enforces retention policies
+// Enforces retention policies
 pub struct RetentionEnforcer {
-    /// Retention manager
+    // Retention manager
     manager: Arc<RetentionManager>,
 }
 
 impl RetentionEnforcer {
-    /// Create a new enforcer
+    // Create a new enforcer
     pub fn new(manager: Arc<RetentionManager>) -> Self {
         Self { manager }
     }
 
-    /// Find rows eligible for expiration
+    // Find rows eligible for expiration
     pub fn find_expired_rows(&self, rows: &[LedgerRow]) -> Vec<RowId> {
         let mut expired = Vec::new();
 
@@ -470,7 +470,7 @@ impl RetentionEnforcer {
         expired
     }
 
-    /// Generate expiration report
+    // Generate expiration report
     pub fn generate_expiration_report(&self, rows: &[LedgerRow]) -> ExpirationReport {
         let expired = self.find_expired_rows(rows);
         let under_hold: Vec<RowId> = rows.iter()
@@ -505,24 +505,24 @@ impl RetentionEnforcer {
     }
 }
 
-/// Expiration report
+// Expiration report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExpirationReport {
-    /// Report timestamp
+    // Report timestamp
     pub timestamp: u64,
-    /// Total rows checked
+    // Total rows checked
     pub total_rows: usize,
-    /// Number of expired rows
+    // Number of expired rows
     pub expired_rows: usize,
-    /// Number of rows under legal hold
+    // Number of rows under legal hold
     pub under_legal_hold: usize,
-    /// Number of rows expiring soon
+    // Number of rows expiring soon
     pub expiring_soon: usize,
-    /// IDs of expired rows
+    // IDs of expired rows
     pub expired_row_ids: Vec<RowId>,
-    /// IDs of rows under legal hold
+    // IDs of rows under legal hold
     pub held_row_ids: Vec<RowId>,
-    /// IDs of rows expiring soon
+    // IDs of rows expiring soon
     pub expiring_soon_row_ids: Vec<RowId>,
 }
 
@@ -530,81 +530,81 @@ pub struct ExpirationReport {
 // Compliance Reporting
 // ============================================================================
 
-/// Compliance report
+// Compliance report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceReport {
-    /// Report timestamp
+    // Report timestamp
     pub timestamp: u64,
-    /// Report period (start, end)
+    // Report period (start, end)
     pub period: (u64, u64),
-    /// Policies in effect
+    // Policies in effect
     pub policies: Vec<PolicyCompliance>,
-    /// Legal holds
+    // Legal holds
     pub legal_holds: Vec<LegalHoldCompliance>,
-    /// Retention statistics
+    // Retention statistics
     pub statistics: RetentionStatistics,
 }
 
-/// Policy compliance details
+// Policy compliance details
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyCompliance {
-    /// Policy ID
+    // Policy ID
     pub policy_id: String,
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Retention period
+    // Retention period
     pub period: RetentionPeriod,
-    /// Tables using this policy
+    // Tables using this policy
     pub tables: Vec<TableId>,
-    /// Compliance status
+    // Compliance status
     pub compliant: bool,
-    /// Issues (if any)
+    // Issues (if any)
     pub issues: Vec<String>,
 }
 
-/// Legal hold compliance details
+// Legal hold compliance details
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegalHoldCompliance {
-    /// Hold ID
+    // Hold ID
     pub hold_id: String,
-    /// Case ID
+    // Case ID
     pub case_id: String,
-    /// Status
+    // Status
     pub status: LegalHoldStatus,
-    /// Duration (days)
+    // Duration (days)
     pub duration_days: u64,
-    /// Rows affected
+    // Rows affected
     pub rows_affected: usize,
 }
 
-/// Retention statistics
+// Retention statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetentionStatistics {
-    /// Total rows
+    // Total rows
     pub total_rows: u64,
-    /// Rows under retention
+    // Rows under retention
     pub rows_under_retention: u64,
-    /// Rows under legal hold
+    // Rows under legal hold
     pub rows_under_legal_hold: u64,
-    /// Rows eligible for deletion
+    // Rows eligible for deletion
     pub rows_eligible_for_deletion: u64,
-    /// Average retention period (days)
+    // Average retention period (days)
     pub avg_retention_days: f64,
 }
 
-/// Compliance reporter
+// Compliance reporter
 pub struct ComplianceReporter {
-    /// Retention manager
+    // Retention manager
     manager: Arc<RetentionManager>,
 }
 
 impl ComplianceReporter {
-    /// Create a new compliance reporter
+    // Create a new compliance reporter
     pub fn new(manager: Arc<RetentionManager>) -> Self {
         Self { manager }
     }
 
-    /// Generate a compliance report
+    // Generate a compliance report
     pub fn generate_report(&self, start_time: u64, end_time: u64) -> ComplianceReport {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
 
@@ -664,7 +664,7 @@ impl ComplianceReporter {
         }
     }
 
-    /// Export report to JSON
+    // Export report to JSON
     pub fn export_json(&self, report: &ComplianceReport) -> Result<String> {
         serde_json::to_string_pretty(report)
             .map_err(|e| DbError::Serialization(format!("Failed to serialize report: {}", e)))

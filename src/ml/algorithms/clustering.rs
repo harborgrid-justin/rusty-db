@@ -11,19 +11,19 @@ use super::{Algorithm, ModelType};
 // K-Means Clustering
 // ============================================================================
 
-/// K-Means clustering algorithm
+// K-Means clustering algorithm
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KMeansClustering {
-    /// Cluster centroids
+    // Cluster centroids
     pub centroids: Matrix,
-    /// Number of clusters
+    // Number of clusters
     n_clusters: usize,
-    /// Whether the model has been trained
+    // Whether the model has been trained
     trained: bool,
 }
 
 impl KMeansClustering {
-    /// Create a new K-means model
+    // Create a new K-means model
     pub fn new() -> Self {
         Self {
             centroids: Vec::new(),
@@ -32,7 +32,7 @@ impl KMeansClustering {
         }
     }
 
-    /// Calculate Euclidean distance
+    // Calculate Euclidean distance
     fn euclidean_distance(&self, a: &[f64], b: &[f64]) -> f64 {
         a.iter()
             .zip(b.iter())
@@ -41,7 +41,7 @@ impl KMeansClustering {
             .sqrt()
     }
 
-    /// Assign samples to nearest centroid
+    // Assign samples to nearest centroid
     fn assign_clusters(&self, features: &Matrix) -> Vec<usize> {
         features.iter()
             .map(|sample| {
@@ -55,7 +55,7 @@ impl KMeansClustering {
             .collect()
     }
 
-    /// Update centroids based on cluster assignments
+    // Update centroids based on cluster assignments
     fn update_centroids(&self, features: &Matrix, assignments: &[usize], n_features: usize) -> Matrix {
         let mut new_centroids = vec![vec![0.0; n_features]; self.n_clusters];
         let mut counts = vec![0; self.n_clusters];

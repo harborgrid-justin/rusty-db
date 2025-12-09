@@ -17,7 +17,7 @@ use crate::error::DbError;
 use super::types::*;
 use std::time::UNIX_EPOCH;
 
-/// Execute a SQL query
+// Execute a SQL query
 #[utoipa::path(
     post,
     path = "/api/v1/query",
@@ -91,7 +91,7 @@ pub async fn execute_query(
     Ok(AxumJson(response))
 }
 
-/// Execute batch operations
+// Execute batch operations
 #[utoipa::path(
     post,
     path = "/api/v1/batch",
@@ -155,7 +155,7 @@ pub async fn execute_batch(
     Ok(AxumJson(response))
 }
 
-/// Get table information
+// Get table information
 #[utoipa::path(
     get,
     path = "/api/v1/tables/{name}",
@@ -185,7 +185,7 @@ pub async fn get_table(
     Ok(AxumJson(table))
 }
 
-/// Create a new table
+// Create a new table
 #[utoipa::path(
     post,
     path = "/api/v1/tables/{name}",
@@ -205,7 +205,7 @@ pub async fn create_table(
     Ok(StatusCode::CREATED)
 }
 
-/// Update table schema
+// Update table schema
 #[utoipa::path(
     put,
     path = "/api/v1/tables/{name}",
@@ -225,7 +225,7 @@ pub async fn update_table(
     Ok(StatusCode::OK)
 }
 
-/// Delete a table
+// Delete a table
 #[utoipa::path(
     delete,
     path = "/api/v1/tables/{name}",
@@ -243,7 +243,7 @@ pub async fn delete_table(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Get database schema
+// Get database schema
 #[utoipa::path(
     get,
     path = "/api/v1/schema",
@@ -267,7 +267,7 @@ pub async fn get_schema(
     Ok(AxumJson(response))
 }
 
-/// Begin a new transaction
+// Begin a new transaction
 #[utoipa::path(
     post,
     path = "/api/v1/transactions",
@@ -296,7 +296,7 @@ pub async fn begin_transaction(
     Ok(AxumJson(response))
 }
 
-/// Commit a transaction
+// Commit a transaction
 #[utoipa::path(
     post,
     path = "/api/v1/transactions/{id}/commit",
@@ -317,7 +317,7 @@ pub async fn commit_transaction(
     Ok(StatusCode::OK)
 }
 
-/// Rollback a transaction
+// Rollback a transaction
 #[utoipa::path(
     post,
     path = "/api/v1/transactions/{id}/rollback",
@@ -342,7 +342,7 @@ pub async fn rollback_transaction(
 // Administration Handlers
 // ============================================================================
 
-/// Get database configuration
+// Get database configuration
 #[utoipa::path(
     get,
     path = "/api/v1/admin/config",
@@ -368,7 +368,7 @@ pub async fn get_config(
     Ok(AxumJson(response))
 }
 
-/// Update database configuration
+// Update database configuration
 #[utoipa::path(
     put,
     path = "/api/v1/admin/config",
@@ -387,7 +387,7 @@ pub async fn update_config(
     Ok(StatusCode::OK)
 }
 
-/// Create a backup
+// Create a backup
 #[utoipa::path(
     post,
     path = "/api/v1/admin/backup",
@@ -415,7 +415,7 @@ pub async fn create_backup(
     Ok(AxumJson(response))
 }
 
-/// Health check endpoint
+// Health check endpoint
 #[utoipa::path(
     get,
     path = "/api/v1/admin/health",
@@ -451,7 +451,7 @@ pub async fn get_health(
     Ok(AxumJson(response))
 }
 
-/// Run maintenance operations
+// Run maintenance operations
 #[utoipa::path(
     post,
     path = "/api/v1/admin/maintenance",
@@ -476,7 +476,7 @@ pub async fn run_maintenance(
     }
 }
 
-/// Get all users
+// Get all users
 #[utoipa::path(
     get,
     path = "/api/v1/admin/users",
@@ -496,7 +496,7 @@ pub async fn get_users(
     Ok(AxumJson(response))
 }
 
-/// Create a new user
+// Create a new user
 #[utoipa::path(
     post,
     path = "/api/v1/admin/users",
@@ -523,7 +523,7 @@ pub async fn create_user(
     Ok(AxumJson(user))
 }
 
-/// Get user by ID
+// Get user by ID
 pub async fn get_user(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -532,7 +532,7 @@ pub async fn get_user(
     Err(ApiError::new("NOT_FOUND", "User not found"))
 }
 
-/// Update user
+// Update user
 pub async fn update_user(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -542,7 +542,7 @@ pub async fn update_user(
     Ok(StatusCode::OK)
 }
 
-/// Delete user
+// Delete user
 pub async fn delete_user(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -551,7 +551,7 @@ pub async fn delete_user(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Get all roles
+// Get all roles
 #[utoipa::path(
     get,
     path = "/api/v1/admin/roles",
@@ -567,7 +567,7 @@ pub async fn get_roles(
     Ok(AxumJson(vec![]))
 }
 
-/// Create a new role
+// Create a new role
 #[utoipa::path(
     post,
     path = "/api/v1/admin/roles",
@@ -592,7 +592,7 @@ pub async fn create_role(
     Ok(AxumJson(role))
 }
 
-/// Get role by ID
+// Get role by ID
 pub async fn get_role(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -600,7 +600,7 @@ pub async fn get_role(
     Err(ApiError::new("NOT_FOUND", "Role not found"))
 }
 
-/// Update role
+// Update role
 pub async fn update_role(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -609,7 +609,7 @@ pub async fn update_role(
     Ok(StatusCode::OK)
 }
 
-/// Delete role
+// Delete role
 pub async fn delete_role(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -621,7 +621,7 @@ pub async fn delete_role(
 // Monitoring Handlers
 // ============================================================================
 
-/// Get metrics
+// Get metrics
 #[utoipa::path(
     get,
     path = "/api/v1/metrics",
@@ -664,7 +664,7 @@ pub async fn get_metrics(
     Ok(AxumJson(response))
 }
 
-/// Get Prometheus-formatted metrics
+// Get Prometheus-formatted metrics
 pub async fn get_prometheus_metrics(
     State(state): State<Arc<ApiState>>,
 ) -> ApiResult<String> {
@@ -686,7 +686,7 @@ pub async fn get_prometheus_metrics(
     Ok(output)
 }
 
-/// Get session statistics
+// Get session statistics
 #[utoipa::path(
     get,
     path = "/api/v1/stats/sessions",
@@ -719,7 +719,7 @@ pub async fn get_session_stats(
     Ok(AxumJson(response))
 }
 
-/// Get query statistics
+// Get query statistics
 #[utoipa::path(
     get,
     path = "/api/v1/stats/queries",
@@ -744,7 +744,7 @@ pub async fn get_query_stats(
     Ok(AxumJson(response))
 }
 
-/// Get performance data
+// Get performance data
 #[utoipa::path(
     get,
     path = "/api/v1/stats/performance",
@@ -772,7 +772,7 @@ pub async fn get_performance_data(
     Ok(AxumJson(response))
 }
 
-/// Get logs
+// Get logs
 #[utoipa::path(
     get,
     path = "/api/v1/logs",
@@ -795,7 +795,7 @@ pub async fn get_logs(
     Ok(AxumJson(response))
 }
 
-/// Get alerts
+// Get alerts
 #[utoipa::path(
     get,
     path = "/api/v1/alerts",
@@ -815,7 +815,7 @@ pub async fn get_alerts(
     Ok(AxumJson(response))
 }
 
-/// Acknowledge an alert
+// Acknowledge an alert
 pub async fn acknowledge_alert(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
@@ -828,7 +828,7 @@ pub async fn acknowledge_alert(
 // Pool Management Handlers
 // ============================================================================
 
-/// Get all connection pools
+// Get all connection pools
 #[utoipa::path(
     get,
     path = "/api/v1/pools",
@@ -855,7 +855,7 @@ pub async fn get_pools(
     Ok(AxumJson(pools))
 }
 
-/// Get pool by ID
+// Get pool by ID
 pub async fn get_pool(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
@@ -872,7 +872,7 @@ pub async fn get_pool(
     Ok(AxumJson(pool))
 }
 
-/// Update pool configuration
+// Update pool configuration
 #[utoipa::path(
     put,
     path = "/api/v1/pools/{id}",
@@ -891,7 +891,7 @@ pub async fn update_pool(
     Ok(StatusCode::OK)
 }
 
-/// Get pool statistics
+// Get pool statistics
 #[utoipa::path(
     get,
     path = "/api/v1/pools/{id}/stats",
@@ -918,7 +918,7 @@ pub async fn get_pool_stats(
     Ok(AxumJson(stats))
 }
 
-/// Drain a connection pool
+// Drain a connection pool
 #[utoipa::path(
     post,
     path = "/api/v1/pools/{id}/drain",
@@ -935,7 +935,7 @@ pub async fn drain_pool(
     Ok(StatusCode::ACCEPTED)
 }
 
-/// Get all active connections
+// Get all active connections
 #[utoipa::path(
     get,
     path = "/api/v1/connections",
@@ -955,7 +955,7 @@ pub async fn get_connections(
     Ok(AxumJson(response))
 }
 
-/// Get connection by ID
+// Get connection by ID
 pub async fn get_connection(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -963,7 +963,7 @@ pub async fn get_connection(
     Err(ApiError::new("NOT_FOUND", "Connection not found"))
 }
 
-/// Kill a connection
+// Kill a connection
 #[utoipa::path(
     delete,
     path = "/api/v1/connections/{id}",
@@ -980,7 +980,7 @@ pub async fn kill_connection(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Get all sessions
+// Get all sessions
 #[utoipa::path(
     get,
     path = "/api/v1/sessions",
@@ -1006,7 +1006,7 @@ pub async fn get_sessions(
     Ok(AxumJson(response))
 }
 
-/// Get session by ID
+// Get session by ID
 pub async fn get_session(
     State(state): State<Arc<ApiState>>,
     Path(id): Path<u64>,
@@ -1019,7 +1019,7 @@ pub async fn get_session(
         .ok_or_else(|| ApiError::new("NOT_FOUND", "Session not found"))
 }
 
-/// Terminate a session
+// Terminate a session
 pub async fn terminate_session(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -1032,7 +1032,7 @@ pub async fn terminate_session(
 // Cluster Management Handlers
 // ============================================================================
 
-/// Get all cluster nodes
+// Get all cluster nodes
 #[utoipa::path(
     get,
     path = "/api/v1/cluster/nodes",
@@ -1069,7 +1069,7 @@ pub async fn get_cluster_nodes(
     Ok(AxumJson(nodes))
 }
 
-/// Add a new cluster node
+// Add a new cluster node
 #[utoipa::path(
     post,
     path = "/api/v1/cluster/nodes",
@@ -1096,7 +1096,7 @@ pub async fn add_cluster_node(
     Ok(AxumJson(node))
 }
 
-/// Get cluster node by ID
+// Get cluster node by ID
 pub async fn get_cluster_node(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
@@ -1105,7 +1105,7 @@ pub async fn get_cluster_node(
     Err(ApiError::new("NOT_FOUND", "Node not found"))
 }
 
-/// Remove a cluster node
+// Remove a cluster node
 pub async fn remove_cluster_node(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
@@ -1114,7 +1114,7 @@ pub async fn remove_cluster_node(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Get cluster topology
+// Get cluster topology
 #[utoipa::path(
     get,
     path = "/api/v1/cluster/topology",
@@ -1149,7 +1149,7 @@ pub async fn get_cluster_topology(
     Ok(AxumJson(response))
 }
 
-/// Trigger manual failover
+// Trigger manual failover
 #[utoipa::path(
     post,
     path = "/api/v1/cluster/failover",
@@ -1167,7 +1167,7 @@ pub async fn trigger_failover(
     Ok(StatusCode::ACCEPTED)
 }
 
-/// Get replication status
+// Get replication status
 #[utoipa::path(
     get,
     path = "/api/v1/cluster/replication",
@@ -1197,7 +1197,7 @@ pub async fn get_replication_status(
     Ok(AxumJson(response))
 }
 
-/// Get cluster configuration
+// Get cluster configuration
 pub async fn get_cluster_config(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<HashMap<String, serde_json::Value>>> {
@@ -1209,7 +1209,7 @@ pub async fn get_cluster_config(
     Ok(AxumJson(config))
 }
 
-/// Update cluster configuration
+// Update cluster configuration
 #[utoipa::path(
     put,
     path = "/api/v1/cluster/config",

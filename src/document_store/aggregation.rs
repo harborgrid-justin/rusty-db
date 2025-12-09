@@ -13,28 +13,28 @@ use crate::error::Result;
 use super::document::{Document, DocumentId};
 use super::qbe::QueryDocument;
 
-/// Aggregation pipeline
+// Aggregation pipeline
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Pipeline {
-    /// Pipeline stages
+    // Pipeline stages
     pub stages: Vec<PipelineStage>,
 }
 
 impl Pipeline {
-    /// Create a new empty pipeline
+    // Create a new empty pipeline
     pub fn new() -> Self {
         Self {
             stages: Vec::new(),
         }
     }
 
-    /// Add a stage to the pipeline
+    // Add a stage to the pipeline
     pub fn add_stage(mut self, stage: PipelineStage) -> Self {
         self.stages.push(stage);
         self
     }
 
-    /// Execute the pipeline on a collection of documents
+    // Execute the pipeline on a collection of documents
     pub fn execute(&self, documents: &HashMap<DocumentId, Document>) -> Result<Vec<Value>> {
         let mut results: Vec<Value> = documents
             .values()
@@ -55,61 +55,61 @@ impl Default for Pipeline {
     }
 }
 
-/// Pipeline stage
+// Pipeline stage
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum PipelineStage {
-    /// Match documents by query
+    // Match documents by query
     #[serde(rename = "$match")]
     Match { query: Value },
 
-    /// Project (reshape) documents
+    // Project (reshape) documents
     #[serde(rename = "$project")]
     Project { projection: Value },
 
-    /// Group documents by key
+    // Group documents by key
     #[serde(rename = "$group")]
     Group { group_spec: GroupSpec },
 
-    /// Sort documents
+    // Sort documents
     #[serde(rename = "$sort")]
     Sort { sort_spec: BTreeMap<String, i32> },
 
-    /// Limit number of documents
+    // Limit number of documents
     #[serde(rename = "$limit")]
     Limit { count: usize },
 
-    /// Skip documents
+    // Skip documents
     #[serde(rename = "$skip")]
     Skip { count: usize },
 
-    /// Unwind array field
+    // Unwind array field
     #[serde(rename = "$unwind")]
     Unwind { path: String, preserve_null_and_empty: bool },
 
-    /// Lookup/join from another collection
+    // Lookup/join from another collection
     #[serde(rename = "$lookup")]
     Lookup { lookup_spec: LookupSpec },
 
-    /// Multi-faceted aggregation
+    // Multi-faceted aggregation
     #[serde(rename = "$facet")]
     Facet { facets: HashMap<String, Vec<PipelineStage>> },
 
-    /// Add computed fields
+    // Add computed fields
     #[serde(rename = "$addFields")]
     AddFields { fields: HashMap<String, Expression> },
 
-    /// Count documents
+    // Count documents
     #[serde(rename = "$count")]
     Count { field: String },
 
-    /// Replace root document
+    // Replace root document
     #[serde(rename = "$replaceRoot")]
     ReplaceRoot { new_root: String },
 }
 
 impl PipelineStage {
-    /// Execute this stage
+    // Execute this stage
     pub fn execute(&self, documents: Vec<Value>) -> Result<Vec<Value>> {
         match self {
             PipelineStage::Match { query } => self.execute_match(documents, query),
@@ -324,31 +324,31 @@ impl PipelineStage {
     }
 }
 
-/// Group specification
+// Group specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GroupSpec {
-    /// Group key expression
+    // Group key expression
     #[serde(rename = "_id")]
     pub id: Expression,
-    /// Accumulator expressions
+    // Accumulator expressions
     #[serde(flatten)]
     pub accumulators: HashMap<String, Accumulator>,
 }
 
-/// Expression for computed values
+// Expression for computed values
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Expression {
-    /// Field reference (starts with $)
+    // Field reference (starts with $)
     Field(String),
-    /// Literal value
+    // Literal value
     Literal(Value),
-    /// Complex expression
+    // Complex expression
     Complex(Box<ComplexExpression>),
 }
 
 impl Expression {
-    /// Create from JSON value
+    // Create from JSON value
     pub fn from_value(value: Value) -> Self {
         if let Value::String(s) = &value {
             if s.starts_with('$') {
@@ -358,7 +358,7 @@ impl Expression {
         Expression::Literal(value)
     }
 
-    /// Evaluate expression against a document
+    // Evaluate expression against a document
     pub fn evaluate(&self, doc: &Value) -> Result<Value> {
         match self {
             Expression::Field(field) => {
@@ -371,32 +371,32 @@ impl Expression {
     }
 }
 
-/// Complex expression types
+// Complex expression types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "op")]
 pub enum ComplexExpression {
-    /// Addition
+    // Addition
     #[serde(rename = "$add")]
     Add { values: Vec<Expression> },
-    /// Subtraction
+    // Subtraction
     #[serde(rename = "$subtract")]
     Subtract { values: Vec<Expression> },
-    /// Multiplication
+    // Multiplication
     #[serde(rename = "$multiply")]
     Multiply { values: Vec<Expression> },
-    /// Division
+    // Division
     #[serde(rename = "$divide")]
     Divide { dividend: Expression, divisor: Expression },
-    /// Concatenation
+    // Concatenation
     #[serde(rename = "$concat")]
     Concat { values: Vec<Expression> },
-    /// Conditional
+    // Conditional
     #[serde(rename = "$cond")]
     Cond { if_expr: Expression, then_expr: Expression, else_expr: Expression },
 }
 
 impl ComplexExpression {
-    /// Evaluate complex expression
+    // Evaluate complex expression
     pub fn evaluate(&self, doc: &Value) -> Result<Value> {
         match self {
             ComplexExpression::Add { values } => {
@@ -459,41 +459,41 @@ impl ComplexExpression {
     }
 }
 
-/// Accumulator for group operations
+// Accumulator for group operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "op")]
 pub enum Accumulator {
-    /// Sum of values
+    // Sum of values
     #[serde(rename = "$sum")]
     Sum { expr: Expression },
-    /// Average of values
+    // Average of values
     #[serde(rename = "$avg")]
     Avg { expr: Expression },
-    /// Minimum value
+    // Minimum value
     #[serde(rename = "$min")]
     Min { expr: Expression },
-    /// Maximum value
+    // Maximum value
     #[serde(rename = "$max")]
     Max { expr: Expression },
-    /// Count of documents
+    // Count of documents
     #[serde(rename = "$count")]
     Count,
-    /// First value
+    // First value
     #[serde(rename = "$first")]
     First { expr: Expression },
-    /// Last value
+    // Last value
     #[serde(rename = "$last")]
     Last { expr: Expression },
-    /// Push to array
+    // Push to array
     #[serde(rename = "$push")]
     Push { expr: Expression },
-    /// Add to set (unique values)
+    // Add to set (unique values)
     #[serde(rename = "$addToSet")]
     AddToSet { expr: Expression },
 }
 
 impl Accumulator {
-    /// Compute accumulator over a group of documents
+    // Compute accumulator over a group of documents
     pub fn compute(&self, documents: &[Value]) -> Result<Value> {
         match self {
             Accumulator::Sum { expr } => {
@@ -581,20 +581,20 @@ impl Accumulator {
     }
 }
 
-/// Lookup specification for $lookup stage
+// Lookup specification for $lookup stage
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LookupSpec {
-    /// Foreign collection name
+    // Foreign collection name
     pub from: String,
-    /// Local field
+    // Local field
     pub local_field: String,
-    /// Foreign field
+    // Foreign field
     pub foreign_field: String,
-    /// Output array field name
+    // Output array field name
     pub as_field: String,
 }
 
-/// Helper function to get field value from JSON
+// Helper function to get field value from JSON
 fn get_field_value(doc: &Value, field: &str) -> Value {
     if let Value::Object(obj) = doc {
         obj.get(field).cloned().unwrap_or(Value::Null)
@@ -603,7 +603,7 @@ fn get_field_value(doc: &Value, field: &str) -> Value {
     }
 }
 
-/// Helper function to compare JSON values
+// Helper function to compare JSON values
 fn compare_json_values(a: &Value, b: &Value) -> Ordering {
     match (a, b) {
         (Value::Number(n1), Value::Number(n2)) => {
@@ -620,50 +620,50 @@ fn compare_json_values(a: &Value, b: &Value) -> Ordering {
     }
 }
 
-/// Pipeline builder for fluent construction
+// Pipeline builder for fluent construction
 pub struct PipelineBuilder {
     pipeline: Pipeline,
 }
 
 impl PipelineBuilder {
-    /// Create a new pipeline builder
+    // Create a new pipeline builder
     pub fn new() -> Self {
         Self {
             pipeline: Pipeline::new(),
         }
     }
 
-    /// Add a $match stage
+    // Add a $match stage
     pub fn match_stage(mut self, query: Value) -> Self {
         self.pipeline.stages.push(PipelineStage::Match { query });
         self
     }
 
-    /// Add a $project stage
+    // Add a $project stage
     pub fn project(mut self, projection: Value) -> Self {
         self.pipeline.stages.push(PipelineStage::Project { projection });
         self
     }
 
-    /// Add a $sort stage
+    // Add a $sort stage
     pub fn sort(mut self, sort_spec: BTreeMap<String, i32>) -> Self {
         self.pipeline.stages.push(PipelineStage::Sort { sort_spec });
         self
     }
 
-    /// Add a $limit stage
+    // Add a $limit stage
     pub fn limit(mut self, count: usize) -> Self {
         self.pipeline.stages.push(PipelineStage::Limit { count });
         self
     }
 
-    /// Add a $skip stage
+    // Add a $skip stage
     pub fn skip(mut self, count: usize) -> Self {
         self.pipeline.stages.push(PipelineStage::Skip { count });
         self
     }
 
-    /// Add an $unwind stage
+    // Add an $unwind stage
     pub fn unwind(mut self, path: String) -> Self {
         self.pipeline.stages.push(PipelineStage::Unwind {
             path,
@@ -672,7 +672,7 @@ impl PipelineBuilder {
         self
     }
 
-    /// Build the pipeline
+    // Build the pipeline
     pub fn build(self) -> Pipeline {
         self.pipeline
     }

@@ -44,27 +44,27 @@ use serde::{Serialize, Deserialize};
 // SQL Statement Parsing
 // ============================================================================
 
-/// CREATE MODEL statement
+// CREATE MODEL statement
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateModelStatement {
-    /// Model name
+    // Model name
     pub name: String,
-    /// Algorithm type
+    // Algorithm type
     pub algorithm: String,
-    /// Hyperparameters
+    // Hyperparameters
     pub hyperparameters: HashMap<String, String>,
-    /// Training query
+    // Training query
     pub training_query: String,
-    /// Target column name
+    // Target column name
     pub target_column: Option<String>,
-    /// Feature columns (if specified)
+    // Feature columns (if specified)
     pub feature_columns: Option<Vec<String>>,
-    /// Replace if exists
+    // Replace if exists
     pub replace: bool,
 }
 
 impl CreateModelStatement {
-    /// Parse CREATE MODEL statement
+    // Parse CREATE MODEL statement
     pub fn parse(sql: &str) -> Result<Self> {
         // Simplified parser - in production, integrate with full SQL parser
         let sql = sql.trim();
@@ -123,7 +123,7 @@ impl CreateModelStatement {
         })
     }
 
-    /// Convert algorithm string to ModelType
+    // Convert algorithm string to ModelType
     pub fn get_model_type(&self) -> Result<ModelType> {
         match self.algorithm.to_lowercase().as_str() {
             "linear_regression" | "linearregression" => Ok(ModelType::LinearRegression),
@@ -136,7 +136,7 @@ impl CreateModelStatement {
         }
     }
 
-    /// Convert hyperparameters to Hyperparameters struct
+    // Convert hyperparameters to Hyperparameters struct
     pub fn get_hyperparameters(&self) -> Hyperparameters {
         let mut params = Hyperparameters::new();
 
@@ -157,19 +157,19 @@ impl CreateModelStatement {
     }
 }
 
-/// DROP MODEL statement
+// DROP MODEL statement
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DropModelStatement {
-    /// Model name
+    // Model name
     pub name: String,
-    /// Version (if specified)
+    // Version (if specified)
     pub version: Option<ModelVersion>,
-    /// If exists flag
+    // If exists flag
     pub if_exists: bool,
 }
 
 impl DropModelStatement {
-    /// Parse DROP MODEL statement
+    // Parse DROP MODEL statement
     pub fn parse(sql: &str) -> Result<Self> {
         let sql = sql.trim();
 
@@ -192,19 +192,19 @@ impl DropModelStatement {
     }
 }
 
-/// RETRAIN MODEL statement
+// RETRAIN MODEL statement
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetrainModelStatement {
-    /// Model name
+    // Model name
     pub name: String,
-    /// New training query (optional)
+    // New training query (optional)
     pub training_query: Option<String>,
-    /// New hyperparameters (optional)
+    // New hyperparameters (optional)
     pub hyperparameters: Option<HashMap<String, String>>,
 }
 
 impl RetrainModelStatement {
-    /// Parse RETRAIN MODEL statement
+    // Parse RETRAIN MODEL statement
     pub fn parse(sql: &str) -> Result<Self> {
         let sql = sql.trim();
 
@@ -236,19 +236,19 @@ impl RetrainModelStatement {
 // PREDICT Function
 // ============================================================================
 
-/// PREDICT function implementation
+// PREDICT function implementation
 #[derive(Debug, Clone)]
 pub struct PredictFunction {
-    /// Model name
+    // Model name
     pub model_name: String,
-    /// Model version (optional)
+    // Model version (optional)
     pub model_version: Option<ModelVersion>,
-    /// Feature column names
+    // Feature column names
     pub feature_columns: Vec<String>,
 }
 
 impl PredictFunction {
-    /// Create a new PREDICT function
+    // Create a new PREDICT function
     pub fn new(model_name: String, feature_columns: Vec<String>) -> Self {
         Self {
             model_name,
@@ -257,13 +257,13 @@ impl PredictFunction {
         }
     }
 
-    /// With specific model version
+    // With specific model version
     pub fn with_version(mut self, version: ModelVersion) -> Self {
         self.model_version = Some(version);
         self
     }
 
-    /// Parse PREDICT function call
+    // Parse PREDICT function call
     pub fn parse(expr: &str) -> Result<Self> {
         let expr = expr.trim();
 
@@ -292,7 +292,7 @@ impl PredictFunction {
         Ok(Self::new(model_name, feature_columns))
     }
 
-    /// Execute prediction
+    // Execute prediction
     pub fn execute(
         &self,
         inference_engine: &InferenceEngine,
@@ -312,7 +312,7 @@ impl PredictFunction {
 // MODEL_INFO Function
 // ============================================================================
 
-/// Model info result
+// Model info result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelInfo {
     pub name: String,
@@ -326,7 +326,7 @@ pub struct ModelInfo {
 }
 
 impl ModelInfo {
-    /// Create from model metadata
+    // Create from model metadata
     pub fn from_metadata(metadata: &ModelMetadata) -> Self {
         Self {
             name: metadata.name.clone(),
@@ -340,7 +340,7 @@ impl ModelInfo {
         }
     }
 
-    /// Format as JSON
+    // Format as JSON
     pub fn to_json(&self) -> Result<String> {
         serde_json::to_string_pretty(self)
             .map_err(|e| MLError::InvalidConfiguration(format!("JSON serialization failed: {}", e)).into())
@@ -351,23 +351,23 @@ impl ModelInfo {
 // Model as Virtual Table
 // ============================================================================
 
-/// Virtual table representing a model's predictions
+// Virtual table representing a model's predictions
 #[derive(Debug, Clone)]
 pub struct ModelTable {
-    /// Model name
+    // Model name
     pub model_name: String,
-    /// Model version
+    // Model version
     pub model_version: Option<ModelVersion>,
-    /// Source table for features
+    // Source table for features
     pub source_table: String,
-    /// Feature columns
+    // Feature columns
     pub feature_columns: Vec<String>,
-    /// Prediction column name
+    // Prediction column name
     pub prediction_column: String,
 }
 
 impl ModelTable {
-    /// Create a new model table
+    // Create a new model table
     pub fn new(
         model_name: String,
         source_table: String,
@@ -382,13 +382,13 @@ impl ModelTable {
         }
     }
 
-    /// Set prediction column name
+    // Set prediction column name
     pub fn with_prediction_column(mut self, name: String) -> Self {
         self.prediction_column = name;
         self
     }
 
-    /// Generate SQL to create the virtual table view
+    // Generate SQL to create the virtual table view
     pub fn to_sql(&self) -> String {
         let features = self.feature_columns.join(", ");
         format!(
@@ -407,19 +407,19 @@ impl ModelTable {
 // ML SQL Parser
 // ============================================================================
 
-/// ML-specific SQL parser
+// ML-specific SQL parser
 pub struct MLSqlParser {
-    /// ML engine reference
+    // ML engine reference
     ml_engine: Arc<MLEngine>,
 }
 
 impl MLSqlParser {
-    /// Create a new ML SQL parser
+    // Create a new ML SQL parser
     pub fn new(ml_engine: Arc<MLEngine>) -> Self {
         Self { ml_engine }
     }
 
-    /// Check if SQL statement is ML-related
+    // Check if SQL statement is ML-related
     pub fn is_ml_statement(sql: &str) -> bool {
         let sql_upper = sql.trim().to_uppercase();
         sql_upper.starts_with("CREATE MODEL")
@@ -430,7 +430,7 @@ impl MLSqlParser {
             || sql_upper.contains("MODEL_METRICS(")
     }
 
-    /// Parse and execute ML statement
+    // Parse and execute ML statement
     pub fn parse_and_execute(&self, sql: &str) -> Result<MLExecutionResult> {
         let sql_upper = sql.trim().to_uppercase();
 
@@ -447,7 +447,7 @@ impl MLSqlParser {
         }
     }
 
-    /// Execute CREATE MODEL
+    // Execute CREATE MODEL
     fn execute_create_model(&self, sql: &str) -> Result<MLExecutionResult> {
         let stmt = CreateModelStatement::parse(sql)?;
         let model_type = stmt.get_model_type()?;
@@ -462,7 +462,7 @@ impl MLSqlParser {
         })
     }
 
-    /// Execute DROP MODEL
+    // Execute DROP MODEL
     fn execute_drop_model(&self, sql: &str) -> Result<MLExecutionResult> {
         let stmt = DropModelStatement::parse(sql)?;
 
@@ -484,7 +484,7 @@ impl MLSqlParser {
         }
     }
 
-    /// Execute RETRAIN MODEL
+    // Execute RETRAIN MODEL
     fn execute_retrain_model(&self, sql: &str) -> Result<MLExecutionResult> {
         let stmt = RetrainModelStatement::parse(sql)?;
 
@@ -500,7 +500,7 @@ impl MLSqlParser {
     }
 }
 
-/// Result of ML SQL execution
+// Result of ML SQL execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MLExecutionResult {
     ModelCreated {
@@ -527,7 +527,7 @@ pub enum MLExecutionResult {
 }
 
 impl MLExecutionResult {
-    /// Convert to JSON
+    // Convert to JSON
     pub fn to_json(&self) -> Result<String> {
         serde_json::to_string_pretty(self)
             .map_err(|e| MLError::InvalidConfiguration(format!("JSON serialization failed: {}", e)).into())
@@ -538,11 +538,11 @@ impl MLExecutionResult {
 // Feature Detection
 // ============================================================================
 
-/// Automatic feature detection from schema
+// Automatic feature detection from schema
 pub struct FeatureDetector;
 
 impl FeatureDetector {
-    /// Detect numeric features from column types
+    // Detect numeric features from column types
     pub fn detect_numeric_features(columns: &[(String, String)]) -> Vec<String> {
         columns.iter()
             .filter(|(_, col_type)| {
@@ -554,7 +554,7 @@ impl FeatureDetector {
             .collect()
     }
 
-    /// Detect categorical features
+    // Detect categorical features
     pub fn detect_categorical_features(columns: &[(String, String)]) -> Vec<String> {
         columns.iter()
             .filter(|(_, col_type)| {
@@ -566,7 +566,7 @@ impl FeatureDetector {
             .collect()
     }
 
-    /// Suggest preprocessing steps based on column types
+    // Suggest preprocessing steps based on column types
     pub fn suggest_preprocessing(columns: &[(String, String)]) -> Vec<String> {
         let mut suggestions = Vec::new();
 

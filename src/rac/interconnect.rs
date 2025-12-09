@@ -37,111 +37,111 @@ use bytes::{Bytes, BytesMut, Buf, BufMut};
 // Constants
 // ============================================================================
 
-/// Heartbeat interval
+// Heartbeat interval
 const HEARTBEAT_INTERVAL: Duration = Duration::from_millis(100);
 
-/// Heartbeat timeout (missed heartbeats before declaring failure)
+// Heartbeat timeout (missed heartbeats before declaring failure)
 const HEARTBEAT_TIMEOUT: Duration = Duration::from_secs(3);
 
-/// Maximum message size
+// Maximum message size
 const MAX_MESSAGE_SIZE: usize = 1024 * 1024; // 1MB
 
-/// Message queue size per connection
+// Message queue size per connection
 const MESSAGE_QUEUE_SIZE: usize = 10000;
 
-/// Network latency sample window
+// Network latency sample window
 const LATENCY_WINDOW_SIZE: usize = 100;
 
-/// Split-brain detection quorum
+// Split-brain detection quorum
 const QUORUM_PERCENTAGE: f64 = 0.5;
 
-/// Reconnection backoff base
+// Reconnection backoff base
 const RECONNECT_BACKOFF_MS: u64 = 100;
 
-/// Maximum reconnection attempts
+// Maximum reconnection attempts
 const MAX_RECONNECT_ATTEMPTS: u32 = 10;
 
 // ============================================================================
 // Message Types
 // ============================================================================
 
-/// Interconnect message envelope
+// Interconnect message envelope
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
-    /// Unique message identifier
+    // Unique message identifier
     pub message_id: u64,
 
-    /// Source node
+    // Source node
     pub source: NodeId,
 
-    /// Destination node
+    // Destination node
     pub destination: NodeId,
 
-    /// Message type
+    // Message type
     pub message_type: MessageType,
 
-    /// Payload
+    // Payload
     pub payload: Vec<u8>,
 
-    /// Timestamp
+    // Timestamp
     pub timestamp: u64,
 
-    /// Priority (higher = more urgent)
+    // Priority (higher = more urgent)
     pub priority: MessagePriority,
 
-    /// Requires acknowledgment
+    // Requires acknowledgment
     pub requires_ack: bool,
 
-    /// Sequence number for ordering
+    // Sequence number for ordering
     pub sequence: u64,
 }
 
-/// Message type classification
+// Message type classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[derive(Hash)]
 pub enum MessageType {
-    /// Heartbeat message
+    // Heartbeat message
     Heartbeat,
 
-    /// Cache fusion block transfer
+    // Cache fusion block transfer
     CacheFusion,
 
-    /// Global resource directory
+    // Global resource directory
     Grd,
 
-    /// Transaction coordination
+    // Transaction coordination
     Transaction,
 
-    /// Query coordination
+    // Query coordination
     Query,
 
-    /// Administrative command
+    // Administrative command
     Admin,
 
-    /// Replication
+    // Replication
     Replication,
 
-    /// Custom application message
+    // Custom application message
     Custom,
 }
 
-/// Message priority levels
+// Message priority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum MessagePriority {
-    /// Low priority - background tasks
+    // Low priority - background tasks
     Low = 0,
 
-    /// Normal priority - standard operations
+    // Normal priority - standard operations
     Normal = 1,
 
-    /// High priority - cache fusion, locks
+    // High priority - cache fusion, locks
     High = 2,
 
-    /// Critical priority - heartbeats, failover
+    // Critical priority - heartbeats, failover
     Critical = 3,
 }
 
-/// Message acknowledgment
+// Message acknowledgment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MessageAck {
     pub message_id: u64,
@@ -153,66 +153,66 @@ pub struct MessageAck {
 // Node State and Health
 // ============================================================================
 
-/// Node state in the cluster
+// Node state in the cluster
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NodeState {
-    /// Node is healthy and operational
+    // Node is healthy and operational
     Healthy,
 
-    /// Node is suspected to be down (missing heartbeats)
+    // Node is suspected to be down (missing heartbeats)
     Suspected,
 
-    /// Node is confirmed down
+    // Node is confirmed down
     Down,
 
-    /// Node is recovering
+    // Node is recovering
     Recovering,
 
-    /// Node is leaving cluster
+    // Node is leaving cluster
     Leaving,
 
-    /// Node is joining cluster
+    // Node is joining cluster
     Joining,
 }
 
-/// Node health information
+// Node health information
 #[derive(Debug, Clone)]
 pub struct NodeHealth {
-    /// Node identifier
+    // Node identifier
     pub node_id: NodeId,
 
-    /// Current state
+    // Current state
     pub state: NodeState,
 
-    /// Last heartbeat timestamp
+    // Last heartbeat timestamp
     pub last_heartbeat: Instant,
 
-    /// Consecutive missed heartbeats
+    // Consecutive missed heartbeats
     pub missed_heartbeats: u32,
 
-    /// Network latency (microseconds)
+    // Network latency (microseconds)
     pub latency_us: u64,
 
-    /// Packet loss percentage
+    // Packet loss percentage
     pub packet_loss: f64,
 
-    /// Bandwidth utilization
+    // Bandwidth utilization
     pub bandwidth_mbps: f64,
 
-    /// Last state change
+    // Last state change
     pub last_state_change: Instant,
 
-    /// NEW: Phi accrual failure detector state
-    /// Heartbeat interval history for adaptive detection
+    // NEW: Phi accrual failure detector state
+    // Heartbeat interval history for adaptive detection
     pub heartbeat_intervals: Vec<Duration>,
 
-    /// Current phi value (suspicion level)
+    // Current phi value (suspicion level)
     pub phi_value: f64,
 
-    /// Mean heartbeat interval
+    // Mean heartbeat interval
     pub mean_interval_ms: f64,
 
-    /// Standard deviation of intervals
+    // Standard deviation of intervals
     pub std_dev_interval_ms: f64,
 }
 
@@ -250,9 +250,9 @@ impl NodeHealth {
         }
     }
 
-    /// NEW: Phi accrual failure detector
-    /// Calculates suspicion level based on heartbeat timing variance
-    /// Higher phi = more suspicious, threshold typically 8.0-10.0
+    // NEW: Phi accrual failure detector
+    // Calculates suspicion level based on heartbeat timing variance
+    // Higher phi = more suspicious, threshold typically 8.0-10.0
     fn update_phi_accrual(&mut self, interval: Duration) {
         let _interval_ms = interval.as_millis() as f64;
 
@@ -316,29 +316,29 @@ impl NodeHealth {
 // Connection Management
 // ============================================================================
 
-/// Connection to a remote node
+// Connection to a remote node
 struct Connection {
-    /// Remote node identifier
+    // Remote node identifier
     remote_node: NodeId,
 
-    /// TCP stream (in production, could be RDMA)
-    /// Use tokio::sync::Mutex to allow holding across await points
+    // TCP stream (in production, could be RDMA)
+    // Use tokio::sync::Mutex to allow holding across await points
     stream: Arc<tokio::sync::Mutex<Option<TcpStream>>>,
 
-    /// Message send queue
+    // Message send queue
     send_queue: Arc<Mutex<VecDeque<Message>>>,
 
-    /// Connection state
+    // Connection state
     state: Arc<RwLock<ConnectionState>>,
 
-    /// Latency samples
+    // Latency samples
     latency_samples: Arc<Mutex<VecDeque<u64>>>,
 
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<ConnectionStats>>,
 }
 
-/// Connection state
+// Connection state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ConnectionState {
     Disconnected,
@@ -348,7 +348,7 @@ enum ConnectionState {
     Failed,
 }
 
-/// Connection statistics
+// Connection statistics
 #[derive(Debug, Clone, Default)]
 struct ConnectionStats {
     messages_sent: u64,
@@ -488,73 +488,73 @@ impl Connection {
 // Cluster Interconnect
 // ============================================================================
 
-/// Cluster interconnect manager
+// Cluster interconnect manager
 pub struct ClusterInterconnect {
-    /// Local node identifier
+    // Local node identifier
     node_id: NodeId,
 
-    /// Local listen address
+    // Local listen address
     listen_address: String,
 
-    /// Connections to other nodes
+    // Connections to other nodes
     connections: Arc<RwLock<HashMap<NodeId, Arc<Connection>>>>,
 
-    /// Node health tracking
+    // Node health tracking
     node_health: Arc<RwLock<HashMap<NodeId, NodeHealth>>>,
 
-    /// Message handlers
+    // Message handlers
     message_handlers: Arc<RwLock<HashMap<MessageType, MessageHandler>>>,
 
-    /// Pending message acknowledgments
+    // Pending message acknowledgments
     pending_acks: Arc<RwLock<HashMap<u64, oneshot::Sender<MessageAck>>>>,
 
-    /// Message sequence counter
+    // Message sequence counter
     sequence_counter: Arc<Mutex<u64>>,
 
-    /// Configuration
+    // Configuration
     config: InterconnectConfig,
 
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<InterconnectStatistics>>,
 
-    /// Shutdown signal
+    // Shutdown signal
     shutdown_tx: broadcast::Sender<()>,
 }
 
-/// Message handler function type
+// Message handler function type
 type MessageHandler = Arc<dyn Fn(Message) -> Result<Vec<u8>, DbError> + Send + Sync>;
 
-/// Interconnect configuration
+// Interconnect configuration
 #[derive(Debug, Clone)]
 pub struct InterconnectConfig {
-    /// Enable heartbeat monitoring
+    // Enable heartbeat monitoring
     pub enable_heartbeat: bool,
 
-    /// Heartbeat interval
+    // Heartbeat interval
     pub heartbeat_interval: Duration,
 
-    /// Heartbeat timeout
+    // Heartbeat timeout
     pub heartbeat_timeout: Duration,
 
-    /// Enable adaptive routing
+    // Enable adaptive routing
     pub adaptive_routing: bool,
 
-    /// Maximum retry attempts
+    // Maximum retry attempts
     pub max_retries: u32,
 
-    /// Enable message compression
+    // Enable message compression
     pub enable_compression: bool,
 
-    /// NEW: Enable message batching for efficiency
+    // NEW: Enable message batching for efficiency
     pub enable_batching: bool,
 
-    /// NEW: Batching window (milliseconds)
+    // NEW: Batching window (milliseconds)
     pub batch_window_ms: u64,
 
-    /// NEW: Maximum batch size (messages)
+    // NEW: Maximum batch size (messages)
     pub max_batch_size: usize,
 
-    /// NEW: Phi accrual failure detector threshold
+    // NEW: Phi accrual failure detector threshold
     pub phi_threshold: f64,
 }
 
@@ -575,58 +575,58 @@ impl Default for InterconnectConfig {
     }
 }
 
-/// Interconnect statistics
+// Interconnect statistics
 #[derive(Debug, Clone, Default)]
 pub struct InterconnectStatistics {
-    /// Total messages sent
+    // Total messages sent
     pub total_sent: u64,
 
-    /// Total messages received
+    // Total messages received
     pub total_received: u64,
 
-    /// Total bytes sent
+    // Total bytes sent
     pub total_bytes_sent: u64,
 
-    /// Total bytes received
+    // Total bytes received
     pub total_bytes_received: u64,
 
-    /// Message send failures
+    // Message send failures
     pub send_failures: u64,
 
-    /// Heartbeats sent
+    // Heartbeats sent
     pub heartbeats_sent: u64,
 
-    /// Heartbeats received
+    // Heartbeats received
     pub heartbeats_received: u64,
 
-    /// Node failures detected
+    // Node failures detected
     pub node_failures: u64,
 
-    /// Average message latency (microseconds)
+    // Average message latency (microseconds)
     pub avg_latency_us: u64,
 
-    /// NEW: Batching statistics
-    /// Batches sent
+    // NEW: Batching statistics
+    // Batches sent
     pub batches_sent: u64,
 
-    /// Messages batched
+    // Messages batched
     pub messages_batched: u64,
 
-    /// Average batch size
+    // Average batch size
     pub avg_batch_size: f64,
 
-    /// Phi accrual suspicion levels (histogram)
+    // Phi accrual suspicion levels (histogram)
     pub phi_suspicions: u64,
 
-    /// P99 message latency (microseconds)
+    // P99 message latency (microseconds)
     pub p99_latency_us: u64,
 
-    /// False positive detections
+    // False positive detections
     pub false_positives: u64,
 }
 
 impl ClusterInterconnect {
-    /// Create a new cluster interconnect
+    // Create a new cluster interconnect
     pub fn new(
         node_id: NodeId,
         listen_address: String,
@@ -648,7 +648,7 @@ impl ClusterInterconnect {
         }
     }
 
-    /// Start the interconnect service
+    // Start the interconnect service
     pub async fn start(&self) -> Result<(), DbError> {
         // Start listener
         let listener = TcpListener::bind(&self.listen_address).await
@@ -698,13 +698,13 @@ impl ClusterInterconnect {
         Ok(())
     }
 
-    /// Stop the interconnect service
+    // Stop the interconnect service
     pub async fn stop(&self) -> Result<(), DbError> {
         let _ = self.shutdown_tx.send(());
         Ok(())
     }
 
-    /// Add a node to the cluster
+    // Add a node to the cluster
     pub async fn add_node(&self, node_id: NodeId, address: String) -> Result<(), DbError> {
         let conn = Arc::new(Connection::new(node_id.clone()));
 
@@ -723,7 +723,7 @@ impl ClusterInterconnect {
         Ok(())
     }
 
-    /// Remove a node from the cluster
+    // Remove a node from the cluster
     pub async fn remove_node(&self, node_id: &NodeId) -> Result<(), DbError> {
         self.connections.write().remove(node_id);
         self.node_health.write().remove(node_id);
@@ -733,7 +733,7 @@ impl ClusterInterconnect {
         Ok(())
     }
 
-    /// Send a message to another node
+    // Send a message to another node
     pub async fn send_message(
         &self,
         destination: NodeId,
@@ -759,7 +759,7 @@ impl ClusterInterconnect {
         self.send_message_internal(destination, message).await
     }
 
-    /// Send a message and wait for acknowledgment
+    // Send a message and wait for acknowledgment
     pub async fn send_with_ack(
         &self,
         destination: NodeId,
@@ -822,7 +822,7 @@ impl ClusterInterconnect {
         Ok(())
     }
 
-    /// Register a message handler
+    // Register a message handler
     pub fn register_handler<F>(&self, message_type: MessageType, handler: F)
     where
         F: Fn(Message) -> Result<Vec<u8>, DbError> + Send + Sync + 'static,
@@ -833,7 +833,7 @@ impl ClusterInterconnect {
         );
     }
 
-    /// Start heartbeat monitoring
+    // Start heartbeat monitoring
     async fn start_heartbeat_monitor(&self) {
         let node_health = self.node_health.clone();
         let connections = self.connections.clone();
@@ -893,7 +893,7 @@ impl ClusterInterconnect {
         });
     }
 
-    /// Detect split-brain scenario
+    // Detect split-brain scenario
     pub fn detect_split_brain(&self) -> Result<bool, DbError> {
         let health = self.node_health.read();
         let total_nodes = health.len() + 1; // +1 for local node
@@ -908,7 +908,7 @@ impl ClusterInterconnect {
         Ok(healthy_nodes < quorum)
     }
 
-    /// Get cluster view (visible nodes)
+    // Get cluster view (visible nodes)
     pub fn get_cluster_view(&self) -> ClusterView {
         let health = self.node_health.read();
 
@@ -937,12 +937,12 @@ impl ClusterInterconnect {
         }
     }
 
-    /// Get node health
+    // Get node health
     pub fn get_node_health(&self, node_id: &NodeId) -> Option<NodeHealth> {
         self.node_health.read().get(node_id).cloned()
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_statistics(&self) -> InterconnectStatistics {
         self.stats.read().clone()
     }
@@ -967,7 +967,7 @@ impl ClusterInterconnect {
     }
 }
 
-/// Cluster view
+// Cluster view
 #[derive(Debug, Clone)]
 pub struct ClusterView {
     pub local_node: NodeId,

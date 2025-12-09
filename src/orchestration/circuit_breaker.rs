@@ -46,29 +46,29 @@ use tracing::{debug, info, warn};
 
 use crate::error::{Result, DbError};
 
-/// Circuit breaker state
+// Circuit breaker state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CircuitState {
-    /// Circuit is closed, requests pass through
+    // Circuit is closed, requests pass through
     Closed,
-    /// Circuit is open, requests fail immediately
+    // Circuit is open, requests fail immediately
     Open,
-    /// Circuit is half-open, testing if service recovered
+    // Circuit is half-open, testing if service recovered
     HalfOpen,
 }
 
-/// Circuit breaker configuration
+// Circuit breaker configuration
 #[derive(Debug, Clone)]
 pub struct CircuitBreakerConfig {
-    /// Number of failures before opening the circuit
+    // Number of failures before opening the circuit
     pub failure_threshold: usize,
-    /// Success threshold in half-open state before closing
+    // Success threshold in half-open state before closing
     pub success_threshold: usize,
-    /// Timeout duration for requests
+    // Timeout duration for requests
     pub timeout: Duration,
-    /// Duration to wait before transitioning from Open to Half-Open
+    // Duration to wait before transitioning from Open to Half-Open
     pub reset_timeout: Duration,
-    /// Rolling window size for tracking failures
+    // Rolling window size for tracking failures
     pub window_size: usize,
 }
 
@@ -84,44 +84,44 @@ impl Default for CircuitBreakerConfig {
     }
 }
 
-/// Circuit breaker statistics
+// Circuit breaker statistics
 #[derive(Debug, Clone, Default)]
 pub struct CircuitBreakerStats {
-    /// Total number of calls
+    // Total number of calls
     pub total_calls: u64,
-    /// Number of successful calls
+    // Number of successful calls
     pub successful_calls: u64,
-    /// Number of failed calls
+    // Number of failed calls
     pub failed_calls: u64,
-    /// Number of rejected calls (circuit open)
+    // Number of rejected calls (circuit open)
     pub rejected_calls: u64,
-    /// Number of timeout calls
+    // Number of timeout calls
     pub timeout_calls: u64,
-    /// Current consecutive failures
+    // Current consecutive failures
     pub consecutive_failures: usize,
-    /// Current consecutive successes (in half-open)
+    // Current consecutive successes (in half-open)
     pub consecutive_successes: usize,
-    /// Last state transition time
+    // Last state transition time
     pub last_state_change: Option<Instant>,
 }
 
-/// Internal state for circuit breaker
+// Internal state for circuit breaker
 struct CircuitBreakerState {
-    /// Current circuit state
+    // Current circuit state
     state: CircuitState,
-    /// Statistics
+    // Statistics
     stats: CircuitBreakerStats,
-    /// Configuration
+    // Configuration
     config: CircuitBreakerConfig,
 }
 
-/// Circuit breaker for fault tolerance
+// Circuit breaker for fault tolerance
 pub struct CircuitBreaker {
-    /// Service name
+    // Service name
     name: String,
-    /// Internal state
+    // Internal state
     state: Arc<RwLock<CircuitBreakerState>>,
-    /// Atomic counters for lock-free reads
+    // Atomic counters for lock-free reads
     total_calls: Arc<AtomicU64>,
     successful_calls: Arc<AtomicU64>,
     failed_calls: Arc<AtomicU64>,
@@ -129,7 +129,7 @@ pub struct CircuitBreaker {
 }
 
 impl CircuitBreaker {
-    /// Create a new circuit breaker
+    // Create a new circuit breaker
     pub fn new(name: String, config: CircuitBreakerConfig) -> Self {
         Self {
             name,
@@ -145,23 +145,23 @@ impl CircuitBreaker {
         }
     }
 
-    /// Create with default configuration
+    // Create with default configuration
     pub fn with_defaults(name: String) -> Self {
         Self::new(name, CircuitBreakerConfig::default())
     }
 
-    /// Get the current circuit state
+    // Get the current circuit state
     pub fn state(&self) -> CircuitState {
         let state = self.state.read();
         state.state
     }
 
-    /// Get the circuit breaker name
+    // Get the circuit breaker name
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    /// Execute a call through the circuit breaker
+    // Execute a call through the circuit breaker
     pub async fn call<F, T>(&self, f: F) -> Result<T>
     where
         F: std::future::Future<Output = Result<T>>,
@@ -204,7 +204,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Execute with fallback
+    // Execute with fallback
     pub async fn call_with_fallback<F, FB, T>(&self, f: F, fallback: FB) -> Result<T>
     where
         F: std::future::Future<Output = Result<T>>,
@@ -220,7 +220,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Check if request should be allowed
+    // Check if request should be allowed
     async fn should_allow_request(&self) -> bool {
         let mut state = self.state.write();
 
@@ -246,7 +246,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Handle successful call
+    // Handle successful call
     async fn on_success(&self) {
         self.successful_calls.fetch_add(1, Ordering::Relaxed);
 
@@ -274,7 +274,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Handle failed call
+    // Handle failed call
     async fn on_failure(&self) {
         self.failed_calls.fetch_add(1, Ordering::Relaxed);
 
@@ -308,7 +308,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Handle timeout
+    // Handle timeout
     async fn on_timeout(&self) {
         let mut state = self.state.write();
         state.stats.timeout_calls += 1;
@@ -318,7 +318,7 @@ impl CircuitBreaker {
         self.on_failure().await;
     }
 
-    /// Force the circuit to open
+    // Force the circuit to open
     pub async fn force_open(&self) {
         let mut state = self.state.write();
         if state.state != CircuitState::Open {
@@ -328,7 +328,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Force the circuit to close
+    // Force the circuit to close
     pub async fn force_close(&self) {
         let mut state = self.state.write();
         if state.state != CircuitState::Closed {
@@ -340,7 +340,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Reset statistics
+    // Reset statistics
     pub async fn reset_stats(&self) {
         let mut state = self.state.write();
         state.stats = CircuitBreakerStats::default();
@@ -353,7 +353,7 @@ impl CircuitBreaker {
         debug!("Reset statistics for circuit breaker '{}'", self.name);
     }
 
-    /// Get current statistics
+    // Get current statistics
     pub fn statistics(&self) -> CircuitBreakerStats {
         let state = self.state.read();
         let mut stats = state.stats.clone();
@@ -367,7 +367,7 @@ impl CircuitBreaker {
         stats
     }
 
-    /// Get success rate (0.0 to 1.0)
+    // Get success rate (0.0 to 1.0)
     pub fn success_rate(&self) -> f64 {
         let total = self.total_calls.load(Ordering::Relaxed);
         if total == 0 {
@@ -378,7 +378,7 @@ impl CircuitBreaker {
         successful as f64 / total as f64
     }
 
-    /// Get failure rate (0.0 to 1.0)
+    // Get failure rate (0.0 to 1.0)
     pub fn failure_rate(&self) -> f64 {
         1.0 - self.success_rate()
     }
@@ -397,16 +397,16 @@ impl Clone for CircuitBreaker {
     }
 }
 
-/// Circuit breaker registry for managing multiple circuit breakers
+// Circuit breaker registry for managing multiple circuit breakers
 pub struct CircuitBreakerRegistry {
-    /// Registered circuit breakers
+    // Registered circuit breakers
     breakers: RwLock<std::collections::HashMap<String, CircuitBreaker>>,
-    /// Default configuration
+    // Default configuration
     default_config: CircuitBreakerConfig,
 }
 
 impl CircuitBreakerRegistry {
-    /// Create a new registry
+    // Create a new registry
     pub fn new(default_config: CircuitBreakerConfig) -> Self {
         Self {
             breakers: RwLock::new(std::collections::HashMap::new()),
@@ -414,12 +414,12 @@ impl CircuitBreakerRegistry {
         }
     }
 
-    /// Create with default configuration
+    // Create with default configuration
     pub fn with_defaults() -> Self {
         Self::new(CircuitBreakerConfig::default())
     }
 
-    /// Get or create a circuit breaker
+    // Get or create a circuit breaker
     pub fn get_or_create(&self, name: &str) -> CircuitBreaker {
         // Try to get existing breaker
         {
@@ -444,13 +444,13 @@ impl CircuitBreakerRegistry {
         breaker
     }
 
-    /// Get a circuit breaker by name
+    // Get a circuit breaker by name
     pub fn get(&self, name: &str) -> Option<CircuitBreaker> {
         let breakers = self.breakers.read();
         breakers.get(name).cloned()
     }
 
-    /// Register a circuit breaker with custom config
+    // Register a circuit breaker with custom config
     pub fn register(&self, name: String, config: CircuitBreakerConfig) -> CircuitBreaker {
         let mut breakers = self.breakers.write();
 
@@ -461,13 +461,13 @@ impl CircuitBreakerRegistry {
         breaker
     }
 
-    /// List all circuit breakers
+    // List all circuit breakers
     pub fn list(&self) -> Vec<String> {
         let breakers = self.breakers.read();
         breakers.keys().cloned().collect()
     }
 
-    /// Get statistics for all circuit breakers
+    // Get statistics for all circuit breakers
     pub fn all_statistics(&self) -> Vec<(String, CircuitBreakerStats)> {
         let breakers = self.breakers.read();
         breakers
@@ -476,7 +476,7 @@ impl CircuitBreakerRegistry {
             .collect()
     }
 
-    /// Remove a circuit breaker
+    // Remove a circuit breaker
     pub fn remove(&self, name: &str) -> Option<CircuitBreaker> {
         let mut breakers = self.breakers.write();
         let removed = breakers.remove(name);
@@ -486,14 +486,14 @@ impl CircuitBreakerRegistry {
         removed
     }
 
-    /// Clear all circuit breakers
+    // Clear all circuit breakers
     pub fn clear(&self) {
         let mut breakers = self.breakers.write();
         breakers.clear();
         info!("Cleared all circuit breakers");
     }
 
-    /// Get count of registered circuit breakers
+    // Get count of registered circuit breakers
     pub fn count(&self) -> usize {
         let breakers = self.breakers.read();
         breakers.len()

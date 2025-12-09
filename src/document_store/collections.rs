@@ -10,33 +10,33 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::error::Result;
 use super::document::{Document, DocumentId, IdGenerationType};
 
-/// JSON Schema for document validation
+// JSON Schema for document validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonSchema {
-    /// Schema title
+    // Schema title
     pub title: Option<String>,
-    /// Schema description
+    // Schema description
     pub description: Option<String>,
-    /// Schema type
+    // Schema type
     #[serde(rename = "type")]
     pub schema_type: Option<String>,
-    /// Required properties
+    // Required properties
     pub required: Vec<String>,
-    /// Property definitions
+    // Property definitions
     pub properties: HashMap<String, PropertySchema>,
-    /// Additional properties allowed
+    // Additional properties allowed
     #[serde(rename = "additionalProperties")]
     pub additional_properties: bool,
-    /// Minimum properties
+    // Minimum properties
     #[serde(rename = "minProperties")]
     pub min_properties: Option<usize>,
-    /// Maximum properties
+    // Maximum properties
     #[serde(rename = "maxProperties")]
     pub max_properties: Option<usize>,
 }
 
 impl JsonSchema {
-    /// Create a new empty schema
+    // Create a new empty schema
     pub fn new() -> Self {
         Self {
             title: None,
@@ -50,7 +50,7 @@ impl JsonSchema {
         }
     }
 
-    /// Validate a JSON document against this schema
+    // Validate a JSON document against this schema
     pub fn validate(&self, doc: &serde_json::Value) -> Result<()> {
         // Check if document is an object
         if self.schema_type.as_deref() == Some("object") {
@@ -105,12 +105,12 @@ impl JsonSchema {
         Ok(())
     }
 
-    /// Add a required property
+    // Add a required property
     pub fn add_required(&mut self, property: impl Into<String>) {
         self.required.push(property.into());
     }
 
-    /// Add a property schema
+    // Add a property schema
     pub fn add_property(&mut self, name: impl Into<String>, schema: PropertySchema) {
         self.properties.insert(name.into(), schema);
     }
@@ -122,35 +122,35 @@ impl Default for JsonSchema {
     }
 }
 
-/// Property schema definition
+// Property schema definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PropertySchema {
-    /// Property type
+    // Property type
     #[serde(rename = "type")]
     pub property_type: String,
-    /// Property description
+    // Property description
     pub description: Option<String>,
-    /// Minimum value (for numbers)
+    // Minimum value (for numbers)
     pub minimum: Option<f64>,
-    /// Maximum value (for numbers)
+    // Maximum value (for numbers)
     pub maximum: Option<f64>,
-    /// Minimum length (for strings)
+    // Minimum length (for strings)
     #[serde(rename = "minLength")]
     pub min_length: Option<usize>,
-    /// Maximum length (for strings)
+    // Maximum length (for strings)
     #[serde(rename = "maxLength")]
     pub max_length: Option<usize>,
-    /// Pattern (regex for strings)
+    // Pattern (regex for strings)
     pub pattern: Option<String>,
-    /// Enum values
+    // Enum values
     #[serde(rename = "enum")]
     pub enum_values: Option<Vec<serde_json::Value>>,
-    /// Format (e.g., "email", "date-time")
+    // Format (e.g., "email", "date-time")
     pub format: Option<String>,
 }
 
 impl PropertySchema {
-    /// Create a string property schema
+    // Create a string property schema
     pub fn string() -> Self {
         Self {
             property_type: "string".to_string(),
@@ -165,7 +165,7 @@ impl PropertySchema {
         }
     }
 
-    /// Create a number property schema
+    // Create a number property schema
     pub fn number() -> Self {
         Self {
             property_type: "number".to_string(),
@@ -180,7 +180,7 @@ impl PropertySchema {
         }
     }
 
-    /// Create an integer property schema
+    // Create an integer property schema
     pub fn integer() -> Self {
         Self {
             property_type: "integer".to_string(),
@@ -195,7 +195,7 @@ impl PropertySchema {
         }
     }
 
-    /// Create a boolean property schema
+    // Create a boolean property schema
     pub fn boolean() -> Self {
         Self {
             property_type: "boolean".to_string(),
@@ -210,7 +210,7 @@ impl PropertySchema {
         }
     }
 
-    /// Create an array property schema
+    // Create an array property schema
     pub fn array() -> Self {
         Self {
             property_type: "array".to_string(),
@@ -225,7 +225,7 @@ impl PropertySchema {
         }
     }
 
-    /// Create an object property schema
+    // Create an object property schema
     pub fn object() -> Self {
         Self {
             property_type: "object".to_string(),
@@ -240,7 +240,7 @@ impl PropertySchema {
         }
     }
 
-    /// Validate a value against this property schema
+    // Validate a value against this property schema
     pub fn validate(&self, value: &serde_json::Value) -> Result<()> {
         // Type validation
         match self.property_type.as_str() {
@@ -347,64 +347,64 @@ impl PropertySchema {
         Ok(())
     }
 
-    /// Set description
+    // Set description
     pub fn description(mut self, desc: impl Into<String>) -> Self {
         self.description = Some(desc.into());
         self
     }
 
-    /// Set minimum value
+    // Set minimum value
     pub fn minimum(mut self, min: f64) -> Self {
         self.minimum = Some(min);
         self
     }
 
-    /// Set maximum value
+    // Set maximum value
     pub fn maximum(mut self, max: f64) -> Self {
         self.maximum = Some(max);
         self
     }
 
-    /// Set minimum length
+    // Set minimum length
     pub fn min_length(mut self, min: usize) -> Self {
         self.min_length = Some(min);
         self
     }
 
-    /// Set maximum length
+    // Set maximum length
     pub fn max_length(mut self, max: usize) -> Self {
         self.max_length = Some(max);
         self
     }
 
-    /// Set pattern
+    // Set pattern
     pub fn pattern(mut self, pattern: impl Into<String>) -> Self {
         self.pattern = Some(pattern.into());
         self
     }
 }
 
-/// Collection statistics
+// Collection statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollectionStats {
-    /// Total number of documents
+    // Total number of documents
     pub document_count: u64,
-    /// Total size in bytes
+    // Total size in bytes
     pub total_size: u64,
-    /// Average document size
+    // Average document size
     pub avg_document_size: u64,
-    /// Number of indexes
+    // Number of indexes
     pub index_count: usize,
-    /// Total index size
+    // Total index size
     pub index_size: u64,
-    /// Last update time
+    // Last update time
     pub last_updated: u64,
-    /// Document count by version
+    // Document count by version
     pub version_distribution: HashMap<u64, u64>,
 }
 
 impl CollectionStats {
-    /// Create new statistics
+    // Create new statistics
     pub fn new() -> Self {
         Self {
             document_count: 0,
@@ -420,7 +420,7 @@ impl CollectionStats {
         }
     }
 
-    /// Update statistics after document insertion
+    // Update statistics after document insertion
     pub fn on_insert(&mut self, doc_size: u64, version: u64) {
         self.document_count += 1;
         self.total_size += doc_size;
@@ -429,7 +429,7 @@ impl CollectionStats {
         self.update_timestamp();
     }
 
-    /// Update statistics after document deletion
+    // Update statistics after document deletion
     pub fn on_delete(&mut self, doc_size: u64, version: u64) {
         if self.document_count > 0 {
             self.document_count -= 1;
@@ -449,7 +449,7 @@ impl CollectionStats {
         }
     }
 
-    /// Update statistics after document update
+    // Update statistics after document update
     pub fn on_update(&mut self, old_size: u64, new_size: u64, oldversion: u64, newversion: u64) {
         self.total_size = self.total_size.saturating_sub(old_size) + new_size;
         if self.document_count > 0 {
@@ -482,31 +482,31 @@ impl Default for CollectionStats {
     }
 }
 
-/// Collection settings
+// Collection settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollectionSettings {
-    /// ID generation strategy
+    // ID generation strategy
     pub id_generation: IdGenerationType,
-    /// Enable versioning
+    // Enable versioning
     pub versioning_enabled: bool,
-    /// Maximum document size in bytes
+    // Maximum document size in bytes
     pub max_document_size: usize,
-    /// Enable compression
+    // Enable compression
     pub compression_enabled: bool,
-    /// Default TTL in seconds
+    // Default TTL in seconds
     pub default_ttl: Option<u64>,
-    /// Enable schema validation
+    // Enable schema validation
     pub schema_validation_enabled: bool,
-    /// Validation action on failure
+    // Validation action on failure
     pub validation_action: ValidationAction,
-    /// Case sensitivity for queries
+    // Case sensitivity for queries
     pub case_sensitive: bool,
-    /// Enable audit logging
+    // Enable audit logging
     pub audit_enabled: bool,
 }
 
 impl CollectionSettings {
-    /// Create default settings
+    // Create default settings
     pub fn new() -> Self {
         Self {
             id_generation: IdGenerationType::Uuid,
@@ -528,38 +528,38 @@ impl Default for CollectionSettings {
     }
 }
 
-/// Validation action when schema validation fails
+// Validation action when schema validation fails
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ValidationAction {
-    /// Reject the operation with an error
+    // Reject the operation with an error
     Error,
-    /// Allow the operation but log a warning
+    // Allow the operation but log a warning
     Warn,
 }
 
-/// Collection metadata
+// Collection metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollectionMetadata {
-    /// Collection name
+    // Collection name
     pub name: String,
-    /// Collection description
+    // Collection description
     pub description: Option<String>,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: u64,
-    /// Last modification timestamp
+    // Last modification timestamp
     pub updated_at: u64,
-    /// Collection settings
+    // Collection settings
     pub settings: CollectionSettings,
-    /// JSON schema for validation
+    // JSON schema for validation
     pub schema: Option<JsonSchema>,
-    /// Collection statistics
+    // Collection statistics
     pub stats: CollectionStats,
-    /// Custom metadata
+    // Custom metadata
     pub custom_fields: HashMap<String, serde_json::Value>,
 }
 
 impl CollectionMetadata {
-    /// Create new collection metadata
+    // Create new collection metadata
     pub fn new(name: String) -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -578,14 +578,14 @@ impl CollectionMetadata {
         }
     }
 
-    /// Set schema
+    // Set schema
     pub fn set_schema(&mut self, schema: JsonSchema) {
         self.schema = Some(schema);
         self.settings.schema_validation_enabled = true;
         self.update_timestamp();
     }
 
-    /// Remove schema
+    // Remove schema
     pub fn remove_schema(&mut self) {
         self.schema = None;
         self.settings.schema_validation_enabled = false;
@@ -600,19 +600,19 @@ impl CollectionMetadata {
     }
 }
 
-/// Collection of documents
+// Collection of documents
 #[derive(Clone)]
 pub struct Collection {
-    /// Collection metadata
+    // Collection metadata
     pub metadata: CollectionMetadata,
-    /// Documents in the collection (in-memory storage for now)
+    // Documents in the collection (in-memory storage for now)
     documents: Arc<RwLock<HashMap<DocumentId, Document>>>,
-    /// Auto-increment counter
+    // Auto-increment counter
     auto_increment_counter: Arc<RwLock<u64>>,
 }
 
 impl Collection {
-    /// Create a new collection
+    // Create a new collection
     pub fn new(name: String) -> Self {
         Self {
             metadata: CollectionMetadata::new(name),
@@ -621,7 +621,7 @@ impl Collection {
         }
     }
 
-    /// Create a collection with settings
+    // Create a collection with settings
     pub fn with_settings(name: String, settings: CollectionSettings) -> Self {
         let mut metadata = CollectionMetadata::new(name);
         metadata.settings = settings;
@@ -633,7 +633,7 @@ impl Collection {
         }
     }
 
-    /// Insert a document into the collection
+    // Insert a document into the collection
     pub fn insert(&mut self, mut document: Document) -> Result<DocumentId> {
         // Validate against schema if enabled
         if self.metadata.settings.schema_validation_enabled {
@@ -680,14 +680,14 @@ impl Collection {
         Ok(doc_id)
     }
 
-    /// Get a document by ID
+    // Get a document by ID
     pub fn get(&self, id: &DocumentId) -> Option<Document> {
         let docs = self.documents.read().unwrap();
         docs.get(id)
             .cloned()
     }
 
-    /// Update a document
+    // Update a document
     pub fn update(&mut self, id: &DocumentId, document: Document) -> Result<()> {
         // Validate against schema if enabled
         if self.metadata.settings.schema_validation_enabled {
@@ -724,7 +724,7 @@ impl Collection {
         }
     }
 
-    /// Delete a document
+    // Delete a document
     pub fn delete(&mut self, id: &DocumentId) -> Result<()> {
         let mut docs = self.documents.write().unwrap();
         if let Some(doc) = docs.remove(id) {
@@ -742,30 +742,30 @@ impl Collection {
         }
     }
 
-    /// Count documents in collection
+    // Count documents in collection
     pub fn count(&self) -> usize {
         self.documents.read().unwrap().len()
     }
 
-    /// Get all document IDs
+    // Get all document IDs
     pub fn get_all_ids(&self) -> Vec<DocumentId> {
         self.documents.read().unwrap().keys().cloned().collect()
     }
 
-    /// Generate next auto-increment ID
+    // Generate next auto-increment ID
     pub fn next_auto_increment_id(&self) -> u64 {
         let mut counter = self.auto_increment_counter.write().unwrap();
         *counter += 1;
         *counter
     }
 
-    /// Clear all documents from the collection
+    // Clear all documents from the collection
     pub fn clear(&mut self) {
         self.documents.write().unwrap().clear();
         self.metadata.stats = CollectionStats::new();
     }
 
-    /// Remove expired documents (TTL cleanup)
+    // Remove expired documents (TTL cleanup)
     pub fn cleanup_expired(&mut self) -> usize {
         let mut docs = self.documents.write().unwrap();
         let mut expired_ids = Vec::new();
@@ -789,21 +789,21 @@ impl Collection {
     }
 }
 
-/// Collection manager for managing multiple collections
+// Collection manager for managing multiple collections
 pub struct CollectionManager {
-    /// Collections indexed by name
+    // Collections indexed by name
     collections: Arc<RwLock<BTreeMap<String, Collection>>>,
 }
 
 impl CollectionManager {
-    /// Create a new collection manager
+    // Create a new collection manager
     pub fn new() -> Self {
         Self {
             collections: Arc::new(RwLock::new(BTreeMap::new())),
         }
     }
 
-    /// Create a new collection
+    // Create a new collection
     pub fn create_collection(&self, name: String) -> Result<()> {
         let mut collections = self.collections.write().unwrap();
 
@@ -817,7 +817,7 @@ impl CollectionManager {
         Ok(())
     }
 
-    /// Create a collection with settings
+    // Create a collection with settings
     pub fn create_collection_with_settings(
         &self,
         name: String,
@@ -835,7 +835,7 @@ impl CollectionManager {
         Ok(())
     }
 
-    /// Drop a collection
+    // Drop a collection
     pub fn drop_collection(&self, name: &str) -> Result<()> {
         let mut collections = self.collections.write().unwrap();
 
@@ -848,7 +848,7 @@ impl CollectionManager {
         }
     }
 
-    /// Get a collection
+    // Get a collection
     pub fn get_collection(&self, name: &str) -> Result<Collection> {
         let collections = self.collections.read().unwrap();
         collections.get(name)
@@ -858,22 +858,22 @@ impl CollectionManager {
             ))
     }
 
-    /// Check if collection exists
+    // Check if collection exists
     pub fn collection_exists(&self, name: &str) -> bool {
         self.collections.read().unwrap().contains_key(name)
     }
 
-    /// List all collection names
+    // List all collection names
     pub fn list_collections(&self) -> Vec<String> {
         self.collections.read().unwrap().keys().cloned().collect()
     }
 
-    /// Get collection count
+    // Get collection count
     pub fn collection_count(&self) -> usize {
         self.collections.read().unwrap().len()
     }
 
-    /// Rename a collection
+    // Rename a collection
     pub fn rename_collection(&self, old_name: &str, new_name: String) -> Result<()> {
         let mut collections = self.collections.write().unwrap();
 

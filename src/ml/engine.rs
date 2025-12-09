@@ -21,41 +21,41 @@ use parking_lot::Mutex;
 // Model Metadata and Versioning
 // ============================================================================
 
-/// Model metadata
+// Model metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelMetadata {
-    /// Model name
+    // Model name
     pub name: String,
-    /// Model version
+    // Model version
     pub version: ModelVersion,
-    /// Model type
+    // Model type
     pub model_type: ModelType,
-    /// Feature names used for training
+    // Feature names used for training
     pub feature_names: Vec<String>,
-    /// Number of features
+    // Number of features
     pub n_features: usize,
-    /// Training metrics
+    // Training metrics
     pub metrics: HashMap<String, f64>,
-    /// Hyperparameters used
+    // Hyperparameters used
     pub hyperparameters: HashMap<String, String>,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: u64,
-    /// Last updated timestamp
+    // Last updated timestamp
     pub updated_at: u64,
-    /// Training status
+    // Training status
     pub status: ModelStatus,
-    /// Description
+    // Description
     pub description: Option<String>,
-    /// Tags for organization
+    // Tags for organization
     pub tags: Vec<String>,
-    /// Model size in bytes
+    // Model size in bytes
     pub model_size: usize,
-    /// Number of training samples
+    // Number of training samples
     pub training_samples: usize,
 }
 
 impl ModelMetadata {
-    /// Create new metadata
+    // Create new metadata
     pub fn new(name: String, model_type: ModelType, feature_names: Vec<String>) -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -80,7 +80,7 @@ impl ModelMetadata {
         }
     }
 
-    /// Update timestamp
+    // Update timestamp
     pub fn touch(&mut self) {
         self.updated_at = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -88,14 +88,14 @@ impl ModelMetadata {
             .as_secs();
     }
 
-    /// Add a tag
+    // Add a tag
     pub fn add_tag(&mut self, tag: String) {
         if !self.tags.contains(&tag) {
             self.tags.push(tag);
         }
     }
 
-    /// Remove a tag
+    // Remove a tag
     pub fn remove_tag(&mut self, tag: &str) -> bool {
         if let Some(pos) = self.tags.iter().position(|t| t == tag) {
             self.tags.remove(pos);
@@ -106,7 +106,7 @@ impl ModelMetadata {
     }
 }
 
-/// Model version
+// Model version
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ModelVersion {
     pub major: u32,
@@ -115,30 +115,30 @@ pub struct ModelVersion {
 }
 
 impl ModelVersion {
-    /// Create a new version
+    // Create a new version
     pub fn new(major: u32, minor: u32, patch: u32) -> Self {
         Self { major, minor, patch }
     }
 
-    /// Increment major version
+    // Increment major version
     pub fn increment_major(&mut self) {
         self.major += 1;
         self.minor = 0;
         self.patch = 0;
     }
 
-    /// Increment minor version
+    // Increment minor version
     pub fn increment_minor(&mut self) {
         self.minor += 1;
         self.patch = 0;
     }
 
-    /// Increment patch version
+    // Increment patch version
     pub fn increment_patch(&mut self) {
         self.patch += 1;
     }
 
-    /// Format as string (e.g., "1.2.3")
+    // Format as string (e.g., "1.2.3")
     pub fn to_string(&self) -> String {
         format!("{}.{}.{}", self.major, self.minor, self.patch)
     }
@@ -150,20 +150,20 @@ impl fmt::Display for ModelVersion {
     }
 }
 
-/// Model training and deployment status
+// Model training and deployment status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ModelStatus {
-    /// Currently training
+    // Currently training
     Training,
-    /// Training completed successfully
+    // Training completed successfully
     Trained,
-    /// Deployed and active
+    // Deployed and active
     Deployed,
-    /// In A/B testing
+    // In A/B testing
     ABTesting,
-    /// Archived (not active)
+    // Archived (not active)
     Archived,
-    /// Training failed
+    // Training failed
     Failed,
 }
 
@@ -184,19 +184,19 @@ impl fmt::Display for ModelStatus {
 // Model Storage
 // ============================================================================
 
-/// Stored model with serialized data
+// Stored model with serialized data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StoredModel {
-    /// Model metadata
+    // Model metadata
     pub metadata: ModelMetadata,
-    /// Serialized model bytes
+    // Serialized model bytes
     pub model_data: Vec<u8>,
-    /// Preprocessing pipeline (optional)
+    // Preprocessing pipeline (optional)
     pub preprocessing_pipeline: Option<Vec<u8>>,
 }
 
 impl StoredModel {
-    /// Create a new stored model
+    // Create a new stored model
     pub fn new(metadata: ModelMetadata, model_data: Vec<u8>) -> Self {
         Self {
             metadata,
@@ -205,7 +205,7 @@ impl StoredModel {
         }
     }
 
-    /// Add preprocessing pipeline
+    // Add preprocessing pipeline
     pub fn with_preprocessing(mut self, pipeline: Vec<u8>) -> Self {
         self.preprocessing_pipeline = Some(pipeline);
         self
@@ -216,17 +216,17 @@ impl StoredModel {
 // Model Registry
 // ============================================================================
 
-/// Model registry for managing trained models
+// Model registry for managing trained models
 #[derive(Debug, Clone)]
 pub struct ModelRegistry {
-    /// Stored models by name
+    // Stored models by name
     models: Arc<RwLock<HashMap<String, Vec<StoredModel>>>>,
-    /// Active model versions by name
+    // Active model versions by name
     active_versions: Arc<RwLock<HashMap<String, ModelVersion>>>,
 }
 
 impl ModelRegistry {
-    /// Create a new model registry
+    // Create a new model registry
     pub fn new() -> Self {
         Self {
             models: Arc::new(RwLock::new(HashMap::new())),
@@ -234,7 +234,7 @@ impl ModelRegistry {
         }
     }
 
-    /// Register a new model
+    // Register a new model
     pub fn register(&self, model: StoredModel) -> Result<()> {
         let name = model.metadata.name.clone();
         let version = model.metadata.version;
@@ -261,7 +261,7 @@ impl ModelRegistry {
         Ok(())
     }
 
-    /// Get a specific model version
+    // Get a specific model version
     pub fn get(&self, name: &str, version: Option<ModelVersion>) -> Result<StoredModel> {
         let models = self.models.read().unwrap();
 
@@ -288,7 +288,7 @@ impl ModelRegistry {
         }
     }
 
-    /// List all versions of a model
+    // List all versions of a model
     pub fn list_versions(&self, name: &str) -> Result<Vec<ModelMetadata>> {
         let models = self.models.read().unwrap();
 
@@ -298,13 +298,13 @@ impl ModelRegistry {
         Ok(versions.iter().map(|m| m.metadata.clone()).collect())
     }
 
-    /// List all model names
+    // List all model names
     pub fn list_models(&self) -> Vec<String> {
         let models = self.models.read().unwrap();
         models.keys().cloned().collect()
     }
 
-    /// Set active version for a model
+    // Set active version for a model
     pub fn set_active_version(&self, name: &str, version: ModelVersion) -> Result<()> {
         let models = self.models.read().unwrap();
 
@@ -324,7 +324,7 @@ impl ModelRegistry {
         Ok(())
     }
 
-    /// Delete a model version
+    // Delete a model version
     pub fn delete(&self, name: &str, version: Option<ModelVersion>) -> Result<()> {
         let mut models = self.models.write().unwrap();
 
@@ -366,13 +366,13 @@ impl ModelRegistry {
         Ok(())
     }
 
-    /// Get total number of registered models
+    // Get total number of registered models
     pub fn count(&self) -> usize {
         let models = self.models.read().unwrap();
         models.len()
     }
 
-    /// Search models by tags
+    // Search models by tags
     pub fn search_by_tags(&self, tags: &[String]) -> Vec<ModelMetadata> {
         let models = self.models.read().unwrap();
         let mut results = Vec::new();
@@ -399,7 +399,7 @@ impl Default for ModelRegistry {
 // Training Jobs
 // ============================================================================
 
-/// Training job status
+// Training job status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TrainingJobStatus {
     Queued,
@@ -409,33 +409,33 @@ pub enum TrainingJobStatus {
     Cancelled,
 }
 
-/// Training job
+// Training job
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingJob {
-    /// Job ID
+    // Job ID
     pub id: String,
-    /// Model name
+    // Model name
     pub model_name: String,
-    /// Model type
+    // Model type
     pub model_type: ModelType,
-    /// Job status
+    // Job status
     pub status: TrainingJobStatus,
-    /// Progress (0.0 to 1.0)
+    // Progress (0.0 to 1.0)
     pub progress: f64,
-    /// Error message (if failed)
+    // Error message (if failed)
     pub error: Option<String>,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: u64,
-    /// Started timestamp
+    // Started timestamp
     pub started_at: Option<u64>,
-    /// Completed timestamp
+    // Completed timestamp
     pub completed_at: Option<u64>,
-    /// Hyperparameters
+    // Hyperparameters
     pub hyperparameters: Hyperparameters,
 }
 
 impl TrainingJob {
-    /// Create a new training job
+    // Create a new training job
     pub fn new(model_name: String, model_type: ModelType, hyperparameters: Hyperparameters) -> Self {
         use uuid::Uuid;
 
@@ -453,32 +453,32 @@ impl TrainingJob {
         }
     }
 
-    /// Mark job as started
+    // Mark job as started
     pub fn start(&mut self) {
         self.status = TrainingJobStatus::Running;
         self.started_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
     }
 
-    /// Update progress
+    // Update progress
     pub fn update_progress(&mut self, progress: f64) {
         self.progress = progress.clamp(0.0, 1.0);
     }
 
-    /// Mark job as completed
+    // Mark job as completed
     pub fn complete(&mut self) {
         self.status = TrainingJobStatus::Completed;
         self.progress = 1.0;
         self.completed_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
     }
 
-    /// Mark job as failed
+    // Mark job as failed
     pub fn fail(&mut self, error: String) {
         self.status = TrainingJobStatus::Failed;
         self.error = Some(error);
         self.completed_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
     }
 
-    /// Get elapsed time in seconds
+    // Get elapsed time in seconds
     pub fn elapsed_seconds(&self) -> u64 {
         let start = self.started_at.unwrap_or(self.created_at);
         let end = self.completed_at.unwrap_or_else(|| {
@@ -492,20 +492,20 @@ impl TrainingJob {
 // ML Engine
 // ============================================================================
 
-/// Main ML engine
+// Main ML engine
 pub struct MLEngine {
-    /// Model registry
+    // Model registry
     registry: ModelRegistry,
-    /// Active training jobs
+    // Active training jobs
     jobs: Arc<Mutex<HashMap<String, TrainingJob>>>,
-    /// Resource limits
+    // Resource limits
     max_concurrent_jobs: usize,
-    /// Performance metrics collector
+    // Performance metrics collector
     metrics_collector: Arc<Mutex<HashMap<String, Vec<Metrics>>>>,
 }
 
 impl MLEngine {
-    /// Create a new ML engine
+    // Create a new ML engine
     pub fn new() -> Self {
         Self {
             registry: ModelRegistry::new(),
@@ -515,17 +515,17 @@ impl MLEngine {
         }
     }
 
-    /// Set maximum concurrent training jobs
+    // Set maximum concurrent training jobs
     pub fn set_max_concurrent_jobs(&mut self, max: usize) {
         self.max_concurrent_jobs = max;
     }
 
-    /// Get model registry
+    // Get model registry
     pub fn registry(&self) -> &ModelRegistry {
         &self.registry
     }
 
-    /// Create a training job
+    // Create a training job
     pub fn create_training_job(
         &self,
         model_name: String,
@@ -554,7 +554,7 @@ impl MLEngine {
         Ok(job)
     }
 
-    /// Get training job status
+    // Get training job status
     pub fn get_job(&self, job_id: &str) -> Result<TrainingJob> {
         let jobs = self.jobs.lock();
         jobs.get(job_id)
@@ -564,7 +564,7 @@ impl MLEngine {
             ).into())
     }
 
-    /// Train a model
+    // Train a model
     pub fn train_model(
         &self,
         model_name: String,
@@ -634,7 +634,7 @@ impl MLEngine {
         }
     }
 
-    /// Internal training implementation
+    // Internal training implementation
     fn train_model_internal(
         &self,
         model_type: ModelType,
@@ -714,7 +714,7 @@ impl MLEngine {
         }
     }
 
-    /// Deploy a model
+    // Deploy a model
     pub fn deploy_model(&self, name: &str, version: Option<ModelVersion>) -> Result<()> {
         let mut stored_model = self.registry.get(name, version)?;
         stored_model.metadata.status = ModelStatus::Deployed;
@@ -726,7 +726,7 @@ impl MLEngine {
         Ok(())
     }
 
-    /// Start A/B testing with two model versions
+    // Start A/B testing with two model versions
     pub fn start_ab_test(&self, name: &str, version_a: ModelVersion, version_b: ModelVersion) -> Result<()> {
         // Verify both versions exist
         self.registry.get(name, Some(version_a))?;
@@ -746,7 +746,7 @@ impl MLEngine {
         Ok(())
     }
 
-    /// Archive a model version
+    // Archive a model version
     pub fn archive_model(&self, name: &str, version: ModelVersion) -> Result<()> {
         let mut stored_model = self.registry.get(name, Some(version))?;
         stored_model.metadata.status = ModelStatus::Archived;
@@ -757,19 +757,19 @@ impl MLEngine {
         Ok(())
     }
 
-    /// Get model performance history
+    // Get model performance history
     pub fn get_model_metrics(&self, name: &str) -> Vec<Metrics> {
         let collector = self.metrics_collector.lock();
         collector.get(name).cloned().unwrap_or_default()
     }
 
-    /// List all training jobs
+    // List all training jobs
     pub fn list_jobs(&self) -> Vec<TrainingJob> {
         let jobs = self.jobs.lock();
         jobs.values().cloned().collect()
     }
 
-    /// Cancel a training job
+    // Cancel a training job
     pub fn cancel_job(&self, job_id: &str) -> Result<()> {
         let mut jobs = self.jobs.lock();
         if let Some(job) = jobs.get_mut(job_id) {
@@ -789,7 +789,7 @@ impl MLEngine {
         }
     }
 
-    /// Clean up completed jobs
+    // Clean up completed jobs
     pub fn cleanup_jobs(&self, older_than_seconds: u64) {
         let mut jobs = self.jobs.lock();
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();

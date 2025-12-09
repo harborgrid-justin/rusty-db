@@ -20,213 +20,213 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 
-/// Key identifier
+// Key identifier
 pub type KeyId = String;
 
-/// Encryption algorithm types
+// Encryption algorithm types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum EncryptionAlgorithm {
-    /// AES-256-GCM
+    // AES-256-GCM
     Aes256Gcm,
-    /// ChaCha20-Poly1305
+    // ChaCha20-Poly1305
     ChaCha20Poly1305,
-    /// AES-128-GCM
+    // AES-128-GCM
     Aes128Gcm,
-    /// AES-192-GCM
+    // AES-192-GCM
     Aes192Gcm,
 }
 
-/// Key type in the hierarchy
+// Key type in the hierarchy
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum KeyType {
-    /// Master encryption key (root of hierarchy)
+    // Master encryption key (root of hierarchy)
     Master,
-    /// Table encryption key
+    // Table encryption key
     TableEncryption,
-    /// Column encryption key
+    // Column encryption key
     ColumnEncryption,
-    /// Backup encryption key
+    // Backup encryption key
     BackupEncryption,
-    /// Transaction log encryption key
+    // Transaction log encryption key
     TransactionLogEncryption,
-    /// Temporary key for key rotation
+    // Temporary key for key rotation
     Temporary,
 }
 
-/// Encryption key with metadata
+// Encryption key with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptionKey {
-    /// Unique key identifier
+    // Unique key identifier
     pub id: KeyId,
-    /// Key type
+    // Key type
     pub key_type: KeyType,
-    /// Encryption algorithm
+    // Encryption algorithm
     pub algorithm: EncryptionAlgorithm,
-    /// Encrypted key material (encrypted with master key)
+    // Encrypted key material (encrypted with master key)
     pub encrypted_key_material: Vec<u8>,
-    /// Initialization vector
+    // Initialization vector
     pub iv: Vec<u8>,
-    /// Key version (for rotation)
+    // Key version (for rotation)
     pub version: u32,
-    /// Parent key ID (for key hierarchy)
+    // Parent key ID (for key hierarchy)
     pub parent_key_id: Option<KeyId>,
-    /// Key creation timestamp
+    // Key creation timestamp
     pub created_at: i64,
-    /// Key expiration timestamp
+    // Key expiration timestamp
     pub expires_at: Option<i64>,
-    /// Whether key is currently active
+    // Whether key is currently active
     pub is_active: bool,
-    /// Key rotation state
+    // Key rotation state
     pub rotation_state: KeyRotationState,
-    /// Tags for key management
+    // Tags for key management
     pub tags: HashMap<String, String>,
 }
 
-/// Key rotation state
+// Key rotation state
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum KeyRotationState {
-    /// Normal active state
+    // Normal active state
     Active,
-    /// Being rotated (both old and new keys valid)
+    // Being rotated (both old and new keys valid)
     Rotating,
-    /// Rotation complete, being deprecated
+    // Rotation complete, being deprecated
     Deprecated,
-    /// Destroyed (no longer usable)
+    // Destroyed (no longer usable)
     Destroyed,
 }
 
-/// Transparent Data Encryption configuration for a tablespace
+// Transparent Data Encryption configuration for a tablespace
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TdeConfig {
-    /// Tablespace identifier
+    // Tablespace identifier
     pub tablespace_id: String,
-    /// Encryption key ID
+    // Encryption key ID
     pub key_id: KeyId,
-    /// Algorithm
+    // Algorithm
     pub algorithm: EncryptionAlgorithm,
-    /// Whether TDE is enabled
+    // Whether TDE is enabled
     pub enabled: bool,
-    /// Compression before encryption
+    // Compression before encryption
     pub compress_before_encrypt: bool,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: i64,
-    /// Last key rotation
+    // Last key rotation
     pub last_rotation: Option<i64>,
 }
 
-/// Column encryption configuration
+// Column encryption configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnEncryption {
-    /// Table identifier
+    // Table identifier
     pub table_id: String,
-    /// Column identifier
+    // Column identifier
     pub column_id: String,
-    /// Encryption key ID
+    // Encryption key ID
     pub key_id: KeyId,
-    /// Algorithm
+    // Algorithm
     pub algorithm: EncryptionAlgorithm,
-    /// Whether deterministic encryption (allows equality checks)
+    // Whether deterministic encryption (allows equality checks)
     pub deterministic: bool,
-    /// Salt for key derivation (if deterministic)
+    // Salt for key derivation (if deterministic)
     pub salt: Option<Vec<u8>>,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: i64,
 }
 
-/// Hardware Security Module (HSM) configuration
+// Hardware Security Module (HSM) configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HsmConfig {
-    /// HSM provider type
+    // HSM provider type
     pub provider: HsmProvider,
-    /// Connection endpoint
+    // Connection endpoint
     pub endpoint: String,
-    /// Credentials (encrypted)
+    // Credentials (encrypted)
     pub credentials: Vec<u8>,
-    /// Partition/slot identifier
+    // Partition/slot identifier
     pub partition: Option<String>,
-    /// Whether HSM is enabled
+    // Whether HSM is enabled
     pub enabled: bool,
-    /// Master key ID in HSM
+    // Master key ID in HSM
     pub master_key_id: Option<String>,
 }
 
-/// HSM provider types
+// HSM provider types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum HsmProvider {
-    /// AWS CloudHSM
+    // AWS CloudHSM
     AwsCloudHsm,
-    /// Azure Key Vault
+    // Azure Key Vault
     AzureKeyVault,
-    /// Google Cloud KMS
+    // Google Cloud KMS
     GoogleCloudKms,
-    /// PKCS#11 compatible HSM
+    // PKCS#11 compatible HSM
     Pkcs11,
-    /// Custom provider
+    // Custom provider
     Custom { name: String },
 }
 
-/// Key rotation job
+// Key rotation job
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyRotationJob {
-    /// Job ID
+    // Job ID
     pub id: String,
-    /// Key being rotated
+    // Key being rotated
     pub old_key_id: KeyId,
-    /// New key
+    // New key
     pub new_key_id: KeyId,
-    /// Job state
+    // Job state
     pub state: RotationJobState,
-    /// Started timestamp
+    // Started timestamp
     pub started_at: i64,
-    /// Completed timestamp
+    // Completed timestamp
     pub completed_at: Option<i64>,
-    /// Progress percentage (0-100)
+    // Progress percentage (0-100)
     pub progress: u8,
-    /// Number of data blocks re-encrypted
+    // Number of data blocks re-encrypted
     pub blocks_reencrypted: u64,
-    /// Total blocks to re-encrypt
+    // Total blocks to re-encrypt
     pub total_blocks: u64,
-    /// Error message if failed
+    // Error message if failed
     pub error: Option<String>,
 }
 
-/// State of a key rotation job
+// State of a key rotation job
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum RotationJobState {
-    /// Job is queued
+    // Job is queued
     Queued,
-    /// Job is running
+    // Job is running
     Running,
-    /// Job paused
+    // Job paused
     Paused,
-    /// Job completed successfully
+    // Job completed successfully
     Completed,
-    /// Job failed
+    // Job failed
     Failed,
-    /// Job cancelled
+    // Job cancelled
     Cancelled,
 }
 
-/// Encryption manager
+// Encryption manager
 pub struct EncryptionManager {
-    /// Encryption keys
+    // Encryption keys
     keys: Arc<RwLock<HashMap<KeyId, EncryptionKey>>>,
-    /// TDE configurations by tablespace
+    // TDE configurations by tablespace
     tde_configs: Arc<RwLock<HashMap<String, TdeConfig>>>,
-    /// Column encryption configurations
+    // Column encryption configurations
     column_encryptions: Arc<RwLock<HashMap<String, HashMap<String, ColumnEncryption>>>>,
-    /// HSM configuration
+    // HSM configuration
     hsm_config: Arc<RwLock<Option<HsmConfig>>>,
-    /// Active key rotation jobs
+    // Active key rotation jobs
     rotation_jobs: Arc<RwLock<HashMap<String, KeyRotationJob>>>,
-    /// Master key (in memory, would be in HSM in production)
+    // Master key (in memory, would be in HSM in production)
     master_key: Arc<RwLock<Option<Vec<u8>>>>,
-    /// Key version counter
+    // Key version counter
     key_version_counter: Arc<RwLock<u32>>,
 }
 
 impl EncryptionManager {
-    /// Create a new encryption manager
+    // Create a new encryption manager
     pub fn new() -> Self {
         Self {
             keys: Arc::new(RwLock::new(HashMap::new())),
@@ -239,7 +239,7 @@ impl EncryptionManager {
         }
     }
 
-    /// Initialize with a master key
+    // Initialize with a master key
     pub fn initialize_master_key(&self, master_key: Vec<u8>) -> Result<KeyId> {
         if master_key.len() != 32 {
             return Err(DbError::InvalidInput("Master key must be 32 bytes".to_string()));
@@ -269,7 +269,7 @@ impl EncryptionManager {
         Ok(key.id)
     }
 
-    /// Generate a new encryption key
+    // Generate a new encryption key
     pub fn generate_key(
         &self,
         key_type: KeyType,
@@ -317,7 +317,7 @@ impl EncryptionManager {
         Ok(key_id)
     }
 
-    /// Get a key by ID
+    // Get a key by ID
     pub fn get_key(&self, key_id: &str) -> Result<EncryptionKey> {
         self.keys.read()
             .get(key_id)
@@ -325,7 +325,7 @@ impl EncryptionManager {
             .ok_or_else(|| DbError::NotFound(format!("Key {} not found", key_id)))
     }
 
-    /// Enable TDE for a tablespace
+    // Enable TDE for a tablespace
     pub fn enable_tde(
         &self,
         tablespace_id: String,
@@ -353,7 +353,7 @@ impl EncryptionManager {
         Ok(())
     }
 
-    /// Disable TDE for a tablespace
+    // Disable TDE for a tablespace
     pub fn disable_tde(&self, tablespace_id: &str) -> Result<()> {
         let mut configs = self.tde_configs.write();
 
@@ -366,12 +366,12 @@ impl EncryptionManager {
         Ok(())
     }
 
-    /// Get TDE configuration for a tablespace
+    // Get TDE configuration for a tablespace
     pub fn get_tde_config(&self, tablespace_id: &str) -> Option<TdeConfig> {
         self.tde_configs.read().get(tablespace_id).cloned()
     }
 
-    /// Enable column encryption
+    // Enable column encryption
     pub fn enable_column_encryption(
         &self,
         table_id: String,
@@ -409,7 +409,7 @@ impl EncryptionManager {
         Ok(())
     }
 
-    /// Disable column encryption
+    // Disable column encryption
     pub fn disable_column_encryption(&self, table_id: &str, column_id: &str) -> Result<()> {
         let mut encryptions = self.column_encryptions.write();
 
@@ -427,7 +427,7 @@ impl EncryptionManager {
         }
     }
 
-    /// Get column encryption configuration
+    // Get column encryption configuration
     pub fn get_column_encryption(
         &self,
         table_id: &str,
@@ -439,7 +439,7 @@ impl EncryptionManager {
             .cloned()
     }
 
-    /// Start key rotation
+    // Start key rotation
     pub fn start_key_rotation(&self, old_key_id: &KeyId) -> Result<String> {
         // Get the old key
         let old_key = self.get_key(old_key_id)?;
@@ -483,7 +483,7 @@ impl EncryptionManager {
         Ok(job_id)
     }
 
-    /// Get rotation job status
+    // Get rotation job status
     pub fn get_rotation_job(&self, job_id: &str) -> Result<KeyRotationJob> {
         self.rotation_jobs.read()
             .get(job_id)
@@ -491,7 +491,7 @@ impl EncryptionManager {
             .ok_or_else(|| DbError::NotFound(format!("Rotation job {} not found", job_id)))
     }
 
-    /// Update rotation job progress
+    // Update rotation job progress
     pub fn update_rotation_progress(
         &self,
         job_id: &str,
@@ -523,18 +523,18 @@ impl EncryptionManager {
         }
     }
 
-    /// Configure HSM integration
+    // Configure HSM integration
     pub fn configure_hsm(&self, config: HsmConfig) -> Result<()> {
         *self.hsm_config.write() = Some(config);
         Ok(())
     }
 
-    /// Get HSM configuration
+    // Get HSM configuration
     pub fn get_hsm_config(&self) -> Option<HsmConfig> {
         self.hsm_config.read().clone()
     }
 
-    /// Encrypt data with a specific key
+    // Encrypt data with a specific key
     pub fn encrypt_data(&self, key_id: &str, plaintext: &[u8]) -> Result<Vec<u8>> {
         let key = self.get_key(key_id)?;
 
@@ -551,7 +551,7 @@ impl EncryptionManager {
         Ok(ciphertext)
     }
 
-    /// Decrypt data with a specific key
+    // Decrypt data with a specific key
     pub fn decrypt_data(&self, key_id: &str, ciphertext: &[u8]) -> Result<Vec<u8>> {
         let key = self.get_key(key_id)?;
 
@@ -569,7 +569,7 @@ impl EncryptionManager {
         Ok(plaintext)
     }
 
-    /// Destroy a key (irreversible)
+    // Destroy a key (irreversible)
     pub fn destroy_key(&self, key_id: &KeyId) -> Result<()> {
         let mut keys = self.keys.write();
 
@@ -595,7 +595,7 @@ impl EncryptionManager {
         }
     }
 
-    /// Get all active keys
+    // Get all active keys
     pub fn get_active_keys(&self) -> Vec<EncryptionKey> {
         self.keys.read()
             .values()
@@ -604,7 +604,7 @@ impl EncryptionManager {
             .collect()
     }
 
-    /// Get encryption statistics
+    // Get encryption statistics
     pub fn get_statistics(&self) -> EncryptionStatistics {
         let keys = self.keys.read();
         let tde_configs = self.tde_configs.read();
@@ -687,7 +687,7 @@ impl Default for EncryptionManager {
     }
 }
 
-/// Encryption statistics
+// Encryption statistics
 #[derive(Debug, Clone)]
 pub struct EncryptionStatistics {
     pub total_keys: usize,

@@ -95,18 +95,18 @@ use std::time::{SystemTime, UNIX_EPOCH, Instant};
 use crate::memory::types::*;
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
 use thiserror::Error;
-use tokio::sync::{Semaphore};
+use tokio::sync::Semaphore;
 use uuid::Uuid;
 
-/// Memory pressure management specific errors
+// Memory pressure management specific errors
 #[derive(Error, Debug)]
 pub enum PressureError {
     #[error("Memory monitoring not active")]
@@ -131,140 +131,140 @@ pub enum PressureError {
     ReclamationFailed { reason: String },
 }
 
-/// Memory pressure callback function type
-///
-/// Callbacks are async functions that receive the pressure level and event details
-/// and return the number of bytes freed during cleanup.
+// Memory pressure callback function type
+//
+// Callbacks are async functions that receive the pressure level and event details
+// and return the number of bytes freed during cleanup.
 pub type PressureCallback = Box<
     dyn Fn(MemoryPressureLevel, MemoryPressureEvent) -> Pin<Box<dyn Future<Output = Result<u64, Box<dyn std::error::Error + Send + Sync>>> + Send>>
         + Send
         + Sync,
 >;
 
-/// Callback registration information
+// Callback registration information
 #[derive(Debug)]
 pub struct CallbackRegistration {
-    /// Unique callback identifier
+    // Unique callback identifier
     pub callback_id: Uuid,
-    /// Pressure level that triggers this callback
+    // Pressure level that triggers this callback
     pub trigger_level: MemoryPressureLevel,
-    /// Priority of the callback (lower number = higher priority)
+    // Priority of the callback (lower number = higher priority)
     pub priority: i32,
-    /// Whether the callback is active
+    // Whether the callback is active
     pub is_active: AtomicBool,
-    /// Number of times this callback has been invoked
+    // Number of times this callback has been invoked
     pub invocation_count: AtomicU64,
-    /// Total bytes freed by this callback
+    // Total bytes freed by this callback
     pub total_bytes_freed: AtomicU64,
-    /// Average execution time
+    // Average execution time
     pub avg_execution_time: Arc<Mutex<Duration>>,
-    /// Registration timestamp
+    // Registration timestamp
     pub registered_at: SystemTime,
-    /// Last invocation timestamp
+    // Last invocation timestamp
     pub last_invoked: AtomicU64,
-    /// The actual callback function
+    // The actual callback function
     pub callback: PressureCallback,
 }
 
-/// System memory information
+// System memory information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMemoryInfo {
-    /// Total system memory in bytes
+    // Total system memory in bytes
     pub total_memory: u64,
-    /// Available memory in bytes
+    // Available memory in bytes
     pub available_memory: u64,
-    /// Used memory in bytes
+    // Used memory in bytes
     pub used_memory: u64,
-    /// Free memory in bytes
+    // Free memory in bytes
     pub free_memory: u64,
-    /// Cached memory in bytes
+    // Cached memory in bytes
     pub cached_memory: u64,
-    /// Buffer memory in bytes
+    // Buffer memory in bytes
     pub buffer_memory: u64,
-    /// Shared memory in bytes
+    // Shared memory in bytes
     pub shared_memory: u64,
-    /// Process RSS (Resident Set Size) in bytes
+    // Process RSS (Resident Set Size) in bytes
     pub process_rss: u64,
-    /// Process virtual memory in bytes
+    // Process virtual memory in bytes
     pub process_virtual: u64,
-    /// Memory usage percentage (0.0 to 1.0)
+    // Memory usage percentage (0.0 to 1.0)
     pub usage_ratio: f64,
-    /// Timestamp when this information was collected
+    // Timestamp when this information was collected
     pub collected_at: SystemTime,
 }
 
-/// Memory pressure statistics
+// Memory pressure statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MemoryPressureStats {
-    /// Total number of pressure events
+    // Total number of pressure events
     pub total_events: u64,
-    /// Events by pressure level
+    // Events by pressure level
     pub events_by_level: HashMap<String, u64>,
-    /// Total bytes freed by pressure response
+    // Total bytes freed by pressure response
     pub total_bytes_freed: u64,
-    /// Average event duration
+    // Average event duration
     pub avg_event_duration: Duration,
-    /// Maximum event duration
+    // Maximum event duration
     pub max_event_duration: Duration,
-    /// Number of callback invocations
+    // Number of callback invocations
     pub callback_invocations: u64,
-    /// Number of failed callback invocations
+    // Number of failed callback invocations
     pub failed_callback_invocations: u64,
-    /// Average callback execution time
+    // Average callback execution time
     pub avg_callback_time: Duration,
-    /// Current memory pressure level
+    // Current memory pressure level
     pub current_level: MemoryPressureLevel,
-    /// Time spent at each pressure level
+    // Time spent at each pressure level
     pub time_at_level: HashMap<String, Duration>,
-    /// Peak memory usage observed
+    // Peak memory usage observed
     pub peak_memory_usage: u64,
-    /// Memory reclamation efficiency (freed/requested ratio)
+    // Memory reclamation efficiency (freed/requested ratio)
     pub reclamation_efficiency: f64,
-    /// Number of emergency actions taken
+    // Number of emergency actions taken
     pub emergency_actions: u64,
-    /// System uptime when monitoring started
+    // System uptime when monitoring started
     pub monitoring_uptime: Duration,
-    /// Last updated timestamp
+    // Last updated timestamp
     pub last_updated: SystemTime,
 }
 
-/// Memory pressure event history entry
+// Memory pressure event history entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PressureEventHistory {
-    /// Event identifier
+    // Event identifier
     pub event_id: Uuid,
-    /// When the event occurred
+    // When the event occurred
     pub timestamp: SystemTime,
-    /// Pressure level during the event
+    // Pressure level during the event
     pub level: MemoryPressureLevel,
-    /// System memory state at event time
+    // System memory state at event time
     pub memory_info: SystemMemoryInfo,
-    /// Number of callbacks invoked
+    // Number of callbacks invoked
     pub callbacks_invoked: usize,
-    /// Total bytes freed during event
+    // Total bytes freed during event
     pub bytes_freed: u64,
-    /// Event duration
+    // Event duration
     pub duration: Duration,
-    /// Whether emergency actions were taken
+    // Whether emergency actions were taken
     pub emergency_actions_taken: bool,
-    /// Event resolution method
+    // Event resolution method
     pub resolution: PressureResolution,
-    /// Additional context about the event
+    // Additional context about the event
     pub context: String,
 }
 
-/// How a pressure event was resolved
+// How a pressure event was resolved
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PressureResolution {
-    /// Event resolved through normal callbacks
+    // Event resolved through normal callbacks
     CallbackSuccess,
-    /// Event resolved through emergency actions
+    // Event resolved through emergency actions
     EmergencyAction,
-    /// Event resolved automatically (memory freed by external factors)
+    // Event resolved automatically (memory freed by external factors)
     AutoResolved,
-    /// Event timeout (still in pressure state)
+    // Event timeout (still in pressure state)
     Timeout,
-    /// Event resolution failed
+    // Event resolution failed
     Failed,
 }
 
@@ -280,38 +280,38 @@ impl fmt::Display for PressureResolution {
     }
 }
 
-/// Main memory pressure manager
-///
-/// Coordinates system-wide memory pressure monitoring and response.
-/// Integrates with all allocators and provides callback-based pressure handling.
+// Main memory pressure manager
+//
+// Coordinates system-wide memory pressure monitoring and response.
+// Integrates with all allocators and provides callback-based pressure handling.
 #[derive(Debug)]
 pub struct MemoryPressureManager {
-    /// Configuration for pressure management
+    // Configuration for pressure management
     config: PressureConfig,
-    /// Whether monitoring is active
+    // Whether monitoring is active
     is_monitoring: AtomicBool,
-    /// Current pressure level
+    // Current pressure level
     current_level: Arc<RwLock<MemoryPressureLevel>>,
-    /// Registered pressure callbacks
+    // Registered pressure callbacks
     callbacks: Arc<RwLock<HashMap<Uuid, Arc<CallbackRegistration>>>>,
-    /// Pressure event history
+    // Pressure event history
     event_history: Arc<RwLock<VecDeque<PressureEventHistory>>>,
-    /// Pressure statistics
+    // Pressure statistics
     stats: Arc<AsyncRwLock<MemoryPressureStats>>,
-    /// Last system memory information
+    // Last system memory information
     last_memory_info: Arc<RwLock<Option<SystemMemoryInfo>>>,
-    /// Monitoring task handle
+    // Monitoring task handle
     monitoring_task: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
-    /// Pressure manager creation timestamp
+    // Pressure manager creation timestamp
     created_at: SystemTime,
-    /// Manager unique identifier
+    // Manager unique identifier
     manager_id: Uuid,
-    /// Callback execution semaphore (limits concurrent callbacks)
+    // Callback execution semaphore (limits concurrent callbacks)
     callback_semaphore: Arc<Semaphore>,
 }
 
 impl CallbackRegistration {
-    /// Creates a new callback registration
+    // Creates a new callback registration
     pub fn new(
         trigger_level: MemoryPressureLevel,
         priority: i32,
@@ -331,7 +331,7 @@ impl CallbackRegistration {
         }
     }
 
-    /// Records callback execution
+    // Records callback execution
     pub fn record_execution(&self, execution_time: Duration, bytes_freed: u64) {
         self.invocation_count.fetch_add(1, Ordering::Relaxed);
         self.total_bytes_freed.fetch_add(bytes_freed, Ordering::Relaxed);
@@ -353,7 +353,7 @@ impl CallbackRegistration {
         }
     }
 
-    /// Gets callback statistics
+    // Gets callback statistics
     pub fn get_stats(&self) -> (u64, u64, Duration) {
         (
             self.invocation_count.load(Ordering::Relaxed),
@@ -364,7 +364,7 @@ impl CallbackRegistration {
 }
 
 impl SystemMemoryInfo {
-    /// Collects current system memory information
+    // Collects current system memory information
     pub fn collect() -> Result<Self, PressureError> {
         // Platform-specific memory collection
         #[cfg(target_os = "linux")]
@@ -504,7 +504,7 @@ impl SystemMemoryInfo {
         })
     }
 
-    /// Calculates pressure level based on usage ratio and thresholds
+    // Calculates pressure level based on usage ratio and thresholds
     pub fn calculate_pressure_level(&self, config: &PressureConfig) -> MemoryPressureLevel {
         if self.usage_ratio >= config.emergency_threshold {
             MemoryPressureLevel::Emergency
@@ -519,7 +519,7 @@ impl SystemMemoryInfo {
 }
 
 impl MemoryPressureManager {
-    /// Creates a new memory pressure manager
+    // Creates a new memory pressure manager
     pub async fn new(config: PressureConfig) -> Result<Self, PressureError> {
         // Validate configuration
         if config.warning_threshold >= config.critical_threshold {
@@ -551,7 +551,7 @@ impl MemoryPressureManager {
         })
     }
 
-    /// Registers a pressure callback
+    // Registers a pressure callback
     pub async fn register_callback(
         &self,
         trigger_level: MemoryPressureLevel,
@@ -560,7 +560,7 @@ impl MemoryPressureManager {
         self.register_callback_with_priority(trigger_level, 100, callback).await
     }
 
-    /// Registers a pressure callback with specific priority
+    // Registers a pressure callback with specific priority
     pub async fn register_callback_with_priority(
         &self,
         trigger_level: MemoryPressureLevel,
@@ -582,7 +582,7 @@ impl MemoryPressureManager {
         Ok(callback_id)
     }
 
-    /// Unregisters a pressure callback
+    // Unregisters a pressure callback
     pub async fn unregister_callback(&self, callback_id: Uuid) -> Result<(), PressureError> {
         let mut callbacks = self.callbacks.write();
 
@@ -593,7 +593,7 @@ impl MemoryPressureManager {
         Ok(())
     }
 
-    /// Starts memory pressure monitoring
+    // Starts memory pressure monitoring
     pub async fn start_monitoring(&self) -> Result<(), PressureError> {
         if self.is_monitoring.swap(true, Ordering::Relaxed) {
             return Ok(());  // Already monitoring
@@ -661,7 +661,7 @@ impl MemoryPressureManager {
         Ok(())
     }
 
-    /// Stops memory pressure monitoring
+    // Stops memory pressure monitoring
     pub async fn stop_monitoring(&self) -> Result<(), PressureError> {
         self.is_monitoring.store(false, Ordering::Relaxed);
 
@@ -672,7 +672,7 @@ impl MemoryPressureManager {
         Ok(())
     }
 
-    /// Manually checks current pressure level
+    // Manually checks current pressure level
     pub async fn check_pressure(&self) -> Result<MemoryPressureLevel, PressureError> {
         let memory_info = SystemMemoryInfo::collect()?;
         let pressure_level = memory_info.calculate_pressure_level(&self.config);
@@ -689,7 +689,7 @@ impl MemoryPressureManager {
         Ok(pressure_level)
     }
 
-    /// Handles a pressure event
+    // Handles a pressure event
     async fn handle_pressure_event(
         &self,
         level: MemoryPressureLevel,
@@ -708,7 +708,7 @@ impl MemoryPressureManager {
         Ok(())
     }
 
-    /// Internal pressure event handling
+    // Internal pressure event handling
     async fn handle_pressure_event_internal(
         level: MemoryPressureLevel,
         memory_info: SystemMemoryInfo,
@@ -859,17 +859,17 @@ impl MemoryPressureManager {
         }
     }
 
-    /// Gets current memory information
+    // Gets current memory information
     pub async fn get_memory_info(&self) -> Option<SystemMemoryInfo> {
         self.last_memory_info.read().clone()
     }
 
-    /// Gets current pressure level
+    // Gets current pressure level
     pub async fn get_current_level(&self) -> MemoryPressureLevel {
         *self.current_level.read()
     }
 
-    /// Gets pressure statistics
+    // Gets pressure statistics
     pub async fn get_statistics(&self) -> MemoryPressureStats {
         let mut stats = self.stats.write().await;
         stats.monitoring_uptime = SystemTime::now()
@@ -878,12 +878,12 @@ impl MemoryPressureManager {
         stats.clone()
     }
 
-    /// Gets pressure event history
+    // Gets pressure event history
     pub async fn get_event_history(&self) -> Vec<PressureEventHistory> {
         self.event_history.read().iter().cloned().collect()
     }
 
-    /// Gets callback statistics
+    // Gets callback statistics
     pub async fn get_callback_statistics(&self) -> HashMap<Uuid, (u64, u64)> {
         let callbacks = self.callbacks.read();
         callbacks
@@ -892,7 +892,7 @@ impl MemoryPressureManager {
             .collect()
     }
 
-    /// Forces memory pressure cleanup
+    // Forces memory pressure cleanup
     pub async fn force_cleanup(
         &self,
         target_level: MemoryPressureLevel,
@@ -910,7 +910,7 @@ impl MemoryPressureManager {
         Ok(recent_bytes_freed)
     }
 
-    /// Simulates memory pressure for testing
+    // Simulates memory pressure for testing
     #[cfg(test)]
     pub async fn simulate_pressure(
         &self,
@@ -936,7 +936,7 @@ impl MemoryPressureManager {
         Ok(())
     }
 
-    /// Shuts down the pressure manager gracefully
+    // Shuts down the pressure manager gracefully
     pub async fn shutdown(&self) -> Result<(), PressureError> {
         self.stop_monitoring().await?;
 
@@ -950,16 +950,16 @@ impl MemoryPressureManager {
     }
 }
 
-/// Utility functions
+// Utility functions
 impl MemoryPressureManager {
-    /// Calculates system memory pressure without triggering callbacks
+    // Calculates system memory pressure without triggering callbacks
     pub async fn calculate_pressure_only(&self) -> Result<(MemoryPressureLevel, SystemMemoryInfo), PressureError> {
         let memory_info = SystemMemoryInfo::collect()?;
         let pressure_level = memory_info.calculate_pressure_level(&self.config);
         Ok((pressure_level, memory_info))
     }
 
-    /// Estimates time to next pressure level
+    // Estimates time to next pressure level
     pub async fn estimate_time_to_pressure(
         &self,
         target_level: MemoryPressureLevel,
@@ -970,7 +970,7 @@ impl MemoryPressureManager {
         None
     }
 
-    /// Gets memory efficiency score (0.0 to 1.0)
+    // Gets memory efficiency score (0.0 to 1.0)
     pub async fn get_efficiency_score(&self) -> f64 {
         let stats = self.stats.read().await;
         if stats.total_events > 0 && stats.total_bytes_freed > 0 {

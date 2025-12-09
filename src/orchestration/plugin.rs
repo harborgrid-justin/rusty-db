@@ -32,18 +32,18 @@ use tracing::{debug, error, info, warn};
 
 use crate::error::{Result, DbError};
 
-/// Plugin state
+// Plugin state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PluginState {
-    /// Plugin is registered but not initialized
+    // Plugin is registered but not initialized
     Registered,
-    /// Plugin is initialized
+    // Plugin is initialized
     Initialized,
-    /// Plugin is started and running
+    // Plugin is started and running
     Started,
-    /// Plugin is stopped
+    // Plugin is stopped
     Stopped,
-    /// Plugin failed
+    // Plugin failed
     Failed,
 }
 
@@ -59,25 +59,25 @@ impl fmt::Display for PluginState {
     }
 }
 
-/// Plugin metadata
+// Plugin metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginMetadata {
-    /// Plugin name
+    // Plugin name
     pub name: String,
-    /// Plugin version
+    // Plugin version
     pub version: String,
-    /// Plugin author
+    // Plugin author
     pub author: String,
-    /// Plugin description
+    // Plugin description
     pub description: String,
-    /// Plugin dependencies (other plugin names)
+    // Plugin dependencies (other plugin names)
     pub dependencies: Vec<String>,
-    /// Required API version
+    // Required API version
     pub api_version: String,
 }
 
 impl PluginMetadata {
-    /// Create new plugin metadata
+    // Create new plugin metadata
     pub fn new(name: String, version: String) -> Self {
         Self {
             name,
@@ -89,40 +89,40 @@ impl PluginMetadata {
         }
     }
 
-    /// Add author
+    // Add author
     pub fn with_author(mut self, author: String) -> Self {
         self.author = author;
         self
     }
 
-    /// Add description
+    // Add description
     pub fn with_description(mut self, description: String) -> Self {
         self.description = description;
         self
     }
 
-    /// Add dependencies
+    // Add dependencies
     pub fn with_dependencies(mut self, dependencies: Vec<String>) -> Self {
         self.dependencies = dependencies;
         self
     }
 }
 
-/// Plugin configuration
+// Plugin configuration
 pub type PluginConfig = HashMap<String, serde_json::Value>;
 
-/// Plugin context for accessing system services
+// Plugin context for accessing system services
 pub struct PluginContext {
-    /// Plugin name
+    // Plugin name
     plugin_name: String,
-    /// Plugin configuration
+    // Plugin configuration
     config: Arc<RwLock<PluginConfig>>,
-    /// Event bus for plugin communication
+    // Event bus for plugin communication
     event_bus: Arc<PluginEventBus>,
 }
 
 impl PluginContext {
-    /// Create a new plugin context
+    // Create a new plugin context
     pub fn new(
         plugin_name: String,
         config: PluginConfig,
@@ -135,87 +135,87 @@ impl PluginContext {
         }
     }
 
-    /// Get plugin name
+    // Get plugin name
     pub fn plugin_name(&self) -> &str {
         &self.plugin_name
     }
 
-    /// Get configuration value
+    // Get configuration value
     pub fn get_config(&self, key: &str) -> Option<serde_json::Value> {
         let config = self.config.read();
         config.get(key).cloned()
     }
 
-    /// Set configuration value
+    // Set configuration value
     pub fn set_config(&self, key: String, value: serde_json::Value) {
         let mut config = self.config.write();
         config.insert(key, value);
     }
 
-    /// Emit an event
+    // Emit an event
     pub fn emit_event(&self, event: PluginEvent) {
         self.event_bus.emit(event);
     }
 
-    /// Subscribe to events
+    // Subscribe to events
     pub fn subscribe(&self, event_type: &str) -> tokio::sync::mpsc::UnboundedReceiver<PluginEvent> {
         self.event_bus.subscribe(event_type)
     }
 }
 
-/// Trait for plugins
+// Trait for plugins
 #[async_trait::async_trait]
 pub trait Plugin: Send + Sync {
-    /// Get plugin metadata
+    // Get plugin metadata
     fn metadata(&self) -> PluginMetadata;
 
-    /// Initialize the plugin
+    // Initialize the plugin
     async fn initialize(&mut self, ctx: &PluginContext) -> Result<()> {
         let _ = ctx;
         Ok(())
     }
 
-    /// Start the plugin
+    // Start the plugin
     async fn start(&mut self, ctx: &PluginContext) -> Result<()> {
         let _ = ctx;
         Ok(())
     }
 
-    /// Stop the plugin
+    // Stop the plugin
     async fn stop(&mut self, ctx: &PluginContext) -> Result<()> {
         let _ = ctx;
         Ok(())
     }
 
-    /// Handle a plugin event
+    // Handle a plugin event
     async fn handle_event(&mut self, event: &PluginEvent, ctx: &PluginContext) -> Result<()> {
         let _ = (event, ctx);
         Ok(())
     }
 
-    /// Get plugin as Any for downcasting
+    // Get plugin as Any for downcasting
     fn as_any(&self) -> &dyn Any;
 
-    /// Get plugin as mutable Any
+    // Get plugin as mutable Any
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-/// Plugin event for communication
+// Plugin event for communication
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginEvent {
-    /// Event type
+    // Event type
     pub event_type: String,
-    /// Event source (plugin name)
+    // Event source (plugin name)
     pub source: String,
-    /// Event data
+    // Event data
     pub data: serde_json::Value,
-    /// Timestamp
+    // Timestamp
     #[serde(skip, default = "std::time::Instant::now")]
     pub timestamp: std::time::Instant,
 }
 
 impl PluginEvent {
-    /// Create a new plugin event
+    // Create a new plugin event
     pub fn new(event_type: String, source: String, data: serde_json::Value) -> Self {
         Self {
             event_type,
@@ -226,21 +226,21 @@ impl PluginEvent {
     }
 }
 
-/// Plugin event bus for inter-plugin communication
+// Plugin event bus for inter-plugin communication
 pub struct PluginEventBus {
-    /// Event subscribers
+    // Event subscribers
     subscribers: RwLock<HashMap<String, Vec<tokio::sync::mpsc::UnboundedSender<PluginEvent>>>>,
 }
 
 impl PluginEventBus {
-    /// Create a new event bus
+    // Create a new event bus
     pub fn new() -> Arc<Self> {
         Arc::new(Self {
             subscribers: RwLock::new(HashMap::new()),
         })
     }
 
-    /// Subscribe to events of a specific type
+    // Subscribe to events of a specific type
     pub fn subscribe(&self, event_type: &str) -> tokio::sync::mpsc::UnboundedReceiver<PluginEvent> {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
 
@@ -253,7 +253,7 @@ impl PluginEventBus {
         rx
     }
 
-    /// Emit an event
+    // Emit an event
     pub fn emit(&self, event: PluginEvent) {
         let subscribers = self.subscribers.read();
 
@@ -271,7 +271,7 @@ impl PluginEventBus {
         }
     }
 
-    /// Clear all subscribers
+    // Clear all subscribers
     pub fn clear(&self) {
         let mut subscribers = self.subscribers.write();
         subscribers.clear();
@@ -286,30 +286,30 @@ impl Default for PluginEventBus {
     }
 }
 
-/// Plugin instance wrapper
+// Plugin instance wrapper
 struct PluginInstance {
-    /// The plugin
+    // The plugin
     plugin: Box<dyn Plugin>,
-    /// Plugin state
+    // Plugin state
     state: PluginState,
-    /// Plugin context
+    // Plugin context
     context: Arc<PluginContext>,
-    /// Metadata
+    // Metadata
     metadata: PluginMetadata,
 }
 
-/// Plugin registry for managing plugins
+// Plugin registry for managing plugins
 pub struct PluginRegistry {
-    /// Registered plugins
+    // Registered plugins
     plugins: RwLock<HashMap<String, PluginInstance>>,
-    /// Event bus
+    // Event bus
     event_bus: Arc<PluginEventBus>,
-    /// Global configuration
+    // Global configuration
     global_config: RwLock<PluginConfig>,
 }
 
 impl PluginRegistry {
-    /// Create a new plugin registry
+    // Create a new plugin registry
     pub fn new() -> Self {
         Self {
             plugins: RwLock::new(HashMap::new()),
@@ -318,7 +318,7 @@ impl PluginRegistry {
         }
     }
 
-    /// Register a plugin
+    // Register a plugin
     pub fn register(&self, plugin: Box<dyn Plugin>, config: PluginConfig) -> Result<()> {
         let metadata = plugin.metadata();
         let name = metadata.name.clone();
@@ -359,7 +359,7 @@ impl PluginRegistry {
         Ok(())
     }
 
-    /// Initialize a plugin
+    // Initialize a plugin
     pub async fn initialize(&self, name: &str) -> Result<()> {
         // Check dependencies first (immutable borrow)
         {
@@ -401,7 +401,7 @@ impl PluginRegistry {
         Ok(())
     }
 
-    /// Start a plugin
+    // Start a plugin
     pub async fn start(&self, name: &str) -> Result<()> {
         let mut plugins = self.plugins.write();
         let instance = plugins
@@ -423,7 +423,7 @@ impl PluginRegistry {
         Ok(())
     }
 
-    /// Stop a plugin
+    // Stop a plugin
     pub async fn stop(&self, name: &str) -> Result<()> {
         let mut plugins = self.plugins.write();
         let instance = plugins
@@ -445,7 +445,7 @@ impl PluginRegistry {
         Ok(())
     }
 
-    /// Unregister a plugin
+    // Unregister a plugin
     pub async fn unregister(&self, name: &str) -> Result<()> {
         // Stop first if running
         if let Ok(state) = self.get_state(name) {
@@ -463,7 +463,7 @@ impl PluginRegistry {
         }
     }
 
-    /// Get plugin state
+    // Get plugin state
     pub fn get_state(&self, name: &str) -> Result<PluginState> {
         let plugins = self.plugins.read();
         plugins
@@ -472,13 +472,13 @@ impl PluginRegistry {
             .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))
     }
 
-    /// Get plugin metadata
+    // Get plugin metadata
     pub fn get_metadata(&self, name: &str) -> Option<PluginMetadata> {
         let plugins = self.plugins.read();
         plugins.get(name).map(|p| p.metadata.clone())
     }
 
-    /// List all plugins
+    // List all plugins
     pub fn list_plugins(&self) -> Vec<PluginInfo> {
         let plugins = self.plugins.read();
         plugins
@@ -490,7 +490,7 @@ impl PluginRegistry {
             .collect()
     }
 
-    /// Initialize all plugins
+    // Initialize all plugins
     pub async fn initialize_all(&self) -> Result<()> {
         info!("Initializing all plugins...");
 
@@ -519,7 +519,7 @@ impl PluginRegistry {
         }
     }
 
-    /// Start all plugins
+    // Start all plugins
     pub async fn start_all(&self) -> Result<()> {
         info!("Starting all plugins...");
 
@@ -548,7 +548,7 @@ impl PluginRegistry {
         }
     }
 
-    /// Stop all plugins
+    // Stop all plugins
     pub async fn stop_all(&self) -> Result<()> {
         info!("Stopping all plugins...");
 
@@ -576,24 +576,24 @@ impl PluginRegistry {
         }
     }
 
-    /// Get event bus
+    // Get event bus
     pub fn event_bus(&self) -> &Arc<PluginEventBus> {
         &self.event_bus
     }
 
-    /// Set global configuration
+    // Set global configuration
     pub fn set_global_config(&self, config: PluginConfig) {
         let mut global = self.global_config.write();
         *global = config;
     }
 
-    /// Get global configuration
+    // Get global configuration
     pub fn get_global_config(&self) -> PluginConfig {
         let global = self.global_config.read();
         global.clone()
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn statistics(&self) -> PluginRegistryStats {
         let plugins = self.plugins.read();
 
@@ -615,21 +615,21 @@ impl Default for PluginRegistry {
     }
 }
 
-/// Plugin information
+// Plugin information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
-    /// Plugin metadata
+    // Plugin metadata
     pub metadata: PluginMetadata,
-    /// Current state
+    // Current state
     pub state: PluginState,
 }
 
-/// Statistics about the plugin registry
+// Statistics about the plugin registry
 #[derive(Debug, Clone)]
 pub struct PluginRegistryStats {
-    /// Total number of plugins
+    // Total number of plugins
     pub total_plugins: usize,
-    /// Number of plugins in each state
+    // Number of plugins in each state
     pub state_counts: HashMap<PluginState, usize>,
 }
 

@@ -1,21 +1,21 @@
-/// Advanced B+ Tree Index Implementation - PhD-Level Optimizations
-///
-/// Revolutionary features:
-/// - Adaptive branching factor based on workload analysis
-/// - SIMD-accelerated binary search (AVX2/NEON)
-/// - Cache-line aligned nodes for zero false sharing
-/// - Prefix compression for string keys (40-70% space savings)
-/// - Optimistic lock coupling with version numbers
-/// - Bulk loading with Hilbert curve ordering
-/// - Concurrent access using optimistic locking protocol
-/// - Range scan support with prefetching
-/// - Write-optimized delta chains for hot nodes
-///
-/// Performance characteristics:
-/// - Point queries: O(log_B N / SIMD_WIDTH) with 1-2 cache misses
-/// - Range scans: O(log_B N + k) where k = result size
-/// - Inserts: O(log_B N) with optimistic path, O(log_B N) pessimistic
-/// - Space: 40-70% reduction with prefix compression on strings
+// Advanced B+ Tree Index Implementation - PhD-Level Optimizations
+//
+// Revolutionary features:
+// - Adaptive branching factor based on workload analysis
+// - SIMD-accelerated binary search (AVX2/NEON)
+// - Cache-line aligned nodes for zero false sharing
+// - Prefix compression for string keys (40-70% space savings)
+// - Optimistic lock coupling with version numbers
+// - Bulk loading with Hilbert curve ordering
+// - Concurrent access using optimistic locking protocol
+// - Range scan support with prefetching
+// - Write-optimized delta chains for hot nodes
+//
+// Performance characteristics:
+// - Point queries: O(log_B N / SIMD_WIDTH) with 1-2 cache misses
+// - Range scans: O(log_B N + k) where k = result size
+// - Inserts: O(log_B N) with optimistic path, O(log_B N) pessimistic
+// - Space: 40-70% reduction with prefix compression on strings
 
 use crate::Result;
 use parking_lot::RwLock;
@@ -26,21 +26,21 @@ use std::fmt::Debug;
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
-/// Adaptive order - starts at 64, can grow to 256 based on workload
+// Adaptive order - starts at 64, can grow to 256 based on workload
 const MIN_ORDER: usize = 32;
 const DEFAULT_ORDER: usize = 64;
 const MAX_ORDER: usize = 256;
 
-/// Cache line size for alignment
+// Cache line size for alignment
 const CACHE_LINE_SIZE: usize = 64;
 
-/// Minimum number of keys in a node (except root)
+// Minimum number of keys in a node (except root)
 const MIN_KEYS: usize = DEFAULT_ORDER / 2 - 1;
 
-/// SIMD width for vectorized operations
+// SIMD width for vectorized operations
 const SIMD_WIDTH: usize = 8; // AVX2 can compare 8 i32s or 4 i64s at once
 
-/// B+ Tree Index with Adaptive Optimization
+// B+ Tree Index with Adaptive Optimization
 pub struct BPlusTree<K: Ord + Clone + Debug, V: Clone + Debug> {
     root: Arc<RwLock<Option<NodeRef<K, V>>>>,
     order: Arc<AtomicUsize>,  // Adaptive branching factor
@@ -61,7 +61,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Clone for BPlusTree<K, V> {
     }
 }
 
-/// Configuration for B+Tree behavior
+// Configuration for B+Tree behavior
 #[derive(Clone, Debug)]
 pub struct BTreeConfig {
     pub enable_adaptive_order: bool,
@@ -81,7 +81,7 @@ impl Default for BTreeConfig {
     }
 }
 
-/// Adaptive statistics for workload-aware optimization
+// Adaptive statistics for workload-aware optimization
 #[derive(Debug)]
 pub struct AdaptiveStats {
     point_queries: AtomicU64,
@@ -106,12 +106,12 @@ impl Default for AdaptiveStats {
 }
 
 impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
-    /// Create a new B+ tree with default configuration
+    // Create a new B+ tree with default configuration
     pub fn new() -> Self {
         Self::with_config(BTreeConfig::default())
     }
 
-    /// Create a new B+ tree with specified order
+    // Create a new B+ tree with specified order
     pub fn with_order(order: usize) -> Self {
         assert!(order >= 3, "B+ tree order must be at least 3");
         Self {
@@ -123,7 +123,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Create a new B+ tree with full configuration
+    // Create a new B+ tree with full configuration
     pub fn with_config(config: BTreeConfig) -> Self {
         Self {
             root: Arc::new(RwLock::new(None)),
@@ -134,12 +134,12 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Get current adaptive order
+    // Get current adaptive order
     fn get_order(&self) -> usize {
         self.order.load(AtomicOrdering::Relaxed)
     }
 
-    /// Adjust branching factor based on workload analysis
+    // Adjust branching factor based on workload analysis
     fn maybe_adjust_order(&self) {
         if !self.config.enable_adaptive_order {
             return;
@@ -169,7 +169,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Insert a key-value pair
+    // Insert a key-value pair
     pub fn insert(&self, key: K, value: V) -> Result<()> {
         // Track statistics
         self.stats.inserts.fetch_add(1, AtomicOrdering::Relaxed);
@@ -211,7 +211,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         Ok(())
     }
 
-    /// Recursive insert with latch crabbing
+    // Recursive insert with latch crabbing
     fn insert_recursive(
         &self,
         node_ref: NodeRef<K, V>,
@@ -261,7 +261,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Search for a key with SIMD acceleration
+    // Search for a key with SIMD acceleration
     pub fn search(&self, key: &K) -> Result<Option<V>> {
         // Track statistics
         self.stats.point_queries.fetch_add(1, AtomicOrdering::Relaxed);
@@ -274,7 +274,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Recursive search
+    // Recursive search
     fn search_recursive(&self, node_ref: NodeRef<K, V>, key: &K) -> Result<Option<V>> {
         let node = node_ref.read();
 
@@ -291,7 +291,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Range scan from start to end (inclusive) with prefetching
+    // Range scan from start to end (inclusive) with prefetching
     pub fn range_scan(&self, start: &K, end: &K) -> Result<Vec<(K, V)>> {
         // Track statistics
         self.stats.range_queries.fetch_add(1, AtomicOrdering::Relaxed);
@@ -307,7 +307,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Find the leaf node that should contain the key
+    // Find the leaf node that should contain the key
     fn find_leaf(&self, node_ref: NodeRef<K, V>, key: &K) -> Result<NodeRef<K, V>> {
         let node = node_ref.read();
 
@@ -323,7 +323,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Collect key-value pairs in range from leaf nodes
+    // Collect key-value pairs in range from leaf nodes
     fn collect_range(
         &self,
         mut current_leaf: NodeRef<K, V>,
@@ -357,7 +357,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         Ok(results)
     }
 
-    /// Delete a key
+    // Delete a key
     pub fn delete(&self, key: &K) -> Result<bool> {
         let root_lock = self.root.read();
 
@@ -372,7 +372,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Recursive delete
+    // Recursive delete
     fn delete_recursive(&self, node_ref: NodeRef<K, V>, key: &K) -> Result<bool> {
         let mut node = node_ref.write();
 
@@ -390,8 +390,8 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         }
     }
 
-    /// Bulk load data efficiently
-    /// This is optimized for loading sorted data into an empty tree
+    // Bulk load data efficiently
+    // This is optimized for loading sorted data into an empty tree
     pub fn bulk_load(&self, mut data: Vec<(K, V)>) -> Result<()> {
         if data.is_empty() {
             return Ok(());
@@ -420,7 +420,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         Ok(())
     }
 
-    /// Build leaf level for bulk loading
+    // Build leaf level for bulk loading
     fn build_leaf_level(&self, data: Vec<(K, V)>) -> Result<Vec<NodeRef<K, V>>> {
         let mut leaves = Vec::new();
         let order = self.order.load(AtomicOrdering::Relaxed);
@@ -471,7 +471,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         Ok(leaves)
     }
 
-    /// Build internal levels for bulk loading
+    // Build internal levels for bulk loading
     fn build_internal_levels(&self, mut children: Vec<NodeRef<K, V>>) -> Result<NodeRef<K, V>> {
         let mut height = 1;
         let order = self.order.load(AtomicOrdering::Relaxed);
@@ -513,7 +513,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
         Ok(children[0].clone())
     }
 
-    /// Get tree statistics
+    // Get tree statistics
     pub fn stats(&self) -> BTreeStats {
         let root_lock = self.root.read();
         let height = *self.height.read();
@@ -558,10 +558,10 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
     }
 }
 
-/// Node reference type
+// Node reference type
 type NodeRef<K, V> = Arc<RwLock<Node<K, V>>>;
 
-/// B+ Tree Node
+// B+ Tree Node
 #[derive(Debug)]
 struct Node<K: Ord + Clone + Debug, V: Clone + Debug> {
     keys: Vec<K>,
@@ -575,7 +575,7 @@ struct Node<K: Ord + Clone + Debug, V: Clone + Debug> {
 }
 
 impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
-    /// Create a new leaf node
+    // Create a new leaf node
     fn new_leaf(order: usize) -> Self {
         Self {
             keys: Vec::with_capacity(order),
@@ -586,7 +586,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
         }
     }
 
-    /// Create a new internal node
+    // Create a new internal node
     fn new_internal(order: usize) -> Self {
         Self {
             keys: Vec::with_capacity(order),
@@ -597,8 +597,8 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
         }
     }
 
-    /// Find the index of the child to descend into
-    /// Uses SIMD when available and beneficial
+    // Find the index of the child to descend into
+    // Uses SIMD when available and beneficial
     fn find_child_index(&self, key: &K) -> usize {
         // For small key counts, linear search is faster due to SIMD
         if self.keys.len() < 16 {
@@ -614,7 +614,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
         }
     }
 
-    /// SIMD-accelerated search for integer keys (when available)
+    // SIMD-accelerated search for integer keys (when available)
     #[cfg(target_arch = "x86_64")]
     #[inline]
     fn simd_find_child_index_i64(&self, target: i64, keys_i64: &[i64]) -> usize {
@@ -655,7 +655,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
         keys.len()
     }
 
-    /// Insert in leaf node
+    // Insert in leaf node
     fn insert_in_leaf(&mut self, key: K, value: V) -> Result<()> {
         let pos = self.entries.binary_search_by(|(k, _)| k.cmp(&key))
             .unwrap_or_else(|e| e);
@@ -666,7 +666,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
         Ok(())
     }
 
-    /// Insert in internal node
+    // Insert in internal node
     fn insert_in_internal(
         &mut self,
         key: K,
@@ -678,7 +678,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
         Ok(())
     }
 
-    /// Split a leaf node
+    // Split a leaf node
     fn split_leaf(&mut self, order: usize) -> Result<(K, Node<K, V>)> {
         let split_point = order / 2;
 
@@ -696,7 +696,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
         Ok((split_key, new_leaf))
     }
 
-    /// Split an internal node
+    // Split an internal node
     fn split_internal(&mut self, order: usize) -> Result<(K, Node<K, V>)> {
         let split_point = order / 2;
 
@@ -713,7 +713,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
         Ok((median_key, new_node))
     }
 
-    /// Search in leaf node
+    // Search in leaf node
     fn search_in_leaf(&self, key: &K) -> Option<V> {
         self.entries
             .binary_search_by(|(k, _)| k.cmp(key))
@@ -721,7 +721,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
             .map(|idx| self.entries[idx].1.clone())
     }
 
-    /// Delete from leaf node
+    // Delete from leaf node
     fn delete_from_leaf(&mut self, key: &K) -> bool {
         if let Ok(idx) = self.entries.binary_search_by(|(k, _)| k.cmp(key)) {
             self.entries.remove(idx);
@@ -733,7 +733,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
     }
 }
 
-/// B+ Tree statistics
+// B+ Tree statistics
 #[derive(Debug, Clone)]
 pub struct BTreeStats {
     pub height: usize,
@@ -821,5 +821,3 @@ mod tests {
         assert!(stats.leaf_nodes > 0);
     }
 }
-
-

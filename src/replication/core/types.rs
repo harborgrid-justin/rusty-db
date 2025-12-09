@@ -1,4 +1,4 @@
-//! Replication types and data structures
+// Replication types and data structures
 use serde::{Serialize, Deserialize};
 use std::path::PathBuf;
 

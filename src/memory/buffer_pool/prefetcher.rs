@@ -1,18 +1,18 @@
-//! Page Prefetcher
-//!
-//! Sequential scan detection and prefetching.
+// Page Prefetcher
+//
+// Sequential scan detection and prefetching.
 
 use super::common::*;
 use serde::{Serialize, Deserialize};
 
 pub struct PagePrefetcher {
-    /// Sequential scan detection window
+    // Sequential scan detection window
     scan_window: usize,
-    /// Recent access pattern
+    // Recent access pattern
     access_history: Mutex<VecDeque<PageId>>,
-    /// Prefetch queue
+    // Prefetch queue
     prefetch_queue: Mutex<VecDeque<PageId>>,
-    /// Statistics
+    // Statistics
     stats: PrefetchStats,
 }
 
@@ -39,7 +39,7 @@ impl PagePrefetcher {
         }
     }
 
-    /// Record page access and predict next pages
+    // Record page access and predict next pages
     pub fn record_access(&self, page_id: PageId) -> Vec<PageId> {
         let mut history = self.access_history.lock();
         history.push_back(page_id);
@@ -57,7 +57,7 @@ impl PagePrefetcher {
         Vec::new()
     }
 
-    /// Check if access pattern is sequential
+    // Check if access pattern is sequential
     fn is_sequential_scan(&self, history: &VecDeque<PageId>) -> bool {
         if history.len() < 3 {
             return false;
@@ -76,7 +76,7 @@ impl PagePrefetcher {
         sequential_count as f64 / (vec.len() - 1) as f64 > 0.7
     }
 
-    /// Predict next pages in sequential scan
+    // Predict next pages in sequential scan
     fn predict_sequential(&self, last_page: PageId) -> Vec<PageId> {
         let mut predictions = Vec::new();
 
@@ -92,7 +92,7 @@ impl PagePrefetcher {
         predictions
     }
 
-    /// Get prefetch statistics
+    // Get prefetch statistics
     pub fn get_stats(&self) -> PrefetchStatsSnapshot {
         PrefetchStatsSnapshot {
             prefetch_requests: self.stats.prefetch_requests.load(Ordering::Relaxed),
@@ -110,4 +110,3 @@ pub struct PrefetchStatsSnapshot {
     pub prefetch_misses: u64,
     pub sequential_scans_detected: u64,
 }
-

@@ -1,6 +1,6 @@
-//! Checkpoint Management
-//!
-//! Checkpoint queue and incremental checkpointing.
+// Checkpoint Management
+//
+// Checkpoint queue and incremental checkpointing.
 
 use super::common::*;
 use serde::{Serialize, Deserialize};
@@ -13,15 +13,15 @@ pub struct DirtyPage {
     pub frame: Arc<BufferFrame>,
 }
 
-/// Checkpoint queue for dirty pages
+// Checkpoint queue for dirty pages
 pub struct CheckpointQueue {
-    /// Dirty pages ordered by LSN
+    // Dirty pages ordered by LSN
     queue: Mutex<BTreeMap<u64, Vec<DirtyPage>>>,
-    /// Total dirty pages
+    // Total dirty pages
     dirty_count: AtomicUsize,
-    /// Checkpoint LSN watermark
+    // Checkpoint LSN watermark
     checkpoint_lsn: AtomicU64,
-    /// Statistics
+    // Statistics
     stats: CheckpointStats,
 }
 
@@ -46,7 +46,7 @@ impl CheckpointQueue {
         }
     }
 
-    /// Add dirty page to checkpoint queue
+    // Add dirty page to checkpoint queue
     pub fn enqueue(&self, dirty_page: DirtyPage) {
         let lsn = dirty_page.lsn;
         let mut queue = self.queue.lock();
@@ -59,7 +59,7 @@ impl CheckpointQueue {
         self.stats.pages_queued.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Get pages to flush up to a given LSN
+    // Get pages to flush up to a given LSN
     pub fn get_pages_to_flush(&self, up_to_lsn: u64) -> Vec<DirtyPage> {
         let mut queue = self.queue.lock();
         let mut pages = Vec::new();
@@ -80,7 +80,7 @@ impl CheckpointQueue {
         pages
     }
 
-    /// Perform checkpoint
+    // Perform checkpoint
     pub fn checkpoint(&self) -> CheckpointResult {
         self.stats.checkpoints.fetch_add(1, Ordering::Relaxed);
 
@@ -103,12 +103,12 @@ impl CheckpointQueue {
         }
     }
 
-    /// Get dirty page count
+    // Get dirty page count
     pub fn dirty_count(&self) -> usize {
         self.dirty_count.load(Ordering::Relaxed)
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> CheckpointStatsSnapshot {
         CheckpointStatsSnapshot {
             pages_queued: self.stats.pages_queued.load(Ordering::Relaxed),
@@ -134,17 +134,17 @@ pub struct CheckpointStatsSnapshot {
     pub current_dirty_count: usize,
 }
 
-/// Incremental checkpoint manager
+// Incremental checkpoint manager
 pub struct IncrementalCheckpointer {
-    /// Checkpoint interval in seconds
+    // Checkpoint interval in seconds
     interval: Duration,
-    /// Pages per checkpoint batch
+    // Pages per checkpoint batch
     batch_size: usize,
-    /// Checkpoint queue reference
+    // Checkpoint queue reference
     checkpoint_queue: Arc<CheckpointQueue>,
-    /// Running flag
+    // Running flag
     running: Arc<AtomicBool>,
-    /// Statistics
+    // Statistics
     stats: IncrementalCheckpointStats,
 }
 
@@ -174,7 +174,7 @@ impl IncrementalCheckpointer {
         }
     }
 
-    /// Start incremental checkpointing
+    // Start incremental checkpointing
     pub fn start(&self) {
         if self.running.swap(true, Ordering::Acquire) {
             return; // Already running
@@ -200,12 +200,12 @@ impl IncrementalCheckpointer {
         });
     }
 
-    /// Stop incremental checkpointing
+    // Stop incremental checkpointing
     pub fn stop(&self) {
         self.running.store(false, Ordering::Release);
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> IncrementalCheckpointStatsSnapshot {
         IncrementalCheckpointStatsSnapshot {
             incremental_checkpoints: self.stats.incremental_checkpoints.load(Ordering::Relaxed),

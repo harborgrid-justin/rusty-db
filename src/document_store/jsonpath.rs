@@ -7,55 +7,55 @@ use serde_json::Value;
 use std::collections::VecDeque;
 use crate::error::Result;
 
-/// JSONPath expression
+// JSONPath expression
 #[derive(Debug, Clone, PartialEq)]
 pub enum JsonPath {
-    /// Root element ($)
+    // Root element ($)
     Root,
-    /// Current element (@)
+    // Current element (@)
     Current,
-    /// Child element by name
+    // Child element by name
     Child(String),
-    /// All children (*)
+    // All children (*)
     Wildcard,
-    /// Recursive descent (..)
+    // Recursive descent (..)
     RecursiveDescent(Box<JsonPath>),
-    /// Array index [n]
+    // Array index [n]
     Index(i64),
-    /// Array slice [start:end:step]
+    // Array slice [start:end:step]
     Slice { start: Option<i64>, end: Option<i64>, step: Option<i64> },
-    /// Filter expression [?(...)]
+    // Filter expression [?(...)]
     Filter(Box<FilterExpression>),
-    /// Union of multiple paths [path1, path2, ...]
+    // Union of multiple paths [path1, path2, ...]
     Union(Vec<JsonPath>),
-    /// Sequence of path segments
+    // Sequence of path segments
     Sequence(Vec<JsonPath>),
 }
 
-/// Filter expression for conditional selection
+// Filter expression for conditional selection
 #[derive(Debug, Clone, PartialEq)]
 pub enum FilterExpression {
-    /// Comparison: path op value
+    // Comparison: path op value
     Comparison {
         left: Box<FilterExpression>,
         op: ComparisonOp,
         right: Box<FilterExpression>,
     },
-    /// Logical AND
+    // Logical AND
     And(Box<FilterExpression>, Box<FilterExpression>),
-    /// Logical OR
+    // Logical OR
     Or(Box<FilterExpression>, Box<FilterExpression>),
-    /// Logical NOT
+    // Logical NOT
     Not(Box<FilterExpression>),
-    /// Path expression
+    // Path expression
     Path(JsonPath),
-    /// Literal value
+    // Literal value
     Literal(Value),
-    /// Exists check
+    // Exists check
     Exists(JsonPath),
 }
 
-/// Comparison operators
+// Comparison operators
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ComparisonOp {
     Equal,
@@ -67,19 +67,19 @@ pub enum ComparisonOp {
     RegexMatch,
 }
 
-/// JSONPath parser
+// JSONPath parser
 pub struct JsonPathParser {
     input: String,
     position: usize,
 }
 
 impl JsonPathParser {
-    /// Create a new parser
+    // Create a new parser
     pub fn new(input: String) -> Self {
         Self { input, position: 0 }
     }
 
-    /// Parse a JSONPath expression
+    // Parse a JSONPath expression
     pub fn parse(&mut self) -> Result<JsonPath> {
         self.skip_whitespace();
 
@@ -440,11 +440,11 @@ impl JsonPathParser {
     }
 }
 
-/// JSONPath evaluator
+// JSONPath evaluator
 pub struct JsonPathEvaluator;
 
 impl JsonPathEvaluator {
-    /// Evaluate a JSONPath expression against a JSON value
+    // Evaluate a JSONPath expression against a JSON value
     pub fn evaluate(path: &JsonPath, value: &Value) -> Result<Vec<Value>> {
         let mut results = Vec::new();
         Self::evaluate_path(path, value, &mut results)?;
@@ -723,7 +723,7 @@ impl JsonPathEvaluator {
     }
 }
 
-/// High-level JSONPath query API
+// High-level JSONPath query API
 pub fn query(jsonpath: &str, value: &Value) -> Result<Vec<Value>> {
     let mut parser = JsonPathParser::new(jsonpath.to_string());
     let path = parser.parse()?;

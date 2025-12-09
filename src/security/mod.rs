@@ -151,28 +151,28 @@ pub use circuit_breaker::{
     CircuitBreaker, CircuitBreakerConfig, CircuitState, CircuitBreakerMetrics,
 };
 
-/// Integrated security manager combining all security subsystems
+// Integrated security manager combining all security subsystems
 pub struct IntegratedSecurityManager {
-    /// RBAC manager
+    // RBAC manager
     pub rbac: Arc<RbacManager>,
-    /// FGAC manager
+    // FGAC manager
     pub fgac: Arc<FgacManager>,
-    /// Encryption manager
+    // Encryption manager
     pub encryption: Arc<EncryptionManager>,
-    /// Audit manager
+    // Audit manager
     pub audit: Arc<AuditManager>,
-    /// Authentication manager
+    // Authentication manager
     pub authentication: Arc<AuthenticationManager>,
-    /// Privilege manager
+    // Privilege manager
     pub privileges: Arc<PrivilegeManager>,
-    /// Label manager
+    // Label manager
     pub labels: Arc<LabelManager>,
-    /// Insider threat manager
+    // Insider threat manager
     pub insider_threat: Arc<InsiderThreatManager>,
 }
 
 impl IntegratedSecurityManager {
-    /// Create a new integrated security manager
+    // Create a new integrated security manager
     pub fn new() -> Self {
         Self {
             rbac: Arc::new(RbacManager::new()),
@@ -186,7 +186,7 @@ impl IntegratedSecurityManager {
         }
     }
 
-    /// Authenticate a user and create a session
+    // Authenticate a user and create a session
     pub fn authenticate(&self, username: &str, password: &str) -> Result<AuthSession> {
         let credentials = LoginCredentials {
             username: username.to_string(),
@@ -253,7 +253,7 @@ impl IntegratedSecurityManager {
         }
     }
 
-    /// Check if user has permission for an operation
+    // Check if user has permission for an operation
     pub fn check_permission(
         &self,
         session_id: &str,
@@ -285,7 +285,7 @@ impl IntegratedSecurityManager {
         Ok(result.has_privilege)
     }
 
-    /// Filter rows based on security policies
+    // Filter rows based on security policies
     pub fn filter_rows(
         &self,
         session_id: &str,
@@ -307,7 +307,7 @@ impl IntegratedSecurityManager {
         Ok(label_filtered)
     }
 
-    /// Grant a privilege to a user
+    // Grant a privilege to a user
     pub fn grant_privilege(
         &self,
         grantor_session_id: &str,
@@ -344,7 +344,7 @@ impl IntegratedSecurityManager {
         Ok(grant_id)
     }
 
-    /// Encrypt sensitive data
+    // Encrypt sensitive data
     pub fn encrypt_data(&self, key_id: &str, plaintext: &[u8]) -> Result<Vec<u8>> {
         let ciphertext = self.encryption.encrypt_data(key_id, plaintext)?;
 
@@ -362,7 +362,7 @@ impl IntegratedSecurityManager {
         Ok(ciphertext)
     }
 
-    /// Decrypt sensitive data
+    // Decrypt sensitive data
     pub fn decrypt_data(&self, key_id: &str, ciphertext: &[u8]) -> Result<Vec<u8>> {
         let plaintext = self.encryption.decrypt_data(key_id, ciphertext)?;
 
@@ -380,7 +380,7 @@ impl IntegratedSecurityManager {
         Ok(plaintext)
     }
 
-    /// Get security statistics
+    // Get security statistics
     pub fn get_statistics(&self) -> SecurityStatistics {
         SecurityStatistics {
             audit_stats: self.audit.get_statistics(),
@@ -394,7 +394,7 @@ impl IntegratedSecurityManager {
         }
     }
 
-    /// Assess query for insider threats
+    // Assess query for insider threats
     pub fn assess_query_threat(
         &self,
         user_id: &str,
@@ -423,7 +423,7 @@ impl Default for IntegratedSecurityManager {
     }
 }
 
-/// Combined security statistics
+// Combined security statistics
 #[derive(Debug, Clone)]
 pub struct SecurityStatistics {
     pub audit_stats: audit::AuditStatistics,

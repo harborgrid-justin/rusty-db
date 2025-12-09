@@ -13,25 +13,25 @@ use crate::spatial::geometry::{BoundingBox, Coordinate};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 
-/// Spatial index trait
+// Spatial index trait
 pub trait SpatialIndex: Send + Sync {
-    /// Insert a geometry with associated ID
+    // Insert a geometry with associated ID
     fn insert(&mut self, id: u64, bbox: BoundingBox) -> Result<()>;
 
-    /// Remove a geometry by ID
+    // Remove a geometry by ID
     fn remove(&mut self, id: u64) -> Result<bool>;
 
-    /// Search for geometries intersecting the query box
+    // Search for geometries intersecting the query box
     fn search(&self, query: &BoundingBox) -> Vec<u64>;
 
-    /// Find nearest neighbor
+    // Find nearest neighbor
     fn nearest(&self, point: &Coordinate, max_distance: f64) -> Option<u64>;
 
-    /// Get statistics about the index
+    // Get statistics about the index
     fn stats(&self) -> IndexStats;
 }
 
-/// Index statistics
+// Index statistics
 #[derive(Debug, Clone)]
 pub struct IndexStats {
     pub num_entries: usize,
@@ -40,7 +40,7 @@ pub struct IndexStats {
     pub avg_fill_factor: f64,
 }
 
-/// R-tree node
+// R-tree node
 #[derive(Debug, Clone)]
 struct RTreeNode {
     bbox: BoundingBox,
@@ -64,7 +64,7 @@ impl RTreeEntry {
     }
 }
 
-/// R-tree spatial index
+// R-tree spatial index
 pub struct RTree {
     root: Option<RTreeNode>,
     max_entries: usize,
@@ -74,12 +74,12 @@ pub struct RTree {
 }
 
 impl RTree {
-    /// Create a new R-tree with default capacity
+    // Create a new R-tree with default capacity
     pub fn new() -> Self {
         Self::with_capacity(8, 3)
     }
 
-    /// Create an R-tree with specified capacity
+    // Create an R-tree with specified capacity
     pub fn with_capacity(max_entries: usize, min_entries: usize) -> Self {
         Self {
             root: None,
@@ -90,7 +90,7 @@ impl RTree {
         }
     }
 
-    /// Bulk load entries efficiently
+    // Bulk load entries efficiently
     pub fn bulk_load(&mut self, mut entries: Vec<(u64, BoundingBox)>) -> Result<()> {
         if entries.is_empty() {
             return Ok(());
@@ -447,7 +447,7 @@ impl RTree {
     }
 }
 
-/// Quadtree for point data
+// Quadtree for point data
 pub struct Quadtree {
     root: Option<QuadtreeNode>,
     bounds: BoundingBox,
@@ -647,7 +647,7 @@ impl SpatialIndex for Quadtree {
     }
 }
 
-/// Grid-based spatial index for uniform distributions
+// Grid-based spatial index for uniform distributions
 pub struct GridIndex {
     grid: HashMap<(i32, i32), Vec<(u64, BoundingBox)>>,
     cell_size: f64,
@@ -780,7 +780,7 @@ impl SpatialIndex for GridIndex {
     }
 }
 
-/// Hilbert curve utilities for spatial ordering
+// Hilbert curve utilities for spatial ordering
 pub struct HilbertCurve {
     order: u32,
 }
@@ -790,7 +790,7 @@ impl HilbertCurve {
         Self { order }
     }
 
-    /// Convert (x, y) coordinates to Hilbert distance
+    // Convert (x, y) coordinates to Hilbert distance
     pub fn xy_to_distance(&self, x: u32, y: u32) -> u64 {
         let mut d = 0u64;
         let mut s = 1 << (self.order - 1);
@@ -811,7 +811,7 @@ impl HilbertCurve {
         d
     }
 
-    /// Convert Hilbert distance to (x, y) coordinates
+    // Convert Hilbert distance to (x, y) coordinates
     pub fn distance_to_xy(&self, mut d: u64) -> (u32, u32) {
         let mut x = 0u32;
         let mut y = 0u32;
@@ -844,7 +844,7 @@ impl HilbertCurve {
         }
     }
 
-    /// Sort points by Hilbert order
+    // Sort points by Hilbert order
     pub fn sort_points(&self, points: &mut [(u64, Coordinate)]) {
         points.sort_by_key(|(_, coord)| {
             let x = (coord.x * 1000.0) as u32;
@@ -854,7 +854,7 @@ impl HilbertCurve {
     }
 }
 
-/// Thread-safe spatial index wrapper
+// Thread-safe spatial index wrapper
 pub struct ConcurrentSpatialIndex {
     index: Arc<RwLock<Box<dyn SpatialIndex>>>,
 }
@@ -887,7 +887,7 @@ impl ConcurrentSpatialIndex {
     }
 }
 
-/// Index builder for bulk loading
+// Index builder for bulk loading
 pub struct SpatialIndexBuilder {
     index_type: IndexType,
     entries: Vec<(u64, BoundingBox)>,

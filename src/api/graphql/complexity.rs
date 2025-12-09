@@ -21,7 +21,7 @@ use crate::error::DbError;
 // PART 5: PERFORMANCE & SECURITY (600+ lines)
 // ============================================================================
 
-/// Query complexity analyzer
+// Query complexity analyzer
 pub struct ComplexityAnalyzer {
     max_complexity: usize,
     max_depth: usize,
@@ -83,7 +83,7 @@ impl ComplexityAnalyzer {
     }
 }
 
-/// Complexity metrics
+// Complexity metrics
 #[derive(Debug, Clone)]
 pub struct ComplexityMetrics {
     pub total_complexity: usize,
@@ -93,7 +93,7 @@ pub struct ComplexityMetrics {
     pub has_subscriptions: bool,
 }
 
-/// Rate limiter for GraphQL operations
+// Rate limiter for GraphQL operations
 pub struct RateLimiter {
     limits: Arc<RwLock<HashMap<String, RateLimit>>>,
     requests: Arc<RwLock<HashMap<String, VecDeque<Instant>>>>,
@@ -150,14 +150,14 @@ impl RateLimiter {
     }
 }
 
-/// Rate limit configuration
+// Rate limit configuration
 #[derive(Clone, Debug)]
 pub struct RateLimit {
     pub max_requests: usize,
     pub window_secs: u64,
 }
 
-/// Authorization context for field-level security
+// Authorization context for field-level security
 pub struct AuthorizationContext {
     user_id: String,
     roles: HashSet<String>,
@@ -200,7 +200,7 @@ impl AuthorizationContext {
     }
 }
 
-/// Query result cache
+// Query result cache
 pub struct QueryCache {
     cache: Arc<RwLock<HashMap<String, CacheEntry>>>,
     max_size: usize,
@@ -257,7 +257,7 @@ impl QueryCache {
     }
 }
 
-/// Cache entry
+// Cache entry
 #[derive(Clone, Debug)]
 struct CacheEntry {
     data: Vec<RowType>,
@@ -265,7 +265,7 @@ struct CacheEntry {
     expires_at: Instant,
 }
 
-/// DataLoader for N+1 query prevention
+// DataLoader for N+1 query prevention
 pub struct DataLoader<K, V> {
     loader_fn: Arc<dyn Fn(Vec<K>) -> Pin<Box<dyn Future<Output = HashMap<K, V>> + Send>> + Send + Sync>,
     cache: Arc<RwLock<HashMap<K, V>>>,
@@ -348,7 +348,7 @@ where
     }
 }
 
-/// Persisted queries manager
+// Persisted queries manager
 pub struct PersistedQueries {
     queries: Arc<RwLock<HashMap<String, String>>>,
 }
@@ -381,7 +381,7 @@ impl PersistedQueries {
     }
 }
 
-/// GraphQL extension for performance monitoring
+// GraphQL extension for performance monitoring
 pub struct PerformanceExtension;
 
 impl ExtensionFactory for PerformanceExtension {
@@ -417,7 +417,7 @@ impl Extension for PerformanceExtensionImpl {
     }
 }
 
-/// Depth limiting extension
+// Depth limiting extension
 pub struct DepthLimitExtension {
     max_depth: usize,
 }

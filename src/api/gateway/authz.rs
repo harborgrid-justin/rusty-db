@@ -20,58 +20,58 @@ use super::types::*;
 // Authorization Engine - RBAC, ABAC, Policy Engine
 // ============================================================================
 
-/// Authorization engine
+// Authorization engine
 pub struct AuthorizationEngine {
-    /// RBAC manager
+    // RBAC manager
     rbac: Arc<RbacManager>,
-    /// ABAC evaluator
+    // ABAC evaluator
     abac: Arc<AbacEvaluator>,
-    /// Policy engine
+    // Policy engine
     policy_engine: Arc<PolicyEngine>,
 }
 
-/// RBAC manager
+// RBAC manager
 pub struct RbacManager {
-    /// Roles
+    // Roles
     roles: Arc<RwLock<HashMap<String, Role>>>,
-    /// User role assignments
+    // User role assignments
     user_roles: Arc<RwLock<HashMap<String, Vec<String>>>>,
 }
 
-/// Role definition
+// Role definition
 #[derive(Debug, Clone)]
 pub struct Role {
-    /// Role ID
+    // Role ID
     pub id: String,
-    /// Role name
+    // Role name
     pub name: String,
-    /// Description
+    // Description
     pub description: String,
-    /// Permissions
+    // Permissions
     pub permissions: Vec<String>,
-    /// Parent roles (inheritance)
+    // Parent roles (inheritance)
     pub parent_roles: Vec<String>,
-    /// Created at
+    // Created at
     pub created_at: SystemTime,
 }
 
-/// ABAC evaluator
+// ABAC evaluator
 pub struct AbacEvaluator {
-    /// Attribute providers
+    // Attribute providers
     attribute_providers: Vec<Arc<dyn AttributeProvider>>,
 }
 
-/// Attribute provider trait
+// Attribute provider trait
 pub trait AttributeProvider: Send + Sync {
-    /// Get attributes for subject
+    // Get attributes for subject
     fn get_subject_attributes(&self, subject: &str) -> HashMap<String, AttributeValue>;
-    /// Get attributes for resource
+    // Get attributes for resource
     fn get_resource_attributes(&self, resource: &str) -> HashMap<String, AttributeValue>;
-    /// Get attributes for environment
+    // Get attributes for environment
     fn get_environment_attributes(&self) -> HashMap<String, AttributeValue>;
 }
 
-/// Attribute value
+// Attribute value
 #[derive(Debug, Clone, PartialEq)]
 pub enum AttributeValue {
     String(String),
@@ -80,52 +80,52 @@ pub enum AttributeValue {
     List(Vec<AttributeValue>),
 }
 
-/// Policy engine
+// Policy engine
 pub struct PolicyEngine {
-    /// Policies
+    // Policies
     policies: Arc<RwLock<HashMap<String, Policy>>>,
 }
 
-/// Policy definition
+// Policy definition
 #[derive(Debug, Clone)]
 pub struct Policy {
-    /// Policy ID
+    // Policy ID
     pub id: String,
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Description
+    // Description
     pub description: String,
-    /// Effect
+    // Effect
     pub effect: PolicyEffect,
-    /// Subjects (who)
+    // Subjects (who)
     pub subjects: Vec<String>,
-    /// Resources (what)
+    // Resources (what)
     pub resources: Vec<String>,
-    /// Actions (how)
+    // Actions (how)
     pub actions: Vec<String>,
-    /// Conditions
+    // Conditions
     pub conditions: Vec<PolicyCondition>,
 }
 
-/// Policy effect
+// Policy effect
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PolicyEffect {
     Allow,
     Deny,
 }
 
-/// Policy condition
+// Policy condition
 #[derive(Debug, Clone)]
 pub struct PolicyCondition {
-    /// Attribute path
+    // Attribute path
     pub attribute: String,
-    /// Operator
+    // Operator
     pub operator: PolicyOperator,
-    /// Value
+    // Value
     pub value: AttributeValue,
 }
 
-/// Policy operator
+// Policy operator
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PolicyOperator {
     Equals,
@@ -142,7 +142,7 @@ pub enum PolicyOperator {
 }
 
 impl AuthorizationEngine {
-    /// Create new authorization engine
+    // Create new authorization engine
     pub fn new() -> Self {
         Self {
             rbac: Arc::new(RbacManager::new()),
@@ -151,7 +151,7 @@ impl AuthorizationEngine {
         }
     }
 
-    /// Authorize session for permissions
+    // Authorize session for permissions
     pub fn authorize(&self, session: &Session, required_permissions: &[String]) -> Result<bool, DbError> {
         // Check RBAC first
         if self.rbac.has_permissions(&session.user_id, required_permissions) {
@@ -168,12 +168,12 @@ impl AuthorizationEngine {
         Ok(true)
     }
 
-    /// Check if user has permission
+    // Check if user has permission
     pub fn check_permission(&self, user_id: &str, permission: &str) -> bool {
         self.rbac.has_permission(user_id, permission)
     }
 
-    /// Evaluate policy
+    // Evaluate policy
     pub fn evaluate_policy(&self, subject: &str, resource: &str, action: &str) -> Result<bool, DbError> {
         self.policy_engine.evaluate(subject, resource, action)
     }
@@ -187,19 +187,19 @@ impl RbacManager {
         }
     }
 
-    /// Create role
+    // Create role
     pub fn create_role(&self, role: Role) {
         let mut roles = self.roles.write();
         roles.insert(role.id.clone(), role);
     }
 
-    /// Assign role to user
+    // Assign role to user
     pub fn assign_role(&self, user_id: String, role_id: String) {
         let mut user_roles = self.user_roles.write();
         user_roles.entry(user_id).or_insert_with(Vec::new).push(role_id);
     }
 
-    /// Remove role from user
+    // Remove role from user
     pub fn remove_role(&self, user_id: &str, role_id: &str) -> bool {
         let mut user_roles = self.user_roles.write();
         if let Some(roles) = user_roles.get_mut(user_id) {
@@ -211,7 +211,7 @@ impl RbacManager {
         false
     }
 
-    /// Get user roles
+    // Get user roles
     pub fn get_user_roles(&self, user_id: &str) -> Vec<Role> {
         let user_roles = self.user_roles.read();
         let roles = self.roles.read();
@@ -225,7 +225,7 @@ impl RbacManager {
             .unwrap_or_default()
     }
 
-    /// Get all permissions for user (including inherited)
+    // Get all permissions for user (including inherited)
     pub fn get_user_permissions(&self, user_id: &str) -> HashSet<String> {
         let mut permissions = HashSet::new();
         let user_roles = self.get_user_roles(user_id);
@@ -239,13 +239,13 @@ impl RbacManager {
         permissions
     }
 
-    /// Check if user has permission
+    // Check if user has permission
     pub fn has_permission(&self, user_id: &str, permission: &str) -> bool {
         let permissions = self.get_user_permissions(user_id);
         permissions.contains(permission)
     }
 
-    /// Check if user has all permissions
+    // Check if user has all permissions
     pub fn has_permissions(&self, user_id: &str, required: &[String]) -> bool {
         let permissions = self.get_user_permissions(user_id);
         required.iter().all(|p| permissions.contains(p))
@@ -259,12 +259,12 @@ impl AbacEvaluator {
         }
     }
 
-    /// Add attribute provider
+    // Add attribute provider
     pub fn add_provider(&mut self, provider: Arc<dyn AttributeProvider>) {
         self.attribute_providers.push(provider);
     }
 
-    /// Evaluate ABAC policy
+    // Evaluate ABAC policy
     pub fn evaluate(&self, subject: &str, resource: &str, action: &str, conditions: &[PolicyCondition]) -> bool {
         // Collect attributes
         let mut subject_attrs = HashMap::new();
@@ -301,7 +301,7 @@ impl AbacEvaluator {
         true
     }
 
-    /// Evaluate single condition
+    // Evaluate single condition
     fn evaluate_condition(&self, actual: &AttributeValue, operator: &PolicyOperator, expected: &AttributeValue) -> bool {
         match operator {
             PolicyOperator::Equals => actual == expected,
@@ -318,19 +318,19 @@ impl PolicyEngine {
         }
     }
 
-    /// Add policy
+    // Add policy
     pub fn add_policy(&self, policy: Policy) {
         let mut policies = self.policies.write();
         policies.insert(policy.id.clone(), policy);
     }
 
-    /// Remove policy
+    // Remove policy
     pub fn remove_policy(&self, policy_id: &str) -> bool {
         let mut policies = self.policies.write();
         policies.remove(policy_id).is_some()
     }
 
-    /// Evaluate policies
+    // Evaluate policies
     pub fn evaluate(&self, subject: &str, resource: &str, action: &str) -> Result<bool, DbError> {
         let policies = self.policies.read();
 
@@ -365,7 +365,7 @@ impl PolicyEngine {
         }
     }
 
-    /// Match pattern (supports wildcards)
+    // Match pattern (supports wildcards)
     fn matches_pattern(&self, patterns: &[String], value: &str) -> bool {
         if patterns.is_empty() {
             return true;
@@ -389,7 +389,7 @@ impl PolicyEngine {
         false
     }
 
-    /// Get all policies
+    // Get all policies
     pub fn get_policies(&self) -> Vec<Policy> {
         let policies = self.policies.read();
         policies.values().cloned().collect()

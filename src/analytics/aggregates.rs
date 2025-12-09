@@ -18,87 +18,87 @@ use crate::error::{Result, DbError};
 // Aggregate Function Definitions
 // =============================================================================
 
-/// Aggregate function types supported by the analytics engine.
-///
-/// These functions operate on a set of values and return a single result.
+// Aggregate function types supported by the analytics engine.
+//
+// These functions operate on a set of values and return a single result.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AggregateFunction {
     // Basic aggregates
-    /// Count of all rows
+    // Count of all rows
     Count,
-    /// Count of distinct values
+    // Count of distinct values
     CountDistinct,
-    /// Sum of numeric values
+    // Sum of numeric values
     Sum,
-    /// Average of numeric values
+    // Average of numeric values
     Avg,
-    /// Minimum value
+    // Minimum value
     Min,
-    /// Maximum value
+    // Maximum value
     Max,
 
     // Statistical aggregates
-    /// Sample standard deviation
+    // Sample standard deviation
     StdDev,
-    /// Population standard deviation
+    // Population standard deviation
     StdDevPop,
-    /// Sample variance
+    // Sample variance
     Variance,
-    /// Population variance
+    // Population variance
     VarPop,
-    /// Median (50th percentile)
+    // Median (50th percentile)
     Median,
-    /// Most frequent value
+    // Most frequent value
     Mode,
-    /// Arbitrary percentile
+    // Arbitrary percentile
     Percentile { percentile: f64 },
 
     // Positional aggregates
-    /// First value in the group
+    // First value in the group
     FirstValue,
-    /// Last value in the group
+    // Last value in the group
     LastValue,
 
     // String aggregates
-    /// Concatenate strings with separator
+    // Concatenate strings with separator
     StringAgg { separator: String },
 
     // Collection aggregates
-    /// Collect values into an array
+    // Collect values into an array
     ArrayAgg,
-    /// Collect values into JSON array
+    // Collect values into JSON array
     JsonAgg,
-    /// Collect key-value pairs into JSON object
+    // Collect key-value pairs into JSON object
     JsonObjectAgg,
 
     // Bitwise aggregates
-    /// Bitwise AND of all values
+    // Bitwise AND of all values
     BitAnd,
-    /// Bitwise OR of all values
+    // Bitwise OR of all values
     BitOr,
-    /// Bitwise XOR of all values
+    // Bitwise XOR of all values
     BitXor,
 
     // Boolean aggregates
-    /// True if all values are true
+    // True if all values are true
     BoolAnd,
-    /// True if any value is true
+    // True if any value is true
     BoolOr,
-    /// Alias for BoolAnd
+    // Alias for BoolAnd
     Every,
 
     // Regression aggregates
-    /// Correlation coefficient
+    // Correlation coefficient
     Corr,
-    /// Population covariance
+    // Population covariance
     CovarPop,
-    /// Sample covariance
+    // Sample covariance
     CovarSamp,
-    /// Slope of linear regression
+    // Slope of linear regression
     RegrSlope,
-    /// Y-intercept of linear regression
+    // Y-intercept of linear regression
     RegrIntercept,
-    /// R-squared (coefficient of determination)
+    // R-squared (coefficient of determination)
     RegrR2,
 }
 
@@ -106,15 +106,15 @@ pub enum AggregateFunction {
 // Aggregate Computation
 // =============================================================================
 
-/// Compute an aggregate function over a column of data.
-///
-/// # Arguments
-/// * `data` - The input data rows
-/// * `column_index` - Index of the column to aggregate
-/// * `function` - The aggregate function to apply
-///
-/// # Returns
-/// The computed aggregate value as a string, or an error.
+// Compute an aggregate function over a column of data.
+//
+// # Arguments
+// * `data` - The input data rows
+// * `column_index` - Index of the column to aggregate
+// * `function` - The aggregate function to apply
+//
+// # Returns
+// The computed aggregate value as a string, or an error.
 pub fn compute_aggregate(
     data: &[Vec<String>],
     column_index: usize,
@@ -315,7 +315,7 @@ AggregateFunction::LastValue => {
 // Helper Functions
 // =============================================================================
 
-/// Extract numeric values from a column.
+// Extract numeric values from a column.
 fn extract_numeric_values(data: &[Vec<String>], column_index: usize) -> Vec<f64> {
     data.iter()
         .filter_map(|row| row.get(column_index))
@@ -323,12 +323,12 @@ fn extract_numeric_values(data: &[Vec<String>], column_index: usize) -> Vec<f64>
         .collect()
 }
 
-/// Compute standard deviation.
+// Compute standard deviation.
 fn compute_stddev(values: &[f64], population: bool) -> f64 {
     compute_variance(values, population).sqrt()
 }
 
-/// Compute variance.
+// Compute variance.
 fn compute_variance(values: &[f64], population: bool) -> f64 {
     if values.is_empty() {
         return 0.0;
@@ -346,7 +346,7 @@ fn compute_variance(values: &[f64], population: bool) -> f64 {
     sum_sq / divisor
 }
 
-/// Compute percentile using linear interpolation.
+// Compute percentile using linear interpolation.
 fn compute_percentile(values: &[f64], percentile: f64) -> f64 {
     if values.is_empty() {
         return 0.0;
@@ -359,7 +359,7 @@ fn compute_percentile(values: &[f64], percentile: f64) -> f64 {
     sorted[index.min(sorted.len() - 1)]
 }
 
-/// Format a number, removing unnecessary trailing zeros.
+// Format a number, removing unnecessary trailing zeros.
 fn format_number(value: f64) -> String {
     if value.fract() == 0.0 {
         format!("{:.0}", value)
@@ -372,9 +372,9 @@ fn format_number(value: f64) -> String {
 // Aggregate State for Incremental Computation
 // =============================================================================
 
-/// State for incremental aggregate computation.
-///
-/// Allows computing aggregates incrementally as data arrives.
+// State for incremental aggregate computation.
+//
+// Allows computing aggregates incrementally as data arrives.
 #[derive(Debug, Clone)]
 pub struct AggregateState {
     function: AggregateFunction,
@@ -387,7 +387,7 @@ pub struct AggregateState {
 }
 
 impl AggregateState {
-    /// Create a new aggregate state.
+    // Create a new aggregate state.
     pub fn new(function: AggregateFunction) -> Self {
         Self {
             function,
@@ -400,7 +400,7 @@ impl AggregateState {
         }
     }
 
-    /// Add a value to the aggregate.
+    // Add a value to the aggregate.
     pub fn add(&mut self, value: f64) {
         self.count += 1;
         self.sum += value;
@@ -415,7 +415,7 @@ impl AggregateState {
         }
     }
 
-    /// Get the current aggregate value.
+    // Get the current aggregate value.
     pub fn result(&self) -> f64 {
         match &self.function {
             AggregateFunction::Count => self.count as f64,

@@ -6,7 +6,7 @@ use crate::transaction::TransactionManager;
 use std::sync::Arc;
 use std::collections::HashMap;
 
-/// Query executor
+// Query executor
 pub struct Executor {
     catalog: Arc<Catalog>,
     txn_manager: Arc<TransactionManager>,
@@ -19,8 +19,8 @@ impl Executor {
             txn_manager,
         }
     }
-    
-    /// Execute SQL statement (inline for performance)
+
+    // Execute SQL statement (inline for performance)
     #[inline]
     pub fn execute(&self, stmt: SqlStatement) -> Result<QueryResult, DbError> {
         match stmt {
@@ -35,29 +35,29 @@ impl Executor {
             }
             SqlStatement::Select { table, columns, join, group_by, order_by, limit, .. } => {
                 let schema = self.catalog.get_table(&table)?;
-                
+
                 // Simple implementation - return empty result with schema
                 let result_columns = if columns.contains(&"*".to_string()) {
                     schema.columns.iter().map(|c| c.name.clone()).collect()
                 } else {
                     columns
                 };
-                
+
                 // Handle JOIN (placeholder)
                 if join.is_some() {
                     // JOIN implementation would go here
                 }
-                
+
                 // Handle GROUP BY (placeholder)
                 if !group_by.is_empty() {
                     // Aggregation would be applied here
                 }
-                
+
                 // Handle ORDER BY (placeholder)
                 if !order_by.is_empty() {
                     // Sorting would be applied here
                 }
-                
+
                 Ok(QueryResult::new(result_columns, Vec::new()))
             }
             SqlStatement::Insert { table, .. } => {
@@ -99,8 +99,8 @@ impl Executor {
             }
         }
     }
-    
-    /// Execute a query plan node (inline for performance)
+
+    // Execute a query plan node (inline for performance)
     #[inline]
     pub fn execute_plan(&self, plan: PlanNode) -> Result<QueryResult, DbError> {
         match plan {
@@ -137,36 +137,36 @@ impl Executor {
             }
         }
     }
-    
+
     fn execute_table_scan(&self, table: &str, columns: &[String]) -> Result<QueryResult, DbError> {
         let schema = self.catalog.get_table(table)?;
-        
+
         let result_columns = if columns.contains(&"*".to_string()) {
             schema.columns.iter().map(|c| c.name.clone()).collect()
         } else {
             columns.to_vec()
         };
-        
+
         // Return empty result for now - actual data scanning would go here
         Ok(QueryResult::new(result_columns, Vec::new()))
     }
-    
+
     fn execute_filter(&self, input: QueryResult, _predicate: &str) -> Result<QueryResult, DbError> {
         // TODO: Implement actual filtering based on predicate
         // For now, just pass through the input
         Ok(input)
     }
-    
+
     fn execute_project(&self, input: QueryResult, columns: &[String]) -> Result<QueryResult, DbError> {
         // Project only the specified columns
         if columns.contains(&"*".to_string()) {
             return Ok(input);
         }
-        
+
         // TODO: Implement column projection
         Ok(QueryResult::new(columns.to_vec(), Vec::new()))
     }
-    
+
     fn execute_join(
         &self,
         left: QueryResult,
@@ -177,9 +177,9 @@ impl Executor {
         // Combine column names from both sides
         let mut result_columns = left.columns.clone();
         result_columns.extend(right.columns.clone());
-        
+
         let mut result_rows = Vec::new();
-        
+
         // Helper function to check join condition
         // TODO: Implement proper condition parsing and evaluation
         // For now, we perform a cross join (all combinations)
@@ -190,7 +190,7 @@ impl Executor {
             // and evaluate it against the row values
             true
         };
-        
+
         match join_type {
             JoinType::Inner => {
                 // INNER JOIN: Only matching rows
@@ -216,7 +216,7 @@ impl Executor {
                         result_rows.push(combined_row);
                         found_match = true;
                     }
-                    
+
                     if !found_match {
                         let mut combined_row = left_row.clone();
                         combined_row.extend(vec!["NULL".to_string(); right.columns.len()]);
@@ -236,7 +236,7 @@ impl Executor {
                         result_rows.push(combined_row);
                         found_match = true;
                     }
-                    
+
                     if !found_match {
                         let mut combined_row = vec!["NULL".to_string(); left.columns.len()];
                         combined_row.extend(right_row.clone());
@@ -247,7 +247,7 @@ impl Executor {
             JoinType::Full => {
                 // FULL OUTER JOIN: All rows from both tables
                 let mut matched_right = vec![false; right.rows.len()];
-                
+
                 for left_row in &left.rows {
                     let mut found_match = false;
                     for (i, right_row) in right.rows.iter().enumerate() {
@@ -259,14 +259,14 @@ impl Executor {
                         found_match = true;
                         matched_right[i] = true;
                     }
-                    
+
                     if !found_match {
                         let mut combined_row = left_row.clone();
                         combined_row.extend(vec!["NULL".to_string(); right.columns.len()]);
                         result_rows.push(combined_row);
                     }
                 }
-                
+
                 // Add unmatched right rows
                 for (i, right_row) in right.rows.iter().enumerate() {
                     if !matched_right[i] {
@@ -287,10 +287,10 @@ impl Executor {
                 }
             }
         }
-        
+
         Ok(QueryResult::new(result_columns, result_rows))
     }
-    
+
     fn execute_aggregate(
         &self,
         input: QueryResult,
@@ -304,10 +304,10 @@ impl Executor {
             // No grouping - single aggregate result
             let mut result_columns = Vec::new();
             let mut result_row = Vec::new();
-            
+
             for agg in aggregates {
                 result_columns.push(agg.column.clone());
-                
+
                 // Calculate aggregate value
                 let value = match agg.function {
                     AggregateFunction::Count => input.rows.len().to_string(),
@@ -318,21 +318,21 @@ impl Executor {
                     AggregateFunction::StdDev => "0".to_string(), // TODO: Implement
                     AggregateFunction::Variance => "0".to_string(), // TODO: Implement
                 };
-                
+
                 result_row.push(value);
             }
-            
+
             Ok(QueryResult::new(result_columns, vec![result_row]))
         } else {
             // Group by columns
             let _groups: HashMap<Vec<String>, Vec<Vec<String>>> = HashMap::new();
-            
+
             // TODO: Implement grouping logic
             // For now, return empty result
             Ok(QueryResult::new(group_by.to_vec(), Vec::new()))
         }
     }
-    
+
     fn execute_sort(
         &self,
         input: QueryResult,
@@ -342,7 +342,7 @@ impl Executor {
         // For now, just return the input as-is
         Ok(input)
     }
-    
+
     fn execute_limit(
         &self,
         mut input: QueryResult,
@@ -350,12 +350,12 @@ impl Executor {
         offset: Option<usize>,
     ) -> Result<QueryResult, DbError> {
         let start = offset.unwrap_or(0);
-        
+
         input.rows = input.rows.into_iter()
             .skip(start)
             .take(limit)
             .collect();
-        
+
         Ok(input)
     }
 }
@@ -364,21 +364,19 @@ impl Executor {
 mod tests {
     use super::*;
     use crate::parser::SqlParser;
-    
+
     #[test]
     fn test_executor() -> Result<(), DbError> {
         let catalog = Arc::new(Catalog::new());
         let txn_manager = Arc::new(TransactionManager::new());
         let executor = Executor::new(catalog, txn_manager);
-        
+
         let parser = SqlParser::new();
         let stmts = parser.parse("CREATE TABLE users (id INT, name VARCHAR(255))")?;
-        
+
         let result = executor.execute(stmts[0].clone())?;
         assert_eq!(result.rows_affected, 0);
-        
+
         Ok(())
     }
 }
-
-

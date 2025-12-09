@@ -16,9 +16,35 @@ use uuid::Uuid;
 
 use crate::error::DbError;
 use crate::api::rest::types::*;
+use crate::parser::{SqlParser, SqlStatement};
+use crate::catalog::{Catalog, Schema, Column, DataType};
+use crate::transaction::TransactionManager;
 use std::time::UNIX_EPOCH;
+use parking_lot::RwLock;
 
-/// Execute a SQL query
+// Lazy-initialized shared state for database operations
+lazy_static::lazy_static! {
+    static ref CATALOG: Arc<RwLock<Catalog>> = Arc::new(RwLock::new(Catalog::new()));
+    static ref TXN_MANAGER: Arc<TransactionManager> = Arc::new(TransactionManager::new());
+    static ref SQL_PARSER: SqlParser = SqlParser::new();
+}
+
+/// Helper function to format DataType enum as a string for display
+fn format_data_type(data_type: &DataType) -> String {
+    match data_type {
+        DataType::Integer => "INTEGER".to_string(),
+        DataType::BigInt => "BIGINT".to_string(),
+        DataType::Float => "FLOAT".to_string(),
+        DataType::Double => "DOUBLE".to_string(),
+        DataType::Varchar(size) => format!("VARCHAR({})", size),
+        DataType::Text => "TEXT".to_string(),
+        DataType::Boolean => "BOOLEAN".to_string(),
+        DataType::Date => "DATE".to_string(),
+        DataType::Timestamp => "TIMESTAMP".to_string(),
+    }
+}
+
+// Execute a SQL query
 #[utoipa::path(
     post,
     path = "/api/v1/query",
@@ -92,7 +118,7 @@ pub async fn execute_query(
     Ok(AxumJson(response))
 }
 
-/// Execute batch operations
+// Execute batch operations
 #[utoipa::path(
     post,
     path = "/api/v1/batch",
@@ -156,7 +182,7 @@ pub async fn execute_batch(
     Ok(AxumJson(response))
 }
 
-/// Get table information
+// Get table information
 #[utoipa::path(
     get,
     path = "/api/v1/tables/{name}",
@@ -199,11 +225,74 @@ pub async fn get_table(
 )]
 pub async fn create_table(
     State(_state): State<Arc<ApiState>>,
-    Path(_name): Path<String>,
-    AxumJson(_request): AxumJson<TableRequest>,
+    Path(name): Path<String>,
+    AxumJson(request): AxumJson<TableRequest>,
 ) -> ApiResult<StatusCode> {
-    // TODO: Implement table creation
-    Ok(StatusCode::CREATED)
+    // Validate input
+    if request.columns.is_empty() {
+        return Err(ApiError::new("INVALID_INPUT", "Table must have at least one column"));
+    }
+
+    // Convert API column definitions to catalog columns
+    let columns: Vec<Column> = request.columns.iter().map(|col| {
+        let data_type = parse_data_type(&col.data_type);
+        Column {
+            name: col.name.clone(),
+            data_type,
+            nullable: col.nullable,
+            default: col.default_value.as_ref().map(|v| v.to_string()),
+        }
+    }).collect();
+
+    // Create schema
+    let schema = if let Some(pk) = &request.primary_key {
+        if let Some(pk_col) = pk.first() {
+            Schema::new(name.clone(), columns).with_primary_key(pk_col.clone())
+        } else {
+            Schema::new(name.clone(), columns)
+        }
+    } else {
+        Schema::new(name.clone(), columns)
+    };
+
+    // Add to catalog
+    let catalog = CATALOG.write();
+    match catalog.create_table(schema) {
+        Ok(_) => Ok(StatusCode::CREATED),
+        Err(e) => {
+            if e.to_string().contains("already exists") {
+                Err(ApiError::new("CONFLICT", format!("Table '{}' already exists", name)))
+            } else {
+                Err(ApiError::new("DATABASE_ERROR", format!("Failed to create table: {}", e)))
+            }
+        }
+    }
+}
+
+/// Helper function to parse data type string into DataType enum
+fn parse_data_type(type_str: &str) -> DataType {
+    let upper = type_str.to_uppercase();
+    if upper.starts_with("VARCHAR") {
+        // Extract size from VARCHAR(n)
+        let size = upper
+            .trim_start_matches("VARCHAR")
+            .trim_matches(|c| c == '(' || c == ')' || c == ' ')
+            .parse::<usize>()
+            .unwrap_or(255);
+        DataType::Varchar(size)
+    } else {
+        match upper.as_str() {
+            "INT" | "INTEGER" => DataType::Integer,
+            "BIGINT" => DataType::BigInt,
+            "FLOAT" | "REAL" => DataType::Float,
+            "DOUBLE" | "DOUBLE PRECISION" => DataType::Double,
+            "TEXT" => DataType::Text,
+            "BOOL" | "BOOLEAN" => DataType::Boolean,
+            "DATE" => DataType::Date,
+            "TIMESTAMP" | "DATETIME" => DataType::Timestamp,
+            _ => DataType::Text,
+        }
+    }
 }
 
 /// Update table schema
@@ -219,11 +308,42 @@ pub async fn create_table(
 )]
 pub async fn update_table(
     State(_state): State<Arc<ApiState>>,
-    Path(_name): Path<String>,
-    AxumJson(_request): AxumJson<TableRequest>,
+    Path(name): Path<String>,
+    AxumJson(request): AxumJson<TableRequest>,
 ) -> ApiResult<StatusCode> {
-    // TODO: Implement table update
-    Ok(StatusCode::OK)
+    // First verify the table exists
+    {
+        let catalog = CATALOG.read();
+        if catalog.get_table(&name).is_err() {
+            return Err(ApiError::new("NOT_FOUND", format!("Table '{}' not found", name)));
+        }
+    }
+
+    // Drop and recreate with new schema (simple approach)
+    // A production system would support ALTER TABLE operations
+    let catalog = CATALOG.write();
+
+    // Drop existing table
+    if let Err(e) = catalog.drop_table(&name) {
+        return Err(ApiError::new("DATABASE_ERROR", format!("Failed to update table: {}", e)));
+    }
+
+    // Create new schema with updated columns
+    let columns: Vec<Column> = request.columns.iter().map(|col| {
+        Column {
+            name: col.name.clone(),
+            data_type: parse_data_type(&col.data_type),
+            nullable: col.nullable,
+            default: col.default_value.as_ref().map(|v| v.to_string()),
+        }
+    }).collect();
+
+    let schema = Schema::new(name.clone(), columns);
+
+    match catalog.create_table(schema) {
+        Ok(_) => Ok(StatusCode::OK),
+        Err(e) => Err(ApiError::new("DATABASE_ERROR", format!("Failed to recreate table: {}", e))),
+    }
 }
 
 /// Delete a table
@@ -238,13 +358,17 @@ pub async fn update_table(
 )]
 pub async fn delete_table(
     State(_state): State<Arc<ApiState>>,
-    Path(_name): Path<String>,
+    Path(name): Path<String>,
 ) -> ApiResult<StatusCode> {
-    // TODO: Implement table deletion
-    Ok(StatusCode::NO_CONTENT)
+    let catalog = CATALOG.write();
+
+    match catalog.drop_table(&name) {
+        Ok(_) => Ok(StatusCode::NO_CONTENT),
+        Err(e) => Err(ApiError::new("NOT_FOUND", format!("Table '{}' not found: {}", name, e))),
+    }
 }
 
-/// Get database schema
+// Get database schema
 #[utoipa::path(
     get,
     path = "/api/v1/schema",
@@ -256,19 +380,46 @@ pub async fn delete_table(
 pub async fn get_schema(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<SchemaResponse>> {
-    // TODO: Implement schema introspection
+    let catalog = CATALOG.read();
+    let table_names = catalog.list_tables();
+
+    let mut tables: Vec<TableInfo> = Vec::new();
+
+    for table_name in &table_names {
+        if let Ok(schema) = catalog.get_table(table_name) {
+            let columns: Vec<ColumnMetadata> = schema.columns.iter().map(|col| ColumnMetadata {
+                name: col.name.clone(),
+                data_type: format_data_type(&col.data_type),
+                nullable: col.nullable,
+                precision: None,
+                scale: None,
+            }).collect();
+
+            tables.push(TableInfo {
+                name: schema.name.clone(),
+                schema: "public".to_string(),
+                row_count: 0,
+                size_bytes: 0,
+                columns,
+                indexes: vec![],
+            });
+        }
+    }
+
+    let total_count = tables.len();
+
     let response = SchemaResponse {
         database_name: "rustydb".to_string(),
-        tables: vec![],
-        views: vec![],
-        procedures: vec![],
-        total_count: 0,
+        tables,
+        views: vec![],  // Would need view catalog integration
+        procedures: vec![],  // Would need procedure catalog integration
+        total_count,
     };
 
     Ok(AxumJson(response))
 }
 
-/// Begin a new transaction
+// Begin a new transaction
 #[utoipa::path(
     post,
     path = "/api/v1/transactions",
@@ -282,14 +433,19 @@ pub async fn begin_transaction(
     State(_state): State<Arc<ApiState>>,
     AxumJson(request): AxumJson<TransactionRequest>,
 ) -> ApiResult<AxumJson<TransactionResponse>> {
-    let txn_id = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_micros() as u64;
+    // Begin a real transaction using the transaction manager
+    let txn_id = match TXN_MANAGER.begin() {
+        Ok(id) => id,
+        Err(e) => {
+            return Err(ApiError::new("TRANSACTION_ERROR", format!("Failed to begin transaction: {}", e)));
+        }
+    };
+
+    let isolation_level = request.isolation_level.unwrap_or_else(|| "READ_COMMITTED".to_string());
 
     let response = TransactionResponse {
         transaction_id: TransactionId(txn_id),
-        isolation_level: request.isolation_level.unwrap_or_else(|| "READ_COMMITTED".to_string()),
+        isolation_level,
         started_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
         status: "active".to_string(),
     };
@@ -312,10 +468,18 @@ pub async fn begin_transaction(
 )]
 pub async fn commit_transaction(
     State(_state): State<Arc<ApiState>>,
-    Path(_id): Path<u64>,
+    Path(id): Path<u64>,
 ) -> ApiResult<StatusCode> {
-    // TODO: Implement transaction commit
-    Ok(StatusCode::OK)
+    // Verify transaction exists
+    if !TXN_MANAGER.is_active(id) {
+        return Err(ApiError::new("NOT_FOUND", format!("Transaction {} not found or already completed", id)));
+    }
+
+    // Commit the transaction
+    match TXN_MANAGER.commit(id) {
+        Ok(_) => Ok(StatusCode::OK),
+        Err(e) => Err(ApiError::new("TRANSACTION_ERROR", format!("Failed to commit transaction: {}", e))),
+    }
 }
 
 /// Rollback a transaction
@@ -333,8 +497,16 @@ pub async fn commit_transaction(
 )]
 pub async fn rollback_transaction(
     State(_state): State<Arc<ApiState>>,
-    Path(_id): Path<u64>,
+    Path(id): Path<u64>,
 ) -> ApiResult<StatusCode> {
-    // TODO: Implement transaction rollback
-    Ok(StatusCode::OK)
+    // Verify transaction exists
+    if !TXN_MANAGER.is_active(id) {
+        return Err(ApiError::new("NOT_FOUND", format!("Transaction {} not found or already completed", id)));
+    }
+
+    // Abort/rollback the transaction
+    match TXN_MANAGER.abort(id) {
+        Ok(_) => Ok(StatusCode::OK),
+        Err(e) => Err(ApiError::new("TRANSACTION_ERROR", format!("Failed to rollback transaction: {}", e))),
+    }
 }

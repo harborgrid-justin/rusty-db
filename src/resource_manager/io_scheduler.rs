@@ -21,39 +21,39 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 
-/// I/O request identifier
+// I/O request identifier
 pub type IoRequestId = u64;
 
-/// I/O request type
+// I/O request type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IoRequestType {
-    /// Read request
+    // Read request
     Read,
-    /// Write request
+    // Write request
     Write,
-    /// Synchronous write
+    // Synchronous write
     SyncWrite,
-    /// Metadata operation
+    // Metadata operation
     Metadata,
 }
 
-/// I/O priority level
+// I/O priority level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum IoPriority {
-    /// Real-time priority (highest)
+    // Real-time priority (highest)
     RealTime,
-    /// High priority
+    // High priority
     High,
-    /// Normal priority
+    // Normal priority
     Normal,
-    /// Low priority
+    // Low priority
     Low,
-    /// Background/idle priority (lowest)
+    // Background/idle priority (lowest)
     Idle,
 }
 
 impl IoPriority {
-    /// Get numeric value for priority (lower = higher priority)
+    // Get numeric value for priority (lower = higher priority)
     pub fn value(&self) -> u8 {
         match self {
             IoPriority::RealTime => 0,
@@ -65,35 +65,35 @@ impl IoPriority {
     }
 }
 
-/// I/O request
+// I/O request
 #[derive(Debug, Clone)]
 pub struct IoRequest {
-    /// Request identifier
+    // Request identifier
     pub id: IoRequestId,
-    /// Consumer group
+    // Consumer group
     pub group_id: ConsumerGroupId,
-    /// Request type
+    // Request type
     pub request_type: IoRequestType,
-    /// Priority
+    // Priority
     pub priority: IoPriority,
-    /// Size in bytes
+    // Size in bytes
     pub size_bytes: u64,
-    /// File/block offset
+    // File/block offset
     pub offset: u64,
-    /// Deadline for completion
+    // Deadline for completion
     pub deadline: Option<Instant>,
-    /// Submission time
+    // Submission time
     pub submitted_at: Instant,
-    /// Start time (when I/O actually started)
+    // Start time (when I/O actually started)
     pub started_at: Option<Instant>,
-    /// Completion time
+    // Completion time
     pub completed_at: Option<Instant>,
-    /// Whether this is a sequential I/O
+    // Whether this is a sequential I/O
     pub is_sequential: bool,
 }
 
 impl IoRequest {
-    /// Create a new I/O request
+    // Create a new I/O request
     pub fn new(
         id: IoRequestId,
         group_id: ConsumerGroupId,
@@ -117,7 +117,7 @@ impl IoRequest {
         }
     }
 
-    /// Calculate wait time
+    // Calculate wait time
     pub fn wait_time(&self) -> Duration {
         if let Some(started) = self.started_at {
             started.duration_since(self.submitted_at)
@@ -126,7 +126,7 @@ impl IoRequest {
         }
     }
 
-    /// Check if deadline has passed
+    // Check if deadline has passed
     pub fn is_past_deadline(&self) -> bool {
         if let Some(deadline) = self.deadline {
             Instant::now() > deadline
@@ -135,7 +135,7 @@ impl IoRequest {
         }
     }
 
-    /// Calculate effective priority (considering deadline)
+    // Calculate effective priority (considering deadline)
     pub fn effective_priority(&self) -> u8 {
         let mut priority = self.priority.value();
 
@@ -148,7 +148,7 @@ impl IoRequest {
     }
 }
 
-/// Ordering for priority queue
+// Ordering for priority queue
 impl Ord for IoRequest {
     fn cmp(&self, other: &Self) -> Ordering {
         // Lower priority value = higher priority
@@ -180,25 +180,25 @@ impl PartialEq for IoRequest {
 
 impl Eq for IoRequest {}
 
-/// I/O group allocation with atomic counters for lock-free updates
+// I/O group allocation with atomic counters for lock-free updates
 #[derive(Debug)]
 pub struct IoGroupAllocation {
     pub group_id: ConsumerGroupId,
-    /// Bandwidth limit in bytes/sec
+    // Bandwidth limit in bytes/sec
     pub bandwidth_limit: Option<u64>,
-    /// IOPS limit
+    // IOPS limit
     pub iops_limit: Option<u32>,
-    /// I/O weight (for proportional sharing)
+    // I/O weight (for proportional sharing)
     pub weight: u32,
-    /// Current bandwidth usage (bytes/sec, exponentially weighted)
+    // Current bandwidth usage (bytes/sec, exponentially weighted)
     pub current_bandwidth: AtomicU64,
-    /// Current IOPS
+    // Current IOPS
     pub current_iops: AtomicU32,
-    /// Total bytes transferred - atomic for lock-free updates
+    // Total bytes transferred - atomic for lock-free updates
     pub total_bytes: AtomicU64,
-    /// Total I/O operations - atomic for lock-free updates
+    // Total I/O operations - atomic for lock-free updates
     pub total_ops: AtomicU64,
-    /// Pending I/O requests - atomic for lock-free updates
+    // Pending I/O requests - atomic for lock-free updates
     pub pending_requests: AtomicUsize,
 }
 
@@ -259,21 +259,21 @@ impl IoGroupAllocation {
     }
 }
 
-/// Token bucket for rate limiting
+// Token bucket for rate limiting
 #[derive(Debug)]
 pub struct TokenBucket {
-    /// Maximum tokens
+    // Maximum tokens
     capacity: u64,
-    /// Current tokens available
+    // Current tokens available
     tokens: f64,
-    /// Refill rate (tokens per second)
+    // Refill rate (tokens per second)
     refill_rate: f64,
-    /// Last refill time
+    // Last refill time
     last_refill: Instant,
 }
 
 impl TokenBucket {
-    /// Create a new token bucket
+    // Create a new token bucket
     pub fn new(capacity: u64, refill_rate: f64) -> Self {
         Self {
             capacity,
@@ -283,7 +283,7 @@ impl TokenBucket {
         }
     }
 
-    /// Try to consume tokens
+    // Try to consume tokens
     pub fn try_consume(&mut self, tokens: u64) -> bool {
         self.refill();
 
@@ -295,7 +295,7 @@ impl TokenBucket {
         }
     }
 
-    /// Refill tokens based on elapsed time
+    // Refill tokens based on elapsed time
     fn refill(&mut self) {
         let now = Instant::now();
         let elapsed = now.duration_since(self.last_refill).as_secs_f64();
@@ -305,68 +305,68 @@ impl TokenBucket {
         self.last_refill = now;
     }
 
-    /// Get available tokens
+    // Get available tokens
     pub fn available(&mut self) -> u64 {
         self.refill();
         self.tokens as u64
     }
 }
 
-/// I/O scheduling policy
+// I/O scheduling policy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IoSchedulingPolicy {
-    /// Completely Fair Queuing (CFQ)
+    // Completely Fair Queuing (CFQ)
     CompletelyFair,
-    /// Deadline-based scheduling
+    // Deadline-based scheduling
     Deadline,
-    /// Budget Fair Queueing (BFQ)
+    // Budget Fair Queueing (BFQ)
     BudgetFair,
-    /// Priority-based
+    // Priority-based
     Priority,
 }
 
-/// I/O scheduler with atomic counters
+// I/O scheduler with atomic counters
 pub struct IoScheduler {
-    /// Scheduling policy
+    // Scheduling policy
     policy: IoSchedulingPolicy,
-    /// All I/O requests
+    // All I/O requests
     requests: Arc<RwLock<HashMap<IoRequestId, IoRequest>>>,
-    /// Priority queue for pending requests
+    // Priority queue for pending requests
     pending_queue: Arc<Mutex<BinaryHeap<IoRequest>>>,
-    /// Per-group queues
+    // Per-group queues
     group_queues: Arc<RwLock<HashMap<ConsumerGroupId, VecDeque<IoRequestId>>>>,
-    /// Group allocations
+    // Group allocations
     group_allocations: Arc<RwLock<HashMap<ConsumerGroupId, IoGroupAllocation>>>,
-    /// Bandwidth token buckets per group
+    // Bandwidth token buckets per group
     bandwidth_buckets: Arc<RwLock<HashMap<ConsumerGroupId, TokenBucket>>>,
-    /// IOPS token buckets per group
+    // IOPS token buckets per group
     iops_buckets: Arc<RwLock<HashMap<ConsumerGroupId, TokenBucket>>>,
-    /// Active I/O requests
+    // Active I/O requests
     active_requests: Arc<RwLock<Vec<IoRequestId>>>,
-    /// Next request ID - atomic for lock-free allocation
+    // Next request ID - atomic for lock-free allocation
     next_request_id: AtomicU64,
-    /// Maximum concurrent I/O operations
+    // Maximum concurrent I/O operations
     max_concurrent_io: usize,
-    /// Statistics with atomic counters
+    // Statistics with atomic counters
     stats: Arc<IoStats>,
 }
 
-/// I/O statistics with atomic counters for lock-free updates
+// I/O statistics with atomic counters for lock-free updates
 #[derive(Debug, Default)]
 pub struct IoStats {
-    /// Total I/O requests submitted
+    // Total I/O requests submitted
     pub total_requests: AtomicU64,
-    /// Total I/O requests completed
+    // Total I/O requests completed
     pub completed_requests: AtomicU64,
-    /// Total bytes read
+    // Total bytes read
     pub total_bytes_read: AtomicU64,
-    /// Total bytes written
+    // Total bytes written
     pub total_bytes_written: AtomicU64,
-    /// Average I/O latency (microseconds)
+    // Average I/O latency (microseconds)
     pub avg_latency_us: AtomicU64,
-    /// Number of deadline misses
+    // Number of deadline misses
     pub deadline_misses: AtomicU64,
-    /// Throttled requests
+    // Throttled requests
     pub throttled_requests: AtomicU64,
 }
 
@@ -414,7 +414,7 @@ impl IoStats {
     }
 }
 
-/// Snapshot of I/O statistics for serialization
+// Snapshot of I/O statistics for serialization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IoStatsSnapshot {
     pub total_requests: u64,
@@ -427,7 +427,7 @@ pub struct IoStatsSnapshot {
 }
 
 impl IoScheduler {
-    /// Create a new I/O scheduler
+    // Create a new I/O scheduler
     pub fn new(policy: IoSchedulingPolicy, max_concurrent_io: usize) -> Self {
         Self {
             policy,
@@ -444,7 +444,7 @@ impl IoScheduler {
         }
     }
 
-    /// Register a consumer group with I/O limits
+    // Register a consumer group with I/O limits
     pub fn register_group(
         &self,
         group_id: ConsumerGroupId,
@@ -483,7 +483,7 @@ impl IoScheduler {
         Ok(())
     }
 
-    /// Submit an I/O request
+    // Submit an I/O request
     #[inline]
     pub fn submit_request(
         &self,
@@ -544,7 +544,7 @@ impl IoScheduler {
         Ok(request_id)
     }
 
-    /// Schedule next I/O request (hot path - inline)
+    // Schedule next I/O request (hot path - inline)
     #[inline]
     pub fn schedule_next(&self) -> Option<IoRequestId> {
         // Check if we can accept more concurrent I/O
@@ -563,7 +563,7 @@ impl IoScheduler {
         }
     }
 
-    /// Priority-based scheduling (hot path - inline)
+    // Priority-based scheduling (hot path - inline)
     #[inline]
     fn schedule_priority(&self) -> Option<IoRequestId> {
         let mut pending_queue = self.pending_queue.lock().unwrap();
@@ -583,13 +583,13 @@ impl IoScheduler {
         None
     }
 
-    /// Deadline-based scheduling
+    // Deadline-based scheduling
     fn schedule_deadline(&self) -> Option<IoRequestId> {
         // Same as priority for now, but prioritizes deadline misses
         self.schedule_priority()
     }
 
-    /// Completely Fair Queuing (hot path - inline)
+    // Completely Fair Queuing (hot path - inline)
     #[inline]
     fn schedule_cfq(&self) -> Option<IoRequestId> {
         let allocations = self.group_allocations.read().unwrap();
@@ -650,13 +650,13 @@ impl IoScheduler {
         None
     }
 
-    /// Budget Fair Queuing
+    // Budget Fair Queuing
     fn schedule_bfq(&self) -> Option<IoRequestId> {
         // Similar to CFQ but with time budgets
         self.schedule_cfq()
     }
 
-    /// Check if group is within limits (hot path - inline)
+    // Check if group is within limits (hot path - inline)
     #[inline]
     fn check_group_limits(&self, group_id: ConsumerGroupId, size_bytes: u64) -> bool {
         // Check bandwidth limit
@@ -682,7 +682,7 @@ impl IoScheduler {
         true
     }
 
-    /// Start an I/O request
+    // Start an I/O request
     fn start_request(&self, request_id: IoRequestId) {
         let mut requests = self.requests.write().unwrap();
         if let Some(request) = requests.get_mut(&request_id) {
@@ -693,7 +693,7 @@ impl IoScheduler {
         active.push(request_id);
     }
 
-    /// Complete an I/O request
+    // Complete an I/O request
     pub fn complete_request(&self, request_id: IoRequestId) -> Result<()> {
         let mut requests = self.requests.write().unwrap();
         let request = requests.get_mut(&request_id)
@@ -750,12 +750,12 @@ impl IoScheduler {
         Ok(())
     }
 
-    /// Get I/O statistics (snapshot for serialization)
+    // Get I/O statistics (snapshot for serialization)
     pub fn get_stats(&self) -> IoStatsSnapshot {
         self.stats.snapshot()
     }
 
-    /// Get group I/O statistics (values only, not Clone)
+    // Get group I/O statistics (values only, not Clone)
     pub fn get_group_stats(&self, group_id: ConsumerGroupId) -> Option<(ConsumerGroupId, u64, u64, usize)> {
         let allocations = self.group_allocations.read().unwrap();
         allocations.get(&group_id).map(|alloc| {
@@ -768,7 +768,7 @@ impl IoScheduler {
         })
     }
 
-    /// Update bandwidth usage metrics
+    // Update bandwidth usage metrics
     pub fn update_bandwidth_metrics(&self) {
         let allocations = self.group_allocations.read().unwrap();
 

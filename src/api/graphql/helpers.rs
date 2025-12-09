@@ -12,7 +12,7 @@ use crate::error::DbError;
 use super::types::*;
 use super::models::*;
 
-/// Batch query executor for optimizing multiple queries
+// Batch query executor for optimizing multiple queries
 pub struct BatchExecutor {
     engine: Arc<GraphQLEngine>,
     max_batch_size: usize,
@@ -26,7 +26,7 @@ impl BatchExecutor {
         }
     }
 
-    /// Execute multiple queries in a batch
+    // Execute multiple queries in a batch
     pub async fn execute_batch(&self, queries: Vec<BuiltQuery>) -> GqlResult<Vec<QueryResult>> {
         if queries.len() > self.max_batch_size {
             return Err(Error::new(format!(
@@ -71,11 +71,11 @@ impl BatchExecutor {
     }
 }
 
-/// Query result formatter for different output formats
+// Query result formatter for different output formats
 pub struct ResultFormatter;
 
 impl ResultFormatter {
-    /// Format results as JSON
+    // Format results as JSON
     pub fn to_json(rows: &[RowType]) -> GqlResult<String> {
         // Convert to simple JSON representation
         let json_rows: Vec<serde_json::Value> = rows
@@ -93,7 +93,7 @@ impl ResultFormatter {
             .map_err(|e| Error::new(format!("JSON serialization error: {}", e)))
     }
 
-    /// Format results as CSV
+    // Format results as CSV
     pub fn to_csv(rows: &[RowType]) -> GqlResult<String> {
         if rows.is_empty() {
             return Ok(String::new());
@@ -126,7 +126,7 @@ impl ResultFormatter {
         Ok(csv)
     }
 
-    /// Format results as Markdown table
+    // Format results as Markdown table
     pub fn to_markdown(rows: &[RowType]) -> GqlResult<String> {
         if rows.is_empty() {
             return Ok(String::new());
@@ -170,11 +170,11 @@ impl ResultFormatter {
     }
 }
 
-/// Subscription filter evaluator
+// Subscription filter evaluator
 pub struct FilterEvaluator;
 
 impl FilterEvaluator {
-    /// Evaluate if a row matches a where clause
+    // Evaluate if a row matches a where clause
     pub fn matches(row: &RowType, where_clause: &WhereClause) -> bool {
         // Simplified evaluation - would need full implementation
         if let Some(condition) = &where_clause.condition {
@@ -207,7 +207,7 @@ impl FilterEvaluator {
     }
 }
 
-/// Metrics collector for GraphQL operations
+// Metrics collector for GraphQL operations
 pub struct MetricsCollector {
     query_count: Arc<RwLock<u64>>,
     mutation_count: Arc<RwLock<u64>>,
@@ -269,7 +269,7 @@ impl MetricsCollector {
     }
 }
 
-/// Metrics snapshot
+// Metrics snapshot
 #[derive(Clone, Debug)]
 pub struct Metrics {
     pub query_count: u64,
@@ -279,4 +279,3 @@ pub struct Metrics {
     pub total_execution_time: Duration,
     pub avg_execution_time: Duration,
 }
-

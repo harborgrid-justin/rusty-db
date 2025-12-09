@@ -12,7 +12,7 @@ pub type SlotId = u16;
 const SLOT_SIZE: usize = size_of::<Slot>();
 const PAGE_HEADER_SIZE: usize = size_of::<PageHeader>();
 
-/// Hardware-accelerated CRC32C checksum (SSE4.2 on x86_64)
+// Hardware-accelerated CRC32C checksum (SSE4.2 on x86_64)
 #[inline]
 fn hardware_crc32c(data: &[u8]) -> u32 {
     #[cfg(target_arch = "x86_64")]
@@ -53,7 +53,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
     !crc
 }
 
-/// A page represents a fixed-size block of data
+// A page represents a fixed-size block of data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Page {
     pub id: PageId,
@@ -105,7 +105,7 @@ impl Page {
         bincode::deserialize(&self.data[..PAGE_HEADER_SIZE]).unwrap()
     }
 
-    /// Verify page checksum
+    // Verify page checksum
     pub fn verify_checksum(&self) -> bool {
         let header = self.read_header();
         let computed = self.compute_checksum();
@@ -126,7 +126,7 @@ impl Page {
     }
 }
 
-/// Page header containing metadata
+// Page header containing metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct PageHeader {
     checksum: u32,
@@ -155,7 +155,7 @@ enum PageType {
     Index,
 }
 
-/// Slot directory entry
+// Slot directory entry
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 struct Slot {
     offset: u16,
@@ -172,7 +172,7 @@ impl Slot {
     }
 }
 
-/// Slotted page implementation for variable-length records
+// Slotted page implementation for variable-length records
 pub struct SlottedPage {
     page: Page,
 }
@@ -188,7 +188,7 @@ impl SlottedPage {
         Self { page }
     }
 
-    /// Insert a record into the slotted page
+    // Insert a record into the slotted page
     pub fn insert_record(&mut self, data: &[u8]) -> Option<SlotId> {
         let record_size = data.len();
         let header = self.page.read_header();
@@ -233,7 +233,7 @@ impl SlottedPage {
         Some(slot_id)
     }
 
-    /// Get a record from the slotted page
+    // Get a record from the slotted page
     pub fn get_record(&self, slot_id: SlotId) -> Option<Vec<u8>> {
         let header = self.page.read_header();
         if slot_id >= header.num_slots {
@@ -251,7 +251,7 @@ impl SlottedPage {
         Some(self.page.data[start..end].to_vec())
     }
 
-    /// Delete a record from the slotted page
+    // Delete a record from the slotted page
     pub fn delete_record(&mut self, slot_id: SlotId) -> bool {
         let header = self.page.read_header();
         if slot_id >= header.num_slots {
@@ -276,7 +276,7 @@ impl SlottedPage {
         true
     }
 
-    /// Update a record in place
+    // Update a record in place
     pub fn update_record(&mut self, slot_id: SlotId, data: &[u8]) -> bool {
         let slot = self.read_slot(slot_id);
         if slot.is_empty() {
@@ -303,7 +303,7 @@ impl SlottedPage {
         }
     }
 
-    /// Compact the page to reclaim fragmented space
+    // Compact the page to reclaim fragmented space
     pub fn compact(&mut self) {
         let header = self.page.read_header();
         let mut records = Vec::new();
@@ -328,13 +328,13 @@ impl SlottedPage {
         self.page.mark_dirty();
     }
 
-    /// Get free space available in the page
+    // Get free space available in the page
     pub fn free_space(&self) -> u16 {
         let header = self.page.read_header();
         header.free_space
     }
 
-    /// Check if page needs compaction
+    // Check if page needs compaction
     pub fn needs_compaction(&self) -> bool {
         let header = self.page.read_header();
         let used_slots = (0..header.num_slots)
@@ -395,7 +395,7 @@ impl SlottedPage {
     }
 }
 
-/// Page splitting for when a page becomes too full
+// Page splitting for when a page becomes too full
 pub struct PageSplitter {
     threshold: f64,
 }
@@ -405,14 +405,14 @@ impl PageSplitter {
         Self { threshold }
     }
 
-    /// Check if page should be split
+    // Check if page should be split
     pub fn should_split(&self, page: &SlottedPage, page_size: usize) -> bool {
         let used_space = page_size - page.free_space() as usize;
         let utilization = used_space as f64 / page_size as f64;
         utilization > self.threshold
     }
 
-    /// Split a page into two pages
+    // Split a page into two pages
     pub fn split(&self, page: &mut SlottedPage, new_page_id: PageId) -> SlottedPage {
         let header = page.page.read_header();
         let mut records = Vec::new();
@@ -446,7 +446,7 @@ impl PageSplitter {
     }
 }
 
-/// Page merging for when two pages can be combined
+// Page merging for when two pages can be combined
 pub struct PageMerger {
     threshold: f64,
 }
@@ -456,7 +456,7 @@ impl PageMerger {
         Self { threshold }
     }
 
-    /// Check if two pages should be merged
+    // Check if two pages should be merged
     pub fn should_merge(
         &self,
         page1: &SlottedPage,
@@ -468,7 +468,7 @@ impl PageMerger {
         utilization < self.threshold
     }
 
-    /// Merge two pages into one
+    // Merge two pages into one
     pub fn merge(&self, page1: &mut SlottedPage, page2: &SlottedPage) -> bool {
         let header2 = page2.page.read_header();
 
@@ -485,7 +485,7 @@ impl PageMerger {
     }
 }
 
-/// Variable-length record with overflow support
+// Variable-length record with overflow support
 pub struct VariableLengthRecord {
     inline_data: Vec<u8>,
     overflow_pages: Vec<PageId>,

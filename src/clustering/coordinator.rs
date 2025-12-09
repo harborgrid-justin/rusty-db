@@ -1,18 +1,18 @@
-/// Distributed Query Coordinator
-///
-/// This module coordinates query execution across multiple nodes in the cluster.
-/// Features include:
-/// - Query routing to appropriate shards
-/// - Scatter-gather execution for parallel processing
-/// - Distributed join strategies (broadcast, shuffle, co-located)
-/// - Two-phase query execution (map-reduce style)
-/// - Query result merging and aggregation
-/// - Cross-shard transaction coordination
-///
-/// Designed for:
-/// - High-performance distributed queries
-/// - Minimizing data movement
-/// - Parallel execution optimization
+// Distributed Query Coordinator
+//
+// This module coordinates query execution across multiple nodes in the cluster.
+// Features include:
+// - Query routing to appropriate shards
+// - Scatter-gather execution for parallel processing
+// - Distributed join strategies (broadcast, shuffle, co-located)
+// - Two-phase query execution (map-reduce style)
+// - Query result merging and aggregation
+// - Cross-shard transaction coordination
+//
+// Designed for:
+// - High-performance distributed queries
+// - Minimizing data movement
+// - Parallel execution optimization
 
 use std::time::{SystemTime};
 use std::collections::HashSet;
@@ -23,42 +23,42 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 use tokio::sync::mpsc;
 
-/// Query identifier
+// Query identifier
 pub type QueryId = u64;
 
-/// Shard/partition identifier
+// Shard/partition identifier
 pub type ShardId = u64;
 
-/// Node identifier
+// Node identifier
 pub type NodeId = String;
 
-/// Query execution strategy
+// Query execution strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ExecutionStrategy {
-    /// Send query to single shard (point query)
+    // Send query to single shard (point query)
     SingleShard,
-    /// Send query to specific shards
+    // Send query to specific shards
     MultiShard,
-    /// Send query to all shards (full table scan)
+    // Send query to all shards (full table scan)
     ScatterGather,
-    /// Route based on partitioning key
+    // Route based on partitioning key
     PartitionAware,
 }
 
-/// Join strategy for distributed joins
+// Join strategy for distributed joins
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum JoinStrategy {
-    /// Broadcast smaller table to all nodes
+    // Broadcast smaller table to all nodes
     Broadcast,
-    /// Shuffle both tables by join key
+    // Shuffle both tables by join key
     Shuffle,
-    /// Data is already co-located by join key
+    // Data is already co-located by join key
     CoLocated,
-    /// Nested loop join (fallback)
+    // Nested loop join (fallback)
     NestedLoop,
 }
 
-/// Aggregation operation
+// Aggregation operation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AggregateOp {
     Count,
@@ -69,63 +69,63 @@ pub enum AggregateOp {
     GroupBy,
 }
 
-/// Query plan node
+// Query plan node
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum QueryPlanNode {
-    /// Scan operation
+    // Scan operation
     Scan {
         table: String,
         shards: Vec<ShardId>,
         filter: Option<String>,
     },
-    /// Join operation
+    // Join operation
     Join {
         strategy: JoinStrategy,
         left: Box<QueryPlanNode>,
         right: Box<QueryPlanNode>,
         join_key: String,
     },
-    /// Aggregate operation
+    // Aggregate operation
     Aggregate {
         operation: AggregateOp,
         input: Box<QueryPlanNode>,
         group_by: Option<Vec<String>>,
     },
-    /// Sort operation
+    // Sort operation
     Sort {
         input: Box<QueryPlanNode>,
         keys: Vec<String>,
         ascending: bool,
     },
-    /// Limit operation
+    // Limit operation
     Limit {
         input: Box<QueryPlanNode>,
         limit: usize,
         offset: usize,
     },
-    /// Projection (select specific columns)
+    // Projection (select specific columns)
     Project {
         input: Box<QueryPlanNode>,
         columns: Vec<String>,
     },
 }
 
-/// Distributed query plan
+// Distributed query plan
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DistributedQueryPlan {
-    /// Query ID
+    // Query ID
     pub query_id: QueryId,
-    /// Execution strategy
+    // Execution strategy
     pub strategy: ExecutionStrategy,
-    /// Root of the query plan tree
+    // Root of the query plan tree
     pub root: QueryPlanNode,
-    /// Shards involved in this query
+    // Shards involved in this query
     pub shards: Vec<ShardId>,
-    /// Nodes to execute on
+    // Nodes to execute on
     pub nodes: Vec<NodeId>,
-    /// Estimated cost
+    // Estimated cost
     pub estimated_cost: f64,
-    /// Timeout for query execution
+    // Timeout for query execution
     pub timeout: Duration,
 }
 
@@ -142,7 +142,7 @@ impl DistributedQueryPlan {
         }
     }
 
-    /// Extract shards from the query plan
+    // Extract shards from the query plan
     pub fn extract_shards(&mut self) {
         let mut shards = HashSet::new();
         self.collect_shards(&self.root.clone(), &mut shards);
@@ -168,77 +168,77 @@ impl DistributedQueryPlan {
     }
 }
 
-/// Query execution task
+// Query execution task
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryTask {
-    /// Task ID
+    // Task ID
     pub id: String,
-    /// Query ID this belongs to
+    // Query ID this belongs to
     pub query_id: QueryId,
-    /// Shard to execute on
+    // Shard to execute on
     pub shard_id: ShardId,
-    /// Node to execute on
+    // Node to execute on
     pub node_id: NodeId,
-    /// The query fragment to execute
+    // The query fragment to execute
     pub query_fragment: String,
-    /// Parameters
+    // Parameters
     pub parameters: Vec<Vec<u8>>,
-    /// Task dependencies (must complete before this)
+    // Task dependencies (must complete before this)
     pub dependencies: Vec<String>,
 }
 
-/// Query result from a single shard
+// Query result from a single shard
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ShardResult {
-    /// Shard ID
+    // Shard ID
     pub shard_id: ShardId,
-    /// Node that executed
+    // Node that executed
     pub node_id: NodeId,
-    /// Result rows
+    // Result rows
     pub rows: Vec<Vec<u8>>,
-    /// Execution time
+    // Execution time
     pub execution_time: Duration,
-    /// Number of rows scanned
+    // Number of rows scanned
     pub rows_scanned: usize,
-    /// Error if any
+    // Error if any
     pub error: Option<String>,
 }
 
-/// Complete query result
+// Complete query result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryResult {
-    /// Query ID
+    // Query ID
     pub query_id: QueryId,
-    /// Merged result rows
+    // Merged result rows
     pub rows: Vec<Vec<u8>>,
-    /// Total execution time
+    // Total execution time
     pub total_time: Duration,
-    /// Shard results
+    // Shard results
     pub shard_results: Vec<ShardResult>,
-    /// Statistics
+    // Statistics
     pub stats: QueryStats,
 }
 
-/// Query execution statistics
+// Query execution statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryStats {
-    /// Total rows returned
+    // Total rows returned
     pub rows_returned: usize,
-    /// Total rows scanned across all shards
+    // Total rows scanned across all shards
     pub rows_scanned: usize,
-    /// Number of shards accessed
+    // Number of shards accessed
     pub shards_accessed: usize,
-    /// Data transferred (bytes)
+    // Data transferred (bytes)
     pub bytes_transferred: usize,
-    /// Network round trips
+    // Network round trips
     pub network_trips: usize,
 }
 
-/// Shard mapping (key -> shard)
+// Shard mapping (key -> shard)
 pub struct ShardMap {
-    /// Partition key -> shard ID mapping
+    // Partition key -> shard ID mapping
     partitions: Arc<RwLock<HashMap<Vec<u8>, ShardId>>>,
-    /// Shard ID -> node ID mapping
+    // Shard ID -> node ID mapping
     shard_to_node: Arc<RwLock<HashMap<ShardId, NodeId>>>,
 }
 
@@ -250,27 +250,27 @@ impl ShardMap {
         }
     }
 
-    /// Get shard for a partition key
+    // Get shard for a partition key
     pub fn get_shard(&self, key: &[u8]) -> Option<ShardId> {
         self.partitions.read().unwrap().get(key).copied()
     }
 
-    /// Get node for a shard
+    // Get node for a shard
     pub fn get_node(&self, shard_id: ShardId) -> Option<NodeId> {
         self.shard_to_node.read().unwrap().get(&shard_id).cloned()
     }
 
-    /// Add partition mapping
+    // Add partition mapping
     pub fn add_partition(&self, key: Vec<u8>, shard_id: ShardId) {
         self.partitions.write().unwrap().insert(key, shard_id);
     }
 
-    /// Add shard to node mapping
+    // Add shard to node mapping
     pub fn add_shard_mapping(&self, shard_id: ShardId, node_id: NodeId) {
         self.shard_to_node.write().unwrap().insert(shard_id, node_id);
     }
 
-    /// Get all shards for a node
+    // Get all shards for a node
     pub fn get_shards_for_node(&self, node_id: &str) -> Vec<ShardId> {
         self.shard_to_node
             .read()
@@ -288,15 +288,15 @@ impl Default for ShardMap {
     }
 }
 
-/// Query coordinator
+// Query coordinator
 pub struct QueryCoordinator {
-    /// Shard mapping
+    // Shard mapping
     shard_map: ShardMap,
-    /// Active queries
+    // Active queries
     active_queries: Arc<RwLock<HashMap<QueryId, DistributedQueryPlan>>>,
-    /// Query results cache
+    // Query results cache
     result_cache: Arc<RwLock<HashMap<QueryId, QueryResult>>>,
-    /// Next query ID
+    // Next query ID
     next_query_id: Arc<RwLock<QueryId>>,
 }
 
@@ -310,14 +310,14 @@ impl QueryCoordinator {
         }
     }
 
-    /// Generate next query ID
+    // Generate next query ID
     fn next_query_id(&self) -> QueryId {
         let mut id = self.next_query_id.write().unwrap();
         *id += 1;
         *id
     }
 
-    /// Create a distributed query plan
+    // Create a distributed query plan
     pub fn plan_query(&self, root: QueryPlanNode) -> DistributedQueryPlan {
         let query_id = self.next_query_id();
         let mut plan = DistributedQueryPlan::new(query_id, root);
@@ -348,7 +348,7 @@ impl QueryCoordinator {
         plan
     }
 
-    /// Execute distributed query
+    // Execute distributed query
     pub async fn execute_query(&self, plan: DistributedQueryPlan) -> Result<QueryResult, DbError> {
         let query_id = plan.query_id;
 
@@ -373,7 +373,7 @@ impl QueryCoordinator {
         Ok(result)
     }
 
-    /// Create query tasks from plan
+    // Create query tasks from plan
     fn create_query_tasks(&self, plan: &DistributedQueryPlan) -> Result<Vec<QueryTask>, DbError> {
         let mut tasks = Vec::new();
 
@@ -398,13 +398,13 @@ impl QueryCoordinator {
         Ok(tasks)
     }
 
-    /// Serialize plan node to query fragment
+    // Serialize plan node to query fragment
     fn serialize_plan_node(&self, node: &QueryPlanNode) -> Result<String, DbError> {
         serde_json::to_string(node)
             .map_err(|e| DbError::Internal(format!("Failed to serialize plan: {}", e)))
     }
 
-    /// Execute tasks in parallel
+    // Execute tasks in parallel
     async fn execute_tasks(&self, tasks: Vec<QueryTask>) -> Result<Vec<ShardResult>, DbError> {
         let mut results = Vec::new();
 
@@ -418,7 +418,7 @@ impl QueryCoordinator {
         Ok(results)
     }
 
-    /// Execute a single task
+    // Execute a single task
     async fn execute_single_task(&self, task: QueryTask) -> Result<ShardResult, DbError> {
         let start = SystemTime::now();
 
@@ -439,7 +439,7 @@ impl QueryCoordinator {
         })
     }
 
-    /// Merge results from multiple shards
+    // Merge results from multiple shards
     fn merge_results(
         &self,
         query_id: QueryId,
@@ -476,7 +476,7 @@ impl QueryCoordinator {
         })
     }
 
-    /// Merge rows based on plan node type
+    // Merge rows based on plan node type
     fn merge_rows(
         &self,
         node: &QueryPlanNode,
@@ -525,7 +525,7 @@ impl QueryCoordinator {
         Ok(all_rows)
     }
 
-    /// Execute distributed join
+    // Execute distributed join
     pub async fn execute_join(
         &self,
         left_table: String,
@@ -549,7 +549,7 @@ impl QueryCoordinator {
         }
     }
 
-    /// Broadcast join (send smaller table to all nodes)
+    // Broadcast join (send smaller table to all nodes)
     async fn broadcast_join(
         &self,
         _left_table: String,
@@ -564,7 +564,7 @@ impl QueryCoordinator {
         Ok(Vec::new())
     }
 
-    /// Shuffle join (repartition both tables by join key)
+    // Shuffle join (repartition both tables by join key)
     async fn shuffle_join(
         &self,
         _left_table: String,
@@ -579,7 +579,7 @@ impl QueryCoordinator {
         Ok(Vec::new())
     }
 
-    /// Co-located join (tables already partitioned by join key)
+    // Co-located join (tables already partitioned by join key)
     async fn colocated_join(
         &self,
         _left_table: String,
@@ -593,7 +593,7 @@ impl QueryCoordinator {
         Ok(Vec::new())
     }
 
-    /// Nested loop join (fallback)
+    // Nested loop join (fallback)
     async fn nested_loop_join(
         &self,
         _left_table: String,
@@ -607,7 +607,7 @@ impl QueryCoordinator {
         Ok(Vec::new())
     }
 
-    /// Execute two-phase aggregation (map-reduce style)
+    // Execute two-phase aggregation (map-reduce style)
     pub async fn execute_two_phase_aggregate(
         &self,
         table: String,
@@ -623,7 +623,7 @@ impl QueryCoordinator {
         Ok(final_result)
     }
 
-    /// Local aggregation phase
+    // Local aggregation phase
     async fn local_aggregate(
         &self,
         _table: &str,
@@ -634,7 +634,7 @@ impl QueryCoordinator {
         Ok(Vec::new())
     }
 
-    /// Global aggregation phase
+    // Global aggregation phase
     async fn global_aggregate(
         &self,
         _local_results: Vec<Vec<u8>>,
@@ -645,7 +645,7 @@ impl QueryCoordinator {
         Ok(Vec::new())
     }
 
-    /// Get query status
+    // Get query status
     pub fn get_query_status(&self, query_id: QueryId) -> Option<String> {
         if self.active_queries.read().unwrap().contains_key(&query_id) {
             Some("running".to_string())
@@ -656,13 +656,13 @@ impl QueryCoordinator {
         }
     }
 
-    /// Cancel a running query
+    // Cancel a running query
     pub fn cancel_query(&self, query_id: QueryId) -> Result<(), DbError> {
         self.active_queries.write().unwrap().remove(&query_id);
         Ok(())
     }
 
-    /// Get shard map reference
+    // Get shard map reference
     pub fn shard_map(&self) -> &ShardMap {
         &self.shard_map
     }
@@ -702,5 +702,3 @@ mod tests {
         assert_eq!(shard_map.get_node(1), Some("node1".to_string()));
     }
 }
-
-

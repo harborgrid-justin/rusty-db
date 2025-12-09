@@ -6,25 +6,25 @@
 
 use std::collections::VecDeque;
 use std::time::{SystemTime, UNIX_EPOCH, Instant, Duration};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
 use crate::Result;
 
-/// Aggressiveness level for autonomous tuning
+// Aggressiveness level for autonomous tuning
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AggressivenessLevel {
-    /// Conservative - only make safe, well-tested changes
+    // Conservative - only make safe, well-tested changes
     Conservative,
-    /// Moderate - balance between safety and performance
+    // Moderate - balance between safety and performance
     Moderate,
-    /// Aggressive - prioritize performance over caution
+    // Aggressive - prioritize performance over caution
     Aggressive,
 }
 
-/// Database parameter that can be tuned
+// Database parameter that can be tuned
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TunableParameter {
     BufferPoolSize,
@@ -41,7 +41,7 @@ pub enum TunableParameter {
     MaintenanceWorkMem,
 }
 
-/// Parameter value type
+// Parameter value type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ParameterValue {
     Integer(i64),
@@ -68,7 +68,7 @@ impl ParameterValue {
     }
 }
 
-/// Parameter configuration with constraints
+// Parameter configuration with constraints
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParameterConfig {
     pub parameter: TunableParameter,
@@ -80,7 +80,7 @@ pub struct ParameterConfig {
     pub last_changed: SystemTime,
 }
 
-/// Performance metrics for evaluation
+// Performance metrics for evaluation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceMetrics {
     pub queries_per_second: f64,
@@ -117,7 +117,7 @@ impl Default for PerformanceMetrics {
 }
 
 impl PerformanceMetrics {
-    /// Calculate overall performance score (0.0 to 1.0)
+    // Calculate overall performance score (0.0 to 1.0)
     pub fn calculate_score(&self) -> f64 {
         let mut score = 0.0;
         let mut weight_sum = 0.0;
@@ -158,7 +158,7 @@ impl PerformanceMetrics {
     }
 }
 
-/// Tuning action taken by the auto-tuner
+// Tuning action taken by the auto-tuner
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TuningAction {
     pub parameter: TunableParameter,
@@ -169,7 +169,7 @@ pub struct TuningAction {
     pub expected_improvement: f64,
 }
 
-/// Tuning result after applying an action
+// Tuning result after applying an action
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TuningResult {
     pub action: TuningAction,
@@ -180,7 +180,7 @@ pub struct TuningResult {
     pub timestamp: SystemTime,
 }
 
-/// Workload characteristics
+// Workload characteristics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkloadCharacteristics {
     pub read_write_ratio: f64,  // 0.0 = all writes, 1.0 = all reads
@@ -194,7 +194,7 @@ pub struct WorkloadCharacteristics {
     pub cpu_intensive: bool,
 }
 
-/// Reinforcement learning state
+// Reinforcement learning state
 #[derive(Debug, Clone)]
 struct RLState {
     workload: WorkloadCharacteristics,
@@ -202,7 +202,7 @@ struct RLState {
     performance_score: f64,
 }
 
-/// Q-Learning agent for parameter optimization
+// Q-Learning agent for parameter optimization
 struct QLearningAgent {
     q_table: HashMap<String, HashMap<String, f64>>,
     learning_rate: f64,
@@ -322,7 +322,7 @@ impl QLearningAgent {
     }
 }
 
-/// Regression detector for identifying performance degradation
+// Regression detector for identifying performance degradation
 struct RegressionDetector {
     metric_history: VecDeque<PerformanceMetrics>,
     window_size: usize,
@@ -382,7 +382,7 @@ impl RegressionDetector {
     }
 }
 
-/// Statistics gatherer for automatic statistics collection
+// Statistics gatherer for automatic statistics collection
 pub struct StatisticsGatherer {
     table_stats: HashMap<String, TableStatistics>,
     last_gather_time: HashMap<String, Instant>,
@@ -428,7 +428,7 @@ impl StatisticsGatherer {
     }
 }
 
-/// Main auto-tuner orchestrator
+// Main auto-tuner orchestrator
 pub struct AutoTuner {
     aggressiveness: AggressivenessLevel,
     parameters: Arc<RwLock<HashMap<TunableParameter, ParameterConfig>>>,

@@ -12,21 +12,21 @@ use super::{Algorithm, ModelType};
 // Logistic Regression
 // ============================================================================
 
-/// Logistic regression for binary classification
+// Logistic regression for binary classification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogisticRegression {
-    /// Model coefficients
+    // Model coefficients
     pub weights: Vector,
-    /// Intercept term
+    // Intercept term
     pub intercept: f64,
-    /// Whether the model has been trained
+    // Whether the model has been trained
     trained: bool,
-    /// Training metrics
+    // Training metrics
     metrics: HashMap<String, f64>,
 }
 
 impl LogisticRegression {
-    /// Create a new logistic regression model
+    // Create a new logistic regression model
     pub fn new() -> Self {
         Self {
             weights: Vec::new(),
@@ -36,12 +36,12 @@ impl LogisticRegression {
         }
     }
 
-    /// Sigmoid function
+    // Sigmoid function
     fn sigmoid(&self, x: f64) -> f64 {
         1.0 / (1.0 + (-x).exp())
     }
 
-    /// Compute predictions (probabilities)
+    // Compute predictions (probabilities)
     fn predict_proba_internal(&self, features: &Matrix) -> Vector {
         features.iter().map(|sample| {
             let mut logit = self.intercept;
@@ -52,7 +52,7 @@ impl LogisticRegression {
         }).collect()
     }
 
-    /// Compute binary cross-entropy loss
+    // Compute binary cross-entropy loss
     fn binary_cross_entropy(&self, predictions: &Vector, targets: &Vector) -> f64 {
         let epsilon = 1e-15;
         predictions.iter()
@@ -64,7 +64,7 @@ impl LogisticRegression {
             .sum::<f64>() / predictions.len() as f64
     }
 
-    /// Calculate accuracy
+    // Calculate accuracy
     fn accuracy(&self, predictions: &Vector, targets: &Vector) -> f64 {
         predictions.iter()
             .zip(targets.iter())
@@ -190,23 +190,23 @@ impl Algorithm for LogisticRegression {
 // Naive Bayes
 // ============================================================================
 
-/// Naive Bayes classifier (Gaussian)
+// Naive Bayes classifier (Gaussian)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NaiveBayes {
-    /// Class priors
+    // Class priors
     class_priors: HashMap<i64, f64>,
-    /// Feature means per class
+    // Feature means per class
     feature_means: HashMap<i64, Vector>,
-    /// Feature variances per class
+    // Feature variances per class
     feature_variances: HashMap<i64, Vector>,
-    /// Classes
+    // Classes
     classes: Vec<i64>,
-    /// Whether the model has been trained
+    // Whether the model has been trained
     trained: bool,
 }
 
 impl NaiveBayes {
-    /// Create a new Naive Bayes model
+    // Create a new Naive Bayes model
     pub fn new() -> Self {
         Self {
             class_priors: HashMap::new(),
@@ -217,7 +217,7 @@ impl NaiveBayes {
         }
     }
 
-    /// Calculate Gaussian probability density
+    // Calculate Gaussian probability density
     fn gaussian_pdf(&self, x: f64, mean: f64, variance: f64) -> f64 {
         let epsilon = 1e-9;
         let var = variance.max(epsilon);

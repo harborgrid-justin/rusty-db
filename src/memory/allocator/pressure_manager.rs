@@ -1,49 +1,49 @@
 //\! Memory Pressure Management
-//\! 
+//\!
 //\! Global memory monitoring and OOM prevention.
 
 use super::common::*;
 
 
-/// Memory pressure callback type
+// Memory pressure callback type
 pub type PressureCallback = Arc<dyn Fn(MemoryPressureLevel) -> Result<usize> + Send + Sync>;
 
-/// Memory pressure event
+// Memory pressure event
 #[derive(Debug, Clone)]
 pub struct MemoryPressureEvent {
-    /// Event timestamp
+    // Event timestamp
     pub timestamp: SystemTime,
-    /// Pressure level
+    // Pressure level
     pub level: MemoryPressureLevel,
-    /// Total memory
+    // Total memory
     pub total_memory: u64,
-    /// Used memory
+    // Used memory
     pub used_memory: u64,
-    /// Available memory
+    // Available memory
     pub available_memory: u64,
-    /// Number of callbacks invoked
+    // Number of callbacks invoked
     pub callbacks_invoked: usize,
-    /// Total bytes freed
+    // Total bytes freed
     pub bytes_freed: u64,
 }
 
-/// Memory pressure manager
+// Memory pressure manager
 pub struct MemoryPressureManager {
-    /// Total memory limit
+    // Total memory limit
     total_memory: AtomicU64,
-    /// Current used memory
+    // Current used memory
     used_memory: AtomicU64,
-    /// Memory pressure callbacks
+    // Memory pressure callbacks
     callbacks: RwLock<Vec<PressureCallback>>,
-    /// Current pressure level
+    // Current pressure level
     current_level: RwLock<MemoryPressureLevel>,
-    /// Pressure events history
+    // Pressure events history
     events: RwLock<VecDeque<MemoryPressureEvent>>,
-    /// Emergency mode flag
+    // Emergency mode flag
     emergency_mode: AtomicBool,
-    /// Statistics
+    // Statistics
     stats: PressureStats,
-    /// Monitoring enabled
+    // Monitoring enabled
     monitoring_enabled: AtomicBool,
 }
 
@@ -68,7 +68,7 @@ impl PressureStats {
 }
 
 impl MemoryPressureManager {
-    /// Create a new memory pressure manager
+    // Create a new memory pressure manager
     pub fn new(total_memory: u64) -> Self {
         Self {
             total_memory: AtomicU64::new(total_memory),
@@ -82,12 +82,12 @@ impl MemoryPressureManager {
         }
     }
 
-    /// Register a pressure callback
+    // Register a pressure callback
     pub fn register_callback(&self, callback: PressureCallback) {
         self.callbacks.write().unwrap().push(callback);
     }
 
-    /// Record memory allocation
+    // Record memory allocation
     pub fn record_allocation(&self, size: u64) -> Result<()> {
         if !self.monitoring_enabled.load(Ordering::Relaxed) {
             return Ok(());
@@ -111,7 +111,7 @@ impl MemoryPressureManager {
         Ok(())
     }
 
-    /// Record memory deallocation
+    // Record memory deallocation
     pub fn record_deallocation(&self, size: u64) {
         if !self.monitoring_enabled.load(Ordering::Relaxed) {
             return;
@@ -135,7 +135,7 @@ impl MemoryPressureManager {
         }
     }
 
-    /// Calculate pressure level from usage ratio
+    // Calculate pressure level from usage ratio
     fn calculate_pressure_level(&self, usage_ratio: f64) -> MemoryPressureLevel {
         if usage_ratio >= 0.95 {
             MemoryPressureLevel::Emergency
@@ -148,7 +148,7 @@ impl MemoryPressureManager {
         }
     }
 
-    /// Handle pressure level change
+    // Handle pressure level change
     fn handle_pressure_change(&self, new_level: MemoryPressureLevel) -> Result<()> {
         self.stats.pressure_events.fetch_add(1, Ordering::Relaxed);
 
@@ -203,7 +203,7 @@ impl MemoryPressureManager {
         Ok(())
     }
 
-    /// Emergency memory release
+    // Emergency memory release
     pub(crate) fn emergency_release(&self) -> Result<()> {
         self.stats.emergency_releases.fetch_add(1, Ordering::Relaxed);
 
@@ -224,7 +224,7 @@ impl MemoryPressureManager {
         Ok(())
     }
 
-    /// Check if allocation would cause OOM
+    // Check if allocation would cause OOM
     pub fn check_allocation(&self, size: u64) -> Result<()> {
         let used = self.used_memory.load(Ordering::Relaxed);
         let total = self.total_memory.load(Ordering::Relaxed);
@@ -244,17 +244,17 @@ impl MemoryPressureManager {
         Ok(())
     }
 
-    /// Set total memory limit
+    // Set total memory limit
     pub fn set_total_memory(&self, total: u64) {
         self.total_memory.store(total, Ordering::Relaxed);
     }
 
-    /// Get current pressure level
+    // Get current pressure level
     pub fn get_pressure_level(&self) -> MemoryPressureLevel {
         *self.current_level.read().unwrap()
     }
 
-    /// Get memory usage
+    // Get memory usage
     pub fn get_usage(&self) -> MemoryUsage {
         let total = self.total_memory.load(Ordering::Relaxed);
         let used = self.used_memory.load(Ordering::Relaxed);
@@ -269,7 +269,7 @@ impl MemoryPressureManager {
         }
     }
 
-    /// Get pressure statistics
+    // Get pressure statistics
     pub fn get_stats(&self) -> MemoryPressureStats {
         MemoryPressureStats {
             pressure_events: self.stats.pressure_events.load(Ordering::Relaxed),
@@ -282,19 +282,19 @@ impl MemoryPressureManager {
         }
     }
 
-    /// Get recent pressure events
+    // Get recent pressure events
     pub fn get_recent_events(&self, count: usize) -> Vec<MemoryPressureEvent> {
         let events = self.events.read().unwrap();
         events.iter().rev().take(count).cloned().collect()
     }
 
-    /// Enable/disable monitoring
+    // Enable/disable monitoring
     pub fn set_monitoring_enabled(&self, enabled: bool) {
         self.monitoring_enabled.store(enabled, Ordering::Relaxed);
     }
 }
 
-/// Memory usage snapshot
+// Memory usage snapshot
 #[derive(Debug, Clone)]
 pub struct MemoryUsage {
     pub total_memory: u64,
@@ -305,7 +305,7 @@ pub struct MemoryUsage {
     pub emergency_mode: bool,
 }
 
-/// Memory pressure statistics
+// Memory pressure statistics
 #[derive(Debug, Clone)]
 pub struct MemoryPressureStats {
     pub pressure_events: u64,

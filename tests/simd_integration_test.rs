@@ -1,4 +1,4 @@
-//! Integration tests for SIMD scan engine
+// Integration tests for SIMD scan engine
 
 use rusty_db::simd::{
     ColumnScan, FilterOp, SimdAggregator, AggregateOp,

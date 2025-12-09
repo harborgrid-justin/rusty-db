@@ -14,16 +14,16 @@ use crate::concurrent;
 // Linear Regression
 // ============================================================================
 
-/// Ordinary Least Squares Linear Regression
+// Ordinary Least Squares Linear Regression
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LinearRegression {
-    /// Model coefficients (weights)
+    // Model coefficients (weights)
     pub coefficients: Vec<f64>,
-    /// Intercept term
+    // Intercept term
     pub intercept: f64,
-    /// Training statistics
+    // Training statistics
     pub r_squared: f64,
-    /// Feature importance scores
+    // Feature importance scores
     pub feature_importance: Vec<f64>,
 }
 
@@ -37,7 +37,7 @@ impl LinearRegression {
         }
     }
 
-    /// Train using normal equation: w = (X^T X)^-1 X^T y
+    // Train using normal equation: w = (X^T X)^-1 X^T y
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
         let targets = dataset.targets.as_ref()
             .ok_or_else(|| crate::DbError::InvalidInput("Targets required for regression".into()))?;
@@ -96,7 +96,7 @@ impl LinearRegression {
         Ok(())
     }
 
-    /// Predict values for new samples
+    // Predict values for new samples
     pub fn predict(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
         if self.coefficients.is_empty() {
             return Err(crate::DbError::InvalidInput("Model not trained".into()));
@@ -117,7 +117,7 @@ impl LinearRegression {
         Ok(predictions)
     }
 
-    /// Solve linear system Ax = b using Gauss-Jordan elimination
+    // Solve linear system Ax = b using Gauss-Jordan elimination
     fn solve_linear_system(&self, a: &[Vec<f64>], b: &[f64]) -> Result<Vec<f64>> {
         let n = a.len();
         let mut aug = vec![vec![0.0; n + 1]; n];
@@ -189,18 +189,18 @@ impl Default for LinearRegression {
 // Logistic Regression
 // ============================================================================
 
-/// Logistic Regression for binary and multi-class classification
+// Logistic Regression for binary and multi-class classification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogisticRegression {
-    /// Model weights
+    // Model weights
     pub weights: Vec<f64>,
-    /// Intercept term
+    // Intercept term
     pub intercept: f64,
-    /// Number of classes
+    // Number of classes
     pub num_classes: usize,
-    /// Learning rate
+    // Learning rate
     learning_rate: f64,
-    /// Regularization parameter
+    // Regularization parameter
     regularization: f64,
 }
 
@@ -215,7 +215,7 @@ impl LogisticRegression {
         }
     }
 
-    /// Train using gradient descent
+    // Train using gradient descent
     pub fn fit(&mut self, dataset: &Dataset, max_iterations: usize) -> Result<()> {
         let targets = dataset.targets.as_ref()
             .ok_or_else(|| crate::DbError::InvalidInput("Targets required".into()))?;
@@ -252,12 +252,12 @@ impl LogisticRegression {
         Ok(())
     }
 
-    /// Predict class probabilities
+    // Predict class probabilities
     pub fn predict_proba(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
         Ok(features.iter().map(|sample| self.predict_proba_single(sample)).collect())
     }
 
-    /// Predict classes (0 or 1)
+    // Predict classes (0 or 1)
     pub fn predict(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
         Ok(self.predict_proba(features)?.iter().map(|&p| if p >= 0.5 { 1.0 } else { 0.0 }).collect())
     }
@@ -279,36 +279,36 @@ impl LogisticRegression {
 // Decision Tree (CART)
 // ============================================================================
 
-/// Decision Tree for classification and regression (CART algorithm)
+// Decision Tree for classification and regression (CART algorithm)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecisionTree {
-    /// Root node of the tree
+    // Root node of the tree
     pub root: Option<TreeNode>,
-    /// Maximum depth
+    // Maximum depth
     max_depth: usize,
-    /// Minimum samples to split
+    // Minimum samples to split
     min_samples_split: usize,
-    /// Minimum samples per leaf
+    // Minimum samples per leaf
     min_samples_leaf: usize,
-    /// Task type (classification or regression)
+    // Task type (classification or regression)
     is_classification: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TreeNode {
-    /// Feature index for split
+    // Feature index for split
     pub feature_idx: Option<usize>,
-    /// Threshold value for split
+    // Threshold value for split
     pub threshold: Option<f64>,
-    /// Left child
+    // Left child
     pub left: Option<Box<TreeNode>>,
-    /// Right child
+    // Right child
     pub right: Option<Box<TreeNode>>,
-    /// Predicted value (for leaf nodes)
+    // Predicted value (for leaf nodes)
     pub value: Option<f64>,
-    /// Number of samples at this node
+    // Number of samples at this node
     pub n_samples: usize,
-    /// Impurity at this node
+    // Impurity at this node
     pub impurity: f64,
 }
 
@@ -528,16 +528,16 @@ impl DecisionTree {
 // Random Forest
 // ============================================================================
 
-/// Random Forest ensemble method
+// Random Forest ensemble method
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RandomForest {
-    /// Collection of decision trees
+    // Collection of decision trees
     pub trees: Vec<DecisionTree>,
-    /// Number of trees in the forest
+    // Number of trees in the forest
     n_estimators: usize,
-    /// Maximum depth per tree
+    // Maximum depth per tree
     max_depth: usize,
-    /// Feature subsample ratio
+    // Feature subsample ratio
     max_features: f64,
 }
 
@@ -632,16 +632,16 @@ impl RandomForest {
 // K-Means Clustering
 // ============================================================================
 
-/// K-Means clustering algorithm
+// K-Means clustering algorithm
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KMeans {
-    /// Cluster centroids
+    // Cluster centroids
     pub centroids: Vec<Vec<f64>>,
-    /// Number of clusters
+    // Number of clusters
     k: usize,
-    /// Maximum iterations
+    // Maximum iterations
     max_iterations: usize,
-    /// Convergence tolerance
+    // Convergence tolerance
     tolerance: f64,
 }
 
@@ -762,14 +762,14 @@ impl KMeans {
 // Naive Bayes
 // ============================================================================
 
-/// Gaussian Naive Bayes classifier
+// Gaussian Naive Bayes classifier
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NaiveBayes {
-    /// Class priors
+    // Class priors
     pub class_priors: HashMap<i64, f64>,
-    /// Feature means per class
+    // Feature means per class
     pub means: HashMap<i64, Vec<f64>>,
-    /// Feature variances per class
+    // Feature variances per class
     pub variances: HashMap<i64, Vec<f64>>,
 }
 

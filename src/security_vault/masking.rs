@@ -28,39 +28,39 @@ use sha2::{Sha256, Digest};
 use rand::Rng;
 use regex::Regex;
 
-/// Masking type enumeration
+// Masking type enumeration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum MaskingType {
-    /// Replace entire value with fixed string
+    // Replace entire value with fixed string
     FullMask(String),
-    /// Show only last N characters
+    // Show only last N characters
     PartialMask { show_last: usize },
-    /// Show only first N characters
+    // Show only first N characters
     PartialMaskFirst { show_first: usize },
-    /// Randomize value while maintaining format
+    // Randomize value while maintaining format
     Shuffle,
-    /// Replace with random value from substitution table
+    // Replace with random value from substitution table
     Substitution { table: String },
-    /// Replace with NULL
+    // Replace with NULL
     Nullify,
-    /// One-way hash with salt
+    // One-way hash with salt
     Hash { salt: String },
-    /// Format-preserving encryption
+    // Format-preserving encryption
     FormatPreserving,
-    /// Email masking (preserve domain)
+    // Email masking (preserve domain)
     EmailMask,
-    /// Credit card masking (show last 4)
+    // Credit card masking (show last 4)
     CreditCardMask,
-    /// SSN masking (show last 4)
+    // SSN masking (show last 4)
     SsnMask,
-    /// Phone number masking
+    // Phone number masking
     PhoneMask,
-    /// Custom function
+    // Custom function
     Custom { function_name: String },
 }
 
 impl MaskingType {
-    /// Parse masking type from string
+    // Parse masking type from string
     pub fn from_str(s: &str) -> Result<Self> {
         match s.to_uppercase().as_str() {
             "FULL_MASK" => Ok(Self::FullMask("***MASKED***".to_string())),
@@ -78,29 +78,29 @@ impl MaskingType {
     }
 }
 
-/// Masking policy defining how data should be masked
+// Masking policy defining how data should be masked
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaskingPolicy {
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Column pattern (regex)
+    // Column pattern (regex)
     pub column_pattern: String,
-    /// Table pattern (optional)
+    // Table pattern (optional)
     pub table_pattern: Option<String>,
-    /// Masking type
+    // Masking type
     pub masking_type: MaskingType,
-    /// Enabled flag
+    // Enabled flag
     pub enabled: bool,
-    /// Consistency key (for deterministic masking)
+    // Consistency key (for deterministic masking)
     pub consistency_key: Option<String>,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: i64,
-    /// Priority (higher priority applied first)
+    // Priority (higher priority applied first)
     pub priority: i32,
 }
 
 impl MaskingPolicy {
-    /// Create a new masking policy
+    // Create a new masking policy
     pub fn new(name: String, column_pattern: String, masking_type: MaskingType) -> Self {
         Self {
             name,
@@ -114,7 +114,7 @@ impl MaskingPolicy {
         }
     }
 
-    /// Check if policy applies to a column
+    // Check if policy applies to a column
     pub fn applies_to(&self, table: &str, column: &str) -> Result<bool> {
         // Check table pattern if specified
         if let Some(ref table_pat) = self.table_pattern {
@@ -132,23 +132,23 @@ impl MaskingPolicy {
     }
 }
 
-/// Substitution table for realistic fake data
+// Substitution table for realistic fake data
 #[derive(Debug, Clone)]
 struct SubstitutionTable {
-    /// Table name
+    // Table name
     name: String,
-    /// Values to substitute
+    // Values to substitute
     values: Vec<String>,
 }
 
 impl SubstitutionTable {
-    /// Get random value from table
+    // Get random value from table
     fn get_random(&self) -> &str {
         let idx = rand::thread_rng().gen_range(0..self.values.len());
         &self.values[idx]
     }
 
-    /// Get deterministic value based on hash
+    // Get deterministic value based on hash
     fn get_consistent(&self, input: &str, seed: &str) -> &str {
         let mut hasher = Sha256::new();
         hasher.update(input);
@@ -159,36 +159,36 @@ impl SubstitutionTable {
     }
 }
 
-/// Custom masking function
+// Custom masking function
 pub type MaskingFunction = Box<dyn Fn(&str) -> Result<String> + Send + Sync>;
 
-/// Main Data Masking Engine
+// Main Data Masking Engine
 pub struct MaskingEngine {
-    /// Masking policies
+    // Masking policies
     policies: RwLock<HashMap<String, MaskingPolicy>>,
-    /// Substitution tables
+    // Substitution tables
     substitution_tables: RwLock<HashMap<String, SubstitutionTable>>,
-    /// Custom masking functions
+    // Custom masking functions
     custom_functions: RwLock<HashMap<String, MaskingFunction>>,
-    /// Consistency cache (for deterministic masking)
+    // Consistency cache (for deterministic masking)
     consistency_cache: RwLock<HashMap<String, String>>,
-    /// Masking statistics
+    // Masking statistics
     stats: RwLock<MaskingStats>,
 }
 
-/// Masking statistics
+// Masking statistics
 #[derive(Debug, Default)]
 struct MaskingStats {
-    /// Total values masked
+    // Total values masked
     total_masked: u64,
-    /// Masked by policy
+    // Masked by policy
     by_policy: HashMap<String, u64>,
-    /// Cache hits
+    // Cache hits
     cache_hits: u64,
 }
 
 impl MaskingEngine {
-    /// Create a new masking engine
+    // Create a new masking engine
 pub fn new() -> Result<Self> {
                 let mut engine = Self {
                     policies: RwLock::new(HashMap::new()),
@@ -197,14 +197,14 @@ pub fn new() -> Result<Self> {
                     consistency_cache: RwLock::new(HashMap::new()),
                     stats: RwLock::new(MaskingStats::default()),
                 };
-            
+
                 // Initialize default substitution tables
                 engine.init_default_substitution_tables();
-            
+
                 Ok(engine)
             }
 
-    /// Initialize default substitution tables
+    // Initialize default substitution tables
     fn init_default_substitution_tables(&mut self) {
         // First names
         let first_names = SubstitutionTable {
@@ -239,7 +239,7 @@ pub fn new() -> Result<Self> {
         tables.insert("CITIES".to_string(), cities);
     }
 
-    /// Create a masking policy
+    // Create a masking policy
     pub fn create_policy(
         &mut self,
         name: &str,
@@ -257,7 +257,7 @@ pub fn new() -> Result<Self> {
         Ok(())
     }
 
-    /// Create policy with custom configuration
+    // Create policy with custom configuration
     pub fn create_policy_custom(&mut self, policy: MaskingPolicy) -> Result<()> {
         // Validate regex patterns
         Regex::new(&policy.column_pattern)
@@ -272,14 +272,14 @@ pub fn new() -> Result<Self> {
         Ok(())
     }
 
-    /// Drop a masking policy
+    // Drop a masking policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
         self.policies.write().remove(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         Ok(())
     }
 
-    /// Enable a policy
+    // Enable a policy
     pub fn enable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
         let policy = policies.get_mut(name)
@@ -288,7 +288,7 @@ pub fn new() -> Result<Self> {
         Ok(())
     }
 
-    /// Disable a policy
+    // Disable a policy
     pub fn disable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
         let policy = policies.get_mut(name)
@@ -297,7 +297,7 @@ pub fn new() -> Result<Self> {
         Ok(())
     }
 
-    /// Apply masking to a value (dynamic masking)
+    // Apply masking to a value (dynamic masking)
     pub fn mask_value(
         &self,
         table: &str,
@@ -330,7 +330,7 @@ pub fn new() -> Result<Self> {
         Ok(masked)
     }
 
-    /// Apply masking based on type
+    // Apply masking based on type
     fn apply_masking(
         &self,
         masking_type: &MaskingType,
@@ -432,7 +432,7 @@ pub fn new() -> Result<Self> {
         Ok(masked)
     }
 
-    /// Format-preserving masking (maintains data type and format)
+    // Format-preserving masking (maintains data type and format)
     fn format_preserving_mask(&self, value: &str) -> String {
         let mut masked = String::new();
         for ch in value.chars() {
@@ -451,7 +451,7 @@ pub fn new() -> Result<Self> {
         masked
     }
 
-    /// Mask email address (preserve domain)
+    // Mask email address (preserve domain)
     fn mask_email(&self, value: &str) -> Result<String> {
         if let Some(at_pos) = value.find('@') {
             let (local, domain) = value.split_at(at_pos);
@@ -466,7 +466,7 @@ pub fn new() -> Result<Self> {
         }
     }
 
-    /// Mask credit card (show last 4 digits)
+    // Mask credit card (show last 4 digits)
     fn mask_credit_card(&self, value: &str) -> String {
         let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect();
         if digits.len() >= 4 {
@@ -477,7 +477,7 @@ pub fn new() -> Result<Self> {
         }
     }
 
-    /// Mask SSN (show last 4 digits)
+    // Mask SSN (show last 4 digits)
     fn mask_ssn(&self, value: &str) -> String {
         let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect();
         if digits.len() == 9 {
@@ -487,7 +487,7 @@ pub fn new() -> Result<Self> {
         }
     }
 
-    /// Mask phone number
+    // Mask phone number
     fn mask_phone(&self, value: &str) -> String {
         let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect();
         if digits.len() >= 4 {
@@ -498,7 +498,7 @@ pub fn new() -> Result<Self> {
         }
     }
 
-    /// Register a custom masking function
+    // Register a custom masking function
     pub fn register_custom_function(
         &mut self,
         name: String,
@@ -507,7 +507,7 @@ pub fn new() -> Result<Self> {
         self.custom_functions.write().insert(name, function);
     }
 
-    /// Add a substitution table
+    // Add a substitution table
     pub fn add_substitution_table(&mut self, name: String, values: Vec<String>) -> Result<()> {
         if values.is_empty() {
             return Err(DbError::InvalidInput("Substitution table cannot be empty".to_string()));
@@ -518,28 +518,28 @@ pub fn new() -> Result<Self> {
         Ok(())
     }
 
-    /// List all policies
+    // List all policies
     pub fn list_policies(&self) -> Vec<String> {
         self.policies.read().keys().cloned().collect()
     }
 
-    /// Get policy details
+    // Get policy details
     pub fn get_policy(&self, name: &str) -> Option<MaskingPolicy> {
         self.policies.read().get(name).cloned()
     }
 
-    /// Get masking statistics
+    // Get masking statistics
     pub fn get_stats(&self) -> (u64, u64, HashMap<String, u64>) {
         let stats = self.stats.read();
         (stats.total_masked, stats.cache_hits, stats.by_policy.clone())
     }
 
-    /// Clear consistency cache
+    // Clear consistency cache
     pub fn clear_cache(&mut self) {
         self.consistency_cache.write().clear();
     }
 
-    /// Batch mask values for static masking
+    // Batch mask values for static masking
     pub fn batch_mask(
         &self,
         table: &str,

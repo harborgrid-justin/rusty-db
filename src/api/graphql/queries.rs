@@ -17,24 +17,24 @@ use crate::api::AuthorizationContext;
 // PART 2: QUERY OPERATIONS (600+ lines)
 // ============================================================================
 
-/// Root query type
+// Root query type
 pub struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
-    /// Get all database schemas
+    // Get all database schemas
     async fn schemas(&self, ctx: &Context<'_>) -> GqlResult<Vec<DatabaseSchema>> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_schemas().await
     }
 
-    /// Get a specific schema by name
+    // Get a specific schema by name
     async fn schema(&self, ctx: &Context<'_>, name: String) -> GqlResult<Option<DatabaseSchema>> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_schema(&name).await
     }
 
-    /// Get all tables across all schemas
+    // Get all tables across all schemas
     async fn tables(
         &self,
         ctx: &Context<'_>,
@@ -46,7 +46,7 @@ impl QueryRoot {
         engine.get_tables(schema, limit, offset).await
     }
 
-    /// Get a specific table by name
+    // Get a specific table by name
     async fn table(
         &self,
         ctx: &Context<'_>,
@@ -57,7 +57,7 @@ impl QueryRoot {
         engine.get_table(&name, schema).await
     }
 
-    /// Query a table with filtering and pagination
+    // Query a table with filtering and pagination
     async fn query_table(
         &self,
         ctx: &Context<'_>,
@@ -88,7 +88,7 @@ impl QueryRoot {
         }
     }
 
-    /// Query multiple tables with joins
+    // Query multiple tables with joins
     async fn query_tables(
         &self,
         ctx: &Context<'_>,
@@ -119,7 +119,7 @@ impl QueryRoot {
         }
     }
 
-    /// Query with cursor-based pagination
+    // Query with cursor-based pagination
     async fn query_table_connection(
         &self,
         ctx: &Context<'_>,
@@ -143,7 +143,7 @@ impl QueryRoot {
         ).await
     }
 
-    /// Get a single row by ID
+    // Get a single row by ID
     async fn row(
         &self,
         ctx: &Context<'_>,
@@ -154,7 +154,7 @@ impl QueryRoot {
         engine.get_row(&table, &id).await
     }
 
-    /// Perform aggregations on a table
+    // Perform aggregations on a table
     async fn aggregate(
         &self,
         ctx: &Context<'_>,
@@ -167,7 +167,7 @@ impl QueryRoot {
         engine.aggregate(&table, aggregates, where_clause, group_by).await
     }
 
-    /// Count rows in a table
+    // Count rows in a table
     async fn count(
         &self,
         ctx: &Context<'_>,
@@ -179,7 +179,7 @@ impl QueryRoot {
         Ok(BigInt(count))
     }
 
-    /// Execute a raw SQL query (admin only)
+    // Execute a raw SQL query (admin only)
     async fn execute_sql(
         &self,
         ctx: &Context<'_>,
@@ -215,7 +215,7 @@ impl QueryRoot {
         }
     }
 
-    /// Search across multiple tables
+    // Search across multiple tables
     async fn search(
         &self,
         ctx: &Context<'_>,
@@ -228,7 +228,7 @@ impl QueryRoot {
         engine.search(&query, tables, fields, limit).await
     }
 
-    /// Get query execution plan
+    // Get query execution plan
     async fn explain(
         &self,
         ctx: &Context<'_>,
@@ -241,7 +241,7 @@ impl QueryRoot {
     }
 }
 
-/// Input type for join operations
+// Input type for join operations
 #[derive(InputObject, Clone, Debug)]
 pub struct JoinInput {
     pub table: String,
@@ -250,7 +250,7 @@ pub struct JoinInput {
     pub other_field: String,
 }
 
-/// Search result with highlighting
+// Search result with highlighting
 #[derive(SimpleObject, Clone, Debug)]
 pub struct SearchResult {
     pub results: Vec<SearchMatch>,
@@ -258,7 +258,7 @@ pub struct SearchResult {
     pub execution_time_ms: f64,
 }
 
-/// Individual search match
+// Individual search match
 #[derive(SimpleObject, Clone, Debug)]
 pub struct SearchMatch {
     pub table: String,
@@ -267,7 +267,7 @@ pub struct SearchMatch {
     pub highlights: HashMap<String, String>,
 }
 
-/// Query execution plan
+// Query execution plan
 #[derive(SimpleObject, Clone, Debug)]
 pub struct QueryPlan {
     pub plan_text: String,
@@ -276,7 +276,7 @@ pub struct QueryPlan {
     pub operations: Vec<PlanOperation>,
 }
 
-/// Individual operation in query plan
+// Individual operation in query plan
 #[derive(SimpleObject, Clone, Debug)]
 pub struct PlanOperation {
     pub operation_type: String,

@@ -13,13 +13,13 @@ use std::collections::HashMap;
 // Scoring Engine
 // ============================================================================
 
-/// Main scoring engine for model inference
+// Main scoring engine for model inference
 pub struct ScoringEngine {
-    /// Batch size for vectorized operations
+    // Batch size for vectorized operations
     batch_size: usize,
-    /// Enable GPU acceleration
+    // Enable GPU acceleration
     use_gpu: bool,
-    /// Cache for frequently used models
+    // Cache for frequently used models
     model_cache: HashMap<String, CachedModel>,
 }
 
@@ -42,7 +42,7 @@ impl ScoringEngine {
         self
     }
 
-    /// Make predictions using a trained model
+    // Make predictions using a trained model
     pub fn predict(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         match &model.algorithm {
             Algorithm::LinearRegression | Algorithm::LogisticRegression => {
@@ -72,7 +72,7 @@ impl ScoringEngine {
         }
     }
 
-    /// Batch scoring with automatic batching
+    // Batch scoring with automatic batching
     pub fn batch_predict(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         let n_samples = features.len();
         let mut all_predictions = Vec::with_capacity(n_samples);
@@ -85,7 +85,7 @@ impl ScoringEngine {
         Ok(all_predictions)
     }
 
-    /// Predict with feature explanations (SHAP-like)
+    // Predict with feature explanations (SHAP-like)
     pub fn predict_with_explanation(
         &self,
         model: &Model,
@@ -102,7 +102,7 @@ impl ScoringEngine {
         Ok(predictions)
     }
 
-    /// Predict with confidence intervals
+    // Predict with confidence intervals
     pub fn predict_with_interval(
         &self,
         model: &Model,
@@ -381,7 +381,7 @@ impl ScoringEngine {
     // PMML Import/Export
     // ========================================================================
 
-    /// Export model to PMML format
+    // Export model to PMML format
     pub fn export_pmml(&self, model: &Model) -> Result<String> {
         let mut pmml = String::new();
 
@@ -430,7 +430,7 @@ impl ScoringEngine {
         Ok(pmml)
     }
 
-    /// Import model from PMML format
+    // Import model from PMML format
     pub fn import_pmml(&self, pmml: &str) -> Result<Model> {
         // Simplified PMML parsing
         // In production, use a proper XML parser
@@ -495,7 +495,7 @@ struct CachedModel {
 // Real-time Scoring Service
 // ============================================================================
 
-/// Real-time scoring service with request queuing
+// Real-time scoring service with request queuing
 pub struct RealTimeScoringService {
     engine: ScoringEngine,
     request_queue: Vec<ScoringRequest>,
@@ -564,7 +564,7 @@ pub struct ScoringResponse {
 // Batch Scoring Job
 // ============================================================================
 
-/// Batch scoring job configuration
+// Batch scoring job configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatchScoringJob {
     pub job_id: String,

@@ -14,7 +14,7 @@ use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
-/// Catalog database configuration
+// Catalog database configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CatalogConfig {
     pub catalog_path: PathBuf,
@@ -38,7 +38,7 @@ impl Default for CatalogConfig {
     }
 }
 
-/// Backup piece - individual backup file component
+// Backup piece - individual backup file component
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupPiece {
     pub piece_id: String,
@@ -62,7 +62,7 @@ pub enum PieceStatus {
     Archived,
 }
 
-/// Backup set - logical grouping of backup pieces
+// Backup set - logical grouping of backup pieces
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupSet {
     pub set_id: String,
@@ -112,7 +112,7 @@ impl BackupSet {
     }
 }
 
-/// Database registration in catalog
+// Database registration in catalog
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatabaseRegistration {
     pub database_id: String,
@@ -126,7 +126,7 @@ pub struct DatabaseRegistration {
     pub tags: HashMap<String, String>,
 }
 
-/// Backup report
+// Backup report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupReport {
     pub report_id: String,
@@ -171,7 +171,7 @@ pub struct ReportDetail {
     pub recovery_window_compliant: bool,
 }
 
-/// Restore point catalog entry
+// Restore point catalog entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RestorePointCatalog {
     pub restore_point_id: String,
@@ -183,7 +183,7 @@ pub struct RestorePointCatalog {
     pub preserve_until: Option<SystemTime>,
 }
 
-/// Archived redo log entry
+// Archived redo log entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchivedRedoLog {
     pub log_id: String,
@@ -206,7 +206,7 @@ pub enum ArchiveLogStatus {
     Expired,
 }
 
-/// Backup catalog - main catalog manager
+// Backup catalog - main catalog manager
 pub struct BackupCatalog {
     config: CatalogConfig,
     databases: Arc<RwLock<HashMap<String, DatabaseRegistration>>>,
@@ -233,7 +233,7 @@ impl BackupCatalog {
         })
     }
 
-    /// Register a database in the catalog
+    // Register a database in the catalog
     pub fn register_database(
         &self,
         database_id: String,
@@ -257,14 +257,14 @@ impl BackupCatalog {
         Ok(())
     }
 
-    /// Unregister a database
+    // Unregister a database
     pub fn unregister_database(&self, database_id: &str) -> Result<()> {
         self.databases.write().remove(database_id)
             .ok_or_else(|| DbError::BackupError("Database not found".to_string()))?;
         Ok(())
     }
 
-    /// Register a backup set
+    // Register a backup set
     pub fn register_backup_set(&self, backup_set: BackupSet) -> Result<()> {
         let database_id = backup_set.database_id.clone();
         let set_id = backup_set.set_id.clone();
@@ -283,14 +283,14 @@ impl BackupCatalog {
         Ok(())
     }
 
-    /// Register a backup piece
+    // Register a backup piece
     pub fn register_backup_piece(&self, piece: BackupPiece) -> Result<()> {
         let piece_id = piece.piece_id.clone();
         self.backup_pieces.write().insert(piece_id, piece);
         Ok(())
     }
 
-    /// Mark backup set as obsolete
+    // Mark backup set as obsolete
     pub fn mark_obsolete(&self, set_id: &str) -> Result<()> {
         let mut sets = self.backup_sets.write();
         let set = sets.get_mut(set_id)
@@ -309,7 +309,7 @@ impl BackupCatalog {
         Ok(())
     }
 
-    /// Delete obsolete backups
+    // Delete obsolete backups
     pub fn delete_obsolete(&self) -> Result<Vec<String>> {
         let mut deleted = Vec::new();
         let mut sets = self.backup_sets.write();
@@ -333,7 +333,7 @@ impl BackupCatalog {
         Ok(deleted)
     }
 
-    /// List backup sets for a database
+    // List backup sets for a database
     pub fn list_backup_sets(&self, database_id: &str) -> Vec<BackupSet> {
         self.backup_sets.read()
             .values()
@@ -342,7 +342,7 @@ impl BackupCatalog {
             .collect()
     }
 
-    /// Find backup sets for point-in-time recovery
+    // Find backup sets for point-in-time recovery
     pub fn find_recovery_path(&self, database_id: &str, target_scn: u64) -> Result<Vec<BackupSet>> {
         let sets = self.backup_sets.read();
         let mut recovery_sets = Vec::new();
@@ -386,21 +386,21 @@ impl BackupCatalog {
         Ok(recovery_sets)
     }
 
-    /// Register a restore point
+    // Register a restore point
     pub fn register_restore_point(&self, restore_point: RestorePointCatalog) -> Result<()> {
         let id = restore_point.restore_point_id.clone();
         self.restore_points.write().insert(id, restore_point);
         Ok(())
     }
 
-    /// Register archived redo log
+    // Register archived redo log
     pub fn register_archived_log(&self, log: ArchivedRedoLog) -> Result<()> {
         let sequence = log.sequence_number;
         self.archived_logs.write().insert(sequence, log);
         Ok(())
     }
 
-    /// Find archived logs for recovery
+    // Find archived logs for recovery
     pub fn find_archived_logs(
         &self,
         database_id: &str,
@@ -419,7 +419,7 @@ impl BackupCatalog {
             .collect()
     }
 
-    /// Generate backup report
+    // Generate backup report
     pub fn generate_report(
         &self,
         report_type: ReportType,
@@ -511,12 +511,12 @@ impl BackupCatalog {
         Ok(report_id)
     }
 
-    /// Get report by ID
+    // Get report by ID
     pub fn get_report(&self, report_id: &str) -> Option<BackupReport> {
         self.reports.read().get(report_id).cloned()
     }
 
-    /// Export catalog to file
+    // Export catalog to file
     pub fn export_catalog(&self, export_path: &Path) -> Result<()> {
         let catalog_data = CatalogExport {
             databases: self.databases.read().clone(),
@@ -538,7 +538,7 @@ impl BackupCatalog {
         Ok(())
     }
 
-    /// Import catalog from file
+    // Import catalog from file
     pub fn import_catalog(&self, import_path: &Path) -> Result<()> {
         let mut file = File::open(import_path)
             .map_err(|e| DbError::BackupError(format!("Failed to open import file: {}", e)))?;
@@ -559,7 +559,7 @@ impl BackupCatalog {
         Ok(())
     }
 
-    /// Get catalog statistics
+    // Get catalog statistics
     pub fn get_statistics(&self) -> CatalogStatistics {
         let databases = self.databases.read();
         let sets = self.backup_sets.read();
@@ -588,7 +588,7 @@ impl BackupCatalog {
     }
 }
 
-/// Catalog export format
+// Catalog export format
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CatalogExport {
     databases: HashMap<String, DatabaseRegistration>,
@@ -598,7 +598,7 @@ struct CatalogExport {
     archived_logs: BTreeMap<u64, ArchivedRedoLog>,
 }
 
-/// Catalog statistics
+// Catalog statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CatalogStatistics {
     pub total_databases: usize,
@@ -691,5 +691,3 @@ mod tests {
         assert!(!path.is_empty());
     }
 }
-
-

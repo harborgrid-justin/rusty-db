@@ -55,13 +55,13 @@ type Result<T> = std::result::Result<T, DbError>;
 // SECTION 1: METRICS COLLECTION ENGINE (700+ lines)
 // ============================================================================
 
-/// Label key-value pair for metric dimensions
+// Label key-value pair for metric dimensions
 pub type Label = (String, String);
 
-/// Labels collection type
+// Labels collection type
 pub type Labels = Vec<Label>;
 
-/// Metric identifier combining name and labels
+// Metric identifier combining name and labels
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MetricId {
     pub name: String,
@@ -83,7 +83,7 @@ impl MetricId {
     }
 }
 
-/// Counter metric - monotonically increasing value
+// Counter metric - monotonically increasing value
 #[derive(Debug)]
 pub struct CounterMetric {
     value: AtomicU64,
@@ -117,7 +117,7 @@ impl CounterMetric {
     }
 }
 
-/// Gauge metric - value that can go up or down
+// Gauge metric - value that can go up or down
 #[derive(Debug)]
 pub struct GaugeMetric {
     value: Arc<RwLock<f64>>,
@@ -159,14 +159,14 @@ impl GaugeMetric {
     }
 }
 
-/// Histogram bucket for distribution tracking
+// Histogram bucket for distribution tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistogramBucketData {
     pub upper_bound: f64,
     pub count: u64,
 }
 
-/// Histogram metric - tracks distribution of values
+// Histogram metric - tracks distribution of values
 #[derive(Debug)]
 pub struct HistogramMetric {
     buckets: Vec<(f64, AtomicU64)>, // (upper_bound, count)
@@ -228,7 +228,7 @@ impl HistogramMetric {
     }
 }
 
-/// Summary metric - tracks quantiles and statistics
+// Summary metric - tracks quantiles and statistics
 #[derive(Debug)]
 pub struct SummaryMetric {
     observations: Arc<RwLock<Vec<f64>>>,
@@ -300,7 +300,7 @@ impl SummaryMetric {
     }
 }
 
-/// Unified metric type
+// Unified metric type
 #[derive(Debug)]
 pub enum MetricType {
     Counter(Arc<CounterMetric>),
@@ -309,7 +309,7 @@ pub enum MetricType {
     Summary(Arc<SummaryMetric>),
 }
 
-/// High-precision timing utility
+// High-precision timing utility
 pub struct Timer {
     start: Instant,
 }
@@ -334,7 +334,7 @@ impl Timer {
     }
 }
 
-/// Metric namespace for component isolation
+// Metric namespace for component isolation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricNamespace {
     pub prefix: String,
@@ -363,7 +363,7 @@ impl MetricNamespace {
     }
 }
 
-/// Time window for metric aggregation
+// Time window for metric aggregation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AggregationWindow {
     OneMinute,
@@ -385,7 +385,7 @@ impl AggregationWindow {
     }
 }
 
-/// Aggregated metric data point
+// Aggregated metric data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregatedMetricPoint {
     pub timestamp: SystemTime,
@@ -397,7 +397,7 @@ pub struct AggregatedMetricPoint {
     pub sum: f64,
 }
 
-/// Metric aggregator for time-series analysis
+// Metric aggregator for time-series analysis
 pub struct MetricAggregator {
     data_points: Arc<RwLock<VecDeque<(SystemTime, f64)>>>,
     aggregated: Arc<RwLock<HashMap<AggregationWindow, Vec<AggregatedMetricPoint>>>>,
@@ -473,7 +473,7 @@ impl MetricAggregator {
     }
 }
 
-/// Cardinality tracker for preventing metric explosion
+// Cardinality tracker for preventing metric explosion
 pub struct CardinalityManager {
     cardinality_limits: HashMap<String, usize>,
     current_cardinality: Arc<RwLock<HashMap<String, usize>>>,
@@ -542,7 +542,7 @@ pub enum CardinalityCheckResult {
     Drop,
 }
 
-/// Metric retention policy
+// Metric retention policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetentionPolicy {
     pub raw_data_retention: Duration,
@@ -564,7 +564,7 @@ impl Default for RetentionPolicy {
     }
 }
 
-/// Core metrics registry
+// Core metrics registry
 pub struct MetricsRegistry {
     metrics: Arc<RwLock<HashMap<MetricId, MetricType>>>,
     aggregators: Arc<RwLock<HashMap<String, MetricAggregator>>>,
@@ -695,13 +695,13 @@ impl Default for MetricsRegistry {
 // SECTION 2: PROMETHEUS INTEGRATION (600+ lines)
 // ============================================================================
 
-/// Prometheus exposition format exporter
+// Prometheus exposition format exporter
 pub struct PrometheusExporter {
     registry: Arc<MetricsRegistry>,
     exemplar_storage: Arc<RwLock<HashMap<String, Vec<Exemplar>>>>,
 }
 
-/// Exemplar data for tracing integration
+// Exemplar data for tracing integration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Exemplar {
     pub value: f64,
@@ -726,7 +726,7 @@ impl PrometheusExporter {
             .push(exemplar);
     }
 
-    /// Export all metrics in Prometheus text exposition format
+    // Export all metrics in Prometheus text exposition format
     pub fn export_text(&self) -> String {
         let mut output = String::new();
         let metrics = self.registry.all_metrics();
@@ -849,7 +849,7 @@ impl PrometheusExporter {
     }
 }
 
-/// Prometheus push gateway client
+// Prometheus push gateway client
 pub struct PrometheusPushGateway {
     gateway_url: String,
     job_name: String,
@@ -918,7 +918,7 @@ impl PrometheusPushGateway {
     }
 }
 
-/// Prometheus remote write protocol implementation
+// Prometheus remote write protocol implementation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RemoteWriteRequest {
     pub timeseries: Vec<TimeSeries>,
@@ -1014,7 +1014,7 @@ impl RemoteWriteClient {
     }
 }
 
-/// Metric family for grouping related metrics
+// Metric family for grouping related metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricFamily {
     pub name: String,
@@ -1095,7 +1095,7 @@ impl Default for MetricFamilyBuilder {
 // SECTION 3: HEALTH CHECK SYSTEM (500+ lines)
 // ============================================================================
 
-/// Health check status
+// Health check status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HealthStatus {
     Healthy,
@@ -1123,7 +1123,7 @@ impl HealthStatus {
     }
 }
 
-/// Health check result
+// Health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckResult {
     pub status: HealthStatus,
@@ -1179,13 +1179,13 @@ impl HealthCheckResult {
     }
 }
 
-/// Trait for implementing health checks
+// Trait for implementing health checks
 pub trait HealthChecker: Send + Sync {
     fn name(&self) -> &str;
     fn check(&self) -> HealthCheckResult;
 }
 
-/// Liveness probe - is the service alive?
+// Liveness probe - is the service alive?
 pub struct LivenessProbe {
     started: AtomicBool,
     startup_time: RwLock<Option<SystemTime>>,
@@ -1240,7 +1240,7 @@ impl Default for LivenessProbe {
     }
 }
 
-/// Readiness probe - is the service ready to accept traffic?
+// Readiness probe - is the service ready to accept traffic?
 pub struct ReadinessProbe {
     dependencies: Arc<RwLock<Vec<Arc<dyn HealthChecker>>>>,
     min_healthy_dependencies: usize,
@@ -1307,7 +1307,7 @@ impl HealthChecker for ReadinessProbe {
     }
 }
 
-/// Startup probe - has the service completed initialization?
+// Startup probe - has the service completed initialization?
 pub struct StartupProbe {
     initialization_checks: Arc<RwLock<Vec<(String, Arc<AtomicBool>)>>>,
 }
@@ -1372,7 +1372,7 @@ impl Default for StartupProbe {
     }
 }
 
-/// Database connection health check
+// Database connection health check
 pub struct DatabaseHealthCheck {
     name: String,
     active_connections: Arc<RwLock<usize>>,
@@ -1427,7 +1427,7 @@ impl HealthChecker for DatabaseHealthCheck {
     }
 }
 
-/// Memory health check
+// Memory health check
 pub struct MemoryHealthCheck {
     max_memory_bytes: u64,
     current_usage: Arc<RwLock<u64>>,
@@ -1475,7 +1475,7 @@ impl HealthChecker for MemoryHealthCheck {
     }
 }
 
-/// Self-healing trigger based on health checks
+// Self-healing trigger based on health checks
 pub struct SelfHealingTrigger {
     name: String,
     health_checker: Arc<dyn HealthChecker>,
@@ -1520,7 +1520,7 @@ impl SelfHealingTrigger {
     }
 }
 
-/// Health check coordinator
+// Health check coordinator
 pub struct HealthCheckCoordinator {
     checkers: Arc<RwLock<Vec<Arc<dyn HealthChecker>>>>,
     liveness_probe: Arc<LivenessProbe>,
@@ -1591,7 +1591,7 @@ impl Default for HealthCheckCoordinator {
 // SECTION 4: ALERTING ENGINE (600+ lines)
 // ============================================================================
 
-/// Alert severity level
+// Alert severity level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
 pub enum AlertSeverity {
     Info,
@@ -1600,7 +1600,7 @@ pub enum AlertSeverity {
     Critical,
 }
 
-/// Alert state
+// Alert state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AlertState {
     Pending,
@@ -1610,7 +1610,7 @@ pub enum AlertState {
     Inhibited,
 }
 
-/// Alert instance
+// Alert instance
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Alert {
     pub id: String,
@@ -1662,7 +1662,7 @@ impl Alert {
     }
 }
 
-/// Comparison operator for threshold rules
+// Comparison operator for threshold rules
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ComparisonOperator {
     GreaterThan,
@@ -1686,7 +1686,7 @@ impl ComparisonOperator {
     }
 }
 
-/// Threshold-based alert rule
+// Threshold-based alert rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThresholdAlertRule {
     pub name: String,
@@ -1787,7 +1787,7 @@ impl ThresholdAlertRule {
     }
 }
 
-/// Multi-condition alert rule
+// Multi-condition alert rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MultiConditionAlertRule {
     pub name: String,
@@ -1845,7 +1845,7 @@ impl MultiConditionAlertRule {
     }
 }
 
-/// Alert routing rule
+// Alert routing rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertRoute {
     pub name: String,
@@ -1885,7 +1885,7 @@ impl AlertRoute {
     }
 }
 
-/// Alert silencer
+// Alert silencer
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertSilence {
     pub id: String,
@@ -1915,7 +1915,7 @@ impl AlertSilence {
     }
 }
 
-/// Alert inhibitor - suppress alerts based on other active alerts
+// Alert inhibitor - suppress alerts based on other active alerts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertInhibitionRule {
     pub source_matchers: Vec<AlertMatcher>,
@@ -1923,13 +1923,13 @@ pub struct AlertInhibitionRule {
     pub equal_labels: Vec<String>,
 }
 
-/// Notification channel trait
+// Notification channel trait
 pub trait NotificationChannel: Send + Sync {
     fn name(&self) -> &str;
     fn send(&self, alert: &Alert) -> std::result::Result<(), DbError>;
 }
 
-/// Webhook notification channel
+// Webhook notification channel
 pub struct WebhookChannel {
     name: String,
     url: String,
@@ -1963,7 +1963,7 @@ impl NotificationChannel for WebhookChannel {
     }
 }
 
-/// Email notification channel
+// Email notification channel
 pub struct EmailChannel {
     name: String,
     smtp_server: String,
@@ -1993,7 +1993,7 @@ impl NotificationChannel for EmailChannel {
     }
 }
 
-/// Slack notification channel
+// Slack notification channel
 pub struct SlackChannel {
     name: String,
     webhook_url: String,
@@ -2021,7 +2021,7 @@ impl NotificationChannel for SlackChannel {
     }
 }
 
-/// Alert manager
+// Alert manager
 pub struct AlertManager {
     threshold_rules: Arc<RwLock<Vec<ThresholdAlertRule>>>,
     multi_condition_rules: Arc<RwLock<Vec<MultiConditionAlertRule>>>,
@@ -2159,7 +2159,7 @@ impl Default for AlertManager {
 // SECTION 5: DASHBOARD DATA API (600+ lines)
 // ============================================================================
 
-/// Time-series data point
+// Time-series data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesPoint {
     pub timestamp: SystemTime,
@@ -2167,7 +2167,7 @@ pub struct TimeSeriesPoint {
     pub labels: BTreeMap<String, String>,
 }
 
-/// Time-series query
+// Time-series query
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesQuery {
     pub metric_name: String,
@@ -2189,7 +2189,7 @@ pub enum AggregationFunction {
     Percentile(u8),
 }
 
-/// Time-series result
+// Time-series result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesResult {
     pub metric_name: String,
@@ -2197,7 +2197,7 @@ pub struct TimeSeriesResult {
     pub points: Vec<TimeSeriesPoint>,
 }
 
-/// Real-time metric stream
+// Real-time metric stream
 pub struct MetricStream {
     subscribers: Arc<RwLock<Vec<Arc<dyn MetricSubscriber>>>>,
 }
@@ -2231,7 +2231,7 @@ impl Default for MetricStream {
     }
 }
 
-/// Dashboard widget configuration
+// Dashboard widget configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DashboardWidget {
     pub id: String,
@@ -2262,7 +2262,7 @@ pub enum WidgetType {
     Alert,
 }
 
-/// Custom dashboard definition
+// Custom dashboard definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Dashboard {
     pub id: String,
@@ -2295,7 +2295,7 @@ impl Dashboard {
     }
 }
 
-/// Dashboard manager
+// Dashboard manager
 pub struct DashboardManager {
     dashboards: Arc<RwLock<HashMap<String, Dashboard>>>,
 }
@@ -2337,7 +2337,7 @@ impl Default for DashboardManager {
     }
 }
 
-/// Time-series database for historical metrics
+// Time-series database for historical metrics
 pub struct TimeSeriesDatabase {
     data: Arc<RwLock<HashMap<String, VecDeque<TimeSeriesPoint>>>>,
     max_points_per_metric: usize,
@@ -2503,7 +2503,7 @@ impl TimeSeriesDatabase {
     }
 }
 
-/// Export format for metrics data
+// Export format for metrics data
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExportFormat {
     Json,
@@ -2511,7 +2511,7 @@ pub enum ExportFormat {
     Prometheus,
 }
 
-/// Metrics exporter
+// Metrics exporter
 pub struct MetricsExporter {
     tsdb: Arc<TimeSeriesDatabase>,
 }
@@ -2580,7 +2580,7 @@ impl MetricsExporter {
     }
 }
 
-/// Top-level monitoring API
+// Top-level monitoring API
 pub struct MonitoringApi {
     pub metrics_registry: Arc<MetricsRegistry>,
     pub prometheus_exporter: Arc<PrometheusExporter>,
@@ -2592,7 +2592,7 @@ pub struct MonitoringApi {
     pub exporter: Arc<MetricsExporter>,
 }
 
-/// Monitoring configuration
+// Monitoring configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringConfig {
     pub retention_policy: RetentionPolicy,

@@ -1,10 +1,10 @@
-//! Pool partitioning module
-//!
-//! This module provides connection pool partitioning functionality for:
-//! - User/application/service-based isolation
-//! - Resource limits per partition
-//! - Routing strategies
-//! - Load balancing
+// Pool partitioning module
+//
+// This module provides connection pool partitioning functionality for:
+// - User/application/service-based isolation
+// - Resource limits per partition
+// - Routing strategies
+// - Load balancing
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -18,24 +18,24 @@ pub struct PoolPartition<C> {
     _phantom: std::marker::PhantomData<C>,
 }
 
-/// Partition type
+// Partition type
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PartitionType {
-    /// User-based partitioning
+    // User-based partitioning
     User(String),
-    /// Application-based partitioning
+    // Application-based partitioning
     Application(String),
-    /// Service-based partitioning
+    // Service-based partitioning
     Service(String),
-    /// Tenant-based partitioning (multi-tenant isolation)
+    // Tenant-based partitioning (multi-tenant isolation)
     Tenant(String),
-    /// Resource group partitioning
+    // Resource group partitioning
     ResourceGroup(String),
-    /// Custom partitioning
+    // Custom partitioning
     Custom(String),
 }
 
-/// Resource limits for a partition
+// Resource limits for a partition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PartitionLimits {
     pub max_connections: usize,
@@ -59,7 +59,7 @@ impl Default for PartitionLimits {
     }
 }
 
-/// Partition statistics
+// Partition statistics
 #[derive(Default)]
 pub struct PartitionStatistics {
     connections_acquired: AtomicU64,
@@ -79,7 +79,7 @@ impl PartitionStatistics {
     }
 }
 
-/// Partition statistics snapshot
+// Partition statistics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PartitionStats {
     pub connections_acquired: u64,
@@ -88,7 +88,7 @@ pub struct PartitionStats {
     pub limit_violations: u64,
 }
 
-/// Affinity rules for routing connections
+// Affinity rules for routing connections
 #[derive(Debug, Clone)]
 pub struct AffinityRules {
     preferred_partitions: Vec<String>,
@@ -108,7 +108,7 @@ impl Default for AffinityRules {
     }
 }
 
-/// Partition manager
+// Partition manager
 pub struct PartitionManager<C> {
     partitions: Arc<RwLock<HashMap<String, Arc<PoolPartition<C>>>>>,
     default_partition: Arc<RwLock<Option<String>>>,
@@ -127,7 +127,7 @@ impl<C: Send + Sync + 'static> PartitionManager<C> {
     }
 }
 
-/// Routing strategy for partitions
+// Routing strategy for partitions
 #[derive(Clone)]
 pub enum RoutingStrategy {
     UserBased,
@@ -138,7 +138,7 @@ pub enum RoutingStrategy {
     Custom(Arc<dyn Fn(&PartitionRequest) -> Option<String> + Send + Sync>),
 }
 
-/// Partition request information
+// Partition request information
 #[derive(Debug, Clone)]
 pub struct PartitionRequest {
     pub user: Option<String>,
@@ -162,7 +162,7 @@ impl Default for PartitionRequest {
     }
 }
 
-/// Load balancer for partitions
+// Load balancer for partitions
 pub struct LoadBalancer {
     algorithm: LoadBalancingAlgorithm,
     round_robin_counter: AtomicU64,
@@ -203,7 +203,7 @@ impl Default for LoadBalancer {
     }
 }
 
-/// Load balancing algorithm
+// Load balancing algorithm
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LoadBalancingAlgorithm {
     RoundRobin,

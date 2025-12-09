@@ -47,7 +47,7 @@ use std::time::{Duration};
 use thiserror::Error;
 use crate::error::DbError;
 
-/// Replication-specific error types
+// Replication-specific error types
 #[derive(Error, Debug)]
 pub enum ReplicationTypeError {
     #[error("Invalid replica ID '{replica_id}': {reason}")]
@@ -75,38 +75,38 @@ pub enum ReplicationTypeError {
     InvalidChecksum { expected: u32, actual: u32 },
 }
 
-/// Strongly-typed replica identifier
-///
-/// Ensures replica IDs follow naming conventions and are valid for use
-/// across the replication system.
+// Strongly-typed replica identifier
+//
+// Ensures replica IDs follow naming conventions and are valid for use
+// across the replication system.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ReplicaId(String);
 
 impl ReplicaId {
-    /// Creates a new replica ID with validation
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - The replica identifier string
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ReplicaId)` - Valid replica ID
-    /// * `Err(ReplicationTypeError)` - Invalid replica ID
-    ///
-    /// # Validation Rules
-    ///
-    /// - Length: 1-64 characters
-    /// - Characters: alphanumeric, hyphens, underscores only
-    /// - Must start with a letter
-    /// - No consecutive special characters
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// let valid = ReplicaId::new("replica-01").unwrap();
-    /// let invalid = ReplicaId::new("123-invalid"); // Error: must start with letter
-    /// ```
+    // Creates a new replica ID with validation
+    //
+    // # Arguments
+    //
+    // * `id` - The replica identifier string
+    //
+    // # Returns
+    //
+    // * `Ok(ReplicaId)` - Valid replica ID
+    // * `Err(ReplicationTypeError)` - Invalid replica ID
+    //
+    // # Validation Rules
+    //
+    // - Length: 1-64 characters
+    // - Characters: alphanumeric, hyphens, underscores only
+    // - Must start with a letter
+    // - No consecutive special characters
+    //
+    // # Examples
+    //
+    // ```rust
+    // let valid = ReplicaId::new("replica-01").unwrap();
+    // let invalid = ReplicaId::new("123-invalid"); // Error: must start with letter
+    // ```
     pub fn new(id: impl Into<String>) -> Result<Self, ReplicationTypeError> {
         let id = id.into();
 
@@ -145,12 +145,12 @@ impl ReplicaId {
         Ok(Self(id))
     }
 
-    /// Returns the replica ID as a string slice
+    // Returns the replica ID as a string slice
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
-    /// Consumes the ReplicaId and returns the inner String
+    // Consumes the ReplicaId and returns the inner String
     pub fn into_string(self) -> String {
         self.0
     }
@@ -162,36 +162,36 @@ impl fmt::Display for ReplicaId {
     }
 }
 
-/// Strongly-typed replica network address
-///
-/// Validates and normalizes network addresses for replica connections.
+// Strongly-typed replica network address
+//
+// Validates and normalizes network addresses for replica connections.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ReplicaAddress(String);
 
 impl ReplicaAddress {
-    /// Creates a new replica address with validation
-    ///
-    /// # Arguments
-    ///
-    /// * `address` - The network address (IP:port or hostname:port)
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ReplicaAddress)` - Valid address
-    /// * `Err(ReplicationTypeError)` - Invalid address
-    ///
-    /// # Validation Rules
-    ///
-    /// - Must contain exactly one colon (for port separation)
-    /// - Port must be in range 1-65535
-    /// - Host part must be valid hostname or IP address
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// let address = ReplicaAddress::new("127.0.0.1:5432")?;
-    /// let hostname = ReplicaAddress::new("replica.example.com:5432")?;
-    /// ```
+    // Creates a new replica address with validation
+    //
+    // # Arguments
+    //
+    // * `address` - The network address (IP:port or hostname:port)
+    //
+    // # Returns
+    //
+    // * `Ok(ReplicaAddress)` - Valid address
+    // * `Err(ReplicationTypeError)` - Invalid address
+    //
+    // # Validation Rules
+    //
+    // - Must contain exactly one colon (for port separation)
+    // - Port must be in range 1-65535
+    // - Host part must be valid hostname or IP address
+    //
+    // # Examples
+    //
+    // ```rust
+    // let address = ReplicaAddress::new("127.0.0.1:5432")?;
+    // let hostname = ReplicaAddress::new("replica.example.com:5432")?;
+    // ```
     pub fn new(address: impl Into<String>) -> Result<Self, ReplicationTypeError> {
         let address = address.into();
 
@@ -233,17 +233,17 @@ impl ReplicaAddress {
         Ok(Self(address))
     }
 
-    /// Returns the address as a string slice
+    // Returns the address as a string slice
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
-    /// Extracts the host portion of the address
+    // Extracts the host portion of the address
     pub fn host(&self) -> &str {
         self.0.split(':').next().unwrap()
     }
 
-    /// Extracts the port portion of the address
+    // Extracts the port portion of the address
     pub fn port(&self) -> u16 {
         self.0.split(':').nth(1).unwrap().parse().unwrap()
     }
@@ -255,12 +255,12 @@ impl fmt::Display for ReplicaAddress {
     }
 }
 
-/// Strongly-typed table name for replication operations
+// Strongly-typed table name for replication operations
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TableName(String);
 
 impl TableName {
-    /// Creates a new table name with validation
+    // Creates a new table name with validation
     pub fn new(name: impl Into<String>) -> Result<Self, ReplicationTypeError> {
         let name = name.into();
 
@@ -290,7 +290,7 @@ impl TableName {
         Ok(Self(name))
     }
 
-    /// Returns the table name as a string slice
+    // Returns the table name as a string slice
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -302,29 +302,29 @@ impl fmt::Display for TableName {
     }
 }
 
-/// Log Sequence Number for WAL ordering
-///
-/// Provides strong typing for LSN values with ordering guarantees.
+// Log Sequence Number for WAL ordering
+//
+// Provides strong typing for LSN values with ordering guarantees.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct LogSequenceNumber(u64);
 
 impl LogSequenceNumber {
-    /// Creates a new LSN
+    // Creates a new LSN
     pub fn new(lsn: u64) -> Self {
         Self(lsn)
     }
 
-    /// Returns the LSN value
+    // Returns the LSN value
     pub fn value(&self) -> u64 {
         self.0
     }
 
-    /// Returns the next LSN in sequence
+    // Returns the next LSN in sequence
     pub fn next(&self) -> Self {
         Self(self.0.saturating_add(1))
     }
 
-    /// Calculates the difference between two LSNs
+    // Calculates the difference between two LSNs
     pub fn distance_from(&self, other: &LogSequenceNumber) -> u64 {
         if self.0 >= other.0 {
             self.0 - other.0
@@ -340,17 +340,17 @@ impl fmt::Display for LogSequenceNumber {
     }
 }
 
-/// Transaction ID for grouping WAL entries
+// Transaction ID for grouping WAL entries
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TransactionId(u64);
 
 impl TransactionId {
-    /// Creates a new transaction ID
+    // Creates a new transaction ID
     pub fn new(txn_id: u64) -> Self {
         Self(txn_id)
     }
 
-    /// Returns the transaction ID value
+    // Returns the transaction ID value
     pub fn value(&self) -> u64 {
         self.0
     }
@@ -362,14 +362,14 @@ impl fmt::Display for TransactionId {
     }
 }
 
-/// Replication mode configuration
+// Replication mode configuration
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicationMode {
-    /// Wait for all replicas to acknowledge before committing
+    // Wait for all replicas to acknowledge before committing
     Synchronous,
-    /// Fire-and-forget replication for maximum performance
+    // Fire-and-forget replication for maximum performance
     Asynchronous,
-    /// Wait for at least one replica to acknowledge
+    // Wait for at least one replica to acknowledge
     SemiSynchronous,
 }
 
@@ -383,20 +383,20 @@ impl fmt::Display for ReplicationMode {
     }
 }
 
-/// Replica status enumeration
+// Replica status enumeration
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicaStatus {
-    /// Replica is active and up-to-date
+    // Replica is active and up-to-date
     Active,
-    /// Replica is lagging but connected
+    // Replica is lagging but connected
     Lagging,
-    /// Replica is disconnected
+    // Replica is disconnected
     Disconnected,
-    /// Replica is in process of initial sync
+    // Replica is in process of initial sync
     Syncing,
-    /// Replica has failed and needs intervention
+    // Replica has failed and needs intervention
     Failed,
-    /// Replica is paused for maintenance
+    // Replica is paused for maintenance
     Paused,
 }
 
@@ -413,16 +413,16 @@ impl fmt::Display for ReplicaStatus {
     }
 }
 
-/// Replica role in the replication topology
+// Replica role in the replication topology
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicaRole {
-    /// Primary replica that accepts writes
+    // Primary replica that accepts writes
     Primary,
-    /// Read-only replica for queries
+    // Read-only replica for queries
     ReadOnly,
-    /// Standby replica for failover
+    // Standby replica for failover
     Standby,
-    /// Cascading replica that can have sub-replicas
+    // Cascading replica that can have sub-replicas
     Cascading,
 }
 
@@ -437,36 +437,36 @@ impl fmt::Display for ReplicaRole {
     }
 }
 
-/// Type of replication operation
+// Type of replication operation
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ReplicationOperation {
-    /// Insert new row(s)
+    // Insert new row(s)
     Insert,
-    /// Update existing row(s)
+    // Update existing row(s)
     Update,
-    /// Delete row(s)
+    // Delete row(s)
     Delete,
-    /// Create new table
+    // Create new table
     CreateTable,
-    /// Drop existing table
+    // Drop existing table
     DropTable,
-    /// Alter table structure
+    // Alter table structure
     AlterTable,
-    /// Begin transaction
+    // Begin transaction
     BeginTransaction,
-    /// Commit transaction
+    // Commit transaction
     CommitTransaction,
-    /// Rollback transaction
+    // Rollback transaction
     RollbackTransaction,
-    /// Create index
+    // Create index
     CreateIndex,
-    /// Drop index
+    // Drop index
     DropIndex,
-    /// Create view
+    // Create view
     CreateView,
-    /// Drop view
+    // Drop view
     DropView,
-    /// Truncate table
+    // Truncate table
     TruncateTable,
 }
 
@@ -491,16 +491,16 @@ impl fmt::Display for ReplicationOperation {
     }
 }
 
-/// Replication topology configuration
+// Replication topology configuration
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicationTopology {
-    /// One primary with multiple read replicas
+    // One primary with multiple read replicas
     SinglePrimary,
-    /// Multiple primaries with conflict resolution
+    // Multiple primaries with conflict resolution
     MultiPrimary,
-    /// Replicas can have their own replicas
+    // Replicas can have their own replicas
     Cascading,
-    /// Linear chain of replicas for consistency
+    // Linear chain of replicas for consistency
     ChainReplication,
 }
 
@@ -515,16 +515,16 @@ impl fmt::Display for ReplicationTopology {
     }
 }
 
-/// Conflict resolution strategy
+// Conflict resolution strategy
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ConflictResolutionStrategy {
-    /// Most recent timestamp wins
+    // Most recent timestamp wins
     LastWriteWins,
-    /// First write is preserved
+    // First write is preserved
     FirstWriteWins,
-    /// Primary's version always wins
+    // Primary's version always wins
     PrimaryWins,
-    /// Custom conflict resolver
+    // Custom conflict resolver
     Custom,
 }
 
@@ -539,16 +539,16 @@ impl fmt::Display for ConflictResolutionStrategy {
     }
 }
 
-/// Lag monitoring trend
+// Lag monitoring trend
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LagTrend {
-    /// Lag is decreasing
+    // Lag is decreasing
     Improving,
-    /// Lag is stable
+    // Lag is stable
     Stable,
-    /// Lag is increasing
+    // Lag is increasing
     Degrading,
-    /// Lag is critically high
+    // Lag is critically high
     Critical,
 }
 
@@ -563,47 +563,47 @@ impl fmt::Display for LagTrend {
     }
 }
 
-/// Replica node information with comprehensive metadata
-///
-/// Contains all information needed to manage a replica connection,
-/// monitor its health, and track its replication status.
+// Replica node information with comprehensive metadata
+//
+// Contains all information needed to manage a replica connection,
+// monitor its health, and track its replication status.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicaNode {
-    /// Unique identifier for the replica
+    // Unique identifier for the replica
     pub id: ReplicaId,
-    /// Network address for connection
+    // Network address for connection
     pub address: ReplicaAddress,
-    /// Current operational status
+    // Current operational status
     pub status: ReplicaStatus,
-    /// Role in replication topology
+    // Role in replication topology
     pub role: ReplicaRole,
-    /// Current replication lag in bytes
+    // Current replication lag in bytes
     pub lag_bytes: u64,
-    /// Last successful sync timestamp
+    // Last successful sync timestamp
     pub last_sync: SystemTime,
-    /// Last heartbeat timestamp
+    // Last heartbeat timestamp
     pub last_heartbeat: SystemTime,
-    /// Connection priority (0 = highest)
+    // Connection priority (0 = highest)
     pub priority: u8,
-    /// Maximum allowed lag before alerting
+    // Maximum allowed lag before alerting
     pub max_lag_bytes: u64,
-    /// Additional metadata
+    // Additional metadata
     pub metadata: HashMap<String, String>,
 }
 
 impl ReplicaNode {
-    /// Creates a new replica node with validation
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - Unique replica identifier
-    /// * `address` - Network address
-    /// * `role` - Replica role in topology
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ReplicaNode)` - Valid replica node
-    /// * `Err(DbError)` - Creation failed
+    // Creates a new replica node with validation
+    //
+    // # Arguments
+    //
+    // * `id` - Unique replica identifier
+    // * `address` - Network address
+    // * `role` - Replica role in topology
+    //
+    // # Returns
+    //
+    // * `Ok(ReplicaNode)` - Valid replica node
+    // * `Err(DbError)` - Creation failed
     pub fn new(id: ReplicaId, address: ReplicaAddress, role: ReplicaRole) -> Result<Self, DbError> {
         let now = SystemTime::now();
 
@@ -621,7 +621,7 @@ impl ReplicaNode {
         })
     }
 
-    /// Updates the replica's replication lag
+    // Updates the replica's replication lag
     pub fn update_lag(&mut self, lag_bytes: u64) {
         self.lag_bytes = lag_bytes;
 
@@ -633,12 +633,12 @@ impl ReplicaNode {
         }
     }
 
-    /// Updates the last sync timestamp
+    // Updates the last sync timestamp
     pub fn update_sync_time(&mut self) {
         self.last_sync = SystemTime::now();
     }
 
-    /// Updates the heartbeat timestamp
+    // Updates the heartbeat timestamp
     pub fn update_heartbeat(&mut self) {
         self.last_heartbeat = SystemTime::now();
 
@@ -648,7 +648,7 @@ impl ReplicaNode {
         }
     }
 
-    /// Checks if the replica is healthy based on heartbeat
+    // Checks if the replica is healthy based on heartbeat
     pub fn is_healthy(&self, heartbeat_timeout: Duration) -> bool {
         self.last_heartbeat
             .elapsed()
@@ -656,60 +656,60 @@ impl ReplicaNode {
             .unwrap_or(false)
     }
 
-    /// Gets the age of the last sync
+    // Gets the age of the last sync
     pub fn sync_age(&self) -> Option<Duration> {
         self.last_sync.elapsed().ok()
     }
 
-    /// Sets metadata for the replica
+    // Sets metadata for the replica
     pub fn set_metadata(&mut self, key: String, value: String) {
         self.metadata.insert(key, value);
     }
 
-    /// Gets metadata for the replica
+    // Gets metadata for the replica
     pub fn get_metadata(&self, key: &str) -> Option<&String> {
         self.metadata.get(key)
     }
 }
 
-/// WAL (Write-Ahead Log) entry with comprehensive metadata
-///
-/// Represents a single operation in the write-ahead log with all
-/// necessary information for replication and recovery.
+// WAL (Write-Ahead Log) entry with comprehensive metadata
+//
+// Represents a single operation in the write-ahead log with all
+// necessary information for replication and recovery.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalEntry {
-    /// Log sequence number for ordering
+    // Log sequence number for ordering
     pub lsn: LogSequenceNumber,
-    /// Associated transaction ID (if any)
+    // Associated transaction ID (if any)
     pub transaction_id: Option<TransactionId>,
-    /// Type of operation
+    // Type of operation
     pub operation: ReplicationOperation,
-    /// Table affected by operation
+    // Table affected by operation
     pub table_name: TableName,
-    /// Operation data payload
+    // Operation data payload
     pub data: Vec<u8>,
-    /// Timestamp when entry was created
+    // Timestamp when entry was created
     pub timestamp: SystemTime,
-    /// CRC32 checksum for integrity verification
+    // CRC32 checksum for integrity verification
     pub checksum: u32,
-    /// Size of the entry in bytes
+    // Size of the entry in bytes
     pub size_bytes: usize,
 }
 
 impl WalEntry {
-    /// Creates a new WAL entry with validation
-    ///
-    /// # Arguments
-    ///
-    /// * `lsn` - Log sequence number
-    /// * `operation` - Type of operation
-    /// * `table_name` - Affected table
-    /// * `data` - Operation payload
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(WalEntry)` - Valid WAL entry
-    /// * `Err(DbError)` - Creation failed
+    // Creates a new WAL entry with validation
+    //
+    // # Arguments
+    //
+    // * `lsn` - Log sequence number
+    // * `operation` - Type of operation
+    // * `table_name` - Affected table
+    // * `data` - Operation payload
+    //
+    // # Returns
+    //
+    // * `Ok(WalEntry)` - Valid WAL entry
+    // * `Err(DbError)` - Creation failed
     pub fn new(
         lsn: LogSequenceNumber,
         operation: ReplicationOperation,
@@ -732,7 +732,7 @@ impl WalEntry {
         })
     }
 
-    /// Creates a WAL entry with transaction ID
+    // Creates a WAL entry with transaction ID
     pub fn new_with_txn(
         lsn: LogSequenceNumber,
         transaction_id: TransactionId,
@@ -745,12 +745,12 @@ impl WalEntry {
         Ok(entry)
     }
 
-    /// Validates the entry's checksum
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - Checksum is valid
-    /// * `Err(ReplicationTypeError)` - Checksum mismatch
+    // Validates the entry's checksum
+    //
+    // # Returns
+    //
+    // * `Ok(())` - Checksum is valid
+    // * `Err(ReplicationTypeError)` - Checksum mismatch
     pub fn validate_checksum(&self) -> Result<(), ReplicationTypeError> {
         let calculated = Self::calculate_checksum(&self.data);
         if calculated == self.checksum {
@@ -763,41 +763,41 @@ impl WalEntry {
         }
     }
 
-    /// Calculates CRC32 checksum for data integrity
+    // Calculates CRC32 checksum for data integrity
     fn calculate_checksum(data: &[u8]) -> u32 {
         // Simple checksum implementation - in production use proper CRC32
         data.iter().fold(0u32, |acc, &b| acc.wrapping_add(b as u32))
     }
 
-    /// Gets the age of this WAL entry
+    // Gets the age of this WAL entry
     pub fn age(&self) -> Option<Duration> {
         self.timestamp.elapsed().ok()
     }
 
-    /// Checks if this entry is part of a transaction
+    // Checks if this entry is part of a transaction
     pub fn is_transactional(&self) -> bool {
         self.transaction_id.is_some()
     }
 }
 
-/// Replication log entry for network transmission
-///
-/// Simplified version of WalEntry for efficient network transmission
-/// between replicas.
+// Replication log entry for network transmission
+//
+// Simplified version of WalEntry for efficient network transmission
+// between replicas.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationLogEntry {
-    /// Sequential entry number
+    // Sequential entry number
     pub sequence_number: u64,
-    /// Type of operation
+    // Type of operation
     pub operation: ReplicationOperation,
-    /// Timestamp when operation occurred
+    // Timestamp when operation occurred
     pub timestamp: i64,
-    /// Operation payload
+    // Operation payload
     pub data: Vec<u8>,
 }
 
 impl ReplicationLogEntry {
-    /// Creates a new replication log entry
+    // Creates a new replication log entry
     pub fn new(sequence_number: u64, operation: ReplicationOperation, data: Vec<u8>) -> Self {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -812,7 +812,7 @@ impl ReplicationLogEntry {
         }
     }
 
-    /// Converts to WAL entry with specified LSN and table
+    // Converts to WAL entry with specified LSN and table
     pub fn to_wal_entry(
         &self,
         lsn: LogSequenceNumber,
@@ -822,7 +822,7 @@ impl ReplicationLogEntry {
     }
 }
 
-/// Default implementations for common types
+// Default implementations for common types
 impl Default for ReplicationMode {
     fn default() -> Self {
         ReplicationMode::Asynchronous

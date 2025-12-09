@@ -1,6 +1,6 @@
-/// Columnar Storage Engine for RustyDB
-/// Optimized for analytical (OLAP) workloads
-/// Features: Dictionary encoding, run-length encoding, delta encoding, SIMD decompression
+// Columnar Storage Engine for RustyDB
+// Optimized for analytical (OLAP) workloads
+// Features: Dictionary encoding, run-length encoding, delta encoding, SIMD decompression
 
 use std::collections::HashSet;
 use std::collections::HashMap;
@@ -9,7 +9,7 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::error::{DbError, Result};
 
-/// Column data type
+// Column data type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ColumnType {
     Int32,
@@ -32,7 +32,7 @@ impl ColumnType {
     }
 }
 
-/// Encoding strategy for column data
+// Encoding strategy for column data
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EncodingType {
     Plain,          // No encoding
@@ -42,7 +42,7 @@ pub enum EncodingType {
     BitPacked,      // Bit-packing for small integers
 }
 
-/// Column statistics for query optimization
+// Column statistics for query optimization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnStats {
     pub num_values: usize,
@@ -79,7 +79,7 @@ impl ColumnStats {
     }
 }
 
-/// Column value wrapper
+// Column value wrapper
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum ColumnValue {
     Int32(i32),
@@ -111,7 +111,7 @@ impl ColumnValue {
     }
 }
 
-/// Dictionary encoder for low-cardinality columns
+// Dictionary encoder for low-cardinality columns
 struct DictionaryEncoder {
     dictionary: HashMap<String, u32>,
     reverse_dict: Vec<String>,
@@ -153,7 +153,7 @@ impl DictionaryEncoder {
     }
 }
 
-/// Run-length encoder for repeated values
+// Run-length encoder for repeated values
 struct RunLengthEncoder {
     runs: Vec<(ColumnValue, usize)>,
 }
@@ -206,7 +206,7 @@ impl RunLengthEncoder {
     }
 }
 
-/// Delta encoder for sequential/sorted data
+// Delta encoder for sequential/sorted data
 struct DeltaEncoder {
     base_value: i64,
     deltas: Vec<i32>,
@@ -268,7 +268,7 @@ impl DeltaEncoder {
     }
 }
 
-/// Bit-packing encoder for small integers
+// Bit-packing encoder for small integers
 struct BitPackedEncoder {
     bit_width: u8,
     values: Vec<u64>,
@@ -303,7 +303,7 @@ impl BitPackedEncoder {
     }
 }
 
-/// Column chunk with encoding
+// Column chunk with encoding
 struct ColumnChunk {
     column_type: ColumnType,
     encoding: EncodingType,
@@ -483,8 +483,8 @@ impl ColumnChunk {
         self.stats.compression_ratio = self.data.len() as f64 / original_size as f64;
     }
 
-    /// SIMD-accelerated decompression stub
-    /// In production, would use SIMD intrinsics for parallel decompression
+    // SIMD-accelerated decompression stub
+    // In production, would use SIMD intrinsics for parallel decompression
     fn simd_decode(&self) -> Result<Vec<ColumnValue>> {
         // Stub for SIMD decompression
         // In production, would use:
@@ -494,7 +494,7 @@ impl ColumnChunk {
     }
 }
 
-/// Column definition in a table
+// Column definition in a table
 #[derive(Debug, Clone)]
 pub struct ColumnDef {
     pub name: String,
@@ -512,7 +512,7 @@ impl ColumnDef {
     }
 }
 
-/// Columnar table for analytics
+// Columnar table for analytics
 pub struct ColumnarTable {
     name: String,
     columns: Vec<ColumnDef>,
@@ -530,7 +530,7 @@ impl ColumnarTable {
         }
     }
 
-    /// Insert a batch of rows
+    // Insert a batch of rows
     pub fn insert_batch(&mut self, rows: Vec<HashMap<String, ColumnValue>>) -> Result<()> {
         if rows.is_empty() {
             return Ok(());
@@ -559,7 +559,7 @@ impl ColumnarTable {
         Ok(())
     }
 
-    /// Scan a single column
+    // Scan a single column
     pub fn scan_column(&self, column_name: &str) -> Result<Vec<ColumnValue>> {
         let chunks = self.chunks.read();
 
@@ -576,7 +576,7 @@ impl ColumnarTable {
         Ok(result)
     }
 
-    /// Project multiple columns
+    // Project multiple columns
     pub fn project(&self, column_names: &[String]) -> Result<Vec<HashMap<String, ColumnValue>>> {
         let mut columns_data = HashMap::new();
 
@@ -603,7 +603,7 @@ impl ColumnarTable {
         Ok(result)
     }
 
-    /// Get statistics for a column
+    // Get statistics for a column
     pub fn column_stats(&self, column_name: &str) -> Result<ColumnStats> {
         let chunks = self.chunks.read();
 
@@ -725,5 +725,3 @@ mod tests {
         assert_eq!(projected.len(), 1);
     }
 }
-
-

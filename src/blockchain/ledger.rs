@@ -24,47 +24,47 @@ use super::crypto::{Hash256, sha256, MerkleTree, HashChain, ChainLink, hash_to_h
 // Type Aliases
 // ============================================================================
 
-/// Block identifier
+// Block identifier
 pub type BlockId = u64;
 
-/// Row version number
+// Row version number
 pub type RowVersion = u64;
 
 // ============================================================================
 // Ledger Row
 // ============================================================================
 
-/// A row in a blockchain table (immutable once written)
+// A row in a blockchain table (immutable once written)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LedgerRow {
-    /// Row ID
+    // Row ID
     pub row_id: RowId,
-    /// Table ID
+    // Table ID
     pub table_id: TableId,
-    /// Block this row belongs to
+    // Block this row belongs to
     pub block_id: BlockId,
-    /// Version number (for historical tracking)
+    // Version number (for historical tracking)
     pub version: RowVersion,
-    /// Row data (column values)
+    // Row data (column values)
     pub data: Vec<Value>,
-    /// Hash of this row's data
+    // Hash of this row's data
     pub data_hash: Hash256,
-    /// Hash of previous row (chain)
+    // Hash of previous row (chain)
     pub previous_hash: Hash256,
-    /// Combined row hash
+    // Combined row hash
     pub row_hash: Hash256,
-    /// Creation timestamp
+    // Creation timestamp
     pub timestamp: u64,
-    /// Creator (user/session)
+    // Creator (user/session)
     pub creator: String,
-    /// Digital signature (optional)
+    // Digital signature (optional)
     pub signature: Option<Vec<u8>>,
-    /// Metadata
+    // Metadata
     pub metadata: HashMap<String, String>,
 }
 
 impl LedgerRow {
-    /// Create a new ledger row
+    // Create a new ledger row
     pub fn new(
         row_id: RowId,
         table_id: TableId,
@@ -110,7 +110,7 @@ impl LedgerRow {
         }
     }
 
-    /// Compute hash for this row
+    // Compute hash for this row
     fn compute_row_hash(
         row_id: RowId,
         table_id: TableId,
@@ -137,7 +137,7 @@ impl LedgerRow {
         hash
     }
 
-    /// Verify this row's integrity
+    // Verify this row's integrity
     pub fn verify(&self) -> bool {
         // Verify data hash
         let data_bytes = bincode::serialize(&self.data).unwrap();
@@ -160,17 +160,17 @@ impl LedgerRow {
         computed_row_hash == self.row_hash
     }
 
-    /// Verify this row chains to a previous row
+    // Verify this row chains to a previous row
     pub fn verify_chain(&self, previous: &LedgerRow) -> bool {
         self.previous_hash == previous.row_hash
     }
 
-    /// Add a digital signature to this row
+    // Add a digital signature to this row
     pub fn sign(&mut self, signature: Vec<u8>) {
         self.signature = Some(signature);
     }
 
-    /// Get row hash as hex string
+    // Get row hash as hex string
     pub fn hash_hex(&self) -> String {
         hash_to_hex(&self.row_hash)
     }
@@ -180,46 +180,46 @@ impl LedgerRow {
 // Block
 // ============================================================================
 
-/// Block status
+// Block status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BlockStatus {
-    /// Block is being built (rows can be added)
+    // Block is being built (rows can be added)
     Open,
-    /// Block is finalized (immutable)
+    // Block is finalized (immutable)
     Finalized,
-    /// Block is verified
+    // Block is verified
     Verified,
 }
 
-/// A block containing multiple ledger rows
+// A block containing multiple ledger rows
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Block {
-    /// Block ID
+    // Block ID
     pub block_id: BlockId,
-    /// Table ID
+    // Table ID
     pub table_id: TableId,
-    /// Previous block hash
+    // Previous block hash
     pub previous_block_hash: Hash256,
-    /// Rows in this block
+    // Rows in this block
     pub rows: Vec<LedgerRow>,
-    /// Merkle root of all rows
+    // Merkle root of all rows
     pub merkle_root: Hash256,
-    /// Block hash
+    // Block hash
     pub block_hash: Hash256,
-    /// Block status
+    // Block status
     pub status: BlockStatus,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: u64,
-    /// Finalization timestamp
+    // Finalization timestamp
     pub finalized_at: Option<u64>,
-    /// Block creator
+    // Block creator
     pub creator: String,
-    /// Block metadata
+    // Block metadata
     pub metadata: HashMap<String, String>,
 }
 
 impl Block {
-    /// Create a new empty block
+    // Create a new empty block
     pub fn new(block_id: BlockId, table_id: TableId, previousblock_hash: Hash256, creator: String) -> Self {
         let created_at = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -241,7 +241,7 @@ impl Block {
         }
     }
 
-    /// Add a row to this block (only if open)
+    // Add a row to this block (only if open)
     pub fn add_row(&mut self, row: LedgerRow) -> Result<()> {
         if self.status != BlockStatus::Open {
             return Err(DbError::InvalidOperation("Cannot add row to finalized block".to_string()));
@@ -255,7 +255,7 @@ impl Block {
         Ok(())
     }
 
-    /// Finalize this block (compute hashes, prevent further modifications)
+    // Finalize this block (compute hashes, prevent further modifications)
     pub fn finalize(&mut self) -> Result<()> {
         if self.status != BlockStatus::Open {
             return Err(DbError::InvalidOperation("Block already finalized".to_string()));
@@ -285,7 +285,7 @@ impl Block {
         Ok(())
     }
 
-    /// Compute hash for this block
+    // Compute hash for this block
     fn compute_block_hash(&self) -> Hash256 {
         let mut hasher = sha2::Sha256::new();
 
@@ -301,7 +301,7 @@ impl Block {
         hash
     }
 
-    /// Verify this block's integrity
+    // Verify this block's integrity
     pub fn verify(&self) -> Result<bool> {
         if self.status == BlockStatus::Open {
             return Ok(false); // Cannot verify open block
@@ -339,12 +339,12 @@ impl Block {
         Ok(true)
     }
 
-    /// Get block hash as hex string
+    // Get block hash as hex string
     pub fn hash_hex(&self) -> String {
         hash_to_hex(&self.block_hash)
     }
 
-    /// Get number of rows in block
+    // Get number of rows in block
     pub fn row_count(&self) -> usize {
         self.rows.len()
     }
@@ -354,16 +354,16 @@ impl Block {
 // Blockchain Table
 // ============================================================================
 
-/// Configuration for blockchain table
+// Configuration for blockchain table
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BlockchainConfig {
-    /// Maximum rows per block (0 = unlimited)
+    // Maximum rows per block (0 = unlimited)
     pub max_rows_per_block: usize,
-    /// Auto-finalize blocks when full
+    // Auto-finalize blocks when full
     pub auto_finalize: bool,
-    /// Require digital signatures
+    // Require digital signatures
     pub require_signatures: bool,
-    /// Enable compression
+    // Enable compression
     pub enable_compression: bool,
 }
 
@@ -378,51 +378,51 @@ impl Default for BlockchainConfig {
     }
 }
 
-/// Statistics for blockchain table
+// Statistics for blockchain table
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BlockchainStats {
-    /// Total number of blocks
+    // Total number of blocks
     pub total_blocks: u64,
-    /// Total number of rows
+    // Total number of rows
     pub total_rows: u64,
-    /// Number of finalized blocks
+    // Number of finalized blocks
     pub finalized_blocks: u64,
-    /// Number of verified blocks
+    // Number of verified blocks
     pub verified_blocks: u64,
-    /// Total data size (bytes)
+    // Total data size (bytes)
     pub total_size_bytes: u64,
-    /// Average block size
+    // Average block size
     pub avg_block_size: f64,
-    /// Average rows per block
+    // Average rows per block
     pub avg_rows_per_block: f64,
 }
 
-/// Blockchain table with immutable rows
+// Blockchain table with immutable rows
 pub struct BlockchainTable {
-    /// Table ID
+    // Table ID
     table_id: TableId,
-    /// Table name
+    // Table name
     name: String,
-    /// Configuration
+    // Configuration
     config: BlockchainConfig,
-    /// All blocks (ordered)
+    // All blocks (ordered)
     pub blocks: Arc<RwLock<BTreeMap<BlockId, Block>>>,
-    /// Current open block
+    // Current open block
     current_block: Arc<RwLock<Option<Block>>>,
-    /// Row index (row_id -> block_id)
+    // Row index (row_id -> block_id)
     row_index: Arc<RwLock<HashMap<RowId, BlockId>>>,
-    /// Next block ID
+    // Next block ID
     next_block_id: Arc<RwLock<BlockId>>,
-    /// Next row ID
+    // Next row ID
     next_row_id: Arc<RwLock<RowId>>,
-    /// Hash chain for all rows
+    // Hash chain for all rows
     pub hash_chain: Arc<RwLock<HashChain>>,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<BlockchainStats>>,
 }
 
 impl BlockchainTable {
-    /// Create a new blockchain table
+    // Create a new blockchain table
     pub fn new(table_id: TableId, name: String, config: BlockchainConfig) -> Self {
         Self {
             table_id,
@@ -438,7 +438,7 @@ impl BlockchainTable {
         }
     }
 
-    /// Insert a new row (append-only)
+    // Insert a new row (append-only)
     pub fn insert(&self, data: Vec<Value>, creator: String) -> Result<RowId> {
         let mut current_block = self.current_block.write().unwrap();
         let mut next_row_id = self.next_row_id.write().unwrap();
@@ -502,7 +502,7 @@ impl BlockchainTable {
         Ok(row_id)
     }
 
-    /// Create a new block
+    // Create a new block
     fn create_new_block(&self, creator: String) -> Result<()> {
         let mut next_block_id = self.next_block_id.write().unwrap();
         let blocks = self.blocks.read().unwrap();
@@ -528,7 +528,7 @@ impl BlockchainTable {
         Ok(())
     }
 
-    /// Finalize the current block
+    // Finalize the current block
     pub fn finalize_current_block(&self) -> Result<()> {
         let mut current_block = self.current_block.write().unwrap();
 
@@ -547,7 +547,7 @@ impl BlockchainTable {
         Ok(())
     }
 
-    /// Get a row by ID
+    // Get a row by ID
     pub fn get_row(&self, row_id: RowId) -> Result<Option<LedgerRow>> {
         let row_index = self.row_index.read().unwrap();
         let blocks = self.blocks.read().unwrap();
@@ -578,18 +578,18 @@ impl BlockchainTable {
         Ok(None)
     }
 
-    /// Get all rows in a block
+    // Get all rows in a block
     pub fn get_block(&self, block_id: BlockId) -> Result<Option<Block>> {
         let blocks = self.blocks.read().unwrap();
         Ok(blocks.get(&block_id).cloned())
     }
 
-    /// Get current block (may be open)
+    // Get current block (may be open)
     pub fn get_current_block(&self) -> Option<Block> {
         self.current_block.read().unwrap().clone()
     }
 
-    /// Query rows with optional filters
+    // Query rows with optional filters
     pub fn query_rows(&self, filter: Option<RowFilter>) -> Result<Vec<LedgerRow>> {
         let blocks = self.blocks.read().unwrap();
         let current_block = self.current_block.read().unwrap();
@@ -616,7 +616,7 @@ impl BlockchainTable {
         Ok(results)
     }
 
-    /// Verify all blocks in the table
+    // Verify all blocks in the table
     pub fn verify_all(&self) -> Result<bool> {
         let blocks = self.blocks.read().unwrap();
 
@@ -643,7 +643,7 @@ impl BlockchainTable {
         hash_chain.verify()
     }
 
-    /// Get table statistics
+    // Get table statistics
     pub fn get_stats(&self) -> BlockchainStats {
         let mut stats = self.stats.read().unwrap().clone();
 
@@ -655,27 +655,27 @@ impl BlockchainTable {
         stats
     }
 
-    /// Get table name
+    // Get table name
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    /// Get table ID
+    // Get table ID
     pub fn table_id(&self) -> TableId {
         self.table_id
     }
 
-    /// Get configuration
+    // Get configuration
     pub fn config(&self) -> &BlockchainConfig {
         &self.config
     }
 
-    /// Get block count
+    // Get block count
     pub fn block_count(&self) -> usize {
         self.blocks.read().unwrap().len()
     }
 
-    /// Get row count
+    // Get row count
     pub fn row_count(&self) -> usize {
         self.row_index.read().unwrap().len()
     }
@@ -685,21 +685,21 @@ impl BlockchainTable {
 // Row Filter
 // ============================================================================
 
-/// Filter for querying rows
+// Filter for querying rows
 #[derive(Debug, Clone)]
 pub struct RowFilter {
-    /// Filter by block ID
+    // Filter by block ID
     pub block_id: Option<BlockId>,
-    /// Filter by row ID range
+    // Filter by row ID range
     pub row_id_range: Option<(RowId, RowId)>,
-    /// Filter by timestamp range
+    // Filter by timestamp range
     pub timestamp_range: Option<(u64, u64)>,
-    /// Filter by creator
+    // Filter by creator
     pub creator: Option<String>,
 }
 
 impl RowFilter {
-    /// Check if a row matches this filter
+    // Check if a row matches this filter
     pub fn matches(&self, row: &LedgerRow) -> bool {
         if let Some(block_id) = self.block_id {
             if row.block_id != block_id {
@@ -733,17 +733,17 @@ impl RowFilter {
 // Historical Versioning
 // ============================================================================
 
-/// Historical version of a row
+// Historical version of a row
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RowHistory {
-    /// Original row ID
+    // Original row ID
     pub row_id: RowId,
-    /// All versions of this row
+    // All versions of this row
     pub versions: Vec<LedgerRow>,
 }
 
 impl RowHistory {
-    /// Create new history
+    // Create new history
     pub fn new(row_id: RowId) -> Self {
         Self {
             row_id,
@@ -751,22 +751,22 @@ impl RowHistory {
         }
     }
 
-    /// Add a version
+    // Add a version
     pub fn add_version(&mut self, row: LedgerRow) {
         self.versions.push(row);
     }
 
-    /// Get latest version
+    // Get latest version
     pub fn latest(&self) -> Option<&LedgerRow> {
         self.versions.last()
     }
 
-    /// Get version by index
+    // Get version by index
     pub fn get_version(&self, version: RowVersion) -> Option<&LedgerRow> {
         self.versions.iter().find(|r| r.version == version)
     }
 
-    /// Get version count
+    // Get version count
     pub fn version_count(&self) -> usize {
         self.versions.len()
     }
@@ -776,19 +776,19 @@ impl RowHistory {
 // Export/Import
 // ============================================================================
 
-/// Export a block to bytes
+// Export a block to bytes
 pub fn export_block(block: &Block) -> Result<Vec<u8>> {
     bincode::serialize(block)
         .map_err(|e| DbError::Serialization(format!("Block serialization failed: {}", e)))
 }
 
-/// Import a block from bytes
+// Import a block from bytes
 pub fn import_block(data: &[u8]) -> Result<Block> {
     bincode::deserialize(data)
         .map_err(|e| DbError::Serialization(format!("Block deserialization failed: {}", e)))
 }
 
-/// Export entire blockchain to bytes
+// Export entire blockchain to bytes
 pub fn export_blockchain(table: &BlockchainTable) -> Result<Vec<u8>> {
     let blocks = table.blocks.read().unwrap();
     let all_blocks: Vec<Block> = blocks.values().cloned().collect();

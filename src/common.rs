@@ -738,6 +738,8 @@ pub struct DatabaseConfig {
     // Network configuration
     pub listen_address: String,
     pub port: u16,
+    pub api_port: u16,
+    pub enable_rest_api: bool,
     pub max_connections: usize,
     pub connection_timeout: Duration,
 
@@ -784,6 +786,8 @@ impl Default for DatabaseConfig {
             // Network
             listen_address: "127.0.0.1".to_string(),
             port: 5432,
+            api_port: 8080,
+            enable_rest_api: true,
             max_connections: 100,
             connection_timeout: Duration::from_secs(30),
 

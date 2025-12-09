@@ -378,35 +378,35 @@ const MaxConnections: usize = 100;
 
 **Module-level Documentation**:
 ```rust
-//! Buffer pool management module.
-//!
-//! This module provides a high-performance buffer pool for caching
-//! database pages in memory.
+// Buffer pool management module.
+//
+// This module provides a high-performance buffer pool for caching
+// database pages in memory.
 ```
 
 **Function Documentation**:
 ```rust
-/// Pins a page in the buffer pool.
-///
-/// # Arguments
-///
-/// * `page_id` - The ID of the page to pin
-///
-/// # Returns
-///
-/// A pinned page guard that automatically unpins on drop.
-///
-/// # Errors
-///
-/// Returns `DbError::PageNotFound` if the page doesn't exist.
-///
-/// # Examples
-///
-/// ```
-/// let page = buffer_pool.pin_page(page_id)?;
-/// // Use page...
-/// // Page is automatically unpinned when it goes out of scope
-/// ```
+// Pins a page in the buffer pool.
+//
+// # Arguments
+//
+// * `page_id` - The ID of the page to pin
+//
+// # Returns
+//
+// A pinned page guard that automatically unpins on drop.
+//
+// # Errors
+//
+// Returns `DbError::PageNotFound` if the page doesn't exist.
+//
+// # Examples
+//
+// ```
+// let page = buffer_pool.pin_page(page_id)?;
+// // Use page...
+// // Page is automatically unpinned when it goes out of scope
+// ```
 pub fn pin_page(&self, page_id: PageId) -> Result<PageGuard> {
     // Implementation
 }
@@ -456,7 +456,7 @@ let page = self.disk.read(page_id)
 
 2. **Create `mod.rs`**:
    ```rust
-   //! My module for doing X.
+   // My module for doing X.
 
    mod core;
    mod types;

@@ -39,19 +39,19 @@ use tracing::{debug, info};
 
 use crate::error::{Result, DbError};
 
-/// Node in the dependency graph
+// Node in the dependency graph
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DependencyNode {
-    /// Node identifier (service name)
+    // Node identifier (service name)
     pub id: String,
-    /// Display name
+    // Display name
     pub name: String,
-    /// Node metadata
+    // Node metadata
     pub metadata: HashMap<String, String>,
 }
 
 impl DependencyNode {
-    /// Create a new dependency node
+    // Create a new dependency node
     pub fn new(id: String, name: String) -> Self {
         Self {
             id,
@@ -60,28 +60,28 @@ impl DependencyNode {
         }
     }
 
-    /// Add metadata
+    // Add metadata
     pub fn with_metadata(mut self, key: String, value: String) -> Self {
         self.metadata.insert(key, value);
         self
     }
 }
 
-/// Edge in the dependency graph
+// Edge in the dependency graph
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DependencyEdge {
-    /// Source node (dependent)
+    // Source node (dependent)
     pub from: String,
-    /// Target node (dependency)
+    // Target node (dependency)
     pub to: String,
-    /// Edge type
+    // Edge type
     pub edge_type: DependencyType,
-    /// Whether this is a required dependency
+    // Whether this is a required dependency
     pub required: bool,
 }
 
 impl DependencyEdge {
-    /// Create a new dependency edge
+    // Create a new dependency edge
     pub fn new(from: String, to: String, edge_type: DependencyType) -> Self {
         Self {
             from,
@@ -91,36 +91,36 @@ impl DependencyEdge {
         }
     }
 
-    /// Mark as optional dependency
+    // Mark as optional dependency
     pub fn optional(mut self) -> Self {
         self.required = false;
         self
     }
 }
 
-/// Type of dependency relationship
+// Type of dependency relationship
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DependencyType {
-    /// Hard dependency (must be initialized first)
+    // Hard dependency (must be initialized first)
     Hard,
-    /// Soft dependency (preferred order but not required)
+    // Soft dependency (preferred order but not required)
     Soft,
-    /// Runtime dependency (can be resolved later)
+    // Runtime dependency (can be resolved later)
     Runtime,
 }
 
-/// Dependency graph for tracking service dependencies
+// Dependency graph for tracking service dependencies
 pub struct DependencyGraph {
-    /// Nodes in the graph
+    // Nodes in the graph
     nodes: HashMap<String, DependencyNode>,
-    /// Adjacency list (node -> dependencies)
+    // Adjacency list (node -> dependencies)
     edges: HashMap<String, Vec<DependencyEdge>>,
-    /// Reverse adjacency list (node -> dependents)
+    // Reverse adjacency list (node -> dependents)
     reverse_edges: HashMap<String, Vec<String>>,
 }
 
 impl DependencyGraph {
-    /// Create a new dependency graph
+    // Create a new dependency graph
     pub fn new() -> Self {
         Self {
             nodes: HashMap::new(),
@@ -129,7 +129,7 @@ impl DependencyGraph {
         }
     }
 
-    /// Add a node to the graph
+    // Add a node to the graph
     pub fn add_node(&mut self, node: DependencyNode) -> Result<()> {
         let id = node.id.clone();
         if self.nodes.contains_key(&id) {
@@ -143,7 +143,7 @@ impl DependencyGraph {
         Ok(())
     }
 
-    /// Add an edge to the graph
+    // Add an edge to the graph
     pub fn add_edge(&mut self, edge: DependencyEdge) -> Result<()> {
         // Verify both nodes exist
         if !self.nodes.contains_key(&edge.from) {
@@ -170,7 +170,7 @@ impl DependencyGraph {
         Ok(())
     }
 
-    /// Remove a node and all its edges
+    // Remove a node and all its edges
     pub fn remove_node(&mut self, id: &str) -> Result<()> {
         if !self.nodes.contains_key(id) {
             return Err(DbError::Internal(format!("Node not found: {}", id)));
@@ -199,12 +199,12 @@ impl DependencyGraph {
         Ok(())
     }
 
-    /// Get a node by ID
+    // Get a node by ID
     pub fn get_node(&self, id: &str) -> Option<&DependencyNode> {
         self.nodes.get(id)
     }
 
-    /// Get dependencies of a node
+    // Get dependencies of a node
     pub fn get_dependencies(&self, id: &str) -> Vec<&DependencyEdge> {
         self.edges
             .get(id)
@@ -212,7 +212,7 @@ impl DependencyGraph {
             .unwrap_or_default()
     }
 
-    /// Get dependents of a node (nodes that depend on this one)
+    // Get dependents of a node (nodes that depend on this one)
     pub fn get_dependents(&self, id: &str) -> Vec<&String> {
         self.reverse_edges
             .get(id)
@@ -220,7 +220,7 @@ impl DependencyGraph {
             .unwrap_or_default()
     }
 
-    /// Check if the graph has cycles
+    // Check if the graph has cycles
     pub fn has_cycles(&self) -> bool {
         let mut visited = HashSet::new();
         let mut rec_stack = HashSet::new();
@@ -236,7 +236,7 @@ impl DependencyGraph {
         false
     }
 
-    /// Utility function for cycle detection using DFS
+    // Utility function for cycle detection using DFS
     fn has_cycle_util(
         &self,
         node: &str,
@@ -267,7 +267,7 @@ impl DependencyGraph {
         false
     }
 
-    /// Find a cycle in the graph (if one exists)
+    // Find a cycle in the graph (if one exists)
     pub fn find_cycle(&self) -> Option<Vec<String>> {
         let mut visited = HashSet::new();
         let mut rec_stack = HashSet::new();
@@ -289,7 +289,7 @@ impl DependencyGraph {
         None
     }
 
-    /// Utility function for finding a cycle
+    // Utility function for finding a cycle
     fn find_cycle_util(
         &self,
         node: &str,
@@ -329,7 +329,7 @@ impl DependencyGraph {
         None
     }
 
-    /// Perform topological sort to get initialization order
+    // Perform topological sort to get initialization order
     pub fn topological_sort(&self) -> Result<Vec<String>> {
         // Check for cycles first
         if let Some(cycle) = self.find_cycle() {
@@ -399,7 +399,7 @@ impl DependencyGraph {
         Ok(result)
     }
 
-    /// Get all nodes that depend on the given node (transitive closure)
+    // Get all nodes that depend on the given node (transitive closure)
     pub fn get_impact_set(&self, node_id: &str) -> HashSet<String> {
         let mut impact = HashSet::new();
         let mut queue = VecDeque::new();
@@ -419,7 +419,7 @@ impl DependencyGraph {
         impact
     }
 
-    /// Validate that all dependencies can be satisfied
+    // Validate that all dependencies can be satisfied
     pub fn validate(&self) -> Result<Vec<String>> {
         let mut errors = Vec::new();
 
@@ -444,7 +444,7 @@ impl DependencyGraph {
         }
     }
 
-    /// Get graph statistics
+    // Get graph statistics
     pub fn statistics(&self) -> GraphStatistics {
         let total_edges: usize = self.edges.values().map(|e| e.len()).sum();
         let hard_edges = self
@@ -469,7 +469,7 @@ impl DependencyGraph {
         }
     }
 
-    /// Generate a DOT representation of the graph for visualization
+    // Generate a DOT representation of the graph for visualization
     pub fn to_dot(&self) -> String {
         let mut dot = String::from("digraph Dependencies {\n");
         dot.push_str("  rankdir=LR;\n");
@@ -503,17 +503,17 @@ impl DependencyGraph {
         dot
     }
 
-    /// Get the number of nodes
+    // Get the number of nodes
     pub fn node_count(&self) -> usize {
         self.nodes.len()
     }
 
-    /// Get the number of edges
+    // Get the number of edges
     pub fn edge_count(&self) -> usize {
         self.edges.values().map(|e| e.len()).sum()
     }
 
-    /// Clear the graph
+    // Clear the graph
     pub fn clear(&mut self) {
         self.nodes.clear();
         self.edges.clear();
@@ -536,18 +536,18 @@ impl fmt::Debug for DependencyGraph {
     }
 }
 
-/// Statistics about a dependency graph
+// Statistics about a dependency graph
 #[derive(Debug, Clone)]
 pub struct GraphStatistics {
-    /// Total number of nodes
+    // Total number of nodes
     pub total_nodes: usize,
-    /// Total number of edges
+    // Total number of edges
     pub total_edges: usize,
-    /// Number of hard dependency edges
+    // Number of hard dependency edges
     pub hard_edges: usize,
-    /// Number of soft dependency edges
+    // Number of soft dependency edges
     pub soft_edges: usize,
-    /// Whether the graph has cycles
+    // Whether the graph has cycles
     pub has_cycles: bool,
 }
 

@@ -1,33 +1,33 @@
-//! Memory Zones and Buddy Allocator
+// Memory Zones and Buddy Allocator
 
 use super::common::*;
 
 pub struct MemoryZone {
-    /// Zone name
+    // Zone name
     name: String,
-    /// Base address
+    // Base address
     base: NonNull<u8>,
-    /// Zone size
+    // Zone size
     size: usize,
-    /// Current offset
+    // Current offset
     offset: AtomicUsize,
-    /// Zone type
+    // Zone type
     zone_type: ZoneType,
 }
 
-/// Zone type
+// Zone type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ZoneType {
-    /// Normal zone
+    // Normal zone
     Normal,
-    /// DMA zone (for direct memory access)
+    // DMA zone (for direct memory access)
     Dma,
-    /// High memory zone
+    // High memory zone
     HighMem,
 }
 
 impl MemoryZone {
-    /// Create a new memory zone
+    // Create a new memory zone
     pub fn new(name: String, size: usize, zone_type: ZoneType) -> Result<Self> {
         unsafe {
             let layout = Layout::from_size_align(size, 4096)
@@ -48,7 +48,7 @@ impl MemoryZone {
         }
     }
 
-    /// Allocate from zone
+    // Allocate from zone
     pub fn allocate(&self, size: usize, align: usize) -> Option<NonNull<u8>> {
         loop {
             let current_offset = self.offset.load(Ordering::Acquire);
@@ -72,12 +72,12 @@ impl MemoryZone {
         }
     }
 
-    /// Reset zone
+    // Reset zone
     pub fn reset(&self) {
         self.offset.store(0, Ordering::Release);
     }
 
-    /// Get zone statistics
+    // Get zone statistics
     pub fn get_stats(&self) -> MemoryZoneStats {
         let used = self.offset.load(Ordering::Relaxed);
         MemoryZoneStats {
@@ -100,7 +100,7 @@ impl Drop for MemoryZone {
     }
 }
 
-/// Memory zone statistics
+// Memory zone statistics
 #[derive(Debug, Clone)]
 pub struct MemoryZoneStats {
     pub name: String,
@@ -111,17 +111,17 @@ pub struct MemoryZoneStats {
     pub utilization: f64,
 }
 
-/// Buddy allocator for power-of-two allocations
+// Buddy allocator for power-of-two allocations
 pub struct BuddyAllocator {
-    /// Base address
+    // Base address
     base: NonNull<u8>,
-    /// Total size (must be power of 2)
+    // Total size (must be power of 2)
     size: usize,
-    /// Minimum block size
+    // Minimum block size
     min_block_size: usize,
-    /// Free lists per order
+    // Free lists per order
     free_lists: Vec<Mutex<Vec<usize>>>,
-    /// Block states
+    // Block states
     block_states: Mutex<HashMap<usize, BlockState>>,
 }
 
@@ -133,7 +133,7 @@ enum BlockState {
 }
 
 impl BuddyAllocator {
-    /// Create a new buddy allocator
+    // Create a new buddy allocator
     pub fn new(size: usize, min_block_size: usize) -> Result<Self> {
         if !size.is_power_of_two() || !min_block_size.is_power_of_two() {
             return Err(DbError::InvalidArgument("Size must be power of 2".to_string()));
@@ -171,7 +171,7 @@ impl BuddyAllocator {
         }
     }
 
-    /// Calculate order for size
+    // Calculate order for size
     fn size_to_order(&self, size: usize) -> Option<usize> {
         let block_size = size.next_power_of_two().max(self.min_block_size);
         if block_size > self.size {
@@ -180,7 +180,7 @@ impl BuddyAllocator {
         Some((block_size / self.min_block_size).trailing_zeros() as usize)
     }
 
-    /// Allocate memory
+    // Allocate memory
     pub fn allocate(&self, size: usize) -> Option<NonNull<u8>> {
         let order = self.size_to_order(size)?;
 
@@ -214,7 +214,7 @@ impl BuddyAllocator {
         None
     }
 
-    /// Deallocate memory
+    // Deallocate memory
     pub fn deallocate(&self, ptr: NonNull<u8>, size: usize) -> Result<()> {
         let offset = unsafe { ptr.as_ptr().offset_from(self.base.as_ptr()) as usize };
         let order = self.size_to_order(size)

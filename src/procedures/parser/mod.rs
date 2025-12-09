@@ -1,11 +1,11 @@
-/// PL/SQL Parser Module
-///
-/// This module provides PL/SQL parsing functionality organized into submodules:
-/// - `ast_nodes`: AST node definitions (structs, enums, types)
-/// - `lexer`: Lexical analysis and tokenization
-/// - `pl_sql_parser`: Main parser implementation
-///
-/// Public API re-exports all necessary types to maintain compatibility.
+// PL/SQL Parser Module
+//
+// This module provides PL/SQL parsing functionality organized into submodules:
+// - `ast_nodes`: AST node definitions (structs, enums, types)
+// - `lexer`: Lexical analysis and tokenization
+// - `pl_sql_parser`: Main parser implementation
+//
+// Public API re-exports all necessary types to maintain compatibility.
 
 pub mod ast_nodes;
 pub mod lexer;

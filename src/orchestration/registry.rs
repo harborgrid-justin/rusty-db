@@ -36,36 +36,36 @@ use tracing::{debug, info};
 
 use crate::error::{Result, DbError};
 
-/// Service lifetime scope
+// Service lifetime scope
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ServiceLifetime {
-    /// Single instance shared across the entire application
+    // Single instance shared across the entire application
     Singleton,
-    /// New instance created for each request
+    // New instance created for each request
     Transient,
-    /// Single instance per scope (e.g., per request, per transaction)
+    // Single instance per scope (e.g., per request, per transaction)
     Scoped,
 }
 
-/// Service metadata
+// Service metadata
 #[derive(Debug, Clone)]
 pub struct ServiceMetadata {
-    /// Service name
+    // Service name
     pub name: String,
-    /// Service type name
+    // Service type name
     pub type_name: &'static str,
-    /// Service lifetime
+    // Service lifetime
     pub lifetime: ServiceLifetime,
-    /// Dependencies
+    // Dependencies
     pub dependencies: Vec<String>,
-    /// Description
+    // Description
     pub description: Option<String>,
-    /// Version
+    // Version
     pub version: Option<String>,
 }
 
 impl ServiceMetadata {
-    /// Create new service metadata
+    // Create new service metadata
     pub fn new(name: String, typename: &'static str, lifetime: ServiceLifetime) -> Self {
         Self {
             name,
@@ -77,60 +77,60 @@ impl ServiceMetadata {
         }
     }
 
-    /// Add a dependency
+    // Add a dependency
     pub fn with_dependency(mut self, dep: String) -> Self {
         self.dependencies.push(dep);
         self
     }
 
-    /// Add dependencies
+    // Add dependencies
     pub fn with_dependencies(mut self, deps: Vec<String>) -> Self {
         self.dependencies.extend(deps);
         self
     }
 
-    /// Add description
+    // Add description
     pub fn with_description(mut self, desc: String) -> Self {
         self.description = Some(desc);
         self
     }
 
-    /// Add version
+    // Add version
     pub fn with_version(mut self, version: String) -> Self {
         self.version = Some(version);
         self
     }
 }
 
-/// Trait for services that can be registered
+// Trait for services that can be registered
 pub trait Service: Send + Sync + 'static {
-    /// Get service metadata
+    // Get service metadata
     fn metadata(&self) -> ServiceMetadata;
 
-    /// Initialize the service
+    // Initialize the service
     fn initialize(&mut self) -> Result<()> {
         Ok(())
     }
 
-    /// Shutdown the service
+    // Shutdown the service
     fn shutdown(&mut self) -> Result<()> {
         Ok(())
     }
 
-    /// Clone the service as a boxed trait object
+    // Clone the service as a boxed trait object
     fn clone_service(&self) -> Box<dyn Service>;
 }
 
-/// Service factory for creating service instances
+// Service factory for creating service instances
 pub trait ServiceFactory: Send + Sync {
-    /// Create a new service instance
+    // Create a new service instance
     fn create(&self, registry: &ServiceRegistry) -> Result<Box<dyn Any + Send + Sync>>;
 
-    /// Get the service metadata
+    // Get the service metadata
     fn metadata(&self) -> &ServiceMetadata;
 }
 
-/// Concrete service factory implementation
+// Concrete service factory implementation
 struct ConcreteServiceFactory<F>
 where
     F: Fn(&ServiceRegistry) -> Result<Box<dyn Any + Send + Sync>> + Send + Sync,
@@ -152,28 +152,28 @@ where
     }
 }
 
-/// Service instance with metadata
+// Service instance with metadata
 struct ServiceInstance {
-    /// The service instance
+    // The service instance
     instance: Arc<RwLock<Box<dyn Any + Send + Sync>>>,
-    /// Service metadata
+    // Service metadata
     metadata: ServiceMetadata,
 }
 
-/// Service registry for dependency injection
+// Service registry for dependency injection
 pub struct ServiceRegistry {
-    /// Registered service factories by type
+    // Registered service factories by type
     factories: RwLock<HashMap<TypeId, Box<dyn ServiceFactory>>>,
-    /// Singleton instances
+    // Singleton instances
     singletons: RwLock<HashMap<TypeId, ServiceInstance>>,
-    /// Named services
+    // Named services
     named_services: RwLock<HashMap<String, TypeId>>,
-    /// Service initialization order
+    // Service initialization order
     init_order: RwLock<Vec<TypeId>>,
 }
 
 impl ServiceRegistry {
-    /// Create a new service registry
+    // Create a new service registry
     pub fn new() -> Arc<Self> {
         Arc::new(Self {
             factories: RwLock::new(HashMap::new()),
@@ -183,7 +183,7 @@ impl ServiceRegistry {
         })
     }
 
-    /// Register a service with a factory function
+    // Register a service with a factory function
     pub fn register<T, F>(&self, name: String, factory: F, metadata: ServiceMetadata) -> Result<()>
     where
         T: Send + Sync + 'static,
@@ -223,7 +223,7 @@ impl ServiceRegistry {
         Ok(())
     }
 
-    /// Register a singleton service instance
+    // Register a singleton service instance
     pub fn register_singleton<T>(&self, name: String, instance: T, metadata: ServiceMetadata) -> Result<()>
     where
         T: Send + Sync + 'static,
@@ -261,7 +261,7 @@ impl ServiceRegistry {
         Ok(())
     }
 
-    /// Resolve a service by type
+    // Resolve a service by type
     pub fn resolve<T: 'static>(&self) -> Result<Arc<RwLock<Box<dyn Any + Send + Sync>>>> {
         let type_id = TypeId::of::<T>();
 
@@ -323,7 +323,7 @@ impl ServiceRegistry {
         }
     }
 
-    /// Resolve a service by name
+    // Resolve a service by name
     pub fn resolve_by_name(&self, name: &str) -> Result<Arc<RwLock<Box<dyn Any + Send + Sync>>>> {
         let named = self.named_services.read();
         let type_id = named
@@ -351,7 +351,7 @@ impl ServiceRegistry {
         Ok(Arc::new(RwLock::new(instance)))
     }
 
-    /// Get service metadata by name
+    // Get service metadata by name
     pub fn get_metadata(&self, name: &str) -> Option<ServiceMetadata> {
         let named = self.named_services.read();
         let type_id = named.get(name)?;
@@ -369,7 +369,7 @@ impl ServiceRegistry {
         factories.get(type_id).map(|f| f.metadata().clone())
     }
 
-    /// List all registered services
+    // List all registered services
     pub fn list_services(&self) -> Vec<ServiceMetadata> {
         let mut services = Vec::new();
 
@@ -395,13 +395,13 @@ impl ServiceRegistry {
         services
     }
 
-    /// Check if a service is registered
+    // Check if a service is registered
     pub fn has_service(&self, name: &str) -> bool {
         let named = self.named_services.read();
         named.contains_key(name)
     }
 
-    /// Initialize all registered singleton services
+    // Initialize all registered singleton services
     pub fn initialize_all(&self) -> Result<()> {
         info!("Initializing all services...");
 
@@ -420,7 +420,7 @@ impl ServiceRegistry {
         Ok(())
     }
 
-    /// Shutdown all services in reverse order
+    // Shutdown all services in reverse order
     pub fn shutdown_all(&self) -> Result<()> {
         info!("Shutting down all services...");
 
@@ -448,7 +448,7 @@ impl ServiceRegistry {
         }
     }
 
-    /// Clear all registered services
+    // Clear all registered services
     pub fn clear(&self) {
         let mut factories = self.factories.write();
         let mut singletons = self.singletons.write();
@@ -463,7 +463,7 @@ impl ServiceRegistry {
         info!("Service registry cleared");
     }
 
-    /// Get statistics about the registry
+    // Get statistics about the registry
     pub fn statistics(&self) -> RegistryStatistics {
         let factories = self.factories.read();
         let singletons = self.singletons.read();
@@ -488,27 +488,27 @@ impl Default for ServiceRegistry {
     }
 }
 
-/// Statistics about the service registry
+// Statistics about the service registry
 #[derive(Debug, Clone)]
 pub struct RegistryStatistics {
-    /// Total number of registered factories
+    // Total number of registered factories
     pub total_factories: usize,
-    /// Total number of singleton instances
+    // Total number of singleton instances
     pub total_singletons: usize,
-    /// Total number of named services
+    // Total number of named services
     pub total_named: usize,
 }
 
-/// Service container for managing service lifecycles
+// Service container for managing service lifecycles
 pub struct ServiceContainer {
-    /// The service registry
+    // The service registry
     registry: Arc<ServiceRegistry>,
-    /// Active scopes
+    // Active scopes
     scopes: RwLock<HashMap<String, Arc<ServiceScope>>>,
 }
 
 impl ServiceContainer {
-    /// Create a new service container
+    // Create a new service container
     pub fn new(registry: Arc<ServiceRegistry>) -> Self {
         Self {
             registry,
@@ -516,12 +516,12 @@ impl ServiceContainer {
         }
     }
 
-    /// Get the registry
+    // Get the registry
     pub fn registry(&self) -> &Arc<ServiceRegistry> {
         &self.registry
     }
 
-    /// Create a new scope
+    // Create a new scope
     pub fn create_scope(&self, name: String) -> Arc<ServiceScope> {
         let scope = Arc::new(ServiceScope::new(name.clone(), Arc::clone(&self.registry)));
         let mut scopes = self.scopes.write();
@@ -529,37 +529,37 @@ impl ServiceContainer {
         scope
     }
 
-    /// Get a scope by name
+    // Get a scope by name
     pub fn get_scope(&self, name: &str) -> Option<Arc<ServiceScope>> {
         let scopes = self.scopes.read();
         scopes.get(name).cloned()
     }
 
-    /// Remove a scope
+    // Remove a scope
     pub fn remove_scope(&self, name: &str) -> Option<Arc<ServiceScope>> {
         let mut scopes = self.scopes.write();
         scopes.remove(name)
     }
 
-    /// List all active scopes
+    // List all active scopes
     pub fn list_scopes(&self) -> Vec<String> {
         let scopes = self.scopes.read();
         scopes.keys().cloned().collect()
     }
 }
 
-/// Service scope for scoped service lifetimes
+// Service scope for scoped service lifetimes
 pub struct ServiceScope {
-    /// Scope name
+    // Scope name
     name: String,
-    /// Service registry
+    // Service registry
     registry: Arc<ServiceRegistry>,
-    /// Scoped service instances
+    // Scoped service instances
     instances: RwLock<HashMap<TypeId, Arc<RwLock<Box<dyn Any + Send + Sync>>>>>,
 }
 
 impl ServiceScope {
-    /// Create a new service scope
+    // Create a new service scope
     pub fn new(name: String, registry: Arc<ServiceRegistry>) -> Self {
         Self {
             name,
@@ -568,12 +568,12 @@ impl ServiceScope {
         }
     }
 
-    /// Get the scope name
+    // Get the scope name
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    /// Resolve a service within this scope
+    // Resolve a service within this scope
     pub fn resolve<T: 'static>(&self) -> Result<Arc<RwLock<Box<dyn Any + Send + Sync>>>> {
         let type_id = TypeId::of::<T>();
 
@@ -593,7 +593,7 @@ impl ServiceScope {
         Ok(instance)
     }
 
-    /// Clear all scoped instances
+    // Clear all scoped instances
     pub fn clear(&self) {
         let mut instances = self.instances.write();
         instances.clear();

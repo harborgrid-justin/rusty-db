@@ -1,10 +1,10 @@
-/// PL/SQL Lexical Analyzer
-///
-/// This module provides tokenization functionality for PL/SQL source code.
+// PL/SQL Lexical Analyzer
+//
+// This module provides tokenization functionality for PL/SQL source code.
 
 use crate::{Result, DbError};
 
-/// Token types for lexical analysis
+// Token types for lexical analysis
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     // Keywords
@@ -94,7 +94,7 @@ pub enum Token {
     Eof,
 }
 
-/// Tokenize PL/SQL source code
+// Tokenize PL/SQL source code
 pub fn tokenize(source: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut chars: Vec<char> = source.chars().collect();

@@ -1,10 +1,10 @@
-//! Connection pool core engine module
-//!
-//! This module provides the core connection pooling functionality including:
-//! - Pool configuration and management
-//! - Connection lifecycle and state tracking
-//! - Statement and cursor caching
-//! - Connection guard implementation
+// Connection pool core engine module
+//
+// This module provides the core connection pooling functionality including:
+// - Pool configuration and management
+// - Connection lifecycle and state tracking
+// - Statement and cursor caching
+// - Connection guard implementation
 
 use tokio::time::sleep;
 use std::time::SystemTime;
@@ -28,7 +28,7 @@ use super::partitioning::PoolPartition;
 use super::statistics::PoolStatistics;
 use super::lifecycle::ConnectionFactory;
 
-/// Errors specific to connection pooling
+// Errors specific to connection pooling
 #[derive(Error, Debug, Clone)]
 pub enum PoolError {
     #[error("Pool is closed")]
@@ -68,55 +68,55 @@ pub enum PoolError {
     InvalidConfig(String),
 }
 
-/// Configuration for connection pool
+// Configuration for connection pool
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PoolConfig {
-    /// Minimum number of connections to maintain
+    // Minimum number of connections to maintain
     pub min_size: usize,
 
-    /// Maximum number of connections allowed
+    // Maximum number of connections allowed
     pub max_size: usize,
 
-    /// Initial number of connections to create
+    // Initial number of connections to create
     pub initial_size: usize,
 
-    /// Timeout for acquiring a connection
+    // Timeout for acquiring a connection
     pub acquire_timeout: Duration,
 
-    /// Maximum lifetime of a connection before forced recycling
+    // Maximum lifetime of a connection before forced recycling
     pub max_lifetime: Option<Duration>,
 
-    /// Maximum idle time before connection is closed
+    // Maximum idle time before connection is closed
     pub idle_timeout: Option<Duration>,
 
-    /// Validate connections before returning from pool
+    // Validate connections before returning from pool
     pub validate_on_acquire: bool,
 
-    /// Validate connections before returning to pool
+    // Validate connections before returning to pool
     pub validate_on_release: bool,
 
-    /// Maximum time to wait for connection validation
+    // Maximum time to wait for connection validation
     pub validation_timeout: Duration,
 
-    /// Maximum number of waiters in queue
+    // Maximum number of waiters in queue
     pub max_wait_queue_size: usize,
 
-    /// Connection creation throttle (max creations per second)
+    // Connection creation throttle (max creations per second)
     pub creation_throttle: Option<u64>,
 
-    /// Interval for background maintenance tasks
+    // Interval for background maintenance tasks
     pub maintenance_interval: Duration,
 
-    /// Statement cache size per connection
+    // Statement cache size per connection
     pub statement_cache_size: usize,
 
-    /// Enable connection leak detection
+    // Enable connection leak detection
     pub leak_detection_threshold: Option<Duration>,
 
-    /// Fair queue mode (FIFO vs priority-based)
+    // Fair queue mode (FIFO vs priority-based)
     pub fair_queue: bool,
 
-    /// Enable pool partitioning
+    // Enable pool partitioning
     pub enable_partitioning: bool,
 }
 
@@ -144,7 +144,7 @@ impl Default for PoolConfig {
 }
 
 impl PoolConfig {
-    /// Validate pool configuration
+    // Validate pool configuration
     pub fn validate(&self) -> std::result::Result<(), PoolError> {
         if self.min_size > self.max_size {
             return Err(PoolError::InvalidConfig(
@@ -167,13 +167,13 @@ impl PoolConfig {
         Ok(())
     }
 
-    /// Create a builder for pool configuration
+    // Create a builder for pool configuration
     pub fn builder() -> PoolConfigBuilder {
         PoolConfigBuilder::default()
     }
 }
 
-/// Builder for pool configuration
+// Builder for pool configuration
 #[derive(Default)]
 pub struct PoolConfigBuilder {
     config: PoolConfig,
@@ -226,74 +226,74 @@ impl PoolConfigBuilder {
     }
 }
 
-/// Recycling strategy for connections
+// Recycling strategy for connections
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RecyclingStrategy {
-    /// Verify connection is still valid, reset state
+    // Verify connection is still valid, reset state
     Fast,
 
-    /// Full connection reset including session state
+    // Full connection reset including session state
     Checked,
 
-    /// Create new connection
+    // Create new connection
     Replace,
 
-    /// Age-based strategy
+    // Age-based strategy
     Adaptive,
 }
 
-/// Connection state for internal tracking
+// Connection state for internal tracking
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ConnectionState {
-    /// Connection is idle and available
+    // Connection is idle and available
     Idle,
 
-    /// Connection is active and in use
+    // Connection is active and in use
     Active,
 
-    /// Connection is being validated
+    // Connection is being validated
     Validating,
 
-    /// Connection is being recycled
+    // Connection is being recycled
     Recycling,
 
-    /// Connection is closed
+    // Connection is closed
     Closed,
 }
 
-/// Internal connection wrapper with metadata
+// Internal connection wrapper with metadata
 pub(crate) struct PooledConnection<C> {
-    /// The actual connection
+    // The actual connection
     pub(crate) connection: C,
 
-    /// Unique connection ID
+    // Unique connection ID
     pub(crate) id: u64,
 
-    /// Current state
+    // Current state
     pub(crate) state: ConnectionState,
 
-    /// Time when connection was created
+    // Time when connection was created
     pub(crate) created_at: Instant,
 
-    /// Time when connection was last used
+    // Time when connection was last used
     pub(crate) last_used_at: Instant,
 
-    /// Time when connection was acquired
+    // Time when connection was acquired
     pub(crate) acquired_at: Option<Instant>,
 
-    /// Number of times connection has been borrowed
+    // Number of times connection has been borrowed
     pub(crate) borrow_count: u64,
 
-    /// Statement cache for this connection
+    // Statement cache for this connection
     pub(crate) statement_cache: StatementCache,
 
-    /// Cursor cache for this connection
+    // Cursor cache for this connection
     pub(crate) cursor_cache: CursorCache,
 
-    /// Connection-specific metrics
+    // Connection-specific metrics
     pub(crate) metrics: ConnectionMetrics,
 
-    /// Owner information for leak detection
+    // Owner information for leak detection
     pub(crate) owner: Option<String>,
 }
 
@@ -344,7 +344,7 @@ impl<C> PooledConnection<C> {
     }
 }
 
-/// Statement cache for prepared statements
+// Statement cache for prepared statements
 pub(crate) struct StatementCache {
     pub(crate) cache: HashMap<String, CachedStatement>,
     pub(crate) max_size: usize,
@@ -396,7 +396,7 @@ impl StatementCache {
     }
 }
 
-/// Cached prepared statement
+// Cached prepared statement
 #[derive(Debug, Clone)]
 pub(crate) struct CachedStatement {
     pub(crate) id: u64,
@@ -406,7 +406,7 @@ pub(crate) struct CachedStatement {
     pub(crate) use_count: u64,
 }
 
-/// Cursor cache for open cursors
+// Cursor cache for open cursors
 pub(crate) struct CursorCache {
     pub(crate) cache: HashMap<String, CachedCursor>,
     pub(crate) max_size: usize,
@@ -434,7 +434,7 @@ impl CursorCache {
     }
 }
 
-/// Cached cursor
+// Cached cursor
 #[derive(Debug, Clone)]
 pub(crate) struct CachedCursor {
     pub(crate) id: u64,
@@ -442,7 +442,7 @@ pub(crate) struct CachedCursor {
     pub(crate) created_at: Instant,
 }
 
-/// Connection-specific metrics
+// Connection-specific metrics
 #[derive(Debug, Default, Clone)]
 pub(crate) struct ConnectionMetrics {
     pub(crate) queries_executed: u64,
@@ -453,50 +453,50 @@ pub(crate) struct ConnectionMetrics {
     pub(crate) errors: u64,
 }
 
-/// Main connection pool
+// Main connection pool
 pub struct ConnectionPool<C> {
-    /// Pool configuration
+    // Pool configuration
     config: Arc<PoolConfig>,
 
-    /// Available connections
+    // Available connections
     idle: Arc<Mutex<VecDeque<PooledConnection<C>>>>,
 
-    /// Active connections (tracking only)
+    // Active connections (tracking only)
     active: Arc<RwLock<HashMap<u64, Instant>>>,
 
-    /// Connection factory
+    // Connection factory
     factory: Arc<dyn ConnectionFactory<C>>,
 
-    /// Next connection ID
+    // Next connection ID
     next_id: AtomicU64,
 
-    /// Total connections created
+    // Total connections created
     total_created: AtomicU64,
 
-    /// Total connections destroyed
+    // Total connections destroyed
     total_destroyed: AtomicU64,
 
-    /// Wait queue
+    // Wait queue
     wait_queue: Arc<WaitQueue>,
 
-    /// Pool partitions (if enabled)
+    // Pool partitions (if enabled)
     partitions: Arc<RwLock<HashMap<String, PoolPartition<C>>>>,
 
-    /// Pool statistics
+    // Pool statistics
     stats: Arc<PoolStatistics>,
 
-    /// Maintenance task handle
+    // Maintenance task handle
     maintenance_handle: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
 
-    /// Pool state
+    // Pool state
     closed: AtomicBool,
 
-    /// Creation semaphore for throttling
+    // Creation semaphore for throttling
     creation_semaphore: Arc<Semaphore>,
 }
 
 impl<C: Send + Sync + 'static> ConnectionPool<C> {
-    /// Create a new connection pool
+    // Create a new connection pool
     pub async fn new(
         config: PoolConfig,
         factory: Arc<dyn ConnectionFactory<C>>,
@@ -528,7 +528,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         Ok(pool)
     }
 
-    /// Initialize pool with initial connections
+    // Initialize pool with initial connections
     async fn initialize(&self) -> std::result::Result<(), PoolError> {
         let mut created = 0;
         let target = self.config.initial_size;
@@ -561,7 +561,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         Ok(())
     }
 
-    /// Create a new connection
+    // Create a new connection
     async fn create_connection(&self) -> std::result::Result<PooledConnection<C>, PoolError> {
         // Apply throttling if configured
         if let Some(throttle) = self.config.creation_throttle {
@@ -582,7 +582,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         Ok(PooledConnection::new(connection, id, self.config.statement_cache_size))
     }
 
-    /// Start background maintenance task
+    // Start background maintenance task
     fn start_maintenance_task(&self) {
         let pool_weak = Arc::downgrade(&self.stats);
         let idle = Arc::clone(&self.idle);
@@ -621,7 +621,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         *self.maintenance_handle.lock().unwrap() = Some(handle);
     }
 
-    /// Perform maintenance tasks
+    // Perform maintenance tasks
     async fn perform_maintenance(
         idle: &Arc<Mutex<VecDeque<PooledConnection<C>>>>,
         active: &Arc<RwLock<HashMap<u64, Instant>>>,
@@ -664,7 +664,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         }
     }
 
-    /// Acquire a connection from the pool
+    // Acquire a connection from the pool
     pub async fn acquire(&self) -> std::result::Result<PooledConnectionGuard<C>, PoolError> {
         if self.closed.load(Ordering::SeqCst) {
             return Err(PoolError::PoolClosed);
@@ -695,7 +695,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         }
     }
 
-    /// Internal acquire implementation
+    // Internal acquire implementation
     async fn acquire_inner(&self) -> std::result::Result<PooledConnectionGuard<C>, PoolError> {
         loop {
             // Try to get idle connection
@@ -767,7 +767,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         }
     }
 
-    /// Validate a connection
+    // Validate a connection
     async fn validate_connection(&self, conn: &mut PooledConnection<C>) -> std::result::Result<(), PoolError> {
         conn.state = ConnectionState::Validating;
 
@@ -796,27 +796,27 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         }
     }
 
-    /// Get current pool size
+    // Get current pool size
     pub fn size(&self) -> usize {
         self.idle.lock().unwrap().len() + self.active.read().len()
     }
 
-    /// Get number of idle connections
+    // Get number of idle connections
     pub fn idle_count(&self) -> usize {
         self.idle.lock().unwrap().len()
     }
 
-    /// Get number of active connections
+    // Get number of active connections
     pub fn active_count(&self) -> usize {
         self.active.read().len()
     }
 
-    /// Get pool statistics
+    // Get pool statistics
     pub fn statistics(&self) -> super::statistics::PoolStats {
         self.stats.snapshot()
     }
 
-    /// Close the pool
+    // Close the pool
     pub async fn close(&self) {
         self.closed.store(true, Ordering::SeqCst);
 
@@ -834,7 +834,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     }
 }
 
-/// Handle for returning connections to pool
+// Handle for returning connections to pool
 pub(crate) struct PoolHandle<C> {
     pub(crate) idle: Arc<Mutex<VecDeque<PooledConnection<C>>>>,
     pub(crate) active: Arc<RwLock<HashMap<u64, Instant>>>,
@@ -842,29 +842,29 @@ pub(crate) struct PoolHandle<C> {
     pub(crate) stats: Arc<PoolStatistics>,
 }
 
-/// Guard for a pooled connection
+// Guard for a pooled connection
 pub struct PooledConnectionGuard<C> {
     pub(crate) connection: Option<PooledConnection<C>>,
     pub(crate) pool: PoolHandle<C>,
 }
 
 impl<C> PooledConnectionGuard<C> {
-    /// Get reference to the connection
+    // Get reference to the connection
     pub fn connection(&self) -> &C {
         &self.connection.as_ref().unwrap().connection
     }
 
-    /// Get mutable reference to the connection
+    // Get mutable reference to the connection
     pub fn connection_mut(&mut self) -> &mut C {
         &mut self.connection.as_mut().unwrap().connection
     }
 
-    /// Get connection ID
+    // Get connection ID
     pub fn id(&self) -> u64 {
         self.connection.as_ref().unwrap().id
     }
 
-    /// Get connection age
+    // Get connection age
     pub fn age(&self) -> Duration {
         self.connection.as_ref().unwrap().age()
     }

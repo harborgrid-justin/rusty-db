@@ -25,25 +25,25 @@ use crate::Result;
 use crate::error::DbError;
 use sha2::{Sha256, Digest};
 
-/// Threat score (0-100)
+// Threat score (0-100)
 pub type ThreatScore = u8;
 
-/// User identifier
+// User identifier
 pub type UserId = String;
 
-/// Query identifier
+// Query identifier
 pub type QueryId = String;
 
-/// Threat level based on score
+// Threat level based on score
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ThreatLevel {
-    /// Low risk (0-30)
+    // Low risk (0-30)
     Low,
-    /// Medium risk (31-60)
+    // Medium risk (31-60)
     Medium,
-    /// High risk (61-80)
+    // High risk (61-80)
     High,
-    /// Critical risk (81-100)
+    // Critical risk (81-100)
     Critical,
 }
 
@@ -59,96 +59,96 @@ impl ThreatLevel {
     }
 }
 
-/// Query risk assessment result
+// Query risk assessment result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryRiskAssessment {
-    /// Unique assessment ID
+    // Unique assessment ID
     pub assessment_id: String,
-    /// User who executed the query
+    // User who executed the query
     pub user_id: UserId,
-    /// Query text
+    // Query text
     pub query_text: String,
-    /// Query hash for deduplication
+    // Query hash for deduplication
     pub query_hash: String,
-    /// Total threat score (0-100)
+    // Total threat score (0-100)
     pub total_score: ThreatScore,
-    /// Threat level
+    // Threat level
     pub threat_level: ThreatLevel,
-    /// Query pattern risk (0-25)
+    // Query pattern risk (0-25)
     pub pattern_risk: u8,
-    /// Data volume risk (0-25)
+    // Data volume risk (0-25)
     pub volume_risk: u8,
-    /// Temporal risk (0-25)
+    // Temporal risk (0-25)
     pub temporal_risk: u8,
-    /// Behavioral deviation risk (0-25)
+    // Behavioral deviation risk (0-25)
     pub behavioral_risk: u8,
-    /// Risk factors identified
+    // Risk factors identified
     pub risk_factors: Vec<String>,
-    /// Assessment timestamp
+    // Assessment timestamp
     pub timestamp: i64,
-    /// Session ID
+    // Session ID
     pub session_id: Option<String>,
-    /// Client IP
+    // Client IP
     pub client_ip: Option<String>,
-    /// Geographic location
+    // Geographic location
     pub location: Option<String>,
-    /// Action taken
+    // Action taken
     pub action: ThreatAction,
 }
 
-/// Action taken in response to threat
+// Action taken in response to threat
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ThreatAction {
-    /// Allowed with logging
+    // Allowed with logging
     AllowWithLog,
-    /// Allowed with alert
+    // Allowed with alert
     AllowWithAlert,
-    /// Warning shown to user
+    // Warning shown to user
     WarnUser,
-    /// Require justification
+    // Require justification
     RequireJustification,
-    /// Require MFA re-authentication
+    // Require MFA re-authentication
     RequireMfa,
-    /// Blocked automatically
+    // Blocked automatically
     Blocked,
-    /// Session suspended
+    // Session suspended
     SessionSuspended,
 }
 
-/// User behavior baseline
+// User behavior baseline
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserBehaviorBaseline {
-    /// User ID
+    // User ID
     pub user_id: UserId,
-    /// Baseline established date
+    // Baseline established date
     pub established_at: i64,
-    /// Last update timestamp
+    // Last update timestamp
     pub updated_at: i64,
-    /// Number of queries in baseline
+    // Number of queries in baseline
     pub query_count: u64,
-    /// Common query patterns (normalized SQL templates)
+    // Common query patterns (normalized SQL templates)
     pub common_patterns: HashMap<String, u32>,
-    /// Hourly access distribution (0-23 hours)
+    // Hourly access distribution (0-23 hours)
     pub access_time_distribution: [u32; 24],
-    /// Day of week distribution (0-6, Sunday-Saturday)
+    // Day of week distribution (0-6, Sunday-Saturday)
     pub day_distribution: [u32; 7],
-    /// Frequently accessed tables
+    // Frequently accessed tables
     pub frequent_tables: HashMap<String, u32>,
-    /// Frequently accessed schemas
+    // Frequently accessed schemas
     pub frequent_schemas: HashMap<String, u32>,
-    /// Average result set size
+    // Average result set size
     pub avg_result_set_size: f64,
-    /// Maximum result set size ever requested
+    // Maximum result set size ever requested
     pub max_result_set_size: u64,
-    /// Standard deviation of result set size
+    // Standard deviation of result set size
     pub result_set_stddev: f64,
-    /// Typical session duration (seconds)
+    // Typical session duration (seconds)
     pub avg_session_duration: f64,
-    /// Common source IPs
+    // Common source IPs
     pub common_ips: HashSet<String>,
-    /// Common locations
+    // Common locations
     pub common_locations: HashSet<String>,
-    /// Typical query complexity score
+    // Typical query complexity score
     pub avg_query_complexity: f64,
 }
 
@@ -175,131 +175,131 @@ impl Default for UserBehaviorBaseline {
     }
 }
 
-/// Anomaly detection result
+// Anomaly detection result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnomalyScore {
-    /// Total anomaly score (0-100)
+    // Total anomaly score (0-100)
     pub score: f64,
-    /// Anomalies detected
+    // Anomalies detected
     pub anomalies: Vec<String>,
-    /// Z-score for various metrics
+    // Z-score for various metrics
     pub z_scores: HashMap<String, f64>,
 }
 
-/// Data exfiltration attempt
+// Data exfiltration attempt
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExfiltrationAttempt {
-    /// Attempt ID
+    // Attempt ID
     pub attempt_id: String,
-    /// User ID
+    // User ID
     pub user_id: UserId,
-    /// Timestamp
+    // Timestamp
     pub timestamp: i64,
-    /// Query that triggered detection
+    // Query that triggered detection
     pub query: String,
-    /// Estimated data volume (rows)
+    // Estimated data volume (rows)
     pub estimated_rows: u64,
-    /// Tables accessed
+    // Tables accessed
     pub tables_accessed: Vec<String>,
-    /// Blocked or allowed
+    // Blocked or allowed
     pub blocked: bool,
-    /// Detection reason
+    // Detection reason
     pub reason: String,
 }
 
-/// Privilege escalation attempt
+// Privilege escalation attempt
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrivilegeEscalationAttempt {
-    /// Attempt ID
+    // Attempt ID
     pub attempt_id: String,
-    /// User ID
+    // User ID
     pub user_id: UserId,
-    /// Timestamp
+    // Timestamp
     pub timestamp: i64,
-    /// Query that triggered detection
+    // Query that triggered detection
     pub query: String,
-    /// Escalation type
+    // Escalation type
     pub escalation_type: EscalationType,
-    /// Blocked or allowed
+    // Blocked or allowed
     pub blocked: bool,
-    /// Detection patterns matched
+    // Detection patterns matched
     pub patterns_matched: Vec<String>,
 }
 
-/// Type of privilege escalation
+// Type of privilege escalation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum EscalationType {
-    /// Attempting to grant privileges
+    // Attempting to grant privileges
     GrantAttempt,
-    /// SQL injection patterns
+    // SQL injection patterns
     SqlInjection,
-    /// System table modification
+    // System table modification
     SystemTableModification,
-    /// Audit disabling attempt
+    // Audit disabling attempt
     AuditTampering,
-    /// Backdoor creation
+    // Backdoor creation
     BackdoorCreation,
-    /// Role manipulation
+    // Role manipulation
     RoleManipulation,
 }
 
-/// Forensic audit record with threat intelligence
+// Forensic audit record with threat intelligence
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForensicRecord {
-    /// Record ID
+    // Record ID
     pub id: u64,
-    /// Timestamp (microseconds)
+    // Timestamp (microseconds)
     pub timestamp: i64,
-    /// User ID
+    // User ID
     pub user_id: UserId,
-    /// Session ID
+    // Session ID
     pub session_id: Option<String>,
-    /// Query text
+    // Query text
     pub query_text: String,
-    /// Threat assessment
+    // Threat assessment
     pub assessment: QueryRiskAssessment,
-    /// Anomaly score
+    // Anomaly score
     pub anomaly_score: Option<AnomalyScore>,
-    /// Exfiltration attempt (if detected)
+    // Exfiltration attempt (if detected)
     pub exfiltration_attempt: Option<ExfiltrationAttempt>,
-    /// Privilege escalation attempt (if detected)
+    // Privilege escalation attempt (if detected)
     pub escalation_attempt: Option<PrivilegeEscalationAttempt>,
-    /// Client metadata
+    // Client metadata
     pub client_ip: Option<String>,
     pub user_agent: Option<String>,
     pub location: Option<String>,
-    /// Chain integrity hash
+    // Chain integrity hash
     pub integrity_hash: String,
-    /// Previous record hash (blockchain-style)
+    // Previous record hash (blockchain-style)
     pub previous_hash: String,
 }
 
-/// Insider Threat Detection Configuration
+// Insider Threat Detection Configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InsiderThreatConfig {
-    /// Enable threat detection
+    // Enable threat detection
     pub enabled: bool,
-    /// Auto-block critical threats (score > 80)
+    // Auto-block critical threats (score > 80)
     pub auto_block_critical: bool,
-    /// Require MFA for high-risk queries (score > 60)
+    // Require MFA for high-risk queries (score > 60)
     pub require_mfa_high_risk: bool,
-    /// Maximum rows allowed without justification
+    // Maximum rows allowed without justification
     pub max_rows_without_justification: u64,
-    /// Alert threshold score
+    // Alert threshold score
     pub alert_threshold: u8,
-    /// Block threshold score
+    // Block threshold score
     pub block_threshold: u8,
-    /// Baseline learning period (days)
+    // Baseline learning period (days)
     pub baseline_learning_days: u32,
-    /// Minimum queries for baseline
+    // Minimum queries for baseline
     pub min_queries_for_baseline: u64,
-    /// Enable behavioral analytics
+    // Enable behavioral analytics
     pub behavioral_analytics_enabled: bool,
-    /// Enable anomaly detection
+    // Enable anomaly detection
     pub anomaly_detection_enabled: bool,
-    /// Enable data exfiltration prevention
+    // Enable data exfiltration prevention
     pub exfiltration_prevention_enabled: bool,
-    /// Enable privilege escalation detection
+    // Enable privilege escalation detection
     pub escalation_detection_enabled: bool,
 }
 
@@ -322,10 +322,10 @@ impl Default for InsiderThreatConfig {
     }
 }
 
-/// ML-Based Query Threat Scorer
+// ML-Based Query Threat Scorer
 pub struct ThreatScorer {
     config: Arc<RwLock<InsiderThreatConfig>>,
-    /// Malicious patterns for SQL injection detection
+    // Malicious patterns for SQL injection detection
     malicious_patterns: Vec<regex::Regex>,
 }
 
@@ -347,7 +347,7 @@ impl ThreatScorer {
         }
     }
 
-    /// Calculate query pattern risk (0-25 points)
+    // Calculate query pattern risk (0-25 points)
     pub fn calculate_pattern_risk(&self, query: &str) -> (u8, Vec<String>) {
         let mut score = 0u8;
         let mut factors = Vec::new();
@@ -388,7 +388,7 @@ impl ThreatScorer {
         (score.min(25), factors)
     }
 
-    /// Calculate data volume risk (0-25 points)
+    // Calculate data volume risk (0-25 points)
     pub fn calculate_volume_risk(&self, estimatedrows: u64) -> (u8, Vec<String>) {
         let mut score = 0u8;
         let mut factors = Vec::new();
@@ -407,7 +407,7 @@ impl ThreatScorer {
         (score.min(25), factors)
     }
 
-    /// Calculate temporal risk (0-25 points)
+    // Calculate temporal risk (0-25 points)
     pub fn calculate_temporal_risk(
         &self,
         timestamp: i64,
@@ -455,7 +455,7 @@ impl ThreatScorer {
         (score.min(25), factors)
     }
 
-    /// Calculate behavioral deviation risk (0-25 points)
+    // Calculate behavioral deviation risk (0-25 points)
     pub fn calculate_behavioral_risk(
         &self,
         query: &str,
@@ -502,7 +502,7 @@ impl ThreatScorer {
         (score.min(25), factors)
     }
 
-    /// Calculate overall threat score
+    // Calculate overall threat score
     pub fn calculate_threat_score(
         &self,
         query: &str,
@@ -585,11 +585,11 @@ impl ThreatScorer {
     }
 }
 
-/// User Behavior Analyzer
+// User Behavior Analyzer
 pub struct BehaviorAnalyzer {
-    /// User baselines
+    // User baselines
     baselines: Arc<RwLock<HashMap<UserId, UserBehaviorBaseline>>>,
-    /// Recent queries for baseline building
+    // Recent queries for baseline building
     query_history: Arc<RwLock<HashMap<UserId, VecDeque<QueryHistoryEntry>>>>,
     config: Arc<RwLock<InsiderThreatConfig>>,
 }
@@ -614,7 +614,7 @@ impl BehaviorAnalyzer {
         }
     }
 
-    /// Record query for baseline building
+    // Record query for baseline building
     pub fn record_query(
         &self,
         user_id: &UserId,
@@ -648,7 +648,7 @@ impl BehaviorAnalyzer {
         self.update_baseline(user_id);
     }
 
-    /// Update user baseline
+    // Update user baseline
     fn update_baseline(&self, user_id: &UserId) {
         let history = self.query_history.read();
         let user_history = match history.get(user_id) {
@@ -719,7 +719,7 @@ impl BehaviorAnalyzer {
         self.baselines.write().insert(user_id.clone(), baseline);
     }
 
-    /// Get user baseline
+    // Get user baseline
     pub fn get_baseline(&self, user_id: &UserId) -> Option<UserBehaviorBaseline> {
         self.baselines.read().get(user_id).cloned()
     }
@@ -732,7 +732,7 @@ impl BehaviorAnalyzer {
     }
 }
 
-/// Statistical Anomaly Detector
+// Statistical Anomaly Detector
 pub struct AnomalyDetector {
     config: Arc<RwLock<InsiderThreatConfig>>,
 }
@@ -742,7 +742,7 @@ impl AnomalyDetector {
         Self { config }
     }
 
-    /// Detect anomalies based on baseline deviation
+    // Detect anomalies based on baseline deviation
     pub fn detect_anomalies(
         &self,
         result_rows: u64,
@@ -780,11 +780,11 @@ impl AnomalyDetector {
     }
 }
 
-/// Data Exfiltration Guard
+// Data Exfiltration Guard
 pub struct DataExfiltrationGuard {
-    /// Recent exfiltration attempts
+    // Recent exfiltration attempts
     attempts: Arc<RwLock<Vec<ExfiltrationAttempt>>>,
-    /// Per-user data volume tracking (rolling 1 hour)
+    // Per-user data volume tracking (rolling 1 hour)
     user_volumes: Arc<RwLock<HashMap<UserId, VecDeque<(i64, u64)>>>>,
     config: Arc<RwLock<InsiderThreatConfig>>,
 }
@@ -798,7 +798,7 @@ impl DataExfiltrationGuard {
         }
     }
 
-    /// Check for data exfiltration attempt
+    // Check for data exfiltration attempt
     pub fn check_exfiltration(
         &self,
         user_id: &UserId,
@@ -862,7 +862,7 @@ impl DataExfiltrationGuard {
         None
     }
 
-    /// Get recent attempts
+    // Get recent attempts
     pub fn get_recent_attempts(&self, user_id: Option<&UserId>) -> Vec<ExfiltrationAttempt> {
         let attempts = self.attempts.read();
         match user_id {
@@ -872,11 +872,11 @@ impl DataExfiltrationGuard {
     }
 }
 
-/// Privilege Escalation Detector
+// Privilege Escalation Detector
 pub struct PrivilegeEscalationDetector {
-    /// Recent escalation attempts
+    // Recent escalation attempts
     attempts: Arc<RwLock<Vec<PrivilegeEscalationAttempt>>>,
-    /// Dangerous patterns
+    // Dangerous patterns
     dangerous_patterns: Vec<(regex::Regex, EscalationType)>,
 }
 
@@ -902,7 +902,7 @@ impl PrivilegeEscalationDetector {
         }
     }
 
-    /// Check for privilege escalation attempt
+    // Check for privilege escalation attempt
     pub fn check_escalation(&self, user_id: &UserId, query: &str) -> Option<PrivilegeEscalationAttempt> {
         let mut patterns_matched = Vec::new();
         let mut escalation_type = None;
@@ -932,7 +932,7 @@ impl PrivilegeEscalationDetector {
         None
     }
 
-    /// Get recent attempts
+    // Get recent attempts
     pub fn get_recent_attempts(&self, user_id: Option<&UserId>) -> Vec<PrivilegeEscalationAttempt> {
         let attempts = self.attempts.read();
         match user_id {
@@ -942,9 +942,9 @@ impl PrivilegeEscalationDetector {
     }
 }
 
-/// Query Sanitizer
+// Query Sanitizer
 pub struct QuerySanitizer {
-    /// Blocked keywords
+    // Blocked keywords
     blocked_keywords: HashSet<String>,
 }
 
@@ -958,7 +958,7 @@ impl QuerySanitizer {
         Self { blocked_keywords }
     }
 
-    /// Sanitize and validate query
+    // Sanitize and validate query
     pub fn sanitize(&self, query: &str) -> Result<String> {
         let query_upper = query.to_uppercase();
 
@@ -975,15 +975,15 @@ impl QuerySanitizer {
     }
 }
 
-/// Forensic Logger with Immutable Audit Trail
+// Forensic Logger with Immutable Audit Trail
 pub struct ForensicLogger {
-    /// Forensic records
+    // Forensic records
     records: Arc<RwLock<VecDeque<ForensicRecord>>>,
-    /// Record ID counter
+    // Record ID counter
     id_counter: Arc<RwLock<u64>>,
-    /// Previous hash for chaining
+    // Previous hash for chaining
     previous_hash: Arc<RwLock<String>>,
-    /// Maximum records in memory
+    // Maximum records in memory
     max_records: usize,
 }
 
@@ -997,7 +997,7 @@ impl ForensicLogger {
         }
     }
 
-    /// Log forensic record
+    // Log forensic record
     pub fn log_record(
         &self,
         user_id: UserId,
@@ -1068,12 +1068,12 @@ impl ForensicLogger {
         format!("{:x}", hasher.finalize())
     }
 
-    /// Get recent records
+    // Get recent records
     pub fn get_recent_records(&self, limit: usize) -> Vec<ForensicRecord> {
         self.records.read().iter().rev().take(limit).cloned().collect()
     }
 
-    /// Verify audit trail integrity
+    // Verify audit trail integrity
     pub fn verify_integrity(&self) -> bool {
         let records = self.records.read();
         let mut prev_hash = "0".to_string();
@@ -1095,28 +1095,28 @@ impl ForensicLogger {
     }
 }
 
-/// Integrated Insider Threat Manager
+// Integrated Insider Threat Manager
 pub struct InsiderThreatManager {
-    /// Configuration
+    // Configuration
     config: Arc<RwLock<InsiderThreatConfig>>,
-    /// Threat scorer
+    // Threat scorer
     pub threat_scorer: Arc<ThreatScorer>,
-    /// Behavior analyzer
+    // Behavior analyzer
     pub behavior_analyzer: Arc<BehaviorAnalyzer>,
-    /// Anomaly detector
+    // Anomaly detector
     pub anomaly_detector: Arc<AnomalyDetector>,
-    /// Exfiltration guard
+    // Exfiltration guard
     pub exfiltration_guard: Arc<DataExfiltrationGuard>,
-    /// Escalation detector
+    // Escalation detector
     pub escalation_detector: Arc<PrivilegeEscalationDetector>,
-    /// Query sanitizer
+    // Query sanitizer
     pub query_sanitizer: Arc<QuerySanitizer>,
-    /// Forensic logger
+    // Forensic logger
     pub forensic_logger: Arc<ForensicLogger>,
 }
 
 impl InsiderThreatManager {
-    /// Create new insider threat manager
+    // Create new insider threat manager
     pub fn new() -> Self {
         let config = Arc::new(RwLock::new(InsiderThreatConfig::default()));
 
@@ -1132,7 +1132,7 @@ impl InsiderThreatManager {
         }
     }
 
-    /// Assess query threat
+    // Assess query threat
     pub fn assess_query(
         &self,
         user_id: &UserId,
@@ -1293,7 +1293,7 @@ impl InsiderThreatManager {
         Ok(assessment)
     }
 
-    /// Get threat statistics
+    // Get threat statistics
     pub fn get_statistics(&self) -> ThreatStatistics {
         let forensic_records = self.forensic_logger.get_recent_records(1000);
 
@@ -1325,12 +1325,12 @@ impl InsiderThreatManager {
         }
     }
 
-    /// Update configuration
+    // Update configuration
     pub fn update_config(&self, config: InsiderThreatConfig) {
         *self.config.write() = config;
     }
 
-    /// Get configuration
+    // Get configuration
     pub fn get_config(&self) -> InsiderThreatConfig {
         self.config.read().clone()
     }
@@ -1342,7 +1342,7 @@ impl Default for InsiderThreatManager {
     }
 }
 
-/// Threat statistics
+// Threat statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThreatStatistics {
     pub total_assessments: usize,

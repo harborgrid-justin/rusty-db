@@ -1,11 +1,11 @@
-/// Session authentication system
-///
-/// This module provides multi-method authentication with support for:
-/// - Database native authentication
-/// - LDAP integration
-/// - Kerberos SSO
-/// - SAML federation
-/// - Token-based authentication
+// Session authentication system
+//
+// This module provides multi-method authentication with support for:
+// - Database native authentication
+// - LDAP integration
+// - Kerberos SSO
+// - SAML federation
+// - Token-based authentication
 
 use std::fmt;
 use super::types::Username;
@@ -15,85 +15,85 @@ use sha2::{Digest, Sha256};
 use std::collections::{HashSet, HashMap};
 use std::time::SystemTime;
 
-/// Authentication provider trait
-///
-/// Implement this trait to add new authentication methods.
-///
-/// # Examples
-///
-/// ```rust,ignore
-/// use rusty_db::pool::session::auth::Authenticator;
-///
-/// struct CustomAuth;
-///
-/// impl Authenticator for CustomAuth {
-///     async fn authenticate(&self, credentials: &Credentials) -> Result<AuthenticationResult> {
-///         // Custom authentication logic
-///         Ok(AuthenticationResult {
-///             username: Username::new("user").unwrap(),
-///             authenticated: true,
-///             privileges: PrivilegeSet::default(),
-///             roles: HashSet::new(),
-///             auth_method: AuthMethod::Custom,
-///         })
-///     }
-/// }
-/// ```
+// Authentication provider trait
+//
+// Implement this trait to add new authentication methods.
+//
+// # Examples
+//
+// ```rust,ignore
+// use rusty_db::pool::session::auth::Authenticator;
+//
+// struct CustomAuth;
+//
+// impl Authenticator for CustomAuth {
+//     async fn authenticate(&self, credentials: &Credentials) -> Result<AuthenticationResult> {
+//         // Custom authentication logic
+//         Ok(AuthenticationResult {
+//             username: Username::new("user").unwrap(),
+//             authenticated: true,
+//             privileges: PrivilegeSet::default(),
+//             roles: HashSet::new(),
+//             auth_method: AuthMethod::Custom,
+//         })
+//     }
+// }
+// ```
 pub trait Authenticator: Send + Sync {
-    /// Authenticate user with provided credentials
-    ///
-    /// # Arguments
-    ///
-    /// * `credentials` - User credentials (password, token, certificate, etc.)
-    ///
-    /// # Returns
-    ///
-    /// `AuthenticationResult` on success with user privileges
-    ///
-    /// # Errors
-    ///
-    /// Returns `DbError::AuthenticationFailed` if credentials are invalid
+    // Authenticate user with provided credentials
+    //
+    // # Arguments
+    //
+    // * `credentials` - User credentials (password, token, certificate, etc.)
+    //
+    // # Returns
+    //
+    // `AuthenticationResult` on success with user privileges
+    //
+    // # Errors
+    //
+    // Returns `DbError::AuthenticationFailed` if credentials are invalid
     fn authenticate(
         &self,
         credentials: &Credentials,
     ) -> impl std::future::Future<Output = Result<AuthenticationResult>> + Send;
 
-    /// Validate existing authentication token
+    // Validate existing authentication token
     fn validate_token(
         &self,
         token: &str,
     ) -> impl std::future::Future<Output = Result<bool>> + Send;
 
-    /// Refresh authentication token
+    // Refresh authentication token
     fn refresh_token(
         &self,
         token: &str,
     ) -> impl std::future::Future<Output = Result<String>> + Send;
 }
 
-/// Authentication credentials
+// Authentication credentials
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Credentials {
-    /// Username and password
+    // Username and password
     Password { username: String, password: String },
 
-    /// LDAP bind DN and password
+    // LDAP bind DN and password
     Ldap { bind_dn: String, password: String },
 
-    /// Kerberos ticket
+    // Kerberos ticket
     Kerberos { ticket: Vec<u8>, service: String },
 
-    /// SAML assertion
+    // SAML assertion
     Saml { assertion: String, issuer: String },
 
-    /// Bearer token (JWT, OAuth2, etc.)
+    // Bearer token (JWT, OAuth2, etc.)
     Token { token: String },
 
-    /// Client certificate
+    // Client certificate
     Certificate { cert_pem: String },
 }
 
-/// Authentication result
+// Authentication result
 #[derive(Debug, Clone)]
 pub struct AuthenticationResult {
     pub username: Username,
@@ -103,7 +103,7 @@ pub struct AuthenticationResult {
     pub auth_method: AuthMethod,
 }
 
-/// Authentication methods supported
+// Authentication methods supported
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AuthMethod {
     Database,
@@ -129,31 +129,31 @@ impl fmt::Display for AuthMethod {
     }
 }
 
-/// Privilege set for a user
-///
-/// Represents system and object privileges granted to a user.
+// Privilege set for a user
+//
+// Represents system and object privileges granted to a user.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PrivilegeSet {
-    /// System privileges (e.g., CREATE_TABLE, DROP_USER)
+    // System privileges (e.g., CREATE_TABLE, DROP_USER)
     pub system_privileges: HashSet<String>,
 
-    /// Object privileges (e.g., SELECT on table X)
+    // Object privileges (e.g., SELECT on table X)
     pub object_privileges: HashMap<String, HashSet<String>>,
 
-    /// Administrative privileges
+    // Administrative privileges
     pub is_dba: bool,
 
-    /// Can grant privileges to others
+    // Can grant privileges to others
     pub can_grant: bool,
 }
 
 impl PrivilegeSet {
-    /// Create a new empty privilege set
+    // Create a new empty privilege set
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Create a DBA privilege set with all permissions
+    // Create a DBA privilege set with all permissions
     pub fn dba() -> Self {
         Self {
             system_privileges: HashSet::new(),
@@ -163,12 +163,12 @@ impl PrivilegeSet {
         }
     }
 
-    /// Check if user has a specific system privilege
+    // Check if user has a specific system privilege
     pub fn has_system_privilege(&self, privilege: &str) -> bool {
         self.is_dba || self.system_privileges.contains(privilege)
     }
 
-    /// Check if user has a specific object privilege
+    // Check if user has a specific object privilege
     pub fn has_object_privilege(&self, object: &str, privilege: &str) -> bool {
         if self.is_dba {
             return true;
@@ -179,12 +179,12 @@ impl PrivilegeSet {
             .map_or(false, |privs| privs.contains(privilege))
     }
 
-    /// Add system privilege
+    // Add system privilege
     pub fn add_system_privilege(&mut self, privilege: String) {
         self.system_privileges.insert(privilege);
     }
 
-    /// Add object privilege
+    // Add object privilege
     pub fn add_object_privilege(&mut self, object: String, privilege: String) {
         self.object_privileges
             .entry(object)
@@ -193,46 +193,46 @@ impl PrivilegeSet {
     }
 }
 
-/// Database native authenticator
-///
-/// Implements password-based authentication with password hashing.
+// Database native authenticator
+//
+// Implements password-based authentication with password hashing.
 pub struct DatabaseAuthenticator {
-    /// User password hashes (username -> hash)
+    // User password hashes (username -> hash)
     password_hashes: parking_lot::RwLock<HashMap<String, String>>,
 }
 
 impl DatabaseAuthenticator {
-    /// Create a new database authenticator
+    // Create a new database authenticator
     pub fn new() -> Self {
         Self {
             password_hashes: parking_lot::RwLock::new(HashMap::new()),
         }
     }
 
-    /// Register a new user with password
-    ///
-    /// # Arguments
-    ///
-    /// * `username` - Username
-    /// * `password` - Plain-text password (will be hashed)
+    // Register a new user with password
+    //
+    // # Arguments
+    //
+    // * `username` - Username
+    // * `password` - Plain-text password (will be hashed)
     pub fn register_user(&self, username: String, password: &str) {
         let hash = self.hash_password(password);
         self.password_hashes.write().insert(username, hash);
     }
 
-    /// Remove a user
+    // Remove a user
     pub fn remove_user(&self, username: &str) {
         self.password_hashes.write().remove(username);
     }
 
-    /// Hash password using SHA-256
+    // Hash password using SHA-256
     fn hash_password(&self, password: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(password.as_bytes());
         format!("{:x}", hasher.finalize())
     }
 
-    /// Verify password against stored hash
+    // Verify password against stored hash
     fn verify_password(&self, username: &str, password: &str) -> bool {
         let hashes = self.password_hashes.read();
         let stored_hash = match hashes.get(username) {
@@ -282,11 +282,11 @@ impl Authenticator for DatabaseAuthenticator {
     }
 }
 
-/// Token-based authenticator
-///
-/// Implements JWT or custom token authentication.
+// Token-based authenticator
+//
+// Implements JWT or custom token authentication.
 pub struct TokenAuthenticator {
-    /// Valid tokens (token -> username, expiry)
+    // Valid tokens (token -> username, expiry)
     tokens: parking_lot::RwLock<HashMap<String, (String, SystemTime)>>,
 }
 
@@ -297,16 +297,16 @@ impl TokenAuthenticator {
         }
     }
 
-    /// Issue a new token for a user
-    ///
-    /// # Arguments
-    ///
-    /// * `username` - Username
-    /// * `validity` - Token validity duration
-    ///
-    /// # Returns
-    ///
-    /// Generated token string
+    // Issue a new token for a user
+    //
+    // # Arguments
+    //
+    // * `username` - Username
+    // * `validity` - Token validity duration
+    //
+    // # Returns
+    //
+    // Generated token string
 pub fn issue_token(&self, username: String, validity: std::time::Duration) -> String {
     use uuid::Uuid;
 
@@ -317,12 +317,12 @@ pub fn issue_token(&self, username: String, validity: std::time::Duration) -> St
     token
 }
 
-    /// Revoke a token
+    // Revoke a token
     pub fn revoke_token(&self, token: &str) {
         self.tokens.write().remove(token);
     }
 
-    /// Check if token is valid and not expired
+    // Check if token is valid and not expired
 fn is_token_valid(&self, token: &str) -> Option<String> {
         let tokens = self.tokens.read();
         tokens.get(token).and_then(|(username, expiry)| {

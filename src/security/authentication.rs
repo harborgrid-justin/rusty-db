@@ -23,38 +23,38 @@ use crate::error::DbError;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::{SaltString, rand_core::OsRng};
 
-/// User identifier
+// User identifier
 pub type UserId = String;
 
-/// Session identifier
+// Session identifier
 pub type SessionId = String;
 
-/// Password policy configuration
+// Password policy configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PasswordPolicy {
-    /// Minimum password length
+    // Minimum password length
     pub min_length: usize,
-    /// Maximum password length
+    // Maximum password length
     pub max_length: usize,
-    /// Require uppercase letters
+    // Require uppercase letters
     pub require_uppercase: bool,
-    /// Require lowercase letters
+    // Require lowercase letters
     pub require_lowercase: bool,
-    /// Require digits
+    // Require digits
     pub require_digits: bool,
-    /// Require special characters
+    // Require special characters
     pub require_special: bool,
-    /// Password expiration in days (None = never expires)
+    // Password expiration in days (None = never expires)
     pub expiration_days: Option<u32>,
-    /// Number of previous passwords to remember
+    // Number of previous passwords to remember
     pub password_history: usize,
-    /// Minimum password age in days (prevent frequent changes)
+    // Minimum password age in days (prevent frequent changes)
     pub min_age_days: Option<u32>,
-    /// Maximum failed login attempts before lockout
+    // Maximum failed login attempts before lockout
     pub max_failed_attempts: u32,
-    /// Account lockout duration in minutes
+    // Account lockout duration in minutes
     pub lockout_duration_minutes: u32,
-    /// Require password change on first login
+    // Require password change on first login
     pub require_change_on_first_login: bool,
 }
 
@@ -77,232 +77,232 @@ impl Default for PasswordPolicy {
     }
 }
 
-/// User account information
+// User account information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserAccount {
-    /// User ID
+    // User ID
     pub user_id: UserId,
-    /// Username for login
+    // Username for login
     pub username: String,
-    /// Email address
+    // Email address
     pub email: Option<String>,
-    /// Hashed password (Argon2)
+    // Hashed password (Argon2)
     pub password_hash: String,
-    /// Account creation timestamp
+    // Account creation timestamp
     pub created_at: i64,
-    /// Last login timestamp
+    // Last login timestamp
     pub last_login: Option<i64>,
-    /// Last password change timestamp
+    // Last password change timestamp
     pub last_password_change: i64,
-    /// Password expiration timestamp
+    // Password expiration timestamp
     pub password_expires_at: Option<i64>,
-    /// Account status
+    // Account status
     pub status: AccountStatus,
-    /// Failed login attempts
+    // Failed login attempts
     pub failed_login_attempts: u32,
-    /// Account lockout until timestamp
+    // Account lockout until timestamp
     pub locked_until: Option<i64>,
-    /// MFA enabled
+    // MFA enabled
     pub mfa_enabled: bool,
-    /// MFA secret (TOTP)
+    // MFA secret (TOTP)
     pub mfa_secret: Option<String>,
-    /// MFA backup codes
+    // MFA backup codes
     pub mfa_backup_codes: Vec<String>,
-    /// Password history (hashes)
+    // Password history (hashes)
     pub password_history: Vec<String>,
-    /// Account metadata
+    // Account metadata
     pub metadata: HashMap<String, String>,
 }
 
-/// Account status
+// Account status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AccountStatus {
-    /// Account is active and can log in
+    // Account is active and can log in
     Active,
-    /// Account is locked (by admin or failed attempts)
+    // Account is locked (by admin or failed attempts)
     Locked,
-    /// Account is disabled
+    // Account is disabled
     Disabled,
-    /// Account requires password change
+    // Account requires password change
     PasswordChangeRequired,
-    /// Account is pending activation
+    // Account is pending activation
     PendingActivation,
 }
 
-/// Authentication method
+// Authentication method
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AuthMethod {
-    /// Local username/password
+    // Local username/password
     Local,
-    /// LDAP/Active Directory
+    // LDAP/Active Directory
     Ldap,
-    /// OAuth2
+    // OAuth2
     OAuth2 { provider: String },
-    /// OIDC (OpenID Connect)
+    // OIDC (OpenID Connect)
     Oidc { provider: String },
-    /// API Key
+    // API Key
     ApiKey,
-    /// Certificate-based
+    // Certificate-based
     Certificate,
 }
 
-/// Multi-factor authentication type
+// Multi-factor authentication type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum MfaType {
-    /// Time-based One-Time Password (TOTP)
+    // Time-based One-Time Password (TOTP)
     Totp,
-    /// SMS verification code
+    // SMS verification code
     Sms,
-    /// Email verification code
+    // Email verification code
     Email,
-    /// Hardware token (U2F/FIDO2)
+    // Hardware token (U2F/FIDO2)
     HardwareToken,
-    /// Backup code
+    // Backup code
     BackupCode,
 }
 
-/// Authentication session
+// Authentication session
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthSession {
-    /// Session ID
+    // Session ID
     pub session_id: SessionId,
-    /// User ID
+    // User ID
     pub user_id: UserId,
-    /// Username
+    // Username
     pub username: String,
-    /// Authentication method used
+    // Authentication method used
     pub auth_method: AuthMethod,
-    /// Session creation timestamp
+    // Session creation timestamp
     pub created_at: i64,
-    /// Last activity timestamp
+    // Last activity timestamp
     pub last_activity: i64,
-    /// Session expiration timestamp
+    // Session expiration timestamp
     pub expires_at: i64,
-    /// Client IP address
+    // Client IP address
     pub client_ip: Option<String>,
-    /// User agent
+    // User agent
     pub user_agent: Option<String>,
-    /// MFA verified in this session
+    // MFA verified in this session
     pub mfa_verified: bool,
-    /// Session metadata
+    // Session metadata
     pub metadata: HashMap<String, String>,
 }
 
-/// LDAP configuration
+// LDAP configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LdapConfig {
-    /// LDAP server URL
+    // LDAP server URL
     pub server_url: String,
-    /// Bind DN for authentication
+    // Bind DN for authentication
     pub bind_dn: String,
-    /// Bind password
+    // Bind password
     pub bind_password: String,
-    /// Base DN for user search
+    // Base DN for user search
     pub base_dn: String,
-    /// User search filter
+    // User search filter
     pub user_filter: String,
-    /// Group search filter
+    // Group search filter
     pub group_filter: Option<String>,
-    /// Attribute mappings
+    // Attribute mappings
     pub attribute_mapping: HashMap<String, String>,
-    /// Connection timeout in seconds
+    // Connection timeout in seconds
     pub timeout_seconds: u32,
-    /// Use TLS/SSL
+    // Use TLS/SSL
     pub use_tls: bool,
 }
 
-/// OAuth2 configuration
+// OAuth2 configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OAuth2Config {
-    /// Provider name
+    // Provider name
     pub provider: String,
-    /// Client ID
+    // Client ID
     pub client_id: String,
-    /// Client secret
+    // Client secret
     pub client_secret: String,
-    /// Authorization endpoint
+    // Authorization endpoint
     pub auth_url: String,
-    /// Token endpoint
+    // Token endpoint
     pub token_url: String,
-    /// Redirect URI
+    // Redirect URI
     pub redirect_uri: String,
-    /// Scopes
+    // Scopes
     pub scopes: Vec<String>,
-    /// User info endpoint
+    // User info endpoint
     pub user_info_url: Option<String>,
 }
 
-/// OIDC configuration
+// OIDC configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OidcConfig {
-    /// Provider name
+    // Provider name
     pub provider: String,
-    /// Client ID
+    // Client ID
     pub client_id: String,
-    /// Client secret
+    // Client secret
     pub client_secret: String,
-    /// Discovery endpoint
+    // Discovery endpoint
     pub discovery_url: String,
-    /// Redirect URI
+    // Redirect URI
     pub redirect_uri: String,
-    /// Scopes
+    // Scopes
     pub scopes: Vec<String>,
 }
 
-/// Login credentials
+// Login credentials
 #[derive(Debug, Clone)]
 pub struct LoginCredentials {
-    /// Username
+    // Username
     pub username: String,
-    /// Password
+    // Password
     pub password: String,
-    /// Optional MFA code
+    // Optional MFA code
     pub mfa_code: Option<String>,
-    /// Client IP address
+    // Client IP address
     pub client_ip: Option<String>,
-    /// User agent
+    // User agent
     pub user_agent: Option<String>,
 }
 
-/// Login result
+// Login result
 #[derive(Debug, Clone)]
 pub enum LoginResult {
-    /// Successful login with session
+    // Successful login with session
     Success { session: AuthSession },
-    /// MFA required
+    // MFA required
     MfaRequired { user_id: UserId, mfa_types: Vec<MfaType> },
-    /// Password change required
+    // Password change required
     PasswordChangeRequired { user_id: UserId },
-    /// Account locked
+    // Account locked
     AccountLocked { locked_until: i64 },
-    /// Invalid credentials
+    // Invalid credentials
     InvalidCredentials,
-    /// Account disabled
+    // Account disabled
     AccountDisabled,
 }
 
-/// Authentication manager
+// Authentication manager
 pub struct AuthenticationManager {
-    /// User accounts
+    // User accounts
     users: Arc<RwLock<HashMap<UserId, UserAccount>>>,
-    /// Active sessions
+    // Active sessions
     sessions: Arc<RwLock<HashMap<SessionId, AuthSession>>>,
-    /// Password policy
+    // Password policy
     password_policy: Arc<RwLock<PasswordPolicy>>,
-    /// LDAP configuration
+    // LDAP configuration
     ldap_config: Arc<RwLock<Option<LdapConfig>>>,
-    /// OAuth2 configurations
+    // OAuth2 configurations
     oauth2_configs: Arc<RwLock<HashMap<String, OAuth2Config>>>,
-    /// OIDC configurations
+    // OIDC configurations
     oidc_configs: Arc<RwLock<HashMap<String, OidcConfig>>>,
-    /// Failed login tracking (username -> attempts with timestamp)
+    // Failed login tracking (username -> attempts with timestamp)
     failed_logins: Arc<RwLock<HashMap<String, Vec<i64>>>>,
-    /// Session timeout in seconds
+    // Session timeout in seconds
     session_timeout: Arc<RwLock<u64>>,
 }
 
 impl AuthenticationManager {
-    /// Create a new authentication manager
+    // Create a new authentication manager
     pub fn new() -> Self {
         Self {
             users: Arc::new(RwLock::new(HashMap::new())),
@@ -316,7 +316,7 @@ impl AuthenticationManager {
         }
     }
 
-    /// Create a new user account
+    // Create a new user account
     pub fn create_user(
         &self,
         username: String,
@@ -370,7 +370,7 @@ impl AuthenticationManager {
         Ok(user_id)
     }
 
-    /// Authenticate a user with username and password
+    // Authenticate a user with username and password
     pub fn login(&self, credentials: LoginCredentials) -> Result<LoginResult> {
         // Check if account is locked out from failed attempts
         if self.is_locked_out(&credentials.username) {
@@ -481,7 +481,7 @@ impl AuthenticationManager {
         Ok(LoginResult::Success { session })
     }
 
-    /// Logout and invalidate session
+    // Logout and invalidate session
     pub fn logout(&self, session_id: &SessionId) -> Result<()> {
         let mut sessions = self.sessions.write();
         sessions.remove(session_id)
@@ -490,7 +490,7 @@ impl AuthenticationManager {
         Ok(())
     }
 
-    /// Validate a session
+    // Validate a session
     pub fn validate_session(&self, session_id: &str) -> Result<AuthSession> {
         let mut sessions = self.sessions.write();
         let session = sessions.get_mut(session_id)
@@ -512,7 +512,7 @@ impl AuthenticationManager {
         Ok(session.clone())
     }
 
-    /// Change user password
+    // Change user password
     pub fn change_password(
         &self,
         user_id: &UserId,
@@ -575,7 +575,7 @@ impl AuthenticationManager {
         Ok(())
     }
 
-    /// Enable MFA for a user
+    // Enable MFA for a user
     pub fn enable_mfa(&self, user_id: &UserId) -> Result<(String, Vec<String>)> {
         let mut users = self.users.write();
         let user = users.get_mut(user_id)
@@ -594,7 +594,7 @@ impl AuthenticationManager {
         Ok((secret, backup_codes))
     }
 
-    /// Disable MFA for a user
+    // Disable MFA for a user
     pub fn disable_mfa(&self, user_id: &UserId, password: &str) -> Result<()> {
         let mut users = self.users.write();
         let user = users.get_mut(user_id)
@@ -612,37 +612,37 @@ impl AuthenticationManager {
         Ok(())
     }
 
-    /// Configure LDAP authentication
+    // Configure LDAP authentication
     pub fn configure_ldap(&self, config: LdapConfig) -> Result<()> {
         *self.ldap_config.write() = Some(config);
         Ok(())
     }
 
-    /// Configure OAuth2 provider
+    // Configure OAuth2 provider
     pub fn configure_oauth2(&self, config: OAuth2Config) -> Result<()> {
         let provider = config.provider.clone();
         self.oauth2_configs.write().insert(provider, config);
         Ok(())
     }
 
-    /// Configure OIDC provider
+    // Configure OIDC provider
     pub fn configure_oidc(&self, config: OidcConfig) -> Result<()> {
         let provider = config.provider.clone();
         self.oidc_configs.write().insert(provider, config);
         Ok(())
     }
 
-    /// Update password policy
+    // Update password policy
     pub fn update_password_policy(&self, policy: PasswordPolicy) {
         *self.password_policy.write() = policy;
     }
 
-    /// Get password policy
+    // Get password policy
     pub fn get_password_policy(&self) -> PasswordPolicy {
         self.password_policy.read().clone()
     }
 
-    /// Get user account
+    // Get user account
     pub fn get_user(&self, user_id: &UserId) -> Result<UserAccount> {
         self.users.read()
             .get(user_id)
@@ -650,7 +650,7 @@ impl AuthenticationManager {
             .ok_or_else(|| DbError::NotFound("User not found".to_string()))
     }
 
-    /// Get all active sessions for a user
+    // Get all active sessions for a user
     pub fn get_user_sessions(&self, user_id: &UserId) -> Vec<AuthSession> {
         self.sessions.read()
             .values()
@@ -659,7 +659,7 @@ impl AuthenticationManager {
             .collect()
     }
 
-    /// Invalidate all sessions for a user
+    // Invalidate all sessions for a user
     pub fn invalidate_user_sessions(&self, user_id: &UserId) -> Result<usize> {
         let mut sessions = self.sessions.write();
         let session_ids: Vec<SessionId> = sessions.values()
@@ -843,22 +843,22 @@ impl AuthenticationManager {
         self.failed_logins.write().remove(username);
     }
 
-    /// Get the number of active sessions
+    // Get the number of active sessions
     pub fn session_count(&self) -> usize {
         self.sessions.read().len()
     }
 
-    /// Get the number of registered users
+    // Get the number of registered users
     pub fn user_count(&self) -> usize {
         self.users.read().len()
     }
 
-    /// Get access to users (for internal security module use)
+    // Get access to users (for internal security module use)
     pub(crate) fn users(&self) -> &Arc<RwLock<HashMap<UserId, UserAccount>>> {
         &self.users
     }
 
-    /// Get access to sessions (for internal security module use)
+    // Get access to sessions (for internal security module use)
     pub(crate) fn sessions(&self) -> &Arc<RwLock<HashMap<SessionId, AuthSession>>> {
         &self.sessions
     }

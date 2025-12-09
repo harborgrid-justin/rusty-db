@@ -37,122 +37,122 @@ use tokio::sync::{mpsc};
 // Constants
 // ============================================================================
 
-/// Recovery coordinator election timeout
+// Recovery coordinator election timeout
 const ELECTION_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// Maximum recovery time before escalation
+// Maximum recovery time before escalation
 const MAX_RECOVERY_TIME: Duration = Duration::from_secs(300);
 
-/// Redo log batch size
+// Redo log batch size
 const REDO_BATCH_SIZE: usize = 1000;
 
-/// Lock reclamation timeout
+// Lock reclamation timeout
 const LOCK_RECLAIM_TIMEOUT: Duration = Duration::from_secs(10);
 
 // ============================================================================
 // Recovery Types
 // ============================================================================
 
-/// Instance failure information
+// Instance failure information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceFailure {
-    /// Failed instance identifier
+    // Failed instance identifier
     pub failed_instance: NodeId,
 
-    /// Failure detection time
+    // Failure detection time
     pub detected_at: SystemTime,
 
-    /// Failure reason
+    // Failure reason
     pub reason: FailureReason,
 
-    /// Last known LSN from failed instance
+    // Last known LSN from failed instance
     pub last_known_lsn: LogSequenceNumber,
 
-    /// Active transactions on failed instance
+    // Active transactions on failed instance
     pub active_transactions: HashSet<TransactionId>,
 
-    /// Resources owned by failed instance
+    // Resources owned by failed instance
     pub owned_resources: HashSet<ResourceId>,
 }
 
-/// Reason for instance failure
+// Reason for instance failure
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FailureReason {
-    /// Network partition
+    // Network partition
     NetworkPartition,
 
-    /// Heartbeat timeout
+    // Heartbeat timeout
     HeartbeatTimeout,
 
-    /// Process crash
+    // Process crash
     ProcessCrash,
 
-    /// Administrative shutdown
+    // Administrative shutdown
     AdminShutdown,
 
-    /// Unknown
+    // Unknown
     Unknown,
 }
 
-/// Recovery phase
+// Recovery phase
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RecoveryPhase {
-    /// Failure detected, starting recovery
+    // Failure detected, starting recovery
     Detecting,
 
-    /// Electing recovery coordinator
+    // Electing recovery coordinator
     Electing,
 
-    /// Freezing resources
+    // Freezing resources
     Freezing,
 
-    /// Applying redo logs
+    // Applying redo logs
     RedoRecovery,
 
-    /// Reclaiming locks
+    // Reclaiming locks
     LockReclamation,
 
-    /// Remastering resources
+    // Remastering resources
     Remastering,
 
-    /// Unfreezing and resuming
+    // Unfreezing and resuming
     Resuming,
 
-    /// Recovery complete
+    // Recovery complete
     Complete,
 
-    /// Recovery failed
+    // Recovery failed
     Failed,
 }
 
-/// Recovery state
+// Recovery state
 #[derive(Debug, Clone)]
 pub struct RecoveryState {
-    /// Current phase
+    // Current phase
     pub phase: RecoveryPhase,
 
-    /// Recovery coordinator
+    // Recovery coordinator
     pub coordinator: Option<NodeId>,
 
-    /// Failed instance being recovered
+    // Failed instance being recovered
     pub failed_instance: NodeId,
 
-    /// Recovery start time
+    // Recovery start time
     pub started_at: Instant,
 
-    /// Redo logs processed
+    // Redo logs processed
     pub redo_logs_processed: u64,
 
-    /// Locks reclaimed
+    // Locks reclaimed
     pub locks_reclaimed: u64,
 
-    /// Resources remastered
+    // Resources remastered
     pub resources_remastered: u64,
 
-    /// Progress percentage (0-100)
+    // Progress percentage (0-100)
     pub progress: u8,
 
-    /// Estimated time remaining
+    // Estimated time remaining
     pub estimated_remaining: Option<Duration>,
 }
 
@@ -160,66 +160,66 @@ pub struct RecoveryState {
 // Redo Log
 // ============================================================================
 
-/// Redo log entry for recovery
+// Redo log entry for recovery
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedoLogEntry {
-    /// Log sequence number
+    // Log sequence number
     pub lsn: LogSequenceNumber,
 
-    /// Transaction ID
+    // Transaction ID
     pub transaction_id: TransactionId,
 
-    /// Operation type
+    // Operation type
     pub operation: RedoOperation,
 
-    /// Target resource
+    // Target resource
     pub resource_id: ResourceId,
 
-    /// Before image (for undo)
+    // Before image (for undo)
     pub before_image: Option<Vec<u8>>,
 
-    /// After image (for redo)
+    // After image (for redo)
     pub after_image: Vec<u8>,
 
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
 }
 
-/// Redo operation type
+// Redo operation type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RedoOperation {
-    /// Insert operation
+    // Insert operation
     Insert,
 
-    /// Update operation
+    // Update operation
     Update,
 
-    /// Delete operation
+    // Delete operation
     Delete,
 
-    /// Begin transaction
+    // Begin transaction
     BeginTxn,
 
-    /// Commit transaction
+    // Commit transaction
     Commit,
 
-    /// Rollback transaction
+    // Rollback transaction
     Rollback,
 
-    /// Checkpoint
+    // Checkpoint
     Checkpoint,
 }
 
-/// Redo log buffer
+// Redo log buffer
 #[derive(Debug)]
 struct RedoLogBuffer {
-    /// Redo log entries
+    // Redo log entries
     entries: VecDeque<RedoLogEntry>,
 
-    /// Current LSN
+    // Current LSN
     current_lsn: LogSequenceNumber,
 
-    /// Flushed LSN (written to disk)
+    // Flushed LSN (written to disk)
     flushed_lsn: LogSequenceNumber,
 }
 
@@ -263,62 +263,62 @@ impl RedoLogBuffer {
 // Instance Recovery Manager
 // ============================================================================
 
-/// Instance recovery manager
+// Instance recovery manager
 pub struct InstanceRecoveryManager {
-    /// Local node identifier
+    // Local node identifier
     node_id: NodeId,
 
-    /// Active recoveries
+    // Active recoveries
     active_recoveries: Arc<RwLock<HashMap<NodeId, RecoveryState>>>,
 
-    /// Redo log buffer
+    // Redo log buffer
     redo_buffer: Arc<Mutex<RedoLogBuffer>>,
 
-    /// Cluster interconnect
+    // Cluster interconnect
     interconnect: Arc<ClusterInterconnect>,
 
-    /// Global resource directory
+    // Global resource directory
     grd: Arc<GlobalResourceDirectory>,
 
-    /// Recovery configuration
+    // Recovery configuration
     config: RecoveryConfig,
 
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<RecoveryStatistics>>,
 
-    /// Message channel
+    // Message channel
     message_tx: mpsc::UnboundedSender<RecoveryMessage>,
     message_rx: Arc<tokio::sync::Mutex<mpsc::UnboundedReceiver<RecoveryMessage>>>,
 }
 
-/// Recovery configuration
+// Recovery configuration
 #[derive(Debug, Clone)]
 pub struct RecoveryConfig {
-    /// Enable automatic recovery
+    // Enable automatic recovery
     pub auto_recovery: bool,
 
-    /// Maximum concurrent recoveries
+    // Maximum concurrent recoveries
     pub max_concurrent_recoveries: usize,
 
-    /// Redo batch size
+    // Redo batch size
     pub redo_batch_size: usize,
 
-    /// Enable parallel recovery
+    // Enable parallel recovery
     pub enable_parallel: bool,
 
-    /// Recovery timeout
+    // Recovery timeout
     pub recovery_timeout: Duration,
 
-    /// NEW: Number of parallel redo apply threads
+    // NEW: Number of parallel redo apply threads
     pub parallel_redo_threads: usize,
 
-    /// NEW: Enable incremental checkpointing
+    // NEW: Enable incremental checkpointing
     pub enable_checkpoints: bool,
 
-    /// NEW: Checkpoint interval
+    // NEW: Checkpoint interval
     pub checkpoint_interval: Duration,
 
-    /// NEW: Priority-based recovery (system resources first)
+    // NEW: Priority-based recovery (system resources first)
     pub priority_recovery: bool,
 }
 
@@ -338,69 +338,69 @@ impl Default for RecoveryConfig {
     }
 }
 
-/// Recovery statistics
+// Recovery statistics
 #[derive(Debug, Default, Clone)]
 pub struct RecoveryStatistics {
-    /// Total recoveries performed
+    // Total recoveries performed
     pub total_recoveries: u64,
 
-    /// Successful recoveries
+    // Successful recoveries
     pub successful_recoveries: u64,
 
-    /// Failed recoveries
+    // Failed recoveries
     pub failed_recoveries: u64,
 
-    /// Total redo logs applied
+    // Total redo logs applied
     pub total_redo_applied: u64,
 
-    /// Total locks reclaimed
+    // Total locks reclaimed
     pub total_locks_reclaimed: u64,
 
-    /// Total resources remastered
+    // Total resources remastered
     pub total_resources_remastered: u64,
 
-    /// Average recovery time (seconds)
+    // Average recovery time (seconds)
     pub avg_recovery_time_secs: u64,
 
-    /// Longest recovery time
+    // Longest recovery time
     pub max_recovery_time_secs: u64,
 }
 
-/// Recovery messages
+// Recovery messages
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum RecoveryMessage {
-    /// Initiate recovery for failed instance
+    // Initiate recovery for failed instance
     InitiateRecovery {
         failed_instance: NodeId,
         reason: FailureReason,
     },
 
-    /// Vote for recovery coordinator
+    // Vote for recovery coordinator
     VoteCoordinator {
         failed_instance: NodeId,
         candidate: NodeId,
         ballot: u64,
     },
 
-    /// Coordinator elected
+    // Coordinator elected
     CoordinatorElected {
         failed_instance: NodeId,
         coordinator: NodeId,
     },
 
-    /// Request redo logs
+    // Request redo logs
     RequestRedoLogs {
         failed_instance: NodeId,
         from_lsn: LogSequenceNumber,
     },
 
-    /// Send redo logs
+    // Send redo logs
     SendRedoLogs {
         failed_instance: NodeId,
         logs: Vec<RedoLogEntry>,
     },
 
-    /// Recovery complete
+    // Recovery complete
     RecoveryComplete {
         failed_instance: NodeId,
         success: bool,
@@ -408,7 +408,7 @@ enum RecoveryMessage {
 }
 
 impl InstanceRecoveryManager {
-    /// Create a new instance recovery manager
+    // Create a new instance recovery manager
     pub fn new(
         node_id: NodeId,
         interconnect: Arc<ClusterInterconnect>,
@@ -430,7 +430,7 @@ impl InstanceRecoveryManager {
         }
     }
 
-    /// Start recovery monitoring
+    // Start recovery monitoring
     pub async fn start(&self) -> Result<(), DbError> {
         // Monitor for instance failures
         let interconnect = self.interconnect.clone();
@@ -463,7 +463,7 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Process recovery messages
+    // Process recovery messages
     async fn process_recovery_messages(&self) {
         let mut rx = self.message_rx.lock().await;
 
@@ -496,7 +496,7 @@ impl InstanceRecoveryManager {
         }
     }
 
-    /// Initiate recovery for a failed instance
+    // Initiate recovery for a failed instance
     pub async fn initiate_recovery(
         &self,
         failed_instance: NodeId,
@@ -539,7 +539,7 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Elect recovery coordinator
+    // Elect recovery coordinator
     async fn elect_recovery_coordinator(&self, failed_instance: NodeId) -> Result<(), DbError> {
         // Update phase
         {
@@ -604,7 +604,7 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Execute recovery process
+    // Execute recovery process
     async fn execute_recovery(&self, failed_instance: NodeId) -> Result<(), DbError> {
         let start = Instant::now();
 
@@ -652,7 +652,7 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Freeze resources during recovery
+    // Freeze resources during recovery
     async fn freeze_resources(&self, failed_instance: &NodeId) -> Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
@@ -667,8 +667,8 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Perform redo recovery
-    /// NEW: Parallel redo apply with multiple threads for 10x faster recovery
+    // Perform redo recovery
+    // NEW: Parallel redo apply with multiple threads for 10x faster recovery
     async fn perform_redo_recovery(&self, failed_instance: &NodeId) -> Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
@@ -703,8 +703,8 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// NEW: Parallel redo apply for 10x faster recovery
-    /// Partitions redo logs by resource and applies in parallel
+    // NEW: Parallel redo apply for 10x faster recovery
+    // Partitions redo logs by resource and applies in parallel
     async fn apply_redo_parallel(&self, failed_instance: &NodeId, logs: Vec<RedoLogEntry>) -> Result<(), DbError> {
 
         // Partition logs by resource to avoid conflicts
@@ -756,7 +756,7 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Apply a single redo log entry
+    // Apply a single redo log entry
     async fn apply_redo_log(&self, log: &RedoLogEntry) -> Result<(), DbError> {
         match log.operation {
             RedoOperation::Insert | RedoOperation::Update | RedoOperation::Delete => {
@@ -775,7 +775,7 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Reclaim locks from failed instance
+    // Reclaim locks from failed instance
     async fn reclaim_locks(&self, failed_instance: &NodeId) -> Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
@@ -798,7 +798,7 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Remaster resources from failed instance
+    // Remaster resources from failed instance
     async fn remaster_resources(&self, failed_instance: &NodeId) -> Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
@@ -821,7 +821,7 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Resume normal operations
+    // Resume normal operations
     async fn resume_operations(&self, failed_instance: &NodeId) -> Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
@@ -880,23 +880,23 @@ impl InstanceRecoveryManager {
         Ok(())
     }
 
-    /// Add redo log entry
+    // Add redo log entry
     pub fn append_redo_log(&self, entry: RedoLogEntry) -> Result<(), DbError> {
         self.redo_buffer.lock().unwrap().append(entry);
         Ok(())
     }
 
-    /// Get recovery state for an instance
+    // Get recovery state for an instance
     pub fn get_recovery_state(&self, failed_instance: &NodeId) -> Option<RecoveryState> {
         self.active_recoveries.read().get(failed_instance).cloned()
     }
 
-    /// Get all active recoveries
+    // Get all active recoveries
     pub fn get_active_recoveries(&self) -> Vec<RecoveryState> {
         self.active_recoveries.read().values().cloned().collect()
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_statistics(&self) -> RecoveryStatistics {
         self.stats.read().clone()
     }

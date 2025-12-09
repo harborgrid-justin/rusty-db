@@ -48,12 +48,12 @@ pub const INVALID_PAGE_ID: PageId = u64::MAX;
 #[repr(C, align(4096))]
 #[derive(Clone)]
 pub struct PageBuffer {
-    /// Raw page data (4KB)
+// Raw page data (4KB)
     data: [u8; PAGE_SIZE],
 }
 
 impl PageBuffer {
-    /// Create a new zeroed page buffer
+// Create a new zeroed page buffer
     #[inline]
     pub fn new() -> Self {
         Self {
@@ -61,11 +61,11 @@ impl PageBuffer {
         }
     }
 
-    /// Create a page buffer from existing data
-    ///
-    /// # Safety
-    ///
-    /// Caller must ensure data is exactly PAGE_SIZE bytes
+// Create a page buffer from existing data
+//
+// # Safety
+//
+// Caller must ensure data is exactly PAGE_SIZE bytes
     #[inline]
     pub fn from_bytes(data: &[u8]) -> Self {
         let mut buffer = Self::new();
@@ -73,53 +73,53 @@ impl PageBuffer {
         buffer
     }
 
-    /// Get immutable reference to page data
+// Get immutable reference to page data
     #[inline(always)]
     pub fn data(&self) -> &[u8] {
         &self.data
     }
 
-    /// Get mutable reference to page data
+// Get mutable reference to page data
     #[inline(always)]
     pub fn data_mut(&mut self) -> &mut [u8] {
         &mut self.data
     }
 
-    /// Get raw pointer to page data (for zero-copy I/O)
-    ///
-    /// # Safety
-    ///
-    /// The returned pointer is valid for PAGE_SIZE bytes.
-    /// Caller must ensure proper synchronization when using this pointer.
+// Get raw pointer to page data (for zero-copy I/O)
+//
+// # Safety
+//
+// The returned pointer is valid for PAGE_SIZE bytes.
+// Caller must ensure proper synchronization when using this pointer.
     #[inline(always)]
     pub unsafe fn as_ptr(&self) -> *const u8 {
         self.data.as_ptr()
     }
 
-    /// Get mutable raw pointer to page data (for zero-copy I/O)
-    ///
-    /// # Safety
-    ///
-    /// The returned pointer is valid for PAGE_SIZE bytes.
-    /// Caller must ensure exclusive access when using this pointer.
+// Get mutable raw pointer to page data (for zero-copy I/O)
+//
+// # Safety
+//
+// The returned pointer is valid for PAGE_SIZE bytes.
+// Caller must ensure exclusive access when using this pointer.
     #[inline(always)]
     pub unsafe fn as_mut_ptr(&mut self) -> *mut u8 {
         self.data.as_mut_ptr()
     }
 
-    /// Zero out the entire page
+// Zero out the entire page
     #[inline]
     pub fn zero(&mut self) {
-        // SAFETY: Writing zeros is always safe
+// SAFETY: Writing zeros is always safe
         unsafe {
             std::ptr::write_bytes(self.data.as_mut_ptr(), 0, PAGE_SIZE);
         }
     }
 
-    /// Copy data from another page buffer
+// Copy data from another page buffer
     #[inline]
     pub fn copy_from(&mut self, other: &PageBuffer) {
-        // SAFETY: Both buffers are PAGE_SIZE, this is safe
+// SAFETY: Both buffers are PAGE_SIZE, this is safe
         unsafe {
             std::ptr::copy_nonoverlapping(
                 other.data.as_ptr(),
@@ -129,19 +129,19 @@ impl PageBuffer {
         }
     }
 
-    /// Check if page is zeroed (used for optimization)
+// Check if page is zeroed (used for optimization)
     #[cold]
     pub fn is_zeroed(&self) -> bool {
         self.data.iter().all(|&b| b == 0)
     }
 
-    /// Calculate checksum of page data (CRC32)
+// Calculate checksum of page data (CRC32)
     #[inline]
     pub fn checksum(&self) -> u32 {
         crc32fast::hash(&self.data)
     }
 
-    /// Verify page checksum
+// Verify page checksum
     #[inline]
     pub fn verify_checksum(&self, expected: u32) -> bool {
         self.checksum() == expected
@@ -179,41 +179,41 @@ impl Default for PageBuffer {
 /// ```
 #[repr(C)]
 pub struct BufferFrame {
-    /// Page ID currently stored in this frame (INVALID_PAGE_ID if empty)
+// Page ID currently stored in this frame (INVALID_PAGE_ID if empty)
     page_id: AtomicU64,
 
-    /// Frame ID (index in frame array)
+// Frame ID (index in frame array)
     frame_id: FrameId,
 
-    /// Pin count - number of concurrent users of this page
-    /// 0 = unpinned (can be evicted)
-    /// >0 = pinned (cannot be evicted)
+// Pin count - number of concurrent users of this page
+// 0 = unpinned (can be evicted)
+// >0 = pinned (cannot be evicted)
     pin_count: AtomicU32,
 
-    /// Dirty flag - has the page been modified?
+// Dirty flag - has the page been modified?
     dirty: AtomicBool,
 
-    /// I/O in progress flag - is this frame being read/written?
+// I/O in progress flag - is this frame being read/written?
     io_in_progress: AtomicBool,
 
-    /// Reference bit for CLOCK algorithm
+// Reference bit for CLOCK algorithm
     ref_bit: AtomicBool,
 
-    /// Last access timestamp (for LRU)
+// Last access timestamp (for LRU)
     last_access: AtomicU64,
 
-    /// Page data (aligned to 4096 bytes)
+// Page data (aligned to 4096 bytes)
     data: RwLock<PageBuffer>,
 
-    /// LSN of last modification (for WAL)
+// LSN of last modification (for WAL)
     page_lsn: AtomicU64,
 
-    /// Access count for statistics
+// Access count for statistics
     access_count: AtomicU64,
 }
 
 impl BufferFrame {
-    /// Create a new empty buffer frame
+// Create a new empty buffer frame
     #[inline]
     pub fn new(frame_id: FrameId) -> Self {
         Self {
@@ -230,40 +230,40 @@ impl BufferFrame {
         }
     }
 
-    /// Get frame ID
+// Get frame ID
     #[inline(always)]
     pub fn frame_id(&self) -> FrameId {
         self.frame_id
     }
 
-    /// Get page ID (lock-free)
+// Get page ID (lock-free)
     #[inline(always)]
     pub fn page_id(&self) -> PageId {
         self.page_id.load(Ordering::Acquire)
     }
 
-    /// Set page ID
+// Set page ID
     #[inline]
     pub fn set_page_id(&self, page_id: PageId) {
         self.page_id.store(page_id, Ordering::Release);
     }
 
-    /// Get pin count (lock-free)
+// Get pin count (lock-free)
     #[inline(always)]
     pub fn pin_count(&self) -> u32 {
         self.pin_count.load(Ordering::Acquire)
     }
 
-    /// Check if frame is pinned (lock-free)
+// Check if frame is pinned (lock-free)
     #[inline(always)]
     pub fn is_pinned(&self) -> bool {
         self.pin_count() > 0
     }
 
-    /// Increment pin count atomically
-    ///
-    /// Returns the old pin count.
-    /// This is a hot-path operation, so it's marked `#[inline(always)]`.
+// Increment pin count atomically
+//
+// Returns the old pin count.
+// This is a hot-path operation, so it's marked `#[inline(always)]`.
     #[inline(always)]
     pub fn pin(&self) -> u32 {
         let old_count = self.pin_count.fetch_add(1, Ordering::AcqRel);
@@ -272,10 +272,10 @@ impl BufferFrame {
         old_count
     }
 
-    /// Decrement pin count atomically
-    ///
-    /// Returns the new pin count.
-    /// Panics if pin count would underflow (indicates a bug).
+// Decrement pin count atomically
+//
+// Returns the new pin count.
+// Panics if pin count would underflow (indicates a bug).
     #[inline(always)]
     pub fn unpin(&self) -> u32 {
         let old_count = self.pin_count.fetch_sub(1, Ordering::AcqRel);
@@ -283,7 +283,7 @@ impl BufferFrame {
         old_count - 1
     }
 
-    /// Try to pin the frame (returns false if eviction in progress)
+// Try to pin the frame (returns false if eviction in progress)
     #[inline]
     pub fn try_pin(&self) -> bool {
         if self.io_in_progress.load(Ordering::Acquire) {
@@ -293,81 +293,81 @@ impl BufferFrame {
         true
     }
 
-    /// Check if frame is dirty (lock-free)
+// Check if frame is dirty (lock-free)
     #[inline(always)]
     pub fn is_dirty(&self) -> bool {
         self.dirty.load(Ordering::Acquire)
     }
 
-    /// Mark frame as dirty
+// Mark frame as dirty
     #[inline]
     pub fn set_dirty(&self, dirty: bool) {
         self.dirty.store(dirty, Ordering::Release);
     }
 
-    /// Mark frame as dirty and update LSN
+// Mark frame as dirty and update LSN
     #[inline]
     pub fn mark_dirty(&self, lsn: u64) {
         self.dirty.store(true, Ordering::Release);
         self.page_lsn.store(lsn, Ordering::Release);
     }
 
-    /// Get page LSN
+// Get page LSN
     #[inline]
     pub fn page_lsn(&self) -> u64 {
         self.page_lsn.load(Ordering::Acquire)
     }
 
-    /// Check if I/O is in progress
+// Check if I/O is in progress
     #[inline]
     pub fn io_in_progress(&self) -> bool {
         self.io_in_progress.load(Ordering::Acquire)
     }
 
-    /// Set I/O in progress flag
+// Set I/O in progress flag
     #[inline]
     pub fn set_io_in_progress(&self, in_progress: bool) {
         self.io_in_progress.store(in_progress, Ordering::Release);
     }
 
-    /// Get reference bit (for CLOCK algorithm)
+// Get reference bit (for CLOCK algorithm)
     #[inline(always)]
     pub fn ref_bit(&self) -> bool {
         self.ref_bit.load(Ordering::Acquire)
     }
 
-    /// Set reference bit
+// Set reference bit
     #[inline(always)]
     pub fn set_ref_bit(&self, bit: bool) {
         self.ref_bit.store(bit, Ordering::Release);
     }
 
-    /// Clear reference bit and return old value (for CLOCK)
+// Clear reference bit and return old value (for CLOCK)
     #[inline(always)]
     pub fn clear_ref_bit(&self) -> bool {
         self.ref_bit.swap(false, Ordering::AcqRel)
     }
 
-    /// Update access timestamp (for LRU)
+// Update access timestamp (for LRU)
     #[inline]
     fn update_access_time(&self) {
         let now = Instant::now().elapsed().as_millis() as u64;
         self.last_access.store(now, Ordering::Relaxed);
     }
 
-    /// Get last access time
+// Get last access time
     #[inline]
     pub fn last_access_time(&self) -> u64 {
         self.last_access.load(Ordering::Relaxed)
     }
 
-    /// Get access count for statistics
+// Get access count for statistics
     #[inline]
     pub fn access_count(&self) -> u64 {
         self.access_count.load(Ordering::Relaxed)
     }
 
-    /// Reset frame to empty state
+// Reset frame to empty state
     #[cold]
     pub fn reset(&self) {
         self.page_id.store(INVALID_PAGE_ID, Ordering::Release);
@@ -379,45 +379,45 @@ impl BufferFrame {
         self.access_count.store(0, Ordering::Release);
     }
 
-    /// Check if frame is empty (not holding a page)
+// Check if frame is empty (not holding a page)
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.page_id() == INVALID_PAGE_ID
     }
 
-    /// Get read access to page data
-    ///
-    /// This acquires a read lock, so multiple readers are allowed.
+// Get read access to page data
+//
+// This acquires a read lock, so multiple readers are allowed.
     #[inline]
     pub fn read_data(&self) -> parking_lot::RwLockReadGuard<'_, PageBuffer> {
         self.data.read()
     }
 
-    /// Get write access to page data
-    ///
-    /// This acquires a write lock, so only one writer is allowed.
-    /// Automatically marks the frame as dirty.
+// Get write access to page data
+//
+// This acquires a write lock, so only one writer is allowed.
+// Automatically marks the frame as dirty.
     #[inline]
     pub fn write_data(&self) -> parking_lot::RwLockWriteGuard<'_, PageBuffer> {
         self.dirty.store(true, Ordering::Release);
         self.data.write()
     }
 
-    /// Get write access without marking dirty (for initial load)
+// Get write access without marking dirty (for initial load)
     #[inline]
     pub fn write_data_no_dirty(&self) -> parking_lot::RwLockWriteGuard<'_, PageBuffer> {
         self.data.write()
     }
 
-    /// Try to evict this frame (returns true if successful)
+// Try to evict this frame (returns true if successful)
     #[cold]
     pub fn try_evict(&self) -> bool {
-        // Can only evict if not pinned and no I/O in progress
+// Can only evict if not pinned and no I/O in progress
         if self.is_pinned() || self.io_in_progress() {
             return false;
         }
 
-        // Try to set I/O in progress
+// Try to set I/O in progress
         if self.io_in_progress
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
             .is_err()
@@ -425,7 +425,7 @@ impl BufferFrame {
             return false;
         }
 
-        // Double-check pin count after setting I/O flag
+// Double-check pin count after setting I/O flag
         if self.is_pinned() {
             self.io_in_progress.store(false, Ordering::Release);
             return false;
@@ -456,38 +456,38 @@ pub struct FrameGuard {
 }
 
 impl FrameGuard {
-    /// Create a new frame guard (pins the frame)
+// Create a new frame guard (pins the frame)
     #[inline]
     pub fn new(frame: Arc<BufferFrame>) -> Self {
         frame.pin();
         Self { frame }
     }
 
-    /// Get the underlying frame
+// Get the underlying frame
     #[inline]
     pub fn frame(&self) -> &BufferFrame {
         &self.frame
     }
 
-    /// Get page ID
+// Get page ID
     #[inline]
     pub fn page_id(&self) -> PageId {
         self.frame.page_id()
     }
 
-    /// Get frame ID
+// Get frame ID
     #[inline]
     pub fn frame_id(&self) -> FrameId {
         self.frame.frame_id()
     }
 
-    /// Read page data
+// Read page data
     #[inline]
     pub fn read_data(&self) -> parking_lot::RwLockReadGuard<'_, PageBuffer> {
         self.frame.read_data()
     }
 
-    /// Write page data
+// Write page data
     #[inline]
     pub fn write_data(&self) -> parking_lot::RwLockWriteGuard<'_, PageBuffer> {
         self.frame.write_data()
@@ -519,7 +519,7 @@ pub struct FrameStats {
 }
 
 impl BufferFrame {
-    /// Get current frame statistics
+// Get current frame statistics
     #[cold]
     pub fn get_stats(&self) -> FrameStats {
         FrameStats {
@@ -546,7 +546,7 @@ pub struct FrameBatch {
 }
 
 impl FrameBatch {
-    /// Create a new frame batch
+// Create a new frame batch
     #[inline]
     pub fn new(max_size: usize) -> Self {
         Self {
@@ -555,9 +555,9 @@ impl FrameBatch {
         }
     }
 
-    /// Add a frame to the batch
-    ///
-    /// Returns false if batch is full.
+// Add a frame to the batch
+//
+// Returns false if batch is full.
     #[inline]
     pub fn add(&mut self, frame: Arc<BufferFrame>) -> bool {
         if self.frames.len() >= self.max_size {
@@ -567,43 +567,43 @@ impl FrameBatch {
         true
     }
 
-    /// Check if batch is full
+// Check if batch is full
     #[inline]
     pub fn is_full(&self) -> bool {
         self.frames.len() >= self.max_size
     }
 
-    /// Check if batch is empty
+// Check if batch is empty
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.frames.is_empty()
     }
 
-    /// Get number of frames in batch
+// Get number of frames in batch
     #[inline]
     pub fn len(&self) -> usize {
         self.frames.len()
     }
 
-    /// Get frames in the batch
+// Get frames in the batch
     #[inline]
     pub fn frames(&self) -> &[Arc<BufferFrame>] {
         &self.frames
     }
 
-    /// Clear the batch
+// Clear the batch
     #[inline]
     pub fn clear(&mut self) {
         self.frames.clear();
     }
 
-    /// Sort frames by page ID (for sequential I/O)
+// Sort frames by page ID (for sequential I/O)
     #[inline]
     pub fn sort_by_page_id(&mut self) {
         self.frames.sort_by_key(|f| f.page_id());
     }
 
-    /// Get dirty frames in the batch
+// Get dirty frames in the batch
     #[inline]
     pub fn dirty_frames(&self) -> Vec<Arc<BufferFrame>> {
         self.frames
@@ -623,22 +623,22 @@ impl FrameBatch {
 /// Each CPU core gets its own pool of frames that it can allocate from
 /// without contention. This is inspired by Linux's per-CPU page allocator.
 pub struct PerCoreFramePool {
-    /// Core ID this pool belongs to
+// Core ID this pool belongs to
     core_id: usize,
 
-    /// Free frames in this pool
+// Free frames in this pool
     free_frames: Mutex<Vec<FrameId>>,
 
-    /// Maximum frames in this pool
+// Maximum frames in this pool
     max_frames: usize,
 
-    /// Statistics
+// Statistics
     allocations: AtomicU64,
     deallocations: AtomicU64,
 }
 
 impl PerCoreFramePool {
-    /// Create a new per-core frame pool
+// Create a new per-core frame pool
     #[inline]
     pub fn new(core_id: usize, max_frames: usize) -> Self {
         Self {
@@ -650,7 +650,7 @@ impl PerCoreFramePool {
         }
     }
 
-    /// Try to allocate a frame from this core's pool
+// Try to allocate a frame from this core's pool
     #[inline]
     pub fn try_allocate(&self) -> Option<FrameId> {
         let frame = self.free_frames.lock().unwrap().pop();
@@ -660,7 +660,7 @@ impl PerCoreFramePool {
         frame
     }
 
-    /// Return a frame to this core's pool
+// Return a frame to this core's pool
     #[inline]
     pub fn deallocate(&self, frame_id: FrameId) -> bool {
         let mut frames = self.free_frames.lock().unwrap();
@@ -672,20 +672,20 @@ impl PerCoreFramePool {
         true
     }
 
-    /// Add frames to this pool
+// Add frames to this pool
     #[inline]
     pub fn add_frames(&self, new_frames: Vec<FrameId>) {
         let mut pool = self.free_frames.lock().unwrap();
         pool.extend(new_frames);
     }
 
-    /// Get number of free frames
+// Get number of free frames
     #[inline]
     pub fn free_count(&self) -> usize {
         self.free_frames.lock().unwrap().len()
     }
 
-    /// Get statistics
+// Get statistics
     #[cold]
     pub fn stats(&self) -> (u64, u64, usize) {
         (

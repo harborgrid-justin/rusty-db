@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-/// CTE statistics collector for monitoring and optimization
+// CTE statistics collector for monitoring and optimization
 pub struct CteStatistics {
     execution_counts: HashMap<String, usize>,
     execution_times: HashMap<String, u128>,

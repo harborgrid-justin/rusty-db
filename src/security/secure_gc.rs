@@ -56,31 +56,31 @@ use rand::RngCore;
 // Core Sanitization Primitives
 // ============================================================================
 
-/// Sanitization pattern types
+// Sanitization pattern types
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Pattern {
-    /// Single pass with zeros
+    // Single pass with zeros
     Zero,
-    /// DoD 5220.22-M: 3-pass (0x00, 0xFF, random)
+    // DoD 5220.22-M: 3-pass (0x00, 0xFF, random)
     Dod522022M,
-    /// Gutmann method: 35-pass
+    // Gutmann method: 35-pass
     Gutmann,
-    /// Random data only
+    // Random data only
     Random,
 }
 
-/// Multi-pass memory sanitizer implementing DoD 5220.22-M standard
+// Multi-pass memory sanitizer implementing DoD 5220.22-M standard
 pub struct MemorySanitizer;
 
 impl MemorySanitizer {
 
-    /// Sanitize a memory slice with the specified pattern
+    // Sanitize a memory slice with the specified pattern
     #[inline]
     pub fn sanitize_slice(data: &mut [u8]) {
         Self::sanitize_with_pattern(data, Pattern::Dod522022M);
     }
 
-    /// Sanitize with specific pattern
+    // Sanitize with specific pattern
     pub fn sanitize_with_pattern(data: &mut [u8], pattern: Pattern) {
         match pattern {
             Pattern::Zero => {
@@ -123,7 +123,7 @@ impl MemorySanitizer {
         }
     }
 
-    /// Zero pass with SIMD optimization where available
+    // Zero pass with SIMD optimization where available
     #[inline]
     fn zero_pass(data: &mut [u8]) {
         // Use volatile writes to prevent compiler optimization
@@ -132,7 +132,7 @@ impl MemorySanitizer {
         }
     }
 
-    /// Fill pass with specific byte pattern
+    // Fill pass with specific byte pattern
     #[inline]
     fn fill_pass(data: &mut [u8], pattern: u8) {
         unsafe {
@@ -140,18 +140,18 @@ impl MemorySanitizer {
         }
     }
 
-    /// Random data pass using cryptographically secure RNG
+    // Random data pass using cryptographically secure RNG
     #[inline]
     fn random_pass(data: &mut [u8]) {
         rand::thread_rng().fill_bytes(data);
     }
 
-    /// Sanitize a raw pointer (unsafe, caller must ensure validity)
-    ///
-    /// # Safety
-    /// - `ptr` must be valid for `len` bytes
-    /// - `ptr` must be properly aligned
-    /// - No other references to this memory must exist
+    // Sanitize a raw pointer (unsafe, caller must ensure validity)
+    //
+    // # Safety
+    // - `ptr` must be valid for `len` bytes
+    // - `ptr` must be properly aligned
+    // - No other references to this memory must exist
     #[inline]
     pub unsafe fn sanitize_ptr(ptr: *mut u8, len: usize) {
         if !ptr.is_null() && len > 0 {
@@ -161,7 +161,7 @@ impl MemorySanitizer {
     }
 }
 
-/// Compiler fence to prevent optimization
+// Compiler fence to prevent optimization
 #[inline(always)]
 fn compiler_fence_full() {
     std::sync::atomic::compiler_fence(Ordering::SeqCst);
@@ -171,42 +171,42 @@ fn compiler_fence_full() {
 // SecureDrop<T> - Automatic Memory Zeroing Wrapper
 // ============================================================================
 
-/// Wrapper that automatically zeros memory on drop
-///
-/// This type ensures that the contained value is securely zeroed before
-/// being deallocated, preventing sensitive data from remaining in memory.
-///
-/// # Example
-///
-/// ```rust,no_run
-/// use rusty_db::security::secure_gc::SecureDrop;
-///
-/// let key = SecureDrop::new(vec![1, 2, 3, 4]);
-/// // key is automatically sanitized when dropped
-/// ```
+// Wrapper that automatically zeros memory on drop
+//
+// This type ensures that the contained value is securely zeroed before
+// being deallocated, preventing sensitive data from remaining in memory.
+//
+// # Example
+//
+// ```rust,no_run
+// use rusty_db::security::secure_gc::SecureDrop;
+//
+// let key = SecureDrop::new(vec![1, 2, 3, 4]);
+// // key is automatically sanitized when dropped
+// ```
 pub struct SecureDrop<T> {
     value: Option<T>,
 }
 
 impl<T> SecureDrop<T> {
-    /// Create a new SecureDrop wrapper
+    // Create a new SecureDrop wrapper
     pub fn new(value: T) -> Self {
         Self {
             value: Some(value),
         }
     }
 
-    /// Take the value out, leaving None
+    // Take the value out, leaving None
     pub fn take(&mut self) -> Option<T> {
         self.value.take()
     }
 
-    /// Get immutable reference to the value
+    // Get immutable reference to the value
     pub fn get(&self) -> Option<&T> {
         self.value.as_ref()
     }
 
-    /// Get mutable reference to the value
+    // Get mutable reference to the value
     pub fn get_mut(&mut self) -> Option<&mut T> {
         self.value.as_mut()
     }
@@ -255,46 +255,46 @@ impl<T> fmt::Debug for SecureDrop<T> {
 // SensitiveData<T> - Protected Wrapper with No Debug/Display
 // ============================================================================
 
-/// Wrapper for sensitive data that prevents accidental exposure
-///
-/// This type wraps sensitive data and prevents it from being accidentally
-/// printed, logged, or otherwise exposed. The data is automatically sanitized
-/// on drop.
-///
-/// # Example
-///
-/// ```rust,no_run
-/// use rusty_db::security::secure_gc::SensitiveData;
-///
-/// let password = SensitiveData::new("my_password".to_string());
-/// // Cannot be printed or logged
-/// // Automatically sanitized on drop
-/// ```
+// Wrapper for sensitive data that prevents accidental exposure
+//
+// This type wraps sensitive data and prevents it from being accidentally
+// printed, logged, or otherwise exposed. The data is automatically sanitized
+// on drop.
+//
+// # Example
+//
+// ```rust,no_run
+// use rusty_db::security::secure_gc::SensitiveData;
+//
+// let password = SensitiveData::new("my_password".to_string());
+// // Cannot be printed or logged
+// // Automatically sanitized on drop
+// ```
 pub struct SensitiveData<T> {
     inner: SecureDrop<T>,
 }
 
 impl<T> SensitiveData<T> {
-    /// Create new sensitive data wrapper
+    // Create new sensitive data wrapper
     pub fn new(value: T) -> Self {
         Self {
             inner: SecureDrop::new(value),
         }
     }
 
-    /// Get immutable reference to the data
-    ///
-    /// Use with caution - the reference should not outlive the SensitiveData
+    // Get immutable reference to the data
+    //
+    // Use with caution - the reference should not outlive the SensitiveData
     pub fn expose(&self) -> &T {
         self.inner.get().expect("SensitiveData was taken")
     }
 
-    /// Get mutable reference to the data
+    // Get mutable reference to the data
     pub fn expose_mut(&mut self) -> &mut T {
         self.inner.get_mut().expect("SensitiveData was taken")
     }
 
-    /// Take the value out, consuming the wrapper
+    // Take the value out, consuming the wrapper
     pub fn expose_owned(mut self) -> T {
         self.inner.take().expect("SensitiveData was taken")
     }
@@ -311,14 +311,14 @@ impl<T> fmt::Debug for SensitiveData<T> {
 // CryptoErase - Cryptographic Memory Erasure
 // ============================================================================
 
-/// Cryptographic erasure for provably secure memory sanitization
-///
-/// Uses AES-CTR stream to overwrite memory with cryptographically random data,
-/// making statistical analysis of freed memory impossible.
+// Cryptographic erasure for provably secure memory sanitization
+//
+// Uses AES-CTR stream to overwrite memory with cryptographically random data,
+// making statistical analysis of freed memory impossible.
 pub struct CryptoErase;
 
 impl CryptoErase {
-    /// Erase memory using cryptographic overwrite
+    // Erase memory using cryptographic overwrite
     pub fn erase(data: &mut [u8]) {
         // Generate key from timestamp + random
         let mut key = [0u8; 32];
@@ -346,25 +346,25 @@ impl CryptoErase {
 // SecurePool - Sanitizing Memory Pool
 // ============================================================================
 
-/// Memory pool that automatically sanitizes returned memory
-///
-/// Provides a pool of pre-allocated memory blocks that are automatically
-/// sanitized when returned to the pool.
+// Memory pool that automatically sanitizes returned memory
+//
+// Provides a pool of pre-allocated memory blocks that are automatically
+// sanitized when returned to the pool.
 pub struct SecurePool {
-    /// Block size in bytes
+    // Block size in bytes
     block_size: usize,
-    /// Available blocks
+    // Available blocks
     free_blocks: Mutex<VecDeque<*mut u8>>,
-    /// Total blocks allocated
+    // Total blocks allocated
     total_blocks: AtomicUsize,
-    /// Blocks in use
+    // Blocks in use
     used_blocks: AtomicUsize,
-    /// Sanitization pattern
+    // Sanitization pattern
     pattern: Pattern,
 }
 
 impl SecurePool {
-    /// Create a new secure memory pool
+    // Create a new secure memory pool
     pub fn new(block_size: usize, initial_capacity: usize) -> Self {
         let pool = Self {
             block_size,
@@ -389,7 +389,7 @@ impl SecurePool {
         pool
     }
 
-    /// Allocate a block from the pool
+    // Allocate a block from the pool
     pub fn allocate(&self) -> Option<SecurePoolBlock> {
         let ptr = {
             let mut blocks = self.free_blocks.lock().unwrap();
@@ -423,7 +423,7 @@ impl SecurePool {
         }
     }
 
-    /// Return a block to the pool (with sanitization)
+    // Return a block to the pool (with sanitization)
     fn return_block(&self, ptr: *mut u8) {
         // Sanitize the block
         unsafe {
@@ -436,7 +436,7 @@ impl SecurePool {
         self.used_blocks.fetch_sub(1, Ordering::Relaxed);
     }
 
-    /// Get pool statistics
+    // Get pool statistics
     pub fn stats(&self) -> SecurePoolStats {
         SecurePoolStats {
             total_blocks: self.total_blocks.load(Ordering::Relaxed),
@@ -466,7 +466,7 @@ impl Drop for SecurePool {
 unsafe impl Send for SecurePool {}
 unsafe impl Sync for SecurePool {}
 
-/// Pool block that automatically returns to pool on drop
+// Pool block that automatically returns to pool on drop
 pub struct SecurePoolBlock {
     ptr: *mut u8,
     size: usize,
@@ -474,12 +474,12 @@ pub struct SecurePoolBlock {
 }
 
 impl SecurePoolBlock {
-    /// Get the raw pointer to the block
+    // Get the raw pointer to the block
     pub fn as_ptr(&self) -> *mut u8 {
         self.ptr
     }
 
-    /// Get the block as a mutable slice
+    // Get the block as a mutable slice
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         unsafe { std::slice::from_raw_parts_mut(self.ptr, self.size) }
     }
@@ -495,7 +495,7 @@ impl Drop for SecurePoolBlock {
     }
 }
 
-/// Pool statistics
+// Pool statistics
 #[derive(Debug, Clone, Copy)]
 pub struct SecurePoolStats {
     pub total_blocks: usize,
@@ -508,30 +508,30 @@ pub struct SecurePoolStats {
 // ReferenceTracker - Dangling Pointer Prevention
 // ============================================================================
 
-/// Tracks references to prevent dangling pointer access
-///
-/// Maintains weak references to allocated objects and automatically nulls
-/// them out on deallocation.
+// Tracks references to prevent dangling pointer access
+//
+// Maintains weak references to allocated objects and automatically nulls
+// them out on deallocation.
 pub struct ReferenceTracker<T> {
     inner: Arc<RwLock<Option<T>>>,
 }
 
 impl<T> ReferenceTracker<T> {
-    /// Create a new reference tracker
+    // Create a new reference tracker
     pub fn new(value: T) -> Self {
         Self {
             inner: Arc::new(RwLock::new(Some(value))),
         }
     }
 
-    /// Get a weak reference
+    // Get a weak reference
     pub fn weak(&self) -> WeakReference<T> {
         WeakReference {
             inner: Arc::downgrade(&self.inner),
         }
     }
 
-    /// Access the value
+    // Access the value
     pub fn with<F, R>(&self, f: F) -> Option<R>
     where
         F: FnOnce(&T) -> R,
@@ -539,7 +539,7 @@ impl<T> ReferenceTracker<T> {
         self.inner.read().as_ref().map(f)
     }
 
-    /// Mutably access the value
+    // Mutably access the value
     pub fn with_mut<F, R>(&self, f: F) -> Option<R>
     where
         F: FnOnce(&mut T) -> R,
@@ -562,18 +562,18 @@ impl<T> Drop for ReferenceTracker<T> {
     }
 }
 
-/// Weak reference that cannot cause use-after-free
+// Weak reference that cannot cause use-after-free
 pub struct WeakReference<T> {
     inner: Weak<RwLock<Option<T>>>,
 }
 
 impl<T> WeakReference<T> {
-    /// Try to upgrade to a strong reference
+    // Try to upgrade to a strong reference
     pub fn upgrade(&self) -> Option<Arc<RwLock<Option<T>>>> {
         self.inner.upgrade()
     }
 
-    /// Check if the reference is still valid
+    // Check if the reference is still valid
     pub fn is_valid(&self) -> bool {
         self.inner.strong_count() > 0
     }
@@ -591,16 +591,16 @@ impl<T> Clone for WeakReference<T> {
 // DelayedSanitizer - Deferred Cleanup
 // ============================================================================
 
-/// Deferred sanitization for performance-critical paths
-///
-/// Queues memory for later sanitization by a background thread, allowing
-/// hot paths to avoid sanitization overhead.
+// Deferred sanitization for performance-critical paths
+//
+// Queues memory for later sanitization by a background thread, allowing
+// hot paths to avoid sanitization overhead.
 pub struct DelayedSanitizer {
-    /// Queue of pending sanitization tasks
+    // Queue of pending sanitization tasks
     queue: Arc<Mutex<VecDeque<SanitizationTask>>>,
-    /// Maximum queue size
+    // Maximum queue size
     max_queue_size: usize,
-    /// Total bytes sanitized
+    // Total bytes sanitized
     bytes_sanitized: Arc<AtomicU64>,
 }
 
@@ -614,7 +614,7 @@ struct SanitizationTask {
 unsafe impl Send for SanitizationTask {}
 
 impl DelayedSanitizer {
-    /// Create a new delayed sanitizer
+    // Create a new delayed sanitizer
     pub fn new(max_queue_size: usize) -> Self {
         Self {
             queue: Arc::new(Mutex::new(VecDeque::with_capacity(max_queue_size))),
@@ -623,10 +623,10 @@ impl DelayedSanitizer {
         }
     }
 
-    /// Queue memory for delayed sanitization
-    ///
-    /// # Safety
-    /// Caller must ensure the pointer remains valid until sanitization
+    // Queue memory for delayed sanitization
+    //
+    // # Safety
+    // Caller must ensure the pointer remains valid until sanitization
     pub unsafe fn queue_sanitization(
         &self,
         ptr: *mut u8,
@@ -649,7 +649,7 @@ impl DelayedSanitizer {
         }
     }
 
-    /// Process pending sanitization tasks
+    // Process pending sanitization tasks
     pub fn process_queue(&self, max_tasks: usize) -> usize {
         let mut queue = self.queue.lock().unwrap();
         let mut processed = 0;
@@ -667,7 +667,7 @@ impl DelayedSanitizer {
         processed
     }
 
-    /// Flush all pending tasks
+    // Flush all pending tasks
     pub fn flush(&self) {
         let mut queue = self.queue.lock().unwrap();
         while let Some(task) = queue.pop_front() {
@@ -678,7 +678,7 @@ impl DelayedSanitizer {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn stats(&self) -> DelayedSanitizerStats {
         DelayedSanitizerStats {
             queue_size: self.queue.lock().unwrap().len(),
@@ -693,7 +693,7 @@ impl Drop for DelayedSanitizer {
     }
 }
 
-/// Sanitizer statistics
+// Sanitizer statistics
 #[derive(Debug, Clone, Copy)]
 pub struct DelayedSanitizerStats {
     pub queue_size: usize,
@@ -704,16 +704,16 @@ pub struct DelayedSanitizerStats {
 // HeapGuard - Heap Spray Prevention
 // ============================================================================
 
-/// Guards against heap spray attacks
-///
-/// Provides randomized allocation patterns and canary values to detect
-/// and prevent heap spray attacks.
+// Guards against heap spray attacks
+//
+// Provides randomized allocation patterns and canary values to detect
+// and prevent heap spray attacks.
 pub struct HeapGuard {
-    /// Canary value for detection
+    // Canary value for detection
     canary: Arc<AtomicU64>,
-    /// Allocated regions with canaries
+    // Allocated regions with canaries
     regions: Arc<Mutex<HashMap<usize, HeapRegion>>>,
-    /// Detected anomalies
+    // Detected anomalies
     anomalies: Arc<AtomicUsize>,
 }
 
@@ -727,7 +727,7 @@ struct HeapRegion {
 unsafe impl Send for HeapRegion {}
 
 impl HeapGuard {
-    /// Create a new heap guard
+    // Create a new heap guard
     pub fn new() -> Self {
         let mut canary_bytes = [0u8; 8];
         rand::thread_rng().fill_bytes(&mut canary_bytes);
@@ -740,7 +740,7 @@ impl HeapGuard {
         }
     }
 
-    /// Allocate memory with canary protection
+    // Allocate memory with canary protection
     pub fn allocate(&self, size: usize) -> Option<HeapGuardBlock> {
         // Add space for canaries (before and after)
         let total_size = size + 16; // 8 bytes before, 8 bytes after
@@ -781,7 +781,7 @@ impl HeapGuard {
         })
     }
 
-    /// Verify canaries for a region
+    // Verify canaries for a region
     fn verify_canaries(&self, ptr: *mut u8) -> bool {
         let regions = self.regions.lock().unwrap();
         if let Some(region) = regions.get(&(ptr as usize)) {
@@ -798,7 +798,7 @@ impl HeapGuard {
         true
     }
 
-    /// Deallocate memory with verification
+    // Deallocate memory with verification
     fn deallocate(&self, ptr: *mut u8) {
         // Verify canaries before deallocation
         if !self.verify_canaries(ptr) {
@@ -818,7 +818,7 @@ impl HeapGuard {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn stats(&self) -> HeapGuardStats {
         HeapGuardStats {
             active_regions: self.regions.lock().unwrap().len(),
@@ -833,7 +833,7 @@ impl Default for HeapGuard {
     }
 }
 
-/// Heap guard protected block
+// Heap guard protected block
 pub struct HeapGuardBlock {
     ptr: *mut u8,
     size: usize,
@@ -841,12 +841,12 @@ pub struct HeapGuardBlock {
 }
 
 impl HeapGuardBlock {
-    /// Get the raw pointer
+    // Get the raw pointer
     pub fn as_ptr(&self) -> *mut u8 {
         self.ptr
     }
 
-    /// Get as mutable slice
+    // Get as mutable slice
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         unsafe { std::slice::from_raw_parts_mut(self.ptr, self.size) }
     }
@@ -862,7 +862,7 @@ impl Drop for HeapGuardBlock {
     }
 }
 
-/// Heap guard statistics
+// Heap guard statistics
 #[derive(Debug, Clone, Copy)]
 pub struct HeapGuardStats {
     pub active_regions: usize,

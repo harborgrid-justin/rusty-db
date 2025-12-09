@@ -20,195 +20,195 @@ use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
-/// Table identifier
+// Table identifier
 pub type TableId = String;
 
-/// Column identifier
+// Column identifier
 pub type ColumnId = String;
 
-/// User/Role identifier
+// User/Role identifier
 pub type PrincipalId = String;
 
-/// Security context for policy evaluation
+// Security context for policy evaluation
 #[derive(Debug, Clone)]
 pub struct SecurityContext {
-    /// Current user
+    // Current user
     pub user_id: String,
-    /// Active roles
+    // Active roles
     pub roles: HashSet<String>,
-    /// Session attributes
+    // Session attributes
     pub session_attributes: HashMap<String, String>,
-    /// IP address
+    // IP address
     pub ip_address: Option<String>,
-    /// Timestamp
+    // Timestamp
     pub timestamp: i64,
-    /// Application context
+    // Application context
     pub app_context: HashMap<String, String>,
 }
 
-/// Row-level security policy
+// Row-level security policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RowLevelPolicy {
-    /// Policy ID
+    // Policy ID
     pub id: String,
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Table this policy applies to
+    // Table this policy applies to
     pub table_id: TableId,
-    /// Policy type
+    // Policy type
     pub policy_type: PolicyType,
-    /// SQL predicate expression
+    // SQL predicate expression
     pub predicate: String,
-    /// Principals this policy applies to
+    // Principals this policy applies to
     pub principals: Vec<PrincipalId>,
-    /// Whether policy is enabled
+    // Whether policy is enabled
     pub enabled: bool,
-    /// Policy priority (higher = evaluated first)
+    // Policy priority (higher = evaluated first)
     pub priority: i32,
-    /// Policy creation timestamp
+    // Policy creation timestamp
     pub created_at: i64,
-    /// Policy update timestamp
+    // Policy update timestamp
     pub updated_at: i64,
-    /// Description
+    // Description
     pub description: Option<String>,
 }
 
-/// Type of row-level security policy
+// Type of row-level security policy
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PolicyType {
-    /// Permissive policy - ORed with other permissive policies
+    // Permissive policy - ORed with other permissive policies
     Permissive,
-    /// Restrictive policy - ANDed with all policies
+    // Restrictive policy - ANDed with all policies
     Restrictive,
 }
 
-/// Column-level access policy
+// Column-level access policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnPolicy {
-    /// Policy ID
+    // Policy ID
     pub id: String,
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Table ID
+    // Table ID
     pub table_id: TableId,
-    /// Column ID
+    // Column ID
     pub column_id: ColumnId,
-    /// Access level
+    // Access level
     pub access_level: ColumnAccessLevel,
-    /// Principals this policy applies to
+    // Principals this policy applies to
     pub principals: Vec<PrincipalId>,
-    /// Masking function (if applicable)
+    // Masking function (if applicable)
     pub masking_function: Option<MaskingFunction>,
-    /// Whether policy is enabled
+    // Whether policy is enabled
     pub enabled: bool,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: i64,
 }
 
-/// Column access level
+// Column access level
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ColumnAccessLevel {
-    /// Full access to column
+    // Full access to column
     Full,
-    /// Masked/redacted access
+    // Masked/redacted access
     Masked,
-    /// No access (column not visible)
+    // No access (column not visible)
     None,
-    /// Conditional access based on predicate
+    // Conditional access based on predicate
     Conditional { predicate: String },
 }
 
-/// Masking function for column data
+// Masking function for column data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MaskingFunction {
-    /// Show only first N characters
+    // Show only first N characters
     Partial { visible_chars: usize },
-    /// Hash the value
+    // Hash the value
     Hash,
-    /// Replace with fixed value
+    // Replace with fixed value
     Fixed { value: String },
-    /// Email masking (show domain, hide user)
+    // Email masking (show domain, hide user)
     Email,
-    /// Credit card masking (show last 4 digits)
+    // Credit card masking (show last 4 digits)
     CreditCard,
-    /// Random value from same distribution
+    // Random value from same distribution
     Random,
-    /// NULL out the value
+    // NULL out the value
     Null,
-    /// Custom SQL expression
+    // Custom SQL expression
     Custom { expression: String },
 }
 
-/// Virtual Private Database (VPD) context
+// Virtual Private Database (VPD) context
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VpdContext {
-    /// Context ID
+    // Context ID
     pub id: String,
-    /// Context name
+    // Context name
     pub name: String,
-    /// Table this context applies to
+    // Table this context applies to
     pub table_id: TableId,
-    /// Context attributes
+    // Context attributes
     pub attributes: HashMap<String, String>,
-    /// Security predicate
+    // Security predicate
     pub predicate: String,
-    /// Whether context is active
+    // Whether context is active
     pub active: bool,
 }
 
-/// Data classification level
+// Data classification level
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum DataClassification {
-    /// Public data
+    // Public data
     Public,
-    /// Internal use only
+    // Internal use only
     Internal,
-    /// Confidential data
+    // Confidential data
     Confidential,
-    /// Restricted/highly sensitive
+    // Restricted/highly sensitive
     Restricted,
-    /// Top secret
+    // Top secret
     TopSecret,
 }
 
-/// Column classification
+// Column classification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnClassification {
-    /// Table ID
+    // Table ID
     pub table_id: TableId,
-    /// Column ID
+    // Column ID
     pub column_id: ColumnId,
-    /// Classification level
+    // Classification level
     pub classification: DataClassification,
-    /// Tags for additional metadata
+    // Tags for additional metadata
     pub tags: HashSet<String>,
 }
 
-/// Security predicate that can be injected into queries
+// Security predicate that can be injected into queries
 #[derive(Debug, Clone)]
 pub struct SecurityPredicate {
-    /// Predicate expression
+    // Predicate expression
     pub expression: String,
-    /// Bind parameters
+    // Bind parameters
     pub parameters: HashMap<String, String>,
 }
 
-/// Fine-grained access control manager
+// Fine-grained access control manager
 pub struct FgacManager {
-    /// Row-level policies by table
+    // Row-level policies by table
     row_policies: Arc<RwLock<HashMap<TableId, Vec<RowLevelPolicy>>>>,
-    /// Column-level policies
+    // Column-level policies
     column_policies: Arc<RwLock<HashMap<TableId, HashMap<ColumnId, Vec<ColumnPolicy>>>>>,
-    /// VPD contexts
+    // VPD contexts
     vpd_contexts: Arc<RwLock<HashMap<TableId, Vec<VpdContext>>>>,
-    /// Column classifications
+    // Column classifications
     column_classifications: Arc<RwLock<HashMap<TableId, HashMap<ColumnId, ColumnClassification>>>>,
-    /// Policy cache for performance
+    // Policy cache for performance
     policy_cache: Arc<RwLock<HashMap<String, Vec<SecurityPredicate>>>>,
 }
 
 impl FgacManager {
-    /// Create a new FGAC manager
+    // Create a new FGAC manager
     pub fn new() -> Self {
         Self {
             row_policies: Arc::new(RwLock::new(HashMap::new())),
@@ -219,7 +219,7 @@ impl FgacManager {
         }
     }
 
-    /// Add a row-level security policy
+    // Add a row-level security policy
     pub fn add_row_policy(&self, policy: RowLevelPolicy) -> Result<()> {
         let mut policies = self.row_policies.write();
         let table_policies = policies.entry(policy.table_id.clone()).or_insert_with(Vec::new);
@@ -242,7 +242,7 @@ impl FgacManager {
         Ok(())
     }
 
-    /// Remove a row-level security policy
+    // Remove a row-level security policy
     pub fn remove_row_policy(&self, table_id: &TableId, policy_id: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
 
@@ -263,7 +263,7 @@ impl FgacManager {
         }
     }
 
-    /// Get row-level policies for a table
+    // Get row-level policies for a table
     pub fn get_row_policies(&self, table_id: &TableId) -> Vec<RowLevelPolicy> {
         self.row_policies.read()
             .get(table_id)
@@ -271,7 +271,7 @@ impl FgacManager {
             .unwrap_or_default()
     }
 
-    /// Add a column-level policy
+    // Add a column-level policy
     pub fn add_column_policy(&self, policy: ColumnPolicy) -> Result<()> {
         let mut policies = self.column_policies.write();
         let table_policies = policies.entry(policy.table_id.clone()).or_insert_with(HashMap::new);
@@ -292,7 +292,7 @@ impl FgacManager {
         Ok(())
     }
 
-    /// Remove a column-level policy
+    // Remove a column-level policy
     pub fn remove_column_policy(
         &self,
         table_id: &TableId,
@@ -320,7 +320,7 @@ impl FgacManager {
         Err(DbError::NotFound("Policy not found".to_string()))
     }
 
-    /// Get column policies for a specific column
+    // Get column policies for a specific column
     pub fn get_column_policies(
         &self,
         table_id: &TableId,
@@ -333,7 +333,7 @@ impl FgacManager {
             .unwrap_or_default()
     }
 
-    /// Get effective column access for a principal
+    // Get effective column access for a principal
     pub fn get_column_access(
         &self,
         table_id: &TableId,
@@ -377,7 +377,7 @@ impl FgacManager {
         most_restrictive
     }
 
-    /// Apply masking to a column value
+    // Apply masking to a column value
     pub fn apply_masking(&self, value: &str, function: &MaskingFunction) -> String {
         match function {
             MaskingFunction::Partial { visible_chars } => {
@@ -429,7 +429,7 @@ impl FgacManager {
         }
     }
 
-    /// Add a VPD context
+    // Add a VPD context
     pub fn add_vpd_context(&self, context: VpdContext) -> Result<()> {
         let mut contexts = self.vpd_contexts.write();
         let table_contexts = contexts.entry(context.table_id.clone()).or_insert_with(Vec::new);
@@ -449,7 +449,7 @@ impl FgacManager {
         Ok(())
     }
 
-    /// Remove a VPD context
+    // Remove a VPD context
     pub fn remove_vpd_context(&self, table_id: &TableId, context_id: &str) -> Result<()> {
         let mut contexts = self.vpd_contexts.write();
 
@@ -470,7 +470,7 @@ impl FgacManager {
         }
     }
 
-    /// Get VPD contexts for a table
+    // Get VPD contexts for a table
     pub fn get_vpd_contexts(&self, table_id: &TableId) -> Vec<VpdContext> {
         self.vpd_contexts.read()
             .get(table_id)
@@ -478,7 +478,7 @@ impl FgacManager {
             .unwrap_or_default()
     }
 
-    /// Generate security predicates for a table based on context
+    // Generate security predicates for a table based on context
     pub fn generate_security_predicates(
         &self,
         table_id: &TableId,
@@ -544,7 +544,7 @@ impl FgacManager {
         predicates
     }
 
-    /// Set column classification
+    // Set column classification
     pub fn set_column_classification(
         &self,
         table_id: TableId,
@@ -568,7 +568,7 @@ impl FgacManager {
         Ok(())
     }
 
-    /// Get column classification
+    // Get column classification
     pub fn get_column_classification(
         &self,
         table_id: &TableId,
@@ -580,7 +580,7 @@ impl FgacManager {
             .cloned()
     }
 
-    /// Get all columns with a specific classification level
+    // Get all columns with a specific classification level
     pub fn get_columns_by_classification(
         &self,
         classification: &DataClassification,
@@ -599,7 +599,7 @@ impl FgacManager {
         result
     }
 
-    /// Check if user can access data at a specific classification level
+    // Check if user can access data at a specific classification level
     pub fn can_access_classification(
         &self,
         context: &SecurityContext,
@@ -622,7 +622,7 @@ impl FgacManager {
         user_clearance >= *required_level
     }
 
-    /// Inject security predicates into a query
+    // Inject security predicates into a query
     pub fn inject_predicates(
         &self,
         original_query: &str,
@@ -649,12 +649,12 @@ impl FgacManager {
         }
     }
 
-    /// Clear all caches
+    // Clear all caches
     pub fn clear_cache(&self) {
         self.policy_cache.write().clear();
     }
 
-    /// Get statistics about policies
+    // Get statistics about policies
     pub fn get_statistics(&self) -> FgacStatistics {
         let row_policies = self.row_policies.read();
         let column_policies = self.column_policies.read();
@@ -687,7 +687,7 @@ impl Default for FgacManager {
     }
 }
 
-/// Statistics about FGAC usage
+// Statistics about FGAC usage
 #[derive(Debug, Clone)]
 pub struct FgacStatistics {
     pub total_row_policies: usize,

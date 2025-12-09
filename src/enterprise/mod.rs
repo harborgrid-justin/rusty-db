@@ -397,28 +397,28 @@ pub use cross_cutting::{
     retry_with_backoff,
 };
 
-/// Enterprise layer version
+// Enterprise layer version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Initialize the enterprise layer with default settings
+// Initialize the enterprise layer with default settings
 pub async fn initialize() -> crate::Result<EnterpriseRuntime> {
     EnterpriseRuntime::new().await
 }
 
-/// Enterprise runtime that coordinates all enterprise components
+// Enterprise runtime that coordinates all enterprise components
 pub struct EnterpriseRuntime {
-    /// Service bus for message routing
+    // Service bus for message routing
     pub service_bus: std::sync::Arc<ServiceBus>,
-    /// Configuration manager
+    // Configuration manager
     pub config: ConfigManager,
-    /// Feature flag manager
+    // Feature flag manager
     pub feature_flags: FeatureFlagManager,
-    /// Lifecycle manager
+    // Lifecycle manager
     pub lifecycle: LifecycleManager,
 }
 
 impl EnterpriseRuntime {
-    /// Create a new enterprise runtime with all components initialized
+    // Create a new enterprise runtime with all components initialized
     pub async fn new() -> crate::Result<Self> {
         // Detect environment from environment variable or default to production
         let env = std::env::var("RUSTYDB_ENV")
@@ -434,7 +434,7 @@ impl EnterpriseRuntime {
         })
     }
 
-    /// Start the enterprise runtime
+    // Start the enterprise runtime
     pub async fn start(&self) -> crate::Result<()> {
         // Load configuration if file exists
         if let Ok(config_path) = std::env::var("RUSTYDB_CONFIG") {
@@ -450,7 +450,7 @@ impl EnterpriseRuntime {
         Ok(())
     }
 
-    /// Shutdown the enterprise runtime gracefully
+    // Shutdown the enterprise runtime gracefully
     pub async fn shutdown(&self) -> crate::Result<()> {
         tracing::info!("Shutting down enterprise runtime...");
 
@@ -464,7 +464,7 @@ impl EnterpriseRuntime {
         Ok(())
     }
 
-    /// Get health status of all components
+    // Get health status of all components
     pub async fn health_check(&self) -> Vec<HealthCheck> {
         self.lifecycle.health_check_all().await
     }

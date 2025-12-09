@@ -20,36 +20,36 @@ use axum::{
 use crate::common::*;
 use crate::error::DbError;
 
-/// Newtype for API configuration to ensure domain-specific handling
+// Newtype for API configuration to ensure domain-specific handling
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiConfig {
-    /// API listen address
+    // API listen address
     pub listen_addr: String,
-    /// API port
+    // API port
     pub port: u16,
-    /// Enable CORS
+    // Enable CORS
     pub enable_cors: bool,
-    /// CORS allowed origins
+    // CORS allowed origins
     pub cors_origins: Vec<String>,
-    /// Rate limit (requests per second)
+    // Rate limit (requests per second)
     pub rate_limit_rps: u64,
-    /// Request timeout in seconds
+    // Request timeout in seconds
     pub request_timeout_secs: u64,
-    /// Max request body size in bytes
+    // Max request body size in bytes
     pub max_body_size: usize,
-    /// Enable Swagger UI
+    // Enable Swagger UI
     pub enable_swagger: bool,
-    /// Enable authentication
+    // Enable authentication
     pub enable_auth: bool,
-    /// API key for authentication
+    // API key for authentication
     pub api_key: Option<String>,
-    /// Max concurrent connections
+    // Max concurrent connections
     pub max_connections: usize,
-    /// Enable request logging
+    // Enable request logging
     pub enable_logging: bool,
-    /// Pagination default page size
+    // Pagination default page size
     pub default_page_size: usize,
-    /// Pagination max page size
+    // Pagination max page size
     pub max_page_size: usize,
 }
 
@@ -74,15 +74,15 @@ impl Default for ApiConfig {
     }
 }
 
-/// Newtype for session ID to prevent confusion with other IDs
+// Newtype for session ID to prevent confusion with other IDs
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 pub struct SessionId(pub u64);
 
-/// Newtype for transaction ID
+// Newtype for transaction ID
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 pub struct TransactionId(pub u64);
 
-/// Shared API state with proper encapsulation
+// Shared API state with proper encapsulation
 #[derive(Clone)]
 pub struct ApiState {
     pub config: ApiConfig,
@@ -93,7 +93,7 @@ pub struct ApiState {
     pub rate_limiter: Arc<RwLock<RateLimiter>>,
 }
 
-/// API error with structured information
+// API error with structured information
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ApiError {
     pub code: String,
@@ -151,7 +151,7 @@ impl IntoResponse for ApiError {
 
 pub type ApiResult<T> = Result<T, ApiError>;
 
-/// Query execution tracking
+// Query execution tracking
 #[derive(Debug, Clone)]
 pub struct QueryExecution {
     pub query_id: Uuid,
@@ -161,7 +161,7 @@ pub struct QueryExecution {
     pub status: String,
 }
 
-/// API metrics with atomic counters where appropriate
+// API metrics with atomic counters where appropriate
 #[derive(Debug, Clone, Default)]
 pub struct ApiMetrics {
     pub total_requests: u64,
@@ -171,7 +171,7 @@ pub struct ApiMetrics {
     pub requests_by_endpoint: HashMap<String, u64>,
 }
 
-/// Rate limiter implementation
+// Rate limiter implementation
 #[derive(Debug)]
 pub struct RateLimiter {
     pub requests: HashMap<String, Vec<SystemTime>>,
@@ -208,49 +208,49 @@ impl RateLimiter {
 // Request/Response Types - Core Database Operations
 // ============================================================================
 
-/// Query request with validation
+// Query request with validation
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct QueryRequest {
-    /// SQL query to execute
+    // SQL query to execute
     pub sql: String,
-    /// Query parameters
+    // Query parameters
     pub params: Option<Vec<serde_json::Value>>,
-    /// Maximum number of rows to return
+    // Maximum number of rows to return
     pub limit: Option<usize>,
-    /// Offset for pagination
+    // Offset for pagination
     pub offset: Option<usize>,
-    /// Timeout in seconds
+    // Timeout in seconds
     pub timeout: Option<u64>,
-    /// Return query plan
+    // Return query plan
     pub explain: Option<bool>,
-    /// Transaction ID (if part of transaction)
+    // Transaction ID (if part of transaction)
     pub transaction_id: Option<TransactionId>,
 }
 
-/// Query response with comprehensive metadata
+// Query response with comprehensive metadata
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct QueryResponse {
-    /// Query execution ID
+    // Query execution ID
     pub query_id: String,
-    /// Result rows
+    // Result rows
     pub rows: Vec<HashMap<String, serde_json::Value>>,
-    /// Column metadata
+    // Column metadata
     pub columns: Vec<ColumnMetadata>,
-    /// Number of rows returned
+    // Number of rows returned
     pub row_count: usize,
-    /// Number of rows affected (for INSERT/UPDATE/DELETE)
+    // Number of rows affected (for INSERT/UPDATE/DELETE)
     pub affected_rows: Option<usize>,
-    /// Execution time in milliseconds
+    // Execution time in milliseconds
     pub execution_time_ms: u64,
-    /// Query plan (if requested)
+    // Query plan (if requested)
     pub plan: Option<String>,
-    /// Warnings
+    // Warnings
     pub warnings: Vec<String>,
-    /// Has more results
+    // Has more results
     pub has_more: bool,
 }
 
-/// Column metadata with type safety
+// Column metadata with type safety
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ColumnMetadata {
     pub name: String,
@@ -260,35 +260,35 @@ pub struct ColumnMetadata {
     pub scale: Option<u32>,
 }
 
-/// Batch request for multiple statements
+// Batch request for multiple statements
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BatchRequest {
-    /// List of SQL statements to execute
+    // List of SQL statements to execute
     pub statements: Vec<String>,
-    /// Execute in transaction
+    // Execute in transaction
     pub transactional: bool,
-    /// Stop on error
+    // Stop on error
     pub stop_on_error: bool,
-    /// Transaction isolation level
+    // Transaction isolation level
     pub isolation: Option<String>,
 }
 
-/// Batch response with detailed results
+// Batch response with detailed results
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BatchResponse {
-    /// Batch execution ID
+    // Batch execution ID
     pub batch_id: String,
-    /// Results for each statement
+    // Results for each statement
     pub results: Vec<BatchStatementResult>,
-    /// Total execution time
+    // Total execution time
     pub total_time_ms: u64,
-    /// Number of successful statements
+    // Number of successful statements
     pub success_count: usize,
-    /// Number of failed statements
+    // Number of failed statements
     pub failure_count: usize,
 }
 
-/// Result of individual batch statement
+// Result of individual batch statement
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BatchStatementResult {
     pub statement_index: usize,
@@ -298,7 +298,7 @@ pub struct BatchStatementResult {
     pub execution_time_ms: u64,
 }
 
-/// Table creation/update request
+// Table creation/update request
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TableRequest {
     pub table_name: String,
@@ -307,7 +307,7 @@ pub struct TableRequest {
     pub indexes: Option<Vec<IndexDefinition>>,
 }
 
-/// Table column definition
+// Table column definition
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TableColumn {
     pub name: String,
@@ -316,7 +316,7 @@ pub struct TableColumn {
     pub default_value: Option<serde_json::Value>,
 }
 
-/// Index definition
+// Index definition
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct IndexDefinition {
     pub name: String,
@@ -325,7 +325,7 @@ pub struct IndexDefinition {
     pub index_type: Option<String>,
 }
 
-/// Schema response with table information
+// Schema response with table information
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SchemaResponse {
     pub database_name: String,
@@ -335,7 +335,7 @@ pub struct SchemaResponse {
     pub total_count: usize,
 }
 
-/// Table information
+// Table information
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TableInfo {
     pub name: String,
@@ -346,7 +346,7 @@ pub struct TableInfo {
     pub indexes: Vec<IndexInfo>,
 }
 
-/// View information
+// View information
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ViewInfo {
     pub name: String,
@@ -354,7 +354,7 @@ pub struct ViewInfo {
     pub is_materialized: bool,
 }
 
-/// Procedure information
+// Procedure information
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ProcedureInfo {
     pub name: String,
@@ -362,7 +362,7 @@ pub struct ProcedureInfo {
     pub return_type: Option<String>,
 }
 
-/// Index information
+// Index information
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct IndexInfo {
     pub name: String,
@@ -372,7 +372,7 @@ pub struct IndexInfo {
     pub size_bytes: u64,
 }
 
-/// Transaction request
+// Transaction request
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TransactionRequest {
     pub isolation_level: Option<String>,
@@ -380,7 +380,7 @@ pub struct TransactionRequest {
     pub deferrable: Option<bool>,
 }
 
-/// Transaction response
+// Transaction response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TransactionResponse {
     pub transaction_id: TransactionId,
@@ -393,7 +393,7 @@ pub struct TransactionResponse {
 // Request/Response Types - Administration
 // ============================================================================
 
-/// Configuration response
+// Configuration response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ConfigResponse {
     pub settings: HashMap<String, serde_json::Value>,
@@ -401,7 +401,7 @@ pub struct ConfigResponse {
     pub updated_at: i64,
 }
 
-/// Backup request
+// Backup request
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BackupRequest {
     pub backup_type: String, // full, incremental, differential
@@ -411,7 +411,7 @@ pub struct BackupRequest {
     pub retention_days: Option<u32>,
 }
 
-/// Backup response
+// Backup response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BackupResponse {
     pub backup_id: String,
@@ -422,7 +422,7 @@ pub struct BackupResponse {
     pub location: String,
 }
 
-/// Health check response
+// Health check response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct HealthResponse {
     pub status: String, // healthy, degraded, unhealthy
@@ -431,7 +431,7 @@ pub struct HealthResponse {
     pub checks: HashMap<String, ComponentHealth>,
 }
 
-/// Component health status
+// Component health status
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ComponentHealth {
     pub status: String,
@@ -439,7 +439,7 @@ pub struct ComponentHealth {
     pub last_check: i64,
 }
 
-/// Maintenance request
+// Maintenance request
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct MaintenanceRequest {
     pub operation: String, // vacuum, analyze, reindex, checkpoint
@@ -447,7 +447,7 @@ pub struct MaintenanceRequest {
     pub options: Option<HashMap<String, serde_json::Value>>,
 }
 
-/// User request
+// User request
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UserRequest {
     pub username: String,
@@ -456,8 +456,8 @@ pub struct UserRequest {
     pub enabled: Option<bool>,
 }
 
-/// User response
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+// User response
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UserResponse {
     pub user_id: u64,
     pub username: String,
@@ -467,7 +467,7 @@ pub struct UserResponse {
     pub last_login: Option<i64>,
 }
 
-/// Role request
+// Role request
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RoleRequest {
     pub role_name: String,
@@ -475,8 +475,8 @@ pub struct RoleRequest {
     pub description: Option<String>,
 }
 
-/// Role response
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+// Role response
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct RoleResponse {
     pub role_id: u64,
     pub role_name: String,
@@ -489,7 +489,7 @@ pub struct RoleResponse {
 // Request/Response Types - Monitoring & Metrics
 // ============================================================================
 
-/// Metrics response
+// Metrics response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct MetricsResponse {
     pub timestamp: i64,
@@ -497,7 +497,7 @@ pub struct MetricsResponse {
     pub prometheus_format: Option<String>,
 }
 
-/// Metric data point
+// Metric data point
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct MetricData {
     pub value: f64,
@@ -505,7 +505,7 @@ pub struct MetricData {
     pub labels: HashMap<String, String>,
 }
 
-/// Session statistics response
+// Session statistics response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SessionStatsResponse {
     pub active_sessions: usize,
@@ -515,20 +515,23 @@ pub struct SessionStatsResponse {
     pub peak_connections: usize,
 }
 
-/// Session information
+// Session information
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SessionInfo {
     pub session_id: SessionId,
-    pub user: String,
+    #[serde(alias = "user")]
+    pub username: String,
     pub database: String,
-    pub client_address: String,
-    pub connected_at: i64,
+    pub client_address: Option<String>,
+    #[serde(alias = "connected_at")]
+    pub created_at: i64,
+    pub last_activity: i64,
     pub state: String,
     pub current_query: Option<String>,
     pub transaction_id: Option<TransactionId>,
 }
 
-/// Query statistics response
+// Query statistics response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct QueryStatsResponse {
     pub total_queries: u64,
@@ -538,7 +541,7 @@ pub struct QueryStatsResponse {
     pub top_queries: Vec<TopQueryInfo>,
 }
 
-/// Slow query information
+// Slow query information
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SlowQueryInfo {
     pub query: String,
@@ -547,7 +550,7 @@ pub struct SlowQueryInfo {
     pub user: String,
 }
 
-/// Top query information
+// Top query information
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TopQueryInfo {
     pub query_pattern: String,
@@ -556,7 +559,7 @@ pub struct TopQueryInfo {
     pub avg_time_ms: f64,
 }
 
-/// Performance data response
+// Performance data response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PerformanceDataResponse {
     pub cpu_usage_percent: f64,
@@ -570,7 +573,7 @@ pub struct PerformanceDataResponse {
     pub deadlocks: u64,
 }
 
-/// Log response
+// Log response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct LogResponse {
     pub entries: Vec<LogEntry>,
@@ -578,7 +581,7 @@ pub struct LogResponse {
     pub has_more: bool,
 }
 
-/// Log entry
+// Log entry
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct LogEntry {
     pub timestamp: i64,
@@ -587,14 +590,14 @@ pub struct LogEntry {
     pub context: HashMap<String, serde_json::Value>,
 }
 
-/// Alert response
+// Alert response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AlertResponse {
     pub alerts: Vec<Alert>,
     pub active_count: usize,
 }
 
-/// Alert information
+// Alert information
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct Alert {
     pub alert_id: String,
@@ -609,8 +612,8 @@ pub struct Alert {
 // Request/Response Types - Pool & Connection Management
 // ============================================================================
 
-/// Pool configuration
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+// Pool configuration
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct PoolConfig {
     pub pool_id: String,
     pub min_connections: usize,
@@ -620,7 +623,7 @@ pub struct PoolConfig {
     pub max_lifetime_secs: Option<u64>,
 }
 
-/// Pool statistics response
+// Pool statistics response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PoolStatsResponse {
     pub pool_id: String,
@@ -633,15 +636,18 @@ pub struct PoolStatsResponse {
     pub total_destroyed: u64,
 }
 
-/// Connection information
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+// Connection information
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ConnectionInfo {
     pub connection_id: u64,
+    pub pool_id: String,
     pub session_id: SessionId,
-    pub user: String,
+    pub username: String,
     pub database: String,
     pub client_address: String,
-    pub connected_at: i64,
+    pub created_at: i64,
+    pub last_activity: i64,
+    pub queries_executed: u64,
     pub state: String,
     pub idle_time_secs: u64,
 }
@@ -650,8 +656,8 @@ pub struct ConnectionInfo {
 // Request/Response Types - Cluster Management
 // ============================================================================
 
-/// Cluster node information
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+// Cluster node information
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ClusterNodeInfo {
     pub node_id: String,
     pub address: String,
@@ -662,7 +668,7 @@ pub struct ClusterNodeInfo {
     pub last_heartbeat: i64,
 }
 
-/// Add node request
+// Add node request
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AddNodeRequest {
     pub node_id: String,
@@ -670,7 +676,7 @@ pub struct AddNodeRequest {
     pub role: Option<String>,
 }
 
-/// Cluster topology response
+// Cluster topology response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TopologyResponse {
     pub cluster_id: String,
@@ -680,14 +686,14 @@ pub struct TopologyResponse {
     pub total_nodes: usize,
 }
 
-/// Failover request
+// Failover request
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct FailoverRequest {
     pub target_node: Option<String>,
     pub force: Option<bool>,
 }
 
-/// Replication status response
+// Replication status response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ReplicationStatusResponse {
     pub primary_node: String,
@@ -696,7 +702,7 @@ pub struct ReplicationStatusResponse {
     pub sync_state: String,
 }
 
-/// Replica status
+// Replica status
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ReplicaStatus {
     pub node_id: String,
@@ -710,7 +716,7 @@ pub struct ReplicaStatus {
 // Pagination Support
 // ============================================================================
 
-/// Pagination parameters
+// Pagination parameters
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct PaginationParams {
     #[serde(default = "default_page")]
@@ -729,7 +735,7 @@ fn default_page_size() -> usize {
     50
 }
 
-/// Paginated response wrapper
+// Paginated response wrapper
 #[derive(Debug, Serialize, ToSchema)]
 pub struct PaginatedResponse<T> {
     pub data: Vec<T>,

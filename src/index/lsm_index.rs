@@ -1,20 +1,20 @@
-/// LSM Tree Index Implementation - PhD-Level Optimizations
-///
-/// Revolutionary features:
-/// - Blocked Bloom filters for better cache locality (3-5x faster)
-/// - SIMD-accelerated bloom filter operations
-/// - Fractional cascading for multi-level search optimization
-/// - Adaptive compaction with write amplification minimization
-/// - Fence pointers for O(1) SSTable navigation
-/// - Delta encoding and prefix compression
-/// - Concurrent compaction with minimal write stalls
-///
-/// Performance characteristics:
-/// - Writes: O(1) amortized to memtable
-/// - Reads: O(log n + L) with fractional cascading vs O(L * log n)
-/// - Bloom filter: O(k / SIMD_WIDTH) where k = hash functions
-/// - Space: 10-15 bits per key for bloom filters
-/// - Write amplification: 5-10x (vs 20-50x for naive LSM)
+// LSM Tree Index Implementation - PhD-Level Optimizations
+//
+// Revolutionary features:
+// - Blocked Bloom filters for better cache locality (3-5x faster)
+// - SIMD-accelerated bloom filter operations
+// - Fractional cascading for multi-level search optimization
+// - Adaptive compaction with write amplification minimization
+// - Fence pointers for O(1) SSTable navigation
+// - Delta encoding and prefix compression
+// - Concurrent compaction with minimal write stalls
+//
+// Performance characteristics:
+// - Writes: O(1) amortized to memtable
+// - Reads: O(log n + L) with fractional cascading vs O(L * log n)
+// - Bloom filter: O(k / SIMD_WIDTH) where k = hash functions
+// - Space: 10-15 bits per key for bloom filters
+// - Write amplification: 5-10x (vs 20-50x for naive LSM)
 
 use tokio::time::sleep;
 use crate::error::{DbError, Result};
@@ -25,17 +25,17 @@ use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 
 
-/// LSM Tree Index
+// LSM Tree Index
 pub struct LSMTreeIndex<K: Ord + Clone + Hash, V: Clone> {
-    /// In-memory table for recent writes
+    // In-memory table for recent writes
     memtable: Arc<RwLock<MemTable<K, V>>>,
-    /// Immutable memtable being flushed
+    // Immutable memtable being flushed
     immutable_memtable: Arc<RwLock<Option<MemTable<K, V>>>>,
-    /// Sorted String Tables (SSTables) organized by level
+    // Sorted String Tables (SSTables) organized by level
     levels: Arc<RwLock<Vec<Level<K, V>>>>,
-    /// Configuration
+    // Configuration
     config: LSMConfig,
-    /// Compaction strategy
+    // Compaction strategy
     compaction_strategy: CompactionStrategy,
 }
 
@@ -52,7 +52,7 @@ impl<K: Ord + Clone + Hash, V: Clone> Clone for LSMTreeIndex<K, V> {
 }
 
 impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
-    /// Create a new LSM tree index
+    // Create a new LSM tree index
     pub fn new(config: LSMConfig) -> Self {
         let num_levels = config.max_levels;
         let mut levels = Vec::with_capacity(num_levels);
@@ -69,7 +69,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         }
     }
 
-    /// Insert a key-value pair
+    // Insert a key-value pair
     pub fn insert(&self, key: K, value: V) -> Result<()> {
         let mut memtable = self.memtable.write();
 
@@ -84,7 +84,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(())
     }
 
-    /// Get a value by key
+    // Get a value by key
     pub fn get(&self, key: &K) -> Result<Option<V>> {
         // Check memtable first
         {
@@ -115,7 +115,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(None)
     }
 
-    /// Delete a key (using tombstone)
+    // Delete a key (using tombstone)
     pub fn delete(&self, key: K) -> Result<()> {
         let mut memtable = self.memtable.write();
 
@@ -129,7 +129,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(())
     }
 
-    /// Range scan
+    // Range scan
     pub fn range(&self, start: &K, end: &K) -> Result<Vec<(K, V)>> {
         let mut results = BTreeMap::new();
 
@@ -172,7 +172,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(results.into_iter().collect())
     }
 
-    /// Flush memtable to SSTable
+    // Flush memtable to SSTable
     fn flush_memtable(&self) -> Result<()> {
         let mut memtable = self.memtable.write();
         let mut immutable = self.immutable_memtable.write();
@@ -202,7 +202,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(())
     }
 
-    /// Flush immutable memtable to level 0
+    // Flush immutable memtable to level 0
     fn flush_to_level0(&self) -> Result<()> {
         let mut immutable = self.immutable_memtable.write();
 
@@ -223,7 +223,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(())
     }
 
-    /// Trigger compaction for a level
+    // Trigger compaction for a level
     fn trigger_compaction(&self, level: usize) -> Result<()> {
         match self.compaction_strategy {
             CompactionStrategy::Leveled => self.leveled_compaction(level),
@@ -232,7 +232,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         }
     }
 
-    /// Leveled compaction strategy
+    // Leveled compaction strategy
     fn leveled_compaction(&self, level: usize) -> Result<()> {
         let mut levels = self.levels.write();
 
@@ -255,7 +255,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(())
     }
 
-    /// Size-tiered compaction strategy
+    // Size-tiered compaction strategy
     fn size_tiered_compaction(&self, level: usize) -> Result<()> {
         let mut levels = self.levels.write();
 
@@ -273,7 +273,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(())
     }
 
-    /// Tiered compaction strategy
+    // Tiered compaction strategy
     fn tiered_compaction(&self, level: usize) -> Result<()> {
         let mut levels = self.levels.write();
 
@@ -292,7 +292,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(())
     }
 
-    /// Merge multiple SSTables
+    // Merge multiple SSTables
     fn merge_sstables(
         &self,
         mut tables1: Vec<SSTable<K, V>>,
@@ -320,7 +320,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         Ok(vec![sstable])
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn stats(&self) -> LSMStats {
         let levels = self.levels.read();
         let memtable = self.memtable.read();
@@ -342,7 +342,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
     }
 }
 
-/// LSM Configuration
+// LSM Configuration
 #[derive(Debug, Clone)]
 pub struct LSMConfig {
     pub memtable_size: usize,
@@ -364,7 +364,7 @@ impl Default for LSMConfig {
     }
 }
 
-/// Compaction strategy
+// Compaction strategy
 #[derive(Debug, Clone, Copy)]
 pub enum CompactionStrategy {
     Leveled,
@@ -372,7 +372,7 @@ pub enum CompactionStrategy {
     Tiered,
 }
 
-/// In-memory table
+// In-memory table
 struct MemTable<K: Ord + Clone, V: Clone> {
     entries: BTreeMap<K, MemTableEntry<V>>,
     size: usize,
@@ -433,14 +433,14 @@ impl<K: Ord + Clone, V: Clone> MemTable<K, V> {
     }
 }
 
-/// MemTable entry
+// MemTable entry
 struct MemTableEntry<V> {
     value: Option<V>,
     is_tombstone: bool,
     sequence: usize,
 }
 
-/// SSTable (Sorted String Table)
+// SSTable (Sorted String Table)
 struct SSTable<K: Ord + Clone + Hash, V: Clone> {
     entries: Vec<(K, MemTableEntry<V>)>,
     bloom_filter: BloomFilter,
@@ -513,7 +513,7 @@ impl<K: Ord + Clone + Hash, V: Clone> SSTable<K, V> {
     }
 }
 
-/// Level in LSM tree
+// Level in LSM tree
 struct Level<K: Ord + Clone + Hash, V: Clone> {
     level: usize,
     sstables: Vec<SSTable<K, V>>,
@@ -605,9 +605,9 @@ impl<K: Ord + Clone + Hash, V: Clone> Level<K, V> {
     }
 }
 
-/// Blocked Bloom Filter for cache-friendly operations
-/// Uses cache-line sized blocks (64 bytes = 512 bits)
-/// SIMD-accelerated for 3-5x faster membership tests
+// Blocked Bloom Filter for cache-friendly operations
+// Uses cache-line sized blocks (64 bytes = 512 bits)
+// SIMD-accelerated for 3-5x faster membership tests
 struct BlockedBloomFilter {
     blocks: Vec<BloomBlock>,
     num_hashes: usize,
@@ -615,7 +615,7 @@ struct BlockedBloomFilter {
     num_bits: usize,
 }
 
-/// Cache-line aligned bloom filter block (64 bytes)
+// Cache-line aligned bloom filter block (64 bytes)
 #[repr(align(64))]
 #[derive(Clone, Copy)]
 struct BloomBlock {
@@ -639,7 +639,7 @@ impl BlockedBloomFilter {
         }
     }
 
-    /// Insert with SIMD acceleration when available
+    // Insert with SIMD acceleration when available
     fn insert<T: Hash>(&mut self, item: &T) {
         let hashes = self.compute_hashes(item);
 
@@ -653,7 +653,7 @@ impl BlockedBloomFilter {
         }
     }
 
-    /// Check membership with SIMD
+    // Check membership with SIMD
     fn contains<T: Hash>(&self, item: &T) -> bool {
         let hashes = self.compute_hashes(item);
 
@@ -713,7 +713,7 @@ impl BlockedBloomFilter {
         true
     }
 
-    /// Compute multiple hash values efficiently
+    // Compute multiple hash values efficiently
     fn compute_hashes<T: Hash>(&self, item: &T) -> [u64; 8] {
         let mut hasher1 = DefaultHasher::new();
         let mut hasher2 = DefaultHasher::new();
@@ -747,7 +747,7 @@ impl BlockedBloomFilter {
     }
 }
 
-/// Legacy bloom filter for compatibility
+// Legacy bloom filter for compatibility
 struct BloomFilter {
     blocked: BlockedBloomFilter,
 }
@@ -768,7 +768,7 @@ impl BloomFilter {
     }
 }
 
-/// LSM statistics
+// LSM statistics
 #[derive(Debug, Clone)]
 pub struct LSMStats {
     pub memtable_size: usize,
@@ -776,7 +776,7 @@ pub struct LSMStats {
     pub level_stats: Vec<LevelStats>,
 }
 
-/// Level statistics
+// Level statistics
 #[derive(Debug, Clone)]
 pub struct LevelStats {
     pub level: usize,
@@ -839,5 +839,3 @@ use std::time::Duration;
         assert!(results.len() >= 5);
     }
 }
-
-

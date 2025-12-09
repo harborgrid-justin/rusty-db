@@ -1,28 +1,28 @@
-/// Index Advisor Module
-///
-/// Provides intelligent index recommendations based on:
-/// - Query workload analysis
-/// - Missing index detection
-/// - Unused index identification
-/// - Index consolidation opportunities
-/// - Cost-benefit analysis
+// Index Advisor Module
+//
+// Provides intelligent index recommendations based on:
+// - Query workload analysis
+// - Missing index detection
+// - Unused index identification
+// - Index consolidation opportunities
+// - Cost-benefit analysis
 
 use crate::Result;
 use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
-/// Index Advisor
+// Index Advisor
 pub struct IndexAdvisor {
-    /// Workload tracker
+    // Workload tracker
     workload: WorkloadTracker,
-    /// Existing indexes
+    // Existing indexes
     existing_indexes: Vec<IndexMetadata>,
-    /// Configuration
+    // Configuration
     config: AdvisorConfig,
 }
 
 impl IndexAdvisor {
-    /// Create a new index advisor
+    // Create a new index advisor
     pub fn new(config: AdvisorConfig) -> Self {
         Self {
             workload: WorkloadTracker::new(),
@@ -31,17 +31,17 @@ impl IndexAdvisor {
         }
     }
 
-    /// Register an existing index
+    // Register an existing index
     pub fn register_index(&mut self, metadata: IndexMetadata) {
         self.existing_indexes.push(metadata);
     }
 
-    /// Record a query for workload analysis
+    // Record a query for workload analysis
     pub fn record_query(&mut self, query: &Query) {
         self.workload.record_query(query);
     }
 
-    /// Analyze workload and generate recommendations
+    // Analyze workload and generate recommendations
     pub fn analyze(&self) -> Result<Vec<IndexRecommendation>> {
         let mut recommendations = Vec::new();
 
@@ -64,7 +64,7 @@ impl IndexAdvisor {
         Ok(recommendations)
     }
 
-    /// Detect missing indexes based on query patterns
+    // Detect missing indexes based on query patterns
     fn detect_missing_indexes(&self) -> Result<Vec<IndexRecommendation>> {
         let mut recommendations = Vec::new();
 
@@ -152,7 +152,7 @@ impl IndexAdvisor {
         Ok(recommendations)
     }
 
-    /// Detect unused indexes
+    // Detect unused indexes
     fn detect_unused_indexes(&self) -> Result<Vec<IndexRecommendation>> {
         let mut recommendations = Vec::new();
 
@@ -178,7 +178,7 @@ impl IndexAdvisor {
         Ok(recommendations)
     }
 
-    /// Suggest index consolidation
+    // Suggest index consolidation
     fn suggest_consolidation(&self) -> Result<Vec<IndexRecommendation>> {
         let mut recommendations = Vec::new();
 
@@ -224,7 +224,7 @@ impl IndexAdvisor {
         Ok(recommendations)
     }
 
-    /// Identify redundant indexes
+    // Identify redundant indexes
     fn identify_redundant_indexes(&self) -> Result<Vec<IndexRecommendation>> {
         let mut recommendations = Vec::new();
 
@@ -269,21 +269,21 @@ impl IndexAdvisor {
         Ok(recommendations)
     }
 
-    /// Check if an index exists on a column
+    // Check if an index exists on a column
     fn has_index_on_column(&self, column: &str) -> bool {
         self.existing_indexes
             .iter()
             .any(|idx| idx.columns.contains(&column.to_string()))
     }
 
-    /// Check if a composite index exists
+    // Check if a composite index exists
     fn has_composite_index(&self, table: &str, columns: &[String]) -> bool {
         self.existing_indexes.iter().any(|idx| {
             idx.table == table && idx.columns == columns
         })
     }
 
-    /// Check if indexes can be consolidated
+    // Check if indexes can be consolidated
     fn can_consolidate(&self, idx1: &IndexMetadata, idx2: &IndexMetadata) -> bool {
         if idx1.table != idx2.table {
             return false;
@@ -297,7 +297,7 @@ impl IndexAdvisor {
         intersection.len() > 0
     }
 
-    /// Combine columns from two indexes
+    // Combine columns from two indexes
     fn combine_columns(&self, cols1: &[String], cols2: &[String]) -> Vec<String> {
         let mut combined = cols1.to_vec();
         for col in cols2 {
@@ -308,7 +308,7 @@ impl IndexAdvisor {
         combined
     }
 
-    /// Check if one index is a prefix of another
+    // Check if one index is a prefix of another
     fn is_prefix_index(&self, short: &IndexMetadata, long: &IndexMetadata) -> bool {
         if short.columns.len() >= long.columns.len() {
             return false;
@@ -323,7 +323,7 @@ impl IndexAdvisor {
         true
     }
 
-    /// Estimate benefit of creating an index
+    // Estimate benefit of creating an index
     fn estimate_benefit(&self, stats: &QueryStats) -> f64 {
         // Simple model: benefit = frequency * avg_time_saved
         let frequency = stats.execution_count as f64;
@@ -331,18 +331,18 @@ impl IndexAdvisor {
         frequency * time_saved
     }
 
-    /// Estimate cost of creating an index
+    // Estimate cost of creating an index
     fn estimate_index_cost(&self, column: &str) -> f64 {
         // Simplified cost model
         100.0 // Base cost for single-column index
     }
 
-    /// Estimate cost of creating a composite index
+    // Estimate cost of creating a composite index
     fn estimate_composite_index_cost(&self, columns: &[String]) -> f64 {
         100.0 + (columns.len() as f64 - 1.0) * 50.0
     }
 
-    /// Calculate priority based on benefit and cost
+    // Calculate priority based on benefit and cost
     fn calculate_priority(&self, benefit: f64, cost: f64) -> Priority {
         let ratio = benefit / cost.max(1.0);
 
@@ -356,7 +356,7 @@ impl IndexAdvisor {
     }
 }
 
-/// Workload tracker
+// Workload tracker
 struct WorkloadTracker {
     query_patterns: HashMap<QueryPattern, QueryStats>,
     index_usage: HashMap<String, usize>,
@@ -389,7 +389,7 @@ impl WorkloadTracker {
     }
 }
 
-/// Query pattern (normalized query for analysis)
+// Query pattern (normalized query for analysis)
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 struct QueryPattern {
     table: String,
@@ -409,7 +409,7 @@ impl QueryPattern {
     }
 }
 
-/// Query statistics
+// Query statistics
 #[derive(Debug, Clone)]
 struct QueryStats {
     execution_count: usize,
@@ -427,7 +427,7 @@ impl QueryStats {
     }
 }
 
-/// Query information
+// Query information
 #[derive(Debug, Clone)]
 pub struct Query {
     pub table: String,
@@ -438,28 +438,28 @@ pub struct Query {
     pub indexes_used: Vec<String>,
 }
 
-/// WHERE condition
+// WHERE condition
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct Condition {
     pub column: String,
     pub operator: String,
 }
 
-/// JOIN information
+// JOIN information
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct JoinInfo {
     pub table: String,
     pub join_column: String,
 }
 
-/// ORDER BY information
+// ORDER BY information
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct OrderByInfo {
     pub column: String,
     pub direction: String,
 }
 
-/// Index metadata
+// Index metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexMetadata {
     pub name: String,
@@ -471,7 +471,7 @@ pub struct IndexMetadata {
     pub maintenance_cost: f64,
 }
 
-/// Index recommendation
+// Index recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexRecommendation {
     pub recommendation_type: RecommendationType,
@@ -483,7 +483,7 @@ pub struct IndexRecommendation {
     pub estimated_cost: f64,
 }
 
-/// Recommendation type
+// Recommendation type
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum RecommendationType {
     CreateIndex,
@@ -492,7 +492,7 @@ pub enum RecommendationType {
     RebuildIndex,
 }
 
-/// Priority level
+// Priority level
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Priority {
     Low,
@@ -500,7 +500,7 @@ pub enum Priority {
     High,
 }
 
-/// Advisor configuration
+// Advisor configuration
 #[derive(Debug, Clone)]
 pub struct AdvisorConfig {
     pub min_query_count: usize,
@@ -617,5 +617,3 @@ mod tests {
         assert!(!redundant.is_empty());
     }
 }
-
-

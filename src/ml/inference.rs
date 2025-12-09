@@ -22,21 +22,21 @@ use parking_lot::Mutex;
 // Prediction Result
 // ============================================================================
 
-/// Result of a prediction
+// Result of a prediction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictionResult {
-    /// Predicted values
+    // Predicted values
     pub predictions: Vector,
-    /// Confidence scores (if available)
+    // Confidence scores (if available)
     pub confidence: Option<ConfidenceScore>,
-    /// Feature importance for this prediction (if available)
+    // Feature importance for this prediction (if available)
     pub feature_importance: Option<FeatureImportance>,
-    /// Prediction metadata
+    // Prediction metadata
     pub metadata: PredictionMetadata,
 }
 
 impl PredictionResult {
-    /// Create a simple prediction result
+    // Create a simple prediction result
     pub fn new(predictions: Vector) -> Self {
         Self {
             predictions,
@@ -46,39 +46,39 @@ impl PredictionResult {
         }
     }
 
-    /// Add confidence scores
+    // Add confidence scores
     pub fn with_confidence(mut self, confidence: ConfidenceScore) -> Self {
         self.confidence = Some(confidence);
         self
     }
 
-    /// Add feature importance
+    // Add feature importance
     pub fn with_feature_importance(mut self, importance: FeatureImportance) -> Self {
         self.feature_importance = Some(importance);
         self
     }
 
-    /// Add metadata
+    // Add metadata
     pub fn with_metadata(mut self, metadata: PredictionMetadata) -> Self {
         self.metadata = metadata;
         self
     }
 }
 
-/// Prediction metadata
+// Prediction metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictionMetadata {
-    /// Model name
+    // Model name
     pub model_name: String,
-    /// Model version
+    // Model version
     pub model_version: ModelVersion,
-    /// Prediction timestamp
+    // Prediction timestamp
     pub timestamp: u64,
-    /// Inference time in microseconds
+    // Inference time in microseconds
     pub inference_time_us: u64,
-    /// Number of samples predicted
+    // Number of samples predicted
     pub num_samples: usize,
-    /// Was cache hit
+    // Was cache hit
     pub cache_hit: bool,
 }
 
@@ -99,19 +99,19 @@ impl Default for PredictionMetadata {
 // Confidence Score
 // ============================================================================
 
-/// Confidence scores for predictions
+// Confidence scores for predictions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfidenceScore {
-    /// Confidence values per prediction (0.0 to 1.0)
+    // Confidence values per prediction (0.0 to 1.0)
     pub scores: Vector,
-    /// Prediction intervals (for regression)
+    // Prediction intervals (for regression)
     pub intervals: Option<Vec<(f64, f64)>>,
-    /// Class probabilities (for classification)
+    // Class probabilities (for classification)
     pub class_probabilities: Option<Vec<HashMap<String, f64>>>,
 }
 
 impl ConfidenceScore {
-    /// Create confidence scores
+    // Create confidence scores
     pub fn new(scores: Vector) -> Self {
         Self {
             scores,
@@ -120,19 +120,19 @@ impl ConfidenceScore {
         }
     }
 
-    /// Add prediction intervals
+    // Add prediction intervals
     pub fn with_intervals(mut self, intervals: Vec<(f64, f64)>) -> Self {
         self.intervals = Some(intervals);
         self
     }
 
-    /// Add class probabilities
+    // Add class probabilities
     pub fn with_class_probabilities(mut self, probabilities: Vec<HashMap<String, f64>>) -> Self {
         self.class_probabilities = Some(probabilities);
         self
     }
 
-    /// Get average confidence
+    // Get average confidence
     pub fn average(&self) -> f64 {
         if self.scores.is_empty() {
             0.0
@@ -141,14 +141,14 @@ impl ConfidenceScore {
         }
     }
 
-    /// Get minimum confidence
+    // Get minimum confidence
     pub fn min(&self) -> f64 {
         self.scores.iter()
             .copied()
             .fold(f64::INFINITY, f64::min)
     }
 
-    /// Get maximum confidence
+    // Get maximum confidence
     pub fn max(&self) -> f64 {
         self.scores.iter()
             .copied()
@@ -160,19 +160,19 @@ impl ConfidenceScore {
 // Feature Importance
 // ============================================================================
 
-/// Feature importance for prediction explanation
+// Feature importance for prediction explanation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeatureImportance {
-    /// Feature names
+    // Feature names
     pub feature_names: Vec<String>,
-    /// Importance scores
+    // Importance scores
     pub importance_scores: Vector,
-    /// Top-k most important features
+    // Top-k most important features
     pub top_features: Vec<(String, f64)>,
 }
 
 impl FeatureImportance {
-    /// Create feature importance
+    // Create feature importance
     pub fn new(feature_names: Vec<String>, importance_scores: Vector) -> Self {
         let mut feature_scores: Vec<(String, f64)> = feature_names.iter()
             .zip(importance_scores.iter())
@@ -193,14 +193,14 @@ impl FeatureImportance {
         }
     }
 
-    /// Get importance for a specific feature
+    // Get importance for a specific feature
     pub fn get_importance(&self, feature_name: &str) -> Option<f64> {
         self.feature_names.iter()
             .position(|name| name == feature_name)
             .and_then(|idx| self.importance_scores.get(idx).copied())
     }
 
-    /// Get top k features
+    // Get top k features
     pub fn top_k(&self, k: usize) -> Vec<(String, f64)> {
         self.top_features.iter().take(k).cloned().collect()
     }
@@ -210,32 +210,32 @@ impl FeatureImportance {
 // Model Cache
 // ============================================================================
 
-/// Cached model entry
+// Cached model entry
 #[derive(Clone)]
 struct CachedModel {
-    /// Model type
+    // Model type
     model_type: ModelType,
-    /// Serialized model data
+    // Serialized model data
     model_data: Vec<u8>,
-    /// Feature names
+    // Feature names
     feature_names: Vec<String>,
-    /// Last access time
+    // Last access time
     last_access: Instant,
-    /// Access count
+    // Access count
     access_count: usize,
-    /// Model size in bytes
+    // Model size in bytes
     size_bytes: usize,
 }
 
-/// Model cache for fast inference
+// Model cache for fast inference
 pub struct ModelCache {
-    /// Cached models
+    // Cached models
     cache: Arc<RwLock<HashMap<String, CachedModel>>>,
-    /// Maximum cache size in bytes
+    // Maximum cache size in bytes
     max_size_bytes: usize,
-    /// Current cache size
+    // Current cache size
     current_size: Arc<Mutex<usize>>,
-    /// Cache statistics
+    // Cache statistics
     stats: Arc<Mutex<CacheStats>>,
 }
 
@@ -247,7 +247,7 @@ struct CacheStats {
 }
 
 impl ModelCache {
-    /// Create a new model cache
+    // Create a new model cache
     pub fn new(max_size_mb: usize) -> Self {
         Self {
             cache: Arc::new(RwLock::new(HashMap::new())),
@@ -257,7 +257,7 @@ impl ModelCache {
         }
     }
 
-    /// Put a model in cache
+    // Put a model in cache
     pub fn put(&self, key: String, stored_model: &StoredModel) {
         let size = stored_model.model_data.len();
 
@@ -284,7 +284,7 @@ impl ModelCache {
         }
     }
 
-    /// Get a model from cache
+    // Get a model from cache
     pub fn get(&self, key: &str) -> Option<(ModelType, Vec<u8>, Vec<String>)> {
         let mut cache = self.cache.write().unwrap();
 
@@ -303,7 +303,7 @@ impl ModelCache {
         }
     }
 
-    /// Remove a model from cache
+    // Remove a model from cache
     pub fn remove(&self, key: &str) -> bool {
         let mut cache = self.cache.write().unwrap();
         if let Some(cached) = cache.remove(key) {
@@ -315,7 +315,7 @@ impl ModelCache {
         }
     }
 
-    /// Evict least recently used item
+    // Evict least recently used item
     fn evict_lru(&self) -> bool {
         let mut cache = self.cache.write().unwrap();
 
@@ -343,7 +343,7 @@ impl ModelCache {
         false
     }
 
-    /// Clear the cache
+    // Clear the cache
     pub fn clear(&self) {
         let mut cache = self.cache.write().unwrap();
         cache.clear();
@@ -352,24 +352,24 @@ impl ModelCache {
         *current_size = 0;
     }
 
-    /// Get cache statistics
+    // Get cache statistics
     pub fn stats(&self) -> (u64, u64, u64) {
         let stats = self.stats.lock();
         (stats.hits, stats.misses, stats.evictions)
     }
 
-    /// Get cache size
+    // Get cache size
     pub fn size(&self) -> usize {
         *self.current_size.lock()
     }
 
-    /// Get number of cached models
+    // Get number of cached models
     pub fn count(&self) -> usize {
         let cache = self.cache.read().unwrap();
         cache.len()
     }
 
-    /// Warm up cache with models
+    // Warm up cache with models
     pub fn warmup(&self, registry: &ModelRegistry, model_names: Vec<String>) -> Result<()> {
         for name in model_names {
             let stored_model = registry.get(&name, None)?;
@@ -390,21 +390,21 @@ impl Default for ModelCache {
 // Batch Predictor
 // ============================================================================
 
-/// Batch prediction optimizer
+// Batch prediction optimizer
 pub struct BatchPredictor {
-    /// Batch size for prediction
+    // Batch size for prediction
     batch_size: usize,
-    /// Enable parallel processing
+    // Enable parallel processing
     parallel: bool,
 }
 
 impl BatchPredictor {
-    /// Create a new batch predictor
+    // Create a new batch predictor
     pub fn new(batch_size: usize, parallel: bool) -> Self {
         Self { batch_size, parallel }
     }
 
-    /// Predict in batches
+    // Predict in batches
     pub fn predict_batch(
         &self,
         features: &Matrix,
@@ -426,7 +426,7 @@ impl BatchPredictor {
         Ok(all_predictions)
     }
 
-    /// Predict a single batch
+    // Predict a single batch
     fn predict_single_batch(
         &self,
         features: &Matrix,
@@ -467,7 +467,7 @@ impl BatchPredictor {
         }
     }
 
-    /// Get optimal batch size based on feature dimensions
+    // Get optimal batch size based on feature dimensions
     pub fn optimal_batch_size(n_features: usize, n_samples: usize) -> usize {
         // Simple heuristic: larger batches for smaller feature sets
         if n_features < 10 {
@@ -490,21 +490,21 @@ impl Default for BatchPredictor {
 // Inference Engine
 // ============================================================================
 
-/// Main inference engine
+// Main inference engine
 pub struct InferenceEngine {
-    /// Model registry
+    // Model registry
     registry: Arc<ModelRegistry>,
-    /// Model cache
+    // Model cache
     cache: ModelCache,
-    /// Batch predictor
+    // Batch predictor
     batch_predictor: BatchPredictor,
-    /// Prediction logging
+    // Prediction logging
     log_predictions: bool,
-    /// Prediction logs
+    // Prediction logs
     prediction_logs: Arc<Mutex<Vec<PredictionLog>>>,
 }
 
-/// Prediction log entry
+// Prediction log entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct PredictionLog {
     model_name: String,
@@ -515,7 +515,7 @@ struct PredictionLog {
 }
 
 impl InferenceEngine {
-    /// Create a new inference engine
+    // Create a new inference engine
     pub fn new(registry: Arc<ModelRegistry>) -> Self {
         Self {
             registry,
@@ -526,22 +526,22 @@ impl InferenceEngine {
         }
     }
 
-    /// Enable prediction logging
+    // Enable prediction logging
     pub fn enable_logging(&mut self) {
         self.log_predictions = true;
     }
 
-    /// Set cache size
+    // Set cache size
     pub fn set_cache_size(&mut self, size_mb: usize) {
         self.cache = ModelCache::new(size_mb);
     }
 
-    /// Set batch size
+    // Set batch size
     pub fn set_batch_size(&mut self, batch_size: usize) {
         self.batch_predictor = BatchPredictor::new(batch_size, false);
     }
 
-    /// Real-time prediction (single or small batch)
+    // Real-time prediction (single or small batch)
     pub fn predict(
         &self,
         model_name: &str,
@@ -611,7 +611,7 @@ impl InferenceEngine {
         Ok(PredictionResult::new(predictions).with_metadata(metadata))
     }
 
-    /// Batch prediction with optimization
+    // Batch prediction with optimization
     pub fn predict_batch(
         &self,
         model_name: &str,
@@ -621,7 +621,7 @@ impl InferenceEngine {
         self.predict(model_name, model_version, features)
     }
 
-    /// Predict with confidence scores
+    // Predict with confidence scores
     pub fn predict_with_confidence(
         &self,
         model_name: &str,
@@ -637,7 +637,7 @@ impl InferenceEngine {
         Ok(result)
     }
 
-    /// Predict with explanation (feature importance)
+    // Predict with explanation (feature importance)
     pub fn predict_with_explanation(
         &self,
         model_name: &str,
@@ -674,27 +674,27 @@ impl InferenceEngine {
         Ok(result)
     }
 
-    /// Warm up cache with frequently used models
+    // Warm up cache with frequently used models
     pub fn warmup(&self, model_names: Vec<String>) -> Result<()> {
         self.cache.warmup(&self.registry, model_names)
     }
 
-    /// Get cache statistics
+    // Get cache statistics
     pub fn cache_stats(&self) -> (u64, u64, u64) {
         self.cache.stats()
     }
 
-    /// Get prediction logs
+    // Get prediction logs
     pub fn get_logs(&self) -> Vec<PredictionLog> {
         self.prediction_logs.lock().clone()
     }
 
-    /// Clear prediction logs
+    // Clear prediction logs
     pub fn clear_logs(&self) {
         self.prediction_logs.lock().clear();
     }
 
-    /// Get average inference time
+    // Get average inference time
     pub fn average_inference_time(&self) -> Duration {
         let logs = self.prediction_logs.lock();
         if logs.is_empty() {

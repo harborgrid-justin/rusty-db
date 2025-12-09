@@ -1,11 +1,11 @@
-/// Failover and Recovery Management
-///
-/// This module handles automatic failover, failure detection, and recovery
-/// processes in the cluster:
-/// - Health monitoring and failure detection
-/// - Automatic leader failover
-/// - Node replacement and recovery
-/// - Split-brain prevention
+// Failover and Recovery Management
+//
+// This module handles automatic failover, failure detection, and recovery
+// processes in the cluster:
+// - Health monitoring and failure detection
+// - Automatic leader failover
+// - Node replacement and recovery
+// - Split-brain prevention
 
 use std::fmt;
 use std::time::Duration;
@@ -16,7 +16,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
 
-/// Trait for failover management behavior
+// Trait for failover management behavior
 pub trait FailoverManager {
     fn detect_failures(&self) -> Result<Vec<NodeId>, DbError>;
     fn initiate_failover(&self, failed_node: &NodeId) -> Result<FailoverEvent, DbError>;
@@ -24,14 +24,14 @@ pub trait FailoverManager {
     fn demote_leader(&self, node_id: &NodeId) -> Result<(), DbError>;
 }
 
-/// Trait for failure detection
+// Trait for failure detection
 pub trait FailureDetector {
     fn is_node_failed(&self, node_id: &NodeId) -> Result<bool, DbError>;
     fn get_failure_probability(&self, node_id: &NodeId) -> Result<f64, DbError>;
     fn mark_node_suspected(&self, node_id: &NodeId) -> Result<(), DbError>;
 }
 
-/// Failover manager implementation
+// Failover manager implementation
 pub struct ClusterFailoverManager {
     coordinator: Arc<dyn ClusterState>,
     config: FailoverConfig,
@@ -59,7 +59,7 @@ impl ClusterFailoverManager {
 
     pub fn check_and_failover(&self) -> Result<Option<FailoverEvent>, DbError> {
         let failed_nodes = self.detect_failures()?;
-        
+
         if failed_nodes.is_empty() {
             return Ok(None);
         }
@@ -83,7 +83,7 @@ impl ClusterFailoverManager {
                     success: true,
                     details: "Follower node replaced".to_string(),
                 };
-                
+
                 self.record_failover_event(event.clone());
                 return Ok(Some(event));
             }
@@ -126,10 +126,10 @@ impl FailoverManager for ClusterFailoverManager {
 
     fn initiate_failover(&self, failed_node: &NodeId) -> Result<FailoverEvent, DbError> {
         let replacement = self.find_replacement_node(failed_node)?;
-        
+
         let event = if let Some(new_leader) = replacement {
             self.promote_follower(&new_leader.id)?;
-            
+
             FailoverEvent {
                 failed_node: failed_node.clone(),
                 replacement_node: Some(new_leader.id),
@@ -172,7 +172,7 @@ impl FailureDetector for ClusterFailoverManager {
             let last_heartbeat = node.last_heartbeat;
             let elapsed = last_heartbeat.elapsed()
                 .map_err(|_| DbError::Internal("Invalid heartbeat timestamp".to_string()))?;
-            
+
             Ok(elapsed > self.config.failure_timeout)
         } else {
             Ok(true) // Node not found = failed
@@ -191,13 +191,13 @@ impl FailureDetector for ClusterFailoverManager {
     fn mark_node_suspected(&self, node_id: &NodeId) -> Result<(), DbError> {
         let mut suspected = self.suspected_nodes.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
-        
+
         suspected.insert(node_id.clone(), std::time::Instant::now());
         Ok(())
     }
 }
 
-/// Failover configuration
+// Failover configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FailoverConfig {
     pub failure_timeout: Duration,
@@ -217,7 +217,7 @@ impl Default for FailoverConfig {
     }
 }
 
-/// Failover event record
+// Failover event record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FailoverEvent {
     pub failed_node: NodeId,
@@ -228,7 +228,7 @@ pub struct FailoverEvent {
     pub details: String,
 }
 
-/// Types of failover events
+// Types of failover events
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum FailoverType {
     LeaderFailover,
@@ -237,7 +237,7 @@ pub enum FailoverType {
     AutoRecovery,
 }
 
-/// Trait for cluster state access
+// Trait for cluster state access
 pub trait ClusterState {
     fn get_leader(&self) -> Result<Option<NodeId>, DbError>;
     fn get_healthy_nodes(&self) -> Result<Vec<NodeInfo>, DbError>;
@@ -295,7 +295,7 @@ use std::time::Instant;
 
         let result = manager.check_and_failover().unwrap();
         assert!(result.is_some());
-        
+
         let event = result.unwrap();
         assert_eq!(event.failed_node.0, "node1");
         assert!(matches!(event.event_type, FailoverType::LeaderFailover));

@@ -1,13 +1,13 @@
-/// Built-in Packages for RustyDB
-///
-/// This module provides Oracle-compatible built-in packages like DBMS_OUTPUT,
-/// DBMS_SQL, UTL_FILE, and DBMS_SCHEDULER for enterprise database operations.
+// Built-in Packages for RustyDB
+//
+// This module provides Oracle-compatible built-in packages like DBMS_OUTPUT,
+// DBMS_SQL, UTL_FILE, and DBMS_SCHEDULER for enterprise database operations.
 
 use tokio::time::sleep;
 use std::collections::VecDeque;
 use crate::{Result, DbError};
 use crate::procedures::runtime::RuntimeValue;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::path::PathBuf;
@@ -18,7 +18,7 @@ use std::io::{Write, BufRead, BufReader};
 // DBMS_OUTPUT - Text output buffering
 // ============================================================================
 
-/// DBMS_OUTPUT package for managing text output from procedures
+// DBMS_OUTPUT package for managing text output from procedures
 pub struct DbmsOutput {
     buffer: Arc<RwLock<VecDeque<String>>>,
     enabled: Arc<RwLock<bool>>,
@@ -34,7 +34,7 @@ impl DbmsOutput {
         }
     }
 
-    /// Enable output buffering
+    // Enable output buffering
     pub fn enable(&self, buffersize: Option<usize>) {
         let mut enabled = self.enabled.write();
         let mut size = self.buffer_size.write();
@@ -45,7 +45,7 @@ impl DbmsOutput {
         }
     }
 
-    /// Disable output buffering
+    // Disable output buffering
     pub fn disable(&self) {
         let mut enabled = self.enabled.write();
         let mut buffer = self.buffer.write();
@@ -54,7 +54,7 @@ impl DbmsOutput {
         buffer.clear();
     }
 
-    /// Put a line into the buffer
+    // Put a line into the buffer
     pub fn put_line(&self, line: String) -> Result<()> {
         let enabled = self.enabled.read();
         if !*enabled {
@@ -75,7 +75,7 @@ impl DbmsOutput {
         Ok(())
     }
 
-    /// Put text without newline
+    // Put text without newline
     pub fn put(&self, text: String) -> Result<()> {
         let enabled = self.enabled.read();
         if !*enabled {
@@ -94,7 +94,7 @@ impl DbmsOutput {
         Ok(())
     }
 
-    /// Add a newline to the current line
+    // Add a newline to the current line
     pub fn new_line(&self) -> Result<()> {
         let enabled = self.enabled.read();
         if !*enabled {
@@ -108,7 +108,7 @@ impl DbmsOutput {
         Ok(())
     }
 
-    /// Get a line from the buffer
+    // Get a line from the buffer
     pub fn get_line(&self) -> Result<Option<String>> {
         let enabled = self.enabled.read();
         if !*enabled {
@@ -120,7 +120,7 @@ impl DbmsOutput {
         Ok(buffer.pop_front())
     }
 
-    /// Get multiple lines from the buffer
+    // Get multiple lines from the buffer
     pub fn get_lines(&self, numlines: usize) -> Result<Vec<String>> {
         let enabled = self.enabled.read();
         if !*enabled {
@@ -153,13 +153,13 @@ impl Default for DbmsOutput {
 // DBMS_SQL - Dynamic SQL execution
 // ============================================================================
 
-/// DBMS_SQL package for dynamic SQL operations
+// DBMS_SQL package for dynamic SQL operations
 pub struct DbmsSql {
     cursors: Arc<RwLock<HashMap<i32, DynamicCursor>>>,
     next_cursor_id: Arc<RwLock<i32>>,
 }
 
-/// Dynamic cursor for DBMS_SQL
+// Dynamic cursor for DBMS_SQL
 #[derive(Debug, Clone)]
 struct DynamicCursor {
     id: i32,
@@ -178,7 +178,7 @@ impl DbmsSql {
         }
     }
 
-    /// Open a new cursor
+    // Open a new cursor
     pub fn open_cursor(&self) -> i32 {
         let mut next_id = self.next_cursor_id.write();
         let mut cursors = self.cursors.write();
@@ -199,7 +199,7 @@ impl DbmsSql {
         cursor_id
     }
 
-    /// Parse SQL statement
+    // Parse SQL statement
     pub fn parse(&self, cursor_id: i32, sql: String) -> Result<()> {
         let mut cursors = self.cursors.write();
 
@@ -213,7 +213,7 @@ impl DbmsSql {
         Ok(())
     }
 
-    /// Bind a variable by name
+    // Bind a variable by name
     pub fn bind_variable(&self, cursor_id: i32, name: String, value: RuntimeValue) -> Result<()> {
         let mut cursors = self.cursors.write();
 
@@ -226,7 +226,7 @@ impl DbmsSql {
         Ok(())
     }
 
-    /// Execute the SQL statement
+    // Execute the SQL statement
     pub fn execute(&self, cursor_id: i32) -> Result<usize> {
         let mut cursors = self.cursors.write();
 
@@ -244,7 +244,7 @@ impl DbmsSql {
         Ok(0) // Return rows affected
     }
 
-    /// Close a cursor
+    // Close a cursor
     pub fn close_cursor(&self, cursor_id: i32) -> Result<()> {
         let mut cursors = self.cursors.write();
 
@@ -255,7 +255,7 @@ impl DbmsSql {
         Ok(())
     }
 
-    /// Check if cursor is open
+    // Check if cursor is open
     pub fn is_open(&self, cursor_id: i32) -> bool {
         let cursors = self.cursors.read();
         cursors.contains_key(&cursor_id)
@@ -272,14 +272,14 @@ impl Default for DbmsSql {
 // UTL_FILE - File I/O operations
 // ============================================================================
 
-/// UTL_FILE package for file operations
+// UTL_FILE package for file operations
 pub struct UtlFile {
     file_handles: Arc<RwLock<HashMap<i32, FileHandle>>>,
     next_handle_id: Arc<RwLock<i32>>,
     directories: Arc<RwLock<HashMap<String, PathBuf>>>,
 }
 
-/// File handle
+// File handle
 struct FileHandle {
     id: i32,
     directory: String,
@@ -288,7 +288,7 @@ struct FileHandle {
     file: Option<File>,
 }
 
-/// File mode
+// File mode
 #[derive(Debug, Clone, PartialEq)]
 enum FileMode {
     Read,
@@ -305,13 +305,13 @@ impl UtlFile {
         }
     }
 
-    /// Register a directory for file operations
+    // Register a directory for file operations
     pub fn add_directory(&self, alias: String, path: PathBuf) {
         let mut directories = self.directories.write();
         directories.insert(alias, path);
     }
 
-    /// Open a file
+    // Open a file
     pub fn fopen(&self, directory: String, filename: String, mode: String) -> Result<i32> {
         let directories = self.directories.read();
         let dir_path = directories.get(&directory).ok_or_else(||
@@ -362,7 +362,7 @@ impl UtlFile {
         Ok(handle_id)
     }
 
-    /// Write a line to file
+    // Write a line to file
     pub fn put_line(&self, handle_id: i32, text: String) -> Result<()> {
         let mut handles = self.file_handles.write();
 
@@ -382,7 +382,7 @@ impl UtlFile {
         Ok(())
     }
 
-    /// Read a line from file
+    // Read a line from file
     pub fn get_line(&self, handle_id: i32) -> Result<String> {
         let mut handles = self.file_handles.write();
 
@@ -414,7 +414,7 @@ impl UtlFile {
         }
     }
 
-    /// Close a file
+    // Close a file
     pub fn fclose(&self, handle_id: i32) -> Result<()> {
         let mut handles = self.file_handles.write();
 
@@ -425,7 +425,7 @@ impl UtlFile {
         Ok(())
     }
 
-    /// Check if file is open
+    // Check if file is open
     pub fn is_open(&self, handle_id: i32) -> bool {
         let handles = self.file_handles.read();
         handles.contains_key(&handle_id)
@@ -442,12 +442,12 @@ impl Default for UtlFile {
 // DBMS_SCHEDULER - Job scheduling
 // ============================================================================
 
-/// DBMS_SCHEDULER package for job scheduling
+// DBMS_SCHEDULER package for job scheduling
 pub struct DbmsScheduler {
     jobs: Arc<RwLock<HashMap<String, ScheduledJob>>>,
 }
 
-/// Scheduled job
+// Scheduled job
 #[derive(Debug, Clone)]
 struct ScheduledJob {
     name: String,
@@ -459,7 +459,7 @@ struct ScheduledJob {
     comments: Option<String>,
 }
 
-/// Job type
+// Job type
 #[derive(Debug, Clone)]
 enum JobType {
     PlSqlBlock,
@@ -467,14 +467,14 @@ enum JobType {
     Executable,
 }
 
-/// Schedule definition
+// Schedule definition
 #[derive(Debug, Clone)]
 enum Schedule {
-    /// Run once at a specific time
+    // Run once at a specific time
     Once { run_date: String },
-    /// Recurring with interval
+    // Recurring with interval
     Recurring { interval: String },
-    /// Calendar expression
+    // Calendar expression
     Calendar { expression: String },
 }
 
@@ -485,7 +485,7 @@ impl DbmsScheduler {
         }
     }
 
-    /// Create a job
+    // Create a job
     pub fn create_job(
         &self,
         name: String,
@@ -532,7 +532,7 @@ impl DbmsScheduler {
         Ok(())
     }
 
-    /// Enable a job
+    // Enable a job
     pub fn enable_job(&self, job_name: &str) -> Result<()> {
         let mut jobs = self.jobs.write();
 
@@ -544,7 +544,7 @@ impl DbmsScheduler {
         Ok(())
     }
 
-    /// Disable a job
+    // Disable a job
     pub fn disable_job(&self, job_name: &str) -> Result<()> {
         let mut jobs = self.jobs.write();
 
@@ -556,7 +556,7 @@ impl DbmsScheduler {
         Ok(())
     }
 
-    /// Drop a job
+    // Drop a job
     pub fn drop_job(&self, job_name: &str) -> Result<()> {
         let mut jobs = self.jobs.write();
 
@@ -567,7 +567,7 @@ impl DbmsScheduler {
         Ok(())
     }
 
-    /// Run a job immediately
+    // Run a job immediately
     pub fn run_job(&self, job_name: &str) -> Result<()> {
         let jobs = self.jobs.read();
 
@@ -586,7 +586,7 @@ impl DbmsScheduler {
         Ok(())
     }
 
-    /// List all jobs
+    // List all jobs
     pub fn list_jobs(&self) -> Vec<String> {
         let jobs = self.jobs.read();
         jobs.keys().cloned().collect()
@@ -603,12 +603,12 @@ impl Default for DbmsScheduler {
 // DBMS_LOCK - Lock management
 // ============================================================================
 
-/// DBMS_LOCK package for user-defined locks
+// DBMS_LOCK package for user-defined locks
 pub struct DbmsLock {
     locks: Arc<RwLock<HashMap<String, LockHandle>>>,
 }
 
-/// Lock handle
+// Lock handle
 #[derive(Debug, Clone)]
 struct LockHandle {
     id: String,
@@ -616,7 +616,7 @@ struct LockHandle {
     timeout: Option<i32>,
 }
 
-/// Lock mode
+// Lock mode
 #[derive(Debug, Clone, PartialEq)]
 enum LockMode {
     Exclusive,
@@ -631,7 +631,7 @@ impl DbmsLock {
         }
     }
 
-    /// Request a lock
+    // Request a lock
     pub fn request(
         &self,
         lockid: String,
@@ -662,7 +662,7 @@ impl DbmsLock {
         Ok(0) // Success
     }
 
-    /// Release a lock
+    // Release a lock
     pub fn release(&self, lock_id: &str) -> Result<i32> {
         let mut locks = self.locks.write();
 
@@ -673,7 +673,7 @@ impl DbmsLock {
         }
     }
 
-    /// Sleep for specified seconds
+    // Sleep for specified seconds
     pub fn sleep(&self, seconds: f64) -> Result<()> {
         let duration = std::time::Duration::from_secs_f64(seconds);
         std::thread::sleep(duration);
@@ -691,7 +691,7 @@ impl Default for DbmsLock {
 // Built-in Packages Manager
 // ============================================================================
 
-/// Manager for all built-in packages
+// Manager for all built-in packages
 pub struct BuiltInPackages {
     pub dbms_output: DbmsOutput,
     pub dbms_sql: DbmsSql,
@@ -711,7 +711,7 @@ impl BuiltInPackages {
         }
     }
 
-    /// Initialize built-in packages with configuration
+    // Initialize built-in packages with configuration
     pub fn initialize(&self) {
         // Set up default directories for UTL_FILE
         self.utl_file.add_directory(
@@ -810,5 +810,3 @@ use std::time::Duration;
         Ok(())
     }
 }
-
-

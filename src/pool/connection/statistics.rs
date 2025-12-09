@@ -1,10 +1,10 @@
-//! Pool statistics and monitoring module
-//!
-//! This module provides comprehensive statistics and monitoring for connection pools including:
-//! - Real-time metrics collection
-//! - Performance analytics
-//! - Leak detection
-//! - Export formats (JSON, Prometheus, CSV)
+// Pool statistics and monitoring module
+//
+// This module provides comprehensive statistics and monitoring for connection pools including:
+// - Real-time metrics collection
+// - Performance analytics
+// - Leak detection
+// - Export formats (JSON, Prometheus, CSV)
 
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
@@ -13,7 +13,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use parking_lot::RwLock;
 use serde::{Serialize, Deserialize};
 
-/// Comprehensive pool statistics
+// Comprehensive pool statistics
 pub struct PoolStatistics {
     // Connection metrics
     connections_created: AtomicU64,
@@ -154,7 +154,7 @@ impl Default for PoolStatistics {
     }
 }
 
-/// Pool statistics snapshot
+// Pool statistics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PoolStats {
     pub connections_created: u64,
@@ -176,7 +176,7 @@ pub struct PoolStats {
     pub efficiency_metrics: EfficiencyMetricsSnapshot,
 }
 
-/// Wait time histogram
+// Wait time histogram
 struct WaitTimeHistogram {
     buckets: BTreeMap<u64, u64>, // microseconds -> count
     total_samples: u64,
@@ -214,7 +214,7 @@ impl WaitTimeHistogram {
     }
 }
 
-/// Histogram snapshot
+// Histogram snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistogramSnapshot {
     pub buckets: BTreeMap<u64, u64>,
@@ -222,7 +222,7 @@ pub struct HistogramSnapshot {
     pub percentiles: Percentiles,
 }
 
-/// Percentile values
+// Percentile values
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Percentiles {
     pub p50: Duration,
@@ -230,7 +230,7 @@ pub struct Percentiles {
     pub p99: Duration,
 }
 
-/// Connection usage patterns
+// Connection usage patterns
 struct UsagePatterns {
     acquisitions_by_hour: [u64; 24],
     releases_by_hour: [u64; 24],
@@ -284,7 +284,7 @@ impl UsagePatterns {
     }
 }
 
-/// Usage patterns snapshot
+// Usage patterns snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UsagePatternsSnapshot {
     pub acquisitions_by_hour: [u64; 24],
@@ -292,7 +292,7 @@ pub struct UsagePatternsSnapshot {
     pub peak_hour: usize,
 }
 
-/// Pool efficiency metrics
+// Pool efficiency metrics
 struct EfficiencyMetrics {
     cache_hit_rate: f64,
     connection_reuse_rate: f64,
@@ -319,7 +319,7 @@ impl EfficiencyMetrics {
     }
 }
 
-/// Efficiency metrics snapshot
+// Efficiency metrics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EfficiencyMetricsSnapshot {
     pub cache_hit_rate: f64,
@@ -327,7 +327,7 @@ pub struct EfficiencyMetricsSnapshot {
     pub pool_utilization: f64,
 }
 
-/// Dashboard data snapshot
+// Dashboard data snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DashboardData {
     pub timestamp: SystemTime,
@@ -341,7 +341,7 @@ pub struct DashboardData {
     pub peak_hour: usize,
 }
 
-/// Leak information
+// Leak information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LeakInfo {
     pub connection_id: u64,
@@ -352,7 +352,7 @@ pub struct LeakInfo {
     pub detected_at: Instant,
 }
 
-/// Leak detector
+// Leak detector
 pub struct LeakDetector {
     threshold: Duration,
     check_interval: Duration,
@@ -400,7 +400,7 @@ impl LeakDetector {
     }
 }
 
-/// Pool size information
+// Pool size information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PoolSizeInfo {
     pub total: usize,
@@ -408,7 +408,7 @@ pub struct PoolSizeInfo {
     pub active: usize,
 }
 
-/// Export format for monitoring data
+// Export format for monitoring data
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExportFormat {
     Json,
@@ -416,7 +416,7 @@ pub enum ExportFormat {
     Csv,
 }
 
-/// Dashboard provider for pool monitoring
+// Dashboard provider for pool monitoring
 pub struct DashboardProvider {
     statistics: Arc<PoolStatistics>,
 }
@@ -442,7 +442,7 @@ impl DashboardProvider {
     }
 }
 
-/// Monitoring exporter for external monitoring systems
+// Monitoring exporter for external monitoring systems
 pub struct MonitoringExporter {
     statistics: Arc<PoolStatistics>,
     format: ExportFormat,

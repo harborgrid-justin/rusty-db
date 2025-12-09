@@ -17,7 +17,7 @@ use super::registry::*;
 // SECTION 2: CROSS-CUTTING CONCERNS (600+ lines)
 // ============================================================================
 
-/// Correlation ID for request tracing
+// Correlation ID for request tracing
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct CorrelationId(String);
 
@@ -41,7 +41,7 @@ impl fmt::Display for CorrelationId {
     }
 }
 
-/// Distributed tracing context
+// Distributed tracing context
 #[derive(Debug, Clone)]
 pub struct TraceContext {
     pub trace_id: String,
@@ -76,7 +76,7 @@ impl TraceContext {
     }
 }
 
-/// Trace span
+// Trace span
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Span {
     pub span_id: String,
@@ -104,7 +104,7 @@ pub enum SpanStatus {
     Cancelled,
 }
 
-/// Distributed tracing manager
+// Distributed tracing manager
 pub struct DistributedTracingManager {
     spans: Arc<RwLock<HashMap<String, Span>>>,
     exporters: Arc<RwLock<Vec<Box<dyn SpanExporter>>>>,
@@ -190,7 +190,7 @@ impl DistributedTracingManager {
     }
 }
 
-/// Correlation ID propagator
+// Correlation ID propagator
 pub struct CorrelationIdPropagator {
     context_storage: Arc<tokio::sync::RwLock<HashMap<std::thread::ThreadId, CorrelationId>>>,
 }
@@ -221,7 +221,7 @@ impl CorrelationIdPropagator {
     }
 }
 
-/// Centralized logging system
+// Centralized logging system
 pub struct CentralizedLogger {
     log_sink: Arc<Mutex<Box<dyn LogSink>>>,
     log_level: Arc<RwLock<LogLevel>>,
@@ -294,7 +294,7 @@ impl CentralizedLogger {
     }
 }
 
-/// Error handling policy
+// Error handling policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorHandlingPolicy {
     pub max_retries: usize,
@@ -318,7 +318,7 @@ impl Default for ErrorHandlingPolicy {
     }
 }
 
-/// Retry policy executor
+// Retry policy executor
 pub struct RetryPolicyExecutor {
     policies: Arc<RwLock<HashMap<String, ErrorHandlingPolicy>>>,
 }
@@ -367,7 +367,7 @@ impl RetryPolicyExecutor {
     }
 }
 
-/// Circuit breaker state
+// Circuit breaker state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CircuitState {
     Closed,
@@ -375,7 +375,7 @@ pub enum CircuitState {
     HalfOpen,
 }
 
-/// Circuit breaker
+// Circuit breaker
 pub struct CircuitBreaker {
     state: Arc<RwLock<CircuitState>>,
     failure_count: Arc<RwLock<usize>>,
@@ -436,7 +436,7 @@ impl CircuitBreaker {
     }
 }
 
-/// Circuit breaker coordinator
+// Circuit breaker coordinator
 pub struct CircuitBreakerCoordinator {
     breakers: Arc<RwLock<HashMap<String, Arc<CircuitBreaker>>>>,
     policies: Arc<RwLock<HashMap<String, ErrorHandlingPolicy>>>,

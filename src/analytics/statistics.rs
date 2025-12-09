@@ -16,48 +16,48 @@ use std::time::SystemTime;
 // Column Statistics
 // =============================================================================
 
-/// Statistics for a single column.
-///
-/// Used by the query optimizer to estimate cardinality and selectivity.
+// Statistics for a single column.
+//
+// Used by the query optimizer to estimate cardinality and selectivity.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnStatistics {
-    /// Table containing this column
+    // Table containing this column
     pub table_name: String,
 
-    /// Column name
+    // Column name
     pub column_name: String,
 
-    /// Number of distinct values
+    // Number of distinct values
     pub distinct_count: u64,
 
-    /// Number of NULL values
+    // Number of NULL values
     pub null_count: u64,
 
-    /// Total number of rows
+    // Total number of rows
     pub total_count: u64,
 
-    /// Minimum value (as string)
+    // Minimum value (as string)
     pub min_value: Option<String>,
 
-    /// Maximum value (as string)
+    // Maximum value (as string)
     pub max_value: Option<String>,
 
-    /// Average length for string columns
+    // Average length for string columns
     pub avg_length: f64,
 
-    /// Value distribution histogram
+    // Value distribution histogram
     pub histogram: Option<Histogram>,
 
-    /// Most common values with frequencies
+    // Most common values with frequencies
     pub most_common_values: Vec<(String, u64)>,
 
-    /// When statistics were last updated
+    // When statistics were last updated
     pub last_updated: SystemTime,
     pub num_values: ()
 }
 
 impl ColumnStatistics {
-    /// Create new empty statistics for a column.
+    // Create new empty statistics for a column.
     pub fn new(table: String, column: String) -> Self {
         Self {
             table_name: table,
@@ -75,9 +75,9 @@ impl ColumnStatistics {
         }
     }
 
-    /// Calculate selectivity (distinct values / total rows).
-    ///
-    /// Returns 1.0 if there are no rows.
+    // Calculate selectivity (distinct values / total rows).
+    //
+    // Returns 1.0 if there are no rows.
     pub fn selectivity(&self) -> f64 {
         if self.total_count == 0 {
             return 1.0;
@@ -85,7 +85,7 @@ impl ColumnStatistics {
         self.distinct_count as f64 / self.total_count as f64
     }
 
-    /// Calculate null fraction.
+    // Calculate null fraction.
     pub fn null_fraction(&self) -> f64 {
         if self.total_count == 0 {
             return 0.0;
@@ -93,7 +93,7 @@ impl ColumnStatistics {
         self.null_count as f64 / self.total_count as f64
     }
 
-    /// Estimate the selectivity for an equality predicate.
+    // Estimate the selectivity for an equality predicate.
     pub fn estimate_equality_selectivity(&self, value: &str) -> f64 {
         // Check most common values first
         for (mcv, count) in &self.most_common_values {
@@ -114,7 +114,7 @@ impl ColumnStatistics {
         1.0 / self.distinct_count as f64
     }
 
-    /// Estimate the selectivity for a range predicate.
+    // Estimate the selectivity for a range predicate.
     pub fn estimate_range_selectivity(&self, lower: Option<&str>, upper: Option<&str>) -> f64 {
         if let Some(histogram) = &self.histogram {
             let lower_str = lower.unwrap_or("");
@@ -126,7 +126,7 @@ impl ColumnStatistics {
         0.3
     }
 
-    /// Check if statistics are stale.
+    // Check if statistics are stale.
     pub fn is_stale(&self, max_age_seconds: u64) -> bool {
         SystemTime::now()
             .duration_since(self.last_updated)
@@ -134,7 +134,7 @@ impl ColumnStatistics {
             .unwrap_or(true)
     }
 
-    /// Collect statistics from data.
+    // Collect statistics from data.
     pub fn collect(&mut self, data: &[String]) {
         self.total_count = data.len() as u64;
         self.null_count = data.iter().filter(|v| v.is_empty() || *v == "NULL").count() as u64;
@@ -177,45 +177,45 @@ impl ColumnStatistics {
 // Histogram Types
 // =============================================================================
 
-/// Histogram for value distribution.
+// Histogram for value distribution.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Histogram {
-    /// Histogram buckets
+    // Histogram buckets
     pub buckets: Vec<HistogramBucket>,
 
-    /// Type of histogram
+    // Type of histogram
     pub bucket_type: HistogramType,
 }
 
-/// Type of histogram bucketing.
+// Type of histogram bucketing.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum HistogramType {
-    /// Equal-width buckets (same range size)
+    // Equal-width buckets (same range size)
     Equiwidth,
-    /// Equal-depth buckets (same row count)
+    // Equal-depth buckets (same row count)
     Equidepth,
-    /// One bucket per distinct value
+    // One bucket per distinct value
     Singleton,
 }
 
-/// Single histogram bucket.
+// Single histogram bucket.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistogramBucket {
-    /// Lower bound (inclusive)
+    // Lower bound (inclusive)
     pub lower_bound: String,
 
-    /// Upper bound (inclusive)
+    // Upper bound (inclusive)
     pub upper_bound: String,
 
-    /// Number of rows in this bucket
+    // Number of rows in this bucket
     pub count: u64,
 
-    /// Number of distinct values in this bucket
+    // Number of distinct values in this bucket
     pub distinct_count: u64,
 }
 
 impl Histogram {
-    /// Create a new empty histogram.
+    // Create a new empty histogram.
     pub fn new(bucket_type: HistogramType) -> Self {
         Self {
             buckets: Vec::new(),
@@ -223,7 +223,7 @@ impl Histogram {
         }
     }
 
-    /// Estimate selectivity for an equality predicate.
+    // Estimate selectivity for an equality predicate.
     pub fn estimate_selectivity(&self, value: &str) -> f64 {
         for bucket in &self.buckets {
             let in_range = Self::value_in_range(value, &bucket.lower_bound, &bucket.upper_bound);
@@ -238,7 +238,7 @@ impl Histogram {
         0.0
     }
 
-    /// Estimate selectivity for a range predicate.
+    // Estimate selectivity for a range predicate.
     pub fn estimate_range_selectivity(&self, lower: &str, upper: &str) -> f64 {
         let mut total_count = 0u64;
         let mut matched_count = 0u64;
@@ -259,7 +259,7 @@ impl Histogram {
         matched_count as f64 / total_count as f64
     }
 
-    /// Check if a value is in a range.
+    // Check if a value is in a range.
     fn value_in_range(value: &str, lower: &str, upper: &str) -> bool {
         // Try numeric comparison first
         if let (Ok(val_num), Ok(lower_num), Ok(upper_num)) = (
@@ -274,12 +274,12 @@ impl Histogram {
         }
     }
 
-    /// Get the total row count across all buckets.
+    // Get the total row count across all buckets.
     pub fn total_count(&self) -> u64 {
         self.buckets.iter().map(|b| b.count).sum()
     }
 
-    /// Get the number of buckets.
+    // Get the number of buckets.
     pub fn num_buckets(&self) -> usize {
         self.buckets.len()
     }
@@ -289,20 +289,20 @@ impl Histogram {
 // Histogram Manager
 // =============================================================================
 
-/// Manager for building and maintaining histograms.
+// Manager for building and maintaining histograms.
 pub struct HistogramManager {
-    /// Stored histograms by key
+    // Stored histograms by key
     histograms: HashMap<String, Histogram>,
 
-    /// Whether to auto-update histograms
+    // Whether to auto-update histograms
     pub auto_update: bool,
 
-    /// Row count threshold for auto-update
+    // Row count threshold for auto-update
     pub update_threshold: u64,
 }
 
 impl HistogramManager {
-    /// Create a new histogram manager.
+    // Create a new histogram manager.
     pub fn new() -> Self {
         Self {
             histograms: HashMap::new(),
@@ -311,7 +311,7 @@ impl HistogramManager {
         }
     }
 
-    /// Create a histogram from data.
+    // Create a histogram from data.
     pub fn create_histogram(
         &mut self,
         key: String,
@@ -335,7 +335,7 @@ impl HistogramManager {
         self.histograms.insert(key, histogram);
     }
 
-    /// Build an equiwidth histogram.
+    // Build an equiwidth histogram.
     fn build_equiwidth_histogram(
         &self,
         histogram: &mut Histogram,
@@ -374,7 +374,7 @@ impl HistogramManager {
         }
     }
 
-    /// Build an equidepth histogram.
+    // Build an equidepth histogram.
     fn build_equidepth_histogram(
         &self,
         histogram: &mut Histogram,
@@ -400,7 +400,7 @@ impl HistogramManager {
         }
     }
 
-    /// Build a singleton histogram (one bucket per value).
+    // Build a singleton histogram (one bucket per value).
     fn build_singleton_histogram(&self, histogram: &mut Histogram, data: Vec<String>) {
         let mut value_counts: HashMap<String, u64> = HashMap::new();
 
@@ -423,17 +423,17 @@ impl HistogramManager {
             .sort_by(|a, b| a.lower_bound.cmp(&b.lower_bound));
     }
 
-    /// Get a histogram by key.
+    // Get a histogram by key.
     pub fn get_histogram(&self, key: &str) -> Option<&Histogram> {
         self.histograms.get(key)
     }
 
-    /// Remove a histogram.
+    // Remove a histogram.
     pub fn remove_histogram(&mut self, key: &str) -> Option<Histogram> {
         self.histograms.remove(key)
     }
 
-    /// List all histogram keys.
+    // List all histogram keys.
     pub fn list_histograms(&self) -> Vec<String> {
         self.histograms.keys().cloned().collect()
     }

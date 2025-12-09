@@ -33,18 +33,18 @@ use tracing::{debug, error, info, warn};
 
 use crate::error::{Result, DbError};
 
-/// Error severity level
+// Error severity level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ErrorSeverity {
-    /// Informational - no action needed
+    // Informational - no action needed
     Info,
-    /// Warning - may need attention
+    // Warning - may need attention
     Warning,
-    /// Error - needs handling
+    // Error - needs handling
     Error,
-    /// Critical - immediate attention required
+    // Critical - immediate attention required
     Critical,
-    /// Fatal - system cannot continue
+    // Fatal - system cannot continue
     Fatal,
 }
 
@@ -60,20 +60,20 @@ impl fmt::Display for ErrorSeverity {
     }
 }
 
-/// Error category for classification
+// Error category for classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ErrorCategory {
-    /// Transient errors (network, timeout, temporary resource exhaustion)
+    // Transient errors (network, timeout, temporary resource exhaustion)
     Transient,
-    /// Resource errors (disk full, memory exhausted)
+    // Resource errors (disk full, memory exhausted)
     Resource,
-    /// Logic errors (constraint violation, invalid state)
+    // Logic errors (constraint violation, invalid state)
     Logic,
-    /// External errors (third-party service failure)
+    // External errors (third-party service failure)
     External,
-    /// Configuration errors
+    // Configuration errors
     Configuration,
-    /// Unknown errors
+    // Unknown errors
     Unknown,
 }
 
@@ -90,23 +90,23 @@ impl fmt::Display for ErrorCategory {
     }
 }
 
-/// Classified error with metadata
+// Classified error with metadata
 #[derive(Debug, Clone)]
 pub struct ClassifiedError {
-    /// Original error
+    // Original error
     pub error: DbError,
-    /// Error category
+    // Error category
     pub category: ErrorCategory,
-    /// Error severity
+    // Error severity
     pub severity: ErrorSeverity,
-    /// Whether this error is retriable
+    // Whether this error is retriable
     pub retriable: bool,
-    /// Suggested recovery action
+    // Suggested recovery action
     pub recovery_action: RecoveryAction,
 }
 
 impl ClassifiedError {
-    /// Create a new classified error
+    // Create a new classified error
     pub fn new(
         error: DbError,
         category: ErrorCategory,
@@ -123,7 +123,7 @@ impl ClassifiedError {
         }
     }
 
-    /// Suggest recovery action based on error
+    // Suggest recovery action based on error
     fn suggest_recovery(category: ErrorCategory, severity: ErrorSeverity) -> RecoveryAction {
         match (category, severity) {
             (ErrorCategory::Transient, _) => RecoveryAction::Retry,
@@ -137,46 +137,46 @@ impl ClassifiedError {
     }
 }
 
-/// Recovery action to take
+// Recovery action to take
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RecoveryAction {
-    /// Retry the operation
+    // Retry the operation
     Retry,
-    /// Use fallback strategy
+    // Use fallback strategy
     Fallback,
-    /// Compensate (undo) the operation
+    // Compensate (undo) the operation
     Compensate,
-    /// Scale up resources
+    // Scale up resources
     ScaleUp,
-    /// Shed load
+    // Shed load
     LoadShed,
-    /// Alert administrators
+    // Alert administrators
     Alert,
-    /// No action needed
+    // No action needed
     None,
 }
 
-/// Error classifier for categorizing errors
+// Error classifier for categorizing errors
 pub struct ErrorClassifier {
-    /// Custom classification rules
+    // Custom classification rules
     rules: RwLock<Vec<ClassificationRule>>,
 }
 
 impl ErrorClassifier {
-    /// Create a new error classifier
+    // Create a new error classifier
     pub fn new() -> Self {
         Self {
             rules: RwLock::new(Vec::new()),
         }
     }
 
-    /// Add a classification rule
+    // Add a classification rule
     pub fn add_rule(&self, rule: ClassificationRule) {
         let mut rules = self.rules.write();
         rules.push(rule);
     }
 
-    /// Classify an error
+    // Classify an error
     pub fn classify(&self, error: &DbError) -> ClassifiedError {
         let rules = self.rules.read();
 
@@ -196,7 +196,7 @@ impl ErrorClassifier {
         self.default_classify(error)
     }
 
-    /// Default error classification
+    // Default error classification
     fn default_classify(&self, error: &DbError) -> ClassifiedError {
         let error_msg = error.to_string().to_lowercase();
 
@@ -239,22 +239,22 @@ impl Default for ErrorClassifier {
     }
 }
 
-/// Classification rule
+// Classification rule
 pub struct ClassificationRule {
-    /// Rule name
+    // Rule name
     pub name: String,
-    /// Error matcher function
+    // Error matcher function
     pub matcher: Arc<dyn Fn(&DbError) -> bool + Send + Sync>,
-    /// Error category
+    // Error category
     pub category: ErrorCategory,
-    /// Error severity
+    // Error severity
     pub severity: ErrorSeverity,
-    /// Whether retriable
+    // Whether retriable
     pub retriable: bool,
 }
 
 impl ClassificationRule {
-    /// Create a new rule
+    // Create a new rule
     pub fn new<F>(
         name: String,
         matcher: F,
@@ -275,18 +275,18 @@ impl ClassificationRule {
     }
 }
 
-/// Retry configuration
+// Retry configuration
 #[derive(Debug, Clone)]
 pub struct RetryConfig {
-    /// Maximum number of retry attempts
+    // Maximum number of retry attempts
     pub max_attempts: usize,
-    /// Initial retry delay
+    // Initial retry delay
     pub initial_delay: Duration,
-    /// Maximum retry delay
+    // Maximum retry delay
     pub max_delay: Duration,
-    /// Backoff multiplier
+    // Backoff multiplier
     pub multiplier: f64,
-    /// Enable jitter to prevent thundering herd
+    // Enable jitter to prevent thundering herd
     pub jitter: bool,
 }
 
@@ -303,7 +303,7 @@ impl Default for RetryConfig {
 }
 
 impl RetryConfig {
-    /// Calculate delay for a given attempt
+    // Calculate delay for a given attempt
     pub fn delay_for_attempt(&self, attempt: usize) -> Duration {
         let mut delay = self.initial_delay.as_millis() as f64
             * self.multiplier.powi(attempt as i32);
@@ -323,20 +323,20 @@ impl RetryConfig {
     }
 }
 
-/// Retry executor
+// Retry executor
 pub struct RetryExecutor {
-    /// Retry configuration
+    // Retry configuration
     config: RetryConfig,
-    /// Error classifier
+    // Error classifier
     classifier: Arc<ErrorClassifier>,
-    /// Statistics
+    // Statistics
     total_retries: Arc<AtomicU64>,
     successful_retries: Arc<AtomicU64>,
     failed_retries: Arc<AtomicU64>,
 }
 
 impl RetryExecutor {
-    /// Create a new retry executor
+    // Create a new retry executor
     pub fn new(config: RetryConfig, classifier: Arc<ErrorClassifier>) -> Self {
         Self {
             config,
@@ -347,7 +347,7 @@ impl RetryExecutor {
         }
     }
 
-    /// Execute with retry
+    // Execute with retry
     pub async fn execute<F, Fut, T>(&self, f: F) -> Result<T>
     where
         F: Fn() -> Fut,
@@ -398,7 +398,7 @@ impl RetryExecutor {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn statistics(&self) -> RetryStats {
         RetryStats {
             total_retries: self.total_retries.load(Ordering::Relaxed),
@@ -408,31 +408,31 @@ impl RetryExecutor {
     }
 }
 
-/// Retry statistics
+// Retry statistics
 #[derive(Debug, Clone)]
 pub struct RetryStats {
-    /// Total retry attempts
+    // Total retry attempts
     pub total_retries: u64,
-    /// Successful retries
+    // Successful retries
     pub successful_retries: u64,
-    /// Failed retries
+    // Failed retries
     pub failed_retries: u64,
 }
 
-/// Recovery manager coordinating all recovery strategies
+// Recovery manager coordinating all recovery strategies
 pub struct RecoveryManager {
-    /// Error classifier
+    // Error classifier
     classifier: Arc<ErrorClassifier>,
-    /// Retry executor
+    // Retry executor
     retry_executor: Arc<RetryExecutor>,
-    /// Fallback handlers
+    // Fallback handlers
     fallback_handlers: RwLock<HashMap<String, Arc<dyn FallbackHandler>>>,
-    /// Recovery event listeners
+    // Recovery event listeners
     listeners: RwLock<Vec<Arc<dyn RecoveryListener>>>,
 }
 
 impl RecoveryManager {
-    /// Create a new recovery manager
+    // Create a new recovery manager
     pub fn new(retry_config: RetryConfig) -> Self {
         let classifier = Arc::new(ErrorClassifier::new());
         let retry_executor = Arc::new(RetryExecutor::new(retry_config, Arc::clone(&classifier)));
@@ -445,30 +445,30 @@ impl RecoveryManager {
         }
     }
 
-    /// Get error classifier
+    // Get error classifier
     pub fn classifier(&self) -> &Arc<ErrorClassifier> {
         &self.classifier
     }
 
-    /// Get retry executor
+    // Get retry executor
     pub fn retry_executor(&self) -> &Arc<RetryExecutor> {
         &self.retry_executor
     }
 
-    /// Register a fallback handler
+    // Register a fallback handler
     pub fn register_fallback(&self, name: String, handler: Arc<dyn FallbackHandler>) {
         let mut handlers = self.fallback_handlers.write();
         handlers.insert(name.clone(), handler);
         info!("Registered fallback handler: {}", name);
     }
 
-    /// Add a recovery listener
+    // Add a recovery listener
     pub fn add_listener(&self, listener: Arc<dyn RecoveryListener>) {
         let mut listeners = self.listeners.write();
         listeners.push(listener);
     }
 
-    /// Execute operation with recovery
+    // Execute operation with recovery
     pub async fn execute_with_recovery<F, Fut, T>(
         &self,
         operation_name: &str,
@@ -513,7 +513,7 @@ impl RecoveryManager {
         }
     }
 
-    /// Notify listeners of operation attempt
+    // Notify listeners of operation attempt
     fn notify_attempt(&self, operation: &str) {
         let listeners = self.listeners.read();
         for listener in listeners.iter() {
@@ -521,7 +521,7 @@ impl RecoveryManager {
         }
     }
 
-    /// Notify listeners of success
+    // Notify listeners of success
     fn notify_success(&self, operation: &str) {
         let listeners = self.listeners.read();
         for listener in listeners.iter() {
@@ -529,7 +529,7 @@ impl RecoveryManager {
         }
     }
 
-    /// Notify listeners of failure
+    // Notify listeners of failure
     fn notify_failure(&self, operation: &str, error: &ClassifiedError) {
         let listeners = self.listeners.read();
         for listener in listeners.iter() {
@@ -537,7 +537,7 @@ impl RecoveryManager {
         }
     }
 
-    /// Notify listeners of fallback success
+    // Notify listeners of fallback success
     fn notify_fallback_success(&self, operation: &str) {
         let listeners = self.listeners.read();
         for listener in listeners.iter() {
@@ -546,29 +546,29 @@ impl RecoveryManager {
     }
 }
 
-/// Trait for fallback handlers
+// Trait for fallback handlers
 #[async_trait::async_trait]
 pub trait FallbackHandler: Send + Sync {
-    /// Execute fallback
+    // Execute fallback
     async fn execute(&self) -> Result<()>;
 }
 
-/// Trait for recovery event listeners
+// Trait for recovery event listeners
 pub trait RecoveryListener: Send + Sync {
-    /// Called when operation is attempted
+    // Called when operation is attempted
     fn on_attempt(&self, operation: &str);
 
-    /// Called when operation succeeds
+    // Called when operation succeeds
     fn on_success(&self, operation: &str);
 
-    /// Called when operation fails
+    // Called when operation fails
     fn on_failure(&self, operation: &str, error: &ClassifiedError);
 
-    /// Called when fallback succeeds
+    // Called when fallback succeeds
     fn on_fallback_success(&self, operation: &str);
 }
 
-/// Simple logging recovery listener
+// Simple logging recovery listener
 pub struct LoggingRecoveryListener;
 
 impl RecoveryListener for LoggingRecoveryListener {

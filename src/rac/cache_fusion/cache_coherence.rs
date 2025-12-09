@@ -17,20 +17,20 @@ use super::lock_management::{
 // Cache Fusion Coordinator
 // ============================================================================
 
-/// Cache Fusion coordinator - integrates GCS and GES
+// Cache Fusion coordinator - integrates GCS and GES
 pub struct CacheFusionCoordinator {
-    /// Global Cache Service
+    // Global Cache Service
     gcs: Arc<GlobalCacheService>,
 
-    /// Global Enqueue Service
+    // Global Enqueue Service
     ges: Arc<GlobalEnqueueService>,
 
-    /// Node identifier
+    // Node identifier
     node_id: NodeId,
 }
 
 impl CacheFusionCoordinator {
-    /// Create a new Cache Fusion coordinator
+    // Create a new Cache Fusion coordinator
     pub fn new(node_id: NodeId, gcs_config: GcsConfig) -> Self {
         Self {
             gcs: Arc::new(GlobalCacheService::new(node_id.clone(), gcs_config)),
@@ -39,7 +39,7 @@ impl CacheFusionCoordinator {
         }
     }
 
-    /// Request block with automatic lock acquisition
+    // Request block with automatic lock acquisition
     pub async fn request_block_with_lock(
         &self,
         resource_id: ResourceId,
@@ -66,7 +66,7 @@ impl CacheFusionCoordinator {
         Ok((block_grant, lock_grant))
     }
 
-    /// Release block and lock
+    // Release block and lock
     pub async fn release_block_with_lock(&self, resource_id: ResourceId) -> Result<(), DbError> {
         // Release lock
         self.ges.release_lock(resource_id).await?;
@@ -75,7 +75,7 @@ impl CacheFusionCoordinator {
         Ok(())
     }
 
-    /// Get combined statistics
+    // Get combined statistics
     pub fn get_statistics(&self) -> CacheFusionStatistics {
         CacheFusionStatistics {
             gcs: self.gcs.get_statistics(),
@@ -84,7 +84,7 @@ impl CacheFusionCoordinator {
     }
 }
 
-/// Combined Cache Fusion statistics
+// Combined Cache Fusion statistics
 #[derive(Debug, Clone)]
 pub struct CacheFusionStatistics {
     pub gcs: GcsStatistics,

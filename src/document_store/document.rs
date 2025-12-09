@@ -11,34 +11,34 @@ use uuid::Uuid;
 use sha2::{Sha256, Digest};
 use crate::error::Result;
 
-/// Document ID types supported by the system
+// Document ID types supported by the system
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum DocumentId {
-    /// UUID-based document ID (default)
+    // UUID-based document ID (default)
     Uuid(Uuid),
-    /// Auto-increment integer ID
+    // Auto-increment integer ID
     AutoIncrement(u64),
-    /// Custom string-based ID
+    // Custom string-based ID
     Custom(String),
 }
 
 impl DocumentId {
-    /// Generate a new UUID-based ID
+    // Generate a new UUID-based ID
     pub fn new_uuid() -> Self {
         DocumentId::Uuid(Uuid::new_v4())
     }
 
-    /// Create an auto-increment ID
+    // Create an auto-increment ID
     pub fn new_auto_increment(id: u64) -> Self {
         DocumentId::AutoIncrement(id)
     }
 
-    /// Create a custom ID from a string
+    // Create a custom ID from a string
     pub fn new_custom(id: impl Into<String>) -> Self {
         DocumentId::Custom(id.into())
     }
 
-    /// Convert to string representation
+    // Convert to string representation
     pub fn to_string(&self) -> String {
         match self {
             DocumentId::Uuid(uuid) => uuid.to_string(),
@@ -47,7 +47,7 @@ impl DocumentId {
         }
     }
 
-    /// Parse from string representation
+    // Parse from string representation
     pub fn from_string(s: &str, id_type: IdGenerationType) -> Result<Self> {
         match id_type {
             IdGenerationType::Uuid => {
@@ -71,34 +71,34 @@ impl fmt::Display for DocumentId {
     }
 }
 
-/// ID generation strategy
+// ID generation strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IdGenerationType {
-    /// Generate UUID v4
+    // Generate UUID v4
     Uuid,
-    /// Auto-increment integer
+    // Auto-increment integer
     AutoIncrement,
-    /// Custom user-provided ID
+    // Custom user-provided ID
     Custom,
 }
 
-/// Document version information
+// Document version information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentVersion {
-    /// Version number (starts at 1)
+    // Version number (starts at 1)
     pub version: u64,
-    /// Timestamp when this version was created
+    // Timestamp when this version was created
     pub created_at: u64,
-    /// User who created this version
+    // User who created this version
     pub created_by: Option<String>,
-    /// Hash of document content for change detection
+    // Hash of document content for change detection
     pub content_hash: String,
-    /// Parent version (for version history)
+    // Parent version (for version history)
     pub parent_version: Option<u64>,
 }
 
 impl DocumentVersion {
-    /// Create a new version
+    // Create a new version
     pub fn new(version: u64, created_by: Option<String>, content_hash: String) -> Self {
         let created_at = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -114,43 +114,43 @@ impl DocumentVersion {
         }
     }
 
-    /// Check if this is the initial version
+    // Check if this is the initial version
     pub fn is_initial(&self) -> bool {
         self.version == 1
     }
 }
 
-/// Document metadata
+// Document metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentMetadata {
-    /// Document ID
+    // Document ID
     pub id: DocumentId,
-    /// Collection name
+    // Collection name
     pub collection: String,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: u64,
-    /// Last modification timestamp
+    // Last modification timestamp
     pub updated_at: u64,
-    /// Document version information
+    // Document version information
     pub version: DocumentVersion,
-    /// Document size in bytes
+    // Document size in bytes
     pub size: usize,
-    /// Content type (e.g., "application/json", "application/bson")
+    // Content type (e.g., "application/json", "application/bson")
     pub content_type: String,
-    /// Custom metadata fields
+    // Custom metadata fields
     pub custom_fields: HashMap<String, serde_json::Value>,
-    /// Checksum for integrity verification
+    // Checksum for integrity verification
     pub checksum: String,
-    /// Tags for categorization
+    // Tags for categorization
     pub tags: Vec<String>,
-    /// Time-to-live in seconds (optional)
+    // Time-to-live in seconds (optional)
     pub ttl: Option<u64>,
-    /// Expiration timestamp (optional)
+    // Expiration timestamp (optional)
     pub expires_at: Option<u64>,
 }
 
 impl DocumentMetadata {
-    /// Create new metadata for a document
+    // Create new metadata for a document
     pub fn new(
         id: DocumentId,
         collection: String,
@@ -178,7 +178,7 @@ impl DocumentMetadata {
         }
     }
 
-    /// Check if document has expired
+    // Check if document has expired
     pub fn is_expired(&self) -> bool {
         if let Some(expires_at) = self.expires_at {
             let now = SystemTime::now()
@@ -191,7 +191,7 @@ impl DocumentMetadata {
         }
     }
 
-    /// Set TTL and calculate expiration
+    // Set TTL and calculate expiration
     pub fn set_ttl(&mut self, ttl_seconds: u64) {
         self.ttl = Some(ttl_seconds);
         let now = SystemTime::now()
@@ -201,7 +201,7 @@ impl DocumentMetadata {
         self.expires_at = Some(now + ttl_seconds);
     }
 
-    /// Update version information
+    // Update version information
     pub fn increment_version(&mut self, created_by: Option<String>, content_hash: String) {
         let new_version = self.version.version + 1;
         self.version = DocumentVersion::new(new_version, created_by, content_hash.clone());
@@ -213,32 +213,32 @@ impl DocumentMetadata {
     }
 }
 
-/// Document storage format
+// Document storage format
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DocumentFormat {
-    /// JSON format (human-readable)
+    // JSON format (human-readable)
     Json,
-    /// BSON format (binary, efficient)
+    // BSON format (binary, efficient)
     Bson,
-    /// Compressed JSON
+    // Compressed JSON
     CompressedJson,
-    /// Compressed BSON
+    // Compressed BSON
     CompressedBson,
 }
 
-/// Document content representation
+// Document content representation
 #[derive(Debug, Clone)]
 pub enum DocumentContent {
-    /// JSON value
+    // JSON value
     Json(serde_json::Value),
-    /// BSON document
+    // BSON document
     Bson(bson::Document),
-    /// Raw bytes (for compressed or chunked content)
+    // Raw bytes (for compressed or chunked content)
     Bytes(Vec<u8>),
 }
 
 impl DocumentContent {
-    /// Convert to JSON value
+    // Convert to JSON value
     pub fn to_json(&self) -> Result<serde_json::Value> {
         match self {
             DocumentContent::Json(v) => Ok(v.clone()),
@@ -254,7 +254,7 @@ impl DocumentContent {
         }
     }
 
-    /// Convert to BSON document
+    // Convert to BSON document
     pub fn to_bson(&self) -> Result<bson::Document> {
         match self {
             DocumentContent::Json(v) => {
@@ -273,7 +273,7 @@ impl DocumentContent {
         }
     }
 
-    /// Get size in bytes
+    // Get size in bytes
     pub fn size(&self) -> usize {
         match self {
             DocumentContent::Json(v) => serde_json::to_vec(v).unwrap_or_default().len(),
@@ -286,7 +286,7 @@ impl DocumentContent {
         }
     }
 
-    /// Calculate content hash
+    // Calculate content hash
     pub fn hash(&self) -> String {
         let bytes = match self {
             DocumentContent::Json(v) => serde_json::to_vec(v).unwrap_or_default(),
@@ -303,19 +303,19 @@ impl DocumentContent {
     }
 }
 
-/// Main document structure
+// Main document structure
 #[derive(Debug, Clone)]
 pub struct Document {
-    /// Document metadata
+    // Document metadata
     pub metadata: DocumentMetadata,
-    /// Document content
+    // Document content
     pub content: DocumentContent,
-    /// Storage format hint
+    // Storage format hint
     pub format: DocumentFormat,
 }
 
 impl Document {
-    /// Create a new document from JSON
+    // Create a new document from JSON
     pub fn from_json(
         id: DocumentId,
         collection: String,
@@ -332,7 +332,7 @@ impl Document {
         })
     }
 
-    /// Create a new document from BSON
+    // Create a new document from BSON
     pub fn from_bson(
         id: DocumentId,
         collection: String,
@@ -349,17 +349,17 @@ impl Document {
         })
     }
 
-    /// Get document as JSON
+    // Get document as JSON
     pub fn as_json(&self) -> Result<serde_json::Value> {
         self.content.to_json()
     }
 
-    /// Get document as BSON
+    // Get document as BSON
     pub fn as_bson(&self) -> Result<bson::Document> {
         self.content.to_bson()
     }
 
-    /// Update document content
+    // Update document content
     pub fn update_content(&mut self, content: DocumentContent, updated_by: Option<String>) -> Result<()> {
         let content_hash = content.hash();
         let size = content.size();
@@ -371,48 +371,48 @@ impl Document {
         Ok(())
     }
 
-    /// Add a tag to the document
+    // Add a tag to the document
     pub fn add_tag(&mut self, tag: String) {
         if !self.metadata.tags.contains(&tag) {
             self.metadata.tags.push(tag);
         }
     }
 
-    /// Remove a tag from the document
+    // Remove a tag from the document
     pub fn remove_tag(&mut self, tag: &str) {
         self.metadata.tags.retain(|t| t != tag);
     }
 
-    /// Set custom metadata field
+    // Set custom metadata field
     pub fn set_custom_field(&mut self, key: String, value: serde_json::Value) {
         self.metadata.custom_fields.insert(key, value);
     }
 
-    /// Get custom metadata field
+    // Get custom metadata field
     pub fn get_custom_field(&self, key: &str) -> Option<&serde_json::Value> {
         self.metadata.custom_fields.get(key)
     }
 }
 
-/// Document chunk for large document handling
+// Document chunk for large document handling
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentChunk {
-    /// Parent document ID
+    // Parent document ID
     pub document_id: DocumentId,
-    /// Chunk sequence number
+    // Chunk sequence number
     pub chunk_number: u32,
-    /// Total number of chunks
+    // Total number of chunks
     pub total_chunks: u32,
-    /// Chunk data
+    // Chunk data
     pub data: Vec<u8>,
-    /// Chunk size
+    // Chunk size
     pub size: usize,
-    /// Chunk checksum
+    // Chunk checksum
     pub checksum: String,
 }
 
 impl DocumentChunk {
-    /// Create a new chunk
+    // Create a new chunk
     pub fn new(
         document_id: DocumentId,
         chunk_number: u32,
@@ -434,7 +434,7 @@ impl DocumentChunk {
         }
     }
 
-    /// Verify chunk integrity
+    // Verify chunk integrity
     pub fn verify(&self) -> bool {
         let mut hasher = Sha256::new();
         hasher.update(&self.data);
@@ -443,19 +443,19 @@ impl DocumentChunk {
     }
 }
 
-/// Large document handler for chunking
+// Large document handler for chunking
 pub struct LargeDocumentHandler {
-    /// Maximum chunk size in bytes
+    // Maximum chunk size in bytes
     chunk_size: usize,
 }
 
 impl LargeDocumentHandler {
-    /// Create a new handler with specified chunk size
+    // Create a new handler with specified chunk size
     pub fn new(chunk_size: usize) -> Self {
         Self { chunk_size }
     }
 
-    /// Split a document into chunks
+    // Split a document into chunks
     pub fn chunk_document(&self, document: &Document) -> Result<Vec<DocumentChunk>> {
         let bytes = match &document.content {
             DocumentContent::Json(v) => serde_json::to_vec(v)?,
@@ -488,7 +488,7 @@ impl LargeDocumentHandler {
         Ok(chunks)
     }
 
-    /// Reassemble chunks into a document
+    // Reassemble chunks into a document
     pub fn reassemble_chunks(&self, chunks: Vec<DocumentChunk>) -> Result<Vec<u8>> {
         if chunks.is_empty() {
             return Err(crate::error::DbError::InvalidInput("No chunks provided".to_string()));
@@ -526,7 +526,7 @@ impl LargeDocumentHandler {
     }
 }
 
-/// Document builder for fluent API
+// Document builder for fluent API
 pub struct DocumentBuilder {
     id: Option<DocumentId>,
     collection: String,
@@ -538,7 +538,7 @@ pub struct DocumentBuilder {
 }
 
 impl DocumentBuilder {
-    /// Create a new builder for a collection
+    // Create a new builder for a collection
     pub fn new(collection: impl Into<String>) -> Self {
         Self {
             id: None,
@@ -551,45 +551,45 @@ impl DocumentBuilder {
         }
     }
 
-    /// Set document ID
+    // Set document ID
     pub fn id(mut self, id: DocumentId) -> Self {
         self.id = Some(id);
         self
     }
 
-    /// Set JSON content
+    // Set JSON content
     pub fn json(mut self, json: serde_json::Value) -> Self {
         self.content = Some(DocumentContent::Json(json));
         self.format = DocumentFormat::Json;
         self
     }
 
-    /// Set BSON content
+    // Set BSON content
     pub fn bson(mut self, bson: bson::Document) -> Self {
         self.content = Some(DocumentContent::Bson(bson));
         self.format = DocumentFormat::Bson;
         self
     }
 
-    /// Add a tag
+    // Add a tag
     pub fn tag(mut self, tag: impl Into<String>) -> Self {
         self.tags.push(tag.into());
         self
     }
 
-    /// Add custom metadata field
+    // Add custom metadata field
     pub fn custom_field(mut self, key: impl Into<String>, value: serde_json::Value) -> Self {
         self.custom_fields.insert(key.into(), value);
         self
     }
 
-    /// Set TTL
+    // Set TTL
     pub fn ttl(mut self, ttl_seconds: u64) -> Self {
         self.ttl = Some(ttl_seconds);
         self
     }
 
-    /// Build the document
+    // Build the document
     pub fn build(self) -> Result<Document> {
         let content = self.content.ok_or_else(|| {
             crate::error::DbError::InvalidInput("Document content not set".to_string())

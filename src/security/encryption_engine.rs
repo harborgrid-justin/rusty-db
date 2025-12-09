@@ -45,16 +45,16 @@ use crate::error::DbError;
 
 type HmacSha256 = Hmac<Sha256>;
 
-/// Encryption key material (32 bytes for AES-256/ChaCha20)
+// Encryption key material (32 bytes for AES-256/ChaCha20)
 pub type KeyMaterial = [u8; 32];
 
-/// Initialization Vector for AES-GCM (12 bytes recommended)
+// Initialization Vector for AES-GCM (12 bytes recommended)
 pub type Iv = [u8; 12];
 
-/// Nonce for ChaCha20 (12 bytes)
+// Nonce for ChaCha20 (12 bytes)
 pub type Nonce = [u8; 12];
 
-/// Authentication tag (16 bytes)
+// Authentication tag (16 bytes)
 pub type AuthTag = [u8; 16];
 
 // ============================================================================
@@ -66,24 +66,24 @@ const IV_SIZE: usize = 12;  // 96 bits
 const TAG_SIZE: usize = 16; // 128 bits
 const SALT_SIZE: usize = 32;
 
-/// Ciphertext format version
+// Ciphertext format version
 const CIPHERTEXT_VERSION: u8 = 1;
 
 // ============================================================================
 // Algorithm Enumeration
 // ============================================================================
 
-/// Supported encryption algorithms
+// Supported encryption algorithms
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Algorithm {
-    /// AES-256-GCM (hardware accelerated)
+    // AES-256-GCM (hardware accelerated)
     Aes256Gcm = 1,
-    /// ChaCha20-Poly1305 (software optimized)
+    // ChaCha20-Poly1305 (software optimized)
     ChaCha20Poly1305 = 2,
 }
 
 impl Algorithm {
-    /// Convert from byte representation
+    // Convert from byte representation
     pub fn from_u8(value: u8) -> Result<Self> {
         match value {
             1 => Ok(Algorithm::Aes256Gcm),
@@ -92,12 +92,12 @@ impl Algorithm {
         }
     }
 
-    /// Convert to byte representation
+    // Convert to byte representation
     pub fn to_u8(&self) -> u8 {
         *self as u8
     }
 
-    /// Get algorithm name
+    // Get algorithm name
     pub fn name(&self) -> &'static str {
         match self {
             Algorithm::Aes256Gcm => "AES-256-GCM",
@@ -110,25 +110,25 @@ impl Algorithm {
 // Ciphertext Structure
 // ============================================================================
 
-/// Structured ciphertext with metadata
-///
-/// Format: [VERSION:1][ALGORITHM:1][IV/NONCE:12][TAG:16][CIPHERTEXT:N]
+// Structured ciphertext with metadata
+//
+// Format: [VERSION:1][ALGORITHM:1][IV/NONCE:12][TAG:16][CIPHERTEXT:N]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Ciphertext {
-    /// Format version
+    // Format version
     pub version: u8,
-    /// Encryption algorithm used
+    // Encryption algorithm used
     pub algorithm: Algorithm,
-    /// Initialization vector or nonce
+    // Initialization vector or nonce
     pub iv: Vec<u8>,
-    /// Authentication tag
+    // Authentication tag
     pub tag: Vec<u8>,
-    /// Encrypted data
+    // Encrypted data
     pub data: Vec<u8>,
 }
 
 impl Ciphertext {
-    /// Create new ciphertext
+    // Create new ciphertext
     pub fn new(algorithm: Algorithm, iv: Vec<u8>, tag: Vec<u8>, data: Vec<u8>) -> Self {
         Self {
             version: CIPHERTEXT_VERSION,
@@ -139,7 +139,7 @@ impl Ciphertext {
         }
     }
 
-    /// Serialize to bytes
+    // Serialize to bytes
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
         bytes.push(self.version);
@@ -159,7 +159,7 @@ impl Ciphertext {
         bytes
     }
 
-    /// Deserialize from bytes
+    // Deserialize from bytes
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() < 4 {
             return Err(DbError::InvalidInput("Ciphertext too short".to_string()));
@@ -212,18 +212,18 @@ impl Ciphertext {
 // Encryption Engine
 // ============================================================================
 
-/// Main encryption engine providing all cryptographic operations
+// Main encryption engine providing all cryptographic operations
 pub struct EncryptionEngine {
-    /// Preferred algorithm
+    // Preferred algorithm
     default_algorithm: Algorithm,
-    /// Encryption operation counter (for monitoring)
+    // Encryption operation counter (for monitoring)
     encrypt_counter: Arc<RwLock<u64>>,
-    /// Decryption operation counter
+    // Decryption operation counter
     decrypt_counter: Arc<RwLock<u64>>,
 }
 
 impl EncryptionEngine {
-    /// Create a new encryption engine
+    // Create a new encryption engine
     pub fn new(default_algorithm: Algorithm) -> Self {
         Self {
             default_algorithm,
@@ -232,22 +232,22 @@ impl EncryptionEngine {
         }
     }
 
-    /// Create engine with AES-256-GCM (default)
+    // Create engine with AES-256-GCM (default)
     pub fn new_aes() -> Self {
         Self::new(Algorithm::Aes256Gcm)
     }
 
-    /// Create engine with ChaCha20-Poly1305
+    // Create engine with ChaCha20-Poly1305
     pub fn new_chacha() -> Self {
         Self::new(Algorithm::ChaCha20Poly1305)
     }
 
-    /// Encrypt data with default algorithm
+    // Encrypt data with default algorithm
     pub fn encrypt(&self, key: &KeyMaterial, plaintext: &[u8], aad: Option<&[u8]>) -> Result<Ciphertext> {
         self.encrypt_with_algorithm(self.default_algorithm, key, plaintext, aad)
     }
 
-    /// Encrypt with specific algorithm
+    // Encrypt with specific algorithm
     pub fn encrypt_with_algorithm(
         &self,
         algorithm: Algorithm,
@@ -264,7 +264,7 @@ impl EncryptionEngine {
         }
     }
 
-    /// Decrypt data (algorithm auto-detected from ciphertext)
+    // Decrypt data (algorithm auto-detected from ciphertext)
     pub fn decrypt(&self, key: &KeyMaterial, ciphertext: &Ciphertext, aad: Option<&[u8]>) -> Result<Vec<u8>> {
         // Increment counter
         *self.decrypt_counter.write() += 1;
@@ -275,7 +275,7 @@ impl EncryptionEngine {
         }
     }
 
-    /// Encrypt with AES-256-GCM
+    // Encrypt with AES-256-GCM
     fn encrypt_aes256gcm(
         &self,
         key: &KeyMaterial,
@@ -314,7 +314,7 @@ impl EncryptionEngine {
         Ok(Ciphertext::new(Algorithm::Aes256Gcm, iv.to_vec(), tag, ciphertext_data))
     }
 
-    /// Decrypt with AES-256-GCM
+    // Decrypt with AES-256-GCM
     fn decrypt_aes256gcm(
         &self,
         key: &KeyMaterial,
@@ -353,7 +353,7 @@ impl EncryptionEngine {
         Ok(plaintext)
     }
 
-    /// Encrypt with ChaCha20-Poly1305
+    // Encrypt with ChaCha20-Poly1305
     fn encrypt_chacha20(
         &self,
         key: &KeyMaterial,
@@ -397,7 +397,7 @@ impl EncryptionEngine {
         ))
     }
 
-    /// Decrypt with ChaCha20-Poly1305
+    // Decrypt with ChaCha20-Poly1305
     fn decrypt_chacha20(
         &self,
         key: &KeyMaterial,
@@ -436,7 +436,7 @@ impl EncryptionEngine {
         Ok(plaintext)
     }
 
-    /// Get encryption statistics
+    // Get encryption statistics
     pub fn get_stats(&self) -> EncryptionStats {
         EncryptionStats {
             encrypt_count: *self.encrypt_counter.read(),
@@ -452,7 +452,7 @@ impl Default for EncryptionEngine {
     }
 }
 
-/// Encryption statistics
+// Encryption statistics
 #[derive(Debug, Clone)]
 pub struct EncryptionStats {
     pub encrypt_count: u64,
@@ -464,17 +464,17 @@ pub struct EncryptionStats {
 // Key Manager
 // ============================================================================
 
-/// Secure key generation and management
+// Secure key generation and management
 pub struct KeyManager {
-    /// Active encryption keys
+    // Active encryption keys
     keys: Arc<RwLock<HashMap<String, SecureKey>>>,
-    /// Key hierarchy relationships
+    // Key hierarchy relationships
     hierarchy: Arc<RwLock<HashMap<String, String>>>, // child_id -> parent_id
-    /// Key version counter
+    // Key version counter
     version_counter: Arc<Mutex<u64>>,
 }
 
-/// Secure key with metadata
+// Secure key with metadata
 #[derive(Clone)]
 pub struct SecureKey {
     pub id: String,
@@ -486,25 +486,25 @@ pub struct SecureKey {
     pub is_active: bool,
 }
 
-/// Protected key material
+// Protected key material
 #[derive(Clone)]
 pub struct SecureKeyMaterial {
     data: KeyMaterial,
 }
 
 impl SecureKeyMaterial {
-    /// Create new secure key material
+    // Create new secure key material
     pub fn new(data: KeyMaterial) -> Self {
         Self { data }
     }
 
-    /// Generate random key
+    // Generate random key
     pub fn generate() -> Result<Self> {
         let data = CryptoRandom::generate_key()?;
         Ok(Self { data })
     }
 
-    /// Get key reference (use carefully)
+    // Get key reference (use carefully)
     pub fn as_bytes(&self) -> &KeyMaterial {
         &self.data
     }
@@ -518,7 +518,7 @@ impl Drop for SecureKeyMaterial {
 }
 
 impl KeyManager {
-    /// Create new key manager
+    // Create new key manager
     pub fn new() -> Self {
         Self {
             keys: Arc::new(RwLock::new(HashMap::new())),
@@ -527,7 +527,7 @@ impl KeyManager {
         }
     }
 
-    /// Generate a new encryption key
+    // Generate a new encryption key
     pub fn generate_key(
         &self,
         keyid: Option<String>,
@@ -565,7 +565,7 @@ impl KeyManager {
         Ok(id)
     }
 
-    /// Import an existing key
+    // Import an existing key
     pub fn import_key(
         &self,
         keyid: String,
@@ -592,7 +592,7 @@ impl KeyManager {
         Ok(())
     }
 
-    /// Get a key by ID
+    // Get a key by ID
     pub fn get_key(&self, key_id: &str) -> Result<SecureKey> {
         self.keys
             .read()
@@ -601,7 +601,7 @@ impl KeyManager {
             .ok_or_else(|| DbError::NotFound(format!("Key not found: {}", key_id)))
     }
 
-    /// Mark key as inactive
+    // Mark key as inactive
     pub fn deactivate_key(&self, key_id: &str) -> Result<()> {
         let mut keys = self.keys.write();
         if let Some(key) = keys.get_mut(key_id) {
@@ -612,7 +612,7 @@ impl KeyManager {
         }
     }
 
-    /// Remove a key (use with caution!)
+    // Remove a key (use with caution!)
     pub fn remove_key(&self, key_id: &str) -> Result<()> {
         let mut keys = self.keys.write();
         keys.remove(key_id)
@@ -624,7 +624,7 @@ impl KeyManager {
         Ok(())
     }
 
-    /// Get all active keys
+    // Get all active keys
     pub fn get_active_keys(&self) -> Vec<String> {
         self.keys
             .read()
@@ -634,7 +634,7 @@ impl KeyManager {
             .collect()
     }
 
-    /// Derive a child key from parent
+    // Derive a child key from parent
     pub fn derive_key(&self, parent_key_id: &str, context: &[u8]) -> Result<KeyMaterial> {
         let parent = self.get_key(parent_key_id)?;
         let derived = KeyDerivation::hkdf_expand(parent.key_material.as_bytes(), context, KEY_SIZE)?;
@@ -656,11 +656,11 @@ impl Default for KeyManager {
 // Key Derivation Functions
 // ============================================================================
 
-/// Key derivation utilities
+// Key derivation utilities
 pub struct KeyDerivation;
 
 impl KeyDerivation {
-    /// HKDF-Expand (simplified)
+    // HKDF-Expand (simplified)
     pub fn hkdf_expand(prk: &[u8], info: &[u8], outputlen: usize) -> Result<Vec<u8>> {
         let mut output = Vec::with_capacity(outputlen);
         let mut counter = 1u8;
@@ -688,7 +688,7 @@ impl KeyDerivation {
         Ok(output)
     }
 
-    /// Derive key from password using Argon2id
+    // Derive key from password using Argon2id
     pub fn derive_from_password(password: &str, salt: &[u8]) -> Result<KeyMaterial> {
         use argon2::{Argon2, PasswordHasher};
         use argon2::password_hash::SaltString;
@@ -715,7 +715,7 @@ impl KeyDerivation {
         Ok(key_material)
     }
 
-    /// Simple key derivation for deterministic encryption
+    // Simple key derivation for deterministic encryption
     pub fn derive_deterministic(basekey: &[u8], context: &[u8]) -> Result<KeyMaterial> {
         let mut hasher = Sha256::new();
         hasher.update(basekey);
@@ -732,44 +732,44 @@ impl KeyDerivation {
 // Cryptographic Random Number Generator
 // ============================================================================
 
-/// Secure random number generation
+// Secure random number generation
 pub struct CryptoRandom;
 
 impl CryptoRandom {
-    /// Generate secure random bytes
+    // Generate secure random bytes
     pub fn random_bytes(size: usize) -> Result<Vec<u8>> {
         let mut bytes = vec![0u8; size];
         OsRng.fill_bytes(&mut bytes);
         Ok(bytes)
     }
 
-    /// Generate encryption key
+    // Generate encryption key
     pub fn generate_key() -> Result<KeyMaterial> {
         let mut key = [0u8; KEY_SIZE];
         OsRng.fill_bytes(&mut key);
         Ok(key)
     }
 
-    /// Generate IV for encryption
+    // Generate IV for encryption
     pub fn generate_iv() -> Result<Iv> {
         let mut iv = [0u8; IV_SIZE];
         OsRng.fill_bytes(&mut iv);
         Ok(iv)
     }
 
-    /// Generate nonce for encryption
+    // Generate nonce for encryption
     pub fn generate_nonce() -> Result<Nonce> {
         let mut nonce = [0u8; IV_SIZE];
         OsRng.fill_bytes(&mut nonce);
         Ok(nonce)
     }
 
-    /// Generate salt for key derivation
+    // Generate salt for key derivation
     pub fn generate_salt() -> Result<Vec<u8>> {
         Self::random_bytes(SALT_SIZE)
     }
 
-    /// Generate UUID v4
+    // Generate UUID v4
     pub fn generate_uuid() -> String {
         uuid::Uuid::new_v4().to_string()
     }
@@ -779,20 +779,20 @@ impl CryptoRandom {
 // Column Encryptor
 // ============================================================================
 
-/// Column-level encryption with deterministic and randomized modes
+// Column-level encryption with deterministic and randomized modes
 pub struct ColumnEncryptor {
     engine: EncryptionEngine,
 }
 
 impl ColumnEncryptor {
-    /// Create new column encryptor
+    // Create new column encryptor
     pub fn new(algorithm: Algorithm) -> Self {
         Self {
             engine: EncryptionEngine::new(algorithm),
         }
     }
 
-    /// Encrypt column data (randomized - different ciphertext each time)
+    // Encrypt column data (randomized - different ciphertext each time)
     pub fn encrypt_randomized(
         &self,
         key: &KeyMaterial,
@@ -804,7 +804,7 @@ impl ColumnEncryptor {
         Ok(ciphertext.to_bytes())
     }
 
-    /// Decrypt column data (randomized)
+    // Decrypt column data (randomized)
     pub fn decrypt_randomized(
         &self,
         key: &KeyMaterial,
@@ -815,8 +815,8 @@ impl ColumnEncryptor {
         self.engine.decrypt(key, &ciphertext, Some(column_id.as_bytes()))
     }
 
-    /// Encrypt column data (deterministic - same plaintext = same ciphertext)
-    /// Allows equality checks and indexing
+    // Encrypt column data (deterministic - same plaintext = same ciphertext)
+    // Allows equality checks and indexing
     pub fn encrypt_deterministic(
         &self,
         key: &KeyMaterial,
@@ -840,7 +840,7 @@ impl ColumnEncryptor {
         Ok(result)
     }
 
-    /// Decrypt deterministic column data
+    // Decrypt deterministic column data
     pub fn decrypt_deterministic(
         &self,
         key: &KeyMaterial,
@@ -869,14 +869,14 @@ impl ColumnEncryptor {
 // Transparent Data Encryption (TDE) Helper
 // ============================================================================
 
-/// Transparent encryption for storage pages
+// Transparent encryption for storage pages
 pub struct TransparentEncryption {
     engine: EncryptionEngine,
     key_manager: Arc<KeyManager>,
 }
 
 impl TransparentEncryption {
-    /// Create new TDE handler
+    // Create new TDE handler
     pub fn new(key_manager: Arc<KeyManager>) -> Self {
         Self {
             engine: EncryptionEngine::new_aes(),
@@ -884,7 +884,7 @@ impl TransparentEncryption {
         }
     }
 
-    /// Encrypt a storage page
+    // Encrypt a storage page
     pub fn encrypt_page(
         &self,
         key_id: &str,
@@ -904,7 +904,7 @@ impl TransparentEncryption {
         Ok(ciphertext.to_bytes())
     }
 
-    /// Decrypt a storage page
+    // Decrypt a storage page
     pub fn decrypt_page(
         &self,
         key_id: &str,
@@ -928,14 +928,14 @@ impl TransparentEncryption {
 // Key Rotator
 // ============================================================================
 
-/// Automated key rotation without downtime
+// Automated key rotation without downtime
 pub struct KeyRotator {
     key_manager: Arc<KeyManager>,
     engine: EncryptionEngine,
 }
 
 impl KeyRotator {
-    /// Create new key rotator
+    // Create new key rotator
     pub fn new(key_manager: Arc<KeyManager>) -> Self {
         Self {
             key_manager,
@@ -943,7 +943,7 @@ impl KeyRotator {
         }
     }
 
-    /// Initiate key rotation (generate new key)
+    // Initiate key rotation (generate new key)
     pub fn start_rotation(&self, old_key_id: &str) -> Result<String> {
         let old_key = self.key_manager.get_key(old_key_id)?;
 
@@ -957,7 +957,7 @@ impl KeyRotator {
         Ok(new_key_id)
     }
 
-    /// Re-encrypt data with new key
+    // Re-encrypt data with new key
     pub fn reencrypt_data(
         &self,
         old_key_id: &str,
@@ -977,7 +977,7 @@ impl KeyRotator {
         Ok(new_ciphertext.to_bytes())
     }
 
-    /// Complete rotation (deactivate old key)
+    // Complete rotation (deactivate old key)
     pub fn complete_rotation(&self, old_key_id: &str) -> Result<()> {
         self.key_manager.deactivate_key(old_key_id)
     }
@@ -987,18 +987,18 @@ impl KeyRotator {
 // Encrypted Index (Searchable Encryption)
 // ============================================================================
 
-/// Searchable encryption for indexed columns
+// Searchable encryption for indexed columns
 pub struct EncryptedIndex {
     key_manager: Arc<KeyManager>,
 }
 
 impl EncryptedIndex {
-    /// Create new encrypted index handler
+    // Create new encrypted index handler
     pub fn new(key_manager: Arc<KeyManager>) -> Self {
         Self { key_manager }
     }
 
-    /// Generate searchable token for equality search
+    // Generate searchable token for equality search
     pub fn generate_search_token(
         &self,
         key_id: &str,
@@ -1022,7 +1022,7 @@ impl EncryptedIndex {
         Ok(result.into_bytes().to_vec())
     }
 
-    /// Generate index entry (deterministic encryption)
+    // Generate index entry (deterministic encryption)
     pub fn encrypt_index_entry(
         &self,
         key_id: &str,
@@ -1041,14 +1041,14 @@ impl EncryptedIndex {
 // Secure Key Store (Memory Protection)
 // ============================================================================
 
-/// Protected key storage with memory locking
+// Protected key storage with memory locking
 pub struct SecureKeyStore {
     key_manager: Arc<KeyManager>,
     locked_memory: Arc<RwLock<bool>>,
 }
 
 impl SecureKeyStore {
-    /// Create new secure key store
+    // Create new secure key store
     pub fn new(key_manager: Arc<KeyManager>) -> Self {
         Self {
             key_manager,
@@ -1056,7 +1056,7 @@ impl SecureKeyStore {
         }
     }
 
-    /// Lock memory pages to prevent swapping
+    // Lock memory pages to prevent swapping
     #[cfg(unix)]
     pub fn lock_memory(&self) -> Result<()> {
         // Note: This is a simplified version. Production would use mlock()
@@ -1071,7 +1071,7 @@ impl SecureKeyStore {
         Ok(())
     }
 
-    /// Store master key in protected memory
+    // Store master key in protected memory
     pub fn store_master_key(&self, key_material: KeyMaterial) -> Result<String> {
         self.key_manager.import_key(
             "MASTER_KEY".to_string(),
@@ -1081,7 +1081,7 @@ impl SecureKeyStore {
         Ok("MASTER_KEY".to_string())
     }
 
-    /// Retrieve master key
+    // Retrieve master key
     pub fn get_master_key(&self) -> Result<SecureKey> {
         self.key_manager.get_key("MASTER_KEY")
     }

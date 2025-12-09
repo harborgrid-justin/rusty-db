@@ -72,27 +72,27 @@ pub use hints::{HintParser, OptimizerHint, HintValidator};
 // Core Types
 // ============================================================================
 
-/// Unique identifier for a query
+// Unique identifier for a query
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct QueryId(pub u64);
 
-/// Unique identifier for a plan
+// Unique identifier for a plan
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PlanId(pub u64);
 
-/// Query fingerprint for plan caching
+// Query fingerprint for plan caching
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct QueryFingerprint {
-    /// Normalized query text
+    // Normalized query text
     pub normalized_text: String,
-    /// Parameter types
+    // Parameter types
     pub param_types: Vec<String>,
-    /// Schema version
+    // Schema version
     pub schema_version: u64,
 }
 
 impl QueryFingerprint {
-    /// Create a new query fingerprint
+    // Create a new query fingerprint
     pub fn new(query_text: &str, param_types: Vec<String>, schema_version: u64) -> Self {
         Self {
             normalized_text: Self::normalize_query(query_text),
@@ -101,7 +101,7 @@ impl QueryFingerprint {
         }
     }
 
-    /// Normalize query text by removing whitespace and literals
+    // Normalize query text by removing whitespace and literals
     fn normalize_query(text: &str) -> String {
         // Simple normalization - in production this would be more sophisticated
         text.to_lowercase()
@@ -111,41 +111,41 @@ impl QueryFingerprint {
     }
 }
 
-/// Physical operator types
+// Physical operator types
 #[derive(Debug, Clone, PartialEq)]
 pub enum PhysicalOperator {
-    /// Sequential scan
+    // Sequential scan
     SeqScan {
         table_id: TableId,
         filter: Option<Expression>,
     },
-    /// Index scan
+    // Index scan
     IndexScan {
         table_id: TableId,
         index_id: IndexId,
         key_conditions: Vec<Expression>,
         filter: Option<Expression>,
     },
-    /// Index-only scan
+    // Index-only scan
     IndexOnlyScan {
         index_id: IndexId,
         key_conditions: Vec<Expression>,
         filter: Option<Expression>,
     },
-    /// Bitmap heap scan
+    // Bitmap heap scan
     BitmapHeapScan {
         table_id: TableId,
         bitmap_index_scans: Vec<IndexId>,
         filter: Option<Expression>,
     },
-    /// Nested loop join
+    // Nested loop join
     NestedLoopJoin {
         left: Box<PhysicalPlan>,
         right: Box<PhysicalPlan>,
         condition: Option<Expression>,
         join_type: JoinType,
     },
-    /// Hash join
+    // Hash join
     HashJoin {
         left: Box<PhysicalPlan>,
         right: Box<PhysicalPlan>,
@@ -153,7 +153,7 @@ pub enum PhysicalOperator {
         condition: Option<Expression>,
         join_type: JoinType,
     },
-    /// Merge join
+    // Merge join
     MergeJoin {
         left: Box<PhysicalPlan>,
         right: Box<PhysicalPlan>,
@@ -161,75 +161,75 @@ pub enum PhysicalOperator {
         condition: Option<Expression>,
         join_type: JoinType,
     },
-    /// Sort
+    // Sort
     Sort {
         input: Box<PhysicalPlan>,
         sort_keys: Vec<SortKey>,
     },
-    /// Aggregation
+    // Aggregation
     Aggregate {
         input: Box<PhysicalPlan>,
         group_by: Vec<Expression>,
         aggregates: Vec<AggregateFunction>,
     },
-    /// Hash aggregation
+    // Hash aggregation
     HashAggregate {
         input: Box<PhysicalPlan>,
         group_by: Vec<Expression>,
         aggregates: Vec<AggregateFunction>,
     },
-    /// Materialize
+    // Materialize
     Materialize {
         input: Box<PhysicalPlan>,
     },
-    /// Limit
+    // Limit
     Limit {
         input: Box<PhysicalPlan>,
         limit: usize,
         offset: usize,
     },
-    /// Subquery scan
+    // Subquery scan
     SubqueryScan {
         subquery: Box<PhysicalPlan>,
         alias: String,
     },
 }
 
-/// Physical execution plan
+// Physical execution plan
 #[repr(C)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct PhysicalPlan {
-    /// Plan identifier
+    // Plan identifier
     pub plan_id: PlanId,
-    /// Root operator
+    // Root operator
     pub operator: PhysicalOperator,
-    /// Estimated cost
+    // Estimated cost
     pub cost: f64,
-    /// Estimated cardinality
+    // Estimated cardinality
     pub cardinality: usize,
-    /// Output schema
+    // Output schema
     pub schema: Schema,
-    /// Plan metadata
+    // Plan metadata
     pub metadata: PlanMetadata,
 }
 
-/// Plan metadata
+// Plan metadata
 #[repr(C)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct PlanMetadata {
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: SystemTime,
-    /// Optimizer version
+    // Optimizer version
     pub optimizer_version: String,
-    /// Applied hints
+    // Applied hints
     pub hints: Vec<OptimizerHint>,
-    /// Applied transformations
+    // Applied transformations
     pub transformations: Vec<String>,
-    /// Is plan from baseline
+    // Is plan from baseline
     pub from_baseline: bool,
 }
 
-/// Join type
+// Join type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JoinType {
     Inner,
@@ -241,7 +241,7 @@ pub enum JoinType {
     Cross,
 }
 
-/// Sort key
+// Sort key
 #[derive(Debug, Clone, PartialEq)]
 pub struct SortKey {
     pub expression: Expression,
@@ -249,7 +249,7 @@ pub struct SortKey {
     pub nulls_first: bool,
 }
 
-/// Aggregate function
+// Aggregate function
 #[derive(Debug, Clone, PartialEq)]
 pub struct AggregateFunction {
     pub function: AggregateFunctionType,
@@ -258,7 +258,7 @@ pub struct AggregateFunction {
     pub filter: Option<Expression>,
 }
 
-/// Aggregate function type
+// Aggregate function type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AggregateFunctionType {
     Count,
@@ -272,7 +272,7 @@ pub enum AggregateFunctionType {
     Last,
 }
 
-/// Expression representation
+// Expression representation
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     Column { table: String, column: String },
@@ -288,7 +288,7 @@ pub enum Expression {
     IsNotNull(Box<Expression>),
 }
 
-/// Binary operators
+// Binary operators
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOperator {
     Add,
@@ -308,7 +308,7 @@ pub enum BinaryOperator {
     NotLike,
 }
 
-/// Unary operators
+// Unary operators
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnaryOperator {
     Not,
@@ -322,28 +322,28 @@ pub enum UnaryOperator {
 // Optimizer Configuration
 // ============================================================================
 
-/// Optimizer configuration
+// Optimizer configuration
 #[derive(Debug, Clone)]
 pub struct OptimizerConfig {
-    /// Enable cost-based optimization
+    // Enable cost-based optimization
     pub enable_cost_based: bool,
-    /// Enable adaptive query execution
+    // Enable adaptive query execution
     pub enable_adaptive: bool,
-    /// Enable plan baselines
+    // Enable plan baselines
     pub enable_plan_baselines: bool,
-    /// Enable query transformations
+    // Enable query transformations
     pub enable_transformations: bool,
-    /// Maximum join order combinations to consider
+    // Maximum join order combinations to consider
     pub max_join_combinations: usize,
-    /// Timeout for optimization
+    // Timeout for optimization
     pub optimization_timeout: Duration,
-    /// Enable parallel plan search
+    // Enable parallel plan search
     pub enable_parallel_search: bool,
-    /// Enable ML-based cardinality estimation
+    // Enable ML-based cardinality estimation
     pub enable_ml_cardinality: bool,
-    /// Cost model parameters
+    // Cost model parameters
     pub cost_params: CostParameters,
-    /// Transformation rules to apply
+    // Transformation rules to apply
     pub transformation_rules: Vec<String>,
 }
 
@@ -370,24 +370,24 @@ impl Default for OptimizerConfig {
     }
 }
 
-/// Cost model parameters
+// Cost model parameters
 #[derive(Debug, Clone)]
 pub struct CostParameters {
-    /// CPU cost per tuple processed
+    // CPU cost per tuple processed
     pub cpu_tuple_cost: f64,
-    /// CPU cost per operator call
+    // CPU cost per operator call
     pub cpu_operator_cost: f64,
-    /// Sequential I/O cost per page
+    // Sequential I/O cost per page
     pub seq_page_cost: f64,
-    /// Random I/O cost per page
+    // Random I/O cost per page
     pub random_page_cost: f64,
-    /// Network cost per tuple
+    // Network cost per tuple
     pub network_tuple_cost: f64,
-    /// Memory cost per MB
+    // Memory cost per MB
     pub memory_mb_cost: f64,
-    /// Parallel tuple cost factor
+    // Parallel tuple cost factor
     pub parallel_tuple_cost: f64,
-    /// Parallel setup cost
+    // Parallel setup cost
     pub parallel_setup_cost: f64,
 }
 
@@ -410,30 +410,30 @@ impl Default for CostParameters {
 // Query Optimizer
 // ============================================================================
 
-/// Main query optimizer
+// Main query optimizer
 pub struct QueryOptimizer {
-    /// Optimizer configuration
+    // Optimizer configuration
     config: OptimizerConfig,
-    /// Cost model
+    // Cost model
     cost_model: Arc<CostModel>,
-    /// Plan generator
+    // Plan generator
     plan_generator: Arc<PlanGenerator>,
-    /// Query transformer
+    // Query transformer
     transformer: Arc<QueryTransformer>,
-    /// Adaptive executor
+    // Adaptive executor
     adaptive_executor: Arc<AdaptiveExecutor>,
-    /// Plan baseline manager
+    // Plan baseline manager
     baseline_manager: Arc<PlanBaselineManager>,
-    /// Hint parser
+    // Hint parser
     hint_parser: Arc<HintParser>,
-    /// Plan cache
+    // Plan cache
     plan_cache: Arc<RwLock<PlanCache>>,
-    /// Query statistics
+    // Query statistics
     stats: Arc<RwLock<OptimizerStatistics>>,
 }
 
 impl QueryOptimizer {
-    /// Create a new query optimizer
+    // Create a new query optimizer
     pub fn new(config: OptimizerConfig) -> Self {
         let cost_model = Arc::new(CostModel::new(config.cost_params.clone()));
         let plan_generator = Arc::new(PlanGenerator::new(
@@ -458,7 +458,7 @@ impl QueryOptimizer {
         }
     }
 
-    /// Optimize a query
+    // Optimize a query
     pub fn optimize(&self, query: &Query) -> Result<PhysicalPlan> {
         let start = Instant::now();
         let mut stats = self.stats.write().unwrap();
@@ -515,7 +515,7 @@ impl QueryOptimizer {
         Ok(best_plan)
     }
 
-    /// Execute a plan with adaptive optimization
+    // Execute a plan with adaptive optimization
     pub fn execute_adaptive(&self, plan: &PhysicalPlan) -> Result<ExecutionResult> {
         if self.config.enable_adaptive {
             self.adaptive_executor.execute(plan)
@@ -529,8 +529,8 @@ impl QueryOptimizer {
         }
     }
 
-    /// Select the best plan from candidates
-    /// Optimized to eliminate heap allocations in comparison loops
+    // Select the best plan from candidates
+    // Optimized to eliminate heap allocations in comparison loops
     #[inline]
     fn select_best_plan(&self, mut plans: Vec<PhysicalPlan>) -> Result<PhysicalPlan> {
         if plans.is_empty() {
@@ -543,22 +543,22 @@ impl QueryOptimizer {
         Ok(plans.into_iter().next().unwrap())
     }
 
-    /// Get optimizer statistics
+    // Get optimizer statistics
     pub fn get_statistics(&self) -> OptimizerStatistics {
         self.stats.read().unwrap().clone()
     }
 
-    /// Clear plan cache
+    // Clear plan cache
     pub fn clear_cache(&self) {
         self.plan_cache.write().unwrap().clear();
     }
 
-    /// Capture a plan baseline
+    // Capture a plan baseline
     pub fn capture_baseline(&self, fingerprint: QueryFingerprint, plan: PhysicalPlan) -> Result<()> {
         self.baseline_manager.capture_baseline(fingerprint, plan)
     }
 
-    /// Evolve plan baselines
+    // Evolve plan baselines
     pub fn evolve_baselines(&self) -> Result<usize> {
         self.baseline_manager.evolve_baselines()
     }
@@ -568,7 +568,7 @@ impl QueryOptimizer {
 // Supporting Types
 // ============================================================================
 
-/// Query representation
+// Query representation
 #[derive(Debug, Clone)]
 pub struct Query {
     pub text: String,
@@ -577,7 +577,7 @@ pub struct Query {
 }
 
 impl Query {
-    /// Parse a query from text
+    // Parse a query from text
     pub fn parse(text: &str) -> Result<Self> {
         Ok(Self {
             text: text.to_string(),
@@ -587,7 +587,7 @@ impl Query {
     }
 }
 
-/// Execution result
+// Execution result
 #[derive(Debug)]
 pub struct ExecutionResult {
     pub rows: Vec<Vec<Value>>,
@@ -595,7 +595,7 @@ pub struct ExecutionResult {
     pub adaptive_corrections: Vec<String>,
 }
 
-/// Plan cache
+// Plan cache
 struct PlanCache {
     cache: HashMap<QueryFingerprint, PhysicalPlan>,
     max_size: usize,
@@ -632,7 +632,7 @@ impl PlanCache {
     }
 }
 
-/// Optimizer statistics
+// Optimizer statistics
 #[derive(Debug, Clone, Default)]
 pub struct OptimizerStatistics {
     pub queries_optimized: u64,

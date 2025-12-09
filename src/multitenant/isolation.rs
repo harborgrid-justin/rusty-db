@@ -31,34 +31,34 @@ use serde::{Serialize, Deserialize};
 use crate::error::{Result, DbError};
 use super::pdb::PdbId;
 
-/// Resource limits for a PDB
+// Resource limits for a PDB
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceLimits {
-    /// Maximum memory allocation (bytes)
+    // Maximum memory allocation (bytes)
     pub memory_bytes: u64,
 
-    /// CPU shares (relative weight, higher = more CPU)
+    // CPU shares (relative weight, higher = more CPU)
     pub cpu_shares: u32,
 
-    /// I/O bandwidth limit (bytes/sec)
+    // I/O bandwidth limit (bytes/sec)
     pub io_bandwidth_bytes_per_sec: u64,
 
-    /// Maximum concurrent connections
+    // Maximum concurrent connections
     pub max_connections: u32,
 
-    /// Temporary space limit (bytes)
+    // Temporary space limit (bytes)
     pub temp_space_bytes: u64,
 
-    /// Storage quota (bytes)
+    // Storage quota (bytes)
     pub storage_quota_bytes: u64,
 
-    /// QoS priority (0-10, higher = more important)
+    // QoS priority (0-10, higher = more important)
     pub qos_priority: u8,
 
-    /// Enable CPU throttling if exceeded
+    // Enable CPU throttling if exceeded
     pub cpu_throttling_enabled: bool,
 
-    /// Enable I/O throttling if exceeded
+    // Enable I/O throttling if exceeded
     pub io_throttling_enabled: bool,
 }
 
@@ -78,21 +78,21 @@ impl Default for ResourceLimits {
     }
 }
 
-/// QoS policy for resource allocation
+// QoS policy for resource allocation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum QosPolicy {
-    /// Best effort (no guarantees)
+    // Best effort (no guarantees)
     BestEffort,
-    /// Guaranteed minimum resources
+    // Guaranteed minimum resources
     Guaranteed,
-    /// Burstable (can use more when available)
+    // Burstable (can use more when available)
     Burstable,
-    /// Critical (highest priority)
+    // Critical (highest priority)
     Critical,
 }
 
 impl QosPolicy {
-    /// Get the multiplier for resource allocation
+    // Get the multiplier for resource allocation
     pub fn multiplier(&self) -> f64 {
         match self {
             QosPolicy::BestEffort => 0.5,
@@ -103,39 +103,39 @@ impl QosPolicy {
     }
 }
 
-/// Memory isolator for per-PDB memory tracking
+// Memory isolator for per-PDB memory tracking
 #[derive(Debug, Clone)]
 pub struct MemoryIsolator {
-    /// Per-PDB memory allocations
+    // Per-PDB memory allocations
     allocations: Arc<RwLock<HashMap<PdbId, MemoryAllocation>>>,
 
-    /// Total system memory
+    // Total system memory
     total_memory: u64,
 
-    /// Reserved system memory
+    // Reserved system memory
     reserved_memory: u64,
 }
 
 #[derive(Debug, Clone)]
 struct MemoryAllocation {
-    /// Current allocation
+    // Current allocation
     current_bytes: u64,
 
-    /// Peak allocation
+    // Peak allocation
     peak_bytes: u64,
 
-    /// Limit
+    // Limit
     limit_bytes: u64,
 
-    /// Number of allocations
+    // Number of allocations
     allocation_count: u64,
 
-    /// Number of OOM events
+    // Number of OOM events
     oom_count: u64,
 }
 
 impl MemoryIsolator {
-    /// Create a new memory isolator
+    // Create a new memory isolator
     pub fn new(total_memory: u64) -> Self {
         Self {
             allocations: Arc::new(RwLock::new(HashMap::new())),
@@ -144,7 +144,7 @@ impl MemoryIsolator {
         }
     }
 
-    /// Register a PDB
+    // Register a PDB
     pub async fn register(&self, pdb_id: PdbId, limit_bytes: u64) -> Result<()> {
         let allocation = MemoryAllocation {
             current_bytes: 0,
@@ -158,13 +158,13 @@ impl MemoryIsolator {
         Ok(())
     }
 
-    /// Unregister a PDB
+    // Unregister a PDB
     pub async fn unregister(&self, pdb_id: PdbId) -> Result<()> {
         self.allocations.write().await.remove(&pdb_id);
         Ok(())
     }
 
-    /// Allocate memory for a PDB
+    // Allocate memory for a PDB
     pub async fn allocate(&self, pdb_id: PdbId, bytes: u64) -> Result<()> {
         let mut allocations = self.allocations.write().await;
 
@@ -192,7 +192,7 @@ impl MemoryIsolator {
         }
     }
 
-    /// Deallocate memory for a PDB
+    // Deallocate memory for a PDB
     pub async fn deallocate(&self, pdb_id: PdbId, bytes: u64) -> Result<()> {
         let mut allocations = self.allocations.write().await;
 
@@ -204,7 +204,7 @@ impl MemoryIsolator {
         }
     }
 
-    /// Get current usage for a PDB
+    // Get current usage for a PDB
     pub async fn get_usage(&self, pdb_id: PdbId) -> Result<(u64, u64)> {
         let allocations = self.allocations.read().await;
 
@@ -215,7 +215,7 @@ impl MemoryIsolator {
         }
     }
 
-    /// Get memory statistics
+    // Get memory statistics
     pub async fn get_stats(&self, pdb_id: PdbId) -> Result<MemoryStats> {
         let allocations = self.allocations.read().await;
 
@@ -244,37 +244,37 @@ pub struct MemoryStats {
     pub utilization_percent: f64,
 }
 
-/// CPU scheduler with fair-share allocation
+// CPU scheduler with fair-share allocation
 #[derive(Debug, Clone)]
 pub struct CpuScheduler {
-    /// Per-PDB CPU allocations
+    // Per-PDB CPU allocations
     allocations: Arc<RwLock<HashMap<PdbId, CpuAllocation>>>,
 
-    /// Total CPU shares
+    // Total CPU shares
     total_shares: u32,
 
-    /// Scheduling queue
+    // Scheduling queue
     queue: Arc<RwLock<Vec<ScheduledTask>>>,
 }
 
 #[derive(Debug, Clone)]
 struct CpuAllocation {
-    /// CPU shares (weight)
+    // CPU shares (weight)
     shares: u32,
 
-    /// Total CPU time used (microseconds)
+    // Total CPU time used (microseconds)
     cpu_time_micros: u64,
 
-    /// Last scheduling time
+    // Last scheduling time
     last_scheduled: Instant,
 
-    /// Virtual runtime (for fair scheduling)
+    // Virtual runtime (for fair scheduling)
     vruntime: u64,
 
-    /// Number of tasks executed
+    // Number of tasks executed
     tasks_executed: u64,
 
-    /// Throttled count
+    // Throttled count
     throttled_count: u64,
 }
 
@@ -286,7 +286,7 @@ struct ScheduledTask {
 }
 
 impl CpuScheduler {
-    /// Create a new CPU scheduler
+    // Create a new CPU scheduler
     pub fn new(total_shares: u32) -> Self {
         Self {
             allocations: Arc::new(RwLock::new(HashMap::new())),
@@ -295,7 +295,7 @@ impl CpuScheduler {
         }
     }
 
-    /// Register a PDB
+    // Register a PDB
     pub async fn register(&self, pdb_id: PdbId, shares: u32) -> Result<()> {
         let allocation = CpuAllocation {
             shares,
@@ -310,13 +310,13 @@ impl CpuScheduler {
         Ok(())
     }
 
-    /// Unregister a PDB
+    // Unregister a PDB
     pub async fn unregister(&self, pdb_id: PdbId) -> Result<()> {
         self.allocations.write().await.remove(&pdb_id);
         Ok(())
     }
 
-    /// Schedule a task
+    // Schedule a task
     pub async fn schedule(&self, pdb_id: PdbId, priority: u8) -> Result<()> {
         let task = ScheduledTask {
             pdb_id,
@@ -328,7 +328,7 @@ impl CpuScheduler {
         Ok(())
     }
 
-    /// Get next task to execute (fair scheduling)
+    // Get next task to execute (fair scheduling)
     pub async fn next_task(&self) -> Option<PdbId> {
         let mut queue = self.queue.write().await;
         let allocations = self.allocations.read().await;
@@ -354,7 +354,7 @@ impl CpuScheduler {
         Some(task.pdb_id)
     }
 
-    /// Record CPU time used
+    // Record CPU time used
     pub async fn record_cpu_time(&self, pdb_id: PdbId, micros: u64) -> Result<()> {
         let mut allocations = self.allocations.write().await;
 
@@ -373,7 +373,7 @@ impl CpuScheduler {
         }
     }
 
-    /// Get CPU statistics
+    // Get CPU statistics
     pub async fn get_stats(&self, pdb_id: PdbId) -> Result<CpuStats> {
         let allocations = self.allocations.read().await;
 
@@ -409,31 +409,31 @@ pub struct CpuStats {
     pub usage_percent: f64,
 }
 
-/// I/O bandwidth allocator using token bucket algorithm
+// I/O bandwidth allocator using token bucket algorithm
 #[derive(Debug, Clone)]
 pub struct IoBandwidthAllocator {
-    /// Per-PDB I/O buckets
+    // Per-PDB I/O buckets
     buckets: Arc<RwLock<HashMap<PdbId, TokenBucket>>>,
 }
 
 #[derive(Debug, Clone)]
 struct TokenBucket {
-    /// Maximum tokens (bytes)
+    // Maximum tokens (bytes)
     capacity: u64,
 
-    /// Current tokens
+    // Current tokens
     tokens: u64,
 
-    /// Refill rate (bytes/sec)
+    // Refill rate (bytes/sec)
     refill_rate: u64,
 
-    /// Last refill time
+    // Last refill time
     last_refill: Instant,
 
-    /// Total bytes transferred
+    // Total bytes transferred
     total_bytes: u64,
 
-    /// Number of throttle events
+    // Number of throttle events
     throttle_count: u64,
 }
 
@@ -473,14 +473,14 @@ impl TokenBucket {
 }
 
 impl IoBandwidthAllocator {
-    /// Create a new I/O bandwidth allocator
+    // Create a new I/O bandwidth allocator
     pub fn new() -> Self {
         Self {
             buckets: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    /// Register a PDB
+    // Register a PDB
     pub async fn register(&self, pdb_id: PdbId, bandwidth_bytes_per_sec: u64) -> Result<()> {
         let bucket = TokenBucket::new(
             bandwidth_bytes_per_sec * 2, // 2 second burst
@@ -491,13 +491,13 @@ impl IoBandwidthAllocator {
         Ok(())
     }
 
-    /// Unregister a PDB
+    // Unregister a PDB
     pub async fn unregister(&self, pdb_id: PdbId) -> Result<()> {
         self.buckets.write().await.remove(&pdb_id);
         Ok(())
     }
 
-    /// Try to consume bandwidth
+    // Try to consume bandwidth
     pub async fn try_consume(&self, pdb_id: PdbId, bytes: u64) -> Result<bool> {
         let mut buckets = self.buckets.write().await;
 
@@ -508,7 +508,7 @@ impl IoBandwidthAllocator {
         }
     }
 
-    /// Wait until bandwidth is available
+    // Wait until bandwidth is available
     pub async fn consume(&self, pdb_id: PdbId, bytes: u64) -> Result<()> {
         loop {
             if self.try_consume(pdb_id, bytes).await? {
@@ -520,7 +520,7 @@ impl IoBandwidthAllocator {
         }
     }
 
-    /// Get I/O statistics
+    // Get I/O statistics
     pub async fn get_stats(&self, pdb_id: PdbId) -> Result<IoStats> {
         let buckets = self.buckets.read().await;
 
@@ -549,16 +549,16 @@ pub struct IoStats {
     pub utilization_percent: f64,
 }
 
-/// Connection limiter
+// Connection limiter
 #[derive(Debug, Clone)]
 pub struct ConnectionLimiter {
-    /// Per-PDB connection limits
+    // Per-PDB connection limits
     limits: Arc<RwLock<HashMap<PdbId, ConnectionLimit>>>,
 }
 
 #[derive(Debug, Clone)]
 struct ConnectionLimit {
-    /// Maximum connections
+    // Maximum connections
     max_connections: u32,
 
     /// Current connections

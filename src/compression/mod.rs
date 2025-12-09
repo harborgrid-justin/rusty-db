@@ -12,7 +12,7 @@ use std::error::Error;
 use std::fmt;
 
 
-/// Compression level from 0 (none) to 9 (maximum)
+// Compression level from 0 (none) to 9 (maximum)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CompressionLevel {
     None = 0,
@@ -32,7 +32,7 @@ impl From<u8> for CompressionLevel {
     }
 }
 
-/// Compression algorithm selection
+// Compression algorithm selection
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompressionAlgorithm {
     None,
@@ -60,7 +60,7 @@ impl fmt::Display for CompressionAlgorithm {
     }
 }
 
-/// Compression error types
+// Compression error types
 #[derive(Debug, Clone)]
 pub enum CompressionError {
     InvalidInput(String),
@@ -96,7 +96,7 @@ impl Error for CompressionError {}
 
 pub type CompressionResult<T> = Result<T, CompressionError>;
 
-/// Compression statistics
+// Compression statistics
 #[derive(Debug, Clone, Default)]
 pub struct CompressionStats {
     pub uncompressed_size: usize,
@@ -147,96 +147,96 @@ impl CompressionStats {
     }
 }
 
-/// Core compression trait - all compressors must implement this
+// Core compression trait - all compressors must implement this
 pub trait Compressor: Send + Sync {
-    /// Compress data from input buffer into output buffer
-    /// Returns the number of bytes written to output
+    // Compress data from input buffer into output buffer
+    // Returns the number of bytes written to output
     fn compress(&self, input: &[u8], output: &mut [u8]) -> CompressionResult<usize>;
 
-    /// Decompress data from input buffer into output buffer
-    /// Returns the number of bytes written to output
+    // Decompress data from input buffer into output buffer
+    // Returns the number of bytes written to output
     fn decompress(&self, input: &[u8], output: &mut [u8]) -> CompressionResult<usize>;
 
-    /// Get the maximum compressed size for given input size
+    // Get the maximum compressed size for given input size
     fn max_compressed_size(&self, input_size: usize) -> usize;
 
-    /// Get the algorithm identifier
+    // Get the algorithm identifier
     fn algorithm(&self) -> CompressionAlgorithm;
 
-    /// Get the compression level
+    // Get the compression level
     fn level(&self) -> CompressionLevel;
 
-    /// Get statistics
+    // Get statistics
     fn stats(&self) -> CompressionStats;
 
-    /// Reset statistics
+    // Reset statistics
     fn reset_stats(&mut self);
 }
 
-/// Streaming compression trait for large data
+// Streaming compression trait for large data
 pub trait StreamingCompressor: Send + Sync {
-    /// Initialize a new compression stream
+    // Initialize a new compression stream
     fn init_stream(&mut self) -> CompressionResult<()>;
 
-    /// Compress a chunk of data in streaming mode
+    // Compress a chunk of data in streaming mode
     fn compress_chunk(&mut self, input: &[u8], output: &mut Vec<u8>) -> CompressionResult<usize>;
 
-    /// Finalize the compression stream
+    // Finalize the compression stream
     fn finalize_stream(&mut self, output: &mut Vec<u8>) -> CompressionResult<usize>;
 
-    /// Initialize a new decompression stream
+    // Initialize a new decompression stream
     fn init_decompress_stream(&mut self) -> CompressionResult<()>;
 
-    /// Decompress a chunk of data in streaming mode
+    // Decompress a chunk of data in streaming mode
     fn decompress_chunk(&mut self, input: &[u8], output: &mut Vec<u8>) -> CompressionResult<usize>;
 
-    /// Finalize the decompression stream
+    // Finalize the decompression stream
     fn finalize_decompress_stream(&mut self, output: &mut Vec<u8>) -> CompressionResult<usize>;
 }
 
-/// Columnar compression trait for HCC
+// Columnar compression trait for HCC
 pub trait ColumnarCompressor: Send + Sync {
-    /// Transform row-major data to column-major format
+    // Transform row-major data to column-major format
     fn transform_to_columnar(&self, rows: &[Vec<u8>], num_columns: usize) -> CompressionResult<Vec<Vec<u8>>>;
 
-    /// Transform column-major data back to row-major format
+    // Transform column-major data back to row-major format
     fn transform_to_rows(&self, columns: &[Vec<u8>], num_rows: usize) -> CompressionResult<Vec<Vec<u8>>>;
 
-    /// Compress a single column
+    // Compress a single column
     fn compress_column(&self, column: &[u8], output: &mut [u8]) -> CompressionResult<usize>;
 
-    /// Decompress a single column
+    // Decompress a single column
     fn decompress_column(&self, compressed: &[u8], output: &mut [u8]) -> CompressionResult<usize>;
 
-    /// Compress all columns in a Compression Unit
+    // Compress all columns in a Compression Unit
     fn compress_cu(&self, columns: &[Vec<u8>]) -> CompressionResult<Vec<Vec<u8>>>;
 
-    /// Decompress all columns in a Compression Unit
+    // Decompress all columns in a Compression Unit
     fn decompress_cu(&self, compressed_columns: &[Vec<u8>]) -> CompressionResult<Vec<Vec<u8>>>;
 }
 
-/// Deduplication trait
+// Deduplication trait
 pub trait Deduplicator: Send + Sync {
-    /// Compute hash for content-defined chunking
+    // Compute hash for content-defined chunking
     fn compute_chunk_hash(&self, data: &[u8]) -> u64;
 
-    /// Find chunk boundaries using content-defined chunking
+    // Find chunk boundaries using content-defined chunking
     fn find_chunk_boundaries(&self, data: &[u8]) -> Vec<usize>;
 
-    /// Detect if a chunk is a duplicate
+    // Detect if a chunk is a duplicate
     fn is_duplicate(&self, chunk_hash: u64) -> bool;
 
-    /// Store a chunk and return its identifier
+    // Store a chunk and return its identifier
     fn store_chunk(&mut self, chunk: &[u8], hash: u64) -> CompressionResult<Vec<u8>>;
 
-    /// Retrieve a chunk by its identifier
+    // Retrieve a chunk by its identifier
     fn retrieve_chunk(&self, chunk_id: &[u8]) -> CompressionResult<Vec<u8>>;
 
-    /// Get deduplication ratio
+    // Get deduplication ratio
     fn dedup_ratio(&self) -> f64;
 }
 
-/// Temperature-based data classification for tiered compression
+// Temperature-based data classification for tiered compression
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DataTemperature {
     Hot,    // Frequently accessed, low compression
@@ -265,25 +265,25 @@ impl DataTemperature {
     }
 }
 
-/// Tiered compression manager trait
+// Tiered compression manager trait
 pub trait TieredCompressionManager: Send + Sync {
-    /// Classify data temperature based on access patterns
+    // Classify data temperature based on access patterns
     fn classify_temperature(&self, block_id: u64) -> DataTemperature;
 
-    /// Update access pattern for a block
+    // Update access pattern for a block
     fn record_access(&mut self, block_id: u64);
 
-    /// Migrate block to appropriate tier
+    // Migrate block to appropriate tier
     fn migrate_block(&mut self, block_id: u64, new_temp: DataTemperature) -> CompressionResult<()>;
 
-    /// Get compression recommendation for a block
+    // Get compression recommendation for a block
     fn get_compression_recommendation(&self, block_id: u64) -> (CompressionAlgorithm, CompressionLevel);
 
-    /// Get tier statistics
+    // Get tier statistics
     fn tier_stats(&self) -> TierStats;
 }
 
-/// Statistics for compression tiers
+// Statistics for compression tiers
 #[derive(Debug, Clone, Default)]
 pub struct TierStats {
     pub hot_blocks: usize,
@@ -294,7 +294,7 @@ pub struct TierStats {
     pub total_space_saved: usize,
 }
 
-/// Compression context - maintains state for compression operations
+// Compression context - maintains state for compression operations
 pub struct CompressionContext {
     pub algorithm: CompressionAlgorithm,
     pub level: CompressionLevel,
@@ -332,7 +332,7 @@ impl CompressionContext {
     }
 }
 
-/// Compression metadata stored with compressed data
+// Compression metadata stored with compressed data
 #[derive(Debug, Clone)]
 pub struct CompressionMetadata {
     pub algorithm: CompressionAlgorithm,
@@ -358,7 +358,7 @@ impl CompressionMetadata {
         }
     }
 
-    /// Serialize metadata to bytes
+    // Serialize metadata to bytes
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(32);
         bytes.push(self.version);
@@ -372,7 +372,7 @@ impl CompressionMetadata {
         bytes
     }
 
-    /// Deserialize metadata from bytes
+    // Deserialize metadata from bytes
     pub fn from_bytes(bytes: &[u8]) -> CompressionResult<Self> {
         if bytes.len() < 32 {
             return Err(CompressionError::InvalidMetadata(
@@ -420,11 +420,11 @@ impl CompressionMetadata {
     }
 }
 
-/// Utility functions for compression
+// Utility functions for compression
 pub mod utils {
     use super::*;
 
-    /// Calculate CRC32 checksum
+    // Calculate CRC32 checksum
     pub fn crc32(data: &[u8]) -> u32 {
         const CRC32_TABLE: [u32; 256] = generate_crc32_table();
 
@@ -456,7 +456,7 @@ pub mod utils {
         table
     }
 
-    /// Calculate Adler32 checksum (faster than CRC32)
+    // Calculate Adler32 checksum (faster than CRC32)
     pub fn adler32(data: &[u8]) -> u32 {
         const MOD_ADLER: u32 = 65521;
         let mut a = 1u32;
@@ -470,7 +470,7 @@ pub mod utils {
         (b << 16) | a
     }
 
-    /// Estimate compression ratio for data
+    // Estimate compression ratio for data
     pub fn estimate_compressibility(data: &[u8]) -> f64 {
         if data.is_empty() {
             return 1.0;
@@ -497,7 +497,7 @@ pub mod utils {
         1.0 + (max_entropy - entropy) / max_entropy * 3.0
     }
 
-    /// Find the best compression algorithm for given data
+    // Find the best compression algorithm for given data
     pub fn select_best_algorithm(data: &[u8]) -> CompressionAlgorithm {
         let compressibility = estimate_compressibility(data);
 
@@ -583,5 +583,3 @@ mod tests {
         );
     }
 }
-
-

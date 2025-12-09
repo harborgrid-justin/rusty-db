@@ -4,32 +4,32 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::Duration;
 
-/// Replication slot manager configuration
+// Replication slot manager configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlotManagerConfig {
-    /// Maximum number of slots
+    // Maximum number of slots
     pub max_slots: usize,
-    /// Storage path for slot state
+    // Storage path for slot state
     pub storage_path: PathBuf,
-    /// Enable automatic cleanup
+    // Enable automatic cleanup
     pub enable_auto_cleanup: bool,
-    /// Cleanup interval
+    // Cleanup interval
     pub cleanup_interval: Duration,
-    /// Maximum inactive duration before cleanup
+    // Maximum inactive duration before cleanup
     pub max_inactive_duration: Duration,
-    /// Enable slot monitoring
+    // Enable slot monitoring
     pub enable_monitoring: bool,
-    /// Monitoring interval
+    // Monitoring interval
     pub monitoring_interval: Duration,
-    /// Enable slot statistics
+    // Enable slot statistics
     pub enable_statistics: bool,
-    /// Statistics collection interval
+    // Statistics collection interval
     pub statistics_interval: Duration,
-    /// Maximum WAL retention size per slot
+    // Maximum WAL retention size per slot
     pub max_wal_retention_size: u64,
-    /// Enable slot backup
+    // Enable slot backup
     pub enable_backup: bool,
-    /// Backup interval
+    // Backup interval
     pub backup_interval: Duration,
 }
 

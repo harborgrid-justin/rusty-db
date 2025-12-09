@@ -48,16 +48,16 @@ use uuid::Uuid;
 
 use crate::{Result, DbError};
 
-/// Message priority levels for the service bus
+// Message priority levels for the service bus
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum MessagePriority {
-    /// Low priority - background tasks, cleanup operations
+    // Low priority - background tasks, cleanup operations
     Low = 0,
-    /// Normal priority - regular database operations
+    // Normal priority - regular database operations
     Normal = 1,
-    /// High priority - user-facing transactions
+    // High priority - user-facing transactions
     High = 2,
-    /// Critical priority - system health, failover events
+    // Critical priority - system health, failover events
     Critical = 3,
 }
 
@@ -67,53 +67,53 @@ impl Default for MessagePriority {
     }
 }
 
-/// Message delivery mode
+// Message delivery mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DeliveryMode {
-    /// Fire and forget - no acknowledgment required
+    // Fire and forget - no acknowledgment required
     FireAndForget,
-    /// At least once - requires acknowledgment, may deliver duplicates
+    // At least once - requires acknowledgment, may deliver duplicates
     AtLeastOnce,
-    /// At most once - best effort, no retries
+    // At most once - best effort, no retries
     AtMostOnce,
 }
 
-/// Message metadata for tracking and routing
+// Message metadata for tracking and routing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MessageMetadata {
-    /// Unique message identifier
+    // Unique message identifier
     pub message_id: Uuid,
-    /// Correlation ID for request/response patterns
+    // Correlation ID for request/response patterns
     pub correlation_id: Option<Uuid>,
-    /// Message timestamp
+    // Message timestamp
     pub timestamp: SystemTime,
-    /// Sender service identifier
+    // Sender service identifier
     pub sender: String,
-    /// Target service or topic
+    // Target service or topic
     pub target: String,
-    /// Message priority
+    // Message priority
     pub priority: MessagePriority,
-    /// Delivery mode
+    // Delivery mode
     pub delivery_mode: DeliveryMode,
-    /// Time to live in seconds
+    // Time to live in seconds
     pub ttl: Option<u64>,
-    /// Retry count for failed messages
+    // Retry count for failed messages
     pub retry_count: u32,
-    /// Custom headers
+    // Custom headers
     pub headers: HashMap<String, String>,
 }
 
-/// A message in the service bus
+// A message in the service bus
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
-    /// Message metadata
+    // Message metadata
     pub metadata: MessageMetadata,
-    /// Message payload as bytes
+    // Message payload as bytes
     pub payload: Vec<u8>,
 }
 
 impl Message {
-    /// Create a new message with the given topic and payload
+    // Create a new message with the given topic and payload
     pub fn new(topic: impl Into<String>, payload: Vec<u8>) -> Self {
         Self {
             metadata: MessageMetadata {
@@ -132,43 +132,43 @@ impl Message {
         }
     }
 
-    /// Set the message priority
+    // Set the message priority
     pub fn with_priority(mut self, priority: MessagePriority) -> Self {
         self.metadata.priority = priority;
         self
     }
 
-    /// Set the delivery mode
+    // Set the delivery mode
     pub fn with_delivery_mode(mut self, mode: DeliveryMode) -> Self {
         self.metadata.delivery_mode = mode;
         self
     }
 
-    /// Set the sender
+    // Set the sender
     pub fn with_sender(mut self, sender: impl Into<String>) -> Self {
         self.metadata.sender = sender.into();
         self
     }
 
-    /// Set the correlation ID for request/response
+    // Set the correlation ID for request/response
     pub fn with_correlation_id(mut self, id: Uuid) -> Self {
         self.metadata.correlation_id = Some(id);
         self
     }
 
-    /// Set time to live
+    // Set time to live
     pub fn with_ttl(mut self, seconds: u64) -> Self {
         self.metadata.ttl = Some(seconds);
         self
     }
 
-    /// Add a custom header
+    // Add a custom header
     pub fn with_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.metadata.headers.insert(key.into(), value.into());
         self
     }
 
-    /// Check if message has expired
+    // Check if message has expired
     pub fn is_expired(&self) -> bool {
         if let Some(ttl) = self.metadata.ttl {
             if let Ok(elapsed) = self.metadata.timestamp.elapsed() {
@@ -179,77 +179,77 @@ impl Message {
     }
 }
 
-/// Service registration information
+// Service registration information
 #[derive(Debug, Clone)]
 pub struct ServiceInfo {
-    /// Service unique identifier
+    // Service unique identifier
     pub service_id: String,
-    /// Service name
+    // Service name
     pub name: String,
-    /// Service version
+    // Service version
     pub version: String,
-    /// Service endpoints
+    // Service endpoints
     pub endpoints: Vec<String>,
-    /// Service metadata
+    // Service metadata
     pub metadata: HashMap<String, String>,
-    /// Registration timestamp
+    // Registration timestamp
     pub registered_at: SystemTime,
-    /// Last heartbeat timestamp
+    // Last heartbeat timestamp
     pub last_heartbeat: SystemTime,
-    /// Service health status
+    // Service health status
     pub healthy: bool,
 }
 
-/// Dead letter message wrapper with failure information
+// Dead letter message wrapper with failure information
 #[derive(Debug, Clone)]
 pub struct DeadLetter {
-    /// Original message
+    // Original message
     pub message: Message,
-    /// Failure reason
+    // Failure reason
     pub reason: String,
-    /// Timestamp when message was sent to DLQ
+    // Timestamp when message was sent to DLQ
     pub dead_lettered_at: SystemTime,
-    /// Number of delivery attempts
+    // Number of delivery attempts
     pub attempts: u32,
 }
 
-/// Statistics for the service bus
+// Statistics for the service bus
 #[derive(Debug, Clone, Default)]
 pub struct BusStatistics {
-    /// Total messages published
+    // Total messages published
     pub messages_published: u64,
-    /// Total messages delivered
+    // Total messages delivered
     pub messages_delivered: u64,
-    /// Messages currently in flight
+    // Messages currently in flight
     pub messages_in_flight: u64,
-    /// Messages in dead letter queue
+    // Messages in dead letter queue
     pub messages_dead_lettered: u64,
-    /// Total number of subscribers
+    // Total number of subscribers
     pub total_subscribers: usize,
-    /// Total number of registered services
+    // Total number of registered services
     pub total_services: usize,
 }
 
-/// Channel for message delivery
+// Channel for message delivery
 type MessageChannel = mpsc::UnboundedSender<Message>;
 
-/// Subscription handle for receiving messages
+// Subscription handle for receiving messages
 pub type SubscriptionHandle = mpsc::UnboundedReceiver<Message>;
 
-/// Service bus configuration
+// Service bus configuration
 #[derive(Debug, Clone)]
 pub struct ServiceBusConfig {
-    /// Maximum message size in bytes
+    // Maximum message size in bytes
     pub max_message_size: usize,
-    /// Default message TTL in seconds
+    // Default message TTL in seconds
     pub default_ttl: u64,
-    /// Maximum retry attempts for failed messages
+    // Maximum retry attempts for failed messages
     pub max_retries: u32,
-    /// Dead letter queue capacity
+    // Dead letter queue capacity
     pub dlq_capacity: usize,
-    /// Service heartbeat interval in seconds
+    // Service heartbeat interval in seconds
     pub heartbeat_interval: u64,
-    /// Service timeout before considered unhealthy in seconds
+    // Service timeout before considered unhealthy in seconds
     pub service_timeout: u64,
 }
 
@@ -266,31 +266,31 @@ impl Default for ServiceBusConfig {
     }
 }
 
-/// The main service bus implementation
+// The main service bus implementation
 pub struct ServiceBus {
-    /// Configuration
+    // Configuration
     config: ServiceBusConfig,
-    /// Topic subscribers: topic -> list of channels
+    // Topic subscribers: topic -> list of channels
     subscribers: Arc<RwLock<HashMap<String, Vec<MessageChannel>>>>,
-    /// Registered services
+    // Registered services
     services: Arc<RwLock<HashMap<String, ServiceInfo>>>,
-    /// Dead letter queue
+    // Dead letter queue
     dead_letter_queue: Arc<RwLock<Vec<DeadLetter>>>,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<BusStatistics>>,
-    /// Semaphore for backpressure control
+    // Semaphore for backpressure control
     backpressure: Arc<Semaphore>,
-    /// Shutdown signal
+    // Shutdown signal
     shutdown: Arc<tokio::sync::Notify>,
 }
 
 impl ServiceBus {
-    /// Create a new service bus with default configuration
+    // Create a new service bus with default configuration
     pub fn new(max_concurrent_messages: usize) -> Arc<Self> {
         Self::with_config(ServiceBusConfig::default(), max_concurrent_messages)
     }
 
-    /// Create a new service bus with custom configuration
+    // Create a new service bus with custom configuration
     pub fn with_config(config: ServiceBusConfig, max_concurrent_messages: usize) -> Arc<Self> {
         let bus = Arc::new(Self {
             config,
@@ -308,7 +308,7 @@ impl ServiceBus {
         bus
     }
 
-    /// Subscribe to a topic and receive messages
+    // Subscribe to a topic and receive messages
     pub async fn subscribe(&self, topic: impl Into<String>) -> SubscriptionHandle {
         let topic = topic.into();
         let (tx, rx) = mpsc::unbounded_channel();
@@ -323,7 +323,7 @@ impl ServiceBus {
         rx
     }
 
-    /// Unsubscribe from a topic
+    // Unsubscribe from a topic
     pub async fn unsubscribe(&self, topic: &str) {
         let mut subs = self.subscribers.write().await;
         subs.remove(topic);
@@ -333,7 +333,7 @@ impl ServiceBus {
         stats.total_subscribers = subs.values().map(|v| v.len()).sum();
     }
 
-    /// Publish a message to a topic
+    // Publish a message to a topic
     pub async fn publish(&self, message: Message) -> Result<()> {
         // Validate message size
         if message.payload.len() > self.config.max_message_size {
@@ -404,7 +404,7 @@ impl ServiceBus {
         Ok(())
     }
 
-    /// Publish a message with automatic retry
+    // Publish a message with automatic retry
     pub async fn publish_with_retry(&self, message: Message) -> Result<()> {
         let mut attempts = 0;
         let max_retries = self.config.max_retries;
@@ -430,7 +430,7 @@ impl ServiceBus {
         }
     }
 
-    /// Send a message to the dead letter queue
+    // Send a message to the dead letter queue
     async fn send_to_dlq(&self, message: Message, reason: String, attempts: u32) {
         let mut dlq = self.dead_letter_queue.write().await;
 
@@ -452,7 +452,7 @@ impl ServiceBus {
         stats.messages_dead_lettered = dlq.len() as u64;
     }
 
-    /// Register a service with the bus
+    // Register a service with the bus
     pub async fn register_service(&self, info: ServiceInfo) -> Result<()> {
         let mut services = self.services.write().await;
         services.insert(info.service_id.clone(), info);
@@ -464,7 +464,7 @@ impl ServiceBus {
         Ok(())
     }
 
-    /// Unregister a service from the bus
+    // Unregister a service from the bus
     pub async fn unregister_service(&self, service_id: &str) -> Result<()> {
         let mut services = self.services.write().await;
         services.remove(service_id);
@@ -476,7 +476,7 @@ impl ServiceBus {
         Ok(())
     }
 
-    /// Discover services by name
+    // Discover services by name
     pub async fn discover_services(&self, name: &str) -> Vec<ServiceInfo> {
         let services = self.services.read().await;
         services
@@ -486,13 +486,13 @@ impl ServiceBus {
             .collect()
     }
 
-    /// Get all registered services
+    // Get all registered services
     pub async fn get_all_services(&self) -> Vec<ServiceInfo> {
         let services = self.services.read().await;
         services.values().cloned().collect()
     }
 
-    /// Update service heartbeat
+    // Update service heartbeat
     pub async fn heartbeat(&self, service_id: &str) -> Result<()> {
         let mut services = self.services.write().await;
         if let Some(service) = services.get_mut(service_id) {
@@ -504,13 +504,13 @@ impl ServiceBus {
         }
     }
 
-    /// Get dead letter queue contents
+    // Get dead letter queue contents
     pub async fn get_dead_letters(&self) -> Vec<DeadLetter> {
         let dlq = self.dead_letter_queue.read().await;
         dlq.clone()
     }
 
-    /// Clear dead letter queue
+    // Clear dead letter queue
     pub async fn clear_dead_letters(&self) {
         let mut dlq = self.dead_letter_queue.write().await;
         dlq.clear();
@@ -520,12 +520,12 @@ impl ServiceBus {
         stats.messages_dead_lettered = 0;
     }
 
-    /// Get service bus statistics
+    // Get service bus statistics
     pub async fn get_statistics(&self) -> BusStatistics {
         self.stats.read().await.clone()
     }
 
-    /// Start background maintenance tasks
+    // Start background maintenance tasks
     fn start_background_tasks(bus: Arc<Self>) {
         // Task 1: Check service health
         let bus_clone = Arc::clone(&bus);
@@ -564,7 +564,7 @@ impl ServiceBus {
         });
     }
 
-    /// Check health of all registered services
+    // Check health of all registered services
     async fn check_service_health(&self) {
         let mut services = self.services.write().await;
         let timeout = Duration::from_secs(self.config.service_timeout);
@@ -578,7 +578,7 @@ impl ServiceBus {
         }
     }
 
-    /// Clean expired messages from dead letter queue
+    // Clean expired messages from dead letter queue
     async fn clean_expired_dlq(&self) {
         let mut dlq = self.dead_letter_queue.write().await;
         let one_day = Duration::from_secs(86400);
@@ -596,7 +596,7 @@ impl ServiceBus {
         stats.messages_dead_lettered = dlq.len() as u64;
     }
 
-    /// Gracefully shutdown the service bus
+    // Gracefully shutdown the service bus
     pub async fn shutdown(&self) {
         self.shutdown.notify_waiters();
 

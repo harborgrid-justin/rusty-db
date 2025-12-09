@@ -23,51 +23,51 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 
-/// Security classification level
+// Security classification level
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ClassificationLevel {
-    /// Unclassified
+    // Unclassified
     Unclassified,
-    /// Restricted
+    // Restricted
     Restricted,
-    /// Confidential
+    // Confidential
     Confidential,
-    /// Secret
+    // Secret
     Secret,
-    /// TopSecret
+    // TopSecret
     TopSecret,
-    /// Custom level with numeric value
+    // Custom level with numeric value
     Custom { name: String, level: u32 },
 }
 
-/// Security compartment (category)
+// Security compartment (category)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Compartment {
-    /// Compartment ID
+    // Compartment ID
     pub id: String,
-    /// Compartment name
+    // Compartment name
     pub name: String,
-    /// Compartment description
+    // Compartment description
     pub description: Option<String>,
-    /// Parent compartment (for hierarchical compartments)
+    // Parent compartment (for hierarchical compartments)
     pub parent: Option<String>,
 }
 
-/// Security label combining classification and compartments
+// Security label combining classification and compartments
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SecurityLabel {
-    /// Classification level
+    // Classification level
     pub classification: ClassificationLevel,
-    /// Set of compartments
+    // Set of compartments
     pub compartments: HashSet<String>,
-    /// Optional groups (for group-based access)
+    // Optional groups (for group-based access)
     pub groups: HashSet<String>,
-    /// Label metadata
+    // Label metadata
     pub metadata: HashMap<String, String>,
 }
 
 impl SecurityLabel {
-    /// Create a new security label
+    // Create a new security label
     pub fn new(classification: ClassificationLevel) -> Self {
         Self {
             classification,
@@ -77,17 +77,17 @@ impl SecurityLabel {
         }
     }
 
-    /// Add a compartment to the label
+    // Add a compartment to the label
     pub fn add_compartment(&mut self, compartment: String) {
         self.compartments.insert(compartment);
     }
 
-    /// Add a group to the label
+    // Add a group to the label
     pub fn add_group(&mut self, group: String) {
         self.groups.insert(group);
     }
 
-    /// Check if this label dominates another label
+    // Check if this label dominates another label
     pub fn dominates(&self, other: &SecurityLabel) -> bool {
         // Classification must be >= other's classification
         if self.classification < other.classification {
@@ -107,17 +107,17 @@ impl SecurityLabel {
         true
     }
 
-    /// Check if this label is dominated by another label
+    // Check if this label is dominated by another label
     pub fn dominated_by(&self, other: &SecurityLabel) -> bool {
         other.dominates(self)
     }
 
-    /// Check if labels are comparable (one dominates the other)
+    // Check if labels are comparable (one dominates the other)
     pub fn comparable(&self, other: &SecurityLabel) -> bool {
         self.dominates(other) || other.dominates(self)
     }
 
-    /// Compare labels (for partial ordering)
+    // Compare labels (for partial ordering)
     pub fn partial_cmp_label(&self, other: &SecurityLabel) -> Option<Ordering> {
         if self == other {
             return Some(Ordering::Equal);
@@ -135,101 +135,101 @@ impl SecurityLabel {
     }
 }
 
-/// User clearance (maximum label a user can read/write)
+// User clearance (maximum label a user can read/write)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserClearance {
-    /// User ID
+    // User ID
     pub user_id: String,
-    /// Maximum read label
+    // Maximum read label
     pub max_read: SecurityLabel,
-    /// Maximum write label
+    // Maximum write label
     pub max_write: SecurityLabel,
-    /// Current working label
+    // Current working label
     pub current_label: SecurityLabel,
-    /// Authorized compartments
+    // Authorized compartments
     pub authorized_compartments: HashSet<String>,
-    /// Authorized groups
+    // Authorized groups
     pub authorized_groups: HashSet<String>,
 }
 
-/// Row-level label assignment
+// Row-level label assignment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RowLabel {
-    /// Table ID
+    // Table ID
     pub table_id: String,
-    /// Row ID/primary key
+    // Row ID/primary key
     pub row_id: String,
-    /// Security label
+    // Security label
     pub label: SecurityLabel,
-    /// Label assignment timestamp
+    // Label assignment timestamp
     pub assigned_at: i64,
-    /// Label assigned by
+    // Label assigned by
     pub assigned_by: String,
 }
 
-/// Label policy for a table
+// Label policy for a table
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LabelPolicy {
-    /// Policy ID
+    // Policy ID
     pub id: String,
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Table this policy applies to
+    // Table this policy applies to
     pub table_id: String,
-    /// Label column name
+    // Label column name
     pub label_column: String,
-    /// Default label for new rows
+    // Default label for new rows
     pub default_label: Option<SecurityLabel>,
-    /// Read access policy
+    // Read access policy
     pub read_policy: LabelAccessPolicy,
-    /// Write access policy
+    // Write access policy
     pub write_policy: LabelAccessPolicy,
-    /// Whether policy is enabled
+    // Whether policy is enabled
     pub enabled: bool,
 }
 
-/// Label access policy type
+// Label access policy type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum LabelAccessPolicy {
-    /// User must dominate row label
+    // User must dominate row label
     ReadDown,
-    /// User label must equal row label
+    // User label must equal row label
     ReadEqual,
-    /// User label can be dominated by row label
+    // User label can be dominated by row label
     ReadUp,
-    /// Custom policy with expression
+    // Custom policy with expression
     Custom { expression: String },
 }
 
-/// Label operation
+// Label operation
 #[derive(Debug, Clone)]
 pub enum LabelOperation {
-    /// Check if user can read row with label
+    // Check if user can read row with label
     CanRead { user_label: SecurityLabel, row_label: SecurityLabel },
-    /// Check if user can write row with label
+    // Check if user can write row with label
     CanWrite { user_label: SecurityLabel, row_label: SecurityLabel },
-    /// Check if user can upgrade label
+    // Check if user can upgrade label
     CanUpgrade { from_label: SecurityLabel, to_label: SecurityLabel },
-    /// Check if user can downgrade label
+    // Check if user can downgrade label
     CanDowngrade { from_label: SecurityLabel, to_label: SecurityLabel },
 }
 
-/// Label manager
+// Label manager
 pub struct LabelManager {
-    /// Defined compartments
+    // Defined compartments
     compartments: Arc<RwLock<HashMap<String, Compartment>>>,
-    /// User clearances
+    // User clearances
     clearances: Arc<RwLock<HashMap<String, UserClearance>>>,
-    /// Row labels
+    // Row labels
     row_labels: Arc<RwLock<HashMap<String, HashMap<String, RowLabel>>>>, // table_id -> row_id -> label
-    /// Label policies
+    // Label policies
     policies: Arc<RwLock<HashMap<String, LabelPolicy>>>,
-    /// Label statistics
+    // Label statistics
     statistics: Arc<RwLock<LabelStatistics>>,
 }
 
 impl LabelManager {
-    /// Create a new label manager
+    // Create a new label manager
     pub fn new() -> Self {
         Self {
             compartments: Arc::new(RwLock::new(HashMap::new())),
@@ -240,7 +240,7 @@ impl LabelManager {
         }
     }
 
-    /// Register a compartment
+    // Register a compartment
     pub fn register_compartment(&self, compartment: Compartment) -> Result<()> {
         let mut compartments = self.compartments.write();
 
@@ -263,7 +263,7 @@ impl LabelManager {
         Ok(())
     }
 
-    /// Get a compartment
+    // Get a compartment
     pub fn get_compartment(&self, id: &str) -> Result<Compartment> {
         self.compartments.read()
             .get(id)
@@ -271,12 +271,12 @@ impl LabelManager {
             .ok_or_else(|| DbError::NotFound(format!("Compartment {} not found", id)))
     }
 
-    /// Get all compartments
+    // Get all compartments
     pub fn get_all_compartments(&self) -> Vec<Compartment> {
         self.compartments.read().values().cloned().collect()
     }
 
-    /// Set user clearance
+    // Set user clearance
     pub fn set_user_clearance(&self, clearance: UserClearance) -> Result<()> {
         // Validate compartments exist
         let compartments = self.compartments.read();
@@ -297,7 +297,7 @@ impl LabelManager {
         Ok(())
     }
 
-    /// Get user clearance
+    // Get user clearance
     pub fn get_user_clearance(&self, user_id: &str) -> Result<UserClearance> {
         self.clearances.read()
             .get(user_id)
@@ -305,7 +305,7 @@ impl LabelManager {
             .ok_or_else(|| DbError::NotFound(format!("Clearance not found for user {}", user_id)))
     }
 
-    /// Set label for a row
+    // Set label for a row
     pub fn set_row_label(
         &self,
         table_id: String,
@@ -339,7 +339,7 @@ impl LabelManager {
         Ok(())
     }
 
-    /// Get label for a row
+    // Get label for a row
     pub fn get_row_label(&self, table_id: &str, row_id: &str) -> Option<SecurityLabel> {
         self.row_labels.read()
             .get(table_id)
@@ -347,7 +347,7 @@ impl LabelManager {
             .map(|row_label| row_label.label.clone())
     }
 
-    /// Check if user can read a row
+    // Check if user can read a row
     pub fn can_read_row(
         &self,
         user_id: &str,
@@ -385,7 +385,7 @@ impl LabelManager {
         }
     }
 
-    /// Check if user can write a row
+    // Check if user can write a row
     pub fn can_write_row(
         &self,
         user_id: &str,
@@ -418,7 +418,7 @@ impl LabelManager {
         }
     }
 
-    /// Filter rows based on user's label clearance
+    // Filter rows based on user's label clearance
     pub fn filter_readable_rows(
         &self,
         user_id: &str,
@@ -463,7 +463,7 @@ impl LabelManager {
         Ok(readable)
     }
 
-    /// Create a label policy for a table
+    // Create a label policy for a table
     pub fn create_label_policy(&self, policy: LabelPolicy) -> Result<()> {
         let mut policies = self.policies.write();
 
@@ -477,7 +477,7 @@ impl LabelManager {
         Ok(())
     }
 
-    /// Get label policy for a table
+    // Get label policy for a table
     pub fn get_table_policy(&self, table_id: &str) -> Result<LabelPolicy> {
         self.policies.read()
             .values()
@@ -486,7 +486,7 @@ impl LabelManager {
             .ok_or_else(|| DbError::NotFound(format!("No active label policy for table {}", table_id)))
     }
 
-    /// Update user's current working label
+    // Update user's current working label
     pub fn set_user_label(&self, user_id: &str, label: SecurityLabel) -> Result<()> {
         let mut clearances = self.clearances.write();
         let clearance = clearances.get_mut(user_id)
@@ -510,7 +510,7 @@ impl LabelManager {
         Ok(())
     }
 
-    /// Combine two labels (least upper bound)
+    // Combine two labels (least upper bound)
     pub fn combine_labels(&self, label1: &SecurityLabel, label2: &SecurityLabel) -> SecurityLabel {
         let classification = if label1.classification > label2.classification {
             label1.classification.clone()
@@ -532,7 +532,7 @@ impl LabelManager {
         }
     }
 
-    /// Intersect two labels (greatest lower bound)
+    // Intersect two labels (greatest lower bound)
     pub fn intersect_labels(&self, label1: &SecurityLabel, label2: &SecurityLabel) -> SecurityLabel {
         let classification = if label1.classification < label2.classification {
             label1.classification.clone()
@@ -558,12 +558,12 @@ impl LabelManager {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_statistics(&self) -> LabelStatistics {
         self.statistics.read().clone()
     }
 
-    /// Update statistics
+    // Update statistics
     pub fn update_statistics(&self) {
         let mut stats = self.statistics.write();
 
@@ -593,7 +593,7 @@ impl Default for LabelManager {
     }
 }
 
-/// Label statistics
+// Label statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LabelStatistics {
     pub total_compartments: usize,

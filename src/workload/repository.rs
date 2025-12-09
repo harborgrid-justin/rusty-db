@@ -11,64 +11,64 @@ use parking_lot::RwLock;
 use crate::Result;
 use crate::error::DbError;
 
-/// Unique identifier for a workload snapshot
+// Unique identifier for a workload snapshot
 pub type SnapshotId = u64;
 
-/// Unique identifier for a baseline
+// Unique identifier for a baseline
 pub type BaselineId = u64;
 
-/// AWR-like workload repository for automatic workload capture and analysis
+// AWR-like workload repository for automatic workload capture and analysis
 pub struct WorkloadRepository {
-    /// All captured snapshots, indexed by snapshot ID
+    // All captured snapshots, indexed by snapshot ID
     snapshots: Arc<RwLock<BTreeMap<SnapshotId, WorkloadSnapshot>>>,
 
-    /// Named baselines for comparison
+    // Named baselines for comparison
     baselines: Arc<RwLock<HashMap<BaselineId, Baseline>>>,
 
-    /// Configuration settings
+    // Configuration settings
     config: Arc<RwLock<RepositoryConfig>>,
 
-    /// Snapshot metadata index for quick lookup
+    // Snapshot metadata index for quick lookup
     snapshot_index: Arc<RwLock<SnapshotIndex>>,
 
-    /// Aggregated metrics cache
+    // Aggregated metrics cache
     metric_cache: Arc<RwLock<MetricCache>>,
 
-    /// Next snapshot ID
+    // Next snapshot ID
     next_snapshot_id: Arc<RwLock<SnapshotId>>,
 
-    /// Next baseline ID
+    // Next baseline ID
     next_baseline_id: Arc<RwLock<BaselineId>>,
 
-    /// Background collection status
+    // Background collection status
     collection_status: Arc<RwLock<CollectionStatus>>,
 }
 
-/// Configuration for the workload repository
+// Configuration for the workload repository
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RepositoryConfig {
-    /// Snapshot interval in seconds
+    // Snapshot interval in seconds
     pub snapshot_interval_secs: u64,
 
-    /// Retention period in days
+    // Retention period in days
     pub retention_days: u32,
 
-    /// Maximum number of snapshots to keep
+    // Maximum number of snapshots to keep
     pub max_snapshots: usize,
 
-    /// Enable automatic snapshot collection
+    // Enable automatic snapshot collection
     pub auto_collection_enabled: bool,
 
-    /// Top N queries to capture per snapshot
+    // Top N queries to capture per snapshot
     pub top_sql_count: usize,
 
-    /// Threshold for capturing long-running queries (ms)
+    // Threshold for capturing long-running queries (ms)
     pub long_query_threshold_ms: u64,
 
-    /// Enable metric aggregation
+    // Enable metric aggregation
     pub enable_aggregation: bool,
 
-    /// Aggregation window size (number of snapshots)
+    // Aggregation window size (number of snapshots)
     pub aggregation_window: usize,
 }
 
@@ -87,53 +87,53 @@ impl Default for RepositoryConfig {
     }
 }
 
-/// Complete workload snapshot capturing database state at a point in time
+// Complete workload snapshot capturing database state at a point in time
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkloadSnapshot {
-    /// Unique snapshot identifier
+    // Unique snapshot identifier
     pub snapshot_id: SnapshotId,
 
-    /// Timestamp when snapshot was taken
+    // Timestamp when snapshot was taken
     pub timestamp: SystemTime,
 
-    /// Database instance information
+    // Database instance information
     pub instance_info: InstanceInfo,
 
-    /// System-wide statistics
+    // System-wide statistics
     pub system_stats: SystemStatistics,
 
-    /// Top SQL statements by various metrics
+    // Top SQL statements by various metrics
     pub top_sql: Vec<SqlStatementStats>,
 
-    /// Session statistics
+    // Session statistics
     pub session_stats: Vec<SessionStats>,
 
-    /// Wait event statistics
+    // Wait event statistics
     pub wait_events: Vec<WaitEventStats>,
 
-    /// I/O statistics
+    // I/O statistics
     pub io_stats: IoStatistics,
 
-    /// Memory statistics
+    // Memory statistics
     pub memory_stats: MemoryStatistics,
 
-    /// Time model statistics
+    // Time model statistics
     pub time_model: TimeModelStats,
 
-    /// Load profile
+    // Load profile
     pub load_profile: LoadProfile,
 
-    /// Operating system statistics
+    // Operating system statistics
     pub os_stats: OsStatistics,
 
-    /// Tablespace usage
+    // Tablespace usage
     pub tablespace_usage: Vec<TablespaceStats>,
 
-    /// Segment statistics (top tables/indexes)
+    // Segment statistics (top tables/indexes)
     pub segment_stats: Vec<SegmentStats>,
 }
 
-/// Database instance information
+// Database instance information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceInfo {
     pub instance_name: String,
@@ -144,7 +144,7 @@ pub struct InstanceInfo {
     pub uptime_seconds: u64,
 }
 
-/// System-wide statistics
+// System-wide statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemStatistics {
     pub transactions_committed: u64,
@@ -168,7 +168,7 @@ pub struct SystemStatistics {
     pub sorts_disk: u64,
 }
 
-/// SQL statement statistics
+// SQL statement statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SqlStatementStats {
     pub sql_id: String,
@@ -190,7 +190,7 @@ pub struct SqlStatementStats {
     pub action: Option<String>,
 }
 
-/// Session statistics
+// Session statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionStats {
     pub session_id: u64,
@@ -208,7 +208,7 @@ pub struct SessionStats {
     pub wait_event: Option<String>,
 }
 
-/// Wait event statistics
+// Wait event statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WaitEventStats {
     pub wait_class: String,
@@ -219,7 +219,7 @@ pub struct WaitEventStats {
     pub time_waited_pct: f64,
 }
 
-/// I/O statistics
+// I/O statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IoStatistics {
     pub datafile_reads: u64,
@@ -236,7 +236,7 @@ pub struct IoStatistics {
     pub throughput_mbps: f64,
 }
 
-/// Memory statistics
+// Memory statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryStatistics {
     pub sga_size_bytes: u64,
@@ -251,7 +251,7 @@ pub struct MemoryStatistics {
     pub session_count: u32,
 }
 
-/// Time model statistics
+// Time model statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeModelStats {
     pub db_time_micros: u64,
@@ -265,7 +265,7 @@ pub struct TimeModelStats {
     pub pl_sql_compilation_time_micros: u64,
 }
 
-/// Load profile showing database workload characteristics
+// Load profile showing database workload characteristics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoadProfile {
     pub transactions_per_second: f64,
@@ -281,7 +281,7 @@ pub struct LoadProfile {
     pub user_calls_per_second: f64,
 }
 
-/// Operating system statistics
+// Operating system statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OsStatistics {
     pub cpu_count: u32,
@@ -295,7 +295,7 @@ pub struct OsStatistics {
     pub network_tx_bytes_per_sec: f64,
 }
 
-/// Tablespace usage statistics
+// Tablespace usage statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TablespaceStats {
     pub tablespace_name: String,
@@ -306,7 +306,7 @@ pub struct TablespaceStats {
     pub datafiles: u32,
 }
 
-/// Segment (table/index) statistics
+// Segment (table/index) statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SegmentStats {
     pub owner: String,
@@ -321,7 +321,7 @@ pub struct SegmentStats {
     pub space_used_bytes: u64,
 }
 
-/// Named baseline for comparison
+// Named baseline for comparison
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Baseline {
     pub baseline_id: BaselineId,
@@ -333,37 +333,37 @@ pub struct Baseline {
     pub baseline_type: BaselineType,
 }
 
-/// Type of baseline
+// Type of baseline
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum BaselineType {
-    /// Static baseline for a specific time range
+    // Static baseline for a specific time range
     Static,
-    /// Moving window baseline
+    // Moving window baseline
     MovingWindow,
-    /// Template baseline for similar workloads
+    // Template baseline for similar workloads
     Template,
 }
 
-/// Snapshot index for fast lookup
+// Snapshot index for fast lookup
 #[derive(Debug, Default)]
 struct SnapshotIndex {
-    /// Snapshots by time range
+    // Snapshots by time range
     by_time: BTreeMap<SystemTime, SnapshotId>,
-    /// Snapshots by date (for retention)
+    // Snapshots by date (for retention)
     by_date: HashMap<String, Vec<SnapshotId>>,
 }
 
-/// Metric cache for aggregated data
+// Metric cache for aggregated data
 #[derive(Debug, Default)]
 struct MetricCache {
-    /// Aggregated metrics by time window
+    // Aggregated metrics by time window
     hourly_metrics: VecDeque<AggregatedMetrics>,
     daily_metrics: VecDeque<AggregatedMetrics>,
-    /// Last cache update time
+    // Last cache update time
     last_update: Option<SystemTime>,
 }
 
-/// Aggregated metrics for a time period
+// Aggregated metrics for a time period
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregatedMetrics {
     pub period_start: SystemTime,
@@ -377,7 +377,7 @@ pub struct AggregatedMetrics {
     pub peak_active_sessions: u32,
 }
 
-/// Collection status
+// Collection status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CollectionStatus {
     enabled: bool,
@@ -388,12 +388,12 @@ struct CollectionStatus {
 }
 
 impl WorkloadRepository {
-    /// Create a new workload repository with default configuration
+    // Create a new workload repository with default configuration
     pub fn new() -> Self {
         Self::with_config(RepositoryConfig::default())
     }
 
-    /// Create a new workload repository with custom configuration
+    // Create a new workload repository with custom configuration
     pub fn with_config(config: RepositoryConfig) -> Self {
         let now = SystemTime::now();
         let interval = Duration::from_secs(config.snapshot_interval_secs);
@@ -416,7 +416,7 @@ impl WorkloadRepository {
         }
     }
 
-    /// Capture a workload snapshot
+    // Capture a workload snapshot
     pub fn capture_snapshot(&self, snapshot_data: WorkloadSnapshot) -> Result<SnapshotId> {
         let mut snapshots = self.snapshots.write();
         let mut index = self.snapshot_index.write();
@@ -450,12 +450,12 @@ impl WorkloadRepository {
         Ok(snapshot_id)
     }
 
-    /// Get a specific snapshot by ID
+    // Get a specific snapshot by ID
     pub fn get_snapshot(&self, snapshot_id: SnapshotId) -> Option<WorkloadSnapshot> {
         self.snapshots.read().get(&snapshot_id).cloned()
     }
 
-    /// Get snapshots within a time range
+    // Get snapshots within a time range
     pub fn get_snapshots_in_range(
         &self,
         start_time: SystemTime,
@@ -476,7 +476,7 @@ impl WorkloadRepository {
             .collect()
     }
 
-    /// Create a named baseline
+    // Create a named baseline
     pub fn create_baseline(
         &self,
         name: String,
@@ -512,17 +512,17 @@ impl WorkloadRepository {
         Ok(baseline_id)
     }
 
-    /// Get baseline by ID
+    // Get baseline by ID
     pub fn get_baseline(&self, baseline_id: BaselineId) -> Option<Baseline> {
         self.baselines.read().get(&baseline_id).cloned()
     }
 
-    /// List all baselines
+    // List all baselines
     pub fn list_baselines(&self) -> Vec<Baseline> {
         self.baselines.read().values().cloned().collect()
     }
 
-    /// Delete a baseline
+    // Delete a baseline
     pub fn delete_baseline(&self, baseline_id: BaselineId) -> Result<()> {
         let mut baselines = self.baselines.write();
         if baselines.remove(&baseline_id).is_some() {
@@ -532,7 +532,7 @@ impl WorkloadRepository {
         }
     }
 
-    /// Compare two snapshots
+    // Compare two snapshots
     pub fn compare_snapshots(
         &self,
         snapshot1_id: SnapshotId,
@@ -550,7 +550,7 @@ impl WorkloadRepository {
         Ok(SnapshotComparison::new(snap1.clone(), snap2.clone()))
     }
 
-    /// Generate aggregated metrics for a time range
+    // Generate aggregated metrics for a time range
     pub fn get_aggregated_metrics(
         &self,
         start_time: SystemTime,
@@ -602,7 +602,7 @@ impl WorkloadRepository {
         }
     }
 
-    /// Apply retention policy to remove old snapshots
+    // Apply retention policy to remove old snapshots
     fn apply_retention_policy(&self) -> Result<()> {
         let config = self.config.read();
         let retention_days = config.retention_days;
@@ -639,7 +639,7 @@ impl WorkloadRepository {
         Ok(())
     }
 
-    /// Get repository statistics
+    // Get repository statistics
     pub fn get_repository_stats(&self) -> RepositoryStats {
         let snapshots = self.snapshots.read();
         let baselines = self.baselines.read();
@@ -657,7 +657,7 @@ impl WorkloadRepository {
         }
     }
 
-    /// Purge all snapshots (use with caution!)
+    // Purge all snapshots (use with caution!)
     pub fn purge_all_snapshots(&self) -> Result<usize> {
         let mut snapshots = self.snapshots.write();
         let mut index = self.snapshot_index.write();
@@ -677,7 +677,7 @@ impl Default for WorkloadRepository {
     }
 }
 
-/// Repository statistics
+// Repository statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RepositoryStats {
     pub total_snapshots: usize,
@@ -690,7 +690,7 @@ pub struct RepositoryStats {
     pub collection_errors: u64,
 }
 
-/// Comparison between two snapshots
+// Comparison between two snapshots
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapshotComparison {
     pub snapshot1: WorkloadSnapshot,
@@ -722,7 +722,7 @@ impl SnapshotComparison {
     }
 }
 
-/// Delta statistics between two snapshots
+// Delta statistics between two snapshots
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeltaStatistics {
     pub delta_transactions: i64,
@@ -884,5 +884,3 @@ mod tests {
         assert!(baseline.is_some());
     }
 }
-
-

@@ -1,15 +1,15 @@
-/// Adaptive Query Processing for RustyDB
-///
-/// This module implements runtime query adaptation techniques that adjust
-/// execution strategies based on actual data characteristics discovered during execution.
-///
-/// Key Features:
-/// - Runtime plan switching based on cardinality feedback
-/// - Adaptive join ordering with mid-execution reoptimization
-/// - Memory-adaptive operators (hash to sort fallback)
-/// - Runtime statistics collection and histogram building
-/// - Dynamic operator parameter tuning
-/// - Adaptive query timeouts and resource limits
+// Adaptive Query Processing for RustyDB
+//
+// This module implements runtime query adaptation techniques that adjust
+// execution strategies based on actual data characteristics discovered during execution.
+//
+// Key Features:
+// - Runtime plan switching based on cardinality feedback
+// - Adaptive join ordering with mid-execution reoptimization
+// - Memory-adaptive operators (hash to sort fallback)
+// - Runtime statistics collection and histogram building
+// - Dynamic operator parameter tuning
+// - Adaptive query timeouts and resource limits
 
 use std::time::Instant;
 use crate::error::DbError;
@@ -18,19 +18,19 @@ use crate::parser::JoinType;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::time::{Duration};
+use std::time::Duration;
 
-/// Adaptive execution context that tracks runtime statistics
+// Adaptive execution context that tracks runtime statistics
 pub struct AdaptiveContext {
-    /// Statistics collected during execution
+    // Statistics collected during execution
     stats: Arc<RwLock<RuntimeStatistics>>,
-    /// Current execution phase
+    // Current execution phase
     phase: ExecutionPhase,
-    /// Adaptation decisions made
+    // Adaptation decisions made
     adaptations: Vec<AdaptationDecision>,
-    /// Memory budget for execution
+    // Memory budget for execution
     memory_budget: usize,
-    /// Current memory usage
+    // Current memory usage
     memory_used: Arc<RwLock<usize>>,
 }
 
@@ -45,7 +45,7 @@ impl AdaptiveContext {
         }
     }
 
-    /// Record cardinality observation
+    // Record cardinality observation
     pub fn record_cardinality(&self, operator: String, actual: usize, estimated: usize) {
         let mut stats = self.stats.write();
         stats.cardinality_feedback.insert(
@@ -59,7 +59,7 @@ impl AdaptiveContext {
         );
     }
 
-    /// Check if reoptimization is needed
+    // Check if reoptimization is needed
     pub fn should_reoptimize(&self) -> bool {
         let stats = self.stats.read();
 
@@ -73,13 +73,13 @@ impl AdaptiveContext {
         false
     }
 
-    /// Get current memory pressure (0.0 = no pressure, 1.0 = at limit)
+    // Get current memory pressure (0.0 = no pressure, 1.0 = at limit)
     pub fn memory_pressure(&self) -> f64 {
         let used = *self.memory_used.read();
         used as f64 / self.memory_budget as f64
     }
 
-    /// Allocate memory
+    // Allocate memory
     pub fn allocate_memory(&self, size: usize) -> Result<(), DbError> {
         let mut used = self.memory_used.write();
         if *used + size > self.memory_budget {
@@ -92,24 +92,24 @@ impl AdaptiveContext {
         Ok(())
     }
 
-    /// Free memory
+    // Free memory
     pub fn free_memory(&self, size: usize) {
         let mut used = self.memory_used.write();
         *used = used.saturating_sub(size);
     }
 
-    /// Record adaptation decision
+    // Record adaptation decision
     pub fn record_adaptation(&mut self, decision: AdaptationDecision) {
         self.adaptations.push(decision);
     }
 
-    /// Get adaptation history
+    // Get adaptation history
     pub fn get_adaptations(&self) -> &[AdaptationDecision] {
         &self.adaptations
     }
 }
 
-/// Execution phase tracking
+// Execution phase tracking
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ExecutionPhase {
     Planning,
@@ -118,18 +118,18 @@ pub enum ExecutionPhase {
     Finalization,
 }
 
-/// Runtime statistics collected during execution
+// Runtime statistics collected during execution
 #[derive(Debug, Clone)]
 pub struct RuntimeStatistics {
-    /// Cardinality feedback from operators
+    // Cardinality feedback from operators
     pub cardinality_feedback: HashMap<String, CardinalityFeedback>,
-    /// Selectivity estimates
+    // Selectivity estimates
     pub selectivity_estimates: HashMap<String, f64>,
-    /// Histogram data
+    // Histogram data
     pub histograms: HashMap<String, Histogram>,
-    /// Execution start time
+    // Execution start time
     pub start_time: Option<Instant>,
-    /// Operator timings
+    // Operator timings
     pub operator_timings: HashMap<String, Duration>,
 }
 
@@ -144,18 +144,18 @@ impl RuntimeStatistics {
         }
     }
 
-    /// Record operator execution time
+    // Record operator execution time
     pub fn record_timing(&mut self, operator: String, duration: Duration) {
         self.operator_timings.insert(operator, duration);
     }
 
-    /// Get total execution time
+    // Get total execution time
     pub fn total_execution_time(&self) -> Option<Duration> {
         self.start_time.map(|start| start.elapsed())
     }
 }
 
-/// Cardinality feedback from runtime execution
+// Cardinality feedback from runtime execution
 #[derive(Debug, Clone)]
 pub struct CardinalityFeedback {
     pub operator: String,
@@ -164,7 +164,7 @@ pub struct CardinalityFeedback {
     pub error_ratio: f64,
 }
 
-/// Histogram for value distribution
+// Histogram for value distribution
 #[derive(Debug, Clone)]
 pub struct Histogram {
     pub column: String,
@@ -181,7 +181,7 @@ impl Histogram {
         }
     }
 
-    /// Add value to histogram
+    // Add value to histogram
     pub fn add_value(&mut self, value: f64) {
         // Simple equi-width bucketing
         let bucket_idx = (value.abs() as usize) % self.buckets.len();
@@ -191,7 +191,7 @@ impl Histogram {
         self.total_count += 1;
     }
 
-    /// Estimate selectivity for range predicate
+    // Estimate selectivity for range predicate
     pub fn estimate_selectivity(&self, min: f64, max: f64) -> f64 {
         if self.total_count == 0 {
             return 0.5; // Default estimate
@@ -226,7 +226,7 @@ impl Default for HistogramBucket {
     }
 }
 
-/// Adaptation decision record
+// Adaptation decision record
 #[derive(Debug, Clone)]
 pub struct AdaptationDecision {
     pub timestamp: Instant,
@@ -236,7 +236,7 @@ pub struct AdaptationDecision {
     pub new_strategy: String,
 }
 
-/// Type of adaptation
+// Type of adaptation
 #[derive(Debug, Clone, PartialEq)]
 pub enum AdaptationType {
     JoinReordering,
@@ -247,7 +247,7 @@ pub enum AdaptationType {
     AggregationStrategy,
 }
 
-/// Adaptive query executor
+// Adaptive query executor
 pub struct AdaptiveExecutor {
     context: Arc<RwLock<AdaptiveContext>>,
     reoptimization_threshold: f64,
@@ -261,7 +261,7 @@ impl AdaptiveExecutor {
         }
     }
 
-    /// Execute plan with adaptive strategies
+    // Execute plan with adaptive strategies
     pub fn execute_adaptive(&self, plan: PlanNode) -> Result<QueryResult, DbError> {
         let start = Instant::now();
         let current_plan = plan;
@@ -285,7 +285,7 @@ impl AdaptiveExecutor {
         Ok(result)
     }
 
-    /// Execute with periodic adaptation checkpoints
+    // Execute with periodic adaptation checkpoints
     fn execute_with_checkpoints(&self, plan: PlanNode) -> Result<QueryResult, DbError> {
         match plan {
             PlanNode::Join { join_type, left, right, condition } => {
@@ -304,7 +304,7 @@ impl AdaptiveExecutor {
         }
     }
 
-    /// Adaptive join execution with algorithm selection
+    // Adaptive join execution with algorithm selection
     fn execute_adaptive_join(
         &self,
         join_type: JoinType,
@@ -365,7 +365,7 @@ impl AdaptiveExecutor {
         )
     }
 
-    /// Execute join with specific algorithm
+    // Execute join with specific algorithm
     fn execute_join_with_algorithm(
         &self,
         left: QueryResult,
@@ -463,7 +463,7 @@ impl AdaptiveExecutor {
         }
     }
 
-    /// Adaptive aggregation with algorithm selection
+    // Adaptive aggregation with algorithm selection
     fn execute_adaptive_aggregate(
         &self,
         input: PlanNode,
@@ -506,7 +506,7 @@ impl AdaptiveExecutor {
         }
     }
 
-    /// Hash-based aggregation
+    // Hash-based aggregation
     fn hash_based_aggregation(
         &self,
         input: QueryResult,
@@ -540,7 +540,7 @@ impl AdaptiveExecutor {
         Ok(QueryResult::new(columns, result_rows))
     }
 
-    /// Sort-based aggregation (memory-efficient)
+    // Sort-based aggregation (memory-efficient)
     fn sort_based_aggregation(
         &self,
         input: QueryResult,
@@ -601,7 +601,7 @@ impl AdaptiveExecutor {
         Ok(QueryResult::new(columns, result_rows))
     }
 
-    /// Adaptive table scan with index selection
+    // Adaptive table scan with index selection
     fn execute_adaptive_scan(
         &self,
         table: String,
@@ -617,13 +617,13 @@ impl AdaptiveExecutor {
         Ok(QueryResult::new(columns, Vec::new()))
     }
 
-    /// Get current execution statistics
+    // Get current execution statistics
     pub fn get_statistics(&self) -> RuntimeStatistics {
         self.context.read().stats.read().clone()
     }
 }
 
-/// Join algorithm selection
+// Join algorithm selection
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum JoinAlgorithm {
     Hash,
@@ -631,20 +631,20 @@ enum JoinAlgorithm {
     NestedLoop,
 }
 
-/// Aggregation strategy
+// Aggregation strategy
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum AggregationStrategy {
     HashBased,
     SortBased,
 }
 
-/// Progressive optimization - reoptimize plan during execution
+// Progressive optimization - reoptimize plan during execution
 pub struct ProgressiveOptimizer {
-    /// Original plan
+    // Original plan
     original_plan: PlanNode,
-    /// Current plan (may be reoptimized)
+    // Current plan (may be reoptimized)
     current_plan: Arc<RwLock<PlanNode>>,
-    /// Reoptimization count
+    // Reoptimization count
     reopt_count: usize,
 }
 
@@ -657,7 +657,7 @@ impl ProgressiveOptimizer {
         }
     }
 
-    /// Reoptimize plan based on runtime feedback
+    // Reoptimize plan based on runtime feedback
     pub fn reoptimize(&mut self, feedback: &RuntimeStatistics) -> Result<(), DbError> {
         // Check if reoptimization is worthwhile
         if !self.should_reoptimize(feedback) {
@@ -745,5 +745,3 @@ mod tests {
         assert!(result.is_ok());
     }
 }
-
-

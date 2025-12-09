@@ -15,21 +15,21 @@ use super::aggregates::AggregateFunction;
 // OLAP Cube Builder
 // =============================================================================
 
-/// Builder for constructing OLAP cubes.
+// Builder for constructing OLAP cubes.
 #[derive(Debug, Clone)]
 pub struct OlapCubeBuilder {
-    /// Dimension columns
+    // Dimension columns
     dimensions: Vec<String>,
 
-    /// Measure columns
+    // Measure columns
     measures: Vec<String>,
 
-    /// Aggregation functions for measures
+    // Aggregation functions for measures
     aggregations: Vec<AggregateFunction>,
 }
 
 impl OlapCubeBuilder {
-    /// Create a new OLAP cube builder.
+    // Create a new OLAP cube builder.
     pub fn new() -> Self {
         Self {
             dimensions: Vec::new(),
@@ -38,32 +38,32 @@ impl OlapCubeBuilder {
         }
     }
 
-    /// Add a dimension to the cube.
+    // Add a dimension to the cube.
     pub fn add_dimension(&mut self, dimension: String) -> &mut Self {
         self.dimensions.push(dimension);
         self
     }
 
-    /// Add a measure with an aggregation function.
+    // Add a measure with an aggregation function.
     pub fn add_measure(&mut self, measure: String, aggregation: AggregateFunction) -> &mut Self {
         self.measures.push(measure);
         self.aggregations.push(aggregation);
         self
     }
 
-    /// Get the dimensions.
+    // Get the dimensions.
     pub fn dimensions(&self) -> &[String] {
         &self.dimensions
     }
 
-    /// Get the measures.
+    // Get the measures.
     pub fn measures(&self) -> &[String] {
         &self.measures
     }
 
-    /// Build the cube from data.
-    ///
-    /// In production, this would compute aggregates for all dimension combinations.
+    // Build the cube from data.
+    //
+    // In production, this would compute aggregates for all dimension combinations.
     pub fn build_cube(&self, _data: Vec<Vec<String>>) -> OlapCube {
         OlapCube {
             dimensions: self.dimensions.clone(),
@@ -83,22 +83,22 @@ impl Default for OlapCubeBuilder {
 // OLAP Cube
 // =============================================================================
 
-/// OLAP cube for multidimensional analysis.
-///
-/// Stores pre-computed aggregates indexed by dimension values.
+// OLAP cube for multidimensional analysis.
+//
+// Stores pre-computed aggregates indexed by dimension values.
 pub struct OlapCube {
-    /// Dimension column names
+    // Dimension column names
     dimensions: Vec<String>,
 
-    /// Measure column names
+    // Measure column names
     measures: Vec<String>,
 
-    /// Cube cells: dimension values -> measure values
+    // Cube cells: dimension values -> measure values
     cells: HashMap<Vec<String>, Vec<f64>>,
 }
 
 impl OlapCube {
-    /// Create an empty cube.
+    // Create an empty cube.
     pub fn new(dimensions: Vec<String>, measures: Vec<String>) -> Self {
         Self {
             dimensions,
@@ -107,12 +107,12 @@ impl OlapCube {
         }
     }
 
-    /// Insert a cell value.
+    // Insert a cell value.
     pub fn insert_cell(&mut self, dimension_values: Vec<String>, measure_values: Vec<f64>) {
         self.cells.insert(dimension_values, measure_values);
     }
 
-    /// Query the cube with dimension filters.
+    // Query the cube with dimension filters.
     pub fn query(&self, dimensionfilters: &HashMap<String, String>) -> Vec<Vec<f64>> {
         self.cells
             .iter()
@@ -131,9 +131,9 @@ impl OlapCube {
             .collect()
     }
 
-    /// Drill down to a more detailed level.
-    ///
-    /// Returns a new cube with the additional dimension.
+    // Drill down to a more detailed level.
+    //
+    // Returns a new cube with the additional dimension.
     pub fn drill_down(&self, dimension: &str) -> Result<OlapCube> {
         // In production, this would add a new dimension level
         Ok(OlapCube {
@@ -143,9 +143,9 @@ impl OlapCube {
         })
     }
 
-    /// Roll up to a less detailed level.
-    ///
-    /// Returns a new cube with aggregated values.
+    // Roll up to a less detailed level.
+    //
+    // Returns a new cube with aggregated values.
     pub fn roll_up(&self, dimension: &str) -> Result<OlapCube> {
         // In production, this would aggregate out a dimension
         Ok(OlapCube {
@@ -155,7 +155,7 @@ impl OlapCube {
         })
     }
 
-    /// Slice the cube by fixing one dimension value.
+    // Slice the cube by fixing one dimension value.
     pub fn slice(&self, dimension: &str, value: &str) -> Result<OlapCube> {
         let mut filters = HashMap::new();
         filters.insert(dimension.to_string(), value.to_string());
@@ -180,7 +180,7 @@ impl OlapCube {
         })
     }
 
-    /// Dice the cube by filtering on multiple dimensions.
+    // Dice the cube by filtering on multiple dimensions.
     pub fn dice(&self, filters: &HashMap<String, Vec<String>>) -> Result<OlapCube> {
         let filtered_cells: HashMap<_, _> = self
             .cells
@@ -207,22 +207,22 @@ impl OlapCube {
         })
     }
 
-    /// Get a specific cell value.
+    // Get a specific cell value.
     pub fn get_cell(&self, coordinates: &[String]) -> Option<&Vec<f64>> {
         self.cells.get(coordinates)
     }
 
-    /// Get the total number of cells.
+    // Get the total number of cells.
     pub fn total_cells(&self) -> usize {
         self.cells.len()
     }
 
-    /// Get the dimensions.
+    // Get the dimensions.
     pub fn dimensions(&self) -> &[String] {
         &self.dimensions
     }
 
-    /// Get the measures.
+    // Get the measures.
     pub fn measures(&self) -> &[String] {
         &self.measures
     }
@@ -232,20 +232,20 @@ impl OlapCube {
 // Multidimensional Aggregator
 // =============================================================================
 
-/// Aggregator for computing multidimensional aggregates.
+// Aggregator for computing multidimensional aggregates.
 pub struct MultidimensionalAggregator {
-    /// Dimension column indices
+    // Dimension column indices
     dimensions: Vec<usize>,
 
-    /// Measure column indices
+    // Measure column indices
     measures: Vec<usize>,
 
-    /// Aggregation functions
+    // Aggregation functions
     aggregations: Vec<AggregateFunction>,
 }
 
 impl MultidimensionalAggregator {
-    /// Create a new aggregator.
+    // Create a new aggregator.
     pub fn new(
         dimensions: Vec<usize>,
         measures: Vec<usize>,
@@ -258,7 +258,7 @@ impl MultidimensionalAggregator {
         }
     }
 
-    /// Compute a CUBE (all possible groupings).
+    // Compute a CUBE (all possible groupings).
     pub fn compute_cube(&self, data: &[Vec<String>]) -> AggregationCube {
         let mut cube = AggregationCube::new();
 
@@ -278,7 +278,7 @@ impl MultidimensionalAggregator {
         cube
     }
 
-    /// Compute a ROLLUP (hierarchical groupings).
+    // Compute a ROLLUP (hierarchical groupings).
     pub fn compute_rollup(&self, data: &[Vec<String>]) -> AggregationCube {
         let mut cube = AggregationCube::new();
 
@@ -291,7 +291,7 @@ impl MultidimensionalAggregator {
         cube
     }
 
-    /// Aggregate by specific dimensions.
+    // Aggregate by specific dimensions.
     fn aggregate_by_dimensions(
         &self,
         data: &[Vec<String>],
@@ -351,32 +351,32 @@ impl MultidimensionalAggregator {
 // Aggregation Cube
 // =============================================================================
 
-/// Result of multidimensional aggregation.
+// Result of multidimensional aggregation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregationCube {
-    /// Cells mapping dimension values to measure values
+    // Cells mapping dimension values to measure values
     pub cells: HashMap<Vec<String>, Vec<f64>>,
 }
 
 impl AggregationCube {
-    /// Create an empty aggregation cube.
+    // Create an empty aggregation cube.
     pub fn new() -> Self {
         Self {
             cells: HashMap::new(),
         }
     }
 
-    /// Get a cell value.
+    // Get a cell value.
     pub fn get_cell(&self, coordinates: &[String]) -> Option<&Vec<f64>> {
         self.cells.get(coordinates)
     }
 
-    /// Get the total number of cells.
+    // Get the total number of cells.
     pub fn total_cells(&self) -> usize {
         self.cells.len()
     }
 
-    /// Get all cells.
+    // Get all cells.
     pub fn all_cells(&self) -> impl Iterator<Item = (&Vec<String>, &Vec<f64>)> {
         self.cells.iter()
     }

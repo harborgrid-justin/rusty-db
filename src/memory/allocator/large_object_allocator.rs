@@ -1,27 +1,27 @@
 //\! Large Object Allocator Implementation
-//\! 
+//\!
 //\! Direct mmap for huge allocations with huge page support.
 
 use super::common::*;
 
-/// Large object metadata
+// Large object metadata
 struct LargeObject {
-    /// Base address
+    // Base address
     base: NonNull<u8>,
-    /// Size of allocation
+    // Size of allocation
     size: usize,
-    /// Whether huge pages are used
+    // Whether huge pages are used
     huge_pages: bool,
-    /// Huge page size used (if any)
+    // Huge page size used (if any)
     huge_page_size: usize,
-    /// Whether copy-on-write is enabled
+    // Whether copy-on-write is enabled
     cow: bool,
-    /// Allocation timestamp
+    // Allocation timestamp
     allocated_at: Instant,
 }
 
 impl LargeObject {
-    /// Allocate a large object using mmap
+    // Allocate a large object using mmap
     unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
         #[cfg(unix)]
         {
@@ -124,7 +124,7 @@ impl LargeObject {
         }
     }
 
-    /// Enable lazy allocation (on-demand paging)
+    // Enable lazy allocation (on-demand paging)
     unsafe fn enable_lazy_allocation(&self) -> Result<()> {
         #[cfg(unix)]
         {
@@ -139,7 +139,7 @@ impl LargeObject {
         Ok(())
     }
 
-    /// Prefault pages (force allocation)
+    // Prefault pages (force allocation)
     unsafe fn prefault(&self) -> Result<()> {
         #[cfg(unix)]
         {
@@ -154,7 +154,7 @@ impl LargeObject {
         Ok(())
     }
 
-    /// Mark as sequential access
+    // Mark as sequential access
     unsafe fn set_sequential(&self) -> Result<()> {
         #[cfg(unix)]
         {
@@ -187,11 +187,11 @@ impl Drop for LargeObject {
     }
 }
 
-/// Large object allocator
+// Large object allocator
 pub struct LargeObjectAllocator {
-    /// Active large objects
+    // Active large objects
     objects: RwLock<HashMap<usize, LargeObject>>,
-    /// Statistics
+    // Statistics
     stats: LargeObjectStats,
 }
 
@@ -220,7 +220,7 @@ impl LargeObjectStats {
 }
 
 impl LargeObjectAllocator {
-    /// Create a new large object allocator
+    // Create a new large object allocator
     pub fn new() -> Self {
         Self {
             objects: RwLock::new(HashMap::new()),
@@ -228,7 +228,7 @@ impl LargeObjectAllocator {
         }
     }
 
-    /// Allocate a large object
+    // Allocate a large object
     pub fn allocate(
         &self,
         size: usize,
@@ -256,7 +256,7 @@ impl LargeObjectAllocator {
         Ok(ptr)
     }
 
-    /// Deallocate a large object
+    // Deallocate a large object
     pub fn deallocate(&self, ptr: NonNull<u8>) -> Result<()> {
         let addr = ptr.as_ptr() as usize;
 
@@ -269,7 +269,7 @@ impl LargeObjectAllocator {
         }
     }
 
-    /// Enable lazy allocation for an object
+    // Enable lazy allocation for an object
     pub fn enable_lazy_allocation(&self, ptr: NonNull<u8>) -> Result<()> {
         let addr = ptr.as_ptr() as usize;
         let objects = self.objects.read().unwrap();
@@ -281,7 +281,7 @@ impl LargeObjectAllocator {
         }
     }
 
-    /// Prefault pages for an object
+    // Prefault pages for an object
     pub fn prefault(&self, ptr: NonNull<u8>) -> Result<()> {
         let addr = ptr.as_ptr() as usize;
         let objects = self.objects.read().unwrap();
@@ -293,7 +293,7 @@ impl LargeObjectAllocator {
         }
     }
 
-    /// Set sequential access pattern
+    // Set sequential access pattern
     pub fn set_sequential(&self, ptr: NonNull<u8>) -> Result<()> {
         let addr = ptr.as_ptr() as usize;
         let objects = self.objects.read().unwrap();
@@ -305,7 +305,7 @@ impl LargeObjectAllocator {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> LargeObjectAllocatorStats {
         let objects = self.objects.read().unwrap();
         let active_objects = objects.len();
@@ -325,7 +325,7 @@ impl LargeObjectAllocator {
     }
 }
 
-/// Public large object allocator statistics
+// Public large object allocator statistics
 #[derive(Debug, Clone)]
 pub struct LargeObjectAllocatorStats {
     pub allocations: u64,

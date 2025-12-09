@@ -11,51 +11,51 @@ use super::config::HealthMonitorConfig;
 use super::errors::HealthMonitorError;
 use super::types::*;
 
-/// Health monitor trait
+// Health monitor trait
 #[async_trait]
 pub trait HealthMonitor: Send + Sync {
-    /// Check health of a specific replica
+    // Check health of a specific replica
     async fn check_replica_health(&self, replica_id: &ReplicaId) -> Result<HealthCheckResult, HealthMonitorError>;
 
-    /// Check health of all replicas
+    // Check health of all replicas
     async fn check_all_replicas(&self) -> Result<Vec<HealthCheckResult>, HealthMonitorError>;
 
-    /// Get health history for a replica
+    // Get health history for a replica
     async fn get_health_history(
         &self,
         replica_id: &ReplicaId,
         duration: Duration,
     ) -> Result<Vec<HealthHistoryEntry>, HealthMonitorError>;
 
-    /// Get health statistics
+    // Get health statistics
     async fn get_statistics(&self, replica_id: Option<&ReplicaId>) -> Result<HealthStatistics, HealthMonitorError>;
 
-    /// Get active alerts
+    // Get active alerts
     async fn get_active_alerts(&self) -> Result<Vec<HealthAlert>, HealthMonitorError>;
 
-    /// Acknowledge an alert
+    // Acknowledge an alert
     async fn acknowledge_alert(&self, alert_id: &str) -> Result<(), HealthMonitorError>;
 
-    /// Get health trend
+    // Get health trend
     async fn get_health_trend(&self, replica_id: &ReplicaId) -> Result<HealthTrend, HealthMonitorError>;
 }
 
-/// Replication health monitor implementation
+// Replication health monitor implementation
 pub struct ReplicationHealthMonitor {
-    /// Configuration
+    // Configuration
     pub(crate) config: Arc<HealthMonitorConfig>,
-    /// Health history per replica
+    // Health history per replica
     pub(crate) history: Arc<RwLock<HashMap<ReplicaId, VecDeque<HealthHistoryEntry>>>>,
-    /// Active alerts
+    // Active alerts
     pub(crate) alerts: Arc<RwLock<HashMap<String, HealthAlert>>>,
-    /// Statistics
+    // Statistics
     pub(crate) statistics: Arc<RwLock<HashMap<ReplicaId, HealthStatistics>>>,
-    /// Background task handle
+    // Background task handle
     monitor_handle: Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
 }
 
 impl ReplicationHealthMonitor {
-    /// Create a new health monitor
+    // Create a new health monitor
     pub async fn new(config: HealthMonitorConfig) -> Result<Self, HealthMonitorError> {
         Self::validate_config(&config)?;
 

@@ -1,19 +1,19 @@
-//! Performance Monitoring and Analysis
+// Performance Monitoring and Analysis
 
 use super::common::*;
 
 pub struct PerformanceCounter {
-    /// Fast path allocations (thread-local cache hits)
+    // Fast path allocations (thread-local cache hits)
     fast_path: AtomicU64,
-    /// Medium path allocations (depot hits)
+    // Medium path allocations (depot hits)
     medium_path: AtomicU64,
-    /// Slow path allocations (new slab/chunk)
+    // Slow path allocations (new slab/chunk)
     slow_path: AtomicU64,
-    /// Cache line conflicts
+    // Cache line conflicts
     cache_conflicts: AtomicU64,
-    /// TLB misses
+    // TLB misses
     tlb_misses: AtomicU64,
-    /// Page faults
+    // Page faults
     page_faults: AtomicU64,
 }
 
@@ -70,17 +70,17 @@ pub struct PerformanceStats {
     pub page_faults: u64,
 }
 
-/// Memory access pattern analyzer
+// Memory access pattern analyzer
 pub struct AccessPatternAnalyzer {
-    /// Recent allocations
+    // Recent allocations
     recent_allocations: RwLock<VecDeque<AllocationRecord>>,
-    /// Temporal locality score
+    // Temporal locality score
     temporal_locality: AtomicU64,
-    /// Spatial locality score
+    // Spatial locality score
     spatial_locality: AtomicU64,
-    /// Sequential access count
+    // Sequential access count
     sequential_access: AtomicU64,
-    /// Random access count
+    // Random access count
     random_access: AtomicU64,
 }
 
@@ -174,17 +174,17 @@ pub struct AccessPatternStats {
     pub recent_allocation_count: usize,
 }
 
-/// Memory bandwidth monitor
+// Memory bandwidth monitor
 pub struct BandwidthMonitor {
-    /// Bytes allocated per second
+    // Bytes allocated per second
     alloc_bandwidth: AtomicU64,
-    /// Bytes deallocated per second
+    // Bytes deallocated per second
     dealloc_bandwidth: AtomicU64,
-    /// Last measurement time
+    // Last measurement time
     last_measurement: RwLock<Instant>,
-    /// Total bytes allocated in current window
+    // Total bytes allocated in current window
     window_allocated: AtomicU64,
-    /// Total bytes deallocated in current window
+    // Total bytes deallocated in current window
     window_deallocated: AtomicU64,
 }
 

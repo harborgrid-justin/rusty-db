@@ -1,4 +1,4 @@
-//! Session resource control module
+// Session resource control module
 use std::time::Duration;
 
 pub struct ResourceLimits {

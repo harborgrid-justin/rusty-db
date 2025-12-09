@@ -77,7 +77,7 @@ use thiserror::Error;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-/// Conflict resolution specific errors
+// Conflict resolution specific errors
 #[derive(Error, Debug)]
 pub enum ConflictResolutionError {
     #[error("Conflict resolution failed for conflict {conflict_id}: {reason}")]
@@ -105,35 +105,35 @@ pub enum ConflictResolutionError {
     InvalidConfiguration { reason: String },
 }
 
-/// Comprehensive conflict resolver configuration
-///
-/// Contains all configurable parameters for conflict detection
-/// and resolution with sensible defaults.
+// Comprehensive conflict resolver configuration
+//
+// Contains all configurable parameters for conflict detection
+// and resolution with sensible defaults.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictResolverConfig {
-    /// Default resolution strategy
+    // Default resolution strategy
     pub default_strategy: ConflictResolutionStrategy,
-    /// Enable automatic conflict resolution
+    // Enable automatic conflict resolution
     pub enable_automatic_resolution: bool,
-    /// Maximum time to spend on resolution
+    // Maximum time to spend on resolution
     pub max_resolution_time: Duration,
-    /// Enable detailed conflict logging
+    // Enable detailed conflict logging
     pub enable_conflict_logging: bool,
-    /// Maximum number of conflicts to keep in memory
+    // Maximum number of conflicts to keep in memory
     pub max_conflicts_in_memory: usize,
-    /// Conflict detection threshold (ms)
+    // Conflict detection threshold (ms)
     pub conflict_detection_threshold_ms: u64,
-    /// Enable conflict pattern analysis
+    // Enable conflict pattern analysis
     pub enable_pattern_analysis: bool,
-    /// Audit log retention period
+    // Audit log retention period
     pub audit_retention_period: Duration,
-    /// Enable notifications for conflicts
+    // Enable notifications for conflicts
     pub enable_notifications: bool,
-    /// Batch size for conflict processing
+    // Batch size for conflict processing
     pub batch_processing_size: usize,
-    /// Enable conflict prevention analysis
+    // Enable conflict prevention analysis
     pub enable_conflict_prevention: bool,
-    /// Maximum retries for resolution
+    // Maximum retries for resolution
     pub max_resolution_retries: u32,
 }
 
@@ -156,32 +156,32 @@ impl Default for ConflictResolverConfig {
     }
 }
 
-/// Conflict data structure containing all information about a conflict
-///
-/// Represents a complete conflict scenario with all necessary data
-/// for analysis and resolution.
+// Conflict data structure containing all information about a conflict
+//
+// Represents a complete conflict scenario with all necessary data
+// for analysis and resolution.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictData {
-    /// Table where conflict occurred
+    // Table where conflict occurred
     pub table_name: TableName,
-    /// Primary key of conflicting row
+    // Primary key of conflicting row
     pub primary_key: String,
-    /// Local version of the data
+    // Local version of the data
     pub local_version: Vec<u8>,
-    /// Remote version of the data
+    // Remote version of the data
     pub remote_version: Vec<u8>,
-    /// Timestamp of local change
+    // Timestamp of local change
     pub local_timestamp: SystemTime,
-    /// Timestamp of remote change
+    // Timestamp of remote change
     pub remote_timestamp: SystemTime,
-    /// Type of operation that caused conflict
+    // Type of operation that caused conflict
     pub operation: ReplicationOperation,
-    /// Additional metadata
+    // Additional metadata
     pub metadata: HashMap<String, String>,
 }
 
 impl ConflictData {
-    /// Creates a new conflict data structure
+    // Creates a new conflict data structure
     pub fn new(
         table_name: TableName,
         primary_key: String,
@@ -203,7 +203,7 @@ impl ConflictData {
         }
     }
 
-    /// Gets the time difference between local and remote changes
+    // Gets the time difference between local and remote changes
     pub fn time_delta(&self) -> Option<Duration> {
         if self.local_timestamp >= self.remote_timestamp {
             self.local_timestamp.duration_since(self.remote_timestamp).ok()
@@ -212,50 +212,50 @@ impl ConflictData {
         }
     }
 
-    /// Checks if this is a recent conflict (within threshold)
+    // Checks if this is a recent conflict (within threshold)
     pub fn is_recent_conflict(&self, threshold: Duration) -> bool {
         self.time_delta().map(|delta| delta <= threshold).unwrap_or(false)
     }
 
-    /// Adds metadata to the conflict
+    // Adds metadata to the conflict
     pub fn add_metadata(&mut self, key: String, value: String) {
         self.metadata.insert(key, value);
     }
 
-    /// Gets metadata value
+    // Gets metadata value
     pub fn get_metadata(&self, key: &str) -> Option<&String> {
         self.metadata.get(key)
     }
 }
 
-/// Conflict resolution result
-///
-/// Contains the outcome of a conflict resolution attempt,
-/// including the resolved data and metadata about the resolution process.
+// Conflict resolution result
+//
+// Contains the outcome of a conflict resolution attempt,
+// including the resolved data and metadata about the resolution process.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictResolution {
-    /// Unique resolution ID
+    // Unique resolution ID
     pub resolution_id: Uuid,
-    /// Original conflict ID
+    // Original conflict ID
     pub conflict_id: Uuid,
-    /// Strategy used for resolution
+    // Strategy used for resolution
     pub strategy_used: ConflictResolutionStrategy,
-    /// Resolved data
+    // Resolved data
     pub resolved_data: Vec<u8>,
-    /// Whether resolution was successful
+    // Whether resolution was successful
     pub successful: bool,
-    /// Time taken to resolve
+    // Time taken to resolve
     pub resolution_time: Duration,
-    /// Timestamp of resolution
+    // Timestamp of resolution
     pub resolved_at: SystemTime,
-    /// Additional resolution metadata
+    // Additional resolution metadata
     pub resolution_metadata: HashMap<String, String>,
-    /// Whether manual intervention was required
+    // Whether manual intervention was required
     pub required_manual_intervention: bool,
 }
 
 impl ConflictResolution {
-    /// Creates a successful resolution
+    // Creates a successful resolution
     pub fn success(
         conflict_id: Uuid,
         strategy: ConflictResolutionStrategy,
@@ -275,7 +275,7 @@ impl ConflictResolution {
         }
     }
 
-    /// Creates a failed resolution
+    // Creates a failed resolution
     pub fn failure(
         conflict_id: Uuid,
         strategy: ConflictResolutionStrategy,
@@ -299,91 +299,91 @@ impl ConflictResolution {
     }
 }
 
-/// Conflict information with tracking data
-///
-/// Extended conflict structure that includes tracking information
-/// for monitoring and analysis purposes.
+// Conflict information with tracking data
+//
+// Extended conflict structure that includes tracking information
+// for monitoring and analysis purposes.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictInfo {
-    /// Unique conflict identifier
+    // Unique conflict identifier
     pub conflict_id: Uuid,
-    /// Conflict data
+    // Conflict data
     pub data: ConflictData,
-    /// Detection timestamp
+    // Detection timestamp
     pub detected_at: SystemTime,
-    /// Current status
+    // Current status
     pub status: ConflictStatus,
-    /// Number of resolution attempts
+    // Number of resolution attempts
     pub resolution_attempts: u32,
-    /// Associated resolution (if any)
+    // Associated resolution (if any)
     pub resolution: Option<ConflictResolution>,
-    /// Severity level
+    // Severity level
     pub severity: ConflictSeverity,
-    /// Tags for categorization
+    // Tags for categorization
     pub tags: Vec<String>,
 }
 
-/// Conflict status enumeration
+// Conflict status enumeration
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConflictStatus {
-    /// Conflict detected, awaiting resolution
+    // Conflict detected, awaiting resolution
     Pending,
-    /// Resolution in progress
+    // Resolution in progress
     Resolving,
-    /// Successfully resolved
+    // Successfully resolved
     Resolved,
-    /// Resolution failed
+    // Resolution failed
     Failed,
-    /// Requires manual intervention
+    // Requires manual intervention
     ManualRequired,
-    /// Resolution was skipped
+    // Resolution was skipped
     Skipped,
 }
 
-/// Conflict severity levels
+// Conflict severity levels
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ConflictSeverity {
-    /// Low priority conflict
+    // Low priority conflict
     Low,
-    /// Medium priority conflict
+    // Medium priority conflict
     Medium,
-    /// High priority conflict
+    // High priority conflict
     High,
-    /// Critical conflict requiring immediate attention
+    // Critical conflict requiring immediate attention
     Critical,
 }
 
-/// Custom conflict resolver trait
-///
-/// Allows implementation of custom conflict resolution logic
-/// for specific tables or data types.
+// Custom conflict resolver trait
+//
+// Allows implementation of custom conflict resolution logic
+// for specific tables or data types.
 #[async_trait]
 pub trait CustomConflictResolver: Send + Sync {
-    /// Resolves a conflict using custom logic
-    ///
-    /// # Arguments
-    ///
-    /// * `conflict` - The conflict data to resolve
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(Vec<u8>)` - Resolved data
-    /// * `Err(ConflictResolutionError)` - Resolution failed
+    // Resolves a conflict using custom logic
+    //
+    // # Arguments
+    //
+    // * `conflict` - The conflict data to resolve
+    //
+    // # Returns
+    //
+    // * `Ok(Vec<u8>)` - Resolved data
+    // * `Err(ConflictResolutionError)` - Resolution failed
     async fn resolve(&self, conflict: &ConflictData) -> Result<Vec<u8>, ConflictResolutionError>;
 
-    /// Determines if this resolver can handle the given conflict
+    // Determines if this resolver can handle the given conflict
     async fn can_resolve(&self, conflict: &ConflictData) -> bool;
 
-    /// Gets the resolver's name for logging
+    // Gets the resolver's name for logging
     fn name(&self) -> &str;
 
-    /// Gets resolver priority (higher values have priority)
+    // Gets resolver priority (higher values have priority)
     fn priority(&self) -> u32 {
         0
     }
 }
 
-/// Built-in last-write-wins resolver
+// Built-in last-write-wins resolver
 pub struct LastWriteWinsResolver;
 
 #[async_trait]
@@ -405,7 +405,7 @@ impl CustomConflictResolver for LastWriteWinsResolver {
     }
 }
 
-/// Built-in first-write-wins resolver
+// Built-in first-write-wins resolver
 pub struct FirstWriteWinsResolver;
 
 #[async_trait]
@@ -427,90 +427,90 @@ impl CustomConflictResolver for FirstWriteWinsResolver {
     }
 }
 
-/// Conflict pattern analysis
-///
-/// Analyzes conflict patterns to identify trends and potential
-/// optimizations to prevent future conflicts.
+// Conflict pattern analysis
+//
+// Analyzes conflict patterns to identify trends and potential
+// optimizations to prevent future conflicts.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictPatternAnalysis {
-    /// Analysis timestamp
+    // Analysis timestamp
     pub analyzed_at: SystemTime,
-    /// Total conflicts analyzed
+    // Total conflicts analyzed
     pub total_conflicts: usize,
-    /// Conflicts by table
+    // Conflicts by table
     pub conflicts_by_table: HashMap<String, usize>,
-    /// Conflicts by operation type
+    // Conflicts by operation type
     pub conflicts_by_operation: HashMap<ReplicationOperation, usize>,
-    /// Average resolution time by strategy
+    // Average resolution time by strategy
     pub avg_resolution_time_by_strategy: HashMap<ConflictResolutionStrategy, Duration>,
-    /// Most common conflict patterns
+    // Most common conflict patterns
     pub common_patterns: Vec<ConflictPattern>,
-    /// Recommended optimizations
+    // Recommended optimizations
     pub recommendations: Vec<String>,
 }
 
-/// Conflict pattern
+// Conflict pattern
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictPattern {
-    /// Pattern description
+    // Pattern description
     pub description: String,
-    /// Number of occurrences
+    // Number of occurrences
     pub occurrences: usize,
-    /// Tables affected by this pattern
+    // Tables affected by this pattern
     pub affected_tables: Vec<String>,
-    /// Recommended resolution strategy
+    // Recommended resolution strategy
     pub recommended_strategy: ConflictResolutionStrategy,
 }
 
-/// Main conflict resolver
-///
-/// Central component for managing conflict detection, resolution,
-/// and monitoring across the replication system.
+// Main conflict resolver
+//
+// Central component for managing conflict detection, resolution,
+// and monitoring across the replication system.
 pub struct ConflictResolver {
-    /// Configuration
+    // Configuration
     config: Arc<ConflictResolverConfig>,
-    /// Active conflicts
+    // Active conflicts
     conflicts: Arc<RwLock<HashMap<Uuid, ConflictInfo>>>,
-    /// Custom resolvers by table
+    // Custom resolvers by table
     custom_resolvers: Arc<RwLock<HashMap<TableName, Arc<dyn CustomConflictResolver>>>>,
-    /// Global custom resolvers
+    // Global custom resolvers
     global_resolvers: Arc<RwLock<Vec<Arc<dyn CustomConflictResolver>>>>,
-    /// Conflict resolution history
+    // Conflict resolution history
     resolution_history: Arc<RwLock<Vec<ConflictResolution>>>,
-    /// Event channel for conflict events
+    // Event channel for conflict events
     event_sender: mpsc::UnboundedSender<ConflictEvent>,
-    /// Pattern analysis cache
+    // Pattern analysis cache
     pattern_analysis: Arc<RwLock<Option<ConflictPatternAnalysis>>>,
 }
 
-/// Conflict events for monitoring and alerting
+// Conflict events for monitoring and alerting
 #[derive(Debug, Clone)]
 pub enum ConflictEvent {
-    /// New conflict detected
+    // New conflict detected
     ConflictDetected { conflict_id: Uuid, table_name: String, severity: ConflictSeverity },
-    /// Conflict resolution started
+    // Conflict resolution started
     ResolutionStarted { conflict_id: Uuid, strategy: ConflictResolutionStrategy },
-    /// Conflict successfully resolved
+    // Conflict successfully resolved
     ConflictResolved { conflict_id: Uuid, strategy: ConflictResolutionStrategy, duration: Duration },
-    /// Conflict resolution failed
+    // Conflict resolution failed
     ResolutionFailed { conflict_id: Uuid, reason: String },
-    /// Manual intervention required
+    // Manual intervention required
     ManualInterventionRequired { conflict_id: Uuid, table_name: String },
-    /// Pattern analysis completed
+    // Pattern analysis completed
     PatternAnalysisCompleted { analysis_id: Uuid, patterns_found: usize },
 }
 
 impl ConflictResolver {
-    /// Creates a new conflict resolver
-    ///
-    /// # Arguments
-    ///
-    /// * `config` - Conflict resolver configuration
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ConflictResolver)` - Successfully created resolver
-    /// * `Err(ConflictResolutionError)` - Creation failed
+    // Creates a new conflict resolver
+    //
+    // # Arguments
+    //
+    // * `config` - Conflict resolver configuration
+    //
+    // # Returns
+    //
+    // * `Ok(ConflictResolver)` - Successfully created resolver
+    // * `Err(ConflictResolutionError)` - Creation failed
     pub fn new(config: ConflictResolverConfig) -> Result<Self, ConflictResolutionError> {
         // Validate configuration
         Self::validate_config(&config)?;
@@ -528,7 +528,7 @@ impl ConflictResolver {
         })
     }
 
-    /// Validates the resolver configuration
+    // Validates the resolver configuration
     fn validate_config(config: &ConflictResolverConfig) -> Result<(), ConflictResolutionError> {
         if config.max_resolution_time.is_zero() {
             return Err(ConflictResolutionError::InvalidConfiguration {
@@ -551,17 +551,17 @@ impl ConflictResolver {
         Ok(())
     }
 
-    /// Registers a custom resolver for a specific table
-    ///
-    /// # Arguments
-    ///
-    /// * `table_name` - Table to associate the resolver with
-    /// * `resolver` - Custom resolver implementation
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - Resolver registered successfully
-    /// * `Err(ConflictResolutionError)` - Registration failed
+    // Registers a custom resolver for a specific table
+    //
+    // # Arguments
+    //
+    // * `table_name` - Table to associate the resolver with
+    // * `resolver` - Custom resolver implementation
+    //
+    // # Returns
+    //
+    // * `Ok(())` - Resolver registered successfully
+    // * `Err(ConflictResolutionError)` - Registration failed
     pub async fn register_custom_resolver(
         &self,
         table_name: TableName,
@@ -572,16 +572,16 @@ impl ConflictResolver {
         Ok(())
     }
 
-    /// Registers a global custom resolver
-    ///
-    /// # Arguments
-    ///
-    /// * `resolver` - Custom resolver implementation
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - Resolver registered successfully
-    /// * `Err(ConflictResolutionError)` - Registration failed
+    // Registers a global custom resolver
+    //
+    // # Arguments
+    //
+    // * `resolver` - Custom resolver implementation
+    //
+    // # Returns
+    //
+    // * `Ok(())` - Resolver registered successfully
+    // * `Err(ConflictResolutionError)` - Registration failed
     pub async fn register_global_resolver(
         &self,
         resolver: Arc<dyn CustomConflictResolver>,
@@ -593,16 +593,16 @@ impl ConflictResolver {
         Ok(())
     }
 
-    /// Detects and registers a new conflict
-    ///
-    /// # Arguments
-    ///
-    /// * `conflict_data` - Data representing the conflict
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(Uuid)` - ID of the registered conflict
-    /// * `Err(ConflictResolutionError)` - Detection failed
+    // Detects and registers a new conflict
+    //
+    // # Arguments
+    //
+    // * `conflict_data` - Data representing the conflict
+    //
+    // # Returns
+    //
+    // * `Ok(Uuid)` - ID of the registered conflict
+    // * `Err(ConflictResolutionError)` - Detection failed
     pub async fn detect_conflict(
         &self,
         conflictdata: ConflictData,
@@ -654,16 +654,16 @@ impl ConflictResolver {
         Ok(conflict_id)
     }
 
-    /// Resolves a conflict using configured strategies
-    ///
-    /// # Arguments
-    ///
-    /// * `conflict_data` - Conflict to resolve
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ConflictResolution)` - Resolution result
-    /// * `Err(ConflictResolutionError)` - Resolution failed
+    // Resolves a conflict using configured strategies
+    //
+    // # Arguments
+    //
+    // * `conflict_data` - Conflict to resolve
+    //
+    // # Returns
+    //
+    // * `Ok(ConflictResolution)` - Resolution result
+    // * `Err(ConflictResolutionError)` - Resolution failed
     pub async fn resolve_conflict(
         &self,
         conflict_data: ConflictData,
@@ -672,16 +672,16 @@ impl ConflictResolver {
         self.resolve_conflict_by_id(conflict_id).await
     }
 
-    /// Resolves a conflict by its ID
-    ///
-    /// # Arguments
-    ///
-    /// * `conflict_id` - ID of conflict to resolve
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ConflictResolution)` - Resolution result
-    /// * `Err(ConflictResolutionError)` - Resolution failed
+    // Resolves a conflict by its ID
+    //
+    // # Arguments
+    //
+    // * `conflict_id` - ID of conflict to resolve
+    //
+    // # Returns
+    //
+    // * `Ok(ConflictResolution)` - Resolution result
+    // * `Err(ConflictResolutionError)` - Resolution failed
     pub async fn resolve_conflict_by_id(
         &self,
         conflict_id: Uuid,
@@ -787,7 +787,7 @@ impl ConflictResolver {
         Ok(resolution)
     }
 
-    /// Attempts to resolve a conflict using available strategies
+    // Attempts to resolve a conflict using available strategies
     async fn attempt_resolution(
         &self,
         conflict_data: &ConflictData,
@@ -834,12 +834,12 @@ impl ConflictResolver {
         }
     }
 
-    /// Internal conflict resolution method
+    // Internal conflict resolution method
     async fn resolve_conflict_internal(&self, conflict_id: Uuid) -> Result<(), ConflictResolutionError> {
         self.resolve_conflict_by_id(conflict_id).await.map(|_| ())
     }
 
-    /// Determines the severity of a conflict
+    // Determines the severity of a conflict
     fn determine_conflict_severity(&self, conflict_data: &ConflictData) -> ConflictSeverity {
         // Simple severity determination based on time delta and operation
         let time_delta = conflict_data.time_delta().unwrap_or_default();
@@ -852,14 +852,14 @@ impl ConflictResolver {
         }
     }
 
-    /// Creates an Arc clone for async tasks
+    // Creates an Arc clone for async tasks
     fn clone_arc(&self) -> Arc<Self> {
         // This would need proper Arc wrapping in real implementation
         // For now, return a placeholder
         unimplemented!("Arc cloning not implemented in this example")
     }
 
-    /// Cleans up old resolved conflicts to free memory
+    // Cleans up old resolved conflicts to free memory
     fn cleanup_old_conflicts(&self, conflicts: &mut HashMap<Uuid, ConflictInfo>) {
         let cutoff = SystemTime::now() - Duration::from_secs(3600); // 1 hour
 
@@ -869,7 +869,7 @@ impl ConflictResolver {
         });
     }
 
-    /// Gets all active conflicts
+    // Gets all active conflicts
     pub fn get_active_conflicts(&self) -> Vec<ConflictInfo> {
         let conflicts = self.conflicts.read();
         conflicts.values()
@@ -878,7 +878,7 @@ impl ConflictResolver {
             .collect()
     }
 
-    /// Gets conflict resolution statistics
+    // Gets conflict resolution statistics
     pub fn get_resolution_statistics(&self) -> ConflictResolutionStatistics {
         let conflicts = self.conflicts.read();
         let history = self.resolution_history.read();
@@ -911,7 +911,7 @@ impl ConflictResolver {
         }
     }
 
-    /// Performs conflict pattern analysis
+    // Performs conflict pattern analysis
     pub async fn analyze_conflict_patterns(&self) -> Result<ConflictPatternAnalysis, ConflictResolutionError> {
         let conflicts = self.conflicts.read();
         let history = self.resolution_history.read();
@@ -967,20 +967,20 @@ impl ConflictResolver {
     }
 }
 
-/// Conflict resolution statistics
+// Conflict resolution statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictResolutionStatistics {
-    /// Total number of conflicts
+    // Total number of conflicts
     pub total_conflicts: usize,
-    /// Number of successfully resolved conflicts
+    // Number of successfully resolved conflicts
     pub resolved_conflicts: usize,
-    /// Number of failed resolution attempts
+    // Number of failed resolution attempts
     pub failed_conflicts: usize,
-    /// Number of pending conflicts
+    // Number of pending conflicts
     pub pending_conflicts: usize,
-    /// Average time to resolve conflicts
+    // Average time to resolve conflicts
     pub average_resolution_time: Duration,
-    /// Total resolution attempts
+    // Total resolution attempts
     pub total_resolution_attempts: usize,
 }
 

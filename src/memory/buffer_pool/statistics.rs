@@ -1,22 +1,22 @@
-//! Buffer Pool Statistics
-//!
-//! Comprehensive statistics tracking and reporting.
+// Buffer Pool Statistics
+//
+// Comprehensive statistics tracking and reporting.
 
 use super::common::*;
 use serde::{Serialize, Deserialize};
 
 pub struct BufferPoolStatisticsTracker {
-    /// Per-pool hit ratio tracking
+    // Per-pool hit ratio tracking
     pool_hit_ratios: PRwLock<HashMap<String, PoolHitRatio>>,
-    /// Page type distribution
+    // Page type distribution
     page_type_dist: PRwLock<HashMap<PageType, AtomicU64>>,
-    /// Wait statistics
+    // Wait statistics
     wait_stats: WaitStatistics,
-    /// Buffer busy waits
+    // Buffer busy waits
     busy_waits: BusyWaitStatistics,
-    /// Memory pressure
+    // Memory pressure
     pub(crate) memory_pressure: MemoryPressureMonitor,
-    /// Real-time metrics
+    // Real-time metrics
     realtime_metrics: RealtimeMetrics,
 }
 
@@ -67,16 +67,16 @@ impl PoolHitRatio {
     }
 }
 
-/// Wait statistics for buffer operations
+// Wait statistics for buffer operations
 #[derive(Debug)]
 pub struct WaitStatistics {
-    /// Wait time for free buffers
+    // Wait time for free buffers
     free_buffer_waits: AtomicU64,
     free_buffer_wait_time_ns: AtomicU64,
-    /// Wait time for buffer locks
+    // Wait time for buffer locks
     buffer_lock_waits: AtomicU64,
     buffer_lock_wait_time_ns: AtomicU64,
-    /// Wait time for I/O completion
+    // Wait time for I/O completion
     io_waits: AtomicU64,
     io_wait_time_ns: AtomicU64,
 }
@@ -93,25 +93,25 @@ impl WaitStatistics {
         }
     }
 
-    /// Record free buffer wait
+    // Record free buffer wait
     pub fn record_free_buffer_wait(&self, duration: Duration) {
         self.free_buffer_waits.fetch_add(1, Ordering::Relaxed);
         self.free_buffer_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
     }
 
-    /// Record buffer lock wait
+    // Record buffer lock wait
     pub fn record_buffer_lock_wait(&self, duration: Duration) {
         self.buffer_lock_waits.fetch_add(1, Ordering::Relaxed);
         self.buffer_lock_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
     }
 
-    /// Record I/O wait
+    // Record I/O wait
     pub fn record_io_wait(&self, duration: Duration) {
         self.io_waits.fetch_add(1, Ordering::Relaxed);
         self.io_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
     }
 
-    /// Get snapshot
+    // Get snapshot
     pub fn snapshot(&self) -> WaitStatisticsSnapshot {
         WaitStatisticsSnapshot {
             free_buffer_waits: self.free_buffer_waits.load(Ordering::Relaxed),
@@ -134,16 +134,16 @@ pub struct WaitStatisticsSnapshot {
     pub io_wait_time_ns: u64,
 }
 
-/// Buffer busy wait statistics
+// Buffer busy wait statistics
 #[derive(Debug)]
 pub struct BusyWaitStatistics {
-    /// Waits by page type
+    // Waits by page type
     waits_by_type: PRwLock<HashMap<PageType, AtomicU64>>,
-    /// Waits by tablespace
+    // Waits by tablespace
     waits_by_tablespace: PRwLock<HashMap<u32, AtomicU64>>,
-    /// Total busy waits
+    // Total busy waits
     total_waits: AtomicU64,
-    /// Total wait time
+    // Total wait time
     total_wait_time_ns: AtomicU64,
 }
 
@@ -157,7 +157,7 @@ impl BusyWaitStatistics {
         }
     }
 
-    /// Record busy wait
+    // Record busy wait
     pub fn record_wait(&self, page_type: PageType, tablespace_id: u32, duration: Duration) {
         self.total_waits.fetch_add(1, Ordering::Relaxed);
         self.total_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
@@ -185,7 +185,7 @@ impl BusyWaitStatistics {
         }
     }
 
-    /// Get snapshot
+    // Get snapshot
     pub fn snapshot(&self) -> BusyWaitStatisticsSnapshot {
         let types = self.waits_by_type.read();
         let waits_by_type: HashMap<PageType, u64> = types.iter()
@@ -214,18 +214,18 @@ pub struct BusyWaitStatisticsSnapshot {
     pub total_wait_time_ns: u64,
 }
 
-/// Memory pressure monitor
+// Memory pressure monitor
 #[derive(Debug)]
 pub struct MemoryPressureMonitor {
-    /// Current memory usage
+    // Current memory usage
     current_usage: AtomicU64,
-    /// Peak memory usage
+    // Peak memory usage
     peak_usage: AtomicU64,
-    /// Memory limit
+    // Memory limit
     limit: AtomicU64,
-    /// Pressure events
+    // Pressure events
     pressure_events: AtomicU64,
-    /// Last pressure check
+    // Last pressure check
     last_check: Mutex<Instant>,
 }
 
@@ -240,7 +240,7 @@ impl MemoryPressureMonitor {
         }
     }
 
-    /// Update memory usage
+    // Update memory usage
     pub fn update_usage(&self, usage: u64) {
         self.current_usage.store(usage, Ordering::Relaxed);
 
@@ -266,21 +266,21 @@ impl MemoryPressureMonitor {
         *self.last_check.lock() = Instant::now();
     }
 
-    /// Check if under memory pressure
+    // Check if under memory pressure
     pub fn is_under_pressure(&self) -> bool {
         let usage = self.current_usage.load(Ordering::Relaxed);
         let limit = self.limit.load(Ordering::Relaxed);
         usage as f64 / limit as f64 > 0.9 // 90% threshold
     }
 
-    /// Get pressure level (0.0 - 1.0)
+    // Get pressure level (0.0 - 1.0)
     pub fn pressure_level(&self) -> f64 {
         let usage = self.current_usage.load(Ordering::Relaxed);
         let limit = self.limit.load(Ordering::Relaxed);
         (usage as f64 / limit as f64).min(1.0)
     }
 
-    /// Get snapshot
+    // Get snapshot
     pub fn snapshot(&self) -> MemoryPressureSnapshot {
         MemoryPressureSnapshot {
             current_usage: self.current_usage.load(Ordering::Relaxed),
@@ -303,14 +303,14 @@ pub struct MemoryPressureSnapshot {
     pub under_pressure: bool,
 }
 
-/// Real-time metrics exporter
+// Real-time metrics exporter
 #[derive(Debug)]
 pub struct RealtimeMetrics {
-    /// Metrics update interval
+    // Metrics update interval
     interval: Duration,
-    /// Current metrics
+    // Current metrics
     current: Mutex<MetricsSnapshot>,
-    /// Last update time
+    // Last update time
     last_update: Mutex<Instant>,
 }
 
@@ -323,18 +323,18 @@ impl RealtimeMetrics {
         }
     }
 
-    /// Update metrics
+    // Update metrics
     pub fn update(&self, snapshot: MetricsSnapshot) {
         *self.current.lock() = snapshot;
         *self.last_update.lock() = Instant::now();
     }
 
-    /// Get current metrics
+    // Get current metrics
     pub fn get(&self) -> MetricsSnapshot {
         self.current.lock().clone()
     }
 
-    /// Check if metrics are stale
+    // Check if metrics are stale
     pub fn is_stale(&self) -> bool {
         self.last_update.lock().elapsed() > self.interval * 2
     }
@@ -364,7 +364,7 @@ impl BufferPoolStatisticsTracker {
         }
     }
 
-    /// Record hit for a pool
+    // Record hit for a pool
     pub fn record_hit(&self, pool_name: &str) {
         let ratios = self.pool_hit_ratios.read();
         if let Some(ratio) = ratios.get(pool_name) {
@@ -378,7 +378,7 @@ impl BufferPoolStatisticsTracker {
         }
     }
 
-    /// Record miss for a pool
+    // Record miss for a pool
     pub fn record_miss(&self, pool_name: &str) {
         let ratios = self.pool_hit_ratios.read();
         if let Some(ratio) = ratios.get(pool_name) {
@@ -392,7 +392,7 @@ impl BufferPoolStatisticsTracker {
         }
     }
 
-    /// Record page type access
+    // Record page type access
     pub fn record_page_type(&self, page_type: PageType) {
         let types = self.page_type_dist.read();
         if let Some(counter) = types.get(&page_type) {
@@ -406,7 +406,7 @@ impl BufferPoolStatisticsTracker {
         }
     }
 
-    /// Get comprehensive statistics
+    // Get comprehensive statistics
     pub fn get_comprehensive_stats(&self) -> ComprehensiveBufferStats {
         let ratios = self.pool_hit_ratios.read();
         let pool_stats: HashMap<String, PoolStatsSnapshot> = ratios.iter()
@@ -435,7 +435,7 @@ impl BufferPoolStatisticsTracker {
         }
     }
 
-    /// Export metrics in Prometheus format
+    // Export metrics in Prometheus format
     pub fn export_prometheus(&self) -> String {
         let stats = self.get_comprehensive_stats();
         let mut output = String::new();
@@ -483,7 +483,7 @@ impl BufferPoolStatisticsTracker {
         output
     }
 
-    /// Export metrics in JSON format
+    // Export metrics in JSON format
     pub fn export_json(&self) -> String {
         let stats = self.get_comprehensive_stats();
         serde_json::to_string_pretty(&stats).unwrap_or_default()
@@ -507,4 +507,3 @@ pub struct ComprehensiveBufferStats {
     pub memory_pressure: MemoryPressureSnapshot,
     pub realtime_metrics: MetricsSnapshot,
 }
-

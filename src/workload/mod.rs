@@ -58,53 +58,53 @@ use std::time::{Duration};
 use parking_lot::RwLock;
 use crate::Result;
 
-/// Unified Workload Intelligence Hub
-///
-/// Integrates all workload intelligence components:
-/// - AWR-like workload repository
-/// - SQL Tuning Advisor
-/// - Real-time SQL monitoring
-/// - Performance dashboard
-/// - Automatic diagnostic advisor (ADDM)
+// Unified Workload Intelligence Hub
+//
+// Integrates all workload intelligence components:
+// - AWR-like workload repository
+// - SQL Tuning Advisor
+// - Real-time SQL monitoring
+// - Performance dashboard
+// - Automatic diagnostic advisor (ADDM)
 pub struct WorkloadIntelligence {
-    /// Workload repository for historical analysis
+    // Workload repository for historical analysis
     pub repository: Arc<WorkloadRepository>,
 
-    /// SQL Tuning Advisor for query optimization
+    // SQL Tuning Advisor for query optimization
     pub sql_tuning: Arc<SqlTuningAdvisor>,
 
-    /// Real-time SQL monitor
+    // Real-time SQL monitor
     pub sql_monitor: Arc<SqlMonitor>,
 
-    /// Performance hub for unified views
+    // Performance hub for unified views
     pub performance_hub: Arc<PerformanceHub>,
 
-    /// Diagnostic advisor for automatic problem detection
+    // Diagnostic advisor for automatic problem detection
     pub advisor: Arc<DiagnosticAdvisor>,
 
-    /// Configuration
+    // Configuration
     config: Arc<RwLock<WorkloadIntelligenceConfig>>,
 }
 
-/// Workload Intelligence configuration
+// Workload Intelligence configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkloadIntelligenceConfig {
-    /// Enable automatic snapshot collection
+    // Enable automatic snapshot collection
     pub auto_snapshot_enabled: bool,
 
-    /// Snapshot interval (seconds)
+    // Snapshot interval (seconds)
     pub snapshot_interval_secs: u64,
 
-    /// Enable automatic analysis
+    // Enable automatic analysis
     pub auto_analysis_enabled: bool,
 
-    /// Analysis interval (seconds)
+    // Analysis interval (seconds)
     pub analysis_interval_secs: u64,
 
-    /// Enable SQL monitoring
+    // Enable SQL monitoring
     pub sql_monitoring_enabled: bool,
 
-    /// Enable SQL tuning recommendations
+    // Enable SQL tuning recommendations
     pub sql_tuning_enabled: bool,
 }
 
@@ -122,12 +122,12 @@ impl Default for WorkloadIntelligenceConfig {
 }
 
 impl WorkloadIntelligence {
-    /// Create a new Workload Intelligence system with default configuration
+    // Create a new Workload Intelligence system with default configuration
     pub fn new() -> Self {
         Self::with_config(WorkloadIntelligenceConfig::default())
     }
 
-    /// Create a new Workload Intelligence system with custom configuration
+    // Create a new Workload Intelligence system with custom configuration
     pub fn with_config(config: WorkloadIntelligenceConfig) -> Self {
         let repo_config = RepositoryConfig {
             snapshot_interval_secs: config.snapshot_interval_secs,
@@ -163,7 +163,7 @@ impl WorkloadIntelligence {
         }
     }
 
-    /// Capture a workload snapshot
+    // Capture a workload snapshot
     pub fn capture_snapshot(&self) -> Result<SnapshotId> {
         // Collect current performance data
         let snapshot = self.collect_current_snapshot();
@@ -172,7 +172,7 @@ impl WorkloadIntelligence {
         self.repository.capture_snapshot(snapshot)
     }
 
-    /// Collect current snapshot data
+    // Collect current snapshot data
     fn collect_current_snapshot(&self) -> WorkloadSnapshot {
         let now = SystemTime::now();
 
@@ -319,7 +319,7 @@ impl WorkloadIntelligence {
         }
     }
 
-    /// Run automatic diagnostic analysis
+    // Run automatic diagnostic analysis
     pub fn run_diagnostic_analysis(
         &self,
         start_snapshot_id: u64,
@@ -337,7 +337,7 @@ impl WorkloadIntelligence {
         Ok(analysis_id)
     }
 
-    /// Get comprehensive performance report
+    // Get comprehensive performance report
     pub fn get_performance_report(&self) -> PerformanceReport {
         PerformanceReport {
             timestamp: SystemTime::now(),
@@ -355,7 +355,7 @@ impl Default for WorkloadIntelligence {
     }
 }
 
-/// Comprehensive performance report
+// Comprehensive performance report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceReport {
     pub timestamp: SystemTime,

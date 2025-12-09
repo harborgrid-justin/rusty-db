@@ -12,7 +12,7 @@ use crate::api::monitoring::{MetricStream, AlertManager, RetentionPolicy, TimeSe
 use crate::error::DbError;
 use super::metrics_core::*;
 
-/// Export format for metrics data
+// Export format for metrics data
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExportFormat {
     Json,
@@ -20,7 +20,7 @@ pub enum ExportFormat {
     Prometheus,
 }
 
-/// Metrics exporter
+// Metrics exporter
 pub struct MetricsExporter {
     tsdb: Arc<TimeSeriesDatabase>,
 }
@@ -89,7 +89,7 @@ impl MetricsExporter {
     }
 }
 
-/// Top-level monitoring API
+// Top-level monitoring API
 pub struct MonitoringApi {
     pub metrics_registry: Arc<MetricsRegistry>,
     pub prometheus_exporter: Arc<PrometheusExporter>,
@@ -101,7 +101,7 @@ pub struct MonitoringApi {
     pub exporter: Arc<MetricsExporter>,
 }
 
-/// Monitoring configuration
+// Monitoring configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringConfig {
     pub retention_policy: RetentionPolicy,

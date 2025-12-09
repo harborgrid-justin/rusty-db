@@ -1,4 +1,4 @@
-//! Memory Management Web API
+// Memory Management Web API
 
 use super::common::*;
 use super::memory_manager::*;
@@ -14,12 +14,12 @@ impl MemoryApi {
         Self { manager }
     }
 
-    /// Get comprehensive statistics as JSON-compatible structure
+    // Get comprehensive statistics as JSON-compatible structure
     pub fn api_get_stats(&self) -> ComprehensiveMemoryStats {
         self.manager.get_comprehensive_stats()
     }
 
-    /// Get memory usage summary
+    // Get memory usage summary
     pub fn api_get_usage_summary(&self) -> UsageSummary {
         let stats = self.manager.get_comprehensive_stats();
 
@@ -35,20 +35,20 @@ impl MemoryApi {
         }
     }
 
-    /// Get component breakdown
+    // Get component breakdown
     pub fn api_get_component_breakdown(&self) -> Vec<ComponentBreakdown> {
         self.manager.debugger()
             .generate_report()
             .component_breakdown
     }
 
-    /// Detect memory leaks
+    // Detect memory leaks
     pub fn api_detect_leaks(&self, min_age_seconds: u64) -> Vec<LeakReport> {
         self.manager.debugger()
             .detect_leaks(Duration::from_secs(min_age_seconds))
     }
 
-    /// Enable debugging features
+    // Enable debugging features
     pub fn api_enable_debugging(&self, feature: &str) -> Result<()> {
         match feature {
             "tracking" => {
@@ -75,7 +75,7 @@ impl MemoryApi {
         }
     }
 
-    /// Disable debugging features
+    // Disable debugging features
     pub fn api_disable_debugging(&self, feature: &str) -> Result<()> {
         match feature {
             "tracking" => {
@@ -86,31 +86,31 @@ impl MemoryApi {
         }
     }
 
-    /// Get pressure events
+    // Get pressure events
     pub fn api_get_pressure_events(&self, count: usize) -> Vec<MemoryPressureEvent> {
         self.manager.pressure_manager()
             .get_recent_events(count)
     }
 
-    /// Force emergency memory release
+    // Force emergency memory release
     pub fn api_force_emergency_release(&self) -> Result<()> {
         self.manager.pressure_manager()
             .emergency_release()
     }
 
-    /// Set memory limit
+    // Set memory limit
     pub fn api_set_memory_limit(&self, limit_bytes: u64) {
         self.manager.pressure_manager()
             .set_total_memory(limit_bytes);
     }
 
-    /// Generate full memory report
+    // Generate full memory report
     pub fn api_generate_report(&self) -> MemoryReport {
         self.manager.debugger().generate_report()
     }
 }
 
-/// Usage summary for web display
+// Usage summary for web display
 #[derive(Debug, Clone)]
 pub struct UsageSummary {
     pub total_memory: u64,

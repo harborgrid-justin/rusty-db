@@ -1,6 +1,6 @@
-//! Buffer Pool Manager Public API
-//! 
-//! Main interface for buffer pool operations.
+// Buffer Pool Manager Public API
+//
+// Main interface for buffer pool operations.
 
 use super::common::*;
 use super::multi_tier::*;
@@ -31,7 +31,7 @@ pub struct BufferPoolManager {
 }
 
 impl BufferPoolManager {
-    /// Create a new buffer pool manager
+    // Create a new buffer pool manager
     pub fn new(config: BufferPoolConfig) -> Self {
         let pool = Arc::new(MultiTierBufferPool::new(config.clone()));
         let capacity = config.total_size / config.page_size;
@@ -60,19 +60,19 @@ impl BufferPoolManager {
         }
     }
 
-    /// Pin a page (web API endpoint)
+    // Pin a page (web API endpoint)
     pub fn api_pin_page(&self, tablespace_id: u32, page_number: u64) -> Option<Arc<BufferFrame>> {
         let page_id = PageId::new(tablespace_id, page_number);
         self.pool.pin_page(page_id, PoolType::Default)
     }
 
-    /// Unpin a page (web API endpoint)
+    // Unpin a page (web API endpoint)
     pub fn api_unpin_page(&self, tablespace_id: u32, page_number: u64, dirty: bool) -> bool {
         let page_id = PageId::new(tablespace_id, page_number);
         self.pool.unpin_page(page_id, dirty)
     }
 
-    /// Get buffer pool statistics (web API endpoint)
+    // Get buffer pool statistics (web API endpoint)
     pub fn api_get_stats(&self) -> serde_json::Value {
         serde_json::json!({
             "buffer_pool": self.pool.get_stats(),
@@ -93,51 +93,51 @@ impl BufferPoolManager {
         })
     }
 
-    /// Flush all dirty pages (web API endpoint)
+    // Flush all dirty pages (web API endpoint)
     pub fn api_flush_all(&self) -> usize {
         self.pool.flush_all()
     }
 
-    /// Perform checkpoint (web API endpoint)
+    // Perform checkpoint (web API endpoint)
     pub fn api_checkpoint(&self) -> CheckpointResult {
         self.checkpoint_queue.checkpoint()
     }
 
-    /// Get memory pressure (web API endpoint)
+    // Get memory pressure (web API endpoint)
     pub fn api_get_memory_pressure(&self) -> MemoryPressureSnapshot {
         self.stats_tracker.memory_pressure.snapshot()
     }
 
-    /// Export Prometheus metrics (web API endpoint)
+    // Export Prometheus metrics (web API endpoint)
     pub fn api_export_prometheus(&self) -> String {
         self.stats_tracker.export_prometheus()
     }
 
-    /// Export JSON metrics (web API endpoint)
+    // Export JSON metrics (web API endpoint)
     pub fn api_export_json(&self) -> String {
         self.stats_tracker.export_json()
     }
 
-    /// Start background operations (web API endpoint)
+    // Start background operations (web API endpoint)
     pub fn api_start_background_operations(&self) {
         self.pool.start_tier_manager();
         self.incremental_checkpointer.start();
         self.background_writer.start();
     }
 
-    /// Stop background operations (web API endpoint)
+    // Stop background operations (web API endpoint)
     pub fn api_stop_background_operations(&self) {
         self.pool.stop_tier_manager();
         self.incremental_checkpointer.stop();
         self.background_writer.stop();
     }
 
-    /// Get buffer pool capacity (web API endpoint)
+    // Get buffer pool capacity (web API endpoint)
     pub fn api_get_capacity(&self) -> usize {
         self.pool.capacity()
     }
 
-    /// Get frames in use (web API endpoint)
+    // Get frames in use (web API endpoint)
     pub fn api_get_frames_in_use(&self) -> usize {
         self.pool.frames_in_use()
     }

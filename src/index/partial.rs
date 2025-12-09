@@ -1,10 +1,10 @@
-/// Partial and Expression Indexes
-///
-/// This module provides advanced indexing capabilities:
-/// - Partial indexes with filter predicates
-/// - Function-based/expression indexes
-/// - Computed column indexes
-/// - Index-only scans support
+// Partial and Expression Indexes
+//
+// This module provides advanced indexing capabilities:
+// - Partial indexes with filter predicates
+// - Function-based/expression indexes
+// - Computed column indexes
+// - Index-only scans support
 
 use crate::error::{DbError, Result};
 use parking_lot::RwLock;
@@ -12,16 +12,16 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 
-/// Partial Index
-///
-/// Indexes only rows that satisfy a predicate condition
+// Partial Index
+//
+// Indexes only rows that satisfy a predicate condition
 pub struct PartialIndex<K: Ord + Clone, V: Clone> {
     name: String,
-    /// The underlying index structure
+    // The underlying index structure
     index: Arc<RwLock<BTreeMap<K, Vec<V>>>>,
-    /// Predicate that determines which rows to index
+    // Predicate that determines which rows to index
     predicate: Arc<Predicate>,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<PartialIndexStats>>,
 }
 
@@ -37,7 +37,7 @@ impl<K: Ord + Clone, V: Clone> Clone for PartialIndex<K, V> {
 }
 
 impl<K: Ord + Clone, V: Clone> PartialIndex<K, V> {
-    /// Create a new partial index
+    // Create a new partial index
     pub fn new(name: String, predicate: Predicate) -> Self {
         Self {
             name,
@@ -47,7 +47,7 @@ impl<K: Ord + Clone, V: Clone> PartialIndex<K, V> {
         }
     }
 
-    /// Insert a key-value pair if it satisfies the predicate
+    // Insert a key-value pair if it satisfies the predicate
     pub fn insert(&self, key: K, value: V, row_data: &RowData) -> Result<bool> {
         if self.predicate.evaluate(row_data)? {
             let mut index = self.index.write();
@@ -64,13 +64,13 @@ impl<K: Ord + Clone, V: Clone> PartialIndex<K, V> {
         }
     }
 
-    /// Search for a key
+    // Search for a key
     pub fn search(&self, key: &K) -> Result<Vec<V>> {
         let index = self.index.read();
         Ok(index.get(key).cloned().unwrap_or_default())
     }
 
-    /// Range search
+    // Range search
     pub fn range_search(&self, start: &K, end: &K) -> Result<Vec<V>> {
         let index = self.index.read();
         let mut results = Vec::new();
@@ -82,7 +82,7 @@ impl<K: Ord + Clone, V: Clone> PartialIndex<K, V> {
         Ok(results)
     }
 
-    /// Delete a key-value pair
+    // Delete a key-value pair
     pub fn delete(&self, key: &K, value: &V) -> Result<bool>
     where
         V: PartialEq,
@@ -112,27 +112,27 @@ impl<K: Ord + Clone, V: Clone> PartialIndex<K, V> {
         Ok(deleted)
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn stats(&self) -> PartialIndexStats {
         self.stats.read().clone()
     }
 
-    /// Get the predicate
+    // Get the predicate
     pub fn predicate(&self) -> &Predicate {
         &self.predicate
     }
 }
 
-/// Expression Index
-///
-/// Indexes computed values based on an expression
+// Expression Index
+//
+// Indexes computed values based on an expression
 pub struct ExpressionIndex<V: Clone> {
     name: String,
-    /// The underlying index structure (maps computed values to row IDs)
+    // The underlying index structure (maps computed values to row IDs)
     index: Arc<RwLock<BTreeMap<ComputedValue, Vec<V>>>>,
-    /// Expression to compute indexed values
+    // Expression to compute indexed values
     expression: Arc<Expression>,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<ExpressionIndexStats>>,
 }
 
@@ -148,7 +148,7 @@ impl<V: Clone> Clone for ExpressionIndex<V> {
 }
 
 impl<V: Clone> ExpressionIndex<V> {
-    /// Create a new expression index
+    // Create a new expression index
     pub fn new(name: String, expression: Expression) -> Self {
         Self {
             name,
@@ -158,7 +158,7 @@ impl<V: Clone> ExpressionIndex<V> {
         }
     }
 
-    /// Insert a row by computing the expression
+    // Insert a row by computing the expression
     pub fn insert(&self, row_data: &RowData, row_id: V) -> Result<()> {
         let computed_value = self.expression.evaluate(row_data)?;
 
@@ -175,19 +175,19 @@ impl<V: Clone> ExpressionIndex<V> {
         Ok(())
     }
 
-    /// Search for a computed value
+    // Search for a computed value
     pub fn search(&self, value: &ComputedValue) -> Result<Vec<V>> {
         let index = self.index.read();
         Ok(index.get(value).cloned().unwrap_or_default())
     }
 
-    /// Search using a row's data (computes the expression)
+    // Search using a row's data (computes the expression)
     pub fn search_by_row(&self, row_data: &RowData) -> Result<Vec<V>> {
         let computed_value = self.expression.evaluate(row_data)?;
         self.search(&computed_value)
     }
 
-    /// Range search on computed values
+    // Range search on computed values
     pub fn range_search(&self, start: &ComputedValue, end: &ComputedValue) -> Result<Vec<V>> {
         let index = self.index.read();
         let mut results = Vec::new();
@@ -199,27 +199,27 @@ impl<V: Clone> ExpressionIndex<V> {
         Ok(results)
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn stats(&self) -> ExpressionIndexStats {
         self.stats.read().clone()
     }
 
-    /// Get the expression
+    // Get the expression
     pub fn expression(&self) -> &Expression {
         &self.expression
     }
 }
 
-/// Covering Index
-///
-/// An index that includes all columns needed for a query (enables index-only scans)
+// Covering Index
+//
+// An index that includes all columns needed for a query (enables index-only scans)
 pub struct CoveringIndex<K: Ord + Clone> {
     name: String,
-    /// Indexed columns (key)
+    // Indexed columns (key)
     indexed_columns: Vec<String>,
-    /// Included columns (stored with index for index-only scans)
+    // Included columns (stored with index for index-only scans)
     included_columns: Vec<String>,
-    /// The index structure
+    // The index structure
     index: Arc<RwLock<BTreeMap<K, Vec<CoveringEntry>>>>,
 }
 
@@ -235,7 +235,7 @@ impl<K: Ord + Clone> Clone for CoveringIndex<K> {
 }
 
 impl<K: Ord + Clone> CoveringIndex<K> {
-    /// Create a new covering index
+    // Create a new covering index
     pub fn new(
         name: String,
         indexed_columns: Vec<String>,
@@ -249,7 +249,7 @@ impl<K: Ord + Clone> CoveringIndex<K> {
         }
     }
 
-    /// Insert a row
+    // Insert a row
     pub fn insert(&self, key: K, row_id: u64, included_values: Vec<ColumnValue>) -> Result<()> {
         let mut index = self.index.write();
 
@@ -261,13 +261,13 @@ impl<K: Ord + Clone> CoveringIndex<K> {
         Ok(())
     }
 
-    /// Search and return both row IDs and included column values
+    // Search and return both row IDs and included column values
     pub fn search_covering(&self, key: &K) -> Result<Vec<CoveringEntry>> {
         let index = self.index.read();
         Ok(index.get(key).cloned().unwrap_or_default())
     }
 
-    /// Check if this index can cover a query
+    // Check if this index can cover a query
     pub fn can_cover(&self, required_columns: &[String]) -> bool {
         let all_columns: Vec<_> = self
             .indexed_columns
@@ -281,29 +281,29 @@ impl<K: Ord + Clone> CoveringIndex<K> {
     }
 }
 
-/// Predicate for partial indexes
+// Predicate for partial indexes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Predicate {
-    /// Simple comparison: column op value
+    // Simple comparison: column op value
     Comparison {
         column: String,
         operator: ComparisonOp,
         value: ColumnValue,
     },
-    /// Logical AND
+    // Logical AND
     And(Box<Predicate>, Box<Predicate>),
-    /// Logical OR
+    // Logical OR
     Or(Box<Predicate>, Box<Predicate>),
-    /// Logical NOT
+    // Logical NOT
     Not(Box<Predicate>),
-    /// Check if column is NULL
+    // Check if column is NULL
     IsNull(String),
-    /// Check if column is NOT NULL
+    // Check if column is NOT NULL
     IsNotNull(String),
 }
 
 impl Predicate {
-    /// Evaluate predicate against row data
+    // Evaluate predicate against row data
     pub fn evaluate(&self, row_data: &RowData) -> Result<bool> {
         match self {
             Predicate::Comparison {
@@ -333,7 +333,7 @@ impl Predicate {
     }
 }
 
-/// Comparison operators
+// Comparison operators
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ComparisonOp {
     Equal,
@@ -373,19 +373,19 @@ impl ComparisonOp {
     }
 }
 
-/// Expression for computed indexes
+// Expression for computed indexes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Expression {
-    /// Reference to a column
+    // Reference to a column
     Column(String),
-    /// Constant value
+    // Constant value
     Constant(ColumnValue),
-    /// Function call
+    // Function call
     Function {
         name: String,
         args: Vec<Expression>,
     },
-    /// Binary operation
+    // Binary operation
     BinaryOp {
         left: Box<Expression>,
         operator: BinaryOperator,
@@ -394,7 +394,7 @@ pub enum Expression {
 }
 
 impl Expression {
-    /// Evaluate expression against row data
+    // Evaluate expression against row data
     pub fn evaluate(&self, row_data: &RowData) -> Result<ComputedValue> {
         match self {
             Expression::Column(name) => {
@@ -459,7 +459,7 @@ impl Expression {
     }
 }
 
-/// Binary operators for expressions
+// Binary operators for expressions
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum BinaryOperator {
     Add,
@@ -497,7 +497,7 @@ impl BinaryOperator {
     }
 }
 
-/// Row data for predicate/expression evaluation
+// Row data for predicate/expression evaluation
 #[derive(Debug, Clone)]
 pub struct RowData {
     columns: std::collections::HashMap<String, ColumnValue>,
@@ -522,7 +522,7 @@ impl RowData {
     }
 }
 
-/// Column value
+// Column value
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ColumnValue {
     Null,
@@ -531,7 +531,7 @@ pub enum ColumnValue {
     Boolean(bool),
 }
 
-/// Computed value (result of expression evaluation)
+// Computed value (result of expression evaluation)
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ComputedValue {
     Null,
@@ -551,14 +551,14 @@ impl ComputedValue {
     }
 }
 
-/// Entry in covering index
+// Entry in covering index
 #[derive(Debug, Clone)]
 pub struct CoveringEntry {
     pub row_id: u64,
     pub included_values: Vec<ColumnValue>,
 }
 
-/// Partial index statistics
+// Partial index statistics
 #[derive(Debug, Clone, Default)]
 pub struct PartialIndexStats {
     pub total_entries: usize,
@@ -576,7 +576,7 @@ impl PartialIndexStats {
     }
 }
 
-/// Expression index statistics
+// Expression index statistics
 #[derive(Debug, Clone, Default)]
 pub struct ExpressionIndexStats {
     pub total_entries: usize,

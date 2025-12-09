@@ -86,7 +86,7 @@ use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::time::interval;
 
-/// WAL-specific error types
+// WAL-specific error types
 #[derive(Error, Debug)]
 pub enum WalError {
     #[error("WAL I/O error: {operation} - {source}")]
@@ -114,37 +114,37 @@ pub enum WalError {
     ArchiveError { reason: String },
 }
 
-/// WAL configuration parameters
-///
-/// Comprehensive configuration for WAL management with sensible
-/// defaults for production environments.
+// WAL configuration parameters
+//
+// Comprehensive configuration for WAL management with sensible
+// defaults for production environments.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalConfig {
-    /// Maximum total WAL size in bytes
+    // Maximum total WAL size in bytes
     pub max_wal_size: u64,
-    /// Size of each WAL segment file
+    // Size of each WAL segment file
     pub segment_size: u64,
-    /// Enable compression for WAL segments
+    // Enable compression for WAL segments
     pub compression_enabled: bool,
-    /// Archive timeout for WAL segments
+    // Archive timeout for WAL segments
     pub archive_timeout: Duration,
-    /// Buffer size for WAL writes
+    // Buffer size for WAL writes
     pub buffer_size: usize,
-    /// Sync frequency for WAL writes
+    // Sync frequency for WAL writes
     pub sync_frequency: Duration,
-    /// Maximum number of WAL segments to keep
+    // Maximum number of WAL segments to keep
     pub max_segments: usize,
-    /// Enable checksums for WAL entries
+    // Enable checksums for WAL entries
     pub enable_checksums: bool,
-    /// Directory for WAL archive storage
+    // Directory for WAL archive storage
     pub archive_directory: Option<PathBuf>,
-    /// Streaming batch size
+    // Streaming batch size
     pub stream_batch_size: usize,
-    /// Streaming interval
+    // Streaming interval
     pub stream_interval: Duration,
-    /// Enable WAL encryption
+    // Enable WAL encryption
     pub enable_encryption: bool,
-    /// Retention period for archived WAL
+    // Retention period for archived WAL
     pub archive_retention: Duration,
 }
 
@@ -168,38 +168,38 @@ impl Default for WalConfig {
     }
 }
 
-/// WAL segment metadata
-///
-/// Contains information about a WAL segment including
-/// LSN range, file location, and status information.
+// WAL segment metadata
+//
+// Contains information about a WAL segment including
+// LSN range, file location, and status information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalSegment {
-    /// Unique segment identifier
+    // Unique segment identifier
     pub id: String,
-    /// Starting LSN for this segment
+    // Starting LSN for this segment
     pub start_lsn: LogSequenceNumber,
-    /// Ending LSN for this segment
+    // Ending LSN for this segment
     pub end_lsn: LogSequenceNumber,
-    /// File path for the segment
+    // File path for the segment
     pub file_path: PathBuf,
-    /// Size of the segment in bytes
+    // Size of the segment in bytes
     pub size_bytes: u64,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: SystemTime,
-    /// Last access timestamp
+    // Last access timestamp
     pub last_accessed: SystemTime,
-    /// Whether segment is compressed
+    // Whether segment is compressed
     pub compressed: bool,
-    /// Whether segment is archived
+    // Whether segment is archived
     pub archived: bool,
-    /// CRC checksum for the segment
+    // CRC checksum for the segment
     pub checksum: u32,
-    /// Number of entries in the segment
+    // Number of entries in the segment
     pub entry_count: usize,
 }
 
 impl WalSegment {
-    /// Creates a new WAL segment
+    // Creates a new WAL segment
     pub fn new(
         id: String,
         start_lsn: LogSequenceNumber,
@@ -221,7 +221,7 @@ impl WalSegment {
         }
     }
 
-    /// Updates segment metadata after adding an entry
+    // Updates segment metadata after adding an entry
     pub fn update_after_append(&mut self, lsn: LogSequenceNumber, entry_size: usize) {
         self.end_lsn = lsn;
         self.size_bytes += entry_size as u64;
@@ -229,35 +229,35 @@ impl WalSegment {
         self.last_accessed = SystemTime::now();
     }
 
-    /// Checks if the segment contains the given LSN
+    // Checks if the segment contains the given LSN
     pub fn contains_lsn(&self, lsn: LogSequenceNumber) -> bool {
         lsn >= self.start_lsn && lsn <= self.end_lsn
     }
 
-    /// Calculates the age of the segment
+    // Calculates the age of the segment
     pub fn age(&self) -> Option<Duration> {
         self.created_at.elapsed().ok()
     }
 }
 
-/// WAL buffer for batching writes
-///
-/// In-memory buffer that collects WAL entries before
-/// writing to disk for improved performance.
+// WAL buffer for batching writes
+//
+// In-memory buffer that collects WAL entries before
+// writing to disk for improved performance.
 #[derive(Debug)]
 struct WalBuffer {
-    /// Buffered entries
+    // Buffered entries
     entries: VecDeque<WalEntry>,
-    /// Current buffer size in bytes
+    // Current buffer size in bytes
     current_size: usize,
-    /// Maximum buffer size
+    // Maximum buffer size
     max_size: usize,
-    /// Last flush time
+    // Last flush time
     last_flush: SystemTime,
 }
 
 impl WalBuffer {
-    /// Creates a new WAL buffer
+    // Creates a new WAL buffer
     fn new(max_size: usize) -> Self {
         Self {
             entries: VecDeque::new(),
@@ -267,7 +267,7 @@ impl WalBuffer {
         }
     }
 
-    /// Adds an entry to the buffer
+    // Adds an entry to the buffer
     fn add_entry(&mut self, entry: WalEntry) -> Result<(), WalError> {
         if self.current_size + entry.size_bytes > self.max_size {
             return Err(WalError::BufferFull {
@@ -281,7 +281,7 @@ impl WalBuffer {
         Ok(())
     }
 
-    /// Drains all entries from the buffer
+    // Drains all entries from the buffer
     fn drain(&mut self) -> Vec<WalEntry> {
         let entries = self.entries.drain(..).collect();
         self.current_size = 0;
@@ -289,94 +289,94 @@ impl WalBuffer {
         entries
     }
 
-    /// Checks if buffer should be flushed
+    // Checks if buffer should be flushed
     fn should_flush(&self, max_age: Duration) -> bool {
         !self.entries.is_empty() &&
         (self.current_size >= self.max_size ||
          self.last_flush.elapsed().unwrap_or_default() >= max_age)
     }
 
-    /// Returns current buffer statistics
+    // Returns current buffer statistics
     fn stats(&self) -> (usize, usize) {
         (self.entries.len(), self.current_size)
     }
 }
 
-/// WAL streaming state for replica
+// WAL streaming state for replica
 #[derive(Debug, Clone)]
 struct StreamingState {
-    /// Last LSN sent to this replica
+    // Last LSN sent to this replica
     pub last_sent_lsn: LogSequenceNumber,
-    /// Last confirmed LSN from replica
+    // Last confirmed LSN from replica
     pub last_confirmed_lsn: LogSequenceNumber,
-    /// Whether streaming is active
+    // Whether streaming is active
     pub active: bool,
-    /// Number of entries pending confirmation
+    // Number of entries pending confirmation
     pub pending_count: usize,
-    /// Last streaming error
+    // Last streaming error
     pub last_error: Option<String>,
-    /// Streaming start time
+    // Streaming start time
     pub started_at: SystemTime,
 }
 
-/// WAL manager implementation
-///
-/// Core component responsible for all WAL operations including
-/// writing, streaming, archival, and recovery.
+// WAL manager implementation
+//
+// Core component responsible for all WAL operations including
+// writing, streaming, archival, and recovery.
 pub struct WalManager {
-    /// WAL configuration
+    // WAL configuration
     config: Arc<WalConfig>,
-    /// WAL directory path
+    // WAL directory path
     wal_directory: PathBuf,
-    /// Current WAL segments
+    // Current WAL segments
     segments: Arc<RwLock<HashMap<String, WalSegment>>>,
-    /// Current LSN counter
+    // Current LSN counter
     current_lsn: Arc<Mutex<LogSequenceNumber>>,
-    /// WAL buffer for batching writes
+    // WAL buffer for batching writes
     buffer: Arc<Mutex<WalBuffer>>,
-    /// Streaming states for replicas
+    // Streaming states for replicas
     streaming_states: Arc<RwLock<HashMap<ReplicaId, StreamingState>>>,
-    /// Background task handles
+    // Background task handles
     task_handles: Arc<Mutex<Vec<tokio::task::JoinHandle<()>>>>,
-    /// Shutdown signal
+    // Shutdown signal
     shutdown_sender: Arc<Mutex<Option<mpsc::UnboundedSender<()>>>>,
-    /// Event channel for WAL events
+    // Event channel for WAL events
     event_sender: mpsc::UnboundedSender<WalEvent>,
 }
 
-/// WAL events for monitoring and alerting
+// WAL events for monitoring and alerting
 #[derive(Debug, Clone)]
 pub enum WalEvent {
-    /// New entry appended to WAL
+    // New entry appended to WAL
     EntryAppended { lsn: LogSequenceNumber, size_bytes: usize },
-    /// WAL segment created
+    // WAL segment created
     SegmentCreated { segment_id: String, start_lsn: LogSequenceNumber },
-    /// WAL segment archived
+    // WAL segment archived
     SegmentArchived { segment_id: String, archive_path: PathBuf },
-    /// WAL segment removed
+    // WAL segment removed
     SegmentRemoved { segment_id: String, reason: String },
-    /// Streaming started for replica
+    // Streaming started for replica
     StreamingStarted { replica_id: String, from_lsn: LogSequenceNumber },
-    /// Streaming stopped for replica
+    // Streaming stopped for replica
     StreamingStopped { replica_id: String, reason: String },
-    /// WAL corruption detected
+    // WAL corruption detected
     CorruptionDetected { lsn: LogSequenceNumber, reason: String },
-    /// Buffer flushed to disk
+    // Buffer flushed to disk
     BufferFlushed { entry_count: usize, size_bytes: usize },
 }
 
 impl WalManager {
-    /// Creates a new WAL manager
-    ///
-    /// # Arguments
-    ///
-    /// * `config` - WAL configuration
-    /// * `wal_directory` - Directory for WAL storage
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(WalManager)` - Successfully created manager
-    /// * `Err(WalError)` - Creation failed
+    // Creates a new WAL manager
+    //
+    // # Arguments
+    //
+    // * `config` - WAL configuration
+    // * `wal_directory` - Directory for WAL storage
+    //
+    // # Returns
+    //
+    // * `Ok(WalManager)` - Successfully created manager
+    // * `Err(WalError)` - Creation failed
     pub async fn new<P: AsRef<Path>>(
         config: WalConfig,
         wal_directory: P,
@@ -415,7 +415,7 @@ impl WalManager {
         Ok(manager)
     }
 
-    /// Validates the WAL configuration
+    // Validates the WAL configuration
     fn validate_config(config: &WalConfig) -> Result<(), WalError> {
         if config.max_wal_size == 0 {
             return Err(WalError::InvalidConfiguration {
@@ -444,7 +444,7 @@ impl WalManager {
         Ok(())
     }
 
-    /// Loads existing WAL segments from disk
+    // Loads existing WAL segments from disk
     async fn load_existing_segments(&self) -> Result<(), WalError> {
         let entries = std::fs::read_dir(&self.wal_directory)
             .map_err(|e| WalError::IoError {
@@ -477,7 +477,7 @@ impl WalManager {
         Ok(())
     }
 
-    /// Loads a single WAL segment from file
+    // Loads a single WAL segment from file
     async fn load_segment(&self, path: &Path) -> Result<WalSegment, WalError> {
         // For now, create a basic segment from the file_name
         let segment_id = path.file_stem()
@@ -502,7 +502,7 @@ impl WalManager {
         Ok(segment)
     }
 
-    /// Starts WAL streaming to replicas
+    // Starts WAL streaming to replicas
     pub async fn start_streaming(&self) -> Result<(), WalError> {
         // Start buffer flush task
         self.start_buffer_flush_task().await;
@@ -518,7 +518,7 @@ impl WalManager {
         Ok(())
     }
 
-    /// Stops WAL streaming and background tasks
+    // Stops WAL streaming and background tasks
     pub async fn stop_streaming(&self) -> Result<(), WalError> {
         // Send shutdown signal
         {
@@ -544,16 +544,16 @@ impl WalManager {
         Ok(())
     }
 
-    /// Appends an entry to the WAL
-    ///
-    /// # Arguments
-    ///
-    /// * `entry` - WAL entry to append
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(LogSequenceNumber)` - LSN assigned to the entry
-    /// * `Err(WalError)` - Append failed
+    // Appends an entry to the WAL
+    //
+    // # Arguments
+    //
+    // * `entry` - WAL entry to append
+    //
+    // # Returns
+    //
+    // * `Ok(LogSequenceNumber)` - LSN assigned to the entry
+    // * `Err(WalError)` - Append failed
     pub async fn append(&self, mut entry: WalEntry) -> Result<LogSequenceNumber, WalError> {
         // Assign LSN
         let lsn = {
@@ -598,17 +598,17 @@ impl WalManager {
         Ok(lsn)
     }
 
-    /// Gets WAL entries starting from a specific LSN
-    ///
-    /// # Arguments
-    ///
-    /// * `from_lsn` - Starting LSN (inclusive)
-    /// * `limit` - Maximum number of entries to return
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(Vec<WalEntry>)` - Found entries
-    /// * `Err(WalError)` - Read failed
+    // Gets WAL entries starting from a specific LSN
+    //
+    // # Arguments
+    //
+    // * `from_lsn` - Starting LSN (inclusive)
+    // * `limit` - Maximum number of entries to return
+    //
+    // # Returns
+    //
+    // * `Ok(Vec<WalEntry>)` - Found entries
+    // * `Err(WalError)` - Read failed
     pub async fn get_entries(
         &self,
         from_lsn: LogSequenceNumber,
@@ -642,7 +642,7 @@ impl WalManager {
         Ok(entries)
     }
 
-    /// Reads entries from a specific segment file
+    // Reads entries from a specific segment file
     async fn read_entries_from_segment(
         &self,
         segment: &WalSegment,
@@ -658,16 +658,16 @@ impl WalManager {
         Ok(Vec::new())
     }
 
-    /// Truncates WAL up to a specific LSN
-    ///
-    /// # Arguments
-    ///
-    /// * `up_to_lsn` - LSN to truncate up to (inclusive)
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - Truncation completed
-    /// * `Err(WalError)` - Truncation failed
+    // Truncates WAL up to a specific LSN
+    //
+    // # Arguments
+    //
+    // * `up_to_lsn` - LSN to truncate up to (inclusive)
+    //
+    // # Returns
+    //
+    // * `Ok(())` - Truncation completed
+    // * `Err(WalError)` - Truncation failed
     pub async fn truncate(&self, up_to_lsn: LogSequenceNumber) -> Result<(), WalError> {
         let mut segments = self.segments.write();
         let mut to_remove = Vec::new();
@@ -702,17 +702,17 @@ impl WalManager {
         Ok(())
     }
 
-    /// Gets the latest LSN in the WAL
+    // Gets the latest LSN in the WAL
     pub async fn get_latest_lsn(&self) -> Result<LogSequenceNumber, WalError> {
         Ok(*self.current_lsn.lock())
     }
 
-    /// Gets WAL statistics
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(WalStats)` - Current WAL statistics
-    /// * `Err(WalError)` - Failed to get statistics
+    // Gets WAL statistics
+    //
+    // # Returns
+    //
+    // * `Ok(WalStats)` - Current WAL statistics
+    // * `Err(WalError)` - Failed to get statistics
     pub async fn get_stats(&self) -> Result<WalStats, WalError> {
         let segments = self.segments.read();
         let current_lsn = *self.current_lsn.lock();
@@ -742,17 +742,17 @@ impl WalManager {
         })
     }
 
-    /// Starts streaming to a specific replica
-    ///
-    /// # Arguments
-    ///
-    /// * `replica_id` - ID of the replica to stream to
-    /// * `from_lsn` - LSN to start streaming from
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - Streaming started successfully
-    /// * `Err(WalError)` - Failed to start streaming
+    // Starts streaming to a specific replica
+    //
+    // # Arguments
+    //
+    // * `replica_id` - ID of the replica to stream to
+    // * `from_lsn` - LSN to start streaming from
+    //
+    // # Returns
+    //
+    // * `Ok(())` - Streaming started successfully
+    // * `Err(WalError)` - Failed to start streaming
     pub async fn stream_to_replica(
         &self,
         replica_id: &ReplicaId,
@@ -785,7 +785,7 @@ impl WalManager {
         Ok(())
     }
 
-    /// Stops streaming to a specific replica
+    // Stops streaming to a specific replica
     pub async fn stop_streaming_to_replica(
         &self,
         replica_id: &ReplicaId,
@@ -807,7 +807,7 @@ impl WalManager {
         Ok(())
     }
 
-    /// Flushes the WAL buffer to disk
+    // Flushes the WAL buffer to disk
     async fn flush_buffer(&self) -> Result<(), WalError> {
         let entries = {
             let mut buffer = self.buffer.lock();
@@ -832,7 +832,7 @@ impl WalManager {
         Ok(())
     }
 
-    /// Writes entries to disk
+    // Writes entries to disk
     async fn write_entries_to_disk(&self, entries: &[WalEntry]) -> Result<(), WalError> {
         // For now, just simulate writing
         // In a full implementation, this would:
@@ -843,7 +843,7 @@ impl WalManager {
         Ok(())
     }
 
-    /// Starts the buffer flush task
+    // Starts the buffer flush task
     async fn start_buffer_flush_task(&self) {
         let buffer = Arc::clone(&self.buffer);
         let sync_frequency = self.config.sync_frequency;
@@ -869,7 +869,7 @@ impl WalManager {
         self.task_handles.lock().push(handle);
     }
 
-    /// Starts the cleanup task
+    // Starts the cleanup task
     async fn start_cleanup_task(&self) {
         let segments = Arc::clone(&self.segments);
         let config = Arc::clone(&self.config);
@@ -891,7 +891,7 @@ impl WalManager {
         self.task_handles.lock().push(handle);
     }
 
-    /// Starts the archive task
+    // Starts the archive task
     async fn start_archive_task(&self) {
         if self.config.archive_directory.is_none() {
             return;
@@ -923,7 +923,7 @@ impl WalManager {
         self.task_handles.lock().push(handle);
     }
 
-    /// Starts streaming task for a specific replica
+    // Starts streaming task for a specific replica
     async fn start_replica_streaming_task(
         &self,
         replica_id: ReplicaId,
@@ -958,30 +958,30 @@ impl WalManager {
         self.task_handles.lock().push(handle);
     }
 
-    /// Gets streaming state for a replica
+    // Gets streaming state for a replica
     pub fn get_streaming_state(&self, replica_id: &ReplicaId) -> Option<StreamingState> {
         let states = self.streaming_states.read();
         states.get(replica_id).cloned()
     }
 
-    /// Gets all streaming states
+    // Gets all streaming states
     pub fn get_all_streaming_states(&self) -> HashMap<ReplicaId, StreamingState> {
         self.streaming_states.read().clone()
     }
 }
 
-/// WAL statistics implementation required by WalService trait
+// WAL statistics implementation required by WalService trait
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalStats {
-    /// Total number of WAL entries
+    // Total number of WAL entries
     pub total_entries: usize,
-    /// Total WAL size in bytes
+    // Total WAL size in bytes
     pub size_bytes: u64,
-    /// Oldest LSN in WAL
+    // Oldest LSN in WAL
     pub oldest_lsn: LogSequenceNumber,
-    /// Newest LSN in WAL
+    // Newest LSN in WAL
     pub newest_lsn: LogSequenceNumber,
-    /// Average entries per second
+    // Average entries per second
     pub entries_per_second: f64,
 }
 
@@ -1010,7 +1010,7 @@ mod tests {
                 max_wal_size: 0, // Invalid
                 ..WalConfig::default()
             };
-        
+
 let result = WalManager::new(config, temp_dir.path()).await;
                 assert!(result.is_err());
                 if let Err(err) = result {

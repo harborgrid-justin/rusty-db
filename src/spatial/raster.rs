@@ -11,7 +11,7 @@ use crate::error::{DbError, Result};
 use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, LinearRing, Polygon};
 use std::collections::HashMap;
 
-/// Pixel data types
+// Pixel data types
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PixelType {
     UInt8,
@@ -35,7 +35,7 @@ impl PixelType {
     }
 }
 
-/// Pixel value enum
+// Pixel value enum
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PixelValue {
     UInt8(u8),
@@ -65,7 +65,7 @@ impl PixelValue {
     }
 }
 
-/// Raster band
+// Raster band
 #[derive(Debug, Clone)]
 pub struct RasterBand {
     pub width: usize,
@@ -97,7 +97,7 @@ impl RasterBand {
         }
     }
 
-    /// Get pixel value at (x, y)
+    // Get pixel value at (x, y)
     pub fn get_pixel(&self, x: usize, y: usize) -> Result<PixelValue> {
         if x >= self.width || y >= self.height {
             return Err(DbError::InvalidInput("Pixel coordinates out of bounds".to_string()));
@@ -126,7 +126,7 @@ impl RasterBand {
         Ok(value)
     }
 
-    /// Set pixel value at (x, y)
+    // Set pixel value at (x, y)
     pub fn set_pixel(&mut self, x: usize, y: usize, value: PixelValue) -> Result<()> {
         if x >= self.width || y >= self.height {
             return Err(DbError::InvalidInput("Pixel coordinates out of bounds".to_string()));
@@ -159,7 +159,7 @@ impl RasterBand {
         Ok(())
     }
 
-    /// Calculate band statistics
+    // Calculate band statistics
     pub fn calculate_statistics(&mut self) -> Result<()> {
         let mut min = f64::INFINITY;
         let mut max = f64::NEG_INFINITY;
@@ -217,7 +217,7 @@ impl RasterBand {
     }
 }
 
-/// Georeferencing information
+// Georeferencing information
 #[derive(Debug, Clone)]
 pub struct GeoTransform {
     pub origin_x: f64,      // X coordinate of upper-left corner
@@ -240,14 +240,14 @@ impl GeoTransform {
         }
     }
 
-    /// Convert pixel coordinates to world coordinates
+    // Convert pixel coordinates to world coordinates
     pub fn pixel_to_world(&self, pixel_x: f64, pixel_y: f64) -> Coordinate {
         let x = self.origin_x + pixel_x * self.pixel_width + pixel_y * self.rotation_x;
         let y = self.origin_y + pixel_x * self.rotation_y + pixel_y * self.pixel_height;
         Coordinate::new(x, y)
     }
 
-    /// Convert world coordinates to pixel coordinates
+    // Convert world coordinates to pixel coordinates
     pub fn world_to_pixel(&self, world_x: f64, world_y: f64) -> (f64, f64) {
         let det = self.pixel_width * self.pixel_height - self.rotation_x * self.rotation_y;
 
@@ -265,7 +265,7 @@ impl GeoTransform {
     }
 }
 
-/// Main raster dataset
+// Main raster dataset
 #[derive(Debug, Clone)]
 pub struct Raster {
     pub width: usize,
@@ -298,7 +298,7 @@ impl Raster {
         }
     }
 
-    /// Get bounding box of the raster
+    // Get bounding box of the raster
     pub fn bbox(&self) -> BoundingBox {
         let min_coord = self.geo_transform.pixel_to_world(0.0, 0.0);
         let max_coord = self
@@ -313,7 +313,7 @@ impl Raster {
         )
     }
 
-    /// Get pixel value at world coordinates
+    // Get pixel value at world coordinates
     pub fn get_value_at(&self, coord: &Coordinate, band_idx: usize) -> Result<PixelValue> {
         if band_idx >= self.bands.len() {
             return Err(DbError::InvalidInput("Band index out of range".to_string()));
@@ -333,31 +333,31 @@ impl Raster {
     }
 }
 
-/// Raster algebra operations
+// Raster algebra operations
 pub struct RasterAlgebra;
 
 impl RasterAlgebra {
-    /// Add two rasters
+    // Add two rasters
     pub fn add(raster1: &Raster, raster2: &Raster) -> Result<Raster> {
         Self::binary_op(raster1, raster2, |a, b| a + b)
     }
 
-    /// Subtract raster2 from raster1
+    // Subtract raster2 from raster1
     pub fn subtract(raster1: &Raster, raster2: &Raster) -> Result<Raster> {
         Self::binary_op(raster1, raster2, |a, b| a - b)
     }
 
-    /// Multiply two rasters
+    // Multiply two rasters
     pub fn multiply(raster1: &Raster, raster2: &Raster) -> Result<Raster> {
         Self::binary_op(raster1, raster2, |a, b| a * b)
     }
 
-    /// Divide raster1 by raster2
+    // Divide raster1 by raster2
     pub fn divide(raster1: &Raster, raster2: &Raster) -> Result<Raster> {
         Self::binary_op(raster1, raster2, |a, b| if b != 0.0 { a / b } else { 0.0 })
     }
 
-    /// Generic binary operation
+    // Generic binary operation
     fn binary_op<F>(raster1: &Raster, raster2: &Raster, op: F) -> Result<Raster>
     where
         F: Fn(f64, f64) -> f64,
@@ -397,7 +397,7 @@ impl RasterAlgebra {
         Ok(result)
     }
 
-    /// Calculate NDVI (Normalized Difference Vegetation Index)
+    // Calculate NDVI (Normalized Difference Vegetation Index)
     pub fn ndvi(nir_band: &RasterBand, red_band: &RasterBand) -> Result<RasterBand> {
         if nir_band.width != red_band.width || nir_band.height != red_band.height {
             return Err(DbError::InvalidInput("Band dimensions must match".to_string()));
@@ -424,7 +424,7 @@ impl RasterAlgebra {
         Ok(result)
     }
 
-    /// Apply a focal filter (moving window operation)
+    // Apply a focal filter (moving window operation)
     pub fn focal_filter(band: &RasterBand, kernel_size: usize) -> Result<RasterBand> {
         let mut result = RasterBand::new(band.width, band.height, PixelType::Float32);
         let half_kernel = kernel_size / 2;
@@ -462,11 +462,11 @@ impl RasterAlgebra {
     }
 }
 
-/// Raster to vector conversion
+// Raster to vector conversion
 pub struct RasterVectorConverter;
 
 impl RasterVectorConverter {
-    /// Convert raster to polygons (contour polygons)
+    // Convert raster to polygons (contour polygons)
     pub fn vectorize(band: &RasterBand, geo_transform: &GeoTransform) -> Result<Vec<Polygon>> {
         let mut polygons = Vec::new();
 
@@ -568,7 +568,7 @@ impl RasterVectorConverter {
         Ok(Some(Polygon::new(ring, vec![])))
     }
 
-    /// Extract contour lines at specified values
+    // Extract contour lines at specified values
     pub fn contour_lines(
         band: &RasterBand,
         geo_transform: &GeoTransform,
@@ -627,13 +627,13 @@ impl RasterVectorConverter {
     }
 }
 
-/// Raster pyramid for multi-resolution support
+// Raster pyramid for multi-resolution support
 pub struct RasterPyramid {
     pub levels: Vec<Raster>,
 }
 
 impl RasterPyramid {
-    /// Build pyramid from base raster
+    // Build pyramid from base raster
     pub fn build(base: &Raster, num_levels: usize) -> Result<Self> {
         let mut levels = vec![base.clone()];
 
@@ -646,7 +646,7 @@ impl RasterPyramid {
         Ok(Self { levels })
     }
 
-    /// Downsample raster by factor of 2
+    // Downsample raster by factor of 2
     fn downsample(raster: &Raster) -> Result<Raster> {
         let new_width = raster.width / 2;
         let new_height = raster.height / 2;
@@ -704,14 +704,14 @@ impl RasterPyramid {
         Ok(result)
     }
 
-    /// Get appropriate level for given scale
+    // Get appropriate level for given scale
     pub fn get_level(&self, scale: f64) -> &Raster {
         let level_idx = (scale.log2().floor() as usize).min(self.levels.len() - 1);
         &self.levels[level_idx]
     }
 }
 
-/// Tile-based raster storage for large datasets
+// Tile-based raster storage for large datasets
 pub struct TiledRaster {
     pub tile_width: usize,
     pub tile_height: usize,
@@ -739,12 +739,12 @@ impl TiledRaster {
         }
     }
 
-    /// Get tile coordinates for a pixel
+    // Get tile coordinates for a pixel
     fn get_tile_coords(&self, x: usize, y: usize) -> (usize, usize) {
         (x / self.tile_width, y / self.tile_height)
     }
 
-    /// Get or create a tile
+    // Get or create a tile
     pub fn get_tile_mut(&mut self, tile_x: usize, tile_y: usize) -> &mut Raster {
         self.tiles.entry((tile_x, tile_y)).or_insert_with(|| {
             let width = self.tile_width.min(self.full_width - tile_x * self.tile_width);
@@ -754,7 +754,7 @@ impl TiledRaster {
         })
     }
 
-    /// Get pixel value across tiles
+    // Get pixel value across tiles
     pub fn get_pixel(&self, x: usize, y: usize) -> Result<PixelValue> {
         let (tile_x, tile_y) = self.get_tile_coords(x, y);
 

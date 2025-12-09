@@ -28,7 +28,7 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use crate::error::{DbError, Result};
 
-/// Index key type
+// Index key type
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum IndexKey {
     Integer(i64),
@@ -36,10 +36,10 @@ pub enum IndexKey {
     Binary(Vec<u8>),
 }
 
-/// Index value (row ID or pointer)
+// Index value (row ID or pointer)
 pub type IndexValue = u64;
 
-/// Simple B-Tree index implementation (for backward compatibility)
+// Simple B-Tree index implementation (for backward compatibility)
 #[derive(Clone)]
 pub struct BTreeIndex {
     name: String,
@@ -94,7 +94,7 @@ impl BTreeIndex {
     }
 }
 
-/// Simple hash index implementation (for backward compatibility)
+// Simple hash index implementation (for backward compatibility)
 #[derive(Clone)]
 pub struct HashIndex {
     name: String,
@@ -138,7 +138,7 @@ impl HashIndex {
     }
 }
 
-/// Unified index types supporting all index structures
+// Unified index types supporting all index structures
 #[derive(Clone)]
 pub enum Index {
     BTree(BTreeIndex),
@@ -211,14 +211,14 @@ impl Index {
     }
 }
 
-/// Index Manager - Central management for all indexes
+// Index Manager - Central management for all indexes
 pub struct IndexManager {
     indexes: Arc<RwLock<std::collections::HashMap<String, Index>>>,
     advisor: Arc<RwLock<advisor::IndexAdvisor>>,
 }
 
 impl IndexManager {
-    /// Create a new index manager
+    // Create a new index manager
     pub fn new() -> Self {
         Self {
             indexes: Arc::new(RwLock::new(std::collections::HashMap::new())),
@@ -228,7 +228,7 @@ impl IndexManager {
         }
     }
 
-    /// Create a new index
+    // Create a new index
     pub fn create_index(&self, name: String, index_type: IndexType) -> Result<()> {
         let mut indexes = self.indexes.write();
 
@@ -257,7 +257,7 @@ impl IndexManager {
         Ok(())
     }
 
-    /// Get an index by name
+    // Get an index by name
     pub fn get_index(&self, name: &str) -> Result<Index> {
         let indexes = self.indexes.read();
         indexes
@@ -266,7 +266,7 @@ impl IndexManager {
             .ok_or_else(|| DbError::Internal(format!("Index '{}' not found", name)))
     }
 
-    /// Drop an index
+    // Drop an index
     pub fn drop_index(&self, name: &str) -> Result<()> {
         let mut indexes = self.indexes.write();
         if indexes.remove(name).is_some() {
@@ -276,25 +276,25 @@ impl IndexManager {
         }
     }
 
-    /// Get index recommendations from the advisor
+    // Get index recommendations from the advisor
     pub fn get_recommendations(&self) -> Result<Vec<advisor::IndexRecommendation>> {
         let advisor = self.advisor.read();
         advisor.analyze()
     }
 
-    /// Record a query for workload analysis
+    // Record a query for workload analysis
     pub fn record_query(&self, query: &advisor::Query) {
         let mut advisor = self.advisor.write();
         advisor.record_query(query);
     }
 
-    /// List all indexes
+    // List all indexes
     pub fn list_indexes(&self) -> Vec<String> {
         let indexes = self.indexes.read();
         indexes.keys().cloned().collect()
     }
 
-    /// Get index statistics
+    // Get index statistics
     pub fn get_index_stats(&self, name: &str) -> Result<IndexStats> {
         let indexes = self.indexes.read();
         let index = indexes
@@ -333,7 +333,7 @@ impl Default for IndexManager {
     }
 }
 
-/// Index type enumeration
+// Index type enumeration
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum IndexType {
     BTree,
@@ -346,7 +346,7 @@ pub enum IndexType {
     Spatial,
 }
 
-/// Index statistics
+// Index statistics
 #[derive(Debug, Clone)]
 pub enum IndexStats {
     BPlusTree(btree::BTreeStats),
@@ -361,36 +361,34 @@ pub enum IndexStats {
 mod tests {
     use super::*;
 use std::collections::HashMap;
-    
+
     #[test]
     fn test_btree_index() -> Result<()> {
         let idx = BTreeIndex::new("test_idx".to_string());
-        
+
         idx.insert(IndexKey::Integer(1), 100)?;
         idx.insert(IndexKey::Integer(2), 200)?;
         idx.insert(IndexKey::Integer(3), 300)?;
-        
+
         let results = idx.search(&IndexKey::Integer(2))?;
         assert_eq!(results, vec![200]);
-        
+
         let range_results = idx.range_search(&IndexKey::Integer(1), &IndexKey::Integer(3))?;
         assert_eq!(range_results.len(), 3);
-        
+
         Ok(())
     }
-    
+
     #[test]
     fn test_hash_index() -> Result<()> {
         let idx = HashIndex::new("test_hash".to_string());
-        
+
         idx.insert(IndexKey::String("key1".to_string()), 100)?;
         idx.insert(IndexKey::String("key2".to_string()), 200)?;
-        
+
         let results = idx.search(&IndexKey::String("key1".to_string()))?;
         assert_eq!(results, vec![100]);
-        
+
         Ok(())
     }
 }
-
-

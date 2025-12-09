@@ -30,17 +30,17 @@ use serde::{Serialize, Deserialize};
 use crate::error::{Result, DbError};
 use super::isolation::ResourceLimits;
 
-/// Unique identifier for a Pluggable Database
+// Unique identifier for a Pluggable Database
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PdbId(pub u64);
 
 impl PdbId {
-    /// Create a new PDB ID
+    // Create a new PDB ID
     pub fn new(id: u64) -> Self {
         Self(id)
     }
 
-    /// Get the underlying ID value
+    // Get the underlying ID value
     pub fn value(&self) -> u64 {
         self.0
     }
@@ -52,101 +52,101 @@ impl fmt::Display for PdbId {
     }
 }
 
-/// PDB lifecycle state
+// PDB lifecycle state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PdbLifecycleState {
-    /// PDB is being created
+    // PDB is being created
     Creating,
-    /// PDB is mounted but not open
+    // PDB is mounted but not open
     Mounted,
-    /// PDB is open for normal operations
+    // PDB is open for normal operations
     Open,
-    /// PDB is open in restricted mode (admin only)
+    // PDB is open in restricted mode (admin only)
     OpenRestricted,
-    /// PDB is being closed
+    // PDB is being closed
     Closing,
-    /// PDB is closed
+    // PDB is closed
     Closed,
-    /// PDB is being dropped
+    // PDB is being dropped
     Dropping,
-    /// PDB is being migrated
+    // PDB is being migrated
     Migrating,
-    /// PDB is in read-only mode
+    // PDB is in read-only mode
     ReadOnly,
 }
 
-/// PDB open mode
+// PDB open mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PdbMode {
-    /// Full read-write mode
+    // Full read-write mode
     ReadWrite,
-    /// Read-only mode
+    // Read-only mode
     ReadOnly,
-    /// Restricted mode (admin only)
+    // Restricted mode (admin only)
     Restricted,
 }
 
-/// PDB creation mode
+// PDB creation mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PdbCreateMode {
-    /// Create a new empty PDB
+    // Create a new empty PDB
     New,
-    /// Create from seed PDB
+    // Create from seed PDB
     FromSeed,
-    /// Clone an existing PDB
+    // Clone an existing PDB
     Clone,
-    /// Plug in an unplugged PDB
+    // Plug in an unplugged PDB
     Plug,
-    /// Create from backup
+    // Create from backup
     FromBackup,
 }
 
-/// PDB configuration
+// PDB configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdbConfig {
-    /// PDB name (must be unique within CDB)
+    // PDB name (must be unique within CDB)
     pub name: String,
 
-    /// Creation mode
+    // Creation mode
     pub create_mode: PdbCreateMode,
 
-    /// Admin username
+    // Admin username
     pub admin_user: String,
 
-    /// Admin password (hashed)
+    // Admin password (hashed)
     pub admin_password: String,
 
-    /// Data file directory
+    // Data file directory
     pub data_dir: PathBuf,
 
-    /// Default tablespace name
+    // Default tablespace name
     pub default_tablespace: String,
 
-    /// Temporary tablespace name
+    // Temporary tablespace name
     pub temp_tablespace: String,
 
-    /// Resource limits
+    // Resource limits
     pub resource_limits: ResourceLimits,
 
-    /// Enable flashback
+    // Enable flashback
     pub flashback_enabled: bool,
 
-    /// Enable force logging
+    // Enable force logging
     pub force_logging: bool,
 
-    /// Character set
+    // Character set
     pub charset: String,
 
-    /// National character set
+    // National character set
     pub ncharset: String,
 
-    /// Application container (if this PDB is an app container)
+    // Application container (if this PDB is an app container)
     pub is_application_container: bool,
 
-    /// Parent application container ID (if any)
+    // Parent application container ID (if any)
     pub parent_app_container: Option<PdbId>,
 
-    /// Snapshot interval (seconds, 0 = disabled)
+    // Snapshot interval (seconds, 0 = disabled)
     pub snapshot_interval_secs: u64,
 }
 
@@ -173,13 +173,13 @@ impl Default for PdbConfig {
 }
 
 impl PdbConfig {
-    /// Create a new PDB config builder
+    // Create a new PDB config builder
     pub fn builder() -> PdbConfigBuilder {
         PdbConfigBuilder::default()
     }
 }
 
-/// Builder for PDB configuration
+// Builder for PDB configuration
 #[derive(Default)]
 pub struct PdbConfigBuilder {
     config: PdbConfig,
@@ -221,45 +221,45 @@ impl PdbConfigBuilder {
     }
 }
 
-/// PDB metadata
+// PDB metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdbMetadata {
-    /// PDB GUID (globally unique identifier)
+    // PDB GUID (globally unique identifier)
     pub guid: String,
 
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: u64,
 
-    /// Last modified timestamp
+    // Last modified timestamp
     pub modified_at: u64,
 
-    /// PDB version
+    // PDB version
     pub version: String,
 
-    /// Open count (number of times opened)
+    // Open count (number of times opened)
     pub open_count: u64,
 
-    /// Total size in bytes
+    // Total size in bytes
     pub total_size_bytes: u64,
 
-    /// Number of tablespaces
+    // Number of tablespaces
     pub tablespace_count: u32,
 
-    /// Number of users
+    // Number of users
     pub user_count: u32,
 
-    /// Number of tables
+    // Number of tables
     pub table_count: u64,
 
-    /// Source PDB ID (if cloned)
+    // Source PDB ID (if cloned)
     pub source_pdb_id: Option<PdbId>,
 
-    /// Tags for organization
+    // Tags for organization
     pub tags: HashMap<String, String>,
 }
 
 impl PdbMetadata {
-    /// Create new PDB metadata
+    // Create new PDB metadata
     pub fn new() -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -281,7 +281,7 @@ impl PdbMetadata {
         }
     }
 
-    /// Update modification timestamp
+    // Update modification timestamp
     pub fn touch(&mut self) {
         self.modified_at = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -290,59 +290,59 @@ impl PdbMetadata {
     }
 }
 
-/// PDB snapshot
+// PDB snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdbSnapshot {
-    /// Snapshot ID
+    // Snapshot ID
     pub id: u64,
 
-    /// Snapshot name
+    // Snapshot name
     pub name: String,
 
-    /// Source PDB ID
+    // Source PDB ID
     pub source_pdb_id: PdbId,
 
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: u64,
 
-    /// Snapshot SCN (System Change Number)
+    // Snapshot SCN (System Change Number)
     pub scn: u64,
 
-    /// Size in bytes
+    // Size in bytes
     pub size_bytes: u64,
 
-    /// Snapshot type
+    // Snapshot type
     pub snapshot_type: SnapshotType,
 
-    /// Description
+    // Description
     pub description: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SnapshotType {
-    /// Full snapshot
+    // Full snapshot
     Full,
-    /// Incremental snapshot
+    // Incremental snapshot
     Incremental,
-    /// Copy-on-write snapshot
+    // Copy-on-write snapshot
     CopyOnWrite,
 }
 
-/// Seed PDB for fast provisioning
+// Seed PDB for fast provisioning
 #[derive(Debug, Clone)]
 pub struct SeedPdb {
-    /// Seed PDB configuration
+    // Seed PDB configuration
     config: PdbConfig,
 
-    /// Template metadata
+    // Template metadata
     metadata: PdbMetadata,
 
-    /// Pre-created objects
+    // Pre-created objects
     objects: Vec<String>,
 }
 
 impl SeedPdb {
-    /// Create a new seed PDB
+    // Create a new seed PDB
     pub fn new(config: PdbConfig) -> Self {
         Self {
             config,
@@ -351,7 +351,7 @@ impl SeedPdb {
         }
     }
 
-    /// Clone from seed
+    // Clone from seed
     pub async fn clone(&self, name: &str) -> Result<PluggableDatabase> {
         let mut config = self.config.clone();
         config.name = name.to_string();
@@ -361,23 +361,23 @@ impl SeedPdb {
     }
 }
 
-/// Application Container
-///
-/// A special type of PDB that can contain other PDBs and share common objects
+// Application Container
+//
+// A special type of PDB that can contain other PDBs and share common objects
 #[derive(Debug, Clone)]
 pub struct ApplicationContainer {
-    /// Base PDB
+    // Base PDB
     pdb: PluggableDatabase,
 
-    /// Child PDBs
+    // Child PDBs
     children: Arc<RwLock<HashMap<PdbId, Arc<RwLock<PluggableDatabase>>>>>,
 
-    /// Common application objects
+    // Common application objects
     common_objects: Arc<RwLock<Vec<String>>>,
 }
 
 impl ApplicationContainer {
-    /// Create a new application container
+    // Create a new application container
     pub async fn new(config: PdbConfig) -> Result<Self> {
         let mut app_config = config;
         app_config.is_application_container = true;
@@ -391,63 +391,63 @@ impl ApplicationContainer {
         })
     }
 
-    /// Add a child PDB
+    // Add a child PDB
     pub async fn add_child(&self, child_id: PdbId, child: PluggableDatabase) -> Result<()> {
         self.children.write().await.insert(child_id, Arc::new(RwLock::new(child)));
         Ok(())
     }
 
-    /// Remove a child PDB
+    // Remove a child PDB
     pub async fn remove_child(&self, child_id: PdbId) -> Result<()> {
         self.children.write().await.remove(&child_id);
         Ok(())
     }
 
-    /// List child PDBs
+    // List child PDBs
     pub async fn list_children(&self) -> Vec<PdbId> {
         self.children.read().await.keys().copied().collect()
     }
 
-    /// Add a common object
+    // Add a common object
     pub async fn add_common_object(&self, object_name: String) -> Result<()> {
         self.common_objects.write().await.push(object_name);
         Ok(())
     }
 }
 
-/// Pluggable Database (PDB)
-///
-/// A fully isolated database instance within a CDB
+// Pluggable Database (PDB)
+//
+// A fully isolated database instance within a CDB
 #[derive(Debug, Clone)]
 pub struct PluggableDatabase {
-    /// PDB configuration
+    // PDB configuration
     config: PdbConfig,
 
-    /// PDB metadata
+    // PDB metadata
     metadata: Arc<RwLock<PdbMetadata>>,
 
-    /// Current lifecycle state
+    // Current lifecycle state
     state: Arc<RwLock<PdbLifecycleState>>,
 
-    /// Current open mode
+    // Current open mode
     mode: Arc<RwLock<Option<PdbMode>>>,
 
-    /// Snapshots
+    // Snapshots
     snapshots: Arc<RwLock<HashMap<u64, PdbSnapshot>>>,
 
-    /// Next snapshot ID
+    // Next snapshot ID
     next_snapshot_id: Arc<RwLock<u64>>,
 
-    /// Tablespaces
+    // Tablespaces
     tablespaces: Arc<RwLock<HashMap<String, Tablespace>>>,
 
-    /// Users
+    // Users
     users: Arc<RwLock<HashMap<String, PdbUser>>>,
 
-    /// Connection pool
+    // Connection pool
     connections: Arc<RwLock<Vec<Connection>>>,
 
-    /// Performance metrics
+    // Performance metrics
     metrics: Arc<RwLock<PdbMetrics>>,
 }
 
@@ -481,31 +481,31 @@ pub struct Connection {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdbMetrics {
-    /// Total queries executed
+    // Total queries executed
     pub queries_executed: u64,
 
-    /// Total transactions committed
+    // Total transactions committed
     pub transactions_committed: u64,
 
-    /// Total transactions rolled back
+    // Total transactions rolled back
     pub transactions_rolled_back: u64,
 
-    /// Average query time (microseconds)
+    // Average query time (microseconds)
     pub avg_query_time_micros: u64,
 
-    /// Peak connections
+    // Peak connections
     pub peak_connections: u32,
 
-    /// Current connections
+    // Current connections
     pub current_connections: u32,
 
-    /// Bytes read
+    // Bytes read
     pub bytes_read: u64,
 
-    /// Bytes written
+    // Bytes written
     pub bytes_written: u64,
 
-    /// Cache hit ratio
+    // Cache hit ratio
     pub cache_hit_ratio: f64,
 }
 
@@ -526,7 +526,7 @@ impl Default for PdbMetrics {
 }
 
 impl PluggableDatabase {
-    /// Create a new PDB
+    // Create a new PDB
     pub async fn create(config: PdbConfig) -> Result<Self> {
         let metadata = Arc::new(RwLock::new(PdbMetadata::new()));
         let state = Arc::new(RwLock::new(PdbLifecycleState::Creating));
@@ -564,32 +564,32 @@ impl PluggableDatabase {
         Ok(pdb)
     }
 
-    /// Get PDB name
+    // Get PDB name
     pub fn name(&self) -> &str {
         &self.config.name
     }
 
-    /// Get current state
+    // Get current state
     pub async fn state(&self) -> PdbLifecycleState {
         *self.state.read().await
     }
 
-    /// Get current mode
+    // Get current mode
     pub async fn mode(&self) -> Option<PdbMode> {
         *self.mode.read().await
     }
 
-    /// Get resource limits
+    // Get resource limits
     pub fn resource_limits(&self) -> &ResourceLimits {
         &self.config.resource_limits
     }
 
-    /// Open the PDB
+    // Open the PDB
     pub async fn open(&mut self) -> Result<()> {
         self.open_with_mode(PdbMode::ReadWrite).await
     }
 
-    /// Open the PDB with specific mode
+    // Open the PDB with specific mode
     pub async fn open_with_mode(&mut self, mode: PdbMode) -> Result<()> {
         let current_state = *self.state.read().await;
 
@@ -628,7 +628,7 @@ impl PluggableDatabase {
         Ok(())
     }
 
-    /// Close the PDB
+    // Close the PDB
     pub async fn close(&mut self) -> Result<()> {
         let current_state = *self.state.read().await;
 
@@ -650,7 +650,7 @@ impl PluggableDatabase {
         Ok(())
     }
 
-    /// Create a tablespace
+    // Create a tablespace
     pub async fn create_tablespace(&self, name: &str, size_bytes: u64) -> Result<()> {
         let tablespace = Tablespace {
             name: name.to_string(),
@@ -666,14 +666,14 @@ impl PluggableDatabase {
         Ok(())
     }
 
-    /// Create a user
+    // Create a user
     pub async fn create_user(&self, user: PdbUser) -> Result<()> {
         self.users.write().await.insert(user.username.clone(), user);
         self.metadata.write().await.user_count += 1;
         Ok(())
     }
 
-    /// Create a snapshot
+    // Create a snapshot
     pub async fn create_snapshot(&self, name: &str, scn: u64) -> Result<u64> {
         let mut next_id = self.next_snapshot_id.write().await;
         let snapshot_id = *next_id;
@@ -695,28 +695,28 @@ impl PluggableDatabase {
         Ok(snapshot_id)
     }
 
-    /// List snapshots
+    // List snapshots
     pub async fn list_snapshots(&self) -> Vec<PdbSnapshot> {
         self.snapshots.read().await.values().cloned().collect()
     }
 
-    /// Delete a snapshot
+    // Delete a snapshot
     pub async fn delete_snapshot(&self, snapshot_id: u64) -> Result<()> {
         self.snapshots.write().await.remove(&snapshot_id);
         Ok(())
     }
 
-    /// Get metadata
+    // Get metadata
     pub async fn metadata(&self) -> PdbMetadata {
         self.metadata.read().await.clone()
     }
 
-    /// Get metrics
+    // Get metrics
     pub async fn metrics(&self) -> PdbMetrics {
         self.metrics.read().await.clone()
     }
 
-    /// Update metrics
+    // Update metrics
     pub async fn update_metrics<F>(&self, f: F)
     where
         F: FnOnce(&mut PdbMetrics),
@@ -725,7 +725,7 @@ impl PluggableDatabase {
         f(&mut metrics);
     }
 
-    /// Add a connection
+    // Add a connection
     pub async fn add_connection(&self, connection: Connection) -> Result<()> {
         let mut connections = self.connections.write().await;
         let mut metrics = self.metrics.write().await;
@@ -740,7 +740,7 @@ impl PluggableDatabase {
         Ok(())
     }
 
-    /// Remove a connection
+    // Remove a connection
     pub async fn remove_connection(&self, connection_id: u64) -> Result<()> {
         let mut connections = self.connections.write().await;
         connections.retain(|c| c.connection_id != connection_id);
@@ -751,18 +751,18 @@ impl PluggableDatabase {
         Ok(())
     }
 
-    /// Get connection count
+    // Get connection count
     pub async fn connection_count(&self) -> usize {
         self.connections.read().await.len()
     }
 
-    /// Check if connection limit is reached
+    // Check if connection limit is reached
     pub async fn is_connection_limit_reached(&self) -> bool {
         let count = self.connection_count().await;
         count >= self.config.resource_limits.max_connections as usize
     }
 
-    /// Get tablespace usage
+    // Get tablespace usage
     pub async fn tablespace_usage(&self, name: &str) -> Option<(u64, u64)> {
         self.tablespaces
             .read()
@@ -771,7 +771,7 @@ impl PluggableDatabase {
             .map(|ts| (ts.used_bytes, ts.size_bytes))
     }
 
-    /// Check storage quota
+    // Check storage quota
     pub async fn check_storage_quota(&self) -> Result<()> {
         let metadata = self.metadata.read().await;
         let quota = self.config.resource_limits.storage_quota_bytes;
@@ -785,7 +785,7 @@ impl PluggableDatabase {
         Ok(())
     }
 
-    /// Rename the PDB
+    // Rename the PDB
     pub async fn rename(&mut self, new_name: String) -> Result<()> {
         let current_state = *self.state.read().await;
 
@@ -801,12 +801,12 @@ impl PluggableDatabase {
         Ok(())
     }
 
-    /// Check if PDB is seed PDB
+    // Check if PDB is seed PDB
     pub fn is_seed(&self) -> bool {
         self.config.name == super::SEED_PDB_NAME
     }
 
-    /// Check if PDB is application container
+    // Check if PDB is application container
     pub fn is_application_container(&self) -> bool {
         self.config.is_application_container
     }

@@ -1,26 +1,26 @@
-/// Hash Join Implementations for RustyDB
-///
-/// This module provides various hash join algorithms optimized for different scenarios:
-///
-/// 1. **Grace Hash Join** - For datasets larger than memory
-///    - Partitions both inputs into disk-resident partitions
-///    - Joins matching partitions independently
-///    - Handles recursive partitioning for skewed data
-///
-/// 2. **Hybrid Hash Join** - Combines in-memory and disk-based approaches
-///    - Keeps hot partitions in memory
-///    - Spills cold partitions to disk
-///    - Optimal for mixed workloads
-///
-/// 3. **Parallel Hash Join** - Multi-threaded hash table building
-///    - Partitioned hash tables for thread-local access
-///    - Lock-free probing with read-optimized structures
-///    - Work stealing for load balancing
-///
-/// 4. **Bloom Filter Hash Join** - Optimized for semi-joins
-///    - Build bloom filter on build side
-///    - Filter probe side before hash table lookup
-///    - Reduces memory access for low selectivity
+// Hash Join Implementations for RustyDB
+//
+// This module provides various hash join algorithms optimized for different scenarios:
+//
+// 1. **Grace Hash Join** - For datasets larger than memory
+//    - Partitions both inputs into disk-resident partitions
+//    - Joins matching partitions independently
+//    - Handles recursive partitioning for skewed data
+//
+// 2. **Hybrid Hash Join** - Combines in-memory and disk-based approaches
+//    - Keeps hot partitions in memory
+//    - Spills cold partitions to disk
+//    - Optimal for mixed workloads
+//
+// 3. **Parallel Hash Join** - Multi-threaded hash table building
+//    - Partitioned hash tables for thread-local access
+//    - Lock-free probing with read-optimized structures
+//    - Work stealing for load balancing
+//
+// 4. **Bloom Filter Hash Join** - Optimized for semi-joins
+//    - Build bloom filter on build side
+//    - Filter probe side before hash table lookup
+//    - Reduces memory access for low selectivity
 
 use crate::error::DbError;
 use crate::execution::QueryResult;
@@ -31,18 +31,18 @@ use std::fs::File;
 use std::io::{Write as IoWrite, BufWriter, BufReader};
 use std::path::{Path, PathBuf};
 
-/// Hash join configuration
+// Hash join configuration
 #[derive(Debug, Clone)]
 pub struct HashJoinConfig {
-    /// Memory budget in bytes
+    // Memory budget in bytes
     pub memory_budget: usize,
-    /// Number of partitions for grace hash join
+    // Number of partitions for grace hash join
     pub num_partitions: usize,
-    /// Enable bloom filter optimization
+    // Enable bloom filter optimization
     pub use_bloom_filter: bool,
-    /// Temporary directory for spilling
+    // Temporary directory for spilling
     pub temp_dir: PathBuf,
-    /// Parallel execution threads
+    // Parallel execution threads
     pub num_threads: usize,
 }
 
@@ -58,7 +58,7 @@ impl Default for HashJoinConfig {
     }
 }
 
-/// Hash join executor with multiple algorithms
+// Hash join executor with multiple algorithms
 pub struct HashJoinExecutor {
     config: HashJoinConfig,
     spill_counter: Arc<RwLock<usize>>,
@@ -76,7 +76,7 @@ impl HashJoinExecutor {
         Self::new(HashJoinConfig::default())
     }
 
-    /// Execute hash join with automatic algorithm selection (inline for performance)
+    // Execute hash join with automatic algorithm selection (inline for performance)
     #[inline]
     pub fn execute(
         &self,
@@ -102,7 +102,7 @@ impl HashJoinExecutor {
         }
     }
 
-    /// Simple in-memory hash join (optimized - avoid allocations in hot loop)
+    // Simple in-memory hash join (optimized - avoid allocations in hot loop)
     #[inline]
     fn simple_hash_join(
         &self,
@@ -151,7 +151,7 @@ impl HashJoinExecutor {
         Ok(QueryResult::new(result_columns, result_rows))
     }
 
-    /// Grace hash join - partitions both sides to disk
+    // Grace hash join - partitions both sides to disk
     fn grace_hash_join(
         &self,
         build_side: QueryResult,
@@ -226,7 +226,7 @@ impl HashJoinExecutor {
         Ok(QueryResult::new(result_columns, result_rows))
     }
 
-    /// Hybrid hash join - keeps hot partitions in memory, spills cold ones
+    // Hybrid hash join - keeps hot partitions in memory, spills cold ones
     fn hybrid_hash_join(
         &self,
         build_side: QueryResult,
@@ -350,7 +350,7 @@ impl HashJoinExecutor {
         Ok(QueryResult::new(result_columns, result_rows))
     }
 
-    /// Partition data to disk
+    // Partition data to disk
     fn partition_to_disk(
         &self,
         data: &QueryResult,
@@ -390,7 +390,7 @@ impl HashJoinExecutor {
         Ok(partition_files)
     }
 
-    /// Load partition from disk
+    // Load partition from disk
     fn load_partition(&self, path: &Path) -> Result<QueryResult, DbError> {
         let file = File::open(path)
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -412,7 +412,7 @@ impl HashJoinExecutor {
         Ok(QueryResult::new(Vec::new(), rows))
     }
 
-    /// Spill partition to disk
+    // Spill partition to disk
     fn spill_partition(
         &self,
         partition: &[Vec<String>],
@@ -444,16 +444,16 @@ impl HashJoinExecutor {
         Ok(path)
     }
 
-    /// Hash partition key to partition ID
-    ///
-    /// Now uses xxHash3-AVX2 for 10x faster partitioning
+    // Hash partition key to partition ID
+    //
+    // Now uses xxHash3-AVX2 for 10x faster partitioning
     fn hash_partition(&self, key: &str) -> usize {
         use crate::simd::hash::hash_str;
         let hash = hash_str(key);
         (hash as usize) % self.config.num_partitions
     }
 
-    /// Estimate memory size of query result
+    // Estimate memory size of query result
     fn estimate_size(&self, result: &QueryResult) -> usize {
         let row_count = result.rows.len();
         let avg_row_size = if row_count > 0 {
@@ -468,12 +468,12 @@ impl HashJoinExecutor {
     }
 }
 
-/// Bloom filter for semi-join optimization (DEPRECATED - use SimdBloomFilter)
-///
-/// This implementation is kept for backward compatibility but is 10x slower.
-/// New code should use crate::index::simd_bloom::SimdBloomFilter
+// Bloom filter for semi-join optimization (DEPRECATED - use SimdBloomFilter)
+//
+// This implementation is kept for backward compatibility but is 10x slower.
+// New code should use crate::index::simd_bloom::SimdBloomFilter
 pub struct BloomFilter {
-    /// Internal SIMD bloom filter for better performance
+    // Internal SIMD bloom filter for better performance
     inner: crate::index::simd_bloom::SimdBloomFilter,
 }
 
@@ -487,18 +487,18 @@ impl BloomFilter {
         }
     }
 
-    /// Insert item into bloom filter
+    // Insert item into bloom filter
     pub fn insert(&mut self, item: &str) {
         self.inner.insert(item.as_bytes());
     }
 
-    /// Check if item might be in the set
+    // Check if item might be in the set
     pub fn contains(&self, item: &str) -> bool {
         self.inner.contains(item.as_bytes())
     }
 }
 
-/// Bloom filter optimized hash join
+// Bloom filter optimized hash join
 pub struct BloomFilterHashJoin {
     bloom_filter: Option<BloomFilter>,
     executor: HashJoinExecutor,
@@ -512,7 +512,7 @@ impl BloomFilterHashJoin {
         }
     }
 
-    /// Execute join with bloom filter optimization
+    // Execute join with bloom filter optimization
     pub fn execute_with_bloom_filter(
         &mut self,
         build_side: QueryResult,
@@ -603,5 +603,3 @@ mod tests {
         assert!(partition < executor.config.num_partitions);
     }
 }
-
-

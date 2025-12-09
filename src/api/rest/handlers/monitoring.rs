@@ -51,7 +51,7 @@ pub async fn get_metrics(
     Ok(AxumJson(response))
 }
 
-/// Get Prometheus-formatted metrics
+// Get Prometheus-formatted metrics
 pub async fn get_prometheus_metrics(
     State(state): State<Arc<ApiState>>,
 ) -> ApiResult<String> {
@@ -73,7 +73,7 @@ pub async fn get_prometheus_metrics(
     Ok(output)
 }
 
-/// Get session statistics
+// Get session statistics
 #[utoipa::path(
     get,
     path = "/api/v1/stats/sessions",
@@ -106,7 +106,7 @@ pub async fn get_session_stats(
     Ok(AxumJson(response))
 }
 
-/// Get query statistics
+// Get query statistics
 #[utoipa::path(
     get,
     path = "/api/v1/stats/queries",
@@ -131,7 +131,7 @@ pub async fn get_query_stats(
     Ok(AxumJson(response))
 }
 
-/// Get performance data
+// Get performance data
 #[utoipa::path(
     get,
     path = "/api/v1/stats/performance",
@@ -159,7 +159,7 @@ pub async fn get_performance_data(
     Ok(AxumJson(response))
 }
 
-/// Get logs
+// Get logs
 #[utoipa::path(
     get,
     path = "/api/v1/logs",
@@ -182,7 +182,7 @@ pub async fn get_logs(
     Ok(AxumJson(response))
 }
 
-/// Get alerts
+// Get alerts
 #[utoipa::path(
     get,
     path = "/api/v1/alerts",
@@ -202,7 +202,7 @@ pub async fn get_alerts(
     Ok(AxumJson(response))
 }
 
-/// Acknowledge an alert
+// Acknowledge an alert
 pub async fn acknowledge_alert(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
@@ -215,7 +215,7 @@ pub async fn acknowledge_alert(
 // Pool Management Handlers
 // ============================================================================
 
-/// Get all connection pools
+// Get all connection pools
 #[utoipa::path(
     get,
     path = "/api/v1/pools",

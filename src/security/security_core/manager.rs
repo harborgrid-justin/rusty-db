@@ -105,7 +105,7 @@ impl UnifiedSecurityCore {
 // Security Dashboard
 // ============================================================================
 
-/// Type alias for SecurityDashboard
+// Type alias for SecurityDashboard
 pub type DashboardView = SecurityDashboard;
 
 pub struct SecurityDashboard {
@@ -127,7 +127,7 @@ pub struct DashboardData {
     pub threat_intel_stats: ThreatIntelligenceStatistics,
 }
 
-/// Executive summary of security status
+// Executive summary of security status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutiveSummary {
     pub overall_security_score: f64,
@@ -138,7 +138,7 @@ pub struct ExecutiveSummary {
     pub key_metrics: Vec<(String, f64)>,
 }
 
-/// Security status enum
+// Security status enum
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SecurityStatus {
     Secure,

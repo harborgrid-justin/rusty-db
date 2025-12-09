@@ -1,26 +1,26 @@
-/// Clustering and High Availability Module
-/// 
-/// This module provides enterprise-grade clustering capabilities through
-/// specialized submodules that handle distinct responsibilities:
-/// 
-/// - `coordinator`: Cluster coordination and leader election
-/// - `query_execution`: Distributed query processing 
-/// - `failover`: Automatic failover and recovery
-/// - `migration`: Data migration and rebalancing
-/// - `transactions`: Distributed transaction coordination
-/// - `node`: Node information and lifecycle management
-/// - `raft`: Raft consensus algorithm implementation
-/// - `health`: Cluster health monitoring
-/// - `load_balancer`: Load balancing strategies
-/// - `membership`: Node discovery and membership management
-/// - `dht`: Distributed hash table for data location
-/// - `geo_replication`: Geographic replication support
+// Clustering and High Availability Module
+//
+// This module provides enterprise-grade clustering capabilities through
+// specialized submodules that handle distinct responsibilities:
+//
+// - `coordinator`: Cluster coordination and leader election
+// - `query_execution`: Distributed query processing
+// - `failover`: Automatic failover and recovery
+// - `migration`: Data migration and rebalancing
+// - `transactions`: Distributed transaction coordination
+// - `node`: Node information and lifecycle management
+// - `raft`: Raft consensus algorithm implementation
+// - `health`: Cluster health monitoring
+// - `load_balancer`: Load balancing strategies
+// - `membership`: Node discovery and membership management
+// - `dht`: Distributed hash table for data location
+// - `geo_replication`: Geographic replication support
 
 // Core clustering functionality
 pub mod coordinator;
 pub mod query_execution;
 pub mod failover;
-pub mod migration; 
+pub mod migration;
 pub mod transactions;
 
 // Supporting modules
@@ -49,10 +49,10 @@ pub use geo_replication::{DatacenterId, StreamId, LogicalTimestamp, ConsistencyL
 use crate::error::DbError;
 use std::sync::Arc;
 
-/// High-level cluster management facade
-/// 
-/// This provides a simplified interface for common cluster operations,
-/// coordinating between the specialized submodules.
+// High-level cluster management facade
+//
+// This provides a simplified interface for common cluster operations,
+// coordinating between the specialized submodules.
 pub struct ClusterManager {
     query_executor: Arc<DistributedQueryExecutor>,
     failover_manager: Arc<ClusterFailoverManager>,
@@ -61,7 +61,7 @@ pub struct ClusterManager {
 }
 
 impl ClusterManager {
-    /// Create a new cluster manager with default configuration
+    // Create a new cluster manager with default configuration
     pub fn new() -> Result<Self, DbError> {
         // This requires proper coordinator implementations to be provided
         // For now, return not implemented
@@ -70,7 +70,7 @@ impl ClusterManager {
         ))
     }
 
-    /// Create a new cluster manager with provided components
+    // Create a new cluster manager with provided components
     pub fn with_components(
         query_executor: Arc<DistributedQueryExecutor>,
         failover_manager: Arc<ClusterFailoverManager>,
@@ -85,7 +85,7 @@ impl ClusterManager {
         }
     }
 
-    /// Get cluster performance metrics
+    // Get cluster performance metrics
     pub fn get_metrics(&self) -> Result<ClusterMetrics, DbError> {
         Ok(ClusterMetrics {
             total_nodes: 0,
@@ -97,7 +97,7 @@ impl ClusterManager {
     }
 }
 
-/// Comprehensive cluster metrics
+// Comprehensive cluster metrics
 #[derive(Debug, Clone)]
 pub struct ClusterMetrics {
     pub total_nodes: usize,
@@ -120,11 +120,9 @@ mod tests {
     #[test]
     fn test_cluster_operations() {
         let manager = ClusterManager::new().unwrap();
-        
+
         // Test metrics
         let metrics = manager.get_metrics();
         assert!(metrics.is_ok());
     }
 }
-
-

@@ -1,11 +1,11 @@
-/// PL/SQL AST Node Definitions
-///
-/// This module defines all Abstract Syntax Tree nodes for PL/SQL-compatible
-/// procedural language, including declarations, statements, expressions, and types.
+// PL/SQL AST Node Definitions
+//
+// This module defines all Abstract Syntax Tree nodes for PL/SQL-compatible
+// procedural language, including declarations, statements, expressions, and types.
 
 use serde::{Deserialize, Serialize};
 
-/// Represents a complete PL/SQL block
+// Represents a complete PL/SQL block
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PlSqlBlock {
     pub declarations: Vec<Declaration>,
@@ -13,7 +13,7 @@ pub struct PlSqlBlock {
     pub exception_handlers: Vec<ExceptionHandler>,
 }
 
-/// Variable or constant declaration
+// Variable or constant declaration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Declaration {
     pub name: String,
@@ -23,7 +23,7 @@ pub struct Declaration {
     pub not_null: bool,
 }
 
-/// PL/SQL data types
+// PL/SQL data types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PlSqlType {
     Integer,
@@ -41,55 +41,55 @@ pub enum PlSqlType {
     RefCursor,
 }
 
-/// Statements that can appear in PL/SQL blocks
+// Statements that can appear in PL/SQL blocks
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Statement {
-    /// Assignment statement: variable := expression
+    // Assignment statement: variable := expression
     Assignment {
         target: String,
         value: Expression,
     },
-    /// SQL SELECT INTO statement
+    // SQL SELECT INTO statement
     SelectInto {
         columns: Vec<String>,
         into_vars: Vec<String>,
         from: String,
         where_clause: Option<Expression>,
     },
-    /// SQL INSERT statement
+    // SQL INSERT statement
     Insert {
         table: String,
         columns: Vec<String>,
         values: Vec<Expression>,
     },
-    /// SQL UPDATE statement
+    // SQL UPDATE statement
     Update {
         table: String,
         assignments: Vec<(String, Expression)>,
         where_clause: Option<Expression>,
     },
-    /// SQL DELETE statement
+    // SQL DELETE statement
     Delete {
         table: String,
         where_clause: Option<Expression>,
     },
-    /// IF-THEN-ELSIF-ELSE control structure
+    // IF-THEN-ELSIF-ELSE control structure
     If {
         condition: Expression,
         then_block: Vec<Statement>,
         elsif_blocks: Vec<(Expression, Vec<Statement>)>,
         else_block: Option<Vec<Statement>>,
     },
-    /// Simple LOOP...END LOOP
+    // Simple LOOP...END LOOP
     Loop {
         statements: Vec<Statement>,
     },
-    /// WHILE loop
+    // WHILE loop
     While {
         condition: Expression,
         statements: Vec<Statement>,
     },
-    /// FOR loop (numeric)
+    // FOR loop (numeric)
     ForNumeric {
         iterator: String,
         reverse: bool,
@@ -97,60 +97,60 @@ pub enum Statement {
         end: Expression,
         statements: Vec<Statement>,
     },
-    /// FOR loop (cursor)
+    // FOR loop (cursor)
     ForCursor {
         record: String,
         cursor: String,
         statements: Vec<Statement>,
     },
-    /// EXIT statement (with optional WHEN condition)
+    // EXIT statement (with optional WHEN condition)
     Exit {
         when: Option<Expression>,
     },
-    /// CONTINUE statement (with optional WHEN condition)
+    // CONTINUE statement (with optional WHEN condition)
     Continue {
         when: Option<Expression>,
     },
-    /// RETURN statement
+    // RETURN statement
     Return {
         value: Option<Expression>,
     },
-    /// RAISE exception
+    // RAISE exception
     Raise {
         exception: String,
     },
-    /// COMMIT transaction
+    // COMMIT transaction
     Commit,
-    /// ROLLBACK transaction
+    // ROLLBACK transaction
     Rollback {
         to_savepoint: Option<String>,
     },
-    /// SAVEPOINT
+    // SAVEPOINT
     Savepoint {
         name: String,
     },
-    /// Procedure or function call
+    // Procedure or function call
     Call {
         name: String,
         arguments: Vec<Expression>,
     },
-    /// NULL statement (no-op)
+    // NULL statement (no-op)
     Null,
-    /// Open cursor
+    // Open cursor
     OpenCursor {
         cursor: String,
         arguments: Vec<Expression>,
     },
-    /// Fetch from cursor
+    // Fetch from cursor
     FetchCursor {
         cursor: String,
         into_vars: Vec<String>,
     },
-    /// Close cursor
+    // Close cursor
     CloseCursor {
         cursor: String,
     },
-    /// CASE statement
+    // CASE statement
     Case {
         selector: Option<Expression>,
         when_clauses: Vec<(Expression, Vec<Statement>)>,
@@ -158,57 +158,57 @@ pub enum Statement {
     },
 }
 
-/// Expressions used in PL/SQL
+// Expressions used in PL/SQL
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Expression {
-    /// Literal value
+    // Literal value
     Literal(LiteralValue),
-    /// Variable reference
+    // Variable reference
     Variable(String),
-    /// Binary operation
+    // Binary operation
     BinaryOp {
         left: Box<Expression>,
         op: BinaryOperator,
         right: Box<Expression>,
     },
-    /// Unary operation
+    // Unary operation
     UnaryOp {
         op: UnaryOperator,
         operand: Box<Expression>,
     },
-    /// Function call
+    // Function call
     FunctionCall {
         name: String,
         arguments: Vec<Expression>,
     },
-    /// SQL aggregate function
+    // SQL aggregate function
     Aggregate {
         function: AggregateFunction,
         argument: Box<Expression>,
     },
-    /// CASE expression
+    // CASE expression
     CaseExpr {
         selector: Option<Box<Expression>>,
         when_clauses: Vec<(Expression, Expression)>,
         else_clause: Option<Box<Expression>>,
     },
-    /// Subquery
+    // Subquery
     Subquery {
         query: String,
     },
-    /// Record field access (e.g., employee.salary)
+    // Record field access (e.g., employee.salary)
     FieldAccess {
         record: String,
         field: String,
     },
-    /// Collection element access (e.g., array(i))
+    // Collection element access (e.g., array(i))
     CollectionAccess {
         collection: String,
         index: Box<Expression>,
     },
 }
 
-/// Literal values
+// Literal values
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum LiteralValue {
     Integer(i64),
@@ -220,7 +220,7 @@ pub enum LiteralValue {
     Timestamp(String),
 }
 
-/// Binary operators
+// Binary operators
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum BinaryOperator {
     // Arithmetic
@@ -248,7 +248,7 @@ pub enum BinaryOperator {
     NotIn,
 }
 
-/// Unary operators
+// Unary operators
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum UnaryOperator {
     Not,
@@ -256,7 +256,7 @@ pub enum UnaryOperator {
     Plus,
 }
 
-/// Aggregate functions
+// Aggregate functions
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AggregateFunction {
     Count,
@@ -268,30 +268,30 @@ pub enum AggregateFunction {
     Variance,
 }
 
-/// Exception handler
+// Exception handler
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ExceptionHandler {
     pub exception_type: ExceptionType,
     pub statements: Vec<Statement>,
 }
 
-/// Exception types
+// Exception types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ExceptionType {
-    /// NO_DATA_FOUND
+    // NO_DATA_FOUND
     NoDataFound,
-    /// TOO_MANY_ROWS
+    // TOO_MANY_ROWS
     TooManyRows,
-    /// ZERO_DIVIDE
+    // ZERO_DIVIDE
     ZeroDivide,
-    /// VALUE_ERROR
+    // VALUE_ERROR
     ValueError,
-    /// INVALID_CURSOR
+    // INVALID_CURSOR
     InvalidCursor,
-    /// DUP_VAL_ON_INDEX
+    // DUP_VAL_ON_INDEX
     DupValOnIndex,
-    /// User-defined exception
+    // User-defined exception
     UserDefined(String),
-    /// OTHERS (catch-all)
+    // OTHERS (catch-all)
     Others,
 }

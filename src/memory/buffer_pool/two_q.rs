@@ -1,28 +1,28 @@
-//! 2Q Cache Algorithm
-//!
-//! Two-queue cache with A1/Am/Aout lists.
+// 2Q Cache Algorithm
+//
+// Two-queue cache with A1/Am/Aout lists.
 
 use super::common::*;
 use serde::{Serialize, Deserialize};
 
 pub struct TwoQCache {
-    /// Maximum cache size
+    // Maximum cache size
     capacity: usize,
-    /// A1in size (typically 25% of capacity)
+    // A1in size (typically 25% of capacity)
     a1in_size: usize,
-    /// A1out size (typically 50% of capacity)
+    // A1out size (typically 50% of capacity)
     a1out_size: usize,
-    /// A1in queue (FIFO for new pages)
+    // A1in queue (FIFO for new pages)
     a1in: Mutex<VecDeque<PageId>>,
-    /// A1out queue (ghost entries)
+    // A1out queue (ghost entries)
     a1out: Mutex<VecDeque<PageId>>,
-    /// Am queue (LRU for frequent pages)
+    // Am queue (LRU for frequent pages)
     am: Mutex<VecDeque<PageId>>,
-    /// Page directory
+    // Page directory
     directory: PRwLock<HashMap<PageId, TwoQLocation>>,
-    /// Frame storage
+    // Frame storage
     frames: PRwLock<HashMap<PageId, Arc<BufferFrame>>>,
-    /// Statistics
+    // Statistics
     stats: TwoQStats,
 }
 
@@ -55,7 +55,7 @@ impl TwoQStats {
 }
 
 impl TwoQCache {
-    /// Create new 2Q cache
+    // Create new 2Q cache
     pub fn new(capacity: usize) -> Self {
         Self {
             capacity,
@@ -70,7 +70,7 @@ impl TwoQCache {
         }
     }
 
-    /// Access a page
+    // Access a page
     pub fn get(&self, page_id: PageId) -> Option<Arc<BufferFrame>> {
         let dir = self.directory.read();
 
@@ -100,7 +100,7 @@ impl TwoQCache {
         None
     }
 
-    /// Insert a new page
+    // Insert a new page
     pub fn insert(&self, page_id: PageId, frame: Arc<BufferFrame>) {
         let dir = self.directory.read();
 
@@ -220,7 +220,7 @@ impl TwoQCache {
         a1out.retain(|&id| id != page_id);
     }
 
-    /// Get cache statistics
+    // Get cache statistics
     pub fn get_stats(&self) -> TwoQStatsSnapshot {
         TwoQStatsSnapshot {
             hits_a1in: self.stats.hits_a1in.load(Ordering::Relaxed),

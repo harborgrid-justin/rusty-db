@@ -18,36 +18,36 @@ use tokio::time::interval;
 use crate::error::Result;
 use super::publisher::PublishedEvent;
 
-/// Delivery semantics
+// Delivery semantics
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DeliverySemantics {
-    /// At-most-once (fire and forget)
+    // At-most-once (fire and forget)
     AtMostOnce,
-    /// At-least-once (default, may deliver duplicates)
+    // At-least-once (default, may deliver duplicates)
     AtLeastOnce,
-    /// Exactly-once (requires deduplication)
+    // Exactly-once (requires deduplication)
     ExactlyOnce,
 }
 
-/// Offset commit strategy
+// Offset commit strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OffsetCommitStrategy {
-    /// Manual commit by consumer
+    // Manual commit by consumer
     Manual,
-    /// Auto-commit after processing
+    // Auto-commit after processing
     AutoCommitAfterProcess,
-    /// Auto-commit on interval
+    // Auto-commit on interval
     AutoCommitPeriodic,
 }
 
-/// Subscription filter
+// Subscription filter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubscriptionFilter {
-    /// Filter by event headers
+    // Filter by event headers
     pub header_filters: HashMap<String, String>,
-    /// Filter by key prefix
+    // Filter by key prefix
     pub key_prefix: Option<Vec<u8>>,
-    /// Custom filter expression (simplified)
+    // Custom filter expression (simplified)
     pub expression: Option<String>,
 }
 
@@ -92,7 +92,7 @@ impl SubscriptionFilter {
     }
 }
 
-/// Partition offset
+// Partition offset
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct PartitionOffset {
     pub partition: u32,
@@ -105,7 +105,7 @@ impl PartitionOffset {
     }
 }
 
-/// Consumer position in a topic
+// Consumer position in a topic
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsumerPosition {
     pub topic: String,
@@ -132,7 +132,7 @@ impl ConsumerPosition {
     }
 }
 
-/// Consumer group member
+// Consumer group member
 #[derive(Debug, Clone)]
 struct ConsumerMember {
     consumer_id: String,
@@ -141,7 +141,7 @@ struct ConsumerMember {
     generation_id: u64,
 }
 
-/// Consumer group
+// Consumer group
 #[derive(Debug)]
 struct ConsumerGroup {
     group_id: String,
@@ -214,28 +214,28 @@ impl ConsumerGroup {
     }
 }
 
-/// Subscription configuration
+// Subscription configuration
 #[derive(Debug, Clone)]
 pub struct SubscriptionConfig {
-    /// Consumer ID
+    // Consumer ID
     pub consumer_id: String,
-    /// Consumer group ID
+    // Consumer group ID
     pub group_id: Option<String>,
-    /// Topics to subscribe to
+    // Topics to subscribe to
     pub topics: Vec<String>,
-    /// Delivery semantics
+    // Delivery semantics
     pub delivery: DeliverySemantics,
-    /// Offset commit strategy
+    // Offset commit strategy
     pub commit_strategy: OffsetCommitStrategy,
-    /// Auto-commit interval
+    // Auto-commit interval
     pub auto_commit_interval: Duration,
-    /// Session timeout
+    // Session timeout
     pub session_timeout: Duration,
-    /// Max poll records
+    // Max poll records
     pub max_poll_records: usize,
-    /// Enable auto offset store
+    // Enable auto offset store
     pub enable_auto_offset_store: bool,
-    /// Subscription filter
+    // Subscription filter
     pub filter: Option<SubscriptionFilter>,
 }
 
@@ -256,66 +256,66 @@ impl Default for SubscriptionConfig {
     }
 }
 
-/// Consumed event with metadata
+// Consumed event with metadata
 #[derive(Debug, Clone)]
 pub struct ConsumedEvent {
-    /// Original published event
+    // Original published event
     pub event: PublishedEvent,
-    /// Consumer that received this event
+    // Consumer that received this event
     pub consumer_id: String,
-    /// Consumption timestamp
+    // Consumption timestamp
     pub consumed_at: SystemTime,
-    /// Delivery attempt count
+    // Delivery attempt count
     pub attempt: u32,
 }
 
-/// Subscription statistics
+// Subscription statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SubscriptionStats {
-    /// Total events consumed
+    // Total events consumed
     pub total_consumed: u64,
-    /// Events consumed per second
+    // Events consumed per second
     pub events_per_second: f64,
-    /// Total bytes consumed
+    // Total bytes consumed
     pub total_bytes: u64,
-    /// Average processing time (ms)
+    // Average processing time (ms)
     pub avg_processing_time_ms: f64,
-    /// Number of redeliveries
+    // Number of redeliveries
     pub redeliveries: u64,
-    /// Current lag (events behind)
+    // Current lag (events behind)
     pub current_lag: u64,
-    /// Number of filtered events
+    // Number of filtered events
     pub filtered_events: u64,
-    /// Dead letter queue size
+    // Dead letter queue size
     pub dlq_size: u64,
 }
 
-/// Event Subscriber
+// Event Subscriber
 pub struct EventSubscriber {
-    /// Configuration
+    // Configuration
     config: SubscriptionConfig,
-    /// Consumer positions per topic
+    // Consumer positions per topic
     positions: Arc<RwLock<HashMap<String, ConsumerPosition>>>,
-    /// Pending commits
+    // Pending commits
     pending_commits: Arc<Mutex<VecDeque<PartitionOffset>>>,
-    /// Consumer groups
+    // Consumer groups
     groups: Arc<RwLock<HashMap<String, Arc<Mutex<ConsumerGroup>>>>>,
-    /// Event buffer
+    // Event buffer
     event_buffer: Arc<Mutex<VecDeque<ConsumedEvent>>>,
-    /// Deduplication cache (for exactly-once)
+    // Deduplication cache (for exactly-once)
     dedup_cache: Arc<RwLock<HashSet<u64>>>,
-    /// Dead letter queue
+    // Dead letter queue
     dlq: Arc<Mutex<VecDeque<ConsumedEvent>>>,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<SubscriptionStats>>,
-    /// Event receiver
+    // Event receiver
     event_rx: Arc<Mutex<Option<mpsc::Receiver<PublishedEvent>>>>,
-    /// Shutdown flag
+    // Shutdown flag
     shutdown: Arc<AtomicBool>,
 }
 
 impl EventSubscriber {
-    /// Create a new event subscriber
+    // Create a new event subscriber
     pub fn new(config: SubscriptionConfig) -> Self {
         Self {
             config,
@@ -331,7 +331,7 @@ impl EventSubscriber {
         }
     }
 
-    /// Subscribe to topics
+    // Subscribe to topics
     pub async fn subscribe(&self) -> Result<()> {
         // Join consumer group if specified
         if let Some(group_id) = &self.config.group_id {
@@ -354,7 +354,7 @@ impl EventSubscriber {
         Ok(())
     }
 
-    /// Unsubscribe from all topics
+    // Unsubscribe from all topics
     pub async fn unsubscribe(&self) -> Result<()> {
         // Leave consumer groups
         if let Some(group_id) = &self.config.group_id {
@@ -370,7 +370,7 @@ impl EventSubscriber {
         Ok(())
     }
 
-    /// Poll for events
+    // Poll for events
     pub async fn poll(&self, timeout: Duration) -> Result<Vec<ConsumedEvent>> {
         let start = Instant::now();
         let mut consumed = Vec::new();
@@ -420,13 +420,13 @@ impl EventSubscriber {
         Ok(consumed)
     }
 
-    /// Consume a single event
+    // Consume a single event
     pub async fn consume_one(&self, timeout: Duration) -> Result<Option<ConsumedEvent>> {
         let events = self.poll(timeout).await?;
         Ok(events.into_iter().next())
     }
 
-    /// Add event to buffer (called by publisher)
+    // Add event to buffer (called by publisher)
     pub fn add_event(&self, event: PublishedEvent) {
         let consumed = ConsumedEvent {
             event,
@@ -438,7 +438,7 @@ impl EventSubscriber {
         self.event_buffer.lock().unwrap().push_back(consumed);
     }
 
-    /// Commit offsets synchronously
+    // Commit offsets synchronously
     pub async fn commit_sync(&self) -> Result<()> {
         let pending = self.pending_commits.lock().unwrap().drain(..).collect::<Vec<_>>();
 
@@ -455,13 +455,13 @@ impl EventSubscriber {
         Ok(())
     }
 
-    /// Commit offsets asynchronously
+    // Commit offsets asynchronously
     pub async fn commit_async(&self) -> Result<()> {
         // In a real implementation, this would queue commits for background processing
         self.commit_sync().await
     }
 
-    /// Store offset for later commit
+    // Store offset for later commit
     pub async fn store_offset(&self, _topic: &str, partition: u32, offset: u64) -> Result<()> {
         if self.config.enable_auto_offset_store {
             self.pending_commits.lock().unwrap().push_back(PartitionOffset::new(partition, offset));
@@ -469,7 +469,7 @@ impl EventSubscriber {
         Ok(())
     }
 
-    /// Seek to a specific offset
+    // Seek to a specific offset
     pub async fn seek(&self, topic: &str, partition: u32, offset: u64) -> Result<()> {
         self.positions.write()
             .entry(topic.to_string())
@@ -478,22 +478,22 @@ impl EventSubscriber {
         Ok(())
     }
 
-    /// Seek to beginning of topic
+    // Seek to beginning of topic
     pub async fn seek_to_beginning(&self, topic: &str, partition: u32) -> Result<()> {
         self.seek(topic, partition, 0).await
     }
 
-    /// Seek to end of topic
+    // Seek to end of topic
     pub async fn seek_to_end(&self, topic: &str, partition: u32, end_offset: u64) -> Result<()> {
         self.seek(topic, partition, end_offset).await
     }
 
-    /// Get current position
+    // Get current position
     pub fn get_position(&self, topic: &str) -> Option<ConsumerPosition> {
         self.positions.read().get(topic).cloned()
     }
 
-    /// Get assigned partitions (for consumer groups)
+    // Get assigned partitions (for consumer groups)
     pub fn get_assigned_partitions(&self, _topic: &str) -> Vec<u32> {
         if let Some(group_id) = &self.config.group_id {
             let groups = self.groups.read();
@@ -504,28 +504,28 @@ impl EventSubscriber {
         Vec::new()
     }
 
-    /// Pause consumption from partitions
+    // Pause consumption from partitions
     pub fn pause(&self, _partitions: Vec<u32>) {
         // Implementation would mark partitions as paused
     }
 
-    /// Resume consumption from partitions
+    // Resume consumption from partitions
     pub fn resume(&self, _partitions: Vec<u32>) {
         // Implementation would mark partitions as resumed
     }
 
-    /// Get dead letter queue events
+    // Get dead letter queue events
     pub fn get_dlq_events(&self) -> Vec<ConsumedEvent> {
         self.dlq.lock().unwrap().iter().cloned().collect()
     }
 
-    /// Send event to dead letter queue
+    // Send event to dead letter queue
     pub fn send_to_dlq(&self, event: ConsumedEvent) {
         self.dlq.lock().unwrap().push_back(event);
         self.stats.write().dlq_size += 1;
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_statistics(&self) -> SubscriptionStats {
         self.stats.read().clone()
     }

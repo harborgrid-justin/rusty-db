@@ -27,23 +27,23 @@ use super::crypto::{Hash256, MerkleProof, hash_to_hex};
 // Verification Result Types
 // ============================================================================
 
-/// Result of a verification operation
+// Result of a verification operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationResult {
-    /// Whether verification passed
+    // Whether verification passed
     pub passed: bool,
-    /// Verification timestamp
+    // Verification timestamp
     pub timestamp: u64,
-    /// Details about what was verified
+    // Details about what was verified
     pub details: VerificationDetails,
-    /// Issues found (if any)
+    // Issues found (if any)
     pub issues: Vec<VerificationIssue>,
-    /// Duration of verification
+    // Duration of verification
     pub duration_ms: u64,
 }
 
 impl VerificationResult {
-    /// Create a new successful result
+    // Create a new successful result
     pub fn success(details: VerificationDetails, duration_ms: u64) -> Self {
         Self {
             passed: true,
@@ -54,7 +54,7 @@ impl VerificationResult {
         }
     }
 
-    /// Create a new failed result
+    // Create a new failed result
     pub fn failure(details: VerificationDetails, issues: Vec<VerificationIssue>, duration_ms: u64) -> Self {
         Self {
             passed: false,
@@ -66,55 +66,55 @@ impl VerificationResult {
     }
 }
 
-/// Details about what was verified
+// Details about what was verified
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationDetails {
-    /// Number of blocks verified
+    // Number of blocks verified
     pub blocks_verified: usize,
-    /// Number of rows verified
+    // Number of rows verified
     pub rows_verified: usize,
-    /// Verification type
+    // Verification type
     pub verification_type: VerificationType,
-    /// Additional metadata
+    // Additional metadata
     pub metadata: HashMap<String, String>,
 }
 
-/// Type of verification performed
+// Type of verification performed
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum VerificationType {
-    /// Full blockchain verification
+    // Full blockchain verification
     Full,
-    /// Single block verification
+    // Single block verification
     Block,
-    /// Row-level verification
+    // Row-level verification
     Row,
-    /// Chain continuity verification
+    // Chain continuity verification
     Chain,
-    /// Merkle tree verification
+    // Merkle tree verification
     Merkle,
-    /// Incremental verification
+    // Incremental verification
     Incremental,
 }
 
-/// Issue found during verification
+// Issue found during verification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationIssue {
-    /// Severity level
+    // Severity level
     pub severity: IssueSeverity,
-    /// Issue type
+    // Issue type
     pub issue_type: IssueType,
-    /// Block ID (if applicable)
+    // Block ID (if applicable)
     pub block_id: Option<BlockId>,
-    /// Row ID (if applicable)
+    // Row ID (if applicable)
     pub row_id: Option<RowId>,
-    /// Human-readable description
+    // Human-readable description
     pub description: String,
-    /// When the issue was detected
+    // When the issue was detected
     pub detected_at: u64,
 }
 
 impl VerificationIssue {
-    /// Create a new issue
+    // Create a new issue
     pub fn new(severity: IssueSeverity, issue_type: IssueType, description: String) -> Self {
         Self {
             severity,
@@ -126,50 +126,50 @@ impl VerificationIssue {
         }
     }
 
-    /// Set block ID
+    // Set block ID
     pub fn with_block(mut self, block_id: BlockId) -> Self {
         self.block_id = Some(block_id);
         self
     }
 
-    /// Set row ID
+    // Set row ID
     pub fn with_row(mut self, row_id: RowId) -> Self {
         self.row_id = Some(row_id);
         self
     }
 }
 
-/// Severity of an issue
+// Severity of an issue
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum IssueSeverity {
-    /// Informational only
+    // Informational only
     Info,
-    /// Warning - potential issue
+    // Warning - potential issue
     Warning,
-    /// Error - integrity violation
+    // Error - integrity violation
     Error,
-    /// Critical - data corruption
+    // Critical - data corruption
     Critical,
 }
 
-/// Type of issue
+// Type of issue
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IssueType {
-    /// Hash mismatch
+    // Hash mismatch
     HashMismatch,
-    /// Chain break
+    // Chain break
     ChainBreak,
-    /// Merkle tree invalid
+    // Merkle tree invalid
     MerkleInvalid,
-    /// Signature invalid
+    // Signature invalid
     SignatureInvalid,
-    /// Timestamp anomaly
+    // Timestamp anomaly
     TimestampAnomaly,
-    /// Missing data
+    // Missing data
     MissingData,
-    /// Duplicate entry
+    // Duplicate entry
     DuplicateEntry,
-    /// Other issue
+    // Other issue
     Other,
 }
 
@@ -177,11 +177,11 @@ pub enum IssueType {
 // Block Verifier
 // ============================================================================
 
-/// Verifies individual blocks
+// Verifies individual blocks
 pub struct BlockVerifier;
 
 impl BlockVerifier {
-    /// Verify a single block
+    // Verify a single block
     pub fn verify_block(block: &Block) -> Result<VerificationResult> {
         let start = SystemTime::now();
         let mut issues = Vec::new();
@@ -280,7 +280,7 @@ impl BlockVerifier {
         }
     }
 
-    /// Verify timestamp ordering
+    // Verify timestamp ordering
     pub fn verify_timestamps(block: &Block) -> Vec<VerificationIssue> {
         let mut issues = Vec::new();
 
@@ -304,11 +304,11 @@ impl BlockVerifier {
 // Chain Verifier
 // ============================================================================
 
-/// Verifies blockchain continuity
+// Verifies blockchain continuity
 pub struct ChainVerifier;
 
 impl ChainVerifier {
-    /// Verify entire blockchain chain
+    // Verify entire blockchain chain
     pub fn verify_chain(table: &BlockchainTable) -> Result<VerificationResult> {
         let start = SystemTime::now();
         let mut issues = Vec::new();
@@ -397,7 +397,7 @@ impl ChainVerifier {
         }
     }
 
-    /// Verify no duplicate rows exist
+    // Verify no duplicate rows exist
     pub fn verify_no_duplicates(table: &BlockchainTable) -> Vec<VerificationIssue> {
         let mut issues = Vec::new();
         let mut seen_row_ids = HashSet::new();
@@ -424,11 +424,11 @@ impl ChainVerifier {
 // Parallel Verifier
 // ============================================================================
 
-/// Performs parallel verification for performance
+// Performs parallel verification for performance
 pub struct ParallelVerifier;
 
 impl ParallelVerifier {
-    /// Verify all blocks in parallel
+    // Verify all blocks in parallel
     pub async fn verify_all_blocks(table: &BlockchainTable) -> Result<VerificationResult> {
         let start = SystemTime::now();
         let blocks = table.blocks.read().unwrap();
@@ -514,18 +514,18 @@ impl ParallelVerifier {
 // Verification Scheduler
 // ============================================================================
 
-/// Schedules periodic verification
+// Schedules periodic verification
 pub struct VerificationScheduler {
-    /// Verification interval
+    // Verification interval
     interval: Duration,
-    /// Last verification time
+    // Last verification time
     last_verification: Arc<RwLock<Option<SystemTime>>>,
-    /// Verification history
+    // Verification history
     history: Arc<RwLock<Vec<VerificationResult>>>,
 }
 
 impl VerificationScheduler {
-    /// Create a new scheduler
+    // Create a new scheduler
     pub fn new(interval: Duration) -> Self {
         Self {
             interval,
@@ -534,7 +534,7 @@ impl VerificationScheduler {
         }
     }
 
-    /// Check if verification is due
+    // Check if verification is due
     pub fn is_due(&self) -> bool {
         let last = self.last_verification.read().unwrap();
         match *last {
@@ -545,7 +545,7 @@ impl VerificationScheduler {
         }
     }
 
-    /// Run verification
+    // Run verification
     pub async fn run_verification(&self, table: &BlockchainTable) -> Result<VerificationResult> {
         let result = ParallelVerifier::verify_all_blocks(table).await?;
 
@@ -565,12 +565,12 @@ impl VerificationScheduler {
         Ok(result)
     }
 
-    /// Get verification history
+    // Get verification history
     pub fn get_history(&self) -> Vec<VerificationResult> {
         self.history.read().unwrap().clone()
     }
 
-    /// Get last verification result
+    // Get last verification result
     pub fn last_result(&self) -> Option<VerificationResult> {
         self.history.read().unwrap().last().cloned()
     }
@@ -580,11 +580,11 @@ impl VerificationScheduler {
 // Tamper Detection
 // ============================================================================
 
-/// Detects tampering attempts
+// Detects tampering attempts
 pub struct TamperDetector;
 
 impl TamperDetector {
-    /// Detect any tampering in the blockchain
+    // Detect any tampering in the blockchain
     pub fn detect_tampering(table: &BlockchainTable) -> Vec<VerificationIssue> {
         let mut issues = Vec::new();
 
@@ -630,7 +630,7 @@ impl TamperDetector {
         issues
     }
 
-    /// Generate tamper detection report
+    // Generate tamper detection report
     pub fn generate_report(table: &BlockchainTable) -> TamperReport {
         let issues = Self::detect_tampering(table);
         let stats = table.get_stats();
@@ -652,31 +652,31 @@ impl TamperDetector {
     }
 }
 
-/// Tamper detection report
+// Tamper detection report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TamperReport {
-    /// Report timestamp
+    // Report timestamp
     pub timestamp: u64,
-    /// Total blocks checked
+    // Total blocks checked
     pub total_blocks: u64,
-    /// Total rows checked
+    // Total rows checked
     pub total_rows: u64,
-    /// Number of issues found
+    // Number of issues found
     pub issues_found: usize,
-    /// Issues detected
+    // Issues detected
     pub issues: Vec<VerificationIssue>,
-    /// Overall status
+    // Overall status
     pub status: TamperStatus,
 }
 
-/// Tamper status
+// Tamper status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TamperStatus {
-    /// No tampering detected
+    // No tampering detected
     Clean,
-    /// Tampering detected
+    // Tampering detected
     Compromised,
-    /// Unable to verify
+    // Unable to verify
     Unknown,
 }
 
@@ -684,11 +684,11 @@ pub enum TamperStatus {
 // Recovery Procedures
 // ============================================================================
 
-/// Recovery actions for verification issues
+// Recovery actions for verification issues
 pub struct RecoveryManager;
 
 impl RecoveryManager {
-    /// Analyze issues and suggest recovery actions
+    // Analyze issues and suggest recovery actions
     pub fn analyze_issues(issues: &[VerificationIssue]) -> Vec<RecoveryAction> {
         let mut actions = Vec::new();
 
@@ -731,40 +731,40 @@ impl RecoveryManager {
     }
 }
 
-/// Recovery action
+// Recovery action
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecoveryAction {
-    /// Type of action
+    // Type of action
     pub action_type: RecoveryActionType,
-    /// Description
+    // Description
     pub description: String,
-    /// Priority
+    // Priority
     pub priority: RecoveryPriority,
 }
 
-/// Type of recovery action
+// Type of recovery action
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RecoveryActionType {
-    /// Restore from backup
+    // Restore from backup
     RestoreFromBackup,
-    /// Rebuild chain
+    // Rebuild chain
     RebuildChain,
-    /// Manual investigation needed
+    // Manual investigation needed
     Investigate,
-    /// Quarantine affected data
+    // Quarantine affected data
     Quarantine,
 }
 
-/// Recovery priority
+// Recovery priority
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum RecoveryPriority {
-    /// Low priority
+    // Low priority
     Low,
-    /// Medium priority
+    // Medium priority
     Medium,
-    /// High priority
+    // High priority
     High,
-    /// Critical - immediate action required
+    // Critical - immediate action required
     Critical,
 }
 

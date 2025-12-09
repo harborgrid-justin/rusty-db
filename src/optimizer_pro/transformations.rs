@@ -19,18 +19,18 @@ use std::sync::Arc;
 // Query Transformer
 // ============================================================================
 
-/// Query transformer with multiple optimization rules
+// Query transformer with multiple optimization rules
 pub struct QueryTransformer {
-    /// Enabled transformation rules
+    // Enabled transformation rules
     enabled_rules: HashSet<String>,
-    /// Transformation statistics
+    // Transformation statistics
     stats: std::sync::RwLock<TransformationStatistics>,
-    /// Materialized view registry
+    // Materialized view registry
     mv_registry: Arc<MaterializedViewRegistry>,
 }
 
 impl QueryTransformer {
-    /// Create a new query transformer
+    // Create a new query transformer
     pub fn new(enabled_rules: Vec<String>) -> Self {
         Self {
             enabled_rules: enabled_rules.into_iter().collect(),
@@ -39,7 +39,7 @@ impl QueryTransformer {
         }
     }
 
-    /// Transform a query
+    // Transform a query
     pub fn transform(&self, query: &Query) -> Result<Query> {
         let mut transformed = query.clone();
 
@@ -79,13 +79,13 @@ impl QueryTransformer {
         Ok(transformed)
     }
 
-    /// Check if a rule is enabled
+    // Check if a rule is enabled
     #[inline(always)]
     fn is_enabled(&self, rule: &str) -> bool {
         self.enabled_rules.contains(rule)
     }
 
-    /// Apply predicate pushdown
+    // Apply predicate pushdown
     fn apply_predicate_pushdown(&self, query: &Query) -> Result<Query> {
         let mut stats = self.stats.write().unwrap();
         stats.predicate_pushdowns += 1;
@@ -94,7 +94,7 @@ impl QueryTransformer {
         Ok(query.clone())
     }
 
-    /// Apply join predicate pushdown
+    // Apply join predicate pushdown
     fn apply_join_predicate_pushdown(&self, query: &Query) -> Result<Query> {
         let mut stats = self.stats.write().unwrap();
         stats.join_predicate_pushdowns += 1;
@@ -103,7 +103,7 @@ impl QueryTransformer {
         Ok(query.clone())
     }
 
-    /// Apply OR expansion
+    // Apply OR expansion
     fn apply_or_expansion(&self, query: &Query) -> Result<Query> {
         let mut stats = self.stats.write().unwrap();
         stats.or_expansions += 1;
@@ -113,7 +113,7 @@ impl QueryTransformer {
         Ok(query.clone())
     }
 
-    /// Apply star transformation
+    // Apply star transformation
     fn apply_star_transformation(&self, query: &Query) -> Result<Query> {
         let mut stats = self.stats.write().unwrap();
         stats.star_transformations += 1;
@@ -123,7 +123,7 @@ impl QueryTransformer {
         Ok(query.clone())
     }
 
-    /// Apply materialized view rewrite
+    // Apply materialized view rewrite
     fn apply_materialized_view_rewrite(&self, query: &Query) -> Result<Query> {
         // Check if query can be answered by a materialized view
         if let Some(mv) = self.mv_registry.find_matching_view(&query.text) {
@@ -141,7 +141,7 @@ impl QueryTransformer {
         Ok(query.clone())
     }
 
-    /// Apply common subexpression elimination
+    // Apply common subexpression elimination
     fn apply_cse(&self, query: &Query) -> Result<Query> {
         let mut stats = self.stats.write().unwrap();
         stats.cse_applications += 1;
@@ -150,7 +150,7 @@ impl QueryTransformer {
         Ok(query.clone())
     }
 
-    /// Apply subquery unnesting
+    // Apply subquery unnesting
     fn apply_subquery_unnesting(&self, query: &Query) -> Result<Query> {
         let mut stats = self.stats.write().unwrap();
         stats.subquery_unnestings += 1;
@@ -159,7 +159,7 @@ impl QueryTransformer {
         Ok(query.clone())
     }
 
-    /// Apply view merging
+    // Apply view merging
     fn apply_view_merging(&self, query: &Query) -> Result<Query> {
         let mut stats = self.stats.write().unwrap();
         stats.view_mergings += 1;
@@ -168,7 +168,7 @@ impl QueryTransformer {
         Ok(query.clone())
     }
 
-    /// Get transformation statistics
+    // Get transformation statistics
     pub fn get_statistics(&self) -> TransformationStatistics {
         self.stats.read().unwrap().clone()
     }
@@ -178,22 +178,22 @@ impl QueryTransformer {
 // Transformation Rules
 // ============================================================================
 
-/// Transformation rule
+// Transformation rule
 pub trait TransformationRule {
-    /// Rule name
+    // Rule name
     fn name(&self) -> &str;
 
-    /// Check if rule is applicable
+    // Check if rule is applicable
     fn is_applicable(&self, query: &Query) -> bool;
 
-    /// Apply the transformation
+    // Apply the transformation
     fn apply(&self, query: &Query) -> Result<Query>;
 
-    /// Estimated benefit of applying this rule
+    // Estimated benefit of applying this rule
     fn estimated_benefit(&self, query: &Query) -> f64;
 }
 
-/// Predicate pushdown rule
+// Predicate pushdown rule
 pub struct PredicatePushdownRule {
     pub name: String,
 }
@@ -219,7 +219,7 @@ impl TransformationRule for PredicatePushdownRule {
     }
 }
 
-/// Join reordering rule
+// Join reordering rule
 pub struct JoinReorderingRule {
     pub name: String,
 }
@@ -243,7 +243,7 @@ impl TransformationRule for JoinReorderingRule {
     }
 }
 
-/// Subquery unnesting rule
+// Subquery unnesting rule
 pub struct SubqueryUnnestigRule {
     pub name: String,
 }
@@ -267,7 +267,7 @@ impl TransformationRule for SubqueryUnnestigRule {
     }
 }
 
-/// View merging rule
+// View merging rule
 pub struct ViewMergingRule {
     pub name: String,
 }
@@ -291,7 +291,7 @@ impl TransformationRule for ViewMergingRule {
     }
 }
 
-/// Materialized view rewrite rule
+// Materialized view rewrite rule
 pub struct MaterializedViewRewriteRule {
     pub name: String,
     pub mv_registry: Arc<MaterializedViewRegistry>,
@@ -327,9 +327,9 @@ impl TransformationRule for MaterializedViewRewriteRule {
 // Predicate Analysis
 // ============================================================================
 
-/// Predicate analyzer
+// Predicate analyzer
 pub struct PredicateAnalyzer {
-    /// Selectivity cache
+    // Selectivity cache
     selectivity_cache: std::sync::RwLock<HashMap<String, f64>>,
 }
 
@@ -340,7 +340,7 @@ impl PredicateAnalyzer {
         }
     }
 
-    /// Analyze predicate selectivity
+    // Analyze predicate selectivity
     #[inline]
     pub fn analyze_selectivity(&self, predicate: &Expression) -> f64 {
         match predicate {
@@ -361,7 +361,7 @@ impl PredicateAnalyzer {
         }
     }
 
-    /// Analyze binary operator selectivity
+    // Analyze binary operator selectivity
     #[inline]
     fn analyze_binary_op_selectivity(
         &self,
@@ -389,7 +389,7 @@ impl PredicateAnalyzer {
         }
     }
 
-    /// Analyze unary operator selectivity
+    // Analyze unary operator selectivity
     fn analyze_unary_op_selectivity(&self, op: UnaryOperator, expr: &Expression) -> f64 {
         match op {
             UnaryOperator::Not => 1.0 - self.analyze_selectivity(expr),
@@ -397,7 +397,7 @@ impl PredicateAnalyzer {
         }
     }
 
-    /// Extract pushable predicates
+    // Extract pushable predicates
     pub fn extract_pushable_predicates(&self, predicate: &Expression) -> Vec<Expression> {
         let mut predicates = Vec::new();
 
@@ -414,7 +414,7 @@ impl PredicateAnalyzer {
         predicates
     }
 
-    /// Check if predicate references only one table
+    // Check if predicate references only one table
     pub fn is_single_table_predicate(&self, predicate: &Expression, table: &str) -> bool {
         match predicate {
             Expression::Column { table: t, .. } => t == table,
@@ -433,9 +433,9 @@ impl PredicateAnalyzer {
 // Join Analysis
 // ============================================================================
 
-/// Join analyzer
+// Join analyzer
 pub struct JoinAnalyzer {
-    /// Join graph
+    // Join graph
     join_graph: std::sync::RwLock<JoinGraph>,
 }
 
@@ -446,31 +446,31 @@ impl JoinAnalyzer {
         }
     }
 
-    /// Build join graph from query
+    // Build join graph from query
     pub fn build_join_graph(&self, query: &Query) -> Result<()> {
         // Parse query and build graph of join relationships
         Ok(())
     }
 
-    /// Find optimal join order
+    // Find optimal join order
     pub fn find_optimal_join_order(&self) -> Vec<TableId> {
         // Use dynamic programming to find optimal join order
         vec![]
     }
 
-    /// Detect cross products
+    // Detect cross products
     pub fn detect_cross_products(&self) -> Vec<(TableId, TableId)> {
         // Find pairs of tables with no join condition
         vec![]
     }
 }
 
-/// Join graph representation
+// Join graph representation
 #[derive(Debug)]
 struct JoinGraph {
-    /// Tables in the query
+    // Tables in the query
     tables: BTreeSet<TableId>,
-    /// Join edges (table pairs with join conditions)
+    // Join edges (table pairs with join conditions)
     edges: HashMap<(TableId, TableId), Vec<Expression>>,
 }
 
@@ -517,9 +517,9 @@ impl JoinGraph {
 // Materialized View Registry
 // ============================================================================
 
-/// Materialized view registry
+// Materialized view registry
 pub struct MaterializedViewRegistry {
-    /// Registered materialized views
+    // Registered materialized views
     views: std::sync::RwLock<HashMap<String, MaterializedView>>,
 }
 
@@ -530,12 +530,12 @@ impl MaterializedViewRegistry {
         }
     }
 
-    /// Register a materialized view
+    // Register a materialized view
     pub fn register_view(&self, view: MaterializedView) {
         self.views.write().unwrap().insert(view.name.clone(), view);
     }
 
-    /// Find matching materialized view
+    // Find matching materialized view
     pub fn find_matching_view(&self, query_text: &str) -> Option<MaterializedView> {
         let views = self.views.read().unwrap();
 
@@ -548,19 +548,19 @@ impl MaterializedViewRegistry {
         None
     }
 
-    /// Check if query matches view definition
+    // Check if query matches view definition
     fn query_matches_view(&self, query: &str, view_def: &str) -> bool {
         // Simplified matching - in production this would do semantic analysis
         query.to_lowercase().contains(&view_def.to_lowercase())
     }
 
-    /// Get all views
+    // Get all views
     pub fn get_all_views(&self) -> Vec<MaterializedView> {
         self.views.read().unwrap().values().cloned().collect()
     }
 }
 
-/// Materialized view definition
+// Materialized view definition
 #[derive(Debug, Clone)]
 pub struct MaterializedView {
     pub name: String,
@@ -571,14 +571,14 @@ pub struct MaterializedView {
     pub last_refresh: Option<std::time::SystemTime>,
 }
 
-/// Refresh mode for materialized views
+// Refresh mode for materialized views
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RefreshMode {
-    /// Manual refresh
+    // Manual refresh
     Manual,
-    /// Automatic refresh on commit
+    // Automatic refresh on commit
     OnCommit,
-    /// Automatic refresh on demand
+    // Automatic refresh on demand
     OnDemand,
 }
 
@@ -586,9 +586,9 @@ pub enum RefreshMode {
 // Common Subexpression Elimination
 // ============================================================================
 
-/// Common subexpression eliminator
+// Common subexpression eliminator
 pub struct CommonSubexpressionEliminator {
-    /// Expression cache
+    // Expression cache
     expression_cache: std::sync::RwLock<HashMap<String, Expression>>,
 }
 
@@ -599,7 +599,7 @@ impl CommonSubexpressionEliminator {
         }
     }
 
-    /// Find common subexpressions
+    // Find common subexpressions
     pub fn find_common_subexpressions(&self, expressions: &[Expression]) -> Vec<Expression> {
         let common = Vec::new();
         let mut expr_counts: HashMap<String, usize> = HashMap::new();
@@ -619,7 +619,7 @@ impl CommonSubexpressionEliminator {
         common
     }
 
-    /// Eliminate common subexpressions
+    // Eliminate common subexpressions
     pub fn eliminate(&self, expressions: Vec<Expression>) -> Vec<Expression> {
         // Replace common subexpressions with temporary variables
         expressions
@@ -630,7 +630,7 @@ impl CommonSubexpressionEliminator {
 // Statistics
 // ============================================================================
 
-/// Transformation statistics
+// Transformation statistics
 #[derive(Debug, Clone, Default)]
 pub struct TransformationStatistics {
     pub predicate_pushdowns: u64,
@@ -647,11 +647,11 @@ pub struct TransformationStatistics {
 // Expression Utilities
 // ============================================================================
 
-/// Expression utilities
+// Expression utilities
 pub struct ExpressionUtils;
 
 impl ExpressionUtils {
-    /// Normalize expression
+    // Normalize expression
     pub fn normalize(expr: &Expression) -> Expression {
         match expr {
             Expression::BinaryOp { op: BinaryOperator::And, left, right } => {
@@ -683,7 +683,7 @@ impl ExpressionUtils {
         }
     }
 
-    /// Simplify expression
+    // Simplify expression
     pub fn simplify(expr: &Expression) -> Expression {
         match expr {
             Expression::BinaryOp { op: BinaryOperator::And, left, right } => {
@@ -704,7 +704,7 @@ impl ExpressionUtils {
         }
     }
 
-    /// Extract referenced tables
+    // Extract referenced tables
     pub fn extract_tables(expr: &Expression) -> HashSet<String> {
         let mut tables = HashSet::new();
 
@@ -730,7 +730,7 @@ impl ExpressionUtils {
         tables
     }
 
-    /// Check if expression is constant
+    // Check if expression is constant
     pub fn is_constant(expr: &Expression) -> bool {
         match expr {
             Expression::Literal(_) => true,

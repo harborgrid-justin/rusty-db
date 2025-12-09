@@ -17,7 +17,7 @@
 use std::collections::HashSet;
 use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -25,44 +25,44 @@ use crate::error::Result;
 use super::document::{Document, DocumentId};
 use super::jsonpath::{JsonPath, JsonPathEvaluator};
 
-/// Index type enumeration
+// Index type enumeration
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IndexType {
-    /// Single field index
+    // Single field index
     Single,
-    /// Compound index on multiple fields
+    // Compound index on multiple fields
     Compound,
-    /// Full-text search index
+    // Full-text search index
     FullText,
-    /// Geospatial index
+    // Geospatial index
     Geospatial,
-    /// TTL (Time-To-Live) index
+    // TTL (Time-To-Live) index
     TTL,
-    /// Unique index
+    // Unique index
     Unique,
-    /// Partial index with filter
+    // Partial index with filter
     Partial,
 }
 
-/// Index key value
+// Index key value
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum IndexKey {
-    /// String value
+    // String value
     String(String),
-    /// Integer value
+    // Integer value
     Integer(i64),
-    /// Float value (stored as bits for hashing)
+    // Float value (stored as bits for hashing)
     Float(u64),
-    /// Boolean value
+    // Boolean value
     Boolean(bool),
-    /// Null value
+    // Null value
     Null,
-    /// Compound key (multiple values)
+    // Compound key (multiple values)
     Compound(Vec<IndexKey>),
 }
 
 impl IndexKey {
-    /// Create index key from JSON value
+    // Create index key from JSON value
     pub fn from_json(value: &serde_json::Value) -> Self {
         match value {
             serde_json::Value::String(s) => IndexKey::String(s.clone()),
@@ -81,7 +81,7 @@ impl IndexKey {
         }
     }
 
-    /// Convert to display string
+    // Convert to display string
     pub fn to_string(&self) -> String {
         match self {
             IndexKey::String(s) => s.clone(),
@@ -97,17 +97,17 @@ impl IndexKey {
     }
 }
 
-/// Index field specification
+// Index field specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexField {
-    /// JSONPath to the field
+    // JSONPath to the field
     pub path: String,
-    /// Sort order (1 for ascending, -1 for descending)
+    // Sort order (1 for ascending, -1 for descending)
     pub order: i32,
 }
 
 impl IndexField {
-    /// Create ascending index field
+    // Create ascending index field
     pub fn ascending(path: impl Into<String>) -> Self {
         Self {
             path: path.into(),
@@ -115,7 +115,7 @@ impl IndexField {
         }
     }
 
-    /// Create descending index field
+    // Create descending index field
     pub fn descending(path: impl Into<String>) -> Self {
         Self {
             path: path.into(),
@@ -124,29 +124,29 @@ impl IndexField {
     }
 }
 
-/// Index definition
+// Index definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexDefinition {
-    /// Index name
+    // Index name
     pub name: String,
-    /// Index type
+    // Index type
     pub index_type: IndexType,
-    /// Fields to index
+    // Fields to index
     pub fields: Vec<IndexField>,
-    /// Unique constraint
+    // Unique constraint
     pub unique: bool,
-    /// Sparse index (only index documents with the field)
+    // Sparse index (only index documents with the field)
     pub sparse: bool,
-    /// TTL in seconds (for TTL indexes)
+    // TTL in seconds (for TTL indexes)
     pub ttl_seconds: Option<u64>,
-    /// Partial index filter (JSONPath filter)
+    // Partial index filter (JSONPath filter)
     pub partial_filter: Option<String>,
-    /// Text search options
+    // Text search options
     pub text_options: Option<TextIndexOptions>,
 }
 
 impl IndexDefinition {
-    /// Create a new index definition
+    // Create a new index definition
     pub fn new(name: impl Into<String>, index_type: IndexType) -> Self {
         Self {
             name: name.into(),
@@ -160,39 +160,39 @@ impl IndexDefinition {
         }
     }
 
-    /// Add a field to the index
+    // Add a field to the index
     pub fn add_field(mut self, field: IndexField) -> Self {
         self.fields.push(field);
         self
     }
 
-    /// Make the index unique
+    // Make the index unique
     pub fn unique(mut self) -> Self {
         self.unique = true;
         self
     }
 
-    /// Make the index sparse
+    // Make the index sparse
     pub fn sparse(mut self) -> Self {
         self.sparse = true;
         self
     }
 
-    /// Set TTL for TTL index
+    // Set TTL for TTL index
     pub fn ttl(mut self, seconds: u64) -> Self {
         self.ttl_seconds = Some(seconds);
         self.index_type = IndexType::TTL;
         self
     }
 
-    /// Set partial filter
+    // Set partial filter
     pub fn partial_filter(mut self, filter: impl Into<String>) -> Self {
         self.partial_filter = Some(filter.into());
         self.index_type = IndexType::Partial;
         self
     }
 
-    /// Set text search options
+    // Set text search options
     pub fn text_options(mut self, options: TextIndexOptions) -> Self {
         self.text_options = Some(options);
         self.index_type = IndexType::FullText;
@@ -200,16 +200,16 @@ impl IndexDefinition {
     }
 }
 
-/// Full-text search index options
+// Full-text search index options
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TextIndexOptions {
-    /// Language for stemming
+    // Language for stemming
     pub language: String,
-    /// Case sensitive search
+    // Case sensitive search
     pub case_sensitive: bool,
-    /// Stop words to ignore
+    // Stop words to ignore
     pub stop_words: Vec<String>,
-    /// Minimum word length
+    // Minimum word length
     pub min_word_length: usize,
 }
 
@@ -228,19 +228,19 @@ impl Default for TextIndexOptions {
     }
 }
 
-/// B-Tree index for ordered data with prefix compression
+// B-Tree index for ordered data with prefix compression
 pub struct BTreeIndex {
-    /// Definition of the index
+    // Definition of the index
     definition: IndexDefinition,
-    /// Index entries (key -> document IDs)
+    // Index entries (key -> document IDs)
     entries: BTreeMap<IndexKey, Vec<DocumentId>>,
-    /// Reverse index (document ID -> keys)
+    // Reverse index (document ID -> keys)
     reverse_index: HashMap<DocumentId, Vec<IndexKey>>,
-    /// Statistics for adaptive optimization
+    // Statistics for adaptive optimization
     stats: IndexStats,
 }
 
-/// Index statistics for performance tracking
+// Index statistics for performance tracking
 #[derive(Debug, Default)]
 struct IndexStats {
     lookups: AtomicU64,
@@ -250,7 +250,7 @@ struct IndexStats {
 }
 
 impl BTreeIndex {
-    /// Create a new B-tree index with optimizations
+    // Create a new B-tree index with optimizations
     pub fn new(definition: IndexDefinition) -> Self {
         Self {
             definition,
@@ -260,7 +260,7 @@ impl BTreeIndex {
         }
     }
 
-    /// Get performance statistics
+    // Get performance statistics
     pub fn get_stats(&self) -> (u64, u64, u64, f64) {
         let lookups = self.stats.lookups.load(AtomicOrdering::Relaxed);
         let inserts = self.stats.inserts.load(AtomicOrdering::Relaxed);
@@ -274,7 +274,7 @@ impl BTreeIndex {
         (lookups, inserts, range_scans, hit_rate)
     }
 
-    /// Insert a document into the index with statistics tracking
+    // Insert a document into the index with statistics tracking
     pub fn insert(&mut self, doc_id: DocumentId, doc: &Document) -> Result<()> {
         self.stats.inserts.fetch_add(1, AtomicOrdering::Relaxed);
         let keys = self.extract_keys(doc)?;
@@ -305,7 +305,7 @@ impl BTreeIndex {
         Ok(())
     }
 
-    /// Remove a document from the index
+    // Remove a document from the index
     pub fn remove(&mut self, doc_id: &DocumentId) {
         if let Some(keys) = self.reverse_index.remove(doc_id) {
             for key in keys {
@@ -319,7 +319,7 @@ impl BTreeIndex {
         }
     }
 
-    /// Look up documents by exact key with statistics
+    // Look up documents by exact key with statistics
     pub fn lookup(&self, key: &IndexKey) -> Vec<DocumentId> {
         self.stats.lookups.fetch_add(1, AtomicOrdering::Relaxed);
         let result = self.entries.get(key).cloned().unwrap_or_default();
@@ -329,7 +329,7 @@ impl BTreeIndex {
         result
     }
 
-    /// Range query (inclusive) with statistics
+    // Range query (inclusive) with statistics
     pub fn range(&self, start: &IndexKey, end: &IndexKey) -> HashSet<DocumentId> {
         self.stats.range_scans.fetch_add(1, AtomicOrdering::Relaxed);
         let mut results = HashSet::new();
@@ -341,7 +341,7 @@ impl BTreeIndex {
         results
     }
 
-    /// Extract index keys from a document
+    // Extract index keys from a document
     fn extract_keys(&self, doc: &Document) -> Result<Vec<IndexKey>> {
         let json = doc.as_json()?;
         let mut keys = Vec::new();
@@ -410,18 +410,18 @@ impl BTreeIndex {
     }
 }
 
-/// Full-text search index using inverted index
+// Full-text search index using inverted index
 pub struct FullTextIndex {
-    /// Index definition
+    // Index definition
     definition: IndexDefinition,
-    /// Inverted index (term -> document IDs with positions)
+    // Inverted index (term -> document IDs with positions)
     inverted_index: HashMap<String, HashMap<DocumentId, Vec<usize>>>,
-    /// Document word count
+    // Document word count
     doc_word_count: HashMap<DocumentId, usize>,
 }
 
 impl FullTextIndex {
-    /// Create a new full-text index
+    // Create a new full-text index
     pub fn new(definition: IndexDefinition) -> Self {
         Self {
             definition,
@@ -430,7 +430,7 @@ impl FullTextIndex {
         }
     }
 
-    /// Insert a document into the index
+    // Insert a document into the index
     pub fn insert(&mut self, doc_id: DocumentId, doc: &Document) -> Result<()> {
         let json = doc.as_json()?;
         let text = self.extract_text(&json)?;
@@ -452,7 +452,7 @@ impl FullTextIndex {
         Ok(())
     }
 
-    /// Remove a document from the index
+    // Remove a document from the index
     pub fn remove(&mut self, doc_id: &DocumentId) {
         self.doc_word_count.remove(doc_id);
 
@@ -469,7 +469,7 @@ impl FullTextIndex {
         }
     }
 
-    /// Search for documents containing all terms
+    // Search for documents containing all terms
     pub fn search(&self, query: &str) -> Vec<(DocumentId, f64)> {
         let tokens = self.tokenize(query);
         if tokens.is_empty() {
@@ -500,7 +500,7 @@ impl FullTextIndex {
         results
     }
 
-    /// Search for documents containing any of the terms
+    // Search for documents containing any of the terms
     pub fn search_any(&self, query: &str) -> Vec<(DocumentId, f64)> {
         let tokens = self.tokenize(query);
         if tokens.is_empty() {
@@ -529,7 +529,7 @@ impl FullTextIndex {
         results
     }
 
-    /// Phrase search
+    // Phrase search
     pub fn search_phrase(&self, phrase: &str) -> HashSet<DocumentId> {
         let tokens = self.tokenize(phrase);
         if tokens.is_empty() {
@@ -640,16 +640,16 @@ impl FullTextIndex {
     }
 }
 
-/// TTL index for automatic document expiration
+// TTL index for automatic document expiration
 pub struct TTLIndex {
-    /// Index definition
+    // Index definition
     definition: IndexDefinition,
-    /// Expiration times (document ID -> expiration timestamp)
+    // Expiration times (document ID -> expiration timestamp)
     expiration_times: BTreeMap<DocumentId, u64>,
 }
 
 impl TTLIndex {
-    /// Create a new TTL index
+    // Create a new TTL index
     pub fn new(definition: IndexDefinition) -> Self {
         Self {
             definition,
@@ -657,7 +657,7 @@ impl TTLIndex {
         }
     }
 
-    /// Insert a document into the TTL index
+    // Insert a document into the TTL index
     pub fn insert(&mut self, doc_id: DocumentId, doc: &Document) -> Result<()> {
         if let Some(expires_at) = doc.metadata.expires_at {
             self.expiration_times.insert(doc_id, expires_at);
@@ -666,12 +666,12 @@ impl TTLIndex {
         Ok(())
     }
 
-    /// Remove a document from the index
+    // Remove a document from the index
     pub fn remove(&mut self, doc_id: &DocumentId) {
         self.expiration_times.remove(doc_id);
     }
 
-    /// Get expired document IDs
+    // Get expired document IDs
     pub fn get_expired(&self) -> Vec<DocumentId> {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -690,13 +690,13 @@ impl TTLIndex {
     }
 }
 
-/// Index manager for coordinating all indexes
+// Index manager for coordinating all indexes
 pub struct IndexManager {
-    /// All indexes
+    // All indexes
     indexes: Arc<RwLock<HashMap<String, Index>>>,
 }
 
-/// Unified index wrapper
+// Unified index wrapper
 pub enum Index {
     BTree(BTreeIndex),
     FullText(FullTextIndex),
@@ -704,14 +704,14 @@ pub enum Index {
 }
 
 impl IndexManager {
-    /// Create a new index manager
+    // Create a new index manager
     pub fn new() -> Self {
         Self {
             indexes: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    /// Create an index
+    // Create an index
     pub fn create_index(&self, definition: IndexDefinition) -> Result<()> {
         let mut indexes = self.indexes.write().unwrap();
 
@@ -743,7 +743,7 @@ impl IndexManager {
         Ok(())
     }
 
-    /// Drop an index
+    // Drop an index
     pub fn drop_index(&self, name: &str) -> Result<()> {
         let mut indexes = self.indexes.write().unwrap();
 
@@ -756,7 +756,7 @@ impl IndexManager {
         }
     }
 
-    /// List all index names
+    // List all index names
     pub fn list_indexes(&self) -> Vec<String> {
         self.indexes.read().unwrap().keys().cloned().collect()
     }

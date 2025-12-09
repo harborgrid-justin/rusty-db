@@ -33,40 +33,40 @@ use crate::error::{Result, DbError};
 use super::pdb::{PluggableDatabase, PdbId, PdbConfig, PdbLifecycleState, PdbCreateMode};
 use super::isolation::ResourceLimits;
 
-/// Container Database (CDB) configuration
+// Container Database (CDB) configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CdbConfig {
-    /// CDB name (must be unique)
+    // CDB name (must be unique)
     pub name: String,
 
-    /// Data directory for CDB root
+    // Data directory for CDB root
     pub data_dir: String,
 
-    /// Maximum number of PDBs allowed
+    // Maximum number of PDBs allowed
     pub max_pdbs: usize,
 
-    /// Total memory allocated to CDB (bytes)
+    // Total memory allocated to CDB (bytes)
     pub total_memory_bytes: u64,
 
-    /// Shared buffer pool size (bytes)
+    // Shared buffer pool size (bytes)
     pub shared_buffer_size: u64,
 
-    /// Enable automatic PDB startup on CDB startup
+    // Enable automatic PDB startup on CDB startup
     pub auto_start_pdbs: bool,
 
-    /// Background process configuration
+    // Background process configuration
     pub background_processes: BackgroundProcessConfig,
 
-    /// Enable Kubernetes integration
+    // Enable Kubernetes integration
     pub kubernetes_integration: bool,
 
-    /// Enable AI-driven resource optimization
+    // Enable AI-driven resource optimization
     pub ai_optimization: bool,
 
-    /// Undo tablespace size (bytes)
+    // Undo tablespace size (bytes)
     pub undo_tablespace_size: u64,
 
-    /// Temp tablespace size (bytes)
+    // Temp tablespace size (bytes)
     pub temp_tablespace_size: u64,
 }
 
@@ -88,31 +88,31 @@ impl Default for CdbConfig {
     }
 }
 
-/// Background process configuration
+// Background process configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackgroundProcessConfig {
-    /// Number of database writer processes
+    // Number of database writer processes
     pub dbwr_processes: u32,
 
-    /// Number of log writer processes
+    // Number of log writer processes
     pub lgwr_processes: u32,
 
-    /// Number of checkpoint processes
+    // Number of checkpoint processes
     pub ckpt_processes: u32,
 
-    /// Enable archiver process
+    // Enable archiver process
     pub archiver_enabled: bool,
 
-    /// Number of recovery processes
+    // Number of recovery processes
     pub recovery_processes: u32,
 
-    /// Enable process monitor
+    // Enable process monitor
     pub pmon_enabled: bool,
 
-    /// Enable system monitor
+    // Enable system monitor
     pub smon_enabled: bool,
 
-    /// Background process check interval (seconds)
+    // Background process check interval (seconds)
     pub check_interval_secs: u64,
 }
 
@@ -131,45 +131,45 @@ impl Default for BackgroundProcessConfig {
     }
 }
 
-/// System-level metadata for the CDB
+// System-level metadata for the CDB
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMetadata {
-    /// CDB creation timestamp
+    // CDB creation timestamp
     pub created_at: u64,
 
-    /// CDB version
+    // CDB version
     pub version: String,
 
-    /// Platform information
+    // Platform information
     pub platform: String,
 
-    /// Character set
+    // Character set
     pub charset: String,
 
-    /// National character set
+    // National character set
     pub ncharset: String,
 
-    /// System Change Number (SCN) - monotonically increasing
+    // System Change Number (SCN) - monotonically increasing
     pub current_scn: u64,
 
-    /// Global database name
+    // Global database name
     pub global_name: String,
 
-    /// Database ID (DBID)
+    // Database ID (DBID)
     pub db_id: u64,
 
-    /// Archive log mode
+    // Archive log mode
     pub archivelog_mode: bool,
 
-    /// Flashback enabled
+    // Flashback enabled
     pub flashback_enabled: bool,
 
-    /// Force logging
+    // Force logging
     pub force_logging: bool,
 }
 
 impl SystemMetadata {
-    /// Create new system metadata
+    // Create new system metadata
     pub fn new(cdb_name: &str) -> Self {
         Self {
             created_at: SystemTime::now()
@@ -189,7 +189,7 @@ impl SystemMetadata {
         }
     }
 
-    /// Generate a unique database ID
+    // Generate a unique database ID
     fn generate_db_id() -> u64 {
         use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
@@ -200,40 +200,40 @@ impl SystemMetadata {
         hasher.finish()
     }
 
-    /// Increment and return the next SCN
+    // Increment and return the next SCN
     pub fn next_scn(&mut self) -> u64 {
         self.current_scn += 1;
         self.current_scn
     }
 }
 
-/// CDB resource pool for fair-share allocation
+// CDB resource pool for fair-share allocation
 #[derive(Debug, Clone)]
 pub struct CdbResourcePool {
-    /// Total memory in pool (bytes)
+    // Total memory in pool (bytes)
     total_memory: u64,
 
-    /// Allocated memory (bytes)
+    // Allocated memory (bytes)
     allocated_memory: u64,
 
-    /// Total CPU shares
+    // Total CPU shares
     total_cpu_shares: u32,
 
-    /// Allocated CPU shares
+    // Allocated CPU shares
     allocated_cpu_shares: u32,
 
-    /// Total I/O bandwidth (bytes/sec)
+    // Total I/O bandwidth (bytes/sec)
     total_io_bandwidth: u64,
 
-    /// Allocated I/O bandwidth
+    // Allocated I/O bandwidth
     allocated_io_bandwidth: u64,
 
-    /// Per-PDB allocations
+    // Per-PDB allocations
     allocations: HashMap<PdbId, ResourceLimits>,
 }
 
 impl CdbResourcePool {
-    /// Create a new resource pool
+    // Create a new resource pool
     pub fn new(config: &CdbConfig) -> Self {
         Self {
             total_memory: config.total_memory_bytes,
@@ -246,7 +246,7 @@ impl CdbResourcePool {
         }
     }
 
-    /// Allocate resources for a PDB
+    // Allocate resources for a PDB
     pub fn allocate(&mut self, pdb_id: PdbId, limits: ResourceLimits) -> Result<()> {
         // Check if resources are available
         if self.allocated_memory + limits.memory_bytes > self.total_memory {
@@ -280,7 +280,7 @@ impl CdbResourcePool {
         Ok(())
     }
 
-    /// Deallocate resources for a PDB
+    // Deallocate resources for a PDB
     pub fn deallocate(&mut self, pdb_id: PdbId) -> Result<()> {
         if let Some(limits) = self.allocations.remove(&pdb_id) {
             self.allocated_memory -= limits.memory_bytes;
@@ -290,22 +290,22 @@ impl CdbResourcePool {
         Ok(())
     }
 
-    /// Get allocation for a PDB
+    // Get allocation for a PDB
     pub fn get_allocation(&self, pdb_id: PdbId) -> Option<&ResourceLimits> {
         self.allocations.get(&pdb_id)
     }
 
-    /// Get available memory
+    // Get available memory
     pub fn available_memory(&self) -> u64 {
         self.total_memory - self.allocated_memory
     }
 
-    /// Get available CPU shares
+    // Get available CPU shares
     pub fn available_cpu_shares(&self) -> u32 {
         self.total_cpu_shares - self.allocated_cpu_shares
     }
 
-    /// Get resource utilization percentage
+    // Get resource utilization percentage
     pub fn utilization(&self) -> ResourceUtilization {
         ResourceUtilization {
             memory_percent: (self.allocated_memory as f64 / self.total_memory as f64) * 100.0,
@@ -315,7 +315,7 @@ impl CdbResourcePool {
     }
 }
 
-/// Resource utilization metrics
+// Resource utilization metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceUtilization {
     pub memory_percent: f64,
@@ -323,21 +323,21 @@ pub struct ResourceUtilization {
     pub io_percent: f64,
 }
 
-/// Container registry mapping PDB IDs to instances
+// Container registry mapping PDB IDs to instances
 #[derive(Debug, Clone)]
 pub struct CdbRegistry {
-    /// Map of PDB ID to PDB instance
+    // Map of PDB ID to PDB instance
     pdbs: Arc<RwLock<HashMap<PdbId, Arc<RwLock<PluggableDatabase>>>>>,
 
-    /// Map of PDB name to PDB ID
+    // Map of PDB name to PDB ID
     name_to_id: Arc<RwLock<HashMap<String, PdbId>>>,
 
-    /// Next available PDB ID
+    // Next available PDB ID
     next_id: Arc<Mutex<u64>>,
 }
 
 impl CdbRegistry {
-    /// Create a new registry
+    // Create a new registry
     pub fn new() -> Self {
         Self {
             pdbs: Arc::new(RwLock::new(HashMap::new())),
@@ -346,7 +346,7 @@ impl CdbRegistry {
         }
     }
 
-    /// Register a new PDB
+    // Register a new PDB
     pub async fn register(&self, pdb: PluggableDatabase) -> Result<PdbId> {
         let mut next_id = self.next_id.lock().unwrap();
         let pdb_id = PdbId::new(*next_id);
@@ -362,7 +362,7 @@ impl CdbRegistry {
         Ok(pdb_id)
     }
 
-    /// Unregister a PDB
+    // Unregister a PDB
     pub async fn unregister(&self, pdb_id: PdbId) -> Result<()> {
         let pdbs = self.pdbs.read().await;
         if let Some(pdb_arc) = pdbs.get(&pdb_id) {
@@ -379,7 +379,7 @@ impl CdbRegistry {
         }
     }
 
-    /// Get a PDB by ID
+    // Get a PDB by ID
     pub async fn get(&self, pdb_id: PdbId) -> Result<Arc<RwLock<PluggableDatabase>>> {
         let pdbs = self.pdbs.read().await;
         pdbs.get(&pdb_id)
@@ -387,7 +387,7 @@ impl CdbRegistry {
             .ok_or_else(|| DbError::NotFound(format!("PDB not found: {:?}", pdb_id)))
     }
 
-    /// Get a PDB ID by name
+    // Get a PDB ID by name
     pub async fn get_id_by_name(&self, name: &str) -> Result<PdbId> {
         let name_to_id = self.name_to_id.read().await;
         name_to_id
@@ -396,27 +396,27 @@ impl CdbRegistry {
             .ok_or_else(|| DbError::NotFound(format!("PDB not found: {}", name)))
     }
 
-    /// List all PDB IDs
+    // List all PDB IDs
     pub async fn list_ids(&self) -> Vec<PdbId> {
         self.pdbs.read().await.keys().copied().collect()
     }
 
-    /// Count registered PDBs
+    // Count registered PDBs
     pub async fn count(&self) -> usize {
         self.pdbs.read().await.len()
     }
 }
 
-/// Background process manager
+// Background process manager
 #[derive(Debug, Clone)]
 pub struct BackgroundProcessManager {
-    /// Configuration
+    // Configuration
     config: BackgroundProcessConfig,
 
-    /// Process states
+    // Process states
     processes: Arc<RwLock<HashMap<String, BackgroundProcessState>>>,
 
-    /// Shutdown signal
+    // Shutdown signal
     shutdown: Arc<Mutex<bool>>,
 }
 
@@ -450,7 +450,7 @@ pub enum ProcessStatus {
 }
 
 impl BackgroundProcessManager {
-    /// Create a new background process manager
+    // Create a new background process manager
     pub fn new(config: BackgroundProcessConfig) -> Self {
         Self {
             config,
@@ -459,7 +459,7 @@ impl BackgroundProcessManager {
         }
     }
 
-    /// Start all background processes
+    // Start all background processes
     pub async fn start_all(&self) -> Result<()> {
         // Start DBWR processes
         for i in 0..self.config.dbwr_processes {
@@ -520,7 +520,7 @@ impl BackgroundProcessManager {
         Ok(())
     }
 
-    /// Start a single background process
+    // Start a single background process
     async fn start_process(&self, name: String, process_type: BackgroundProcessType) -> Result<()> {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -567,7 +567,7 @@ impl BackgroundProcessManager {
         Ok(())
     }
 
-    /// Stop all background processes
+    // Stop all background processes
     pub async fn stop_all(&self) -> Result<()> {
         *self.shutdown.lock().unwrap() = true;
 
@@ -582,12 +582,12 @@ impl BackgroundProcessManager {
         Ok(())
     }
 
-    /// Get status of all processes
+    // Get status of all processes
     pub async fn get_all_status(&self) -> Vec<BackgroundProcessState> {
         self.processes.read().await.values().cloned().collect()
     }
 
-    /// Check health of background processes
+    // Check health of background processes
     pub async fn health_check(&self) -> bool {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -609,51 +609,51 @@ impl BackgroundProcessManager {
     }
 }
 
-/// Container Database (CDB)
-///
-/// The root container that manages all PDBs and system-level resources
+// Container Database (CDB)
+//
+// The root container that manages all PDBs and system-level resources
 pub struct ContainerDatabase {
-    /// CDB configuration
+    // CDB configuration
     config: CdbConfig,
 
-    /// System metadata
+    // System metadata
     metadata: Arc<RwLock<SystemMetadata>>,
 
-    /// PDB registry
+    // PDB registry
     registry: CdbRegistry,
 
-    /// Resource pool
+    // Resource pool
     resource_pool: Arc<RwLock<CdbResourcePool>>,
 
-    /// Background process manager
+    // Background process manager
     bg_processes: BackgroundProcessManager,
 
-    /// CDB state
+    // CDB state
     state: Arc<RwLock<CdbState>>,
 
-    /// Kubernetes operator handle (if enabled)
+    // Kubernetes operator handle (if enabled)
     k8s_operator: Option<Arc<KubernetesOperator>>,
 
-    /// AI optimizer (if enabled)
+    // AI optimizer (if enabled)
     ai_optimizer: Option<Arc<AiOptimizer>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CdbState {
-    /// CDB is starting up
+    // CDB is starting up
     Starting,
-    /// CDB is open and operational
+    // CDB is open and operational
     Open,
-    /// CDB is in restricted mode
+    // CDB is in restricted mode
     Restricted,
-    /// CDB is shutting down
+    // CDB is shutting down
     ShuttingDown,
-    /// CDB is closed
+    // CDB is closed
     Closed,
 }
 
 impl ContainerDatabase {
-    /// Create a new Container Database
+    // Create a new Container Database
     pub async fn new(name: &str) -> Result<Self> {
         let config = CdbConfig {
             name: name.to_string(),
@@ -663,7 +663,7 @@ impl ContainerDatabase {
         Self::with_config(config).await
     }
 
-    /// Create a CDB with custom configuration
+    // Create a CDB with custom configuration
     pub async fn with_config(config: CdbConfig) -> Result<Self> {
         let metadata = Arc::new(RwLock::new(SystemMetadata::new(&config.name)));
         let registry = CdbRegistry::new();
@@ -702,17 +702,17 @@ impl ContainerDatabase {
         Ok(cdb)
     }
 
-    /// Get CDB name
+    // Get CDB name
     pub fn name(&self) -> &str {
         &self.config.name
     }
 
-    /// Get CDB state
+    // Get CDB state
     pub async fn state(&self) -> CdbState {
         *self.state.read().await
     }
 
-    /// Create a new PDB
+    // Create a new PDB
     pub async fn create_pdb(&self, config: PdbConfig) -> Result<PdbId> {
         // Check if we've reached max PDBs
         if self.registry.count().await >= self.config.max_pdbs {
@@ -745,21 +745,21 @@ impl ContainerDatabase {
         Ok(pdb_id)
     }
 
-    /// Open a PDB
+    // Open a PDB
     pub async fn open_pdb(&self, pdb_id: PdbId) -> Result<()> {
         let pdb_arc = self.registry.get(pdb_id).await?;
         let mut pdb = pdb_arc.write().await;
         pdb.open().await
     }
 
-    /// Close a PDB
+    // Close a PDB
     pub async fn close_pdb(&self, pdb_id: PdbId) -> Result<()> {
         let pdb_arc = self.registry.get(pdb_id).await?;
         let mut pdb = pdb_arc.write().await;
         pdb.close().await
     }
 
-    /// Drop a PDB
+    // Drop a PDB
     pub async fn drop_pdb(&self, pdb_id: PdbId) -> Result<()> {
         // Close the PDB first
         self.close_pdb(pdb_id).await?;
@@ -773,7 +773,7 @@ impl ContainerDatabase {
         Ok(())
     }
 
-    /// Clone a PDB
+    // Clone a PDB
     pub async fn clone_pdb(&self, source_pdb_id: PdbId, clone_name: &str) -> Result<PdbId> {
         let source_arc = self.registry.get(source_pdb_id).await?;
         let source = source_arc.read().await;
@@ -792,33 +792,33 @@ impl ContainerDatabase {
         self.create_pdb(clone_config).await
     }
 
-    /// List all PDBs
+    // List all PDBs
     pub async fn list_pdbs(&self) -> Vec<PdbId> {
         self.registry.list_ids().await
     }
 
-    /// Get PDB by ID
+    // Get PDB by ID
     pub async fn get_pdb(&self, pdb_id: PdbId) -> Result<Arc<RwLock<PluggableDatabase>>> {
         self.registry.get(pdb_id).await
     }
 
-    /// Get PDB by name
+    // Get PDB by name
     pub async fn get_pdb_by_name(&self, name: &str) -> Result<Arc<RwLock<PluggableDatabase>>> {
         let pdb_id = self.registry.get_id_by_name(name).await?;
         self.registry.get(pdb_id).await
     }
 
-    /// Get resource utilization
+    // Get resource utilization
     pub async fn resource_utilization(&self) -> ResourceUtilization {
         self.resource_pool.read().await.utilization()
     }
 
-    /// Get background process status
+    // Get background process status
     pub async fn background_process_status(&self) -> Vec<BackgroundProcessState> {
         self.bg_processes.get_all_status().await
     }
 
-    /// Health check
+    // Health check
     pub async fn health_check(&self) -> bool {
         // Check CDB state
         if *self.state.read().await != CdbState::Open {
@@ -833,7 +833,7 @@ impl ContainerDatabase {
         true
     }
 
-    /// Shutdown the CDB
+    // Shutdown the CDB
     pub async fn shutdown(&self) -> Result<()> {
         *self.state.write().await = CdbState::ShuttingDown;
 
@@ -850,18 +850,18 @@ impl ContainerDatabase {
         Ok(())
     }
 
-    /// Get system metadata
+    // Get system metadata
     pub async fn system_metadata(&self) -> SystemMetadata {
         self.metadata.read().await.clone()
     }
 
-    /// Allocate next SCN
+    // Allocate next SCN
     pub async fn next_scn(&self) -> u64 {
         self.metadata.write().await.next_scn()
     }
 }
 
-/// Kubernetes operator for CDB management
+// Kubernetes operator for CDB management
 #[derive(Debug, Clone)]
 pub struct KubernetesOperator {
     cdb_name: String,
@@ -889,7 +889,7 @@ impl KubernetesOperator {
     }
 }
 
-/// AI-driven resource optimizer
+// AI-driven resource optimizer
 #[derive(Debug, Clone)]
 pub struct AiOptimizer {
     optimization_enabled: bool,

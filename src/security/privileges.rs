@@ -21,13 +21,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 
-/// Principal identifier (user or role)
+// Principal identifier (user or role)
 pub type PrincipalId = String;
 
-/// Object identifier
+// Object identifier
 pub type ObjectId = String;
 
-/// System privilege types
+// System privilege types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum SystemPrivilege {
     // Database administration
@@ -99,7 +99,7 @@ pub enum SystemPrivilege {
     SysBackup,
 }
 
-/// Object privilege types
+// Object privilege types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ObjectPrivilege {
     Select,
@@ -114,7 +114,7 @@ pub enum ObjectPrivilege {
     All,
 }
 
-/// Object type for privilege management
+// Object type for privilege management
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum PrivilegeObjectType {
     Table,
@@ -127,95 +127,95 @@ pub enum PrivilegeObjectType {
     Trigger,
 }
 
-/// Privilege grant record
+// Privilege grant record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrivilegeGrant {
-    /// Grant ID
+    // Grant ID
     pub grant_id: String,
-    /// Grantee (user or role)
+    // Grantee (user or role)
     pub grantee: PrincipalId,
-    /// Grantor (who granted the privilege)
+    // Grantor (who granted the privilege)
     pub grantor: PrincipalId,
-    /// Type of privilege
+    // Type of privilege
     pub privilege_type: PrivilegeType,
-    /// Can grantee grant this to others?
+    // Can grantee grant this to others?
     pub with_grant_option: bool,
-    /// Can grantee create hierarchy under this?
+    // Can grantee create hierarchy under this?
     pub with_hierarchy_option: bool,
-    /// Grant timestamp
+    // Grant timestamp
     pub granted_at: i64,
-    /// Grant expiration (None = never expires)
+    // Grant expiration (None = never expires)
     pub expires_at: Option<i64>,
-    /// Is this grant currently active?
+    // Is this grant currently active?
     pub is_active: bool,
 }
 
-/// Type of privilege being granted
+// Type of privilege being granted
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PrivilegeType {
-    /// System-level privilege
+    // System-level privilege
     System(SystemPrivilege),
-    /// Object-level privilege
+    // Object-level privilege
     Object {
         privilege: ObjectPrivilege,
         object_type: PrivilegeObjectType,
         object_id: ObjectId,
-        /// Specific columns (for SELECT, UPDATE, INSERT, REFERENCES)
+        // Specific columns (for SELECT, UPDATE, INSERT, REFERENCES)
         columns: Option<Vec<String>>,
     },
 }
 
-/// Privilege dependency (for cascade operations)
+// Privilege dependency (for cascade operations)
 #[derive(Debug, Clone)]
 pub struct PrivilegeDependency {
-    /// Dependent grant
+    // Dependent grant
     pub dependent_grant_id: String,
-    /// Grant it depends on
+    // Grant it depends on
     pub depends_on_grant_id: String,
 }
 
-/// Privilege check result
+// Privilege check result
 #[derive(Debug, Clone)]
 pub struct PrivilegeCheckResult {
-    /// Does the principal have the privilege?
+    // Does the principal have the privilege?
     pub has_privilege: bool,
-    /// Source of the privilege (direct grant, role inheritance, etc.)
+    // Source of the privilege (direct grant, role inheritance, etc.)
     pub source: Option<PrivilegeSource>,
-    /// Can the principal grant this to others?
+    // Can the principal grant this to others?
     pub can_grant: bool,
 }
 
-/// Source of a privilege
+// Source of a privilege
 #[derive(Debug, Clone)]
 pub enum PrivilegeSource {
-    /// Direct grant to the principal
+    // Direct grant to the principal
     DirectGrant { grant_id: String },
-    /// Inherited through a role
+    // Inherited through a role
     RoleInheritance { role_id: String, grant_id: String },
-    /// Public grant
+    // Public grant
     PublicGrant { grant_id: String },
 }
 
-/// Privilege manager
+// Privilege manager
 pub struct PrivilegeManager {
-    /// All privilege grants
+    // All privilege grants
     grants: Arc<RwLock<HashMap<String, PrivilegeGrant>>>,
-    /// Grants by grantee (for quick lookup)
+    // Grants by grantee (for quick lookup)
     grantee_index: Arc<RwLock<HashMap<PrincipalId, Vec<String>>>>,
-    /// Grants by grantor (for dependency tracking)
+    // Grants by grantor (for dependency tracking)
     grantor_index: Arc<RwLock<HashMap<PrincipalId, Vec<String>>>>,
-    /// Grants by object (for object-level privileges)
+    // Grants by object (for object-level privileges)
     object_index: Arc<RwLock<HashMap<ObjectId, Vec<String>>>>,
-    /// Privilege dependencies
+    // Privilege dependencies
     dependencies: Arc<RwLock<Vec<PrivilegeDependency>>>,
-    /// Grant ID counter
+    // Grant ID counter
     grant_counter: Arc<RwLock<u64>>,
-    /// Role hierarchy (role -> parent roles)
+    // Role hierarchy (role -> parent roles)
     role_hierarchy: Arc<RwLock<HashMap<String, Vec<String>>>>,
 }
 
 impl PrivilegeManager {
-    /// Create a new privilege manager
+    // Create a new privilege manager
     pub fn new() -> Self {
         Self {
             grants: Arc::new(RwLock::new(HashMap::new())),
@@ -228,7 +228,7 @@ impl PrivilegeManager {
         }
     }
 
-    /// Grant a system privilege
+    // Grant a system privilege
     pub fn grant_system_privilege(
         &self,
         grantor: PrincipalId,
@@ -270,7 +270,7 @@ impl PrivilegeManager {
         Ok(grant_id)
     }
 
-    /// Grant an object privilege
+    // Grant an object privilege
     pub fn grant_object_privilege(
         &self,
         grantor: PrincipalId,
@@ -332,7 +332,7 @@ impl PrivilegeManager {
         Ok(grant_id)
     }
 
-    /// Revoke a privilege grant
+    // Revoke a privilege grant
     pub fn revoke_grant(
         &self,
         grant_id: &str,
@@ -370,7 +370,7 @@ impl PrivilegeManager {
         Ok(revoked_grants)
     }
 
-    /// Check if a principal has a system privilege
+    // Check if a principal has a system privilege
     pub fn check_system_privilege(
         &self,
         principal: &PrincipalId,
@@ -422,7 +422,7 @@ impl PrivilegeManager {
         }
     }
 
-    /// Check if a principal has an object privilege
+    // Check if a principal has an object privilege
     pub fn check_object_privilege(
         &self,
         principal: &PrincipalId,
@@ -513,7 +513,7 @@ impl PrivilegeManager {
         }
     }
 
-    /// Get all grants for a principal
+    // Get all grants for a principal
     pub fn get_principal_grants(&self, principal: &PrincipalId) -> Vec<PrivilegeGrant> {
         let grantee_index = self.grantee_index.read();
         let grants = self.grants.read();
@@ -529,7 +529,7 @@ impl PrivilegeManager {
         }
     }
 
-    /// Get all grants for an object
+    // Get all grants for an object
     pub fn get_object_grants(&self, objectid: &ObjectId) -> Vec<PrivilegeGrant> {
         let object_index = self.object_index.read();
         let grants = self.grants.read();
@@ -545,12 +545,12 @@ impl PrivilegeManager {
         }
     }
 
-    /// Set role hierarchy for privilege inheritance
+    // Set role hierarchy for privilege inheritance
     pub fn set_role_hierarchy(&self, role: String, parent_roles: Vec<String>) {
         self.role_hierarchy.write().insert(role, parent_roles);
     }
 
-    /// Get effective privileges for a principal (including role inheritance)
+    // Get effective privileges for a principal (including role inheritance)
     pub fn get_effective_privileges(&self, principal: &PrincipalId) -> EffectivePrivileges {
         let mut system_privileges = HashSet::new();
         let mut object_privileges: HashMap<ObjectId, Vec<(ObjectPrivilege, PrivilegeObjectType)>> = HashMap::new();
@@ -586,7 +586,7 @@ impl PrivilegeManager {
         }
     }
 
-    /// Get privilege statistics
+    // Get privilege statistics
     pub fn get_statistics(&self) -> PrivilegeStatistics {
         let grants = self.grants.read();
 
@@ -777,14 +777,14 @@ impl Default for PrivilegeManager {
     }
 }
 
-/// Effective privileges for a principal
+// Effective privileges for a principal
 #[derive(Debug, Clone)]
 pub struct EffectivePrivileges {
     pub system_privileges: HashSet<SystemPrivilege>,
     pub object_privileges: HashMap<ObjectId, Vec<(ObjectPrivilege, PrivilegeObjectType)>>,
 }
 
-/// Privilege statistics
+// Privilege statistics
 #[derive(Debug, Clone)]
 pub struct PrivilegeStatistics {
     pub total_grants: usize,

@@ -18,12 +18,12 @@ use super::{GraphQLEngine, AuthorizationContext};
 // PART 3: MUTATION OPERATIONS (500+ lines)
 // ============================================================================
 
-/// Root mutation type
+// Root mutation type
 pub struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
-    /// Insert a single row
+    // Insert a single row
     async fn insert_one(
         &self,
         ctx: &Context<'_>,
@@ -60,7 +60,7 @@ impl MutationRoot {
         }
     }
 
-    /// Insert multiple rows
+    // Insert multiple rows
     async fn insert_many(
         &self,
         ctx: &Context<'_>,
@@ -98,7 +98,7 @@ impl MutationRoot {
         }
     }
 
-    /// Update a single row by ID
+    // Update a single row by ID
     async fn update_one(
         &self,
         ctx: &Context<'_>,
@@ -141,7 +141,7 @@ impl MutationRoot {
         }
     }
 
-    /// Update multiple rows matching a condition
+    // Update multiple rows matching a condition
     async fn update_many(
         &self,
         ctx: &Context<'_>,
@@ -180,7 +180,7 @@ impl MutationRoot {
         }
     }
 
-    /// Delete a single row by ID
+    // Delete a single row by ID
     async fn delete_one(
         &self,
         ctx: &Context<'_>,
@@ -222,7 +222,7 @@ impl MutationRoot {
         }
     }
 
-    /// Delete multiple rows matching a condition
+    // Delete multiple rows matching a condition
     async fn delete_many(
         &self,
         ctx: &Context<'_>,
@@ -259,7 +259,7 @@ impl MutationRoot {
         }
     }
 
-    /// Upsert (insert or update) a row
+    // Upsert (insert or update) a row
     async fn upsert(
         &self,
         ctx: &Context<'_>,
@@ -297,7 +297,7 @@ impl MutationRoot {
         }
     }
 
-    /// Begin a new transaction
+    // Begin a new transaction
     async fn begin_transaction(
         &self,
         ctx: &Context<'_>,
@@ -307,7 +307,7 @@ impl MutationRoot {
         engine.begin_transaction(isolation_level).await
     }
 
-    /// Commit a transaction
+    // Commit a transaction
     async fn commit_transaction(
         &self,
         ctx: &Context<'_>,
@@ -317,7 +317,7 @@ impl MutationRoot {
         engine.commit_transaction(&transaction_id).await
     }
 
-    /// Rollback a transaction
+    // Rollback a transaction
     async fn rollback_transaction(
         &self,
         ctx: &Context<'_>,
@@ -327,7 +327,7 @@ impl MutationRoot {
         engine.rollback_transaction(&transaction_id).await
     }
 
-    /// Execute multiple mutations in a transaction
+    // Execute multiple mutations in a transaction
     async fn execute_transaction(
         &self,
         ctx: &Context<'_>,
@@ -356,7 +356,7 @@ impl MutationRoot {
         }
     }
 
-    /// Bulk insert with optimizations
+    // Bulk insert with optimizations
     async fn bulk_insert(
         &self,
         ctx: &Context<'_>,
@@ -395,7 +395,7 @@ impl MutationRoot {
     }
 }
 
-/// Transaction result
+// Transaction result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct TransactionResult {
     pub transaction_id: String,
@@ -403,7 +403,7 @@ pub struct TransactionResult {
     pub timestamp: DateTime,
 }
 
-/// Transaction operation input
+// Transaction operation input
 #[derive(InputObject, Clone, Debug)]
 pub struct TransactionOperation {
     pub operation_type: TransactionOpType,
@@ -413,7 +413,7 @@ pub struct TransactionOperation {
     pub id: Option<ID>,
 }
 
-/// Transaction operation type
+// Transaction operation type
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
 pub enum TransactionOpType {
     Insert,
@@ -421,7 +421,7 @@ pub enum TransactionOpType {
     Delete,
 }
 
-/// Transaction execution result
+// Transaction execution result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct TransactionExecutionResult {
     pub success: bool,

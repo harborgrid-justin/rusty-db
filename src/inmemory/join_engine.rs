@@ -15,7 +15,7 @@ use std::collections::hash_map::DefaultHasher;
 use crate::inmemory::column_store::ColumnSegment;
 use crate::inmemory::vectorized_ops::VectorizedFilter;
 
-/// Join types
+// Join types
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JoinType {
     Inner,
@@ -26,7 +26,7 @@ pub enum JoinType {
     LeftAnti,
 }
 
-/// Join statistics
+// Join statistics
 #[derive(Debug, Clone, Default)]
 pub struct JoinStats {
     pub build_time_us: u64,
@@ -42,7 +42,7 @@ pub struct JoinStats {
     pub partitions_created: usize,
 }
 
-/// Bloom filter for pre-filtering join candidates
+// Bloom filter for pre-filtering join candidates
 pub struct BloomFilter {
     bits: Vec<u64>,
     num_bits: usize,
@@ -123,14 +123,14 @@ impl BloomFilter {
     }
 }
 
-/// Hash table entry for joins
+// Hash table entry for joins
 #[derive(Debug, Clone)]
 struct HashTableEntry {
     key: i64,
     row_ids: Vec<usize>,
 }
 
-/// Hash table for join operations
+// Hash table for join operations
 pub struct JoinHashTable {
     entries: HashMap<i64, Vec<usize>>,
     total_entries: usize,
@@ -171,7 +171,7 @@ impl JoinHashTable {
     }
 }
 
-/// Partition for partitioned joins
+// Partition for partitioned joins
 pub struct JoinPartition {
     partition_id: usize,
     build_data: Vec<i64>,
@@ -210,7 +210,7 @@ impl JoinPartition {
     }
 }
 
-/// Partitioned join for parallel execution
+// Partitioned join for parallel execution
 pub struct PartitionedJoin {
     num_partitions: usize,
     partitions: Vec<JoinPartition>,
@@ -280,7 +280,7 @@ impl PartitionedJoin {
     }
 }
 
-/// Vectorized hash join engine
+// Vectorized hash join engine
 pub struct HashJoinEngine {
     filter: Arc<VectorizedFilter>,
     bloom_filter_threshold: usize,
@@ -481,7 +481,7 @@ impl Default for HashJoinEngine {
     }
 }
 
-/// Vectorized join interface
+// Vectorized join interface
 pub trait VectorizedJoin {
     fn join(
         &self,
@@ -663,5 +663,3 @@ use std::time::Instant;
         assert!(matching_rows.contains(&5));
     }
 }
-
-

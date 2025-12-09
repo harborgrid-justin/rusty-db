@@ -1,27 +1,27 @@
 //\! Advanced Features
-//\! 
+//\!
 //\! Memory pools, zones, buddy allocator, and utility functions.
 
 use super::common::*;
 
-/// Memory pool for fixed-size allocations
+// Memory pool for fixed-size allocations
 pub struct MemoryPool {
-    /// Object size
+    // Object size
     object_size: usize,
-    /// Pool capacity
+    // Pool capacity
     capacity: usize,
-    /// Free list
+    // Free list
     free_list: Mutex<Vec<NonNull<u8>>>,
-    /// Allocated objects
+    // Allocated objects
     allocated: AtomicUsize,
-    /// Total allocations
+    // Total allocations
     total_allocations: AtomicU64,
-    /// Total deallocations
+    // Total deallocations
     total_deallocations: AtomicU64,
 }
 
 impl MemoryPool {
-    /// Create a new memory pool
+    // Create a new memory pool
     pub fn new(object_size: usize, capacity: usize) -> Result<Self> {
         let mut free_list = Vec::with_capacity(capacity);
 
@@ -49,7 +49,7 @@ impl MemoryPool {
         })
     }
 
-    /// Allocate an object from the pool
+    // Allocate an object from the pool
     pub fn allocate(&self) -> Option<NonNull<u8>> {
         let mut free_list = self.free_list.lock().unwrap();
 
@@ -62,7 +62,7 @@ impl MemoryPool {
         }
     }
 
-    /// Deallocate an object back to the pool
+    // Deallocate an object back to the pool
     pub fn deallocate(&self, ptr: NonNull<u8>) -> Result<()> {
         let mut free_list = self.free_list.lock().unwrap();
 
@@ -77,7 +77,7 @@ impl MemoryPool {
         Ok(())
     }
 
-    /// Get pool statistics
+    // Get pool statistics
     pub fn get_stats(&self) -> MemoryPoolStats {
         MemoryPoolStats {
             object_size: self.object_size,
@@ -104,7 +104,7 @@ impl Drop for MemoryPool {
     }
 }
 
-/// Memory pool statistics
+// Memory pool statistics
 #[derive(Debug, Clone)]
 pub struct MemoryPoolStats {
     pub object_size: usize,

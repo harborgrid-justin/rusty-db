@@ -1,10 +1,10 @@
-//! Wait queue management module
-//!
-//! This module provides wait queue functionality for connection requests including:
-//! - Fair and priority-based queuing
-//! - Deadlock detection
-//! - Starvation prevention
-//! - Queue statistics
+// Wait queue management module
+//
+// This module provides wait queue functionality for connection requests including:
+// - Fair and priority-based queuing
+// - Deadlock detection
+// - Starvation prevention
+// - Queue statistics
 
 use std::collections::VecDeque;
 use std::sync::Mutex;
@@ -16,28 +16,28 @@ use serde::{Serialize, Deserialize};
 
 use super::core::PoolError;
 
-/// Wait queue for connection requests
+// Wait queue for connection requests
 pub struct WaitQueue {
-    /// Queue entries
+    // Queue entries
     entries: Mutex<VecDeque<WaitEntry>>,
 
-    /// Condition variable for notifications
+    // Condition variable for notifications
     condvar: Condvar,
 
-    /// Maximum queue size
+    // Maximum queue size
     max_size: usize,
 
-    /// Fair queue mode
+    // Fair queue mode
     fair_mode: bool,
 
-    /// Next waiter ID
+    // Next waiter ID
     next_id: AtomicU64,
 
-    /// Queue statistics
+    // Queue statistics
     stats: WaitQueueStats,
 }
 
-/// Wait queue entry
+// Wait queue entry
 struct WaitEntry {
     id: u64,
     enqueued_at: Instant,
@@ -45,7 +45,7 @@ struct WaitEntry {
     notified: Arc<AtomicBool>,
 }
 
-/// Queue priority
+// Queue priority
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum QueuePriority {
     Low = 0,
@@ -60,7 +60,7 @@ impl Default for QueuePriority {
     }
 }
 
-/// Wait queue statistics
+// Wait queue statistics
 #[derive(Default)]
 struct WaitQueueStats {
     total_enqueued: AtomicU64,
@@ -71,7 +71,7 @@ struct WaitQueueStats {
 }
 
 impl WaitQueue {
-    /// Create a new wait queue
+    // Create a new wait queue
     pub fn new(max_size: usize, fair_mode: bool) -> Self {
         Self {
             entries: Mutex::new(VecDeque::new()),
@@ -83,12 +83,12 @@ impl WaitQueue {
         }
     }
 
-    /// Enqueue a waiter
+    // Enqueue a waiter
     pub async fn enqueue(&self) -> Result<(), PoolError> {
         self.enqueue_with_priority(QueuePriority::Normal).await
     }
 
-    /// Enqueue with priority
+    // Enqueue with priority
     pub async fn enqueue_with_priority(&self, priority: QueuePriority) -> Result<(), PoolError> {
         let mut queue = self.entries.lock().unwrap();
 
@@ -122,7 +122,7 @@ impl WaitQueue {
         Ok(())
     }
 
-    /// Notify next waiter
+    // Notify next waiter
     pub fn notify_one(&self) {
         let mut queue = self.entries.lock().unwrap();
 
@@ -137,7 +137,7 @@ impl WaitQueue {
         }
     }
 
-    /// Notify all waiters
+    // Notify all waiters
     pub fn notify_all(&self) {
         let mut queue = self.entries.lock().unwrap();
 
@@ -152,23 +152,23 @@ impl WaitQueue {
         self.condvar.notify_all();
     }
 
-    /// Get queue position for a waiter
+    // Get queue position for a waiter
     pub fn queue_position(&self, waiter_id: u64) -> Option<usize> {
         let queue = self.entries.lock().unwrap();
         queue.iter().position(|e| e.id == waiter_id)
     }
 
-    /// Get current queue length
+    // Get current queue length
     pub fn len(&self) -> usize {
         self.entries.lock().unwrap().len()
     }
 
-    /// Check if queue is empty
+    // Check if queue is empty
     pub fn is_empty(&self) -> bool {
         self.entries.lock().unwrap().is_empty()
     }
 
-    /// Record wait time
+    // Record wait time
     fn record_wait_time(&self, duration: Duration) {
         let micros = duration.as_micros() as u64;
         self.stats.total_wait_time.fetch_add(micros, Ordering::SeqCst);
@@ -188,7 +188,7 @@ impl WaitQueue {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn statistics(&self) -> QueueStats {
         let total_enqueued = self.stats.total_enqueued.load(Ordering::SeqCst);
         let total_dequeued = self.stats.total_dequeued.load(Ordering::SeqCst);
@@ -210,7 +210,7 @@ impl WaitQueue {
     }
 }
 
-/// Queue statistics snapshot
+// Queue statistics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueueStats {
     pub current_size: usize,
@@ -221,23 +221,23 @@ pub struct QueueStats {
     pub max_wait_time: Duration,
 }
 
-/// Deadlock detector for wait queue
+// Deadlock detector for wait queue
 pub struct DeadlockDetector {
-    /// Detection enabled
+    // Detection enabled
     enabled: bool,
 
-    /// Detection interval
+    // Detection interval
     check_interval: Duration,
 
-    /// Deadlock threshold (how long to wait before considering deadlock)
+    // Deadlock threshold (how long to wait before considering deadlock)
     deadlock_threshold: Duration,
 
-    /// Detected deadlocks
+    // Detected deadlocks
     deadlocks_detected: AtomicU64,
 }
 
 impl DeadlockDetector {
-    /// Create a new deadlock detector
+    // Create a new deadlock detector
     pub fn new(enabled: bool) -> Self {
         Self {
             enabled,
@@ -247,7 +247,7 @@ impl DeadlockDetector {
         }
     }
 
-    /// Check for deadlocks in the wait queue
+    // Check for deadlocks in the wait queue
     pub fn check_deadlock(&self, queue: &WaitQueue) -> bool {
         if !self.enabled {
             return false;
@@ -268,7 +268,7 @@ impl DeadlockDetector {
         false
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn statistics(&self) -> DeadlockStats {
         DeadlockStats {
             deadlocks_detected: self.deadlocks_detected.load(Ordering::SeqCst),
@@ -276,26 +276,26 @@ impl DeadlockDetector {
     }
 }
 
-/// Deadlock statistics
+// Deadlock statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeadlockStats {
     pub deadlocks_detected: u64,
 }
 
-/// Starvation prevention system
+// Starvation prevention system
 pub struct StarvationPrevention {
-    /// Maximum wait time before boosting priority
+    // Maximum wait time before boosting priority
     max_wait_time: Duration,
 
-    /// Priority boost increment
+    // Priority boost increment
     priority_boost: u32,
 
-    /// Boosted waiters
+    // Boosted waiters
     boosted_count: AtomicU64,
 }
 
 impl StarvationPrevention {
-    /// Create a new starvation prevention system
+    // Create a new starvation prevention system
     pub fn new(max_wait_time: Duration) -> Self {
         Self {
             max_wait_time,
@@ -304,7 +304,7 @@ impl StarvationPrevention {
         }
     }
 
-    /// Check for starvation and boost priority if needed
+    // Check for starvation and boost priority if needed
     pub fn check_and_boost(&self, queue: &WaitQueue) {
         let mut entries = queue.entries.lock().unwrap();
 
@@ -336,7 +336,7 @@ impl StarvationPrevention {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn statistics(&self) -> StarvationStats {
         StarvationStats {
             boosted_count: self.boosted_count.load(Ordering::SeqCst),
@@ -344,7 +344,7 @@ impl StarvationPrevention {
     }
 }
 
-/// Starvation statistics
+// Starvation statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StarvationStats {
     pub boosted_count: u64,

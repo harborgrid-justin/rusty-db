@@ -98,26 +98,26 @@ use crate::error::{Result, DbError};
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
-/// ML-specific error types
+// ML-specific error types
 #[derive(Debug, Clone)]
 pub enum MLError {
-    /// Model not found in registry
+    // Model not found in registry
     ModelNotFound(String),
-    /// Invalid model configuration
+    // Invalid model configuration
     InvalidConfiguration(String),
-    /// Training failed
+    // Training failed
     TrainingFailed(String),
-    /// Prediction failed
+    // Prediction failed
     PredictionFailed(String),
-    /// Feature mismatch
+    // Feature mismatch
     FeatureMismatch { expected: usize, got: usize },
-    /// Insufficient data for training
+    // Insufficient data for training
     InsufficientData(String),
-    /// Algorithm not supported
+    // Algorithm not supported
     UnsupportedAlgorithm(String),
-    /// Model version conflict
+    // Model version conflict
     VersionConflict(String),
-    /// Invalid hyperparameters
+    // Invalid hyperparameters
     InvalidHyperparameters(String),
 }
 
@@ -141,37 +141,37 @@ impl fmt::Display for MLError {
 
 impl std::error::Error for MLError {}
 
-/// Convert MLError to DbError
+// Convert MLError to DbError
 impl From<MLError> for DbError {
     fn from(err: MLError) -> Self {
         DbError::Execution(err.to_string())
     }
 }
 
-/// Matrix type for ML operations
+// Matrix type for ML operations
 pub type Matrix = Vec<Vec<f64>>;
 
-/// Vector type for ML operations
+// Vector type for ML operations
 pub type Vector = Vec<f64>;
 
-/// Feature names
+// Feature names
 pub type FeatureNames = Vec<String>;
 
-/// Training dataset
+// Training dataset
 #[derive(Debug, Clone)]
 pub struct Dataset {
-    /// Feature matrix (rows = samples, columns = features)
+    // Feature matrix (rows = samples, columns = features)
     pub features: Matrix,
-    /// Target values (for supervised learning)
+    // Target values (for supervised learning)
     pub target: Option<Vector>,
-    /// Feature names
+    // Feature names
     pub feature_names: FeatureNames,
-    /// Sample weights (optional)
+    // Sample weights (optional)
     pub weights: Option<Vector>,
 }
 
 impl Dataset {
-    /// Create a new dataset
+    // Create a new dataset
     pub fn new(features: Matrix, target: Option<Vector>, feature_names: FeatureNames) -> Self {
         Self {
             features,
@@ -181,17 +181,17 @@ impl Dataset {
         }
     }
 
-    /// Get number of samples
+    // Get number of samples
     pub fn num_samples(&self) -> usize {
         self.features.len()
     }
 
-    /// Get number of features
+    // Get number of features
     pub fn num_features(&self) -> usize {
         self.features.get(0).map(|row| row.len()).unwrap_or(0)
     }
 
-    /// Validate dataset consistency
+    // Validate dataset consistency
     pub fn validate(&self) -> Result<()> {
         if self.features.is_empty() {
             return Err(MLError::InsufficientData("Empty feature matrix".to_string()).into());
@@ -228,14 +228,14 @@ impl Dataset {
         Ok(())
     }
 
-    /// Add sample weights
+    // Add sample weights
     pub fn with_weights(mut self, weights: Vector) -> Self {
         self.weights = Some(weights);
         self
     }
 }
 
-/// Hyperparameters for ML algorithms
+// Hyperparameters for ML algorithms
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Hyperparameters {
     params: HashMap<String, HyperparameterValue>,
@@ -250,34 +250,34 @@ pub enum HyperparameterValue {
 }
 
 impl Hyperparameters {
-    /// Create new hyperparameters
+    // Create new hyperparameters
     pub fn new() -> Self {
         Self {
             params: HashMap::new(),
         }
     }
 
-    /// Set a float parameter
+    // Set a float parameter
     pub fn set_float(&mut self, key: &str, value: f64) {
         self.params.insert(key.to_string(), HyperparameterValue::Float(value));
     }
 
-    /// Set an integer parameter
+    // Set an integer parameter
     pub fn set_int(&mut self, key: &str, value: i64) {
         self.params.insert(key.to_string(), HyperparameterValue::Int(value));
     }
 
-    /// Set a string parameter
+    // Set a string parameter
     pub fn set_string(&mut self, key: &str, value: String) {
         self.params.insert(key.to_string(), HyperparameterValue::String(value));
     }
 
-    /// Set a boolean parameter
+    // Set a boolean parameter
     pub fn set_bool(&mut self, key: &str, value: bool) {
         self.params.insert(key.to_string(), HyperparameterValue::Bool(value));
     }
 
-    /// Get a float parameter
+    // Get a float parameter
     pub fn get_float(&self, key: &str) -> Option<f64> {
         match self.params.get(key) {
             Some(HyperparameterValue::Float(v)) => Some(*v),
@@ -285,7 +285,7 @@ impl Hyperparameters {
         }
     }
 
-    /// Get an integer parameter
+    // Get an integer parameter
     pub fn get_int(&self, key: &str) -> Option<i64> {
         match self.params.get(key) {
             Some(HyperparameterValue::Int(v)) => Some(*v),
@@ -293,7 +293,7 @@ impl Hyperparameters {
         }
     }
 
-    /// Get a string parameter
+    // Get a string parameter
     pub fn get_string(&self, key: &str) -> Option<&str> {
         match self.params.get(key) {
             Some(HyperparameterValue::String(v)) => Some(v),
@@ -301,7 +301,7 @@ impl Hyperparameters {
         }
     }
 
-    /// Get a boolean parameter
+    // Get a boolean parameter
     pub fn get_bool(&self, key: &str) -> Option<bool> {
         match self.params.get(key) {
             Some(HyperparameterValue::Bool(v)) => Some(*v),
@@ -310,32 +310,32 @@ impl Hyperparameters {
     }
 }
 
-/// Performance metrics for model evaluation
+// Performance metrics for model evaluation
 #[derive(Debug, Clone)]
 pub struct Metrics {
-    /// Metric values
+    // Metric values
     values: HashMap<String, f64>,
 }
 
 impl Metrics {
-    /// Create new metrics
+    // Create new metrics
     pub fn new() -> Self {
         Self {
             values: HashMap::new(),
         }
     }
 
-    /// Set a metric value
+    // Set a metric value
     pub fn set(&mut self, name: &str, value: f64) {
         self.values.insert(name.to_string(), value);
     }
 
-    /// Get a metric value
+    // Get a metric value
     pub fn get(&self, name: &str) -> Option<f64> {
         self.values.get(name).copied()
     }
 
-    /// Get all metrics
+    // Get all metrics
     pub fn all(&self) -> &HashMap<String, f64> {
         &self.values
     }

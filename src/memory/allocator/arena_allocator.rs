@@ -1,35 +1,35 @@
 //\! Arena Allocator Implementation
-//\! 
+//\!
 //\! Bump allocation for per-query memory contexts with hierarchical support.
 
 use super::common::*;
 
-/// Memory arena for bump allocation
+// Memory arena for bump allocation
 struct Arena {
-    /// Current chunk
+    // Current chunk
     current_chunk: Option<ArenaChunk>,
-    /// Previous chunks
+    // Previous chunks
     chunks: Vec<ArenaChunk>,
-    /// Total allocated in this arena
+    // Total allocated in this arena
     total_allocated: usize,
-    /// Allocation limit (0 = unlimited)
+    // Allocation limit (0 = unlimited)
     limit: usize,
-    /// Arena name
+    // Arena name
     name: String,
 }
 
-/// Arena chunk
+// Arena chunk
 struct ArenaChunk {
-    /// Base pointer
+    // Base pointer
     base: NonNull<u8>,
-    /// Chunk size
+    // Chunk size
     size: usize,
-    /// Current offset
+    // Current offset
     offset: usize,
 }
 
 impl ArenaChunk {
-    /// Create a new arena chunk
+    // Create a new arena chunk
     unsafe fn new(size: usize) -> Result<Self> {
         let layout = Layout::from_size_align(size, 16)
             .map_err(|e| DbError::OutOfMemory(format!("Invalid arena layout: {}", e)))?;
@@ -46,7 +46,7 @@ impl ArenaChunk {
         })
     }
 
-    /// Allocate from this chunk
+    // Allocate from this chunk
     unsafe fn allocate(&mut self, size: usize, align: usize) -> Option<NonNull<u8>> {
         let offset = (self.offset + align - 1) & !(align - 1);
         let end = offset + size;
@@ -135,25 +135,25 @@ impl Arena {
     }
 }
 
-/// Memory context (hierarchical arena)
+// Memory context (hierarchical arena)
 pub struct MemoryContext {
-    /// Context ID
+    // Context ID
     id: u64,
-    /// Context type
+    // Context type
     context_type: ContextType,
-    /// Arena for this context
+    // Arena for this context
     arena: Arena,
-    /// Parent context
+    // Parent context
     parent: Option<Weak<Mutex<MemoryContext>>>,
-    /// Child contexts
+    // Child contexts
     children: Vec<Arc<Mutex<MemoryContext>>>,
-    /// Creation time
+    // Creation time
     created_at: Instant,
-    /// Statistics
+    // Statistics
     stats: ContextStats,
 }
 
-/// Memory context statistics
+// Memory context statistics
 struct ContextStats {
     allocations: AtomicU64,
     deallocations: AtomicU64,
@@ -173,7 +173,7 @@ impl ContextStats {
 }
 
 impl MemoryContext {
-    /// Create a new top-level memory context
+    // Create a new top-level memory context
     pub fn new_top_level(name: String, limit: usize) -> Result<Arc<Mutex<Self>>> {
         static CONTEXT_ID: AtomicU64 = AtomicU64::new(0);
         let id = CONTEXT_ID.fetch_add(1, Ordering::SeqCst);
@@ -189,7 +189,7 @@ impl MemoryContext {
         })))
     }
 
-    /// Create a child context
+    // Create a child context
     pub fn create_child(
         parent: &Arc<Mutex<Self>>,
         name: String,
@@ -214,7 +214,7 @@ impl MemoryContext {
         Ok(child)
     }
 
-    /// Allocate memory in this context
+    // Allocate memory in this context
     pub fn allocate(&mut self, size: usize) -> Result<NonNull<u8>> {
         self.stats.allocations.fetch_add(1, Ordering::Relaxed);
 
@@ -229,7 +229,7 @@ impl MemoryContext {
         Ok(ptr)
     }
 
-    /// Allocate aligned memory in this context
+    // Allocate aligned memory in this context
     pub fn allocate_aligned(&mut self, size: usize, align: usize) -> Result<NonNull<u8>> {
         self.stats.allocations.fetch_add(1, Ordering::Relaxed);
 
@@ -244,7 +244,7 @@ impl MemoryContext {
         Ok(ptr)
     }
 
-    /// Reset this context (free all memory)
+    // Reset this context (free all memory)
     pub fn reset(&mut self) {
         self.stats.resets.fetch_add(1, Ordering::Relaxed);
         self.arena.reset();
@@ -257,7 +257,7 @@ impl MemoryContext {
         }
     }
 
-    /// Delete this context and all children
+    // Delete this context and all children
     pub fn delete(context: Arc<Mutex<Self>>) {
         let mut ctx = context.lock().unwrap();
 
@@ -270,7 +270,7 @@ impl MemoryContext {
         }
     }
 
-    /// Get context statistics
+    // Get context statistics
     pub fn get_stats(&self) -> MemoryContextStats {
         MemoryContextStats {
             id: self.id,
@@ -285,7 +285,7 @@ impl MemoryContext {
     }
 }
 
-/// Public memory context statistics
+// Public memory context statistics
 #[derive(Debug, Clone)]
 pub struct MemoryContextStats {
     pub id: u64,
@@ -298,11 +298,11 @@ pub struct MemoryContextStats {
     pub child_count: usize,
 }
 
-/// Arena allocator manager
+// Arena allocator manager
 pub struct ArenaAllocator {
-    /// All active contexts
+    // All active contexts
     contexts: RwLock<HashMap<u64, Weak<Mutex<MemoryContext>>>>,
-    /// Global statistics
+    // Global statistics
     stats: ArenaStats,
 }
 
@@ -326,7 +326,7 @@ impl ArenaStats {
 }
 
 impl ArenaAllocator {
-    /// Create a new arena allocator
+    // Create a new arena allocator
     pub fn new() -> Self {
         Self {
             contexts: RwLock::new(HashMap::new()),
@@ -334,7 +334,7 @@ impl ArenaAllocator {
         }
     }
 
-    /// Create a new top-level context
+    // Create a new top-level context
     pub fn create_context(&self, name: String, limit: usize) -> Result<Arc<Mutex<MemoryContext>>> {
         let context = MemoryContext::new_top_level(name, limit)?;
         let id = context.lock().unwrap().id;
@@ -345,7 +345,7 @@ impl ArenaAllocator {
         Ok(context)
     }
 
-    /// Get global statistics
+    // Get global statistics
     pub fn get_stats(&self) -> ArenaAllocatorStats {
         let contexts = self.contexts.read().unwrap();
         let active_contexts = contexts.values().filter(|w| w.strong_count() > 0).count();
@@ -358,7 +358,7 @@ impl ArenaAllocator {
         }
     }
 
-    /// Cleanup dead contexts
+    // Cleanup dead contexts
     pub fn cleanup_dead_contexts(&self) -> usize {
         let mut contexts = self.contexts.write().unwrap();
         let before = contexts.len();
@@ -370,7 +370,7 @@ impl ArenaAllocator {
     }
 }
 
-/// Public arena allocator statistics
+// Public arena allocator statistics
 #[derive(Debug, Clone)]
 pub struct ArenaAllocatorStats {
     pub contexts_created: u64,

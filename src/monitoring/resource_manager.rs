@@ -12,7 +12,7 @@ use parking_lot::RwLock;
 use std::time::{Duration};
 
 
-/// Resource type enumeration
+// Resource type enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ResourceType {
     Cpu,
@@ -36,7 +36,7 @@ impl fmt::Display for ResourceType {
     }
 }
 
-/// Resource limit definition
+// Resource limit definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceLimit {
     pub resource_type: ResourceType,
@@ -88,7 +88,7 @@ impl ResourceLimit {
     }
 }
 
-/// Enforcement policy when resource limits are exceeded
+// Enforcement policy when resource limits are exceeded
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EnforcementPolicy {
     Allow,      // Log but allow
@@ -98,7 +98,7 @@ pub enum EnforcementPolicy {
     Terminate,  // Terminate existing operations
 }
 
-/// Resource group for organizing sessions/queries
+// Resource group for organizing sessions/queries
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceGroup {
     pub name: String,
@@ -183,7 +183,7 @@ impl ResourceGroup {
     }
 }
 
-/// Resource limit status
+// Resource limit status
 #[derive(Debug, Clone)]
 pub enum ResourceLimitStatus {
     Ok(ResourceLimit),
@@ -192,7 +192,7 @@ pub enum ResourceLimitStatus {
     NoLimit,
 }
 
-/// Query resource tracker
+// Query resource tracker
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryResourceUsage {
     pub query_id: u64,
@@ -263,7 +263,7 @@ impl QueryResourceUsage {
     }
 }
 
-/// Resource manager for enforcing resource limits
+// Resource manager for enforcing resource limits
 pub struct ResourceManager {
     groups: Arc<RwLock<HashMap<String, ResourceGroup>>>,
     session_groups: Arc<RwLock<HashMap<u64, String>>>,
@@ -523,7 +523,7 @@ impl Default for ResourceManager {
     }
 }
 
-/// Resource group statistics
+// Resource group statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceGroupStatistics {
     pub name: String,
@@ -535,7 +535,7 @@ pub struct ResourceGroupStatistics {
     pub resource_usage: HashMap<ResourceType, f64>,
 }
 
-/// Resource allocation planner for predictive resource management
+// Resource allocation planner for predictive resource management
 pub struct ResourcePlanner {
     historical_usage: Arc<RwLock<HashMap<String, Vec<ResourceGroupStatistics>>>>,
     max_history: usize,
@@ -692,5 +692,3 @@ mod tests {
         assert_eq!(prediction, Some(50.0));
     }
 }
-
-

@@ -14,7 +14,7 @@ use crate::spatial::geometry::{
     Coordinate, Geometry, LinearRing, LineString, Point, Polygon,
 };
 
-/// Spatial relationship types based on DE-9IM (Dimensionally Extended 9-Intersection Model)
+// Spatial relationship types based on DE-9IM (Dimensionally Extended 9-Intersection Model)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpatialRelation {
     Disjoint,
@@ -29,11 +29,11 @@ pub enum SpatialRelation {
     CoveredBy,
 }
 
-/// Topological operators
+// Topological operators
 pub struct TopologicalOps;
 
 impl TopologicalOps {
-    /// Check if geometry A contains geometry B
+    // Check if geometry A contains geometry B
     pub fn contains(a: &Geometry, b: &Geometry) -> Result<bool> {
         match (a, b) {
             (Geometry::Polygon(poly), Geometry::Point(point)) => {
@@ -46,12 +46,12 @@ impl TopologicalOps {
         }
     }
 
-    /// Check if geometry A is within geometry B
+    // Check if geometry A is within geometry B
     pub fn within(a: &Geometry, b: &Geometry) -> Result<bool> {
         Self::contains(b, a)
     }
 
-    /// Check if geometries intersect
+    // Check if geometries intersect
     pub fn intersects(a: &Geometry, b: &Geometry) -> Result<bool> {
         // Quick bbox check first
         if let (Some(bbox_a), Some(bbox_b)) = (a.bbox(), b.bbox()) {
@@ -74,7 +74,7 @@ impl TopologicalOps {
         }
     }
 
-    /// Check if geometries touch (share boundary but not interior)
+    // Check if geometries touch (share boundary but not interior)
     pub fn touches(a: &Geometry, b: &Geometry) -> Result<bool> {
         match (a, b) {
             (Geometry::Polygon(poly_a), Geometry::Polygon(poly_b)) => {
@@ -85,7 +85,7 @@ impl TopologicalOps {
         }
     }
 
-    /// Check if geometries overlap (share some but not all area)
+    // Check if geometries overlap (share some but not all area)
     pub fn overlaps(a: &Geometry, b: &Geometry) -> Result<bool> {
         match (a, b) {
             (Geometry::Polygon(poly_a), Geometry::Polygon(poly_b)) => {
@@ -99,12 +99,12 @@ impl TopologicalOps {
         }
     }
 
-    /// Check if geometries are equal
+    // Check if geometries are equal
     pub fn equals(a: &Geometry, b: &Geometry) -> Result<bool> {
         Ok(a == b)
     }
 
-    /// Point-in-polygon test using ray casting algorithm
+    // Point-in-polygon test using ray casting algorithm
     pub fn polygon_contains_point(polygon: &Polygon, point: &Coordinate) -> bool {
         if !Self::ring_contains_point(&polygon.exterior, point) {
             return false;
@@ -120,7 +120,7 @@ impl TopologicalOps {
         true
     }
 
-    /// Ring contains point (ray casting)
+    // Ring contains point (ray casting)
     fn ring_contains_point(ring: &LinearRing, point: &Coordinate) -> bool {
         let mut inside = false;
         let coords = &ring.coords;
@@ -142,7 +142,7 @@ impl TopologicalOps {
         inside
     }
 
-    /// Polygon contains polygon (all vertices and no edge crossings)
+    // Polygon contains polygon (all vertices and no edge crossings)
     fn polygon_contains_polygon(outer: &Polygon, inner: &Polygon) -> bool {
         // Check if all vertices of inner polygon are inside outer
         for coord in &inner.exterior.coords {
@@ -155,7 +155,7 @@ impl TopologicalOps {
         true
     }
 
-    /// Polygon intersects polygon
+    // Polygon intersects polygon
     fn polygon_intersects_polygon(poly_a: &Polygon, poly_b: &Polygon) -> bool {
         // Check if any vertex of one is inside the other
         for coord in &poly_a.exterior.coords {
@@ -174,12 +174,12 @@ impl TopologicalOps {
         Self::rings_intersect(&poly_a.exterior, &poly_b.exterior)
     }
 
-    /// Check if polygon boundaries touch
+    // Check if polygon boundaries touch
     fn polygon_boundaries_touch(poly_a: &Polygon, poly_b: &Polygon) -> bool {
         Self::rings_intersect(&poly_a.exterior, &poly_b.exterior)
     }
 
-    /// Check if two rings intersect
+    // Check if two rings intersect
     fn rings_intersect(ring_a: &LinearRing, ring_b: &LinearRing) -> bool {
         for i in 0..ring_a.coords.len() - 1 {
             for j in 0..ring_b.coords.len() - 1 {
@@ -196,7 +196,7 @@ impl TopologicalOps {
         false
     }
 
-    /// Check if two line segments intersect
+    // Check if two line segments intersect
     fn segments_intersect(
         a1: &Coordinate,
         a2: &Coordinate,
@@ -240,7 +240,7 @@ impl TopologicalOps {
             && q.y >= p.y.min(r.y)
     }
 
-    /// LineString intersects LineString
+    // LineString intersects LineString
     fn linestring_intersects_linestring(ls_a: &LineString, ls_b: &LineString) -> bool {
         for i in 0..ls_a.coords.len() - 1 {
             for j in 0..ls_b.coords.len() - 1 {
@@ -266,11 +266,11 @@ impl TopologicalOps {
     }
 }
 
-/// Distance calculations
+// Distance calculations
 pub struct DistanceOps;
 
 impl DistanceOps {
-    /// Calculate distance between two geometries
+    // Calculate distance between two geometries
     pub fn distance(a: &Geometry, b: &Geometry) -> Result<f64> {
         match (a, b) {
             (Geometry::Point(p1), Geometry::Point(p2)) => {
@@ -288,7 +288,7 @@ impl DistanceOps {
         }
     }
 
-    /// Point to line segment distance
+    // Point to line segment distance
     fn point_to_segment_distance(
         point: &Coordinate,
         seg_start: &Coordinate,
@@ -313,7 +313,7 @@ impl DistanceOps {
         point.distance_2d(&proj)
     }
 
-    /// Point to linestring distance
+    // Point to linestring distance
     fn point_to_linestring_distance(point: &Coordinate, linestring: &LineString) -> f64 {
         let mut min_dist = f64::INFINITY;
 
@@ -329,7 +329,7 @@ impl DistanceOps {
         min_dist
     }
 
-    /// Point to polygon distance
+    // Point to polygon distance
     fn point_to_polygon_distance(point: &Coordinate, polygon: &Polygon) -> f64 {
         if TopologicalOps::polygon_contains_point(polygon, point) {
             return 0.0;
@@ -363,11 +363,11 @@ impl DistanceOps {
     }
 }
 
-/// Buffer operations
+// Buffer operations
 pub struct BufferOps;
 
 impl BufferOps {
-    /// Create a buffer around a geometry
+    // Create a buffer around a geometry
     pub fn buffer(geom: &Geometry, distance: f64) -> Result<Geometry> {
         match geom {
             Geometry::Point(point) => Self::buffer_point(point, distance),
@@ -377,7 +377,7 @@ impl BufferOps {
         }
     }
 
-    /// Buffer a point (creates a circle approximation)
+    // Buffer a point (creates a circle approximation)
     fn buffer_point(point: &Point, distance: f64) -> Result<Geometry> {
         let segments = 32;
         let mut coords = Vec::with_capacity(segments + 1);
@@ -393,7 +393,7 @@ impl BufferOps {
         Ok(Geometry::Polygon(Polygon::new(ring, vec![])))
     }
 
-    /// Buffer a linestring
+    // Buffer a linestring
     fn buffer_linestring(linestring: &LineString, distance: f64) -> Result<Geometry> {
         // Simplified implementation - creates polygon around linestring
         let mut left_coords = Vec::new();
@@ -437,7 +437,7 @@ impl BufferOps {
         Ok(Geometry::Polygon(Polygon::new(ring, vec![])))
     }
 
-    /// Buffer a polygon (expand or shrink)
+    // Buffer a polygon (expand or shrink)
     fn buffer_polygon(polygon: &Polygon, distance: f64) -> Result<Geometry> {
         // Simplified - offset each edge
         let mut new_coords = Vec::new();
@@ -463,11 +463,11 @@ impl BufferOps {
     }
 }
 
-/// Convex hull computation
+// Convex hull computation
 pub struct ConvexHullOps;
 
 impl ConvexHullOps {
-    /// Compute convex hull using Graham scan
+    // Compute convex hull using Graham scan
     pub fn convex_hull(coords: &[Coordinate]) -> Result<Geometry> {
         if coords.len() < 3 {
             return Err(DbError::InvalidInput(
@@ -525,11 +525,11 @@ impl ConvexHullOps {
     }
 }
 
-/// Set operations (union, intersection, difference)
+// Set operations (union, intersection, difference)
 pub struct SetOps;
 
 impl SetOps {
-    /// Union of two polygons (simplified)
+    // Union of two polygons (simplified)
     pub fn union(a: &Geometry, b: &Geometry) -> Result<Geometry> {
         match (a, b) {
             (Geometry::Polygon(poly_a), Geometry::Polygon(poly_b)) => {
@@ -539,7 +539,7 @@ impl SetOps {
         }
     }
 
-    /// Intersection of two polygons
+    // Intersection of two polygons
     pub fn intersection(a: &Geometry, b: &Geometry) -> Result<Geometry> {
         match (a, b) {
             (Geometry::Polygon(poly_a), Geometry::Polygon(poly_b)) => {
@@ -551,7 +551,7 @@ impl SetOps {
         }
     }
 
-    /// Difference (A - B)
+    // Difference (A - B)
     pub fn difference(a: &Geometry, b: &Geometry) -> Result<Geometry> {
         match (a, b) {
             (Geometry::Polygon(poly_a), Geometry::Polygon(poly_b)) => {
@@ -563,7 +563,7 @@ impl SetOps {
         }
     }
 
-    /// Simplified polygon union (uses vertex merging)
+    // Simplified polygon union (uses vertex merging)
     fn polygon_union(poly_a: &Polygon, poly_b: &Polygon) -> Result<Geometry> {
         // Simplified implementation - combines all vertices and computes convex hull
         let mut all_coords = poly_a.exterior.coords.clone();
@@ -572,7 +572,7 @@ impl SetOps {
         ConvexHullOps::convex_hull(&all_coords)
     }
 
-    /// Simplified polygon intersection
+    // Simplified polygon intersection
     fn polygon_intersection(poly_a: &Polygon, poly_b: &Polygon) -> Result<Geometry> {
         // Collect vertices of poly_a that are inside poly_b
         let mut intersection_coords = Vec::new();
@@ -597,7 +597,7 @@ impl SetOps {
         ConvexHullOps::convex_hull(&intersection_coords)
     }
 
-    /// Simplified polygon difference
+    // Simplified polygon difference
     fn polygon_difference(poly_a: &Polygon, poly_b: &Polygon) -> Result<Geometry> {
         // Simplified - returns vertices of A not in B
         let mut diff_coords: Vec<Coordinate> = poly_a
@@ -619,11 +619,11 @@ impl SetOps {
     }
 }
 
-/// Simplification algorithms
+// Simplification algorithms
 pub struct SimplificationOps;
 
 impl SimplificationOps {
-    /// Douglas-Peucker line simplification
+    // Douglas-Peucker line simplification
     pub fn douglas_peucker(linestring: &LineString, tolerance: f64) -> Result<LineString> {
         let simplified = Self::dp_recursive(&linestring.coords, tolerance);
         LineString::new(simplified)
@@ -663,7 +663,7 @@ impl SimplificationOps {
         }
     }
 
-    /// Visvalingam-Whyatt simplification (area-based)
+    // Visvalingam-Whyatt simplification (area-based)
     pub fn visvalingam_whyatt(linestring: &LineString, tolerance: f64) -> Result<LineString> {
         let mut coords = linestring.coords.clone();
 
@@ -695,11 +695,11 @@ impl SimplificationOps {
     }
 }
 
-/// Geometric transformations
+// Geometric transformations
 pub struct TransformOps;
 
 impl TransformOps {
-    /// Translate geometry by offset
+    // Translate geometry by offset
     pub fn translate(geom: &Geometry, dx: f64, dy: f64) -> Geometry {
         match geom {
             Geometry::Point(p) => {
@@ -728,7 +728,7 @@ impl TransformOps {
         }
     }
 
-    /// Scale geometry by factors
+    // Scale geometry by factors
     pub fn scale(geom: &Geometry, sx: f64, sy: f64) -> Geometry {
         match geom {
             Geometry::Point(p) => {
@@ -757,7 +757,7 @@ impl TransformOps {
         }
     }
 
-    /// Rotate geometry around origin
+    // Rotate geometry around origin
     pub fn rotate(geom: &Geometry, angle_rad: f64) -> Geometry {
         let cos_a = angle_rad.cos();
         let sin_a = angle_rad.sin();
@@ -798,7 +798,7 @@ impl TransformOps {
         }
     }
 
-    /// Centroid calculation
+    // Centroid calculation
     pub fn centroid(geom: &Geometry) -> Result<Point> {
         match geom {
             Geometry::Point(p) => Ok(p.clone()),

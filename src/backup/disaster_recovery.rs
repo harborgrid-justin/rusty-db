@@ -12,7 +12,7 @@ use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
-/// Standby database configuration
+// Standby database configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StandbyConfig {
     pub standby_name: String,
@@ -42,18 +42,18 @@ impl Default for StandbyConfig {
     }
 }
 
-/// Replication mode
+// Replication mode
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ReplicationMode {
-    /// Synchronous replication - waits for standby confirmation
+    // Synchronous replication - waits for standby confirmation
     Synchronous,
-    /// Asynchronous replication - doesn't wait for standby
+    // Asynchronous replication - doesn't wait for standby
     Asynchronous,
-    /// Semi-synchronous - waits for at least one standby
+    // Semi-synchronous - waits for at least one standby
     SemiSynchronous,
 }
 
-/// Standby database role
+// Standby database role
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum DatabaseRole {
     Primary,
@@ -61,7 +61,7 @@ pub enum DatabaseRole {
     Unknown,
 }
 
-/// Standby database status
+// Standby database status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StandbyStatus {
     pub standby_name: String,
@@ -90,7 +90,7 @@ impl StandbyStatus {
     }
 }
 
-/// Recovery Time Objective (RTO) configuration
+// Recovery Time Objective (RTO) configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RtoConfig {
     pub target_seconds: u64,
@@ -140,7 +140,7 @@ impl RtoConfig {
     }
 }
 
-/// Recovery Point Objective (RPO) configuration
+// Recovery Point Objective (RPO) configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RpoConfig {
     pub target_seconds: u64,
@@ -185,7 +185,7 @@ impl RpoConfig {
     }
 }
 
-/// Failover trigger conditions
+// Failover trigger conditions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FailoverTrigger {
     Manual,
@@ -196,7 +196,7 @@ pub enum FailoverTrigger {
     QuorumLost,
 }
 
-/// Failover status
+// Failover status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum FailoverStatus {
     Idle,
@@ -216,7 +216,7 @@ pub enum FailoverStep {
     VerifyingPromoted,
 }
 
-/// Failover event record
+// Failover event record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FailoverEvent {
     pub event_id: String,
@@ -263,7 +263,7 @@ impl FailoverEvent {
     }
 }
 
-/// Disaster Recovery Manager
+// Disaster Recovery Manager
 pub struct DisasterRecoveryManager {
     config: StandbyConfig,
     rto_config: RtoConfig,
@@ -293,7 +293,7 @@ impl DisasterRecoveryManager {
         }
     }
 
-    /// Register a standby database
+    // Register a standby database
     pub fn register_standby(&self, standby_name: String) -> Result<()> {
         let status = StandbyStatus {
             standby_name: standby_name.clone(),
@@ -312,7 +312,7 @@ impl DisasterRecoveryManager {
         Ok(())
     }
 
-    /// Update standby status
+    // Update standby status
     pub fn update_standby_status(
         &self,
         standby_name: &str,
@@ -347,7 +347,7 @@ impl DisasterRecoveryManager {
         Ok(())
     }
 
-    /// Perform health check on standby
+    // Perform health check on standby
     pub fn health_check(&self, standby_name: &str) -> Result<bool> {
         let mut standbys = self.standbys.write();
         let standby = standbys.get_mut(standby_name)
@@ -369,7 +369,7 @@ impl DisasterRecoveryManager {
         Ok(is_healthy)
     }
 
-    /// Trigger failover
+    // Trigger failover
     pub fn trigger_failover(
         &self,
         trigger: FailoverTrigger,
@@ -505,23 +505,23 @@ impl DisasterRecoveryManager {
         Ok(())
     }
 
-    /// Perform switchover (planned failover)
+    // Perform switchover (planned failover)
     pub fn switchover(&self, target_standby: &str) -> Result<String> {
         // Switchover is a planned failover with zero data loss
         self.trigger_failover(FailoverTrigger::Manual, target_standby)
     }
 
-    /// Get current RTO metrics
+    // Get current RTO metrics
     pub fn get_rto_metrics(&self) -> RtoConfig {
         self.rto_config.clone()
     }
 
-    /// Get current RPO metrics
+    // Get current RPO metrics
     pub fn get_rpo_metrics(&self) -> RpoConfig {
         self.rpo_config.clone()
     }
 
-    /// Test disaster recovery plan
+    // Test disaster recovery plan
     pub fn test_dr_plan(&self) -> Result<DrTestResult> {
         let start_time = Instant::now();
 
@@ -578,22 +578,22 @@ impl DisasterRecoveryManager {
         Ok(test_result)
     }
 
-    /// Get failover history
+    // Get failover history
     pub fn get_failover_history(&self) -> Vec<FailoverEvent> {
         self.failover_history.read().clone()
     }
 
-    /// Get all standby statuses
+    // Get all standby statuses
     pub fn get_standby_statuses(&self) -> Vec<StandbyStatus> {
         self.standbys.read().values().cloned().collect()
     }
 
-    /// Get current database role
+    // Get current database role
     pub fn get_current_role(&self) -> DatabaseRole {
         self.current_role.read().clone()
     }
 
-    /// Calculate uptime percentage
+    // Calculate uptime percentage
     pub fn calculate_uptime_percentage(&self, period_hours: u64) -> f64 {
         let health_checks = self.health_check_results.lock();
         if health_checks.is_empty() {
@@ -614,7 +614,7 @@ impl DisasterRecoveryManager {
     }
 }
 
-/// DR test result
+// DR test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DrTestResult {
     pub test_id: String,
@@ -677,5 +677,3 @@ mod tests {
         assert!(matches!(event.status, FailoverStatus::Completed { .. }));
     }
 }
-
-

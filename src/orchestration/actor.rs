@@ -48,12 +48,12 @@ use tracing::{debug, error, info};
 use crate::DbError;
 use crate::error::Result;
 
-/// Unique identifier for an actor
+// Unique identifier for an actor
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ActorId(u64);
 
 impl ActorId {
-    /// Generate a new unique actor ID
+    // Generate a new unique actor ID
     pub fn new() -> Self {
         use std::sync::atomic::{AtomicU64, Ordering};
         static COUNTER: AtomicU64 = AtomicU64::new(1);
@@ -73,7 +73,7 @@ impl fmt::Display for ActorId {
     }
 }
 
-/// Actor address for sending messages
+// Actor address for sending messages
 #[derive(Clone)]
 pub struct ActorRef {
     id: ActorId,
@@ -82,22 +82,22 @@ pub struct ActorRef {
 }
 
 impl ActorRef {
-    /// Create a new actor reference
+    // Create a new actor reference
     pub fn new(id: ActorId, name: Option<String>, tx: mpsc::Sender<ActorMessage>) -> Self {
         Self { id, name, tx }
     }
 
-    /// Get the actor ID
+    // Get the actor ID
     pub fn id(&self) -> ActorId {
         self.id
     }
 
-    /// Get the actor name
+    // Get the actor name
     pub fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
 
-    /// Send a message to this actor
+    // Send a message to this actor
     pub async fn send<M: Message>(&self, msg: M) -> Result<()> {
         let envelope = ActorMessage::User(Box::new(msg));
         self.tx
@@ -107,7 +107,7 @@ impl ActorRef {
         Ok(())
     }
 
-    /// Send a message and wait for a response
+    // Send a message and wait for a response
     pub async fn ask<M: Message, R: 'static + Send>(
         &self,
         msg: M,
@@ -135,7 +135,7 @@ impl ActorRef {
             .map_err(|_| DbError::Internal("Invalid response type".into()))
     }
 
-    /// Stop the actor
+    // Stop the actor
     pub async fn stop(&self) -> Result<()> {
         self.tx
             .send(ActorMessage::Stop)
@@ -154,9 +154,9 @@ impl fmt::Debug for ActorRef {
     }
 }
 
-/// Trait for messages that can be sent to actors
+// Trait for messages that can be sent to actors
 pub trait Message: Send + 'static {
-    /// Type-erased message
+    // Type-erased message
     fn as_any(&self) -> &dyn Any;
 }
 
@@ -166,38 +166,38 @@ impl<T: Send + 'static> Message for T {
     }
 }
 
-/// Internal actor message envelope
+// Internal actor message envelope
 pub enum ActorMessage {
-    /// User-defined message
+    // User-defined message
     User(Box<dyn Any + Send>),
-    /// Request-response message
+    // Request-response message
     Request {
         msg: Box<dyn Any + Send>,
         reply: oneshot::Sender<Box<dyn Any + Send>>,
     },
-    /// System message to stop the actor
+    // System message to stop the actor
     Stop,
-    /// System message to restart the actor
+    // System message to restart the actor
     Restart,
 }
 
-/// Actor trait that defines actor behavior
+// Actor trait that defines actor behavior
 #[async_trait::async_trait]
 pub trait Actor: Send + 'static {
-    /// Called when the actor is started
+    // Called when the actor is started
     async fn started(&mut self, _ctx: &ActorContext) -> Result<()> {
         Ok(())
     }
 
-    /// Called when the actor is stopped
+    // Called when the actor is stopped
     async fn stopped(&mut self, _ctx: &ActorContext) -> Result<()> {
         Ok(())
     }
 
-    /// Handle a message
+    // Handle a message
     async fn handle(&mut self, msg: Box<dyn Any + Send>, ctx: &ActorContext) -> Result<()>;
 
-    /// Handle a request-response message
+    // Handle a request-response message
     async fn handle_request(
         &mut self,
         msg: Box<dyn Any + Send>,
@@ -210,7 +210,7 @@ pub trait Actor: Send + 'static {
     }
 }
 
-/// Actor execution context
+// Actor execution context
 pub struct ActorContext {
     id: ActorId,
     name: Option<String>,
@@ -219,7 +219,7 @@ pub struct ActorContext {
 }
 
 impl ActorContext {
-    /// Create a new actor context
+    // Create a new actor context
     pub fn new(id: ActorId, name: Option<String>, system: Arc<ActorSystem>) -> Self {
         Self {
             id,
@@ -229,32 +229,32 @@ impl ActorContext {
         }
     }
 
-    /// Set the self reference
+    // Set the self reference
     pub fn set_self_ref(&mut self, actor_ref: ActorRef) {
         self.self_ref = Some(actor_ref);
     }
 
-    /// Get the actor ID
+    // Get the actor ID
     pub fn id(&self) -> ActorId {
         self.id
     }
 
-    /// Get the actor name
+    // Get the actor name
     pub fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
 
-    /// Get a reference to self
+    // Get a reference to self
     pub fn self_ref(&self) -> Option<&ActorRef> {
         self.self_ref.as_ref()
     }
 
-    /// Get the actor system
+    // Get the actor system
     pub fn system(&self) -> &Arc<ActorSystem> {
         &self.system
     }
 
-    /// Spawn a new child actor
+    // Spawn a new child actor
     pub async fn spawn<A: Actor>(
         &self,
         actor: A,
@@ -264,7 +264,7 @@ impl ActorContext {
         self.system.spawn(actor, name, mailbox_size).await
     }
 
-    /// Stop self
+    // Stop self
     pub async fn stop(&self) -> Result<()> {
         if let Some(self_ref) = &self.self_ref {
             self_ref.stop().await
@@ -283,27 +283,27 @@ impl fmt::Debug for ActorContext {
     }
 }
 
-/// Supervision strategy for actor failures
+// Supervision strategy for actor failures
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SupervisionStrategy {
-    /// Restart the failed actor
+    // Restart the failed actor
     Restart,
-    /// Escalate the failure to the supervisor
+    // Escalate the failure to the supervisor
     Escalate,
-    /// Stop the failed actor
+    // Stop the failed actor
     Stop,
-    /// Resume the actor (ignore the error)
+    // Resume the actor (ignore the error)
     Resume,
 }
 
-/// Actor supervisor configuration
+// Actor supervisor configuration
 #[derive(Debug, Clone)]
 pub struct SupervisorConfig {
-    /// Supervision strategy
+    // Supervision strategy
     pub strategy: SupervisionStrategy,
-    /// Maximum number of restarts within the time window
+    // Maximum number of restarts within the time window
     pub max_restarts: usize,
-    /// Time window for restart counting (seconds)
+    // Time window for restart counting (seconds)
     pub time_window_secs: u64,
 }
 
@@ -317,19 +317,19 @@ impl Default for SupervisorConfig {
     }
 }
 
-/// Actor system that manages all actors
+// Actor system that manages all actors
 pub struct ActorSystem {
-    /// Registry of all active actors
+    // Registry of all active actors
     actors: RwLock<HashMap<ActorId, ActorHandle>>,
-    /// Named actor registry
+    // Named actor registry
     named_actors: RwLock<HashMap<String, ActorId>>,
-    /// Supervisor configuration
+    // Supervisor configuration
     supervisor_config: Mutex<SupervisorConfig>,
-    /// System shutdown signal
+    // System shutdown signal
     shutdown_tx: Arc<Mutex<Option<tokio::sync::broadcast::Sender<()>>>>,
 }
 
-/// Handle to an actor for lifecycle management
+// Handle to an actor for lifecycle management
 struct ActorHandle {
     id: ActorId,
     name: Option<String>,
@@ -338,7 +338,7 @@ struct ActorHandle {
 }
 
 impl ActorSystem {
-    /// Create a new actor system
+    // Create a new actor system
     pub fn new() -> Arc<Self> {
         let (shutdown_tx, _) = tokio::sync::broadcast::channel(1);
         Arc::new(Self {
@@ -349,12 +349,12 @@ impl ActorSystem {
         })
     }
 
-    /// Configure supervision strategy
+    // Configure supervision strategy
     pub async fn configure_supervision(&self, config: SupervisorConfig) {
         *self.supervisor_config.lock() = config;
     }
 
-    /// Spawn a new actor
+    // Spawn a new actor
     pub async fn spawn<A: Actor>(
         self: &Arc<Self>,
         mut actor: A,
@@ -469,7 +469,7 @@ impl ActorSystem {
         Ok(actor_ref_clone)
     }
 
-    /// Find an actor by name
+    // Find an actor by name
     pub async fn find_actor(&self, name: &str) -> Option<ActorRef> {
         let named = self.named_actors.read().await;
         let id = named.get(name)?;
@@ -477,13 +477,13 @@ impl ActorSystem {
         actors.get(id).map(|h| h.actor_ref.clone())
     }
 
-    /// Get an actor by ID
+    // Get an actor by ID
     pub async fn get_actor(&self, id: ActorId) -> Option<ActorRef> {
         let actors = self.actors.read().await;
         actors.get(&id).map(|h| h.actor_ref.clone())
     }
 
-    /// List all active actors
+    // List all active actors
     pub async fn list_actors(&self) -> Vec<(ActorId, Option<String>)> {
         let actors = self.actors.read().await;
         actors
@@ -492,7 +492,7 @@ impl ActorSystem {
             .collect()
     }
 
-    /// Broadcast a message to all actors
+    // Broadcast a message to all actors
     pub async fn broadcast<M: Message + Clone>(&self, msg: M) -> Result<()> {
         let actors = self.actors.read().await;
         let mut errors = Vec::new();
@@ -514,7 +514,7 @@ impl ActorSystem {
         }
     }
 
-    /// Handle actor failure according to supervision strategy
+    // Handle actor failure according to supervision strategy
     async fn handle_actor_failure(&self, id: ActorId, error: DbError) {
         let strategy = {
             let config = self.supervisor_config.lock();
@@ -551,7 +551,7 @@ impl ActorSystem {
         }
     }
 
-    /// Unregister an actor
+    // Unregister an actor
     async fn unregister_actor(&self, id: ActorId) {
         let mut actors = self.actors.write().await;
         if let Some(handle) = actors.remove(&id) {
@@ -563,7 +563,7 @@ impl ActorSystem {
         }
     }
 
-    /// Shutdown the entire actor system
+    // Shutdown the entire actor system
     pub async fn shutdown(self: &Arc<Self>) -> Result<()> {
         info!("Shutting down actor system...");
 
@@ -600,7 +600,7 @@ impl ActorSystem {
         Ok(())
     }
 
-    /// Get statistics about the actor system
+    // Get statistics about the actor system
     pub async fn statistics(&self) -> ActorSystemStats {
         let actors = self.actors.read().await;
         ActorSystemStats {
@@ -622,12 +622,12 @@ impl Default for ActorSystem {
     }
 }
 
-/// Statistics about the actor system
+// Statistics about the actor system
 #[derive(Debug, Clone)]
 pub struct ActorSystemStats {
-    /// Total number of active actors
+    // Total number of active actors
     pub total_actors: usize,
-    /// Number of named actors
+    // Number of named actors
     pub named_actors: usize,
 }
 

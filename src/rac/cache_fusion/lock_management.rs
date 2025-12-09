@@ -17,37 +17,37 @@ use std::time::Duration;
 use parking_lot::RwLock;
 use super::global_cache::{ResourceId, LockValueBlock};
 
-/// Lock conversion timeout
+// Lock conversion timeout
 pub const LOCK_CONVERSION_TIMEOUT: Duration = Duration::from_secs(10);
 
 // ============================================================================
 // Lock Types
 // ============================================================================
 
-/// Global Enqueue Service lock type
+// Global Enqueue Service lock type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LockType {
-    /// Null lock - no access
+    // Null lock - no access
     Null,
 
-    /// Concurrent Read - allows other reads
+    // Concurrent Read - allows other reads
     ConcurrentRead,
 
-    /// Concurrent Write - allows reads but queues writes
+    // Concurrent Write - allows reads but queues writes
     ConcurrentWrite,
 
-    /// Protected Read - prevents writes
+    // Protected Read - prevents writes
     ProtectedRead,
 
-    /// Protected Write - prevents other writes
+    // Protected Write - prevents other writes
     ProtectedWrite,
 
-    /// Exclusive - prevents all access
+    // Exclusive - prevents all access
     Exclusive,
 }
 
 impl LockType {
-    /// Check if two lock types are compatible
+    // Check if two lock types are compatible
     pub fn is_compatible(&self, other: &LockType) -> bool {
         match (self, other) {
             (LockType::Null, _) | (_, LockType::Null) => true,
@@ -58,7 +58,7 @@ impl LockType {
         }
     }
 
-    /// Get priority for lock acquisition (higher = more priority)
+    // Get priority for lock acquisition (higher = more priority)
     pub fn priority(&self) -> u8 {
         match self {
             LockType::Null => 0,
@@ -75,25 +75,25 @@ impl LockType {
 // Global Enqueue Service (GES)
 // ============================================================================
 
-/// Global Enqueue Service - manages distributed locks and enqueues
+// Global Enqueue Service - manages distributed locks and enqueues
 pub struct GlobalEnqueueService {
-    /// Local node identifier
+    // Local node identifier
     node_id: NodeId,
 
-    /// Lock registry (resource -> lock holders)
+    // Lock registry (resource -> lock holders)
     lock_registry: Arc<RwLock<HashMap<ResourceId, LockState>>>,
 
-    /// Lock wait queue
+    // Lock wait queue
     wait_queue: Arc<Mutex<VecDeque<LockWaiter>>>,
 
-    /// Deadlock detection graph
+    // Deadlock detection graph
     wait_for_graph: Arc<RwLock<HashMap<NodeId, Vec<NodeId>>>>,
 
-    /// GES statistics
+    // GES statistics
     stats: Arc<RwLock<GesStatistics>>,
 }
 
-/// Lock state in the global registry
+// Lock state in the global registry
 #[derive(Debug, Clone)]
 struct LockState {
     resource_id: ResourceId,
@@ -103,7 +103,7 @@ struct LockState {
     conversion_queue: Vec<NodeId>,
 }
 
-/// Lock waiter information
+// Lock waiter information
 #[derive(Debug)]
 struct LockWaiter {
     resource_id: ResourceId,
@@ -113,7 +113,7 @@ struct LockWaiter {
     response_tx: oneshot::Sender<Result<LockGrant, DbError>>,
 }
 
-/// Lock grant response
+// Lock grant response
 #[derive(Debug, Clone)]
 pub struct LockGrant {
     pub resource_id: ResourceId,
@@ -121,7 +121,7 @@ pub struct LockGrant {
     pub lvb: LockValueBlock,
 }
 
-/// GES statistics
+// GES statistics
 #[derive(Debug, Default, Clone)]
 pub struct GesStatistics {
     pub total_lock_requests: u64,
@@ -132,7 +132,7 @@ pub struct GesStatistics {
 }
 
 impl GlobalEnqueueService {
-    /// Create a new Global Enqueue Service
+    // Create a new Global Enqueue Service
     pub fn new(node_id: NodeId) -> Self {
         Self {
             node_id,
@@ -143,7 +143,7 @@ impl GlobalEnqueueService {
         }
     }
 
-    /// Acquire a lock on a resource
+    // Acquire a lock on a resource
     pub async fn acquire_lock(
         &self,
         resource_id: ResourceId,
@@ -187,7 +187,7 @@ impl GlobalEnqueueService {
         }
     }
 
-    /// Try to grant lock immediately
+    // Try to grant lock immediately
     async fn try_grant_lock(
         &self,
         resource_id: &ResourceId,
@@ -222,7 +222,7 @@ impl GlobalEnqueueService {
         }
     }
 
-    /// Release a lock
+    // Release a lock
     pub async fn release_lock(&self, resource_id: ResourceId) -> Result<(), DbError> {
         let mut registry = self.lock_registry.write();
 
@@ -241,7 +241,7 @@ impl GlobalEnqueueService {
         Ok(())
     }
 
-    /// Process pending lock requests from wait queue
+    // Process pending lock requests from wait queue
     async fn process_wait_queue(&self) -> Result<(), DbError> {
         let mut queue = self.wait_queue.lock().unwrap();
 
@@ -261,7 +261,7 @@ impl GlobalEnqueueService {
         Ok(())
     }
 
-    /// Detect deadlocks in the wait-for graph using Tarjan's algorithm (O(N) instead of O(N²))
+    // Detect deadlocks in the wait-for graph using Tarjan's algorithm (O(N) instead of O(N²))
     pub async fn detect_deadlocks(&self) -> Result<Vec<NodeId>, DbError> {
         let graph = self.wait_for_graph.read();
         let mut visited = HashSet::new();
@@ -283,8 +283,8 @@ impl GlobalEnqueueService {
         Ok(deadlocked)
     }
 
-    /// Fast deadlock detection with timeout-based prevention
-    /// Proactively abort transactions that wait too long (before full deadlock forms)
+    // Fast deadlock detection with timeout-based prevention
+    // Proactively abort transactions that wait too long (before full deadlock forms)
     pub async fn detect_deadlocks_fast(&self, timeout_ms: u64) -> Result<Vec<NodeId>, DbError> {
         let mut timed_out = Vec::new();
         let queue = self.wait_queue.lock().unwrap();
@@ -332,7 +332,7 @@ impl GlobalEnqueueService {
         false
     }
 
-    /// Get GES statistics
+    // Get GES statistics
     pub fn get_statistics(&self) -> GesStatistics {
         self.stats.read().clone()
     }

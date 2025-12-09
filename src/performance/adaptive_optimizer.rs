@@ -1,13 +1,13 @@
-/// Adaptive Query Optimizer Module
-///
-/// Provides adaptive query optimization using execution statistics
+// Adaptive Query Optimizer Module
+//
+// Provides adaptive query optimization using execution statistics
 
 use crate::{Result, error::DbError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-/// Adaptive query optimizer using statistics
+// Adaptive query optimizer using statistics
 pub struct AdaptiveQueryOptimizer {
     statistics: Arc<RwLock<HashMap<String, QueryStatistics>>>,
     learning_rate: f64,
@@ -23,7 +23,7 @@ impl AdaptiveQueryOptimizer {
         }
     }
 
-    /// Record query execution
+    // Record query execution
     pub fn record_execution(
         &self,
         query_hash: &str,
@@ -58,7 +58,7 @@ impl AdaptiveQueryOptimizer {
         Ok(())
     }
 
-    /// Get optimization suggestions
+    // Get optimization suggestions
     pub fn get_suggestions(&self, query_hash: &str) -> Result<OptimizationSuggestions> {
         let stats = self.statistics.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -105,7 +105,7 @@ impl AdaptiveQueryOptimizer {
         }
     }
 
-    /// Get all query statistics
+    // Get all query statistics
     pub fn get_all_statistics(&self) -> Result<Vec<QueryStatistics>> {
         let stats = self.statistics.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;

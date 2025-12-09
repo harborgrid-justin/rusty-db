@@ -8,7 +8,7 @@ use std::time::Instant;
 use std::time::UNIX_EPOCH;
 use std::time::SystemTime;
 
-/// Chunk store entry
+// Chunk store entry
 #[derive(Debug, Clone)]
 pub struct ChunkEntry {
     pub chunk_id: Vec<u8>,
@@ -20,7 +20,7 @@ pub struct ChunkEntry {
     pub size: usize,
 }
 
-/// Deduplication metadata
+// Deduplication metadata
 #[derive(Debug, Clone)]
 pub struct DedupMetadata {
     pub chunk_map: Vec<ChunkReference>,
@@ -30,7 +30,7 @@ pub struct DedupMetadata {
     pub duplicate_chunks: usize,
 }
 
-/// Reference to a chunk in the chunk store
+// Reference to a chunk in the chunk store
 #[derive(Debug, Clone)]
 pub struct ChunkReference {
     pub chunk_id: Vec<u8>,
@@ -38,7 +38,7 @@ pub struct ChunkReference {
     pub length: usize,
 }
 
-/// Content-Defined Chunking parameters
+// Content-Defined Chunking parameters
 #[derive(Debug, Clone)]
 pub struct ChunkingParams {
     pub min_chunk_size: usize,
@@ -60,7 +60,7 @@ impl Default for ChunkingParams {
     }
 }
 
-/// Deduplication Engine
+// Deduplication Engine
 pub struct DedupEngine {
     chunk_store: Arc<RwLock<HashMap<u64, ChunkEntry>>>,
     chunk_index: Arc<RwLock<HashMap<u64, Vec<u8>>>>,
@@ -129,7 +129,7 @@ impl DedupEngine {
         self
     }
 
-    /// Deduplicate data using content-defined chunking
+    // Deduplicate data using content-defined chunking
     pub fn deduplicate(&mut self, data: &[u8]) -> CompressionResult<DedupMetadata> {
         let start = Instant::now();
 
@@ -233,7 +233,7 @@ impl DedupEngine {
         Ok(metadata)
     }
 
-    /// Restore deduplicated data
+    // Restore deduplicated data
     pub fn restore(&self, metadata: &DedupMetadata) -> CompressionResult<Vec<u8>> {
         let mut restored = Vec::with_capacity(metadata.original_size);
 
@@ -251,7 +251,7 @@ impl DedupEngine {
         Ok(restored)
     }
 
-    /// Find chunk boundaries using Rabin fingerprinting
+    // Find chunk boundaries using Rabin fingerprinting
     pub fn find_chunk_boundaries(&self, data: &[u8]) -> Vec<usize> {
         let mut boundaries = Vec::new();
         let mask = (1u64 << self.params.mask_bits) - 1;
@@ -290,7 +290,7 @@ impl DedupEngine {
         boundaries
     }
 
-    /// Compute hash for a chunk (using xxHash-like algorithm)
+    // Compute hash for a chunk (using xxHash-like algorithm)
     pub fn compute_chunk_hash(&self, data: &[u8]) -> u64 {
         const PRIME1: u64 = 11400714785074694791;
         const PRIME2: u64 = 14029467366897019727;
@@ -314,12 +314,12 @@ impl DedupEngine {
         hash
     }
 
-    /// Check if a chunk is a duplicate
+    // Check if a chunk is a duplicate
     pub fn is_duplicate(&self, chunk_hash: u64) -> bool {
         self.chunk_index.read().unwrap().contains_key(&chunk_hash)
     }
 
-    /// Store a chunk and return its identifier
+    // Store a chunk and return its identifier
     pub fn store_chunk(&mut self, chunk: &[u8], hash: u64) -> CompressionResult<Vec<u8>> {
         let chunk_id = self.generate_chunk_id(hash);
 
@@ -349,7 +349,7 @@ impl DedupEngine {
         Ok(chunk_id)
     }
 
-    /// Retrieve a chunk by its identifier
+    // Retrieve a chunk by its identifier
     pub fn retrieve_chunk(&self, chunk_id: &[u8]) -> CompressionResult<Vec<u8>> {
         let chunk_store = self.chunk_store.read().unwrap();
 
@@ -394,17 +394,17 @@ impl DedupEngine {
         size
     }
 
-    /// Get deduplication ratio
+    // Get deduplication ratio
     pub fn dedup_ratio(&self) -> f64 {
         self.stats.read().unwrap().dedup_ratio()
     }
 
-    /// Get deduplication statistics
+    // Get deduplication statistics
     pub fn stats(&self) -> DedupStats {
         self.stats.read().unwrap().clone()
     }
 
-    /// Garbage collection - remove chunks with zero references
+    // Garbage collection - remove chunks with zero references
     pub fn garbage_collect(&mut self) -> usize {
         let mut removed = 0;
         let mut to_remove = Vec::new();
@@ -435,7 +435,7 @@ impl DedupEngine {
         removed
     }
 
-    /// Decrement reference count for chunks
+    // Decrement reference count for chunks
     pub fn decrement_references(&mut self, metadata: &DedupMetadata) {
         for chunk_ref in &metadata.chunk_map {
             let chunk_hash = {
@@ -493,7 +493,7 @@ impl Deduplicator for DedupEngine {
     }
 }
 
-/// Cross-table deduplication manager
+// Cross-table deduplication manager
 pub struct CrossTableDedup {
     dedup_engine: DedupEngine,
     table_metadata: Arc<RwLock<HashMap<u64, TableDedupMetadata>>>,
@@ -515,7 +515,7 @@ impl CrossTableDedup {
         }
     }
 
-    /// Deduplicate a table's data
+    // Deduplicate a table's data
     pub fn deduplicate_table(&mut self, table_id: u64, data: Vec<Vec<u8>>)
         -> CompressionResult<Vec<DedupMetadata>> {
 
@@ -542,7 +542,7 @@ impl CrossTableDedup {
         Ok(chunks)
     }
 
-    /// Get deduplication ratio for a table
+    // Get deduplication ratio for a table
     pub fn table_dedup_ratio(&self, table_id: u64) -> Option<f64> {
         self.table_metadata.read().unwrap().get(&table_id).map(|metadata| {
             if metadata.deduplicated_size == 0 {
@@ -553,7 +553,7 @@ impl CrossTableDedup {
         })
     }
 
-    /// Get overall deduplication statistics
+    // Get overall deduplication statistics
     pub fn overall_stats(&self) -> DedupStats {
         self.dedup_engine.stats()
     }
@@ -633,5 +633,3 @@ mod tests {
         assert!(stats.dedup_ratio() > 0.0);
     }
 }
-
-

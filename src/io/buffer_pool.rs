@@ -700,9 +700,9 @@ mod tests {
 
         assert_eq!(pool.utilization(), 0.0);
 
-        let buf1 = pool.allocate(PAGE_SIZE).unwrap();
-        let buf2 = pool.allocate(PAGE_SIZE).unwrap();
-        let buf3 = pool.allocate(PAGE_SIZE).unwrap();
+        let _buf1 = pool.allocate(PAGE_SIZE).unwrap();
+        let _buf2 = pool.allocate(PAGE_SIZE).unwrap();
+        let _buf3 = pool.allocate(PAGE_SIZE).unwrap();
 
         assert_eq!(pool.utilization(), 30.0);
     }

@@ -54,25 +54,25 @@ use lazy_static::lazy_static;
 // PART 1: INPUT SANITIZER (Multi-layer input cleaning)
 // ============================================================================
 
-/// Multi-layer input sanitization engine
+// Multi-layer input sanitization engine
 pub struct InputSanitizer {
-    /// Maximum allowed input length (prevent DoS)
+    // Maximum allowed input length (prevent DoS)
     max_input_length: usize,
-    /// Normalization form to use
+    // Normalization form to use
     normalization_form: NormalizationForm,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<SanitizerStats>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NormalizationForm {
-    /// Canonical Composition (NFC) - default
+    // Canonical Composition (NFC) - default
     NFC,
-    /// Canonical Decomposition (NFD)
+    // Canonical Decomposition (NFD)
     NFD,
-    /// Compatibility Composition (NFKC)
+    // Compatibility Composition (NFKC)
     NFKC,
-    /// Compatibility Decomposition (NFKD)
+    // Compatibility Decomposition (NFKD)
     NFKD,
 }
 
@@ -86,7 +86,7 @@ struct SanitizerStats {
 }
 
 impl InputSanitizer {
-    /// Create a new input sanitizer with default settings
+    // Create a new input sanitizer with default settings
     pub fn new() -> Self {
         Self {
             max_input_length: 1_000_000, // 1MB max
@@ -95,19 +95,19 @@ impl InputSanitizer {
         }
     }
 
-    /// Create with custom max length
+    // Create with custom max length
     pub fn with_max_length(mut self, max_length: usize) -> Self {
         self.max_input_length = max_length;
         self
     }
 
-    /// Create with custom normalization form
+    // Create with custom normalization form
     pub fn with_normalization(mut self, form: NormalizationForm) -> Self {
         self.normalization_form = form;
         self
     }
 
-    /// Sanitize input with all cleaning layers
+    // Sanitize input with all cleaning layers
     pub fn sanitize(&self, input: &str) -> Result<String> {
         // Check length first (prevent DoS)
         if input.len() > self.max_input_length {
@@ -148,7 +148,7 @@ impl InputSanitizer {
         Ok(result)
     }
 
-    /// Remove BOM (Byte Order Mark) characters
+    // Remove BOM (Byte Order Mark) characters
     fn remove_bom(&self, input: &str) -> String {
         let result = input.trim_start_matches('\u{FEFF}');
         if result.len() != input.len() {
@@ -158,7 +158,7 @@ impl InputSanitizer {
         result.to_string()
     }
 
-    /// Remove zero-width characters (used in obfuscation attacks)
+    // Remove zero-width characters (used in obfuscation attacks)
     fn remove_zero_width(&self, input: &str) -> String {
         let zero_width_chars = [
             '\u{200B}', // Zero Width Space
@@ -189,7 +189,7 @@ impl InputSanitizer {
         result
     }
 
-    /// Remove dangerous control characters
+    // Remove dangerous control characters
     fn remove_control_characters(&self, input: &str) -> String {
         let mut removed = false;
         let result: String = input
@@ -212,7 +212,7 @@ impl InputSanitizer {
         result
     }
 
-    /// Normalize Unicode to prevent encoding attacks
+    // Normalize Unicode to prevent encoding attacks
     fn normalize_unicode(&self, input: &str) -> String {
         match self.normalization_form {
             NormalizationForm::NFC => input.nfc().collect(),
@@ -222,7 +222,7 @@ impl InputSanitizer {
         }
     }
 
-    /// Detect homograph attacks (visually similar characters from different scripts)
+    // Detect homograph attacks (visually similar characters from different scripts)
     fn detect_homographs(&self, input: &str) -> Option<Vec<HomographWarning>> {
         let mut warnings = Vec::new();
 
@@ -264,7 +264,7 @@ impl InputSanitizer {
         }
     }
 
-    /// Get sanitizer statistics
+    // Get sanitizer statistics
     pub fn get_statistics(&self) -> SanitizerStats {
         self.stats.read().clone()
     }
@@ -289,7 +289,7 @@ pub struct HomographWarning {
 // ============================================================================
 
 lazy_static! {
-    /// SQL keywords commonly used in injection attacks
+    // SQL keywords commonly used in injection attacks
     static ref DANGEROUS_SQL_KEYWORDS: HashSet<String> = {
         let keywords = vec![
             // SQL Commands
@@ -311,7 +311,7 @@ lazy_static! {
         keywords.iter().map(|s| s.to_uppercase()).collect()
     };
 
-    /// Regex patterns for injection detection
+    // Regex patterns for injection detection
     static ref INJECTION_PATTERNS: Vec<Regex> = {
         vec![
             // SQL comments
@@ -336,13 +336,13 @@ lazy_static! {
     };
 }
 
-/// Detects dangerous patterns in user input
+// Detects dangerous patterns in user input
 pub struct DangerousPatternDetector {
-    /// Custom blacklisted keywords
+    // Custom blacklisted keywords
     custom_blacklist: HashSet<String>,
-    /// Enable strict mode (more aggressive detection)
+    // Enable strict mode (more aggressive detection)
     strict_mode: bool,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<DetectorStats>>,
 }
 
@@ -383,7 +383,7 @@ pub enum Severity {
 }
 
 impl DangerousPatternDetector {
-    /// Create a new pattern detector
+    // Create a new pattern detector
     pub fn new() -> Self {
         Self {
             custom_blacklist: HashSet::new(),
@@ -392,18 +392,18 @@ impl DangerousPatternDetector {
         }
     }
 
-    /// Enable or disable strict mode
+    // Enable or disable strict mode
     pub fn with_strict_mode(mut self, strict: bool) -> Self {
         self.strict_mode = strict;
         self
     }
 
-    /// Add custom blacklisted keyword
+    // Add custom blacklisted keyword
     pub fn add_blacklist(&mut self, keyword: &str) {
         self.custom_blacklist.insert(keyword.to_uppercase());
     }
 
-    /// Scan input for dangerous patterns
+    // Scan input for dangerous patterns
     pub fn scan(&self, input: &str) -> Result<()> {
         let mut stats = self.stats.write();
         stats.total_scanned += 1;
@@ -471,12 +471,12 @@ impl DangerousPatternDetector {
         Ok(())
     }
 
-    /// Check for SQL comments
+    // Check for SQL comments
     pub fn contains_sql_comment(&self, input: &str) -> bool {
         input.contains("--") || input.contains("/*") || input.contains("*/") || input.contains("#")
     }
 
-    /// Check for stacked queries
+    // Check for stacked queries
     pub fn contains_stacked_query(&self, input: &str) -> bool {
         let upper = input.to_uppercase();
         upper.contains(";") && (
@@ -487,7 +487,7 @@ impl DangerousPatternDetector {
         )
     }
 
-    /// Check for tautology (always true conditions)
+    // Check for tautology (always true conditions)
     pub fn detect_tautology(&self, input: &str) -> bool {
         let upper = input.to_uppercase();
         upper.contains("1=1") ||
@@ -497,7 +497,7 @@ impl DangerousPatternDetector {
         upper.contains("OR '1'='1")
     }
 
-    /// Get detector statistics
+    // Get detector statistics
     pub fn get_statistics(&self) -> DetectorStats {
         self.stats.read().clone()
     }
@@ -513,15 +513,15 @@ impl Default for DangerousPatternDetector {
 // PART 3: SQL VALIDATOR (Syntax and structure validation)
 // ============================================================================
 
-/// Validates SQL syntax and structure
+// Validates SQL syntax and structure
 pub struct SQLValidator {
-    /// Maximum allowed subquery depth
+    // Maximum allowed subquery depth
     max_subquery_depth: usize,
-    /// Maximum allowed joins
+    // Maximum allowed joins
     max_joins: usize,
-    /// Allowed SQL functions
+    // Allowed SQL functions
     allowed_functions: HashSet<String>,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<ValidatorStats>>,
 }
 
@@ -533,7 +533,7 @@ struct ValidatorStats {
 }
 
 impl SQLValidator {
-    /// Create a new SQL validator
+    // Create a new SQL validator
     pub fn new() -> Self {
         let mut allowed_functions = HashSet::new();
         // Standard aggregate functions
@@ -561,7 +561,7 @@ impl SQLValidator {
         }
     }
 
-    /// Validate SQL string for safety
+    // Validate SQL string for safety
     pub fn validate_sql(&self, sql: &str) -> Result<()> {
         let mut stats = self.stats.write();
         stats.total_validated += 1;
@@ -584,7 +584,7 @@ impl SQLValidator {
         Ok(())
     }
 
-    /// Validate quote balance
+    // Validate quote balance
     fn validate_quotes(&self, sql: &str) -> Result<()> {
         let single_quotes = sql.chars().filter(|&c| c == '\'').count();
         let double_quotes = sql.chars().filter(|&c| c == '"').count();
@@ -600,7 +600,7 @@ impl SQLValidator {
         Ok(())
     }
 
-    /// Validate parentheses balance
+    // Validate parentheses balance
     fn validate_parentheses(&self, sql: &str) -> Result<()> {
         let mut depth = 0;
         for ch in sql.chars() {
@@ -623,7 +623,7 @@ impl SQLValidator {
         Ok(())
     }
 
-    /// Validate SQL identifiers (table/column names)
+    // Validate SQL identifiers (table/column names)
     fn validate_identifiers(&self, sql: &str) -> Result<()> {
         // Identifiers must start with letter or underscore
         // Can contain letters, numbers, underscores
@@ -633,7 +633,7 @@ impl SQLValidator {
         Ok(())
     }
 
-    /// Validate function calls
+    // Validate function calls
     pub fn validate_function(&self, func_name: &str) -> Result<()> {
         let upper_func = func_name.to_uppercase();
         if self.allowed_functions.contains(&upper_func) {
@@ -643,7 +643,7 @@ impl SQLValidator {
         }
     }
 
-    /// Get validator statistics
+    // Get validator statistics
     pub fn get_statistics(&self) -> ValidatorStats {
         self.stats.read().clone()
     }
@@ -659,13 +659,13 @@ impl Default for SQLValidator {
 // PART 4: PARAMETERIZED QUERY BUILDER (Safe query construction)
 // ============================================================================
 
-/// Safe parameterized query builder
+// Safe parameterized query builder
 pub struct ParameterizedQueryBuilder {
-    /// Query template with placeholders
+    // Query template with placeholders
     template: String,
-    /// Parameters with their values
+    // Parameters with their values
     parameters: HashMap<String, Parameter>,
-    /// Parameter counter
+    // Parameter counter
     param_counter: usize,
 }
 
@@ -703,7 +703,7 @@ pub struct PreparedStatement {
 }
 
 impl ParameterizedQueryBuilder {
-    /// Create a new parameterized query builder
+    // Create a new parameterized query builder
     pub fn new() -> Self {
         Self {
             template: String::new(),
@@ -712,13 +712,13 @@ impl ParameterizedQueryBuilder {
         }
     }
 
-    /// Set the query template
+    // Set the query template
     pub fn template(mut self, template: &str) -> Self {
         self.template = template.to_string();
         self
     }
 
-    /// Add a parameter
+    // Add a parameter
     pub fn add_parameter(&mut self, name: &str, value: ParameterValue) -> Result<String> {
         let param_type = match &value {
             ParameterValue::Integer(_) => ParameterType::Integer,
@@ -746,7 +746,7 @@ impl ParameterizedQueryBuilder {
         Ok(format!("${}", self.param_counter))
     }
 
-    /// Validate string parameter for injection attempts
+    // Validate string parameter for injection attempts
     fn validate_string_parameter(&self, value: &str) -> Result<()> {
         // Check for SQL keywords in parameter values
         let dangerous_patterns = ["--", "/*", "*/", "UNION", "EXEC", "DROP"];
@@ -764,7 +764,7 @@ impl ParameterizedQueryBuilder {
         Ok(())
     }
 
-    /// Build the prepared statement
+    // Build the prepared statement
     pub fn build(self) -> Result<PreparedStatement> {
         if self.template.is_empty() {
             return Err(DbError::SqlParse("Empty query template".to_string()));
@@ -778,7 +778,7 @@ impl ParameterizedQueryBuilder {
         })
     }
 
-    /// Get parameter count
+    // Get parameter count
     pub fn parameter_count(&self) -> usize {
         self.parameters.len()
     }
@@ -794,21 +794,21 @@ impl Default for ParameterizedQueryBuilder {
 // PART 5: UNICODE NORMALIZER (Prevent encoding attacks)
 // ============================================================================
 
-/// Unicode normalization and confusable detection
+// Unicode normalization and confusable detection
 pub struct UnicodeNormalizer {
-    /// Default normalization form
+    // Default normalization form
     default_form: NormalizationForm,
 }
 
 impl UnicodeNormalizer {
-    /// Create a new Unicode normalizer
+    // Create a new Unicode normalizer
     pub fn new() -> Self {
         Self {
             default_form: NormalizationForm::NFC,
         }
     }
 
-    /// Normalize string to specified form
+    // Normalize string to specified form
     pub fn normalize(&self, input: &str, form: NormalizationForm) -> String {
         match form {
             NormalizationForm::NFC => input.nfc().collect(),
@@ -818,7 +818,7 @@ impl UnicodeNormalizer {
         }
     }
 
-    /// Check if string is already normalized
+    // Check if string is already normalized
     pub fn is_normalized(&self, input: &str, form: NormalizationForm) -> bool {
         match form {
             NormalizationForm::NFC => is_nfc(input),
@@ -828,7 +828,7 @@ impl UnicodeNormalizer {
         }
     }
 
-    /// Detect bidirectional text (potential security issue)
+    // Detect bidirectional text (potential security issue)
     pub fn has_bidi_chars(&self, input: &str) -> bool {
         input.chars().any(|c| {
             matches!(c,
@@ -856,23 +856,23 @@ impl Default for UnicodeNormalizer {
 // PART 6: ESCAPE VALIDATOR (Validate escape sequences)
 // ============================================================================
 
-/// Validates escape sequences in user input
+// Validates escape sequences in user input
 pub struct EscapeValidator;
 
 impl EscapeValidator {
-    /// Create a new escape validator
+    // Create a new escape validator
     pub fn new() -> Self {
         Self
     }
 
-    /// Validate all escape sequences
+    // Validate all escape sequences
     pub fn validate_escapes(&self, input: &str) -> Result<()> {
         self.validate_backslashes(input)?;
         self.validate_quote_escaping(input)?;
         Ok(())
     }
 
-    /// Validate backslash escaping
+    // Validate backslash escaping
     fn validate_backslashes(&self, input: &str) -> Result<()> {
         let mut chars = input.chars().peekable();
 
@@ -894,7 +894,7 @@ impl EscapeValidator {
         Ok(())
     }
 
-    /// Validate quote escaping
+    // Validate quote escaping
     fn validate_quote_escaping(&self, input: &str) -> Result<()> {
         // Check for unescaped quotes that might break out of string literals
         let mut in_single_quote = false;
@@ -936,11 +936,11 @@ impl Default for EscapeValidator {
 // PART 7: QUERY WHITELISTER (Allow only safe operations)
 // ============================================================================
 
-/// Whitelist-based query validation
+// Whitelist-based query validation
 pub struct QueryWhitelister {
-    /// Allowed SQL operations
+    // Allowed SQL operations
     allowed_operations: HashSet<SqlOperation>,
-    /// Allowed SQL functions
+    // Allowed SQL functions
     allowed_functions: HashSet<String>,
 }
 
@@ -958,13 +958,20 @@ pub enum SqlOperation {
 }
 
 impl QueryWhitelister {
-    /// Create a new query whitelister with default safe operations
+    // Create a new query whitelister with default safe operations
     pub fn new() -> Self {
         let mut allowed_operations = HashSet::new();
+        // DML operations
         allowed_operations.insert(SqlOperation::Select);
         allowed_operations.insert(SqlOperation::Insert);
         allowed_operations.insert(SqlOperation::Update);
         allowed_operations.insert(SqlOperation::Delete);
+        // DDL operations - enabled by default for development
+        allowed_operations.insert(SqlOperation::CreateTable);
+        allowed_operations.insert(SqlOperation::AlterTable);
+        allowed_operations.insert(SqlOperation::DropTable);
+        allowed_operations.insert(SqlOperation::CreateIndex);
+        allowed_operations.insert(SqlOperation::CreateView);
 
         let mut allowed_functions = HashSet::new();
         for func in &["COUNT", "SUM", "AVG", "MAX", "MIN"] {
@@ -977,27 +984,27 @@ impl QueryWhitelister {
         }
     }
 
-    /// Allow an operation
+    // Allow an operation
     pub fn allow_operation(&mut self, op: SqlOperation) {
         self.allowed_operations.insert(op);
     }
 
-    /// Allow a function
+    // Allow a function
     pub fn allow_function(&mut self, func: &str) {
         self.allowed_functions.insert(func.to_uppercase());
     }
 
-    /// Check if operation is allowed
+    // Check if operation is allowed
     pub fn is_operation_allowed(&self, op: &SqlOperation) -> bool {
         self.allowed_operations.contains(op)
     }
 
-    /// Check if function is allowed
+    // Check if function is allowed
     pub fn is_function_allowed(&self, func: &str) -> bool {
         self.allowed_functions.contains(&func.to_uppercase())
     }
 
-    /// Validate query against whitelist
+    // Validate query against whitelist
     pub fn validate(&self, sql: &str) -> Result<()> {
         let upper_sql = sql.to_uppercase();
 
@@ -1012,6 +1019,14 @@ impl QueryWhitelister {
             SqlOperation::Delete
         } else if upper_sql.starts_with("CREATE TABLE") {
             SqlOperation::CreateTable
+        } else if upper_sql.starts_with("ALTER TABLE") {
+            SqlOperation::AlterTable
+        } else if upper_sql.starts_with("DROP TABLE") {
+            SqlOperation::DropTable
+        } else if upper_sql.starts_with("CREATE INDEX") {
+            SqlOperation::CreateIndex
+        } else if upper_sql.starts_with("CREATE VIEW") {
+            SqlOperation::CreateView
         } else {
             return Err(DbError::Security("Unknown or disallowed SQL operation".to_string()));
         };
@@ -1037,7 +1052,7 @@ impl Default for QueryWhitelister {
 // PART 8: INTEGRATED INJECTION PREVENTION GUARD
 // ============================================================================
 
-/// Integrated injection prevention system
+// Integrated injection prevention system
 pub struct InjectionPreventionGuard {
     sanitizer: InputSanitizer,
     detector: DangerousPatternDetector,
@@ -1048,7 +1063,7 @@ pub struct InjectionPreventionGuard {
 }
 
 impl InjectionPreventionGuard {
-    /// Create a new injection prevention guard with all layers
+    // Create a new injection prevention guard with all layers
     pub fn new() -> Self {
         Self {
             sanitizer: InputSanitizer::new(),
@@ -1060,7 +1075,7 @@ impl InjectionPreventionGuard {
         }
     }
 
-    /// Validate and sanitize SQL input through all layers
+    // Validate and sanitize SQL input through all layers
     pub fn validate_and_sanitize(&self, input: &str) -> Result<String> {
         // Layer 1: Input sanitization
         let sanitized = self.sanitizer.sanitize(input)?;
@@ -1083,7 +1098,7 @@ impl InjectionPreventionGuard {
         Ok(normalized)
     }
 
-    /// Quick validation (for performance-critical paths)
+    // Quick validation (for performance-critical paths)
     pub fn quick_validate(&self, input: &str) -> Result<()> {
         // Only run essential checks
         self.detector.scan(input)?;
@@ -1091,7 +1106,7 @@ impl InjectionPreventionGuard {
         Ok(())
     }
 
-    /// Get comprehensive statistics
+    // Get comprehensive statistics
     pub fn get_statistics(&self) -> InjectionPreventionStats {
         InjectionPreventionStats {
             sanitizer_stats: self.sanitizer.get_statistics(),
@@ -1164,7 +1179,7 @@ mod tests {
             builder.template("SELECT * FROM users WHERE id = ?");
             let param_id = builder.add_parameter("id", ParameterValue::Integer(123)).unwrap();
             assert_eq!(param_id, "$1");
-        
+
             let stmt = builder.build().unwrap();
             assert_eq!(stmt.parameters.len(), 1);
         }

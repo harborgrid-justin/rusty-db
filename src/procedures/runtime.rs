@@ -1,7 +1,7 @@
-/// PL/SQL Runtime Execution Engine
-///
-/// This module provides the runtime environment for executing PL/SQL blocks,
-/// managing execution context, variable bindings, and control flow.
+// PL/SQL Runtime Execution Engine
+//
+// This module provides the runtime environment for executing PL/SQL blocks,
+// managing execution context, variable bindings, and control flow.
 
 use crate::{Result, DbError};
 use crate::procedures::parser::{
@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 
-/// Runtime value types
+// Runtime value types
 #[repr(C)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum RuntimeValue {
@@ -29,7 +29,7 @@ pub enum RuntimeValue {
 }
 
 impl RuntimeValue {
-    /// Convert to integer if possible
+    // Convert to integer if possible
     #[inline]
     pub fn as_integer(&self) -> Result<i64> {
         match self {
@@ -41,7 +41,7 @@ impl RuntimeValue {
         }
     }
 
-    /// Convert to float if possible
+    // Convert to float if possible
     #[inline]
     pub fn as_float(&self) -> Result<f64> {
         match self {
@@ -53,7 +53,7 @@ impl RuntimeValue {
         }
     }
 
-    /// Convert to string
+    // Convert to string
     pub fn as_string(&self) -> String {
         match self {
             RuntimeValue::String(s) => s.clone(),
@@ -67,7 +67,7 @@ impl RuntimeValue {
         }
     }
 
-    /// Convert to boolean
+    // Convert to boolean
     #[inline]
     pub fn as_boolean(&self) -> Result<bool> {
         match self {
@@ -78,14 +78,14 @@ impl RuntimeValue {
         }
     }
 
-    /// Check if value is null
+    // Check if value is null
     #[inline]
     pub fn is_null(&self) -> bool {
         matches!(self, RuntimeValue::Null)
     }
 }
 
-/// Cursor state for runtime
+// Cursor state for runtime
 #[derive(Debug, Clone, PartialEq)]
 pub struct CursorState {
     pub name: String,
@@ -95,28 +95,28 @@ pub struct CursorState {
     pub rows: Vec<HashMap<String, RuntimeValue>>,
 }
 
-/// Execution context for a PL/SQL block
+// Execution context for a PL/SQL block
 pub struct ExecutionContext {
-    /// Variable bindings (name -> value)
+    // Variable bindings (name -> value)
     variables: HashMap<String, RuntimeValue>,
-    /// Output parameters
+    // Output parameters
     output_params: HashMap<String, RuntimeValue>,
-    /// Parent context (for nested blocks)
+    // Parent context (for nested blocks)
     parent: Option<Arc<RwLock<ExecutionContext>>>,
-    /// Return value
+    // Return value
     return_value: Option<RuntimeValue>,
-    /// Exception state
+    // Exception state
     exception_raised: Option<String>,
-    /// Loop control flags
+    // Loop control flags
     exit_loop: bool,
     continue_loop: bool,
-    /// Transaction savepoints
+    // Transaction savepoints
     savepoints: Vec<String>,
-    /// Cursors
+    // Cursors
     cursors: HashMap<String, CursorState>,
-    /// Debug mode
+    // Debug mode
     debug: bool,
-    /// Output buffer (for DBMS_OUTPUT)
+    // Output buffer (for DBMS_OUTPUT)
     output_buffer: Vec<String>,
 }
 
@@ -137,7 +137,7 @@ impl ExecutionContext {
         }
     }
 
-    /// Create a child context
+    // Create a child context
     pub fn create_child(&self) -> Self {
         Self {
             variables: HashMap::new(),
@@ -154,13 +154,13 @@ impl ExecutionContext {
         }
     }
 
-    /// Set a variable value
+    // Set a variable value
     #[inline]
     pub fn set_variable(&mut self, name: String, value: RuntimeValue) {
         self.variables.insert(name, value);
     }
 
-    /// Get a variable value
+    // Get a variable value
     #[inline]
     pub fn get_variable(&self, name: &str) -> Result<RuntimeValue> {
         self.variables.get(name)
@@ -174,92 +174,92 @@ impl ExecutionContext {
         DbError::Runtime(format!("Variable '{}' not found", name))
     }
 
-    /// Set an output parameter
+    // Set an output parameter
     pub fn set_output(&mut self, name: String, value: RuntimeValue) {
         self.output_params.insert(name, value);
     }
 
-    /// Get all output parameters
+    // Get all output parameters
     pub fn get_outputs(&self) -> &HashMap<String, RuntimeValue> {
         &self.output_params
     }
 
-    /// Set return value
+    // Set return value
     pub fn set_return(&mut self, value: RuntimeValue) {
         self.return_value = Some(value);
     }
 
-    /// Get return value
+    // Get return value
     pub fn get_return(&self) -> Option<&RuntimeValue> {
         self.return_value.as_ref()
     }
 
-    /// Raise an exception
+    // Raise an exception
     pub fn raise_exception(&mut self, exception: String) {
         self.exception_raised = Some(exception);
     }
 
-    /// Check if exception is raised
+    // Check if exception is raised
     pub fn has_exception(&self) -> bool {
         self.exception_raised.is_some()
     }
 
-    /// Get exception name
+    // Get exception name
     pub fn get_exception(&self) -> Option<&String> {
         self.exception_raised.as_ref()
     }
 
-    /// Clear exception
+    // Clear exception
     pub fn clear_exception(&mut self) {
         self.exception_raised = None;
     }
 
-    /// Set exit loop flag
+    // Set exit loop flag
     pub fn set_exit_loop(&mut self) {
         self.exit_loop = true;
     }
 
-    /// Check exit loop flag
+    // Check exit loop flag
     pub fn should_exit_loop(&self) -> bool {
         self.exit_loop
     }
 
-    /// Clear exit loop flag
+    // Clear exit loop flag
     pub fn clear_exit_loop(&mut self) {
         self.exit_loop = false;
     }
 
-    /// Set continue loop flag
+    // Set continue loop flag
     pub fn set_continue_loop(&mut self) {
         self.continue_loop = true;
     }
 
-    /// Check continue loop flag
+    // Check continue loop flag
     pub fn should_continue_loop(&self) -> bool {
         self.continue_loop
     }
 
-    /// Clear continue loop flag
+    // Clear continue loop flag
     pub fn clear_continue_loop(&mut self) {
         self.continue_loop = false;
     }
 
-    /// Add output line (for DBMS_OUTPUT)
+    // Add output line (for DBMS_OUTPUT)
     pub fn add_output(&mut self, line: String) {
         self.output_buffer.push(line);
     }
 
-    /// Get output buffer
+    // Get output buffer
     pub fn get_output_buffer(&self) -> &[String] {
         &self.output_buffer
     }
 
-    /// Enable debug mode
+    // Enable debug mode
     pub fn enable_debug(&mut self) {
         self.debug = true;
     }
 
-    /// Check if debug mode is enabled
+    // Check if debug mode is enabled
     pub fn is_debug(&self) -> bool {
         self.debug
     }
@@ -271,9 +271,9 @@ impl Default for ExecutionContext {
     }
 }
 
-/// PL/SQL Runtime Executor
+// PL/SQL Runtime Executor
 pub struct RuntimeExecutor {
-    /// Global execution context
+    // Global execution context
     context: Arc<RwLock<ExecutionContext>>,
 }
 
@@ -284,7 +284,7 @@ impl RuntimeExecutor {
         }
     }
 
-    /// Execute a PL/SQL block
+    // Execute a PL/SQL block
     pub fn execute(&self, block: &PlSqlBlock) -> Result<ExecutionResult> {
         let mut ctx = self.context.write();
 
@@ -324,7 +324,7 @@ impl RuntimeExecutor {
         Ok(result)
     }
 
-    /// Execute a declaration
+    // Execute a declaration
     fn execute_declaration(&self, ctx: &mut ExecutionContext, decl: &Declaration) -> Result<()> {
         let value = if let Some(init_expr) = &decl.initial_value {
             self.evaluate_expression(ctx, init_expr)?
@@ -343,7 +343,7 @@ impl RuntimeExecutor {
         Ok(())
     }
 
-    /// Execute a statement
+    // Execute a statement
     fn execute_statement(&self, ctx: &mut ExecutionContext, stmt: &Statement) -> Result<()> {
         match stmt {
             Statement::Assignment { target, value } => {
@@ -674,7 +674,7 @@ impl RuntimeExecutor {
         Ok(())
     }
 
-    /// Evaluate an expression
+    // Evaluate an expression
     fn evaluate_expression(&self, ctx: &ExecutionContext, expr: &Expression) -> Result<RuntimeValue> {
         match expr {
             Expression::Literal(lit) => Ok(match lit {
@@ -723,7 +723,7 @@ impl RuntimeExecutor {
         }
     }
 
-    /// Apply binary operator
+    // Apply binary operator
     fn apply_binary_op(&self, left: &RuntimeValue, op: &BinaryOperator, right: &RuntimeValue) -> Result<RuntimeValue> {
         match op {
             BinaryOperator::Add => {
@@ -840,7 +840,7 @@ impl RuntimeExecutor {
         }
     }
 
-    /// Apply unary operator
+    // Apply unary operator
     fn apply_unary_op(&self, op: &UnaryOperator, val: &RuntimeValue) -> Result<RuntimeValue> {
         match op {
             UnaryOperator::Not => {
@@ -861,7 +861,7 @@ impl RuntimeExecutor {
         }
     }
 
-    /// Check if two values are equal
+    // Check if two values are equal
     fn values_equal(&self, left: &RuntimeValue, right: &RuntimeValue) -> Result<bool> {
         Ok(match (left, right) {
             (RuntimeValue::Null, RuntimeValue::Null) => true,
@@ -874,7 +874,7 @@ impl RuntimeExecutor {
         })
     }
 
-    /// Call a built-in function
+    // Call a built-in function
     fn call_function(&self, name: &str, args: Vec<RuntimeValue>) -> Result<RuntimeValue> {
         match name.to_uppercase().as_str() {
             "UPPER" => {
@@ -943,7 +943,7 @@ impl RuntimeExecutor {
         }
     }
 
-    /// Handle exception
+    // Handle exception
     fn handle_exception(
         &self,
         ctx: &mut ExecutionContext,
@@ -982,7 +982,7 @@ impl Default for RuntimeExecutor {
     }
 }
 
-/// Result of PL/SQL execution
+// Result of PL/SQL execution
 #[derive(Debug, Clone)]
 pub struct ExecutionResult {
     pub return_value: Option<RuntimeValue>,
@@ -1067,5 +1067,3 @@ mod tests {
         Ok(())
     }
 }
-
-

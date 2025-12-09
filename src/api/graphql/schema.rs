@@ -14,7 +14,7 @@ use super::complexity::PerformanceExtension;
 // SCHEMA BUILDER
 // ============================================================================
 
-/// Build the complete GraphQL schema
+// Build the complete GraphQL schema
 pub fn build_schema() -> Schema<QueryRoot, MutationRoot, SubscriptionRoot> {
     Schema::build(QueryRoot, MutationRoot, SubscriptionRoot)
         .extension(PerformanceExtension)
@@ -23,7 +23,7 @@ pub fn build_schema() -> Schema<QueryRoot, MutationRoot, SubscriptionRoot> {
         .finish()
 }
 
-/// Create schema with custom configuration
+// Create schema with custom configuration
 pub fn build_schema_with_config(config: SchemaConfig) -> Schema<QueryRoot, MutationRoot, SubscriptionRoot> {
     let mut builder = Schema::build(QueryRoot, MutationRoot, SubscriptionRoot);
 
@@ -42,7 +42,7 @@ pub fn build_schema_with_config(config: SchemaConfig) -> Schema<QueryRoot, Mutat
     builder.finish()
 }
 
-/// Schema configuration
+// Schema configuration
 #[derive(Clone, Debug)]
 pub struct SchemaConfig {
     pub max_depth: Option<usize>,
@@ -61,4 +61,3 @@ impl Default for SchemaConfig {
         }
     }
 }
-

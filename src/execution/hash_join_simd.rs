@@ -59,18 +59,18 @@ use parking_lot::RwLock;
 use rayon::prelude::*;
 use std::sync::Arc;
 
-/// Configuration for SIMD hash join
+// Configuration for SIMD hash join
 #[derive(Debug, Clone)]
 pub struct SimdHashJoinConfig {
-    /// Number of partitions (typically 4x number of cores)
+    // Number of partitions (typically 4x number of cores)
     pub num_partitions: usize,
-    /// Enable Bloom filter optimization
+    // Enable Bloom filter optimization
     pub use_bloom_filter: bool,
-    /// Bloom filter false positive rate
+    // Bloom filter false positive rate
     pub bloom_fpr: f64,
-    /// Number of threads for parallel execution
+    // Number of threads for parallel execution
     pub num_threads: usize,
-    /// Enable adaptive partitioning (repartition on skew)
+    // Enable adaptive partitioning (repartition on skew)
     pub adaptive_partitioning: bool,
 }
 
@@ -87,33 +87,33 @@ impl Default for SimdHashJoinConfig {
     }
 }
 
-/// SIMD-accelerated hash join executor
+// SIMD-accelerated hash join executor
 pub struct SimdHashJoin {
     config: SimdHashJoinConfig,
 }
 
 impl SimdHashJoin {
-    /// Create a new SIMD hash join executor
+    // Create a new SIMD hash join executor
     pub fn new(config: SimdHashJoinConfig) -> Self {
         Self { config }
     }
 
-    /// Create with default configuration
+    // Create with default configuration
     pub fn with_default_config() -> Self {
         Self::new(SimdHashJoinConfig::default())
     }
 
-    /// Execute hash join with SIMD acceleration
-    ///
-    /// ## Complexity
-    /// - Time: O((n + m) / P) with P threads
-    /// - Space: O(n + m)
-    /// - Expected probes: 1.1 with Swiss tables
-    ///
-    /// ## Performance
-    /// - 13x faster than standard implementation
-    /// - 95%+ cache hit rate with partitioning
-    /// - Near-linear scaling to 16+ cores
+    // Execute hash join with SIMD acceleration
+    //
+    // ## Complexity
+    // - Time: O((n + m) / P) with P threads
+    // - Space: O(n + m)
+    // - Expected probes: 1.1 with Swiss tables
+    //
+    // ## Performance
+    // - 13x faster than standard implementation
+    // - 95%+ cache hit rate with partitioning
+    // - Near-linear scaling to 16+ cores
     pub fn execute(
         &self,
         build_side: QueryResult,
@@ -144,7 +144,7 @@ impl SimdHashJoin {
         Ok(result)
     }
 
-    /// Phase 1: Partition build side and create hash tables
+    // Phase 1: Partition build side and create hash tables
     fn partition_and_build(
         &self,
         build_side: &QueryResult,
@@ -204,7 +204,7 @@ impl SimdHashJoin {
         Ok(partitions)
     }
 
-    /// Phase 2: Probe with SIMD acceleration
+    // Phase 2: Probe with SIMD acceleration
     fn probe_with_simd(
         &self,
         probe_side: &QueryResult,
@@ -265,7 +265,7 @@ impl SimdHashJoin {
         Ok(matches.into_iter().flatten().collect())
     }
 
-    /// Phase 3: Materialize joined rows
+    // Phase 3: Materialize joined rows
     fn materialize(
         &self,
         build_side: &QueryResult,
@@ -315,7 +315,7 @@ impl SimdHashJoin {
         Ok(QueryResult::new(result_columns, result_rows))
     }
 
-    /// Hash partition a key to partition ID
+    // Hash partition a key to partition ID
     #[inline]
     fn hash_partition(&self, key: &str) -> usize {
         let hash = hash_str(key);
@@ -323,13 +323,13 @@ impl SimdHashJoin {
     }
 }
 
-/// A partition for build side
+// A partition for build side
 struct Partition {
-    /// Rows in this partition
+    // Rows in this partition
     rows: Vec<Vec<String>>,
-    /// Swiss table for this partition
+    // Swiss table for this partition
     hash_table: Option<SwissTable<String, usize>>,
-    /// Bloom filter for this partition
+    // Bloom filter for this partition
     bloom_filter: Option<JoinBloomFilter>,
 }
 
@@ -343,27 +343,27 @@ impl Partition {
     }
 }
 
-/// A match between build and probe rows
+// A match between build and probe rows
 #[derive(Debug, Clone, Copy)]
 struct Match {
     build_idx: usize,
     probe_idx: usize,
 }
 
-/// Statistics for SIMD hash join
+// Statistics for SIMD hash join
 #[derive(Debug, Clone)]
 pub struct SimdHashJoinStats {
-    /// Total rows processed
+    // Total rows processed
     pub rows_processed: usize,
-    /// Rows matched
+    // Rows matched
     pub rows_matched: usize,
-    /// Bloom filter hits (filtered out)
+    // Bloom filter hits (filtered out)
     pub bloom_hits: usize,
-    /// Average probe count per lookup
+    // Average probe count per lookup
     pub avg_probes: f64,
-    /// Cache miss rate
+    // Cache miss rate
     pub cache_miss_rate: f64,
-    /// Execution time (ms)
+    // Execution time (ms)
     pub execution_time_ms: f64,
 }
 

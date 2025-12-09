@@ -17,7 +17,7 @@ use super::queries::{QueryPlan, SearchResult};
 // GRAPHQL ENGINE - Core Implementation
 // ============================================================================
 
-/// Main GraphQL engine that interfaces with the database
+// Main GraphQL engine that interfaces with the database
 pub struct GraphQLEngine {
     // Would connect to actual database components
     subscription_manager: Arc<SubscriptionManager>,

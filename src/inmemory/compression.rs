@@ -14,7 +14,7 @@ use parking_lot::RwLock;
 
 use crate::inmemory::column_store::{ColumnDataType, ColumnStats};
 
-/// Compression algorithm types
+// Compression algorithm types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CompressionType {
     None,
@@ -26,7 +26,7 @@ pub enum CompressionType {
     Hybrid,
 }
 
-/// Statistics about compression
+// Statistics about compression
 #[derive(Debug, Clone)]
 pub struct CompressionStats {
     pub original_size: usize,
@@ -50,7 +50,7 @@ impl CompressionStats {
     }
 }
 
-/// Result of compression operation
+// Result of compression operation
 pub struct CompressedData {
     pub compressed_data: Vec<u8>,
     pub compression_type: CompressionType,
@@ -58,14 +58,14 @@ pub struct CompressedData {
     pub metadata: Vec<u8>,
 }
 
-/// Trait for compression algorithms
+// Trait for compression algorithms
 pub trait CompressionAlgorithm: Send + Sync {
     fn compress(&self, data: &[u8], data_type: ColumnDataType) -> Result<Vec<u8>, String>;
     fn decompress(&self, data: &[u8], data_type: ColumnDataType) -> Result<Vec<u8>, String>;
     fn estimate_ratio(&self, data: &[u8], stats: &ColumnStats) -> f64;
 }
 
-/// Dictionary encoding for low-cardinality columns
+// Dictionary encoding for low-cardinality columns
 pub struct DictionaryEncoder {
     max_dictionary_size: usize,
 }
@@ -235,7 +235,7 @@ impl CompressionAlgorithm for DictionaryEncoder {
     }
 }
 
-/// Run-length encoding for repeated values
+// Run-length encoding for repeated values
 pub struct RunLengthEncoder {
     min_run_length: usize,
 }
@@ -361,7 +361,7 @@ impl CompressionAlgorithm for RunLengthEncoder {
     }
 }
 
-/// Bit-packing for low-cardinality integer columns
+// Bit-packing for low-cardinality integer columns
 pub struct BitPacker {
     max_bits: u8,
 }
@@ -492,7 +492,7 @@ impl CompressionAlgorithm for BitPacker {
     }
 }
 
-/// Delta encoding for sorted or monotonic columns
+// Delta encoding for sorted or monotonic columns
 pub struct DeltaEncoder;
 
 impl DeltaEncoder {
@@ -571,7 +571,7 @@ impl CompressionAlgorithm for DeltaEncoder {
     }
 }
 
-/// Frame-of-reference compression
+// Frame-of-reference compression
 pub struct FrameOfReferenceEncoder {
     frame_size: usize,
 }
@@ -668,7 +668,7 @@ impl CompressionAlgorithm for FrameOfReferenceEncoder {
     }
 }
 
-/// Hybrid compressor that selects best algorithm
+// Hybrid compressor that selects best algorithm
 pub struct HybridCompressor {
     dictionary: Arc<DictionaryEncoder>,
     rle: Arc<RunLengthEncoder>,
@@ -856,5 +856,3 @@ use std::time::Instant;
         assert_eq!(data, decompressed);
     }
 }
-
-

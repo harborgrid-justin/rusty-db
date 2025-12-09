@@ -58,24 +58,24 @@ use std::thread;
 // Benchmark Configuration
 // ============================================================================
 
-/// Benchmark configuration parameters
+// Benchmark configuration parameters
 #[derive(Debug, Clone)]
 pub struct BenchConfig {
-    /// Number of iterations for each benchmark
+    // Number of iterations for each benchmark
     pub iterations: usize,
-    /// Number of warmup iterations
+    // Number of warmup iterations
     pub warmup_iterations: usize,
-    /// Page size in bytes (default: 4KB)
+    // Page size in bytes (default: 4KB)
     pub page_size: usize,
-    /// Number of pages for scan benchmarks
+    // Number of pages for scan benchmarks
     pub num_pages: usize,
-    /// Buffer pool size in pages
+    // Buffer pool size in pages
     pub buffer_pool_size: usize,
-    /// Number of concurrent threads
+    // Number of concurrent threads
     pub num_threads: usize,
-    /// Enable SIMD optimizations
+    // Enable SIMD optimizations
     pub enable_simd: bool,
-    /// Enable detailed metrics collection
+    // Enable detailed metrics collection
     pub collect_metrics: bool,
 }
 
@@ -98,24 +98,24 @@ impl Default for BenchConfig {
 // Performance Metrics
 // ============================================================================
 
-/// Detailed performance metrics for benchmarks
+// Detailed performance metrics for benchmarks
 #[derive(Debug)]
 pub struct BenchMetrics {
-    /// Total operations executed
+    // Total operations executed
     pub total_ops: AtomicU64,
-    /// Total bytes processed
+    // Total bytes processed
     pub total_bytes: AtomicU64,
-    /// Number of cache hits
+    // Number of cache hits
     pub cache_hits: AtomicU64,
-    /// Number of cache misses
+    // Number of cache misses
     pub cache_misses: AtomicU64,
-    /// Total latency in nanoseconds
+    // Total latency in nanoseconds
     pub total_latency_ns: AtomicU64,
-    /// Minimum latency observed
+    // Minimum latency observed
     pub min_latency_ns: AtomicU64,
-    /// Maximum latency observed
+    // Maximum latency observed
     pub max_latency_ns: AtomicU64,
-    /// Number of errors
+    // Number of errors
     pub errors: AtomicU64,
 }
 
@@ -150,7 +150,7 @@ impl Default for BenchMetrics {
 }
 
 impl BenchMetrics {
-    /// Record an operation with its latency
+    // Record an operation with its latency
     pub fn record_op(&self, latency_ns: u64, bytes: u64) {
         self.total_ops.fetch_add(1, Ordering::Relaxed);
         self.total_bytes.fetch_add(bytes, Ordering::Relaxed);
@@ -185,22 +185,22 @@ impl BenchMetrics {
         }
     }
 
-    /// Record a cache hit
+    // Record a cache hit
     pub fn record_cache_hit(&self) {
         self.cache_hits.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Record a cache miss
+    // Record a cache miss
     pub fn record_cache_miss(&self) {
         self.cache_misses.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Record an error
+    // Record an error
     pub fn record_error(&self) {
         self.errors.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Calculate average latency in nanoseconds
+    // Calculate average latency in nanoseconds
     pub fn avg_latency_ns(&self) -> f64 {
         let total_ops = self.total_ops.load(Ordering::Relaxed);
         if total_ops == 0 {
@@ -210,7 +210,7 @@ impl BenchMetrics {
         total_latency as f64 / total_ops as f64
     }
 
-    /// Calculate cache hit rate as percentage
+    // Calculate cache hit rate as percentage
     pub fn cache_hit_rate(&self) -> f64 {
         let hits = self.cache_hits.load(Ordering::Relaxed);
         let misses = self.cache_misses.load(Ordering::Relaxed);
@@ -221,19 +221,19 @@ impl BenchMetrics {
         (hits as f64 / total as f64) * 100.0
     }
 
-    /// Calculate throughput in ops/sec
+    // Calculate throughput in ops/sec
     pub fn throughput(&self, duration_secs: f64) -> f64 {
         let total_ops = self.total_ops.load(Ordering::Relaxed);
         total_ops as f64 / duration_secs
     }
 
-    /// Calculate bandwidth in MB/s
+    // Calculate bandwidth in MB/s
     pub fn bandwidth_mbps(&self, duration_secs: f64) -> f64 {
         let total_bytes = self.total_bytes.load(Ordering::Relaxed);
         (total_bytes as f64 / duration_secs) / (1024.0 * 1024.0)
     }
 
-    /// Print detailed metrics summary
+    // Print detailed metrics summary
     pub fn print_summary(&self, duration: Duration) {
         let duration_secs = duration.as_secs_f64();
         println!("\n=== Benchmark Metrics ===");
@@ -254,7 +254,7 @@ impl BenchMetrics {
 // Mock Data Structures for Benchmarking
 // ============================================================================
 
-/// Mock page structure for storage benchmarks
+// Mock page structure for storage benchmarks
 #[repr(align(4096))]
 pub struct Page {
     pub data: [u8; 4096],
@@ -294,7 +294,7 @@ impl Page {
     }
 }
 
-/// Mock buffer pool for buffer manager benchmarks
+// Mock buffer pool for buffer manager benchmarks
 pub struct MockBufferPool {
     pages: Vec<Arc<Page>>,
     page_table: parking_lot::RwLock<HashMap<u32, usize>>,
@@ -351,7 +351,7 @@ impl MockBufferPool {
     }
 }
 
-/// Mock lock-free queue for concurrency benchmarks
+// Mock lock-free queue for concurrency benchmarks
 pub struct MockLockFreeQueue<T> {
     queue: crossbeam::queue::SegQueue<T>,
     metrics: BenchMetrics,
@@ -389,7 +389,7 @@ impl<T> MockLockFreeQueue<T> {
 // Page Scan Benchmarks
 // ============================================================================
 
-/// Sequential page scan benchmark
+// Sequential page scan benchmark
 pub fn bench_sequential_page_scan(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
     let pages: Vec<Page> = (0..config.num_pages)
@@ -418,7 +418,7 @@ pub fn bench_sequential_page_scan(config: &BenchConfig) -> BenchMetrics {
     metrics
 }
 
-/// Random page scan benchmark
+// Random page scan benchmark
 pub fn bench_random_page_scan(config: &BenchConfig) -> BenchMetrics {
     use rand::Rng;
 
@@ -451,7 +451,7 @@ pub fn bench_random_page_scan(config: &BenchConfig) -> BenchMetrics {
     metrics
 }
 
-/// Page scan with predicate filtering
+// Page scan with predicate filtering
 pub fn bench_filtered_page_scan(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
     let pages: Vec<Page> = (0..config.num_pages)
@@ -486,7 +486,7 @@ pub fn bench_filtered_page_scan(config: &BenchConfig) -> BenchMetrics {
 // Index Lookup Benchmarks
 // ============================================================================
 
-/// B-tree index lookup benchmark
+// B-tree index lookup benchmark
 pub fn bench_btree_lookup(config: &BenchConfig) -> BenchMetrics {
     use std::collections::BTreeMap;
 
@@ -521,7 +521,7 @@ pub fn bench_btree_lookup(config: &BenchConfig) -> BenchMetrics {
     metrics
 }
 
-/// Hash index lookup benchmark
+// Hash index lookup benchmark
 pub fn bench_hash_lookup(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
     let mut hash_map = HashMap::new();
@@ -554,7 +554,7 @@ pub fn bench_hash_lookup(config: &BenchConfig) -> BenchMetrics {
     metrics
 }
 
-/// Range scan benchmark (B-tree)
+// Range scan benchmark (B-tree)
 pub fn bench_range_scan(config: &BenchConfig) -> BenchMetrics {
 
     let metrics = BenchMetrics::default();
@@ -592,7 +592,7 @@ pub fn bench_range_scan(config: &BenchConfig) -> BenchMetrics {
 // Buffer Manager Benchmarks
 // ============================================================================
 
-/// Pin/unpin cycle benchmark
+// Pin/unpin cycle benchmark
 pub fn bench_pin_unpin_cycles(config: &BenchConfig) -> BenchMetrics {
     let buffer_pool = MockBufferPool::new(config.clone());
 
@@ -613,7 +613,7 @@ pub fn bench_pin_unpin_cycles(config: &BenchConfig) -> BenchMetrics {
     metrics.clone()
 }
 
-/// Concurrent buffer pool access benchmark
+// Concurrent buffer pool access benchmark
 pub fn bench_concurrent_buffer_access(config: &BenchConfig) -> BenchMetrics {
     use std::thread;
 
@@ -651,7 +651,7 @@ pub fn bench_concurrent_buffer_access(config: &BenchConfig) -> BenchMetrics {
     metrics.clone()
 }
 
-/// Buffer eviction benchmark
+// Buffer eviction benchmark
 pub fn bench_buffer_eviction(config: &BenchConfig) -> BenchMetrics {
     // Simulate LRU eviction by accessing more pages than buffer pool size
     let buffer_pool = MockBufferPool::new(config.clone());
@@ -680,7 +680,7 @@ pub fn bench_buffer_eviction(config: &BenchConfig) -> BenchMetrics {
 // Lock-Free Queue Benchmarks
 // ============================================================================
 
-/// Single-threaded queue operations
+// Single-threaded queue operations
 pub fn bench_queue_single_threaded(config: &BenchConfig) -> BenchMetrics {
     let queue = MockLockFreeQueue::<u64>::new();
 
@@ -701,7 +701,7 @@ pub fn bench_queue_single_threaded(config: &BenchConfig) -> BenchMetrics {
     metrics.clone()
 }
 
-/// Multi-threaded queue operations (producer-consumer)
+// Multi-threaded queue operations (producer-consumer)
 pub fn bench_queue_multi_threaded(config: &BenchConfig) -> BenchMetrics {
 
     let queue = Arc::new(MockLockFreeQueue::<u64>::new());
@@ -752,7 +752,7 @@ pub fn bench_queue_multi_threaded(config: &BenchConfig) -> BenchMetrics {
 // SIMD Filter Benchmarks
 // ============================================================================
 
-/// SIMD equality filter (i32)
+// SIMD equality filter (i32)
 pub fn bench_simd_filter_eq(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
     let data: Vec<i32> = (0..config.num_pages * 1024)
@@ -800,7 +800,7 @@ pub fn bench_simd_filter_eq(config: &BenchConfig) -> BenchMetrics {
     metrics
 }
 
-/// SIMD range filter (i32)
+// SIMD range filter (i32)
 pub fn bench_simd_filter_range(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
     let data: Vec<i32> = (0..config.num_pages * 1024)
@@ -830,7 +830,7 @@ pub fn bench_simd_filter_range(config: &BenchConfig) -> BenchMetrics {
     metrics
 }
 
-/// SIMD aggregation (SUM)
+// SIMD aggregation (SUM)
 pub fn bench_simd_aggregate_sum(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
     let data: Vec<i64> = (0..config.num_pages * 1024)
@@ -856,7 +856,7 @@ pub fn bench_simd_aggregate_sum(config: &BenchConfig) -> BenchMetrics {
     metrics
 }
 
-/// SIMD aggregation (MIN/MAX)
+// SIMD aggregation (MIN/MAX)
 pub fn bench_simd_aggregate_minmax(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
     let data: Vec<i32> = (0..config.num_pages * 1024)
@@ -893,7 +893,7 @@ pub fn bench_simd_aggregate_minmax(config: &BenchConfig) -> BenchMetrics {
 // Transaction Benchmarks
 // ============================================================================
 
-/// Transaction begin/commit overhead
+// Transaction begin/commit overhead
 pub fn bench_transaction_overhead(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
     let txn_counter = AtomicU64::new(0);
@@ -921,7 +921,7 @@ pub fn bench_transaction_overhead(config: &BenchConfig) -> BenchMetrics {
     metrics
 }
 
-/// MVCC version chain traversal
+// MVCC version chain traversal
 pub fn bench_mvcc_traversal(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
 
@@ -986,7 +986,7 @@ pub fn bench_mvcc_traversal(config: &BenchConfig) -> BenchMetrics {
 // Memory Allocation Benchmarks
 // ============================================================================
 
-/// Small allocation benchmark (< 1KB)
+// Small allocation benchmark (< 1KB)
 pub fn bench_small_allocations(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
 
@@ -1006,7 +1006,7 @@ pub fn bench_small_allocations(config: &BenchConfig) -> BenchMetrics {
     metrics
 }
 
-/// Large allocation benchmark (> 1MB)
+// Large allocation benchmark (> 1MB)
 pub fn bench_large_allocations(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
     let alloc_size = 1024 * 1024; // 1MB
@@ -1031,7 +1031,7 @@ pub fn bench_large_allocations(config: &BenchConfig) -> BenchMetrics {
 // Benchmark Suite Runner
 // ============================================================================
 
-/// Run all benchmarks with default configuration
+// Run all benchmarks with default configuration
 pub fn run_all_benchmarks() {
     let config = BenchConfig::default();
 

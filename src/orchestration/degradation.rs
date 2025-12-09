@@ -29,29 +29,29 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 
-/// Degradation level
+// Degradation level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[derive(Hash)]
 pub enum DegradationLevel {
-    /// Normal operation
+    // Normal operation
     Normal = 0,
-    /// Level 1 degradation - minor features disabled
+    // Level 1 degradation - minor features disabled
     DegradedL1 = 1,
-    /// Level 2 degradation - significant features disabled
+    // Level 2 degradation - significant features disabled
     DegradedL2 = 2,
-    /// Level 3 degradation - only critical features enabled
+    // Level 3 degradation - only critical features enabled
     DegradedL3 = 3,
-    /// Critical - minimal functionality only
+    // Critical - minimal functionality only
     Critical = 4,
 }
 
 impl DegradationLevel {
-    /// Check if this level allows a feature
+    // Check if this level allows a feature
     pub fn allows_feature(&self, feature: Feature) -> bool {
         feature.min_level() <= *self
     }
 
-    /// Get human-readable description
+    // Get human-readable description
     pub fn description(&self) -> &'static str {
         match self {
             DegradationLevel::Normal => "Normal operation",
@@ -63,31 +63,31 @@ impl DegradationLevel {
     }
 }
 
-/// Features that can be degraded
+// Features that can be degraded
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Feature {
-    /// Analytics and OLAP queries
+    // Analytics and OLAP queries
     Analytics,
-    /// Full-text search
+    // Full-text search
     FullTextSearch,
-    /// Complex joins
+    // Complex joins
     ComplexJoins,
-    /// Materialized views
+    // Materialized views
     MaterializedViews,
-    /// Background indexing
+    // Background indexing
     BackgroundIndexing,
-    /// Query optimization
+    // Query optimization
     QueryOptimization,
-    /// Write operations
+    // Write operations
     WriteOperations,
-    /// Transaction logging
+    // Transaction logging
     TransactionLogging,
-    /// Replication
+    // Replication
     Replication,
 }
 
 impl Feature {
-    /// Get the minimum degradation level required to use this feature
+    // Get the minimum degradation level required to use this feature
     pub fn min_level(&self) -> DegradationLevel {
         match self {
             Feature::Analytics => DegradationLevel::Normal,
@@ -102,7 +102,7 @@ impl Feature {
         }
     }
 
-    /// Check if this is a critical feature
+    // Check if this is a critical feature
     pub fn is_critical(&self) -> bool {
         matches!(
             self,
@@ -111,20 +111,20 @@ impl Feature {
     }
 }
 
-/// Degradation trigger that determines when to degrade
+// Degradation trigger that determines when to degrade
 #[derive(Clone)]
 pub struct DegradationTrigger {
-    /// Trigger name
+    // Trigger name
     pub name: String,
-    /// CPU threshold (0.0 to 1.0)
+    // CPU threshold (0.0 to 1.0)
     pub cpu_threshold: Option<f64>,
-    /// Memory threshold (0.0 to 1.0)
+    // Memory threshold (0.0 to 1.0)
     pub memory_threshold: Option<f64>,
-    /// Error rate threshold (0.0 to 1.0)
+    // Error rate threshold (0.0 to 1.0)
     pub error_rate_threshold: Option<f64>,
-    /// Latency threshold (milliseconds)
+    // Latency threshold (milliseconds)
     pub latency_threshold: Option<u64>,
-    /// Custom condition
+    // Custom condition
     pub custom_condition: Option<Arc<dyn Fn() -> bool + Send + Sync>>,
 }
 
@@ -142,7 +142,7 @@ impl fmt::Debug for DegradationTrigger {
 }
 
 impl DegradationTrigger {
-    /// Create a new trigger
+    // Create a new trigger
     pub fn new(name: String) -> Self {
         Self {
             name,
@@ -154,31 +154,31 @@ impl DegradationTrigger {
         }
     }
 
-    /// Set CPU threshold
+    // Set CPU threshold
     pub fn with_cpu_threshold(mut self, threshold: f64) -> Self {
         self.cpu_threshold = Some(threshold);
         self
     }
 
-    /// Set memory threshold
+    // Set memory threshold
     pub fn with_memory_threshold(mut self, threshold: f64) -> Self {
         self.memory_threshold = Some(threshold);
         self
     }
 
-    /// Set error rate threshold
+    // Set error rate threshold
     pub fn with_error_rate_threshold(mut self, threshold: f64) -> Self {
         self.error_rate_threshold = Some(threshold);
         self
     }
 
-    /// Set latency threshold
+    // Set latency threshold
     pub fn with_latency_threshold(mut self, threshold_ms: u64) -> Self {
         self.latency_threshold = Some(threshold_ms);
         self
     }
 
-    /// Evaluate if the trigger should fire
+    // Evaluate if the trigger should fire
     pub fn evaluate(&self, metrics: &SystemMetrics) -> bool {
         if let Some(threshold) = self.cpu_threshold {
             if metrics.cpu_usage > threshold {
@@ -214,41 +214,41 @@ impl DegradationTrigger {
     }
 }
 
-/// System metrics for degradation decisions
+// System metrics for degradation decisions
 #[derive(Debug, Clone, Default)]
 pub struct SystemMetrics {
-    /// CPU usage (0.0 to 1.0)
+    // CPU usage (0.0 to 1.0)
     pub cpu_usage: f64,
-    /// Memory usage (0.0 to 1.0)
+    // Memory usage (0.0 to 1.0)
     pub memory_usage: f64,
-    /// Error rate (0.0 to 1.0)
+    // Error rate (0.0 to 1.0)
     pub error_rate: f64,
-    /// Average latency (milliseconds)
+    // Average latency (milliseconds)
     pub avg_latency_ms: u64,
-    /// Active connections
+    // Active connections
     pub active_connections: usize,
-    /// Queue depth
+    // Queue depth
     pub queue_depth: usize,
 }
 
-/// Degradation strategy
+// Degradation strategy
 pub struct DegradationStrategy {
-    /// Current degradation level
+    // Current degradation level
     current_level: RwLock<DegradationLevel>,
-    /// Triggers for each level
+    // Triggers for each level
     triggers: RwLock<HashMap<DegradationLevel, Vec<DegradationTrigger>>>,
-    /// Disabled features
+    // Disabled features
     disabled_features: RwLock<HashMap<Feature, bool>>,
-    /// Metrics
+    // Metrics
     metrics: Arc<RwLock<SystemMetrics>>,
-    /// Statistics
+    // Statistics
     level_changes: Arc<AtomicU64>,
-    /// Last level change time
+    // Last level change time
     last_change: RwLock<Option<Instant>>,
 }
 
 impl DegradationStrategy {
-    /// Create a new degradation strategy
+    // Create a new degradation strategy
     pub fn new() -> Self {
         Self {
             current_level: RwLock::new(DegradationLevel::Normal),
@@ -260,12 +260,12 @@ impl DegradationStrategy {
         }
     }
 
-    /// Get current degradation level
+    // Get current degradation level
     pub fn current_level(&self) -> DegradationLevel {
         *self.current_level.read()
     }
 
-    /// Set degradation level manually
+    // Set degradation level manually
     pub fn set_level(&self, level: DegradationLevel) {
         let mut current = self.current_level.write();
         if *current != level {
@@ -282,7 +282,7 @@ impl DegradationStrategy {
         }
     }
 
-    /// Update disabled features based on level
+    // Update disabled features based on level
     fn update_disabled_features(&self, level: DegradationLevel) {
         let mut disabled = self.disabled_features.write();
         disabled.clear();
@@ -306,13 +306,13 @@ impl DegradationStrategy {
         }
     }
 
-    /// Check if a feature is enabled
+    // Check if a feature is enabled
     pub fn is_feature_enabled(&self, feature: Feature) -> bool {
         let disabled = self.disabled_features.read();
         !disabled.get(&feature).copied().unwrap_or(false)
     }
 
-    /// Register a trigger for a degradation level
+    // Register a trigger for a degradation level
     pub fn register_trigger(&self, level: DegradationLevel, trigger: DegradationTrigger) {
         let mut triggers = self.triggers.write();
         triggers
@@ -321,13 +321,13 @@ impl DegradationStrategy {
             .push(trigger);
     }
 
-    /// Update system metrics
+    // Update system metrics
     pub fn update_metrics(&self, metrics: SystemMetrics) {
         let mut current = self.metrics.write();
         *current = metrics;
     }
 
-    /// Evaluate triggers and adjust degradation level
+    // Evaluate triggers and adjust degradation level
     pub fn evaluate(&self) {
         let metrics = self.metrics.read().clone();
         let triggers = self.triggers.read();
@@ -385,7 +385,7 @@ impl DegradationStrategy {
         }
     }
 
-    /// Get disabled features
+    // Get disabled features
     pub fn get_disabled_features(&self) -> Vec<Feature> {
         let disabled = self.disabled_features.read();
         disabled
@@ -395,7 +395,7 @@ impl DegradationStrategy {
             .collect()
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn statistics(&self) -> DegradationStats {
         DegradationStats {
             current_level: self.current_level(),
@@ -405,7 +405,7 @@ impl DegradationStrategy {
         }
     }
 
-    /// Reset to normal
+    // Reset to normal
     pub fn reset(&self) {
         self.set_level(DegradationLevel::Normal);
         info!("Degradation strategy reset to normal");
@@ -418,33 +418,33 @@ impl Default for DegradationStrategy {
     }
 }
 
-/// Degradation statistics
+// Degradation statistics
 #[derive(Debug, Clone)]
 pub struct DegradationStats {
-    /// Current degradation level
+    // Current degradation level
     pub current_level: DegradationLevel,
-    /// Number of level changes
+    // Number of level changes
     pub level_changes: u64,
-    /// Number of disabled features
+    // Number of disabled features
     pub disabled_features_count: usize,
-    /// Last level change time
+    // Last level change time
     pub last_change: Option<Instant>,
 }
 
-/// Load shedding strategy
+// Load shedding strategy
 pub struct LoadShedder {
-    /// Rejection rate (0.0 to 1.0)
+    // Rejection rate (0.0 to 1.0)
     rejection_rate: RwLock<f64>,
-    /// Total requests
+    // Total requests
     total_requests: Arc<AtomicU64>,
-    /// Rejected requests
+    // Rejected requests
     rejected_requests: Arc<AtomicU64>,
-    /// Priority threshold (requests below this are rejected)
+    // Priority threshold (requests below this are rejected)
     priority_threshold: RwLock<u8>,
 }
 
 impl LoadShedder {
-    /// Create a new load shedder
+    // Create a new load shedder
     pub fn new() -> Self {
         Self {
             rejection_rate: RwLock::new(0.0),
@@ -454,7 +454,7 @@ impl LoadShedder {
         }
     }
 
-    /// Set rejection rate
+    // Set rejection rate
     pub fn set_rejection_rate(&self, rate: f64) {
         let rate = rate.clamp(0.0, 1.0);
         *self.rejection_rate.write() = rate;
@@ -465,13 +465,13 @@ impl LoadShedder {
         }
     }
 
-    /// Set priority threshold
+    // Set priority threshold
     pub fn set_priority_threshold(&self, threshold: u8) {
         *self.priority_threshold.write() = threshold;
         info!("Priority threshold set to: {}", threshold);
     }
 
-    /// Check if a request should be accepted
+    // Check if a request should be accepted
     pub fn should_accept(&self, priority: u8) -> bool {
         self.total_requests.fetch_add(1, Ordering::Relaxed);
 
@@ -496,7 +496,7 @@ impl LoadShedder {
         true
     }
 
-    /// Get current rejection rate
+    // Get current rejection rate
     pub fn current_rejection_rate(&self) -> f64 {
         let total = self.total_requests.load(Ordering::Relaxed);
         if total == 0 {
@@ -507,13 +507,13 @@ impl LoadShedder {
         rejected as f64 / total as f64
     }
 
-    /// Reset statistics
+    // Reset statistics
     pub fn reset_stats(&self) {
         self.total_requests.store(0, Ordering::Relaxed);
         self.rejected_requests.store(0, Ordering::Relaxed);
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn statistics(&self) -> LoadShedderStats {
         LoadShedderStats {
             total_requests: self.total_requests.load(Ordering::Relaxed),
@@ -530,16 +530,16 @@ impl Default for LoadShedder {
     }
 }
 
-/// Load shedder statistics
+// Load shedder statistics
 #[derive(Debug, Clone)]
 pub struct LoadShedderStats {
-    /// Total requests processed
+    // Total requests processed
     pub total_requests: u64,
-    /// Total requests rejected
+    // Total requests rejected
     pub rejected_requests: u64,
-    /// Configured rejection rate
+    // Configured rejection rate
     pub configured_rejection_rate: f64,
-    /// Actual rejection rate
+    // Actual rejection rate
     pub actual_rejection_rate: f64,
 }
 

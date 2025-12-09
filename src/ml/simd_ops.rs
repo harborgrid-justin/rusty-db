@@ -16,12 +16,12 @@ use std::arch::x86::*;
 // SIMD Dot Product
 // ============================================================================
 
-/// SIMD-accelerated dot product of two vectors
-///
-/// # Performance
-/// - AVX2: ~8x faster than scalar
-/// - SSE2: ~4x faster than scalar
-/// - Scalar fallback for other architectures
+// SIMD-accelerated dot product of two vectors
+//
+// # Performance
+// - AVX2: ~8x faster than scalar
+// - SSE2: ~4x faster than scalar
+// - Scalar fallback for other architectures
 #[inline]
 pub fn simd_dot_product(a: &[f64], b: &[f64]) -> f64 {
     assert_eq!(a.len(), b.len(), "Vector dimensions must match");
@@ -46,7 +46,7 @@ pub fn simd_dot_product(a: &[f64], b: &[f64]) -> f64 {
     }
 }
 
-/// Scalar dot product (fallback)
+// Scalar dot product (fallback)
 #[inline]
 fn scalar_dot_product(a: &[f64], b: &[f64]) -> f64 {
     a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()
@@ -117,7 +117,7 @@ unsafe fn simd_dot_product_sse2(a: &[f64], b: &[f64]) -> f64 {
 // SIMD Vector Addition
 // ============================================================================
 
-/// SIMD-accelerated element-wise vector addition: result = a + b
+// SIMD-accelerated element-wise vector addition: result = a + b
 #[inline]
 pub fn simd_vector_add(a: &[f64], b: &[f64], result: &mut [f64]) {
     assert_eq!(a.len(), b.len());
@@ -193,7 +193,7 @@ unsafe fn simd_vector_add_sse2(a: &[f64], b: &[f64], result: &mut [f64]) {
 // SIMD Scalar Multiply
 // ============================================================================
 
-/// SIMD-accelerated scalar multiplication: result = scalar * vector
+// SIMD-accelerated scalar multiplication: result = scalar * vector
 #[inline]
 pub fn simd_scalar_multiply(scalar: f64, vector: &[f64], result: &mut [f64]) {
     assert_eq!(vector.len(), result.len());
@@ -268,10 +268,10 @@ unsafe fn simd_scalar_multiply_sse2(scalar: f64, vector: &[f64], result: &mut [f
 // SIMD Matrix-Vector Multiply
 // ============================================================================
 
-/// SIMD-accelerated matrix-vector multiplication: result = matrix * vector
-///
-/// # Performance
-/// Approximately 6-8x faster than naive scalar implementation
+// SIMD-accelerated matrix-vector multiplication: result = matrix * vector
+//
+// # Performance
+// Approximately 6-8x faster than naive scalar implementation
 pub fn simd_matrix_vector_multiply(matrix: &[Vec<f64>], vector: &[f64]) -> Vector {
     assert!(!matrix.is_empty(), "Matrix cannot be empty");
     assert_eq!(
@@ -294,9 +294,9 @@ pub fn simd_matrix_vector_multiply(matrix: &[Vec<f64>], vector: &[f64]) -> Vecto
 // SIMD Euclidean Distance
 // ============================================================================
 
-/// SIMD-accelerated Euclidean distance between two vectors
-///
-/// Returns: sqrt(sum((a[i] - b[i])^2))
+// SIMD-accelerated Euclidean distance between two vectors
+//
+// Returns: sqrt(sum((a[i] - b[i])^2))
 #[inline]
 pub fn simd_euclidean_distance(a: &[f64], b: &[f64]) -> f64 {
     assert_eq!(a.len(), b.len());
@@ -389,7 +389,7 @@ unsafe fn simd_euclidean_distance_sse2(a: &[f64], b: &[f64]) -> f64 {
 // SIMD Sum
 // ============================================================================
 
-/// SIMD-accelerated sum of all elements in a vector
+// SIMD-accelerated sum of all elements in a vector
 #[inline]
 pub fn simd_sum(vector: &[f64]) -> f64 {
     #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]

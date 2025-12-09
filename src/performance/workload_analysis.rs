@@ -1,6 +1,6 @@
-/// Workload Analysis Module
-///
-/// Analyzes query patterns and provides insights into database workload
+// Workload Analysis Module
+//
+// Analyzes query patterns and provides insights into database workload
 
 use crate::{Result, error::DbError};
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
-/// Workload analyzer
+// Workload analyzer
 pub struct WorkloadAnalyzer {
     query_log: Arc<RwLock<Vec<QueryExecution>>>,
     max_log_size: usize,
@@ -24,7 +24,7 @@ impl WorkloadAnalyzer {
         }
     }
 
-    /// Log query execution
+    // Log query execution
     pub fn log_execution(&self, execution: QueryExecution) -> Result<()> {
         let mut log = self.query_log.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -44,7 +44,7 @@ impl WorkloadAnalyzer {
         Ok(())
     }
 
-    /// Analyze workload
+    // Analyze workload
     pub fn analyze(&self) -> Result<WorkloadAnalysis> {
         // Check cache
         let cache = self.analysis_cache.read()
@@ -98,7 +98,7 @@ impl WorkloadAnalyzer {
         Ok(analysis)
     }
 
-    /// Get query execution log
+    // Get query execution log
     pub fn get_log(&self) -> Result<Vec<QueryExecution>> {
         let log = self.query_log.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;

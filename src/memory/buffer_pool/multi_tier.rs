@@ -1,6 +1,6 @@
-//! Multi-Tier Buffer Pool
-//!
-//! Hot/Warm/Cold tier management.
+// Multi-Tier Buffer Pool
+//
+// Hot/Warm/Cold tier management.
 
 use super::common::*;
 use serde::{Serialize, Deserialize};
@@ -11,33 +11,33 @@ use parking_lot::{Mutex, RwLock as PRwLock};
 
 // Note: BufferFrame, NumaNode, and BufferPoolConfig are now in common.rs
 
-/// Multi-tier buffer pool implementation
+// Multi-tier buffer pool implementation
 pub struct MultiTierBufferPool {
     config: BufferPoolConfig,
-    /// Hot tier frames
+    // Hot tier frames
     hot_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
-    /// Warm tier frames
+    // Warm tier frames
     warm_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
-    /// Cold tier frames
+    // Cold tier frames
     cold_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
-    /// Keep pool frames (pinned pages)
+    // Keep pool frames (pinned pages)
     keep_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
-    /// Recycle pool frames (sequential access)
+    // Recycle pool frames (sequential access)
     recycle_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
-    /// Per-tablespace pools
+    // Per-tablespace pools
     tablespace_pools: Arc<Mutex<HashMap<u32, Vec<Arc<BufferFrame>>>>>,
-    /// Page table mapping PageId to BufferFrame
+    // Page table mapping PageId to BufferFrame
     page_table: Arc<PRwLock<HashMap<PageId, Arc<BufferFrame>>>>,
-    /// Free frames list
+    // Free frames list
     free_frames: Arc<Mutex<VecDeque<Arc<BufferFrame>>>>,
-    /// Background tier management thread handle
+    // Background tier management thread handle
     tier_manager_running: Arc<AtomicBool>,
-    /// Statistics
+    // Statistics
     stats: Arc<BufferPoolStats>,
 }
 
 impl MultiTierBufferPool {
-    /// Create a new multi-tier buffer pool
+    // Create a new multi-tier buffer pool
     pub fn new(config: BufferPoolConfig) -> Self {
         let total_frames = config.total_size / config.page_size;
         let hot_frames_count = (total_frames as f64 * config.hot_tier_ratio) as usize;
@@ -111,7 +111,7 @@ impl MultiTierBufferPool {
         }
     }
 
-    /// Allocate a frame from the appropriate pool
+    // Allocate a frame from the appropriate pool
     pub fn allocate_frame(&self, pool_type: PoolType) -> Option<Arc<BufferFrame>> {
         let mut free_frames = self.free_frames.lock();
         if let Some(frame) = free_frames.pop_front() {
@@ -124,7 +124,7 @@ impl MultiTierBufferPool {
         None
     }
 
-    /// Promote page to higher tier based on access patterns
+    // Promote page to higher tier based on access patterns
     pub fn promote_page(&self, page_id: PageId) -> bool {
         let page_table = self.page_table.read();
         if let Some(frame) = page_table.get(&page_id) {
@@ -152,7 +152,7 @@ impl MultiTierBufferPool {
         false
     }
 
-    /// Demote page to lower tier based on idle time
+    // Demote page to lower tier based on idle time
     pub fn demote_page(&self, page_id: PageId) -> bool {
         let page_table = self.page_table.read();
         if let Some(frame) = page_table.get(&page_id) {
@@ -180,7 +180,7 @@ impl MultiTierBufferPool {
         false
     }
 
-    /// Pin a page in the buffer pool
+    // Pin a page in the buffer pool
     pub fn pin_page(&self, page_id: PageId, pool_type: PoolType) -> Option<Arc<BufferFrame>> {
         // Try to find in page table first
         {
@@ -206,7 +206,7 @@ impl MultiTierBufferPool {
         }
     }
 
-    /// Unpin a page in the buffer pool
+    // Unpin a page in the buffer pool
     pub fn unpin_page(&self, page_id: PageId, dirty: bool) -> bool {
         let page_table = self.page_table.read();
         if let Some(frame) = page_table.get(&page_id) {
@@ -219,7 +219,7 @@ impl MultiTierBufferPool {
         false
     }
 
-    /// Get frame from keep pool (for pinned pages)
+    // Get frame from keep pool (for pinned pages)
     pub fn allocate_keep_frame(&self) -> Option<Arc<BufferFrame>> {
         let mut keep_frames = self.keep_frames.lock();
         for frame in keep_frames.iter() {
@@ -230,7 +230,7 @@ impl MultiTierBufferPool {
         None
     }
 
-    /// Get frame from recycle pool (for sequential scans)
+    // Get frame from recycle pool (for sequential scans)
     pub fn allocate_recycle_frame(&self) -> Option<Arc<BufferFrame>> {
         let mut recycle_frames = self.recycle_frames.lock();
         for frame in recycle_frames.iter() {
@@ -241,7 +241,7 @@ impl MultiTierBufferPool {
         None
     }
 
-    /// Create or get per-tablespace buffer pool
+    // Create or get per-tablespace buffer pool
     pub fn get_tablespace_pool(&self, tablespace_id: u32) -> Vec<Arc<BufferFrame>> {
         let mut pools = self.tablespace_pools.lock();
         if let Some(pool) = pools.get(&tablespace_id) {
@@ -266,7 +266,7 @@ impl MultiTierBufferPool {
         frames
     }
 
-    /// NUMA-aware frame allocation
+    // NUMA-aware frame allocation
     pub fn allocate_numa_frame(&self, numa_node: u32) -> Option<Arc<BufferFrame>> {
         if !self.config.numa_aware {
             return self.allocate_frame(PoolType::Default);
@@ -277,7 +277,7 @@ impl MultiTierBufferPool {
         self.allocate_frame(PoolType::Default)
     }
 
-    /// Start background tier management thread
+    // Start background tier management thread
     pub fn start_tier_manager(&self) {
         if self.tier_manager_running.swap(true, Ordering::Acquire) {
             return; // Already running
@@ -302,17 +302,17 @@ impl MultiTierBufferPool {
         });
     }
 
-    /// Stop background tier management
+    // Stop background tier management
     pub fn stop_tier_manager(&self) {
         self.tier_manager_running.store(false, Ordering::Release);
     }
 
-    /// Get buffer pool statistics
+    // Get buffer pool statistics
     pub fn get_stats(&self) -> BufferPoolStatsSnapshot {
         self.stats.snapshot()
     }
 
-    /// Flush all dirty pages
+    // Flush all dirty pages
     pub fn flush_all(&self) -> usize {
         let mut flushed = 0;
         let page_table = self.page_table.read();
@@ -328,19 +328,19 @@ impl MultiTierBufferPool {
         flushed
     }
 
-    /// Get total buffer pool capacity
+    // Get total buffer pool capacity
     pub fn capacity(&self) -> usize {
         self.config.total_size
     }
 
-    /// Get number of frames in use
+    // Get number of frames in use
     pub fn frames_in_use(&self) -> usize {
         let page_table = self.page_table.read();
         page_table.len()
     }
 }
 
-/// Buffer pool statistics
+// Buffer pool statistics
 #[derive(Debug)]
 pub struct BufferPoolStats {
     pub page_hits: AtomicU64,
@@ -405,4 +405,3 @@ pub struct BufferPoolStatsSnapshot {
     pub demotions_warm_to_cold: u64,
     pub hit_ratio: f64,
 }
-

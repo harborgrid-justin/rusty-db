@@ -1,19 +1,19 @@
-/// Window Functions Engine
-///
-/// This module provides comprehensive support for SQL window functions:
-/// - OVER clause with PARTITION BY and ORDER BY
-/// - Frame specifications (ROWS, RANGE, GROUPS)
-/// - Running aggregates (SUM, AVG, COUNT, etc.)
-/// - Ranking functions (ROW_NUMBER, RANK, DENSE_RANK)
-/// - Value functions (LEAD, LAG, FIRST_VALUE, LAST_VALUE, NTH_VALUE)
-/// - Distribution functions (PERCENT_RANK, CUME_DIST, NTILE)
+// Window Functions Engine
+//
+// This module provides comprehensive support for SQL window functions:
+// - OVER clause with PARTITION BY and ORDER BY
+// - Frame specifications (ROWS, RANGE, GROUPS)
+// - Running aggregates (SUM, AVG, COUNT, etc.)
+// - Ranking functions (ROW_NUMBER, RANK, DENSE_RANK)
+// - Value functions (LEAD, LAG, FIRST_VALUE, LAST_VALUE, NTH_VALUE)
+// - Distribution functions (PERCENT_RANK, CUME_DIST, NTILE)
 
 use crate::error::{Result, DbError};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
-/// Window function specification
+// Window function specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WindowFunction {
     // Ranking functions
@@ -41,14 +41,14 @@ pub enum WindowFunction {
     Variance { column: String },
 }
 
-/// Window specification (OVER clause)
+// Window specification (OVER clause)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WindowSpec {
-    /// PARTITION BY columns
+    // PARTITION BY columns
     pub partition_by: Vec<String>,
-    /// ORDER BY columns and directions
+    // ORDER BY columns and directions
     pub order_by: Vec<OrderByColumn>,
-    /// Frame specification
+    // Frame specification
     pub frame: Option<WindowFrame>,
 }
 
@@ -71,40 +71,40 @@ pub enum NullsOrdering {
     Last,
 }
 
-/// Window frame specification
+// Window frame specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WindowFrame {
-    /// Frame type (ROWS, RANGE, or GROUPS)
+    // Frame type (ROWS, RANGE, or GROUPS)
     pub frame_type: FrameType,
-    /// Frame start boundary
+    // Frame start boundary
     pub start_bound: FrameBound,
-    /// Frame end boundary
+    // Frame end boundary
     pub end_bound: FrameBound,
-    /// Exclusion clause
+    // Exclusion clause
     pub exclusion: FrameExclusion,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FrameType {
-    /// Physical rows
+    // Physical rows
     Rows,
-    /// Logical range based on ORDER BY values
+    // Logical range based on ORDER BY values
     Range,
-    /// Peer groups (rows with same ORDER BY values)
+    // Peer groups (rows with same ORDER BY values)
     Groups,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FrameBound {
-    /// UNBOUNDED PRECEDING
+    // UNBOUNDED PRECEDING
     UnboundedPreceding,
-    /// N PRECEDING
+    // N PRECEDING
     Preceding(usize),
-    /// CURRENT ROW
+    // CURRENT ROW
     CurrentRow,
-    /// N FOLLOWING
+    // N FOLLOWING
     Following(usize),
-    /// UNBOUNDED FOLLOWING
+    // UNBOUNDED FOLLOWING
     UnboundedFollowing,
 }
 
@@ -116,11 +116,11 @@ pub enum FrameExclusion {
     Ties,
 }
 
-/// Window function executor
+// Window function executor
 pub struct WindowExecutor {
-    /// Input data rows
+    // Input data rows
     rows: Vec<Row>,
-    /// Window specifications by name
+    // Window specifications by name
     windows: HashMap<String, WindowSpec>,
 }
 
@@ -132,17 +132,17 @@ impl WindowExecutor {
         }
     }
 
-    /// Add window specification
+    // Add window specification
     pub fn add_window(&mut self, name: String, spec: WindowSpec) {
         self.windows.insert(name, spec);
     }
 
-    /// Set input rows
+    // Set input rows
     pub fn set_rows(&mut self, rows: Vec<Row>) {
         self.rows = rows;
     }
 
-    /// Execute window function
+    // Execute window function
     pub fn execute(
         &self,
         function: &WindowFunction,
@@ -169,7 +169,7 @@ impl WindowExecutor {
         Ok(results)
     }
 
-    /// Partition rows by PARTITION BY columns
+    // Partition rows by PARTITION BY columns
     fn partition_rows(&self, spec: &WindowSpec) -> Result<Vec<Partition>> {
         if spec.partition_by.is_empty() {
             // No partitioning - all rows in one partition
@@ -195,7 +195,7 @@ impl WindowExecutor {
             .collect())
     }
 
-    /// Execute function on a single partition
+    // Execute function on a single partition
     fn execute_on_partition(
         &self,
         function: &WindowFunction,
@@ -239,7 +239,7 @@ impl WindowExecutor {
         }
     }
 
-    /// Sort partition by ORDER BY
+    // Sort partition by ORDER BY
     fn sort_partition(
         &self,
         spec: &WindowSpec,
@@ -272,7 +272,7 @@ impl WindowExecutor {
         Ok(indices)
     }
 
-    /// Get frame for current row
+    // Get frame for current row
     fn get_frame(
         &self,
         spec: &WindowSpec,
@@ -712,7 +712,7 @@ impl WindowExecutor {
     }
 }
 
-/// Row data structure
+// Row data structure
 #[derive(Debug, Clone)]
 pub struct Row {
     values: HashMap<String, String>,
@@ -734,12 +734,12 @@ impl Row {
     }
 }
 
-/// Partition of rows
+// Partition of rows
 struct Partition {
     rows: Vec<usize>,
 }
 
-/// Calculate standard deviation
+// Calculate standard deviation
 fn calculate_stddev(values: &[f64]) -> f64 {
     if values.is_empty() {
         return 0.0;
@@ -749,7 +749,7 @@ fn calculate_stddev(values: &[f64]) -> f64 {
     variance.sqrt()
 }
 
-/// Calculate variance
+// Calculate variance
 fn calculate_variance(values: &[f64]) -> f64 {
     if values.is_empty() {
         return 0.0;
@@ -819,5 +819,3 @@ mod tests {
         assert_eq!(results.len(), 10);
     }
 }
-
-

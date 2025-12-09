@@ -1,12 +1,12 @@
-/// PL/SQL Parser Implementation
-///
-/// This module provides the main parser for PL/SQL blocks, statements, and expressions.
+// PL/SQL Parser Implementation
+//
+// This module provides the main parser for PL/SQL blocks, statements, and expressions.
 
 use crate::{Result, DbError};
 use super::ast_nodes::*;
 use super::lexer::Token;
 
-/// PL/SQL Parser
+// PL/SQL Parser
 pub struct PlSqlParser {
     tokens: Vec<Token>,
     current: usize,
@@ -20,14 +20,14 @@ impl PlSqlParser {
         }
     }
 
-    /// Parse a PL/SQL block from source text
+    // Parse a PL/SQL block from source text
     pub fn parse(&mut self, source: &str) -> Result<PlSqlBlock> {
         self.tokens = super::lexer::tokenize(source)?;
         self.current = 0;
         self.parse_block()
     }
 
-    /// Parse a complete block (DECLARE...BEGIN...EXCEPTION...END)
+    // Parse a complete block (DECLARE...BEGIN...EXCEPTION...END)
     fn parse_block(&mut self) -> Result<PlSqlBlock> {
         let mut declarations = Vec::new();
         let mut statements = Vec::new();
@@ -64,7 +64,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse a variable declaration
+    // Parse a variable declaration
     fn parse_declaration(&mut self) -> Result<Declaration> {
         let name = self.consume_identifier("Expected variable name")?;
 
@@ -96,7 +96,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse a data type
+    // Parse a data type
     fn parse_type(&mut self) -> Result<PlSqlType> {
         let type_name = self.consume_identifier("Expected type name")?;
 
@@ -143,7 +143,7 @@ impl PlSqlParser {
         }
     }
 
-    /// Parse a statement
+    // Parse a statement
     pub fn parse_statement(&mut self) -> Result<Statement> {
         if self.check(&Token::If) {
             self.parse_if_statement()
@@ -196,7 +196,7 @@ impl PlSqlParser {
         }
     }
 
-    /// Parse IF statement
+    // Parse IF statement
     fn parse_if_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::If, "Expected IF")?;
         let condition = self.parse_expression()?;
@@ -240,7 +240,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse LOOP statement
+    // Parse LOOP statement
     fn parse_loop_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Loop, "Expected LOOP")?;
 
@@ -256,7 +256,7 @@ impl PlSqlParser {
         Ok(Statement::Loop { statements })
     }
 
-    /// Parse WHILE loop
+    // Parse WHILE loop
     fn parse_while_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::While, "Expected WHILE")?;
         let condition = self.parse_expression()?;
@@ -277,7 +277,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse FOR loop
+    // Parse FOR loop
     fn parse_for_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::For, "Expected FOR")?;
         let iterator = self.consume_identifier("Expected iterator name")?;
@@ -331,7 +331,7 @@ impl PlSqlParser {
         }
     }
 
-    /// Parse EXIT statement
+    // Parse EXIT statement
     fn parse_exit_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Exit, "Expected EXIT")?;
 
@@ -346,7 +346,7 @@ impl PlSqlParser {
         Ok(Statement::Exit { when })
     }
 
-    /// Parse CONTINUE statement
+    // Parse CONTINUE statement
     fn parse_continue_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Continue, "Expected CONTINUE")?;
 
@@ -361,7 +361,7 @@ impl PlSqlParser {
         Ok(Statement::Continue { when })
     }
 
-    /// Parse RETURN statement
+    // Parse RETURN statement
     fn parse_return_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Return, "Expected RETURN")?;
 
@@ -376,7 +376,7 @@ impl PlSqlParser {
         Ok(Statement::Return { value })
     }
 
-    /// Parse RAISE statement
+    // Parse RAISE statement
     fn parse_raise_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Raise, "Expected RAISE")?;
         let exception = self.consume_identifier("Expected exception name")?;
@@ -385,7 +385,7 @@ impl PlSqlParser {
         Ok(Statement::Raise { exception })
     }
 
-    /// Parse ROLLBACK statement
+    // Parse ROLLBACK statement
     fn parse_rollback_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Rollback, "Expected ROLLBACK")?;
 
@@ -400,7 +400,7 @@ impl PlSqlParser {
         Ok(Statement::Rollback { to_savepoint })
     }
 
-    /// Parse SAVEPOINT statement
+    // Parse SAVEPOINT statement
     fn parse_savepoint_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Savepoint, "Expected SAVEPOINT")?;
         let name = self.consume_identifier("Expected savepoint name")?;
@@ -409,7 +409,7 @@ impl PlSqlParser {
         Ok(Statement::Savepoint { name })
     }
 
-    /// Parse SELECT INTO statement
+    // Parse SELECT INTO statement
     fn parse_select_into_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Select, "Expected SELECT")?;
 
@@ -450,7 +450,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse INSERT statement
+    // Parse INSERT statement
     fn parse_insert_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Insert, "Expected INSERT")?;
         self.consume(&Token::Into, "Expected INTO")?;
@@ -486,7 +486,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse UPDATE statement
+    // Parse UPDATE statement
     fn parse_update_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Update, "Expected UPDATE")?;
         let table = self.consume_identifier("Expected table name")?;
@@ -520,7 +520,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse DELETE statement
+    // Parse DELETE statement
     fn parse_delete_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Delete, "Expected DELETE")?;
         self.consume(&Token::From, "Expected FROM")?;
@@ -540,7 +540,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse OPEN cursor statement
+    // Parse OPEN cursor statement
     fn parse_open_cursor_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Open, "Expected OPEN")?;
         let cursor = self.consume_identifier("Expected cursor name")?;
@@ -563,7 +563,7 @@ impl PlSqlParser {
         Ok(Statement::OpenCursor { cursor, arguments })
     }
 
-    /// Parse FETCH cursor statement
+    // Parse FETCH cursor statement
     fn parse_fetch_cursor_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Fetch, "Expected FETCH")?;
         let cursor = self.consume_identifier("Expected cursor name")?;
@@ -582,7 +582,7 @@ impl PlSqlParser {
         Ok(Statement::FetchCursor { cursor, into_vars })
     }
 
-    /// Parse CLOSE cursor statement
+    // Parse CLOSE cursor statement
     fn parse_close_cursor_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Close, "Expected CLOSE")?;
         let cursor = self.consume_identifier("Expected cursor name")?;
@@ -591,7 +591,7 @@ impl PlSqlParser {
         Ok(Statement::CloseCursor { cursor })
     }
 
-    /// Parse CASE statement
+    // Parse CASE statement
     fn parse_case_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Case, "Expected CASE")?;
 
@@ -635,7 +635,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse assignment or procedure call
+    // Parse assignment or procedure call
     fn parse_assignment_or_call(&mut self) -> Result<Statement> {
         let name = self.consume_identifier("Expected identifier")?;
 
@@ -667,7 +667,7 @@ impl PlSqlParser {
         }
     }
 
-    /// Parse exception handler
+    // Parse exception handler
     fn parse_exception_handler(&mut self) -> Result<ExceptionHandler> {
         self.consume(&Token::When, "Expected WHEN")?;
 
@@ -696,7 +696,7 @@ impl PlSqlParser {
         })
     }
 
-    /// Parse expression
+    // Parse expression
     pub fn parse_expression(&mut self) -> Result<Expression> {
         self.parse_or_expression()
     }

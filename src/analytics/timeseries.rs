@@ -1,13 +1,13 @@
-/// Time-Series Analytics Engine
-///
-/// This module provides specialized time-series analysis capabilities:
-/// - Gap filling and missing data interpolation
-/// - Time bucketing and downsampling
-/// - Moving averages and exponential smoothing
-/// - Trend detection and decomposition
-/// - Seasonality detection and patterns
-/// - Forecasting with multiple methods
-/// - Change point detection
+// Time-Series Analytics Engine
+//
+// This module provides specialized time-series analysis capabilities:
+// - Gap filling and missing data interpolation
+// - Time bucketing and downsampling
+// - Moving averages and exponential smoothing
+// - Trend detection and decomposition
+// - Seasonality detection and patterns
+// - Forecasting with multiple methods
+// - Change point detection
 
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::time::{Duration};
 
-/// Time-series data point
+// Time-series data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesPoint {
     pub timestamp: SystemTime,
@@ -24,7 +24,7 @@ pub struct TimeSeriesPoint {
     pub metadata: HashMap<String, String>,
 }
 
-/// Time-series with metadata
+// Time-series with metadata
 #[derive(Debug, Clone)]
 pub struct TimeSeries {
     pub name: String,
@@ -43,7 +43,7 @@ pub struct TimeSeriesMetadata {
     pub detected_interval: Option<Duration>,
 }
 
-/// Time bucket specification
+// Time bucket specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeBucket {
     pub duration: Duration,
@@ -52,34 +52,34 @@ pub struct TimeBucket {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum BucketAlignment {
-    /// Align to epoch
+    // Align to epoch
     Epoch,
-    /// Align to calendar boundaries
+    // Align to calendar boundaries
     Calendar,
-    /// Align to first data point
+    // Align to first data point
     FirstPoint,
 }
 
-/// Interpolation method for gap filling
+// Interpolation method for gap filling
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum InterpolationMethod {
-    /// Previous value (step function)
+    // Previous value (step function)
     Previous,
-    /// Next value
+    // Next value
     Next,
-    /// Linear interpolation
+    // Linear interpolation
     Linear,
-    /// Spline interpolation
+    // Spline interpolation
     Spline,
-    /// Average of neighbors
+    // Average of neighbors
     Average,
-    /// Fill with constant
+    // Fill with constant
     Constant(f64),
-    /// Fill with null/NaN
+    // Fill with null/NaN
     Null,
 }
 
-/// Aggregation method for downsampling
+// Aggregation method for downsampling
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AggregationMethod {
     Mean,
@@ -93,20 +93,20 @@ pub enum AggregationMethod {
     Median,
 }
 
-/// Moving average type
+// Moving average type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MovingAverageType {
-    /// Simple moving average
+    // Simple moving average
     Simple { window_size: usize },
-    /// Exponential moving average
+    // Exponential moving average
     Exponential { alpha: f64 },
-    /// Weighted moving average
+    // Weighted moving average
     Weighted { weights: Vec<f64> },
-    /// Cumulative moving average
+    // Cumulative moving average
     Cumulative,
 }
 
-/// Time-series analyzer
+// Time-series analyzer
 pub struct TimeSeriesAnalyzer {
     series: TimeSeries,
 }
@@ -116,7 +116,7 @@ impl TimeSeriesAnalyzer {
         Self { series }
     }
 
-    /// Fill gaps in time series
+    // Fill gaps in time series
     pub fn fill_gaps(
         &self,
         expected_interval: Duration,
@@ -176,7 +176,7 @@ impl TimeSeriesAnalyzer {
         })
     }
 
-    /// Interpolate value at given timestamp
+    // Interpolate value at given timestamp
     fn interpolate_value(
         &self,
         timestamp: SystemTime,
@@ -245,7 +245,7 @@ impl TimeSeriesAnalyzer {
         }
     }
 
-    /// Downsample time series into buckets
+    // Downsample time series into buckets
     pub fn downsample(
         &self,
         bucket: TimeBucket,
@@ -283,7 +283,7 @@ impl TimeSeriesAnalyzer {
         })
     }
 
-    /// Get bucket key for timestamp
+    // Get bucket key for timestamp
     fn get_bucket_key(&self, timestamp: SystemTime, bucket: &TimeBucket) -> Result<u64> {
         let secs = timestamp.duration_since(UNIX_EPOCH)
             .unwrap_or(Duration::from_secs(0)).as_secs();
@@ -307,7 +307,7 @@ impl TimeSeriesAnalyzer {
         Ok(bucket_key)
     }
 
-    /// Aggregate values
+    // Aggregate values
     fn aggregate_values(&self, values: &[f64], method: &AggregationMethod) -> Result<f64> {
         if values.is_empty() {
             return Ok(0.0);
@@ -351,7 +351,7 @@ impl TimeSeriesAnalyzer {
         Ok(result)
     }
 
-    /// Calculate moving average
+    // Calculate moving average
     pub fn moving_average(&self, ma_type: MovingAverageType) -> Result<TimeSeries> {
         let mut ma_points = Vec::new();
 
@@ -430,7 +430,7 @@ impl TimeSeriesAnalyzer {
         })
     }
 
-    /// Detect seasonality in time series
+    // Detect seasonality in time series
     pub fn detect_seasonality(&self) -> Result<SeasonalityInfo> {
         if self.series.points.len() < 4 {
             return Ok(SeasonalityInfo {
@@ -468,7 +468,7 @@ impl TimeSeriesAnalyzer {
         })
     }
 
-    /// Calculate autocorrelation at lag
+    // Calculate autocorrelation at lag
     fn autocorrelation(&self, values: &[f64], lag: usize, mean: f64) -> f64 {
         if lag >= values.len() {
             return 0.0;
@@ -493,7 +493,7 @@ impl TimeSeriesAnalyzer {
         }
     }
 
-    /// Decompose time series into trend, seasonal, and residual components
+    // Decompose time series into trend, seasonal, and residual components
     pub fn decompose(&self) -> Result<TimeSeriesDecomposition> {
         let values: Vec<f64> = self.series.points.iter().map(|p| p.value).collect();
 
@@ -568,7 +568,7 @@ impl TimeSeriesAnalyzer {
         seasonal
     }
 
-    /// Detect change points in time series
+    // Detect change points in time series
     pub fn detect_change_points(&self, threshold: f64) -> Result<Vec<usize>> {
         let values: Vec<f64> = self.series.points.iter().map(|p| p.value).collect();
         let mut change_points = Vec::new();
@@ -633,7 +633,7 @@ impl TimeSeriesAnalyzer {
     }
 }
 
-/// Seasonality information
+// Seasonality information
 #[derive(Debug, Clone)]
 pub struct SeasonalityInfo {
     pub has_seasonality: bool,
@@ -649,7 +649,7 @@ pub struct SeasonalPattern {
     pub phase: f64,
 }
 
-/// Time-series decomposition
+// Time-series decomposition
 #[derive(Debug, Clone)]
 pub struct TimeSeriesDecomposition {
     pub trend: Vec<f64>,
@@ -727,5 +727,3 @@ mod tests {
         assert_eq!(filled.points.len(), 100);
     }
 }
-
-

@@ -69,27 +69,27 @@ pub use audit::{AuditVault, AuditRecord, AuditPolicy, ComplianceReport};
 pub use vpd::{VpdEngine, VpdPolicy, SecurityPredicate};
 pub use privileges::{PrivilegeAnalyzer, PrivilegePath, PrivilegeRecommendation};
 
-/// Security context for the current session
+// Security context for the current session
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityContext {
-    /// User identifier
+    // User identifier
     pub user_id: String,
-    /// Session identifier
+    // Session identifier
     pub session_id: String,
-    /// IP address of client
+    // IP address of client
     pub client_ip: String,
-    /// Authenticated roles
+    // Authenticated roles
     pub roles: Vec<String>,
-    /// Security clearance level (0-10)
+    // Security clearance level (0-10)
     pub clearance_level: u8,
-    /// Additional context attributes
+    // Additional context attributes
     pub attributes: HashMap<String, String>,
-    /// Timestamp of context creation
+    // Timestamp of context creation
     pub created_at: i64,
 }
 
 impl SecurityContext {
-    /// Create a new security context
+    // Create a new security context
     pub fn new(user_id: String, session_id: String, client_ip: String) -> Self {
         Self {
             user_id,
@@ -102,77 +102,77 @@ impl SecurityContext {
         }
     }
 
-    /// Get a context attribute
+    // Get a context attribute
     pub fn get_attribute(&self, key: &str) -> Option<&String> {
         self.attributes.get(key)
     }
 
-    /// Set a context attribute
+    // Set a context attribute
     pub fn set_attribute(&mut self, key: String, value: String) {
         self.attributes.insert(key, value);
     }
 
-    /// Check if user has a specific role
+    // Check if user has a specific role
     pub fn has_role(&self, role: &str) -> bool {
         self.roles.iter().any(|r| r == role)
     }
 
-    /// Check if clearance level meets minimum requirement
+    // Check if clearance level meets minimum requirement
     pub fn meets_clearance(&self, required: u8) -> bool {
         self.clearance_level >= required
     }
 }
 
-/// Encryption statistics
+// Encryption statistics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct EncryptionStats {
-    /// Total bytes encrypted
+    // Total bytes encrypted
     pub bytes_encrypted: u64,
-    /// Total bytes decrypted
+    // Total bytes decrypted
     pub bytes_decrypted: u64,
-    /// Number of encryption operations
+    // Number of encryption operations
     pub encrypt_operations: u64,
-    /// Number of decryption operations
+    // Number of decryption operations
     pub decrypt_operations: u64,
-    /// Number of key rotations
+    // Number of key rotations
     pub key_rotations: u64,
-    /// Failed operations
+    // Failed operations
     pub failed_operations: u64,
 }
 
-/// Audit statistics
+// Audit statistics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AuditStats {
-    /// Total audit records
+    // Total audit records
     pub total_records: u64,
-    /// Records by policy
+    // Records by policy
     pub records_by_policy: HashMap<String, u64>,
-    /// Failed audit writes
+    // Failed audit writes
     pub failed_writes: u64,
-    /// Tamper detection alerts
+    // Tamper detection alerts
     pub tamper_alerts: u64,
 }
 
-/// Security vault configuration
+// Security vault configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VaultConfig {
-    /// Vault data directory
+    // Vault data directory
     pub data_dir: PathBuf,
-    /// Enable TDE by default for new tablespaces
+    // Enable TDE by default for new tablespaces
     pub default_tde_enabled: bool,
-    /// Default encryption algorithm
+    // Default encryption algorithm
     pub default_algorithm: String,
-    /// Enable audit vault
+    // Enable audit vault
     pub audit_enabled: bool,
-    /// Audit retention period in days
+    // Audit retention period in days
     pub audit_retention_days: u32,
-    /// Enable VPD enforcement
+    // Enable VPD enforcement
     pub vpd_enabled: bool,
-    /// Master key rotation interval in days
+    // Master key rotation interval in days
     pub key_rotation_days: u32,
-    /// Enable HSM integration
+    // Enable HSM integration
     pub hsm_enabled: bool,
-    /// HSM configuration
+    // HSM configuration
     pub hsm_config: Option<HashMap<String, String>>,
 }
 
@@ -192,35 +192,35 @@ impl Default for VaultConfig {
     }
 }
 
-/// Main Security Vault Manager
-///
-/// Coordinates all security subsystems including TDE, masking, key management,
-/// auditing, and access control.
+// Main Security Vault Manager
+//
+// Coordinates all security subsystems including TDE, masking, key management,
+// auditing, and access control.
 pub struct SecurityVaultManager {
-    /// Configuration
+    // Configuration
     config: VaultConfig,
-    /// TDE engine
+    // TDE engine
     tde_engine: Arc<RwLock<TdeEngine>>,
-    /// Masking engine
+    // Masking engine
     masking_engine: Arc<RwLock<MaskingEngine>>,
-    /// Key store
+    // Key store
     key_store: Arc<AsyncMutex<KeyStore>>,
-    /// Audit vault
+    // Audit vault
     audit_vault: Arc<AsyncMutex<AuditVault>>,
-    /// VPD engine
+    // VPD engine
     vpd_engine: Arc<RwLock<VpdEngine>>,
-    /// Privilege analyzer
+    // Privilege analyzer
     privilege_analyzer: Arc<RwLock<PrivilegeAnalyzer>>,
-    /// Encryption statistics
+    // Encryption statistics
     encryption_stats: Arc<RwLock<EncryptionStats>>,
-    /// Audit statistics
+    // Audit statistics
     audit_stats: Arc<RwLock<AuditStats>>,
-    /// Active security contexts
+    // Active security contexts
     active_contexts: Arc<RwLock<HashMap<String, SecurityContext>>>,
 }
 
 impl SecurityVaultManager {
-    /// Create a new security vault manager
+    // Create a new security vault manager
     pub fn new(data_dir: String) -> Result<Self> {
         let config = VaultConfig {
             data_dir: PathBuf::from(data_dir),
@@ -230,7 +230,7 @@ impl SecurityVaultManager {
         Self::with_config(config)
     }
 
-    /// Create with custom configuration
+    // Create with custom configuration
     pub fn with_config(config: VaultConfig) -> Result<Self> {
         // Create data directory if it doesn't exist
         std::fs::create_dir_all(&config.data_dir)
@@ -271,7 +271,7 @@ impl SecurityVaultManager {
         })
     }
 
-    /// Create a security context for a session
+    // Create a security context for a session
     pub fn create_security_context(
         &self,
         user_id: String,
@@ -283,17 +283,17 @@ impl SecurityVaultManager {
         context
     }
 
-    /// Get security context for a session
+    // Get security context for a session
     pub fn get_security_context(&self, session_id: &str) -> Option<SecurityContext> {
         self.active_contexts.read().get(session_id).cloned()
     }
 
-    /// Remove security context
+    // Remove security context
     pub fn remove_security_context(&self, session_id: &str) {
         self.active_contexts.write().remove(session_id);
     }
 
-    /// Enable tablespace encryption
+    // Enable tablespace encryption
     pub async fn enable_tablespace_encryption(
         &mut self,
         tablespace_name: &str,
@@ -319,7 +319,7 @@ impl SecurityVaultManager {
         Ok(())
     }
 
-    /// Enable column-level encryption
+    // Enable column-level encryption
     pub async fn enable_column_encryption(
         &mut self,
         table_name: &str,
@@ -340,7 +340,7 @@ impl SecurityVaultManager {
         Ok(())
     }
 
-    /// Create a data masking policy
+    // Create a data masking policy
     pub async fn create_masking_policy(
         &mut self,
         policy_name: &str,
@@ -361,7 +361,7 @@ impl SecurityVaultManager {
         Ok(())
     }
 
-    /// Create a VPD policy
+    // Create a VPD policy
     pub async fn create_vpd_policy(
         &mut self,
         table_name: &str,
@@ -381,7 +381,7 @@ impl SecurityVaultManager {
         Ok(())
     }
 
-    /// Rotate encryption keys
+    // Rotate encryption keys
     pub async fn rotate_keys(&mut self) -> Result<usize> {
         let mut key_store = self.key_store.lock().await;
         let rotated = key_store.rotate_expired_deks()?;
@@ -399,7 +399,7 @@ impl SecurityVaultManager {
         Ok(rotated)
     }
 
-    /// Generate compliance report
+    // Generate compliance report
     pub async fn generate_compliance_report(
         &self,
         regulation: &str,
@@ -410,55 +410,55 @@ impl SecurityVaultManager {
         audit.generate_compliance_report(regulation, start_date, end_date)
     }
 
-    /// Analyze privileges for a user
+    // Analyze privileges for a user
     pub fn analyze_user_privileges(&self, user_id: &str) -> Result<Vec<PrivilegeRecommendation>> {
         let analyzer = self.privilege_analyzer.read();
         analyzer.analyze_user(user_id)
     }
 
-    /// Get encryption statistics
+    // Get encryption statistics
     pub fn get_encryption_stats(&self) -> EncryptionStats {
         self.encryption_stats.read().clone()
     }
 
-    /// Get audit statistics
+    // Get audit statistics
     pub fn get_audit_stats(&self) -> AuditStats {
         self.audit_stats.read().clone()
     }
 
-    /// Verify audit integrity
+    // Verify audit integrity
     pub async fn verify_audit_integrity(&self) -> Result<bool> {
         let audit = self.audit_vault.lock().await;
         audit.verify_integrity()
     }
 
-    /// Export security configuration
+    // Export security configuration
     pub fn export_config(&self) -> Result<String> {
         serde_json::to_string_pretty(&self.config)
             .map_err(|e| DbError::Serialization(format!("Failed to export config: {}", e)))
     }
 
-    /// Get TDE engine reference
+    // Get TDE engine reference
     pub fn tde_engine(&self) -> Arc<RwLock<TdeEngine>> {
         Arc::clone(&self.tde_engine)
     }
 
-    /// Get masking engine reference
+    // Get masking engine reference
     pub fn masking_engine(&self) -> Arc<RwLock<MaskingEngine>> {
         Arc::clone(&self.masking_engine)
     }
 
-    /// Get key store reference
+    // Get key store reference
     pub fn key_store(&self) -> Arc<AsyncMutex<KeyStore>> {
         Arc::clone(&self.key_store)
     }
 
-    /// Get audit vault reference
+    // Get audit vault reference
     pub fn audit_vault(&self) -> Arc<AsyncMutex<AuditVault>> {
         Arc::clone(&self.audit_vault)
     }
 
-    /// Get VPD engine reference
+    // Get VPD engine reference
     pub fn vpd_engine(&self) -> Arc<RwLock<VpdEngine>> {
         Arc::clone(&self.vpd_engine)
     }

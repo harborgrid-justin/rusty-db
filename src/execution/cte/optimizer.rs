@@ -5,7 +5,7 @@ use crate::error::DbError;
 use crate::execution::planner::PlanNode;
 use super::core::{CteDefinition, CteContext};
 
-/// CTE reference tracker - tracks how many times each CTE is referenced
+// CTE reference tracker - tracks how many times each CTE is referenced
 pub struct CteReferenceTracker {
     references: HashMap<String, usize>,
 }
@@ -48,11 +48,11 @@ impl CteReferenceTracker {
     }
 }
 
-/// CTE optimizer - optimizes CTE execution strategy
+// CTE optimizer - optimizes CTE execution strategy
 pub struct CteOptimizer;
 
 impl CteOptimizer {
-    /// Decide whether to materialize or inline a CTE
+    // Decide whether to materialize or inline a CTE
     pub fn should_materialize(cte: &CteDefinition, reference_count: usize) -> bool {
         if cte.recursive {
             return true;
@@ -82,7 +82,7 @@ impl CteOptimizer {
     }
 }
 
-/// CTE rewrite rules for optimization
+// CTE rewrite rules for optimization
 pub struct CteRewriteRules;
 
 impl CteRewriteRules {
@@ -113,7 +113,7 @@ impl CteRewriteRules {
     }
 }
 
-/// Advanced CTE materialization strategies
+// Advanced CTE materialization strategies
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MaterializationStrategy {
     AlwaysInline,
@@ -122,7 +122,7 @@ pub enum MaterializationStrategy {
     MultiReference,
 }
 
-/// Materialization strategy selector
+// Materialization strategy selector
 pub struct MaterializationStrategySelector {
     threshold_multiple_refs: usize,
     threshold_cost: f64,
@@ -162,7 +162,7 @@ impl MaterializationStrategySelector {
     }
 }
 
-/// Nested CTE support - handles CTEs within CTEs
+// Nested CTE support - handles CTEs within CTEs
 pub struct NestedCteHandler {
     nesting_level: usize,
     max_nesting_level: usize,

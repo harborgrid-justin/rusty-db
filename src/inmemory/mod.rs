@@ -42,29 +42,29 @@ pub use join_engine::{
 use std::sync::Arc;
 use parking_lot::RwLock;
 
-/// Global in-memory store instance
+// Global in-memory store instance
 pub struct InMemoryStore {
     column_stores: RwLock<Vec<Arc<ColumnStore>>>,
     population_manager: Arc<PopulationManager>,
     config: InMemoryConfig,
 }
 
-/// Configuration for in-memory storage
+// Configuration for in-memory storage
 #[derive(Debug, Clone)]
 pub struct InMemoryConfig {
-    /// Maximum memory for in-memory area (bytes)
+    // Maximum memory for in-memory area (bytes)
     pub max_memory: usize,
-    /// Enable automatic population
+    // Enable automatic population
     pub auto_populate: bool,
-    /// Enable compression
+    // Enable compression
     pub enable_compression: bool,
-    /// SIMD vector width (lanes)
+    // SIMD vector width (lanes)
     pub vector_width: usize,
-    /// Cache line size (bytes)
+    // Cache line size (bytes)
     pub cache_line_size: usize,
-    /// Number of population threads
+    // Number of population threads
     pub population_threads: usize,
-    /// Memory pressure threshold (0.0-1.0)
+    // Memory pressure threshold (0.0-1.0)
     pub memory_pressure_threshold: f64,
 }
 
@@ -187,5 +187,3 @@ mod tests {
         assert!(!store.check_memory_pressure());
     }
 }
-
-

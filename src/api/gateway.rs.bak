@@ -52,85 +52,85 @@ type Result<T> = std::result::Result<T, DbError>;
 // API Gateway Core - Request Routing and Protocol Translation
 // ============================================================================
 
-/// API Gateway configuration
+// API Gateway configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GatewayConfig {
-    /// Gateway listen address
+    // Gateway listen address
     pub listen_address: String,
-    /// Gateway listen port
+    // Gateway listen port
     pub listen_port: u16,
-    /// Enable HTTPS/TLS
+    // Enable HTTPS/TLS
     pub enable_tls: bool,
-    /// TLS certificate path
+    // TLS certificate path
     pub tls_cert_path: Option<String>,
-    /// TLS key path
+    // TLS key path
     pub tls_key_path: Option<String>,
-    /// Enable mTLS (mutual TLS)
+    // Enable mTLS (mutual TLS)
     pub enable_mtls: bool,
-    /// Trusted CA certificates for mTLS
+    // Trusted CA certificates for mTLS
     pub mtls_ca_certs: Vec<String>,
-    /// Enable HTTP/2
+    // Enable HTTP/2
     pub enable_http2: bool,
-    /// Enable gRPC
+    // Enable gRPC
     pub enable_grpc: bool,
-    /// Enable WebSocket
+    // Enable WebSocket
     pub enable_websocket: bool,
-    /// Request timeout (seconds)
+    // Request timeout (seconds)
     pub request_timeout: u64,
-    /// Maximum request size (bytes)
+    // Maximum request size (bytes)
     pub max_request_size: usize,
-    /// Maximum concurrent connections
+    // Maximum concurrent connections
     pub max_connections: usize,
-    /// Enable request compression
+    // Enable request compression
     pub enable_compression: bool,
-    /// Enable CORS
+    // Enable CORS
     pub enable_cors: bool,
-    /// Allowed CORS origins
+    // Allowed CORS origins
     pub cors_origins: Vec<String>,
-    /// Service discovery backend
+    // Service discovery backend
     pub service_discovery: ServiceDiscoveryConfig,
 }
 
-/// Service discovery configuration
+// Service discovery configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceDiscoveryConfig {
-    /// Discovery mechanism
+    // Discovery mechanism
     pub mechanism: DiscoveryMechanism,
-    /// Service registry address
+    // Service registry address
     pub registry_address: Option<String>,
-    /// Health check interval (seconds)
+    // Health check interval (seconds)
     pub health_check_interval: u64,
-    /// Health check timeout (seconds)
+    // Health check timeout (seconds)
     pub health_check_timeout: u64,
 }
 
-/// Service discovery mechanism
+// Service discovery mechanism
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum DiscoveryMechanism {
-    /// Static configuration
+    // Static configuration
     Static,
-    /// Consul integration
+    // Consul integration
     Consul,
-    /// Kubernetes service discovery
+    // Kubernetes service discovery
     Kubernetes,
-    /// etcd-based discovery
+    // etcd-based discovery
     Etcd,
-    /// DNS-based discovery
+    // DNS-based discovery
     Dns,
 }
 
-/// Protocol type
+// Protocol type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Protocol {
-    /// HTTP/1.1 or HTTP/2
+    // HTTP/1.1 or HTTP/2
     Http,
-    /// gRPC over HTTP/2
+    // gRPC over HTTP/2
     Grpc,
-    /// WebSocket
+    // WebSocket
     WebSocket,
 }
 
-/// HTTP method
+// HTTP method
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum HttpMethod {
     Get,
@@ -142,272 +142,272 @@ pub enum HttpMethod {
     Options,
 }
 
-/// API request representation
+// API request representation
 #[derive(Debug, Clone)]
 pub struct ApiRequest {
-    /// Request ID for tracing
+    // Request ID for tracing
     pub request_id: String,
-    /// Protocol
+    // Protocol
     pub protocol: Protocol,
-    /// HTTP method
+    // HTTP method
     pub method: HttpMethod,
-    /// Request path
+    // Request path
     pub path: String,
-    /// Query parameters
+    // Query parameters
     pub query_params: HashMap<String, String>,
-    /// Headers
+    // Headers
     pub headers: HashMap<String, String>,
-    /// Request body
+    // Request body
     pub body: Vec<u8>,
-    /// Client IP address
+    // Client IP address
     pub client_ip: IpAddr,
-    /// Client port
+    // Client port
     pub client_port: u16,
-    /// Request timestamp
+    // Request timestamp
     pub timestamp: SystemTime,
 }
 
-/// API response representation
+// API response representation
 #[derive(Debug, Clone)]
 pub struct ApiResponse {
-    /// Status code
+    // Status code
     pub status_code: u16,
-    /// Response headers
+    // Response headers
     pub headers: HashMap<String, String>,
-    /// Response body
+    // Response body
     pub body: Vec<u8>,
-    /// Processing duration
+    // Processing duration
     pub duration: Duration,
 }
 
-/// Route definition
+// Route definition
 #[derive(Debug, Clone)]
 pub struct Route {
-    /// Route ID
+    // Route ID
     pub id: String,
-    /// Route name
+    // Route name
     pub name: String,
-    /// Path pattern (supports wildcards)
+    // Path pattern (supports wildcards)
     pub path_pattern: String,
-    /// Allowed methods
+    // Allowed methods
     pub methods: Vec<HttpMethod>,
-    /// Backend service
+    // Backend service
     pub backend: BackendService,
-    /// Route-specific middleware
+    // Route-specific middleware
     pub middleware: Vec<String>,
-    /// Rate limit override
+    // Rate limit override
     pub rate_limit: Option<RateLimitConfig>,
-    /// Authentication required
+    // Authentication required
     pub auth_required: bool,
-    /// Required permissions
+    // Required permissions
     pub required_permissions: Vec<String>,
-    /// Request transformation
+    // Request transformation
     pub request_transform: Option<RequestTransform>,
-    /// Response transformation
+    // Response transformation
     pub response_transform: Option<ResponseTransform>,
-    /// Enable caching
+    // Enable caching
     pub enable_cache: bool,
-    /// Cache TTL (seconds)
+    // Cache TTL (seconds)
     pub cache_ttl: Option<u64>,
 }
 
-/// Backend service configuration
+// Backend service configuration
 #[derive(Debug, Clone)]
 pub struct BackendService {
-    /// Service name
+    // Service name
     pub name: String,
-    /// Service endpoints
+    // Service endpoints
     pub endpoints: Vec<ServiceEndpoint>,
-    /// Load balancing strategy
+    // Load balancing strategy
     pub load_balancing: LoadBalancingStrategy,
-    /// Circuit breaker config
+    // Circuit breaker config
     pub circuit_breaker: CircuitBreakerConfig,
-    /// Retry policy
+    // Retry policy
     pub retry_policy: RetryPolicy,
 }
 
-/// Service endpoint
+// Service endpoint
 #[derive(Debug, Clone)]
 pub struct ServiceEndpoint {
-    /// Endpoint ID
+    // Endpoint ID
     pub id: String,
-    /// Host address
+    // Host address
     pub host: String,
-    /// Port
+    // Port
     pub port: u16,
-    /// Protocol
+    // Protocol
     pub protocol: Protocol,
-    /// Weight for load balancing
+    // Weight for load balancing
     pub weight: u32,
-    /// Health status
+    // Health status
     pub healthy: Arc<RwLock<bool>>,
-    /// Last health check
+    // Last health check
     pub last_health_check: Arc<RwLock<Instant>>,
 }
 
-/// Load balancing strategy
+// Load balancing strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LoadBalancingStrategy {
-    /// Round-robin
+    // Round-robin
     RoundRobin,
-    /// Least connections
+    // Least connections
     LeastConnections,
-    /// Weighted round-robin
+    // Weighted round-robin
     WeightedRoundRobin,
-    /// Random
+    // Random
     Random,
-    /// IP hash (sticky sessions)
+    // IP hash (sticky sessions)
     IpHash,
-    /// Least response time
+    // Least response time
     LeastResponseTime,
 }
 
-/// Circuit breaker configuration
+// Circuit breaker configuration
 #[derive(Debug, Clone)]
 pub struct CircuitBreakerConfig {
-    /// Failure threshold
+    // Failure threshold
     pub failure_threshold: u32,
-    /// Success threshold to close circuit
+    // Success threshold to close circuit
     pub success_threshold: u32,
-    /// Timeout duration (seconds)
+    // Timeout duration (seconds)
     pub timeout: u64,
-    /// Half-open max requests
+    // Half-open max requests
     pub half_open_max_requests: u32,
 }
 
-/// Retry policy
+// Retry policy
 #[derive(Debug, Clone)]
 pub struct RetryPolicy {
-    /// Maximum retry attempts
+    // Maximum retry attempts
     pub max_attempts: u32,
-    /// Initial backoff (milliseconds)
+    // Initial backoff (milliseconds)
     pub initial_backoff: u64,
-    /// Max backoff (milliseconds)
+    // Max backoff (milliseconds)
     pub max_backoff: u64,
-    /// Backoff multiplier
+    // Backoff multiplier
     pub backoff_multiplier: f64,
-    /// Retryable status codes
+    // Retryable status codes
     pub retryable_status_codes: Vec<u16>,
 }
 
-/// Request transformation
+// Request transformation
 #[derive(Debug, Clone)]
 pub struct RequestTransform {
-    /// Add headers
+    // Add headers
     pub add_headers: HashMap<String, String>,
-    /// Remove headers
+    // Remove headers
     pub remove_headers: Vec<String>,
-    /// Path rewrite rules
+    // Path rewrite rules
     pub path_rewrites: Vec<PathRewrite>,
-    /// Query parameter transformations
+    // Query parameter transformations
     pub query_transforms: Vec<QueryTransform>,
 }
 
-/// Response transformation
+// Response transformation
 #[derive(Debug, Clone)]
 pub struct ResponseTransform {
-    /// Add headers
+    // Add headers
     pub add_headers: HashMap<String, String>,
-    /// Remove headers
+    // Remove headers
     pub remove_headers: Vec<String>,
-    /// Body transformation
+    // Body transformation
     pub body_transform: Option<BodyTransform>,
 }
 
-/// Path rewrite rule
+// Path rewrite rule
 #[derive(Debug, Clone)]
 pub struct PathRewrite {
-    /// Pattern to match
+    // Pattern to match
     pub pattern: String,
-    /// Replacement
+    // Replacement
     pub replacement: String,
 }
 
-/// Query parameter transformation
+// Query parameter transformation
 #[derive(Debug, Clone)]
 pub struct QueryTransform {
-    /// Parameter name
+    // Parameter name
     pub name: String,
-    /// Transformation type
+    // Transformation type
     pub transform_type: QueryTransformType,
 }
 
-/// Query transformation type
+// Query transformation type
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QueryTransformType {
-    /// Add parameter
+    // Add parameter
     Add(String),
-    /// Remove parameter
+    // Remove parameter
     Remove,
-    /// Rename parameter
+    // Rename parameter
     Rename(String),
 }
 
-/// Body transformation
+// Body transformation
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BodyTransform {
-    /// No transformation
+    // No transformation
     None,
-    /// JSON to XML
+    // JSON to XML
     JsonToXml,
-    /// XML to JSON
+    // XML to JSON
     XmlToJson,
-    /// Custom transformation
+    // Custom transformation
     Custom(String),
 }
 
-/// API Gateway core engine
+// API Gateway core engine
 pub struct ApiGateway {
-    /// Configuration
+    // Configuration
     config: Arc<RwLock<GatewayConfig>>,
-    /// Route registry
+    // Route registry
     routes: Arc<RwLock<HashMap<String, Route>>>,
-    /// Authentication manager
+    // Authentication manager
     auth_manager: Arc<AuthenticationManager>,
-    /// Authorization engine
+    // Authorization engine
     authz_engine: Arc<AuthorizationEngine>,
-    /// Rate limiter
+    // Rate limiter
     rate_limiter: Arc<RateLimiter>,
-    /// Security filter
+    // Security filter
     security_filter: Arc<SecurityFilter>,
-    /// Service registry
+    // Service registry
     service_registry: Arc<RwLock<ServiceRegistry>>,
-    /// Request metrics
+    // Request metrics
     metrics: Arc<RwLock<GatewayMetrics>>,
-    /// Audit logger
+    // Audit logger
     audit_logger: Arc<Mutex<AuditLogger>>,
 }
 
-/// Service registry
+// Service registry
 pub struct ServiceRegistry {
-    /// Registered services
+    // Registered services
     services: HashMap<String, BackendService>,
-    /// Service health status
+    // Service health status
     health_status: HashMap<String, bool>,
 }
 
-/// Gateway metrics
+// Gateway metrics
 #[derive(Debug, Default)]
 pub struct GatewayMetrics {
-    /// Total requests
+    // Total requests
     pub total_requests: u64,
-    /// Successful requests
+    // Successful requests
     pub successful_requests: u64,
-    /// Failed requests
+    // Failed requests
     pub failed_requests: u64,
-    /// Total request duration
+    // Total request duration
     pub total_duration_ms: u64,
-    /// Requests per protocol
+    // Requests per protocol
     pub requests_by_protocol: HashMap<Protocol, u64>,
-    /// Requests per route
+    // Requests per route
     pub requests_by_route: HashMap<String, u64>,
-    /// Authentication failures
+    // Authentication failures
     pub auth_failures: u64,
-    /// Authorization failures
+    // Authorization failures
     pub authz_failures: u64,
-    /// Rate limit hits
+    // Rate limit hits
     pub rate_limit_hits: u64,
-    /// Security blocks
+    // Security blocks
     pub security_blocks: u64,
 }
 
@@ -447,7 +447,7 @@ impl Default for ServiceDiscoveryConfig {
 }
 
 impl ApiGateway {
-    /// Create a new API gateway
+    // Create a new API gateway
     pub fn new(config: GatewayConfig) -> Self {
         Self {
             config: Arc::new(RwLock::new(config)),
@@ -462,25 +462,25 @@ impl ApiGateway {
         }
     }
 
-    /// Register a new route
+    // Register a new route
     pub fn register_route(&self, route: Route) {
         let mut routes = self.routes.write();
         routes.insert(route.id.clone(), route);
     }
 
-    /// Remove a route
+    // Remove a route
     pub fn remove_route(&self, route_id: &str) -> bool {
         let mut routes = self.routes.write();
         routes.remove(route_id).is_some()
     }
 
-    /// Get all routes
+    // Get all routes
     pub fn get_routes(&self) -> Vec<Route> {
         let routes = self.routes.read();
         routes.values().cloned().collect()
     }
 
-    /// Find matching route for request
+    // Find matching route for request
     pub fn find_route(&self, request: &ApiRequest) -> Option<Route> {
         let routes = self.routes.read();
 
@@ -493,7 +493,7 @@ impl ApiGateway {
         None
     }
 
-    /// Check if request matches route
+    // Check if request matches route
     fn matches_route(&self, route: &Route, request: &ApiRequest) -> bool {
         // Check method
         if !route.methods.contains(&request.method) {
@@ -504,7 +504,7 @@ impl ApiGateway {
         self.matches_path_pattern(&route.path_pattern, &request.path)
     }
 
-    /// Match path against pattern
+    // Match path against pattern
     fn matches_path_pattern(&self, pattern: &str, path: &str) -> bool {
         if pattern == path {
             return true;
@@ -521,7 +521,7 @@ impl ApiGateway {
         false
     }
 
-    /// Process incoming request
+    // Process incoming request
     pub async fn process_request(&self, request: ApiRequest) -> std::result::Result<ApiResponse, DbError> {
         let start = Instant::now();
 
@@ -670,7 +670,7 @@ impl ApiGateway {
         Ok(transformed_response)
     }
 
-    /// Transform request before forwarding
+    // Transform request before forwarding
     fn transform_request(&self, request: &ApiRequest, route: &Route) -> ApiRequest {
         let mut transformed = request.clone();
 
@@ -711,7 +711,7 @@ impl ApiGateway {
         transformed
     }
 
-    /// Transform response before returning
+    // Transform response before returning
     fn transform_response(&self, mut response: ApiResponse, route: &Route) -> ApiResponse {
         if let Some(transform) = &route.response_transform {
             // Add headers
@@ -728,7 +728,7 @@ impl ApiGateway {
         response
     }
 
-    /// Forward request to backend service
+    // Forward request to backend service
     async fn forward_to_backend(&self, _request: &ApiRequest, route: &Route) -> std::result::Result<ApiResponse, DbError> {
         // Select endpoint using load balancing
         let endpoint = self.select_endpoint(&route.backend)?;
@@ -743,7 +743,7 @@ impl ApiGateway {
         })
     }
 
-    /// Select backend endpoint using load balancing strategy
+    // Select backend endpoint using load balancing strategy
     fn select_endpoint(&self, backend: &BackendService) -> std::result::Result<ServiceEndpoint, DbError> {
         let healthy_endpoints: Vec<_> = backend.endpoints.iter()
             .filter(|e| *e.healthy.read())
@@ -768,18 +768,18 @@ impl ApiGateway {
         }
     }
 
-    /// Get gateway metrics
+    // Get gateway metrics
     pub fn get_metrics(&self) -> GatewayMetrics {
         self.metrics.read().clone()
     }
 
-    /// Register backend service
+    // Register backend service
     pub fn register_service(&self, service: BackendService) {
         let mut registry = self.service_registry.write();
         registry.services.insert(service.name.clone(), service);
     }
 
-    /// Start health checking for all services
+    // Start health checking for all services
     pub async fn start_health_checks(&self) {
         // TODO: Implement periodic health checks
     }
@@ -815,37 +815,37 @@ impl Clone for GatewayMetrics {
 // Authentication System - JWT, OAuth, API Keys, mTLS
 // ============================================================================
 
-/// Authentication manager
+// Authentication manager
 pub struct AuthenticationManager {
-    /// JWT validator
+    // JWT validator
     jwt_validator: Arc<JwtValidator>,
-    /// OAuth provider
+    // OAuth provider
     oauth_provider: Arc<OAuthProvider>,
-    /// API key store
+    // API key store
     api_key_store: Arc<RwLock<ApiKeyStore>>,
-    /// Session manager
+    // Session manager
     session_manager: Arc<SessionManager>,
-    /// mTLS validator
+    // mTLS validator
     mtls_validator: Arc<MtlsValidator>,
-    /// MFA manager
+    // MFA manager
     mfa_manager: Arc<MfaManager>,
 }
 
-/// JWT validator
+// JWT validator
 pub struct JwtValidator {
-    /// Signing keys (kid -> key)
+    // Signing keys (kid -> key)
     signing_keys: Arc<RwLock<HashMap<String, Vec<u8>>>>,
-    /// Issuer
+    // Issuer
     issuer: String,
-    /// Audience
+    // Audience
     audience: Vec<String>,
-    /// Algorithm
+    // Algorithm
     algorithm: JwtAlgorithm,
-    /// Token expiration tolerance (seconds)
+    // Token expiration tolerance (seconds)
     expiration_tolerance: u64,
 }
 
-/// JWT algorithm
+// JWT algorithm
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JwtAlgorithm {
     HS256,
@@ -859,155 +859,155 @@ pub enum JwtAlgorithm {
     ES512,
 }
 
-/// JWT claims
+// JWT claims
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JwtClaims {
-    /// Issuer
+    // Issuer
     pub iss: String,
-    /// Subject
+    // Subject
     pub sub: String,
-    /// Audience
+    // Audience
     pub aud: Vec<String>,
-    /// Expiration time
+    // Expiration time
     pub exp: u64,
-    /// Not before
+    // Not before
     pub nbf: Option<u64>,
-    /// Issued at
+    // Issued at
     pub iat: u64,
-    /// JWT ID
+    // JWT ID
     pub jti: String,
-    /// Custom claims
+    // Custom claims
     pub custom: HashMap<String, serde_json::Value>,
 }
 
-/// OAuth 2.0 provider
+// OAuth 2.0 provider
 pub struct OAuthProvider {
-    /// Provider configuration
+    // Provider configuration
     config: Arc<RwLock<OAuthConfig>>,
-    /// Token cache
+    // Token cache
     token_cache: Arc<RwLock<HashMap<String, OAuthToken>>>,
 }
 
-/// OAuth configuration
+// OAuth configuration
 #[derive(Debug, Clone)]
 pub struct OAuthConfig {
-    /// Authorization endpoint
+    // Authorization endpoint
     pub auth_endpoint: String,
-    /// Token endpoint
+    // Token endpoint
     pub token_endpoint: String,
-    /// Userinfo endpoint
+    // Userinfo endpoint
     pub userinfo_endpoint: Option<String>,
-    /// Client ID
+    // Client ID
     pub client_id: String,
-    /// Client secret
+    // Client secret
     pub client_secret: String,
-    /// Redirect URI
+    // Redirect URI
     pub redirect_uri: String,
-    /// Scopes
+    // Scopes
     pub scopes: Vec<String>,
-    /// OIDC discovery URL
+    // OIDC discovery URL
     pub discovery_url: Option<String>,
 }
 
-/// OAuth token
+// OAuth token
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OAuthToken {
-    /// Access token
+    // Access token
     pub access_token: String,
-    /// Token type
+    // Token type
     pub token_type: String,
-    /// Expires in (seconds)
+    // Expires in (seconds)
     pub expires_in: u64,
-    /// Refresh token
+    // Refresh token
     pub refresh_token: Option<String>,
-    /// Scope
+    // Scope
     pub scope: Option<String>,
-    /// ID token (OIDC)
+    // ID token (OIDC)
     pub id_token: Option<String>,
 }
 
-/// API key store
+// API key store
 pub struct ApiKeyStore {
-    /// API keys (key -> metadata)
+    // API keys (key -> metadata)
     keys: HashMap<String, ApiKeyMetadata>,
 }
 
-/// API key metadata
+// API key metadata
 #[derive(Debug, Clone)]
 pub struct ApiKeyMetadata {
-    /// Key ID
+    // Key ID
     pub key_id: String,
-    /// User ID
+    // User ID
     pub user_id: String,
-    /// Key hash (never store plain keys)
+    // Key hash (never store plain keys)
     pub key_hash: Vec<u8>,
-    /// Created at
+    // Created at
     pub created_at: SystemTime,
-    /// Expires at
+    // Expires at
     pub expires_at: Option<SystemTime>,
-    /// Enabled
+    // Enabled
     pub enabled: bool,
-    /// Scopes/permissions
+    // Scopes/permissions
     pub scopes: Vec<String>,
-    /// Last used
+    // Last used
     pub last_used: Option<SystemTime>,
-    /// Usage count
+    // Usage count
     pub usage_count: u64,
 }
 
-/// Session manager
+// Session manager
 pub struct SessionManager {
-    /// Active sessions
+    // Active sessions
     sessions: Arc<RwLock<HashMap<String, Session>>>,
-    /// Session timeout (seconds)
+    // Session timeout (seconds)
     session_timeout: u64,
 }
 
-/// User session
+// User session
 #[derive(Debug, Clone)]
 pub struct Session {
-    /// Session ID
+    // Session ID
     pub session_id: String,
-    /// User ID
+    // User ID
     pub user_id: String,
-    /// Username
+    // Username
     pub username: String,
-    /// Roles
+    // Roles
     pub roles: Vec<String>,
-    /// Permissions
+    // Permissions
     pub permissions: Vec<String>,
-    /// Created at
+    // Created at
     pub created_at: SystemTime,
-    /// Last accessed
+    // Last accessed
     pub last_accessed: SystemTime,
-    /// Expires at
+    // Expires at
     pub expires_at: SystemTime,
-    /// IP address
+    // IP address
     pub ip_address: IpAddr,
-    /// User agent
+    // User agent
     pub user_agent: Option<String>,
-    /// Additional attributes
+    // Additional attributes
     pub attributes: HashMap<String, String>,
 }
 
-/// mTLS validator
+// mTLS validator
 pub struct MtlsValidator {
-    /// Trusted CA certificates
+    // Trusted CA certificates
     trusted_cas: Arc<RwLock<Vec<Vec<u8>>>>,
-    /// Certificate revocation list
+    // Certificate revocation list
     crl: Arc<RwLock<HashSet<String>>>,
 }
 
-/// MFA manager
+// MFA manager
 pub struct MfaManager {
-    /// TOTP secrets
+    // TOTP secrets
     totp_secrets: Arc<RwLock<HashMap<String, Vec<u8>>>>,
-    /// Backup codes
+    // Backup codes
     backup_codes: Arc<RwLock<HashMap<String, Vec<String>>>>,
 }
 
 impl AuthenticationManager {
-    /// Create new authentication manager
+    // Create new authentication manager
     pub fn new() -> Self {
         Self {
             jwt_validator: Arc::new(JwtValidator::new("rustydb".to_string())),
@@ -1019,7 +1019,7 @@ impl AuthenticationManager {
         }
     }
 
-    /// Authenticate request
+    // Authenticate request
     pub async fn authenticate(&self, request: &ApiRequest) -> std::result::Result<Session, DbError> {
         // Try different authentication methods in order
 
@@ -1052,7 +1052,7 @@ impl AuthenticationManager {
         Err(DbError::InvalidOperation("Authentication failed".to_string()))
     }
 
-    /// Create session from JWT claims
+    // Create session from JWT claims
     fn create_session_from_jwt(&self, claims: JwtClaims, request: &ApiRequest) -> std::result::Result<Session, DbError> {
         let session = Session {
             session_id: Uuid::new_v4().to_string(),
@@ -1077,7 +1077,7 @@ impl AuthenticationManager {
         Ok(session)
     }
 
-    /// Authenticate using API key
+    // Authenticate using API key
     async fn authenticate_api_key(&self, api_key: &str, request: &ApiRequest) -> std::result::Result<Session, DbError> {
         let key_store = self.api_key_store.read();
 
@@ -1116,7 +1116,7 @@ impl AuthenticationManager {
         Err(DbError::InvalidOperation("Invalid API key".to_string()))
     }
 
-    /// Extract session ID from cookie
+    // Extract session ID from cookie
     fn extract_session_id(&self, cookie: &str) -> Option<String> {
         for part in cookie.split(';') {
             let part = part.trim();
@@ -1127,14 +1127,14 @@ impl AuthenticationManager {
         None
     }
 
-    /// Hash API key
+    // Hash API key
     fn hash_api_key(key: &str) -> Vec<u8> {
         let mut hasher = Sha256::new();
         hasher.update(key.as_bytes());
         hasher.finalize().to_vec()
     }
 
-    /// Generate new API key
+    // Generate new API key
     pub fn generate_api_key(&self, user_id: String, scopes: Vec<String>) -> std::result::Result<String, DbError> {
         let key = Uuid::new_v4().to_string();
         let key_hash = Self::hash_api_key(&key);
@@ -1157,7 +1157,7 @@ impl AuthenticationManager {
         Ok(key)
     }
 
-    /// Revoke API key
+    // Revoke API key
     pub fn revoke_api_key(&self, key_id: &str) -> bool {
         let mut key_store = self.api_key_store.write();
         if let Some(metadata) = key_store.keys.get_mut(key_id) {
@@ -1168,7 +1168,7 @@ impl AuthenticationManager {
         }
     }
 
-    /// List API keys for user
+    // List API keys for user
     pub fn list_api_keys(&self, user_id: &str) -> Vec<ApiKeyMetadata> {
         let key_store = self.api_key_store.read();
         key_store.keys.values()
@@ -1179,7 +1179,7 @@ impl AuthenticationManager {
 }
 
 impl JwtValidator {
-    /// Create new JWT validator
+    // Create new JWT validator
     pub fn new(issuer: String) -> Self {
         Self {
             signing_keys: Arc::new(RwLock::new(HashMap::new())),
@@ -1190,7 +1190,7 @@ impl JwtValidator {
         }
     }
 
-    /// Validate JWT token
+    // Validate JWT token
     pub fn validate(&self, token: &str) -> std::result::Result<JwtClaims, DbError> {
         // Parse token
         let parts: Vec<&str> = token.split('.').collect();
@@ -1223,7 +1223,7 @@ impl JwtValidator {
         Ok(claims)
     }
 
-    /// Verify signature
+    // Verify signature
     fn verify_signature(&self, message: &str, signature: &[u8]) -> std::result::Result<(), DbError> {
         // TODO: Implement proper signature verification based on algorithm
         // For now, just check signature is not empty
@@ -1233,7 +1233,7 @@ impl JwtValidator {
         Ok(())
     }
 
-    /// Validate claims
+    // Validate claims
     fn validate_claims(&self, claims: &JwtClaims) -> std::result::Result<(), DbError> {
         // Check issuer
         if claims.iss != self.issuer {
@@ -1265,7 +1265,7 @@ impl JwtValidator {
         Ok(())
     }
 
-    /// Add signing key
+    // Add signing key
     pub fn add_signing_key(&self, kid: String, key: Vec<u8>) {
         let mut keys = self.signing_keys.write();
         keys.insert(kid, key);
@@ -1273,7 +1273,7 @@ impl JwtValidator {
 }
 
 impl OAuthProvider {
-    /// Create new OAuth provider
+    // Create new OAuth provider
     pub fn new() -> Self {
         Self {
             config: Arc::new(RwLock::new(OAuthConfig::default())),
@@ -1281,19 +1281,19 @@ impl OAuthProvider {
         }
     }
 
-    /// Configure OAuth provider
+    // Configure OAuth provider
     pub fn configure(&self, config: OAuthConfig) {
         let mut cfg = self.config.write();
         *cfg = config;
     }
 
-    /// Exchange authorization code for token
+    // Exchange authorization code for token
     pub async fn exchange_code(&self, code: &str) -> Result<OAuthToken> {
         // TODO: Implement actual OAuth token exchange
         Err(DbError::InvalidOperation("Not implemented".to_string()))
     }
 
-    /// Refresh access token
+    // Refresh access token
     pub async fn refresh_token(&self, refreshtoken: &str) -> Result<OAuthToken> {
         // TODO: Implement token refresh
         Err(DbError::InvalidOperation("Not implemented".to_string()))
@@ -1331,25 +1331,25 @@ impl SessionManager {
         }
     }
 
-    /// Get session by ID
+    // Get session by ID
     fn get_session(&self, session_id: &str) -> Option<Session> {
         let sessions = self.sessions.read();
         sessions.get(session_id).cloned()
     }
 
-    /// Create new session
+    // Create new session
     pub fn create_session(&self, session: Session) {
         let mut sessions = self.sessions.write();
         sessions.insert(session.session_id.clone(), session);
     }
 
-    /// Invalidate session
+    // Invalidate session
     pub fn invalidate_session(&self, session_id: &str) -> bool {
         let mut sessions = self.sessions.write();
         sessions.remove(session_id).is_some()
     }
 
-    /// Cleanup expired sessions
+    // Cleanup expired sessions
     pub fn cleanup_expired_sessions(&self) {
         let mut sessions = self.sessions.write();
         let now = SystemTime::now();
@@ -1365,13 +1365,13 @@ impl MtlsValidator {
         }
     }
 
-    /// Add trusted CA certificate
+    // Add trusted CA certificate
     pub fn add_trusted_ca(&self, cert: Vec<u8>) {
         let mut cas = self.trusted_cas.write();
         cas.push(cert);
     }
 
-    /// Validate client certificate
+    // Validate client certificate
     pub fn validate_certificate(&self, cert: &[u8]) -> Result<bool> {
         // TODO: Implement proper certificate validation
         Ok(true)
@@ -1386,7 +1386,7 @@ impl MfaManager {
         }
     }
 
-    /// Generate TOTP secret for user
+    // Generate TOTP secret for user
     pub fn generate_totp_secret(&self, user_id: String) -> Vec<u8> {
         let mut secret = vec![0u8; 32];
         for i in 0..32 {
@@ -1399,7 +1399,7 @@ impl MfaManager {
         secret
     }
 
-    /// Verify TOTP code
+    // Verify TOTP code
     pub fn verify_totp(&self, user_id: &str, code: &str) -> bool {
         // TODO: Implement TOTP verification
         false
@@ -1410,58 +1410,58 @@ impl MfaManager {
 // Authorization Engine - RBAC, ABAC, Policy Engine
 // ============================================================================
 
-/// Authorization engine
+// Authorization engine
 pub struct AuthorizationEngine {
-    /// RBAC manager
+    // RBAC manager
     rbac: Arc<RbacManager>,
-    /// ABAC evaluator
+    // ABAC evaluator
     abac: Arc<AbacEvaluator>,
-    /// Policy engine
+    // Policy engine
     policy_engine: Arc<PolicyEngine>,
 }
 
-/// RBAC manager
+// RBAC manager
 pub struct RbacManager {
-    /// Roles
+    // Roles
     roles: Arc<RwLock<HashMap<String, Role>>>,
-    /// User role assignments
+    // User role assignments
     user_roles: Arc<RwLock<HashMap<String, Vec<String>>>>,
 }
 
-/// Role definition
+// Role definition
 #[derive(Debug, Clone)]
 pub struct Role {
-    /// Role ID
+    // Role ID
     pub id: String,
-    /// Role name
+    // Role name
     pub name: String,
-    /// Description
+    // Description
     pub description: String,
-    /// Permissions
+    // Permissions
     pub permissions: Vec<String>,
-    /// Parent roles (inheritance)
+    // Parent roles (inheritance)
     pub parent_roles: Vec<String>,
-    /// Created at
+    // Created at
     pub created_at: SystemTime,
 }
 
-/// ABAC evaluator
+// ABAC evaluator
 pub struct AbacEvaluator {
-    /// Attribute providers
+    // Attribute providers
     attribute_providers: Vec<Arc<dyn AttributeProvider>>,
 }
 
-/// Attribute provider trait
+// Attribute provider trait
 pub trait AttributeProvider: Send + Sync {
-    /// Get attributes for subject
+    // Get attributes for subject
     fn get_subject_attributes(&self, subject: &str) -> HashMap<String, AttributeValue>;
-    /// Get attributes for resource
+    // Get attributes for resource
     fn get_resource_attributes(&self, resource: &str) -> HashMap<String, AttributeValue>;
-    /// Get attributes for environment
+    // Get attributes for environment
     fn get_environment_attributes(&self) -> HashMap<String, AttributeValue>;
 }
 
-/// Attribute value
+// Attribute value
 #[derive(Debug, Clone, PartialEq)]
 pub enum AttributeValue {
     String(String),
@@ -1470,52 +1470,52 @@ pub enum AttributeValue {
     List(Vec<AttributeValue>),
 }
 
-/// Policy engine
+// Policy engine
 pub struct PolicyEngine {
-    /// Policies
+    // Policies
     policies: Arc<RwLock<HashMap<String, Policy>>>,
 }
 
-/// Policy definition
+// Policy definition
 #[derive(Debug, Clone)]
 pub struct Policy {
-    /// Policy ID
+    // Policy ID
     pub id: String,
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Description
+    // Description
     pub description: String,
-    /// Effect
+    // Effect
     pub effect: PolicyEffect,
-    /// Subjects (who)
+    // Subjects (who)
     pub subjects: Vec<String>,
-    /// Resources (what)
+    // Resources (what)
     pub resources: Vec<String>,
-    /// Actions (how)
+    // Actions (how)
     pub actions: Vec<String>,
-    /// Conditions
+    // Conditions
     pub conditions: Vec<PolicyCondition>,
 }
 
-/// Policy effect
+// Policy effect
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PolicyEffect {
     Allow,
     Deny,
 }
 
-/// Policy condition
+// Policy condition
 #[derive(Debug, Clone)]
 pub struct PolicyCondition {
-    /// Attribute path
+    // Attribute path
     pub attribute: String,
-    /// Operator
+    // Operator
     pub operator: PolicyOperator,
-    /// Value
+    // Value
     pub value: AttributeValue,
 }
 
-/// Policy operator
+// Policy operator
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PolicyOperator {
     Equals,
@@ -1532,7 +1532,7 @@ pub enum PolicyOperator {
 }
 
 impl AuthorizationEngine {
-    /// Create new authorization engine
+    // Create new authorization engine
     pub fn new() -> Self {
         Self {
             rbac: Arc::new(RbacManager::new()),
@@ -1541,7 +1541,7 @@ impl AuthorizationEngine {
         }
     }
 
-    /// Authorize session for permissions
+    // Authorize session for permissions
     pub fn authorize(&self, session: &Session, required_permissions: &[String]) -> Result<bool> {
         // Check RBAC first
         if self.rbac.has_permissions(&session.user_id, required_permissions) {
@@ -1558,12 +1558,12 @@ impl AuthorizationEngine {
         Ok(true)
     }
 
-    /// Check if user has permission
+    // Check if user has permission
     pub fn check_permission(&self, user_id: &str, permission: &str) -> bool {
         self.rbac.has_permission(user_id, permission)
     }
 
-    /// Evaluate policy
+    // Evaluate policy
     pub fn evaluate_policy(&self, subject: &str, resource: &str, action: &str) -> Result<bool> {
         self.policy_engine.evaluate(subject, resource, action)
     }
@@ -1577,19 +1577,19 @@ impl RbacManager {
         }
     }
 
-    /// Create role
+    // Create role
     pub fn create_role(&self, role: Role) {
         let mut roles = self.roles.write();
         roles.insert(role.id.clone(), role);
     }
 
-    /// Assign role to user
+    // Assign role to user
     pub fn assign_role(&self, user_id: String, role_id: String) {
         let mut user_roles = self.user_roles.write();
         user_roles.entry(user_id).or_insert_with(Vec::new).push(role_id);
     }
 
-    /// Remove role from user
+    // Remove role from user
     pub fn remove_role(&self, user_id: &str, role_id: &str) -> bool {
         let mut user_roles = self.user_roles.write();
         if let Some(roles) = user_roles.get_mut(user_id) {
@@ -1601,7 +1601,7 @@ impl RbacManager {
         false
     }
 
-    /// Get user roles
+    // Get user roles
     pub fn get_user_roles(&self, user_id: &str) -> Vec<Role> {
         let user_roles = self.user_roles.read();
         let roles = self.roles.read();
@@ -1615,7 +1615,7 @@ impl RbacManager {
             .unwrap_or_default()
     }
 
-    /// Get all permissions for user (including inherited)
+    // Get all permissions for user (including inherited)
     pub fn get_user_permissions(&self, user_id: &str) -> HashSet<String> {
         let mut permissions = HashSet::new();
         let user_roles = self.get_user_roles(user_id);
@@ -1629,13 +1629,13 @@ impl RbacManager {
         permissions
     }
 
-    /// Check if user has permission
+    // Check if user has permission
     pub fn has_permission(&self, user_id: &str, permission: &str) -> bool {
         let permissions = self.get_user_permissions(user_id);
         permissions.contains(permission)
     }
 
-    /// Check if user has all permissions
+    // Check if user has all permissions
     pub fn has_permissions(&self, user_id: &str, required: &[String]) -> bool {
         let permissions = self.get_user_permissions(user_id);
         required.iter().all(|p| permissions.contains(p))
@@ -1649,12 +1649,12 @@ impl AbacEvaluator {
         }
     }
 
-    /// Add attribute provider
+    // Add attribute provider
     pub fn add_provider(&mut self, provider: Arc<dyn AttributeProvider>) {
         self.attribute_providers.push(provider);
     }
 
-    /// Evaluate ABAC policy
+    // Evaluate ABAC policy
     pub fn evaluate(&self, subject: &str, resource: &str, action: &str, conditions: &[PolicyCondition]) -> bool {
         // Collect attributes
         let mut subject_attrs = HashMap::new();
@@ -1691,7 +1691,7 @@ impl AbacEvaluator {
         true
     }
 
-    /// Evaluate single condition
+    // Evaluate single condition
     fn evaluate_condition(&self, actual: &AttributeValue, operator: &PolicyOperator, expected: &AttributeValue) -> bool {
         match operator {
             PolicyOperator::Equals => actual == expected,
@@ -1708,19 +1708,19 @@ impl PolicyEngine {
         }
     }
 
-    /// Add policy
+    // Add policy
     pub fn add_policy(&self, policy: Policy) {
         let mut policies = self.policies.write();
         policies.insert(policy.id.clone(), policy);
     }
 
-    /// Remove policy
+    // Remove policy
     pub fn remove_policy(&self, policy_id: &str) -> bool {
         let mut policies = self.policies.write();
         policies.remove(policy_id).is_some()
     }
 
-    /// Evaluate policies
+    // Evaluate policies
     pub fn evaluate(&self, subject: &str, resource: &str, action: &str) -> Result<bool> {
         let policies = self.policies.read();
 
@@ -1755,7 +1755,7 @@ impl PolicyEngine {
         }
     }
 
-    /// Match pattern (supports wildcards)
+    // Match pattern (supports wildcards)
     fn matches_pattern(&self, patterns: &[String], value: &str) -> bool {
         if patterns.is_empty() {
             return true;
@@ -1779,7 +1779,7 @@ impl PolicyEngine {
         false
     }
 
-    /// Get all policies
+    // Get all policies
     pub fn get_policies(&self) -> Vec<Policy> {
         let policies = self.policies.read();
         policies.values().cloned().collect()
@@ -1790,91 +1790,91 @@ impl PolicyEngine {
 // Rate Limiting & Throttling - Token Bucket, Sliding Window
 // ============================================================================
 
-/// Rate limiter
+// Rate limiter
 pub struct RateLimiter {
-    /// Rate limit configurations
+    // Rate limit configurations
     configs: Arc<RwLock<HashMap<String, RateLimitConfig>>>,
-    /// Token buckets
+    // Token buckets
     buckets: Arc<RwLock<HashMap<String, TokenBucket>>>,
-    /// Sliding windows
+    // Sliding windows
     windows: Arc<RwLock<HashMap<String, SlidingWindow>>>,
-    /// Quota manager
+    // Quota manager
     quota_manager: Arc<QuotaManager>,
 }
 
-/// Rate limit configuration
+// Rate limit configuration
 #[derive(Debug, Clone)]
 pub struct RateLimitConfig {
-    /// Limit type
+    // Limit type
     pub limit_type: RateLimitType,
-    /// Requests per window
+    // Requests per window
     pub requests: u64,
-    /// Window duration (seconds)
+    // Window duration (seconds)
     pub window: u64,
-    /// Burst size
+    // Burst size
     pub burst: Option<u64>,
 }
 
-/// Rate limit type
+// Rate limit type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RateLimitType {
-    /// Token bucket algorithm
+    // Token bucket algorithm
     TokenBucket,
-    /// Sliding window
+    // Sliding window
     SlidingWindow,
-    /// Fixed window
+    // Fixed window
     FixedWindow,
 }
 
-/// Token bucket
+// Token bucket
 pub struct TokenBucket {
-    /// Capacity
+    // Capacity
     capacity: u64,
-    /// Current tokens
+    // Current tokens
     tokens: f64,
-    /// Refill rate (tokens per second)
+    // Refill rate (tokens per second)
     refill_rate: f64,
-    /// Last refill time
+    // Last refill time
     last_refill: Instant,
 }
 
-/// Sliding window
+// Sliding window
 pub struct SlidingWindow {
-    /// Window size (seconds)
+    // Window size (seconds)
     window_size: u64,
-    /// Request timestamps
+    // Request timestamps
     requests: VecDeque<Instant>,
-    /// Max requests
+    // Max requests
     max_requests: u64,
 }
 
-/// Quota manager
+// Quota manager
 pub struct QuotaManager {
-    /// User quotas
+    // User quotas
     quotas: Arc<RwLock<HashMap<String, UserQuota>>>,
 }
 
-/// User quota
+// User quota
 #[derive(Debug, Clone)]
 pub struct UserQuota {
-    /// User ID
+    // User ID
     pub user_id: String,
-    /// Daily limit
+    // Daily limit
     pub daily_limit: u64,
-    /// Monthly limit
+    // Monthly limit
     pub monthly_limit: u64,
-    /// Current daily usage
+    // Current daily usage
     pub daily_usage: u64,
-    /// Current monthly usage
+    // Current monthly usage
     pub monthly_usage: u64,
-    /// Reset timestamp
+    // Reset timestamp
     pub daily_reset: SystemTime,
-    /// Monthly reset timestamp
+    // Monthly reset timestamp
     pub monthly_reset: SystemTime,
 }
 
 impl RateLimiter {
-    /// Create new rate limiter
+    // Create new rate limiter
     pub fn new() -> Self {
         Self {
             configs: Arc::new(RwLock::new(HashMap::new())),
@@ -1884,13 +1884,13 @@ impl RateLimiter {
         }
     }
 
-    /// Configure rate limit
+    // Configure rate limit
     pub fn configure(&self, key: String, config: RateLimitConfig) {
         let mut configs = self.configs.write();
         configs.insert(key, config);
     }
 
-    /// Check rate limit
+    // Check rate limit
     pub fn check_rate_limit(&self, key: &str, override_config: Option<&RateLimitConfig>) -> Result<()> {
         let configs = self.configs.read();
         let config = override_config.or_else(|| configs.get(key));
@@ -1913,7 +1913,7 @@ impl RateLimiter {
         }
     }
 
-    /// Check token bucket
+    // Check token bucket
     fn check_token_bucket(&self, key: &str, config: &RateLimitConfig) -> Result<()> {
         let mut buckets = self.buckets.write();
 
@@ -1927,7 +1927,7 @@ impl RateLimiter {
         bucket.consume(1)
     }
 
-    /// Check sliding window
+    // Check sliding window
     fn check_sliding_window(&self, key: &str, config: &RateLimitConfig) -> Result<()> {
         let mut windows = self.windows.write();
 
@@ -1938,13 +1938,13 @@ impl RateLimiter {
         window.allow_request()
     }
 
-    /// Check fixed window
+    // Check fixed window
     fn check_fixed_window(&self, key: &str, config: &RateLimitConfig) -> Result<()> {
         // Simplified implementation using sliding window
         self.check_sliding_window(key, config)
     }
 
-    /// Get rate limit status
+    // Get rate limit status
     pub fn get_status(&self, key: &str) -> Option<RateLimitStatus> {
         let buckets = self.buckets.read();
         if let Some(bucket) = buckets.get(key) {
@@ -1966,17 +1966,17 @@ impl RateLimiter {
     }
 }
 
-/// Rate limit status
+// Rate limit status
 #[derive(Debug, Clone)]
 pub struct RateLimitStatus {
-    /// Remaining requests
+    // Remaining requests
     pub remaining: u64,
-    /// Reset time
+    // Reset time
     pub reset_at: Instant,
 }
 
 impl TokenBucket {
-    /// Create new token bucket
+    // Create new token bucket
     fn new(capacity: u64, refill_rate: f64) -> Self {
         Self {
             capacity,
@@ -1986,7 +1986,7 @@ impl TokenBucket {
         }
     }
 
-    /// Refill tokens
+    // Refill tokens
     fn refill(&mut self) {
         let now = Instant::now();
         let elapsed = now.duration_since(self.last_refill).as_secs_f64();
@@ -1996,7 +1996,7 @@ impl TokenBucket {
         self.last_refill = now;
     }
 
-    /// Consume tokens
+    // Consume tokens
     fn consume(&mut self, amount: u64) -> Result<()> {
         self.refill();
 
@@ -2010,7 +2010,7 @@ impl TokenBucket {
 }
 
 impl SlidingWindow {
-    /// Create new sliding window
+    // Create new sliding window
     fn new(window_size: u64, max_requests: u64) -> Self {
         Self {
             window_size,
@@ -2019,7 +2019,7 @@ impl SlidingWindow {
         }
     }
 
-    /// Clean old requests
+    // Clean old requests
     fn clean_old_requests(&mut self) {
         let cutoff = Instant::now() - Duration::from_secs(self.window_size);
 
@@ -2032,7 +2032,7 @@ impl SlidingWindow {
         }
     }
 
-    /// Allow request
+    // Allow request
     fn allow_request(&mut self) -> Result<()> {
         self.clean_old_requests();
 
@@ -2052,7 +2052,7 @@ impl QuotaManager {
         }
     }
 
-    /// Set user quota
+    // Set user quota
     pub fn set_quota(&self, user_id: String, daily_limit: u64, monthly_limit: u64) {
         let mut quotas = self.quotas.write();
 
@@ -2068,7 +2068,7 @@ impl QuotaManager {
         });
     }
 
-    /// Check and update quota
+    // Check and update quota
     pub fn check_quota(&self, user_id: &str) -> Result<()> {
         let mut quotas = self.quotas.write();
 
@@ -2106,7 +2106,7 @@ impl QuotaManager {
         Ok(())
     }
 
-    /// Get quota status
+    // Get quota status
     pub fn get_quota_status(&self, user_id: &str) -> Option<UserQuota> {
         let quotas = self.quotas.read();
         quotas.get(user_id).cloned()
@@ -2117,82 +2117,82 @@ impl QuotaManager {
 // Security Features - Request Validation, Threat Detection
 // ============================================================================
 
-/// Security filter
+// Security filter
 pub struct SecurityFilter {
-    /// Request validator
+    // Request validator
     validator: Arc<RequestValidator>,
-    /// Threat detector
+    // Threat detector
     threat_detector: Arc<ThreatDetector>,
-    /// IP filter
+    // IP filter
     ip_filter: Arc<IpFilter>,
-    /// CSRF manager
+    // CSRF manager
     csrf_manager: Arc<CsrfManager>,
 }
 
-/// Request validator
+// Request validator
 pub struct RequestValidator {
-    /// Maximum path length
+    // Maximum path length
     max_path_length: usize,
-    /// Maximum header size
+    // Maximum header size
     max_header_size: usize,
-    /// Allowed content types
+    // Allowed content types
     allowed_content_types: HashSet<String>,
 }
 
-/// Threat detector
+// Threat detector
 pub struct ThreatDetector {
-    /// SQL injection patterns
+    // SQL injection patterns
     sql_injection_patterns: Vec<regex::Regex>,
-    /// XSS patterns
+    // XSS patterns
     xss_patterns: Vec<regex::Regex>,
-    /// Path traversal patterns
+    // Path traversal patterns
     path_traversal_patterns: Vec<regex::Regex>,
-    /// Suspicious patterns
+    // Suspicious patterns
     suspicious_patterns: Vec<regex::Regex>,
 }
 
-/// IP filter
+// IP filter
 pub struct IpFilter {
-    /// Whitelist
+    // Whitelist
     whitelist: Arc<RwLock<HashSet<IpAddr>>>,
-    /// Blacklist
+    // Blacklist
     blacklist: Arc<RwLock<HashSet<IpAddr>>>,
-    /// Mode
+    // Mode
     mode: IpFilterMode,
 }
 
-/// IP filter mode
+// IP filter mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IpFilterMode {
-    /// Allow all except blacklisted
+    // Allow all except blacklisted
     Blacklist,
-    /// Deny all except whitelisted
+    // Deny all except whitelisted
     Whitelist,
-    /// No filtering
+    // No filtering
     None,
 }
 
-/// CSRF manager
+// CSRF manager
 pub struct CsrfManager {
-    /// CSRF tokens
+    // CSRF tokens
     tokens: Arc<RwLock<HashMap<String, CsrfToken>>>,
-    /// Token timeout (seconds)
+    // Token timeout (seconds)
     token_timeout: u64,
 }
 
-/// CSRF token
+// CSRF token
 #[derive(Debug, Clone)]
 pub struct CsrfToken {
-    /// Token value
+    // Token value
     pub value: String,
-    /// Created at
+    // Created at
     pub created_at: Instant,
-    /// User session ID
+    // User session ID
     pub session_id: String,
 }
 
 impl SecurityFilter {
-    /// Create new security filter
+    // Create new security filter
     pub fn new() -> Self {
         Self {
             validator: Arc::new(RequestValidator::new()),
@@ -2202,7 +2202,7 @@ impl SecurityFilter {
         }
     }
 
-    /// Validate request
+    // Validate request
     pub fn validate_request(&self, request: &ApiRequest) -> Result<()> {
         // IP filtering
         self.ip_filter.check_ip(request.client_ip)?;
@@ -2216,12 +2216,12 @@ impl SecurityFilter {
         Ok(())
     }
 
-    /// Get IP filter
+    // Get IP filter
     pub fn get_ip_filter(&self) -> Arc<IpFilter> {
         Arc::clone(&self.ip_filter)
     }
 
-    /// Get CSRF manager
+    // Get CSRF manager
     pub fn get_csrf_manager(&self) -> Arc<CsrfManager> {
         Arc::clone(&self.csrf_manager)
     }
@@ -2242,7 +2242,7 @@ impl RequestValidator {
         }
     }
 
-    /// Validate request
+    // Validate request
     fn validate(&self, request: &ApiRequest) -> Result<()> {
         // Check path length
         if request.path.len() > self.max_path_length {
@@ -2300,7 +2300,7 @@ impl ThreatDetector {
         }
     }
 
-    /// Detect threats in request
+    // Detect threats in request
     fn detect_threats(&self, request: &ApiRequest) -> Result<()> {
         // Check path
         self.check_path_traversal(&request.path)?;
@@ -2325,7 +2325,7 @@ impl ThreatDetector {
         Ok(())
     }
 
-    /// Check for SQL injection
+    // Check for SQL injection
     fn check_sql_injection(&self, input: &str) -> Result<()> {
         for pattern in &self.sql_injection_patterns {
             if pattern.is_match(input) {
@@ -2335,7 +2335,7 @@ impl ThreatDetector {
         Ok(())
     }
 
-    /// Check for XSS
+    // Check for XSS
     fn check_xss(&self, input: &str) -> Result<()> {
         for pattern in &self.xss_patterns {
             if pattern.is_match(input) {
@@ -2345,7 +2345,7 @@ impl ThreatDetector {
         Ok(())
     }
 
-    /// Check for path traversal
+    // Check for path traversal
     fn check_path_traversal(&self, input: &str) -> Result<()> {
         for pattern in &self.path_traversal_patterns {
             if pattern.is_match(input) {
@@ -2365,7 +2365,7 @@ impl IpFilter {
         }
     }
 
-    /// Check IP address
+    // Check IP address
     fn check_ip(&self, ip: IpAddr) -> Result<()> {
         match self.mode {
             IpFilterMode::None => Ok(()),
@@ -2388,31 +2388,31 @@ impl IpFilter {
         }
     }
 
-    /// Add to whitelist
+    // Add to whitelist
     pub fn add_to_whitelist(&self, ip: IpAddr) {
         let mut whitelist = self.whitelist.write();
         whitelist.insert(ip);
     }
 
-    /// Remove from whitelist
+    // Remove from whitelist
     pub fn remove_from_whitelist(&self, ip: IpAddr) -> bool {
         let mut whitelist = self.whitelist.write();
         whitelist.remove(&ip)
     }
 
-    /// Add to blacklist
+    // Add to blacklist
     pub fn add_to_blacklist(&self, ip: IpAddr) {
         let mut blacklist = self.blacklist.write();
         blacklist.insert(ip);
     }
 
-    /// Remove from blacklist
+    // Remove from blacklist
     pub fn remove_from_blacklist(&self, ip: IpAddr) -> bool {
         let mut blacklist = self.blacklist.write();
         blacklist.remove(&ip)
     }
 
-    /// Set filter mode
+    // Set filter mode
     pub fn set_mode(&mut self, mode: IpFilterMode) {
         self.mode = mode;
     }
@@ -2426,7 +2426,7 @@ impl CsrfManager {
         }
     }
 
-    /// Generate CSRF token
+    // Generate CSRF token
     pub fn generate_token(&self, session_id: String) -> String {
         let token_value = Uuid::new_v4().to_string();
 
@@ -2442,7 +2442,7 @@ impl CsrfManager {
         token_value
     }
 
-    /// Validate CSRF token
+    // Validate CSRF token
     pub fn validate_token(&self, token_value: &str, session_id: &str) -> bool {
         let tokens = self.tokens.read();
 
@@ -2464,7 +2464,7 @@ impl CsrfManager {
         }
     }
 
-    /// Cleanup expired tokens
+    // Cleanup expired tokens
     pub fn cleanup_expired_tokens(&self) {
         let mut tokens = self.tokens.write();
         let timeout = Duration::from_secs(self.token_timeout);
@@ -2479,40 +2479,40 @@ impl CsrfManager {
 // Audit Logging
 // ============================================================================
 
-/// Audit logger
+// Audit logger
 pub struct AuditLogger {
-    /// Audit events
+    // Audit events
     events: VecDeque<AuditEvent>,
-    /// Max events to keep in memory
+    // Max events to keep in memory
     max_events: usize,
 }
 
-/// Audit event
+// Audit event
 #[derive(Debug, Clone)]
 pub struct AuditEvent {
-    /// Event ID
+    // Event ID
     pub id: String,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
-    /// Event type
+    // Event type
     pub event_type: AuditEventType,
-    /// User ID
+    // User ID
     pub user_id: Option<String>,
-    /// Client IP
+    // Client IP
     pub client_ip: IpAddr,
-    /// Request ID
+    // Request ID
     pub request_id: String,
-    /// Resource
+    // Resource
     pub resource: String,
-    /// Action
+    // Action
     pub action: String,
-    /// Result
+    // Result
     pub result: AuditResult,
-    /// Details
+    // Details
     pub details: HashMap<String, String>,
 }
 
-/// Audit event type
+// Audit event type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AuditEventType {
     Authentication,
@@ -2524,7 +2524,7 @@ pub enum AuditEventType {
     ConfigChange,
 }
 
-/// Audit result
+// Audit result
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AuditResult {
     Success,
@@ -2532,22 +2532,22 @@ pub enum AuditResult {
     Denied,
 }
 
-/// Security event
+// Security event
 #[derive(Debug, Clone)]
 pub struct SecurityEvent {
-    /// Event type
+    // Event type
     pub event_type: SecurityEventType,
-    /// Request ID
+    // Request ID
     pub request_id: String,
-    /// Client IP
+    // Client IP
     pub client_ip: IpAddr,
-    /// Reason
+    // Reason
     pub reason: String,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
 }
 
-/// Security event type
+// Security event type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SecurityEventType {
     AuthenticationFailed,
@@ -2565,7 +2565,7 @@ impl AuditLogger {
         }
     }
 
-    /// Log request
+    // Log request
     fn log_request(&mut self, request: &ApiRequest) {
         let event = AuditEvent {
             id: Uuid::new_v4().to_string(),
@@ -2583,7 +2583,7 @@ impl AuditLogger {
         self.add_event(event);
     }
 
-    /// Log security event
+    // Log security event
     fn log_security_event(&mut self, event: &SecurityEvent) {
         let audit_event = AuditEvent {
             id: Uuid::new_v4().to_string(),
@@ -2605,7 +2605,7 @@ impl AuditLogger {
         self.add_event(audit_event);
     }
 
-    /// Add event
+    // Add event
     fn add_event(&mut self, event: AuditEvent) {
         if self.events.len() >= self.max_events {
             self.events.pop_front();
@@ -2613,7 +2613,7 @@ impl AuditLogger {
         self.events.push_back(event);
     }
 
-    /// Get recent events
+    // Get recent events
     pub fn get_recent_events(&self, count: usize) -> Vec<AuditEvent> {
         self.events.iter()
             .rev()
@@ -2622,7 +2622,7 @@ impl AuditLogger {
             .collect()
     }
 
-    /// Search events
+    // Search events
     pub fn search_events(&self, filter: &AuditEventFilter) -> Vec<AuditEvent> {
         self.events.iter()
             .filter(|e| filter.matches(e))
@@ -2631,18 +2631,18 @@ impl AuditLogger {
     }
 }
 
-/// Audit event filter
+// Audit event filter
 #[derive(Debug, Default)]
 pub struct AuditEventFilter {
-    /// Filter by event type
+    // Filter by event type
     pub event_type: Option<AuditEventType>,
-    /// Filter by user ID
+    // Filter by user ID
     pub user_id: Option<String>,
-    /// Filter by client IP
+    // Filter by client IP
     pub client_ip: Option<IpAddr>,
-    /// Filter by time range
+    // Filter by time range
     pub time_range: Option<(SystemTime, SystemTime)>,
-    /// Filter by result
+    // Filter by result
     pub result: Option<AuditResult>,
 }
 

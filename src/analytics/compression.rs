@@ -26,29 +26,29 @@ use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Compression algorithm for query results.
+// Compression algorithm for query results.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompressionAlgorithm {
-    /// No compression
+    // No compression
     None,
-    /// Run-length encoding for repeated values
+    // Run-length encoding for repeated values
     RunLength,
-    /// Dictionary encoding for low-cardinality data
+    // Dictionary encoding for low-cardinality data
     Dictionary,
-    /// Delta encoding for sorted/sequential data
+    // Delta encoding for sorted/sequential data
     Delta,
-    /// Bit-packing for small integers
+    // Bit-packing for small integers
     BitPacking,
-    /// LZ4-style byte compression
+    // LZ4-style byte compression
     Lz4,
-    /// Snappy-style compression
+    // Snappy-style compression
     Snappy,
-    /// Hybrid (chooses best per column)
+    // Hybrid (chooses best per column)
     Adaptive,
 }
 
 impl CompressionAlgorithm {
-    /// Returns the expected compression ratio for the algorithm.
+    // Returns the expected compression ratio for the algorithm.
     pub fn expected_ratio(&self) -> f64 {
         match self {
             CompressionAlgorithm::None => 1.0,
@@ -62,7 +62,7 @@ impl CompressionAlgorithm {
         }
     }
 
-    /// Returns whether the algorithm is suitable for the data characteristics.
+    // Returns whether the algorithm is suitable for the data characteristics.
     pub fn suitable_for(&self, cardinality: usize, total_count: usize, issorted: bool) -> bool {
         match self {
             CompressionAlgorithm::None => true,
@@ -87,25 +87,25 @@ impl CompressionAlgorithm {
     }
 }
 
-/// Compressed representation of query results.
+// Compressed representation of query results.
 #[derive(Debug, Clone)]
 pub struct CompressedResult {
-    /// Compression algorithm used
+    // Compression algorithm used
     pub algorithm: CompressionAlgorithm,
-    /// Compressed data bytes
+    // Compressed data bytes
     pub data: Vec<u8>,
-    /// Original uncompressed size
+    // Original uncompressed size
     pub original_size: usize,
-    /// Compressed size
+    // Compressed size
     pub compressed_size: usize,
-    /// Column metadata for decompression
+    // Column metadata for decompression
     pub column_info: Vec<CompressedColumnInfo>,
-    /// Number of rows
+    // Number of rows
     pub row_count: usize,
 }
 
 impl CompressedResult {
-    /// Returns the compression ratio (compressed/original).
+    // Returns the compression ratio (compressed/original).
     pub fn compression_ratio(&self) -> f64 {
         if self.original_size == 0 {
             return 1.0;
@@ -113,64 +113,64 @@ impl CompressedResult {
         self.compressed_size as f64 / self.original_size as f64
     }
 
-    /// Returns the space savings as a percentage.
+    // Returns the space savings as a percentage.
     pub fn space_savings_percent(&self) -> f64 {
         (1.0 - self.compression_ratio()) * 100.0
     }
 }
 
-/// Metadata for a compressed column.
+// Metadata for a compressed column.
 #[derive(Debug, Clone)]
 pub struct CompressedColumnInfo {
-    /// Column name
+    // Column name
     pub name: String,
-    /// Algorithm used for this column
+    // Algorithm used for this column
     pub algorithm: CompressionAlgorithm,
-    /// Offset in the data buffer
+    // Offset in the data buffer
     pub offset: usize,
-    /// Length of compressed data
+    // Length of compressed data
     pub length: usize,
-    /// Dictionary for dictionary-encoded columns
+    // Dictionary for dictionary-encoded columns
     pub dictionary: Option<Vec<String>>,
-    /// Base value for delta encoding
+    // Base value for delta encoding
     pub delta_base: Option<i64>,
 }
 
-/// Run-length encoded segment.
+// Run-length encoded segment.
 #[derive(Debug, Clone)]
 struct RleSegment {
     value: Vec<u8>,
     count: u32,
 }
 
-/// Query result compressor.
+// Query result compressor.
 #[derive(Debug)]
 pub struct QueryResultCompressor {
-    /// Default algorithm
+    // Default algorithm
     algorithm: CompressionAlgorithm,
-    /// Compression level (1-9)
+    // Compression level (1-9)
     level: u8,
-    /// Statistics about compression
+    // Statistics about compression
     stats: Arc<RwLock<CompressionStats>>,
 }
 
-/// Statistics about compression operations.
+// Statistics about compression operations.
 #[derive(Debug, Default, Clone)]
 pub struct CompressionStats {
-    /// Total bytes compressed
+    // Total bytes compressed
     pub bytes_in: usize,
-    /// Total bytes after compression
+    // Total bytes after compression
     pub bytes_out: usize,
-    /// Number of compression operations
+    // Number of compression operations
     pub operations: usize,
-    /// Time spent compressing (microseconds)
+    // Time spent compressing (microseconds)
     pub compress_time_us: u64,
-    /// Time spent decompressing (microseconds)
+    // Time spent decompressing (microseconds)
     pub decompress_time_us: u64,
 }
 
 impl CompressionStats {
-    /// Returns the overall compression ratio.
+    // Returns the overall compression ratio.
     pub fn overall_ratio(&self) -> f64 {
         if self.bytes_in == 0 {
             return 1.0;
@@ -186,7 +186,7 @@ impl Default for QueryResultCompressor {
 }
 
 impl QueryResultCompressor {
-    /// Creates a new compressor with the specified algorithm.
+    // Creates a new compressor with the specified algorithm.
     pub fn new(algorithm: CompressionAlgorithm) -> Self {
         Self {
             algorithm,
@@ -195,13 +195,13 @@ impl QueryResultCompressor {
         }
     }
 
-    /// Sets the compression level (1-9).
+    // Sets the compression level (1-9).
     pub fn with_level(mut self, level: u8) -> Self {
         self.level = level.clamp(1, 9);
         self
     }
 
-    /// Compresses string data using the configured algorithm.
+    // Compresses string data using the configured algorithm.
     pub fn compress_strings(&self, data: &[String]) -> CompressedResult {
         let start = std::time::Instant::now();
 
@@ -233,7 +233,7 @@ impl QueryResultCompressor {
         result
     }
 
-    /// Compresses numeric data.
+    // Compresses numeric data.
     pub fn compress_numbers(&self, data: &[i64]) -> CompressedResult {
         let start = std::time::Instant::now();
 
@@ -268,7 +268,7 @@ impl QueryResultCompressor {
         result
     }
 
-    /// Decompresses string data.
+    // Decompresses string data.
     pub fn decompress_strings(&self, compressed: &CompressedResult) -> Vec<String> {
         let start = std::time::Instant::now();
 
@@ -287,7 +287,7 @@ impl QueryResultCompressor {
         result
     }
 
-    /// Decompresses numeric data.
+    // Decompresses numeric data.
     pub fn decompress_numbers(&self, compressed: &CompressedResult) -> Vec<i64> {
         let start = std::time::Instant::now();
 
@@ -301,7 +301,7 @@ impl QueryResultCompressor {
         result
     }
 
-    /// Chooses the best algorithm for the data.
+    // Chooses the best algorithm for the data.
     fn choose_algorithm(&self, data: &[String]) -> CompressionAlgorithm {
         if self.algorithm != CompressionAlgorithm::Adaptive {
             return self.algorithm;
@@ -336,7 +336,7 @@ impl QueryResultCompressor {
         CompressionAlgorithm::None
     }
 
-    /// Dictionary encodes string data.
+    // Dictionary encodes string data.
     fn dictionary_encode(&self, data: &[String]) -> (Vec<u8>, CompressedColumnInfo) {
         let mut dictionary: Vec<String> = Vec::new();
         let mut dict_map: HashMap<&str, u16> = HashMap::new();
@@ -380,7 +380,7 @@ impl QueryResultCompressor {
         (bytes, info)
     }
 
-    /// Decodes dictionary-encoded data.
+    // Decodes dictionary-encoded data.
     fn dictionary_decode(&self, compressed: &CompressedResult) -> Vec<String> {
         if compressed.column_info.is_empty() {
             return Vec::new();
@@ -416,7 +416,7 @@ impl QueryResultCompressor {
         result
     }
 
-    /// Run-length encodes string data.
+    // Run-length encodes string data.
     fn run_length_encode(&self, data: &[String]) -> (Vec<u8>, CompressedColumnInfo) {
         let mut bytes: Vec<u8> = Vec::new();
         let mut i = 0;
@@ -449,7 +449,7 @@ impl QueryResultCompressor {
         (bytes, info)
     }
 
-    /// Decodes run-length encoded data.
+    // Decodes run-length encoded data.
     fn run_length_decode(&self, compressed: &CompressedResult) -> Vec<String> {
         let data = &compressed.data;
         let mut result = Vec::with_capacity(compressed.row_count);
@@ -482,7 +482,7 @@ impl QueryResultCompressor {
         result
     }
 
-    /// Simple length-prefixed encoding.
+    // Simple length-prefixed encoding.
     fn simple_encode(&self, data: &[String]) -> (Vec<u8>, CompressedColumnInfo) {
         let mut bytes: Vec<u8> = Vec::new();
 
@@ -503,7 +503,7 @@ impl QueryResultCompressor {
         (bytes, info)
     }
 
-    /// Decodes simple length-prefixed data.
+    // Decodes simple length-prefixed data.
     fn simple_decode(&self, compressed: &CompressedResult) -> Vec<String> {
         let data = &compressed.data;
         let mut result = Vec::with_capacity(compressed.row_count);
@@ -525,7 +525,7 @@ impl QueryResultCompressor {
         result
     }
 
-    /// Delta encodes numeric data.
+    // Delta encodes numeric data.
     fn delta_encode(&self, data: &[i64]) -> (Vec<u8>, CompressedColumnInfo) {
         if data.is_empty() {
             return (
@@ -567,7 +567,7 @@ impl QueryResultCompressor {
         (bytes, info)
     }
 
-    /// Decodes delta-encoded data.
+    // Decodes delta-encoded data.
     fn delta_decode(&self, compressed: &CompressedResult) -> Vec<i64> {
         let data = &compressed.data;
 
@@ -603,7 +603,7 @@ impl QueryResultCompressor {
         result
     }
 
-    /// Variable-length integer encoding.
+    // Variable-length integer encoding.
     fn varint_encode(&self, data: &[i64]) -> (Vec<u8>, CompressedColumnInfo) {
         let mut bytes: Vec<u8> = Vec::new();
 
@@ -624,7 +624,7 @@ impl QueryResultCompressor {
         (bytes, info)
     }
 
-    /// Decodes variable-length integers.
+    // Decodes variable-length integers.
     fn varint_decode(&self, compressed: &CompressedResult) -> Vec<i64> {
         let data = &compressed.data;
         let mut result = Vec::with_capacity(compressed.row_count);
@@ -648,12 +648,12 @@ impl QueryResultCompressor {
         result
     }
 
-    /// Returns compression statistics.
+    // Returns compression statistics.
     pub fn stats(&self) -> CompressionStats {
         self.stats.read().clone()
     }
 
-    /// Resets compression statistics.
+    // Resets compression statistics.
     pub fn reset_stats(&self) {
         *self.stats.write() = CompressionStats::default();
     }

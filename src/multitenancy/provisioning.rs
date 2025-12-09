@@ -4,13 +4,13 @@
 use tokio::time::sleep;
 use std::fmt;
 use std::collections::VecDeque;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime};
 
-/// Provisioning error types
+// Provisioning error types
 #[derive(Debug, Clone)]
 pub enum ProvisioningError {
     TemplateNotFound(String),
@@ -40,7 +40,7 @@ impl std::error::Error for ProvisioningError {}
 
 pub type ProvisioningResult<T> = Result<T, ProvisioningError>;
 
-/// Provisioning template for different service tiers
+// Provisioning template for different service tiers
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvisioningTemplate {
     pub template_id: String,
@@ -210,7 +210,7 @@ impl ProvisioningTemplate {
     }
 }
 
-/// Provisioning request
+// Provisioning request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvisioningRequest {
     pub request_id: String,
@@ -235,7 +235,7 @@ pub enum RequestStatus {
     Failed,
 }
 
-/// Provisioning workflow
+// Provisioning workflow
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvisioningWorkflow {
     pub workflow_id: String,
@@ -293,7 +293,7 @@ pub enum WorkflowStatus {
     Cancelled,
 }
 
-/// Deprovisioning policy
+// Deprovisioning policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeprovisioningPolicy {
     pub retention_days: u32,
@@ -317,7 +317,7 @@ impl Default for DeprovisioningPolicy {
     }
 }
 
-/// Deprovisioning request
+// Deprovisioning request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeprovisioningRequest {
     pub request_id: String,
@@ -330,7 +330,7 @@ pub struct DeprovisioningRequest {
     pub status: RequestStatus,
 }
 
-/// Provisioning service
+// Provisioning service
 pub struct ProvisioningService {
     templates: Arc<RwLock<HashMap<String, ProvisioningTemplate>>>,
     requests: Arc<RwLock<HashMap<String, ProvisioningRequest>>>,
@@ -388,25 +388,25 @@ impl ProvisioningService {
         }
     }
 
-    /// Register a custom template
+    // Register a custom template
     pub async fn register_template(&self, template: ProvisioningTemplate) {
         let mut templates = self.templates.write().await;
         templates.insert(template.template_id.clone(), template);
     }
 
-    /// Get template by ID
+    // Get template by ID
     pub async fn get_template(&self, template_id: &str) -> Option<ProvisioningTemplate> {
         let templates = self.templates.read().await;
         templates.get(template_id).cloned()
     }
 
-    /// List all templates
+    // List all templates
     pub async fn list_templates(&self) -> Vec<ProvisioningTemplate> {
         let templates = self.templates.read().await;
         templates.values().cloned().collect()
     }
 
-    /// Submit provisioning request
+    // Submit provisioning request
     pub async fn submit_request(
         &self,
         requester: String,
@@ -484,7 +484,7 @@ impl ProvisioningService {
         ))
     }
 
-    /// Approve provisioning request
+    // Approve provisioning request
     pub async fn approve_request(&self, request_id: &str) -> ProvisioningResult<()> {
         let mut requests = self.requests.write().await;
         let request = requests.get_mut(request_id)
@@ -501,7 +501,7 @@ impl ProvisioningService {
         Ok(())
     }
 
-    /// Reject provisioning request
+    // Reject provisioning request
     pub async fn reject_request(&self, request_id: &str, reason: String) -> ProvisioningResult<()> {
         let mut requests = self.requests.write().await;
         if let Some(request) = requests.get_mut(request_id) {
@@ -698,13 +698,13 @@ impl ProvisioningService {
         Ok(())
     }
 
-    /// Get workflow status
+    // Get workflow status
     pub async fn get_workflow_status(&self, workflow_id: &str) -> Option<ProvisioningWorkflow> {
         let workflows = self.workflows.read().await;
         workflows.get(workflow_id).cloned()
     }
 
-    /// Submit deprovisioning request
+    // Submit deprovisioning request
     pub async fn submit_deprovisioning_request(
         &self,
         tenant_id: String,
@@ -734,7 +734,7 @@ impl ProvisioningService {
         Ok(request_id)
     }
 
-    /// Execute deprovisioning
+    // Execute deprovisioning
     pub async fn execute_deprovisioning(&self, request_id: &str) -> ProvisioningResult<()> {
         let mut requests = self.deprovisioning_requests.write().await;
         let request = requests.get_mut(request_id)
@@ -758,7 +758,7 @@ impl ProvisioningService {
         Ok(())
     }
 
-    /// List pending approval requests
+    // List pending approval requests
     pub async fn list_pending_approvals(&self) -> Vec<String> {
         let approval_queue = self.approval_queue.read().await;
         approval_queue.iter().cloned().collect()
@@ -849,5 +849,3 @@ mod tests {
         assert!(result.is_ok());
     }
 }
-
-

@@ -13,43 +13,43 @@ use super::config::{CompressionType, SnapshotConfig};
 use super::errors::SnapshotError;
 use super::types::*;
 
-/// Snapshot manager trait for different implementations
+// Snapshot manager trait for different implementations
 #[async_trait]
 pub trait SnapshotManager: Send + Sync {
-    /// Create a full snapshot
+    // Create a full snapshot
     async fn create_full_snapshot(&self, replica_id: &ReplicaId) -> Result<SnapshotId, SnapshotError>;
 
-    /// Create an incremental snapshot
+    // Create an incremental snapshot
     async fn create_incremental_snapshot(
         &self,
         replica_id: &ReplicaId,
         parent_snapshot: &SnapshotId,
     ) -> Result<SnapshotId, SnapshotError>;
 
-    /// Create a differential snapshot
+    // Create a differential snapshot
     async fn create_differential_snapshot(
         &self,
         replica_id: &ReplicaId,
         base_snapshot: &SnapshotId,
     ) -> Result<SnapshotId, SnapshotError>;
 
-    /// List all snapshots for a replica
+    // List all snapshots for a replica
     async fn list_snapshots(&self, replica_id: &ReplicaId) -> Result<Vec<SnapshotMetadata>, SnapshotError>;
 
-    /// Get snapshot metadata
+    // Get snapshot metadata
     async fn get_snapshot_metadata(&self, snapshot_id: &SnapshotId) -> Result<SnapshotMetadata, SnapshotError>;
 
-    /// Delete a snapshot
+    // Delete a snapshot
     async fn delete_snapshot(&self, snapshot_id: &SnapshotId) -> Result<(), SnapshotError>;
 
-    /// Restore from snapshot
+    // Restore from snapshot
     async fn restore_snapshot(
         &self,
         replica_id: &ReplicaId,
         snapshot_id: &SnapshotId,
     ) -> Result<(), SnapshotError>;
 
-    /// Restore from snapshot with options
+    // Restore from snapshot with options
     async fn restore_snapshot_with_options(
         &self,
         replica_id: &ReplicaId,
@@ -57,34 +57,34 @@ pub trait SnapshotManager: Send + Sync {
         options: RestoreOptions,
     ) -> Result<(), SnapshotError>;
 
-    /// Verify snapshot integrity
+    // Verify snapshot integrity
     async fn verify_snapshot(&self, snapshot_id: &SnapshotId) -> Result<bool, SnapshotError>;
 
-    /// Apply retention policy
+    // Apply retention policy
     async fn apply_retention_policy(&self, replica_id: &ReplicaId) -> Result<Vec<SnapshotId>, SnapshotError>;
 
-    /// Get snapshot statistics
+    // Get snapshot statistics
     async fn get_statistics(&self, replica_id: Option<&ReplicaId>) -> Result<SnapshotStatistics, SnapshotError>;
 }
 
-/// File-based snapshot manager implementation
+// File-based snapshot manager implementation
 pub struct FileSnapshotManager {
-    /// Configuration
+    // Configuration
     pub(super) config: Arc<SnapshotConfig>,
-    /// Metadata cache
+    // Metadata cache
     pub(super) metadata_cache: Arc<RwLock<HashMap<SnapshotId, SnapshotMetadata>>>,
-    /// Active operations tracking
+    // Active operations tracking
     pub(super) active_operations: Arc<Mutex<HashSet<SnapshotId>>>,
-    /// Statistics
+    // Statistics
     pub(super) statistics: Arc<RwLock<SnapshotStatistics>>,
-    /// Background tasks
+    // Background tasks
     pub(super) cleanup_handle: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
-    /// Progress tracking
+    // Progress tracking
     pub(super) progress_tracking: Arc<RwLock<HashMap<SnapshotId, SnapshotProgress>>>,
 }
 
 impl FileSnapshotManager {
-    /// Creates a new file-based snapshot manager
+    // Creates a new file-based snapshot manager
     pub async fn new(config: SnapshotConfig) -> Result<Self, SnapshotError> {
         Self::validate_config(&config).await?;
         Self::create_directories(&config).await?;

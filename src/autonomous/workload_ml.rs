@@ -17,7 +17,7 @@ use crate::Result;
 use crate::error::DbError;
 use crate::ml::simd_ops::simd_euclidean_distance;
 
-/// Query feature vector for ML models
+// Query feature vector for ML models
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryFeatures {
     pub query_id: u64,
@@ -37,7 +37,7 @@ pub struct QueryFeatures {
 }
 
 impl QueryFeatures {
-    /// Convert to feature vector for ML
+    // Convert to feature vector for ML
     pub fn to_vector(&self) -> Vec<f64> {
         vec![
             self.tables_accessed as f64,
@@ -59,7 +59,7 @@ impl QueryFeatures {
     }
 }
 
-/// Workload classification types
+// Workload classification types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum WorkloadClass {
     OLTP,           // Online Transaction Processing
@@ -83,7 +83,7 @@ impl fmt::Display for WorkloadClass {
     }
 }
 
-/// K-Means clustering for workload classification
+// K-Means clustering for workload classification
 pub struct KMeansClassifier {
     k: usize,
     centroids: Vec<Vec<f64>>,
@@ -237,7 +237,7 @@ impl KMeansClassifier {
             .fold(0.0, f64::max)
     }
 
-    /// SIMD-accelerated Euclidean distance (8x faster than scalar)
+    // SIMD-accelerated Euclidean distance (8x faster than scalar)
     fn euclidean_distance(&self, a: &[f64], b: &[f64]) -> f64 {
         simd_euclidean_distance(a, b)
     }
@@ -258,7 +258,7 @@ impl KMeansClassifier {
     }
 }
 
-/// Query performance prediction using linear regression
+// Query performance prediction using linear regression
 pub struct PerformancePredictor {
     weights: Vec<f64>,
     bias: f64,
@@ -358,7 +358,7 @@ impl PerformancePredictor {
     }
 }
 
-/// Anomaly detection using statistical methods
+// Anomaly detection using statistical methods
 pub struct AnomalyDetector {
     mean: Vec<f64>,
     std_dev: Vec<f64>,
@@ -443,7 +443,7 @@ impl AnomalyDetector {
     }
 }
 
-/// Pattern recognition for recurring workloads
+// Pattern recognition for recurring workloads
 pub struct PatternRecognizer {
     patterns: Arc<RwLock<HashMap<u64, QueryPattern>>>,
     min_occurrences: usize,
@@ -517,7 +517,7 @@ impl PatternRecognizer {
     }
 }
 
-/// Time-series analysis for trend detection
+// Time-series analysis for trend detection
 pub struct TimeSeriesAnalyzer {
     window_size: usize,
     time_series: VecDeque<TimeSeriesPoint>,
@@ -626,7 +626,7 @@ impl TimeSeriesAnalyzer {
     }
 }
 
-/// Main workload ML analyzer
+// Main workload ML analyzer
 pub struct WorkloadMLAnalyzer {
     classifier: Arc<RwLock<KMeansClassifier>>,
     performance_predictor: Arc<RwLock<PerformancePredictor>>,

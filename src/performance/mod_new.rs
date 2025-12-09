@@ -1,46 +1,46 @@
-/// Performance Optimization and Monitoring Module
-///
-/// This module provides enterprise-grade performance features for query optimization,
-/// caching, workload analysis, and performance monitoring.
-///
-/// # Module Organization
-///
-/// The performance module is organized into focused submodules:
-///
-/// | Module | Responsibility |
-/// |--------|----------------|
-/// | [`plan_cache`] | Query plan caching with LRU eviction |
-/// | [`workload_analysis`] | Workload analysis and query pattern detection |
-/// | [`adaptive_optimizer`] | Adaptive query optimization using statistics |
-/// | [`performance_stats`] | Performance metrics collection and reporting |
-///
-/// # Quick Start
-///
-/// ```rust,ignore
-/// use rusty_db::performance::{QueryPlanCache, WorkloadAnalyzer};
-///
-/// // Create a query plan cache
-/// let cache = QueryPlanCache::new(1000);
-///
-/// // Create a workload analyzer
-/// let analyzer = WorkloadAnalyzer::new(10000);
-/// ```
-///
-/// # Architecture
-///
-/// ```text
-/// ┌─────────────────────────────────────────────────────────────┐
-/// │                  Performance Module                          │
-/// │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-/// │  │ Plan Cache  │  │  Workload   │  │   Adaptive          │  │
-/// │  │             │  │  Analyzer   │  │   Optimizer         │  │
-/// │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
-/// │  ┌─────────────┐                                            │
-/// │  │Performance  │                                            │
-/// │  │Statistics   │                                            │
-/// │  └─────────────┘                                            │
-/// └─────────────────────────────────────────────────────────────┘
-/// ```
+// Performance Optimization and Monitoring Module
+//
+// This module provides enterprise-grade performance features for query optimization,
+// caching, workload analysis, and performance monitoring.
+//
+// # Module Organization
+//
+// The performance module is organized into focused submodules:
+//
+// | Module | Responsibility |
+// |--------|----------------|
+// | [`plan_cache`] | Query plan caching with LRU eviction |
+// | [`workload_analysis`] | Workload analysis and query pattern detection |
+// | [`adaptive_optimizer`] | Adaptive query optimization using statistics |
+// | [`performance_stats`] | Performance metrics collection and reporting |
+//
+// # Quick Start
+//
+// ```rust,ignore
+// use rusty_db::performance::{QueryPlanCache, WorkloadAnalyzer};
+//
+// // Create a query plan cache
+// let cache = QueryPlanCache::new(1000);
+//
+// // Create a workload analyzer
+// let analyzer = WorkloadAnalyzer::new(10000);
+// ```
+//
+// # Architecture
+//
+// ```text
+// ┌─────────────────────────────────────────────────────────────┐
+// │                  Performance Module                          │
+// │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+// │  │ Plan Cache  │  │  Workload   │  │   Adaptive          │  │
+// │  │             │  │  Analyzer   │  │   Optimizer         │  │
+// │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+// │  ┌─────────────┐                                            │
+// │  │Performance  │                                            │
+// │  │Statistics   │                                            │
+// │  └─────────────┘                                            │
+// └─────────────────────────────────────────────────────────────┘
+// ```
 
 // =============================================================================
 // Submodule declarations - Commented out as they're declared in parent mod.rs

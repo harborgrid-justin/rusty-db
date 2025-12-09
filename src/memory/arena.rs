@@ -91,7 +91,7 @@ use std::time::{Duration};
 use thiserror::Error;
 use uuid::Uuid;
 
-/// Arena allocator specific errors
+// Arena allocator specific errors
 #[derive(Error, Debug)]
 pub enum ArenaError {
     #[error("Memory context not found: {context_id}")]
@@ -116,125 +116,125 @@ pub enum ArenaError {
     BlockChainBroken { context_id: String },
 }
 
-/// Memory block within an arena
-///
-/// Each block represents a contiguous chunk of memory that can be
-/// allocated from using bump allocation. Blocks are chained together
-/// to form larger allocation spaces.
+// Memory block within an arena
+//
+// Each block represents a contiguous chunk of memory that can be
+// allocated from using bump allocation. Blocks are chained together
+// to form larger allocation spaces.
 #[derive(Debug)]
 pub struct MemoryBlock {
-    /// Unique block identifier
+    // Unique block identifier
     pub block_id: Uuid,
-    /// Pointer to block memory
+    // Pointer to block memory
     pub memory: NonNull<u8>,
-    /// Size of the block
+    // Size of the block
     pub size: usize,
-    /// Current allocation pointer within the block
+    // Current allocation pointer within the block
     pub current: AtomicPtr<u8>,
-    /// End pointer of the block
+    // End pointer of the block
     pub end: *const u8,
-    /// Remaining bytes in the block
+    // Remaining bytes in the block
     pub remaining: AtomicUsize,
-    /// Next block in the chain
+    // Next block in the chain
     pub next: Mutex<Option<Arc<MemoryBlock>>>,
-    /// Block creation timestamp
+    // Block creation timestamp
     pub created_at: SystemTime,
-    /// Whether block was allocated via mmap
+    // Whether block was allocated via mmap
     pub is_mmap: bool,
-    /// Reference count
+    // Reference count
     pub ref_count: AtomicUsize,
 }
 
-/// Memory context for arena allocation
-///
-/// A context represents an isolated memory space with its own
-/// block chain and allocation tracking. Contexts can have
-/// parent-child relationships for hierarchical management.
+// Memory context for arena allocation
+//
+// A context represents an isolated memory space with its own
+// block chain and allocation tracking. Contexts can have
+// parent-child relationships for hierarchical management.
 #[derive(Debug)]
 pub struct MemoryContext {
-    /// Context identifier
+    // Context identifier
     pub id: MemoryContextId,
-    /// Context type
+    // Context type
     pub context_type: ContextType,
-    /// Parent context (if any)
+    // Parent context (if any)
     pub parent: Option<MemoryContextId>,
-    /// Child contexts
+    // Child contexts
     pub children: Arc<RwLock<Vec<MemoryContextId>>>,
-    /// First block in the chain
+    // First block in the chain
     pub first_block: Arc<Mutex<Option<Arc<MemoryBlock>>>>,
-    /// Current active block
+    // Current active block
     pub current_block: Arc<Mutex<Option<Arc<MemoryBlock>>>>,
-    /// Total bytes allocated in this context
+    // Total bytes allocated in this context
     pub bytes_allocated: AtomicUsize,
-    /// Peak memory usage
+    // Peak memory usage
     pub peak_usage: AtomicUsize,
-    /// Number of allocations made
+    // Number of allocations made
     pub allocation_count: AtomicU64,
-    /// Number of context resets
+    // Number of context resets
     pub reset_count: AtomicU64,
-    /// Memory limit for this context (None = unlimited)
+    // Memory limit for this context (None = unlimited)
     pub memory_limit: Option<usize>,
-    /// Whether the context is active
+    // Whether the context is active
     pub is_active: AtomicBool,
-    /// Context creation timestamp
+    // Context creation timestamp
     pub created_at: SystemTime,
-    /// Last allocation timestamp
+    // Last allocation timestamp
     pub last_allocation: AtomicU64,
-    /// Context statistics
+    // Context statistics
     pub stats: Arc<AsyncRwLock<ContextStats>>,
 }
 
-/// Context statistics
+// Context statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ContextStats {
-    /// Total bytes allocated
+    // Total bytes allocated
     pub total_allocated: u64,
-    /// Peak memory usage
+    // Peak memory usage
     pub peak_usage: u64,
-    /// Number of allocations
+    // Number of allocations
     pub allocation_count: u64,
-    /// Number of blocks allocated
+    // Number of blocks allocated
     pub block_count: u64,
-    /// Number of context resets
+    // Number of context resets
     pub reset_count: u64,
-    /// Average allocation size
+    // Average allocation size
     pub avg_allocation_size: f64,
-    /// Allocation rate (per second)
+    // Allocation rate (per second)
     pub allocation_rate: f64,
-    /// Memory efficiency (allocated/committed ratio)
+    // Memory efficiency (allocated/committed ratio)
     pub efficiency_ratio: f64,
-    /// Context lifetime
+    // Context lifetime
     pub lifetime: Duration,
-    /// Last updated timestamp
+    // Last updated timestamp
     pub last_updated: SystemTime,
 }
 
-/// Arena allocator configuration
+// Arena allocator configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArenaAllocatorConfig {
-    /// Default initial block size
+    // Default initial block size
     pub initial_block_size: usize,
-    /// Maximum block size
+    // Maximum block size
     pub max_block_size: usize,
-    /// Block size growth factor
+    // Block size growth factor
     pub growth_factor: f64,
-    /// Enable memory mapping for large blocks
+    // Enable memory mapping for large blocks
     pub enable_mmap: bool,
-    /// Minimum size for mmap allocation
+    // Minimum size for mmap allocation
     pub mmap_threshold: usize,
-    /// Enable huge pages
+    // Enable huge pages
     pub enable_huge_pages: bool,
-    /// Memory alignment for allocations
+    // Memory alignment for allocations
     pub default_alignment: usize,
-    /// Enable memory zeroing
+    // Enable memory zeroing
     pub enable_zeroing: bool,
-    /// Maximum number of contexts
+    // Maximum number of contexts
     pub max_contexts: usize,
-    /// Enable statistics collection
+    // Enable statistics collection
     pub enable_statistics: bool,
-    /// Enable debugging features
+    // Enable debugging features
     pub enable_debugging: bool,
-    /// Context cleanup threshold (unused contexts)
+    // Context cleanup threshold (unused contexts)
     pub cleanup_threshold: Duration,
 }
 
@@ -257,65 +257,65 @@ impl Default for ArenaAllocatorConfig {
     }
 }
 
-/// Main arena allocator structure
-///
-/// Manages multiple memory contexts and provides the primary
-/// allocation interface for bump allocation patterns.
+// Main arena allocator structure
+//
+// Manages multiple memory contexts and provides the primary
+// allocation interface for bump allocation patterns.
 #[derive(Debug)]
 pub struct ArenaAllocator {
-    /// Allocator configuration
+    // Allocator configuration
     config: ArenaAllocatorConfig,
-    /// Active memory contexts
+    // Active memory contexts
     contexts: Arc<RwLock<HashMap<MemoryContextId, Arc<MemoryContext>>>>,
-    /// Global allocator statistics
+    // Global allocator statistics
     stats: Arc<AsyncRwLock<ArenaAllocatorStats>>,
-    /// Whether allocator is active
+    // Whether allocator is active
     is_active: AtomicBool,
-    /// Creation timestamp
+    // Creation timestamp
     created_at: SystemTime,
-    /// Allocator unique identifier
+    // Allocator unique identifier
     allocator_id: Uuid,
-    /// Background cleanup task handle
+    // Background cleanup task handle
     cleanup_handle: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
 }
 
-/// Arena allocator statistics
+// Arena allocator statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ArenaAllocatorStats {
-    /// Total bytes allocated across all contexts
+    // Total bytes allocated across all contexts
     pub total_allocated: u64,
-    /// Current bytes in use
+    // Current bytes in use
     pub bytes_in_use: u64,
-    /// Number of active contexts
+    // Number of active contexts
     pub active_contexts: usize,
-    /// Total number of contexts created
+    // Total number of contexts created
     pub total_contexts_created: u64,
-    /// Total number of contexts destroyed
+    // Total number of contexts destroyed
     pub total_contexts_destroyed: u64,
-    /// Number of active blocks
+    // Number of active blocks
     pub active_blocks: usize,
-    /// Total number of blocks allocated
+    // Total number of blocks allocated
     pub total_blocks_allocated: u64,
-    /// Average allocation size
+    // Average allocation size
     pub avg_allocation_size: f64,
-    /// Memory efficiency ratio
+    // Memory efficiency ratio
     pub efficiency_ratio: f64,
-    /// Peak memory usage
+    // Peak memory usage
     pub peak_usage: u64,
-    /// Total allocations across all contexts
+    // Total allocations across all contexts
     pub total_allocations: u64,
-    /// Context resets performed
+    // Context resets performed
     pub context_resets: u64,
-    /// Blocks reused from reset contexts
+    // Blocks reused from reset contexts
     pub blocks_reused: u64,
-    /// Allocator uptime
+    // Allocator uptime
     pub uptime: Duration,
-    /// Last updated timestamp
+    // Last updated timestamp
     pub last_updated: SystemTime,
 }
 
 impl MemoryBlock {
-    /// Creates a new memory block with the specified size
+    // Creates a new memory block with the specified size
     pub fn new(size: usize, use_mmap: bool) -> Result<Arc<Self>, ArenaError> {
         if size == 0 {
             return Err(ArenaError::InvalidBlockSize { size });
@@ -345,7 +345,7 @@ impl MemoryBlock {
         }))
     }
 
-    /// Allocates memory using regular system allocator
+    // Allocates memory using regular system allocator
     fn allocate_regular(size: usize) -> Result<NonNull<u8>, ArenaError> {
         let layout = Layout::from_size_align(size, 4096)
             .map_err(|_| ArenaError::BlockAllocationFailed {
@@ -362,14 +362,14 @@ impl MemoryBlock {
         Ok(NonNull::new(memory).unwrap())
     }
 
-    /// Allocates memory using mmap
+    // Allocates memory using mmap
     fn allocate_mmap(size: usize) -> Result<NonNull<u8>, ArenaError> {
         // Platform-specific mmap implementation would go here
         // For now, fall back to regular allocation
         Self::allocate_regular(size)
     }
 
-    /// Attempts to allocate from this block
+    // Attempts to allocate from this block
     pub fn allocate(&self, size: usize, alignment: usize) -> Option<NonNull<u8>> {
         loop {
             let current = self.current.load(Ordering::Acquire);
@@ -398,28 +398,28 @@ impl MemoryBlock {
         }
     }
 
-    /// Resets the block for reuse
+    // Resets the block for reuse
     pub fn reset(&self) {
         self.current.store(self.memory.as_ptr(), Ordering::Release);
         self.remaining.store(self.size, Ordering::Relaxed);
     }
 
-    /// Gets available space in the block
+    // Gets available space in the block
     pub fn available_space(&self) -> usize {
         self.remaining.load(Ordering::Relaxed)
     }
 
-    /// Checks if the block is empty
+    // Checks if the block is empty
     pub fn is_empty(&self) -> bool {
         self.current.load(Ordering::Relaxed) == self.memory.as_ptr()
     }
 
-    /// Checks if the block is full
+    // Checks if the block is full
     pub fn is_full(&self) -> bool {
         self.remaining.load(Ordering::Relaxed) == 0
     }
 
-    /// Aligns address up to the specified alignment
+    // Aligns address up to the specified alignment
     fn align_up(addr: usize, alignment: usize) -> usize {
         (addr + alignment - 1) & !(alignment - 1)
     }
@@ -440,7 +440,7 @@ impl Drop for MemoryBlock {
 }
 
 impl MemoryContext {
-    /// Creates a new memory context
+    // Creates a new memory context
     pub fn new(
         id: MemoryContextId,
         context_type: ContextType,
@@ -466,7 +466,7 @@ impl MemoryContext {
         }
     }
 
-    /// Adds a child context
+    // Adds a child context
     pub fn add_child(&self, child_id: MemoryContextId) {
         let mut children = self.children.write();
         if !children.contains(&child_id) {
@@ -474,18 +474,18 @@ impl MemoryContext {
         }
     }
 
-    /// Removes a child context
+    // Removes a child context
     pub fn remove_child(&self, child_id: &MemoryContextId) {
         let mut children = self.children.write();
         children.retain(|id| id != child_id);
     }
 
-    /// Gets the current memory usage
+    // Gets the current memory usage
     pub fn current_usage(&self) -> usize {
         self.bytes_allocated.load(Ordering::Relaxed)
     }
 
-    /// Checks if allocation would exceed limit
+    // Checks if allocation would exceed limit
     pub fn would_exceed_limit(&self, additional_size: usize) -> bool {
         if let Some(limit) = self.memory_limit {
             let current = self.current_usage();
@@ -495,7 +495,7 @@ impl MemoryContext {
         }
     }
 
-    /// Updates allocation statistics
+    // Updates allocation statistics
     pub fn record_allocation(&self, size: usize) {
         self.bytes_allocated.fetch_add(size, Ordering::Relaxed);
         self.allocation_count.fetch_add(1, Ordering::Relaxed);
@@ -521,7 +521,7 @@ impl MemoryContext {
         self.last_allocation.store(now, Ordering::Relaxed);
     }
 
-    /// Resets the context (clears all allocations)
+    // Resets the context (clears all allocations)
     pub fn reset(&self) {
         // Reset all blocks in the chain
         if let Some(first_block) = self.first_block.lock().unwrap().as_ref() {
@@ -542,7 +542,7 @@ impl MemoryContext {
         self.reset_count.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Gets the age of the context
+    // Gets the age of the context
     pub fn age(&self) -> Duration {
         SystemTime::now()
             .duration_since(self.created_at)
@@ -551,7 +551,7 @@ impl MemoryContext {
 }
 
 impl ArenaAllocator {
-    /// Creates a new arena allocator with the given configuration
+    // Creates a new arena allocator with the given configuration
     pub async fn new(config: ArenaAllocatorConfig) -> Result<Self, ArenaError> {
         let allocator = Self {
             config,
@@ -571,7 +571,7 @@ impl ArenaAllocator {
         Ok(allocator)
     }
 
-    /// Creates a new memory context
+    // Creates a new memory context
     pub async fn create_context(
         &self,
         id: MemoryContextId,
@@ -632,7 +632,7 @@ impl ArenaAllocator {
         Ok(context)
     }
 
-    /// Destroys a memory context and all its children
+    // Destroys a memory context and all its children
     pub async fn destroy_context(&self, context_id: &MemoryContextId) -> Result<(), ArenaError> {
         let context = {
             let mut contexts = self.contexts.write();
@@ -669,7 +669,7 @@ impl ArenaAllocator {
         Ok(())
     }
 
-    /// Allocates memory within a specific context
+    // Allocates memory within a specific context
     pub async fn allocate_in_context(
         &self,
         context_id: &MemoryContextId,
@@ -708,7 +708,7 @@ impl ArenaAllocator {
         Ok(ptr)
     }
 
-    /// Tries to allocate from the current block
+    // Tries to allocate from the current block
     async fn try_allocate_from_current_block(
         &self,
         context: &MemoryContext,
@@ -724,7 +724,7 @@ impl ArenaAllocator {
         Ok(None)
     }
 
-    /// Allocates a new block and then allocates from it
+    // Allocates a new block and then allocates from it
     async fn allocate_new_block_and_allocate(
         &self,
         context: &MemoryContext,
@@ -751,7 +751,7 @@ impl ArenaAllocator {
             })
     }
 
-    /// Calculates appropriate block size for allocation
+    // Calculates appropriate block size for allocation
     async fn calculate_block_size(&self, context: &MemoryContext, min_size: usize) -> usize {
         let stats = context.stats.read().await;
 
@@ -770,7 +770,7 @@ impl ArenaAllocator {
         block_size.min(self.config.max_block_size)
     }
 
-    /// Links a new block to the context's block chain
+    // Links a new block to the context's block chain
     async fn link_block_to_context(
         &self,
         context: &MemoryContext,
@@ -792,7 +792,7 @@ impl ArenaAllocator {
         }
     }
 
-    /// Resets a memory context (clears all allocations)
+    // Resets a memory context (clears all allocations)
     pub async fn reset_context(&self, context_id: &MemoryContextId) -> Result<(), ArenaError> {
         let contexts = self.contexts.read();
         let context = contexts.get(context_id)
@@ -819,7 +819,7 @@ impl ArenaAllocator {
         Ok(())
     }
 
-    /// Updates global allocator statistics
+    // Updates global allocator statistics
     async fn update_global_stats(&self, size: usize) {
         let mut stats = self.stats.write().await;
         stats.total_allocated += size as u64;
@@ -837,7 +837,7 @@ impl ArenaAllocator {
         stats.last_updated = SystemTime::now();
     }
 
-    /// Gets comprehensive allocator statistics
+    // Gets comprehensive allocator statistics
     pub async fn get_statistics(&self) -> ArenaAllocatorStats {
         let mut stats = self.stats.write().await;
 
@@ -854,7 +854,7 @@ impl ArenaAllocator {
         stats.clone()
     }
 
-    /// Gets statistics for a specific context
+    // Gets statistics for a specific context
     pub async fn get_context_statistics(
         &self,
         context_id: &MemoryContextId,
@@ -881,12 +881,12 @@ impl ArenaAllocator {
         Ok(stats.clone())
     }
 
-    /// Lists all active contexts
+    // Lists all active contexts
     pub async fn list_contexts(&self) -> Vec<MemoryContextId> {
         self.contexts.read().keys().cloned().collect()
     }
 
-    /// Starts the background cleanup task
+    // Starts the background cleanup task
     async fn start_cleanup_task(&self) {
         let contexts = Arc::clone(&self.contexts);
         let cleanup_threshold = self.config.cleanup_threshold;
@@ -942,7 +942,7 @@ impl ArenaAllocator {
         *self.cleanup_handle.lock() = Some(handle);
     }
 
-    /// Shuts down the allocator gracefully
+    // Shuts down the allocator gracefully
     pub async fn shutdown(&self) -> Result<(), ArenaError> {
         self.is_active.store(false, Ordering::Relaxed);
 
@@ -961,9 +961,9 @@ impl ArenaAllocator {
     }
 }
 
-/// Utility functions for arena allocator
+// Utility functions for arena allocator
 impl ArenaAllocator {
-    /// Calculates memory fragmentation for a context
+    // Calculates memory fragmentation for a context
     pub async fn calculate_fragmentation(
         &self,
         context_id: &MemoryContextId,

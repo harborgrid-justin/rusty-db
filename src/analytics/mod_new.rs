@@ -1,35 +1,35 @@
-/// Analytics and Advanced Query Processing Module
-///
-/// This module provides comprehensive analytics capabilities including views,
-/// materialized views, aggregation functions, window functions, and query caching.
-///
-/// # Module Organization
-///
-/// The analytics module combines existing submodules with newly refactored components:
-///
-/// | Module | Responsibility |
-/// |--------|----------------|
-/// | [`view_management`] | View and materialized view management |
-/// | [`query_cache_impl`] | Query result caching |
-/// | [`caching`] | Legacy caching implementation |
-/// | [`materialized_views`] | Materialized view operations |
-/// | [`approximate`] | Approximate query processing |
-/// | [`window`] | Window function execution |
-/// | [`cube`] | OLAP cube operations |
-/// | [`timeseries`] | Time series analytics |
-/// | [`warehouse`] | Data warehouse features |
-///
-/// # Quick Start
-///
-/// ```rust,ignore
-/// use rusty_db::analytics::{ViewManager, QueryCache};
-///
-/// // Create a view manager
-/// let manager = ViewManager::new();
-///
-/// // Create a query cache
-/// let cache = QueryCache::new(1000);
-/// ```
+// Analytics and Advanced Query Processing Module
+//
+// This module provides comprehensive analytics capabilities including views,
+// materialized views, aggregation functions, window functions, and query caching.
+//
+// # Module Organization
+//
+// The analytics module combines existing submodules with newly refactored components:
+//
+// | Module | Responsibility |
+// |--------|----------------|
+// | [`view_management`] | View and materialized view management |
+// | [`query_cache_impl`] | Query result caching |
+// | [`caching`] | Legacy caching implementation |
+// | [`materialized_views`] | Materialized view operations |
+// | [`approximate`] | Approximate query processing |
+// | [`window`] | Window function execution |
+// | [`cube`] | OLAP cube operations |
+// | [`timeseries`] | Time series analytics |
+// | [`warehouse`] | Data warehouse features |
+//
+// # Quick Start
+//
+// ```rust,ignore
+// use rusty_db::analytics::{ViewManager, QueryCache};
+//
+// // Create a view manager
+// let manager = ViewManager::new();
+//
+// // Create a query cache
+// let cache = QueryCache::new(1000);
+// ```
 
 // =============================================================================
 // Submodule declarations - Commented out as they're declared in parent mod.rs
@@ -81,7 +81,7 @@ pub use super::query_cache_impl::{
 // Core analytics types (from mod_old.rs)
 // =============================================================================
 
-/// Window function specification
+// Window function specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WindowFunction {
     RowNumber,
@@ -97,7 +97,7 @@ pub enum WindowFunction {
     CumeDist,
 }
 
-/// Window frame specification
+// Window frame specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WindowFrame {
     pub frame_type: FrameType,
@@ -121,7 +121,7 @@ pub enum FrameBound {
     UnboundedFollowing,
 }
 
-/// Aggregate function
+// Aggregate function
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AggregateFunction {
     Count,
@@ -157,7 +157,7 @@ pub enum AggregateFunction {
     RegrR2,
 }
 
-/// Query execution statistics
+// Query execution statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryExecution {
     pub query: String,
@@ -170,7 +170,7 @@ pub struct QueryExecution {
     pub success: bool,
 }
 
-/// Column statistics for query optimization
+// Column statistics for query optimization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnStatistics {
     pub table_name: String,

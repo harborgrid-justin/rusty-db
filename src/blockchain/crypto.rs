@@ -23,36 +23,36 @@ use crate::error::DbError;
 // Type Aliases
 // ============================================================================
 
-/// SHA-256 hash output (32 bytes)
+// SHA-256 hash output (32 bytes)
 pub type Hash256 = [u8; 32];
 
-/// SHA-512 hash output (64 bytes)
+// SHA-512 hash output (64 bytes)
 pub type Hash512 = [u8; 64];
 
-/// Digital signature (64 bytes for Ed25519-like)
+// Digital signature (64 bytes for Ed25519-like)
 pub type Signature = [u8; 64];
 
-/// Public key (32 bytes)
+// Public key (32 bytes)
 pub type PublicKey = [u8; 32];
 
-/// Private key (32 bytes)
+// Private key (32 bytes)
 pub type PrivateKey = [u8; 32];
 
-/// Nonce for cryptographic operations
+// Nonce for cryptographic operations
 pub type Nonce = [u8; 24];
 
 // ============================================================================
 // Hash Algorithms
 // ============================================================================
 
-/// Supported hash algorithms
+// Supported hash algorithms
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HashAlgorithm {
-    /// SHA-256 (default for blockchain)
+    // SHA-256 (default for blockchain)
     Sha256,
-    /// SHA-512 for enhanced security
+    // SHA-512 for enhanced security
     Sha512,
-    /// HMAC-SHA256 for keyed hashing
+    // HMAC-SHA256 for keyed hashing
     HmacSha256,
 }
 
@@ -76,7 +76,7 @@ impl fmt::Display for HashAlgorithm {
 // Cryptographic Hash Functions
 // ============================================================================
 
-/// Compute SHA-256 hash of data
+// Compute SHA-256 hash of data
 pub fn sha256(data: &[u8]) -> Hash256 {
     let mut hasher = Sha256::new();
     hasher.update(data);
@@ -86,7 +86,7 @@ pub fn sha256(data: &[u8]) -> Hash256 {
     hash
 }
 
-/// Compute SHA-512 hash of data
+// Compute SHA-512 hash of data
 pub fn sha512(data: &[u8]) -> Hash512 {
     let mut hasher = Sha512::new();
     hasher.update(data);
@@ -96,7 +96,7 @@ pub fn sha512(data: &[u8]) -> Hash512 {
     hash
 }
 
-/// Compute HMAC-SHA256 with a key
+// Compute HMAC-SHA256 with a key
 pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<Hash256> {
     type HmacSha256 = Hmac<Sha256>;
 
@@ -111,7 +111,7 @@ pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<Hash256> {
     Ok(hash)
 }
 
-/// Compute hash using specified algorithm
+// Compute hash using specified algorithm
 pub fn compute_hash(algorithm: HashAlgorithm, data: &[u8], key: Option<&[u8]>) -> Result<Vec<u8>> {
     match algorithm {
         HashAlgorithm::Sha256 => Ok(sha256(data).to_vec()),
@@ -127,23 +127,23 @@ pub fn compute_hash(algorithm: HashAlgorithm, data: &[u8], key: Option<&[u8]>) -
 // Hash Chaining
 // ============================================================================
 
-/// Represents a link in a hash chain
+// Represents a link in a hash chain
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChainLink {
-    /// Index in the chain
+    // Index in the chain
     pub index: u64,
-    /// Hash of previous link
+    // Hash of previous link
     pub previous_hash: Hash256,
-    /// Data hash
+    // Data hash
     pub data_hash: Hash256,
-    /// Combined hash of this link
+    // Combined hash of this link
     pub link_hash: Hash256,
-    /// Timestamp
+    // Timestamp
     pub timestamp: u64,
 }
 
 impl ChainLink {
-    /// Create a new chain link
+    // Create a new chain link
     pub fn new(index: u64, previous_hash: Hash256, data: &[u8], timestamp: u64) -> Self {
         let data_hash = sha256(data);
         let link_hash = Self::compute_link_hash(index, &previous_hash, &data_hash, timestamp);
@@ -157,7 +157,7 @@ impl ChainLink {
         }
     }
 
-    /// Compute the hash for this link
+    // Compute the hash for this link
     fn compute_link_hash(index: u64, prevhash: &Hash256, datahash: &Hash256, timestamp: u64) -> Hash256 {
         let mut hasher = Sha256::new();
         hasher.update(&index.to_le_bytes());
@@ -171,29 +171,29 @@ impl ChainLink {
         hash
     }
 
-    /// Verify this link's integrity
+    // Verify this link's integrity
     pub fn verify(&self) -> bool {
         let computed = Self::compute_link_hash(self.index, &self.previous_hash, &self.data_hash, self.timestamp);
         computed == self.link_hash
     }
 
-    /// Verify this link connects to a previous link
+    // Verify this link connects to a previous link
     pub fn verify_connection(&self, previous: &ChainLink) -> bool {
         self.previous_hash == previous.link_hash && self.index == previous.index + 1
     }
 }
 
-/// Hash chain for sequential data verification
+// Hash chain for sequential data verification
 #[derive(Debug, Clone)]
 pub struct HashChain {
-    /// Chain links
+    // Chain links
     links: Vec<ChainLink>,
-    /// Algorithm used
+    // Algorithm used
     algorithm: HashAlgorithm,
 }
 
 impl HashChain {
-    /// Create a new hash chain
+    // Create a new hash chain
     pub fn new(algorithm: HashAlgorithm) -> Self {
         Self {
             links: Vec::new(),
@@ -201,12 +201,12 @@ impl HashChain {
         }
     }
 
-    /// Get genesis hash (all zeros)
+    // Get genesis hash (all zeros)
     pub fn genesis_hash() -> Hash256 {
         [0u8; 32]
     }
 
-    /// Append data to the chain
+    // Append data to the chain
     pub fn append(&mut self, data: &[u8], timestamp: u64) -> ChainLink {
         let index = self.links.len() as u64;
         let previous_hash = if index == 0 {
@@ -220,7 +220,7 @@ impl HashChain {
         link
     }
 
-    /// Verify the entire chain
+    // Verify the entire chain
     pub fn verify(&self) -> Result<bool> {
         if self.links.is_empty() {
             return Ok(true);
@@ -253,22 +253,22 @@ impl HashChain {
         Ok(true)
     }
 
-    /// Get chain length
+    // Get chain length
     pub fn len(&self) -> usize {
         self.links.len()
     }
 
-    /// Check if chain is empty
+    // Check if chain is empty
     pub fn is_empty(&self) -> bool {
         self.links.is_empty()
     }
 
-    /// Get link at index
+    // Get link at index
     pub fn get_link(&self, index: usize) -> Option<&ChainLink> {
         self.links.get(index)
     }
 
-    /// Get latest link
+    // Get latest link
     pub fn latest_link(&self) -> Option<&ChainLink> {
         self.links.last()
     }
@@ -278,19 +278,19 @@ impl HashChain {
 // Merkle Tree
 // ============================================================================
 
-/// Merkle tree node
+// Merkle tree node
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MerkleNode {
-    /// Hash of this node
+    // Hash of this node
     pub hash: Hash256,
-    /// Left child hash (if internal node)
+    // Left child hash (if internal node)
     pub left: Option<Hash256>,
-    /// Right child hash (if internal node)
+    // Right child hash (if internal node)
     pub right: Option<Hash256>,
 }
 
 impl MerkleNode {
-    /// Create a leaf node
+    // Create a leaf node
     pub fn leaf(data: &[u8]) -> Self {
         Self {
             hash: sha256(data),
@@ -299,7 +299,7 @@ impl MerkleNode {
         }
     }
 
-    /// Create an internal node
+    // Create an internal node
     pub fn internal(lefthash: Hash256, righthash: Hash256) -> Self {
         let mut hasher = Sha256::new();
         hasher.update(&lefthash);
@@ -316,19 +316,19 @@ impl MerkleNode {
     }
 }
 
-/// Merkle proof for inclusion verification
+// Merkle proof for inclusion verification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MerkleProof {
-    /// Index of the leaf
+    // Index of the leaf
     pub leaf_index: usize,
-    /// Sibling hashes on path to root
+    // Sibling hashes on path to root
     pub siblings: Vec<(Hash256, bool)>, // (hash, is_left)
-    /// Root hash
+    // Root hash
     pub root: Hash256,
 }
 
 impl MerkleProof {
-    /// Verify that data is included in the tree
+    // Verify that data is included in the tree
     pub fn verify(&self, data: &[u8]) -> bool {
         let mut current_hash = sha256(data);
 
@@ -349,19 +349,19 @@ impl MerkleProof {
     }
 }
 
-/// Merkle tree for efficient integrity verification
+// Merkle tree for efficient integrity verification
 #[derive(Debug, Clone)]
 pub struct MerkleTree {
-    /// Leaf nodes (data hashes)
+    // Leaf nodes (data hashes)
     leaves: Vec<Hash256>,
-    /// All tree levels (bottom-up)
+    // All tree levels (bottom-up)
     levels: Vec<Vec<Hash256>>,
-    /// Root hash
+    // Root hash
     root: Hash256,
 }
 
 impl MerkleTree {
-    /// Build a Merkle tree from data items
+    // Build a Merkle tree from data items
     pub fn build(data_items: &[&[u8]]) -> Result<Self> {
         if data_items.is_empty() {
             return Err(DbError::InvalidInput("Cannot build Merkle tree from empty data".to_string()));
@@ -403,12 +403,12 @@ impl MerkleTree {
         })
     }
 
-    /// Get the root hash
+    // Get the root hash
     pub fn root(&self) -> Hash256 {
         self.root
     }
 
-    /// Generate a proof of inclusion for a leaf
+    // Generate a proof of inclusion for a leaf
     pub fn generate_proof(&self, leafindex: usize) -> Result<MerkleProof> {
         if leafindex >= self.leaves.len() {
             return Err(DbError::InvalidInput(format!("Leaf index {} out of bounds", leafindex)));
@@ -444,12 +444,12 @@ impl MerkleTree {
         })
     }
 
-    /// Verify a proof
+    // Verify a proof
     pub fn verify_proof(&self, proof: &MerkleProof, data: &[u8]) -> bool {
         proof.verify(data) && proof.root == self.root
     }
 
-    /// Get number of leaves
+    // Get number of leaves
     pub fn leaf_count(&self) -> usize {
         self.leaves.len()
     }
@@ -459,17 +459,17 @@ impl MerkleTree {
 // Digital Signatures (Simplified Ed25519-like)
 // ============================================================================
 
-/// Key pair for digital signatures
+// Key pair for digital signatures
 #[derive(Debug, Clone)]
 pub struct KeyPair {
-    /// Public key
+    // Public key
     pub public_key: PublicKey,
-    /// Private key (should be kept secret)
+    // Private key (should be kept secret)
     private_key: PrivateKey,
 }
 
 impl KeyPair {
-    /// Generate a new key pair (simplified - not production-ready)
+    // Generate a new key pair (simplified - not production-ready)
     pub fn generate() -> Self {
         let mut public_key = [0u8; 32];
         let mut private_key = [0u8; 32];
@@ -488,7 +488,7 @@ impl KeyPair {
         }
     }
 
-    /// Sign a message (simplified - not production-ready)
+    // Sign a message (simplified - not production-ready)
     pub fn sign(&self, message: &[u8]) -> Signature {
         let mut signature = [0u8; 64];
 
@@ -502,13 +502,13 @@ impl KeyPair {
         signature
     }
 
-    /// Get public key
+    // Get public key
     pub fn public_key(&self) -> &PublicKey {
         &self.public_key
     }
 }
 
-/// Verify a signature (simplified - not production-ready)
+// Verify a signature (simplified - not production-ready)
 pub fn verify_signature(public_key: &PublicKey, message: &[u8], signature: &Signature) -> bool {
     // Extract message hash from signature
     let mut claimed_message_hash = [0u8; 32];
@@ -525,17 +525,17 @@ pub fn verify_signature(public_key: &PublicKey, message: &[u8], signature: &Sign
 // Cryptographic Accumulator
 // ============================================================================
 
-/// Cryptographic accumulator for set membership proofs
+// Cryptographic accumulator for set membership proofs
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Accumulator {
-    /// Current accumulator value
+    // Current accumulator value
     value: Hash256,
-    /// Set of accumulated elements
+    // Set of accumulated elements
     elements: Vec<Hash256>,
 }
 
 impl Accumulator {
-    /// Create a new empty accumulator
+    // Create a new empty accumulator
     pub fn new() -> Self {
         Self {
             value: [0u8; 32],
@@ -543,7 +543,7 @@ impl Accumulator {
         }
     }
 
-    /// Add an element to the accumulator
+    // Add an element to the accumulator
     pub fn add(&mut self, element: &[u8]) {
         let element_hash = sha256(element);
 
@@ -557,12 +557,12 @@ impl Accumulator {
         self.elements.push(element_hash);
     }
 
-    /// Get current accumulator value
+    // Get current accumulator value
     pub fn value(&self) -> &Hash256 {
         &self.value
     }
 
-    /// Generate membership proof for an element
+    // Generate membership proof for an element
     pub fn generate_membership_proof(&self, element: &[u8]) -> Option<Vec<Hash256>> {
         let element_hash = sha256(element);
 
@@ -577,7 +577,7 @@ impl Accumulator {
             .collect())
     }
 
-    /// Verify membership proof
+    // Verify membership proof
     pub fn verify_membership(&self, element: &[u8], proof: &[Hash256]) -> bool {
         let element_hash = sha256(element);
 
@@ -611,7 +611,7 @@ impl Default for Accumulator {
 // Key Derivation
 // ============================================================================
 
-/// Derive a key from a master key and context
+// Derive a key from a master key and context
 pub fn derive_key(masterkey: &[u8], context: &[u8], index: u64) -> Hash256 {
     let mut hasher = Sha256::new();
     hasher.update(masterkey);
@@ -623,7 +623,7 @@ pub fn derive_key(masterkey: &[u8], context: &[u8], index: u64) -> Hash256 {
     key
 }
 
-/// HKDF-like key derivation
+// HKDF-like key derivation
 pub fn hkdf_expand(prk: &[u8], info: &[u8], outputlen: usize) -> Vec<u8> {
     let mut output = Vec::with_capacity(outputlen);
     let mut counter = 1u8;
@@ -649,17 +649,17 @@ pub fn hkdf_expand(prk: &[u8], info: &[u8], outputlen: usize) -> Vec<u8> {
 // Zero-Knowledge Proof Concepts
 // ============================================================================
 
-/// Simple commitment scheme for zero-knowledge proofs
+// Simple commitment scheme for zero-knowledge proofs
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Commitment {
-    /// Commitment value
+    // Commitment value
     pub value: Hash256,
-    /// Blinding factor
+    // Blinding factor
     blinding: Hash256,
 }
 
 impl Commitment {
-    /// Create a commitment to a value
+    // Create a commitment to a value
     pub fn commit(value: &[u8]) -> (Self, Hash256) {
         // Generate random blinding factor
         use rand::RngCore;
@@ -683,7 +683,7 @@ impl Commitment {
         (commitment, blinding)
     }
 
-    /// Verify a commitment opening
+    // Verify a commitment opening
     pub fn verify(&self, value: &[u8], blinding: &Hash256) -> bool {
         let mut hasher = Sha256::new();
         hasher.update(value);
@@ -696,18 +696,18 @@ impl Commitment {
     }
 }
 
-/// Range proof concept (simplified)
+// Range proof concept (simplified)
 #[derive(Debug, Clone)]
 pub struct RangeProof {
-    /// Claimed range
+    // Claimed range
     pub min: u64,
     pub max: u64,
-    /// Proof data
+    // Proof data
     proof_data: Vec<u8>,
 }
 
 impl RangeProof {
-    /// Create a range proof (simplified)
+    // Create a range proof (simplified)
     pub fn create(value: u64, min: u64, max: u64) -> Result<Self> {
         if value < min || value > max {
             return Err(DbError::InvalidInput("Value outside range".to_string()));
@@ -727,7 +727,7 @@ impl RangeProof {
         })
     }
 
-    /// Verify range proof (simplified)
+    // Verify range proof (simplified)
     pub fn verify(&self) -> bool {
         // In a real implementation, this would verify without knowing the value
         !self.proof_data.is_empty()
@@ -738,18 +738,18 @@ impl RangeProof {
 // Secure Random Generation
 // ============================================================================
 
-/// Generate secure random bytes
+// Generate secure random bytes
 pub fn secure_random(size: usize) -> Vec<u8> {
     let mut rng = thread_rng();
     let mut bytes = vec![0u8; size];
 use rand::{thread_rng, RngCore};
-    
+
     let mut rng = thread_rng();
     rng.fill_bytes(&mut bytes);
     bytes
 }
 
-/// Generate a secure random hash
+// Generate a secure random hash
 pub fn random_hash256() -> Hash256 {
     let random_bytes = secure_random(32);
     let mut hash = [0u8; 32];
@@ -757,7 +757,7 @@ pub fn random_hash256() -> Hash256 {
     hash
 }
 
-/// Generate a nonce for cryptographic operations
+// Generate a nonce for cryptographic operations
 pub fn generate_nonce() -> Nonce {
     let random_bytes = secure_random(24);
     let mut nonce = [0u8; 24];
@@ -769,12 +769,12 @@ pub fn generate_nonce() -> Nonce {
 // Utility Functions
 // ============================================================================
 
-/// Convert hash to hex string
+// Convert hash to hex string
 pub fn hash_to_hex(hash: &[u8]) -> String {
     hash.iter().map(|b| format!("{:02x}", b)).collect()
 }
 
-/// Parse hex string to hash
+// Parse hex string to hash
 pub fn hex_to_hash(hex: &str) -> Result<Vec<u8>> {
     if hex.len() % 2 != 0 {
         return Err(DbError::InvalidInput("Hex string must have even length".to_string()));
@@ -790,7 +790,7 @@ pub fn hex_to_hash(hex: &str) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
-/// Constant-time comparison to prevent timing attacks
+// Constant-time comparison to prevent timing attacks
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     if a.len() != b.len() {
         return false;

@@ -1,7 +1,7 @@
-//! # Connection Pool Demo
-//!
-//! This example demonstrates the comprehensive connection pooling features
-//! of RustyDB, including elastic sizing, partitioning, monitoring, and more.
+// # Connection Pool Demo
+//
+// This example demonstrates the comprehensive connection pooling features
+// of RustyDB, including elastic sizing, partitioning, monitoring, and more.
 
 use rusty_db::pool::{
     ConnectionPool, PoolConfig, ConnectionFactory, PoolError,
@@ -14,14 +14,14 @@ use std::sync::Arc;
 use std::time::Duration;
 use async_trait::async_trait;
 
-/// Example connection type
+// Example connection type
 #[derive(Debug, Clone)]
 struct DatabaseConnection {
     id: String,
     connected: bool,
 }
 
-/// Example connection factory
+// Example connection factory
 struct ExampleConnectionFactory {
     connection_string: String,
 }
@@ -73,7 +73,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Example 1: Basic pool with elastic sizing
+// Example 1: Basic pool with elastic sizing
 async fn basic_pool_example() -> std::result::Result<(), Box<dyn std::error::Error>> {
     println!("Example 1: Basic Pool with Elastic Sizing");
     println!("-------------------------------------------");
@@ -153,7 +153,7 @@ async fn basic_pool_example() -> std::result::Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
-/// Example 2: Pool with partitioning
+// Example 2: Pool with partitioning
 async fn partitioned_pool_example() -> std::result::Result<(), Box<dyn std::error::Error>> {
     println!("Example 2: Pool with Partitioning");
     println!("----------------------------------");
@@ -221,7 +221,7 @@ async fn partitioned_pool_example() -> std::result::Result<(), Box<dyn std::erro
     Ok(())
 }
 
-/// Example 3: Monitoring and statistics
+// Example 3: Monitoring and statistics
 async fn monitoring_example() -> std::result::Result<(), Box<dyn std::error::Error>> {
     println!("Example 3: Monitoring and Statistics");
     println!("-------------------------------------");

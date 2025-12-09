@@ -28,7 +28,7 @@ pub use expressions::{ExpressionEvaluator, Expr, ExprValue, BinaryOperator, Unar
 
 use serde::{Deserialize, Serialize};
 
-/// Query execution result
+// Query execution result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryResult {
     pub columns: Vec<String>,
@@ -45,7 +45,7 @@ impl QueryResult {
             rows_affected,
         }
     }
-    
+
     pub fn empty() -> Self {
         Self {
             columns: Vec::new(),
@@ -53,7 +53,7 @@ impl QueryResult {
             rows_affected: 0,
         }
     }
-    
+
     pub fn with_affected(rows_affected: usize) -> Self {
         Self {
             columns: Vec::new(),
@@ -62,5 +62,3 @@ impl QueryResult {
         }
     }
 }
-
-

@@ -332,20 +332,20 @@ use tracing::{info, warn};
 
 use crate::error::Result;
 
-/// Orchestrator configuration
+// Orchestrator configuration
 #[derive(Debug, Clone)]
 pub struct OrchestratorConfig {
-    /// Actor system mailbox size
+    // Actor system mailbox size
     pub actor_mailbox_size: usize,
-    /// Maximum health history
+    // Maximum health history
     pub max_health_history: usize,
-    /// Retry configuration
+    // Retry configuration
     pub retry_config: RetryConfig,
-    /// Circuit breaker configuration
+    // Circuit breaker configuration
     pub circuit_breaker_config: CircuitBreakerConfig,
-    /// Enable auto-recovery
+    // Enable auto-recovery
     pub auto_recovery: bool,
-    /// Enable graceful degradation
+    // Enable graceful degradation
     pub graceful_degradation: bool,
 }
 
@@ -362,47 +362,47 @@ impl Default for OrchestratorConfig {
     }
 }
 
-/// Main orchestrator coordinating all subsystems
+// Main orchestrator coordinating all subsystems
 pub struct Orchestrator {
-    /// Configuration
+    // Configuration
     config: OrchestratorConfig,
-    /// Actor system
+    // Actor system
     actor_system: Arc<ActorSystem>,
-    /// Service registry
+    // Service registry
     service_registry: Arc<ServiceRegistry>,
-    /// Dependency graph
+    // Dependency graph
     dependency_graph: Arc<RwLock<DependencyGraph>>,
-    /// Circuit breaker registry
+    // Circuit breaker registry
     circuit_breakers: Arc<CircuitBreakerRegistry>,
-    /// Health aggregator
+    // Health aggregator
     health_aggregator: Arc<HealthAggregator>,
-    /// Plugin registry
+    // Plugin registry
     plugin_registry: Arc<PluginRegistry>,
-    /// Degradation strategy
+    // Degradation strategy
     degradation: Arc<DegradationStrategy>,
-    /// Recovery manager
+    // Recovery manager
     recovery: Arc<RecoveryManager>,
-    /// Orchestrator state
+    // Orchestrator state
     state: RwLock<OrchestratorState>,
 }
 
-/// Orchestrator state
+// Orchestrator state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum OrchestratorState {
-    /// Not yet initialized
+    // Not yet initialized
     Uninitialized,
-    /// Initialized but not started
+    // Initialized but not started
     Initialized,
-    /// Running
+    // Running
     Running,
-    /// Stopping
+    // Stopping
     Stopping,
-    /// Stopped
+    // Stopped
     Stopped,
 }
 
 impl Orchestrator {
-    /// Create a new orchestrator
+    // Create a new orchestrator
     pub async fn new(config: OrchestratorConfig) -> Result<Arc<Self>> {
         info!("Creating orchestrator with configuration: {:?}", config);
 
@@ -434,7 +434,7 @@ impl Orchestrator {
         Ok(orchestrator)
     }
 
-    /// Start the orchestrator
+    // Start the orchestrator
     pub async fn start(self: &Arc<Self>) -> Result<()> {
         let mut state = self.state.write();
         if *state == OrchestratorState::Running {
@@ -459,7 +459,7 @@ impl Orchestrator {
         Ok(())
     }
 
-    /// Shutdown the orchestrator
+    // Shutdown the orchestrator
     pub async fn shutdown(self: &Arc<Self>) -> Result<()> {
         let mut state = self.state.write();
         if *state == OrchestratorState::Stopped {
@@ -487,52 +487,52 @@ impl Orchestrator {
         Ok(())
     }
 
-    /// Get actor system
+    // Get actor system
     pub fn actor_system(&self) -> &Arc<ActorSystem> {
         &self.actor_system
     }
 
-    /// Get service registry
+    // Get service registry
     pub fn service_registry(&self) -> &Arc<ServiceRegistry> {
         &self.service_registry
     }
 
-    /// Get dependency graph
+    // Get dependency graph
     pub fn dependency_graph(&self) -> &Arc<RwLock<DependencyGraph>> {
         &self.dependency_graph
     }
 
-    /// Get circuit breaker registry
+    // Get circuit breaker registry
     pub fn circuit_breakers(&self) -> &Arc<CircuitBreakerRegistry> {
         &self.circuit_breakers
     }
 
-    /// Get health aggregator
+    // Get health aggregator
     pub fn health_aggregator(&self) -> &Arc<HealthAggregator> {
         &self.health_aggregator
     }
 
-    /// Get plugin registry
+    // Get plugin registry
     pub fn plugin_registry(&self) -> &Arc<PluginRegistry> {
         &self.plugin_registry
     }
 
-    /// Get degradation strategy
+    // Get degradation strategy
     pub fn degradation(&self) -> &Arc<DegradationStrategy> {
         &self.degradation
     }
 
-    /// Get recovery manager
+    // Get recovery manager
     pub fn recovery(&self) -> &Arc<RecoveryManager> {
         &self.recovery
     }
 
-    /// Check overall system health
+    // Check overall system health
     pub async fn health_check(&self) -> AggregatedHealth {
         self.health_aggregator.check_all().await
     }
 
-    /// Get orchestrator statistics
+    // Get orchestrator statistics
     pub async fn statistics(&self) -> OrchestratorStatistics {
         OrchestratorStatistics {
             state: *self.state.read(),
@@ -543,33 +543,33 @@ impl Orchestrator {
         }
     }
 
-    /// Get current state
+    // Get current state
     pub fn state(&self) -> OrchestratorState {
         *self.state.read()
     }
 
-    /// Check if orchestrator is running
+    // Check if orchestrator is running
     pub fn is_running(&self) -> bool {
         *self.state.read() == OrchestratorState::Running
     }
 }
 
-/// Orchestrator statistics
+// Orchestrator statistics
 #[derive(Debug, Clone)]
 pub struct OrchestratorStatistics {
-    /// Current state
+    // Current state
     pub state: OrchestratorState,
-    /// Actor system statistics
+    // Actor system statistics
     pub actor_stats: ActorSystemStats,
-    /// Service registry statistics
+    // Service registry statistics
     pub registry_stats: RegistryStatistics,
-    /// Health aggregator statistics
+    // Health aggregator statistics
     pub health_stats: health::HealthAggregatorStats,
-    /// Degradation statistics
+    // Degradation statistics
     pub degradation_stats: degradation::DegradationStats,
 }
 
-/// Orchestrator version
+// Orchestrator version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(test)]

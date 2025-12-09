@@ -33,41 +33,41 @@
 
 use crate::simd::hash::{xxhash3_avx2, wyhash};
 
-/// Block size in bits (512 bits = 64 bytes = 1 cache line)
+// Block size in bits (512 bits = 64 bytes = 1 cache line)
 const BLOCK_SIZE_BITS: usize = 512;
 const BLOCK_SIZE_BYTES: usize = BLOCK_SIZE_BITS / 8;
 
-/// Number of hash functions (k=2 is optimal for joins)
+// Number of hash functions (k=2 is optimal for joins)
 const NUM_HASHES: usize = 2;
 
-/// SIMD-accelerated Bloom filter
-///
-/// Uses blocked design for optimal cache performance.
-/// Each block is exactly one cache line (64 bytes).
-///
-/// ## Type Parameters
-/// - Uses raw bytes internally for maximum flexibility
+// SIMD-accelerated Bloom filter
+//
+// Uses blocked design for optimal cache performance.
+// Each block is exactly one cache line (64 bytes).
+//
+// ## Type Parameters
+// - Uses raw bytes internally for maximum flexibility
 pub struct SimdBloomFilter {
-    /// Blocks of bits (each block is 512 bits = 64 bytes)
+    // Blocks of bits (each block is 512 bits = 64 bytes)
     blocks: Vec<[u8; BLOCK_SIZE_BYTES]>,
-    /// Number of blocks
+    // Number of blocks
     num_blocks: usize,
-    /// Number of items inserted
+    // Number of items inserted
     num_items: usize,
-    /// Hash seed
+    // Hash seed
     seed: u64,
 }
 
 impl SimdBloomFilter {
-    /// Create a new Bloom filter
-    ///
-    /// ## Parameters
-    /// - `expected_items`: Expected number of elements
-    /// - `false_positive_rate`: Desired FPR (e.g., 0.01 for 1%)
-    ///
-    /// ## Complexity
-    /// - Time: O(m/512) where m is total bits
-    /// - Space: O(m) = O(-n * ln(p) / ln(2)²)
+    // Create a new Bloom filter
+    //
+    // ## Parameters
+    // - `expected_items`: Expected number of elements
+    // - `false_positive_rate`: Desired FPR (e.g., 0.01 for 1%)
+    //
+    // ## Complexity
+    // - Time: O(m/512) where m is total bits
+    // - Space: O(m) = O(-n * ln(p) / ln(2)²)
     pub fn new(expected_items: usize, false_positive_rate: f64) -> Self {
         // Calculate optimal number of bits
         let optimal_bits = Self::optimal_bits(expected_items, false_positive_rate);
@@ -86,20 +86,20 @@ impl SimdBloomFilter {
         }
     }
 
-    /// Calculate optimal number of bits
-    ///
-    /// Formula: m = -n * ln(p) / (ln(2))²
+    // Calculate optimal number of bits
+    //
+    // Formula: m = -n * ln(p) / (ln(2))²
     fn optimal_bits(n: usize, p: f64) -> usize {
         let n = n.max(1) as f64;
         let bits = -(n * p.ln()) / (2.0_f64.ln().powi(2));
         bits.ceil() as usize
     }
 
-    /// Insert a key into the Bloom filter
-    ///
-    /// ## Complexity
-    /// - Time: O(k) = O(1) with k=2
-    /// - Cache: 1 cache line access
+    // Insert a key into the Bloom filter
+    //
+    // ## Complexity
+    // - Time: O(k) = O(1) with k=2
+    // - Cache: 1 cache line access
     pub fn insert(&mut self, key: &[u8]) {
         let (h1, h2) = self.hash_key(key);
 
@@ -122,15 +122,15 @@ impl SimdBloomFilter {
         self.num_items += 1;
     }
 
-    /// Check if a key might be in the set
-    ///
-    /// ## Returns
-    /// - `true`: Key might be present (with FPR probability of false positive)
-    /// - `false`: Key is definitely not present
-    ///
-    /// ## Complexity
-    /// - Time: O(k) = O(1) with k=2
-    /// - Cache: 1 cache line access
+    // Check if a key might be in the set
+    //
+    // ## Returns
+    // - `true`: Key might be present (with FPR probability of false positive)
+    // - `false`: Key is definitely not present
+    //
+    // ## Complexity
+    // - Time: O(k) = O(1) with k=2
+    // - Cache: 1 cache line access
     pub fn contains(&self, key: &[u8]) -> bool {
         let (h1, h2) = self.hash_key(key);
 
@@ -157,17 +157,17 @@ impl SimdBloomFilter {
         bit2_set
     }
 
-    /// Batch probe multiple keys with SIMD acceleration
-    ///
-    /// Process 8 keys in parallel using AVX2.
-    ///
-    /// ## Complexity
-    /// - Time: O(k * n / 8) for n keys with AVX2
-    /// - Cache: n cache lines (1 per key, likely shared)
-    ///
-    /// ## Performance
-    /// - 8x faster than scalar probing
-    /// - 100M+ keys/second on modern CPUs
+    // Batch probe multiple keys with SIMD acceleration
+    //
+    // Process 8 keys in parallel using AVX2.
+    //
+    // ## Complexity
+    // - Time: O(k * n / 8) for n keys with AVX2
+    // - Cache: n cache lines (1 per key, likely shared)
+    //
+    // ## Performance
+    // - 8x faster than scalar probing
+    // - 100M+ keys/second on modern CPUs
     pub fn contains_batch(&self, keys: &[&[u8]]) -> Vec<bool> {
         let mut results = Vec::with_capacity(keys.len());
 
@@ -189,9 +189,9 @@ impl SimdBloomFilter {
         results
     }
 
-    /// Get current false positive rate estimate
-    ///
-    /// Formula: FPR ≈ (1 - e^(-kn/m))^k
+    // Get current false positive rate estimate
+    //
+    // Formula: FPR ≈ (1 - e^(-kn/m))^k
     pub fn false_positive_rate(&self) -> f64 {
         if self.num_items == 0 {
             return 0.0;
@@ -205,12 +205,12 @@ impl SimdBloomFilter {
         (1.0 - exponent.exp()).powf(k)
     }
 
-    /// Get memory usage in bytes
+    // Get memory usage in bytes
     pub fn memory_usage(&self) -> usize {
         self.num_blocks * BLOCK_SIZE_BYTES
     }
 
-    /// Get fill ratio (percentage of bits set)
+    // Get fill ratio (percentage of bits set)
     pub fn fill_ratio(&self) -> f64 {
         let total_bits = self.num_blocks * BLOCK_SIZE_BITS;
         let mut set_bits = 0;
@@ -224,7 +224,7 @@ impl SimdBloomFilter {
         set_bits as f64 / total_bits as f64
     }
 
-    /// Clear all bits
+    // Clear all bits
     pub fn clear(&mut self) {
         for block in &mut self.blocks {
             block.fill(0);
@@ -232,7 +232,7 @@ impl SimdBloomFilter {
         self.num_items = 0;
     }
 
-    /// Hash a key into two hash values
+    // Hash a key into two hash values
     #[inline]
     fn hash_key(&self, key: &[u8]) -> (u64, u64) {
         // Use different hash functions for h1 and h2
@@ -241,12 +241,12 @@ impl SimdBloomFilter {
         (h1, h2)
     }
 
-    /// Get number of items inserted
+    // Get number of items inserted
     pub fn len(&self) -> usize {
         self.num_items
     }
 
-    /// Check if empty
+    // Check if empty
     pub fn is_empty(&self) -> bool {
         self.num_items == 0
     }
@@ -259,25 +259,25 @@ impl Default for SimdBloomFilter {
     }
 }
 
-/// Statistics for Bloom filter performance analysis
+// Statistics for Bloom filter performance analysis
 #[derive(Debug, Clone)]
 pub struct BloomFilterStats {
-    /// Number of items inserted
+    // Number of items inserted
     pub num_items: usize,
-    /// Number of blocks
+    // Number of blocks
     pub num_blocks: usize,
-    /// Memory usage in bytes
+    // Memory usage in bytes
     pub memory_bytes: usize,
-    /// Estimated false positive rate
+    // Estimated false positive rate
     pub fpr: f64,
-    /// Fill ratio (bits set / total bits)
+    // Fill ratio (bits set / total bits)
     pub fill_ratio: f64,
-    /// Bits per element
+    // Bits per element
     pub bits_per_element: f64,
 }
 
 impl SimdBloomFilter {
-    /// Get comprehensive statistics
+    // Get comprehensive statistics
     pub fn stats(&self) -> BloomFilterStats {
         let memory_bytes = self.memory_usage();
         let bits_per_element = if self.num_items > 0 {
@@ -297,21 +297,21 @@ impl SimdBloomFilter {
     }
 }
 
-/// Optimized Bloom filter for join operations
-///
-/// Pre-configured with optimal settings for hash joins:
-/// - 1% FPR (99% filter rate)
-/// - Compact memory footprint
-/// - Fast batch probing
+// Optimized Bloom filter for join operations
+//
+// Pre-configured with optimal settings for hash joins:
+// - 1% FPR (99% filter rate)
+// - Compact memory footprint
+// - Fast batch probing
 pub struct JoinBloomFilter {
     inner: SimdBloomFilter,
 }
 
 impl JoinBloomFilter {
-    /// Create a Bloom filter for join operations
-    ///
-    /// ## Parameters
-    /// - `build_side_rows`: Number of rows in build side
+    // Create a Bloom filter for join operations
+    //
+    // ## Parameters
+    // - `build_side_rows`: Number of rows in build side
     pub fn new(build_side_rows: usize) -> Self {
         // Use 1% FPR for optimal join performance
         Self {
@@ -319,30 +319,30 @@ impl JoinBloomFilter {
         }
     }
 
-    /// Insert a join key
+    // Insert a join key
     pub fn insert(&mut self, key: &str) {
         self.inner.insert(key.as_bytes());
     }
 
-    /// Check if a key might match
+    // Check if a key might match
     pub fn contains(&self, key: &str) -> bool {
         self.inner.contains(key.as_bytes())
     }
 
-    /// Batch probe multiple keys
+    // Batch probe multiple keys
     pub fn contains_batch(&self, keys: &[&str]) -> Vec<bool> {
         let byte_keys: Vec<&[u8]> = keys.iter().map(|s| s.as_bytes()).collect();
         self.inner.contains_batch(&byte_keys)
     }
 
-    /// Get filter statistics
+    // Get filter statistics
     pub fn stats(&self) -> BloomFilterStats {
         self.inner.stats()
     }
 
-    /// Estimate probe side reduction
-    ///
-    /// Returns the fraction of probe rows that will be filtered out.
+    // Estimate probe side reduction
+    //
+    // Returns the fraction of probe rows that will be filtered out.
     pub fn filter_efficiency(&self) -> f64 {
         1.0 - self.inner.false_positive_rate()
     }

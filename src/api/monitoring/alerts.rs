@@ -13,7 +13,7 @@ use crate::error::DbError;
 // SECTION 4: ALERTING ENGINE (600+ lines)
 // ============================================================================
 
-/// Alert severity level
+// Alert severity level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
 pub enum AlertSeverity {
     Info,
@@ -22,7 +22,7 @@ pub enum AlertSeverity {
     Critical,
 }
 
-/// Alert state
+// Alert state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AlertState {
     Pending,
@@ -32,7 +32,7 @@ pub enum AlertState {
     Inhibited,
 }
 
-/// Alert instance
+// Alert instance
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Alert {
     pub id: String,
@@ -84,7 +84,7 @@ impl Alert {
     }
 }
 
-/// Comparison operator for threshold rules
+// Comparison operator for threshold rules
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ComparisonOperator {
     GreaterThan,
@@ -108,7 +108,7 @@ impl ComparisonOperator {
     }
 }
 
-/// Threshold-based alert rule
+// Threshold-based alert rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThresholdAlertRule {
     pub name: String,
@@ -209,7 +209,7 @@ impl ThresholdAlertRule {
     }
 }
 
-/// Multi-condition alert rule
+// Multi-condition alert rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MultiConditionAlertRule {
     pub name: String,
@@ -267,7 +267,7 @@ impl MultiConditionAlertRule {
     }
 }
 
-/// Alert routing rule
+// Alert routing rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertRoute {
     pub name: String,
@@ -307,7 +307,7 @@ impl AlertRoute {
     }
 }
 
-/// Alert silencer
+// Alert silencer
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertSilence {
     pub id: String,
@@ -337,7 +337,7 @@ impl AlertSilence {
     }
 }
 
-/// Alert inhibitor - suppress alerts based on other active alerts
+// Alert inhibitor - suppress alerts based on other active alerts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertInhibitionRule {
     pub source_matchers: Vec<AlertMatcher>,
@@ -345,13 +345,13 @@ pub struct AlertInhibitionRule {
     pub equal_labels: Vec<String>,
 }
 
-/// Notification channel trait
+// Notification channel trait
 pub trait NotificationChannel: Send + Sync {
     fn name(&self) -> &str;
     fn send(&self, alert: &Alert) -> Result<(), DbError>;
 }
 
-/// Webhook notification channel
+// Webhook notification channel
 pub struct WebhookChannel {
     name: String,
     url: String,
@@ -385,7 +385,7 @@ impl NotificationChannel for WebhookChannel {
     }
 }
 
-/// Email notification channel
+// Email notification channel
 pub struct EmailChannel {
     name: String,
     smtp_server: String,
@@ -415,7 +415,7 @@ impl NotificationChannel for EmailChannel {
     }
 }
 
-/// Slack notification channel
+// Slack notification channel
 pub struct SlackChannel {
     name: String,
     webhook_url: String,
@@ -443,7 +443,7 @@ impl NotificationChannel for SlackChannel {
     }
 }
 
-/// Alert manager
+// Alert manager
 pub struct AlertManager {
     threshold_rules: Arc<RwLock<Vec<ThresholdAlertRule>>>,
     multi_condition_rules: Arc<RwLock<Vec<MultiConditionAlertRule>>>,

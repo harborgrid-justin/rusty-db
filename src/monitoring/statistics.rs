@@ -8,7 +8,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::{Duration};
 
-/// V$SESSION - Session information
+// V$SESSION - Session information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VSession {
     pub session_id: u64,
@@ -56,7 +56,7 @@ impl VSession {
     }
 }
 
-/// V$SQL - SQL statistics
+// V$SQL - SQL statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VSql {
     pub sql_id: u64,
@@ -124,7 +124,7 @@ impl VSql {
     }
 }
 
-/// V$SYSSTAT - System statistics
+// V$SYSSTAT - System statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VSysstat {
     pub statistic_id: u64,
@@ -133,7 +133,7 @@ pub struct VSysstat {
     pub class: String,
 }
 
-/// V$SYSTEM_EVENT - System-wide wait events
+// V$SYSTEM_EVENT - System-wide wait events
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VSystemEvent {
     pub event: String,
@@ -166,7 +166,7 @@ impl VSystemEvent {
     }
 }
 
-/// V$SESSTAT - Session statistics
+// V$SESSTAT - Session statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VSesstat {
     pub session_id: u64,
@@ -175,7 +175,7 @@ pub struct VSesstat {
     pub value: u64,
 }
 
-/// V$LOCK - Lock information
+// V$LOCK - Lock information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VLock {
     pub lock_id: u64,
@@ -188,7 +188,7 @@ pub struct VLock {
     pub lock_time: SystemTime,
 }
 
-/// V$TRANSACTION - Transaction information
+// V$TRANSACTION - Transaction information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VTransaction {
     pub transaction_id: u64,
@@ -200,7 +200,7 @@ pub struct VTransaction {
     pub isolation_level: String,
 }
 
-/// V$SQLAREA - SQL area statistics
+// V$SQLAREA - SQL area statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VSqlarea {
     pub sql_id: u64,
@@ -215,7 +215,7 @@ pub struct VSqlarea {
     pub runtime_mem: u64,
 }
 
-/// V$BGPROCESS - Background process information
+// V$BGPROCESS - Background process information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VBgprocess {
     pub process_name: String,
@@ -225,7 +225,7 @@ pub struct VBgprocess {
     pub start_time: SystemTime,
 }
 
-/// V$PARAMETER - System parameters
+// V$PARAMETER - System parameters
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VParameter {
     pub name: String,
@@ -235,7 +235,7 @@ pub struct VParameter {
     pub description: String,
 }
 
-/// V$DATABASE - Database information
+// V$DATABASE - Database information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VDatabase {
     pub db_name: String,
@@ -247,7 +247,7 @@ pub struct VDatabase {
     pub platform_name: String,
 }
 
-/// Statistics collector for all V$ views
+// Statistics collector for all V$ views
 pub struct StatisticsCollector {
     sessions: Arc<RwLock<HashMap<u64, VSession>>>,
     sql_stats: Arc<RwLock<HashMap<u64, VSql>>>,
@@ -652,5 +652,3 @@ mod tests {
         assert_eq!(event.time_waited_us, 2500);
     }
 }
-
-

@@ -1,13 +1,13 @@
-/// OLAP Cube Operations
-///
-/// This module provides comprehensive OLAP cube functionality:
-/// - ROLLUP for hierarchical aggregation (subtotals and grand totals)
-/// - CUBE for all combinations of dimensions (full cross-tabulation)
-/// - GROUPING SETS for custom aggregation combinations
-/// - Pre-aggregation and caching for query acceleration
-/// - Drill-down and roll-up navigation
-/// - Slice and dice operations
-/// - Pivot table generation
+// OLAP Cube Operations
+//
+// This module provides comprehensive OLAP cube functionality:
+// - ROLLUP for hierarchical aggregation (subtotals and grand totals)
+// - CUBE for all combinations of dimensions (full cross-tabulation)
+// - GROUPING SETS for custom aggregation combinations
+// - Pre-aggregation and caching for query acceleration
+// - Drill-down and roll-up navigation
+// - Slice and dice operations
+// - Pivot table generation
 
 use std::collections::HashSet;
 use crate::error::{Result, DbError};
@@ -16,7 +16,7 @@ use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 
-/// OLAP Cube definition
+// OLAP Cube definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OlapCube {
     pub name: String,
@@ -27,7 +27,7 @@ pub struct OlapCube {
     pub metadata: CubeMetadata,
 }
 
-/// Dimension in a cube
+// Dimension in a cube
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Dimension {
     pub name: String,
@@ -52,7 +52,7 @@ pub struct DimensionLevel {
     pub order: usize,
 }
 
-/// Measure (metric) in a cube
+// Measure (metric) in a cube
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Measure {
     pub name: String,
@@ -81,7 +81,7 @@ pub enum MeasureType {
     Money,
 }
 
-/// Hierarchy of dimensions (e.g., Year > Quarter > Month > Day)
+// Hierarchy of dimensions (e.g., Year > Quarter > Month > Day)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hierarchy {
     pub name: String,
@@ -89,7 +89,7 @@ pub struct Hierarchy {
     pub levels: Vec<String>,
 }
 
-/// Cube metadata
+// Cube metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CubeMetadata {
     pub created_at: std::time::SystemTime,
@@ -100,34 +100,34 @@ pub struct CubeMetadata {
     pub compression_ratio: f64,
 }
 
-/// Grouping key for aggregation results
+// Grouping key for aggregation results
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GroupingKey {
-    /// Dimension values (None indicates ALL level)
+    // Dimension values (None indicates ALL level)
     values: Vec<Option<String>>,
-    /// Grouping set identifier
+    // Grouping set identifier
     grouping_id: usize,
 }
 
-/// Aggregation result
+// Aggregation result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregationResult {
     pub measure_values: HashMap<String, f64>,
     pub row_count: u64,
 }
 
-/// Grouping sets specification
+// Grouping sets specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GroupingSets {
-    /// ROLLUP(a, b, c) -> (a,b,c), (a,b), (a), ()
+    // ROLLUP(a, b, c) -> (a,b,c), (a,b), (a), ()
     Rollup { columns: Vec<String> },
-    /// CUBE(a, b, c) -> all 2^n combinations
+    // CUBE(a, b, c) -> all 2^n combinations
     Cube { columns: Vec<String> },
-    /// Custom grouping sets
+    // Custom grouping sets
     Custom { sets: Vec<Vec<String>> },
 }
 
-/// Cube builder for creating and materializing cubes
+// Cube builder for creating and materializing cubes
 pub struct CubeBuilder {
     cube: OlapCube,
     source_data: Vec<HashMap<String, String>>,
@@ -155,49 +155,49 @@ impl CubeBuilder {
         }
     }
 
-    /// Add dimension to cube
+    // Add dimension to cube
     pub fn add_dimension(&mut self, dimension: Dimension) {
         self.cube.dimensions.push(dimension);
     }
 
-    /// Add measure to cube
+    // Add measure to cube
     pub fn add_measure(&mut self, measure: Measure) {
         self.cube.measures.push(measure);
     }
 
-    /// Add hierarchy
+    // Add hierarchy
     pub fn add_hierarchy(&mut self, hierarchy: Hierarchy) {
         self.cube.hierarchies.push(hierarchy);
     }
 
-    /// Set source data
+    // Set source data
     pub fn set_source_data(&mut self, data: Vec<HashMap<String, String>>) {
         self.source_data = data;
         self.cube.metadata.row_count = self.source_data.len() as u64;
     }
 
-    /// Build cube with ROLLUP
+    // Build cube with ROLLUP
     pub fn build_rollup(&mut self, columns: Vec<String>) -> Result<()> {
         let grouping_sets = self.generate_rollup_sets(&columns);
         self.materialize_grouping_sets(&grouping_sets)?;
         Ok(())
     }
 
-    /// Build cube with CUBE
+    // Build cube with CUBE
     pub fn build_cube(&mut self, columns: Vec<String>) -> Result<()> {
         let grouping_sets = self.generate_cube_sets(&columns);
         self.materialize_grouping_sets(&grouping_sets)?;
         Ok(())
     }
 
-    /// Build cube with custom grouping sets
+    // Build cube with custom grouping sets
     pub fn build_grouping_sets(&mut self, sets: Vec<Vec<String>>) -> Result<()> {
         self.materialize_grouping_sets(&sets)?;
         Ok(())
     }
 
-    /// Generate ROLLUP grouping sets
-    /// ROLLUP(a, b, c) generates: (a,b,c), (a,b), (a), ()
+    // Generate ROLLUP grouping sets
+    // ROLLUP(a, b, c) generates: (a,b,c), (a,b), (a), ()
     fn generate_rollup_sets(&self, columns: &[String]) -> Vec<Vec<String>> {
         let mut sets = Vec::new();
 
@@ -217,8 +217,8 @@ impl CubeBuilder {
         sets
     }
 
-    /// Generate CUBE grouping sets
-    /// CUBE(a, b, c) generates all 2^n combinations
+    // Generate CUBE grouping sets
+    // CUBE(a, b, c) generates all 2^n combinations
     fn generate_cube_sets(&self, columns: &[String]) -> Vec<Vec<String>> {
         let n = columns.len();
         let num_sets = 1 << n; // 2^n
@@ -237,7 +237,7 @@ impl CubeBuilder {
         sets
     }
 
-    /// Materialize grouping sets
+    // Materialize grouping sets
     fn materialize_grouping_sets(&mut self, sets: &[Vec<String>]) -> Result<()> {
         for (set_id, grouping_set) in sets.iter().enumerate() {
             self.materialize_single_grouping_set(grouping_set, set_id)?;
@@ -249,7 +249,7 @@ impl CubeBuilder {
         Ok(())
     }
 
-    /// Materialize a single grouping set
+    // Materialize a single grouping set
     fn materialize_single_grouping_set(
         &mut self,
         groupingcolumns: &[String],
@@ -292,7 +292,7 @@ impl CubeBuilder {
         Ok(())
     }
 
-    /// Compute aggregate value
+    // Compute aggregate value
     fn compute_aggregate(
         &self,
         measure: &Measure,
@@ -343,7 +343,7 @@ impl CubeBuilder {
         Ok(result)
     }
 
-    /// Calculate cube statistics
+    // Calculate cube statistics
     fn calculate_cube_statistics(&mut self) {
         self.cube.metadata.cell_count = self.cube.aggregations.len() as u64;
 
@@ -358,13 +358,13 @@ impl CubeBuilder {
         }
     }
 
-    /// Get the built cube
+    // Get the built cube
     pub fn build(self) -> OlapCube {
         self.cube
     }
 }
 
-/// Cube query executor
+// Cube query executor
 pub struct CubeQuery {
     cube: Arc<RwLock<OlapCube>>,
 }
@@ -374,7 +374,7 @@ impl CubeQuery {
         Self { cube }
     }
 
-    /// Slice cube by fixing one dimension
+    // Slice cube by fixing one dimension
     pub fn slice(&self, dimension: &str, value: &str) -> Result<Vec<AggregationResult>> {
         let cube = self.cube.read();
         let mut results = Vec::new();
@@ -396,7 +396,7 @@ impl CubeQuery {
         Ok(results)
     }
 
-    /// Dice cube by filtering multiple dimensions
+    // Dice cube by filtering multiple dimensions
     pub fn dice(&self, filters: HashMap<String, String>) -> Result<Vec<AggregationResult>> {
         let cube = self.cube.read();
         let mut results = Vec::new();
@@ -433,7 +433,7 @@ impl CubeQuery {
         Ok(results)
     }
 
-    /// Drill down - navigate from higher to lower level in hierarchy
+    // Drill down - navigate from higher to lower level in hierarchy
     pub fn drill_down(
         &self,
         hierarchy: &str,
@@ -463,7 +463,7 @@ impl CubeQuery {
         Ok(Vec::new())
     }
 
-    /// Roll up - navigate from lower to higher level in hierarchy
+    // Roll up - navigate from lower to higher level in hierarchy
     pub fn roll_up(
         &self,
         hierarchy: &str,
@@ -491,7 +491,7 @@ impl CubeQuery {
         Ok(Vec::new())
     }
 
-    /// Pivot - rotate dimensions
+    // Pivot - rotate dimensions
     pub fn pivot(
         &self,
         row_dimensions: Vec<String>,
@@ -553,7 +553,7 @@ impl CubeQuery {
         Ok(values)
     }
 
-    /// Get GROUPING function value
+    // Get GROUPING function value
     pub fn grouping(&self, key: &GroupingKey, dimension_index: usize) -> u8 {
         match key.values.get(dimension_index) {
             Some(None) => 1, // Aggregated (ALL level)
@@ -562,13 +562,13 @@ impl CubeQuery {
         }
     }
 
-    /// Get GROUPING_ID value
+    // Get GROUPING_ID value
     pub fn grouping_id(&self, key: &GroupingKey) -> usize {
         key.grouping_id
     }
 }
 
-/// Pivot table result
+// Pivot table result
 #[derive(Debug, Clone)]
 pub struct PivotTable {
     pub row_headers: Vec<Vec<String>>,
@@ -578,12 +578,12 @@ pub struct PivotTable {
 }
 
 impl PivotTable {
-    /// Get cell value
+    // Get cell value
     pub fn get_cell(&self, row: &[String], col: &[String]) -> Option<f64> {
         self.cells.get(&(row.to_vec(), col.to_vec())).copied()
     }
 
-    /// Format as text table
+    // Format as text table
     pub fn format(&self) -> String {
         let mut output = String::new();
 

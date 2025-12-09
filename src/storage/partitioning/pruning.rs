@@ -1,15 +1,15 @@
-/// Partition Pruning Optimization
+// Partition Pruning Optimization
 
 use super::types::*;
 use super::manager::PartitionManager;
 use std::collections::HashMap;
 
-/// Partition pruning optimizer
-/// Eliminates partitions that don't match query predicates
+// Partition pruning optimizer
+// Eliminates partitions that don't match query predicates
 pub struct PartitionPruner;
 
 impl PartitionPruner {
-    /// Prune partitions based on query predicate
+    // Prune partitions based on query predicate
     pub fn prune_partitions(
         metadata: &PartitionMetadata,
         predicate: &QueryPredicate,
@@ -153,11 +153,11 @@ impl PartitionPruner {
     }
 }
 
-/// Advanced Partition Pruning Engine
+// Advanced Partition Pruning Engine
 pub mod advanced {
     use super::*;
 
-    /// Partition pruning optimizer
+    // Partition pruning optimizer
     pub struct PartitionPruningOptimizer {
         statistics: HashMap<String, PartitionStatistics>,
         pruning_rules: Vec<PruningRule>,

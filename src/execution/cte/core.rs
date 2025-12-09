@@ -6,7 +6,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use crate::error::DbError;
 use crate::execution::{QueryResult, planner::PlanNode};
 
-/// CTE Definition
+// CTE Definition
 #[derive(Debug, Clone)]
 pub struct CteDefinition {
     pub name: String,
@@ -15,7 +15,7 @@ pub struct CteDefinition {
     pub recursive: bool,
 }
 
-/// CTE context for storing materialized CTE results
+// CTE context for storing materialized CTE results
 #[derive(Debug)]
 pub struct CteContext {
     // Maps CTE name to its materialized result
@@ -32,7 +32,7 @@ impl CteContext {
         }
     }
 
-    /// Register a CTE definition
+    // Register a CTE definition
     pub fn register_cte(&mut self, cte: CteDefinition) -> Result<(), DbError> {
         if self.definitions.contains_key(&cte.name) {
             return Err(DbError::AlreadyExists(format!(
@@ -44,28 +44,28 @@ impl CteContext {
         Ok(())
     }
 
-    /// Get a CTE definition
+    // Get a CTE definition
     pub fn get_definition(&self, name: &str) -> Option<&CteDefinition> {
         self.definitions.get(name)
     }
 
-    /// Store materialized CTE result
+    // Store materialized CTE result
     pub fn materialize(&mut self, name: String, result: QueryResult) {
         self.materialized_ctes.insert(name, result);
     }
 
-    /// Get materialized CTE result
+    // Get materialized CTE result
     pub fn get_materialized(&self, name: &str) -> Option<&QueryResult> {
         self.materialized_ctes.get(name)
     }
 
-    /// Check if a name refers to a CTE
+    // Check if a name refers to a CTE
     pub fn is_cte(&self, name: &str) -> bool {
         self.definitions.contains_key(name)
     }
 }
 
-/// Recursive CTE evaluator
+// Recursive CTE evaluator
 pub struct RecursiveCteEvaluator {
     max_iterations: usize,
 }
@@ -81,7 +81,7 @@ impl RecursiveCteEvaluator {
         Self { max_iterations }
     }
 
-    /// Evaluate a recursive CTE
+    // Evaluate a recursive CTE
     pub fn evaluate(
         &self,
         cte_name: &str,
@@ -135,7 +135,7 @@ impl RecursiveCteEvaluator {
     }
 }
 
-/// Cycle detection for recursive CTEs
+// Cycle detection for recursive CTEs
 pub struct CycleDetector {
     seen_hashes: HashSet<u64>,
 }
@@ -174,7 +174,7 @@ impl CycleDetector {
     }
 }
 
-/// CTE plan node (extension to PlanNode)
+// CTE plan node (extension to PlanNode)
 #[derive(Debug, Clone)]
 pub struct CtePlanNode {
     pub ctes: Vec<CteDefinition>,

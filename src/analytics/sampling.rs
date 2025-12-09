@@ -26,27 +26,27 @@ use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Sampling method for approximate query processing.
+// Sampling method for approximate query processing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SamplingMethod {
-    /// Simple random sampling with replacement
+    // Simple random sampling with replacement
     Random,
-    /// Random sampling without replacement
+    // Random sampling without replacement
     RandomWithoutReplacement,
-    /// Stratified sampling based on grouping column
+    // Stratified sampling based on grouping column
     Stratified,
-    /// Reservoir sampling for streaming data
+    // Reservoir sampling for streaming data
     Reservoir,
-    /// Systematic sampling (every Nth row)
+    // Systematic sampling (every Nth row)
     Systematic,
-    /// Bernoulli sampling (coin flip per row)
+    // Bernoulli sampling (coin flip per row)
     Bernoulli,
-    /// Cluster-based sampling
+    // Cluster-based sampling
     Cluster,
 }
 
 impl SamplingMethod {
-    /// Returns whether the method preserves distribution characteristics.
+    // Returns whether the method preserves distribution characteristics.
     pub fn preserves_distribution(&self) -> bool {
         matches!(
             self,
@@ -54,28 +54,28 @@ impl SamplingMethod {
         )
     }
 
-    /// Returns whether the method works with streaming data.
+    // Returns whether the method works with streaming data.
     pub fn supports_streaming(&self) -> bool {
         matches!(self, SamplingMethod::Reservoir | SamplingMethod::Bernoulli)
     }
 }
 
-/// Configuration for sampling operations.
+// Configuration for sampling operations.
 #[derive(Debug, Clone)]
 pub struct SamplingConfig {
-    /// Sampling method to use
+    // Sampling method to use
     pub method: SamplingMethod,
-    /// Sample rate (0.0 to 1.0) or absolute size
+    // Sample rate (0.0 to 1.0) or absolute size
     pub rate: f64,
-    /// Whether rate is a percentage or absolute count
+    // Whether rate is a percentage or absolute count
     pub is_percentage: bool,
-    /// Random seed for reproducibility (None for random)
+    // Random seed for reproducibility (None for random)
     pub seed: Option<u64>,
-    /// Stratification column for stratified sampling
+    // Stratification column for stratified sampling
     pub strata_column: Option<String>,
-    /// Minimum sample size per stratum
+    // Minimum sample size per stratum
     pub min_per_stratum: usize,
-    /// Maximum iterations for complex sampling
+    // Maximum iterations for complex sampling
     pub max_iterations: usize,
 }
 
@@ -94,7 +94,7 @@ impl Default for SamplingConfig {
 }
 
 impl SamplingConfig {
-    /// Creates a new sampling configuration.
+    // Creates a new sampling configuration.
     pub fn new(method: SamplingMethod, rate: f64) -> Self {
         Self {
             method,
@@ -103,13 +103,13 @@ impl SamplingConfig {
         }
     }
 
-    /// Sets the random seed for reproducibility.
+    // Sets the random seed for reproducibility.
     pub fn with_seed(mut self, seed: u64) -> Self {
         self.seed = Some(seed);
         self
     }
 
-    /// Configures for stratified sampling.
+    // Configures for stratified sampling.
     pub fn stratified(mut self, column: impl Into<String>) -> Self {
         self.method = SamplingMethod::Stratified;
         self.strata_column = Some(column.into());
@@ -117,25 +117,25 @@ impl SamplingConfig {
     }
 }
 
-/// A sampled result with metadata about the sampling.
+// A sampled result with metadata about the sampling.
 #[derive(Debug, Clone)]
 pub struct SampledResult<T> {
-    /// The sampled data
+    // The sampled data
     pub data: Vec<T>,
-    /// Original population size
+    // Original population size
     pub population_size: usize,
-    /// Actual sample size
+    // Actual sample size
     pub sample_size: usize,
-    /// Sampling fraction achieved
+    // Sampling fraction achieved
     pub sampling_fraction: f64,
-    /// Method used for sampling
+    // Method used for sampling
     pub method: SamplingMethod,
-    /// Statistical weight for each sample row
+    // Statistical weight for each sample row
     pub weights: Option<Vec<f64>>,
 }
 
 impl<T> SampledResult<T> {
-    /// Returns the expansion factor for aggregate estimation.
+    // Returns the expansion factor for aggregate estimation.
     pub fn expansion_factor(&self) -> f64 {
         if self.sample_size == 0 {
             0.0
@@ -144,7 +144,7 @@ impl<T> SampledResult<T> {
         }
     }
 
-    /// Returns the standard error multiplier for confidence intervals.
+    // Returns the standard error multiplier for confidence intervals.
     pub fn standard_error_multiplier(&self) -> f64 {
         if self.sample_size == 0 {
             return 0.0;
@@ -163,17 +163,17 @@ impl<T> SampledResult<T> {
     }
 }
 
-/// Sampler for query results with various sampling strategies.
+// Sampler for query results with various sampling strategies.
 #[derive(Debug)]
 pub struct QueryResultSampler {
-    /// Sampling configuration
+    // Sampling configuration
     config: SamplingConfig,
-    /// Pseudo-random state
+    // Pseudo-random state
     rng_state: u64,
 }
 
 impl QueryResultSampler {
-    /// Creates a new query result sampler.
+    // Creates a new query result sampler.
     pub fn new(method: SamplingMethod, rate: f64) -> Self {
         Self {
             config: SamplingConfig::new(method, rate),
@@ -181,7 +181,7 @@ impl QueryResultSampler {
         }
     }
 
-    /// Creates a sampler with full configuration.
+    // Creates a sampler with full configuration.
     pub fn with_config(config: SamplingConfig) -> Self {
         let seed = config.seed.unwrap_or(12345);
         Self {
@@ -190,7 +190,7 @@ impl QueryResultSampler {
         }
     }
 
-    /// Simple pseudo-random number generator (xorshift).
+    // Simple pseudo-random number generator (xorshift).
     fn next_random(&mut self) -> f64 {
         self.rng_state ^= self.rng_state << 13;
         self.rng_state ^= self.rng_state >> 7;
@@ -198,7 +198,7 @@ impl QueryResultSampler {
         (self.rng_state as f64) / (u64::MAX as f64)
     }
 
-    /// Samples from a slice of data.
+    // Samples from a slice of data.
     pub fn sample<T: Clone>(&mut self, data: &[T]) -> SampledResult<T> {
         let sample_size = if self.config.is_percentage {
             ((data.len() as f64) * self.config.rate).ceil() as usize
@@ -228,7 +228,7 @@ impl QueryResultSampler {
         }
     }
 
-    /// Random sampling with replacement.
+    // Random sampling with replacement.
     fn random_sample<T: Clone>(&mut self, data: &[T], n: usize) -> Vec<T> {
         let mut result = Vec::with_capacity(n);
 
@@ -241,7 +241,7 @@ impl QueryResultSampler {
         result
     }
 
-    /// Systematic sampling (every kth element).
+    // Systematic sampling (every kth element).
     fn systematic_sample<T: Clone>(&mut self, data: &[T], n: usize) -> Vec<T> {
         if n >= data.len() {
             return data.to_vec();
@@ -258,7 +258,7 @@ impl QueryResultSampler {
             .collect()
     }
 
-    /// Bernoulli sampling (coin flip per row).
+    // Bernoulli sampling (coin flip per row).
     fn bernoulli_sample<T: Clone>(&mut self, data: &[T]) -> Vec<T> {
         data.iter()
             .filter(|_| self.next_random() < self.config.rate)
@@ -266,7 +266,7 @@ impl QueryResultSampler {
             .collect()
     }
 
-    /// Reservoir sampling for streaming data.
+    // Reservoir sampling for streaming data.
     fn reservoir_sample<T: Clone>(&mut self, data: &[T], k: usize) -> Vec<T> {
         let mut reservoir: Vec<T> = data.iter().take(k).cloned().collect();
 
@@ -280,18 +280,18 @@ impl QueryResultSampler {
         reservoir
     }
 
-    /// Estimates a count based on sample.
+    // Estimates a count based on sample.
     pub fn estimate_count<T>(&self, sample: &SampledResult<T>) -> f64 {
         sample.sample_size as f64 * sample.expansion_factor()
     }
 
-    /// Estimates sum from numeric sample.
+    // Estimates sum from numeric sample.
     pub fn estimate_sum(&self, sample: &SampledResult<f64>) -> f64 {
         let sum: f64 = sample.data.iter().sum();
         sum * sample.expansion_factor()
     }
 
-    /// Estimates average from numeric sample.
+    // Estimates average from numeric sample.
     pub fn estimate_avg(&self, sample: &SampledResult<f64>) -> f64 {
         if sample.data.is_empty() {
             return 0.0;
@@ -299,7 +299,7 @@ impl QueryResultSampler {
         sample.data.iter().sum::<f64>() / sample.data.len() as f64
     }
 
-    /// Calculates confidence interval for sum estimate.
+    // Calculates confidence interval for sum estimate.
     pub fn confidence_interval_sum(
         &self,
         sample: &SampledResult<f64>,
@@ -328,7 +328,7 @@ impl QueryResultSampler {
         (estimate - margin, estimate + margin)
     }
 
-    /// Returns z-score for common confidence levels.
+    // Returns z-score for common confidence levels.
     fn z_score_for_confidence(&self, confidence: f64) -> f64 {
         match confidence {
             c if c >= 0.99 => 2.576,
@@ -340,34 +340,34 @@ impl QueryResultSampler {
     }
 }
 
-/// Approximate query processor for fast analytical queries.
+// Approximate query processor for fast analytical queries.
 #[derive(Debug)]
 pub struct ApproximateQueryProcessor {
-    /// Sample cache by table/query
+    // Sample cache by table/query
     sample_cache: Arc<RwLock<HashMap<String, SampledData>>>,
-    /// Default sample rate
+    // Default sample rate
     default_sample_rate: f64,
-    /// Maximum cache size
+    // Maximum cache size
     max_cache_entries: usize,
 }
 
-/// Cached sample data for a table.
+// Cached sample data for a table.
 #[derive(Debug, Clone)]
 pub struct SampledData {
-    /// Column values (column name -> values)
+    // Column values (column name -> values)
     pub columns: HashMap<String, Vec<f64>>,
-    /// Original table size
+    // Original table size
     pub original_size: usize,
-    /// Sample creation time
+    // Sample creation time
     pub created_at: std::time::Instant,
-    /// Sampling method used
+    // Sampling method used
     pub method: SamplingMethod,
-    /// Sample rate
+    // Sample rate
     pub rate: f64,
 }
 
 impl ApproximateQueryProcessor {
-    /// Creates a new approximate query processor.
+    // Creates a new approximate query processor.
     pub fn new(default_sample_rate: f64) -> Self {
         Self {
             sample_cache: Arc::new(RwLock::new(HashMap::new())),
@@ -376,7 +376,7 @@ impl ApproximateQueryProcessor {
         }
     }
 
-    /// Registers a pre-computed sample for a table.
+    // Registers a pre-computed sample for a table.
     pub fn register_sample(&self, table_name: &str, sample: SampledData) {
         let mut cache = self.sample_cache.write();
 
@@ -394,12 +394,12 @@ impl ApproximateQueryProcessor {
         cache.insert(table_name.to_string(), sample);
     }
 
-    /// Retrieves a cached sample for a table.
+    // Retrieves a cached sample for a table.
     pub fn get_sample(&self, table_name: &str) -> Option<SampledData> {
         self.sample_cache.read().get(table_name).cloned()
     }
 
-    /// Estimates count with error bounds.
+    // Estimates count with error bounds.
     pub fn estimate_count_with_bounds(
         &self,
         table_name: &str,
@@ -442,7 +442,7 @@ impl ApproximateQueryProcessor {
         })
     }
 
-    /// Estimates sum with error bounds.
+    // Estimates sum with error bounds.
     pub fn estimate_sum_with_bounds(
         &self,
         table_name: &str,
@@ -473,35 +473,35 @@ impl ApproximateQueryProcessor {
         })
     }
 
-    /// Clears the sample cache.
+    // Clears the sample cache.
     pub fn clear_cache(&self) {
         self.sample_cache.write().clear();
     }
 
-    /// Returns cache statistics.
+    // Returns cache statistics.
     pub fn cache_stats(&self) -> (usize, usize) {
         let cache = self.sample_cache.read();
         (cache.len(), self.max_cache_entries)
     }
 }
 
-/// Result of an approximate query with confidence bounds.
+// Result of an approximate query with confidence bounds.
 #[derive(Debug, Clone)]
 pub struct ApproximateResult {
-    /// Point estimate
+    // Point estimate
     pub estimate: f64,
-    /// Lower bound of confidence interval
+    // Lower bound of confidence interval
     pub lower_bound: f64,
-    /// Upper bound of confidence interval
+    // Upper bound of confidence interval
     pub upper_bound: f64,
-    /// Confidence level (e.g., 0.95 for 95%)
+    // Confidence level (e.g., 0.95 for 95%)
     pub confidence: f64,
-    /// Sample size used
+    // Sample size used
     pub sample_size: usize,
 }
 
 impl ApproximateResult {
-    /// Returns the error margin as a percentage.
+    // Returns the error margin as a percentage.
     pub fn error_percentage(&self) -> f64 {
         if self.estimate == 0.0 {
             return 0.0;
@@ -509,7 +509,7 @@ impl ApproximateResult {
         ((self.upper_bound - self.lower_bound) / 2.0 / self.estimate.abs()) * 100.0
     }
 
-    /// Returns whether the result is precise enough.
+    // Returns whether the result is precise enough.
     pub fn is_acceptable(&self, max_error_percent: f64) -> bool {
         self.error_percentage() <= max_error_percent
     }

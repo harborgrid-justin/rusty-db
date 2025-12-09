@@ -111,38 +111,38 @@ pub use session_control::{
     SessionId, UserId,
 };
 
-/// Resource Manager configuration
+// Resource Manager configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceManagerConfig {
-    /// Enable resource management
+    // Enable resource management
     pub enabled: bool,
-    /// CPU cores available
+    // CPU cores available
     pub cpu_cores: u32,
-    /// Total system memory in bytes
+    // Total system memory in bytes
     pub total_memory: u64,
-    /// Maximum database memory in bytes
+    // Maximum database memory in bytes
     pub max_db_memory: u64,
-    /// I/O parallelism capability
+    // I/O parallelism capability
     pub io_parallelism: u32,
-    /// Maximum concurrent I/O operations
+    // Maximum concurrent I/O operations
     pub max_concurrent_io: usize,
-    /// Maximum total degree of parallelism
+    // Maximum total degree of parallelism
     pub max_total_dop: u32,
-    /// CPU scheduling policy
+    // CPU scheduling policy
     pub cpu_policy: SchedulingPolicy,
-    /// I/O scheduling policy
+    // I/O scheduling policy
     pub io_policy: IoSchedulingPolicy,
-    /// Memory allocation strategy
+    // Memory allocation strategy
     pub memory_strategy: AllocationStrategy,
-    /// Enable ML-based predictions
+    // Enable ML-based predictions
     pub enable_ml_predictions: bool,
-    /// Enable dynamic rebalancing
+    // Enable dynamic rebalancing
     pub enable_dynamic_rebalancing: bool,
-    /// Rebalancing interval
+    // Rebalancing interval
     pub rebalancing_interval: Duration,
-    /// Enable container awareness
+    // Enable container awareness
     pub container_aware: bool,
-    /// Global session limit
+    // Global session limit
     pub global_session_limit: Option<u32>,
 }
 
@@ -168,32 +168,32 @@ impl Default for ResourceManagerConfig {
     }
 }
 
-/// Main Resource Manager coordinator
+// Main Resource Manager coordinator
 pub struct ResourceManager {
-    /// Configuration
+    // Configuration
     config: ResourceManagerConfig,
-    /// Consumer group manager
+    // Consumer group manager
     consumer_groups: Arc<ConsumerGroupManager>,
-    /// Resource plan manager
+    // Resource plan manager
     resource_plans: Arc<ResourcePlanManager>,
-    /// CPU scheduler
+    // CPU scheduler
     cpu_scheduler: Arc<RwLock<CpuScheduler>>,
-    /// I/O scheduler
+    // I/O scheduler
     io_scheduler: Arc<IoScheduler>,
-    /// Memory manager
+    // Memory manager
     memory_manager: Arc<MemoryManager>,
-    /// Parallel execution controller
+    // Parallel execution controller
     parallel_controller: Arc<RwLock<ParallelExecutionController>>,
-    /// Session controller
+    // Session controller
     session_controller: Arc<RwLock<SessionController>>,
-    /// Whether monitoring is active
+    // Whether monitoring is active
     monitoring_active: Arc<RwLock<bool>>,
-    /// ML prediction engine
+    // ML prediction engine
     ml_predictor: Option<Arc<RwLock<WorkloadPredictor>>>,
 }
 
 impl ResourceManager {
-    /// Create a new Resource Manager
+    // Create a new Resource Manager
     pub fn new(config: ResourceManagerConfig) -> Result<Self> {
         // Create consumer group manager
         let consumer_groups = Arc::new(ConsumerGroupManager::new()?);
@@ -250,7 +250,7 @@ impl ResourceManager {
         })
     }
 
-    /// Create a consumer group
+    // Create a consumer group
     pub fn create_consumer_group(
         &self,
         name: String,
@@ -277,7 +277,7 @@ impl ResourceManager {
         Ok(group_id)
     }
 
-    /// Set CPU shares for a consumer group
+    // Set CPU shares for a consumer group
     pub fn set_group_cpu_shares(&self, group_id: ConsumerGroupId, shares: u32) -> Result<()> {
         let scheduler = self.cpu_scheduler.read().unwrap();
         // Re-register with new shares
@@ -291,13 +291,13 @@ impl ResourceManager {
         Ok(())
     }
 
-    /// Set memory limit for a consumer group
+    // Set memory limit for a consumer group
     pub fn set_group_memory_limit(&self, group_id: ConsumerGroupId, limit: u64) -> Result<()> {
         self.memory_manager.register_group_limits(group_id, Some(limit), None)?;
         Ok(())
     }
 
-    /// Set I/O limits for a consumer group
+    // Set I/O limits for a consumer group
     pub fn set_group_io_limits(
         &self,
         group_id: ConsumerGroupId,
@@ -308,7 +308,7 @@ impl ResourceManager {
         Ok(())
     }
 
-    /// Create a session
+    // Create a session
     pub fn create_session(
         &self,
         user_id: UserId,
@@ -329,7 +329,7 @@ impl ResourceManager {
         Ok(session_id)
     }
 
-    /// Execute a query with resource management
+    // Execute a query with resource management
     pub fn execute_query(
         &self,
         session_id: SessionId,
@@ -375,7 +375,7 @@ impl ResourceManager {
         })
     }
 
-    /// Complete a query
+    // Complete a query
     pub fn complete_query(&self, execution: &QueryExecution) -> Result<()> {
         // Complete parallel execution if applicable
         if execution.query_id > 0 {
@@ -390,7 +390,7 @@ impl ResourceManager {
         Ok(())
     }
 
-    /// Activate a resource plan
+    // Activate a resource plan
     pub fn activate_plan(&self, plan_id: ResourcePlanId) -> Result<()> {
         self.resource_plans.activate_plan(plan_id)?;
 
@@ -400,7 +400,7 @@ impl ResourceManager {
         Ok(())
     }
 
-    /// Apply the currently active resource plan
+    // Apply the currently active resource plan
     fn apply_active_plan(&self) -> Result<()> {
         let plan_id = self.resource_plans.get_active_plan()
             .ok_or_else(|| DbError::Configuration("No active resource plan".to_string()))?;
@@ -424,7 +424,7 @@ impl ResourceManager {
         Ok(())
     }
 
-    /// Start monitoring and auto-tuning
+    // Start monitoring and auto-tuning
     pub fn start_monitoring(&self) -> Result<()> {
         *self.monitoring_active.write().unwrap() = true;
 
@@ -434,13 +434,13 @@ impl ResourceManager {
         Ok(())
     }
 
-    /// Stop monitoring
+    // Stop monitoring
     pub fn stop_monitoring(&self) -> Result<()> {
         *self.monitoring_active.write().unwrap() = false;
         Ok(())
     }
 
-    /// Perform dynamic resource rebalancing
+    // Perform dynamic resource rebalancing
     pub fn rebalance_resources(&self) -> Result<RebalancingReport> {
         if !self.config.enable_dynamic_rebalancing {
             return Ok(RebalancingReport::default());
@@ -473,7 +473,7 @@ impl ResourceManager {
         Ok(report)
     }
 
-    /// Get comprehensive resource usage statistics
+    // Get comprehensive resource usage statistics
     pub fn get_resource_stats(&self) -> ResourceStats {
         ResourceStats {
             cpu_stats: {
@@ -495,7 +495,7 @@ impl ResourceManager {
         }
     }
 
-    /// Check and enforce timeouts
+    // Check and enforce timeouts
     pub fn check_timeouts(&self) -> TimeoutReport {
         let controller = self.session_controller.write().unwrap();
 
@@ -509,23 +509,23 @@ impl ResourceManager {
         }
     }
 
-    /// Get consumer group manager
+    // Get consumer group manager
     pub fn consumer_groups(&self) -> &Arc<ConsumerGroupManager> {
         &self.consumer_groups
     }
 
-    /// Get resource plan manager
+    // Get resource plan manager
     pub fn resource_plans(&self) -> &Arc<ResourcePlanManager> {
         &self.resource_plans
     }
 
-    /// Get memory manager
+    // Get memory manager
     pub fn memory_manager(&self) -> &Arc<MemoryManager> {
         &self.memory_manager
     }
 }
 
-/// Query execution context
+// Query execution context
 #[derive(Debug, Clone)]
 pub struct QueryExecution {
     pub session_id: SessionId,
@@ -534,7 +534,7 @@ pub struct QueryExecution {
     pub started_at: SystemTime,
 }
 
-/// Resource rebalancing report
+// Resource rebalancing report
 #[derive(Debug, Clone, Default)]
 pub struct RebalancingReport {
     pub cpu_rebalanced: bool,
@@ -544,7 +544,7 @@ pub struct RebalancingReport {
     pub actions: Vec<String>,
 }
 
-/// Comprehensive resource statistics
+// Comprehensive resource statistics
 #[derive(Debug, Clone)]
 pub struct ResourceStats {
     pub cpu_stats: cpu_scheduler::SchedulerStatsSnapshot,
@@ -556,7 +556,7 @@ pub struct ResourceStats {
     pub memory_pressure: MemoryPressure,
 }
 
-/// Timeout enforcement report
+// Timeout enforcement report
 #[derive(Debug, Clone)]
 pub struct TimeoutReport {
     pub idle_timeout_count: usize,
@@ -564,7 +564,7 @@ pub struct TimeoutReport {
     pub terminated_sessions: Vec<SessionId>,
 }
 
-/// ML-based workload predictor (placeholder for future implementation)
+// ML-based workload predictor (placeholder for future implementation)
 struct WorkloadPredictor {
     // Historical workload data
     // ML models for prediction
@@ -588,7 +588,7 @@ impl WorkloadPredictor {
     }
 }
 
-/// Predicted resource needs
+// Predicted resource needs
 #[allow(dead_code)]
 struct PredictedResources {
     estimated_cpu_time: Duration,

@@ -8,7 +8,7 @@ use crate::storage::page::Page;
 use crate::common::PageId;
 use crate::storage::disk::DiskManager;
 
-/// Copy-on-Write page frame for zero-copy reads
+// Copy-on-Write page frame for zero-copy reads
 #[derive(Clone)]
 struct CowFrame {
     page: Arc<RwLock<Page>>,
@@ -49,7 +49,7 @@ impl CowFrame {
     }
 }
 
-/// Access pattern tracking for LRU-K
+// Access pattern tracking for LRU-K
 #[derive(Debug, Clone)]
 struct AccessHistory {
     timestamps: VecDeque<Instant>,
@@ -91,7 +91,7 @@ impl AccessHistory {
     }
 }
 
-/// LRU-K replacement policy with adaptive K selection
+// LRU-K replacement policy with adaptive K selection
 struct LruKReplacer {
     k: usize,
     adaptive_k: bool,
@@ -180,7 +180,7 @@ impl LruKReplacer {
     }
 }
 
-/// NUMA node affinity for pages
+// NUMA node affinity for pages
 #[derive(Debug, Clone, Copy)]
 struct NumaNode {
     node_id: usize,
@@ -223,7 +223,7 @@ impl NumaNode {
     }
 }
 
-/// NUMA-aware page allocator
+// NUMA-aware page allocator
 struct NumaAllocator {
     nodes: Vec<NumaNode>,
     page_to_node: HashMap<PageId, usize>,
@@ -314,7 +314,7 @@ impl NumaAllocator {
     }
 }
 
-/// Background flusher for write coalescing
+// Background flusher for write coalescing
 struct BackgroundFlusher {
     dirty_pages: Arc<Mutex<Vec<PageId>>>,
     flush_interval: Duration,
@@ -367,7 +367,7 @@ impl BackgroundFlusher {
     }
 }
 
-/// Enterprise-grade buffer pool manager with COW semantics
+// Enterprise-grade buffer pool manager with COW semantics
 pub struct BufferPoolManager {
     // Core buffer pool
     pool: Arc<RwLock<HashMap<usize, CowFrame>>>,
@@ -414,7 +414,7 @@ impl BufferPoolManager {
         }
     }
 
-    /// Fetch a page with COW semantics for zero-copy reads
+    // Fetch a page with COW semantics for zero-copy reads
     pub fn fetch_page(&self, page_id: PageId) -> Result<Page> {
         // Check if page is in buffer pool
         {
@@ -464,7 +464,7 @@ impl BufferPoolManager {
         Ok(page)
     }
 
-    /// Create a new page
+    // Create a new page
     pub fn new_page(&self) -> Result<Page> {
         let page_id = self.disk_manager.allocate_page()?;
         let frame_id = self.get_free_frame()?;
@@ -489,7 +489,7 @@ impl BufferPoolManager {
         Ok(page)
     }
 
-    /// Flush a specific page to disk
+    // Flush a specific page to disk
     pub fn flush_page(&self, page_id: PageId) -> Result<()> {
         let page_table = self.page_table.read();
 
@@ -506,7 +506,7 @@ impl BufferPoolManager {
         Ok(())
     }
 
-    /// Flush all dirty pages to disk
+    // Flush all dirty pages to disk
     pub fn flush_all(&self) -> Result<()> {
         let page_table = self.page_table.read();
         let pool = self.pool.read();
@@ -523,7 +523,7 @@ impl BufferPoolManager {
         Ok(())
     }
 
-    /// Background flush with write coalescing
+    // Background flush with write coalescing
     pub fn background_flush(&self) -> Result<()> {
         let batch = self.flusher.get_batch_to_flush();
 
@@ -554,7 +554,7 @@ impl BufferPoolManager {
         Ok(frame_id)
     }
 
-    /// Get buffer pool statistics
+    // Get buffer pool statistics
     pub fn stats(&self) -> BufferPoolStats {
         let hits = self.hit_count.load(Ordering::Relaxed);
         let misses = self.miss_count.load(Ordering::Relaxed);
@@ -574,7 +574,7 @@ impl BufferPoolManager {
         }
     }
 
-    /// Unpin a page (decrease reference count)
+    // Unpin a page (decrease reference count)
     pub fn unpin_page(&self, page_id: PageId, is_dirty: bool) -> Result<()> {
         let page_table = self.page_table.read();
 
@@ -597,7 +597,7 @@ impl BufferPoolManager {
     }
 }
 
-/// Buffer pool statistics
+// Buffer pool statistics
 #[derive(Debug, Clone)]
 pub struct BufferPoolStats {
     pub pool_size: usize,

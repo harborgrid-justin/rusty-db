@@ -1,15 +1,15 @@
-/// Vectorized Execution Engine for RustyDB
-///
-/// This module implements a modern columnar execution engine that processes data
-/// in batches for improved CPU cache utilization and SIMD opportunities.
-///
-/// Key Features:
-/// - Batch-oriented processing with configurable batch sizes
-/// - Column-at-a-time execution model (columnar storage)
-/// - SIMD-friendly data layouts
-/// - Pipeline breakers and materialization points
-/// - Zero-copy batch transformations where possible
-/// - Adaptive batch sizing based on memory pressure
+// Vectorized Execution Engine for RustyDB
+//
+// This module implements a modern columnar execution engine that processes data
+// in batches for improved CPU cache utilization and SIMD opportunities.
+//
+// Key Features:
+// - Batch-oriented processing with configurable batch sizes
+// - Column-at-a-time execution model (columnar storage)
+// - SIMD-friendly data layouts
+// - Pipeline breakers and materialization points
+// - Zero-copy batch transformations where possible
+// - Adaptive batch sizing based on memory pressure
 
 use crate::error::DbError;
 use crate::catalog::DataType;
@@ -17,32 +17,32 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 
-/// Default batch size for vectorized operations
+// Default batch size for vectorized operations
 pub const DEFAULT_BATCH_SIZE: usize = 1024;
 
-/// Maximum batch size to prevent excessive memory usage
+// Maximum batch size to prevent excessive memory usage
 pub const MAX_BATCH_SIZE: usize = 4096;
 
-/// Minimum batch size for efficiency
+// Minimum batch size for efficiency
 pub const MIN_BATCH_SIZE: usize = 64;
 
-/// Represents a batch of columnar data
+// Represents a batch of columnar data
 #[derive(Debug, Clone)]
 pub struct ColumnBatch {
-    /// Column names
+    // Column names
     pub schema: Vec<String>,
-    /// Data types for each column
+    // Data types for each column
     pub types: Vec<DataType>,
-    /// Number of rows in this batch
+    // Number of rows in this batch
     pub row_count: usize,
-    /// Columnar data - each vector is one column
+    // Columnar data - each vector is one column
     pub columns: Vec<Column>,
-    /// Null bitmap for each column (bit = 1 means NOT NULL)
+    // Null bitmap for each column (bit = 1 means NOT NULL)
     pub null_bitmaps: Vec<Vec<bool>>,
 }
 
 impl ColumnBatch {
-    /// Create a new empty batch with given schema
+    // Create a new empty batch with given schema
     pub fn new(schema: Vec<String>, types: Vec<DataType>) -> Self {
         let col_count = schema.len();
         Self {
@@ -54,7 +54,7 @@ impl ColumnBatch {
         }
     }
 
-    /// Add a row to the batch
+    // Add a row to the batch
     pub fn add_row(&mut self, values: Vec<ColumnValue>) -> Result<(), DbError> {
         if values.len() != self.schema.len() {
             return Err(DbError::Execution(
@@ -72,22 +72,22 @@ impl ColumnBatch {
         Ok(())
     }
 
-    /// Get a specific column
+    // Get a specific column
     pub fn get_column(&self, index: usize) -> Option<&Column> {
         self.columns.get(index)
     }
 
-    /// Get mutable column reference
+    // Get mutable column reference
     pub fn get_column_mut(&mut self, index: usize) -> Option<&mut Column> {
         self.columns.get_mut(index)
     }
 
-    /// Check if batch is full (reached target size)
+    // Check if batch is full (reached target size)
     pub fn is_full(&self, target_size: usize) -> bool {
         self.row_count >= target_size
     }
 
-    /// Clear all data from batch
+    // Clear all data from batch
     pub fn clear(&mut self) {
         self.row_count = 0;
         for col in &mut self.columns {
@@ -98,7 +98,7 @@ impl ColumnBatch {
         }
     }
 
-    /// Convert to row-oriented format (for compatibility)
+    // Convert to row-oriented format (for compatibility)
     pub fn to_rows(&self) -> Vec<Vec<String>> {
         let mut rows = Vec::with_capacity(self.row_count);
 
@@ -116,7 +116,7 @@ impl ColumnBatch {
         rows
     }
 
-    /// Create batch from row-oriented data
+    // Create batch from row-oriented data
     pub fn from_rows(
         schema: Vec<String>,
         types: Vec<DataType>,
@@ -135,7 +135,7 @@ impl ColumnBatch {
     }
 }
 
-/// Represents a single column of data in columnar format
+// Represents a single column of data in columnar format
 #[derive(Debug, Clone)]
 pub struct Column {
     data: Vec<ColumnValue>,
@@ -177,7 +177,7 @@ impl Column {
     }
 }
 
-/// Value in a column (supports multiple types)
+// Value in a column (supports multiple types)
 #[derive(Debug, Clone, PartialEq)]
 pub enum ColumnValue {
     Null,
@@ -226,11 +226,11 @@ impl ColumnValue {
     }
 }
 
-/// Vectorized execution engine
+// Vectorized execution engine
 pub struct VectorizedExecutor {
-    /// Target batch size for processing
+    // Target batch size for processing
     batch_size: usize,
-    /// Statistics for adaptive batch sizing
+    // Statistics for adaptive batch sizing
     stats: Arc<RwLock<ExecutionStats>>,
 }
 
@@ -247,7 +247,7 @@ impl VectorizedExecutor {
         Self::new(DEFAULT_BATCH_SIZE)
     }
 
-    /// Execute a vectorized scan operation
+    // Execute a vectorized scan operation
     pub fn scan(
         &self,
         data: Vec<Vec<String>>,
@@ -278,7 +278,7 @@ impl VectorizedExecutor {
         Ok(batches)
     }
 
-    /// Vectorized filter operation
+    // Vectorized filter operation
     pub fn filter<F>(
         &self,
         batches: Vec<ColumnBatch>,
@@ -321,7 +321,7 @@ impl VectorizedExecutor {
         Ok(result_batches)
     }
 
-    /// Vectorized projection operation
+    // Vectorized projection operation
     pub fn project(
         &self,
         batches: Vec<ColumnBatch>,
@@ -355,7 +355,7 @@ impl VectorizedExecutor {
         Ok(result_batches)
     }
 
-    /// Vectorized aggregation (COUNT, SUM, AVG, etc.)
+    // Vectorized aggregation (COUNT, SUM, AVG, etc.)
     pub fn aggregate(
         &self,
         batches: Vec<ColumnBatch>,
@@ -414,7 +414,7 @@ impl VectorizedExecutor {
         Ok(result_batch)
     }
 
-    /// Adaptive batch size adjustment based on memory pressure
+    // Adaptive batch size adjustment based on memory pressure
     pub fn adjust_batch_size(&mut self, memory_pressure: f64) {
         let stats = self.stats.read();
         let avg_row_size = stats.avg_row_size();
@@ -429,13 +429,13 @@ impl VectorizedExecutor {
         }
     }
 
-    /// Get current execution statistics
+    // Get current execution statistics
     pub fn get_stats(&self) -> ExecutionStats {
         self.stats.read().clone()
     }
 }
 
-/// Aggregation type
+// Aggregation type
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AggregationType {
     Count,
@@ -457,7 +457,7 @@ impl AggregationType {
     }
 }
 
-/// State for computing aggregates
+// State for computing aggregates
 #[derive(Debug, Clone)]
 struct AggregateState {
     count: usize,
@@ -503,7 +503,7 @@ impl AggregateState {
     }
 }
 
-/// Execution statistics for performance monitoring
+// Execution statistics for performance monitoring
 #[derive(Debug, Clone)]
 pub struct ExecutionStats {
     pub total_rows_processed: usize,
@@ -537,7 +537,7 @@ impl ExecutionStats {
     }
 }
 
-/// Pipeline breaker - materializes results and stops vectorized pipeline
+// Pipeline breaker - materializes results and stops vectorized pipeline
 pub struct MaterializationPoint {
     buffered_batches: Vec<ColumnBatch>,
     materialized: bool,
@@ -551,12 +551,12 @@ impl MaterializationPoint {
         }
     }
 
-    /// Add batch to buffer
+    // Add batch to buffer
     pub fn add_batch(&mut self, batch: ColumnBatch) {
         self.buffered_batches.push(batch);
     }
 
-    /// Materialize all batches
+    // Materialize all batches
     pub fn materialize(&mut self) -> Vec<ColumnBatch> {
         self.materialized = true;
         std::mem::take(&mut self.buffered_batches)
@@ -567,10 +567,10 @@ impl MaterializationPoint {
     }
 }
 
-/// SIMD-optimized operations (placeholder for actual SIMD)
+// SIMD-optimized operations (placeholder for actual SIMD)
 pub mod simd_ops {
 
-    /// SIMD-optimized filter for integer columns
+    // SIMD-optimized filter for integer columns
     pub fn filter_integers(column: &[i32], threshold: i32) -> Vec<usize> {
         // In production, this would use actual SIMD instructions
         // For now, we simulate with optimized scalar code
@@ -581,13 +581,13 @@ pub mod simd_ops {
             .collect()
     }
 
-    /// SIMD-optimized sum for integer columns
+    // SIMD-optimized sum for integer columns
     pub fn sum_integers(column: &[i32]) -> i64 {
         // In production, would use SIMD horizontal add
         column.iter().map(|&x| x as i64).sum()
     }
 
-    /// SIMD-optimized comparison
+    // SIMD-optimized comparison
     pub fn compare_integers(left: &[i32], right: &[i32]) -> Vec<bool> {
         left.iter()
             .zip(right.iter())
@@ -596,11 +596,11 @@ pub mod simd_ops {
     }
 }
 
-/// Vectorized hash table for joins and aggregations
+// Vectorized hash table for joins and aggregations
 pub struct VectorizedHashTable {
-    /// Hash buckets
+    // Hash buckets
     buckets: Vec<Vec<(u64, Vec<ColumnValue>)>>,
-    /// Number of buckets
+    // Number of buckets
     num_buckets: usize,
 }
 
@@ -613,7 +613,7 @@ impl VectorizedHashTable {
         }
     }
 
-    /// Insert batch into hash table
+    // Insert batch into hash table
     pub fn insert_batch(&mut self, batch: &ColumnBatch, key_columns: &[usize]) {
         for row_idx in 0..batch.row_count {
             let key_values: Vec<ColumnValue> = key_columns.iter()
@@ -635,7 +635,7 @@ impl VectorizedHashTable {
         }
     }
 
-    /// Probe hash table with batch
+    // Probe hash table with batch
     pub fn probe_batch(
         &self,
         batch: &ColumnBatch,
@@ -758,5 +758,3 @@ mod tests {
         assert_eq!(indices.len(), 3); // Values 3, 4, 5
     }
 }
-
-

@@ -5,7 +5,7 @@ use crate::error::DbError;
 use crate::execution::planner::PlanNode;
 use super::core::CteDefinition;
 
-/// CTE dependency graph for optimization
+// CTE dependency graph for optimization
 pub struct CteDependencyGraph {
     dependencies: HashMap<String, Vec<String>>,
 }

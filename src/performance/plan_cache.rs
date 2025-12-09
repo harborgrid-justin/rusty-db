@@ -1,6 +1,6 @@
-/// Query Plan Caching Module
-///
-/// Provides intelligent query plan caching with LRU eviction
+// Query Plan Caching Module
+//
+// Provides intelligent query plan caching with LRU eviction
 
 use crate::{Result, error::DbError};
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
-/// Query plan cache with LRU eviction
+// Query plan cache with LRU eviction
 pub struct QueryPlanCache {
     cache: Arc<RwLock<HashMap<String, CachedPlan>>>,
     access_order: Arc<RwLock<VecDeque<String>>>,
@@ -28,7 +28,7 @@ impl QueryPlanCache {
         }
     }
 
-    /// Get a cached plan
+    // Get a cached plan
     pub fn get(&self, query_hash: &str) -> Result<Option<QueryPlan>> {
         let cache = self.cache.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -56,7 +56,7 @@ impl QueryPlanCache {
         }
     }
 
-    /// Put a plan in cache
+    // Put a plan in cache
     pub fn put(&self, query_hash: String, plan: QueryPlan, cost: f64) -> Result<()> {
         let mut cache = self.cache.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -87,7 +87,7 @@ impl QueryPlanCache {
         Ok(())
     }
 
-    /// Get cache statistics
+    // Get cache statistics
     pub fn get_statistics(&self) -> Result<CacheStatistics> {
         let hits = *self.hit_count.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -112,7 +112,7 @@ impl QueryPlanCache {
         })
     }
 
-    /// Clear cache
+    // Clear cache
     pub fn clear(&self) -> Result<()> {
         let mut cache = self.cache.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;

@@ -1,26 +1,26 @@
-/// Bitmap Index Implementation
-///
-/// This module provides bitmap indexing optimized for:
-/// - Low-cardinality columns (e.g., gender, status, category)
-/// - Fast AND/OR/NOT operations
-/// - Compressed storage using run-length encoding
-/// - Range-encoded bitmaps for numeric data
-/// - Efficient bitmap scans
+// Bitmap Index Implementation
+//
+// This module provides bitmap indexing optimized for:
+// - Low-cardinality columns (e.g., gender, status, category)
+// - Fast AND/OR/NOT operations
+// - Compressed storage using run-length encoding
+// - Range-encoded bitmaps for numeric data
+// - Efficient bitmap scans
 
 use crate::Result;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Bitmap Index
-///
-/// Maintains a bitmap for each distinct value in the indexed column
+// Bitmap Index
+//
+// Maintains a bitmap for each distinct value in the indexed column
 pub struct BitmapIndex<T: Eq + std::hash::Hash + Clone> {
-    /// Map from value to compressed bitmap
+    // Map from value to compressed bitmap
     bitmaps: Arc<RwLock<HashMap<T, CompressedBitmap>>>,
-    /// Total number of rows indexed
+    // Total number of rows indexed
     num_rows: Arc<RwLock<usize>>,
-    /// Bitmap compression enabled
+    // Bitmap compression enabled
     compression_enabled: bool,
 }
 
@@ -35,7 +35,7 @@ impl<T: Eq + std::hash::Hash + Clone> Clone for BitmapIndex<T> {
 }
 
 impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
-    /// Create a new bitmap index
+    // Create a new bitmap index
     pub fn new() -> Self {
         Self {
             bitmaps: Arc::new(RwLock::new(HashMap::new())),
@@ -44,7 +44,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
         }
     }
 
-    /// Create without compression
+    // Create without compression
     pub fn new_uncompressed() -> Self {
         Self {
             bitmaps: Arc::new(RwLock::new(HashMap::new())),
@@ -53,7 +53,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
         }
     }
 
-    /// Insert a value at a given row position
+    // Insert a value at a given row position
     pub fn insert(&self, value: T, row_id: usize) -> Result<()> {
         let mut bitmaps = self.bitmaps.write();
         let mut num_rows = self.num_rows.write();
@@ -74,7 +74,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
         Ok(())
     }
 
-    /// Get all row IDs for a specific value
+    // Get all row IDs for a specific value
     pub fn get(&self, value: &T) -> Result<Vec<usize>> {
         let bitmaps = self.bitmaps.read();
 
@@ -84,7 +84,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
         }
     }
 
-    /// Perform AND operation between two values
+    // Perform AND operation between two values
     pub fn and(&self, value1: &T, value2: &T) -> Result<Vec<usize>> {
         let bitmaps = self.bitmaps.read();
 
@@ -100,7 +100,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
         }
     }
 
-    /// Perform OR operation between two values
+    // Perform OR operation between two values
     pub fn or(&self, value1: &T, value2: &T) -> Result<Vec<usize>> {
         let bitmaps = self.bitmaps.read();
 
@@ -118,7 +118,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
         }
     }
 
-    /// Perform NOT operation (invert bitmap)
+    // Perform NOT operation (invert bitmap)
     pub fn not(&self, value: &T) -> Result<Vec<usize>> {
         let bitmaps = self.bitmaps.read();
         let num_rows = *self.num_rows.read();
@@ -135,7 +135,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
         }
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn stats(&self) -> BitmapIndexStats {
         let bitmaps = self.bitmaps.read();
         let num_rows = *self.num_rows.read();
@@ -154,15 +154,15 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
     }
 }
 
-/// Compressed Bitmap using run-length encoding
+// Compressed Bitmap using run-length encoding
 #[derive(Debug, Clone)]
 pub struct CompressedBitmap {
-    /// Run-length encoded runs of 0s and 1s
+    // Run-length encoded runs of 0s and 1s
     runs: Vec<Run>,
 }
 
 impl CompressedBitmap {
-    /// Create a new compressed bitmap
+    // Create a new compressed bitmap
     pub fn new(size: usize) -> Self {
         Self {
             runs: vec![Run {
@@ -172,7 +172,7 @@ impl CompressedBitmap {
         }
     }
 
-    /// Set a bit at a position
+    // Set a bit at a position
     pub fn set(&mut self, position: usize, value: bool) {
         let mut current_pos = 0;
         let mut run_idx = 0;
@@ -200,7 +200,7 @@ impl CompressedBitmap {
         }
     }
 
-    /// Split a run to set a different value
+    // Split a run to set a different value
     fn split_run(&mut self, run_idx: usize, offset: usize, value: bool) {
         let run = self.runs[run_idx].clone();
 
@@ -254,7 +254,7 @@ impl CompressedBitmap {
         self.merge_adjacent_runs();
     }
 
-    /// Merge adjacent runs with the same value
+    // Merge adjacent runs with the same value
     fn merge_adjacent_runs(&mut self) {
         let mut i = 0;
         while i + 1 < self.runs.len() {
@@ -267,7 +267,7 @@ impl CompressedBitmap {
         }
     }
 
-    /// Get all positions where bit is set to true
+    // Get all positions where bit is set to true
     pub fn get_set_bits(&self) -> Vec<usize> {
         let mut result = Vec::new();
         let mut position = 0;
@@ -284,7 +284,7 @@ impl CompressedBitmap {
         result
     }
 
-    /// AND operation
+    // AND operation
     pub fn and(&self, other: &CompressedBitmap) -> CompressedBitmap {
         let mut result = CompressedBitmap {
             runs: Vec::new(),
@@ -324,7 +324,7 @@ impl CompressedBitmap {
         result
     }
 
-    /// OR operation
+    // OR operation
     pub fn or(&self, other: &CompressedBitmap) -> CompressedBitmap {
         let mut result = CompressedBitmap {
             runs: Vec::new(),
@@ -364,7 +364,7 @@ impl CompressedBitmap {
         result
     }
 
-    /// NOT operation
+    // NOT operation
     pub fn not(&self, _size: usize) -> CompressedBitmap {
         let mut result = CompressedBitmap {
             runs: Vec::new(),
@@ -380,21 +380,21 @@ impl CompressedBitmap {
         result
     }
 
-    /// Get compressed size in bytes (approximate)
+    // Get compressed size in bytes (approximate)
     pub fn compressed_size(&self) -> usize {
         // Each run takes about 16 bytes (bool + usize)
         self.runs.len() * 16
     }
 }
 
-/// A run of consecutive bits with the same value
+// A run of consecutive bits with the same value
 #[derive(Debug, Clone)]
 struct Run {
     value: bool,
     length: usize,
 }
 
-/// Iterator over runs
+// Iterator over runs
 struct RunIterator<'a> {
     runs: &'a [Run],
     run_idx: usize,
@@ -448,19 +448,19 @@ impl<'a> RunIterator<'a> {
     }
 }
 
-/// Range-encoded bitmap for numeric ranges
+// Range-encoded bitmap for numeric ranges
 pub struct RangeEncodedBitmap {
-    /// Bitmaps for different ranges
+    // Bitmaps for different ranges
     range_bitmaps: HashMap<RangeBucket, CompressedBitmap>,
-    /// Min and max values
+    // Min and max values
     min_value: i64,
     max_value: i64,
-    /// Bucket size
+    // Bucket size
     bucket_size: i64,
 }
 
 impl RangeEncodedBitmap {
-    /// Create a new range-encoded bitmap
+    // Create a new range-encoded bitmap
     pub fn new(min_value: i64, max_value: i64, num_buckets: usize) -> Self {
         let bucket_size = ((max_value - min_value) / num_buckets as i64).max(1);
 
@@ -472,7 +472,7 @@ impl RangeEncodedBitmap {
         }
     }
 
-    /// Insert a value
+    // Insert a value
     pub fn insert(&mut self, value: i64, row_id: usize, total_rows: usize) {
         let bucket = self.get_bucket(value);
 
@@ -483,7 +483,7 @@ impl RangeEncodedBitmap {
         bitmap.set(row_id, true);
     }
 
-    /// Query a range
+    // Query a range
     pub fn range_query(&self, start: i64, end: i64) -> Vec<usize> {
         let start_bucket = self.get_bucket(start);
         let end_bucket = self.get_bucket(end);
@@ -513,11 +513,11 @@ impl RangeEncodedBitmap {
     }
 }
 
-/// Range bucket identifier
+// Range bucket identifier
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct RangeBucket(i64);
 
-/// Bitmap index statistics
+// Bitmap index statistics
 #[derive(Debug, Clone)]
 pub struct BitmapIndexStats {
     pub num_values: usize,
@@ -614,5 +614,3 @@ mod tests {
         assert!(results.contains(&2));
     }
 }
-
-

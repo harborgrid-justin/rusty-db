@@ -12,7 +12,7 @@ use super::{Algorithm, ModelType};
 // Decision Tree (CART Algorithm)
 // ============================================================================
 
-/// Node in a decision tree
+// Node in a decision tree
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum TreeNode {
     Leaf {
@@ -28,7 +28,7 @@ enum TreeNode {
     },
 }
 
-/// Decision tree classifier/regressor using CART algorithm
+// Decision tree classifier/regressor using CART algorithm
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecisionTree {
     root: Option<TreeNode>,
@@ -38,7 +38,7 @@ pub struct DecisionTree {
 }
 
 impl DecisionTree {
-    /// Create a new decision tree
+    // Create a new decision tree
     pub fn new(is_classifier: bool) -> Self {
         Self {
             root: None,
@@ -48,7 +48,7 @@ impl DecisionTree {
         }
     }
 
-    /// Build tree recursively
+    // Build tree recursively
     fn build_tree(
         &self,
         features: &Matrix,
@@ -98,7 +98,7 @@ impl DecisionTree {
         }
     }
 
-    /// Create a leaf node
+    // Create a leaf node
     fn create_leaf(&self, targets: &Vector, indices: &[usize]) -> TreeNode {
         let value = if self.is_classifier {
             // Mode (most common class)
@@ -114,7 +114,7 @@ impl DecisionTree {
         }
     }
 
-    /// Find mode (most common value)
+    // Find mode (most common value)
     fn mode(&self, targets: &Vector, indices: &[usize]) -> f64 {
         let mut counts: HashMap<i64, usize> = HashMap::new();
         for &i in indices {
@@ -127,7 +127,7 @@ impl DecisionTree {
             .unwrap_or(0.0)
     }
 
-    /// Find best split point
+    // Find best split point
     fn find_best_split(
         &self,
         features: &Matrix,
@@ -178,7 +178,7 @@ impl DecisionTree {
         best_split
     }
 
-    /// Calculate impurity (Gini for classification, variance for regression)
+    // Calculate impurity (Gini for classification, variance for regression)
     fn calculate_impurity(&self, targets: &Vector, indices: &[usize]) -> f64 {
         if indices.is_empty() {
             return 0.0;
@@ -208,7 +208,7 @@ impl DecisionTree {
         }
     }
 
-    /// Predict a single sample
+    // Predict a single sample
     fn predict_sample(&self, sample: &[f64], node: &TreeNode) -> f64 {
         match node {
             TreeNode::Leaf { value, .. } => *value,
@@ -289,7 +289,7 @@ impl Algorithm for DecisionTree {
 // Random Forest
 // ============================================================================
 
-/// Random forest ensemble of decision trees
+// Random forest ensemble of decision trees
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RandomForest {
     trees: Vec<DecisionTree>,
@@ -299,7 +299,7 @@ pub struct RandomForest {
 }
 
 impl RandomForest {
-    /// Create a new random forest
+    // Create a new random forest
     pub fn new(is_classifier: bool) -> Self {
         Self {
             trees: Vec::new(),
@@ -309,7 +309,7 @@ impl RandomForest {
         }
     }
 
-    /// Bootstrap sampling
+    // Bootstrap sampling
     fn bootstrap_sample(&self, n_samples: usize) -> Vec<usize> {
         use rand::Rng;
         let mut rng = rand::thread_rng();

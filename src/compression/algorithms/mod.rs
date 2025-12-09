@@ -1,13 +1,13 @@
-/// Compression Algorithms Module
-///
-/// Provides various compression algorithms optimized for database workloads:
-/// - LZ4: Fast compression for general-purpose data
-/// - Zstandard-like: Balanced compression ratio and speed
-/// - Huffman: Entropy encoding for high compression
-/// - Dictionary: LZW-based compression
-/// - Column encodings: Specialized for columnar data (BitPacker, FOR, Delta, RLE)
-/// - Adaptive: Automatically selects best algorithm
-/// - Cascaded: Intelligently combines encodings for optimal compression
+// Compression Algorithms Module
+//
+// Provides various compression algorithms optimized for database workloads:
+// - LZ4: Fast compression for general-purpose data
+// - Zstandard-like: Balanced compression ratio and speed
+// - Huffman: Entropy encoding for high compression
+// - Dictionary: LZW-based compression
+// - Column encodings: Specialized for columnar data (BitPacker, FOR, Delta, RLE)
+// - Adaptive: Automatically selects best algorithm
+// - Cascaded: Intelligently combines encodings for optimal compression
 
 pub mod lz4_compression;
 pub mod zstd_compression;

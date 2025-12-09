@@ -1,15 +1,15 @@
-/// Raft Consensus Protocol Implementation
-///
-/// This module implements the Raft consensus algorithm for distributed systems.
-/// Raft provides strong consistency guarantees and is used for:
-/// - Leader election with randomized timeouts
-/// - Log replication across cluster nodes
-/// - Membership changes through joint consensus
-/// - Snapshot and log compaction for efficiency
-///
-/// References:
-/// - Raft Paper: https://raft.github.io/raft.pdf
-/// - Diego Ongaro's PhD thesis on consensus
+// Raft Consensus Protocol Implementation
+//
+// This module implements the Raft consensus algorithm for distributed systems.
+// Raft provides strong consistency guarantees and is used for:
+// - Leader election with randomized timeouts
+// - Log replication across cluster nodes
+// - Membership changes through joint consensus
+// - Snapshot and log compaction for efficiency
+//
+// References:
+// - Raft Paper: https://raft.github.io/raft.pdf
+// - Diego Ongaro's PhD thesis on consensus
 
 use std::collections::VecDeque;
 use std::time::SystemTime;
@@ -21,40 +21,40 @@ use std::time::{Duration};
 use tokio::sync::mpsc;
 use tokio::time::{interval};
 
-/// Raft node identifier
+// Raft node identifier
 pub type RaftNodeId = u64;
 
-/// Raft term - logical clock for leader elections
+// Raft term - logical clock for leader elections
 pub type Term = u64;
 
-/// Log index
+// Log index
 pub type LogIndex = u64;
 
-/// Raft node state
+// Raft node state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RaftState {
-    /// Follower state - receives logs from leader
+    // Follower state - receives logs from leader
     Follower,
-    /// Candidate state - requesting votes for leadership
+    // Candidate state - requesting votes for leadership
     Candidate,
-    /// Leader state - manages log replication
+    // Leader state - manages log replication
     Leader,
 }
 
-/// Entry in the replicated log
+// Entry in the replicated log
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogEntry {
-    /// The term when entry was received by leader
+    // The term when entry was received by leader
     pub term: Term,
-    /// The index of this entry in the log
+    // The index of this entry in the log
     pub index: LogIndex,
-    /// The command to apply to state machine
+    // The command to apply to state machine
     pub command: Vec<u8>,
-    /// Timestamp when entry was created
+    // Timestamp when entry was created
     pub timestamp: SystemTime,
-    /// Client ID for deduplication
+    // Client ID for deduplication
     pub client_id: Option<String>,
-    /// Request ID for deduplication
+    // Request ID for deduplication
     pub request_id: Option<u64>,
 }
 
@@ -77,104 +77,104 @@ impl LogEntry {
     }
 }
 
-/// Vote request message
+// Vote request message
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VoteRequest {
-    /// Candidate's term
+    // Candidate's term
     pub term: Term,
-    /// Candidate requesting vote
+    // Candidate requesting vote
     pub candidate_id: RaftNodeId,
-    /// Index of candidate's last log entry
+    // Index of candidate's last log entry
     pub last_log_index: LogIndex,
-    /// Term of candidate's last log entry
+    // Term of candidate's last log entry
     pub last_log_term: Term,
 }
 
-/// Vote response message
+// Vote response message
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VoteResponse {
-    /// Current term for candidate to update itself
+    // Current term for candidate to update itself
     pub term: Term,
-    /// True if candidate received vote
+    // True if candidate received vote
     pub vote_granted: bool,
 }
 
-/// Append entries request (heartbeat and log replication)
+// Append entries request (heartbeat and log replication)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppendEntriesRequest {
-    /// Leader's term
+    // Leader's term
     pub term: Term,
-    /// So follower can redirect clients
+    // So follower can redirect clients
     pub leader_id: RaftNodeId,
-    /// Index of log entry immediately preceding new ones
+    // Index of log entry immediately preceding new ones
     pub prev_log_index: LogIndex,
-    /// Term of prev_log_index entry
+    // Term of prev_log_index entry
     pub prev_log_term: Term,
-    /// Log entries to store (empty for heartbeat)
+    // Log entries to store (empty for heartbeat)
     pub entries: Vec<LogEntry>,
-    /// Leader's commit index
+    // Leader's commit index
     pub leader_commit: LogIndex,
 }
 
-/// Append entries response
+// Append entries response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppendEntriesResponse {
-    /// Current term for leader to update itself
+    // Current term for leader to update itself
     pub term: Term,
-    /// True if follower contained entry matching prev_log_index and prev_log_term
+    // True if follower contained entry matching prev_log_index and prev_log_term
     pub success: bool,
-    /// For optimization: follower's last log index
+    // For optimization: follower's last log index
     pub match_index: Option<LogIndex>,
-    /// For fast log backtracking on conflicts
+    // For fast log backtracking on conflicts
     pub conflict_term: Option<Term>,
     pub conflict_index: Option<LogIndex>,
 }
 
-/// Snapshot metadata
+// Snapshot metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapshotMetadata {
-    /// Last included index in snapshot
+    // Last included index in snapshot
     pub last_included_index: LogIndex,
-    /// Last included term in snapshot
+    // Last included term in snapshot
     pub last_included_term: Term,
-    /// Latest configuration in snapshot
+    // Latest configuration in snapshot
     pub configuration: ClusterConfiguration,
-    /// Snapshot creation timestamp
+    // Snapshot creation timestamp
     pub timestamp: SystemTime,
 }
 
-/// Install snapshot request
+// Install snapshot request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstallSnapshotRequest {
-    /// Leader's term
+    // Leader's term
     pub term: Term,
-    /// Leader ID for follower redirection
+    // Leader ID for follower redirection
     pub leader_id: RaftNodeId,
-    /// Snapshot metadata
+    // Snapshot metadata
     pub metadata: SnapshotMetadata,
-    /// Raw snapshot data
+    // Raw snapshot data
     pub data: Vec<u8>,
-    /// Byte offset where chunk is positioned in snapshot file
+    // Byte offset where chunk is positioned in snapshot file
     pub offset: u64,
-    /// True if this is the last chunk
+    // True if this is the last chunk
     pub done: bool,
 }
 
-/// Install snapshot response
+// Install snapshot response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstallSnapshotResponse {
-    /// Current term for leader to update itself
+    // Current term for leader to update itself
     pub term: Term,
-    /// Bytes successfully received up to offset
+    // Bytes successfully received up to offset
     pub bytes_stored: u64,
 }
 
-/// Cluster configuration for membership changes
+// Cluster configuration for membership changes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClusterConfiguration {
-    /// Current configuration members
+    // Current configuration members
     pub members: Vec<RaftNodeId>,
-    /// Optional new configuration for joint consensus
+    // Optional new configuration for joint consensus
     pub new_members: Option<Vec<RaftNodeId>>,
 }
 
@@ -186,12 +186,12 @@ impl ClusterConfiguration {
         }
     }
 
-    /// Check if configuration is in joint consensus mode
+    // Check if configuration is in joint consensus mode
     pub fn is_joint_consensus(&self) -> bool {
         self.new_members.is_some()
     }
 
-    /// Get all members (old and new) during joint consensus
+    // Get all members (old and new) during joint consensus
     pub fn all_members(&self) -> Vec<RaftNodeId> {
         let mut all = self.members.clone();
         if let Some(ref new) = self.new_members {
@@ -204,7 +204,7 @@ impl ClusterConfiguration {
         all
     }
 
-    /// Check if we have a quorum in both old and new configurations
+    // Check if we have a quorum in both old and new configurations
     pub fn has_joint_quorum(&self, votes: &HashMap<RaftNodeId, bool>) -> bool {
         if !self.is_joint_consensus() {
             return self.has_quorum(votes);
@@ -220,7 +220,7 @@ impl ClusterConfiguration {
         old_quorum && new_quorum
     }
 
-    /// Check if we have a simple majority quorum
+    // Check if we have a simple majority quorum
     pub fn has_quorum(&self, votes: &HashMap<RaftNodeId, bool>) -> bool {
         self.count_quorum(&self.members, votes)
     }
@@ -234,16 +234,16 @@ impl ClusterConfiguration {
     }
 }
 
-/// Persistent state (must survive crashes)
+// Persistent state (must survive crashes)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PersistentState {
-    /// Latest term server has seen
+    // Latest term server has seen
     pub current_term: Term,
-    /// Candidate ID that received vote in current term
+    // Candidate ID that received vote in current term
     pub voted_for: Option<RaftNodeId>,
-    /// Log entries
+    // Log entries
     pub log: Vec<LogEntry>,
-    /// Snapshot metadata
+    // Snapshot metadata
     pub snapshot_metadata: Option<SnapshotMetadata>,
 }
 
@@ -275,7 +275,7 @@ impl PersistentState {
         )
     }
 
-    /// Get log entry at index (accounting for snapshots)
+    // Get log entry at index (accounting for snapshots)
     pub fn get_entry(&self, index: LogIndex) -> Option<&LogEntry> {
         if let Some(ref meta) = self.snapshot_metadata {
             if index <= meta.last_included_index {
@@ -291,7 +291,7 @@ impl PersistentState {
         }
     }
 
-    /// Get term at specific index
+    // Get term at specific index
     pub fn get_term(&self, index: LogIndex) -> Option<Term> {
         self.get_entry(index).map(|e| e.term)
     }
@@ -303,12 +303,12 @@ impl Default for PersistentState {
     }
 }
 
-/// Volatile state on all servers
+// Volatile state on all servers
 #[derive(Debug, Clone)]
 pub struct VolatileState {
-    /// Index of highest log entry known to be committed
+    // Index of highest log entry known to be committed
     pub commit_index: LogIndex,
-    /// Index of highest log entry applied to state machine
+    // Index of highest log entry applied to state machine
     pub last_applied: LogIndex,
 }
 
@@ -327,16 +327,16 @@ impl Default for VolatileState {
     }
 }
 
-/// Volatile state on leaders
+// Volatile state on leaders
 #[derive(Debug, Clone)]
 pub struct LeaderState {
-    /// For each server, index of next log entry to send
+    // For each server, index of next log entry to send
     pub next_index: HashMap<RaftNodeId, LogIndex>,
-    /// For each server, index of highest log entry known to be replicated
+    // For each server, index of highest log entry known to be replicated
     pub match_index: HashMap<RaftNodeId, LogIndex>,
-    /// Batch of entries waiting to be replicated
+    // Batch of entries waiting to be replicated
     pub replication_batch: VecDeque<LogEntry>,
-    /// Maximum batch size for replication
+    // Maximum batch size for replication
     pub max_batch_size: usize,
 }
 
@@ -358,7 +358,7 @@ impl LeaderState {
         }
     }
 
-    /// Calculate commit index based on match indexes
+    // Calculate commit index based on match indexes
     pub fn calculate_commit_index(&self, current_commit: LogIndex) -> LogIndex {
         if self.match_index.is_empty() {
             return current_commit;
@@ -373,24 +373,24 @@ impl LeaderState {
     }
 }
 
-/// Raft configuration parameters
+// Raft configuration parameters
 #[derive(Debug, Clone)]
 pub struct RaftConfig {
-    /// This node's ID
+    // This node's ID
     pub node_id: RaftNodeId,
-    /// Peer node IDs
+    // Peer node IDs
     pub peers: Vec<RaftNodeId>,
-    /// Minimum election timeout (randomized)
+    // Minimum election timeout (randomized)
     pub election_timeout_min: Duration,
-    /// Maximum election timeout (randomized)
+    // Maximum election timeout (randomized)
     pub election_timeout_max: Duration,
-    /// Heartbeat interval (should be << election timeout)
+    // Heartbeat interval (should be << election timeout)
     pub heartbeat_interval: Duration,
-    /// Maximum entries per AppendEntries RPC
+    // Maximum entries per AppendEntries RPC
     pub max_entries_per_append: usize,
-    /// Snapshot threshold (entries before creating snapshot)
+    // Snapshot threshold (entries before creating snapshot)
     pub snapshot_threshold: usize,
-    /// Enable batching for log replication
+    // Enable batching for log replication
     pub enable_batching: bool,
 }
 
@@ -409,23 +409,23 @@ impl Default for RaftConfig {
     }
 }
 
-/// Main Raft node implementation
+// Main Raft node implementation
 pub struct RaftNode {
-    /// Configuration
+    // Configuration
     config: RaftConfig,
-    /// Current state (Follower/Candidate/Leader)
+    // Current state (Follower/Candidate/Leader)
     state: RwLock<RaftState>,
-    /// Persistent state
+    // Persistent state
     persistent: Arc<RwLock<PersistentState>>,
-    /// Volatile state
+    // Volatile state
     volatile: RwLock<VolatileState>,
-    /// Leader-specific state
+    // Leader-specific state
     leader_state: RwLock<Option<LeaderState>>,
-    /// Current cluster configuration
+    // Current cluster configuration
     configuration: RwLock<ClusterConfiguration>,
-    /// Current leader ID (if known)
+    // Current leader ID (if known)
     current_leader: RwLock<Option<RaftNodeId>>,
-    /// Votes received in current election
+    // Votes received in current election
     votes_received: RwLock<HashMap<RaftNodeId, bool>>,
 }
 
@@ -445,22 +445,22 @@ impl RaftNode {
         }
     }
 
-    /// Get current state
+    // Get current state
     pub fn get_state(&self) -> RaftState {
         *self.state.read().unwrap()
     }
 
-    /// Get current term
+    // Get current term
     pub fn get_current_term(&self) -> Term {
         self.persistent.read().unwrap().current_term
     }
 
-    /// Get current leader ID
+    // Get current leader ID
     pub fn get_leader(&self) -> Option<RaftNodeId> {
         *self.current_leader.read().unwrap()
     }
 
-    /// Convert to candidate and start election
+    // Convert to candidate and start election
     pub fn start_election(&self) -> Result<VoteRequest, DbError> {
         let mut state = self.state.write().unwrap();
         let mut persistent = self.persistent.write().unwrap();
@@ -491,7 +491,7 @@ impl RaftNode {
         Ok(request)
     }
 
-    /// Handle vote request
+    // Handle vote request
     pub fn handle_vote_request(&self, request: VoteRequest) -> Result<VoteResponse, DbError> {
         let mut persistent = self.persistent.write().unwrap();
         let mut state = self.state.write().unwrap();
@@ -527,7 +527,7 @@ impl RaftNode {
         })
     }
 
-    /// Handle vote response
+    // Handle vote response
     pub fn handle_vote_response(&self, from: RaftNodeId, response: VoteResponse) -> Result<bool, DbError> {
         let mut state = self.state.write().unwrap();
         let mut persistent = self.persistent.write().unwrap();
@@ -568,7 +568,7 @@ impl RaftNode {
         Ok(false)
     }
 
-    /// Transition to leader state
+    // Transition to leader state
     fn become_leader(&self) -> Result<(), DbError> {
         let mut current_leader = self.current_leader.write().unwrap();
         *current_leader = Some(self.config.node_id);
@@ -582,7 +582,7 @@ impl RaftNode {
         Ok(())
     }
 
-    /// Handle append entries request
+    // Handle append entries request
     pub fn handle_append_entries(
         &self,
         request: AppendEntriesRequest,
@@ -676,7 +676,7 @@ impl RaftNode {
         })
     }
 
-    /// Send append entries to a peer
+    // Send append entries to a peer
     pub fn send_append_entries(&self, peer: RaftNodeId) -> Result<AppendEntriesRequest, DbError> {
         let persistent = self.persistent.read().unwrap();
         let leader_state_guard = self.leader_state.read().unwrap();
@@ -723,7 +723,7 @@ impl RaftNode {
         })
     }
 
-    /// Handle append entries response from follower
+    // Handle append entries response from follower
     pub fn handle_append_entries_response(
         &self,
         peer: RaftNodeId,
@@ -785,7 +785,7 @@ impl RaftNode {
         Ok(())
     }
 
-    /// Append command to log (leader only)
+    // Append command to log (leader only)
     pub fn append_command(&self, command: Vec<u8>) -> Result<LogIndex, DbError> {
         let state = self.state.read().unwrap();
         if *state != RaftState::Leader {
@@ -802,7 +802,7 @@ impl RaftNode {
         Ok(index)
     }
 
-    /// Create snapshot of state machine
+    // Create snapshot of state machine
     pub fn create_snapshot(
         &self,
         last_included_index: LogIndex,
@@ -837,7 +837,7 @@ impl RaftNode {
         Ok(())
     }
 
-    /// Install snapshot from leader
+    // Install snapshot from leader
     pub fn install_snapshot(&self, request: InstallSnapshotRequest) -> Result<InstallSnapshotResponse, DbError> {
         let mut persistent = self.persistent.write().unwrap();
         let mut state = self.state.write().unwrap();
@@ -878,7 +878,7 @@ impl RaftNode {
         })
     }
 
-    /// Begin membership change (joint consensus)
+    // Begin membership change (joint consensus)
     pub fn begin_membership_change(&self, new_members: Vec<RaftNodeId>) -> Result<(), DbError> {
         let state = self.state.read().unwrap();
         if *state != RaftState::Leader {
@@ -899,7 +899,7 @@ impl RaftNode {
         Ok(())
     }
 
-    /// Finalize membership change
+    // Finalize membership change
     pub fn finalize_membership_change(&self) -> Result<(), DbError> {
         let state = self.state.read().unwrap();
         if *state != RaftState::Leader {
@@ -953,5 +953,3 @@ mod tests {
         assert_eq!(state.last_log_term(), 2);
     }
 }
-
-

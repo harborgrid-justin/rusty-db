@@ -1,18 +1,18 @@
 //\! Slab Allocator Implementation
-//\! 
+//\!
 //\! Fixed-size allocation with thread-local caching and magazine-layer optimization.
 
 use super::common::*;
 
 
-/// Size class information for slab allocation
+// Size class information for slab allocation
 #[derive(Debug, Clone)]
 struct SizeClass {
-    /// Object size for this class
+    // Object size for this class
     object_size: usize,
-    /// Number of objects per slab
+    // Number of objects per slab
     objects_per_slab: usize,
-    /// Color offset for cache optimization
+    // Color offset for cache optimization
     color_offset: usize,
 }
 
@@ -27,24 +27,24 @@ impl SizeClass {
     }
 }
 
-/// Slab metadata
+// Slab metadata
 struct Slab {
-    /// Base pointer to slab memory
+    // Base pointer to slab memory
     base: NonNull<u8>,
-    /// Size class index
+    // Size class index
     size_class: usize,
-    /// Number of free objects
+    // Number of free objects
     free_count: usize,
-    /// Freelist head
+    // Freelist head
     freelist: Option<NonNull<u8>>,
-    /// Slab color for cache optimization
+    // Slab color for cache optimization
     color: usize,
-    /// Allocation timestamp
+    // Allocation timestamp
     allocated_at: Instant,
 }
 
 impl Slab {
-    /// Create a new slab for the given size class
+    // Create a new slab for the given size class
     unsafe fn new(size_class_info: &SizeClass, size_class: usize, color: usize) -> Result<Self> {
         // Allocate slab memory with proper alignment
         let layout = Layout::from_size_align(SLAB_SIZE, SLAB_SIZE)
@@ -91,7 +91,7 @@ impl Slab {
         })
     }
 
-    /// Allocate an object from this slab
+    // Allocate an object from this slab
     unsafe fn allocate(&mut self) -> Option<NonNull<u8>> {
         if let Some(obj) = self.freelist {
             // Pop from freelist
@@ -108,7 +108,7 @@ impl Slab {
         }
     }
 
-    /// Free an object back to this slab
+    // Free an object back to this slab
     unsafe fn deallocate(&mut self, ptr: NonNull<u8>) {
         // Push to freelist
         *(ptr.as_ptr() as *mut *mut u8) = self.freelist.map_or(ptr::null_mut(), |p| p.as_ptr());
@@ -116,12 +116,12 @@ impl Slab {
         self.free_count += 1;
     }
 
-    /// Check if slab is full
+    // Check if slab is full
     fn is_full(&self) -> bool {
         self.free_count == 0
     }
 
-    /// Check if slab is empty
+    // Check if slab is empty
     fn is_empty(&self, size_class_info: &SizeClass) -> bool {
         self.free_count == size_class_info.objects_per_slab
     }
@@ -136,13 +136,13 @@ impl Drop for Slab {
     }
 }
 
-/// Magazine for CPU-level caching
+// Magazine for CPU-level caching
 struct Magazine {
-    /// Cached objects
+    // Cached objects
     objects: Vec<NonNull<u8>>,
-    /// Capacity of magazine
+    // Capacity of magazine
     capacity: usize,
-    /// Size class this magazine belongs to
+    // Size class this magazine belongs to
     size_class: usize,
 }
 
@@ -155,12 +155,12 @@ impl Magazine {
         }
     }
 
-    /// Try to allocate from magazine
+    // Try to allocate from magazine
     fn allocate(&mut self) -> Option<NonNull<u8>> {
         self.objects.pop()
     }
 
-    /// Try to free to magazine
+    // Try to free to magazine
     fn deallocate(&mut self, ptr: NonNull<u8>) -> bool {
         if self.objects.len() < self.capacity {
             self.objects.push(ptr);
@@ -179,13 +179,13 @@ impl Magazine {
     }
 }
 
-/// Per-thread slab cache
+// Per-thread slab cache
 struct ThreadLocalCache {
-    /// Loaded magazine per size class
+    // Loaded magazine per size class
     loaded_magazines: Vec<Option<Magazine>>,
-    /// Previous magazine per size class
+    // Previous magazine per size class
     previous_magazines: Vec<Option<Magazine>>,
-    /// Thread ID
+    // Thread ID
     thread_id: usize,
 }
 
@@ -224,19 +224,19 @@ impl ThreadLocalCache {
     }
 }
 
-/// Slab depot - central storage for magazines and slabs
+// Slab depot - central storage for magazines and slabs
 struct SlabDepot {
-    /// Full magazines per size class
+    // Full magazines per size class
     full_magazines: Vec<VecDeque<Magazine>>,
-    /// Empty magazines per size class
+    // Empty magazines per size class
     empty_magazines: Vec<VecDeque<Magazine>>,
-    /// Partial slabs per size class
+    // Partial slabs per size class
     partial_slabs: Vec<VecDeque<Slab>>,
-    /// Empty slabs per size class
+    // Empty slabs per size class
     empty_slabs: Vec<VecDeque<Slab>>,
-    /// Full slabs count per size class (for tracking)
+    // Full slabs count per size class (for tracking)
     full_slab_counts: Vec<usize>,
-    /// Current color per size class (for slab coloring)
+    // Current color per size class (for slab coloring)
     current_colors: Vec<usize>,
 }
 
@@ -303,17 +303,17 @@ impl SlabDepot {
     }
 }
 
-/// Main slab allocator
+// Main slab allocator
 pub struct SlabAllocator {
-    /// Size class configurations
+    // Size class configurations
     size_classes: Vec<SizeClass>,
-    /// Central depot (protected by lock)
+    // Central depot (protected by lock)
     depot: Mutex<SlabDepot>,
-    /// Allocation statistics
+    // Allocation statistics
     stats: SlabStats,
 }
 
-/// Slab allocator statistics
+// Slab allocator statistics
 struct SlabStats {
     allocations: AtomicU64,
     deallocations: AtomicU64,
@@ -337,7 +337,7 @@ impl SlabStats {
 }
 
 impl SlabAllocator {
-    /// Create a new slab allocator
+    // Create a new slab allocator
     pub fn new() -> Self {
         let mut size_classes = Vec::with_capacity(NUM_SIZE_CLASSES);
 
@@ -365,14 +365,14 @@ impl SlabAllocator {
         }
     }
 
-    /// Get size class index for a given size
+    // Get size class index for a given size
     fn size_to_class(&self, size: usize) -> Option<usize> {
         self.size_classes
             .iter()
             .position(|sc| sc.object_size >= size)
     }
 
-    /// Allocate memory from slab allocator
+    // Allocate memory from slab allocator
     pub fn allocate(&self, size: usize) -> Result<NonNull<u8>> {
         if size > MAX_SLAB_SIZE {
             return Err(DbError::InvalidArgument(
@@ -389,7 +389,7 @@ impl SlabAllocator {
         unsafe { self.allocate_from_class(size_class) }
     }
 
-    /// Internal allocation from specific size class
+    // Internal allocation from specific size class
     unsafe fn allocate_from_class(&self, size_class: usize) -> Result<NonNull<u8>> {
         THREAD_CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
@@ -446,7 +446,7 @@ impl SlabAllocator {
         })
     }
 
-    /// Deallocate memory back to slab allocator
+    // Deallocate memory back to slab allocator
     pub unsafe fn deallocate(&self, ptr: NonNull<u8>, size: usize) -> Result<()> {
         let size_class = self.size_to_class(size)
             .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?;
@@ -495,7 +495,7 @@ impl SlabAllocator {
         })
     }
 
-    /// Get allocation statistics
+    // Get allocation statistics
     pub fn get_stats(&self) -> SlabAllocatorStats {
         SlabAllocatorStats {
             total_allocations: self.stats.allocations.load(Ordering::Relaxed),
@@ -507,7 +507,7 @@ impl SlabAllocator {
         }
     }
 
-    /// Calculate fragmentation for a size class
+    // Calculate fragmentation for a size class
     pub fn calculate_fragmentation(&self, size_class: usize) -> f64 {
         let depot = self.depot.lock().unwrap();
         let partial = depot.partial_slabs[size_class].len();
@@ -524,7 +524,7 @@ impl SlabAllocator {
     }
 }
 
-/// Public slab allocator statistics
+// Public slab allocator statistics
 #[derive(Debug, Clone)]
 pub struct SlabAllocatorStats {
     pub total_allocations: u64,
@@ -534,4 +534,3 @@ pub struct SlabAllocatorStats {
     pub magazine_unloads: u64,
     pub bytes_allocated: u64,
 }
-

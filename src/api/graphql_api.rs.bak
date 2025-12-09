@@ -69,7 +69,7 @@ type Result<T> = std::result::Result<T, DbError>;
 // PART 1: SCHEMA & TYPE SYSTEM (700+ lines)
 // ============================================================================
 
-/// Custom scalar type for DateTime values
+// Custom scalar type for DateTime values
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DateTime(ChronoDateTime<Utc>);
 
@@ -100,7 +100,7 @@ impl DateTime {
     }
 }
 
-/// Custom scalar type for JSON values
+// Custom scalar type for JSON values
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Json(serde_json::Value);
 
@@ -118,7 +118,7 @@ impl async_graphql::ScalarType for Json {
     }
 }
 
-/// Custom scalar type for Binary data
+// Custom scalar type for Binary data
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Binary(Vec<u8>);
 
@@ -139,7 +139,7 @@ impl async_graphql::ScalarType for Binary {
     }
 }
 
-/// Custom scalar type for large integers
+// Custom scalar type for large integers
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BigInt(i64);
 
@@ -164,7 +164,7 @@ impl async_graphql::ScalarType for BigInt {
     }
 }
 
-/// GraphQL representation of database data types
+// GraphQL representation of database data types
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum DataType {
     Null,
@@ -181,14 +181,14 @@ pub enum DataType {
     Uuid,
 }
 
-/// Sort order for query results
+// Sort order for query results
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum SortOrder {
     Asc,
     Desc,
 }
 
-/// Filter operations for WHERE clauses
+// Filter operations for WHERE clauses
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum FilterOp {
     Eq,
@@ -209,7 +209,7 @@ pub enum FilterOp {
     EndsWith,
 }
 
-/// Aggregate functions
+// Aggregate functions
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum AggregateFunc {
     Count,
@@ -221,7 +221,7 @@ pub enum AggregateFunc {
     Variance,
 }
 
-/// Join types for multi-table queries
+// Join types for multi-table queries
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum JoinType {
     Inner,
@@ -231,7 +231,7 @@ pub enum JoinType {
     Cross,
 }
 
-/// Transaction isolation levels
+// Transaction isolation levels
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum IsolationLevel {
     ReadUncommitted,
@@ -240,7 +240,7 @@ pub enum IsolationLevel {
     Serializable,
 }
 
-/// Node interface - all objects with an ID implement this
+// Node interface - all objects with an ID implement this
 // FIXME: Interface derive disabled due to trait bound issues
 // #[derive(Interface)]
 // #[graphql(field(name = "id", ty = "&ID"))]
@@ -250,7 +250,7 @@ pub enum IsolationLevel {
 //     Row(RowType),
 // }
 
-/// Timestamped interface - objects with creation/modification timestamps
+// Timestamped interface - objects with creation/modification timestamps
 // FIXME: Interface derive disabled due to trait bound issues
 // #[derive(Interface)]
 // #[graphql(
@@ -262,7 +262,7 @@ pub enum IsolationLevel {
 //     Row(RowType),
 // }
 
-/// Auditable interface - objects with audit trail
+// Auditable interface - objects with audit trail
 // FIXME: Interface derive disabled due to trait bound issues
 // #[derive(Interface)]
 // #[graphql(
@@ -274,22 +274,22 @@ pub enum IsolationLevel {
 //     Row(RowType),
 // }
 
-/// Database schema information
+// Database schema information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct DatabaseSchema {
-    /// Schema name
+    // Schema name
     pub name: String,
-    /// Tables in this schema
+    // Tables in this schema
     pub tables: Vec<TableType>,
-    /// Total number of tables
+    // Total number of tables
     pub table_count: i32,
-    /// Schema creation time
+    // Schema creation time
     pub created_at: DateTime,
-    /// Schema description/comment
+    // Schema description/comment
     pub description: Option<String>,
 }
 
-/// Table metadata and structure
+// Table metadata and structure
 #[derive(Clone, Debug)]
 pub struct TableType {
     pub id: ID,
@@ -361,20 +361,20 @@ impl TableType {
         &self.constraints
     }
 
-    /// Get table statistics
+    // Get table statistics
     async fn statistics(&self, ctx: &Context<'_>) -> GqlResult<TableStatistics> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_table_statistics(&self.name).await
     }
 
-    /// Get sample rows from the table
+    // Get sample rows from the table
     async fn sample_rows(&self, ctx: &Context<'_>, limit: Option<i32>) -> GqlResult<Vec<RowType>> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_sample_rows(&self.name, limit.unwrap_or(10)).await
     }
 }
 
-/// Column metadata
+// Column metadata
 #[derive(Clone, Debug)]
 pub struct ColumnType {
     pub id: ID,
@@ -436,14 +436,14 @@ impl ColumnType {
         &self.description
     }
 
-    /// Get column statistics (distinct values, null count, etc.)
+    // Get column statistics (distinct values, null count, etc.)
     async fn statistics(&self, ctx: &Context<'_>) -> GqlResult<ColumnStatistics> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_column_statistics(&self.table_name, &self.name).await
     }
 }
 
-/// Row data representation
+// Row data representation
 #[derive(Clone, Debug)]
 pub struct RowType {
     pub id: ID,
@@ -490,13 +490,13 @@ impl RowType {
         self.version
     }
 
-    /// Get specific field value
+    // Get specific field value
     async fn get_field(&self, name: String) -> Option<&FieldValue> {
         self.fields.get(&name)
     }
 }
 
-/// Field value in a row
+// Field value in a row
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FieldValue {
     pub column_name: String,
@@ -535,7 +535,7 @@ impl FieldValue {
     }
 }
 
-/// Index information
+// Index information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct IndexInfo {
     pub name: String,
@@ -546,7 +546,7 @@ pub struct IndexInfo {
     pub created_at: DateTime,
 }
 
-/// Constraint information
+// Constraint information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct ConstraintInfo {
     pub name: String,
@@ -556,7 +556,7 @@ pub struct ConstraintInfo {
     pub referenced_columns: Option<Vec<String>>,
 }
 
-/// Table statistics
+// Table statistics
 #[derive(SimpleObject, Clone, Debug)]
 pub struct TableStatistics {
     pub row_count: BigInt,
@@ -567,7 +567,7 @@ pub struct TableStatistics {
     pub last_modified: Option<DateTime>,
 }
 
-/// Column statistics
+// Column statistics
 #[derive(SimpleObject, Clone, Debug)]
 pub struct ColumnStatistics {
     pub distinct_count: BigInt,
@@ -578,7 +578,7 @@ pub struct ColumnStatistics {
     pub histogram: Option<Vec<HistogramBucket>>,
 }
 
-/// Histogram bucket for column statistics
+// Histogram bucket for column statistics
 #[derive(SimpleObject, Clone, Debug)]
 pub struct HistogramBucket {
     pub range_start: String,
@@ -587,14 +587,14 @@ pub struct HistogramBucket {
     pub frequency: f64,
 }
 
-/// Query result union type
+// Query result union type
 #[derive(Union)]
 pub enum QueryResult {
     Success(QuerySuccess),
     Error(QueryError),
 }
 
-/// Successful query result
+// Successful query result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct QuerySuccess {
     pub rows: Vec<RowType>,
@@ -603,7 +603,7 @@ pub struct QuerySuccess {
     pub has_more: bool,
 }
 
-/// Query error result
+// Query error result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct QueryError {
     pub message: String,
@@ -611,14 +611,14 @@ pub struct QueryError {
     pub details: Option<String>,
 }
 
-/// Mutation result union type
+// Mutation result union type
 #[derive(Union)]
 pub enum MutationResult {
     Success(MutationSuccess),
     Error(MutationError),
 }
 
-/// Successful mutation result
+// Successful mutation result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct MutationSuccess {
     pub affected_rows: i32,
@@ -626,7 +626,7 @@ pub struct MutationSuccess {
     pub execution_time_ms: f64,
 }
 
-/// Mutation error result
+// Mutation error result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct MutationError {
     pub message: String,
@@ -634,7 +634,7 @@ pub struct MutationError {
     pub details: Option<String>,
 }
 
-/// Input type for filtering
+// Input type for filtering
 #[derive(InputObject, Clone, Debug)]
 pub struct FilterCondition {
     pub field: String,
@@ -643,7 +643,7 @@ pub struct FilterCondition {
     pub values: Option<Vec<Json>>,
 }
 
-/// Input type for complex WHERE clauses
+// Input type for complex WHERE clauses
 #[derive(InputObject, Clone, Debug)]
 pub struct WhereClause {
     pub and: Option<Vec<WhereClause>>,
@@ -652,14 +652,14 @@ pub struct WhereClause {
     pub condition: Option<FilterCondition>,
 }
 
-/// Input type for sorting
+// Input type for sorting
 #[derive(InputObject, Clone, Debug)]
 pub struct OrderBy {
     pub field: String,
     pub order: SortOrder,
 }
 
-/// Input type for aggregations
+// Input type for aggregations
 #[derive(InputObject, Clone, Debug)]
 pub struct AggregateInput {
     pub function: AggregateFunc,
@@ -667,7 +667,7 @@ pub struct AggregateInput {
     pub alias: Option<String>,
 }
 
-/// Aggregation result
+// Aggregation result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct AggregateResult {
     pub field: String,
@@ -675,7 +675,7 @@ pub struct AggregateResult {
     pub value: Json,
 }
 
-/// Pagination cursor
+// Pagination cursor
 #[derive(SimpleObject, Clone, Debug)]
 pub struct PageInfo {
     pub has_next_page: bool,
@@ -685,14 +685,14 @@ pub struct PageInfo {
     pub total_count: BigInt,
 }
 
-/// Edge type for cursor-based pagination
+// Edge type for cursor-based pagination
 #[derive(SimpleObject, Clone, Debug)]
 pub struct RowEdge {
     pub cursor: String,
     pub node: RowType,
 }
 
-/// Connection type for cursor-based pagination
+// Connection type for cursor-based pagination
 #[derive(SimpleObject, Clone, Debug)]
 pub struct RowConnection {
     pub edges: Vec<RowEdge>,
@@ -704,24 +704,24 @@ pub struct RowConnection {
 // PART 2: QUERY OPERATIONS (600+ lines)
 // ============================================================================
 
-/// Root query type
+// Root query type
 pub struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
-    /// Get all database schemas
+    // Get all database schemas
     async fn schemas(&self, ctx: &Context<'_>) -> GqlResult<Vec<DatabaseSchema>> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_schemas().await
     }
 
-    /// Get a specific schema by name
+    // Get a specific schema by name
     async fn schema(&self, ctx: &Context<'_>, name: String) -> GqlResult<Option<DatabaseSchema>> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_schema(&name).await
     }
 
-    /// Get all tables across all schemas
+    // Get all tables across all schemas
     async fn tables(
         &self,
         ctx: &Context<'_>,
@@ -733,7 +733,7 @@ impl QueryRoot {
         engine.get_tables(schema, limit, offset).await
     }
 
-    /// Get a specific table by name
+    // Get a specific table by name
     async fn table(
         &self,
         ctx: &Context<'_>,
@@ -744,7 +744,7 @@ impl QueryRoot {
         engine.get_table(&name, schema).await
     }
 
-    /// Query a table with filtering and pagination
+    // Query a table with filtering and pagination
     async fn query_table(
         &self,
         ctx: &Context<'_>,
@@ -775,7 +775,7 @@ impl QueryRoot {
         }
     }
 
-    /// Query multiple tables with joins
+    // Query multiple tables with joins
     async fn query_tables(
         &self,
         ctx: &Context<'_>,
@@ -806,7 +806,7 @@ impl QueryRoot {
         }
     }
 
-    /// Query with cursor-based pagination
+    // Query with cursor-based pagination
     async fn query_table_connection(
         &self,
         ctx: &Context<'_>,
@@ -830,7 +830,7 @@ impl QueryRoot {
         ).await
     }
 
-    /// Get a single row by ID
+    // Get a single row by ID
     async fn row(
         &self,
         ctx: &Context<'_>,
@@ -841,7 +841,7 @@ impl QueryRoot {
         engine.get_row(&table, &id).await
     }
 
-    /// Perform aggregations on a table
+    // Perform aggregations on a table
     async fn aggregate(
         &self,
         ctx: &Context<'_>,
@@ -854,7 +854,7 @@ impl QueryRoot {
         engine.aggregate(&table, aggregates, where_clause, group_by).await
     }
 
-    /// Count rows in a table
+    // Count rows in a table
     async fn count(
         &self,
         ctx: &Context<'_>,
@@ -866,7 +866,7 @@ impl QueryRoot {
         Ok(BigInt(count))
     }
 
-    /// Execute a raw SQL query (admin only)
+    // Execute a raw SQL query (admin only)
     async fn execute_sql(
         &self,
         ctx: &Context<'_>,
@@ -902,7 +902,7 @@ impl QueryRoot {
         }
     }
 
-    /// Search across multiple tables
+    // Search across multiple tables
     async fn search(
         &self,
         ctx: &Context<'_>,
@@ -915,7 +915,7 @@ impl QueryRoot {
         engine.search(&query, tables, fields, limit).await
     }
 
-    /// Get query execution plan
+    // Get query execution plan
     async fn explain(
         &self,
         ctx: &Context<'_>,
@@ -928,7 +928,7 @@ impl QueryRoot {
     }
 }
 
-/// Input type for join operations
+// Input type for join operations
 #[derive(InputObject, Clone, Debug)]
 pub struct JoinInput {
     pub table: String,
@@ -937,7 +937,7 @@ pub struct JoinInput {
     pub other_field: String,
 }
 
-/// Search result with highlighting
+// Search result with highlighting
 #[derive(SimpleObject, Clone, Debug)]
 pub struct SearchResult {
     pub results: Vec<SearchMatch>,
@@ -945,7 +945,7 @@ pub struct SearchResult {
     pub execution_time_ms: f64,
 }
 
-/// Individual search match
+// Individual search match
 #[derive(SimpleObject, Clone, Debug)]
 pub struct SearchMatch {
     pub table: String,
@@ -954,7 +954,7 @@ pub struct SearchMatch {
     pub highlights: HashMap<String, String>,
 }
 
-/// Query execution plan
+// Query execution plan
 #[derive(SimpleObject, Clone, Debug)]
 pub struct QueryPlan {
     pub plan_text: String,
@@ -963,7 +963,7 @@ pub struct QueryPlan {
     pub operations: Vec<PlanOperation>,
 }
 
-/// Individual operation in query plan
+// Individual operation in query plan
 #[derive(SimpleObject, Clone, Debug)]
 pub struct PlanOperation {
     pub operation_type: String,
@@ -977,12 +977,12 @@ pub struct PlanOperation {
 // PART 3: MUTATION OPERATIONS (500+ lines)
 // ============================================================================
 
-/// Root mutation type
+// Root mutation type
 pub struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
-    /// Insert a single row
+    // Insert a single row
     async fn insert_one(
         &self,
         ctx: &Context<'_>,
@@ -1019,7 +1019,7 @@ impl MutationRoot {
         }
     }
 
-    /// Insert multiple rows
+    // Insert multiple rows
     async fn insert_many(
         &self,
         ctx: &Context<'_>,
@@ -1057,7 +1057,7 @@ impl MutationRoot {
         }
     }
 
-    /// Update a single row by ID
+    // Update a single row by ID
     async fn update_one(
         &self,
         ctx: &Context<'_>,
@@ -1100,7 +1100,7 @@ impl MutationRoot {
         }
     }
 
-    /// Update multiple rows matching a condition
+    // Update multiple rows matching a condition
     async fn update_many(
         &self,
         ctx: &Context<'_>,
@@ -1139,7 +1139,7 @@ impl MutationRoot {
         }
     }
 
-    /// Delete a single row by ID
+    // Delete a single row by ID
     async fn delete_one(
         &self,
         ctx: &Context<'_>,
@@ -1181,7 +1181,7 @@ impl MutationRoot {
         }
     }
 
-    /// Delete multiple rows matching a condition
+    // Delete multiple rows matching a condition
     async fn delete_many(
         &self,
         ctx: &Context<'_>,
@@ -1218,7 +1218,7 @@ impl MutationRoot {
         }
     }
 
-    /// Upsert (insert or update) a row
+    // Upsert (insert or update) a row
     async fn upsert(
         &self,
         ctx: &Context<'_>,
@@ -1256,7 +1256,7 @@ impl MutationRoot {
         }
     }
 
-    /// Begin a new transaction
+    // Begin a new transaction
     async fn begin_transaction(
         &self,
         ctx: &Context<'_>,
@@ -1266,7 +1266,7 @@ impl MutationRoot {
         engine.begin_transaction(isolation_level).await
     }
 
-    /// Commit a transaction
+    // Commit a transaction
     async fn commit_transaction(
         &self,
         ctx: &Context<'_>,
@@ -1276,7 +1276,7 @@ impl MutationRoot {
         engine.commit_transaction(&transaction_id).await
     }
 
-    /// Rollback a transaction
+    // Rollback a transaction
     async fn rollback_transaction(
         &self,
         ctx: &Context<'_>,
@@ -1286,7 +1286,7 @@ impl MutationRoot {
         engine.rollback_transaction(&transaction_id).await
     }
 
-    /// Execute multiple mutations in a transaction
+    // Execute multiple mutations in a transaction
     async fn execute_transaction(
         &self,
         ctx: &Context<'_>,
@@ -1315,7 +1315,7 @@ impl MutationRoot {
         }
     }
 
-    /// Bulk insert with optimizations
+    // Bulk insert with optimizations
     async fn bulk_insert(
         &self,
         ctx: &Context<'_>,
@@ -1354,7 +1354,7 @@ impl MutationRoot {
     }
 }
 
-/// Transaction result
+// Transaction result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct TransactionResult {
     pub transaction_id: String,
@@ -1362,7 +1362,7 @@ pub struct TransactionResult {
     pub timestamp: DateTime,
 }
 
-/// Transaction operation input
+// Transaction operation input
 #[derive(InputObject, Clone, Debug)]
 pub struct TransactionOperation {
     pub operation_type: TransactionOpType,
@@ -1372,7 +1372,7 @@ pub struct TransactionOperation {
     pub id: Option<ID>,
 }
 
-/// Transaction operation type
+// Transaction operation type
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
 pub enum TransactionOpType {
     Insert,
@@ -1380,7 +1380,7 @@ pub enum TransactionOpType {
     Delete,
 }
 
-/// Transaction execution result
+// Transaction execution result
 #[derive(SimpleObject, Clone, Debug)]
 pub struct TransactionExecutionResult {
     pub success: bool,
@@ -1393,12 +1393,12 @@ pub struct TransactionExecutionResult {
 // PART 4: SUBSCRIPTION SYSTEM (600+ lines)
 // ============================================================================
 
-/// Root subscription type
+// Root subscription type
 pub struct SubscriptionRoot;
 
 #[Subscription]
 impl SubscriptionRoot {
-    /// Subscribe to all changes on a table
+    // Subscribe to all changes on a table
     async fn table_changes<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -1416,7 +1416,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to row insertions
+    // Subscribe to row insertions
     async fn row_inserted<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -1434,7 +1434,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to row updates
+    // Subscribe to row updates
     async fn row_updated<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -1452,7 +1452,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to row deletions
+    // Subscribe to row deletions
     async fn row_deleted<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -1470,7 +1470,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to specific row changes by ID
+    // Subscribe to specific row changes by ID
     async fn row_changes<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -1488,7 +1488,7 @@ impl SubscriptionRoot {
         })
     }
 
-    /// Subscribe to aggregation changes
+    // Subscribe to aggregation changes
     async fn aggregate_changes<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -1519,7 +1519,7 @@ impl SubscriptionRoot {
         }
     }
 
-    /// Subscribe to query result changes
+    // Subscribe to query result changes
     async fn query_changes<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -1566,7 +1566,7 @@ impl SubscriptionRoot {
         }
     }
 
-    /// Heartbeat subscription for connection keepalive
+    // Heartbeat subscription for connection keepalive
     async fn heartbeat<'ctx>(
         &self,
         interval_seconds: Option<i32>,
@@ -1590,7 +1590,7 @@ impl SubscriptionRoot {
     }
 }
 
-/// Table change event (union of all change types)
+// Table change event (union of all change types)
 #[derive(Clone, Debug)]
 pub struct TableChange {
     pub table: String,
@@ -1623,7 +1623,7 @@ impl TableChange {
     }
 }
 
-/// Change type enum
+// Change type enum
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ChangeType {
     Insert,
@@ -1631,7 +1631,7 @@ pub enum ChangeType {
     Delete,
 }
 
-/// Row inserted event
+// Row inserted event
 #[derive(Clone, Debug)]
 pub struct RowInserted {
     pub table: String,
@@ -1654,7 +1654,7 @@ impl RowInserted {
     }
 }
 
-/// Row updated event
+// Row updated event
 #[derive(Clone, Debug)]
 pub struct RowUpdated {
     pub table: String,
@@ -1687,7 +1687,7 @@ impl RowUpdated {
     }
 }
 
-/// Row deleted event
+// Row deleted event
 #[derive(Clone, Debug)]
 pub struct RowDeleted {
     pub table: String,
@@ -1715,7 +1715,7 @@ impl RowDeleted {
     }
 }
 
-/// Row change event (for specific row subscriptions)
+// Row change event (for specific row subscriptions)
 #[derive(Clone, Debug)]
 pub struct RowChange {
     pub table: String,
@@ -1753,7 +1753,7 @@ impl RowChange {
     }
 }
 
-/// Aggregate change event
+// Aggregate change event
 #[derive(SimpleObject, Clone, Debug)]
 pub struct AggregateChange {
     pub table: String,
@@ -1761,7 +1761,7 @@ pub struct AggregateChange {
     pub timestamp: DateTime,
 }
 
-/// Query change event
+// Query change event
 #[derive(SimpleObject, Clone, Debug)]
 pub struct QueryChange {
     pub table: String,
@@ -1770,14 +1770,14 @@ pub struct QueryChange {
     pub timestamp: DateTime,
 }
 
-/// Heartbeat event
+// Heartbeat event
 #[derive(SimpleObject, Clone, Debug)]
 pub struct Heartbeat {
     pub sequence: u64,
     pub timestamp: DateTime,
 }
 
-/// Subscription manager for tracking active subscriptions
+// Subscription manager for tracking active subscriptions
 pub struct SubscriptionManager {
     subscriptions: Arc<RwLock<HashMap<String, SubscriptionInfo>>>,
     event_bus: Arc<RwLock<HashMap<String, Vec<broadcast::Sender<TableChange>>>>>,
@@ -1831,7 +1831,7 @@ impl SubscriptionManager {
     }
 }
 
-/// Subscription information
+// Subscription information
 #[derive(Clone, Debug)]
 pub struct SubscriptionInfo {
     pub id: String,
@@ -1858,7 +1858,7 @@ fn compute_rows_hash(rows: &[RowType]) -> u64 {
 // PART 5: PERFORMANCE & SECURITY (600+ lines)
 // ============================================================================
 
-/// Query complexity analyzer
+// Query complexity analyzer
 pub struct ComplexityAnalyzer {
     max_complexity: usize,
     max_depth: usize,
@@ -1920,7 +1920,7 @@ impl ComplexityAnalyzer {
     }
 }
 
-/// Complexity metrics
+// Complexity metrics
 #[derive(Debug, Clone)]
 pub struct ComplexityMetrics {
     pub total_complexity: usize,
@@ -1930,7 +1930,7 @@ pub struct ComplexityMetrics {
     pub has_subscriptions: bool,
 }
 
-/// Rate limiter for GraphQL operations
+// Rate limiter for GraphQL operations
 pub struct RateLimiter {
     limits: Arc<RwLock<HashMap<String, RateLimit>>>,
     requests: Arc<RwLock<HashMap<String, VecDeque<Instant>>>>,
@@ -1987,14 +1987,14 @@ impl RateLimiter {
     }
 }
 
-/// Rate limit configuration
+// Rate limit configuration
 #[derive(Clone, Debug)]
 pub struct RateLimit {
     pub max_requests: usize,
     pub window_secs: u64,
 }
 
-/// Authorization context for field-level security
+// Authorization context for field-level security
 pub struct AuthorizationContext {
     user_id: String,
     roles: HashSet<String>,
@@ -2037,7 +2037,7 @@ impl AuthorizationContext {
     }
 }
 
-/// Query result cache
+// Query result cache
 pub struct QueryCache {
     cache: Arc<RwLock<HashMap<String, CacheEntry>>>,
     max_size: usize,
@@ -2094,7 +2094,7 @@ impl QueryCache {
     }
 }
 
-/// Cache entry
+// Cache entry
 #[derive(Clone, Debug)]
 struct CacheEntry {
     data: Vec<RowType>,
@@ -2102,7 +2102,7 @@ struct CacheEntry {
     expires_at: Instant,
 }
 
-/// DataLoader for N+1 query prevention
+// DataLoader for N+1 query prevention
 pub struct DataLoader<K, V> {
     loader_fn: Arc<dyn Fn(Vec<K>) -> Pin<Box<dyn Future<Output = HashMap<K, V>> + Send>> + Send + Sync>,
     cache: Arc<RwLock<HashMap<K, V>>>,
@@ -2185,7 +2185,7 @@ where
     }
 }
 
-/// Persisted queries manager
+// Persisted queries manager
 pub struct PersistedQueries {
     queries: Arc<RwLock<HashMap<String, String>>>,
 }
@@ -2218,7 +2218,7 @@ impl PersistedQueries {
     }
 }
 
-/// GraphQL extension for performance monitoring
+// GraphQL extension for performance monitoring
 pub struct PerformanceExtension;
 
 impl ExtensionFactory for PerformanceExtension {
@@ -2254,7 +2254,7 @@ impl Extension for PerformanceExtensionImpl {
     }
 }
 
-/// Depth limiting extension
+// Depth limiting extension
 pub struct DepthLimitExtension {
     max_depth: usize,
 }
@@ -2269,7 +2269,7 @@ impl DepthLimitExtension {
 // GRAPHQL ENGINE - Core Implementation
 // ============================================================================
 
-/// Main GraphQL engine that interfaces with the database
+// Main GraphQL engine that interfaces with the database
 pub struct GraphQLEngine {
     // Would connect to actual database components
     subscription_manager: Arc<SubscriptionManager>,
@@ -2570,7 +2570,7 @@ impl GraphQLEngine {
 // SCHEMA BUILDER
 // ============================================================================
 
-/// Build the complete GraphQL schema
+// Build the complete GraphQL schema
 pub fn build_schema() -> Schema<QueryRoot, MutationRoot, SubscriptionRoot> {
     Schema::build(QueryRoot, MutationRoot, SubscriptionRoot)
         .extension(PerformanceExtension)
@@ -2579,7 +2579,7 @@ pub fn build_schema() -> Schema<QueryRoot, MutationRoot, SubscriptionRoot> {
         .finish()
 }
 
-/// Create schema with custom configuration
+// Create schema with custom configuration
 pub fn build_schema_with_config(config: SchemaConfig) -> Schema<QueryRoot, MutationRoot, SubscriptionRoot> {
     let mut builder = Schema::build(QueryRoot, MutationRoot, SubscriptionRoot);
 
@@ -2598,7 +2598,7 @@ pub fn build_schema_with_config(config: SchemaConfig) -> Schema<QueryRoot, Mutat
     builder.finish()
 }
 
-/// Schema configuration
+// Schema configuration
 #[derive(Clone, Debug)]
 pub struct SchemaConfig {
     pub max_depth: Option<usize>,
@@ -2622,7 +2622,7 @@ impl Default for SchemaConfig {
 // ADDITIONAL UTILITIES & HELPERS
 // ============================================================================
 
-/// Query builder for constructing complex queries programmatically
+// Query builder for constructing complex queries programmatically
 pub struct QueryBuilder {
     table: String,
     where_clauses: Vec<WhereClause>,
@@ -2704,7 +2704,7 @@ impl QueryBuilder {
     }
 }
 
-/// Built query ready for execution
+// Built query ready for execution
 #[derive(Clone, Debug)]
 pub struct BuiltQuery {
     pub table: String,
@@ -2715,7 +2715,7 @@ pub struct BuiltQuery {
     pub select_fields: Vec<String>,
 }
 
-/// Mutation builder for constructing complex mutations
+// Mutation builder for constructing complex mutations
 pub struct MutationBuilder {
     table: String,
     operation: MutationOperation,
@@ -2776,14 +2776,14 @@ impl MutationBuilder {
     }
 }
 
-/// Built mutation ready for execution
+// Built mutation ready for execution
 #[derive(Clone, Debug)]
 pub struct BuiltMutation {
     pub table: String,
     pub operation: MutationOperation,
 }
 
-/// Schema introspection utilities
+// Schema introspection utilities
 pub struct SchemaIntrospector {
     engine: Arc<GraphQLEngine>,
 }
@@ -2793,7 +2793,7 @@ impl SchemaIntrospector {
         Self { engine }
     }
 
-    /// Get all available types in the schema
+    // Get all available types in the schema
     pub async fn get_types(&self) -> GqlResult<Vec<TypeInfo>> {
         Ok(vec![
             TypeInfo {
@@ -2814,7 +2814,7 @@ impl SchemaIntrospector {
         ])
     }
 
-    /// Get all available queries
+    // Get all available queries
     pub async fn get_queries(&self) -> GqlResult<Vec<FieldInfo>> {
         Ok(vec![
             FieldInfo {
@@ -2832,7 +2832,7 @@ impl SchemaIntrospector {
         ])
     }
 
-    /// Get all available mutations
+    // Get all available mutations
     pub async fn get_mutations(&self) -> GqlResult<Vec<FieldInfo>> {
         Ok(vec![
             FieldInfo {
@@ -2850,7 +2850,7 @@ impl SchemaIntrospector {
         ])
     }
 
-    /// Get all available subscriptions
+    // Get all available subscriptions
     pub async fn get_subscriptions(&self) -> GqlResult<Vec<FieldInfo>> {
         Ok(vec![
             FieldInfo {
@@ -2863,7 +2863,7 @@ impl SchemaIntrospector {
     }
 }
 
-/// Type information
+// Type information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct TypeInfo {
     pub name: String,
@@ -2871,7 +2871,7 @@ pub struct TypeInfo {
     pub description: Option<String>,
 }
 
-/// Type kind enum
+// Type kind enum
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
 pub enum TypeKind {
     Scalar,
@@ -2884,7 +2884,7 @@ pub enum TypeKind {
     NonNull,
 }
 
-/// Field information
+// Field information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct FieldInfo {
     pub name: String,
@@ -2893,7 +2893,7 @@ pub struct FieldInfo {
     pub arguments: Vec<ArgumentInfo>,
 }
 
-/// Argument information
+// Argument information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct ArgumentInfo {
     pub name: String,
@@ -2902,7 +2902,7 @@ pub struct ArgumentInfo {
     pub description: Option<String>,
 }
 
-/// Query optimizer for analyzing and improving query performance
+// Query optimizer for analyzing and improving query performance
 pub struct QueryOptimizer {
     stats_cache: Arc<RwLock<HashMap<String, TableStats>>>,
 }
@@ -2914,7 +2914,7 @@ impl QueryOptimizer {
         }
     }
 
-    /// Analyze a query and suggest optimizations
+    // Analyze a query and suggest optimizations
     pub async fn analyze(&self, query: &BuiltQuery) -> OptimizationSuggestions {
         let mut suggestions = OptimizationSuggestions {
             suggestions: vec![],
@@ -2946,20 +2946,20 @@ impl QueryOptimizer {
         suggestions
     }
 
-    /// Update statistics for a table
+    // Update statistics for a table
     pub async fn update_stats(&self, table: String, stats: TableStats) {
         let mut cache = self.stats_cache.write().await;
         cache.insert(table, stats);
     }
 
-    /// Get statistics for a table
+    // Get statistics for a table
     pub async fn get_stats(&self, table: &str) -> Option<TableStats> {
         let cache = self.stats_cache.read().await;
         cache.get(table).cloned()
     }
 }
 
-/// Optimization suggestions
+// Optimization suggestions
 #[derive(SimpleObject, Clone, Debug)]
 pub struct OptimizationSuggestions {
     pub suggestions: Vec<String>,
@@ -2967,7 +2967,7 @@ pub struct OptimizationSuggestions {
     pub estimated_rows: i64,
 }
 
-/// Table statistics for optimization
+// Table statistics for optimization
 #[derive(Clone, Debug)]
 pub struct TableStats {
     pub row_count: i64,
@@ -2977,7 +2977,7 @@ pub struct TableStats {
     pub last_analyze: Option<DateTime>,
 }
 
-/// GraphQL request validator
+// GraphQL request validator
 pub struct RequestValidator {
     max_query_size: usize,
     allowed_operations: HashSet<String>,
@@ -2995,7 +2995,7 @@ impl RequestValidator {
         self.allowed_operations.insert(operation.into());
     }
 
-    /// Validate a GraphQL request
+    // Validate a GraphQL request
     pub fn validate(&self, query: &str) -> Result<()> {
         // Check query size
         if query.len() > self.max_query_size {
@@ -3017,7 +3017,7 @@ impl RequestValidator {
     }
 }
 
-/// Batch query executor for optimizing multiple queries
+// Batch query executor for optimizing multiple queries
 pub struct BatchExecutor {
     engine: Arc<GraphQLEngine>,
     max_batch_size: usize,
@@ -3031,7 +3031,7 @@ impl BatchExecutor {
         }
     }
 
-    /// Execute multiple queries in a batch
+    // Execute multiple queries in a batch
     pub async fn execute_batch(&self, queries: Vec<BuiltQuery>) -> GqlResult<Vec<QueryResult>> {
         if queries.len() > self.max_batch_size {
             return Err(Error::new(format!(
@@ -3076,11 +3076,11 @@ impl BatchExecutor {
     }
 }
 
-/// Query result formatter for different output formats
+// Query result formatter for different output formats
 pub struct ResultFormatter;
 
 impl ResultFormatter {
-    /// Format results as JSON
+    // Format results as JSON
     pub fn to_json(rows: &[RowType]) -> GqlResult<String> {
         // Convert to simple JSON representation
         let json_rows: Vec<serde_json::Value> = rows
@@ -3098,7 +3098,7 @@ impl ResultFormatter {
             .map_err(|e| Error::new(format!("JSON serialization error: {}", e)))
     }
 
-    /// Format results as CSV
+    // Format results as CSV
     pub fn to_csv(rows: &[RowType]) -> GqlResult<String> {
         if rows.is_empty() {
             return Ok(String::new());
@@ -3131,7 +3131,7 @@ impl ResultFormatter {
         Ok(csv)
     }
 
-    /// Format results as Markdown table
+    // Format results as Markdown table
     pub fn to_markdown(rows: &[RowType]) -> GqlResult<String> {
         if rows.is_empty() {
             return Ok(String::new());
@@ -3175,11 +3175,11 @@ impl ResultFormatter {
     }
 }
 
-/// Subscription filter evaluator
+// Subscription filter evaluator
 pub struct FilterEvaluator;
 
 impl FilterEvaluator {
-    /// Evaluate if a row matches a where clause
+    // Evaluate if a row matches a where clause
     pub fn matches(row: &RowType, where_clause: &WhereClause) -> bool {
         // Simplified evaluation - would need full implementation
         if let Some(condition) = &where_clause.condition {
@@ -3212,7 +3212,7 @@ impl FilterEvaluator {
     }
 }
 
-/// Metrics collector for GraphQL operations
+// Metrics collector for GraphQL operations
 pub struct MetricsCollector {
     query_count: Arc<RwLock<u64>>,
     mutation_count: Arc<RwLock<u64>>,
@@ -3274,7 +3274,7 @@ impl MetricsCollector {
     }
 }
 
-/// Metrics snapshot
+// Metrics snapshot
 #[derive(Clone, Debug)]
 pub struct Metrics {
     pub query_count: u64,

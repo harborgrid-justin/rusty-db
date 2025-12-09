@@ -4,17 +4,17 @@ mod performance_stats;
 mod mod_new;
 mod workload_analysis;
 
-/// Performance Optimization and Caching Module
-///
-/// This module provides enterprise-grade performance features:
-/// - Intelligent query plan caching with cost-based eviction
-/// - Adaptive query optimization with machine learning
-/// - Query result prefetching and warming
-/// - Distributed cache coordination
-/// - Cache coherency and invalidation protocols
-/// - Query workload analyzer
-/// - Automatic index recommendation system
-/// - Query performance regression detection
+// Performance Optimization and Caching Module
+//
+// This module provides enterprise-grade performance features:
+// - Intelligent query plan caching with cost-based eviction
+// - Adaptive query optimization with machine learning
+// - Query result prefetching and warming
+// - Distributed cache coordination
+// - Cache coherency and invalidation protocols
+// - Query workload analyzer
+// - Automatic index recommendation system
+// - Query performance regression detection
 
 use tokio::time::sleep;
 use std::time::Duration;
@@ -26,7 +26,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
 
-/// Query plan cache with LRU eviction
+// Query plan cache with LRU eviction
 pub struct QueryPlanCache {
     cache: Arc<RwLock<HashMap<String, CachedPlan>>>,
     access_order: Arc<RwLock<VecDeque<String>>>,
@@ -46,7 +46,7 @@ impl QueryPlanCache {
         }
     }
 
-    /// Get a cached plan
+    // Get a cached plan
     pub fn get(&self, query_hash: &str) -> Result<Option<QueryPlan>> {
         let cache = self.cache.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -74,7 +74,7 @@ impl QueryPlanCache {
         }
     }
 
-    /// Put a plan in cache
+    // Put a plan in cache
     pub fn put(&self, query_hash: String, plan: QueryPlan, cost: f64) -> Result<()> {
         let mut cache = self.cache.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -105,7 +105,7 @@ impl QueryPlanCache {
         Ok(())
     }
 
-    /// Get cache statistics
+    // Get cache statistics
     pub fn get_statistics(&self) -> Result<CacheStatistics> {
         let hits = *self.hit_count.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -130,7 +130,7 @@ impl QueryPlanCache {
         })
     }
 
-    /// Clear cache
+    // Clear cache
     pub fn clear(&self) -> Result<()> {
         let mut cache = self.cache.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -169,7 +169,7 @@ pub struct CacheStatistics {
     pub max_size: usize,
 }
 
-/// Adaptive query optimizer using statistics
+// Adaptive query optimizer using statistics
 pub struct AdaptiveQueryOptimizer {
     statistics: Arc<RwLock<HashMap<String, QueryStatistics>>>,
     learning_rate: f64,
@@ -185,7 +185,7 @@ impl AdaptiveQueryOptimizer {
         }
     }
 
-    /// Record query execution
+    // Record query execution
     pub fn record_execution(
         &self,
         query_hash: &str,
@@ -220,7 +220,7 @@ impl AdaptiveQueryOptimizer {
         Ok(())
     }
 
-    /// Get optimization suggestions
+    // Get optimization suggestions
     pub fn get_suggestions(&self, query_hash: &str) -> Result<OptimizationSuggestions> {
         let stats = self.statistics.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -267,7 +267,7 @@ impl AdaptiveQueryOptimizer {
         }
     }
 
-    /// Get all query statistics
+    // Get all query statistics
     pub fn get_all_statistics(&self) -> Result<Vec<QueryStatistics>> {
         let stats = self.statistics.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -294,7 +294,7 @@ pub struct OptimizationSuggestions {
     pub confidence: f64,
 }
 
-/// Query result prefetcher
+// Query result prefetcher
 pub struct QueryPrefetcher {
     predictions: Arc<RwLock<HashMap<String, Vec<String>>>>,
     prefetch_queue: Arc<RwLock<VecDeque<PrefetchTask>>>,
@@ -310,7 +310,7 @@ impl QueryPrefetcher {
         }
     }
 
-    /// Learn query patterns
+    // Learn query patterns
     pub fn learn_pattern(&self, query_hash: &str, next_query_hash: &str) -> Result<()> {
         let mut predictions = self.predictions.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -325,7 +325,7 @@ impl QueryPrefetcher {
         Ok(())
     }
 
-    /// Schedule prefetch task
+    // Schedule prefetch task
     pub fn schedule_prefetch(&self, current_query: &str) -> Result<usize> {
         let predictions = self.predictions.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -352,7 +352,7 @@ impl QueryPrefetcher {
         Ok(0)
     }
 
-    /// Get next prefetch task
+    // Get next prefetch task
     pub fn get_next_task(&self) -> Result<Option<PrefetchTask>> {
         let mut queue = self.prefetch_queue.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -375,7 +375,7 @@ pub enum PrefetchPriority {
     High,
 }
 
-/// Distributed cache coordinator
+// Distributed cache coordinator
 pub struct DistributedCacheCoordinator {
     local_cache: Arc<QueryPlanCache>,
     peers: Arc<RwLock<Vec<CachePeer>>>,
@@ -391,7 +391,7 @@ impl DistributedCacheCoordinator {
         }
     }
 
-    /// Add a cache peer
+    // Add a cache peer
     pub fn add_peer(&self, peer: CachePeer) -> Result<()> {
         let mut peers = self.peers.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -399,7 +399,7 @@ impl DistributedCacheCoordinator {
         Ok(())
     }
 
-    /// Invalidate cache entry across all peers
+    // Invalidate cache entry across all peers
     pub fn invalidate_global(&self, query_hash: &str) -> Result<()> {
         // Invalidate local cache
         // (In real implementation, would call actual invalidation method)
@@ -419,14 +419,14 @@ impl DistributedCacheCoordinator {
         Ok(())
     }
 
-    /// Get invalidation log
+    // Get invalidation log
     pub fn get_invalidation_log(&self) -> Result<Vec<InvalidationEvent>> {
         let log = self.invalidation_log.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(log.clone())
     }
 
-    /// Synchronize with peers
+    // Synchronize with peers
     pub fn sync_with_peers(&self) -> Result<usize> {
         let peers = self.peers.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -451,7 +451,7 @@ pub struct InvalidationEvent {
     pub propagated: bool,
 }
 
-/// Workload analyzer
+// Workload analyzer
 pub struct WorkloadAnalyzer {
     query_log: Arc<RwLock<Vec<QueryExecution>>>,
     max_log_size: usize,
@@ -467,7 +467,7 @@ impl WorkloadAnalyzer {
         }
     }
 
-    /// Log query execution
+    // Log query execution
     pub fn log_execution(&self, execution: QueryExecution) -> Result<()> {
         let mut log = self.query_log.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -487,7 +487,7 @@ impl WorkloadAnalyzer {
         Ok(())
     }
 
-    /// Analyze workload
+    // Analyze workload
     pub fn analyze(&self) -> Result<WorkloadAnalysis> {
         // Check cache
         let cache = self.analysis_cache.read()
@@ -541,7 +541,7 @@ impl WorkloadAnalyzer {
         Ok(analysis)
     }
 
-    /// Get query execution log
+    // Get query execution log
     pub fn get_log(&self) -> Result<Vec<QueryExecution>> {
         let log = self.query_log.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -580,7 +580,7 @@ impl Default for WorkloadAnalysis {
     }
 }
 
-/// Index recommendation engine
+// Index recommendation engine
 pub struct IndexRecommendationEngine {
     query_patterns: Arc<RwLock<Vec<QueryPattern>>>,
     existing_indexes: Arc<RwLock<Vec<IndexInfo>>>,
@@ -594,7 +594,7 @@ impl IndexRecommendationEngine {
         }
     }
 
-    /// Add query pattern for analysis
+    // Add query pattern for analysis
     pub fn add_pattern(&self, pattern: QueryPattern) -> Result<()> {
         let mut patterns = self.query_patterns.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -602,7 +602,7 @@ impl IndexRecommendationEngine {
         Ok(())
     }
 
-    /// Register existing index
+    // Register existing index
     pub fn register_index(&self, index: IndexInfo) -> Result<()> {
         let mut indexes = self.existing_indexes.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -610,7 +610,7 @@ impl IndexRecommendationEngine {
         Ok(())
     }
 
-    /// Generate index recommendations
+    // Generate index recommendations
     pub fn generate_recommendations(&self) -> Result<Vec<IndexRecommendation>> {
         let patterns = self.query_patterns.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -684,7 +684,7 @@ pub struct IndexRecommendation {
     pub reason: String,
 }
 
-/// Performance regression detector
+// Performance regression detector
 pub struct RegressionDetector {
     baseline_metrics: Arc<RwLock<HashMap<String, PerformanceBaseline>>>,
     alert_threshold: f64,
@@ -700,7 +700,7 @@ impl RegressionDetector {
         }
     }
 
-    /// Set baseline for a query
+    // Set baseline for a query
     pub fn set_baseline(&self, query_hash: &str, baseline: PerformanceBaseline) -> Result<()> {
         let mut baselines = self.baseline_metrics.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -708,7 +708,7 @@ impl RegressionDetector {
         Ok(())
     }
 
-    /// Check for regression
+    // Check for regression
     pub fn check_regression(
         &self,
         query_hash: &str,
@@ -748,14 +748,14 @@ impl RegressionDetector {
         Ok(None)
     }
 
-    /// Get all alerts
+    // Get all alerts
     pub fn get_alerts(&self) -> Result<Vec<PerformanceAlert>> {
         let alerts = self.alerts.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(alerts.clone())
     }
 
-    /// Clear alerts
+    // Clear alerts
     pub fn clear_alerts(&self) -> Result<()> {
         let mut alerts = self.alerts.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -790,7 +790,7 @@ pub enum AlertSeverity {
     Critical,
 }
 
-/// Query warming scheduler
+// Query warming scheduler
 pub struct QueryWarmingScheduler {
     warming_tasks: Arc<RwLock<Vec<WarmingTask>>>,
     execution_log: Arc<RwLock<Vec<WarmingExecution>>>,
@@ -804,7 +804,7 @@ impl QueryWarmingScheduler {
         }
     }
 
-    /// Schedule a warming task
+    // Schedule a warming task
     pub fn schedule_task(&self, task: WarmingTask) -> Result<()> {
         let mut tasks = self.warming_tasks.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -812,7 +812,7 @@ impl QueryWarmingScheduler {
         Ok(())
     }
 
-    /// Get tasks due for execution
+    // Get tasks due for execution
     pub fn get_due_tasks(&self) -> Result<Vec<WarmingTask>> {
         let tasks = self.warming_tasks.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -824,7 +824,7 @@ impl QueryWarmingScheduler {
             .collect())
     }
 
-    /// Record warming execution
+    // Record warming execution
     pub fn record_execution(&self, task_id: &str, success: bool, duration_ms: u64) -> Result<()> {
         let execution = WarmingExecution {
             task_id: task_id.to_string(),
@@ -840,7 +840,7 @@ impl QueryWarmingScheduler {
         Ok(())
     }
 
-    /// Get execution history
+    // Get execution history
     pub fn get_execution_history(&self) -> Result<Vec<WarmingExecution>> {
         let log = self.execution_log.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -880,7 +880,7 @@ pub struct WarmingExecution {
     pub duration_ms: u64,
 }
 
-/// Cache coherency manager
+// Cache coherency manager
 pub struct CacheCoherencyManager {
     dependencies: Arc<RwLock<HashMap<String, Vec<String>>>>,
     version_tracker: Arc<RwLock<HashMap<String, u64>>>,
@@ -894,7 +894,7 @@ impl CacheCoherencyManager {
         }
     }
 
-    /// Register cache entry dependency
+    // Register cache entry dependency
     pub fn register_dependency(&self, cache_key: &str, table: &str) -> Result<()> {
         let mut deps = self.dependencies.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -909,7 +909,7 @@ impl CacheCoherencyManager {
         Ok(())
     }
 
-    /// Invalidate cache entries dependent on table
+    // Invalidate cache entries dependent on table
     pub fn invalidate_for_table(&self, table: &str) -> Result<Vec<String>> {
         let deps = self.dependencies.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -927,7 +927,7 @@ impl CacheCoherencyManager {
         }
     }
 
-    /// Get table version
+    // Get table version
     pub fn get_table_version(&self, table: &str) -> Result<u64> {
         let versions = self.version_tracker.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1091,7 +1091,7 @@ mod tests {
     }
 }
 
-/// Query execution profiler
+// Query execution profiler
 pub struct QueryProfiler {
     profiles: Arc<RwLock<HashMap<String, QueryProfile>>>,
     sampling_rate: f64,
@@ -1105,7 +1105,7 @@ impl QueryProfiler {
         }
     }
 
-    /// Start profiling a query
+    // Start profiling a query
     pub fn start_profile(&self, query_hash: &str) -> Result<ProfileSession> {
         Ok(ProfileSession {
             query_hash: query_hash.to_string(),
@@ -1114,7 +1114,7 @@ impl QueryProfiler {
         })
     }
 
-    /// Complete profile and store
+    // Complete profile and store
     pub fn complete_profile(&self, session: ProfileSession) -> Result<()> {
         let duration = session.start_time.elapsed()
             .unwrap_or(Duration::from_secs(0));
@@ -1133,14 +1133,14 @@ impl QueryProfiler {
         Ok(())
     }
 
-    /// Get profile for query
+    // Get profile for query
     pub fn get_profile(&self, query_hash: &str) -> Result<Option<QueryProfile>> {
         let profiles = self.profiles.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(profiles.get(query_hash).cloned())
     }
 
-    /// Get all profiles
+    // Get all profiles
     pub fn get_all_profiles(&self) -> Result<Vec<QueryProfile>> {
         let profiles = self.profiles.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1180,7 +1180,7 @@ pub struct ProfileCheckpoint {
     pub elapsed_ms: u64,
 }
 
-/// Memory pool manager for query execution
+// Memory pool manager for query execution
 pub struct MemoryPoolManager {
     total_capacity: usize,
     allocated: Arc<RwLock<HashMap<String, MemoryAllocation>>>,
@@ -1203,7 +1203,7 @@ impl MemoryPoolManager {
         }
     }
 
-    /// Allocate memory for a query
+    // Allocate memory for a query
     pub fn allocate(&self, query_id: String, size: usize) -> Result<bool> {
         let mut allocated = self.allocated.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -1222,7 +1222,7 @@ impl MemoryPoolManager {
         }
     }
 
-    /// Deallocate memory
+    // Deallocate memory
     pub fn deallocate(&self, query_id: &str) -> Result<()> {
         let mut allocated = self.allocated.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -1230,7 +1230,7 @@ impl MemoryPoolManager {
         Ok(())
     }
 
-    /// Get memory statistics
+    // Get memory statistics
     pub fn get_statistics(&self) -> Result<MemoryStatistics> {
         let allocated = self.allocated.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1264,7 +1264,7 @@ pub struct MemoryStatistics {
     pub active_allocations: usize,
 }
 
-/// Query parallelization analyzer
+// Query parallelization analyzer
 pub struct ParallelizationAnalyzer {
     analysis_cache: Arc<RwLock<HashMap<String, ParallelizationPlan>>>,
 }
@@ -1276,7 +1276,7 @@ impl ParallelizationAnalyzer {
         }
     }
 
-    /// Analyze query for parallelization opportunities
+    // Analyze query for parallelization opportunities
     pub fn analyze(&self, query_hash: &str, _query: &str) -> Result<ParallelizationPlan> {
         // Simplified analysis
         let plan = ParallelizationPlan {
@@ -1294,7 +1294,7 @@ impl ParallelizationAnalyzer {
         Ok(plan)
     }
 
-    /// Get cached plan
+    // Get cached plan
     pub fn get_plan(&self, query_hash: &str) -> Result<Option<ParallelizationPlan>> {
         let cache = self.analysis_cache.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1318,7 +1318,7 @@ pub enum PartitionStrategy {
     RoundRobin,
 }
 
-/// Cost model calibrator
+// Cost model calibrator
 pub struct CostModelCalibrator {
     measurements: Arc<RwLock<Vec<CostMeasurement>>>,
     model_parameters: Arc<RwLock<CostModelParameters>>,
@@ -1332,7 +1332,7 @@ impl CostModelCalibrator {
         }
     }
 
-    /// Add cost measurement
+    // Add cost measurement
     pub fn add_measurement(&self, measurement: CostMeasurement) -> Result<()> {
         let mut measurements = self.measurements.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -1340,7 +1340,7 @@ impl CostModelCalibrator {
         Ok(())
     }
 
-    /// Calibrate model based on measurements
+    // Calibrate model based on measurements
     pub fn calibrate(&self) -> Result<CostModelParameters> {
         let measurements = self.measurements.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1382,7 +1382,7 @@ impl CostModelCalibrator {
         Ok(params)
     }
 
-    /// Get current model parameters
+    // Get current model parameters
     pub fn get_parameters(&self) -> Result<CostModelParameters> {
         let params = self.model_parameters.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1427,7 +1427,7 @@ impl Default for CostModelParameters {
     }
 }
 
-/// Query template manager
+// Query template manager
 pub struct QueryTemplateManager {
     templates: Arc<RwLock<HashMap<String, QueryTemplate>>>,
 }
@@ -1439,7 +1439,7 @@ impl QueryTemplateManager {
         }
     }
 
-    /// Extract template from query
+    // Extract template from query
     pub fn extract_template(&self, query: &str) -> String {
         // Simplified template extraction - replace literals with placeholders
         let without_strings = query.replace("'", "?");
@@ -1449,7 +1449,7 @@ impl QueryTemplateManager {
             .collect()
     }
 
-    /// Register query template
+    // Register query template
     pub fn register_template(&self, template_id: String, template: QueryTemplate) -> Result<()> {
         let mut templates = self.templates.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -1457,7 +1457,7 @@ impl QueryTemplateManager {
         Ok(())
     }
 
-    /// Get template statistics
+    // Get template statistics
     pub fn get_template_stats(&self, template_id: &str) -> Result<Option<TemplateStatistics>> {
         let templates = self.templates.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1491,7 +1491,7 @@ pub struct TemplateStatistics {
     pub last_used: SystemTime,
 }
 
-/// Execution plan optimizer
+// Execution plan optimizer
 pub struct ExecutionPlanOptimizer {
     optimization_rules: Vec<OptimizationRule>,
     applied_optimizations: Arc<RwLock<Vec<AppliedOptimization>>>,
@@ -1523,7 +1523,7 @@ impl ExecutionPlanOptimizer {
         }
     }
 
-    /// Optimize execution plan
+    // Optimize execution plan
     pub fn optimize(&self, plan: &QueryPlan) -> Result<OptimizedPlan> {
         let mut optimizations = Vec::new();
 
@@ -1548,7 +1548,7 @@ impl ExecutionPlanOptimizer {
         })
     }
 
-    /// Get optimization history
+    // Get optimization history
     pub fn get_history(&self) -> Result<Vec<AppliedOptimization>> {
         let applied = self.applied_optimizations.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1577,7 +1577,7 @@ pub struct OptimizedPlan {
     pub estimated_improvement: f64,
 }
 
-/// Resource governor
+// Resource governor
 pub struct ResourceGovernor {
     resource_groups: Arc<RwLock<HashMap<String, ResourceGroup>>>,
     usage_tracking: Arc<RwLock<HashMap<String, ResourceUsage>>>,
@@ -1591,7 +1591,7 @@ impl ResourceGovernor {
         }
     }
 
-    /// Create resource group
+    // Create resource group
     pub fn create_group(&self, name: String, limits: ResourceGroup) -> Result<()> {
         let mut groups = self.resource_groups.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -1599,7 +1599,7 @@ impl ResourceGovernor {
         Ok(())
     }
 
-    /// Check if query can execute
+    // Check if query can execute
     pub fn can_execute(&self, group_name: &str, required_resources: &ResourceRequirement) -> Result<bool> {
         let groups = self.resource_groups.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1619,7 +1619,7 @@ impl ResourceGovernor {
         Ok(false)
     }
 
-    /// Track resource usage
+    // Track resource usage
     pub fn track_usage(&self, group_name: String, usage: ResourceUsage) -> Result<()> {
         let mut tracking = self.usage_tracking.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -1648,7 +1648,7 @@ pub struct ResourceRequirement {
     pub cpu_percent: f64,
 }
 
-/// Query timeout manager
+// Query timeout manager
 pub struct TimeoutManager {
     timeouts: Arc<RwLock<HashMap<String, QueryTimeout>>>,
     default_timeout: Duration,
@@ -1662,7 +1662,7 @@ impl TimeoutManager {
         }
     }
 
-    /// Set timeout for a query
+    // Set timeout for a query
     pub fn set_timeout(&self, query_id: String, timeout: Duration) -> Result<()> {
         let mut timeouts = self.timeouts.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -1675,7 +1675,7 @@ impl TimeoutManager {
         Ok(())
     }
 
-    /// Check if query has timed out
+    // Check if query has timed out
     pub fn is_timed_out(&self, query_id: &str) -> Result<bool> {
         let timeouts = self.timeouts.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1687,7 +1687,7 @@ impl TimeoutManager {
         }
     }
 
-    /// Remove timeout
+    // Remove timeout
     pub fn remove_timeout(&self, query_id: &str) -> Result<()> {
         let mut timeouts = self.timeouts.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -1830,7 +1830,7 @@ mod extended_tests {
     }
 }
 
-/// Comprehensive benchmarking framework
+// Comprehensive benchmarking framework
 pub struct BenchmarkRunner {
     benchmarks: Arc<RwLock<HashMap<String, Benchmark>>>,
     results: Arc<RwLock<Vec<BenchmarkResult>>>,
@@ -1844,7 +1844,7 @@ impl BenchmarkRunner {
         }
     }
 
-    /// Register a benchmark
+    // Register a benchmark
     pub fn register_benchmark(&self, benchmark: Benchmark) -> Result<()> {
         let mut benchmarks = self.benchmarks.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -1852,7 +1852,7 @@ impl BenchmarkRunner {
         Ok(())
     }
 
-    /// Run a specific benchmark
+    // Run a specific benchmark
     pub fn run_benchmark(&self, benchmark_id: &str, iterations: usize) -> Result<BenchmarkResult> {
         let benchmarks = self.benchmarks.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1900,7 +1900,7 @@ impl BenchmarkRunner {
         Ok(result)
     }
 
-    /// Run all benchmarks
+    // Run all benchmarks
     pub fn run_all_benchmarks(&self, iterations: usize) -> Result<Vec<BenchmarkResult>> {
         let benchmarks = self.benchmarks.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -1915,14 +1915,14 @@ impl BenchmarkRunner {
         Ok(all_results)
     }
 
-    /// Get benchmark results
+    // Get benchmark results
     pub fn get_results(&self) -> Result<Vec<BenchmarkResult>> {
         let results = self.results.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(results.clone())
     }
 
-    /// Compare two benchmark runs
+    // Compare two benchmark runs
     pub fn compare_results(&self, result1: &BenchmarkResult, result2: &BenchmarkResult) -> BenchmarkComparison {
         let speedup = result1.avg_time_us as f64 / result2.avg_time_us as f64;
         let improvement_percent = ((result1.avg_time_us as f64 - result2.avg_time_us as f64) / result1.avg_time_us as f64) * 100.0;
@@ -1966,7 +1966,7 @@ pub struct BenchmarkComparison {
     pub is_improvement: bool,
 }
 
-/// Statistics collector for query performance
+// Statistics collector for query performance
 pub struct PerformanceStatsCollector {
     query_stats: Arc<RwLock<HashMap<String, QueryPerformanceStats>>>,
     global_stats: Arc<RwLock<GlobalPerformanceStats>>,
@@ -1980,7 +1980,7 @@ impl PerformanceStatsCollector {
         }
     }
 
-    /// Record query execution
+    // Record query execution
     pub fn record_query(&self, query_hash: &str, execution_time_ms: u64, rows: usize) -> Result<()> {
         // Update query-specific stats
         let mut query_stats = self.query_stats.write()
@@ -2014,21 +2014,21 @@ impl PerformanceStatsCollector {
         Ok(())
     }
 
-    /// Get stats for a specific query
+    // Get stats for a specific query
     pub fn get_query_stats(&self, query_hash: &str) -> Result<Option<QueryPerformanceStats>> {
         let query_stats = self.query_stats.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(query_stats.get(query_hash).cloned())
     }
 
-    /// Get global performance statistics
+    // Get global performance statistics
     pub fn get_global_stats(&self) -> Result<GlobalPerformanceStats> {
         let global_stats = self.global_stats.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(global_stats.clone())
     }
 
-    /// Get top N slowest queries
+    // Get top N slowest queries
     pub fn get_slowest_queries(&self, n: usize) -> Result<Vec<QueryPerformanceStats>> {
         let query_stats = self.query_stats.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2072,7 +2072,7 @@ impl Default for GlobalPerformanceStats {
     }
 }
 
-/// Adaptive caching strategy manager
+// Adaptive caching strategy manager
 pub struct AdaptiveCachingStrategy {
     strategies: Vec<CachingStrategy>,
     current_strategy: Arc<RwLock<usize>>,
@@ -2095,14 +2095,14 @@ impl AdaptiveCachingStrategy {
         }
     }
 
-    /// Get current strategy
+    // Get current strategy
     pub fn get_current_strategy(&self) -> Result<CachingStrategy> {
         let current = self.current_strategy.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(self.strategies[*current].clone())
     }
 
-    /// Record strategy performance
+    // Record strategy performance
     pub fn record_performance(&self, hit_rate: f64) -> Result<()> {
         let current = *self.current_strategy.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2120,7 +2120,7 @@ impl AdaptiveCachingStrategy {
         Ok(())
     }
 
-    /// Adapt strategy based on performance
+    // Adapt strategy based on performance
     pub fn adapt(&self) -> Result<CachingStrategy> {
         let metrics = self.performance_metrics.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2172,7 +2172,7 @@ struct StrategyPerformance {
     timestamp: SystemTime,
 }
 
-/// Query hint optimizer
+// Query hint optimizer
 pub struct QueryHintOptimizer {
     hints: Arc<RwLock<HashMap<String, Vec<QueryHint>>>>,
     hint_effectiveness: Arc<RwLock<HashMap<String, HintEffectiveness>>>,
@@ -2186,7 +2186,7 @@ impl QueryHintOptimizer {
         }
     }
 
-    /// Add hint for a query
+    // Add hint for a query
     pub fn add_hint(&self, query_hash: String, hint: QueryHint) -> Result<()> {
         let mut hints = self.hints.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -2198,7 +2198,7 @@ impl QueryHintOptimizer {
         Ok(())
     }
 
-    /// Get hints for a query
+    // Get hints for a query
     pub fn get_hints(&self, query_hash: &str) -> Result<Vec<QueryHint>> {
         let hints = self.hints.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2206,7 +2206,7 @@ impl QueryHintOptimizer {
         Ok(hints.get(query_hash).cloned().unwrap_or_default())
     }
 
-    /// Record hint effectiveness
+    // Record hint effectiveness
     pub fn record_effectiveness(&self, hint_id: String, improvement: f64) -> Result<()> {
         let mut effectiveness = self.hint_effectiveness.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -2219,7 +2219,7 @@ impl QueryHintOptimizer {
         Ok(())
     }
 
-    /// Get most effective hints
+    // Get most effective hints
     pub fn get_effective_hints(&self, threshold: f64) -> Result<Vec<String>> {
         let effectiveness = self.hint_effectiveness.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2253,7 +2253,7 @@ struct HintEffectiveness {
     sample_count: usize,
 }
 
-/// Continuous query monitor
+// Continuous query monitor
 pub struct ContinuousQueryMonitor {
     monitored_queries: Arc<RwLock<HashMap<String, MonitoredQuery>>>,
     alert_thresholds: Arc<RwLock<AlertThresholds>>,
@@ -2269,7 +2269,7 @@ impl ContinuousQueryMonitor {
         }
     }
 
-    /// Monitor a query
+    // Monitor a query
     pub fn monitor_query(&self, query_hash: String, execution_time_ms: u64) -> Result<()> {
         let mut queries = self.monitored_queries.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -2333,14 +2333,14 @@ impl ContinuousQueryMonitor {
         Ok(())
     }
 
-    /// Get alerts
+    // Get alerts
     pub fn get_alerts(&self) -> Result<Vec<QueryAlert>> {
         let alerts = self.alerts.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(alerts.clone())
     }
 
-    /// Get monitored query info
+    // Get monitored query info
     pub fn get_monitored_query(&self, query_hash: &str) -> Result<Option<MonitoredQuery>> {
         let queries = self.monitored_queries.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2475,7 +2475,7 @@ mod more_tests {
     }
 }
 
-/// Performance report generator
+// Performance report generator
 pub struct PerformanceReportGenerator {
     stats_collector: Arc<PerformanceStatsCollector>,
     workload_analyzer: Arc<WorkloadAnalyzer>,
@@ -2492,7 +2492,7 @@ impl PerformanceReportGenerator {
         }
     }
 
-    /// Generate comprehensive performance report
+    // Generate comprehensive performance report
     pub fn generate_report(&self) -> Result<PerformanceReport> {
         let global_stats = self.stats_collector.get_global_stats()?;
         let workload_analysis = self.workload_analyzer.analyze()?;
@@ -2537,7 +2537,7 @@ impl PerformanceReportGenerator {
         recommendations
     }
 
-    /// Generate trend analysis
+    // Generate trend analysis
     pub fn generate_trend_analysis(&self, period: Duration) -> Result<TrendAnalysis> {
         let log = self.workload_analyzer.get_log()?;
 
@@ -2607,7 +2607,7 @@ pub enum TrendDirection {
     Degrading,
 }
 
-/// Query pattern recognizer
+// Query pattern recognizer
 pub struct QueryPatternRecognizer {
     patterns: Arc<RwLock<HashMap<String, RecognizedPattern>>>,
 }
@@ -2619,7 +2619,7 @@ impl QueryPatternRecognizer {
         }
     }
 
-    /// Recognize pattern in query
+    // Recognize pattern in query
     pub fn recognize_pattern(&self, query: &str) -> Result<RecognizedPattern> {
         let pattern = if query.contains("JOIN") && query.contains("WHERE") {
             PatternType::FilteredJoin
@@ -2665,7 +2665,7 @@ impl QueryPatternRecognizer {
         }
     }
 
-    /// Store recognized pattern
+    // Store recognized pattern
     pub fn store_pattern(&self, query_hash: String, pattern: RecognizedPattern) -> Result<()> {
         let mut patterns = self.patterns.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -2673,7 +2673,7 @@ impl QueryPatternRecognizer {
         Ok(())
     }
 
-    /// Get stored pattern
+    // Get stored pattern
     pub fn get_pattern(&self, query_hash: &str) -> Result<Option<RecognizedPattern>> {
         let patterns = self.patterns.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2697,7 +2697,7 @@ pub enum PatternType {
     InListFilter,
 }
 
-/// Cache warmup scheduler
+// Cache warmup scheduler
 pub struct CacheWarmupScheduler {
     warmup_jobs: Arc<RwLock<Vec<WarmupJob>>>,
     execution_log: Arc<RwLock<Vec<WarmupExecution>>>,
@@ -2711,7 +2711,7 @@ impl CacheWarmupScheduler {
         }
     }
 
-    /// Schedule cache warmup job
+    // Schedule cache warmup job
     pub fn schedule_warmup(&self, job: WarmupJob) -> Result<()> {
         let mut jobs = self.warmup_jobs.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -2719,7 +2719,7 @@ impl CacheWarmupScheduler {
         Ok(())
     }
 
-    /// Execute pending warmup jobs
+    // Execute pending warmup jobs
     pub fn execute_warmups(&self) -> Result<Vec<WarmupExecution>> {
         let jobs = self.warmup_jobs.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2750,7 +2750,7 @@ impl CacheWarmupScheduler {
         Ok(executions)
     }
 
-    /// Get warmup execution history
+    // Get warmup execution history
     pub fn get_execution_history(&self) -> Result<Vec<WarmupExecution>> {
         let log = self.execution_log.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2783,7 +2783,7 @@ pub struct WarmupExecution {
     pub queries_warmed: usize,
 }
 
-/// Query complexity analyzer
+// Query complexity analyzer
 pub struct QueryComplexityAnalyzer {
     complexity_cache: Arc<RwLock<HashMap<String, ComplexityScore>>>,
 }
@@ -2795,7 +2795,7 @@ impl QueryComplexityAnalyzer {
         }
     }
 
-    /// Analyze query complexity
+    // Analyze query complexity
     pub fn analyze_complexity(&self, query: &str) -> Result<ComplexityScore> {
         let mut score = 0;
         let mut factors = Vec::new();
@@ -2846,7 +2846,7 @@ impl QueryComplexityAnalyzer {
         })
     }
 
-    /// Cache complexity score
+    // Cache complexity score
     pub fn cache_complexity(&self, query_hash: String, complexity: ComplexityScore) -> Result<()> {
         let mut cache = self.complexity_cache.write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
@@ -2854,7 +2854,7 @@ impl QueryComplexityAnalyzer {
         Ok(())
     }
 
-    /// Get cached complexity
+    // Get cached complexity
     pub fn get_cached_complexity(&self, query_hash: &str) -> Result<Option<ComplexityScore>> {
         let cache = self.complexity_cache.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
@@ -2886,9 +2886,9 @@ pub enum ComplexityFactor {
     HasWindowFunction,
 }
 
-/// Performance utility functions for common operations
+// Performance utility functions for common operations
 
-/// Calculate the expected number of disk I/O operations for a given query
+// Calculate the expected number of disk I/O operations for a given query
 pub fn estimate_disk_io(
     table_size_pages: u64,
     indexlevels: u32,
@@ -2903,7 +2903,7 @@ pub fn estimate_disk_io(
     std::cmp::min(index_cost, table_scan_cost)
 }
 
-/// Calculate query cost based on multiple factors
+// Calculate query cost based on multiple factors
 pub fn calculate_query_cost(
     rows: u64,
     joins: usize,
@@ -2930,7 +2930,7 @@ pub fn calculate_query_cost(
     cost
 }
 
-/// Estimate the cardinality of a join operation
+// Estimate the cardinality of a join operation
 pub fn estimate_join_cardinality(
     left_cardinality: u64,
     right_cardinality: u64,
@@ -2940,7 +2940,7 @@ pub fn estimate_join_cardinality(
         .max(1) // At least 1 row
 }
 
-/// Calculate buffer pool hit ratio
+// Calculate buffer pool hit ratio
 pub fn calculate_hit_ratio(hits: u64, total_accesses: u64) -> f64 {
     if total_accesses == 0 {
         0.0
@@ -2949,7 +2949,7 @@ pub fn calculate_hit_ratio(hits: u64, total_accesses: u64) -> f64 {
     }
 }
 
-/// Estimate memory requirements for a hash join
+// Estimate memory requirements for a hash join
 pub fn estimate_hash_join_memory(
     build_side_rows: u64,
     avg_row_size_bytes: usize,
@@ -2959,7 +2959,7 @@ pub fn estimate_hash_join_memory(
     (base_size as f64 * hash_overhead_factor) as usize
 }
 
-/// Calculate the optimal number of worker threads for parallel query execution
+// Calculate the optimal number of worker threads for parallel query execution
 pub fn calculate_optimal_parallelism(
     total_rows: u64,
     min_rows_per_thread: u64,

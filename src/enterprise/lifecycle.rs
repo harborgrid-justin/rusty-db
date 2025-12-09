@@ -50,121 +50,121 @@ use async_trait::async_trait;
 
 use crate::{Result, DbError};
 
-/// Component lifecycle state
+// Component lifecycle state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ComponentState {
-    /// Component is not initialized
+    // Component is not initialized
     Uninitialized,
-    /// Component is starting
+    // Component is starting
     Starting,
-    /// Component is running
+    // Component is running
     Running,
-    /// Component is paused
+    // Component is paused
     Paused,
-    /// Component is stopping
+    // Component is stopping
     Stopping,
-    /// Component is stopped
+    // Component is stopped
     Stopped,
-    /// Component is in error state
+    // Component is in error state
     Error,
 }
 
-/// Health status for components
+// Health status for components
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HealthStatus {
-    /// Component is healthy
+    // Component is healthy
     Healthy,
-    /// Component is degraded but operational
+    // Component is degraded but operational
     Degraded,
-    /// Component is unhealthy
+    // Component is unhealthy
     Unhealthy,
-    /// Health status unknown
+    // Health status unknown
     Unknown,
 }
 
-/// Health check result
+// Health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheck {
-    /// Component name
+    // Component name
     pub component: String,
-    /// Health status
+    // Health status
     pub status: HealthStatus,
-    /// Status message
+    // Status message
     pub message: String,
-    /// Additional details
+    // Additional details
     pub details: HashMap<String, String>,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
-    /// Response time in milliseconds
+    // Response time in milliseconds
     pub response_time_ms: u64,
 }
 
-/// Component metadata
+// Component metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentMetadata {
-    /// Component name
+    // Component name
     pub name: String,
-    /// Component version
+    // Component version
     pub version: String,
-    /// Component description
+    // Component description
     pub description: String,
-    /// Dependencies (other component names)
+    // Dependencies (other component names)
     pub dependencies: Vec<String>,
-    /// Startup priority (lower = earlier)
+    // Startup priority (lower = earlier)
     pub priority: i32,
-    /// Required for system operation
+    // Required for system operation
     pub required: bool,
-    /// Supports hot reload
+    // Supports hot reload
     pub hot_reloadable: bool,
 }
 
-/// Component lifecycle trait
+// Component lifecycle trait
 #[async_trait]
 pub trait Component: Send + Sync {
-    /// Get component metadata
+    // Get component metadata
     fn metadata(&self) -> ComponentMetadata;
 
-    /// Initialize the component
+    // Initialize the component
     async fn initialize(&self) -> Result<()>;
 
-    /// Start the component
+    // Start the component
     async fn start(&self) -> Result<()>;
 
-    /// Stop the component
+    // Stop the component
     async fn stop(&self) -> Result<()>;
 
-    /// Perform health check
+    // Perform health check
     async fn health_check(&self) -> HealthCheck;
 
-    /// Reload component configuration
+    // Reload component configuration
     async fn reload(&self) -> Result<()> {
         Err(DbError::Internal("Hot reload not supported".to_string()))
     }
 
-    /// Pause component (optional)
+    // Pause component (optional)
     async fn pause(&self) -> Result<()> {
         Err(DbError::Internal("Pause not supported".to_string()))
     }
 
-    /// Resume component (optional)
+    // Resume component (optional)
     async fn resume(&self) -> Result<()> {
         Err(DbError::Internal("Resume not supported".to_string()))
     }
 }
 
-/// Registered component wrapper
+// Registered component wrapper
 struct RegisteredComponent {
-    /// The component implementation
+    // The component implementation
     component: Arc<dyn Component>,
-    /// Current state
+    // Current state
     state: ComponentState,
-    /// Last health check
+    // Last health check
     last_health: Option<HealthCheck>,
-    /// Registration time
+    // Registration time
     registered_at: SystemTime,
 }
 
-/// Startup phase
+// Startup phase
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum StartupPhase {
     Initialization,
@@ -174,7 +174,7 @@ enum StartupPhase {
     Complete,
 }
 
-/// Shutdown phase
+// Shutdown phase
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ShutdownPhase {
     PreShutdown,
@@ -184,52 +184,52 @@ enum ShutdownPhase {
     Complete,
 }
 
-/// System state snapshot
+// System state snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemSnapshot {
-    /// Snapshot ID
+    // Snapshot ID
     pub id: String,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
-    /// System version
+    // System version
     pub version: String,
-    /// Component states
+    // Component states
     pub component_states: HashMap<String, ComponentState>,
-    /// Health checks
+    // Health checks
     pub health_checks: Vec<HealthCheck>,
-    /// Metadata
+    // Metadata
     pub metadata: HashMap<String, String>,
 }
 
-/// Lifecycle event
+// Lifecycle event
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LifecycleEvent {
-    /// Component registered
+    // Component registered
     ComponentRegistered { name: String, metadata: ComponentMetadata },
-    /// Component state changed
+    // Component state changed
     StateChanged { component: String, old_state: ComponentState, new_state: ComponentState },
-    /// Startup initiated
+    // Startup initiated
     StartupInitiated,
-    /// Startup completed
+    // Startup completed
     StartupCompleted { duration_ms: u64 },
-    /// Shutdown initiated
+    // Shutdown initiated
     ShutdownInitiated,
-    /// Shutdown completed
+    // Shutdown completed
     ShutdownCompleted { duration_ms: u64 },
-    /// Health check performed
+    // Health check performed
     HealthCheckPerformed { component: String, status: HealthStatus },
-    /// Hot reload performed
+    // Hot reload performed
     HotReloadPerformed { component: String },
 }
 
-/// Lifecycle event listener
+// Lifecycle event listener
 pub type EventListener = Arc<dyn Fn(LifecycleEvent) + Send + Sync>;
 
-/// Connection manager for graceful draining
+// Connection manager for graceful draining
 struct ConnectionManager {
-    /// Active connection count
+    // Active connection count
     active_connections: Arc<Mutex<u64>>,
-    /// Semaphore for new connections
+    // Semaphore for new connections
     accept_connections: Arc<Semaphore>,
 }
 
@@ -290,24 +290,24 @@ impl ConnectionManager {
     }
 }
 
-/// Lifecycle manager implementation
+// Lifecycle manager implementation
 pub struct LifecycleManager {
-    /// Registered components
+    // Registered components
     components: Arc<RwLock<HashMap<String, RegisteredComponent>>>,
-    /// Event listeners
+    // Event listeners
     listeners: Arc<RwLock<Vec<EventListener>>>,
-    /// Connection manager
+    // Connection manager
     connection_mgr: Arc<ConnectionManager>,
-    /// System snapshots
+    // System snapshots
     snapshots: Arc<RwLock<Vec<SystemSnapshot>>>,
-    /// Current system state
+    // Current system state
     system_state: Arc<RwLock<ComponentState>>,
-    /// Shutdown signal
+    // Shutdown signal
     shutdown_signal: Arc<tokio::sync::Notify>,
 }
 
 impl LifecycleManager {
-    /// Create a new lifecycle manager
+    // Create a new lifecycle manager
     pub fn new() -> Self {
         Self {
             components: Arc::new(RwLock::new(HashMap::new())),
@@ -319,7 +319,7 @@ impl LifecycleManager {
         }
     }
 
-    /// Register a component
+    // Register a component
     pub async fn register_component(&self, component: Arc<dyn Component>) -> Result<()> {
         let metadata = component.metadata();
         let name = metadata.name.clone();
@@ -342,7 +342,7 @@ impl LifecycleManager {
         Ok(())
     }
 
-    /// Start all components in dependency order
+    // Start all components in dependency order
     pub async fn startup(&self) -> Result<()> {
         let start_time = SystemTime::now();
 
@@ -398,7 +398,7 @@ impl LifecycleManager {
         Ok(())
     }
 
-    /// Resolve component dependencies and return startup order
+    // Resolve component dependencies and return startup order
     async fn resolve_dependencies(&self) -> Result<Vec<String>> {
         let components = self.components.read().await;
 
@@ -458,7 +458,7 @@ impl LifecycleManager {
         Ok(order)
     }
 
-    /// Initialize a component
+    // Initialize a component
     async fn initialize_component(&self, name: &str) -> Result<()> {
         let component = {
             let components = self.components.read().await;
@@ -474,7 +474,7 @@ impl LifecycleManager {
         Ok(())
     }
 
-    /// Start a component
+    // Start a component
     async fn start_component(&self, name: &str) -> Result<()> {
         let component = {
             let components = self.components.read().await;
@@ -492,7 +492,7 @@ impl LifecycleManager {
         Ok(())
     }
 
-    /// Stop a component
+    // Stop a component
     async fn stop_component(&self, name: &str) -> Result<()> {
         let component = {
             let components = self.components.read().await;
@@ -510,7 +510,7 @@ impl LifecycleManager {
         Ok(())
     }
 
-    /// Update component state
+    // Update component state
     async fn update_component_state(&self, name: &str, old_state: ComponentState, new_state: ComponentState) {
         let mut components = self.components.write().await;
         if let Some(reg) = components.get_mut(name) {
@@ -524,7 +524,7 @@ impl LifecycleManager {
         }
     }
 
-    /// Perform health check on all components
+    // Perform health check on all components
     pub async fn health_check_all(&self) -> Vec<HealthCheck> {
         let components = self.components.read().await;
         let mut checks = Vec::new();
@@ -556,7 +556,7 @@ impl LifecycleManager {
         checks
     }
 
-    /// Graceful shutdown
+    // Graceful shutdown
     pub async fn shutdown(&self) -> Result<()> {
         let start_time = SystemTime::now();
 
@@ -605,7 +605,7 @@ impl LifecycleManager {
         Ok(())
     }
 
-    /// Hot reload a component
+    // Hot reload a component
     pub async fn reload_component(&self, name: &str) -> Result<()> {
         let component = {
             let components = self.components.read().await;
@@ -631,7 +631,7 @@ impl LifecycleManager {
         Ok(())
     }
 
-    /// Create a system snapshot
+    // Create a system snapshot
     pub async fn create_snapshot(&self, version: impl Into<String>) -> Result<String> {
         let components = self.components.read().await;
 
@@ -662,19 +662,19 @@ impl LifecycleManager {
         Ok(id)
     }
 
-    /// Get system snapshots
+    // Get system snapshots
     pub async fn get_snapshots(&self) -> Vec<SystemSnapshot> {
         let snapshots = self.snapshots.read().await;
         snapshots.clone()
     }
 
-    /// Add an event listener
+    // Add an event listener
     pub async fn add_listener(&self, listener: EventListener) {
         let mut listeners = self.listeners.write().await;
         listeners.push(listener);
     }
 
-    /// Emit a lifecycle event
+    // Emit a lifecycle event
     async fn emit_event(&self, event: LifecycleEvent) {
         let listeners = self.listeners.read().await;
         for listener in listeners.iter() {
@@ -682,13 +682,13 @@ impl LifecycleManager {
         }
     }
 
-    /// Get current system state
+    // Get current system state
     pub async fn get_system_state(&self) -> ComponentState {
         let state = self.system_state.read().await;
         *state
     }
 
-    /// Wait for shutdown signal
+    // Wait for shutdown signal
     pub async fn wait_for_shutdown(&self) {
         self.shutdown_signal.notified().await;
     }

@@ -32,25 +32,25 @@ impl ApiGateway {
         }
     }
 
-    /// Register a new route
+    // Register a new route
     pub fn register_route(&self, route: Route) {
         let mut routes = self.routes.write();
         routes.insert(route.id.clone(), route);
     }
 
-    /// Remove a route
+    // Remove a route
     pub fn remove_route(&self, route_id: &str) -> bool {
         let mut routes = self.routes.write();
         routes.remove(route_id).is_some()
     }
 
-    /// Get all routes
+    // Get all routes
     pub fn get_routes(&self) -> Vec<Route> {
         let routes = self.routes.read();
         routes.values().cloned().collect()
     }
 
-    /// Find matching route for request
+    // Find matching route for request
     pub fn find_route(&self, request: &ApiRequest) -> Option<Route> {
         let routes = self.routes.read();
 
@@ -63,7 +63,7 @@ impl ApiGateway {
         None
     }
 
-    /// Check if request matches route
+    // Check if request matches route
     fn matches_route(&self, route: &Route, request: &ApiRequest) -> bool {
         // Check method
         if !route.methods.contains(&request.method) {
@@ -74,7 +74,7 @@ impl ApiGateway {
         self.matches_path_pattern(&route.path_pattern, &request.path)
     }
 
-    /// Match path against pattern
+    // Match path against pattern
     fn matches_path_pattern(&self, pattern: &str, path: &str) -> bool {
         if pattern == path {
             return true;
@@ -91,7 +91,7 @@ impl ApiGateway {
         false
     }
 
-    /// Process incoming request
+    // Process incoming request
     pub async fn process_request(&self, request: ApiRequest) -> Result<ApiResponse, DbError> {
         let start = Instant::now();
 
@@ -240,7 +240,7 @@ impl ApiGateway {
         Ok(transformed_response)
     }
 
-    /// Transform request before forwarding
+    // Transform request before forwarding
     fn transform_request(&self, request: &ApiRequest, route: &Route) -> ApiRequest {
         let mut transformed = request.clone();
 
@@ -281,7 +281,7 @@ impl ApiGateway {
         transformed
     }
 
-    /// Transform response before returning
+    // Transform response before returning
     fn transform_response(&self, mut response: ApiResponse, route: &Route) -> ApiResponse {
         if let Some(transform) = &route.response_transform {
             // Add headers
@@ -298,7 +298,7 @@ impl ApiGateway {
         response
     }
 
-    /// Forward request to backend service
+    // Forward request to backend service
     async fn forward_to_backend(&self, _request: &ApiRequest, route: &Route) -> Result<ApiResponse, DbError> {
         // Select endpoint using load balancing
         let endpoint = self.select_endpoint(&route.backend)?;
@@ -313,7 +313,7 @@ impl ApiGateway {
         })
     }
 
-    /// Select backend endpoint using load balancing strategy
+    // Select backend endpoint using load balancing strategy
     fn select_endpoint(&self, backend: &BackendService) -> Result<ServiceEndpoint, DbError> {
         let healthy_endpoints: Vec<_> = backend.endpoints.iter()
             .filter(|e| *e.healthy.read())
@@ -338,18 +338,18 @@ impl ApiGateway {
         }
     }
 
-    /// Get gateway metrics
+    // Get gateway metrics
     pub fn get_metrics(&self) -> GatewayMetrics {
         self.metrics.read().clone()
     }
 
-    /// Register backend service
+    // Register backend service
     pub fn register_service(&self, service: BackendService) {
         let mut registry = self.service_registry.write();
         registry.services.insert(service.name.clone(), service);
     }
 
-    /// Start health checking for all services
+    // Start health checking for all services
     pub async fn start_health_checks(&self) {
         // TODO: Implement periodic health checks
     }

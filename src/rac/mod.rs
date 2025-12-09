@@ -140,40 +140,40 @@ pub use parallel_query::{
 // Cluster Configuration
 // ============================================================================
 
-/// RAC cluster configuration
+// RAC cluster configuration
 #[derive(Debug, Clone)]
 pub struct RacConfig {
-    /// Cluster name
+    // Cluster name
     pub cluster_name: String,
 
-    /// Cache Fusion configuration
+    // Cache Fusion configuration
     pub cache_fusion: GcsConfig,
 
-    /// Global Resource Directory configuration
+    // Global Resource Directory configuration
     pub grd: GrdConfig,
 
-    /// Interconnect configuration
+    // Interconnect configuration
     pub interconnect: InterconnectConfig,
 
-    /// Recovery configuration
+    // Recovery configuration
     pub recovery: RecoveryConfig,
 
-    /// Parallel query configuration
+    // Parallel query configuration
     pub parallel_query: ParallelQueryConfig,
 
-    /// Enable automatic load balancing
+    // Enable automatic load balancing
     pub auto_load_balance: bool,
 
-    /// Load balance interval
+    // Load balance interval
     pub load_balance_interval: Duration,
 
-    /// Enable service placement optimization
+    // Enable service placement optimization
     pub service_placement: bool,
 
-    /// Enable connection load balancing
+    // Enable connection load balancing
     pub connection_load_balancing: bool,
 
-    /// Quorum requirement (0.0-1.0)
+    // Quorum requirement (0.0-1.0)
     pub quorum_percentage: f64,
 }
 
@@ -199,25 +199,25 @@ impl Default for RacConfig {
 // Cluster Node
 // ============================================================================
 
-/// Cluster node information
+// Cluster node information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClusterNode {
-    /// Node identifier
+    // Node identifier
     pub node_id: NodeId,
 
-    /// Network address
+    // Network address
     pub address: String,
 
-    /// Node role
+    // Node role
     pub role: NodeRole,
 
-    /// Node capacity
+    // Node capacity
     pub capacity: NodeCapacity,
 
-    /// Active services
+    // Active services
     pub services: Vec<String>,
 
-    /// Node priority (for failover)
+    // Node priority (for failover)
     pub priority: u8,
 }
 
@@ -234,38 +234,38 @@ impl Default for ClusterNode {
     }
 }
 
-/// Node role in cluster
+// Node role in cluster
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NodeRole {
-    /// Standard database instance
+    // Standard database instance
     Standard,
 
-    /// Coordinator node (for administrative tasks)
+    // Coordinator node (for administrative tasks)
     Coordinator,
 
-    /// Witness node (for quorum only)
+    // Witness node (for quorum only)
     Witness,
 
-    /// Read-only instance
+    // Read-only instance
     ReadOnly,
 }
 
-/// Node capacity information
+// Node capacity information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeCapacity {
-    /// CPU cores
+    // CPU cores
     pub cpu_cores: usize,
 
-    /// Total memory (GB)
+    // Total memory (GB)
     pub total_memory_gb: usize,
 
-    /// Available memory (GB)
+    // Available memory (GB)
     pub available_memory_gb: usize,
 
-    /// Storage capacity (GB)
+    // Storage capacity (GB)
     pub storage_capacity_gb: usize,
 
-    /// Network bandwidth (Mbps)
+    // Network bandwidth (Mbps)
     pub network_bandwidth_mbps: usize,
 }
 
@@ -285,106 +285,106 @@ impl Default for NodeCapacity {
 // RAC Cluster Manager
 // ============================================================================
 
-/// RAC cluster manager - main entry point for RAC functionality
+// RAC cluster manager - main entry point for RAC functionality
 pub struct RacCluster {
-    /// Cluster name
+    // Cluster name
     cluster_name: String,
 
-    /// Local node identifier
+    // Local node identifier
     node_id: NodeId,
 
-    /// Cluster nodes
+    // Cluster nodes
     nodes: Arc<RwLock<HashMap<NodeId, ClusterNode>>>,
 
-    /// Cache Fusion coordinator
+    // Cache Fusion coordinator
     cache_fusion: Arc<CacheFusionCoordinator>,
 
-    /// Global Resource Directory
+    // Global Resource Directory
     grd: Arc<GlobalResourceDirectory>,
 
-    /// Cluster interconnect
+    // Cluster interconnect
     interconnect: Arc<ClusterInterconnect>,
 
-    /// Instance recovery manager
+    // Instance recovery manager
     recovery: Arc<InstanceRecoveryManager>,
 
-    /// Parallel query coordinator
+    // Parallel query coordinator
     parallel_query: Arc<ParallelQueryCoordinator>,
 
-    /// Configuration
+    // Configuration
     config: RacConfig,
 
-    /// Cluster state
+    // Cluster state
     state: Arc<RwLock<ClusterState>>,
 
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<ClusterStatistics>>,
 }
 
-/// Cluster state
+// Cluster state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ClusterState {
-    /// Cluster is initializing
+    // Cluster is initializing
     Initializing,
 
-    /// Cluster is forming (nodes joining)
+    // Cluster is forming (nodes joining)
     Forming,
 
-    /// Cluster is operational
+    // Cluster is operational
     Operational,
 
-    /// Cluster is degraded (some nodes down)
+    // Cluster is degraded (some nodes down)
     Degraded,
 
-    /// Cluster is in recovery
+    // Cluster is in recovery
     Recovering,
 
-    /// Cluster is shutting down
+    // Cluster is shutting down
     ShuttingDown,
 
-    /// Cluster is stopped
+    // Cluster is stopped
     Stopped,
 }
 
-/// Cluster-wide statistics
+// Cluster-wide statistics
 #[derive(Debug, Default, Clone)]
 pub struct ClusterStatistics {
-    /// Total nodes
+    // Total nodes
     pub total_nodes: usize,
 
-    /// Active nodes
+    // Active nodes
     pub active_nodes: usize,
 
-    /// Failed nodes
+    // Failed nodes
     pub failed_nodes: usize,
 
-    /// Cache Fusion statistics
+    // Cache Fusion statistics
     pub cache_fusion: GcsStatistics,
 
-    /// GRD statistics
+    // GRD statistics
     pub grd: GrdStatistics,
 
-    /// Interconnect statistics
+    // Interconnect statistics
     pub interconnect: InterconnectStatistics,
 
-    /// Recovery statistics
+    // Recovery statistics
     pub recovery: RecoveryStatistics,
 
-    /// Parallel query statistics
+    // Parallel query statistics
     pub parallel_query: ParallelQueryStatistics,
 
-    /// Cluster uptime (seconds)
+    // Cluster uptime (seconds)
     pub uptime_seconds: u64,
 
-    /// Total transactions processed
+    // Total transactions processed
     pub total_transactions: u64,
 
-    /// Total queries executed
+    // Total queries executed
     pub total_queries: u64,
 }
 
 impl RacCluster {
-    /// Create a new RAC cluster
+    // Create a new RAC cluster
     pub async fn new(cluster_name: &str, config: RacConfig) -> Result<Self, DbError> {
         let node_id = Self::generate_node_id();
 
@@ -450,7 +450,7 @@ impl RacCluster {
         })
     }
 
-    /// Start the RAC cluster
+    // Start the RAC cluster
     pub async fn start(&self) -> Result<(), DbError> {
         *self.state.write() = ClusterState::Forming;
 
@@ -470,7 +470,7 @@ impl RacCluster {
         Ok(())
     }
 
-    /// Stop the RAC cluster
+    // Stop the RAC cluster
     pub async fn stop(&self) -> Result<(), DbError> {
         *self.state.write() = ClusterState::ShuttingDown;
 
@@ -482,7 +482,7 @@ impl RacCluster {
         Ok(())
     }
 
-    /// Add a node to the cluster
+    // Add a node to the cluster
     pub async fn add_node(&self, node: ClusterNode) -> Result<(), DbError> {
         // Add to interconnect
         self.interconnect.add_node(node.node_id.clone(), node.address.clone()).await?;
@@ -501,7 +501,7 @@ impl RacCluster {
         Ok(())
     }
 
-    /// Remove a node from the cluster
+    // Remove a node from the cluster
     pub async fn remove_node(&self, node_id: &NodeId) -> Result<(), DbError> {
         // Remove from interconnect
         self.interconnect.remove_node(node_id).await?;
@@ -520,7 +520,7 @@ impl RacCluster {
         Ok(())
     }
 
-    /// Execute a parallel query across the cluster
+    // Execute a parallel query across the cluster
     pub async fn execute_parallel_query(
         &self,
         sql: &str,
@@ -544,22 +544,22 @@ impl RacCluster {
         self.parallel_query.execute_query(plan).await
     }
 
-    /// Get cluster topology
+    // Get cluster topology
     pub fn get_topology(&self) -> ClusterTopology {
         self.grd.get_topology()
     }
 
-    /// Get cluster view
+    // Get cluster view
     pub fn get_cluster_view(&self) -> ClusterView {
         self.interconnect.get_cluster_view()
     }
 
-    /// Get cluster state
+    // Get cluster state
     pub fn get_state(&self) -> ClusterState {
         *self.state.read()
     }
 
-    /// Get cluster statistics
+    // Get cluster statistics
     pub fn get_statistics(&self) -> ClusterStatistics {
         let mut stats = self.stats.read().clone();
 
@@ -578,7 +578,7 @@ impl RacCluster {
         stats
     }
 
-    /// Check cluster health
+    // Check cluster health
     pub fn check_health(&self) -> ClusterHealth {
         let view = self.get_cluster_view();
         let state = self.get_state();
@@ -595,7 +595,7 @@ impl RacCluster {
         }
     }
 
-    /// Start automatic load balancer
+    // Start automatic load balancer
     async fn start_load_balancer(&self) {
         let grd = self.grd.clone();
         let interval = self.config.load_balance_interval;
@@ -615,7 +615,7 @@ impl RacCluster {
         });
     }
 
-    /// Generate a unique node ID
+    // Generate a unique node ID
     fn generate_node_id() -> NodeId {
         use std::time::SystemTime;
 
@@ -627,24 +627,24 @@ impl RacCluster {
         format!("node_{}", timestamp)
     }
 
-    /// Generate a unique query ID
+    // Generate a unique query ID
     fn generate_query_id() -> u64 {
         use std::sync::atomic::{AtomicU64, Ordering};
         static COUNTER: AtomicU64 = AtomicU64::new(1);
         COUNTER.fetch_add(1, Ordering::Relaxed)
     }
 
-    /// Get node information
+    // Get node information
     pub fn get_node(&self, node_id: &NodeId) -> Option<ClusterNode> {
         self.nodes.read().get(node_id).cloned()
     }
 
-    /// Get all nodes
+    // Get all nodes
     pub fn get_all_nodes(&self) -> Vec<ClusterNode> {
         self.nodes.read().values().cloned().collect()
     }
 
-    /// Perform graceful failover from one node to another
+    // Perform graceful failover from one node to another
     pub async fn failover(&self, from_node: NodeId, to_node: NodeId) -> Result<(), DbError> {
         // Initiate recovery for the failing node
         self.recovery.initiate_recovery(
@@ -664,38 +664,38 @@ impl RacCluster {
         Ok(())
     }
 
-    /// Rebalance resources across cluster
+    // Rebalance resources across cluster
     pub async fn rebalance(&self) -> Result<(), DbError> {
         self.grd.load_balance()?;
         Ok(())
     }
 }
 
-/// Cluster health information
+// Cluster health information
 #[derive(Debug, Clone)]
 pub struct ClusterHealth {
-    /// Current cluster state
+    // Current cluster state
     pub state: ClusterState,
 
-    /// Whether cluster has quorum
+    // Whether cluster has quorum
     pub has_quorum: bool,
 
-    /// Number of healthy nodes
+    // Number of healthy nodes
     pub healthy_nodes: usize,
 
-    /// Total nodes in cluster
+    // Total nodes in cluster
     pub total_nodes: usize,
 
-    /// Number of suspected nodes
+    // Number of suspected nodes
     pub suspected_nodes: usize,
 
-    /// Number of down nodes
+    // Number of down nodes
     pub down_nodes: usize,
 
-    /// Number of active recoveries
+    // Number of active recoveries
     pub active_recoveries: usize,
 
-    /// Overall health status
+    // Overall health status
     pub is_healthy: bool,
 }
 
@@ -703,34 +703,34 @@ pub struct ClusterHealth {
 // Service Placement
 // ============================================================================
 
-/// Service placement for workload distribution
+// Service placement for workload distribution
 pub struct ServicePlacement {
-    /// Service name
+    // Service name
     pub service_name: String,
 
-    /// Preferred instances
+    // Preferred instances
     pub preferred_instances: Vec<NodeId>,
 
-    /// Available instances
+    // Available instances
     pub available_instances: Vec<NodeId>,
 
-    /// Placement policy
+    // Placement policy
     pub policy: PlacementPolicy,
 }
 
-/// Placement policy
+// Placement policy
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlacementPolicy {
-    /// Prefer local instance
+    // Prefer local instance
     PreferLocal,
 
-    /// Round-robin across instances
+    // Round-robin across instances
     RoundRobin,
 
-    /// Least loaded instance
+    // Least loaded instance
     LeastLoaded,
 
-    /// Affinity-based placement
+    // Affinity-based placement
     AffinityBased,
 }
 

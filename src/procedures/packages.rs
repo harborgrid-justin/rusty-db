@@ -1,8 +1,8 @@
-/// Package System for RustyDB
-///
-/// This module implements Oracle-style packages, which provide a way to group
-/// related procedures, functions, variables, and types into a single namespace
-/// with public and private visibility control.
+// Package System for RustyDB
+//
+// This module implements Oracle-style packages, which provide a way to group
+// related procedures, functions, variables, and types into a single namespace
+// with public and private visibility control.
 
 use crate::{Result, DbError};
 use crate::procedures::parser::{PlSqlBlock, PlSqlType};
@@ -13,16 +13,16 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 
-/// Visibility level for package members
+// Visibility level for package members
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Visibility {
-    /// Public member (visible in specification)
+    // Public member (visible in specification)
     Public,
-    /// Private member (only in body)
+    // Private member (only in body)
     Private,
 }
 
-/// Package procedure definition
+// Package procedure definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageProcedure {
     pub name: String,
@@ -31,7 +31,7 @@ pub struct PackageProcedure {
     pub visibility: Visibility,
 }
 
-/// Package function definition
+// Package function definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageFunction {
     pub name: String,
@@ -41,7 +41,7 @@ pub struct PackageFunction {
     pub visibility: Visibility,
 }
 
-/// Package parameter
+// Package parameter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageParameter {
     pub name: String,
@@ -50,7 +50,7 @@ pub struct PackageParameter {
     pub default_value: Option<String>,
 }
 
-/// Parameter mode
+// Parameter mode
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ParameterMode {
     In,
@@ -58,7 +58,7 @@ pub enum ParameterMode {
     InOut,
 }
 
-/// Package variable
+// Package variable
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageVariable {
     pub name: String,
@@ -68,7 +68,7 @@ pub struct PackageVariable {
     pub visibility: Visibility,
 }
 
-/// Package cursor
+// Package cursor
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageCursor {
     pub name: String,
@@ -77,7 +77,7 @@ pub struct PackageCursor {
     pub visibility: Visibility,
 }
 
-/// Package type definition
+// Package type definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageType {
     pub name: String,
@@ -85,7 +85,7 @@ pub struct PackageType {
     pub visibility: Visibility,
 }
 
-/// Package exception
+// Package exception
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageException {
     pub name: String,
@@ -93,7 +93,7 @@ pub struct PackageException {
     pub visibility: Visibility,
 }
 
-/// Package specification (public interface)
+// Package specification (public interface)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageSpecification {
     pub name: String,
@@ -118,7 +118,7 @@ impl PackageSpecification {
         }
     }
 
-    /// Get all public members
+    // Get all public members
     pub fn get_public_procedures(&self) -> Vec<&PackageProcedure> {
         self.procedures.iter()
             .filter(|p| p.visibility == Visibility::Public)
@@ -138,7 +138,7 @@ impl PackageSpecification {
     }
 }
 
-/// Package body (implementation)
+// Package body (implementation)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageBody {
     pub name: String,
@@ -164,7 +164,7 @@ impl PackageBody {
     }
 }
 
-/// Complete package (specification + body)
+// Complete package (specification + body)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Package {
     pub specification: PackageSpecification,
@@ -230,7 +230,7 @@ impl Package {
         Ok(())
     }
 
-    /// Get procedure by name (checks both public and private)
+    // Get procedure by name (checks both public and private)
     pub fn get_procedure(&self, name: &str, allow_private: bool) -> Option<&PackageProcedure> {
         // Check specification
         if let Some(proc) = self.specification.procedures.iter().find(|p| p.name == name) {
@@ -249,7 +249,7 @@ impl Package {
         None
     }
 
-    /// Get function by name (checks both public and private)
+    // Get function by name (checks both public and private)
     pub fn get_function(&self, name: &str, allow_private: bool) -> Option<&PackageFunction> {
         // Check specification
         if let Some(func) = self.specification.functions.iter().find(|f| f.name == name) {
@@ -269,7 +269,7 @@ impl Package {
     }
 }
 
-/// Package instance state
+// Package instance state
 #[derive(Clone)]
 pub struct PackageInstance {
     pub package_name: String,
@@ -310,7 +310,7 @@ impl PackageInstance {
     }
 }
 
-/// Cursor state
+// Cursor state
 #[derive(Debug, Clone)]
 pub struct CursorState {
     pub is_open: bool,
@@ -318,7 +318,7 @@ pub struct CursorState {
     pub total_rows: usize,
 }
 
-/// Package manager
+// Package manager
 pub struct PackageManager {
     packages: Arc<RwLock<HashMap<String, Package>>>,
     instances: Arc<RwLock<HashMap<String, PackageInstance>>>,
@@ -334,7 +334,7 @@ impl PackageManager {
         }
     }
 
-    /// Create package specification
+    // Create package specification
     pub fn create_package_spec(&self, spec: PackageSpecification) -> Result<()> {
         let mut packages = self.packages.write();
 
@@ -348,7 +348,7 @@ impl PackageManager {
         Ok(())
     }
 
-    /// Create package body
+    // Create package body
     pub fn create_package_body(&self, body: PackageBody) -> Result<()> {
         let mut packages = self.packages.write();
 
@@ -363,7 +363,7 @@ impl PackageManager {
         Ok(())
     }
 
-    /// Drop a package
+    // Drop a package
     pub fn drop_package(&self, name: &str) -> Result<()> {
         let mut packages = self.packages.write();
         let mut instances = self.instances.write();
@@ -380,7 +380,7 @@ impl PackageManager {
         Ok(())
     }
 
-    /// Get package instance (create if needed)
+    // Get package instance (create if needed)
     pub fn get_instance(&self, package_name: &str) -> Result<PackageInstance> {
         let instances = self.instances.read();
 
@@ -419,7 +419,7 @@ impl PackageManager {
         Ok(instance)
     }
 
-    /// Call a package procedure
+    // Call a package procedure
     pub fn call_procedure(
         &self,
         package_name: &str,
@@ -453,7 +453,7 @@ impl PackageManager {
         Ok(())
     }
 
-    /// Call a package function
+    // Call a package function
     pub fn call_function(
         &self,
         package_name: &str,
@@ -490,7 +490,7 @@ impl PackageManager {
         }
     }
 
-    /// Get package variable value
+    // Get package variable value
     pub fn get_variable(
         &self,
         package_name: &str,
@@ -509,7 +509,7 @@ impl PackageManager {
             ))
     }
 
-    /// Set package variable value
+    // Set package variable value
     pub fn set_variable(
         &self,
         package_name: &str,
@@ -546,13 +546,13 @@ impl PackageManager {
         Ok(())
     }
 
-    /// List all packages
+    // List all packages
     pub fn list_packages(&self) -> Vec<String> {
         let packages = self.packages.read();
         packages.keys().cloned().collect()
     }
 
-    /// Get package by name
+    // Get package by name
     pub fn get_package(&self, name: &str) -> Result<Package> {
         let packages = self.packages.read();
         packages.get(name)
@@ -562,7 +562,7 @@ impl PackageManager {
             ))
     }
 
-    /// Get package documentation
+    // Get package documentation
     pub fn get_documentation(&self, package_name: &str) -> Result<PackageDocumentation> {
         let package = self.get_package(package_name)?;
 
@@ -609,7 +609,7 @@ impl Default for PackageManager {
     }
 }
 
-/// Package documentation structure
+// Package documentation structure
 #[derive(Debug, Clone)]
 pub struct PackageDocumentation {
     pub name: String,
@@ -709,5 +709,3 @@ mod tests {
         Ok(())
     }
 }
-
-

@@ -20,37 +20,37 @@ use super::types::*;
 // Authentication System - JWT, OAuth, API Keys, mTLS
 // ============================================================================
 
-/// Authentication manager
+// Authentication manager
 pub struct AuthenticationManager {
-    /// JWT validator
+    // JWT validator
     jwt_validator: Arc<JwtValidator>,
-    /// OAuth provider
+    // OAuth provider
     oauth_provider: Arc<OAuthProvider>,
-    /// API key store
+    // API key store
     api_key_store: Arc<RwLock<ApiKeyStore>>,
-    /// Session manager
+    // Session manager
     session_manager: Arc<SessionManager>,
-    /// mTLS validator
+    // mTLS validator
     mtls_validator: Arc<MtlsValidator>,
-    /// MFA manager
+    // MFA manager
     mfa_manager: Arc<MfaManager>,
 }
 
-/// JWT validator
+// JWT validator
 pub struct JwtValidator {
-    /// Signing keys (kid -> key)
+    // Signing keys (kid -> key)
     signing_keys: Arc<RwLock<HashMap<String, Vec<u8>>>>,
-    /// Issuer
+    // Issuer
     issuer: String,
-    /// Audience
+    // Audience
     audience: Vec<String>,
-    /// Algorithm
+    // Algorithm
     algorithm: JwtAlgorithm,
-    /// Token expiration tolerance (seconds)
+    // Token expiration tolerance (seconds)
     expiration_tolerance: u64,
 }
 
-/// JWT algorithm
+// JWT algorithm
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JwtAlgorithm {
     HS256,
@@ -64,155 +64,155 @@ pub enum JwtAlgorithm {
     ES512,
 }
 
-/// JWT claims
+// JWT claims
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JwtClaims {
-    /// Issuer
+    // Issuer
     pub iss: String,
-    /// Subject
+    // Subject
     pub sub: String,
-    /// Audience
+    // Audience
     pub aud: Vec<String>,
-    /// Expiration time
+    // Expiration time
     pub exp: u64,
-    /// Not before
+    // Not before
     pub nbf: Option<u64>,
-    /// Issued at
+    // Issued at
     pub iat: u64,
-    /// JWT ID
+    // JWT ID
     pub jti: String,
-    /// Custom claims
+    // Custom claims
     pub custom: HashMap<String, serde_json::Value>,
 }
 
-/// OAuth 2.0 provider
+// OAuth 2.0 provider
 pub struct OAuthProvider {
-    /// Provider configuration
+    // Provider configuration
     config: Arc<RwLock<OAuthConfig>>,
-    /// Token cache
+    // Token cache
     token_cache: Arc<RwLock<HashMap<String, OAuthToken>>>,
 }
 
-/// OAuth configuration
+// OAuth configuration
 #[derive(Debug, Clone)]
 pub struct OAuthConfig {
-    /// Authorization endpoint
+    // Authorization endpoint
     pub auth_endpoint: String,
-    /// Token endpoint
+    // Token endpoint
     pub token_endpoint: String,
-    /// Userinfo endpoint
+    // Userinfo endpoint
     pub userinfo_endpoint: Option<String>,
-    /// Client ID
+    // Client ID
     pub client_id: String,
-    /// Client secret
+    // Client secret
     pub client_secret: String,
-    /// Redirect URI
+    // Redirect URI
     pub redirect_uri: String,
-    /// Scopes
+    // Scopes
     pub scopes: Vec<String>,
-    /// OIDC discovery URL
+    // OIDC discovery URL
     pub discovery_url: Option<String>,
 }
 
-/// OAuth token
+// OAuth token
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OAuthToken {
-    /// Access token
+    // Access token
     pub access_token: String,
-    /// Token type
+    // Token type
     pub token_type: String,
-    /// Expires in (seconds)
+    // Expires in (seconds)
     pub expires_in: u64,
-    /// Refresh token
+    // Refresh token
     pub refresh_token: Option<String>,
-    /// Scope
+    // Scope
     pub scope: Option<String>,
-    /// ID token (OIDC)
+    // ID token (OIDC)
     pub id_token: Option<String>,
 }
 
-/// API key store
+// API key store
 pub struct ApiKeyStore {
-    /// API keys (key -> metadata)
+    // API keys (key -> metadata)
     keys: HashMap<String, ApiKeyMetadata>,
 }
 
-/// API key metadata
+// API key metadata
 #[derive(Debug, Clone)]
 pub struct ApiKeyMetadata {
-    /// Key ID
+    // Key ID
     pub key_id: String,
-    /// User ID
+    // User ID
     pub user_id: String,
-    /// Key hash (never store plain keys)
+    // Key hash (never store plain keys)
     pub key_hash: Vec<u8>,
-    /// Created at
+    // Created at
     pub created_at: SystemTime,
-    /// Expires at
+    // Expires at
     pub expires_at: Option<SystemTime>,
-    /// Enabled
+    // Enabled
     pub enabled: bool,
-    /// Scopes/permissions
+    // Scopes/permissions
     pub scopes: Vec<String>,
-    /// Last used
+    // Last used
     pub last_used: Option<SystemTime>,
-    /// Usage count
+    // Usage count
     pub usage_count: u64,
 }
 
-/// Session manager
+// Session manager
 pub struct SessionManager {
-    /// Active sessions
+    // Active sessions
     sessions: Arc<RwLock<HashMap<String, Session>>>,
-    /// Session timeout (seconds)
+    // Session timeout (seconds)
     session_timeout: u64,
 }
 
-/// User session
+// User session
 #[derive(Debug, Clone)]
 pub struct Session {
-    /// Session ID
+    // Session ID
     pub session_id: String,
-    /// User ID
+    // User ID
     pub user_id: String,
-    /// Username
+    // Username
     pub username: String,
-    /// Roles
+    // Roles
     pub roles: Vec<String>,
-    /// Permissions
+    // Permissions
     pub permissions: Vec<String>,
-    /// Created at
+    // Created at
     pub created_at: SystemTime,
-    /// Last accessed
+    // Last accessed
     pub last_accessed: SystemTime,
-    /// Expires at
+    // Expires at
     pub expires_at: SystemTime,
-    /// IP address
+    // IP address
     pub ip_address: IpAddr,
-    /// User agent
+    // User agent
     pub user_agent: Option<String>,
-    /// Additional attributes
+    // Additional attributes
     pub attributes: HashMap<String, String>,
 }
 
-/// mTLS validator
+// mTLS validator
 pub struct MtlsValidator {
-    /// Trusted CA certificates
+    // Trusted CA certificates
     trusted_cas: Arc<RwLock<Vec<Vec<u8>>>>,
-    /// Certificate revocation list
+    // Certificate revocation list
     crl: Arc<RwLock<HashSet<String>>>,
 }
 
-/// MFA manager
+// MFA manager
 pub struct MfaManager {
-    /// TOTP secrets
+    // TOTP secrets
     totp_secrets: Arc<RwLock<HashMap<String, Vec<u8>>>>,
-    /// Backup codes
+    // Backup codes
     backup_codes: Arc<RwLock<HashMap<String, Vec<String>>>>,
 }
 
 impl AuthenticationManager {
-    /// Create new authentication manager
+    // Create new authentication manager
     pub fn new() -> Self {
         Self {
             jwt_validator: Arc::new(JwtValidator::new("rustydb".to_string())),
@@ -224,7 +224,7 @@ impl AuthenticationManager {
         }
     }
 
-    /// Authenticate request
+    // Authenticate request
     pub async fn authenticate(&self, request: &ApiRequest) -> Result<Session, DbError> {
         // Try different authentication methods in order
 
@@ -257,7 +257,7 @@ impl AuthenticationManager {
         Err(DbError::InvalidOperation("Authentication failed".to_string()))
     }
 
-    /// Create session from JWT claims
+    // Create session from JWT claims
     fn create_session_from_jwt(&self, claims: JwtClaims, request: &ApiRequest) -> Result<Session, DbError> {
         let session = Session {
             session_id: Uuid::new_v4().to_string(),
@@ -282,7 +282,7 @@ impl AuthenticationManager {
         Ok(session)
     }
 
-    /// Authenticate using API key
+    // Authenticate using API key
     async fn authenticate_api_key(&self, api_key: &str, request: &ApiRequest) -> Result<Session, DbError> {
         let key_store = self.api_key_store.read();
 
@@ -321,7 +321,7 @@ impl AuthenticationManager {
         Err(DbError::InvalidOperation("Invalid API key".to_string()))
     }
 
-    /// Extract session ID from cookie
+    // Extract session ID from cookie
     fn extract_session_id(&self, cookie: &str) -> Option<String> {
         for part in cookie.split(';') {
             let part = part.trim();
@@ -332,14 +332,14 @@ impl AuthenticationManager {
         None
     }
 
-    /// Hash API key
+    // Hash API key
     fn hash_api_key(key: &str) -> Vec<u8> {
         let mut hasher = Sha256::new();
         hasher.update(key.as_bytes());
         hasher.finalize().to_vec()
     }
 
-    /// Generate new API key
+    // Generate new API key
     pub fn generate_api_key(&self, user_id: String, scopes: Vec<String>) -> Result<String, DbError> {
         let key = Uuid::new_v4().to_string();
         let key_hash = Self::hash_api_key(&key);
@@ -362,7 +362,7 @@ impl AuthenticationManager {
         Ok(key)
     }
 
-    /// Revoke API key
+    // Revoke API key
     pub fn revoke_api_key(&self, key_id: &str) -> bool {
         let mut key_store = self.api_key_store.write();
         if let Some(metadata) = key_store.keys.get_mut(key_id) {
@@ -373,7 +373,7 @@ impl AuthenticationManager {
         }
     }
 
-    /// List API keys for user
+    // List API keys for user
     pub fn list_api_keys(&self, user_id: &str) -> Vec<ApiKeyMetadata> {
         let key_store = self.api_key_store.read();
         key_store.keys.values()
@@ -384,7 +384,7 @@ impl AuthenticationManager {
 }
 
 impl JwtValidator {
-    /// Create new JWT validator
+    // Create new JWT validator
     pub fn new(issuer: String) -> Self {
         Self {
             signing_keys: Arc::new(RwLock::new(HashMap::new())),
@@ -395,7 +395,7 @@ impl JwtValidator {
         }
     }
 
-    /// Validate JWT token
+    // Validate JWT token
     pub fn validate(&self, token: &str) -> Result<JwtClaims, DbError> {
         // Parse token
         let parts: Vec<&str> = token.split('.').collect();
@@ -428,7 +428,7 @@ impl JwtValidator {
         Ok(claims)
     }
 
-    /// Verify signature
+    // Verify signature
     fn verify_signature(&self, message: &str, signature: &[u8]) -> Result<(), DbError> {
         // TODO: Implement proper signature verification based on algorithm
         // For now, just check signature is not empty
@@ -438,7 +438,7 @@ impl JwtValidator {
         Ok(())
     }
 
-    /// Validate claims
+    // Validate claims
     fn validate_claims(&self, claims: &JwtClaims) -> Result<(), DbError> {
         // Check issuer
         if claims.iss != self.issuer {
@@ -470,7 +470,7 @@ impl JwtValidator {
         Ok(())
     }
 
-    /// Add signing key
+    // Add signing key
     pub fn add_signing_key(&self, kid: String, key: Vec<u8>) {
         let mut keys = self.signing_keys.write();
         keys.insert(kid, key);
@@ -478,7 +478,7 @@ impl JwtValidator {
 }
 
 impl OAuthProvider {
-    /// Create new OAuth provider
+    // Create new OAuth provider
     pub fn new() -> Self {
         Self {
             config: Arc::new(RwLock::new(OAuthConfig::default())),
@@ -486,19 +486,19 @@ impl OAuthProvider {
         }
     }
 
-    /// Configure OAuth provider
+    // Configure OAuth provider
     pub fn configure(&self, config: OAuthConfig) {
         let mut cfg = self.config.write();
         *cfg = config;
     }
 
-    /// Exchange authorization code for token
+    // Exchange authorization code for token
     pub async fn exchange_code(&self, code: &str) -> Result<OAuthToken, DbError> {
         // TODO: Implement actual OAuth token exchange
         Err(DbError::InvalidOperation("Not implemented".to_string()))
     }
 
-    /// Refresh access token
+    // Refresh access token
     pub async fn refresh_token(&self, refreshtoken: &str) -> Result<OAuthToken, DbError> {
         // TODO: Implement token refresh
         Err(DbError::InvalidOperation("Not implemented".to_string()))
@@ -536,25 +536,25 @@ impl SessionManager {
         }
     }
 
-    /// Get session by ID
+    // Get session by ID
     fn get_session(&self, session_id: &str) -> Option<Session> {
         let sessions = self.sessions.read();
         sessions.get(session_id).cloned()
     }
 
-    /// Create new session
+    // Create new session
     pub fn create_session(&self, session: Session) {
         let mut sessions = self.sessions.write();
         sessions.insert(session.session_id.clone(), session);
     }
 
-    /// Invalidate session
+    // Invalidate session
     pub fn invalidate_session(&self, session_id: &str) -> bool {
         let mut sessions = self.sessions.write();
         sessions.remove(session_id).is_some()
     }
 
-    /// Cleanup expired sessions
+    // Cleanup expired sessions
     pub fn cleanup_expired_sessions(&self) {
         let mut sessions = self.sessions.write();
         let now = SystemTime::now();
@@ -570,13 +570,13 @@ impl MtlsValidator {
         }
     }
 
-    /// Add trusted CA certificate
+    // Add trusted CA certificate
     pub fn add_trusted_ca(&self, cert: Vec<u8>) {
         let mut cas = self.trusted_cas.write();
         cas.push(cert);
     }
 
-    /// Validate client certificate
+    // Validate client certificate
     pub fn validate_certificate(&self, cert: &[u8]) -> Result<bool, DbError> {
         // TODO: Implement proper certificate validation
         Ok(true)
@@ -591,7 +591,7 @@ impl MfaManager {
         }
     }
 
-    /// Generate TOTP secret for user
+    // Generate TOTP secret for user
     pub fn generate_totp_secret(&self, user_id: String) -> Vec<u8> {
         let mut secret = vec![0u8; 32];
         for i in 0..32 {
@@ -604,10 +604,9 @@ impl MfaManager {
         secret
     }
 
-    /// Verify TOTP code
+    // Verify TOTP code
     pub fn verify_totp(&self, user_id: &str, code: &str) -> bool {
         // TODO: Implement TOTP verification
         false
     }
 }
-

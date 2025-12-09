@@ -13,112 +13,112 @@ use chrono::{DateTime, Utc, Timelike, Weekday, NaiveTime, Datelike};
 use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 
-/// Resource plan identifier
+// Resource plan identifier
 pub type ResourcePlanId = u64;
 
-/// Directive identifier
+// Directive identifier
 pub type DirectiveId = u64;
 
-/// Resource plan definition
+// Resource plan definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourcePlan {
-    /// Unique identifier
+    // Unique identifier
     pub id: ResourcePlanId,
-    /// Plan name
+    // Plan name
     pub name: String,
-    /// Plan description
+    // Plan description
     pub description: Option<String>,
-    /// Whether this is a top-level plan
+    // Whether this is a top-level plan
     pub is_top_plan: bool,
-    /// Parent plan ID (for sub-plans)
+    // Parent plan ID (for sub-plans)
     pub parent_plan_id: Option<ResourcePlanId>,
-    /// CPU management method
+    // CPU management method
     pub cpu_method: CpuManagementMethod,
-    /// Parallel execution management
+    // Parallel execution management
     pub parallel_execution_managed: bool,
-    /// Active session pool management
+    // Active session pool management
     pub active_session_pool_managed: bool,
-    /// Maximum utilization limit (percentage)
+    // Maximum utilization limit (percentage)
     pub max_utilization_limit: Option<u8>,
-    /// Whether the plan is enabled
+    // Whether the plan is enabled
     pub is_enabled: bool,
-    /// Plan status
+    // Plan status
     pub status: PlanStatus,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: SystemTime,
-    /// Last modified timestamp
+    // Last modified timestamp
     pub modified_at: SystemTime,
 }
 
-/// CPU management method
+// CPU management method
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CpuManagementMethod {
-    /// Emphasis on CPU allocation
+    // Emphasis on CPU allocation
     Emphasis,
-    /// Ratio-based allocation
+    // Ratio-based allocation
     Ratio,
-    /// Shares-based allocation (modern approach)
+    // Shares-based allocation (modern approach)
     Shares,
 }
 
-/// Plan status
+// Plan status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlanStatus {
-    /// Plan is active and enforcing resources
+    // Plan is active and enforcing resources
     Active,
-    /// Plan is inactive
+    // Plan is inactive
     Inactive,
-    /// Plan is in maintenance mode
+    // Plan is in maintenance mode
     Maintenance,
 }
 
-/// Resource plan directive
+// Resource plan directive
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourcePlanDirective {
-    /// Directive identifier
+    // Directive identifier
     pub id: DirectiveId,
-    /// Plan this directive belongs to
+    // Plan this directive belongs to
     pub plan_id: ResourcePlanId,
-    /// Consumer group this directive applies to
+    // Consumer group this directive applies to
     pub group_id: ConsumerGroupId,
-    /// CPU allocation percentage (for EMPHASIS method)
+    // CPU allocation percentage (for EMPHASIS method)
     pub cpu_pct: Option<u8>,
-    /// CPU shares (for SHARES method)
+    // CPU shares (for SHARES method)
     pub cpu_shares: Option<u32>,
-    /// Parallel degree limit
+    // Parallel degree limit
     pub parallel_degree_limit: Option<u32>,
-    /// Maximum parallel servers
+    // Maximum parallel servers
     pub parallel_server_limit: Option<u32>,
-    /// Active session pool size
+    // Active session pool size
     pub active_sess_pool_p1: Option<u32>,
-    /// Queue timeout for active session pool
+    // Queue timeout for active session pool
     pub queueing_p1: Option<Duration>,
-    /// Maximum estimated execution time
+    // Maximum estimated execution time
     pub max_est_exec_time: Option<Duration>,
-    /// Maximum idle time
+    // Maximum idle time
     pub max_idle_time: Option<Duration>,
-    /// Maximum idle blocker time
+    // Maximum idle blocker time
     pub max_idle_blocker_time: Option<Duration>,
-    /// Switch group after condition
+    // Switch group after condition
     pub switch_group: Option<ConsumerGroupId>,
-    /// Switch time (CPU time threshold for switching)
+    // Switch time (CPU time threshold for switching)
     pub switch_time: Option<Duration>,
-    /// Switch estimate (estimated execution time threshold)
+    // Switch estimate (estimated execution time threshold)
     pub switch_estimate: bool,
-    /// Switch for call (switch back after call completes)
+    // Switch for call (switch back after call completes)
     pub switch_for_call: bool,
-    /// Undo pool limit
+    // Undo pool limit
     pub undo_pool: Option<u64>,
-    /// Maximum undo generation rate
+    // Maximum undo generation rate
     pub max_undo_rate: Option<u64>,
-    /// Sub-plan to use for this group
+    // Sub-plan to use for this group
     pub sub_plan_id: Option<ResourcePlanId>,
-    /// Directive priority (for evaluation order)
+    // Directive priority (for evaluation order)
     pub priority: u32,
 }
 
 impl ResourcePlanDirective {
-    /// Create a new directive
+    // Create a new directive
     pub fn new(
         id: DirectiveId,
         plan_id: ResourcePlanId,
@@ -149,29 +149,29 @@ impl ResourcePlanDirective {
     }
 }
 
-/// Time-based plan switching schedule
+// Time-based plan switching schedule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlanSchedule {
-    /// Schedule identifier
+    // Schedule identifier
     pub id: u64,
-    /// Schedule name
+    // Schedule name
     pub name: String,
-    /// Day of week (0=Sunday, 6=Saturday, None=all days)
+    // Day of week (0=Sunday, 6=Saturday, None=all days)
     pub day_of_week: Option<u8>,
-    /// Start time
+    // Start time
     pub start_time: NaiveTime,
-    /// End time
+    // End time
     pub end_time: NaiveTime,
-    /// Resource plan to activate
+    // Resource plan to activate
     pub plan_id: ResourcePlanId,
-    /// Schedule priority (lower = higher priority)
+    // Schedule priority (lower = higher priority)
     pub priority: u32,
-    /// Whether this schedule is enabled
+    // Whether this schedule is enabled
     pub is_enabled: bool,
 }
 
 impl PlanSchedule {
-    /// Check if this schedule is active at the given time
+    // Check if this schedule is active at the given time
     pub fn is_active_at(&self, time: DateTime<Utc>) -> bool {
         if !self.is_enabled {
             return false;
@@ -202,59 +202,59 @@ impl PlanSchedule {
     }
 }
 
-/// Maintenance window definition
+// Maintenance window definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaintenanceWindow {
-    /// Window identifier
+    // Window identifier
     pub id: u64,
-    /// Window name
+    // Window name
     pub name: String,
-    /// Description
+    // Description
     pub description: Option<String>,
-    /// Day of week
+    // Day of week
     pub day_of_week: u8,
-    /// Start time
+    // Start time
     pub start_time: NaiveTime,
-    /// Duration
+    // Duration
     pub duration: Duration,
-    /// Resource plan to use during maintenance
+    // Resource plan to use during maintenance
     pub maintenance_plan_id: ResourcePlanId,
-    /// Whether to allow user sessions during maintenance
+    // Whether to allow user sessions during maintenance
     pub allow_user_sessions: bool,
-    /// Maximum concurrent user sessions
+    // Maximum concurrent user sessions
     pub max_user_sessions: Option<u32>,
-    /// Whether this window is enabled
+    // Whether this window is enabled
     pub is_enabled: bool,
 }
 
-/// Resource plan manager
+// Resource plan manager
 pub struct ResourcePlanManager {
-    /// All resource plans
+    // All resource plans
     plans: Arc<RwLock<HashMap<ResourcePlanId, ResourcePlan>>>,
-    /// Plans indexed by name
+    // Plans indexed by name
     plans_by_name: Arc<RwLock<HashMap<String, ResourcePlanId>>>,
-    /// Plan directives
+    // Plan directives
     directives: Arc<RwLock<HashMap<ResourcePlanId, Vec<ResourcePlanDirective>>>>,
-    /// Plan schedules
+    // Plan schedules
     schedules: Arc<RwLock<Vec<PlanSchedule>>>,
-    /// Maintenance windows
+    // Maintenance windows
     maintenance_windows: Arc<RwLock<Vec<MaintenanceWindow>>>,
-    /// Currently active plan
+    // Currently active plan
     active_plan_id: Arc<RwLock<Option<ResourcePlanId>>>,
-    /// Default plan
+    // Default plan
     default_plan_id: ResourcePlanId,
-    /// Next plan ID
+    // Next plan ID
     next_plan_id: Arc<RwLock<ResourcePlanId>>,
-    /// Next directive ID
+    // Next directive ID
     next_directive_id: Arc<RwLock<DirectiveId>>,
-    /// Next schedule ID
+    // Next schedule ID
     next_schedule_id: Arc<RwLock<u64>>,
-    /// Next window ID
+    // Next window ID
     next_window_id: Arc<RwLock<u64>>,
 }
 
 impl ResourcePlanManager {
-    /// Create a new resource plan manager
+    // Create a new resource plan manager
     pub fn new() -> Result<Self> {
         let mut manager = Self {
             plans: Arc::new(RwLock::new(HashMap::new())),
@@ -275,7 +275,7 @@ impl ResourcePlanManager {
         Ok(manager)
     }
 
-    /// Create default system resource plans
+    // Create default system resource plans
     fn create_system_plans(&mut self) -> Result<()> {
         // DEFAULT_PLAN - Balanced resource allocation
         let default_plan = ResourcePlan {
@@ -355,7 +355,7 @@ impl ResourcePlanManager {
         Ok(())
     }
 
-    /// Register a resource plan
+    // Register a resource plan
     fn register_plan(&mut self, plan: ResourcePlan) -> Result<()> {
         let id = plan.id;
         let name = plan.name.clone();
@@ -380,7 +380,7 @@ impl ResourcePlanManager {
         Ok(())
     }
 
-    /// Create a new resource plan
+    // Create a new resource plan
     pub fn create_plan(
         &self,
         name: String,
@@ -438,7 +438,7 @@ impl ResourcePlanManager {
         Ok(id)
     }
 
-    /// Get resource plan by ID
+    // Get resource plan by ID
     pub fn get_plan(&self, plan_id: ResourcePlanId) -> Result<ResourcePlan> {
         let plans = self.plans.read().unwrap();
         plans.get(&plan_id)
@@ -448,7 +448,7 @@ impl ResourcePlanManager {
             ))
     }
 
-    /// Get resource plan by name
+    // Get resource plan by name
     pub fn get_plan_by_name(&self, name: &str) -> Result<ResourcePlan> {
         let plans_by_name = self.plans_by_name.read().unwrap();
         let plan_id = plans_by_name.get(name)
@@ -458,7 +458,7 @@ impl ResourcePlanManager {
         self.get_plan(*plan_id)
     }
 
-    /// Update resource plan
+    // Update resource plan
     pub fn update_plan<F>(&self, plan_id: ResourcePlanId, update_fn: F) -> Result<()>
     where
         F: FnOnce(&mut ResourcePlan),
@@ -474,7 +474,7 @@ impl ResourcePlanManager {
         Ok(())
     }
 
-    /// Delete a resource plan
+    // Delete a resource plan
     pub fn delete_plan(&self, plan_id: ResourcePlanId) -> Result<()> {
         // Don't allow deleting system plans
         if plan_id < 100 {
@@ -510,7 +510,7 @@ impl ResourcePlanManager {
         Ok(())
     }
 
-    /// Create a plan directive
+    // Create a plan directive
     pub fn create_directive(
         &self,
         plan_id: ResourcePlanId,
@@ -535,7 +535,7 @@ impl ResourcePlanManager {
         Ok(id)
     }
 
-    /// Update a directive
+    // Update a directive
     pub fn update_directive<F>(
         &self,
         plan_id: ResourcePlanId,
@@ -561,7 +561,7 @@ impl ResourcePlanManager {
         Ok(())
     }
 
-    /// Get directives for a plan
+    // Get directives for a plan
     pub fn get_plan_directives(&self, plan_id: ResourcePlanId) -> Vec<ResourcePlanDirective> {
         let directives = self.directives.read().unwrap();
         directives.get(&plan_id)
@@ -569,7 +569,7 @@ impl ResourcePlanManager {
             .unwrap_or_default()
     }
 
-    /// Activate a resource plan
+    // Activate a resource plan
     pub fn activate_plan(&self, plan_id: ResourcePlanId) -> Result<()> {
         // Verify plan exists
         let plan = self.get_plan(plan_id)?;
@@ -596,7 +596,7 @@ impl ResourcePlanManager {
         Ok(())
     }
 
-    /// Deactivate current plan and revert to default
+    // Deactivate current plan and revert to default
     pub fn deactivate_plan(&self) -> Result<()> {
         if let Some(current_id) = *self.active_plan_id.read().unwrap() {
             self.update_plan(current_id, |p| {
@@ -608,12 +608,12 @@ impl ResourcePlanManager {
         self.activate_plan(self.default_plan_id)
     }
 
-    /// Get currently active plan
+    // Get currently active plan
     pub fn get_active_plan(&self) -> Option<ResourcePlanId> {
         *self.active_plan_id.read().unwrap()
     }
 
-    /// Add a plan schedule
+    // Add a plan schedule
     pub fn add_schedule(
         &self,
         name: String,
@@ -651,7 +651,7 @@ impl ResourcePlanManager {
         Ok(id)
     }
 
-    /// Check schedules and switch plan if needed
+    // Check schedules and switch plan if needed
     pub fn check_and_switch_plan(&self) -> Result<bool> {
         let now = Utc::now();
         let schedules = self.schedules.read().unwrap();
@@ -678,7 +678,7 @@ impl ResourcePlanManager {
         Ok(false)
     }
 
-    /// Add a maintenance window
+    // Add a maintenance window
     pub fn add_maintenance_window(
         &self,
         name: String,
@@ -716,7 +716,7 @@ impl ResourcePlanManager {
         Ok(id)
     }
 
-    /// Check if currently in maintenance window
+    // Check if currently in maintenance window
     pub fn is_in_maintenance_window(&self) -> Option<MaintenanceWindow> {
         let now = Utc::now();
         let windows = self.maintenance_windows.read().unwrap();
@@ -754,13 +754,13 @@ impl ResourcePlanManager {
         None
     }
 
-    /// List all resource plans
+    // List all resource plans
     pub fn list_plans(&self) -> Vec<ResourcePlan> {
         let plans = self.plans.read().unwrap();
         plans.values().cloned().collect()
     }
 
-    /// Validate plan directives
+    // Validate plan directives
     pub fn validate_plan(&self, plan_id: ResourcePlanId) -> Result<Vec<String>> {
         let plan = self.get_plan(plan_id)?;
         let directives = self.get_plan_directives(plan_id);

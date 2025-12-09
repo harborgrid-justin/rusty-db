@@ -9,8 +9,8 @@ use std::time::Instant;
 use std::time::UNIX_EPOCH;
 use std::time::SystemTime;
 
-/// Block-level compression for OLTP tables
-/// Smaller compression units for better update performance
+// Block-level compression for OLTP tables
+// Smaller compression units for better update performance
 #[derive(Debug, Clone)]
 pub struct OLTPBlock {
     pub block_id: u64,
@@ -23,7 +23,7 @@ pub struct OLTPBlock {
     pub modification_count: usize,
 }
 
-/// Metadata for compressed block
+// Metadata for compressed block
 #[derive(Debug, Clone)]
 pub struct BlockCompressionMetadata {
     pub algorithm: CompressionAlgorithm,
@@ -35,7 +35,7 @@ pub struct BlockCompressionMetadata {
     pub last_modified: u64,
 }
 
-/// Block format for OLTP compression
+// Block format for OLTP compression
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BlockFormat {
     Uncompressed,        // No compression
@@ -44,7 +44,7 @@ pub enum BlockFormat {
     OnlineConversion,    // Being converted to compressed format
 }
 
-/// Row location within a compressed block
+// Row location within a compressed block
 #[derive(Debug, Clone)]
 pub struct RowLocation {
     pub row_id: u64,
@@ -54,7 +54,7 @@ pub struct RowLocation {
     pub next_piece: Option<u64>,
 }
 
-/// OLTP Compression Engine
+// OLTP Compression Engine
 pub struct OLTPCompressor {
     level: CompressionLevel,
     stats: Arc<RwLock<CompressionStats>>,
@@ -88,7 +88,7 @@ impl OLTPCompressor {
         self
     }
 
-    /// Compress a table block
+    // Compress a table block
     pub fn compress_block(&self, block_id: u64, table_id: u64, rows: Vec<Vec<u8>>)
         -> CompressionResult<OLTPBlock> {
 
@@ -160,7 +160,7 @@ impl OLTPCompressor {
         Ok(block)
     }
 
-    /// Decompress a block
+    // Decompress a block
     pub fn decompress_block(&self, block: &OLTPBlock) -> CompressionResult<Vec<Vec<u8>>> {
         let start = Instant::now();
 
@@ -199,7 +199,7 @@ impl OLTPCompressor {
         Ok(rows)
     }
 
-    /// Update a single row in a compressed block
+    // Update a single row in a compressed block
     pub fn update_row(&self, block: &mut OLTPBlock, row_id: u64, new_row: Vec<u8>)
         -> CompressionResult<()> {
 
@@ -256,7 +256,7 @@ impl OLTPCompressor {
         Ok(())
     }
 
-    /// Insert a new row into a compressed block
+    // Insert a new row into a compressed block
     pub fn insert_row(&self, block: &mut OLTPBlock, _row_id: u64, row: Vec<u8>)
         -> CompressionResult<()> {
 
@@ -294,7 +294,7 @@ impl OLTPCompressor {
         Ok(())
     }
 
-    /// Delete a row from a compressed block
+    // Delete a row from a compressed block
     pub fn delete_row(&self, block: &mut OLTPBlock, row_id: u64) -> CompressionResult<()> {
         let mut rows = self.decompress_block(block)?;
 
@@ -330,7 +330,7 @@ impl OLTPCompressor {
         Ok(())
     }
 
-    /// Bulk load compression - optimized for initial data load
+    // Bulk load compression - optimized for initial data load
     pub fn bulk_load(&self, table_id: u64, rows: Vec<Vec<u8>>) -> CompressionResult<Vec<OLTPBlock>> {
         let rows_per_block = self.calculate_optimal_rows_per_block(&rows);
         let mut blocks = Vec::new();
@@ -345,7 +345,7 @@ impl OLTPCompressor {
         Ok(blocks)
     }
 
-    /// Online compression conversion - convert uncompressed table to compressed
+    // Online compression conversion - convert uncompressed table to compressed
     pub fn convert_to_compressed(&self, uncompressed_blocks: Vec<OLTPBlock>)
         -> CompressionResult<Vec<OLTPBlock>> {
 
@@ -366,14 +366,14 @@ impl OLTPCompressor {
         Ok(compressed_blocks)
     }
 
-    /// Check if block needs recompression
+    // Check if block needs recompression
     pub fn needs_recompression(&self, block: &OLTPBlock) -> bool {
         // Recompress if too many modifications or fragmentation
         block.modification_count > 100 ||
         block.free_space > self.block_size / 2
     }
 
-    /// Recompress a block to reclaim space
+    // Recompress a block to reclaim space
     pub fn recompress_block(&self, block: &mut OLTPBlock) -> CompressionResult<()> {
         let rows = self.decompress_block(block)?;
         let new_block = self.compress_block(block.block_id, block.table_id, rows)?;
@@ -485,7 +485,7 @@ impl Compressor for OLTPCompressor {
     }
 }
 
-/// OLTP Compression Advisor
+// OLTP Compression Advisor
 pub struct OLTPCompressionAdvisor {
     update_frequency_threshold: f64,
     compression_ratio_threshold: f64,
@@ -499,7 +499,7 @@ impl OLTPCompressionAdvisor {
         }
     }
 
-    /// Analyze table and recommend compression strategy
+    // Analyze table and recommend compression strategy
     pub fn recommend_compression(&self, table_stats: &TableStats) -> CompressionRecommendation {
         let update_ratio = table_stats.updates_per_second as f64 /
             (table_stats.reads_per_second as f64 + 1.0);
@@ -534,7 +534,7 @@ impl OLTPCompressionAdvisor {
         }
     }
 
-    /// Estimate space savings from compression
+    // Estimate space savings from compression
     pub fn estimate_space_savings(&self, table_stats: &TableStats) -> f64 {
         let compressed_size = table_stats.total_size as f64 /
             table_stats.estimated_compression_ratio;
@@ -639,5 +639,3 @@ mod tests {
         assert!(recommendation.should_compress);
     }
 }
-
-

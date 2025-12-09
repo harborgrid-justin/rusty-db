@@ -14,13 +14,13 @@ use super::metrics_core::*;
 // SECTION 2: PROMETHEUS INTEGRATION (600+ lines)
 // ============================================================================
 
-/// Prometheus exposition format exporter
+// Prometheus exposition format exporter
 pub struct PrometheusExporter {
     registry: Arc<MetricsRegistry>,
     exemplar_storage: Arc<RwLock<HashMap<String, Vec<Exemplar>>>>,
 }
 
-/// Exemplar data for tracing integration
+// Exemplar data for tracing integration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Exemplar {
     pub value: f64,
@@ -45,7 +45,7 @@ impl PrometheusExporter {
             .push(exemplar);
     }
 
-    /// Export all metrics in Prometheus text exposition format
+    // Export all metrics in Prometheus text exposition format
     pub fn export_text(&self) -> String {
         let mut output = String::new();
         let metrics = self.registry.all_metrics();
@@ -168,7 +168,7 @@ impl PrometheusExporter {
     }
 }
 
-/// Prometheus push gateway client
+// Prometheus push gateway client
 pub struct PrometheusPushGateway {
     gateway_url: String,
     job_name: String,
@@ -237,7 +237,7 @@ impl PrometheusPushGateway {
     }
 }
 
-/// Prometheus remote write protocol implementation
+// Prometheus remote write protocol implementation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RemoteWriteRequest {
     pub timeseries: Vec<TimeSeries>,
@@ -333,7 +333,7 @@ impl RemoteWriteClient {
     }
 }
 
-/// Metric family for grouping related metrics
+// Metric family for grouping related metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricFamily {
     pub name: String,

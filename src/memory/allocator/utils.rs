@@ -1,10 +1,10 @@
-//! Utility Functions
+// Utility Functions
 
 use super::common::*;
 
 pub use crate::memory::types::AllocatorType;
 
-/// Helper to format memory size
+// Helper to format memory size
 pub fn format_memory_size(bytes: u64) -> String {
     const KB: u64 = 1024;
     const MB: u64 = KB * 1024;
@@ -24,7 +24,7 @@ pub fn format_memory_size(bytes: u64) -> String {
     }
 }
 
-/// Helper to parse memory size string
+// Helper to parse memory size string
 pub fn parse_memory_size(s: &str) -> Result<u64> {
     let s = s.trim().to_uppercase();
     let (num_str, multiplier) = if s.ends_with("TB") {
@@ -47,7 +47,7 @@ pub fn parse_memory_size(s: &str) -> Result<u64> {
     Ok((num * multiplier as f64) as u64)
 }
 
-/// Calculate optimal slab size for object size
+// Calculate optimal slab size for object size
 pub fn calculate_optimal_slab_size(object_size: usize) -> usize {
     // Aim for ~2MB slabs aligned to huge pages
     let objects_per_slab = SLAB_SIZE / object_size.max(1);
@@ -59,7 +59,7 @@ pub fn calculate_optimal_slab_size(object_size: usize) -> usize {
     }
 }
 
-/// Check if size should use slab, system, or large object allocator
+// Check if size should use slab, system, or large object allocator
 pub fn classify_allocation_size(size: usize) -> AllocatorType {
     crate::memory::types::classify_allocation_size(size)
 }

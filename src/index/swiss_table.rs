@@ -40,42 +40,42 @@ use std::mem::{self, MaybeUninit};
 use std::ptr;
 use crate::simd::hash::xxhash3_avx2;
 
-/// Control byte indicating an empty slot
+// Control byte indicating an empty slot
 const EMPTY: u8 = 0xFF;
 
-/// Control byte indicating a deleted slot (tombstone)
+// Control byte indicating a deleted slot (tombstone)
 const TOMBSTONE: u8 = 0xFE;
 
-/// Number of slots per group (AVX2 width for u8)
+// Number of slots per group (AVX2 width for u8)
 const GROUP_SIZE: usize = 16;
 
-/// Load factor threshold for resizing (7/8 = 87.5%)
+// Load factor threshold for resizing (7/8 = 87.5%)
 const MAX_LOAD_FACTOR_NUMERATOR: usize = 7;
 const MAX_LOAD_FACTOR_DENOMINATOR: usize = 8;
 
-/// Swiss table implementation
-///
-/// Generic hash table using Swiss table design for optimal performance.
-///
-/// ## Type Parameters
-/// - `K`: Key type (must be Eq + Clone)
-/// - `V`: Value type (must be Clone)
+// Swiss table implementation
+//
+// Generic hash table using Swiss table design for optimal performance.
+//
+// ## Type Parameters
+// - `K`: Key type (must be Eq + Clone)
+// - `V`: Value type (must be Clone)
 pub struct SwissTable<K, V> {
-    /// Control bytes (16 per group)
+    // Control bytes (16 per group)
     ctrl: Vec<u8>,
-    /// Keys and values (flat array)
+    // Keys and values (flat array)
     slots: Vec<MaybeUninit<Slot<K, V>>>,
-    /// Number of occupied slots (excluding tombstones)
+    // Number of occupied slots (excluding tombstones)
     len: usize,
-    /// Number of occupied + tombstone slots
+    // Number of occupied + tombstone slots
     occupied: usize,
-    /// Capacity (number of slots)
+    // Capacity (number of slots)
     capacity: usize,
-    /// Hash seed for this table
+    // Hash seed for this table
     seed: u64,
 }
 
-/// A slot containing a key-value pair
+// A slot containing a key-value pair
 struct Slot<K, V> {
     key: K,
     value: V,
@@ -86,18 +86,18 @@ where
     K: Eq + Clone + AsRef<[u8]>,
     V: Clone,
 {
-    /// Create a new Swiss table with default capacity
+    // Create a new Swiss table with default capacity
     pub fn new() -> Self {
         Self::with_capacity(16)
     }
 
-    /// Create a Swiss table with specified capacity
-    ///
-    /// Capacity is rounded up to the next power of 2 for efficient masking.
-    ///
-    /// ## Complexity
-    /// - Time: O(n) where n is capacity
-    /// - Space: O(n * (sizeof(K) + sizeof(V) + 1))
+    // Create a Swiss table with specified capacity
+    //
+    // Capacity is rounded up to the next power of 2 for efficient masking.
+    //
+    // ## Complexity
+    // - Time: O(n) where n is capacity
+    // - Space: O(n * (sizeof(K) + sizeof(V) + 1))
     pub fn with_capacity(capacity: usize) -> Self {
         let capacity = capacity.max(16).next_power_of_two();
         let num_groups = (capacity + GROUP_SIZE - 1) / GROUP_SIZE;
@@ -119,13 +119,13 @@ where
         }
     }
 
-    /// Insert or update a key-value pair
-    ///
-    /// Returns the previous value if the key existed.
-    ///
-    /// ## Complexity
-    /// - Average: O(1) with 1.1 probes expected
-    /// - Worst: O(log n) with quadratic probing
+    // Insert or update a key-value pair
+    //
+    // Returns the previous value if the key existed.
+    //
+    // ## Complexity
+    // - Average: O(1) with 1.1 probes expected
+    // - Worst: O(log n) with quadratic probing
     pub fn insert(&mut self, key: K, value: V) -> Option<V>
     where
         K: AsRef<[u8]>,
@@ -209,11 +209,11 @@ where
         }
     }
 
-    /// Get a value by key
-    ///
-    /// ## Complexity
-    /// - Average: O(1) with 1.1 probes expected
-    /// - Worst: O(log n) with quadratic probing
+    // Get a value by key
+    //
+    // ## Complexity
+    // - Average: O(1) with 1.1 probes expected
+    // - Worst: O(log n) with quadratic probing
     pub fn get(&self, key: &K) -> Option<&V>
     where
         K: AsRef<[u8]>,
@@ -254,12 +254,12 @@ where
         }
     }
 
-    /// Remove a key-value pair
-    ///
-    /// Returns the value if the key existed.
-    ///
-    /// ## Complexity
-    /// - Average: O(1) with tombstone marking
+    // Remove a key-value pair
+    //
+    // Returns the value if the key existed.
+    //
+    // ## Complexity
+    // - Average: O(1) with tombstone marking
     pub fn remove(&mut self, key: &K) -> Option<V>
     where
         K: AsRef<[u8]>,
@@ -308,7 +308,7 @@ where
         }
     }
 
-    /// Check if the table contains a key
+    // Check if the table contains a key
     pub fn contains_key(&self, key: &K) -> bool
     where
         K: AsRef<[u8]>,
@@ -316,38 +316,38 @@ where
         self.get(key).is_some()
     }
 
-    /// Get the number of entries
+    // Get the number of entries
     #[inline]
     pub fn len(&self) -> usize {
         self.len
     }
 
-    /// Check if the table is empty
+    // Check if the table is empty
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
-    /// Get the capacity
+    // Get the capacity
     #[inline]
     pub fn capacity(&self) -> usize {
         self.capacity
     }
 
-    /// Get the load factor
+    // Get the load factor
     #[inline]
     pub fn load_factor(&self) -> f64 {
         self.len as f64 / self.capacity as f64
     }
 
-    /// Clear all entries
+    // Clear all entries
     pub fn clear(&mut self) {
         self.ctrl.fill(EMPTY);
         self.len = 0;
         self.occupied = 0;
     }
 
-    /// Reserve space for at least `additional` more elements
+    // Reserve space for at least `additional` more elements
     fn reserve(&mut self, additional: usize) {
         let new_len = self.len + additional;
         let threshold = self.capacity * MAX_LOAD_FACTOR_NUMERATOR / MAX_LOAD_FACTOR_DENOMINATOR;
@@ -357,7 +357,7 @@ where
         }
     }
 
-    /// Resize the table to new capacity
+    // Resize the table to new capacity
     fn resize(&mut self, new_capacity: usize)
     where
         K: AsRef<[u8]>,
@@ -387,7 +387,7 @@ where
         }
     }
 
-    /// Hash a key
+    // Hash a key
     #[inline]
     fn hash_key(&self, key: &K) -> u64
     where
@@ -396,14 +396,14 @@ where
         xxhash3_avx2(key.as_ref(), self.seed)
     }
 
-    /// Load a group of control bytes for SIMD processing
+    // Load a group of control bytes for SIMD processing
     #[inline]
     fn load_group(&self, index: usize) -> Group {
         let aligned_index = index & !(GROUP_SIZE - 1);
         Group::load(&self.ctrl[aligned_index..])
     }
 
-    /// Iterate over all key-value pairs
+    // Iterate over all key-value pairs
     pub fn iter(&self) -> SwissTableIter<K, V> {
         SwissTableIter {
             table: self,
@@ -436,7 +436,7 @@ impl<K, V> Drop for SwissTable<K, V> {
     }
 }
 
-/// Iterator over Swiss table entries
+// Iterator over Swiss table entries
 pub struct SwissTableIter<'a, K, V> {
     table: &'a SwissTable<K, V>,
     index: usize,
@@ -459,14 +459,14 @@ impl<'a, K, V> Iterator for SwissTableIter<'a, K, V> {
     }
 }
 
-/// Group of 16 control bytes processed with SIMD
+// Group of 16 control bytes processed with SIMD
 #[derive(Clone, Copy)]
 struct Group {
     data: __m128i,
 }
 
 impl Group {
-    /// Load 16 control bytes from memory
+    // Load 16 control bytes from memory
     #[inline]
     fn load(ctrl: &[u8]) -> Self {
         unsafe {
@@ -475,7 +475,7 @@ impl Group {
         }
     }
 
-    /// Match a specific byte across all 16 slots
+    // Match a specific byte across all 16 slots
     #[inline]
     fn match_byte(&self, byte: u8) -> BitMask {
         unsafe {
@@ -486,33 +486,33 @@ impl Group {
         }
     }
 
-    /// Match empty slots (0xFF)
+    // Match empty slots (0xFF)
     #[inline]
     fn match_empty(&self) -> BitMask {
         self.match_byte(EMPTY)
     }
 
-    /// Match tombstone slots (0xFE)
+    // Match tombstone slots (0xFE)
     #[inline]
     fn match_tombstone(&self) -> BitMask {
         self.match_byte(TOMBSTONE)
     }
 }
 
-/// Bitmask representing SIMD comparison results
+// Bitmask representing SIMD comparison results
 #[derive(Clone, Copy)]
 struct BitMask {
     mask: u16,
 }
 
 impl BitMask {
-    /// Check if any bit is set
+    // Check if any bit is set
     #[inline]
     fn any(&self) -> bool {
         self.mask != 0
     }
 
-    /// Get the index of the first set bit
+    // Get the index of the first set bit
     #[inline]
     fn first_set(&self) -> usize {
         self.mask.trailing_zeros() as usize
@@ -534,7 +534,7 @@ impl Iterator for BitMask {
     }
 }
 
-/// Quadratic probe sequence
+// Quadratic probe sequence
 struct ProbeSeq {
     pos: usize,
     stride: usize,

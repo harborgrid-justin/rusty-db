@@ -14,10 +14,10 @@ use rusty_db::VERSION;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    println!("╔══════════════════════════════════════════════════════════╗");
+    println!("╔═════════════════════════════════════════════════════════╗");
     println!("║          RustyDB CLI - Interactive SQL Client           ║");
-    println!("║                    Version {}                        ║", VERSION);
-    println!("╚══════════════════════════════════════════════════════════╝");
+    println!("║                    Version {}                           ║", VERSION);
+    println!("╚═════════════════════════════════════════════════════════╝");
     println!();
 
     let addr = "127.0.0.1:5432";

@@ -31,26 +31,26 @@ use serde::{Serialize, Deserialize};
 use crate::error::{Result, DbError};
 use super::{TenantId, ResourceConsumption};
 
-/// Metering engine
+// Metering engine
 pub struct MeteringEngine {
-    /// Resource usage tracker
+    // Resource usage tracker
     tracker: Arc<ResourceUsageTracker>,
 
-    /// Quota enforcer
+    // Quota enforcer
     enforcer: Arc<QuotaEnforcer>,
 
-    /// Billing integration
+    // Billing integration
     billing: Arc<BillingIntegration>,
 
-    /// Metrics store
+    // Metrics store
     metrics_store: Arc<RwLock<HashMap<TenantId, Vec<TenantMetrics>>>>,
 
-    /// Active metering jobs
+    // Active metering jobs
     jobs: Arc<RwLock<HashMap<TenantId, MeteringJob>>>,
 }
 
 impl MeteringEngine {
-    /// Create a new metering engine
+    // Create a new metering engine
     pub fn new() -> Self {
         Self {
             tracker: Arc::new(ResourceUsageTracker::new()),
@@ -61,7 +61,7 @@ impl MeteringEngine {
         }
     }
 
-    /// Start metering for a tenant
+    // Start metering for a tenant
     pub async fn start_metering(&self, tenant_id: TenantId, quota: ResourceQuota) -> Result<()> {
         // Register quota
         self.enforcer.set_quota(tenant_id, quota).await?;
@@ -98,18 +98,18 @@ impl MeteringEngine {
         Ok(())
     }
 
-    /// Stop metering for a tenant
+    // Stop metering for a tenant
     pub async fn stop_metering(&self, tenant_id: TenantId) -> Result<()> {
         self.jobs.write().await.remove(&tenant_id);
         Ok(())
     }
 
-    /// Get tenant metrics
+    // Get tenant metrics
     pub async fn get_tenant_metrics(&self, tenant_id: TenantId) -> Result<TenantMetrics> {
         self.tracker.collect_metrics(tenant_id).await
     }
 
-    /// Generate usage report
+    // Generate usage report
     pub async fn generate_usage_report(
         &self,
         tenant_id: TenantId,
@@ -154,12 +154,12 @@ impl MeteringEngine {
         })
     }
 
-    /// Check quota compliance
+    // Check quota compliance
     pub async fn check_quota(&self, tenant_id: TenantId) -> Result<QuotaStatus> {
         self.enforcer.check_quota(tenant_id).await
     }
 
-    /// Export metrics to billing system
+    // Export metrics to billing system
     pub async fn export_to_billing(&self, tenant_id: TenantId) -> Result<()> {
         let metrics = self.get_tenant_metrics(tenant_id).await?;
         self.billing.export_metrics(tenant_id, metrics).await
@@ -174,12 +174,12 @@ struct MeteringJob {
     last_collection_at: u64,
 }
 
-/// Resource usage tracker
+// Resource usage tracker
 pub struct ResourceUsageTracker {
-    /// Current usage per tenant
+    // Current usage per tenant
     current_usage: Arc<RwLock<HashMap<TenantId, ResourceConsumption>>>,
 
-    /// Historical usage
+    // Historical usage
     history: Arc<RwLock<HashMap<TenantId, Vec<UsageSnapshot>>>>,
 }
 
@@ -190,7 +190,7 @@ struct UsageSnapshot {
 }
 
 impl ResourceUsageTracker {
-    /// Create a new resource usage tracker
+    // Create a new resource usage tracker
     pub fn new() -> Self {
         Self {
             current_usage: Arc::new(RwLock::new(HashMap::new())),
@@ -198,7 +198,7 @@ impl ResourceUsageTracker {
         }
     }
 
-    /// Record resource usage
+    // Record resource usage
     pub async fn record_usage(&self, tenant_id: TenantId, consumption: ResourceConsumption) {
         // Update current usage
         self.current_usage
@@ -220,12 +220,12 @@ impl ResourceUsageTracker {
             .push(snapshot);
     }
 
-    /// Get current usage
+    // Get current usage
     pub async fn get_current_usage(&self, tenant_id: TenantId) -> Option<ResourceConsumption> {
         self.current_usage.read().await.get(&tenant_id).cloned()
     }
 
-    /// Collect metrics for a tenant
+    // Collect metrics for a tenant
     pub async fn collect_metrics(&self, tenant_id: TenantId) -> Result<TenantMetrics> {
         let consumption = self
             .get_current_usage(tenant_id)
@@ -243,7 +243,7 @@ impl ResourceUsageTracker {
         })
     }
 
-    /// Get usage history
+    // Get usage history
     pub async fn get_history(
         &self,
         tenant_id: TenantId,
@@ -265,91 +265,91 @@ impl ResourceUsageTracker {
     }
 }
 
-/// Tenant metrics
+// Tenant metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantMetrics {
-    /// Tenant ID
+    // Tenant ID
     pub tenant_id: TenantId,
 
-    /// Timestamp
+    // Timestamp
     pub timestamp: u64,
 
-    /// Resource consumption
+    // Resource consumption
     pub resource_consumption: ResourceConsumption,
 
-    /// Query count
+    // Query count
     pub query_count: u64,
 
-    /// Transaction count
+    // Transaction count
     pub transaction_count: u64,
 
-    /// Error count
+    // Error count
     pub error_count: u64,
 
-    /// Average query time (milliseconds)
+    // Average query time (milliseconds)
     pub avg_query_time_ms: u64,
 }
 
-/// Usage report
+// Usage report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UsageReport {
-    /// Tenant ID
+    // Tenant ID
     pub tenant_id: TenantId,
 
-    /// Report start time
+    // Report start time
     pub start_time: u64,
 
-    /// Report end time
+    // Report end time
     pub end_time: u64,
 
-    /// Total resource consumption
+    // Total resource consumption
     pub total_consumption: ResourceConsumption,
 
-    /// Total cost
+    // Total cost
     pub cost: f64,
 
-    /// Number of metrics in report
+    // Number of metrics in report
     pub metrics_count: usize,
 
-    /// Peak memory usage
+    // Peak memory usage
     pub peak_memory_bytes: u64,
 
-    /// Peak connections
+    // Peak connections
     pub peak_connections: u32,
 }
 
-/// Resource quota
+// Resource quota
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceQuota {
-    /// Memory quota (bytes)
+    // Memory quota (bytes)
     pub memory_quota_bytes: u64,
 
-    /// CPU quota (microseconds per period)
+    // CPU quota (microseconds per period)
     pub cpu_quota_micros: u64,
 
-    /// Storage quota (bytes)
+    // Storage quota (bytes)
     pub storage_quota_bytes: u64,
 
-    /// I/O quota (bytes)
+    // I/O quota (bytes)
     pub io_quota_bytes: u64,
 
-    /// Connection quota
+    // Connection quota
     pub connection_quota: u32,
 
-    /// Monthly budget (dollars)
+    // Monthly budget (dollars)
     pub monthly_budget: Option<f64>,
 
-    /// Enforcement mode
+    // Enforcement mode
     pub enforcement_mode: EnforcementMode,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EnforcementMode {
-    /// Soft limit (warn but allow)
+    // Soft limit (warn but allow)
     Soft,
-    /// Hard limit (block when exceeded)
+    // Hard limit (block when exceeded)
     Hard,
-    /// Throttle (slow down when exceeded)
+    // Throttle (slow down when exceeded)
     Throttle,
 }
 
@@ -367,7 +367,7 @@ impl Default for ResourceQuota {
     }
 }
 
-/// Quota status
+// Quota status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuotaStatus {
     pub tenant_id: TenantId,
@@ -381,20 +381,20 @@ pub struct QuotaStatus {
     pub warnings: Vec<String>,
 }
 
-/// Quota enforcer
+// Quota enforcer
 pub struct QuotaEnforcer {
-    /// Quotas per tenant
+    // Quotas per tenant
     quotas: Arc<RwLock<HashMap<TenantId, ResourceQuota>>>,
 
-    /// Current usage
+    // Current usage
     current_usage: Arc<RwLock<HashMap<TenantId, ResourceConsumption>>>,
 
-    /// Violation counts
+    // Violation counts
     violations: Arc<RwLock<HashMap<TenantId, u64>>>,
 }
 
 impl QuotaEnforcer {
-    /// Create a new quota enforcer
+    // Create a new quota enforcer
     pub fn new() -> Self {
         Self {
             quotas: Arc::new(RwLock::new(HashMap::new())),
@@ -403,18 +403,18 @@ impl QuotaEnforcer {
         }
     }
 
-    /// Set quota for a tenant
+    // Set quota for a tenant
     pub async fn set_quota(&self, tenant_id: TenantId, quota: ResourceQuota) -> Result<()> {
         self.quotas.write().await.insert(tenant_id, quota);
         Ok(())
     }
 
-    /// Update current usage
+    // Update current usage
     pub async fn update_usage(&self, tenant_id: TenantId, consumption: ResourceConsumption) {
         self.current_usage.write().await.insert(tenant_id, consumption);
     }
 
-    /// Check quota compliance
+    // Check quota compliance
     pub async fn check_quota(&self, tenant_id: TenantId) -> Result<QuotaStatus> {
         let quotas = self.quotas.read().await;
         let quota = quotas
@@ -475,7 +475,7 @@ impl QuotaEnforcer {
         })
     }
 
-    /// Enforce quota
+    // Enforce quota
     pub async fn enforce(&self, tenant_id: TenantId, resource_type: ResourceType) -> Result<()> {
         let status = self.check_quota(tenant_id).await?;
 
@@ -509,7 +509,7 @@ impl QuotaEnforcer {
         }
     }
 
-    /// Get violation count
+    // Get violation count
     pub async fn get_violations(&self, tenant_id: TenantId) -> u64 {
         self.violations.read().await.get(&tenant_id).copied().unwrap_or(0)
     }
@@ -524,30 +524,30 @@ pub enum ResourceType {
     Connection,
 }
 
-/// Billing integration
+// Billing integration
 pub struct BillingIntegration {
-    /// Pricing configuration
+    // Pricing configuration
     pricing: Arc<RwLock<PricingConfig>>,
 
-    /// Exported metrics
+    // Exported metrics
     exported_metrics: Arc<RwLock<HashMap<TenantId, Vec<TenantMetrics>>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct PricingConfig {
-    /// Price per GB-hour of memory
+    // Price per GB-hour of memory
     memory_price_per_gb_hour: f64,
 
-    /// Price per CPU-hour
+    // Price per CPU-hour
     cpu_price_per_hour: f64,
 
-    /// Price per GB of storage per month
+    // Price per GB of storage per month
     storage_price_per_gb_month: f64,
 
-    /// Price per GB of I/O
+    // Price per GB of I/O
     io_price_per_gb: f64,
 
-    /// Price per connection-hour
+    // Price per connection-hour
     connection_price_per_hour: f64,
 }
 
@@ -564,7 +564,7 @@ impl Default for PricingConfig {
 }
 
 impl BillingIntegration {
-    /// Create a new billing integration
+    // Create a new billing integration
     pub fn new() -> Self {
         Self {
             pricing: Arc::new(RwLock::new(PricingConfig::default())),
@@ -572,7 +572,7 @@ impl BillingIntegration {
         }
     }
 
-    /// Calculate cost for resource consumption
+    // Calculate cost for resource consumption
     pub async fn calculate_cost(&self, consumption: &ResourceConsumption) -> f64 {
         let pricing = self.pricing.read().await;
 
@@ -589,7 +589,7 @@ impl BillingIntegration {
         memory_cost + cpu_cost + storage_cost + io_cost
     }
 
-    /// Export metrics to external billing system
+    // Export metrics to external billing system
     pub async fn export_metrics(&self, tenant_id: TenantId, metrics: TenantMetrics) -> Result<()> {
         self.exported_metrics
             .write()
@@ -602,7 +602,7 @@ impl BillingIntegration {
         Ok(())
     }
 
-    /// Get exported metrics
+    // Get exported metrics
     pub async fn get_exported_metrics(&self, tenant_id: TenantId) -> Vec<TenantMetrics> {
         self.exported_metrics
             .read()
@@ -612,7 +612,7 @@ impl BillingIntegration {
             .unwrap_or_default()
     }
 
-    /// Update pricing configuration
+    // Update pricing configuration
     pub async fn update_pricing(&self, pricing: PricingConfig) {
         *self.pricing.write().await = pricing;
     }

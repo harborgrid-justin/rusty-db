@@ -1,12 +1,12 @@
-/// Materialized View Manager with Incremental Maintenance
-///
-/// This module provides enterprise-grade materialized view management:
-/// - Incremental view maintenance (IVM) for efficient updates
-/// - Automatic query rewriting to leverage materialized views
-/// - Staleness tracking and refresh policy management
-/// - Support for nested materialized views
-/// - Delta propagation for efficient updates
-/// - View dependency graph management
+// Materialized View Manager with Incremental Maintenance
+//
+// This module provides enterprise-grade materialized view management:
+// - Incremental view maintenance (IVM) for efficient updates
+// - Automatic query rewriting to leverage materialized views
+// - Staleness tracking and refresh policy management
+// - Support for nested materialized views
+// - Delta propagation for efficient updates
+// - View dependency graph management
 
 use std::collections::HashSet;
 use std::time::SystemTime;
@@ -18,7 +18,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::{Duration};
 
-/// Materialized view with full metadata and state tracking
+// Materialized view with full metadata and state tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaterializedView {
     pub id: String,
@@ -37,23 +37,23 @@ pub struct MaterializedView {
     pub dependencies: Vec<String>, // Other MVs this depends on
 }
 
-/// Refresh policy for materialized views
+// Refresh policy for materialized views
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RefreshPolicy {
-    /// Manual refresh only
+    // Manual refresh only
     Manual,
-    /// Refresh on commit (immediate)
+    // Refresh on commit (immediate)
     OnCommit,
-    /// Refresh on demand with staleness tolerance
+    // Refresh on demand with staleness tolerance
     OnDemand {
         max_staleness: Duration,
     },
-    /// Scheduled refresh at intervals
+    // Scheduled refresh at intervals
     Scheduled {
         interval: Duration,
         next_refresh: SystemTime,
     },
-    /// Refresh during specific time windows
+    // Refresh during specific time windows
     TimeWindow {
         start_hour: u8,
         end_hour: u8,
@@ -66,30 +66,30 @@ pub enum Weekday {
     Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday,
 }
 
-/// Maintenance mode for materialized views
+// Maintenance mode for materialized views
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MaintenanceMode {
-    /// Complete refresh - rebuild entire view
+    // Complete refresh - rebuild entire view
     Complete,
-    /// Incremental maintenance - apply deltas only
+    // Incremental maintenance - apply deltas only
     Incremental {
         delta_log: Vec<Delta>,
         max_delta_size: usize,
     },
-    /// Fast refresh - optimized incremental for specific patterns
+    // Fast refresh - optimized incremental for specific patterns
     Fast {
         supports_insert: bool,
         supports_update: bool,
         supports_delete: bool,
     },
-    /// Deferred refresh - batch multiple changes
+    // Deferred refresh - batch multiple changes
     Deferred {
         pending_changes: usize,
         threshold: usize,
     },
 }
 
-/// Delta representing a change to base data
+// Delta representing a change to base data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Delta {
     pub operation: DeltaOperation,
@@ -107,7 +107,7 @@ pub enum DeltaOperation {
     Delete,
 }
 
-/// Staleness information for a materialized view
+// Staleness information for a materialized view
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StalenessInfo {
     pub is_stale: bool,
@@ -117,7 +117,7 @@ pub struct StalenessInfo {
     pub confidence_level: f64, // 0.0 to 1.0
 }
 
-/// Statistics for materialized view
+// Statistics for materialized view
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ViewStatistics {
     pub row_count: u64,
@@ -132,7 +132,7 @@ pub struct ViewStatistics {
     pub query_speedup_ratio: f64,
 }
 
-/// Index on a materialized view
+// Index on a materialized view
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ViewIndex {
     pub name: String,
@@ -159,7 +159,7 @@ pub struct IndexStatistics {
     pub distinct_keys: u64,
 }
 
-/// Partitioning strategy for large materialized views
+// Partitioning strategy for large materialized views
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Partitioning {
     pub strategy: PartitionStrategy,
@@ -174,7 +174,7 @@ pub enum PartitionStrategy {
     List { values: Vec<Vec<String>> },
 }
 
-/// Materialized view manager
+// Materialized view manager
 pub struct MaterializedViewManager {
     views: Arc<RwLock<HashMap<String, MaterializedView>>>,
     dependency_graph: Arc<RwLock<DependencyGraph>>,
@@ -194,7 +194,7 @@ impl MaterializedViewManager {
         }
     }
 
-    /// Create a new materialized view
+    // Create a new materialized view
     pub fn create_view(
         &self,
         name: String,
@@ -242,7 +242,7 @@ impl MaterializedViewManager {
         Ok(id)
     }
 
-    /// Refresh a materialized view
+    // Refresh a materialized view
     pub fn refresh_view(&self, name: &str) -> Result<RefreshResult> {
         let mut views = self.views.write();
         let view = views.get_mut(name)
@@ -271,7 +271,7 @@ impl MaterializedViewManager {
         Ok(result)
     }
 
-    /// Complete refresh - rebuild entire view
+    // Complete refresh - rebuild entire view
     fn complete_refresh(&self, view: &MaterializedView) -> Result<RefreshResult> {
         // In production, would execute view query and replace data
         Ok(RefreshResult {
@@ -283,7 +283,7 @@ impl MaterializedViewManager {
         })
     }
 
-    /// Incremental refresh - apply deltas
+    // Incremental refresh - apply deltas
     fn incremental_refresh(&self, view: &MaterializedView) -> Result<RefreshResult> {
         let delta_log = self.delta_log.read();
         let deltas = delta_log.get(&view.id).cloned().unwrap_or_default();
@@ -319,7 +319,7 @@ impl MaterializedViewManager {
         })
     }
 
-    /// Fast refresh - optimized for specific patterns
+    // Fast refresh - optimized for specific patterns
     fn fast_refresh(&self, _view: &MaterializedView) -> Result<RefreshResult> {
         // Fast refresh for aggregate views
         Ok(RefreshResult {
@@ -331,13 +331,13 @@ impl MaterializedViewManager {
         })
     }
 
-    /// Deferred refresh - batch changes
+    // Deferred refresh - batch changes
     fn deferred_refresh(&self, view: &MaterializedView) -> Result<RefreshResult> {
         // Batch multiple changes together
         self.incremental_refresh(view)
     }
 
-    /// Record a change to a base table
+    // Record a change to a base table
     pub fn record_base_table_change(
         &self,
         table: &str,
@@ -388,12 +388,12 @@ impl MaterializedViewManager {
         Ok(())
     }
 
-    /// Rewrite query to use materialized views if beneficial
+    // Rewrite query to use materialized views if beneficial
     pub fn rewrite_query(&self, query: &str) -> Result<RewriteResult> {
         self.query_rewriter.rewrite(query, &self.views.read())
     }
 
-    /// Get staleness information for a view
+    // Get staleness information for a view
     pub fn get_staleness(&self, name: &str) -> Result<StalenessInfo> {
         let views = self.views.read();
         let view = views.get(name)
@@ -401,7 +401,7 @@ impl MaterializedViewManager {
         Ok(view.staleness_info.clone())
     }
 
-    /// Create index on materialized view
+    // Create index on materialized view
     pub fn create_index(
         &self,
         view_name: &str,
@@ -431,7 +431,7 @@ impl MaterializedViewManager {
         Ok(())
     }
 
-    /// Analyze view and update statistics
+    // Analyze view and update statistics
     pub fn analyze_view(&self, name: &str) -> Result<ViewStatistics> {
         let mut views = self.views.write();
         let view = views.get_mut(name)
@@ -464,7 +464,7 @@ impl Default for ViewStatistics {
     }
 }
 
-/// Result of a refresh operation
+// Result of a refresh operation
 #[derive(Debug, Clone)]
 pub struct RefreshResult {
     pub rows_inserted: usize,
@@ -481,13 +481,13 @@ pub enum RefreshMethod {
     Fast,
 }
 
-/// Dependency graph for materialized views
+// Dependency graph for materialized views
 pub struct DependencyGraph {
-    /// View ID -> Base tables
+    // View ID -> Base tables
     view_to_tables: HashMap<String, HashSet<String>>,
-    /// Table -> View IDs
+    // Table -> View IDs
     table_to_views: HashMap<String, HashSet<String>>,
-    /// View ID -> Dependent view IDs
+    // View ID -> Dependent view IDs
     view_dependencies: HashMap<String, HashSet<String>>,
 }
 
@@ -550,7 +550,7 @@ impl DependencyGraph {
     }
 }
 
-/// Query rewriter to leverage materialized views
+// Query rewriter to leverage materialized views
 pub struct QueryRewriter {
     rewrite_rules: Vec<RewriteRule>,
 }
@@ -566,7 +566,7 @@ impl QueryRewriter {
         }
     }
 
-    /// Attempt to rewrite query using materialized views
+    // Attempt to rewrite query using materialized views
     pub fn rewrite(
         &self,
         query: &str,
@@ -663,7 +663,7 @@ pub enum RewriteRule {
     ProjectionPushdown,
 }
 
-/// Result of query rewriting
+// Result of query rewriting
 #[derive(Debug, Clone)]
 pub struct RewriteResult {
     pub rewritten: bool,
@@ -673,7 +673,7 @@ pub struct RewriteResult {
     pub estimated_speedup: f64,
 }
 
-/// Refresh scheduler for automatic view maintenance
+// Refresh scheduler for automatic view maintenance
 pub struct RefreshScheduler {
     scheduled_views: HashMap<String, ScheduledRefresh>,
 }
@@ -868,5 +868,3 @@ mod tests {
         assert_eq!(refresh_result.method, RefreshMethod::Fast);
     }
 }
-
-

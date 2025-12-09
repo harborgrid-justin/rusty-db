@@ -3,13 +3,13 @@
 
 use std::fmt;
 use std::collections::HashSet;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
-use std::time::{SystemTime};
+use std::time::SystemTime;
 
-/// Consolidation error types
+// Consolidation error types
 #[derive(Debug, Clone)]
 pub enum ConsolidationError {
     InsufficientCapacity(String),
@@ -35,7 +35,7 @@ impl std::error::Error for ConsolidationError {}
 
 pub type ConsolidationResult<T> = Result<T, ConsolidationError>;
 
-/// Workload characteristics for placement decisions
+// Workload characteristics for placement decisions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkloadProfile {
     pub tenant_id: String,
@@ -78,7 +78,7 @@ pub enum TimePattern {
     Sporadic,     // Unpredictable pattern
 }
 
-/// Host/node where tenants can be placed
+// Host/node where tenants can be placed
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsolidationHost {
     pub host_id: String,
@@ -152,7 +152,7 @@ impl ConsolidationHost {
     }
 }
 
-/// Tenant placement on a host
+// Tenant placement on a host
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantPlacement {
     pub tenant_id: String,
@@ -162,7 +162,7 @@ pub struct TenantPlacement {
     pub affinity_score: f64,
 }
 
-/// Affinity and anti-affinity rules
+// Affinity and anti-affinity rules
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AffinityRule {
     pub rule_id: String,
@@ -178,7 +178,7 @@ pub enum AffinityType {
     AntiAffinity, // Tenants should NOT be co-located
 }
 
-/// Consolidation plan
+// Consolidation plan
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsolidationPlan {
     pub plan_id: String,
@@ -216,7 +216,7 @@ pub enum PlanStatus {
     Failed,
 }
 
-/// Consolidation metrics and reporting
+// Consolidation metrics and reporting
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsolidationMetrics {
     pub total_hosts: u32,
@@ -231,7 +231,7 @@ pub struct ConsolidationMetrics {
     pub measurement_time: SystemTime,
 }
 
-/// Main consolidation planner
+// Main consolidation planner
 pub struct ConsolidationPlanner {
     hosts: Arc<RwLock<HashMap<String, ConsolidationHost>>>,
     placements: Arc<RwLock<HashMap<String, TenantPlacement>>>,
@@ -251,19 +251,19 @@ impl ConsolidationPlanner {
         }
     }
 
-    /// Register a host
+    // Register a host
     pub async fn register_host(&self, host: ConsolidationHost) {
         let mut hosts = self.hosts.write().await;
         hosts.insert(host.host_id.clone(), host);
     }
 
-    /// Update workload profile for a tenant
+    // Update workload profile for a tenant
     pub async fn update_workload_profile(&self, profile: WorkloadProfile) {
         let mut profiles = self.workload_profiles.write().await;
         profiles.insert(profile.tenant_id.clone(), profile);
     }
 
-    /// Add affinity rule
+    // Add affinity rule
     pub async fn add_affinity_rule(&self, rule: AffinityRule) -> ConsolidationResult<()> {
         // Validate rule doesn't conflict with existing rules
         let rules = self.affinity_rules.read().await;
@@ -296,7 +296,7 @@ impl ConsolidationPlanner {
         }
     }
 
-    /// Find optimal placement for a tenant
+    // Find optimal placement for a tenant
     pub async fn find_placement(
         &self,
         tenant_id: String,
@@ -421,7 +421,7 @@ impl ConsolidationPlanner {
         score
     }
 
-    /// Place a tenant on a host
+    // Place a tenant on a host
     pub async fn place_tenant(
         &self,
         tenant_id: String,
@@ -475,7 +475,7 @@ impl ConsolidationPlanner {
         Ok(target_host)
     }
 
-    /// Generate consolidation plan
+    // Generate consolidation plan
     pub async fn generate_consolidation_plan(&self) -> ConsolidationResult<ConsolidationPlan> {
         let hosts = self.hosts.read().await;
         let placements = self.placements.read().await;
@@ -532,7 +532,7 @@ impl ConsolidationPlanner {
         Ok(plan)
     }
 
-    /// Execute automatic rebalancing
+    // Execute automatic rebalancing
     pub async fn execute_rebalancing(&self) -> ConsolidationResult<Vec<String>> {
         let plan = self.generate_consolidation_plan().await?;
 
@@ -592,7 +592,7 @@ impl ConsolidationPlanner {
         Ok(())
     }
 
-    /// Get consolidation metrics
+    // Get consolidation metrics
     pub async fn get_metrics(&self) -> ConsolidationMetrics {
         let hosts = self.hosts.read().await;
         let placements = self.placements.read().await;
@@ -654,13 +654,13 @@ impl ConsolidationPlanner {
         }
     }
 
-    /// Get placement for a tenant
+    // Get placement for a tenant
     pub async fn get_placement(&self, tenant_id: &str) -> Option<TenantPlacement> {
         let placements = self.placements.read().await;
         placements.get(tenant_id).cloned()
     }
 
-    /// List all placements
+    // List all placements
     pub async fn list_placements(&self) -> Vec<TenantPlacement> {
         let placements = self.placements.read().await;
         placements.values().cloned().collect()
@@ -766,5 +766,3 @@ mod tests {
         assert!(plan.is_ok());
     }
 }
-
-

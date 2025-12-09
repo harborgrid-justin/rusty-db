@@ -6,7 +6,7 @@
 use std::collections::VecDeque;
 use std::collections::HashSet;
 use std::time::SystemTime;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
 use parking_lot::RwLock;
@@ -16,7 +16,7 @@ use tokio::time::sleep;
 use crate::Result;
 use crate::error::DbError;
 
-/// Types of issues that can be auto-healed
+// Types of issues that can be auto-healed
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum IssueType {
     DataCorruption,
@@ -31,7 +31,7 @@ pub enum IssueType {
     TransactionTimeout,
 }
 
-/// Severity of an issue
+// Severity of an issue
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Severity {
     Low,
@@ -40,7 +40,7 @@ pub enum Severity {
     Critical,
 }
 
-/// Detected issue requiring healing
+// Detected issue requiring healing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DetectedIssue {
     pub issue_id: u64,
@@ -52,7 +52,7 @@ pub struct DetectedIssue {
     pub metadata: HashMap<String, String>,
 }
 
-/// Healing action to resolve an issue
+// Healing action to resolve an issue
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum HealingAction {
     RepairDataBlock { page_id: u64, backup_source: String },
@@ -68,7 +68,7 @@ pub enum HealingAction {
     ClearCache { cache_type: String },
 }
 
-/// Result of a healing action
+// Result of a healing action
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealingResult {
     pub issue_id: u64,
@@ -79,7 +79,7 @@ pub struct HealingResult {
     pub retry_count: usize,
 }
 
-/// Corruption detection using checksums
+// Corruption detection using checksums
 pub struct CorruptionDetector {
     scanned_pages: Arc<RwLock<HashSet<u64>>>,
     corrupted_pages: Arc<RwLock<HashMap<u64, CorruptionInfo>>>,
@@ -176,7 +176,7 @@ impl CorruptionDetector {
     }
 }
 
-/// Index health monitor
+// Index health monitor
 pub struct IndexHealthMonitor {
     index_stats: Arc<RwLock<HashMap<String, IndexHealth>>>,
     check_interval: Duration,
@@ -280,7 +280,7 @@ impl IndexHealthMonitor {
     }
 }
 
-/// Connection pool auto-recovery
+// Connection pool auto-recovery
 pub struct ConnectionPoolManager {
     pool_stats: Arc<RwLock<ConnectionPoolStats>>,
     recovery_threshold: f64,
@@ -343,7 +343,7 @@ impl ConnectionPoolManager {
     }
 }
 
-/// Deadlock detector and resolver
+// Deadlock detector and resolver
 pub struct DeadlockResolver {
     transaction_graph: Arc<RwLock<HashMap<u64, Vec<u64>>>>,  // txn_id -> waiting_for_txns
     detection_interval: Duration,
@@ -452,7 +452,7 @@ impl DeadlockResolver {
     }
 }
 
-/// Memory leak detector
+// Memory leak detector
 pub struct MemoryLeakDetector {
     memory_snapshots: Arc<RwLock<VecDeque<MemorySnapshot>>>,
     leak_threshold: f64,
@@ -527,7 +527,7 @@ impl MemoryLeakDetector {
     }
 }
 
-/// Automatic failover orchestrator
+// Automatic failover orchestrator
 pub struct FailoverOrchestrator {
     node_health: Arc<RwLock<HashMap<String, NodeHealth>>>,
     failover_in_progress: Arc<RwLock<bool>>,
@@ -621,7 +621,7 @@ impl FailoverOrchestrator {
     }
 }
 
-/// Main self-healing coordinator
+// Main self-healing coordinator
 pub struct SelfHealingEngine {
     corruption_detector: Arc<CorruptionDetector>,
     index_monitor: Arc<IndexHealthMonitor>,

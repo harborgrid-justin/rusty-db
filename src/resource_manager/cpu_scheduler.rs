@@ -22,24 +22,24 @@ use crate::error::{Result, DbError};
 use super::consumer_groups::{ConsumerGroupId, PriorityLevel};
 use super::plans::ResourcePlanId;
 
-/// Per-core resource tracker - avoids global lock contention
-/// Cache line aligned to prevent false sharing (64 bytes on most platforms)
+// Per-core resource tracker - avoids global lock contention
+// Cache line aligned to prevent false sharing (64 bytes on most platforms)
 #[repr(C, align(64))]
 pub struct PerCoreResourceTracker {
-    /// CPU time used by this core (nanoseconds)
+    // CPU time used by this core (nanoseconds)
     cpu_used: AtomicU64,
-    /// Memory used by this core (bytes)
+    // Memory used by this core (bytes)
     memory_used: AtomicU64,
-    /// Pending I/O operations
+    // Pending I/O operations
     io_pending: AtomicU64,
-    /// Number of tasks scheduled on this core
+    // Number of tasks scheduled on this core
     tasks_scheduled: AtomicU64,
-    /// Cache line padding to ensure 64-byte alignment
+    // Cache line padding to ensure 64-byte alignment
     _padding: [u8; 32],
 }
 
 impl PerCoreResourceTracker {
-    /// Create a new per-core tracker
+    // Create a new per-core tracker
     #[inline]
     pub fn new() -> Self {
         Self {
@@ -51,136 +51,136 @@ impl PerCoreResourceTracker {
         }
     }
 
-    /// Record CPU time usage (lock-free)
+    // Record CPU time usage (lock-free)
     #[inline]
     pub fn add_cpu_time(&self, nanoseconds: u64) {
         self.cpu_used.fetch_add(nanoseconds, AtomicOrdering::Relaxed);
     }
 
-    /// Record memory usage (lock-free)
+    // Record memory usage (lock-free)
     #[inline]
     pub fn add_memory(&self, bytes: u64) {
         self.memory_used.fetch_add(bytes, AtomicOrdering::Relaxed);
     }
 
-    /// Increment I/O pending count
+    // Increment I/O pending count
     #[inline]
     pub fn inc_io_pending(&self) {
         self.io_pending.fetch_add(1, AtomicOrdering::Relaxed);
     }
 
-    /// Decrement I/O pending count
+    // Decrement I/O pending count
     #[inline]
     pub fn dec_io_pending(&self) {
         self.io_pending.fetch_sub(1, AtomicOrdering::Relaxed);
     }
 
-    /// Increment task count
+    // Increment task count
     #[inline]
     pub fn inc_tasks(&self) {
         self.tasks_scheduled.fetch_add(1, AtomicOrdering::Relaxed);
     }
 
-    /// Get current CPU usage
+    // Get current CPU usage
     #[inline]
     pub fn cpu_usage(&self) -> u64 {
         self.cpu_used.load(AtomicOrdering::Relaxed)
     }
 
-    /// Get current memory usage
+    // Get current memory usage
     #[inline]
     pub fn memory_usage(&self) -> u64 {
         self.memory_used.load(AtomicOrdering::Relaxed)
     }
 
-    /// Get pending I/O count
+    // Get pending I/O count
     #[inline]
     pub fn io_pending_count(&self) -> u64 {
         self.io_pending.load(AtomicOrdering::Relaxed)
     }
 
-    /// Get total tasks scheduled
+    // Get total tasks scheduled
     #[inline]
     pub fn tasks_count(&self) -> u64 {
         self.tasks_scheduled.load(AtomicOrdering::Relaxed)
     }
 }
 
-/// Query identifier
+// Query identifier
 pub type QueryId = u64;
 
-/// Thread/Task identifier
+// Thread/Task identifier
 pub type TaskId = u64;
 
-/// CPU quantum size in milliseconds
+// CPU quantum size in milliseconds
 const DEFAULT_QUANTUM_MS: u64 = 100;
 
-/// Runaway query CPU time threshold (in seconds)
+// Runaway query CPU time threshold (in seconds)
 const RUNAWAY_THRESHOLD_SECS: u64 = 300;
 
-/// CPU scheduling policy
+// CPU scheduling policy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SchedulingPolicy {
-    /// Fair-share scheduling based on shares
+    // Fair-share scheduling based on shares
     FairShare,
-    /// Priority-based round-robin
+    // Priority-based round-robin
     PriorityRoundRobin,
-    /// Weighted fair queuing
+    // Weighted fair queuing
     WeightedFairQueuing,
-    /// Completely fair scheduler (CFS-like)
+    // Completely fair scheduler (CFS-like)
     CompletelyFair,
 }
 
-/// Task state in the scheduler
+// Task state in the scheduler
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TaskState {
-    /// Task is ready to run
+    // Task is ready to run
     Ready,
-    /// Task is currently running
+    // Task is currently running
     Running,
-    /// Task is waiting for I/O
+    // Task is waiting for I/O
     Waiting,
-    /// Task is sleeping
+    // Task is sleeping
     Sleeping,
-    /// Task is throttled due to resource limits
+    // Task is throttled due to resource limits
     Throttled,
-    /// Task is completed
+    // Task is completed
     Completed,
 }
 
-/// Scheduled task information
+// Scheduled task information
 #[derive(Debug, Clone)]
 pub struct ScheduledTask {
-    /// Task identifier
+    // Task identifier
     pub task_id: TaskId,
-    /// Associated query ID
+    // Associated query ID
     pub query_id: QueryId,
-    /// Consumer group
+    // Consumer group
     pub group_id: ConsumerGroupId,
-    /// Task priority
+    // Task priority
     pub priority: PriorityLevel,
-    /// Task state
+    // Task state
     pub state: TaskState,
-    /// CPU time used (nanoseconds)
+    // CPU time used (nanoseconds)
     pub cpu_time_used: u64,
-    /// Number of times scheduled
+    // Number of times scheduled
     pub schedule_count: u64,
-    /// Last scheduled time
+    // Last scheduled time
     pub last_scheduled: Option<Instant>,
-    /// Task creation time
+    // Task creation time
     pub created_at: Instant,
-    /// Virtual runtime (for CFS)
+    // Virtual runtime (for CFS)
     pub vruntime: u64,
-    /// Time slice remaining (nanoseconds)
+    // Time slice remaining (nanoseconds)
     pub time_slice_remaining: u64,
-    /// Whether task is a runaway query
+    // Whether task is a runaway query
     pub is_runaway: bool,
-    /// Throttle factor (1.0 = normal, <1.0 = throttled)
+    // Throttle factor (1.0 = normal, <1.0 = throttled)
     pub throttle_factor: f64,
 }
 
 impl ScheduledTask {
-    /// Create a new scheduled task
+    // Create a new scheduled task
     pub fn new(
         task_id: TaskId,
         query_id: QueryId,
@@ -204,7 +204,7 @@ impl ScheduledTask {
         }
     }
 
-    /// Update CPU time usage
+    // Update CPU time usage
     pub fn add_cpu_time(&mut self, nanoseconds: u64) {
         self.cpu_time_used += nanoseconds;
 
@@ -214,7 +214,7 @@ impl ScheduledTask {
         }
     }
 
-    /// Calculate priority for scheduling
+    // Calculate priority for scheduling
     pub fn effective_priority(&self) -> i32 {
         let base_priority = self.priority.value() as i32;
         let runaway_penalty = if self.is_runaway { 5 } else { 0 };
@@ -222,7 +222,7 @@ impl ScheduledTask {
     }
 }
 
-/// Ordering for priority queue (min-heap based on vruntime)
+// Ordering for priority queue (min-heap based on vruntime)
 impl Ord for ScheduledTask {
     fn cmp(&self, other: &Self) -> Ordering {
         // Lower vruntime = higher priority
@@ -246,19 +246,19 @@ impl PartialEq for ScheduledTask {
 
 impl Eq for ScheduledTask {}
 
-/// CPU group allocation with atomic counters for lock-free updates
+// CPU group allocation with atomic counters for lock-free updates
 #[derive(Debug)]
 pub struct GroupAllocation {
     pub group_id: ConsumerGroupId,
-    /// CPU shares allocated to this group
+    // CPU shares allocated to this group
     pub shares: u32,
-    /// CPU percentage (if using percentage-based allocation)
+    // CPU percentage (if using percentage-based allocation)
     pub percentage: Option<u8>,
-    /// Current CPU time used (nanoseconds) - atomic for lock-free updates
+    // Current CPU time used (nanoseconds) - atomic for lock-free updates
     pub cpu_time_used: AtomicU64,
-    /// Number of active tasks - atomic for lock-free updates
+    // Number of active tasks - atomic for lock-free updates
     pub active_tasks: AtomicUsize,
-    /// Target vruntime (for fair scheduling)
+    // Target vruntime (for fair scheduling)
     pub target_vruntime: AtomicU64,
 }
 
@@ -301,54 +301,54 @@ impl GroupAllocation {
     }
 }
 
-/// CPU scheduler implementation with per-core tracking
+// CPU scheduler implementation with per-core tracking
 pub struct CpuScheduler {
-    /// Scheduling policy
+    // Scheduling policy
     policy: SchedulingPolicy,
-    /// All tasks
+    // All tasks
     tasks: Arc<RwLock<HashMap<TaskId, ScheduledTask>>>,
-    /// Ready queue (priority queue for CFS)
+    // Ready queue (priority queue for CFS)
     ready_queue: Arc<Mutex<BinaryHeap<ScheduledTask>>>,
-    /// Per-group ready queues (for group-based scheduling)
+    // Per-group ready queues (for group-based scheduling)
     group_queues: Arc<RwLock<HashMap<ConsumerGroupId, VecDeque<TaskId>>>>,
-    /// Group allocations
+    // Group allocations
     group_allocations: Arc<RwLock<HashMap<ConsumerGroupId, GroupAllocation>>>,
-    /// Running tasks
+    // Running tasks
     running_tasks: Arc<RwLock<HashSet<TaskId>>>,
-    /// Current quantum size (nanoseconds)
+    // Current quantum size (nanoseconds)
     quantum_ns: u64,
-    /// Next task ID - atomic for lock-free allocation
+    // Next task ID - atomic for lock-free allocation
     next_task_id: AtomicU64,
-    /// Total CPU shares - atomic for lock-free updates
+    // Total CPU shares - atomic for lock-free updates
     total_shares: AtomicU32,
-    /// Minimum vruntime (for CFS) - atomic for lock-free updates
+    // Minimum vruntime (for CFS) - atomic for lock-free updates
     min_vruntime: AtomicU64,
-    /// Per-core resource trackers to avoid false sharing
+    // Per-core resource trackers to avoid false sharing
     per_core_trackers: Vec<PerCoreResourceTracker>,
-    /// Number of CPU cores
+    // Number of CPU cores
     num_cores: usize,
-    /// Runaway query detection enabled
+    // Runaway query detection enabled
     runaway_detection_enabled: bool,
-    /// Runaway query throttle factor
+    // Runaway query throttle factor
     runaway_throttle_factor: f64,
-    /// Scheduler statistics with atomic counters
+    // Scheduler statistics with atomic counters
     stats: Arc<SchedulerStats>,
 }
 
-/// Scheduler statistics with atomic counters for lock-free updates
+// Scheduler statistics with atomic counters for lock-free updates
 #[derive(Debug, Default)]
 pub struct SchedulerStats {
-    /// Total tasks scheduled
+    // Total tasks scheduled
     pub total_scheduled: AtomicU64,
-    /// Total context switches
+    // Total context switches
     pub context_switches: AtomicU64,
-    /// Total CPU time allocated (nanoseconds)
+    // Total CPU time allocated (nanoseconds)
     pub total_cpu_time: AtomicU64,
-    /// Number of runaway queries detected
+    // Number of runaway queries detected
     pub runaway_queries_detected: AtomicU64,
-    /// Number of throttled tasks
+    // Number of throttled tasks
     pub throttled_tasks: AtomicU64,
-    /// Average wait time (nanoseconds)
+    // Average wait time (nanoseconds)
     pub avg_wait_time: AtomicU64,
 }
 
@@ -390,7 +390,7 @@ impl SchedulerStats {
     }
 }
 
-/// Snapshot of scheduler statistics for serialization
+// Snapshot of scheduler statistics for serialization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SchedulerStatsSnapshot {
     pub total_scheduled: u64,
@@ -402,7 +402,7 @@ pub struct SchedulerStatsSnapshot {
 }
 
 impl CpuScheduler {
-    /// Create a new CPU scheduler with per-core tracking
+    // Create a new CPU scheduler with per-core tracking
     pub fn new(policy: SchedulingPolicy) -> Self {
         let num_cores = num_cpus::get();
         let per_core_trackers = (0..num_cores)
@@ -428,7 +428,7 @@ impl CpuScheduler {
         }
     }
 
-    /// Get current core ID (approximation)
+    // Get current core ID (approximation)
     #[inline]
     fn current_core_id(&self) -> usize {
         // Use thread ID as approximation for core ID
@@ -439,14 +439,14 @@ impl CpuScheduler {
         id_hash % self.num_cores
     }
 
-    /// Get per-core tracker for current core
+    // Get per-core tracker for current core
     #[inline]
     fn current_core_tracker(&self) -> &PerCoreResourceTracker {
         let core_id = self.current_core_id();
         &self.per_core_trackers[core_id]
     }
 
-    /// Aggregate statistics across all cores
+    // Aggregate statistics across all cores
     pub fn aggregate_core_stats(&self) -> (u64, u64, u64) {
         let mut total_cpu = 0u64;
         let mut total_memory = 0u64;
@@ -461,7 +461,7 @@ impl CpuScheduler {
         (total_cpu, total_memory, total_io)
     }
 
-    /// Register a consumer group with CPU allocation
+    // Register a consumer group with CPU allocation
     pub fn register_group(
         &self,
         group_id: ConsumerGroupId,
@@ -486,7 +486,7 @@ impl CpuScheduler {
         Ok(())
     }
 
-    /// Error path for group already exists (cold to optimize hot path)
+    // Error path for group already exists (cold to optimize hot path)
     #[cold]
     #[inline(never)]
     fn group_exists_error(&self, group_id: ConsumerGroupId) -> Result<()> {
@@ -495,7 +495,7 @@ impl CpuScheduler {
         ))
     }
 
-    /// Add a new task to the scheduler
+    // Add a new task to the scheduler
     #[inline]
     pub fn add_task(
         &self,
@@ -551,7 +551,7 @@ impl CpuScheduler {
         Ok(task_id)
     }
 
-    /// Schedule next task to run (hot path - inline for performance)
+    // Schedule next task to run (hot path - inline for performance)
     #[inline]
     pub fn schedule_next(&self) -> Option<TaskId> {
         match self.policy {
@@ -562,7 +562,7 @@ impl CpuScheduler {
         }
     }
 
-    /// Completely Fair Scheduler (CFS) implementation (hot path - inline)
+    // Completely Fair Scheduler (CFS) implementation (hot path - inline)
     #[inline]
     fn schedule_cfs(&self) -> Option<TaskId> {
         let mut ready_queue = self.ready_queue.lock().unwrap();
@@ -599,7 +599,7 @@ impl CpuScheduler {
         }
     }
 
-    /// Fair-share scheduling implementation (hot path - inline)
+    // Fair-share scheduling implementation (hot path - inline)
     #[inline]
     fn schedule_fair_share(&self) -> Option<TaskId> {
         let allocations = self.group_allocations.read().unwrap();
@@ -646,7 +646,7 @@ impl CpuScheduler {
         None
     }
 
-    /// Priority-based round-robin scheduling
+    // Priority-based round-robin scheduling
     fn schedule_priority_rr(&self) -> Option<TaskId> {
         let group_queues = self.group_queues.read().unwrap();
         let tasks = self.tasks.read().unwrap();
@@ -679,13 +679,13 @@ impl CpuScheduler {
         None
     }
 
-    /// Weighted Fair Queuing scheduling
+    // Weighted Fair Queuing scheduling
     fn schedule_wfq(&self) -> Option<TaskId> {
         // Similar to fair-share but with virtual time tracking
         self.schedule_fair_share()
     }
 
-    /// Mark task as running (hot path - inline)
+    // Mark task as running (hot path - inline)
     #[inline]
     fn mark_task_running(&self, task_id: TaskId) {
         let mut tasks = self.tasks.write().unwrap();
@@ -706,7 +706,7 @@ impl CpuScheduler {
         self.current_core_tracker().inc_tasks();
     }
 
-    /// Update task after execution (hot path - inline)
+    // Update task after execution (hot path - inline)
     #[inline]
     pub fn update_task(&self, task_id: TaskId, cpu_time_ns: u64) -> Result<()> {
         let mut tasks = self.tasks.write().unwrap();
@@ -748,14 +748,14 @@ impl CpuScheduler {
         Ok(())
     }
 
-    /// Error path for task not found (cold to optimize hot path)
+    // Error path for task not found (cold to optimize hot path)
     #[cold]
     #[inline(never)]
     fn task_not_found_error(&self, task_id: TaskId) -> DbError {
         DbError::NotFound(format!("Task {} not found", task_id))
     }
 
-    /// Calculate task weight for CFS (hot path - inline)
+    // Calculate task weight for CFS (hot path - inline)
     #[inline]
     fn calculate_task_weight(&self, task: &ScheduledTask) -> f64 {
         // Weight based on priority (higher priority = higher weight)
@@ -774,7 +774,7 @@ impl CpuScheduler {
         base_weight * task.throttle_factor
     }
 
-    /// Yield current task (put back in queue)
+    // Yield current task (put back in queue)
     pub fn yield_task(&self, task_id: TaskId) -> Result<()> {
         let mut running = self.running_tasks.write().unwrap();
         running.remove(&task_id);
@@ -803,7 +803,7 @@ impl CpuScheduler {
         Ok(())
     }
 
-    /// Complete a task
+    // Complete a task
     pub fn complete_task(&self, task_id: TaskId) -> Result<()> {
         let mut running = self.running_tasks.write().unwrap();
         running.remove(&task_id);
@@ -827,7 +827,7 @@ impl CpuScheduler {
         Ok(())
     }
 
-    /// Detect and throttle runaway queries
+    // Detect and throttle runaway queries
     pub fn detect_runaway_queries(&self) -> Vec<TaskId> {
         if !self.runaway_detection_enabled {
             return Vec::new();
@@ -851,18 +851,18 @@ impl CpuScheduler {
         runaway_tasks
     }
 
-    /// Get task information
+    // Get task information
     pub fn get_task(&self, task_id: TaskId) -> Option<ScheduledTask> {
         let tasks = self.tasks.read().unwrap();
         tasks.get(&task_id).cloned()
     }
 
-    /// Get scheduler statistics (snapshot for serialization)
+    // Get scheduler statistics (snapshot for serialization)
     pub fn get_stats(&self) -> SchedulerStatsSnapshot {
         self.stats.snapshot()
     }
 
-    /// Get group statistics (clone needed due to Atomics not being Clone)
+    // Get group statistics (clone needed due to Atomics not being Clone)
     pub fn get_group_stats(&self, group_id: ConsumerGroupId) -> Option<(ConsumerGroupId, u32, Option<u8>, u64, usize)> {
         let allocations = self.group_allocations.read().unwrap();
         allocations.get(&group_id).map(|alloc| {
@@ -876,22 +876,22 @@ impl CpuScheduler {
         })
     }
 
-    /// Set quantum size
+    // Set quantum size
     pub fn set_quantum(&mut self, quantum_ms: u64) {
         self.quantum_ns = quantum_ms * 1_000_000;
     }
 
-    /// Enable/disable runaway detection
+    // Enable/disable runaway detection
     pub fn set_runaway_detection(&mut self, enabled: bool) {
         self.runaway_detection_enabled = enabled;
     }
 
-    /// Set runaway throttle factor
+    // Set runaway throttle factor
     pub fn set_runaway_throttle_factor(&mut self, factor: f64) {
         self.runaway_throttle_factor = factor.max(0.1).min(1.0);
     }
 
-    /// Update minimum vruntime (for CFS) - uses atomics
+    // Update minimum vruntime (for CFS) - uses atomics
     pub fn update_min_vruntime(&self) {
         if self.policy != SchedulingPolicy::CompletelyFair {
             return;
@@ -913,7 +913,7 @@ impl CpuScheduler {
         }
     }
 
-    /// Rebalance group allocations
+    // Rebalance group allocations
     pub fn rebalance_groups(&self) -> Result<()> {
         let allocations = self.group_allocations.read().unwrap();
         let total_shares = self.total_shares.load(AtomicOrdering::Relaxed);

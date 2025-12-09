@@ -13,10 +13,10 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::sync::{Arc, RwLock};
 
-/// Spatial Reference System identifier
+// Spatial Reference System identifier
 pub type SridType = i32;
 
-/// Well-known SRIDs
+// Well-known SRIDs
 pub mod well_known_srid {
     use super::SridType;
 
@@ -27,7 +27,7 @@ pub mod well_known_srid {
     pub const EPSG_3395: SridType = 3395;      // World Mercator
 }
 
-/// Spatial Reference System definition
+// Spatial Reference System definition
 #[derive(Debug, Clone)]
 pub struct SpatialReferenceSystem {
     pub srid: SridType,
@@ -40,7 +40,7 @@ pub struct SpatialReferenceSystem {
     pub ellipsoid: Ellipsoid,
 }
 
-/// Projection types
+// Projection types
 #[derive(Debug, Clone, PartialEq)]
 pub enum ProjectionType {
     Geographic,
@@ -52,7 +52,7 @@ pub enum ProjectionType {
     Unknown,
 }
 
-/// Geodetic datum
+// Geodetic datum
 #[derive(Debug, Clone)]
 pub struct Datum {
     pub name: String,
@@ -60,7 +60,7 @@ pub struct Datum {
     pub to_wgs84: Option<[f64; 7]>, // 7-parameter transformation
 }
 
-/// Reference ellipsoid
+// Reference ellipsoid
 #[derive(Debug, Clone)]
 pub struct Ellipsoid {
     pub name: String,
@@ -70,7 +70,7 @@ pub struct Ellipsoid {
 }
 
 impl Ellipsoid {
-    /// WGS84 ellipsoid
+    // WGS84 ellipsoid
     pub fn wgs84() -> Self {
         Self {
             name: "WGS84".to_string(),
@@ -80,7 +80,7 @@ impl Ellipsoid {
         }
     }
 
-    /// GRS 1980 ellipsoid
+    // GRS 1980 ellipsoid
     pub fn grs80() -> Self {
         Self {
             name: "GRS 1980".to_string(),
@@ -90,20 +90,20 @@ impl Ellipsoid {
         }
     }
 
-    /// Calculate eccentricity squared
+    // Calculate eccentricity squared
     pub fn eccentricity_squared(&self) -> f64 {
         let f = 1.0 / self.inverse_flattening;
         2.0 * f - f * f
     }
 
-    /// Calculate second eccentricity squared
+    // Calculate second eccentricity squared
     pub fn second_eccentricity_squared(&self) -> f64 {
         let e2 = self.eccentricity_squared();
         e2 / (1.0 - e2)
     }
 }
 
-/// SRS Registry for managing spatial reference systems
+// SRS Registry for managing spatial reference systems
 pub struct SrsRegistry {
     systems: Arc<RwLock<HashMap<SridType, SpatialReferenceSystem>>>,
 }
@@ -117,7 +117,7 @@ impl SrsRegistry {
         registry
     }
 
-    /// Initialize commonly used spatial reference systems
+    // Initialize commonly used spatial reference systems
     fn initialize_common_srs(&mut self) {
         let wgs84_ellipsoid = Ellipsoid::wgs84();
 
@@ -157,18 +157,18 @@ impl SrsRegistry {
         self.systems.write().unwrap().insert(web_mercator.srid, web_mercator);
     }
 
-    /// Register a new SRS
+    // Register a new SRS
     pub fn register(&self, srs: SpatialReferenceSystem) -> Result<()> {
         self.systems.write().unwrap().insert(srs.srid, srs);
         Ok(())
     }
 
-    /// Get SRS by SRID
+    // Get SRS by SRID
     pub fn get(&self, srid: SridType) -> Option<SpatialReferenceSystem> {
         self.systems.read().unwrap().get(&srid).cloned()
     }
 
-    /// List all registered SRIDs
+    // List all registered SRIDs
     pub fn list_srids(&self) -> Vec<SridType> {
         self.systems.read().unwrap().keys().copied().collect()
     }
@@ -180,7 +180,7 @@ impl Default for SrsRegistry {
     }
 }
 
-/// Coordinate transformation engine
+// Coordinate transformation engine
 pub struct CoordinateTransformer {
     registry: Arc<SrsRegistry>,
 }
@@ -190,7 +190,7 @@ impl CoordinateTransformer {
         Self { registry }
     }
 
-    /// Transform coordinate from source SRS to target SRS
+    // Transform coordinate from source SRS to target SRS
     pub fn transform(
         &self,
         coord: &Coordinate,
@@ -226,7 +226,7 @@ impl CoordinateTransformer {
         }
     }
 
-    /// Transform to WGS84 from any SRS
+    // Transform to WGS84 from any SRS
     fn to_wgs84(&self, coord: &Coordinate, srs: &SpatialReferenceSystem) -> Result<Coordinate> {
         match srs.projection_type {
             ProjectionType::Geographic => Ok(*coord), // Already geographic
@@ -237,7 +237,7 @@ impl CoordinateTransformer {
         }
     }
 
-    /// Transform from WGS84 to any SRS
+    // Transform from WGS84 to any SRS
     fn from_wgs84(&self, coord: &Coordinate, srs: &SpatialReferenceSystem) -> Result<Coordinate> {
         match srs.projection_type {
             ProjectionType::Geographic => Ok(*coord), // Already geographic
@@ -248,7 +248,7 @@ impl CoordinateTransformer {
         }
     }
 
-    /// Convert Web Mercator to WGS84
+    // Convert Web Mercator to WGS84
     fn mercator_to_wgs84(&self, coord: &Coordinate) -> Result<Coordinate> {
         let x = coord.x;
         let y = coord.y;
@@ -259,7 +259,7 @@ impl CoordinateTransformer {
         Ok(Coordinate::new(lon, lat))
     }
 
-    /// Convert WGS84 to Web Mercator
+    // Convert WGS84 to Web Mercator
     fn wgs84_to_mercator(&self, coord: &Coordinate) -> Result<Coordinate> {
         let lon = coord.x;
         let lat = coord.y;
@@ -273,7 +273,7 @@ impl CoordinateTransformer {
         Ok(Coordinate::new(x, y))
     }
 
-    /// Batch transform coordinates
+    // Batch transform coordinates
     pub fn transform_batch(
         &self,
         coords: &[Coordinate],
@@ -287,11 +287,11 @@ impl CoordinateTransformer {
     }
 }
 
-/// UTM (Universal Transverse Mercator) projection
+// UTM (Universal Transverse Mercator) projection
 pub struct UtmProjection;
 
 impl UtmProjection {
-    /// Convert WGS84 lat/lon to UTM
+    // Convert WGS84 lat/lon to UTM
     pub fn wgs84_to_utm(coord: &Coordinate) -> Result<(Coordinate, u8, bool)> {
         let lon = coord.x;
         let lat = coord.y;
@@ -345,7 +345,7 @@ impl UtmProjection {
         Ok((Coordinate::new(x, y), zone, is_northern))
     }
 
-    /// Convert UTM to WGS84 lat/lon
+    // Convert UTM to WGS84 lat/lon
     pub fn utm_to_wgs84(coord: &Coordinate, zone: u8, is_northern: bool) -> Result<Coordinate> {
         let x = coord.x - 500000.0; // Remove false easting
         let y = if is_northern {
@@ -393,7 +393,7 @@ impl UtmProjection {
     }
 }
 
-/// Geodetic calculations
+// Geodetic calculations
 pub struct GeodeticCalculator {
     ellipsoid: Ellipsoid,
 }
@@ -407,7 +407,7 @@ impl GeodeticCalculator {
         Self::new(Ellipsoid::wgs84())
     }
 
-    /// Calculate great circle distance using Vincenty formula
+    // Calculate great circle distance using Vincenty formula
     pub fn vincenty_distance(&self, coord1: &Coordinate, coord2: &Coordinate) -> f64 {
         let lat1 = coord1.y * PI / 180.0;
         let lon1 = coord1.x * PI / 180.0;
@@ -490,7 +490,7 @@ impl GeodeticCalculator {
         b * a_coef * (sigma - delta_sigma)
     }
 
-    /// Calculate great circle distance using Haversine formula (faster, less accurate)
+    // Calculate great circle distance using Haversine formula (faster, less accurate)
     pub fn haversine_distance(&self, coord1: &Coordinate, coord2: &Coordinate) -> f64 {
         let lat1 = coord1.y * PI / 180.0;
         let lon1 = coord1.x * PI / 180.0;
@@ -508,7 +508,7 @@ impl GeodeticCalculator {
         self.ellipsoid.semi_major_axis * c
     }
 
-    /// Calculate bearing from coord1 to coord2
+    // Calculate bearing from coord1 to coord2
     pub fn bearing(&self, coord1: &Coordinate, coord2: &Coordinate) -> f64 {
         let lat1 = coord1.y * PI / 180.0;
         let lon1 = coord1.x * PI / 180.0;
@@ -524,7 +524,7 @@ impl GeodeticCalculator {
         (bearing_rad * 180.0 / PI + 360.0) % 360.0
     }
 
-    /// Calculate destination point given start, bearing, and distance
+    // Calculate destination point given start, bearing, and distance
     pub fn destination(&self, start: &Coordinate, bearing_deg: f64, distance: f64) -> Coordinate {
         let lat1 = start.y * PI / 180.0;
         let lon1 = start.x * PI / 180.0;
@@ -543,7 +543,7 @@ impl GeodeticCalculator {
         Coordinate::new(lon2 * 180.0 / PI, lat2 * 180.0 / PI)
     }
 
-    /// Calculate area of a polygon on the ellipsoid
+    // Calculate area of a polygon on the ellipsoid
     pub fn polygon_area(&self, coords: &[Coordinate]) -> f64 {
         if coords.len() < 3 {
             return 0.0;

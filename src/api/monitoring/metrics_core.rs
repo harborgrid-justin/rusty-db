@@ -55,13 +55,13 @@ type Result<T> = std::result::Result<T, DbError>;
 // SECTION 1: METRICS COLLECTION ENGINE (700+ lines)
 // ============================================================================
 
-/// Label key-value pair for metric dimensions
+// Label key-value pair for metric dimensions
 pub type Label = (String, String);
 
-/// Labels collection type
+// Labels collection type
 pub type Labels = Vec<Label>;
 
-/// Metric identifier combining name and labels
+// Metric identifier combining name and labels
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MetricId {
     pub name: String,
@@ -83,7 +83,7 @@ impl MetricId {
     }
 }
 
-/// Counter metric - monotonically increasing value
+// Counter metric - monotonically increasing value
 #[derive(Debug)]
 pub struct CounterMetric {
     value: AtomicU64,
@@ -117,7 +117,7 @@ impl CounterMetric {
     }
 }
 
-/// Gauge metric - value that can go up or down
+// Gauge metric - value that can go up or down
 #[derive(Debug)]
 pub struct GaugeMetric {
     value: Arc<RwLock<f64>>,
@@ -159,14 +159,14 @@ impl GaugeMetric {
     }
 }
 
-/// Histogram bucket for distribution tracking
+// Histogram bucket for distribution tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistogramBucketData {
     pub upper_bound: f64,
     pub count: u64,
 }
 
-/// Histogram metric - tracks distribution of values
+// Histogram metric - tracks distribution of values
 #[derive(Debug)]
 pub struct HistogramMetric {
     buckets: Vec<(f64, AtomicU64)>, // (upper_bound, count)
@@ -228,7 +228,7 @@ impl HistogramMetric {
     }
 }
 
-/// Summary metric - tracks quantiles and statistics
+// Summary metric - tracks quantiles and statistics
 #[derive(Debug)]
 pub struct SummaryMetric {
     observations: Arc<RwLock<Vec<f64>>>,
@@ -300,7 +300,7 @@ impl SummaryMetric {
     }
 }
 
-/// Unified metric type
+// Unified metric type
 #[derive(Debug)]
 pub enum MetricType {
     Counter(Arc<CounterMetric>),
@@ -309,7 +309,7 @@ pub enum MetricType {
     Summary(Arc<SummaryMetric>),
 }
 
-/// High-precision timing utility
+// High-precision timing utility
 pub struct Timer {
     start: Instant,
 }
@@ -334,7 +334,7 @@ impl Timer {
     }
 }
 
-/// Metric namespace for component isolation
+// Metric namespace for component isolation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricNamespace {
     pub prefix: String,
@@ -363,7 +363,7 @@ impl MetricNamespace {
     }
 }
 
-/// Time window for metric aggregation
+// Time window for metric aggregation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AggregationWindow {
     OneMinute,
@@ -385,7 +385,7 @@ impl AggregationWindow {
     }
 }
 
-/// Aggregated metric data point
+// Aggregated metric data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregatedMetricPoint {
     pub timestamp: SystemTime,

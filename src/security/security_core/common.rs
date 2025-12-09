@@ -4,7 +4,7 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Get current timestamp in seconds
+// Get current timestamp in seconds
 pub fn current_timestamp() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -12,7 +12,7 @@ pub fn current_timestamp() -> i64 {
         .as_secs() as i64
 }
 
-/// Get current timestamp in microseconds
+// Get current timestamp in microseconds
 pub fn current_timestamp_micros() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -20,12 +20,12 @@ pub fn current_timestamp_micros() -> i64 {
         .as_micros() as i64
 }
 
-/// Generate unique ID
+// Generate unique ID
 pub fn generate_id() -> String {
     format!("{:016x}", current_timestamp_micros())
 }
 
-/// Simple glob pattern matching
+// Simple glob pattern matching
 pub fn glob_match(pattern: &str, text: &str) -> bool {
     if pattern == "*" {
         return true;

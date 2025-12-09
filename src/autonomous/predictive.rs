@@ -13,14 +13,14 @@ use serde::{Deserialize, Serialize};
 use crate::Result;
 use crate::error::DbError;
 
-/// Time series data point
+// Time series data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesDataPoint {
     pub timestamp: SystemTime,
     pub value: f64,
 }
 
-/// Forecast result with confidence intervals
+// Forecast result with confidence intervals
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Forecast {
     pub timestamp: SystemTime,
@@ -30,7 +30,7 @@ pub struct Forecast {
     pub confidence_level: f64,
 }
 
-/// Storage growth predictor
+// Storage growth predictor
 pub struct StorageGrowthPredictor {
     historical_data: Arc<RwLock<VecDeque<TimeSeriesDataPoint>>>,
     max_history_size: usize,
@@ -148,7 +148,7 @@ impl StorageGrowthPredictor {
     }
 }
 
-/// Query response time predictor
+// Query response time predictor
 pub struct ResponseTimePredictor {
     query_history: Arc<RwLock<HashMap<u64, VecDeque<f64>>>>,  // query_hash -> execution times
     max_history_per_query: usize,
@@ -218,7 +218,7 @@ impl ResponseTimePredictor {
     }
 }
 
-/// Resource exhaustion forecaster
+// Resource exhaustion forecaster
 pub struct ResourceExhaustionForecaster {
     cpu_history: VecDeque<TimeSeriesDataPoint>,
     memory_history: VecDeque<TimeSeriesDataPoint>,
@@ -384,7 +384,7 @@ impl ResourceExhaustionForecaster {
     }
 }
 
-/// Maintenance window optimizer
+// Maintenance window optimizer
 pub struct MaintenanceWindowOptimizer {
     workload_patterns: Arc<RwLock<HashMap<u8, WorkloadIntensity>>>,  // hour -> intensity
 }
@@ -478,7 +478,7 @@ pub struct MaintenanceWindow {
     pub expected_impact_score: f64,
 }
 
-/// Capacity planning recommendations
+// Capacity planning recommendations
 pub struct CapacityPlanner {
     storage_predictor: Arc<StorageGrowthPredictor>,
     resource_forecaster: Arc<RwLock<ResourceExhaustionForecaster>>,

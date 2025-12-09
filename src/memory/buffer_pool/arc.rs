@@ -1,6 +1,6 @@
-//! Adaptive Replacement Cache (ARC)
-//!
-//! Self-tuning cache balancing recency and frequency.
+// Adaptive Replacement Cache (ARC)
+//
+// Self-tuning cache balancing recency and frequency.
 
 use super::common::*;
 use serde::{Serialize, Deserialize};
@@ -13,31 +13,31 @@ use parking_lot::{Mutex, RwLock as PRwLock};
 // SECTION 2: PAGE CACHE MANAGEMENT (600+ lines)
 // ============================================================================
 
-/// Adaptive Replacement Cache (ARC) implementation
-///
-/// ARC maintains four lists:
-/// - T1: Recently accessed pages (once)
-/// - T2: Frequently accessed pages (multiple times)
-/// - B1: Ghost entries for recently evicted from T1
-/// - B2: Ghost entries for recently evicted from T2
+// Adaptive Replacement Cache (ARC) implementation
+//
+// ARC maintains four lists:
+// - T1: Recently accessed pages (once)
+// - T2: Frequently accessed pages (multiple times)
+// - B1: Ghost entries for recently evicted from T1
+// - B2: Ghost entries for recently evicted from T2
 pub struct AdaptiveReplacementCache {
-    /// Target size for T1
+    // Target size for T1
     p: AtomicUsize,
-    /// Maximum cache size
+    // Maximum cache size
     c: usize,
-    /// T1: Recent cache (frequency = 1)
+    // T1: Recent cache (frequency = 1)
     t1: Mutex<VecDeque<PageId>>,
-    /// T2: Frequent cache (frequency > 1)
+    // T2: Frequent cache (frequency > 1)
     t2: Mutex<VecDeque<PageId>>,
-    /// B1: Ghost entries for T1
+    // B1: Ghost entries for T1
     b1: Mutex<VecDeque<PageId>>,
-    /// B2: Ghost entries for T2
+    // B2: Ghost entries for T2
     b2: Mutex<VecDeque<PageId>>,
-    /// Page directory mapping PageId to location
+    // Page directory mapping PageId to location
     directory: PRwLock<HashMap<PageId, CacheLocation>>,
-    /// Frame storage
+    // Frame storage
     frames: PRwLock<HashMap<PageId, Arc<BufferFrame>>>,
-    /// Statistics
+    // Statistics
     stats: ArcStats,
 }
 
@@ -73,7 +73,7 @@ impl ArcStats {
 }
 
 impl AdaptiveReplacementCache {
-    /// Create new ARC cache with given capacity
+    // Create new ARC cache with given capacity
     pub fn new(capacity: usize) -> Self {
         Self {
             p: AtomicUsize::new(0),
@@ -88,7 +88,7 @@ impl AdaptiveReplacementCache {
         }
     }
 
-    /// Access a page in the cache
+    // Access a page in the cache
     pub fn get(&self, page_id: PageId, page_size: usize) -> Option<Arc<BufferFrame>> {
         let dir = self.directory.read();
 
@@ -128,7 +128,7 @@ impl AdaptiveReplacementCache {
         None
     }
 
-    /// Insert a new page into the cache
+    // Insert a new page into the cache
     pub fn insert(&self, page_id: PageId, frame: Arc<BufferFrame>) {
         let dir = self.directory.read();
 
@@ -170,7 +170,7 @@ impl AdaptiveReplacementCache {
         self.add_to_t1(page_id, frame);
     }
 
-    /// ARC replacement algorithm
+    // ARC replacement algorithm
     fn replace(&self, page_id: PageId, hit_location: CacheLocation) {
         let p = self.p.load(Ordering::Relaxed);
         let t1_len = self.t1.lock().len();
@@ -216,7 +216,7 @@ impl AdaptiveReplacementCache {
         }
     }
 
-    /// Adapt parameter p on B1 hit
+    // Adapt parameter p on B1 hit
     fn adapt_on_b1_hit(&self) {
         let b1_len = self.b1.lock().len();
         let b2_len = self.b2.lock().len();
@@ -232,7 +232,7 @@ impl AdaptiveReplacementCache {
         self.p.store(new_p, Ordering::Relaxed);
     }
 
-    /// Adapt parameter p on B2 hit
+    // Adapt parameter p on B2 hit
     fn adapt_on_b2_hit(&self) {
         let b1_len = self.b1.lock().len();
         let b2_len = self.b2.lock().len();
@@ -338,7 +338,7 @@ impl AdaptiveReplacementCache {
         b2.retain(|&id| id != page_id);
     }
 
-    /// Get cache statistics
+    // Get cache statistics
     pub fn get_stats(&self) -> ArcStatsSnapshot {
         ArcStatsSnapshot {
             hits_t1: self.stats.hits_t1.load(Ordering::Relaxed),

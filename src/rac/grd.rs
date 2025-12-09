@@ -36,120 +36,120 @@ use tokio::sync::mpsc;
 // Constants
 // ============================================================================
 
-/// Number of hash buckets for resource distribution
+// Number of hash buckets for resource distribution
 const HASH_BUCKETS: usize = 65536;
 
-/// Remastering threshold - triggers remaster after this many remote accesses
+// Remastering threshold - triggers remaster after this many remote accesses
 const REMASTER_THRESHOLD: u64 = 100;
 
-/// Affinity tracking window (seconds)
+// Affinity tracking window (seconds)
 const AFFINITY_WINDOW: u64 = 60;
 
-/// Maximum resources per master before rebalancing
+// Maximum resources per master before rebalancing
 const MAX_RESOURCES_PER_MASTER: usize = 100000;
 
-/// GRD freeze timeout during remastering
+// GRD freeze timeout during remastering
 const GRD_FREEZE_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// NEW: Virtual nodes per physical node for consistent hashing (better load distribution)
+// NEW: Virtual nodes per physical node for consistent hashing (better load distribution)
 const VIRTUAL_NODES_PER_NODE: usize = 256;
 
-/// NEW: Load imbalance threshold (±%) before triggering rebalancing
+// NEW: Load imbalance threshold (±%) before triggering rebalancing
 const LOAD_IMBALANCE_THRESHOLD: f64 = 0.20; // 20%
 
 // ============================================================================
 // Resource Directory Entry
 // ============================================================================
 
-/// Entry in the Global Resource Directory
+// Entry in the Global Resource Directory
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceEntry {
-    /// Resource identifier
+    // Resource identifier
     pub resource_id: ResourceId,
 
-    /// Current master instance
+    // Current master instance
     pub master_instance: NodeId,
 
-    /// Secondary/shadow master for failover
+    // Secondary/shadow master for failover
     pub shadow_master: Option<NodeId>,
 
-    /// Current mode on master
+    // Current mode on master
     pub master_mode: BlockMode,
 
-    /// Access statistics
+    // Access statistics
     pub access_stats: AccessStatistics,
 
-    /// Lock Value Block
+    // Lock Value Block
     pub lvb: LockValueBlock,
 
-    /// Resource affinity score per instance
+    // Resource affinity score per instance
     pub affinity: HashMap<NodeId, AffinityScore>,
 
-    /// Last remaster timestamp (skipped for serialization)
+    // Last remaster timestamp (skipped for serialization)
     #[serde(skip)]
     pub last_remaster: Option<Instant>,
 
-    /// Resource flags
+    // Resource flags
     pub flags: ResourceFlags,
 }
 
-/// Access statistics for a resource
+// Access statistics for a resource
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AccessStatistics {
-    /// Total access count
+    // Total access count
     pub total_accesses: u64,
 
-    /// Access count by instance
+    // Access count by instance
     pub accesses_by_instance: HashMap<NodeId, u64>,
 
-    /// Read count
+    // Read count
     pub read_count: u64,
 
-    /// Write count
+    // Write count
     pub write_count: u64,
 
-    /// Remote access count (not from master)
+    // Remote access count (not from master)
     pub remote_accesses: u64,
 
-    /// Last access timestamp
+    // Last access timestamp
     #[serde(skip)]
     pub last_access: Option<Instant>,
 
-    /// Access pattern (hot, warm, cold)
+    // Access pattern (hot, warm, cold)
     pub pattern: AccessPattern,
 }
 
-/// Access pattern classification
+// Access pattern classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum AccessPattern {
-    /// Hot - frequently accessed
+    // Hot - frequently accessed
     Hot,
 
-    /// Warm - moderately accessed
+    // Warm - moderately accessed
     Warm,
 
-    /// Cold - rarely accessed
+    // Cold - rarely accessed
     Cold,
 
-    /// Unknown
+    // Unknown
     #[default]
     Unknown,
 }
 
-/// Affinity score for resource placement
+// Affinity score for resource placement
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AffinityScore {
-    /// Access count from this instance
+    // Access count from this instance
     pub access_count: u64,
 
-    /// Last access timestamp
+    // Last access timestamp
     #[serde(skip, default = "Instant::now")]
     pub last_access: Instant,
 
-    /// Average latency
+    // Average latency
     pub avg_latency_us: u64,
 
-    /// Computed score (higher = better affinity)
+    // Computed score (higher = better affinity)
     pub score: f64,
 }
 
@@ -165,7 +165,7 @@ impl Default for AffinityScore {
 }
 
 impl AffinityScore {
-    /// Update score based on new access
+    // Update score based on new access
     pub fn update(&mut self, latency_us: u64) {
         self.access_count += 1;
         self.last_access = Instant::now();
@@ -182,25 +182,25 @@ impl AffinityScore {
         self.score = self.access_count as f64 / (self.avg_latency_us as f64 + 1.0);
     }
 
-    /// Decay score over time
+    // Decay score over time
     pub fn decay(&mut self, factor: f64) {
         self.score *= factor;
     }
 }
 
-/// Resource flags
+// Resource flags
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ResourceFlags {
-    /// Frozen during remastering
+    // Frozen during remastering
     pub frozen: bool,
 
-    /// Pinned to specific master (no remastering)
+    // Pinned to specific master (no remastering)
     pub pinned: bool,
 
-    /// System resource (higher priority)
+    // System resource (higher priority)
     pub system: bool,
 
-    /// Temporary resource
+    // Temporary resource
     pub temporary: bool,
 }
 
@@ -208,22 +208,22 @@ pub struct ResourceFlags {
 // Hash Bucket
 // ============================================================================
 
-/// Hash bucket containing multiple resources
+// Hash bucket containing multiple resources
 #[derive(Debug, Clone)]
 struct HashBucket {
-    /// Bucket ID
+    // Bucket ID
     bucket_id: usize,
 
-    /// Master instance for this bucket
+    // Master instance for this bucket
     master_instance: NodeId,
 
-    /// Resources in this bucket
+    // Resources in this bucket
     resources: HashMap<ResourceId, ResourceEntry>,
 
-    /// Total access count for bucket
+    // Total access count for bucket
     total_accesses: u64,
 
-    /// Last rebalance timestamp
+    // Last rebalance timestamp
     last_rebalance: Instant,
 }
 
@@ -243,32 +243,32 @@ impl HashBucket {
 // Global Resource Directory
 // ============================================================================
 
-/// Global Resource Directory - manages resource ownership and mastering
+// Global Resource Directory - manages resource ownership and mastering
 pub struct GlobalResourceDirectory {
-    /// Local node identifier
+    // Local node identifier
     node_id: NodeId,
 
-    /// Hash buckets for resource distribution
+    // Hash buckets for resource distribution
     buckets: Arc<RwLock<Vec<HashBucket>>>,
 
-    /// Active cluster members
+    // Active cluster members
     cluster_members: Arc<RwLock<HashSet<NodeId>>>,
 
-    /// Remastering queue
+    // Remastering queue
     remaster_queue: Arc<RwLock<VecDeque<RemasterRequest>>>,
 
-    /// GRD configuration
+    // GRD configuration
     config: GrdConfig,
 
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<GrdStatistics>>,
 
-    /// Message channel for remastering coordination
+    // Message channel for remastering coordination
     message_tx: mpsc::UnboundedSender<GrdMessage>,
     message_rx: Arc<tokio::sync::Mutex<mpsc::UnboundedReceiver<GrdMessage>>>,
 }
 
-/// Remaster request
+// Remaster request
 #[derive(Debug, Clone)]
 struct RemasterRequest {
     resource_id: ResourceId,
@@ -278,50 +278,50 @@ struct RemasterRequest {
     initiated_at: Instant,
 }
 
-/// Reason for remastering
+// Reason for remastering
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum RemasterReason {
-    /// High remote access count
+    // High remote access count
     Affinity,
 
-    /// Load balancing
+    // Load balancing
     LoadBalance,
 
-    /// Node failure
+    // Node failure
     Failover,
 
-    /// Manual administrative action
+    // Manual administrative action
     Manual,
 }
 
-/// GRD configuration
+// GRD configuration
 #[derive(Debug, Clone)]
 pub struct GrdConfig {
-    /// Enable automatic remastering
+    // Enable automatic remastering
     pub auto_remaster: bool,
 
-    /// Enable affinity-based placement
+    // Enable affinity-based placement
     pub affinity_enabled: bool,
 
-    /// Remaster threshold
+    // Remaster threshold
     pub remaster_threshold: u64,
 
-    /// Affinity decay factor
+    // Affinity decay factor
     pub affinity_decay: f64,
 
-    /// Load balance interval
+    // Load balance interval
     pub load_balance_interval: Duration,
 
-    /// NEW: Enable consistent hashing with virtual nodes
+    // NEW: Enable consistent hashing with virtual nodes
     pub consistent_hashing: bool,
 
-    /// NEW: Number of virtual nodes per physical node
+    // NEW: Number of virtual nodes per physical node
     pub virtual_nodes: usize,
 
-    /// NEW: Enable proactive load balancing (before threshold breach)
+    // NEW: Enable proactive load balancing (before threshold breach)
     pub proactive_balancing: bool,
 
-    /// NEW: Load imbalance threshold for triggering rebalance
+    // NEW: Load imbalance threshold for triggering rebalance
     pub load_imbalance_threshold: f64,
 }
 
@@ -341,85 +341,85 @@ impl Default for GrdConfig {
     }
 }
 
-/// GRD statistics
+// GRD statistics
 #[derive(Debug, Default, Clone)]
 pub struct GrdStatistics {
-    /// Total resources managed
+    // Total resources managed
     pub total_resources: u64,
 
-    /// Total buckets
+    // Total buckets
     pub total_buckets: usize,
 
-    /// Total remasters performed
+    // Total remasters performed
     pub total_remasters: u64,
 
-    /// Affinity-based remasters
+    // Affinity-based remasters
     pub affinity_remasters: u64,
 
-    /// Load balance remasters
+    // Load balance remasters
     pub load_balance_remasters: u64,
 
-    /// Failover remasters
+    // Failover remasters
     pub failover_remasters: u64,
 
-    /// Average remaster time
+    // Average remaster time
     pub avg_remaster_time_us: u64,
 
-    /// Hot resources count
+    // Hot resources count
     pub hot_resources: u64,
 
-    /// Warm resources count
+    // Warm resources count
     pub warm_resources: u64,
 
-    /// Cold resources count
+    // Cold resources count
     pub cold_resources: u64,
 
-    /// NEW: Consistent hashing metrics
-    /// Load distribution variance (lower is better)
+    // NEW: Consistent hashing metrics
+    // Load distribution variance (lower is better)
     pub load_variance: f64,
 
-    /// Proactive rebalances performed
+    // Proactive rebalances performed
     pub proactive_rebalances: u64,
 
-    /// Virtual node count
+    // Virtual node count
     pub virtual_node_count: usize,
 
-    /// P99 lookup latency (microseconds)
+    // P99 lookup latency (microseconds)
     pub p99_lookup_latency_us: u64,
 }
 
-/// GRD message types
+// GRD message types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum GrdMessage {
-    /// Initiate remaster
+    // Initiate remaster
     RemasterRequest {
         resource_id: ResourceId,
         new_master: NodeId,
         reason: String,
     },
 
-    /// Acknowledge remaster
+    // Acknowledge remaster
     RemasterAck {
         resource_id: ResourceId,
         success: bool,
     },
 
-    /// Freeze resource during remaster
+    // Freeze resource during remaster
     FreezeResource {
         resource_id: ResourceId,
     },
 
-    /// Unfreeze resource after remaster
+    // Unfreeze resource after remaster
     UnfreezeResource {
         resource_id: ResourceId,
     },
 
-    /// Query resource master
+    // Query resource master
     QueryMaster {
         resource_id: ResourceId,
     },
 
-    /// Response with master info
+    // Response with master info
     MasterInfo {
         resource_id: ResourceId,
         master: NodeId,
@@ -428,7 +428,7 @@ enum GrdMessage {
 }
 
 impl GlobalResourceDirectory {
-    /// Create a new Global Resource Directory
+    // Create a new Global Resource Directory
     pub fn new(node_id: NodeId, cluster_members: Vec<NodeId>, config: GrdConfig) -> Self {
         let mut buckets = Vec::with_capacity(HASH_BUCKETS);
 
@@ -460,7 +460,7 @@ impl GlobalResourceDirectory {
         }
     }
 
-    /// Get master instance for a resource
+    // Get master instance for a resource
     pub fn get_master(&self, resource_id: &ResourceId) -> Result<NodeId, DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let buckets = self.buckets.read();
@@ -477,7 +477,7 @@ impl GlobalResourceDirectory {
         }
     }
 
-    /// Register a resource in the directory
+    // Register a resource in the directory
     pub fn register_resource(
         &self,
         resource_id: ResourceId,
@@ -507,7 +507,7 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Record resource access for affinity tracking
+    // Record resource access for affinity tracking
     pub fn record_access(
         &self,
         resource_id: &ResourceId,
@@ -563,7 +563,7 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Classify access pattern based on statistics
+    // Classify access pattern based on statistics
     fn classify_access_pattern(&self, stats: &AccessStatistics) -> AccessPattern {
         let elapsed = stats.last_access
             .map(|t| t.elapsed().as_secs())
@@ -576,7 +576,7 @@ impl GlobalResourceDirectory {
         }
     }
 
-    /// Check if resource should be remastered
+    // Check if resource should be remastered
     fn should_remaster(&self, entry: &ResourceEntry) -> bool {
         if entry.flags.pinned || entry.flags.frozen {
             return false;
@@ -598,7 +598,7 @@ impl GlobalResourceDirectory {
         false
     }
 
-    /// Initiate resource remastering
+    // Initiate resource remastering
     pub fn initiate_remaster(
         &self,
         resource_id: ResourceId,
@@ -636,7 +636,7 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Execute pending remaster operations
+    // Execute pending remaster operations
     pub async fn execute_remaster(&self) -> Result<(), DbError> {
         let request = {
             let mut queue = self.remaster_queue.write();
@@ -673,7 +673,7 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Perform the actual remaster operation
+    // Perform the actual remaster operation
     async fn perform_remaster(&self, request: &RemasterRequest) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(&request.resource_id);
         let mut buckets = self.buckets.write();
@@ -703,7 +703,7 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Freeze resource during remastering
+    // Freeze resource during remastering
     fn freeze_resource(&self, resource_id: &ResourceId) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
@@ -718,7 +718,7 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Unfreeze resource after remastering
+    // Unfreeze resource after remastering
     fn unfreeze_resource(&self, resource_id: &ResourceId) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
@@ -733,8 +733,8 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Perform load balancing across cluster
-    /// NEW: Enhanced with proactive balancing and variance tracking
+    // Perform load balancing across cluster
+    // NEW: Enhanced with proactive balancing and variance tracking
     pub fn load_balance(&self) -> Result<(), DbError> {
         let members = self.cluster_members.read();
         let member_count = members.len();
@@ -803,7 +803,7 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Add new cluster member
+    // Add new cluster member
     pub fn add_member(&self, node_id: NodeId) -> Result<(), DbError> {
         let mut members = self.cluster_members.write();
         members.insert(node_id);
@@ -815,7 +815,7 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Remove cluster member (failover)
+    // Remove cluster member (failover)
     pub fn remove_member(&self, node_id: &NodeId) -> Result<(), DbError> {
         let mut members = self.cluster_members.write();
         members.remove(node_id);
@@ -854,8 +854,8 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Hash resource to bucket
-    /// NEW: Uses xxHash (faster) for consistent hashing when enabled
+    // Hash resource to bucket
+    // NEW: Uses xxHash (faster) for consistent hashing when enabled
     fn hash_resource(&self, resource_id: &ResourceId) -> usize {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
@@ -873,9 +873,9 @@ impl GlobalResourceDirectory {
         }
     }
 
-    /// NEW: Consistent hashing implementation
-    /// Maps resources to virtual nodes, which map to physical nodes
-    /// Provides better load distribution and minimal remapping on node changes
+    // NEW: Consistent hashing implementation
+    // Maps resources to virtual nodes, which map to physical nodes
+    // Provides better load distribution and minimal remapping on node changes
     fn hash_resource_consistent(&self, resource_id: &ResourceId) -> usize {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
@@ -894,7 +894,7 @@ impl GlobalResourceDirectory {
         virtual_node_id % HASH_BUCKETS
     }
 
-    /// Get GRD statistics
+    // Get GRD statistics
     pub fn get_statistics(&self) -> GrdStatistics {
         let mut stats = self.stats.read().clone();
 
@@ -922,7 +922,7 @@ impl GlobalResourceDirectory {
         stats
     }
 
-    /// Get resource information
+    // Get resource information
     pub fn get_resource_info(&self, resource_id: &ResourceId) -> Result<ResourceEntry, DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let buckets = self.buckets.read();
@@ -935,7 +935,7 @@ impl GlobalResourceDirectory {
             .ok_or_else(|| DbError::NotFound("Resource not found".to_string()))
     }
 
-    /// Update Lock Value Block for resource
+    // Update Lock Value Block for resource
     pub fn update_lvb(&self, resource_id: &ResourceId, lvb: LockValueBlock) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
@@ -950,7 +950,7 @@ impl GlobalResourceDirectory {
         Ok(())
     }
 
-    /// Decay affinity scores over time
+    // Decay affinity scores over time
     pub fn decay_affinity(&self) {
         let mut buckets = self.buckets.write();
 
@@ -963,7 +963,7 @@ impl GlobalResourceDirectory {
         }
     }
 
-    /// Get cluster topology
+    // Get cluster topology
     pub fn get_topology(&self) -> ClusterTopology {
         let members = self.cluster_members.read().iter().cloned().collect();
         let buckets = self.buckets.read();
@@ -984,7 +984,7 @@ impl GlobalResourceDirectory {
     }
 }
 
-/// Cluster topology information
+// Cluster topology information
 #[derive(Debug, Clone)]
 pub struct ClusterTopology {
     pub members: Vec<NodeId>,

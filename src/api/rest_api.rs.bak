@@ -48,49 +48,49 @@ type Result<T> = std::result::Result<T, DbError>;
 // API Configuration and Server
 // ============================================================================
 
-/// REST API server configuration
+// REST API server configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiConfig {
-    /// API listen address
+    // API listen address
     pub listen_addr: String,
 
-    /// API port
+    // API port
     pub port: u16,
 
-    /// Enable CORS
+    // Enable CORS
     pub enable_cors: bool,
 
-    /// CORS allowed origins
+    // CORS allowed origins
     pub cors_origins: Vec<String>,
 
-    /// Rate limit (requests per second)
+    // Rate limit (requests per second)
     pub rate_limit_rps: u64,
 
-    /// Request timeout in seconds
+    // Request timeout in seconds
     pub request_timeout_secs: u64,
 
-    /// Max request body size in bytes
+    // Max request body size in bytes
     pub max_body_size: usize,
 
-    /// Enable Swagger UI
+    // Enable Swagger UI
     pub enable_swagger: bool,
 
-    /// Enable authentication
+    // Enable authentication
     pub enable_auth: bool,
 
-    /// API key for authentication
+    // API key for authentication
     pub api_key: Option<String>,
 
-    /// Max concurrent connections
+    // Max concurrent connections
     pub max_connections: usize,
 
-    /// Enable request logging
+    // Enable request logging
     pub enable_logging: bool,
 
-    /// Pagination default page size
+    // Pagination default page size
     pub default_page_size: usize,
 
-    /// Pagination max page size
+    // Pagination max page size
     pub max_page_size: usize,
 }
 
@@ -115,13 +115,13 @@ impl Default for ApiConfig {
     }
 }
 
-/// REST API server
+// REST API server
 pub struct RestApiServer {
     config: ApiConfig,
     state: Arc<ApiState>,
 }
 
-/// Shared API state
+// Shared API state
 #[derive(Clone)]
 struct ApiState {
     config: ApiConfig,
@@ -132,7 +132,7 @@ struct ApiState {
     rate_limiter: Arc<RwLock<RateLimiter>>,
 }
 
-/// API error type
+// API error type
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ApiError {
     pub code: String,
@@ -288,55 +288,55 @@ struct ApiDoc;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct QueryRequest {
-    /// SQL query to execute
+    // SQL query to execute
     pub sql: String,
 
-    /// Query parameters
+    // Query parameters
     pub params: Option<Vec<serde_json::Value>>,
 
-    /// Maximum number of rows to return
+    // Maximum number of rows to return
     pub limit: Option<usize>,
 
-    /// Offset for pagination
+    // Offset for pagination
     pub offset: Option<usize>,
 
-    /// Timeout in seconds
+    // Timeout in seconds
     pub timeout: Option<u64>,
 
-    /// Return query plan
+    // Return query plan
     pub explain: Option<bool>,
 
-    /// Transaction ID (if part of transaction)
+    // Transaction ID (if part of transaction)
     pub transaction_id: Option<TransactionId>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct QueryResponse {
-    /// Query execution ID
+    // Query execution ID
     pub query_id: String,
 
-    /// Result rows
+    // Result rows
     pub rows: Vec<HashMap<String, serde_json::Value>>,
 
-    /// Column metadata
+    // Column metadata
     pub columns: Vec<ColumnMetadata>,
 
-    /// Number of rows returned
+    // Number of rows returned
     pub row_count: usize,
 
-    /// Number of rows affected (for INSERT/UPDATE/DELETE)
+    // Number of rows affected (for INSERT/UPDATE/DELETE)
     pub affected_rows: Option<usize>,
 
-    /// Execution time in milliseconds
+    // Execution time in milliseconds
     pub execution_time_ms: u64,
 
-    /// Query plan (if requested)
+    // Query plan (if requested)
     pub plan: Option<String>,
 
-    /// Warnings
+    // Warnings
     pub warnings: Vec<String>,
 
-    /// Has more results
+    // Has more results
     pub has_more: bool,
 }
 
@@ -351,34 +351,34 @@ pub struct ColumnMetadata {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BatchRequest {
-    /// List of SQL statements to execute
+    // List of SQL statements to execute
     pub statements: Vec<String>,
 
-    /// Execute in transaction
+    // Execute in transaction
     pub transactional: bool,
 
-    /// Stop on error
+    // Stop on error
     pub stop_on_error: bool,
 
-    /// Transaction isolation level
+    // Transaction isolation level
     pub isolation: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BatchResponse {
-    /// Batch execution ID
+    // Batch execution ID
     pub batch_id: String,
 
-    /// Results for each statement
+    // Results for each statement
     pub results: Vec<BatchStatementResult>,
 
-    /// Total execution time
+    // Total execution time
     pub total_time_ms: u64,
 
-    /// Number of successful statements
+    // Number of successful statements
     pub success_count: usize,
 
-    /// Number of failed statements
+    // Number of failed statements
     pub failure_count: usize,
 }
 
@@ -879,7 +879,7 @@ impl<T> PaginatedResponse<T> {
 // ============================================================================
 
 impl RestApiServer {
-    /// Create a new REST API server
+    // Create a new REST API server
     pub async fn new(config: ApiConfig) -> std::result::Result<Self, DbError> {
         let state = Arc::new(ApiState {
             config: config.clone(),
@@ -896,7 +896,7 @@ impl RestApiServer {
         Ok(Self { config, state })
     }
 
-    /// Build the router with all endpoints
+    // Build the router with all endpoints
     fn build_router(&self) -> Router {
         let mut router = Router::new()
             // Core Database Operations API
@@ -993,7 +993,7 @@ impl RestApiServer {
         }
     }
 
-    /// Run the API server
+    // Run the API server
     pub async fn run(&self, addr: &str) -> std::result::Result<(), DbError> {
         let router = self.build_router();
 
@@ -1015,7 +1015,7 @@ impl RestApiServer {
 // Handler Functions - Core Database Operations (700+ lines)
 // ============================================================================
 
-/// Execute a SQL query
+// Execute a SQL query
 #[utoipa::path(
     post,
     path = "/api/v1/query",
@@ -1089,7 +1089,7 @@ async fn execute_query(
     Ok(AxumJson(response))
 }
 
-/// Execute batch operations
+// Execute batch operations
 #[utoipa::path(
     post,
     path = "/api/v1/batch",
@@ -1153,7 +1153,7 @@ async fn execute_batch(
     Ok(AxumJson(response))
 }
 
-/// Get table information
+// Get table information
 #[utoipa::path(
     get,
     path = "/api/v1/tables/{name}",
@@ -1183,7 +1183,7 @@ async fn get_table(
     Ok(AxumJson(table))
 }
 
-/// Create a new table
+// Create a new table
 #[utoipa::path(
     post,
     path = "/api/v1/tables/{name}",
@@ -1203,7 +1203,7 @@ async fn create_table(
     Ok(StatusCode::CREATED)
 }
 
-/// Update table schema
+// Update table schema
 #[utoipa::path(
     put,
     path = "/api/v1/tables/{name}",
@@ -1223,7 +1223,7 @@ async fn update_table(
     Ok(StatusCode::OK)
 }
 
-/// Delete a table
+// Delete a table
 #[utoipa::path(
     delete,
     path = "/api/v1/tables/{name}",
@@ -1241,7 +1241,7 @@ async fn delete_table(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Get database schema
+// Get database schema
 #[utoipa::path(
     get,
     path = "/api/v1/schema",
@@ -1265,7 +1265,7 @@ async fn get_schema(
     Ok(AxumJson(response))
 }
 
-/// Begin a new transaction
+// Begin a new transaction
 #[utoipa::path(
     post,
     path = "/api/v1/transactions",
@@ -1294,7 +1294,7 @@ async fn begin_transaction(
     Ok(AxumJson(response))
 }
 
-/// Commit a transaction
+// Commit a transaction
 #[utoipa::path(
     post,
     path = "/api/v1/transactions/{id}/commit",
@@ -1315,7 +1315,7 @@ async fn commit_transaction(
     Ok(StatusCode::OK)
 }
 
-/// Rollback a transaction
+// Rollback a transaction
 #[utoipa::path(
     post,
     path = "/api/v1/transactions/{id}/rollback",
@@ -1336,7 +1336,7 @@ async fn rollback_transaction(
     Ok(StatusCode::OK)
 }
 
-/// WebSocket endpoint for streaming query results
+// WebSocket endpoint for streaming query results
 async fn websocket_stream(
     ws: WebSocketUpgrade,
     State(state): State<Arc<ApiState>>,
@@ -1376,7 +1376,7 @@ async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
 // Handler Functions - Administration API (600+ lines)
 // ============================================================================
 
-/// Get database configuration
+// Get database configuration
 #[utoipa::path(
     get,
     path = "/api/v1/admin/config",
@@ -1402,7 +1402,7 @@ async fn get_config(
     Ok(AxumJson(response))
 }
 
-/// Update database configuration
+// Update database configuration
 #[utoipa::path(
     put,
     path = "/api/v1/admin/config",
@@ -1421,7 +1421,7 @@ async fn update_config(
     Ok(StatusCode::OK)
 }
 
-/// Create a backup
+// Create a backup
 #[utoipa::path(
     post,
     path = "/api/v1/admin/backup",
@@ -1449,7 +1449,7 @@ async fn create_backup(
     Ok(AxumJson(response))
 }
 
-/// Health check endpoint
+// Health check endpoint
 #[utoipa::path(
     get,
     path = "/api/v1/admin/health",
@@ -1485,7 +1485,7 @@ async fn get_health(
     Ok(AxumJson(response))
 }
 
-/// Run maintenance operations
+// Run maintenance operations
 #[utoipa::path(
     post,
     path = "/api/v1/admin/maintenance",
@@ -1510,7 +1510,7 @@ async fn run_maintenance(
     }
 }
 
-/// Get all users
+// Get all users
 #[utoipa::path(
     get,
     path = "/api/v1/admin/users",
@@ -1530,7 +1530,7 @@ async fn get_users(
     Ok(AxumJson(response))
 }
 
-/// Create a new user
+// Create a new user
 #[utoipa::path(
     post,
     path = "/api/v1/admin/users",
@@ -1557,7 +1557,7 @@ async fn create_user(
     Ok(AxumJson(user))
 }
 
-/// Get user by ID
+// Get user by ID
 async fn get_user(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -1566,7 +1566,7 @@ async fn get_user(
     Err(ApiError::new("NOT_FOUND", "User not found"))
 }
 
-/// Update user
+// Update user
 async fn update_user(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -1576,7 +1576,7 @@ async fn update_user(
     Ok(StatusCode::OK)
 }
 
-/// Delete user
+// Delete user
 async fn delete_user(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -1585,7 +1585,7 @@ async fn delete_user(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Get all roles
+// Get all roles
 #[utoipa::path(
     get,
     path = "/api/v1/admin/roles",
@@ -1601,7 +1601,7 @@ async fn get_roles(
     Ok(AxumJson(vec![]))
 }
 
-/// Create a new role
+// Create a new role
 #[utoipa::path(
     post,
     path = "/api/v1/admin/roles",
@@ -1626,7 +1626,7 @@ async fn create_role(
     Ok(AxumJson(role))
 }
 
-/// Get role by ID
+// Get role by ID
 async fn get_role(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -1634,7 +1634,7 @@ async fn get_role(
     Err(ApiError::new("NOT_FOUND", "Role not found"))
 }
 
-/// Update role
+// Update role
 async fn update_role(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -1643,7 +1643,7 @@ async fn update_role(
     Ok(StatusCode::OK)
 }
 
-/// Delete role
+// Delete role
 async fn delete_role(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -1655,7 +1655,7 @@ async fn delete_role(
 // Handler Functions - Monitoring & Metrics API (500+ lines)
 // ============================================================================
 
-/// Get metrics
+// Get metrics
 #[utoipa::path(
     get,
     path = "/api/v1/metrics",
@@ -1698,7 +1698,7 @@ async fn get_metrics(
     Ok(AxumJson(response))
 }
 
-/// Get Prometheus-formatted metrics
+// Get Prometheus-formatted metrics
 async fn get_prometheus_metrics(
     State(state): State<Arc<ApiState>>,
 ) -> ApiResult<String> {
@@ -1720,7 +1720,7 @@ async fn get_prometheus_metrics(
     Ok(output)
 }
 
-/// Get session statistics
+// Get session statistics
 #[utoipa::path(
     get,
     path = "/api/v1/stats/sessions",
@@ -1753,7 +1753,7 @@ async fn get_session_stats(
     Ok(AxumJson(response))
 }
 
-/// Get query statistics
+// Get query statistics
 #[utoipa::path(
     get,
     path = "/api/v1/stats/queries",
@@ -1778,7 +1778,7 @@ async fn get_query_stats(
     Ok(AxumJson(response))
 }
 
-/// Get performance data
+// Get performance data
 #[utoipa::path(
     get,
     path = "/api/v1/stats/performance",
@@ -1806,7 +1806,7 @@ async fn get_performance_data(
     Ok(AxumJson(response))
 }
 
-/// Get logs
+// Get logs
 #[utoipa::path(
     get,
     path = "/api/v1/logs",
@@ -1829,7 +1829,7 @@ async fn get_logs(
     Ok(AxumJson(response))
 }
 
-/// Get alerts
+// Get alerts
 #[utoipa::path(
     get,
     path = "/api/v1/alerts",
@@ -1849,7 +1849,7 @@ async fn get_alerts(
     Ok(AxumJson(response))
 }
 
-/// Acknowledge an alert
+// Acknowledge an alert
 async fn acknowledge_alert(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
@@ -1862,7 +1862,7 @@ async fn acknowledge_alert(
 // Handler Functions - Pool & Connection Management API (600+ lines)
 // ============================================================================
 
-/// Get all connection pools
+// Get all connection pools
 #[utoipa::path(
     get,
     path = "/api/v1/pools",
@@ -1889,7 +1889,7 @@ async fn get_pools(
     Ok(AxumJson(pools))
 }
 
-/// Get pool by ID
+// Get pool by ID
 async fn get_pool(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<String>,
@@ -1906,7 +1906,7 @@ async fn get_pool(
     Ok(AxumJson(pool))
 }
 
-/// Update pool configuration
+// Update pool configuration
 #[utoipa::path(
     put,
     path = "/api/v1/pools/{id}",
@@ -1925,7 +1925,7 @@ async fn update_pool(
     Ok(StatusCode::OK)
 }
 
-/// Get pool statistics
+// Get pool statistics
 #[utoipa::path(
     get,
     path = "/api/v1/pools/{id}/stats",
@@ -1952,7 +1952,7 @@ async fn get_pool_stats(
     Ok(AxumJson(stats))
 }
 
-/// Drain a connection pool
+// Drain a connection pool
 #[utoipa::path(
     post,
     path = "/api/v1/pools/{id}/drain",
@@ -1969,7 +1969,7 @@ async fn drain_pool(
     Ok(StatusCode::ACCEPTED)
 }
 
-/// Get all active connections
+// Get all active connections
 #[utoipa::path(
     get,
     path = "/api/v1/connections",
@@ -1989,7 +1989,7 @@ async fn get_connections(
     Ok(AxumJson(response))
 }
 
-/// Get connection by ID
+// Get connection by ID
 async fn get_connection(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<u64>,
@@ -1997,7 +1997,7 @@ async fn get_connection(
     Err(ApiError::new("NOT_FOUND", "Connection not found"))
 }
 
-/// Kill a connection
+// Kill a connection
 #[utoipa::path(
     delete,
     path = "/api/v1/connections/{id}",
@@ -2014,7 +2014,7 @@ async fn kill_connection(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Get all sessions
+// Get all sessions
 #[utoipa::path(
     get,
     path = "/api/v1/sessions",
@@ -2040,7 +2040,7 @@ async fn get_sessions(
     Ok(AxumJson(response))
 }
 
-/// Get session by ID
+// Get session by ID
 async fn get_session(
     State(state): State<Arc<ApiState>>,
     Path(id): Path<SessionId>,
@@ -2053,7 +2053,7 @@ async fn get_session(
         .ok_or_else(|| ApiError::new("NOT_FOUND", "Session not found"))
 }
 
-/// Terminate a session
+// Terminate a session
 async fn terminate_session(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<SessionId>,
@@ -2066,7 +2066,7 @@ async fn terminate_session(
 // Handler Functions - Cluster Management API (600+ lines)
 // ============================================================================
 
-/// Get all cluster nodes
+// Get all cluster nodes
 #[utoipa::path(
     get,
     path = "/api/v1/cluster/nodes",
@@ -2103,7 +2103,7 @@ async fn get_cluster_nodes(
     Ok(AxumJson(nodes))
 }
 
-/// Add a new cluster node
+// Add a new cluster node
 #[utoipa::path(
     post,
     path = "/api/v1/cluster/nodes",
@@ -2130,7 +2130,7 @@ async fn add_cluster_node(
     Ok(AxumJson(node))
 }
 
-/// Get cluster node by ID
+// Get cluster node by ID
 async fn get_cluster_node(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
@@ -2139,7 +2139,7 @@ async fn get_cluster_node(
     Err(ApiError::new("NOT_FOUND", "Node not found"))
 }
 
-/// Remove a cluster node
+// Remove a cluster node
 async fn remove_cluster_node(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
@@ -2148,7 +2148,7 @@ async fn remove_cluster_node(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Get cluster topology
+// Get cluster topology
 #[utoipa::path(
     get,
     path = "/api/v1/cluster/topology",
@@ -2183,7 +2183,7 @@ async fn get_cluster_topology(
     Ok(AxumJson(response))
 }
 
-/// Trigger manual failover
+// Trigger manual failover
 #[utoipa::path(
     post,
     path = "/api/v1/cluster/failover",
@@ -2201,7 +2201,7 @@ async fn trigger_failover(
     Ok(StatusCode::ACCEPTED)
 }
 
-/// Get replication status
+// Get replication status
 #[utoipa::path(
     get,
     path = "/api/v1/cluster/replication",
@@ -2231,7 +2231,7 @@ async fn get_replication_status(
     Ok(AxumJson(response))
 }
 
-/// Get cluster configuration
+// Get cluster configuration
 async fn get_cluster_config(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<HashMap<String, serde_json::Value>>> {
@@ -2243,7 +2243,7 @@ async fn get_cluster_config(
     Ok(AxumJson(config))
 }
 
-/// Update cluster configuration
+// Update cluster configuration
 #[utoipa::path(
     put,
     path = "/api/v1/cluster/config",
@@ -2336,7 +2336,7 @@ use std::time::UNIX_EPOCH;
 // Advanced Middleware and Security (400+ lines)
 // ============================================================================
 
-/// Authentication middleware
+// Authentication middleware
 #[derive(Clone)]
 struct AuthMiddleware {
     enabled: bool,
@@ -2361,7 +2361,7 @@ impl AuthMiddleware {
     }
 }
 
-/// Request context for tracking and auditing
+// Request context for tracking and auditing
 #[derive(Debug, Clone)]
 pub struct RequestContext {
     pub request_id: String,
@@ -2393,7 +2393,7 @@ impl RequestContext {
     }
 }
 
-/// Request logger middleware
+// Request logger middleware
 async fn request_logger_middleware(
     State(state): State<Arc<ApiState>>,
     _headers: HeaderMap,
@@ -2436,7 +2436,7 @@ async fn request_logger_middleware(
     Ok(response)
 }
 
-/// Rate limiting middleware
+// Rate limiting middleware
 async fn rate_limit_middleware(
     State(state): State<Arc<ApiState>>,
     headers: HeaderMap,
@@ -2468,7 +2468,7 @@ async fn rate_limit_middleware(
 // Query Execution Engine Integration (300+ lines)
 // ============================================================================
 
-/// Query execution context
+// Query execution context
 #[derive(Debug, Clone)]
 pub struct QueryExecutionContext {
     pub query_id: Uuid,
@@ -2514,7 +2514,7 @@ impl QueryExecutionContext {
     }
 }
 
-/// Query plan representation
+// Query plan representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryPlan {
     pub plan_id: String,
@@ -2584,7 +2584,7 @@ impl QueryPlan {
     }
 }
 
-/// Query result builder
+// Query result builder
 #[derive(Debug)]
 pub struct QueryResultBuilder {
     rows: Vec<HashMap<String, serde_json::Value>>,
@@ -2644,7 +2644,7 @@ impl QueryResultBuilder {
 // Transaction Management (200+ lines)
 // ============================================================================
 
-/// Transaction manager for API layer
+// Transaction manager for API layer
 #[derive(Debug)]
 pub struct ApiTransactionManager {
     active_transactions: Arc<RwLock<HashMap<TransactionId, TransactionState>>>,
@@ -2741,7 +2741,7 @@ impl ApiTransactionManager {
 // Response Caching Layer (200+ lines)
 // ============================================================================
 
-/// Cache entry for query results
+// Cache entry for query results
 #[derive(Debug, Clone)]
 pub struct CacheEntry {
     pub key: String,
@@ -2768,7 +2768,7 @@ impl CacheEntry {
     }
 }
 
-/// Query result cache
+// Query result cache
 #[derive(Debug)]
 pub struct QueryCache {
     entries: Arc<RwLock<HashMap<String, CacheEntry>>>,
@@ -2843,7 +2843,7 @@ impl QueryCache {
 // Connection Pool Monitoring (150+ lines)
 // ============================================================================
 
-/// Detailed connection pool metrics
+// Detailed connection pool metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DetailedPoolMetrics {
     pub pool_id: String,
@@ -2889,7 +2889,7 @@ impl DetailedPoolMetrics {
     }
 }
 
-/// Pool health checker
+// Pool health checker
 pub struct PoolHealthChecker {
     thresholds: HealthThresholds,
 }
@@ -2955,7 +2955,7 @@ impl PoolHealthChecker {
 // Advanced Query Analytics (200+ lines)
 // ============================================================================
 
-/// Query performance analyzer
+// Query performance analyzer
 pub struct QueryAnalyzer {
     slow_query_threshold_ms: u64,
     query_history: Arc<RwLock<Vec<QueryHistoryEntry>>>,
@@ -3061,7 +3061,7 @@ pub struct QueryPattern {
 // Cluster Coordination Helpers (150+ lines)
 // ============================================================================
 
-/// Cluster state manager
+// Cluster state manager
 pub struct ClusterStateManager {
     nodes: Arc<RwLock<HashMap<String, ClusterNodeState>>>,
     leader: Arc<RwLock<Option<String>>>,
@@ -3169,7 +3169,7 @@ impl ClusterStateManager {
 // Additional Utility Functions (100+ lines)
 // ============================================================================
 
-/// SQL sanitizer for preventing injection attacks
+// SQL sanitizer for preventing injection attacks
 pub struct SqlSanitizer;
 
 impl SqlSanitizer {
@@ -3208,7 +3208,7 @@ impl SqlSanitizer {
     }
 }
 
-/// Request validator
+// Request validator
 pub struct RequestValidator;
 
 impl RequestValidator {
@@ -3255,7 +3255,7 @@ impl RequestValidator {
     }
 }
 
-/// Response formatter
+// Response formatter
 pub struct ResponseFormatter;
 
 impl ResponseFormatter {

@@ -13,7 +13,7 @@ use crate::error::DbError;
 // SECTION 4: API FACADE LAYER (700+ lines)
 // ============================================================================
 
-/// Unified API request
+// Unified API request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UnifiedApiRequest {
     pub request_id: String,
@@ -36,7 +36,7 @@ pub enum HttpMethod {
     Patch,
 }
 
-/// Unified API response
+// Unified API response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UnifiedApiResponse {
     pub request_id: String,
@@ -47,7 +47,7 @@ pub struct UnifiedApiResponse {
     pub timestamp: SystemTime,
 }
 
-/// Request router
+// Request router
 pub struct RequestRouter {
     routes: Arc<RwLock<HashMap<String, Box<dyn RouteHandler>>>>,
     middleware: Arc<RwLock<Vec<Box<dyn Middleware>>>>,
@@ -105,7 +105,7 @@ impl RequestRouter {
     }
 }
 
-/// Response aggregator
+// Response aggregator
 pub struct ResponseAggregator {
     aggregation_strategies: Arc<RwLock<HashMap<String, Box<dyn AggregationStrategy>>>>,
 }
@@ -136,7 +136,7 @@ impl ResponseAggregator {
     }
 }
 
-/// Batch request handler
+// Batch request handler
 pub struct BatchRequestHandler {
     max_batch_size: usize,
     router: Arc<RequestRouter>,
@@ -208,7 +208,7 @@ impl BatchRequestHandler {
     }
 }
 
-/// API version manager
+// API version manager
 pub struct ApiVersionManager {
     versions: Arc<RwLock<HashMap<String, ApiVersion>>>,
     default_version: Arc<RwLock<String>>,
@@ -256,7 +256,7 @@ impl ApiVersionManager {
     }
 }
 
-/// Backward compatibility layer
+// Backward compatibility layer
 pub struct BackwardCompatibilityLayer {
     transformers: Arc<RwLock<HashMap<String, Box<dyn RequestTransformer>>>>,
 }
@@ -286,7 +286,7 @@ impl BackwardCompatibilityLayer {
     }
 }
 
-/// API gateway coordinator
+// API gateway coordinator
 pub struct ApiGatewayCoordinator {
     router: Arc<RequestRouter>,
     aggregator: Arc<ResponseAggregator>,
@@ -296,7 +296,7 @@ pub struct ApiGatewayCoordinator {
     rate_limiter: Arc<RateLimiter>,
 }
 
-/// Rate limiter
+// Rate limiter
 pub struct RateLimiter {
     limits: Arc<RwLock<HashMap<String, RateLimit>>>,
     usage: Arc<RwLock<HashMap<String, RateLimitUsage>>>,
@@ -416,4 +416,3 @@ impl ApiGatewayCoordinator {
         &self.rate_limiter
     }
 }
-

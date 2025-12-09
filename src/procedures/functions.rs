@@ -1,7 +1,7 @@
-/// User-Defined Functions Module
-///
-/// This module provides support for creating and managing user-defined functions,
-/// including scalar functions, table-valued functions, and custom aggregate functions.
+// User-Defined Functions Module
+//
+// This module provides support for creating and managing user-defined functions,
+// including scalar functions, table-valued functions, and custom aggregate functions.
 
 use crate::{Result, DbError};
 use crate::procedures::parser::{PlSqlBlock, PlSqlType, Expression};
@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 
-/// Function parameter
+// Function parameter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionParameter {
     pub name: String,
@@ -19,27 +19,27 @@ pub struct FunctionParameter {
     pub default_value: Option<Expression>,
 }
 
-/// Function return type
+// Function return type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum FunctionReturnType {
-    /// Scalar return type (single value)
+    // Scalar return type (single value)
     Scalar(PlSqlType),
-    /// Table return type (set of rows)
+    // Table return type (set of rows)
     Table {
         columns: Vec<(String, PlSqlType)>,
     },
 }
 
-/// Determinism level of a function
+// Determinism level of a function
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Determinism {
-    /// Function always returns the same result for the same inputs
+    // Function always returns the same result for the same inputs
     Deterministic,
-    /// Function may return different results for the same inputs
+    // Function may return different results for the same inputs
     NonDeterministic,
 }
 
-/// User-defined scalar function
+// User-defined scalar function
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScalarFunction {
     pub name: String,
@@ -50,7 +50,7 @@ pub struct ScalarFunction {
     pub parallel_enabled: bool,
 }
 
-/// User-defined table function
+// User-defined table function
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TableFunction {
     pub name: String,
@@ -61,7 +61,7 @@ pub struct TableFunction {
     pub parallel_enabled: bool,
 }
 
-/// Aggregate function accumulator
+// Aggregate function accumulator
 #[derive(Debug, Clone)]
 pub struct AggregateState {
     pub data: HashMap<String, RuntimeValue>,
@@ -89,7 +89,7 @@ impl Default for AggregateState {
     }
 }
 
-/// User-defined aggregate function
+// User-defined aggregate function
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregateFunction {
     pub name: String,
@@ -102,7 +102,7 @@ pub struct AggregateFunction {
     pub parallel_enabled: bool,
 }
 
-/// Function type enumeration
+// Function type enumeration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UserFunction {
     Scalar(ScalarFunction),
@@ -136,7 +136,7 @@ impl UserFunction {
     }
 }
 
-/// Function manager
+// Function manager
 pub struct FunctionManager {
     functions: Arc<RwLock<HashMap<String, UserFunction>>>,
     runtime: Arc<RuntimeExecutor>,
@@ -150,7 +150,7 @@ impl FunctionManager {
         }
     }
 
-    /// Create a scalar function
+    // Create a scalar function
     pub fn create_scalar_function(&self, function: ScalarFunction) -> Result<()> {
         let mut functions = self.functions.write();
 
@@ -164,7 +164,7 @@ impl FunctionManager {
         Ok(())
     }
 
-    /// Create a table function
+    // Create a table function
     pub fn create_table_function(&self, function: TableFunction) -> Result<()> {
         let mut functions = self.functions.write();
 
@@ -178,7 +178,7 @@ impl FunctionManager {
         Ok(())
     }
 
-    /// Create an aggregate function
+    // Create an aggregate function
     pub fn create_aggregate_function(&self, function: AggregateFunction) -> Result<()> {
         let mut functions = self.functions.write();
 
@@ -192,7 +192,7 @@ impl FunctionManager {
         Ok(())
     }
 
-    /// Drop a function
+    // Drop a function
     pub fn drop_function(&self, name: &str) -> Result<()> {
         let mut functions = self.functions.write();
 
@@ -205,7 +205,7 @@ impl FunctionManager {
         Ok(())
     }
 
-    /// Get a function by name
+    // Get a function by name
     pub fn get_function(&self, name: &str) -> Result<UserFunction> {
         let functions = self.functions.read();
 
@@ -216,13 +216,13 @@ impl FunctionManager {
             ))
     }
 
-    /// List all functions
+    // List all functions
     pub fn list_functions(&self) -> Vec<String> {
         let functions = self.functions.read();
         functions.keys().cloned().collect()
     }
 
-    /// Execute a scalar function
+    // Execute a scalar function
     pub fn execute_scalar(
         &self,
         name: &str,
@@ -254,7 +254,7 @@ impl FunctionManager {
         }
     }
 
-    /// Execute a table function
+    // Execute a table function
     pub fn execute_table(
         &self,
         name: &str,
@@ -282,7 +282,7 @@ impl FunctionManager {
         }
     }
 
-    /// Initialize aggregate state
+    // Initialize aggregate state
     pub fn initialize_aggregate(&self, name: &str) -> Result<AggregateState> {
         let function = self.get_function(name)?;
 
@@ -297,7 +297,7 @@ impl FunctionManager {
         }
     }
 
-    /// Accumulate a value in the aggregate
+    // Accumulate a value in the aggregate
     pub fn accumulate_aggregate(
         &self,
         name: &str,
@@ -318,7 +318,7 @@ impl FunctionManager {
         }
     }
 
-    /// Finalize aggregate and return result
+    // Finalize aggregate and return result
     pub fn finalize_aggregate(
         &self,
         name: &str,
@@ -341,7 +341,7 @@ impl FunctionManager {
         }
     }
 
-    /// Get function signature for documentation
+    // Get function signature for documentation
     pub fn get_signature(&self, name: &str) -> Result<String> {
         let function = self.get_function(name)?;
 
@@ -376,11 +376,11 @@ impl Default for FunctionManager {
     }
 }
 
-/// Built-in scalar functions
+// Built-in scalar functions
 pub struct BuiltInFunctions;
 
 impl BuiltInFunctions {
-    /// String functions
+    // String functions
     pub fn upper(s: &str) -> String {
         s.to_uppercase()
     }
@@ -422,7 +422,7 @@ impl BuiltInFunctions {
         strings.join("")
     }
 
-    /// Numeric functions
+    // Numeric functions
     pub fn abs_int(n: i64) -> i64 {
         n.abs()
     }
@@ -479,7 +479,7 @@ impl BuiltInFunctions {
         }
     }
 
-    /// Date/Time functions (simplified)
+    // Date/Time functions (simplified)
     pub fn current_date() -> String {
         // In production, would use chrono or similar
         "2024-01-01".to_string()
@@ -490,7 +490,7 @@ impl BuiltInFunctions {
         "2024-01-01 00:00:00".to_string()
     }
 
-    /// Conversion functions
+    // Conversion functions
     pub fn to_char_int(n: i64) -> String {
         n.to_string()
     }
@@ -509,7 +509,7 @@ impl BuiltInFunctions {
         Ok(s.to_string())
     }
 
-    /// NULL-related functions
+    // NULL-related functions
     pub fn nvl(value: &RuntimeValue, default: &RuntimeValue) -> RuntimeValue {
         if value.is_null() {
             default.clone()
@@ -535,7 +535,7 @@ impl BuiltInFunctions {
         RuntimeValue::Null
     }
 
-    /// Conditional functions
+    // Conditional functions
     pub fn decode(
         expr: &RuntimeValue,
         search_result_pairs: Vec<(&RuntimeValue, &RuntimeValue)>,
@@ -550,7 +550,7 @@ impl BuiltInFunctions {
         default.clone()
     }
 
-    /// Aggregate helper functions
+    // Aggregate helper functions
     pub fn greatest(values: Vec<RuntimeValue>) -> Result<RuntimeValue> {
         if values.is_empty() {
             return Ok(RuntimeValue::Null);
@@ -669,5 +669,3 @@ mod tests {
         Ok(())
     }
 }
-
-

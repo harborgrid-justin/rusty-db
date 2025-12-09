@@ -14,7 +14,7 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 use std::f64;
 
-/// Network node
+// Network node
 #[derive(Debug, Clone)]
 pub struct Node {
     pub id: u64,
@@ -32,7 +32,7 @@ impl Node {
     }
 }
 
-/// Network edge (link)
+// Network edge (link)
 #[derive(Debug, Clone)]
 pub struct Edge {
     pub id: u64,
@@ -74,7 +74,7 @@ impl Edge {
     }
 }
 
-/// Network graph
+// Network graph
 pub struct Network {
     pub nodes: HashMap<u64, Node>,
     pub edges: HashMap<u64, Edge>,
@@ -90,14 +90,14 @@ impl Network {
         }
     }
 
-    /// Add a node to the network
+    // Add a node to the network
     pub fn add_node(&mut self, node: Node) {
         let node_id = node.id;
         self.nodes.insert(node_id, node);
         self.adjacency.entry(node_id).or_insert_with(Vec::new);
     }
 
-    /// Add an edge to the network
+    // Add an edge to the network
     pub fn add_edge(&mut self, edge: Edge) -> Result<()> {
         if !self.nodes.contains_key(&edge.from_node) {
             return Err(DbError::InvalidInput(format!(
@@ -135,7 +135,7 @@ impl Network {
         Ok(())
     }
 
-    /// Get outgoing edges from a node
+    // Get outgoing edges from a node
     pub fn get_outgoing_edges(&self, node_id: u64) -> Vec<&Edge> {
         self.adjacency
             .get(&node_id)
@@ -149,7 +149,7 @@ impl Network {
             .unwrap_or_default()
     }
 
-    /// Get the cost of traversing an edge from a specific node
+    // Get the cost of traversing an edge from a specific node
     pub fn get_edge_cost(&self, edge: &Edge, from_node: u64) -> Option<f64> {
         if edge.from_node == from_node {
             Some(edge.cost)
@@ -167,7 +167,7 @@ impl Default for Network {
     }
 }
 
-/// Dijkstra's shortest path algorithm
+// Dijkstra's shortest path algorithm
 pub struct DijkstraRouter<'a> {
     network: &'a Network,
 }
@@ -214,7 +214,7 @@ impl<'a> DijkstraRouter<'a> {
         Self { network }
     }
 
-    /// Find shortest path from start to end node
+    // Find shortest path from start to end node
     pub fn shortest_path(&self, start: u64, end: u64) -> Result<Path> {
         if !self.network.nodes.contains_key(&start) {
             return Err(DbError::InvalidInput(format!("Start node {} not found", start)));
@@ -299,7 +299,7 @@ impl<'a> DijkstraRouter<'a> {
         }
     }
 
-    /// Find shortest paths from start to all reachable nodes
+    // Find shortest paths from start to all reachable nodes
     pub fn shortest_path_tree(&self, start: u64) -> HashMap<u64, f64> {
         let mut distances: HashMap<u64, f64> = HashMap::new();
         let mut heap = BinaryHeap::new();
@@ -339,7 +339,7 @@ impl<'a> DijkstraRouter<'a> {
     }
 }
 
-/// A* shortest path algorithm with heuristic
+// A* shortest path algorithm with heuristic
 pub struct AStarRouter<'a> {
     network: &'a Network,
 }
@@ -382,7 +382,7 @@ impl<'a> AStarRouter<'a> {
         Self { network }
     }
 
-    /// Find shortest path using A* with Euclidean distance heuristic
+    // Find shortest path using A* with Euclidean distance heuristic
     pub fn shortest_path(&self, start: u64, end: u64) -> Result<Path> {
         if !self.network.nodes.contains_key(&start) {
             return Err(DbError::InvalidInput(format!("Start node {} not found", start)));
@@ -481,7 +481,7 @@ impl<'a> AStarRouter<'a> {
     }
 }
 
-/// Service area analysis (isochrones)
+// Service area analysis (isochrones)
 pub struct ServiceAreaAnalyzer<'a> {
     network: &'a Network,
 }
@@ -499,7 +499,7 @@ impl<'a> ServiceAreaAnalyzer<'a> {
         Self { network }
     }
 
-    /// Calculate service area from a center point with max cost
+    // Calculate service area from a center point with max cost
     pub fn calculate(&self, center: u64, max_cost: f64) -> Result<ServiceArea> {
         if !self.network.nodes.contains_key(&center) {
             return Err(DbError::InvalidInput(format!("Center node {} not found", center)));
@@ -544,7 +544,7 @@ impl<'a> ServiceAreaAnalyzer<'a> {
         })
     }
 
-    /// Calculate multiple service areas (isochrones)
+    // Calculate multiple service areas (isochrones)
     pub fn isochrones(&self, center: u64, cost_intervals: &[f64]) -> Result<Vec<ServiceArea>> {
         let mut areas = Vec::new();
 
@@ -556,7 +556,7 @@ impl<'a> ServiceAreaAnalyzer<'a> {
     }
 }
 
-/// Traveling Salesman Problem (TSP) solver
+// Traveling Salesman Problem (TSP) solver
 pub struct TspSolver<'a> {
     network: &'a Network,
 }
@@ -566,7 +566,7 @@ impl<'a> TspSolver<'a> {
         Self { network }
     }
 
-    /// Solve TSP using nearest neighbor heuristic
+    // Solve TSP using nearest neighbor heuristic
     pub fn solve_nearest_neighbor(&self, nodes: &[u64]) -> Result<Path> {
         if nodes.is_empty() {
             return Err(DbError::InvalidInput("No nodes provided".to_string()));
@@ -623,7 +623,7 @@ impl<'a> TspSolver<'a> {
         })
     }
 
-    /// Improve tour using 2-opt local search
+    // Improve tour using 2-opt local search
     pub fn two_opt_improve(&self, mut path: Path, max_iterations: usize) -> Result<Path> {
         let router = DijkstraRouter::new(self.network);
         let mut improved = true;
@@ -678,7 +678,7 @@ impl<'a> TspSolver<'a> {
     }
 }
 
-/// Turn restrictions for routing
+// Turn restrictions for routing
 #[derive(Debug, Clone)]
 pub struct TurnRestriction {
     pub from_edge: u64,
@@ -695,7 +695,7 @@ pub enum RestrictionType {
     Discouraged,    // Allowed but with additional cost
 }
 
-/// Network with turn restrictions
+// Network with turn restrictions
 pub struct RestrictedNetwork {
     pub network: Network,
     pub restrictions: Vec<TurnRestriction>,
@@ -713,7 +713,7 @@ impl RestrictedNetwork {
         self.restrictions.push(restriction);
     }
 
-    /// Check if a turn is allowed
+    // Check if a turn is allowed
     pub fn is_turn_allowed(&self, from_edge: u64, via_node: u64, to_edge: u64) -> bool {
         for restriction in &self.restrictions {
             if restriction.from_edge == from_edge
@@ -726,7 +726,7 @@ impl RestrictedNetwork {
         true
     }
 
-    /// Get additional cost for a turn
+    // Get additional cost for a turn
     pub fn get_turn_cost(&self, from_edge: u64, via_node: u64, to_edge: u64) -> f64 {
         for restriction in &self.restrictions {
             if restriction.from_edge == from_edge

@@ -39,14 +39,14 @@ use super::handlers::cluster::{get_cluster_nodes, add_cluster_node, get_cluster_
 use super::middleware::{request_logger_middleware, rate_limit_middleware};
 
 
-/// REST API server with dependency injection
+// REST API server with dependency injection
 pub struct RestApiServer {
     config: ApiConfig,
     state: Arc<ApiState>,
 }
 
 impl RestApiServer {
-    /// Create a new REST API server with injected dependencies
+    // Create a new REST API server with injected dependencies
     pub async fn new(config: ApiConfig) -> Result<Self, DbError> {
         let state = Arc::new(ApiState {
             config: config.clone(),
@@ -63,7 +63,7 @@ impl RestApiServer {
         Ok(Self { config, state })
     }
 
-    /// Build the router with all endpoints and middleware
+    // Build the router with all endpoints and middleware
     fn build_router(&self) -> Router {
         let mut router = Router::new()
             // Core Database Operations API
@@ -169,7 +169,7 @@ impl RestApiServer {
         router
     }
 
-    /// Run the API server
+    // Run the API server
     pub async fn run(&self, addr: &str) -> Result<(), DbError> {
         let router = self.build_router();
 
@@ -196,7 +196,7 @@ impl Default for RestApiServer {
     }
 }
 
-/// WebSocket handler for streaming query results
+// WebSocket handler for streaming query results
 async fn websocket_stream(
     ws: WebSocketUpgrade,
     State(state): State<Arc<ApiState>>,

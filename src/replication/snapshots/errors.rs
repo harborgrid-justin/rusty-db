@@ -2,7 +2,7 @@
 
 use thiserror::Error;
 
-/// Snapshot management specific errors
+// Snapshot management specific errors
 #[derive(Error, Debug)]
 pub enum SnapshotError {
     #[error("Snapshot not found: {snapshot_id}")]

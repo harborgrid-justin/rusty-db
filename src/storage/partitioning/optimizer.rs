@@ -1,9 +1,9 @@
-/// Partition Cost Model and Optimizer
+// Partition Cost Model and Optimizer
 
 use super::types::*;
 use std::collections::HashMap;
 
-/// Partition access cost estimator
+// Partition access cost estimator
 pub struct PartitionCostEstimator {
     io_cost_per_page: f64,
     cpu_cost_per_row: f64,
@@ -55,7 +55,7 @@ impl Default for PartitionCostEstimator {
     }
 }
 
-/// Partition strategy recommender
+// Partition strategy recommender
 pub struct PartitionStrategyRecommender {
     workload_patterns: Vec<WorkloadPattern>,
 }
@@ -129,7 +129,7 @@ impl Default for PartitionStrategyRecommender {
     }
 }
 
-/// Smart partition router
+// Smart partition router
 pub struct PartitionRouter {
     routing_cache: HashMap<String, Vec<String>>,
 }
@@ -169,7 +169,7 @@ impl Default for PartitionRouter {
     }
 }
 
-/// Partition SQL generator
+// Partition SQL generator
 pub struct PartitionSqlGenerator;
 
 impl PartitionSqlGenerator {
@@ -242,7 +242,7 @@ impl PartitionSqlGenerator {
     }
 }
 
-/// Partition metadata validator
+// Partition metadata validator
 pub struct PartitionValidator;
 
 impl PartitionValidator {

@@ -91,22 +91,22 @@ pub use aggregation::{Pipeline, PipelineStage, PipelineBuilder};
 pub use changes::{ChangeEvent, ChangeStreamManager, ChangeStreamFilter, ChangeEventType};
 pub use sql_json::{SqlJsonFunctions, JsonTableColumn, JsonDataType};
 
-/// Main document store interface
-///
-/// Provides a unified API for document storage, querying, and management.
+// Main document store interface
+//
+// Provides a unified API for document storage, querying, and management.
 pub struct DocumentStore {
-    /// Collection manager
+    // Collection manager
     collection_manager: CollectionManager,
-    /// Index manager
+    // Index manager
     index_manager: IndexManager,
-    /// Change stream manager
+    // Change stream manager
     change_stream_manager: ChangeStreamManager,
-    /// Documents by collection (in-memory storage)
+    // Documents by collection (in-memory storage)
     collections: Arc<RwLock<HashMap<String, HashMap<DocumentId, Document>>>>,
 }
 
 impl DocumentStore {
-    /// Create a new document store
+    // Create a new document store
     pub fn new() -> Self {
         Self {
             collection_manager: CollectionManager::new(),
@@ -116,14 +116,14 @@ impl DocumentStore {
         }
     }
 
-    /// Create a collection
+    // Create a collection
     pub fn create_collection(&mut self, name: String) -> Result<()> {
         self.collection_manager.create_collection(name.clone())?;
         self.collections.write().unwrap().insert(name, HashMap::new());
         Ok(())
     }
 
-    /// Create a collection with settings
+    // Create a collection with settings
     pub fn create_collection_with_settings(
         &mut self,
         name: String,
@@ -134,7 +134,7 @@ impl DocumentStore {
         Ok(())
     }
 
-    /// Drop a collection
+    // Drop a collection
     pub fn drop_collection(&mut self, name: &str) -> Result<()> {
         self.collection_manager.drop_collection(name)?;
         self.collections.write().unwrap().remove(name);
@@ -150,7 +150,7 @@ impl DocumentStore {
         Ok(())
     }
 
-    /// Insert a document
+    // Insert a document
     pub fn insert(&mut self, collection: &str, document: Document) -> Result<DocumentId> {
         let doc_id = document.metadata.id.clone();
 
@@ -168,7 +168,7 @@ impl DocumentStore {
         Ok(doc_id)
     }
 
-    /// Find a document by ID
+    // Find a document by ID
     pub fn find_by_id(&self, collection: &str, id: &DocumentId) -> Result<Document> {
         let collections = self.collections.read().unwrap();
         let docs = collections.get(collection)
@@ -183,7 +183,7 @@ impl DocumentStore {
             ))
     }
 
-    /// Find documents by query
+    // Find documents by query
     pub fn find(&self, collection: &str, query: Value) -> Result<Vec<Document>> {
         let query_doc = QueryDocument::from_json(query)?;
         let collections = self.collections.read().unwrap();
@@ -202,7 +202,7 @@ impl DocumentStore {
         Ok(results)
     }
 
-    /// Update a document
+    // Update a document
     pub fn update(&mut self, collection: &str, id: &DocumentId, document: Document) -> Result<()> {
         let mut collections = self.collections.write().unwrap();
         let docs = collections.get_mut(collection)
@@ -231,7 +231,7 @@ impl DocumentStore {
         Ok(())
     }
 
-    /// Delete a document
+    // Delete a document
     pub fn delete(&mut self, collection: &str, id: &DocumentId) -> Result<()> {
         let mut collections = self.collections.write().unwrap();
         let docs = collections.get_mut(collection)
@@ -252,7 +252,7 @@ impl DocumentStore {
         }
     }
 
-    /// Count documents in a collection
+    // Count documents in a collection
     pub fn count(&self, collection: &str) -> Result<usize> {
         let collections = self.collections.read().unwrap();
         let docs = collections.get(collection)
@@ -263,13 +263,13 @@ impl DocumentStore {
         Ok(docs.len())
     }
 
-    /// Count documents matching a query
+    // Count documents matching a query
     pub fn count_query(&self, collection: &str, query: Value) -> Result<usize> {
         let results = self.find(collection, query)?;
         Ok(results.len())
     }
 
-    /// Aggregate documents using pipeline
+    // Aggregate documents using pipeline
     pub fn aggregate(&self, collection: &str, pipeline: Pipeline) -> Result<Vec<Value>> {
         let collections = self.collections.read().unwrap();
         let docs = collections.get(collection)
@@ -280,27 +280,27 @@ impl DocumentStore {
         pipeline.execute(docs)
     }
 
-    /// Create an index
+    // Create an index
     pub fn create_index(&mut self, definition: IndexDefinition) -> Result<()> {
         self.index_manager.create_index(definition)
     }
 
-    /// Drop an index
+    // Drop an index
     pub fn drop_index(&mut self, name: &str) -> Result<()> {
         self.index_manager.drop_index(name)
     }
 
-    /// List all indexes
+    // List all indexes
     pub fn list_indexes(&self) -> Vec<String> {
         self.index_manager.list_indexes()
     }
 
-    /// Watch for changes
+    // Watch for changes
     pub fn watch(&self, filter: ChangeStreamFilter) -> changes::ChangeStreamCursor {
         self.change_stream_manager.watch(filter)
     }
 
-    /// Execute JSONPath query
+    // Execute JSONPath query
     pub fn jsonpath_query(&self, collection: &str, path: &str) -> Result<Vec<Value>> {
         let collections = self.collections.read().unwrap();
         let docs = collections.get(collection)
@@ -318,7 +318,7 @@ impl DocumentStore {
         Ok(all_results)
     }
 
-    /// Execute JSON_TABLE function
+    // Execute JSON_TABLE function
     pub fn json_table(
         &self,
         collection: &str,
@@ -331,7 +331,7 @@ impl DocumentStore {
         SqlJsonFunctions::json_table(&json, row_path, columns)
     }
 
-    /// Execute JSON_QUERY function
+    // Execute JSON_QUERY function
     pub fn json_query(
         &self,
         collection: &str,
@@ -344,7 +344,7 @@ impl DocumentStore {
         SqlJsonFunctions::json_query(&json, path, wrapper)
     }
 
-    /// Execute JSON_VALUE function
+    // Execute JSON_VALUE function
     pub fn json_value(
         &self,
         collection: &str,
@@ -357,7 +357,7 @@ impl DocumentStore {
         SqlJsonFunctions::json_value(&json, path, returning_type)
     }
 
-    /// Execute JSON_EXISTS function
+    // Execute JSON_EXISTS function
     pub fn json_exists(
         &self,
         collection: &str,
@@ -369,18 +369,18 @@ impl DocumentStore {
         SqlJsonFunctions::json_exists(&json, path)
     }
 
-    /// List all collections
+    // List all collections
     pub fn list_collections(&self) -> Vec<String> {
         self.collection_manager.list_collections()
     }
 
-    /// Get collection statistics
+    // Get collection statistics
     pub fn get_stats(&self, collection: &str) -> Result<collections::CollectionStats> {
         let coll = self.collection_manager.get_collection(collection)?;
         Ok(coll.metadata.stats)
     }
 
-    /// Bulk insert documents
+    // Bulk insert documents
     pub fn bulk_insert(&mut self, collection: &str, documents: Vec<Document>) -> Result<Vec<DocumentId>> {
         let mut ids = Vec::new();
 
@@ -392,7 +392,7 @@ impl DocumentStore {
         Ok(ids)
     }
 
-    /// Bulk delete documents by query
+    // Bulk delete documents by query
     pub fn bulk_delete(&mut self, collection: &str, query: Value) -> Result<usize> {
         let docs_to_delete = self.find(collection, query)?;
         let count = docs_to_delete.len();
@@ -404,7 +404,7 @@ impl DocumentStore {
         Ok(count)
     }
 
-    /// Bulk update documents by query
+    // Bulk update documents by query
     pub fn bulk_update(
         &mut self,
         collection: &str,
@@ -437,7 +437,7 @@ impl DocumentStore {
         Ok(count)
     }
 
-    /// Upsert a document (update or insert)
+    // Upsert a document (update or insert)
     pub fn upsert(&mut self, collection: &str, id: DocumentId, document: Document) -> Result<bool> {
         let collections = self.collections.read().unwrap();
         let exists = if let Some(docs) = collections.get(collection) {
@@ -456,13 +456,13 @@ impl DocumentStore {
         }
     }
 
-    /// Find one document matching query
+    // Find one document matching query
     pub fn find_one(&self, collection: &str, query: Value) -> Result<Option<Document>> {
         let results = self.find(collection, query)?;
         Ok(results.into_iter().next())
     }
 
-    /// Replace a document
+    // Replace a document
     pub fn replace(&mut self, collection: &str, id: &DocumentId, document: Document) -> Result<()> {
         let mut collections = self.collections.write().unwrap();
         let docs = collections.get_mut(collection)
@@ -485,7 +485,7 @@ impl DocumentStore {
         Ok(())
     }
 
-    /// Get database statistics
+    // Get database statistics
     pub fn database_stats(&self) -> DatabaseStats {
         let collections = self.collections.read().unwrap();
         let mut total_documents = 0;
@@ -514,18 +514,18 @@ impl Default for DocumentStore {
     }
 }
 
-/// Database statistics
+// Database statistics
 #[derive(Debug, Clone)]
 pub struct DatabaseStats {
-    /// Number of collections
+    // Number of collections
     pub collection_count: usize,
-    /// Total number of documents
+    // Total number of documents
     pub total_documents: usize,
-    /// Total size in bytes
+    // Total size in bytes
     pub total_size: usize,
-    /// Number of indexes
+    // Number of indexes
     pub index_count: usize,
-    /// Number of change events
+    // Number of change events
     pub change_event_count: usize,
 }
 

@@ -43,75 +43,75 @@ use rand::Rng;
 // Constants
 // ============================================================================
 
-/// Default failure threshold before opening circuit
+// Default failure threshold before opening circuit
 const DEFAULT_FAILURE_THRESHOLD: u64 = 5;
 
-/// Default success threshold before closing circuit
+// Default success threshold before closing circuit
 const DEFAULT_SUCCESS_THRESHOLD: u64 = 2;
 
-/// Default timeout before transitioning to half-open
+// Default timeout before transitioning to half-open
 const DEFAULT_TIMEOUT_DURATION: Duration = Duration::from_secs(30);
 
-/// Maximum number of half-open requests
+// Maximum number of half-open requests
 const DEFAULT_HALF_OPEN_MAX_REQUESTS: u32 = 3;
 
-/// Default sliding window size for failure tracking
+// Default sliding window size for failure tracking
 const DEFAULT_WINDOW_SIZE: usize = 100;
 
-/// Latency percentile window size
+// Latency percentile window size
 const LATENCY_WINDOW_SIZE: usize = 1000;
 
-/// Default base backoff duration
+// Default base backoff duration
 const DEFAULT_BASE_BACKOFF: Duration = Duration::from_millis(100);
 
-/// Default maximum backoff duration
+// Default maximum backoff duration
 const DEFAULT_MAX_BACKOFF: Duration = Duration::from_secs(60);
 
-/// Default backoff multiplier
+// Default backoff multiplier
 const DEFAULT_BACKOFF_MULTIPLIER: f64 = 2.0;
 
-/// Default maximum retry attempts
+// Default maximum retry attempts
 const DEFAULT_MAX_RETRIES: u32 = 3;
 
 // ============================================================================
 // CircuitBreaker - Three-State Failure Isolation
 // ============================================================================
 
-/// Circuit breaker state
+// Circuit breaker state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CircuitState {
-    /// Circuit is closed - requests flow normally
+    // Circuit is closed - requests flow normally
     Closed,
 
-    /// Circuit is open - requests fail fast
+    // Circuit is open - requests fail fast
     Open,
 
-    /// Circuit is half-open - testing recovery
+    // Circuit is half-open - testing recovery
     HalfOpen,
 }
 
-/// Circuit breaker configuration
+// Circuit breaker configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CircuitBreakerConfig {
-    /// Number of failures before opening circuit
+    // Number of failures before opening circuit
     pub failure_threshold: u64,
 
-    /// Failure rate threshold (0.0 - 1.0)
+    // Failure rate threshold (0.0 - 1.0)
     pub failure_rate_threshold: f64,
 
-    /// Number of successes in half-open before closing
+    // Number of successes in half-open before closing
     pub success_threshold: u64,
 
-    /// Duration to wait before transitioning to half-open
+    // Duration to wait before transitioning to half-open
     pub timeout: Duration,
 
-    /// Maximum requests allowed in half-open state
+    // Maximum requests allowed in half-open state
     pub half_open_max_requests: u32,
 
-    /// Sliding window size for failure tracking
+    // Sliding window size for failure tracking
     pub window_size: usize,
 
-    /// Minimum number of calls before calculating failure rate
+    // Minimum number of calls before calculating failure rate
     pub minimum_calls: u64,
 }
 
@@ -129,48 +129,48 @@ impl Default for CircuitBreakerConfig {
     }
 }
 
-/// Call outcome for tracking
+// Call outcome for tracking
 #[derive(Debug, Clone, Copy)]
 enum CallOutcome {
     Success,
     Failure,
 }
 
-/// Circuit breaker implementation
+// Circuit breaker implementation
 pub struct CircuitBreaker {
-    /// Circuit identifier
+    // Circuit identifier
     name: String,
 
-    /// Current state
+    // Current state
     state: Arc<RwLock<CircuitState>>,
 
-    /// Configuration
+    // Configuration
     config: CircuitBreakerConfig,
 
-    /// Failure count
+    // Failure count
     failure_count: AtomicU64,
 
-    /// Success count in current window
+    // Success count in current window
     success_count: AtomicU64,
 
-    /// Consecutive successes in half-open state
+    // Consecutive successes in half-open state
     consecutive_successes: AtomicU64,
 
-    /// Half-open request counter
+    // Half-open request counter
     half_open_requests: AtomicU64,
 
-    /// Last state transition time
+    // Last state transition time
     last_transition: Arc<RwLock<Instant>>,
 
-    /// Sliding window of call outcomes
+    // Sliding window of call outcomes
     call_outcomes: Arc<Mutex<VecDeque<CallOutcome>>>,
 
-    /// Metrics
+    // Metrics
     metrics: Arc<CircuitBreakerMetrics>,
 }
 
 impl CircuitBreaker {
-    /// Create a new circuit breaker
+    // Create a new circuit breaker
     pub fn new(name: String, config: CircuitBreakerConfig) -> Self {
         Self {
             name,
@@ -186,7 +186,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Execute operation with circuit breaker protection
+    // Execute operation with circuit breaker protection
     pub async fn call<F, T, E>(&self, operation: F) -> Result<T, E>
     where
         F: std::future::Future<Output = Result<T, E>>,
@@ -212,7 +212,7 @@ impl CircuitBreaker {
         result
     }
 
-    /// Check if request should be allowed
+    // Check if request should be allowed
     fn allow_request(&self) -> bool {
         let state = *self.state.read();
 
@@ -241,7 +241,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Handle successful call
+    // Handle successful call
     fn on_success(&self, duration: Duration) {
         self.success_count.fetch_add(1, Ordering::Relaxed);
         self.metrics.successful_calls.fetch_add(1, Ordering::Relaxed);
@@ -270,7 +270,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Handle failed call
+    // Handle failed call
     fn on_failure(&self, duration: Duration) {
         self.failure_count.fetch_add(1, Ordering::Relaxed);
         self.metrics.failed_calls.fetch_add(1, Ordering::Relaxed);
@@ -298,7 +298,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Record call outcome in sliding window
+    // Record call outcome in sliding window
     fn record_outcome(&self, outcome: CallOutcome) {
         let mut outcomes = self.call_outcomes.lock().unwrap();
         outcomes.push_back(outcome);
@@ -308,7 +308,7 @@ impl CircuitBreaker {
         }
     }
 
-    /// Check if circuit should open based on failure rate
+    // Check if circuit should open based on failure rate
     fn should_open_circuit(&self) -> bool {
         let outcomes = self.call_outcomes.lock().unwrap();
         let total = outcomes.len() as u64;
@@ -329,7 +329,7 @@ impl CircuitBreaker {
             || failures >= self.config.failure_threshold
     }
 
-    /// Transition to open state
+    // Transition to open state
     fn transition_to_open(&self) {
         *self.state.write() = CircuitState::Open;
         *self.last_transition.write() = Instant::now();
@@ -343,7 +343,7 @@ impl CircuitBreaker {
         );
     }
 
-    /// Transition to half-open state
+    // Transition to half-open state
     fn transition_to_half_open(&self) {
         *self.state.write() = CircuitState::HalfOpen;
         *self.last_transition.write() = Instant::now();
@@ -357,7 +357,7 @@ impl CircuitBreaker {
         );
     }
 
-    /// Transition to closed state
+    // Transition to closed state
     fn transition_to_closed(&self) {
         *self.state.write() = CircuitState::Closed;
         *self.last_transition.write() = Instant::now();
@@ -372,28 +372,28 @@ impl CircuitBreaker {
         );
     }
 
-    /// Get current circuit state
+    // Get current circuit state
     pub fn state(&self) -> CircuitState {
         *self.state.read()
     }
 
-    /// Force circuit to open (for testing or manual intervention)
+    // Force circuit to open (for testing or manual intervention)
     pub fn force_open(&self) {
         self.transition_to_open();
     }
 
-    /// Force circuit to close (for testing or manual intervention)
+    // Force circuit to close (for testing or manual intervention)
     pub fn force_close(&self) {
         self.transition_to_closed();
     }
 
-    /// Get circuit breaker metrics
+    // Get circuit breaker metrics
     pub fn metrics(&self) -> CircuitBreakerMetricsSnapshot {
         self.metrics.snapshot()
     }
 }
 
-/// Circuit breaker metrics
+// Circuit breaker metrics
 pub struct CircuitBreakerMetrics {
     successful_calls: AtomicU64,
     failed_calls: AtomicU64,
@@ -443,7 +443,7 @@ impl CircuitBreakerMetrics {
     }
 }
 
-/// Circuit breaker metrics snapshot
+// Circuit breaker metrics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CircuitBreakerMetricsSnapshot {
     pub successful_calls: u64,
@@ -459,16 +459,16 @@ pub struct CircuitBreakerMetricsSnapshot {
 // Bulkhead - Resource Pool Isolation
 // ============================================================================
 
-/// Bulkhead configuration
+// Bulkhead configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BulkheadConfig {
-    /// Maximum concurrent requests
+    // Maximum concurrent requests
     pub max_concurrent: usize,
 
-    /// Maximum queue size
+    // Maximum queue size
     pub max_queue_size: usize,
 
-    /// Timeout for acquiring permit
+    // Timeout for acquiring permit
     pub acquire_timeout: Duration,
 }
 
@@ -482,26 +482,26 @@ impl Default for BulkheadConfig {
     }
 }
 
-/// Bulkhead for resource isolation
+// Bulkhead for resource isolation
 pub struct Bulkhead {
-    /// Bulkhead name
+    // Bulkhead name
     name: String,
 
-    /// Semaphore for concurrency control
+    // Semaphore for concurrency control
     semaphore: Arc<Semaphore>,
 
-    /// Configuration
+    // Configuration
     config: BulkheadConfig,
 
-    /// Queue size counter
+    // Queue size counter
     queue_size: AtomicUsize,
 
-    /// Metrics
+    // Metrics
     metrics: Arc<BulkheadMetrics>,
 }
 
 impl Bulkhead {
-    /// Create a new bulkhead
+    // Create a new bulkhead
     pub fn new(name: String, config: BulkheadConfig) -> Self {
         Self {
             name,
@@ -512,7 +512,7 @@ impl Bulkhead {
         }
     }
 
-    /// Execute operation with bulkhead protection
+    // Execute operation with bulkhead protection
     pub async fn call<F, T, E>(&self, operation: F) -> Result<T, E>
     where
         F: std::future::Future<Output = Result<T, E>>,
@@ -558,13 +558,13 @@ impl Bulkhead {
         result
     }
 
-    /// Get bulkhead metrics
+    // Get bulkhead metrics
     pub fn metrics(&self) -> BulkheadMetricsSnapshot {
         self.metrics.snapshot(self.queue_size.load(Ordering::Relaxed))
     }
 }
 
-/// Guard to decrement queue size on drop
+// Guard to decrement queue size on drop
 struct QueueGuard<'a> {
     counter: &'a AtomicUsize,
 }
@@ -581,7 +581,7 @@ impl<'a> Drop for QueueGuard<'a> {
     }
 }
 
-/// Guard to decrement active calls on drop
+// Guard to decrement active calls on drop
 struct ActiveGuard<'a> {
     counter: &'a AtomicU64,
 }
@@ -598,7 +598,7 @@ impl<'a> Drop for ActiveGuard<'a> {
     }
 }
 
-/// Bulkhead metrics
+// Bulkhead metrics
 struct BulkheadMetrics {
     active_calls: AtomicU64,
     total_calls: AtomicU64,
@@ -638,7 +638,7 @@ impl BulkheadMetrics {
     }
 }
 
-/// Bulkhead metrics snapshot
+// Bulkhead metrics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BulkheadMetricsSnapshot {
     pub active_calls: u64,
@@ -653,22 +653,22 @@ pub struct BulkheadMetricsSnapshot {
 // TimeoutManager - Adaptive Timeout Calculation
 // ============================================================================
 
-/// Timeout manager configuration
+// Timeout manager configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeoutManagerConfig {
-    /// Base timeout duration
+    // Base timeout duration
     pub base_timeout: Duration,
 
-    /// Percentile to use for adaptive timeout (0.95 = P95)
+    // Percentile to use for adaptive timeout (0.95 = P95)
     pub percentile: f64,
 
-    /// Multiplier applied to percentile latency
+    // Multiplier applied to percentile latency
     pub multiplier: f64,
 
-    /// Minimum timeout
+    // Minimum timeout
     pub min_timeout: Duration,
 
-    /// Maximum timeout
+    // Maximum timeout
     pub max_timeout: Duration,
 }
 
@@ -684,20 +684,20 @@ impl Default for TimeoutManagerConfig {
     }
 }
 
-/// Timeout manager for adaptive timeouts
+// Timeout manager for adaptive timeouts
 pub struct TimeoutManager {
-    /// Configuration
+    // Configuration
     config: TimeoutManagerConfig,
 
-    /// Latency samples per endpoint
+    // Latency samples per endpoint
     latencies: Arc<RwLock<HashMap<String, VecDeque<Duration>>>>,
 
-    /// Metrics
+    // Metrics
     metrics: Arc<RwLock<HashMap<String, TimeoutMetrics>>>,
 }
 
 impl TimeoutManager {
-    /// Create a new timeout manager
+    // Create a new timeout manager
     pub fn new(config: TimeoutManagerConfig) -> Self {
         Self {
             config,
@@ -706,7 +706,7 @@ impl TimeoutManager {
         }
     }
 
-    /// Execute operation with adaptive timeout
+    // Execute operation with adaptive timeout
     pub async fn call<F, T, E>(&self, endpoint: &str, operation: F) -> Result<T, E>
     where
         F: std::future::Future<Output = Result<T, E>>,
@@ -730,7 +730,7 @@ impl TimeoutManager {
         result
     }
 
-    /// Calculate adaptive timeout for endpoint
+    // Calculate adaptive timeout for endpoint
     pub fn calculate_timeout(&self, endpoint: &str) -> Duration {
         let latencies = self.latencies.read();
 
@@ -753,7 +753,7 @@ impl TimeoutManager {
         }
     }
 
-    /// Record latency sample
+    // Record latency sample
     fn record_latency(&self, endpoint: &str, duration: Duration) {
         let mut latencies = self.latencies.write();
         let samples = latencies.entry(endpoint.to_string()).or_insert_with(VecDeque::new);
@@ -769,20 +769,20 @@ impl TimeoutManager {
         endpoint_metrics.total_calls += 1;
     }
 
-    /// Record timeout
+    // Record timeout
     fn record_timeout(&self, endpoint: &str) {
         let mut metrics = self.metrics.write();
         let endpoint_metrics = metrics.entry(endpoint.to_string()).or_insert_with(TimeoutMetrics::new);
         endpoint_metrics.timeout_count += 1;
     }
 
-    /// Get timeout metrics for endpoint
+    // Get timeout metrics for endpoint
     pub fn metrics(&self, endpoint: &str) -> Option<TimeoutMetrics> {
         self.metrics.read().get(endpoint).cloned()
     }
 }
 
-/// Timeout metrics
+// Timeout metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeoutMetrics {
     pub total_calls: u64,
@@ -802,22 +802,22 @@ impl TimeoutMetrics {
 // RetryPolicy - Exponential Backoff with Jitter
 // ============================================================================
 
-/// Retry policy configuration
+// Retry policy configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetryPolicyConfig {
-    /// Maximum retry attempts
+    // Maximum retry attempts
     pub max_attempts: u32,
 
-    /// Base backoff duration
+    // Base backoff duration
     pub base_backoff: Duration,
 
-    /// Maximum backoff duration
+    // Maximum backoff duration
     pub max_backoff: Duration,
 
-    /// Backoff multiplier
+    // Backoff multiplier
     pub multiplier: f64,
 
-    /// Add jitter to prevent thundering herd
+    // Add jitter to prevent thundering herd
     pub jitter: bool,
 }
 
@@ -833,17 +833,17 @@ impl Default for RetryPolicyConfig {
     }
 }
 
-/// Retry policy with exponential backoff
+// Retry policy with exponential backoff
 pub struct RetryPolicy {
-    /// Configuration
+    // Configuration
     config: RetryPolicyConfig,
 
-    /// Metrics
+    // Metrics
     metrics: Arc<RetryMetrics>,
 }
 
 impl RetryPolicy {
-    /// Create a new retry policy
+    // Create a new retry policy
     pub fn new(config: RetryPolicyConfig) -> Self {
         Self {
             config,
@@ -851,7 +851,7 @@ impl RetryPolicy {
         }
     }
 
-    /// Execute operation with retry
+    // Execute operation with retry
     pub async fn call<F, Fut, T, E>(&self, mut operation: F) -> Result<T, E>
     where
         F: FnMut() -> Fut,
@@ -891,7 +891,7 @@ impl RetryPolicy {
         }
     }
 
-    /// Calculate backoff duration for attempt
+    // Calculate backoff duration for attempt
     fn calculate_backoff(&self, attempt: u32) -> Duration {
         let base_ms = self.config.base_backoff.as_millis() as f64;
         let exponential = base_ms * self.config.multiplier.powi((attempt - 1) as i32);
@@ -908,13 +908,13 @@ impl RetryPolicy {
         backoff.clamp(self.config.base_backoff, self.config.max_backoff)
     }
 
-    /// Get retry metrics
+    // Get retry metrics
     pub fn metrics(&self) -> RetryMetricsSnapshot {
         self.metrics.snapshot()
     }
 }
 
-/// Retry metrics
+// Retry metrics
 struct RetryMetrics {
     total_attempts: AtomicU64,
     successful_retries: AtomicU64,
@@ -942,7 +942,7 @@ impl RetryMetrics {
     }
 }
 
-/// Retry metrics snapshot
+// Retry metrics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetryMetricsSnapshot {
     pub total_attempts: u64,
@@ -955,38 +955,38 @@ pub struct RetryMetricsSnapshot {
 // FallbackHandler - Graceful Degradation
 // ============================================================================
 
-/// Fallback response
+// Fallback response
 pub enum FallbackResponse<T> {
-    /// Cached response
+    // Cached response
     Cached(T),
 
-    /// Default value
+    // Default value
     Default(T),
 
-    /// Empty response
+    // Empty response
     Empty,
 
-    /// Custom fallback
+    // Custom fallback
     Custom(T),
 }
 
-/// Fallback handler for graceful degradation
+// Fallback handler for graceful degradation
 pub struct FallbackHandler<T> {
-    /// Cached responses
+    // Cached responses
     cache: Arc<RwLock<HashMap<String, (T, SystemTime)>>>,
 
-    /// Cache TTL
+    // Cache TTL
     cache_ttl: Duration,
 
-    /// Default value provider
+    // Default value provider
     default_provider: Option<Arc<dyn Fn() -> T + Send + Sync>>,
 
-    /// Metrics
+    // Metrics
     metrics: Arc<FallbackMetrics>,
 }
 
 impl<T: Clone + Send + Sync> FallbackHandler<T> {
-    /// Create a new fallback handler
+    // Create a new fallback handler
     pub fn new(cache_ttl: Duration) -> Self {
         Self {
             cache: Arc::new(RwLock::new(HashMap::new())),
@@ -996,7 +996,7 @@ impl<T: Clone + Send + Sync> FallbackHandler<T> {
         }
     }
 
-    /// Set default value provider
+    // Set default value provider
     pub fn with_default<F>(mut self, provider: F) -> Self
     where
         F: Fn() -> T + Send + Sync + 'static,
@@ -1005,13 +1005,13 @@ impl<T: Clone + Send + Sync> FallbackHandler<T> {
         self
     }
 
-    /// Cache response
+    // Cache response
     pub fn cache_response(&self, key: String, value: T) {
         let mut cache = self.cache.write();
         cache.insert(key, (value, SystemTime::now()));
     }
 
-    /// Get cached response
+    // Get cached response
     pub fn get_cached(&self, key: &str) -> Option<T> {
         let cache = self.cache.read();
 
@@ -1028,7 +1028,7 @@ impl<T: Clone + Send + Sync> FallbackHandler<T> {
         None
     }
 
-    /// Get fallback response
+    // Get fallback response
     pub fn get_fallback(&self, key: &str) -> Option<FallbackResponse<T>> {
         // Try cache first
         if let Some(cached) = self.get_cached(key) {
@@ -1045,13 +1045,13 @@ impl<T: Clone + Send + Sync> FallbackHandler<T> {
         None
     }
 
-    /// Get fallback metrics
+    // Get fallback metrics
     pub fn metrics(&self) -> FallbackMetricsSnapshot {
         self.metrics.snapshot()
     }
 }
 
-/// Fallback metrics
+// Fallback metrics
 struct FallbackMetrics {
     cache_hits: AtomicU64,
     cache_misses: AtomicU64,
@@ -1076,7 +1076,7 @@ impl FallbackMetrics {
     }
 }
 
-/// Fallback metrics snapshot
+// Fallback metrics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FallbackMetricsSnapshot {
     pub cache_hits: u64,
@@ -1088,19 +1088,19 @@ pub struct FallbackMetricsSnapshot {
 // CascadePreventor - Stop Failure Propagation
 // ============================================================================
 
-/// Cascade prevention configuration
+// Cascade prevention configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CascadePreventorConfig {
-    /// Error rate threshold to trigger prevention
+    // Error rate threshold to trigger prevention
     pub error_rate_threshold: f64,
 
-    /// Window size for error rate calculation
+    // Window size for error rate calculation
     pub window_size: usize,
 
-    /// Minimum calls before triggering
+    // Minimum calls before triggering
     pub minimum_calls: u64,
 
-    /// Fast-fail duration after trigger
+    // Fast-fail duration after trigger
     pub fast_fail_duration: Duration,
 }
 
@@ -1115,23 +1115,23 @@ impl Default for CascadePreventorConfig {
     }
 }
 
-/// Cascade preventor
+// Cascade preventor
 pub struct CascadePreventor {
-    /// Configuration
+    // Configuration
     config: CascadePreventorConfig,
 
-    /// Recent outcomes
+    // Recent outcomes
     outcomes: Arc<Mutex<VecDeque<bool>>>, // true = success, false = failure
 
-    /// Fast-fail mode
+    // Fast-fail mode
     fast_fail_until: Arc<RwLock<Option<Instant>>>,
 
-    /// Metrics
+    // Metrics
     metrics: Arc<CascadeMetrics>,
 }
 
 impl CascadePreventor {
-    /// Create a new cascade preventor
+    // Create a new cascade preventor
     pub fn new(config: CascadePreventorConfig) -> Self {
         Self {
             config,
@@ -1141,7 +1141,7 @@ impl CascadePreventor {
         }
     }
 
-    /// Check if request should be allowed
+    // Check if request should be allowed
     pub fn allow_request(&self) -> bool {
         // Check if in fast-fail mode
         if let Some(until) = *self.fast_fail_until.read() {
@@ -1157,7 +1157,7 @@ impl CascadePreventor {
         true
     }
 
-    /// Record call outcome
+    // Record call outcome
     pub fn record_outcome(&self, success: bool) {
         let mut outcomes = self.outcomes.lock().unwrap();
         outcomes.push_back(success);
@@ -1187,13 +1187,13 @@ impl CascadePreventor {
         }
     }
 
-    /// Get cascade prevention metrics
+    // Get cascade prevention metrics
     pub fn metrics(&self) -> CascadeMetricsSnapshot {
         self.metrics.snapshot()
     }
 }
 
-/// Cascade prevention metrics
+// Cascade prevention metrics
 struct CascadeMetrics {
     prevented_calls: AtomicU64,
     cascade_preventions: AtomicU64,
@@ -1215,7 +1215,7 @@ impl CascadeMetrics {
     }
 }
 
-/// Cascade prevention metrics snapshot
+// Cascade prevention metrics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CascadeMetricsSnapshot {
     pub prevented_calls: u64,
@@ -1226,7 +1226,7 @@ pub struct CascadeMetricsSnapshot {
 // LoadShedder - Priority-Based Admission Control
 // ============================================================================
 
-/// Request priority
+// Request priority
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum RequestPriority {
     Low = 0,
@@ -1235,19 +1235,19 @@ pub enum RequestPriority {
     Critical = 3,
 }
 
-/// Load shedder configuration
+// Load shedder configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoadShedderConfig {
-    /// Queue depth threshold for starting to shed
+    // Queue depth threshold for starting to shed
     pub queue_depth_threshold: usize,
 
-    /// CPU usage threshold (0.0 - 1.0)
+    // CPU usage threshold (0.0 - 1.0)
     pub cpu_threshold: f64,
 
-    /// Memory usage threshold (0.0 - 1.0)
+    // Memory usage threshold (0.0 - 1.0)
     pub memory_threshold: f64,
 
-    /// Enable priority-based shedding
+    // Enable priority-based shedding
     pub priority_based: bool,
 }
 
@@ -1262,20 +1262,20 @@ impl Default for LoadShedderConfig {
     }
 }
 
-/// Load shedder for admission control
+// Load shedder for admission control
 pub struct LoadShedder {
-    /// Configuration
+    // Configuration
     config: LoadShedderConfig,
 
-    /// Current queue depth
+    // Current queue depth
     queue_depth: AtomicUsize,
 
-    /// Metrics
+    // Metrics
     metrics: Arc<LoadShedderMetrics>,
 }
 
 impl LoadShedder {
-    /// Create a new load shedder
+    // Create a new load shedder
     pub fn new(config: LoadShedderConfig) -> Self {
         Self {
             config,
@@ -1284,7 +1284,7 @@ impl LoadShedder {
         }
     }
 
-    /// Check if request should be admitted
+    // Check if request should be admitted
     pub fn admit_request(&self, priority: RequestPriority) -> bool {
         let queue_depth = self.queue_depth.load(Ordering::Relaxed);
 
@@ -1319,23 +1319,23 @@ impl LoadShedder {
         true
     }
 
-    /// Increment queue depth
+    // Increment queue depth
     pub fn increment_queue_depth(&self) {
         self.queue_depth.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Decrement queue depth
+    // Decrement queue depth
     pub fn decrement_queue_depth(&self) {
         self.queue_depth.fetch_sub(1, Ordering::Relaxed);
     }
 
-    /// Get load shedder metrics
+    // Get load shedder metrics
     pub fn metrics(&self) -> LoadShedderMetricsSnapshot {
         self.metrics.snapshot(self.queue_depth.load(Ordering::Relaxed))
     }
 }
 
-/// Load shedder metrics
+// Load shedder metrics
 struct LoadShedderMetrics {
     admitted_requests: AtomicU64,
     shed_requests: AtomicU64,
@@ -1358,7 +1358,7 @@ impl LoadShedderMetrics {
     }
 }
 
-/// Load shedder metrics snapshot
+// Load shedder metrics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoadShedderMetricsSnapshot {
     pub admitted_requests: u64,
@@ -1370,32 +1370,32 @@ pub struct LoadShedderMetricsSnapshot {
 // ResilienceMetrics - Comprehensive Tracking
 // ============================================================================
 
-/// Comprehensive resilience metrics
+// Comprehensive resilience metrics
 pub struct ResilienceMetrics {
-    /// Circuit breaker metrics by name
+    // Circuit breaker metrics by name
     pub circuit_breakers: Arc<RwLock<HashMap<String, CircuitBreakerMetricsSnapshot>>>,
 
-    /// Bulkhead metrics by name
+    // Bulkhead metrics by name
     pub bulkheads: Arc<RwLock<HashMap<String, BulkheadMetricsSnapshot>>>,
 
-    /// Timeout metrics by endpoint
+    // Timeout metrics by endpoint
     pub timeouts: Arc<RwLock<HashMap<String, TimeoutMetrics>>>,
 
-    /// Retry metrics
+    // Retry metrics
     pub retry_metrics: Arc<RwLock<RetryMetricsSnapshot>>,
 
-    /// Fallback metrics
+    // Fallback metrics
     pub fallback_metrics: Arc<RwLock<FallbackMetricsSnapshot>>,
 
-    /// Cascade prevention metrics
+    // Cascade prevention metrics
     pub cascade_metrics: Arc<RwLock<CascadeMetricsSnapshot>>,
 
-    /// Load shedder metrics
+    // Load shedder metrics
     pub load_shedder_metrics: Arc<RwLock<LoadShedderMetricsSnapshot>>,
 }
 
 impl ResilienceMetrics {
-    /// Create new resilience metrics
+    // Create new resilience metrics
     pub fn new() -> Self {
         Self {
             circuit_breakers: Arc::new(RwLock::new(HashMap::new())),
@@ -1435,7 +1435,7 @@ impl Default for ResilienceMetrics {
 // Utility Functions
 // ============================================================================
 
-/// Calculate percentile from sorted values
+// Calculate percentile from sorted values
 fn percentile(sorted: &[u64], p: f64) -> u64 {
     if sorted.is_empty() {
         return 0;

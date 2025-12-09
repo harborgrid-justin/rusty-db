@@ -29,47 +29,47 @@
 use std::collections::HashSet;
 use std::collections::HashMap;
 
-/// Inferred data type from column analysis.
-///
-/// The profiler can detect semantic types beyond basic SQL types,
-/// enabling more intelligent query optimization and validation.
+// Inferred data type from column analysis.
+//
+// The profiler can detect semantic types beyond basic SQL types,
+// enabling more intelligent query optimization and validation.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum InferredType {
-    /// Integer numeric type
+    // Integer numeric type
     Integer,
-    /// Floating-point numeric type
+    // Floating-point numeric type
     Float,
-    /// Boolean values (true/false, 1/0, yes/no)
+    // Boolean values (true/false, 1/0, yes/no)
     Boolean,
-    /// Date values (YYYY-MM-DD pattern)
+    // Date values (YYYY-MM-DD pattern)
     Date,
-    /// Timestamp with time component
+    // Timestamp with time component
     Timestamp,
-    /// Email address pattern
+    // Email address pattern
     Email,
-    /// URL pattern
+    // URL pattern
     Url,
-    /// Phone number pattern
+    // Phone number pattern
     Phone,
-    /// IP address (v4 or v6)
+    // IP address (v4 or v6)
     IpAddress,
-    /// UUID/GUID pattern
+    // UUID/GUID pattern
     Uuid,
-    /// JSON structure
+    // JSON structure
     Json,
-    /// Generic string (no specific pattern detected)
+    // Generic string (no specific pattern detected)
     String,
-    /// NULL or empty values only
+    // NULL or empty values only
     Null,
-    /// Mixed or unknown type
+    // Mixed or unknown type
     Unknown,
 }
 
 impl InferredType {
-    /// Infers the type from a string value.
-    ///
-    /// Uses pattern matching and parsing attempts to determine
-    /// the most likely semantic type of the value.
+    // Infers the type from a string value.
+    //
+    // Uses pattern matching and parsing attempts to determine
+    // the most likely semantic type of the value.
     pub fn infer(value: &str) -> Self {
         let trimmed = value.trim();
 
@@ -177,42 +177,42 @@ impl InferredType {
     }
 }
 
-/// Profile of a single column after analysis.
-///
-/// Contains comprehensive statistics about the column's data distribution,
-/// value patterns, and inferred characteristics.
+// Profile of a single column after analysis.
+//
+// Contains comprehensive statistics about the column's data distribution,
+// value patterns, and inferred characteristics.
 #[derive(Debug, Clone)]
 pub struct ColumnProfile {
-    /// Column name
+    // Column name
     pub name: String,
-    /// Total number of rows analyzed
+    // Total number of rows analyzed
     pub row_count: usize,
-    /// Number of NULL values
+    // Number of NULL values
     pub null_count: usize,
-    /// Number of distinct values
+    // Number of distinct values
     pub distinct_count: usize,
-    /// Inferred semantic type
+    // Inferred semantic type
     pub inferred_type: InferredType,
-    /// Minimum value (as string for comparison)
+    // Minimum value (as string for comparison)
     pub min_value: Option<String>,
-    /// Maximum value (as string for comparison)
+    // Maximum value (as string for comparison)
     pub max_value: Option<String>,
-    /// Average length for string columns
+    // Average length for string columns
     pub avg_length: Option<f64>,
-    /// Maximum length for string columns
+    // Maximum length for string columns
     pub max_length: Option<usize>,
-    /// Most frequent values with counts
+    // Most frequent values with counts
     pub top_values: Vec<(String, usize)>,
-    /// Sample of unique values
+    // Sample of unique values
     pub sample_values: Vec<String>,
-    /// Whether column appears to be a primary key candidate
+    // Whether column appears to be a primary key candidate
     pub is_unique: bool,
-    /// Type distribution when mixed types detected
+    // Type distribution when mixed types detected
     pub type_distribution: HashMap<InferredType, usize>,
 }
 
 impl ColumnProfile {
-    /// Creates a new column profile with the given name.
+    // Creates a new column profile with the given name.
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
@@ -231,7 +231,7 @@ impl ColumnProfile {
         }
     }
 
-    /// Calculates the null percentage.
+    // Calculates the null percentage.
     pub fn null_percentage(&self) -> f64 {
         if self.row_count == 0 {
             0.0
@@ -240,7 +240,7 @@ impl ColumnProfile {
         }
     }
 
-    /// Calculates the uniqueness ratio (distinct/total).
+    // Calculates the uniqueness ratio (distinct/total).
     pub fn uniqueness_ratio(&self) -> f64 {
         if self.row_count == 0 {
             0.0
@@ -250,22 +250,22 @@ impl ColumnProfile {
     }
 }
 
-/// Bitmap index for efficient column value lookups.
-///
-/// Particularly effective for low-cardinality columns where
-/// bitmap operations can significantly speed up filtering.
+// Bitmap index for efficient column value lookups.
+//
+// Particularly effective for low-cardinality columns where
+// bitmap operations can significantly speed up filtering.
 #[derive(Debug, Clone)]
 pub struct BitmapIndex {
-    /// Column name this index is for
+    // Column name this index is for
     pub column: String,
-    /// Mapping from values to their row positions
+    // Mapping from values to their row positions
     bitmaps: HashMap<String, Vec<usize>>,
-    /// Total number of rows indexed
+    // Total number of rows indexed
     row_count: usize,
 }
 
 impl BitmapIndex {
-    /// Creates a new empty bitmap index for the given column.
+    // Creates a new empty bitmap index for the given column.
     pub fn new(column: impl Into<String>) -> Self {
         Self {
             column: column.into(),
@@ -274,9 +274,9 @@ impl BitmapIndex {
         }
     }
 
-    /// Builds a bitmap index from column values.
-    ///
-    /// Each unique value gets a list of row positions where it appears.
+    // Builds a bitmap index from column values.
+    //
+    // Each unique value gets a list of row positions where it appears.
     pub fn build(column: impl Into<String>, values: &[String]) -> Self {
         let mut index = Self::new(column);
         index.row_count = values.len();
@@ -292,12 +292,12 @@ impl BitmapIndex {
         index
     }
 
-    /// Returns row positions where the column equals the given value.
+    // Returns row positions where the column equals the given value.
     pub fn lookup(&self, value: &str) -> Option<&Vec<usize>> {
         self.bitmaps.get(value)
     }
 
-    /// Returns row positions matching any of the given values (OR).
+    // Returns row positions matching any of the given values (OR).
     pub fn lookup_any(&self, values: &[&str]) -> Vec<usize> {
         let mut result: HashSet<usize> = HashSet::new();
 
@@ -312,9 +312,9 @@ impl BitmapIndex {
         sorted
     }
 
-    /// Returns row positions matching all given criteria (AND).
-    ///
-    /// Takes another bitmap index and returns intersection of matches.
+    // Returns row positions matching all given criteria (AND).
+    //
+    // Takes another bitmap index and returns intersection of matches.
     pub fn intersect(&self, other: &BitmapIndex, self_value: &str, other_value: &str) -> Vec<usize> {
         let self_positions = self.lookup(self_value);
         let other_positions = other.lookup(other_value);
@@ -328,24 +328,24 @@ impl BitmapIndex {
         }
     }
 
-    /// Returns the number of distinct values in the index.
+    // Returns the number of distinct values in the index.
     pub fn cardinality(&self) -> usize {
         self.bitmaps.len()
     }
 
-    /// Returns all distinct values in the index.
+    // Returns all distinct values in the index.
     pub fn distinct_values(&self) -> Vec<&String> {
         self.bitmaps.keys().collect()
     }
 
-    /// Returns the total row count.
+    // Returns the total row count.
     pub fn row_count(&self) -> usize {
         self.row_count
     }
 
-    /// Checks if the index is suitable for the column.
-    ///
-    /// Bitmap indexes are most effective for low-cardinality columns.
+    // Checks if the index is suitable for the column.
+    //
+    // Bitmap indexes are most effective for low-cardinality columns.
     pub fn is_efficient(&self) -> bool {
         // Generally efficient if cardinality is less than 10% of row count
         // and cardinality is reasonable (< 10000 distinct values)
@@ -353,22 +353,22 @@ impl BitmapIndex {
     }
 }
 
-/// Data profiler for comprehensive column analysis.
-///
-/// Analyzes column data to extract statistics, infer types,
-/// and identify data quality issues.
+// Data profiler for comprehensive column analysis.
+//
+// Analyzes column data to extract statistics, infer types,
+// and identify data quality issues.
 #[derive(Debug, Default)]
 pub struct DataProfiler {
-    /// Maximum number of top values to track per column
+    // Maximum number of top values to track per column
     max_top_values: usize,
-    /// Maximum sample size for unique values
+    // Maximum sample size for unique values
     max_sample_size: usize,
-    /// Cached profiles for reuse
+    // Cached profiles for reuse
     profiles: HashMap<String, ColumnProfile>,
 }
 
 impl DataProfiler {
-    /// Creates a new data profiler with default settings.
+    // Creates a new data profiler with default settings.
     pub fn new() -> Self {
         Self {
             max_top_values: 10,
@@ -377,7 +377,7 @@ impl DataProfiler {
         }
     }
 
-    /// Creates a profiler with custom settings.
+    // Creates a profiler with custom settings.
     pub fn with_settings(max_top_values: usize, max_sample_size: usize) -> Self {
         Self {
             max_top_values,
@@ -386,10 +386,10 @@ impl DataProfiler {
         }
     }
 
-    /// Profiles a column from its values.
-    ///
-    /// Analyzes the values to extract comprehensive statistics
-    /// and infer the semantic type of the column.
+    // Profiles a column from its values.
+    //
+    // Analyzes the values to extract comprehensive statistics
+    // and infer the semantic type of the column.
     pub fn profile_column(&mut self, name: &str, values: &[Option<String>]) -> ColumnProfile {
         let mut profile = ColumnProfile::new(name);
         profile.row_count = values.len();
@@ -471,7 +471,7 @@ impl DataProfiler {
         profile
     }
 
-    /// Profiles multiple columns efficiently.
+    // Profiles multiple columns efficiently.
     pub fn profile_columns(
         &mut self,
         columns: &[(&str, &[Option<String>])],
@@ -482,17 +482,17 @@ impl DataProfiler {
             .collect()
     }
 
-    /// Retrieves a cached profile if available.
+    // Retrieves a cached profile if available.
     pub fn get_cached_profile(&self, column: &str) -> Option<&ColumnProfile> {
         self.profiles.get(column)
     }
 
-    /// Clears the profile cache.
+    // Clears the profile cache.
     pub fn clear_cache(&mut self) {
         self.profiles.clear();
     }
 
-    /// Suggests an appropriate index type for the column.
+    // Suggests an appropriate index type for the column.
     pub fn suggest_index_type(&self, profile: &ColumnProfile) -> IndexSuggestion {
         // High cardinality - B-tree works well
         if profile.uniqueness_ratio() > 0.9 {
@@ -523,18 +523,18 @@ impl DataProfiler {
     }
 }
 
-/// Index type suggestion based on column characteristics.
+// Index type suggestion based on column characteristics.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IndexSuggestion {
-    /// B-tree index (default for high cardinality)
+    // B-tree index (default for high cardinality)
     BTree,
-    /// Bitmap index (optimal for low cardinality)
+    // Bitmap index (optimal for low cardinality)
     Bitmap,
-    /// Hash index (for equality comparisons only)
+    // Hash index (for equality comparisons only)
     Hash,
-    /// Full-text index (for text search)
+    // Full-text index (for text search)
     FullText,
-    /// No index recommended
+    // No index recommended
     None,
 }
 

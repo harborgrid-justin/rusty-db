@@ -1,6 +1,6 @@
-/// Performance Statistics Collector Module
-///
-/// Collects and maintains performance statistics for query execution
+// Performance Statistics Collector Module
+//
+// Collects and maintains performance statistics for query execution
 
 use crate::{Result, error::DbError};
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
-/// Statistics collector for query performance
+// Statistics collector for query performance
 pub struct PerformanceStatsCollector {
     query_stats: Arc<RwLock<HashMap<String, QueryPerformanceStats>>>,
     global_stats: Arc<RwLock<GlobalPerformanceStats>>,
@@ -22,7 +22,7 @@ impl PerformanceStatsCollector {
         }
     }
 
-    /// Record query execution
+    // Record query execution
     pub fn record_query(&self, query_hash: &str, execution_time_ms: u64, rows: usize) -> Result<()> {
         // Update query-specific stats
         let mut query_stats = self.query_stats.write()
@@ -56,21 +56,21 @@ impl PerformanceStatsCollector {
         Ok(())
     }
 
-    /// Get stats for a specific query
+    // Get stats for a specific query
     pub fn get_query_stats(&self, query_hash: &str) -> Result<Option<QueryPerformanceStats>> {
         let query_stats = self.query_stats.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(query_stats.get(query_hash).cloned())
     }
 
-    /// Get global performance statistics
+    // Get global performance statistics
     pub fn get_global_stats(&self) -> Result<GlobalPerformanceStats> {
         let global_stats = self.global_stats.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(global_stats.clone())
     }
 
-    /// Get top N slowest queries
+    // Get top N slowest queries
     pub fn get_slowest_queries(&self, n: usize) -> Result<Vec<QueryPerformanceStats>> {
         let query_stats = self.query_stats.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;

@@ -1,12 +1,12 @@
-/// Table Partitioning Support
-///
-/// This module provides comprehensive table partitioning capabilities:
-/// - Range partitioning (by date, number ranges)
-/// - Hash partitioning (for even distribution)
-/// - List partitioning (by discrete values)
-/// - Composite partitioning (combination of strategies)
-/// - Partition pruning optimization
-/// - Dynamic partition management
+// Table Partitioning Support
+//
+// This module provides comprehensive table partitioning capabilities:
+// - Range partitioning (by date, number ranges)
+// - Hash partitioning (for even distribution)
+// - List partitioning (by discrete values)
+// - Composite partitioning (combination of strategies)
+// - Partition pruning optimization
+// - Dynamic partition management
 
 pub mod types;
 pub mod manager;

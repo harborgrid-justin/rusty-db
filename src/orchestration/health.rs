@@ -35,31 +35,31 @@ use tracing::{debug, error, info, warn};
 
 use crate::error::Result;
 
-/// Health status of a component
+// Health status of a component
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HealthStatus {
-    /// Component is healthy
+    // Component is healthy
     Healthy,
-    /// Component is degraded but functional
+    // Component is degraded but functional
     Degraded,
-    /// Component is unhealthy
+    // Component is unhealthy
     Unhealthy,
-    /// Health status unknown
+    // Health status unknown
     Unknown,
 }
 
 impl HealthStatus {
-    /// Check if the status is healthy or degraded (functional)
+    // Check if the status is healthy or degraded (functional)
     pub fn is_functional(&self) -> bool {
         matches!(self, HealthStatus::Healthy | HealthStatus::Degraded)
     }
 
-    /// Check if the status indicates a problem
+    // Check if the status indicates a problem
     pub fn has_issues(&self) -> bool {
         !matches!(self, HealthStatus::Healthy)
     }
 
-    /// Get numeric score (higher is better)
+    // Get numeric score (higher is better)
     pub fn score(&self) -> u8 {
         match self {
             HealthStatus::Healthy => 100,
@@ -81,27 +81,27 @@ impl fmt::Display for HealthStatus {
     }
 }
 
-/// Health check result
+// Health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckResult {
-    /// Component name
+    // Component name
     pub component: String,
-    /// Health status
+    // Health status
     pub status: HealthStatus,
-    /// Timestamp of the check (skipped for serialization)
+    // Timestamp of the check (skipped for serialization)
     #[serde(skip, default = "Instant::now")]
     pub timestamp: Instant,
-    /// Duration of the health check (skipped for serialization)
+    // Duration of the health check (skipped for serialization)
     #[serde(skip)]
     pub check_duration: Duration,
-    /// Additional details
+    // Additional details
     pub details: HashMap<String, String>,
-    /// Error message if unhealthy
+    // Error message if unhealthy
     pub error: Option<String>,
 }
 
 impl HealthCheckResult {
-    /// Create a healthy result
+    // Create a healthy result
     pub fn healthy(component: String) -> Self {
         Self {
             component,
@@ -113,7 +113,7 @@ impl HealthCheckResult {
         }
     }
 
-    /// Create a degraded result
+    // Create a degraded result
     pub fn degraded(component: String, reason: String) -> Self {
         let mut details = HashMap::new();
         details.insert("reason".to_string(), reason);
@@ -128,7 +128,7 @@ impl HealthCheckResult {
         }
     }
 
-    /// Create an unhealthy result
+    // Create an unhealthy result
     pub fn unhealthy(component: String, error: String) -> Self {
         Self {
             component,
@@ -140,7 +140,7 @@ impl HealthCheckResult {
         }
     }
 
-    /// Create an unknown result
+    // Create an unknown result
     pub fn unknown(component: String) -> Self {
         Self {
             component,
@@ -152,53 +152,53 @@ impl HealthCheckResult {
         }
     }
 
-    /// Add a detail
+    // Add a detail
     pub fn with_detail(mut self, key: String, value: String) -> Self {
         self.details.insert(key, value);
         self
     }
 
-    /// Set check duration
+    // Set check duration
     pub fn with_duration(mut self, duration: Duration) -> Self {
         self.check_duration = duration;
         self
     }
 }
 
-/// Trait for components that can be health checked
+// Trait for components that can be health checked
 #[async_trait::async_trait]
 pub trait HealthCheck: Send + Sync {
-    /// Perform a health check
+    // Perform a health check
     async fn check_health(&self) -> HealthCheckResult;
 
-    /// Get component name
+    // Get component name
     fn component_name(&self) -> &str;
 
-    /// Check if this is a critical component
+    // Check if this is a critical component
     fn is_critical(&self) -> bool {
         true
     }
 
-    /// Get dependencies
+    // Get dependencies
     fn dependencies(&self) -> Vec<String> {
         Vec::new()
     }
 }
 
-/// Health checker that periodically checks component health
+// Health checker that periodically checks component health
 pub struct HealthChecker {
-    /// Component name
+    // Component name
     component: String,
-    /// Health check implementation
+    // Health check implementation
     check: Arc<dyn HealthCheck>,
-    /// Last check result
+    // Last check result
     last_result: RwLock<Option<HealthCheckResult>>,
-    /// Check interval
+    // Check interval
     interval: Duration,
 }
 
 impl HealthChecker {
-    /// Create a new health checker
+    // Create a new health checker
     pub fn new(check: Arc<dyn HealthCheck>, interval: Duration) -> Self {
         Self {
             component: check.component_name().to_string(),
@@ -208,12 +208,12 @@ impl HealthChecker {
         }
     }
 
-    /// Get the component name
+    // Get the component name
     pub fn component_name(&self) -> &str {
         &self.component
     }
 
-    /// Perform a health check now
+    // Perform a health check now
     pub async fn check_now(&self) -> HealthCheckResult {
         let start = Instant::now();
         let mut result = self.check.check_health().await;
@@ -236,13 +236,13 @@ impl HealthChecker {
         result
     }
 
-    /// Get the last check result
+    // Get the last check result
     pub fn last_result(&self) -> Option<HealthCheckResult> {
         let last = self.last_result.read();
         last.clone()
     }
 
-    /// Start periodic health checking
+    // Start periodic health checking
     pub async fn start_periodic(&self) {
         let mut interval_timer = interval(self.interval);
 
@@ -253,28 +253,28 @@ impl HealthChecker {
     }
 }
 
-/// Aggregated health status
+// Aggregated health status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregatedHealth {
-    /// Overall health status
+    // Overall health status
     pub status: HealthStatus,
-    /// Individual component results
+    // Individual component results
     pub components: Vec<HealthCheckResult>,
-    /// Timestamp (skipped for serialization)
+    // Timestamp (skipped for serialization)
     #[serde(skip, default = "Instant::now")]
     pub timestamp: Instant,
-    /// Number of healthy components
+    // Number of healthy components
     pub healthy_count: usize,
-    /// Number of degraded components
+    // Number of degraded components
     pub degraded_count: usize,
-    /// Number of unhealthy components
+    // Number of unhealthy components
     pub unhealthy_count: usize,
-    /// Total components
+    // Total components
     pub total_count: usize,
 }
 
 impl AggregatedHealth {
-    /// Calculate aggregated health from individual results
+    // Calculate aggregated health from individual results
     pub fn from_results(results: Vec<HealthCheckResult>) -> Self {
         let total_count = results.len();
         let healthy_count = results
@@ -312,12 +312,12 @@ impl AggregatedHealth {
         }
     }
 
-    /// Check if the system is functional
+    // Check if the system is functional
     pub fn is_functional(&self) -> bool {
         self.status.is_functional()
     }
 
-    /// Get health score (0-100)
+    // Get health score (0-100)
     pub fn health_score(&self) -> f64 {
         if self.total_count == 0 {
             return 100.0;
@@ -333,20 +333,20 @@ impl AggregatedHealth {
     }
 }
 
-/// Health aggregator that combines health from multiple components
+// Health aggregator that combines health from multiple components
 pub struct HealthAggregator {
-    /// Registered health checkers
+    // Registered health checkers
     checkers: RwLock<HashMap<String, Arc<HealthChecker>>>,
-    /// Health history
+    // Health history
     history: RwLock<Vec<AggregatedHealth>>,
-    /// Maximum history size
+    // Maximum history size
     max_history: usize,
-    /// Cascading failure detection
+    // Cascading failure detection
     cascading_detector: Arc<CascadingFailureDetector>,
 }
 
 impl HealthAggregator {
-    /// Create a new health aggregator
+    // Create a new health aggregator
     pub fn new(maxhistory: usize) -> Self {
         Self {
             checkers: RwLock::new(HashMap::new()),
@@ -356,7 +356,7 @@ impl HealthAggregator {
         }
     }
 
-    /// Register a health checker
+    // Register a health checker
     pub fn register(&self, checker: Arc<HealthChecker>) {
         let name = checker.component_name().to_string();
         let mut checkers = self.checkers.write();
@@ -364,7 +364,7 @@ impl HealthAggregator {
         info!("Registered health checker: {}", name);
     }
 
-    /// Unregister a health checker
+    // Unregister a health checker
     pub fn unregister(&self, component: &str) {
         let mut checkers = self.checkers.write();
         if checkers.remove(component).is_some() {
@@ -372,7 +372,7 @@ impl HealthAggregator {
         }
     }
 
-    /// Check health of all registered components
+    // Check health of all registered components
     pub async fn check_all(&self) -> AggregatedHealth {
         let checkers = {
             let guard = self.checkers.read();
@@ -407,20 +407,20 @@ impl HealthAggregator {
         aggregated
     }
 
-    /// Check health of a specific component
+    // Check health of a specific component
     pub async fn check_component(&self, component: &str) -> Option<HealthCheckResult> {
         let checkers = self.checkers.read();
         let checker = checkers.get(component)?;
         Some(checker.check_now().await)
     }
 
-    /// Get the last aggregated health
+    // Get the last aggregated health
     pub fn last_health(&self) -> Option<AggregatedHealth> {
         let history = self.history.read();
         history.last().cloned()
     }
 
-    /// Get health history
+    // Get health history
     pub fn get_history(&self, limit: usize) -> Vec<AggregatedHealth> {
         let history = self.history.read();
         let start = if history.len() > limit {
@@ -431,20 +431,20 @@ impl HealthAggregator {
         history[start..].to_vec()
     }
 
-    /// Get list of registered components
+    // Get list of registered components
     pub fn list_components(&self) -> Vec<String> {
         let checkers = self.checkers.read();
         checkers.keys().cloned().collect()
     }
 
-    /// Clear health history
+    // Clear health history
     pub fn clear_history(&self) {
         let mut history = self.history.write();
         history.clear();
         info!("Cleared health history");
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn statistics(&self) -> HealthAggregatorStats {
         let checkers = self.checkers.read();
         let history = self.history.read();
@@ -463,29 +463,29 @@ impl Default for HealthAggregator {
     }
 }
 
-/// Statistics about the health aggregator
+// Statistics about the health aggregator
 #[derive(Debug, Clone)]
 pub struct HealthAggregatorStats {
-    /// Number of registered components
+    // Number of registered components
     pub registered_components: usize,
-    /// Current history size
+    // Current history size
     pub history_size: usize,
-    /// Maximum history size
+    // Maximum history size
     pub max_history: usize,
 }
 
-/// Cascading failure detector
+// Cascading failure detector
 pub struct CascadingFailureDetector {
-    /// Failure events
+    // Failure events
     events: RwLock<Vec<FailureEvent>>,
-    /// Detection window
+    // Detection window
     window: Duration,
-    /// Threshold for cascading detection
+    // Threshold for cascading detection
     threshold: f64,
 }
 
 impl CascadingFailureDetector {
-    /// Create a new cascading failure detector
+    // Create a new cascading failure detector
     pub fn new() -> Self {
         Self {
             events: RwLock::new(Vec::new()),
@@ -494,7 +494,7 @@ impl CascadingFailureDetector {
         }
     }
 
-    /// Detect cascading failures
+    // Detect cascading failures
     pub fn detect(&self, health: &AggregatedHealth) -> bool {
         if health.total_count == 0 {
             return false;
@@ -532,13 +532,13 @@ impl CascadingFailureDetector {
         false
     }
 
-    /// Clear recorded events
+    // Clear recorded events
     pub fn clear(&self) {
         let mut events = self.events.write();
         events.clear();
     }
 
-    /// Get recent failure events
+    // Get recent failure events
     pub fn recent_events(&self) -> Vec<FailureEvent> {
         let events = self.events.read();
         events.clone()
@@ -551,29 +551,29 @@ impl Default for CascadingFailureDetector {
     }
 }
 
-/// Failure event for cascading detection
+// Failure event for cascading detection
 #[derive(Debug, Clone)]
 pub struct FailureEvent {
-    /// Timestamp of the event
+    // Timestamp of the event
     pub timestamp: Instant,
-    /// Failure rate at the time
+    // Failure rate at the time
     pub failure_rate: f64,
-    /// Number of affected components
+    // Number of affected components
     pub affected_components: usize,
 }
 
-/// Simple health check implementation
+// Simple health check implementation
 pub struct SimpleHealthCheck {
-    /// Component name
+    // Component name
     name: String,
-    /// Health check function
+    // Health check function
     check_fn: Arc<dyn Fn() -> HealthCheckResult + Send + Sync>,
-    /// Is critical
+    // Is critical
     critical: bool,
 }
 
 impl SimpleHealthCheck {
-    /// Create a new simple health check
+    // Create a new simple health check
     pub fn new<F>(name: String, check_fn: F) -> Self
     where
         F: Fn() -> HealthCheckResult + Send + Sync + 'static,
@@ -585,7 +585,7 @@ impl SimpleHealthCheck {
         }
     }
 
-    /// Mark as non-critical
+    // Mark as non-critical
     pub fn non_critical(mut self) -> Self {
         self.critical = false;
         self

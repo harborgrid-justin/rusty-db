@@ -24,19 +24,19 @@ use super::property_graph::{
 // Storage Format Types
 // ============================================================================
 
-/// Storage format for graph data
+// Storage format for graph data
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StorageFormat {
-    /// Adjacency list (good for general purpose)
+    // Adjacency list (good for general purpose)
     AdjacencyList,
 
-    /// Compressed Sparse Row (good for analytics)
+    // Compressed Sparse Row (good for analytics)
     CSR,
 
-    /// Edge list (good for streaming)
+    // Edge list (good for streaming)
     EdgeList,
 
-    /// Hybrid format
+    // Hybrid format
     Hybrid,
 }
 
@@ -44,23 +44,23 @@ pub enum StorageFormat {
 // Adjacency List Storage
 // ============================================================================
 
-/// Adjacency list representation of the graph
+// Adjacency list representation of the graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdjacencyList {
-    /// Outgoing adjacency lists: vertex -> list of (neighbor, edge_id)
+    // Outgoing adjacency lists: vertex -> list of (neighbor, edge_id)
     pub outgoing: HashMap<VertexId, Vec<(VertexId, EdgeId)>>,
 
-    /// Incoming adjacency lists: vertex -> list of (neighbor, edge_id)
+    // Incoming adjacency lists: vertex -> list of (neighbor, edge_id)
     pub incoming: HashMap<VertexId, Vec<(VertexId, EdgeId)>>,
 
-    /// Vertex data
+    // Vertex data
     pub vertices: HashMap<VertexId, VertexData>,
 
-    /// Edge data
+    // Edge data
     pub edges: HashMap<EdgeId, EdgeData>,
 }
 
-/// Vertex data for storage
+// Vertex data for storage
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VertexData {
     pub id: VertexId,
@@ -68,7 +68,7 @@ pub struct VertexData {
     pub properties: Properties,
 }
 
-/// Edge data for storage
+// Edge data for storage
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EdgeData {
     pub id: EdgeId,
@@ -81,7 +81,7 @@ pub struct EdgeData {
 }
 
 impl AdjacencyList {
-    /// Create a new empty adjacency list
+    // Create a new empty adjacency list
     pub fn new() -> Self {
         Self {
             outgoing: HashMap::new(),
@@ -91,7 +91,7 @@ impl AdjacencyList {
         }
     }
 
-    /// Build from a property graph
+    // Build from a property graph
     pub fn from_graph(graph: &PropertyGraph) -> Self {
         let mut adj_list = Self::new();
 
@@ -140,30 +140,30 @@ impl AdjacencyList {
         adj_list
     }
 
-    /// Get outgoing neighbors of a vertex
+    // Get outgoing neighbors of a vertex
     pub fn get_outgoing(&self, vertex: VertexId) -> Option<&Vec<(VertexId, EdgeId)>> {
         self.outgoing.get(&vertex)
     }
 
-    /// Get incoming neighbors of a vertex
+    // Get incoming neighbors of a vertex
     pub fn get_incoming(&self, vertex: VertexId) -> Option<&Vec<(VertexId, EdgeId)>> {
         self.incoming.get(&vertex)
     }
 
-    /// Get degree of a vertex
+    // Get degree of a vertex
     pub fn degree(&self, vertex: VertexId) -> (usize, usize) {
         let out_degree = self.outgoing.get(&vertex).map_or(0, |v| v.len());
         let in_degree = self.incoming.get(&vertex).map_or(0, |v| v.len());
         (in_degree, out_degree)
     }
 
-    /// Serialize to bytes
+    // Serialize to bytes
     pub fn serialize(&self) -> Result<Vec<u8>> {
         bincode::serialize(self)
             .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))
     }
 
-    /// Deserialize from bytes
+    // Deserialize from bytes
     pub fn deserialize(data: &[u8]) -> Result<Self> {
         bincode::deserialize(data)
             .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))
@@ -180,39 +180,39 @@ impl Default for AdjacencyList {
 // Compressed Sparse Row (CSR) Format
 // ============================================================================
 
-/// CSR (Compressed Sparse Row) format for efficient graph analytics
+// CSR (Compressed Sparse Row) format for efficient graph analytics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CSRGraph {
-    /// Number of vertices
+    // Number of vertices
     pub num_vertices: usize,
 
-    /// Number of edges
+    // Number of edges
     pub num_edges: usize,
 
-    /// Row offsets: vertex i's neighbors are in neighbors[offsets[i]..offsets[i+1]]
+    // Row offsets: vertex i's neighbors are in neighbors[offsets[i]..offsets[i+1]]
     pub offsets: Vec<usize>,
 
-    /// Column indices (neighbor vertex IDs)
+    // Column indices (neighbor vertex IDs)
     pub neighbors: Vec<VertexId>,
 
-    /// Edge IDs corresponding to neighbors
+    // Edge IDs corresponding to neighbors
     pub edge_ids: Vec<EdgeId>,
 
-    /// Vertex ID mapping: index -> actual vertex ID
+    // Vertex ID mapping: index -> actual vertex ID
     pub vertex_map: Vec<VertexId>,
 
-    /// Reverse mapping: vertex ID -> index
+    // Reverse mapping: vertex ID -> index
     pub vertex_index: HashMap<VertexId, usize>,
 
-    /// Vertex properties
+    // Vertex properties
     pub vertex_properties: Vec<Properties>,
 
-    /// Edge properties
+    // Edge properties
     pub edge_properties: HashMap<EdgeId, Properties>,
 }
 
 impl CSRGraph {
-    /// Build CSR representation from adjacency list
+    // Build CSR representation from adjacency list
     pub fn from_adjacency_list(adj_list: &AdjacencyList) -> Self {
         let vertices: Vec<VertexId> = adj_list.vertices.keys().copied().collect();
         let num_vertices = vertices.len();
@@ -272,7 +272,7 @@ impl CSRGraph {
         }
     }
 
-    /// Get neighbors of a vertex
+    // Get neighbors of a vertex
     pub fn get_neighbors(&self, vertex: VertexId) -> Option<&[VertexId]> {
         self.vertex_index.get(&vertex).map(|&idx| {
             let start = self.offsets[idx];
@@ -281,14 +281,14 @@ impl CSRGraph {
         })
     }
 
-    /// Get out-degree of a vertex
+    // Get out-degree of a vertex
     pub fn out_degree(&self, vertex: VertexId) -> Option<usize> {
         self.vertex_index.get(&vertex).map(|&idx| {
             self.offsets[idx + 1] - self.offsets[idx]
         })
     }
 
-    /// Iterate over all edges
+    // Iterate over all edges
     pub fn edges_iter(&self) -> impl Iterator<Item = (VertexId, VertexId, EdgeId)> + '_ {
         self.vertex_map.iter().enumerate().flat_map(move |(idx, &vertex_id)| {
             let start = self.offsets[idx];
@@ -300,7 +300,7 @@ impl CSRGraph {
         })
     }
 
-    /// Memory footprint in bytes
+    // Memory footprint in bytes
     pub fn memory_footprint(&self) -> usize {
         size_of::<Self>() +
         self.offsets.len() * size_of::<usize>() +
@@ -313,23 +313,23 @@ impl CSRGraph {
 // Edge-Centric Storage
 // ============================================================================
 
-/// Edge-centric storage for streaming and incremental updates
+// Edge-centric storage for streaming and incremental updates
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EdgeCentricStorage {
-    /// Edges stored in insertion order
+    // Edges stored in insertion order
     pub edges: Vec<EdgeRecord>,
 
-    /// Index: source vertex -> edge indices
+    // Index: source vertex -> edge indices
     pub source_index: HashMap<VertexId, Vec<usize>>,
 
-    /// Index: target vertex -> edge indices
+    // Index: target vertex -> edge indices
     pub target_index: HashMap<VertexId, Vec<usize>>,
 
-    /// Vertex metadata
+    // Vertex metadata
     pub vertices: HashMap<VertexId, VertexData>,
 }
 
-/// Edge record for edge-centric storage
+// Edge record for edge-centric storage
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EdgeRecord {
     pub edge_id: EdgeId,
@@ -351,7 +351,7 @@ impl EdgeCentricStorage {
         }
     }
 
-    /// Add an edge to the storage
+    // Add an edge to the storage
     pub fn add_edge(&mut self, edge: EdgeRecord) {
         let edge_idx = self.edges.len();
 
@@ -368,7 +368,7 @@ impl EdgeCentricStorage {
         self.edges.push(edge);
     }
 
-    /// Get edges with a specific source
+    // Get edges with a specific source
     pub fn edges_from(&self, source: VertexId) -> Vec<&EdgeRecord> {
         self.source_index
             .get(&source)
@@ -380,7 +380,7 @@ impl EdgeCentricStorage {
             .unwrap_or_default()
     }
 
-    /// Get edges with a specific target
+    // Get edges with a specific target
     pub fn edges_to(&self, target: VertexId) -> Vec<&EdgeRecord> {
         self.target_index
             .get(&target)
@@ -392,7 +392,7 @@ impl EdgeCentricStorage {
             .unwrap_or_default()
     }
 
-    /// Get edges in a time range (for temporal graphs)
+    // Get edges in a time range (for temporal graphs)
     pub fn edges_in_range(&self, start_time: i64, end_time: i64) -> Vec<&EdgeRecord> {
         self.edges.iter()
             .filter(|edge| {
@@ -416,11 +416,11 @@ impl Default for EdgeCentricStorage {
 // Graph Compression
 // ============================================================================
 
-/// Graph compression utilities
+// Graph compression utilities
 pub struct GraphCompression;
 
 impl GraphCompression {
-    /// Compress vertex IDs using gap encoding
+    // Compress vertex IDs using gap encoding
     pub fn compress_vertex_ids(ids: &[VertexId]) -> Vec<u64> {
         if ids.is_empty() {
             return Vec::new();
@@ -440,7 +440,7 @@ impl GraphCompression {
         compressed
     }
 
-    /// Decompress vertex IDs from gap encoding
+    // Decompress vertex IDs from gap encoding
     pub fn decompress_vertex_ids(compressed: &[u64]) -> Vec<VertexId> {
         if compressed.is_empty() {
             return Vec::new();
@@ -456,7 +456,7 @@ impl GraphCompression {
         ids
     }
 
-    /// Estimate compression ratio
+    // Estimate compression ratio
     pub fn compression_ratio(original_size: usize, compressed_size: usize) -> f64 {
         if original_size == 0 {
             return 0.0;
@@ -469,17 +469,17 @@ impl GraphCompression {
 // Persistent Storage Manager
 // ============================================================================
 
-/// Graph storage manager for persistence
+// Graph storage manager for persistence
 pub struct GraphStorageManager {
-    /// Base directory for graph storage
+    // Base directory for graph storage
     base_dir: PathBuf,
 
-    /// Current storage format
+    // Current storage format
     format: StorageFormat,
 }
 
 impl GraphStorageManager {
-    /// Create a new storage manager
+    // Create a new storage manager
     pub fn new<P: AsRef<Path>>(base_dir: P, format: StorageFormat) -> Result<Self> {
         let base_dir = base_dir.as_ref().to_path_buf();
 
@@ -492,7 +492,7 @@ impl GraphStorageManager {
         Ok(Self { base_dir, format })
     }
 
-    /// Save a graph to disk
+    // Save a graph to disk
     pub fn save_graph(&self, graph: &PropertyGraph, name: &str) -> Result<()> {
         let file_path = self.base_dir.join(format!("{}.graph", name));
 
@@ -517,7 +517,7 @@ impl GraphStorageManager {
         Ok(())
     }
 
-    /// Load a graph from disk
+    // Load a graph from disk
     pub fn load_graph(&self, name: &str) -> Result<PropertyGraph> {
         let file_path = self.base_dir.join(format!("{}.graph", name));
 
@@ -539,7 +539,7 @@ impl GraphStorageManager {
         }
     }
 
-    /// Write data to file
+    // Write data to file
     fn write_file(&self, path: &Path, data: &[u8]) -> Result<()> {
         let mut file = File::create(path)
             .map_err(|e| DbError::Internal(format!("Failed to create file: {}", e)))?;
@@ -550,7 +550,7 @@ impl GraphStorageManager {
         Ok(())
     }
 
-    /// Read data from file
+    // Read data from file
     fn read_file(&self, path: &Path) -> Result<Vec<u8>> {
         let mut file = File::open(path)
             .map_err(|e| DbError::Internal(format!("Failed to open file: {}", e)))?;
@@ -562,7 +562,7 @@ impl GraphStorageManager {
         Ok(data)
     }
 
-    /// Convert adjacency list to property graph
+    // Convert adjacency list to property graph
     fn adjacency_list_to_graph(adj_list: &AdjacencyList) -> Result<PropertyGraph> {
         let mut graph = PropertyGraph::new();
 
@@ -592,7 +592,7 @@ impl GraphStorageManager {
         Ok(graph)
     }
 
-    /// Convert CSR to property graph
+    // Convert CSR to property graph
     fn csr_to_graph(csr: &CSRGraph) -> Result<PropertyGraph> {
         let mut graph = PropertyGraph::new();
 
@@ -627,19 +627,19 @@ impl GraphStorageManager {
 // Index Structures
 // ============================================================================
 
-/// Graph index for fast lookups
+// Graph index for fast lookups
 #[derive(Debug, Clone)]
 pub struct GraphIndex {
-    /// Label index: label -> vertices
+    // Label index: label -> vertices
     pub vertex_label_index: HashMap<String, HashSet<VertexId>>,
 
-    /// Property index: property_key -> vertices (simplified to avoid Value as key)
+    // Property index: property_key -> vertices (simplified to avoid Value as key)
     pub vertex_property_index: HashMap<String, HashSet<VertexId>>,
 
-    /// Edge label index: label -> edges
+    // Edge label index: label -> edges
     pub edge_label_index: HashMap<String, HashSet<EdgeId>>,
 
-    /// Two-hop index for faster path queries
+    // Two-hop index for faster path queries
     pub two_hop_index: HashMap<VertexId, HashSet<VertexId>>,
 }
 
@@ -653,7 +653,7 @@ impl GraphIndex {
         }
     }
 
-    /// Build index from a graph
+    // Build index from a graph
     pub fn build_from_graph(graph: &PropertyGraph) -> Self {
         let mut index = Self::new();
 
@@ -701,22 +701,22 @@ impl GraphIndex {
         index
     }
 
-    /// Find vertices by label
+    // Find vertices by label
     pub fn find_by_label(&self, label: &str) -> Option<&HashSet<VertexId>> {
         self.vertex_label_index.get(label)
     }
 
-    /// Find vertices by property key (not value due to Value not implementing Hash)
+    // Find vertices by property key (not value due to Value not implementing Hash)
     pub fn find_by_property(&self, key: &str) -> Option<&HashSet<VertexId>> {
         self.vertex_property_index.get(key)
     }
 
-    /// Find edges by label
+    // Find edges by label
     pub fn find_edges_by_label(&self, label: &str) -> Option<&HashSet<EdgeId>> {
         self.edge_label_index.get(label)
     }
 
-    /// Check if there's a two-hop path between vertices
+    // Check if there's a two-hop path between vertices
     pub fn has_two_hop_path(&self, source: VertexId, target: VertexId) -> bool {
         self.two_hop_index
             .get(&source)
@@ -735,17 +735,17 @@ impl Default for GraphIndex {
 // Memory-Mapped Storage
 // ============================================================================
 
-/// Memory-mapped graph storage for large graphs
+// Memory-mapped graph storage for large graphs
 pub struct MemoryMappedGraph {
-    /// Path to the memory-mapped file
+    // Path to the memory-mapped file
     file_path: PathBuf,
 
-    /// File size
+    // File size
     file_size: usize,
 }
 
 impl MemoryMappedGraph {
-    /// Create a new memory-mapped graph
+    // Create a new memory-mapped graph
     pub fn new<P: AsRef<Path>>(file_path: P) -> Result<Self> {
         let file_path = file_path.as_ref().to_path_buf();
 
@@ -755,7 +755,7 @@ impl MemoryMappedGraph {
         })
     }
 
-    /// Map a graph to memory
+    // Map a graph to memory
     pub fn map_graph(&mut self, graph: &PropertyGraph) -> Result<()> {
         // Serialize graph
         let adj_list = AdjacencyList::from_graph(graph);
@@ -777,7 +777,7 @@ impl MemoryMappedGraph {
         Ok(())
     }
 
-    /// Get file size
+    // Get file size
     pub fn size(&self) -> usize {
         self.file_size
     }

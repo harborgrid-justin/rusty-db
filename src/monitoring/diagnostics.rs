@@ -5,14 +5,14 @@ use std::fmt;
 use std::collections::VecDeque;
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::{Instant, Duration};
 
 use std::path::PathBuf;
 
-/// Incident severity
+// Incident severity
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum IncidentSeverity {
     Low,
@@ -32,7 +32,7 @@ impl fmt::Display for IncidentSeverity {
     }
 }
 
-/// Incident type
+// Incident type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum IncidentType {
     Crash,
@@ -64,7 +64,7 @@ impl fmt::Display for IncidentType {
     }
 }
 
-/// Diagnostic incident
+// Diagnostic incident
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Incident {
     pub id: u64,
@@ -141,7 +141,7 @@ impl Incident {
     }
 }
 
-/// Diagnostic dump type
+// Diagnostic dump type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DumpType {
     SystemState,
@@ -169,7 +169,7 @@ impl fmt::Display for DumpType {
     }
 }
 
-/// Diagnostic dump
+// Diagnostic dump
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiagnosticDump {
     pub id: u64,
@@ -208,7 +208,7 @@ impl DiagnosticDump {
     }
 }
 
-/// Health check status
+// Health check status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HealthStatus {
     Healthy,
@@ -228,7 +228,7 @@ impl fmt::Display for HealthStatus {
     }
 }
 
-/// Health check result
+// Health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckResult {
     pub check_name: String,
@@ -260,7 +260,7 @@ impl HealthCheckResult {
     }
 }
 
-/// Health check trait
+// Health check trait
 pub trait HealthCheck: Send + Sync {
     fn name(&self) -> &str;
     fn check(&self) -> HealthCheckResult;
@@ -269,7 +269,7 @@ pub trait HealthCheck: Send + Sync {
     }
 }
 
-/// Database connection health check
+// Database connection health check
 pub struct ConnectionHealthCheck {
     max_connections: usize,
     current_connections: Arc<RwLock<usize>>,
@@ -316,7 +316,7 @@ impl HealthCheck for ConnectionHealthCheck {
     }
 }
 
-/// Memory health check
+// Memory health check
 pub struct MemoryHealthCheck {
     max_memory_bytes: u64,
     current_memory_bytes: Arc<RwLock<u64>>,
@@ -363,7 +363,7 @@ impl HealthCheck for MemoryHealthCheck {
     }
 }
 
-/// Diagnostic repository
+// Diagnostic repository
 pub struct DiagnosticRepository {
     incidents: Arc<RwLock<HashMap<u64, Incident>>>,
     dumps: Arc<RwLock<HashMap<u64, DiagnosticDump>>>,
@@ -714,5 +714,3 @@ mod tests {
         assert_eq!(results[0].status, HealthStatus::Healthy);
     }
 }
-
-

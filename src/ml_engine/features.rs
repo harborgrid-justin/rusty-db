@@ -12,12 +12,12 @@ use std::collections::HashMap;
 // Feature Transformation Types
 // ============================================================================
 
-/// Feature transformation pipeline
+// Feature transformation pipeline
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeaturePipeline {
-    /// Ordered list of transformations
+    // Ordered list of transformations
     transformations: Vec<Transformation>,
-    /// Feature metadata
+    // Feature metadata
     metadata: FeatureMetadata,
 }
 
@@ -62,7 +62,7 @@ impl Default for FeaturePipeline {
     }
 }
 
-/// Individual feature transformation
+// Individual feature transformation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Transformation {
     Normalization(Normalizer),
@@ -107,14 +107,14 @@ impl Transformation {
 // Normalization (Min-Max Scaling)
 // ============================================================================
 
-/// Min-Max normalization to [0, 1] range
+// Min-Max normalization to [0, 1] range
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Normalizer {
-    /// Minimum values per feature
+    // Minimum values per feature
     min_values: Vec<f64>,
-    /// Maximum values per feature
+    // Maximum values per feature
     max_values: Vec<f64>,
-    /// Whether the normalizer is fitted
+    // Whether the normalizer is fitted
     fitted: bool,
 }
 
@@ -193,14 +193,14 @@ impl Default for Normalizer {
 // Standardization (Z-score)
 // ============================================================================
 
-/// Z-score standardization (mean=0, std=1)
+// Z-score standardization (mean=0, std=1)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Standardizer {
-    /// Mean values per feature
+    // Mean values per feature
     means: Vec<f64>,
-    /// Standard deviations per feature
+    // Standard deviations per feature
     std_devs: Vec<f64>,
-    /// Whether the standardizer is fitted
+    // Whether the standardizer is fitted
     fitted: bool,
 }
 
@@ -286,14 +286,14 @@ impl Default for Standardizer {
 // One-Hot Encoding
 // ============================================================================
 
-/// One-hot encoding for categorical features
+// One-hot encoding for categorical features
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OneHotEncoder {
-    /// Categories per feature
+    // Categories per feature
     categories: HashMap<usize, Vec<i64>>,
-    /// Feature indices to encode
+    // Feature indices to encode
     feature_indices: Vec<usize>,
-    /// Whether the encoder is fitted
+    // Whether the encoder is fitted
     fitted: bool,
 }
 
@@ -383,18 +383,18 @@ impl OneHotEncoder {
 // Feature Binning
 // ============================================================================
 
-/// Equal-width or equal-frequency binning
+// Equal-width or equal-frequency binning
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Binner {
-    /// Bin edges per feature
+    // Bin edges per feature
     bin_edges: HashMap<usize, Vec<f64>>,
-    /// Feature indices to bin
+    // Feature indices to bin
     feature_indices: Vec<usize>,
-    /// Number of bins
+    // Number of bins
     n_bins: usize,
-    /// Binning strategy
+    // Binning strategy
     strategy: BinningStrategy,
-    /// Whether the binner is fitted
+    // Whether the binner is fitted
     fitted: bool,
 }
 
@@ -508,16 +508,16 @@ impl Binner {
 // Missing Value Imputation
 // ============================================================================
 
-/// Imputation strategies for missing values
+// Imputation strategies for missing values
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Imputer {
-    /// Imputation values per feature
+    // Imputation values per feature
     fill_values: Vec<f64>,
-    /// Imputation strategy
+    // Imputation strategy
     strategy: ImputationStrategy,
-    /// Missing value indicator
+    // Missing value indicator
     missing_value: f64,
-    /// Whether the imputer is fitted
+    // Whether the imputer is fitted
     fitted: bool,
 }
 
@@ -624,14 +624,14 @@ impl Imputer {
 // Polynomial Features
 // ============================================================================
 
-/// Generate polynomial and interaction features
+// Generate polynomial and interaction features
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolynomialTransform {
-    /// Polynomial degree
+    // Polynomial degree
     degree: usize,
-    /// Include interaction terms
+    // Include interaction terms
     interaction_only: bool,
-    /// Include bias term
+    // Include bias term
     include_bias: bool,
 }
 
@@ -717,16 +717,16 @@ impl PolynomialTransform {
 // Variance Threshold Selector
 // ============================================================================
 
-/// Remove low-variance features
+// Remove low-variance features
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VarianceThresholdSelector {
-    /// Variance threshold
+    // Variance threshold
     threshold: f64,
-    /// Selected feature indices
+    // Selected feature indices
     selected_features: Vec<usize>,
-    /// Feature variances
+    // Feature variances
     variances: Vec<f64>,
-    /// Whether the selector is fitted
+    // Whether the selector is fitted
     fitted: bool,
 }
 
@@ -800,14 +800,14 @@ impl VarianceThresholdSelector {
 // Correlation-based Feature Selection
 // ============================================================================
 
-/// Remove highly correlated features
+// Remove highly correlated features
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CorrelationSelector {
-    /// Correlation threshold
+    // Correlation threshold
     threshold: f64,
-    /// Selected feature indices
+    // Selected feature indices
     selected_features: Vec<usize>,
-    /// Whether the selector is fitted
+    // Whether the selector is fitted
     fitted: bool,
 }
 
@@ -954,7 +954,7 @@ impl Default for FeatureMetadata {
 // Feature Engine
 // ============================================================================
 
-/// Main feature engineering coordinator
+// Main feature engineering coordinator
 pub struct FeatureEngine {
     pipelines: HashMap<String, FeaturePipeline>,
 }

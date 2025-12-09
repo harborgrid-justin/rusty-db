@@ -7,10 +7,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration};
+use std::time::Duration;
 
 
-/// Alert severity levels
+// Alert severity levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum AlertSeverity {
     Info,
@@ -30,7 +30,7 @@ impl fmt::Display for AlertSeverity {
     }
 }
 
-/// Alert state
+// Alert state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AlertState {
     Active,
@@ -50,7 +50,7 @@ impl fmt::Display for AlertState {
     }
 }
 
-/// Alert category
+// Alert category
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AlertCategory {
     Performance,
@@ -78,7 +78,7 @@ impl fmt::Display for AlertCategory {
     }
 }
 
-/// Alert definition
+// Alert definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Alert {
     pub id: u64,
@@ -159,7 +159,7 @@ impl Alert {
     }
 }
 
-/// Threshold-based alert rule
+// Threshold-based alert rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThresholdRule {
     pub name: String,
@@ -221,7 +221,7 @@ impl ThresholdRule {
     }
 }
 
-/// Comparison operators for threshold rules
+// Comparison operators for threshold rules
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ComparisonOperator {
     GreaterThan,
@@ -232,7 +232,7 @@ pub enum ComparisonOperator {
     NotEqual,
 }
 
-/// Anomaly detection algorithm
+// Anomaly detection algorithm
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AnomalyDetectionAlgorithm {
     StandardDeviation,
@@ -241,7 +241,7 @@ pub enum AnomalyDetectionAlgorithm {
     ExponentialSmoothing,
 }
 
-/// Anomaly detection rule
+// Anomaly detection rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnomalyRule {
     pub name: String,
@@ -348,7 +348,7 @@ impl AnomalyRule {
     }
 }
 
-/// Alert manager
+// Alert manager
 pub struct AlertManager {
     alerts: Arc<RwLock<HashMap<u64, Alert>>>,
     alert_history: Arc<RwLock<VecDeque<Alert>>>,
@@ -662,5 +662,3 @@ mod tests {
         assert!(manager.get_active_alert_count() > 0);
     }
 }
-
-

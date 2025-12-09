@@ -20,96 +20,96 @@ use crate::common::Value;
 // Type Aliases and Constants
 // ============================================================================
 
-/// Unique identifier for vertices in the graph
+// Unique identifier for vertices in the graph
 pub type VertexId = u64;
 
-/// Unique identifier for edges in the graph
+// Unique identifier for edges in the graph
 pub type EdgeId = u64;
 
-/// Identifier for graph partitions
+// Identifier for graph partitions
 pub type PartitionId = u32;
 
-/// Label type for vertices and edges
+// Label type for vertices and edges
 pub type Label = String;
 
-/// Property key type
+// Property key type
 pub type PropertyKey = String;
 
-/// Maximum number of partitions supported
+// Maximum number of partitions supported
 pub const MAX_PARTITIONS: u32 = 1024;
 
-/// Default partition size (number of vertices)
+// Default partition size (number of vertices)
 pub const DEFAULT_PARTITION_SIZE: usize = 100_000;
 
 // ============================================================================
 // Property Storage
 // ============================================================================
 
-/// Properties associated with vertices and edges (key-value pairs)
+// Properties associated with vertices and edges (key-value pairs)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Properties {
     data: HashMap<PropertyKey, Value>,
 }
 
 impl Properties {
-    /// Create empty properties
+    // Create empty properties
     pub fn new() -> Self {
         Self {
             data: HashMap::new(),
         }
     }
 
-    /// Create properties from a hashmap
+    // Create properties from a hashmap
     pub fn from_map(data: HashMap<PropertyKey, Value>) -> Self {
         Self { data }
     }
 
-    /// Set a property value
+    // Set a property value
     pub fn set(&mut self, key: PropertyKey, value: Value) {
         self.data.insert(key, value);
     }
 
-    /// Get a property value
+    // Get a property value
     pub fn get(&self, key: &str) -> Option<&Value> {
         self.data.get(key)
     }
 
-    /// Remove a property
+    // Remove a property
     pub fn remove(&mut self, key: &str) -> Option<Value> {
         self.data.remove(key)
     }
 
-    /// Check if property exists
+    // Check if property exists
     pub fn contains_key(&self, key: &str) -> bool {
         self.data.contains_key(key)
     }
 
-    /// Get all property keys
+    // Get all property keys
     pub fn keys(&self) -> Vec<&String> {
         self.data.keys().collect()
     }
 
-    /// Get all property values
+    // Get all property values
     pub fn values(&self) -> Vec<&Value> {
         self.data.values().collect()
     }
 
-    /// Get number of properties
+    // Get number of properties
     pub fn len(&self) -> usize {
         self.data.len()
     }
 
-    /// Check if properties are empty
+    // Check if properties are empty
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
-    /// Iterate over properties
+    // Iterate over properties
     pub fn iter(&self) -> impl Iterator<Item = (&String, &Value)> {
         self.data.iter()
     }
 
-    /// Merge properties from another set
+    // Merge properties from another set
     pub fn merge(&mut self, other: Properties) {
         self.data.extend(other.data);
     }
@@ -125,32 +125,32 @@ impl Default for Properties {
 // Vertex Structure
 // ============================================================================
 
-/// Represents a vertex (node) in the property graph
+// Represents a vertex (node) in the property graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Vertex {
-    /// Unique vertex identifier
+    // Unique vertex identifier
     pub id: VertexId,
 
-    /// Vertex labels (can have multiple labels)
+    // Vertex labels (can have multiple labels)
     pub labels: Vec<Label>,
 
-    /// Vertex properties
+    // Vertex properties
     pub properties: Properties,
 
-    /// Outgoing edge IDs
+    // Outgoing edge IDs
     pub outgoing_edges: HashSet<EdgeId>,
 
-    /// Incoming edge IDs
+    // Incoming edge IDs
     pub incoming_edges: HashSet<EdgeId>,
 
-    /// Partition this vertex belongs to
+    // Partition this vertex belongs to
     pub partition_id: PartitionId,
 
-    /// Degree cache for quick access
+    // Degree cache for quick access
     degree_cache: Option<VertexDegree>,
 }
 
-/// Vertex degree information
+// Vertex degree information
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct VertexDegree {
     pub in_degree: usize,
@@ -159,7 +159,7 @@ pub struct VertexDegree {
 }
 
 impl Vertex {
-    /// Create a new vertex with given ID and labels
+    // Create a new vertex with given ID and labels
     pub fn new(id: VertexId, labels: Vec<Label>) -> Self {
         Self {
             id,
@@ -172,7 +172,7 @@ impl Vertex {
         }
     }
 
-    /// Create a new vertex with properties
+    // Create a new vertex with properties
     pub fn with_properties(id: VertexId, labels: Vec<Label>, properties: Properties) -> Self {
         Self {
             id,
@@ -185,14 +185,14 @@ impl Vertex {
         }
     }
 
-    /// Add a label to the vertex
+    // Add a label to the vertex
     pub fn add_label(&mut self, label: Label) {
         if !self.labels.contains(&label) {
             self.labels.push(label);
         }
     }
 
-    /// Remove a label from the vertex
+    // Remove a label from the vertex
     pub fn remove_label(&mut self, label: &str) -> bool {
         if let Some(pos) = self.labels.iter().position(|l| l == label) {
             self.labels.remove(pos);
@@ -202,24 +202,24 @@ impl Vertex {
         }
     }
 
-    /// Check if vertex has a specific label
+    // Check if vertex has a specific label
     pub fn has_label(&self, label: &str) -> bool {
         self.labels.iter().any(|l| l == label)
     }
 
-    /// Add an outgoing edge
+    // Add an outgoing edge
     pub(crate) fn add_outgoing_edge(&mut self, edge_id: EdgeId) {
         self.outgoing_edges.insert(edge_id);
         self.degree_cache = None; // Invalidate cache
     }
 
-    /// Add an incoming edge
+    // Add an incoming edge
     pub(crate) fn add_incoming_edge(&mut self, edge_id: EdgeId) {
         self.incoming_edges.insert(edge_id);
         self.degree_cache = None; // Invalidate cache
     }
 
-    /// Remove an outgoing edge
+    // Remove an outgoing edge
     pub(crate) fn remove_outgoing_edge(&mut self, edge_id: EdgeId) -> bool {
         let removed = self.outgoing_edges.remove(&edge_id);
         if removed {
@@ -228,7 +228,7 @@ impl Vertex {
         removed
     }
 
-    /// Remove an incoming edge
+    // Remove an incoming edge
     pub(crate) fn remove_incoming_edge(&mut self, edge_id: EdgeId) -> bool {
         let removed = self.incoming_edges.remove(&edge_id);
         if removed {
@@ -237,7 +237,7 @@ impl Vertex {
         removed
     }
 
-    /// Get degree information
+    // Get degree information
     pub fn degree(&mut self) -> VertexDegree {
         if let Some(degree) = self.degree_cache {
             degree
@@ -252,17 +252,17 @@ impl Vertex {
         }
     }
 
-    /// Get in-degree (number of incoming edges)
+    // Get in-degree (number of incoming edges)
     pub fn in_degree(&self) -> usize {
         self.incoming_edges.len()
     }
 
-    /// Get out-degree (number of outgoing edges)
+    // Get out-degree (number of outgoing edges)
     pub fn out_degree(&self) -> usize {
         self.outgoing_edges.len()
     }
 
-    /// Check if vertex is isolated (no edges)
+    // Check if vertex is isolated (no edges)
     pub fn is_isolated(&self) -> bool {
         self.incoming_edges.is_empty() && self.outgoing_edges.is_empty()
     }
@@ -272,46 +272,46 @@ impl Vertex {
 // Edge Structure
 // ============================================================================
 
-/// Edge direction enumeration
+// Edge direction enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EdgeDirection {
-    /// Directed edge from source to target
+    // Directed edge from source to target
     Directed,
 
-    /// Undirected edge (bidirectional)
+    // Undirected edge (bidirectional)
     Undirected,
 }
 
-/// Represents an edge in the property graph
+// Represents an edge in the property graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Edge {
-    /// Unique edge identifier
+    // Unique edge identifier
     pub id: EdgeId,
 
-    /// Source vertex ID
+    // Source vertex ID
     pub source: VertexId,
 
-    /// Target vertex ID
+    // Target vertex ID
     pub target: VertexId,
 
-    /// Edge label (relationship type)
+    // Edge label (relationship type)
     pub label: Label,
 
-    /// Edge properties
+    // Edge properties
     pub properties: Properties,
 
-    /// Edge direction
+    // Edge direction
     pub direction: EdgeDirection,
 
-    /// Weight (if applicable)
+    // Weight (if applicable)
     pub weight: Option<f64>,
 
-    /// Timestamp for temporal graphs
+    // Timestamp for temporal graphs
     pub timestamp: Option<i64>,
 }
 
 impl Edge {
-    /// Create a new directed edge
+    // Create a new directed edge
     pub fn new(id: EdgeId, source: VertexId, target: VertexId, label: Label) -> Self {
         Self {
             id,
@@ -325,7 +325,7 @@ impl Edge {
         }
     }
 
-    /// Create a new edge with properties
+    // Create a new edge with properties
     pub fn with_properties(
         id: EdgeId,
         source: VertexId,
@@ -345,7 +345,7 @@ impl Edge {
         }
     }
 
-    /// Create an undirected edge
+    // Create an undirected edge
     pub fn undirected(id: EdgeId, source: VertexId, target: VertexId, label: Label) -> Self {
         Self {
             id,
@@ -359,34 +359,34 @@ impl Edge {
         }
     }
 
-    /// Set edge weight
+    // Set edge weight
     pub fn with_weight(mut self, weight: f64) -> Self {
         self.weight = Some(weight);
         self
     }
 
-    /// Set edge timestamp
+    // Set edge timestamp
     pub fn with_timestamp(mut self, timestamp: i64) -> Self {
         self.timestamp = Some(timestamp);
         self
     }
 
-    /// Check if edge is directed
+    // Check if edge is directed
     pub fn is_directed(&self) -> bool {
         self.direction == EdgeDirection::Directed
     }
 
-    /// Check if edge is undirected
+    // Check if edge is undirected
     pub fn is_undirected(&self) -> bool {
         self.direction == EdgeDirection::Undirected
     }
 
-    /// Check if edge is a self-loop
+    // Check if edge is a self-loop
     pub fn is_self_loop(&self) -> bool {
         self.source == self.target
     }
 
-    /// Get the other vertex in the edge (given one endpoint)
+    // Get the other vertex in the edge (given one endpoint)
     pub fn other_vertex(&self, vertex_id: VertexId) -> Option<VertexId> {
         if self.source == vertex_id {
             Some(self.target)
@@ -402,27 +402,27 @@ impl Edge {
 // Hypergraph Support
 // ============================================================================
 
-/// Hyperedge connects multiple vertices (generalization of edge)
+// Hyperedge connects multiple vertices (generalization of edge)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HyperEdge {
-    /// Unique hyperedge identifier
+    // Unique hyperedge identifier
     pub id: EdgeId,
 
-    /// Set of vertices in this hyperedge
+    // Set of vertices in this hyperedge
     pub vertices: HashSet<VertexId>,
 
-    /// Hyperedge label
+    // Hyperedge label
     pub label: Label,
 
-    /// Hyperedge properties
+    // Hyperedge properties
     pub properties: Properties,
 
-    /// Cardinality (number of vertices)
+    // Cardinality (number of vertices)
     pub cardinality: usize,
 }
 
 impl HyperEdge {
-    /// Create a new hyperedge
+    // Create a new hyperedge
     pub fn new(id: EdgeId, vertices: HashSet<VertexId>, label: Label) -> Self {
         let cardinality = vertices.len();
         Self {
@@ -434,13 +434,13 @@ impl HyperEdge {
         }
     }
 
-    /// Add a vertex to the hyperedge
+    // Add a vertex to the hyperedge
     pub fn add_vertex(&mut self, vertex_id: VertexId) {
         self.vertices.insert(vertex_id);
         self.cardinality = self.vertices.len();
     }
 
-    /// Remove a vertex from the hyperedge
+    // Remove a vertex from the hyperedge
     pub fn remove_vertex(&mut self, vertex_id: VertexId) -> bool {
         let removed = self.vertices.remove(&vertex_id);
         if removed {
@@ -449,7 +449,7 @@ impl HyperEdge {
         removed
     }
 
-    /// Check if vertex is in hyperedge
+    // Check if vertex is in hyperedge
     pub fn contains_vertex(&self, vertex_id: VertexId) -> bool {
         self.vertices.contains(&vertex_id)
     }
@@ -459,27 +459,27 @@ impl HyperEdge {
 // Graph Partitioning
 // ============================================================================
 
-/// Graph partition information
+// Graph partition information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphPartition {
-    /// Partition identifier
+    // Partition identifier
     pub id: PartitionId,
 
-    /// Vertices in this partition
+    // Vertices in this partition
     pub vertices: HashSet<VertexId>,
 
-    /// Edges in this partition
+    // Edges in this partition
     pub edges: HashSet<EdgeId>,
 
-    /// Cut edges (edges connecting to other partitions)
+    // Cut edges (edges connecting to other partitions)
     pub cut_edges: HashSet<EdgeId>,
 
-    /// Partition size in bytes (estimated)
+    // Partition size in bytes (estimated)
     pub size_bytes: usize,
 }
 
 impl GraphPartition {
-    /// Create a new partition
+    // Create a new partition
     pub fn new(id: PartitionId) -> Self {
         Self {
             id,
@@ -490,13 +490,13 @@ impl GraphPartition {
         }
     }
 
-    /// Add a vertex to the partition
+    // Add a vertex to the partition
     pub fn add_vertex(&mut self, vertex_id: VertexId) {
         self.vertices.insert(vertex_id);
         self.size_bytes += size_of::<VertexId>();
     }
 
-    /// Add an edge to the partition
+    // Add an edge to the partition
     pub fn add_edge(&mut self, edge_id: EdgeId, is_cut: bool) {
         self.edges.insert(edge_id);
         if is_cut {
@@ -505,12 +505,12 @@ impl GraphPartition {
         self.size_bytes += size_of::<EdgeId>();
     }
 
-    /// Get partition load (number of vertices)
+    // Get partition load (number of vertices)
     pub fn load(&self) -> usize {
         self.vertices.len()
     }
 
-    /// Get cut ratio (proportion of cut edges)
+    // Get cut ratio (proportion of cut edges)
     pub fn cut_ratio(&self) -> f64 {
         if self.edges.is_empty() {
             0.0
@@ -520,23 +520,23 @@ impl GraphPartition {
     }
 }
 
-/// Partitioning strategy
+// Partitioning strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PartitioningStrategy {
-    /// Hash-based partitioning
+    // Hash-based partitioning
     Hash,
 
-    /// Range-based partitioning
+    // Range-based partitioning
     Range,
 
-    /// Edge-cut minimization (METIS-like)
+    // Edge-cut minimization (METIS-like)
     EdgeCut,
 
-    /// Vertex-cut minimization
+    // Vertex-cut minimization
     VertexCut,
 }
 
-/// Graph partitioner
+// Graph partitioner
 #[derive(Clone)]
 pub struct GraphPartitioner {
     strategy: PartitioningStrategy,
@@ -545,7 +545,7 @@ pub struct GraphPartitioner {
 }
 
 impl GraphPartitioner {
-    /// Create a new partitioner
+    // Create a new partitioner
     pub fn new(strategy: PartitioningStrategy, num_partitions: u32) -> Self {
         let mut partitions = Vec::with_capacity(num_partitions as usize);
         for i in 0..num_partitions {
@@ -559,7 +559,7 @@ impl GraphPartitioner {
         }
     }
 
-    /// Assign a vertex to a partition
+    // Assign a vertex to a partition
     pub fn assign_vertex(&mut self, vertex_id: VertexId) -> PartitionId {
         let partition_id = match self.strategy {
             PartitioningStrategy::Hash => {
@@ -579,7 +579,7 @@ impl GraphPartitioner {
         partition_id
     }
 
-    /// Get partition for a vertex
+    // Get partition for a vertex
     pub fn get_partition(&self, vertex_id: VertexId) -> PartitionId {
         match self.strategy {
             PartitioningStrategy::Hash => {
@@ -594,12 +594,12 @@ impl GraphPartitioner {
         }
     }
 
-    /// Get partition statistics
+    // Get partition statistics
     pub fn get_partition_stats(&self, partition_id: PartitionId) -> Option<&GraphPartition> {
         self.partitions.get(partition_id as usize)
     }
 
-    /// Balance partitions (simple greedy rebalancing)
+    // Balance partitions (simple greedy rebalancing)
     pub fn rebalance(&mut self) -> Result<()> {
         // Calculate average load
         let total_vertices: usize = self.partitions.iter().map(|p| p.load()).sum();
@@ -628,48 +628,48 @@ impl GraphPartitioner {
 // Graph Statistics
 // ============================================================================
 
-/// Graph statistics and metadata
+// Graph statistics and metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphStats {
-    /// Total number of vertices
+    // Total number of vertices
     pub num_vertices: u64,
 
-    /// Total number of edges
+    // Total number of edges
     pub num_edges: u64,
 
-    /// Number of hyperedges
+    // Number of hyperedges
     pub num_hyperedges: u64,
 
-    /// Graph density
+    // Graph density
     pub density: f64,
 
-    /// Average degree
+    // Average degree
     pub avg_degree: f64,
 
-    /// Maximum degree
+    // Maximum degree
     pub max_degree: usize,
 
-    /// Minimum degree
+    // Minimum degree
     pub min_degree: usize,
 
-    /// Number of connected components
+    // Number of connected components
     pub num_components: Option<usize>,
 
-    /// Graph diameter
+    // Graph diameter
     pub diameter: Option<usize>,
 
-    /// Clustering coefficient
+    // Clustering coefficient
     pub clustering_coefficient: Option<f64>,
 
-    /// Memory usage in bytes
+    // Memory usage in bytes
     pub memory_bytes: usize,
 
-    /// Last updated timestamp
+    // Last updated timestamp
     pub last_updated: i64,
 }
 
 impl GraphStats {
-    /// Create empty statistics
+    // Create empty statistics
     pub fn new() -> Self {
         Self {
             num_vertices: 0,
@@ -687,7 +687,7 @@ impl GraphStats {
         }
     }
 
-    /// Update basic statistics
+    // Update basic statistics
     pub fn update_basic(&mut self, num_vertices: u64, num_edges: u64) {
         self.num_vertices = num_vertices;
         self.num_edges = num_edges;
@@ -705,7 +705,7 @@ impl GraphStats {
             .as_secs() as i64;
     }
 
-    /// Update degree statistics
+    // Update degree statistics
     pub fn update_degree_stats(&mut self, degrees: &[usize]) {
         if degrees.is_empty() {
             return;
@@ -729,41 +729,41 @@ impl Default for GraphStats {
 // Property Graph
 // ============================================================================
 
-/// Main property graph structure
+// Main property graph structure
 pub struct PropertyGraph {
-    /// All vertices in the graph
+    // All vertices in the graph
     vertices: HashMap<VertexId, Vertex>,
 
-    /// All edges in the graph
+    // All edges in the graph
     edges: HashMap<EdgeId, Edge>,
 
-    /// Hyperedges (for hypergraph support)
+    // Hyperedges (for hypergraph support)
     hyperedges: HashMap<EdgeId, HyperEdge>,
 
-    /// Vertex ID generator
+    // Vertex ID generator
     next_vertex_id: AtomicU64,
 
-    /// Edge ID generator
+    // Edge ID generator
     next_edge_id: AtomicU64,
 
-    /// Graph partitioner
+    // Graph partitioner
     partitioner: Option<GraphPartitioner>,
 
-    /// Graph statistics
+    // Graph statistics
     stats: Arc<RwLock<GraphStats>>,
 
-    /// Index: label -> vertex IDs
+    // Index: label -> vertex IDs
     vertex_label_index: HashMap<Label, HashSet<VertexId>>,
 
-    /// Index: label -> edge IDs
+    // Index: label -> edge IDs
     edge_label_index: HashMap<Label, HashSet<EdgeId>>,
 
-    /// Index: property key -> vertex IDs
+    // Index: property key -> vertex IDs
     vertex_property_index: HashMap<PropertyKey, HashSet<VertexId>>,
 }
 
 impl PropertyGraph {
-    /// Create a new empty property graph
+    // Create a new empty property graph
     pub fn new() -> Self {
         Self {
             vertices: HashMap::new(),
@@ -779,24 +779,24 @@ impl PropertyGraph {
         }
     }
 
-    /// Create a graph with partitioning
+    // Create a graph with partitioning
     pub fn with_partitioning(strategy: PartitioningStrategy, num_partitions: u32) -> Self {
         let mut graph = Self::new();
         graph.partitioner = Some(GraphPartitioner::new(strategy, num_partitions));
         graph
     }
 
-    /// Generate next vertex ID
+    // Generate next vertex ID
     fn generate_vertex_id(&self) -> VertexId {
         self.next_vertex_id.fetch_add(1, Ordering::SeqCst)
     }
 
-    /// Generate next edge ID
+    // Generate next edge ID
     fn generate_edge_id(&self) -> EdgeId {
         self.next_edge_id.fetch_add(1, Ordering::SeqCst)
     }
 
-    /// Add a vertex to the graph
+    // Add a vertex to the graph
     pub fn add_vertex(&mut self, labels: Vec<Label>, properties: Properties) -> Result<VertexId> {
         let id = self.generate_vertex_id();
         let mut vertex = Vertex::with_properties(id, labels.clone(), properties);
@@ -830,17 +830,17 @@ impl PropertyGraph {
         Ok(id)
     }
 
-    /// Get a vertex by ID
+    // Get a vertex by ID
     pub fn get_vertex(&self, id: VertexId) -> Option<&Vertex> {
         self.vertices.get(&id)
     }
 
-    /// Get a mutable vertex by ID
+    // Get a mutable vertex by ID
     pub fn get_vertex_mut(&mut self, id: VertexId) -> Option<&mut Vertex> {
         self.vertices.get_mut(&id)
     }
 
-    /// Remove a vertex and all its edges
+    // Remove a vertex and all its edges
     pub fn remove_vertex(&mut self, id: VertexId) -> Result<()> {
         if let Some(vertex) = self.vertices.remove(&id) {
             // Remove all connected edges
@@ -874,7 +874,7 @@ impl PropertyGraph {
         }
     }
 
-    /// Add an edge between two vertices
+    // Add an edge between two vertices
     pub fn add_edge(
         &mut self,
         source: VertexId,
@@ -926,12 +926,12 @@ impl PropertyGraph {
         Ok(id)
     }
 
-    /// Get an edge by ID
+    // Get an edge by ID
     pub fn get_edge(&self, id: EdgeId) -> Option<&Edge> {
         self.edges.get(&id)
     }
 
-    /// Remove an edge
+    // Remove an edge
     pub fn remove_edge(&mut self, id: EdgeId) -> Result<()> {
         if let Some(edge) = self.edges.remove(&id) {
             // Update vertex edge lists
@@ -965,7 +965,7 @@ impl PropertyGraph {
         }
     }
 
-    /// Add a hyperedge
+    // Add a hyperedge
     pub fn add_hyperedge(
         &mut self,
         vertices: HashSet<VertexId>,
@@ -989,7 +989,7 @@ impl PropertyGraph {
         Ok(id)
     }
 
-    /// Get vertices by label
+    // Get vertices by label
     pub fn get_vertices_by_label(&self, label: &str) -> Vec<&Vertex> {
         if let Some(vertex_ids) = self.vertex_label_index.get(label) {
             vertex_ids.iter()
@@ -1000,7 +1000,7 @@ impl PropertyGraph {
         }
     }
 
-    /// Get edges by label
+    // Get edges by label
     pub fn get_edges_by_label(&self, label: &str) -> Vec<&Edge> {
         if let Some(edge_ids) = self.edge_label_index.get(label) {
             edge_ids.iter()
@@ -1011,7 +1011,7 @@ impl PropertyGraph {
         }
     }
 
-    /// Get neighbors of a vertex
+    // Get neighbors of a vertex
     pub fn get_neighbors(&self, vertex_id: VertexId) -> Result<Vec<VertexId>> {
         if let Some(vertex) = self.vertices.get(&vertex_id) {
             let mut neighbors = HashSet::new();
@@ -1036,7 +1036,7 @@ impl PropertyGraph {
         }
     }
 
-    /// Get outgoing neighbors
+    // Get outgoing neighbors
     pub fn get_outgoing_neighbors(&self, vertex_id: VertexId) -> Result<Vec<VertexId>> {
         if let Some(vertex) = self.vertices.get(&vertex_id) {
             let neighbors: Vec<VertexId> = vertex.outgoing_edges.iter()
@@ -1049,7 +1049,7 @@ impl PropertyGraph {
         }
     }
 
-    /// Get incoming neighbors
+    // Get incoming neighbors
     pub fn get_incoming_neighbors(&self, vertex_id: VertexId) -> Result<Vec<VertexId>> {
         if let Some(vertex) = self.vertices.get(&vertex_id) {
             let neighbors: Vec<VertexId> = vertex.incoming_edges.iter()
@@ -1062,27 +1062,27 @@ impl PropertyGraph {
         }
     }
 
-    /// Get all vertices
+    // Get all vertices
     pub fn vertices(&self) -> impl Iterator<Item = &Vertex> {
         self.vertices.values()
     }
 
-    /// Get all edges
+    // Get all edges
     pub fn edges(&self) -> impl Iterator<Item = &Edge> {
         self.edges.values()
     }
 
-    /// Get vertex count
+    // Get vertex count
     pub fn vertex_count(&self) -> usize {
         self.vertices.len()
     }
 
-    /// Get edge count
+    // Get edge count
     pub fn edge_count(&self) -> usize {
         self.edges.len()
     }
 
-    /// Update graph statistics
+    // Update graph statistics
     fn update_stats(&self) {
         if let Ok(mut stats) = self.stats.write() {
             stats.update_basic(self.vertices.len() as u64, self.edges.len() as u64);
@@ -1103,12 +1103,12 @@ impl PropertyGraph {
         }
     }
 
-    /// Get graph statistics
+    // Get graph statistics
     pub fn get_stats(&self) -> GraphStats {
         self.stats.read().unwrap().clone()
     }
 
-    /// Clear the entire graph
+    // Clear the entire graph
     pub fn clear(&mut self) {
         self.vertices.clear();
         self.edges.clear();

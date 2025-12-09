@@ -1,26 +1,26 @@
 use crate::clustering::node::{NodeId, NodeInfo};
-/// Cluster Health and Status Management Module
-///
-/// This module provides types and functionality for monitoring and managing
-/// the health and status of cluster nodes and the overall cluster.
+// Cluster Health and Status Management Module
+//
+// This module provides types and functionality for monitoring and managing
+// the health and status of cluster nodes and the overall cluster.
 
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::SystemTime;
 
-/// Overall cluster status
+// Overall cluster status
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ClusterStatus {
-    /// Cluster is fully operational
+    // Cluster is fully operational
     Healthy,
-    /// Cluster is operational but degraded
+    // Cluster is operational but degraded
     Degraded,
-    /// Cluster has lost quorum
+    // Cluster has lost quorum
     Failed,
 }
 
-/// Cluster health information
+// Cluster health information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClusterHealth {
     pub total_nodes: usize,
@@ -33,7 +33,7 @@ pub struct ClusterHealth {
 }
 
 impl ClusterHealth {
-    /// Create a new cluster health report
+    // Create a new cluster health report
     pub fn new() -> Self {
         Self {
             total_nodes: 0,
@@ -46,7 +46,7 @@ impl ClusterHealth {
         }
     }
 
-    /// Update health based on node information
+    // Update health based on node information
     pub fn update_from_nodes(&mut self, nodes: &HashMap<NodeId, NodeInfo>, has_leader: bool) {
         self.total_nodes = nodes.len();
         self.healthy_nodes = 0;
@@ -78,13 +78,13 @@ impl ClusterHealth {
         };
     }
 
-    /// Check if cluster is operational
+    // Check if cluster is operational
     pub fn is_operational(&self) -> bool {
         matches!(self.cluster_status, ClusterStatus::Healthy | ClusterStatus::Degraded)
     }
 }
 
-/// Health issue type
+// Health issue type
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum HealthIssueType {
     HighCpuUsage,
@@ -95,7 +95,7 @@ pub enum HealthIssueType {
     DataInconsistency,
 }
 
-/// Issue severity
+// Issue severity
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum IssueSeverity {
     Info,
@@ -104,7 +104,7 @@ pub enum IssueSeverity {
     Critical,
 }
 
-/// Health issue details
+// Health issue details
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthIssue {
     pub node_id: NodeId,
@@ -114,16 +114,16 @@ pub struct HealthIssue {
     pub timestamp: SystemTime,
 }
 
-/// Trait for health monitoring
+// Trait for health monitoring
 pub trait HealthMonitor {
-    /// Perform health check
+    // Perform health check
     fn check_health(&self) -> Result<ClusterHealth, DbError>;
 
-    /// Get detailed health metrics
+    // Get detailed health metrics
     fn get_health_metrics(&self) -> Result<HealthMetrics, DbError>;
 }
 
-/// Health metrics
+// Health metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthMetrics {
     pub cluster_status: ClusterStatus,
@@ -136,7 +136,7 @@ pub struct HealthMetrics {
     pub response_time_ms: f64,
 }
 
-/// Node-specific health metrics
+// Node-specific health metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeHealthMetrics {
     pub node_id: NodeId,

@@ -16,7 +16,7 @@ use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
-/// Cloud storage provider
+// Cloud storage provider
 #[repr(C)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum CloudProvider {
@@ -27,7 +27,7 @@ pub enum CloudProvider {
     Custom { endpoint: String },
 }
 
-/// Cloud storage configuration
+// Cloud storage configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloudStorageConfig {
     pub provider: CloudProvider,
@@ -65,7 +65,7 @@ impl Default for CloudStorageConfig {
     }
 }
 
-/// Cloud backup metadata
+// Cloud backup metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloudBackup {
     pub backup_id: String,
@@ -82,7 +82,7 @@ pub struct CloudBackup {
     pub parts: Vec<UploadPart>,
 }
 
-/// Storage class for cost optimization
+// Storage class for cost optimization
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum StorageClass {
     Standard,
@@ -92,7 +92,7 @@ pub enum StorageClass {
     Intelligent,
 }
 
-/// Upload part for multipart uploads
+// Upload part for multipart uploads
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UploadPart {
     pub part_number: u32,
@@ -102,7 +102,7 @@ pub struct UploadPart {
     pub etag: Option<String>,
 }
 
-/// Upload status tracking
+// Upload status tracking
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum UploadStatus {
     Pending,
@@ -112,7 +112,7 @@ pub enum UploadStatus {
     Failed { error: String, retry_count: u32 },
 }
 
-/// Upload session for resumable uploads
+// Upload session for resumable uploads
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UploadSession {
     pub session_id: String,
@@ -158,7 +158,7 @@ impl UploadSession {
     }
 }
 
-/// Bandwidth throttler for rate limiting uploads
+// Bandwidth throttler for rate limiting uploads
 pub struct BandwidthThrottler {
     limit_bytes_per_sec: Option<u64>,
     window_size: Duration,
@@ -174,7 +174,7 @@ impl BandwidthThrottler {
         }
     }
 
-    /// Wait if necessary to stay within bandwidth limit
+    // Wait if necessary to stay within bandwidth limit
     pub fn throttle(&self, bytes: u64) -> Duration {
         if let Some(limit) = self.limit_bytes_per_sec {
             let now = Instant::now();
@@ -220,7 +220,7 @@ impl BandwidthThrottler {
     }
 }
 
-/// Cloud backup manager
+// Cloud backup manager
 pub struct CloudBackupManager {
     config: CloudStorageConfig,
     backups: Arc<RwLock<HashMap<String, CloudBackup>>>,
@@ -240,7 +240,7 @@ impl CloudBackupManager {
         }
     }
 
-    /// Upload a backup to cloud storage
+    // Upload a backup to cloud storage
     pub fn upload_backup(
         &self,
         backup_id: String,
@@ -471,7 +471,7 @@ impl CloudBackupManager {
         Ok(())
     }
 
-    /// Download a backup from cloud storage
+    // Download a backup from cloud storage
     pub fn download_backup(&self, backup_id: &str, destination_path: PathBuf) -> Result<()> {
         let backup = self.backups.read().get(backup_id).cloned()
             .ok_or_else(|| DbError::BackupError("Backup not found in cloud".to_string()))?;
@@ -503,7 +503,7 @@ impl CloudBackupManager {
         Ok(())
     }
 
-    /// Resume a paused upload
+    // Resume a paused upload
     pub fn resume_upload(&self, session_id: &str) -> Result<()> {
         let mut sessions = self.active_sessions.write();
         let session = sessions.get_mut(session_id)
@@ -523,7 +523,7 @@ impl CloudBackupManager {
         Ok(())
     }
 
-    /// Pause an active upload
+    // Pause an active upload
     pub fn pause_upload(&self, session_id: &str) -> Result<()> {
         let mut sessions = self.active_sessions.write();
         let session = sessions.get_mut(session_id)
@@ -536,7 +536,7 @@ impl CloudBackupManager {
         Ok(())
     }
 
-    /// Delete a backup from cloud storage
+    // Delete a backup from cloud storage
     pub fn delete_cloud_backup(&self, backup_id: &str) -> Result<()> {
         let backup = self.backups.write().remove(backup_id)
             .ok_or_else(|| DbError::BackupError("Backup not found".to_string()))?;
@@ -545,22 +545,22 @@ impl CloudBackupManager {
         Ok(())
     }
 
-    /// List all cloud backups
+    // List all cloud backups
     pub fn list_cloud_backups(&self) -> Vec<CloudBackup> {
         self.backups.read().values().cloned().collect()
     }
 
-    /// Get cloud backup by ID
+    // Get cloud backup by ID
     pub fn get_cloud_backup(&self, backup_id: &str) -> Option<CloudBackup> {
         self.backups.read().get(backup_id).cloned()
     }
 
-    /// Get upload session status
+    // Get upload session status
     pub fn get_upload_status(&self, session_id: &str) -> Option<UploadSession> {
         self.active_sessions.read().get(session_id).cloned()
     }
 
-    /// Get current bandwidth usage
+    // Get current bandwidth usage
     pub fn get_bandwidth_usage(&self) -> f64 {
         self.throttler.get_current_rate_mbps()
     }
@@ -608,5 +608,3 @@ mod tests {
         assert!(manager.list_cloud_backups().is_empty());
     }
 }
-
-

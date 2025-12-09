@@ -3,26 +3,26 @@
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
-/// Health monitor configuration
+// Health monitor configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthMonitorConfig {
-    /// Health check interval
+    // Health check interval
     pub check_interval: Duration,
-    /// History retention duration
+    // History retention duration
     pub history_retention: Duration,
-    /// Maximum history entries per replica
+    // Maximum history entries per replica
     pub max_history_entries: usize,
-    /// Enable automatic alerts
+    // Enable automatic alerts
     pub enable_alerts: bool,
-    /// Alert cool-down period
+    // Alert cool-down period
     pub alert_cooldown: Duration,
-    /// Thresholds for health scoring
+    // Thresholds for health scoring
     pub thresholds: HealthThresholds,
-    /// Enable trend analysis
+    // Enable trend analysis
     pub enable_trend_analysis: bool,
-    /// Trend analysis window
+    // Trend analysis window
     pub trend_window: Duration,
-    /// Enable predictions
+    // Enable predictions
     pub enable_predictions: bool,
 }
 
@@ -42,21 +42,21 @@ impl Default for HealthMonitorConfig {
     }
 }
 
-/// Health scoring thresholds
+// Health scoring thresholds
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthThresholds {
-    /// Lag thresholds
+    // Lag thresholds
     pub lag_bytes_warning: u64,
     pub lag_bytes_critical: u64,
     pub lag_time_warning: Duration,
     pub lag_time_critical: Duration,
-    /// Throughput thresholds
+    // Throughput thresholds
     pub throughput_min_warning: f64,
     pub throughput_min_critical: f64,
-    /// Error rate thresholds
+    // Error rate thresholds
     pub error_rate_warning: f64,
     pub error_rate_critical: f64,
-    /// Resource usage thresholds
+    // Resource usage thresholds
     pub cpu_usage_warning: f64,
     pub cpu_usage_critical: f64,
     pub memory_usage_warning: u64,

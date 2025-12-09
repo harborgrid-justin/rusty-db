@@ -1,4 +1,4 @@
-//! Session lifecycle events module
+// Session lifecycle events module
 use serde::{Serialize, Deserialize};
 use std::sync::Arc;
 use crate::error::Result;
@@ -17,10 +17,10 @@ pub struct LoginTrigger;
 pub struct LogoffTrigger;
 pub struct IdleTimeout;
 
-/// Type alias for SessionEventManager
+// Type alias for SessionEventManager
 pub type SessionEventManager = EventManager;
 
-/// Session trigger type for lifecycle events
+// Session trigger type for lifecycle events
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SessionTrigger {
     BeforeLogin,
@@ -32,10 +32,10 @@ pub enum SessionTrigger {
     OnTimeout,
 }
 
-/// Callback function for session events
+// Callback function for session events
 pub type SessionCallback = Arc<dyn Fn(&SessionEvent) -> Result<()> + Send + Sync>;
 
-/// Purity level for session operations
+// Purity level for session operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PurityLevel {
     Pure,      // No side effects

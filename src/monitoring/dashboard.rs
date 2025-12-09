@@ -10,7 +10,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::{Duration};
 
-/// Real-time metric data point
+// Real-time metric data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricDataPoint {
     pub timestamp: SystemTime,
@@ -31,7 +31,7 @@ impl MetricDataPoint {
     }
 }
 
-/// Time series metric for dashboard visualization
+// Time series metric for dashboard visualization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesMetric {
     pub name: String,
@@ -83,7 +83,7 @@ impl TimeSeriesMetric {
     }
 }
 
-/// Top query information for dashboard
+// Top query information for dashboard
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TopQuery {
     pub sql_id: u64,
@@ -126,7 +126,7 @@ impl TopQuery {
     }
 }
 
-/// Connection pool statistics
+// Connection pool statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionPoolStats {
     pub total_connections: usize,
@@ -170,7 +170,7 @@ impl ConnectionPoolStats {
     }
 }
 
-/// Replication lag information
+// Replication lag information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationLag {
     pub replica_id: String,
@@ -207,7 +207,7 @@ impl ReplicationLag {
     }
 }
 
-/// System resource snapshot
+// System resource snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceSnapshot {
     pub timestamp: SystemTime,
@@ -247,7 +247,7 @@ impl Default for ResourceSnapshot {
     }
 }
 
-/// Database performance summary
+// Database performance summary
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceSummary {
     pub timestamp: SystemTime,
@@ -283,7 +283,7 @@ impl Default for PerformanceSummary {
     }
 }
 
-/// Dashboard data aggregator
+// Dashboard data aggregator
 pub struct DashboardDataAggregator {
     time_series: Arc<RwLock<HashMap<String, TimeSeriesMetric>>>,
     top_queries_by_time: Arc<RwLock<Vec<TopQuery>>>,
@@ -512,7 +512,7 @@ impl Default for DashboardDataAggregator {
     }
 }
 
-/// Complete dashboard snapshot for WebSocket streaming
+// Complete dashboard snapshot for WebSocket streaming
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DashboardSnapshot {
     pub timestamp: SystemTime,
@@ -525,7 +525,7 @@ pub struct DashboardSnapshot {
     pub time_series_latest: HashMap<String, f64>,
 }
 
-/// WebSocket message types for dashboard updates
+// WebSocket message types for dashboard updates
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum DashboardMessage {
@@ -538,7 +538,7 @@ pub enum DashboardMessage {
     PerformanceUpdate { summary: PerformanceSummary },
 }
 
-/// Dashboard update streamer for WebSocket connections
+// Dashboard update streamer for WebSocket connections
 pub struct DashboardStreamer {
     aggregator: Arc<DashboardDataAggregator>,
     update_interval: Duration,
@@ -652,5 +652,3 @@ mod tests {
         assert!(snapshot.performance_summary.is_none());
     }
 }
-
-

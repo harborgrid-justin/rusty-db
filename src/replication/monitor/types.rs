@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 
-/// Replica health status
+// Replica health status
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicaHealthStatus {
     Healthy,
@@ -15,7 +15,7 @@ pub enum ReplicaHealthStatus {
     Unknown,
 }
 
-/// Health check result
+// Health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckResult {
     pub replica_id: ReplicaId,
@@ -27,7 +27,7 @@ pub struct HealthCheckResult {
     pub metrics: HealthMetrics,
 }
 
-/// Individual health components
+// Individual health components
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthComponents {
     pub replication_lag: ComponentHealth,
@@ -37,7 +37,7 @@ pub struct HealthComponents {
     pub resource_usage: ComponentHealth,
 }
 
-/// Component health status
+// Component health status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentHealth {
     pub status: ReplicaHealthStatus,
@@ -47,7 +47,7 @@ pub struct ComponentHealth {
     pub unit: String,
 }
 
-/// Health issue
+// Health issue
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthIssue {
     pub severity: IssueSeverity,
@@ -57,7 +57,7 @@ pub struct HealthIssue {
     pub detected_at: SystemTime,
 }
 
-/// Issue severity levels
+// Issue severity levels
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IssueSeverity {
     Info,
@@ -66,7 +66,7 @@ pub enum IssueSeverity {
     Critical,
 }
 
-/// Health metrics
+// Health metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthMetrics {
     pub replication_lag_bytes: u64,
@@ -96,7 +96,7 @@ impl Default for HealthMetrics {
     }
 }
 
-/// Health alert
+// Health alert
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthAlert {
     pub alert_id: String,
@@ -109,7 +109,7 @@ pub struct HealthAlert {
     pub status: AlertStatus,
 }
 
-/// Alert status
+// Alert status
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AlertStatus {
     Active,
@@ -118,7 +118,7 @@ pub enum AlertStatus {
     Suppressed,
 }
 
-/// Health history entry
+// Health history entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthHistoryEntry {
     pub timestamp: SystemTime,
@@ -128,7 +128,7 @@ pub struct HealthHistoryEntry {
     pub metrics: HealthMetrics,
 }
 
-/// Aggregated health statistics
+// Aggregated health statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthStatistics {
     pub total_checks: u64,
@@ -158,7 +158,7 @@ impl Default for HealthStatistics {
     }
 }
 
-/// Health trend analysis
+// Health trend analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthTrend {
     pub replica_id: ReplicaId,
@@ -170,7 +170,7 @@ pub struct HealthTrend {
     pub predictions: Vec<HealthPrediction>,
 }
 
-/// Trend direction
+// Trend direction
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TrendDirection {
     Improving,
@@ -179,7 +179,7 @@ pub enum TrendDirection {
     Unknown,
 }
 
-/// Health prediction
+// Health prediction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthPrediction {
     pub metric: String,

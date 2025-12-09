@@ -13,52 +13,52 @@ use uuid::Uuid;
 use crate::error::Result;
 use super::document::{Document, DocumentId};
 
-/// Change event type
+// Change event type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ChangeEventType {
-    /// Document inserted
+    // Document inserted
     Insert,
-    /// Document updated
+    // Document updated
     Update,
-    /// Document deleted
+    // Document deleted
     Delete,
-    /// Document replaced
+    // Document replaced
     Replace,
-    /// Collection dropped
+    // Collection dropped
     Drop,
-    /// Collection renamed
+    // Collection renamed
     Rename,
-    /// Database dropped
+    // Database dropped
     DropDatabase,
-    /// Invalidate event (collection/database dropped)
+    // Invalidate event (collection/database dropped)
     Invalidate,
 }
 
-/// Change event
+// Change event
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChangeEvent {
-    /// Unique event ID
+    // Unique event ID
     pub id: String,
-    /// Event type
+    // Event type
     pub operation_type: ChangeEventType,
-    /// Cluster timestamp (for ordering)
+    // Cluster timestamp (for ordering)
     pub cluster_time: u64,
-    /// Collection name
+    // Collection name
     pub collection: String,
-    /// Document ID (for insert/update/delete/replace)
+    // Document ID (for insert/update/delete/replace)
     pub document_key: Option<DocumentId>,
-    /// Full document (for insert/replace, optional for update)
+    // Full document (for insert/replace, optional for update)
     pub full_document: Option<Value>,
-    /// Update description (for update operations)
+    // Update description (for update operations)
     pub update_description: Option<UpdateDescription>,
-    /// Namespace information
+    // Namespace information
     pub namespace: Namespace,
-    /// Resume token for resuming the stream
+    // Resume token for resuming the stream
     pub resume_token: ResumeToken,
 }
 
 impl ChangeEvent {
-    /// Create a new change event
+    // Create a new change event
     pub fn new(
         operation_type: ChangeEventType,
         collection: String,
@@ -87,7 +87,7 @@ impl ChangeEvent {
         }
     }
 
-    /// Create an insert event
+    // Create an insert event
     pub fn insert(collection: String, document: &Document) -> Result<Self> {
         let mut event = Self::new(
             ChangeEventType::Insert,
@@ -98,7 +98,7 @@ impl ChangeEvent {
         Ok(event)
     }
 
-    /// Create an update event
+    // Create an update event
     pub fn update(
         collection: String,
         document_id: DocumentId,
@@ -118,12 +118,12 @@ impl ChangeEvent {
         Ok(event)
     }
 
-    /// Create a delete event
+    // Create a delete event
     pub fn delete(collection: String, document_id: DocumentId) -> Self {
         Self::new(ChangeEventType::Delete, collection, Some(document_id))
     }
 
-    /// Create a replace event
+    // Create a replace event
     pub fn replace(collection: String, document: &Document) -> Result<Self> {
         let mut event = Self::new(
             ChangeEventType::Replace,
@@ -135,26 +135,26 @@ impl ChangeEvent {
     }
 }
 
-/// Namespace information
+// Namespace information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Namespace {
-    /// Database name
+    // Database name
     pub database: String,
-    /// Collection name
+    // Collection name
     pub collection: String,
 }
 
-/// Resume token for resuming change streams
+// Resume token for resuming change streams
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResumeToken {
-    /// Timestamp component
+    // Timestamp component
     pub timestamp: u64,
-    /// Random component for uniqueness
+    // Random component for uniqueness
     pub random: String,
 }
 
 impl ResumeToken {
-    /// Create a new resume token
+    // Create a new resume token
     pub fn new(timestamp: u64) -> Self {
         Self {
             timestamp,
@@ -162,12 +162,12 @@ impl ResumeToken {
         }
     }
 
-    /// Encode token to string
+    // Encode token to string
     pub fn encode(&self) -> String {
         format!("{}:{}", self.timestamp, self.random)
     }
 
-    /// Decode token from string
+    // Decode token from string
     pub fn decode(s: &str) -> Result<Self> {
         let parts: Vec<&str> = s.split(':').collect();
         if parts.len() != 2 {
@@ -188,19 +188,19 @@ impl ResumeToken {
     }
 }
 
-/// Update description for update events
+// Update description for update events
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateDescription {
-    /// Updated fields
+    // Updated fields
     pub updated_fields: HashMap<String, Value>,
-    /// Removed fields
+    // Removed fields
     pub removed_fields: Vec<String>,
-    /// Truncated arrays (field -> new size)
+    // Truncated arrays (field -> new size)
     pub truncated_arrays: HashMap<String, usize>,
 }
 
 impl UpdateDescription {
-    /// Generate update description by comparing two documents
+    // Generate update description by comparing two documents
     pub fn generate(old_doc: &Document, new_doc: &Document) -> Result<Self> {
         let old_json = old_doc.as_json()?;
         let new_json = new_doc.as_json()?;
@@ -236,7 +236,7 @@ impl UpdateDescription {
         })
     }
 
-    /// Check if this is an empty update
+    // Check if this is an empty update
     pub fn is_empty(&self) -> bool {
         self.updated_fields.is_empty()
             && self.removed_fields.is_empty()
@@ -244,21 +244,21 @@ impl UpdateDescription {
     }
 }
 
-/// Change stream filter
+// Change stream filter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChangeStreamFilter {
-    /// Filter by operation types
+    // Filter by operation types
     pub operation_types: Option<Vec<ChangeEventType>>,
-    /// Filter by collection names
+    // Filter by collection names
     pub collections: Option<Vec<String>>,
-    /// Filter by document IDs
+    // Filter by document IDs
     pub document_ids: Option<Vec<DocumentId>>,
-    /// Custom filter function (JSONPath-like)
+    // Custom filter function (JSONPath-like)
     pub custom_filter: Option<String>,
 }
 
 impl ChangeStreamFilter {
-    /// Create a new empty filter
+    // Create a new empty filter
     pub fn new() -> Self {
         Self {
             operation_types: None,
@@ -268,25 +268,25 @@ impl ChangeStreamFilter {
         }
     }
 
-    /// Filter by operation types
+    // Filter by operation types
     pub fn operation_types(mut self, types: Vec<ChangeEventType>) -> Self {
         self.operation_types = Some(types);
         self
     }
 
-    /// Filter by collections
+    // Filter by collections
     pub fn collections(mut self, collections: Vec<String>) -> Self {
         self.collections = Some(collections);
         self
     }
 
-    /// Filter by document IDs
+    // Filter by document IDs
     pub fn document_ids(mut self, ids: Vec<DocumentId>) -> Self {
         self.document_ids = Some(ids);
         self
     }
 
-    /// Check if event matches filter
+    // Check if event matches filter
     pub fn matches(&self, event: &ChangeEvent) -> bool {
         // Check operation type
         if let Some(ref types) = self.operation_types {
@@ -323,25 +323,25 @@ impl Default for ChangeStreamFilter {
     }
 }
 
-/// Change stream cursor for iterating through events
+// Change stream cursor for iterating through events
 #[derive(Clone)]
 pub struct ChangeStreamCursor {
-    /// Stream ID
+    // Stream ID
     pub id: String,
-    /// Current position in the stream
+    // Current position in the stream
     position: usize,
-    /// Events buffer
+    // Events buffer
     events: Arc<RwLock<VecDeque<ChangeEvent>>>,
-    /// Filter for events
+    // Filter for events
     filter: ChangeStreamFilter,
-    /// Resume token to start from
+    // Resume token to start from
     resume_after: Option<ResumeToken>,
-    /// Maximum batch size
+    // Maximum batch size
     batch_size: usize,
 }
 
 impl ChangeStreamCursor {
-    /// Create a new cursor
+    // Create a new cursor
     pub fn new(
         events: Arc<RwLock<VecDeque<ChangeEvent>>>,
         filter: ChangeStreamFilter,
@@ -356,19 +356,19 @@ impl ChangeStreamCursor {
         }
     }
 
-    /// Resume from a token
+    // Resume from a token
     pub fn resume_after(mut self, token: ResumeToken) -> Self {
         self.resume_after = Some(token);
         self
     }
 
-    /// Set batch size
+    // Set batch size
     pub fn batch_size(mut self, size: usize) -> Self {
         self.batch_size = size;
         self
     }
 
-    /// Get next batch of events
+    // Get next batch of events
     pub fn next_batch(&mut self) -> Vec<ChangeEvent> {
         let events = self.events.read().unwrap();
         let mut batch = Vec::new();
@@ -399,13 +399,13 @@ impl ChangeStreamCursor {
         batch
     }
 
-    /// Check if there are more events
+    // Check if there are more events
     pub fn has_more(&self) -> bool {
         let events = self.events.read().unwrap();
         self.position < events.len()
     }
 
-    /// Get the last resume token
+    // Get the last resume token
     pub fn get_resume_token(&self) -> Option<ResumeToken> {
         let events = self.events.read().unwrap();
         if self.position > 0 && self.position <= events.len() {
@@ -416,18 +416,18 @@ impl ChangeStreamCursor {
     }
 }
 
-/// Change stream manager
+// Change stream manager
 pub struct ChangeStreamManager {
-    /// All change events (ring buffer)
+    // All change events (ring buffer)
     events: Arc<RwLock<VecDeque<ChangeEvent>>>,
-    /// Maximum number of events to keep
+    // Maximum number of events to keep
     max_events: usize,
-    /// Active cursors
+    // Active cursors
     cursors: Arc<RwLock<HashMap<String, ChangeStreamCursor>>>,
 }
 
 impl ChangeStreamManager {
-    /// Create a new change stream manager
+    // Create a new change stream manager
     pub fn new(maxevents: usize) -> Self {
         Self {
             events: Arc::new(RwLock::new(VecDeque::with_capacity(maxevents))),
@@ -436,7 +436,7 @@ impl ChangeStreamManager {
         }
     }
 
-    /// Add a change event
+    // Add a change event
     pub fn add_event(&self, event: ChangeEvent) {
         let mut events = self.events.write().unwrap();
 
@@ -449,7 +449,7 @@ impl ChangeStreamManager {
         }
     }
 
-    /// Create a new change stream cursor
+    // Create a new change stream cursor
     pub fn watch(&self, filter: ChangeStreamFilter) -> ChangeStreamCursor {
         let cursor = ChangeStreamCursor::new(Arc::clone(&self.events), filter);
         let cursor_id = cursor.id.clone();
@@ -460,17 +460,17 @@ impl ChangeStreamManager {
         cursor
     }
 
-    /// Get event count
+    // Get event count
     pub fn event_count(&self) -> usize {
         self.events.read().unwrap().len()
     }
 
-    /// Clear all events
+    // Clear all events
     pub fn clear(&self) {
         self.events.write().unwrap().clear();
     }
 
-    /// Get events in time range
+    // Get events in time range
     pub fn get_events_range(&self, start_time: u64, end_time: u64) -> Vec<ChangeEvent> {
         self.events
             .read()
@@ -488,11 +488,11 @@ impl Default for ChangeStreamManager {
     }
 }
 
-/// Document diff generator
+// Document diff generator
 pub struct DiffGenerator;
 
 impl DiffGenerator {
-    /// Generate a diff between two JSON values
+    // Generate a diff between two JSON values
     pub fn diff(old: &Value, new: &Value) -> Diff {
         let mut operations = Vec::new();
         Self::diff_recursive("".to_string(), old, new, &mut operations);
@@ -557,7 +557,7 @@ impl DiffGenerator {
         }
     }
 
-    /// Apply a diff to a JSON value
+    // Apply a diff to a JSON value
     pub fn apply(value: &mut Value, diff: &Diff) -> Result<()> {
         for operation in &diff.operations {
             operation.apply(value)?;
@@ -566,38 +566,38 @@ impl DiffGenerator {
     }
 }
 
-/// Document diff
+// Document diff
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Diff {
-    /// Diff operations
+    // Diff operations
     pub operations: Vec<DiffOperation>,
 }
 
 impl Diff {
-    /// Check if diff is empty
+    // Check if diff is empty
     pub fn is_empty(&self) -> bool {
         self.operations.is_empty()
     }
 
-    /// Get operation count
+    // Get operation count
     pub fn len(&self) -> usize {
         self.operations.len()
     }
 }
 
-/// Diff operation
+// Diff operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "op")]
 pub enum DiffOperation {
-    /// Add a field
+    // Add a field
     #[serde(rename = "add")]
     Add { path: String, value: Value },
 
-    /// Remove a field
+    // Remove a field
     #[serde(rename = "remove")]
     Remove { path: String },
 
-    /// Replace a value
+    // Replace a value
     #[serde(rename = "replace")]
     Replace {
         path: String,
@@ -607,7 +607,7 @@ pub enum DiffOperation {
 }
 
 impl DiffOperation {
-    /// Apply this operation to a JSON value
+    // Apply this operation to a JSON value
     pub fn apply(&self, value: &mut Value) -> Result<()> {
         match self {
             DiffOperation::Add { path, value: new_value } => {

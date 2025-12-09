@@ -1,14 +1,14 @@
-/// Core Partition Manager implementation
+// Core Partition Manager implementation
 
 use super::types::*;
 use crate::error::{DbError, Result};
 use std::collections::HashMap;
 
-/// Partition manager
+// Partition manager
 pub struct PartitionManager {
-    /// Table partitions metadata
+    // Table partitions metadata
     partitions: HashMap<String, PartitionMetadata>,
-    /// Partition data storage paths
+    // Partition data storage paths
     partition_paths: HashMap<String, Vec<String>>,
 }
 
@@ -20,7 +20,7 @@ impl PartitionManager {
         }
     }
 
-    /// Create a partitioned table
+    // Create a partitioned table
     pub fn create_partitioned_table(
         &mut self,
         table_name: String,
@@ -46,7 +46,7 @@ impl PartitionManager {
         Ok(())
     }
 
-    /// Get partition for a given row value
+    // Get partition for a given row value
     #[inline]
     pub fn get_partition_for_value(
         &self,
@@ -90,7 +90,7 @@ impl PartitionManager {
         }
     }
 
-    /// Add a new partition
+    // Add a new partition
     pub fn add_partition(
         &mut self,
         table_name: &str,
@@ -139,7 +139,7 @@ impl PartitionManager {
         }
     }
 
-    /// Drop a partition
+    // Drop a partition
     pub fn drop_partition(
         &mut self,
         table_name: &str,
@@ -175,7 +175,7 @@ impl PartitionManager {
         Ok(())
     }
 
-    /// List all partitions for a table
+    // List all partitions for a table
     pub fn list_partitions(&self, table_name: &str) -> Result<Vec<String>> {
         let metadata = self.partitions.get(table_name)
             .ok_or_else(|| DbError::NotFound(format!(
@@ -280,7 +280,7 @@ impl Default for PartitionManager {
     }
 }
 
-/// Partition statistics manager
+// Partition statistics manager
 pub struct PartitionStatsManager {
     stats: HashMap<String, HashMap<String, PartitionStatistics>>,
 }
@@ -292,7 +292,7 @@ impl PartitionStatsManager {
         }
     }
 
-    /// Update partition statistics
+    // Update partition statistics
     pub fn update_stats(
         &mut self,
         table_name: String,
@@ -315,7 +315,7 @@ impl PartitionStatsManager {
         );
     }
 
-    /// Get statistics for a partition
+    // Get statistics for a partition
     pub fn get_stats(
         &self,
         table_name: &str,
@@ -326,7 +326,7 @@ impl PartitionStatsManager {
             .and_then(|t| t.get(partition_name))
     }
 
-    /// Get all statistics for a table
+    // Get all statistics for a table
     pub fn get_table_stats(
         &self,
         table_name: &str,
@@ -341,11 +341,11 @@ impl Default for PartitionStatsManager {
     }
 }
 
-/// Partition merging support
+// Partition merging support
 pub struct PartitionMerger;
 
 impl PartitionMerger {
-    /// Merge two adjacent range partitions
+    // Merge two adjacent range partitions
     pub fn merge_range_partitions(
         _partition1: &RangePartition,
         _partition2: &RangePartition,
@@ -356,11 +356,11 @@ impl PartitionMerger {
     }
 }
 
-/// Partition splitting support
+// Partition splitting support
 pub struct PartitionSplitter;
 
 impl PartitionSplitter {
-    /// Split a range partition into two
+    // Split a range partition into two
     pub fn split_range_partition(
         _partition: &RangePartition,
         _split_value: String,

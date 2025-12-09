@@ -1,21 +1,21 @@
-//! Background Writer and Flush Management
-//!
-//! Background writer, write coalescing, double-write buffer, and flush lists.
+// Background Writer and Flush Management
+//
+// Background writer, write coalescing, double-write buffer, and flush lists.
 
 use super::common::*;
 use super::checkpoint::DirtyPage;
 use serde::{Serialize, Deserialize};
 
 pub struct BackgroundWriter {
-    /// Write batch size
+    // Write batch size
     batch_size: usize,
-    /// Write interval
+    // Write interval
     interval: Duration,
-    /// Maximum dirty page percentage before aggressive flushing
+    // Maximum dirty page percentage before aggressive flushing
     dirty_threshold: f64,
-    /// Running flag
+    // Running flag
     running: Arc<AtomicBool>,
-    /// Statistics
+    // Statistics
     stats: BackgroundWriterStats,
 }
 
@@ -41,7 +41,7 @@ impl BackgroundWriter {
         }
     }
 
-    /// Start background writer
+    // Start background writer
     pub fn start(&self) {
         if self.running.swap(true, Ordering::Acquire) {
             return;
@@ -58,12 +58,12 @@ impl BackgroundWriter {
         });
     }
 
-    /// Stop background writer
+    // Stop background writer
     pub fn stop(&self) {
         self.running.store(false, Ordering::Release);
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> BackgroundWriterStatsSnapshot {
         BackgroundWriterStatsSnapshot {
             write_cycles: self.stats.write_cycles.load(Ordering::Relaxed),
@@ -80,13 +80,13 @@ pub struct BackgroundWriterStatsSnapshot {
     pub bytes_written: u64,
 }
 
-/// Write coalescing buffer
+// Write coalescing buffer
 pub struct WriteCoalescingBuffer {
-    /// Pending writes grouped by extent
+    // Pending writes grouped by extent
     pending_writes: Mutex<HashMap<u64, Vec<DirtyPage>>>,
-    /// Coalescing window (time to wait for adjacent pages)
+    // Coalescing window (time to wait for adjacent pages)
     coalesce_window: Duration,
-    /// Statistics
+    // Statistics
     stats: CoalescingStats,
 }
 
@@ -108,7 +108,7 @@ impl WriteCoalescingBuffer {
         }
     }
 
-    /// Add page to coalescing buffer
+    // Add page to coalescing buffer
     pub fn add_page(&self, page: DirtyPage) {
         let extent_id = page.page_id.page_number / 64; // 64 pages per extent
 
@@ -118,7 +118,7 @@ impl WriteCoalescingBuffer {
             .push(page);
     }
 
-    /// Flush extent if coalescing window expired or extent is full
+    // Flush extent if coalescing window expired or extent is full
     pub fn try_flush_extent(&self, extent_id: u64) -> Option<Vec<DirtyPage>> {
         let mut pending = self.pending_writes.lock();
 
@@ -142,7 +142,7 @@ impl WriteCoalescingBuffer {
         None
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> CoalescingStatsSnapshot {
         CoalescingStatsSnapshot {
             writes_coalesced: self.stats.writes_coalesced.load(Ordering::Relaxed),
@@ -157,15 +157,15 @@ pub struct CoalescingStatsSnapshot {
     pub io_operations_saved: u64,
 }
 
-/// Double-write buffer for crash recovery
+// Double-write buffer for crash recovery
 pub struct DoubleWriteBuffer {
-    /// Buffer capacity (number of pages)
+    // Buffer capacity (number of pages)
     capacity: usize,
-    /// Buffer pages
+    // Buffer pages
     buffer: Mutex<Vec<DirtyPage>>,
-    /// Flush threshold
+    // Flush threshold
     flush_threshold: usize,
-    /// Statistics
+    // Statistics
     stats: DoubleWriteStats,
 }
 
@@ -190,7 +190,7 @@ impl DoubleWriteBuffer {
         }
     }
 
-    /// Add page to double-write buffer
+    // Add page to double-write buffer
     pub fn add_page(&self, page: DirtyPage) -> bool {
         let mut buffer = self.buffer.lock();
 
@@ -204,7 +204,7 @@ impl DoubleWriteBuffer {
         buffer.len() >= self.flush_threshold
     }
 
-    /// Flush double-write buffer
+    // Flush double-write buffer
     pub fn flush(&self) -> usize {
         let mut buffer = self.buffer.lock();
         let page_count = buffer.len();
@@ -227,14 +227,14 @@ impl DoubleWriteBuffer {
         page_count
     }
 
-    /// Recover from double-write buffer after crash
+    // Recover from double-write buffer after crash
     pub fn recover(&self) -> usize {
         // Would read double-write buffer from disk and restore any partial writes
         self.stats.recovery_operations.fetch_add(1, Ordering::Relaxed);
         0
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> DoubleWriteStatsSnapshot {
         DoubleWriteStatsSnapshot {
             pages_buffered: self.stats.pages_buffered.load(Ordering::Relaxed),
@@ -251,13 +251,13 @@ pub struct DoubleWriteStatsSnapshot {
     pub recovery_operations: u64,
 }
 
-/// Flush list manager
+// Flush list manager
 pub struct FlushListManager {
-    /// Flush lists per tablespace
+    // Flush lists per tablespace
     flush_lists: PRwLock<HashMap<u32, Mutex<VecDeque<DirtyPage>>>>,
-    /// Flush batch size
+    // Flush batch size
     batch_size: usize,
-    /// Statistics
+    // Statistics
     stats: FlushListStats,
 }
 
@@ -281,7 +281,7 @@ impl FlushListManager {
         }
     }
 
-    /// Add page to flush list
+    // Add page to flush list
     pub fn add_page(&self, page: DirtyPage) {
         let tablespace_id = page.page_id.tablespace_id;
 
@@ -304,7 +304,7 @@ impl FlushListManager {
         self.stats.pages_added.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Flush pages from a tablespace
+    // Flush pages from a tablespace
     pub fn flush_tablespace(&self, tablespace_id: u32, max_pages: usize) -> usize {
         let lists = self.flush_lists.read();
         if let Some(list) = lists.get(&tablespace_id) {
@@ -327,7 +327,7 @@ impl FlushListManager {
         0
     }
 
-    /// Flush all tablespaces
+    // Flush all tablespaces
     pub fn flush_all(&self) -> usize {
         let lists = self.flush_lists.read();
         let mut total_flushed = 0;
@@ -339,7 +339,7 @@ impl FlushListManager {
         total_flushed
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> FlushListStatsSnapshot {
         FlushListStatsSnapshot {
             pages_added: self.stats.pages_added.load(Ordering::Relaxed),

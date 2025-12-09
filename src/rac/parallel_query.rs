@@ -35,107 +35,107 @@ use tokio::sync::{mpsc, Semaphore};
 // Constants
 // ============================================================================
 
-/// Maximum degree of parallelism per query
+// Maximum degree of parallelism per query
 const MAX_DOP: usize = 128;
 
-/// Data chunk size for parallel transfer
+// Data chunk size for parallel transfer
 const DATA_CHUNK_SIZE: usize = 65536; // 64KB
 
-/// Worker idle timeout
+// Worker idle timeout
 const WORKER_TIMEOUT: Duration = Duration::from_secs(300);
 
-/// Maximum result buffer size
+// Maximum result buffer size
 const MAX_RESULT_BUFFER: usize = 10000;
 
 // ============================================================================
 // Query Plan and Execution
 // ============================================================================
 
-/// Parallel query execution plan
+// Parallel query execution plan
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParallelQueryPlan {
-    /// Unique query identifier
+    // Unique query identifier
     pub query_id: u64,
 
-    /// SQL text (for monitoring)
+    // SQL text (for monitoring)
     pub sql_text: String,
 
-    /// Query fragments (one per parallel worker)
+    // Query fragments (one per parallel worker)
     pub fragments: Vec<QueryFragment>,
 
-    /// Data flow graph
+    // Data flow graph
     pub data_flow: DataFlowGraph,
 
-    /// Degree of parallelism
+    // Degree of parallelism
     pub dop: usize,
 
-    /// Instance assignment
+    // Instance assignment
     pub instance_assignment: HashMap<usize, NodeId>,
 
-    /// Estimated cost
+    // Estimated cost
     pub estimated_cost: f64,
 }
 
-/// Query fragment (unit of parallel work)
+// Query fragment (unit of parallel work)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryFragment {
-    /// Fragment identifier
+    // Fragment identifier
     pub fragment_id: usize,
 
-    /// Fragment type
+    // Fragment type
     pub fragment_type: FragmentType,
 
-    /// Table scans
+    // Table scans
     pub scans: Vec<TableScan>,
 
-    /// Filters (WHERE clauses)
+    // Filters (WHERE clauses)
     pub filters: Vec<FilterExpression>,
 
-    /// Projections (SELECT columns)
+    // Projections (SELECT columns)
     pub projections: Vec<ProjectExpression>,
 
-    /// Join operations
+    // Join operations
     pub joins: Vec<JoinOperation>,
 
-    /// Aggregations
+    // Aggregations
     pub aggregations: Vec<AggregateOperation>,
 
-    /// Sort operations
+    // Sort operations
     pub sorts: Vec<SortOperation>,
 
-    /// Assigned instance
+    // Assigned instance
     pub assigned_instance: Option<NodeId>,
 
-    /// Data dependencies (input fragments)
+    // Data dependencies (input fragments)
     pub dependencies: Vec<usize>,
 }
 
-/// Fragment type
+// Fragment type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FragmentType {
-    /// Table scan producer
+    // Table scan producer
     TableScan,
 
-    /// Hash join
+    // Hash join
     HashJoin,
 
-    /// Merge join
+    // Merge join
     MergeJoin,
 
-    /// Aggregation
+    // Aggregation
     Aggregation,
 
-    /// Sort
+    // Sort
     Sort,
 
-    /// Filter
+    // Filter
     Filter,
 
-    /// Coordinator (final aggregation)
+    // Coordinator (final aggregation)
     Coordinator,
 }
 
-/// Table scan specification
+// Table scan specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TableScan {
     pub table_id: TableId,
@@ -145,7 +145,7 @@ pub struct TableScan {
     pub index_hint: Option<String>,
 }
 
-/// Filter expression
+// Filter expression
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FilterExpression {
     pub column: String,
@@ -165,7 +165,7 @@ pub enum FilterOperator {
     In,
 }
 
-/// Project expression
+// Project expression
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectExpression {
     pub column: String,
@@ -173,7 +173,7 @@ pub struct ProjectExpression {
     pub expression: Option<String>,
 }
 
-/// Join operation
+// Join operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JoinOperation {
     pub join_type: JoinType,
@@ -197,7 +197,7 @@ pub enum JoinSide {
     Right,
 }
 
-/// Aggregate operation
+// Aggregate operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregateOperation {
     pub function: AggregateFunction,
@@ -215,7 +215,7 @@ pub enum AggregateFunction {
     CountDistinct,
 }
 
-/// Sort operation
+// Sort operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SortOperation {
     pub column: String,
@@ -226,17 +226,17 @@ pub struct SortOperation {
 // Data Flow Graph
 // ============================================================================
 
-/// Data flow graph for parallel execution
+// Data flow graph for parallel execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataFlowGraph {
-    /// Operators in the data flow
+    // Operators in the data flow
     pub operators: Vec<DataFlowOperator>,
 
-    /// Edges (data flows)
+    // Edges (data flows)
     pub edges: Vec<DataFlowEdge>,
 }
 
-/// Data flow operator
+// Data flow operator
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataFlowOperator {
     pub operator_id: usize,
@@ -246,20 +246,20 @@ pub struct DataFlowOperator {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OperatorType {
-    /// Produce data (table scan)
+    // Produce data (table scan)
     Producer,
 
-    /// Consume data (aggregation, write)
+    // Consume data (aggregation, write)
     Consumer,
 
-    /// Transform data (filter, project)
+    // Transform data (filter, project)
     Transformer,
 
-    /// Redistribute data (partition, broadcast)
+    // Redistribute data (partition, broadcast)
     Redistributor,
 }
 
-/// Data flow edge
+// Data flow edge
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataFlowEdge {
     pub from_operator: usize,
@@ -269,16 +269,16 @@ pub struct DataFlowEdge {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DistributionType {
-    /// One-to-one (pipelined)
+    // One-to-one (pipelined)
     Pipelined,
 
-    /// Partition by key
+    // Partition by key
     Partitioned,
 
-    /// Broadcast to all
+    // Broadcast to all
     Broadcast,
 
-    /// Round-robin
+    // Round-robin
     RoundRobin,
 }
 
@@ -286,34 +286,34 @@ pub enum DistributionType {
 // Parallel Execution State
 // ============================================================================
 
-/// Execution state for a parallel query
+// Execution state for a parallel query
 #[derive(Debug)]
 pub struct QueryExecutionState {
-    /// Query identifier
+    // Query identifier
     pub query_id: u64,
 
-    /// Execution status
+    // Execution status
     pub status: ExecutionStatus,
 
-    /// Start time
+    // Start time
     pub started_at: Instant,
 
-    /// Worker states
+    // Worker states
     pub worker_states: HashMap<usize, WorkerState>,
 
-    /// Rows processed
+    // Rows processed
     pub rows_processed: u64,
 
-    /// Rows returned
+    // Rows returned
     pub rows_returned: u64,
 
-    /// Bytes processed
+    // Bytes processed
     pub bytes_processed: u64,
 
-    /// Result buffer
+    // Result buffer
     pub result_buffer: Arc<Mutex<VecDeque<Tuple>>>,
 
-    /// Completion channel
+    // Completion channel
     pub completion_tx: Option<oneshot::Sender<Result<Vec<Tuple>>>>,
 }
 
@@ -327,7 +327,7 @@ pub enum ExecutionStatus {
     Cancelled,
 }
 
-/// Worker execution state
+// Worker execution state
 #[derive(Debug, Clone)]
 pub struct WorkerState {
     pub worker_id: usize,
@@ -353,43 +353,43 @@ pub enum WorkerStatus {
 // Parallel Query Coordinator
 // ============================================================================
 
-/// Parallel query coordinator
+// Parallel query coordinator
 pub struct ParallelQueryCoordinator {
-    /// Local node identifier
+    // Local node identifier
     node_id: NodeId,
 
-    /// Active queries
+    // Active queries
     active_queries: Arc<RwLock<HashMap<u64, QueryExecutionState>>>,
 
-    /// Worker pool
+    // Worker pool
     worker_pool: Arc<WorkerPool>,
 
-    /// Cluster interconnect
+    // Cluster interconnect
     interconnect: Arc<ClusterInterconnect>,
 
-    /// Configuration
+    // Configuration
     config: ParallelQueryConfig,
 
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<ParallelQueryStatistics>>,
 
-    /// Message channel
+    // Message channel
     message_tx: mpsc::UnboundedSender<QueryMessage>,
     message_rx: Arc<tokio::sync::Mutex<mpsc::UnboundedReceiver<QueryMessage>>>,
 }
 
-/// Worker pool for parallel execution
+// Worker pool for parallel execution
 struct WorkerPool {
-    /// Available workers
+    // Available workers
     available_workers: Arc<Mutex<VecDeque<WorkerId>>>,
 
-    /// Active workers
+    // Active workers
     active_workers: Arc<RwLock<HashMap<WorkerId, WorkerInfo>>>,
 
-    /// Maximum workers
+    // Maximum workers
     max_workers: usize,
 
-    /// Semaphore for worker allocation
+    // Semaphore for worker allocation
     semaphore: Arc<Semaphore>,
 }
 
@@ -439,37 +439,37 @@ impl WorkerPool {
     }
 }
 
-/// Parallel query configuration
+// Parallel query configuration
 #[derive(Debug, Clone)]
 pub struct ParallelQueryConfig {
-    /// Default degree of parallelism
+    // Default degree of parallelism
     pub default_dop: usize,
 
-    /// Maximum degree of parallelism
+    // Maximum degree of parallelism
     pub max_dop: usize,
 
-    /// Enable adaptive DOP
+    // Enable adaptive DOP
     pub adaptive_dop: bool,
 
-    /// Enable inter-instance parallelism
+    // Enable inter-instance parallelism
     pub inter_instance: bool,
 
-    /// Data chunk size
+    // Data chunk size
     pub chunk_size: usize,
 
-    /// Result buffer size
+    // Result buffer size
     pub result_buffer_size: usize,
 
-    /// NEW: Enable work stealing for load balancing
+    // NEW: Enable work stealing for load balancing
     pub enable_work_stealing: bool,
 
-    /// NEW: Enable speculative execution for stragglers
+    // NEW: Enable speculative execution for stragglers
     pub enable_speculation: bool,
 
-    /// NEW: Speculation threshold (standard deviations from mean)
+    // NEW: Speculation threshold (standard deviations from mean)
     pub speculation_threshold: f64,
 
-    /// NEW: Enable pipeline parallelism
+    // NEW: Enable pipeline parallelism
     pub enable_pipelining: bool,
 }
 
@@ -490,96 +490,96 @@ impl Default for ParallelQueryConfig {
     }
 }
 
-/// Parallel query statistics
+// Parallel query statistics
 #[derive(Debug, Default, Clone)]
 pub struct ParallelQueryStatistics {
-    /// Total queries executed
+    // Total queries executed
     pub total_queries: u64,
 
-    /// Successful queries
+    // Successful queries
     pub successful_queries: u64,
 
-    /// Failed queries
+    // Failed queries
     pub failed_queries: u64,
 
-    /// Total rows processed
+    // Total rows processed
     pub total_rows_processed: u64,
 
-    /// Total bytes processed
+    // Total bytes processed
     pub total_bytes_processed: u64,
 
-    /// Average query time (milliseconds)
+    // Average query time (milliseconds)
     pub avg_query_time_ms: u64,
 
-    /// Average DOP
+    // Average DOP
     pub avg_dop: f64,
 
-    /// Inter-instance queries
+    // Inter-instance queries
     pub inter_instance_queries: u64,
 
-    /// NEW: Work stealing statistics
-    /// Work steal attempts
+    // NEW: Work stealing statistics
+    // Work steal attempts
     pub work_steal_attempts: u64,
 
-    /// Successful work steals
+    // Successful work steals
     pub work_steal_successes: u64,
 
-    /// NEW: Speculation statistics
-    /// Speculative tasks spawned
+    // NEW: Speculation statistics
+    // Speculative tasks spawned
     pub speculative_tasks: u64,
 
-    /// Speculation wins (speculative task finished first)
+    // Speculation wins (speculative task finished first)
     pub speculation_wins: u64,
 
-    /// NEW: Pipeline statistics
-    /// Pipeline stalls
+    // NEW: Pipeline statistics
+    // Pipeline stalls
     pub pipeline_stalls: u64,
 
-    /// P99 query latency (milliseconds)
+    // P99 query latency (milliseconds)
     pub p99_query_latency_ms: u64,
 
-    /// Worker CPU utilization (0-100%)
+    // Worker CPU utilization (0-100%)
     pub worker_cpu_utilization: f64,
 }
 
-/// Query messages
+// Query messages
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum QueryMessage {
-    /// Execute query fragment
+    // Execute query fragment
     ExecuteFragment {
         query_id: u64,
         fragment_id: usize,
         fragment: QueryFragment,
     },
 
-    /// Send data chunk
+    // Send data chunk
     DataChunk {
         query_id: u64,
         fragment_id: usize,
         chunk: DataChunk,
     },
 
-    /// Fragment completed
+    // Fragment completed
     FragmentComplete {
         query_id: u64,
         fragment_id: usize,
         rows_processed: u64,
     },
 
-    /// Fragment failed
+    // Fragment failed
     FragmentFailed {
         query_id: u64,
         fragment_id: usize,
         error: String,
     },
 
-    /// Cancel query
+    // Cancel query
     CancelQuery {
         query_id: u64,
     },
 }
 
-/// Data chunk for parallel transfer
+// Data chunk for parallel transfer
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataChunk {
     pub chunk_id: u64,
@@ -588,7 +588,7 @@ pub struct DataChunk {
 }
 
 impl ParallelQueryCoordinator {
-    /// Create a new parallel query coordinator
+    // Create a new parallel query coordinator
     pub fn new(
         node_id: NodeId,
         interconnect: Arc<ClusterInterconnect>,
@@ -609,7 +609,7 @@ impl ParallelQueryCoordinator {
         }
     }
 
-    /// Execute a parallel query
+    // Execute a parallel query
     pub async fn execute_query(&self, plan: ParallelQueryPlan) -> std::result::Result<Vec<Tuple>, DbError> {
         let query_id = plan.query_id;
         let start = Instant::now();
@@ -662,7 +662,7 @@ impl ParallelQueryCoordinator {
         result
     }
 
-    /// Start executing a query plan
+    // Start executing a query plan
     async fn start_query_execution(&self, plan: ParallelQueryPlan) -> std::result::Result<(), DbError> {
         let query_id = plan.query_id;
 
@@ -713,8 +713,8 @@ impl ParallelQueryCoordinator {
         Ok(())
     }
 
-    /// Execute fragment locally
-    /// NEW: Enhanced with speculative execution for slow workers
+    // Execute fragment locally
+    // NEW: Enhanced with speculative execution for slow workers
     async fn execute_fragment_local(
         &self,
         query_id: u64,
@@ -799,8 +799,8 @@ impl ParallelQueryCoordinator {
         Ok(())
     }
 
-    /// NEW: Work stealing implementation
-    /// Idle workers can steal work from busy workers' queues
+    // NEW: Work stealing implementation
+    // Idle workers can steal work from busy workers' queues
     async fn try_steal_work(&self, _thief_worker_id: WorkerId) -> Option<QueryFragment> {
         let active_workers = self.worker_pool.active_workers.read();
 
@@ -812,7 +812,7 @@ impl ParallelQueryCoordinator {
         None // Simplified - full implementation would use lock-free deques
     }
 
-    /// Execute fragment remotely
+    // Execute fragment remotely
     async fn execute_fragment_remote(
         &self,
         query_id: u64,
@@ -839,7 +839,7 @@ impl ParallelQueryCoordinator {
         Ok(())
     }
 
-    /// Execute the actual fragment work
+    // Execute the actual fragment work
     async fn execute_fragment_work(fragment: QueryFragment) -> std::result::Result<(Vec<Tuple>, u64), DbError> {
         let mut results = Vec::new();
         let mut rows_processed = 0;
@@ -868,7 +868,7 @@ impl ParallelQueryCoordinator {
         Ok((results, rows_processed))
     }
 
-    /// Process query messages
+    // Process query messages
     pub async fn process_messages(&self) {
         let mut rx = self.message_rx.lock().await;
 
@@ -977,7 +977,7 @@ impl ParallelQueryCoordinator {
         Ok(())
     }
 
-    /// Cancel a running query
+    // Cancel a running query
     pub async fn cancel_query(&self, query_id: u64) -> std::result::Result<(), DbError> {
         let mut queries = self.active_queries.write();
 
@@ -992,17 +992,17 @@ impl ParallelQueryCoordinator {
         Ok(())
     }
 
-    /// Get query execution status
+    // Get query execution status
     pub fn get_query_status(&self, query_id: u64) -> Option<ExecutionStatus> {
         self.active_queries.read().get(&query_id).map(|s| s.status)
     }
 
-    /// Get active queries
+    // Get active queries
     pub fn get_active_queries(&self) -> Vec<u64> {
         self.active_queries.read().keys().copied().collect()
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_statistics(&self) -> ParallelQueryStatistics {
         self.stats.read().clone()
     }

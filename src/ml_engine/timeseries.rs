@@ -12,24 +12,24 @@ use std::collections::VecDeque;
 // Time Series Models
 // ============================================================================
 
-/// Exponential Smoothing model (Holt-Winters)
+// Exponential Smoothing model (Holt-Winters)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExponentialSmoothing {
-    /// Level smoothing parameter (alpha)
+    // Level smoothing parameter (alpha)
     alpha: f64,
-    /// Trend smoothing parameter (beta)
+    // Trend smoothing parameter (beta)
     beta: f64,
-    /// Seasonal smoothing parameter (gamma)
+    // Seasonal smoothing parameter (gamma)
     gamma: f64,
-    /// Seasonality period
+    // Seasonality period
     season_length: usize,
-    /// Current level
+    // Current level
     level: f64,
-    /// Current trend
+    // Current trend
     trend: f64,
-    /// Seasonal components
+    // Seasonal components
     seasonal: Vec<f64>,
-    /// Model type
+    // Model type
     model_type: SeasonalityType,
 }
 
@@ -170,24 +170,24 @@ impl ExponentialSmoothing {
 // ARIMA-like Model
 // ============================================================================
 
-/// ARIMA (AutoRegressive Integrated Moving Average) model
+// ARIMA (AutoRegressive Integrated Moving Average) model
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ARIMAModel {
-    /// AR (autoregressive) order
+    // AR (autoregressive) order
     p: usize,
-    /// I (integration/differencing) order
+    // I (integration/differencing) order
     d: usize,
-    /// MA (moving average) order
+    // MA (moving average) order
     q: usize,
-    /// AR coefficients
+    // AR coefficients
     ar_coefficients: Vec<f64>,
-    /// MA coefficients
+    // MA coefficients
     ma_coefficients: Vec<f64>,
-    /// Constant term
+    // Constant term
     constant: f64,
-    /// Recent observations (for forecasting)
+    // Recent observations (for forecasting)
     recent_values: VecDeque<f64>,
-    /// Recent residuals (for MA component)
+    // Recent residuals (for MA component)
     recent_residuals: VecDeque<f64>,
 }
 
@@ -330,12 +330,12 @@ impl ARIMAModel {
 // Seasonality Detection
 // ============================================================================
 
-/// Detect seasonality in time series using autocorrelation
+// Detect seasonality in time series using autocorrelation
 #[derive(Debug, Clone)]
 pub struct SeasonalityDetector {
-    /// Maximum lag to test
+    // Maximum lag to test
     max_lag: usize,
-    /// Significance threshold
+    // Significance threshold
     threshold: f64,
 }
 
@@ -401,10 +401,10 @@ pub struct SeasonalityInfo {
 // Trend Analysis
 // ============================================================================
 
-/// Decompose time series into trend, seasonal, and residual components
+// Decompose time series into trend, seasonal, and residual components
 #[derive(Debug, Clone)]
 pub struct TrendAnalyzer {
-    /// Decomposition method
+    // Decomposition method
     method: DecompositionMethod,
 }
 
@@ -514,12 +514,12 @@ pub struct TimeSeriesDecomposition {
 // Anomaly Detection
 // ============================================================================
 
-/// Time series anomaly detection
+// Time series anomaly detection
 #[derive(Debug, Clone)]
 pub struct AnomalyDetector {
-    /// Detection method
+    // Detection method
     method: AnomalyDetectionMethod,
-    /// Sensitivity threshold
+    // Sensitivity threshold
     threshold: f64,
 }
 
@@ -645,9 +645,9 @@ pub enum AnomalyType {
 // Time Series Engine
 // ============================================================================
 
-/// Main time series analysis engine
+// Main time series analysis engine
 pub struct TimeSeriesEngine {
-    /// Cached models
+    // Cached models
     models: std::collections::HashMap<String, TimeSeriesModel>,
 }
 

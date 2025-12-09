@@ -12,7 +12,7 @@ use crate::error::{Result, DbError};
 use serde::{Deserialize, Serialize};
 
 
-/// Coordinate representation with optional Z (elevation) and M (measure) values
+// Coordinate representation with optional Z (elevation) and M (measure) values
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Coordinate {
     pub x: f64,
@@ -22,34 +22,34 @@ pub struct Coordinate {
 }
 
 impl Coordinate {
-    /// Create a 2D coordinate
+    // Create a 2D coordinate
     pub fn new(x: f64, y: f64) -> Self {
         Self { x, y, z: None, m: None }
     }
 
-    /// Create a 3D coordinate with Z value
+    // Create a 3D coordinate with Z value
     pub fn new_3d(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z: Some(z), m: None }
     }
 
-    /// Create a measured coordinate with M value
+    // Create a measured coordinate with M value
     pub fn new_m(x: f64, y: f64, m: f64) -> Self {
         Self { x, y, z: None, m: Some(m) }
     }
 
-    /// Create a 3D measured coordinate with both Z and M values
+    // Create a 3D measured coordinate with both Z and M values
     pub fn new_zm(x: f64, y: f64, z: f64, m: f64) -> Self {
         Self { x, y, z: Some(z), m: Some(m) }
     }
 
-    /// Calculate Euclidean distance to another coordinate (2D)
+    // Calculate Euclidean distance to another coordinate (2D)
     pub fn distance_2d(&self, other: &Coordinate) -> f64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
         (dx * dx + dy * dy).sqrt()
     }
 
-    /// Calculate 3D Euclidean distance
+    // Calculate 3D Euclidean distance
     pub fn distance_3d(&self, other: &Coordinate) -> f64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
@@ -58,7 +58,7 @@ impl Coordinate {
     }
 }
 
-/// Bounding box for spatial indexing and queries
+// Bounding box for spatial indexing and queries
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct BoundingBox {
     pub min_x: f64,
@@ -70,7 +70,7 @@ pub struct BoundingBox {
 }
 
 impl BoundingBox {
-    /// Create a new 2D bounding box
+    // Create a new 2D bounding box
     pub fn new(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> Self {
         Self {
             min_x,
@@ -82,7 +82,7 @@ impl BoundingBox {
         }
     }
 
-    /// Create from a list of coordinates
+    // Create from a list of coordinates
     pub fn from_coords(coords: &[Coordinate]) -> Option<Self> {
         if coords.is_empty() {
             return None;
@@ -121,7 +121,7 @@ impl BoundingBox {
         })
     }
 
-    /// Check if this box intersects another
+    // Check if this box intersects another
     pub fn intersects(&self, other: &BoundingBox) -> bool {
         self.min_x <= other.max_x
             && self.max_x >= other.min_x
@@ -129,7 +129,7 @@ impl BoundingBox {
             && self.max_y >= other.min_y
     }
 
-    /// Check if this box contains a coordinate
+    // Check if this box contains a coordinate
     pub fn contains_coord(&self, coord: &Coordinate) -> bool {
         coord.x >= self.min_x
             && coord.x <= self.max_x
@@ -137,12 +137,12 @@ impl BoundingBox {
             && coord.y <= self.max_y
     }
 
-    /// Calculate the area of the bounding box
+    // Calculate the area of the bounding box
     pub fn area(&self) -> f64 {
         (self.max_x - self.min_x) * (self.max_y - self.min_y)
     }
 
-    /// Calculate the volume (for 3D boxes)
+    // Calculate the volume (for 3D boxes)
     pub fn volume(&self) -> Option<f64> {
         if let (Some(min_z), Some(max_z)) = (self.min_z, self.max_z) {
             Some(self.area() * (max_z - min_z))
@@ -151,7 +151,7 @@ impl BoundingBox {
         }
     }
 
-    /// Expand to include another bounding box
+    // Expand to include another bounding box
     pub fn expand(&mut self, other: &BoundingBox) {
         self.min_x = self.min_x.min(other.min_x);
         self.min_y = self.min_y.min(other.min_y);
@@ -166,7 +166,7 @@ impl BoundingBox {
         }
     }
 
-    /// Calculate the center point
+    // Calculate the center point
     pub fn center(&self) -> Coordinate {
         let x = (self.min_x + self.max_x) / 2.0;
         let y = (self.min_y + self.max_y) / 2.0;
@@ -179,7 +179,7 @@ impl BoundingBox {
     }
 }
 
-/// Main geometry enum supporting all Oracle Spatial geometry types
+// Main geometry enum supporting all Oracle Spatial geometry types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Geometry {
     Point(Point),
@@ -194,7 +194,7 @@ pub enum Geometry {
 }
 
 impl Geometry {
-    /// Get the geometry type as a string
+    // Get the geometry type as a string
     pub fn geometry_type(&self) -> &str {
         match self {
             Geometry::Point(_) => "Point",
@@ -209,7 +209,7 @@ impl Geometry {
         }
     }
 
-    /// Get the bounding box of the geometry
+    // Get the bounding box of the geometry
     pub fn bbox(&self) -> Option<BoundingBox> {
         match self {
             Geometry::Point(p) => p.bbox(),
@@ -224,7 +224,7 @@ impl Geometry {
         }
     }
 
-    /// Check if the geometry is 3D
+    // Check if the geometry is 3D
     pub fn is_3d(&self) -> bool {
         match self {
             Geometry::Point(p) => p.coord.z.is_some(),
@@ -234,7 +234,7 @@ impl Geometry {
         }
     }
 
-    /// Check if the geometry is measured
+    // Check if the geometry is measured
     pub fn is_measured(&self) -> bool {
         match self {
             Geometry::Point(p) => p.coord.m.is_some(),
@@ -244,7 +244,7 @@ impl Geometry {
         }
     }
 
-    /// Convert to WKT (Well-Known Text)
+    // Convert to WKT (Well-Known Text)
     pub fn to_wkt(&self) -> String {
         match self {
             Geometry::Point(p) => p.to_wkt(),
@@ -259,7 +259,7 @@ impl Geometry {
         }
     }
 
-    /// Convert to WKB (Well-Known Binary)
+    // Convert to WKB (Well-Known Binary)
     pub fn to_wkb(&self) -> Vec<u8> {
         let mut wkb = Vec::new();
         wkb.push(1); // Little endian
@@ -274,7 +274,7 @@ impl Geometry {
         wkb
     }
 
-    /// Convert to GeoJSON
+    // Convert to GeoJSON
     pub fn to_geojson(&self) -> serde_json::Value {
         match self {
             Geometry::Point(p) => p.to_geojson(),
@@ -289,7 +289,7 @@ impl Geometry {
     }
 }
 
-/// Point geometry
+// Point geometry
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Point {
     pub coord: Coordinate,
@@ -346,7 +346,7 @@ impl Point {
     }
 }
 
-/// LineString geometry
+// LineString geometry
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LineString {
     pub coords: Vec<Coordinate>,
@@ -428,7 +428,7 @@ impl LineString {
     }
 }
 
-/// LinearRing - closed LineString for polygon boundaries
+// LinearRing - closed LineString for polygon boundaries
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LinearRing {
     pub coords: Vec<Coordinate>,
@@ -475,7 +475,7 @@ impl LinearRing {
     }
 }
 
-/// Polygon geometry
+// Polygon geometry
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Polygon {
     pub exterior: LinearRing,
@@ -569,7 +569,7 @@ impl Polygon {
     }
 }
 
-/// MultiPoint geometry
+// MultiPoint geometry
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MultiPoint {
     pub points: Vec<Point>,
@@ -609,7 +609,7 @@ impl MultiPoint {
     }
 }
 
-/// MultiLineString geometry
+// MultiLineString geometry
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MultiLineString {
     pub linestrings: Vec<LineString>,
@@ -667,7 +667,7 @@ impl MultiLineString {
     }
 }
 
-/// MultiPolygon geometry
+// MultiPolygon geometry
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MultiPolygon {
     pub polygons: Vec<Polygon>,
@@ -741,7 +741,7 @@ impl MultiPolygon {
     }
 }
 
-/// GeometryCollection
+// GeometryCollection
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GeometryCollection {
     pub geometries: Vec<Geometry>,
@@ -782,7 +782,7 @@ impl GeometryCollection {
     }
 }
 
-/// CircularString - curve defined by circular arcs
+// CircularString - curve defined by circular arcs
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CircularString {
     pub coords: Vec<Coordinate>,
@@ -810,7 +810,7 @@ impl CircularString {
         format!("CIRCULARSTRING({})", coords_str.join(", "))
     }
 
-    /// Calculate arc length (approximation)
+    // Calculate arc length (approximation)
     pub fn length(&self) -> f64 {
         let mut total_length = 0.0;
         for i in (0..self.coords.len() - 2).step_by(2) {
@@ -832,7 +832,7 @@ impl CircularString {
     }
 }
 
-/// CompoundCurve - combination of circular and linear segments
+// CompoundCurve - combination of circular and linear segments
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CompoundCurve {
     pub segments: Vec<CurveSegment>,
@@ -894,11 +894,11 @@ impl CompoundCurve {
     }
 }
 
-/// WKT Parser
+// WKT Parser
 pub struct WktParser;
 
 impl WktParser {
-    /// Parse WKT string to Geometry
+    // Parse WKT string to Geometry
     pub fn parse(wkt: &str) -> Result<Geometry> {
         let wkt = wkt.trim();
 
@@ -1042,11 +1042,11 @@ impl WktParser {
     }
 }
 
-/// WKB Parser
+// WKB Parser
 pub struct WkbParser;
 
 impl WkbParser {
-    /// Parse WKB bytes to Geometry
+    // Parse WKB bytes to Geometry
     pub fn parse(wkb: &[u8]) -> Result<Geometry> {
         if wkb.is_empty() {
             return Err(DbError::InvalidInput("Empty WKB".to_string()));

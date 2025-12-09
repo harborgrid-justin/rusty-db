@@ -22,10 +22,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 
-/// Audit record identifier
+// Audit record identifier
 pub type AuditId = u64;
 
-/// Audit action types
+// Audit action types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum AuditAction {
     // Authentication actions
@@ -81,61 +81,61 @@ pub enum AuditAction {
     Custom(String),
 }
 
-/// Audit event severity level
+// Audit event severity level
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AuditSeverity {
-    /// Informational
+    // Informational
     Info,
-    /// Warning
+    // Warning
     Warning,
-    /// Error
+    // Error
     Error,
-    /// Critical security event
+    // Critical security event
     Critical,
 }
 
-/// Audit record
+// Audit record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditRecord {
-    /// Unique audit record ID
+    // Unique audit record ID
     pub id: AuditId,
-    /// Timestamp (microseconds since epoch)
+    // Timestamp (microseconds since epoch)
     pub timestamp: i64,
-    /// User who performed the action
+    // User who performed the action
     pub username: String,
-    /// Session ID
+    // Session ID
     pub session_id: Option<String>,
-    /// Action performed
+    // Action performed
     pub action: AuditAction,
-    /// Object affected (table, view, etc.)
+    // Object affected (table, view, etc.)
     pub object_name: Option<String>,
-    /// Object type
+    // Object type
     pub object_type: Option<ObjectType>,
-    /// Schema/database
+    // Schema/database
     pub schema_name: Option<String>,
-    /// SQL statement executed
+    // SQL statement executed
     pub sql_text: Option<String>,
-    /// Action success status
+    // Action success status
     pub success: bool,
-    /// Error message if failed
+    // Error message if failed
     pub error_message: Option<String>,
-    /// Client IP address
+    // Client IP address
     pub client_ip: Option<String>,
-    /// Client application
+    // Client application
     pub client_application: Option<String>,
-    /// Severity level
+    // Severity level
     pub severity: AuditSeverity,
-    /// Additional context
+    // Additional context
     pub context: HashMap<String, String>,
-    /// Number of rows affected
+    // Number of rows affected
     pub rows_affected: Option<u64>,
-    /// Execution time in milliseconds
+    // Execution time in milliseconds
     pub execution_time_ms: Option<u64>,
-    /// Tamper protection hash
+    // Tamper protection hash
     pub integrity_hash: Option<String>,
 }
 
-/// Object type for auditing
+// Object type for auditing
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ObjectType {
     Table,
@@ -149,49 +149,49 @@ pub enum ObjectType {
     Key,
 }
 
-/// Audit policy configuration
+// Audit policy configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditPolicy {
-    /// Policy ID
+    // Policy ID
     pub id: String,
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Whether policy is enabled
+    // Whether policy is enabled
     pub enabled: bool,
-    /// Actions to audit
+    // Actions to audit
     pub actions: HashSet<AuditAction>,
-    /// Object filter (None = all objects)
+    // Object filter (None = all objects)
     pub object_filter: Option<String>,
-    /// User filter (None = all users)
+    // User filter (None = all users)
     pub user_filter: Option<Vec<String>>,
-    /// Condition for auditing
+    // Condition for auditing
     pub condition: Option<String>,
-    /// Audit on success
+    // Audit on success
     pub audit_success: bool,
-    /// Audit on failure
+    // Audit on failure
     pub audit_failure: bool,
-    /// Include SQL text
+    // Include SQL text
     pub include_sql: bool,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: i64,
-    /// Updated timestamp
+    // Updated timestamp
     pub updated_at: i64,
 }
 
-/// Audit log configuration
+// Audit log configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditLogConfig {
-    /// Maximum records in memory before flush
+    // Maximum records in memory before flush
     pub max_memory_records: usize,
-    /// Auto-flush interval in seconds
+    // Auto-flush interval in seconds
     pub flush_interval_seconds: u64,
-    /// Enable tamper protection
+    // Enable tamper protection
     pub tamper_protection: bool,
-    /// Archive old records after days
+    // Archive old records after days
     pub archive_after_days: u32,
-    /// Enable compression for archived logs
+    // Enable compression for archived logs
     pub compress_archives: bool,
-    /// Real-time streaming enabled
+    // Real-time streaming enabled
     pub streaming_enabled: bool,
 }
 
@@ -208,66 +208,66 @@ impl Default for AuditLogConfig {
     }
 }
 
-/// Audit query filter
+// Audit query filter
 #[derive(Debug, Clone)]
 pub struct AuditFilter {
-    /// Start timestamp
+    // Start timestamp
     pub start_time: Option<i64>,
-    /// End timestamp
+    // End timestamp
     pub end_time: Option<i64>,
-    /// Filter by username
+    // Filter by username
     pub username: Option<String>,
-    /// Filter by action
+    // Filter by action
     pub action: Option<AuditAction>,
-    /// Filter by object name
+    // Filter by object name
     pub object_name: Option<String>,
-    /// Filter by success status
+    // Filter by success status
     pub success: Option<bool>,
-    /// Filter by severity
+    // Filter by severity
     pub min_severity: Option<AuditSeverity>,
-    /// Limit number of results
+    // Limit number of results
     pub limit: Option<usize>,
 }
 
-/// Audit statistics
+// Audit statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditStatistics {
-    /// Total audit records
+    // Total audit records
     pub total_records: u64,
-    /// Records today
+    // Records today
     pub records_today: u64,
-    /// Failed actions today
+    // Failed actions today
     pub failed_actions_today: u64,
-    /// Top actions
+    // Top actions
     pub top_actions: Vec<(AuditAction, u64)>,
-    /// Top users
+    // Top users
     pub top_users: Vec<(String, u64)>,
-    /// Critical events today
+    // Critical events today
     pub critical_events_today: u64,
 }
 
-/// Audit manager
+// Audit manager
 pub struct AuditManager {
-    /// In-memory audit records
+    // In-memory audit records
     records: Arc<RwLock<VecDeque<AuditRecord>>>,
-    /// Audit policies
+    // Audit policies
     policies: Arc<RwLock<HashMap<String, AuditPolicy>>>,
-    /// Configuration
+    // Configuration
     config: Arc<RwLock<AuditLogConfig>>,
-    /// Record ID counter
+    // Record ID counter
     id_counter: Arc<RwLock<AuditId>>,
-    /// Previous record hash (for chain integrity)
+    // Previous record hash (for chain integrity)
     previous_hash: Arc<RwLock<Option<String>>>,
-    /// Archived records count
+    // Archived records count
     archived_count: Arc<RwLock<u64>>,
-    /// Statistics cache
+    // Statistics cache
     stats_cache: Arc<RwLock<Option<AuditStatistics>>>,
-    /// Last flush timestamp
+    // Last flush timestamp
     last_flush: Arc<RwLock<i64>>,
 }
 
 impl AuditManager {
-    /// Create a new audit manager
+    // Create a new audit manager
     pub fn new() -> Self {
         Self {
             records: Arc::new(RwLock::new(VecDeque::new())),
@@ -281,7 +281,7 @@ impl AuditManager {
         }
     }
 
-    /// Log an audit event
+    // Log an audit event
     pub fn log_event(
         &self,
         username: String,
@@ -354,7 +354,7 @@ impl AuditManager {
         Ok(id)
     }
 
-    /// Log a statement execution
+    // Log a statement execution
     pub fn log_statement(
         &self,
         username: String,
@@ -387,7 +387,7 @@ impl AuditManager {
         Ok(id)
     }
 
-    /// Add an audit policy
+    // Add an audit policy
     pub fn add_policy(&self, policy: AuditPolicy) -> Result<()> {
         let mut policies = self.policies.write();
 
@@ -401,7 +401,7 @@ impl AuditManager {
         Ok(())
     }
 
-    /// Remove an audit policy
+    // Remove an audit policy
     pub fn remove_policy(&self, policy_id: &str) -> Result<()> {
         let mut policies = self.policies.write();
 
@@ -414,7 +414,7 @@ impl AuditManager {
         Ok(())
     }
 
-    /// Get an audit policy
+    // Get an audit policy
     pub fn get_policy(&self, policy_id: &str) -> Result<AuditPolicy> {
         self.policies.read()
             .get(policy_id)
@@ -422,12 +422,12 @@ impl AuditManager {
             .ok_or_else(|| DbError::NotFound(format!("Audit policy {} not found", policy_id)))
     }
 
-    /// Get all policies
+    // Get all policies
     pub fn get_all_policies(&self) -> Vec<AuditPolicy> {
         self.policies.read().values().cloned().collect()
     }
 
-    /// Query audit records
+    // Query audit records
     pub fn query(&self, filter: AuditFilter) -> Vec<AuditRecord> {
         let records = self.records.read();
         let mut results: Vec<AuditRecord> = records.iter()
@@ -446,7 +446,7 @@ impl AuditManager {
         results
     }
 
-    /// Get a specific audit record by ID
+    // Get a specific audit record by ID
     pub fn get_record(&self, id: AuditId) -> Option<AuditRecord> {
         self.records.read()
             .iter()
@@ -454,7 +454,7 @@ impl AuditManager {
             .cloned()
     }
 
-    /// Get recent audit records
+    // Get recent audit records
     pub fn get_recent(&self, limit: usize) -> Vec<AuditRecord> {
         let records = self.records.read();
         records.iter()
@@ -464,7 +464,7 @@ impl AuditManager {
             .collect()
     }
 
-    /// Flush in-memory records to persistent storage
+    // Flush in-memory records to persistent storage
     pub fn flush(&self) -> Result<()> {
         // In a real implementation, this would write to disk
         // For now, we just update the last flush time
@@ -476,7 +476,7 @@ impl AuditManager {
         Ok(())
     }
 
-    /// Archive old records
+    // Archive old records
     pub fn archive_old_records(&self) -> Result<()> {
         let config = self.config.read();
         let cutoff_time = current_timestamp() - (config.archive_after_days as i64 * 86400);
@@ -495,7 +495,7 @@ impl AuditManager {
         Ok(())
     }
 
-    /// Verify audit trail integrity
+    // Verify audit trail integrity
     pub fn verify_integrity(&self) -> Result<bool> {
         let config = self.config.read();
         if !config.tamper_protection {
@@ -522,7 +522,7 @@ impl AuditManager {
         Ok(true)
     }
 
-    /// Get audit statistics
+    // Get audit statistics
     pub fn get_statistics(&self) -> AuditStatistics {
         // Check cache
         {
@@ -584,12 +584,12 @@ impl AuditManager {
         stats
     }
 
-    /// Update configuration
+    // Update configuration
     pub fn update_config(&self, config: AuditLogConfig) {
         *self.config.write() = config;
     }
 
-    /// Get configuration
+    // Get configuration
     pub fn get_config(&self) -> AuditLogConfig {
         self.config.read().clone()
     }

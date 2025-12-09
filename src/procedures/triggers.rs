@@ -1,8 +1,8 @@
-/// Trigger System for RustyDB
-///
-/// This module provides a comprehensive trigger system supporting BEFORE, AFTER,
-/// and INSTEAD OF triggers at both ROW and STATEMENT levels, with dependency
-/// tracking and ordering capabilities.
+// Trigger System for RustyDB
+//
+// This module provides a comprehensive trigger system supporting BEFORE, AFTER,
+// and INSTEAD OF triggers at both ROW and STATEMENT levels, with dependency
+// tracking and ordering capabilities.
 
 use std::collections::HashSet;
 use crate::{Result, DbError};
@@ -13,18 +13,18 @@ use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 
-/// Trigger timing (when the trigger fires)
+// Trigger timing (when the trigger fires)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum TriggerTiming {
-    /// Fire before the DML operation
+    // Fire before the DML operation
     Before,
-    /// Fire after the DML operation
+    // Fire after the DML operation
     After,
-    /// Fire instead of the DML operation (for views)
+    // Fire instead of the DML operation (for views)
     InsteadOf,
 }
 
-/// DML operation that triggers the event
+// DML operation that triggers the event
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum TriggerEvent {
     Insert,
@@ -32,22 +32,22 @@ pub enum TriggerEvent {
     Delete,
 }
 
-/// Trigger level (row or statement)
+// Trigger level (row or statement)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TriggerLevel {
-    /// Fire once for each row affected
+    // Fire once for each row affected
     Row,
-    /// Fire once for the entire statement
+    // Fire once for the entire statement
     Statement,
 }
 
-/// Trigger condition (WHEN clause)
+// Trigger condition (WHEN clause)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TriggerCondition {
     pub expression: String,
 }
 
-/// Reference to OLD and NEW row values
+// Reference to OLD and NEW row values
 #[derive(Debug, Clone)]
 pub struct TriggerRowContext {
     pub old_values: Option<HashMap<String, RuntimeValue>>,
@@ -90,7 +90,7 @@ impl Default for TriggerRowContext {
     }
 }
 
-/// Trigger definition
+// Trigger definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Trigger {
     pub name: String,
@@ -107,12 +107,12 @@ pub struct Trigger {
 }
 
 impl Trigger {
-    /// Check if trigger should fire for a given event
+    // Check if trigger should fire for a given event
     pub fn should_fire(&self, event: &TriggerEvent, timing: &TriggerTiming) -> bool {
         self.enabled && self.timing == *timing && self.events.contains(event)
     }
 
-    /// Evaluate the WHEN condition
+    // Evaluate the WHEN condition
     pub fn evaluate_condition(&self, context: &TriggerRowContext) -> Result<bool> {
         if let Some(_cond) = &self.condition {
             // TODO: Evaluate condition expression
@@ -124,7 +124,7 @@ impl Trigger {
     }
 }
 
-/// Trigger execution result
+// Trigger execution result
 #[derive(Debug, Clone)]
 pub struct TriggerExecutionResult {
     pub success: bool,
@@ -132,7 +132,7 @@ pub struct TriggerExecutionResult {
     pub error: Option<String>,
 }
 
-/// Trigger manager
+// Trigger manager
 pub struct TriggerManager {
     triggers: Arc<RwLock<HashMap<String, Trigger>>>,
     table_triggers: Arc<RwLock<HashMap<String, Vec<String>>>>,
@@ -148,7 +148,7 @@ impl TriggerManager {
         }
     }
 
-    /// Create a new trigger
+    // Create a new trigger
     pub fn create_trigger(&self, trigger: Trigger) -> Result<()> {
         let mut triggers = self.triggers.write();
         let mut table_triggers = self.table_triggers.write();
@@ -186,7 +186,7 @@ impl TriggerManager {
         Ok(())
     }
 
-    /// Drop a trigger
+    // Drop a trigger
     pub fn drop_trigger(&self, name: &str) -> Result<()> {
         let mut triggers = self.triggers.write();
         let mut table_triggers = self.table_triggers.write();
@@ -203,7 +203,7 @@ impl TriggerManager {
         Ok(())
     }
 
-    /// Enable a trigger
+    // Enable a trigger
     pub fn enable_trigger(&self, name: &str) -> Result<()> {
         let mut triggers = self.triggers.write();
 
@@ -215,7 +215,7 @@ impl TriggerManager {
         Ok(())
     }
 
-    /// Disable a trigger
+    // Disable a trigger
     pub fn disable_trigger(&self, name: &str) -> Result<()> {
         let mut triggers = self.triggers.write();
 
@@ -227,7 +227,7 @@ impl TriggerManager {
         Ok(())
     }
 
-    /// Get all triggers for a table
+    // Get all triggers for a table
     pub fn get_table_triggers(&self, table_name: &str) -> Vec<Trigger> {
         let triggers = self.triggers.read();
         let table_triggers = self.table_triggers.read();
@@ -241,7 +241,7 @@ impl TriggerManager {
         }
     }
 
-    /// Get triggers for a specific event and timing
+    // Get triggers for a specific event and timing
     pub fn get_triggers_for_event(
         &self,
         table_name: &str,
@@ -260,7 +260,7 @@ impl TriggerManager {
         matching_triggers
     }
 
-    /// Sort triggers by order and dependencies
+    // Sort triggers by order and dependencies
     fn sort_triggers(&self, triggers: &mut [Trigger]) {
         // Build dependency graph
         let mut graph: HashMap<String, Vec<String>> = HashMap::new();
@@ -323,7 +323,7 @@ impl TriggerManager {
         });
     }
 
-    /// Fire ROW-level triggers
+    // Fire ROW-level triggers
     pub fn fire_row_triggers(
         &self,
         table_name: &str,
@@ -367,7 +367,7 @@ impl TriggerManager {
         Ok(results)
     }
 
-    /// Fire STATEMENT-level triggers
+    // Fire STATEMENT-level triggers
     pub fn fire_statement_triggers(
         &self,
         table_name: &str,
@@ -405,13 +405,13 @@ impl TriggerManager {
         Ok(results)
     }
 
-    /// List all triggers
+    // List all triggers
     pub fn list_triggers(&self) -> Vec<String> {
         let triggers = self.triggers.read();
         triggers.keys().cloned().collect()
     }
 
-    /// Get trigger by name
+    // Get trigger by name
     pub fn get_trigger(&self, name: &str) -> Result<Trigger> {
         let triggers = self.triggers.read();
         triggers.get(name)
@@ -421,7 +421,7 @@ impl TriggerManager {
             ))
     }
 
-    /// Validate trigger dependencies (check for cycles)
+    // Validate trigger dependencies (check for cycles)
     pub fn validate_dependencies(&self) -> Result<()> {
         let triggers = self.triggers.read();
 
@@ -461,7 +461,7 @@ impl TriggerManager {
         Ok(())
     }
 
-    /// Get trigger statistics
+    // Get trigger statistics
     pub fn get_statistics(&self, table_name: &str) -> TriggerStatistics {
         let triggers = self.get_table_triggers(table_name);
 
@@ -505,7 +505,7 @@ impl Default for TriggerManager {
     }
 }
 
-/// Trigger statistics
+// Trigger statistics
 #[derive(Debug, Clone, Default)]
 pub struct TriggerStatistics {
     pub total_count: usize,
@@ -520,8 +520,8 @@ pub struct TriggerStatistics {
     pub delete_count: usize,
 }
 
-/// Compound trigger (Oracle-style)
-/// Allows multiple timing points in a single trigger
+// Compound trigger (Oracle-style)
+// Allows multiple timing points in a single trigger
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompoundTrigger {
     pub name: String,
@@ -535,7 +535,7 @@ pub struct CompoundTrigger {
 }
 
 impl CompoundTrigger {
-    /// Execute the appropriate section of the compound trigger
+    // Execute the appropriate section of the compound trigger
     pub fn execute_section(
         &self,
         timing: &TriggerTiming,
@@ -727,5 +727,3 @@ mod tests {
         Ok(())
     }
 }
-
-

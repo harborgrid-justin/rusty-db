@@ -53,7 +53,7 @@ impl Default for AutoRecoveryConfig {
     }
 }
 
-/// Recovery statistics
+// Recovery statistics
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct RecoveryStatistics {
     pub total_failures_detected: u64,
@@ -66,7 +66,7 @@ pub struct RecoveryStatistics {
     pub predictive_recoveries: u64,
 }
 
-/// Auto-recovery manager
+// Auto-recovery manager
 pub struct AutoRecoveryManager {
     config: AutoRecoveryConfig,
     crash_detector: Arc<CrashDetector>,
@@ -389,7 +389,7 @@ impl Clone for AutoRecoveryManager {
     }
 }
 
-/// Comprehensive recovery statistics
+// Comprehensive recovery statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComprehensiveRecoveryStats {
     pub recovery: RecoveryStatistics,

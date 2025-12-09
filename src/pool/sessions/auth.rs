@@ -1,4 +1,4 @@
-//! Session authentication module
+// Session authentication module
 use crate::error::Result;
 use serde::{Serialize, Deserialize};
 
@@ -9,7 +9,7 @@ pub struct PrivilegeCache;
 pub struct RoleManager;
 pub struct SessionCredentials;
 
-/// Credentials for authentication
+// Credentials for authentication
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Credentials {
     pub username: String,
@@ -18,7 +18,7 @@ pub struct Credentials {
     pub token: Option<String>,
 }
 
-/// Result of authentication attempt
+// Result of authentication attempt
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticationResult {
     pub success: bool,

@@ -1,12 +1,12 @@
-/// Distributed Query Coordinator
-/// 
-/// This module provides distributed query execution across multiple nodes:
-/// - Query distribution and coordination
-/// - Data shuffling between nodes  
-/// - Distributed join execution
-/// - Fault tolerance and recovery
-/// - Load balancing across nodes
-/// - Result aggregation from multiple nodes
+// Distributed Query Coordinator
+//
+// This module provides distributed query execution across multiple nodes:
+// - Query distribution and coordination
+// - Data shuffling between nodes
+// - Distributed join execution
+// - Fault tolerance and recovery
+// - Load balancing across nodes
+// - Result aggregation from multiple nodes
 
 use tokio::time::sleep;
 use std::time::Duration;
@@ -17,13 +17,13 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use tokio::sync::Semaphore;
 
-/// Distributed query coordinator
+// Distributed query coordinator
 pub struct DistributedCoordinator {
-    /// Available worker nodes
+    // Available worker nodes
     nodes: Arc<RwLock<Vec<WorkerNode>>>,
-    /// Load balancer
+    // Load balancer
     load_balancer: Arc<LoadBalancer>,
-    /// Query scheduler
+    // Query scheduler
     scheduler: Arc<QueryScheduler>,
 }
 
@@ -35,17 +35,17 @@ impl DistributedCoordinator {
             scheduler: Arc::new(QueryScheduler::new()),
         }
     }
-    
-    /// Register a worker node
+
+    // Register a worker node
     pub fn register_node(&self, node: WorkerNode) {
         self.nodes.write().push(node);
     }
-    
-    /// Execute query across distributed nodes
+
+    // Execute query across distributed nodes
     pub async fn execute_distributed(&self, plan: &PlanNode) -> Result<QueryResult, DbError> {
         // Analyze query to determine distribution strategy
         let strategy = self.analyze_query(plan)?;
-        
+
         match strategy {
             DistributionStrategy::BroadcastJoin => {
                 self.execute_broadcast_join(plan).await
@@ -61,7 +61,7 @@ impl DistributedCoordinator {
             }
         }
     }
-    
+
     fn analyze_query(&self, plan: &PlanNode) -> Result<DistributionStrategy, DbError> {
         match plan {
             PlanNode::Join { .. } => {
@@ -79,33 +79,33 @@ impl DistributedCoordinator {
             _ => Ok(DistributionStrategy::SingleNode),
         }
     }
-    
+
     async fn execute_broadcast_join(&self, _plan: &PlanNode) -> Result<QueryResult, DbError> {
         // 1. Send smaller table to all nodes (broadcast)
         // 2. Partition larger table across nodes
         // 3. Execute local joins on each node
         // 4. Collect and merge results
-        
+
         Ok(QueryResult::empty())
     }
-    
+
     async fn execute_hash_partitioned(&self, _plan: &PlanNode) -> Result<QueryResult, DbError> {
         // 1. Hash partition data across nodes
         // 2. Execute local aggregations on each node
         // 3. Collect partial results
         // 4. Final aggregation on coordinator
-        
+
         Ok(QueryResult::empty())
     }
-    
+
     async fn execute_range_partitioned(&self, _plan: &PlanNode) -> Result<QueryResult, DbError> {
         // 1. Partition data by range
         // 2. Execute on each partition
         // 3. Merge sorted results
-        
+
         Ok(QueryResult::empty())
     }
-    
+
     async fn execute_on_single_node(&self, _plan: &PlanNode) -> Result<QueryResult, DbError> {
         // Select best node and execute there
         let nodes = self.nodes.read();
@@ -117,7 +117,7 @@ impl DistributedCoordinator {
     }
 }
 
-/// Distribution strategy
+// Distribution strategy
 #[derive(Debug, Clone, PartialEq)]
 pub enum DistributionStrategy {
     BroadcastJoin,
@@ -126,7 +126,7 @@ pub enum DistributionStrategy {
     SingleNode,
 }
 
-/// Worker node in the distributed system
+// Worker node in the distributed system
 pub struct WorkerNode {
     pub id: String,
     pub address: String,
@@ -145,22 +145,22 @@ impl WorkerNode {
             status: Arc::new(RwLock::new(NodeStatus::Active)),
         }
     }
-    
+
     pub async fn execute_query(&self, _plan: &PlanNode) -> Result<QueryResult, DbError> {
         // In real implementation, would send query to remote node
         Ok(QueryResult::empty())
     }
-    
+
     pub fn get_load(&self) -> usize {
         *self.current_load.read()
     }
-    
+
     pub fn is_available(&self) -> bool {
         *self.status.read() == NodeStatus::Active
     }
 }
 
-/// Node status
+// Node status
 #[derive(Debug, Clone, PartialEq)]
 pub enum NodeStatus {
     Active,
@@ -169,7 +169,7 @@ pub enum NodeStatus {
     Maintenance,
 }
 
-/// Load balancer for distributing work
+// Load balancer for distributing work
 pub struct LoadBalancer {
     strategy: LoadBalancingStrategy,
 }
@@ -180,15 +180,15 @@ impl LoadBalancer {
             strategy: LoadBalancingStrategy::RoundRobin,
         }
     }
-    
-    /// Select node for query execution
+
+    // Select node for query execution
     pub fn select_node<'a>(&self, nodes: &'a [WorkerNode]) -> Option<&'a WorkerNode> {
         let available: Vec<_> = nodes.iter().filter(|n| n.is_available()).collect();
-        
+
         if available.is_empty() {
             return None;
         }
-        
+
         match self.strategy {
             LoadBalancingStrategy::RoundRobin => {
                 // Simple: select first available
@@ -211,7 +211,7 @@ impl LoadBalancer {
     }
 }
 
-/// Load balancing strategy
+// Load balancing strategy
 #[derive(Debug, Clone)]
 pub enum LoadBalancingStrategy {
     RoundRobin,
@@ -219,7 +219,7 @@ pub enum LoadBalancingStrategy {
     Random,
 }
 
-/// Query scheduler for distributed execution
+// Query scheduler for distributed execution
 pub struct QueryScheduler {
     queue: Arc<RwLock<Vec<ScheduledQuery>>>,
     max_concurrent: usize,
@@ -235,8 +235,8 @@ impl QueryScheduler {
             semaphore: Arc::new(Semaphore::new(max_concurrent)),
         }
     }
-    
-    /// Schedule query for execution
+
+    // Schedule query for execution
     pub async fn schedule(&self, query: ScheduledQuery) -> Result<(), DbError> {
         // Wait for available slot
         let _permit = self.semaphore.acquire().await
@@ -247,19 +247,19 @@ impl QueryScheduler {
 
         Ok(())
     }
-    
-    /// Get next query to execute
+
+    // Get next query to execute
     pub fn get_next(&self) -> Option<ScheduledQuery> {
         let mut queue = self.queue.write();
-        
+
         // Sort by priority
         queue.sort_by_key(|q| std::cmp::Reverse(q.priority));
-        
+
         queue.pop()
     }
 }
 
-/// Scheduled query with metadata
+// Scheduled query with metadata
 #[derive(Debug, Clone)]
 pub struct ScheduledQuery {
     pub id: String,
@@ -268,45 +268,45 @@ pub struct ScheduledQuery {
     pub deadline: Option<std::time::SystemTime>,
 }
 
-/// Data shuffler for moving data between nodes
+// Data shuffler for moving data between nodes
 pub struct DataShuffler;
 
 impl DataShuffler {
-    /// Shuffle data for hash join
+    // Shuffle data for hash join
     pub async fn shuffle_for_hash_join(
         data: Vec<Vec<String>>,
         nodes: &[WorkerNode],
         partition_column: usize,
     ) -> Result<HashMap<String, Vec<Vec<String>>>, DbError> {
         let mut partitions: HashMap<String, Vec<Vec<String>>> = HashMap::new();
-        
+
         for row in data {
             if let Some(key_value) = row.get(partition_column) {
                 // Hash to determine target node
                 let node_idx = Self::hash_to_node(key_value, nodes.len());
                 let node_id = &nodes[node_idx].id;
-                
+
                 partitions
                     .entry(node_id.clone())
                     .or_insert_with(Vec::new)
                     .push(row);
             }
         }
-        
+
         Ok(partitions)
     }
-    
+
     fn hash_to_node(key: &str, node_count: usize) -> usize {
         use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
-        
+
         let mut hasher = DefaultHasher::new();
         key.hash(&mut hasher);
         (hasher.finish() as usize) % node_count
     }
 }
 
-/// Fault tolerance manager
+// Fault tolerance manager
 pub struct FaultToleranceManager {
     failed_nodes: Arc<RwLock<Vec<String>>>,
     retry_count: usize,
@@ -319,24 +319,24 @@ impl FaultToleranceManager {
             retry_count,
         }
     }
-    
-    /// Mark node as failed
+
+    // Mark node as failed
     pub fn mark_failed(&self, node_id: String) {
         self.failed_nodes.write().push(node_id);
     }
-    
-    /// Check if node is failed
+
+    // Check if node is failed
     pub fn is_failed(&self, node_id: &str) -> bool {
         self.failed_nodes.read().contains(&node_id.to_string())
     }
-    
-    /// Execute with retry on failure
+
+    // Execute with retry on failure
     pub async fn execute_with_retry<F, T>(&self, mut operation: F) -> Result<T, DbError>
     where
         F: FnMut() -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<T, DbError>> + Send>>,
     {
         let mut attempts = 0;
-        
+
         loop {
             match operation().await {
                 Ok(result) => return Ok(result),
@@ -355,27 +355,27 @@ impl FaultToleranceManager {
     }
 }
 
-/// Result aggregator
+// Result aggregator
 pub struct ResultAggregator;
 
 impl ResultAggregator {
-    /// Merge results from multiple nodes
+    // Merge results from multiple nodes
     pub fn merge_results(results: Vec<QueryResult>) -> QueryResult {
         if results.is_empty() {
             return QueryResult::empty();
         }
-        
+
         let columns = results[0].columns.clone();
         let mut all_rows = Vec::new();
-        
+
         for result in results {
             all_rows.extend(result.rows);
         }
-        
+
         QueryResult::new(columns, all_rows)
     }
-    
-    /// Aggregate distributed aggregations
+
+    // Aggregate distributed aggregations
     pub fn aggregate_partial_results(
         results: Vec<QueryResult>,
         aggregation_type: AggregationType,
@@ -388,7 +388,7 @@ impl ResultAggregator {
             AggregationType::Max => Self::aggregate_max(results),
         }
     }
-    
+
     fn aggregate_count(results: Vec<QueryResult>) -> QueryResult {
         let total: i64 = results
             .iter()
@@ -396,13 +396,13 @@ impl ResultAggregator {
             .filter_map(|row| row.first())
             .filter_map(|val| val.parse::<i64>().ok())
             .sum();
-        
+
         QueryResult::new(
             vec!["count".to_string()],
             vec![vec![total.to_string()]],
         )
     }
-    
+
     fn aggregate_sum(results: Vec<QueryResult>) -> QueryResult {
         let total: f64 = results
             .iter()
@@ -410,18 +410,18 @@ impl ResultAggregator {
             .filter_map(|row| row.first())
             .filter_map(|val| val.parse::<f64>().ok())
             .sum();
-        
+
         QueryResult::new(
             vec!["sum".to_string()],
             vec![vec![total.to_string()]],
         )
     }
-    
+
     fn aggregate_avg(results: Vec<QueryResult>) -> QueryResult {
         // Each node returns (sum, count), we need to combine them
         let mut total_sum = 0.0;
         let mut total_count = 0i64;
-        
+
         for result in results {
             if let Some(row) = result.rows.first() {
                 if row.len() >= 2 {
@@ -435,19 +435,19 @@ impl ResultAggregator {
                 }
             }
         }
-        
+
         let avg = if total_count > 0 {
             total_sum / total_count as f64
         } else {
             0.0
         };
-        
+
         QueryResult::new(
             vec!["avg".to_string()],
             vec![vec![avg.to_string()]],
         )
     }
-    
+
     fn aggregate_min(results: Vec<QueryResult>) -> QueryResult {
         let min = results
             .iter()
@@ -455,13 +455,13 @@ impl ResultAggregator {
             .filter_map(|row| row.first())
             .cloned()
             .min();
-        
+
         QueryResult::new(
             vec!["min".to_string()],
             vec![vec![min.unwrap_or_default()]],
         )
     }
-    
+
     fn aggregate_max(results: Vec<QueryResult>) -> QueryResult {
         let max = results
             .iter()
@@ -469,7 +469,7 @@ impl ResultAggregator {
             .filter_map(|row| row.first())
             .cloned()
             .max();
-        
+
         QueryResult::new(
             vec!["max".to_string()],
             vec![vec![max.unwrap_or_default()]],
@@ -477,7 +477,7 @@ impl ResultAggregator {
     }
 }
 
-/// Aggregation type
+// Aggregation type
 #[derive(Debug, Clone, PartialEq)]
 pub enum AggregationType {
     Count,
@@ -487,7 +487,7 @@ pub enum AggregationType {
     Max,
 }
 
-/// Distributed transaction coordinator (2PC)
+// Distributed transaction coordinator (2PC)
 pub struct DistributedTransactionCoordinator {
     participants: Vec<String>,
     state: Arc<RwLock<TransactionState>>,
@@ -500,12 +500,12 @@ impl DistributedTransactionCoordinator {
             state: Arc::new(RwLock::new(TransactionState::Init)),
         }
     }
-    
-    /// Execute two-phase commit
+
+    // Execute two-phase commit
     pub async fn commit_2pc(&self) -> Result<(), DbError> {
         // Phase 1: Prepare
         *self.state.write() = TransactionState::Preparing;
-        
+
         for participant in &self.participants {
             if !self.send_prepare(participant).await? {
                 // Abort if any participant cannot prepare
@@ -515,45 +515,45 @@ impl DistributedTransactionCoordinator {
                 ));
             }
         }
-        
+
         // Phase 2: Commit
         *self.state.write() = TransactionState::Committing;
-        
+
         for participant in &self.participants {
             self.send_commit(participant).await?;
         }
-        
+
         *self.state.write() = TransactionState::Committed;
         Ok(())
     }
-    
+
     async fn send_prepare(&self, participant: &str) -> Result<bool, DbError> {
         // Would send prepare message to participant node
         Ok(true)
     }
-    
+
     async fn send_commit(&self, participant: &str) -> Result<(), DbError> {
         // Would send commit message to participant node
         Ok(())
     }
-    
+
     async fn abort(&self) -> Result<(), DbError> {
         *self.state.write() = TransactionState::Aborted;
-        
+
         for participant in &self.participants {
             self.send_abort(participant).await?;
         }
-        
+
         Ok(())
     }
-    
+
     async fn send_abort(&self, participant: &str) -> Result<(), DbError> {
         // Would send abort message to participant node
         Ok(())
     }
 }
 
-/// Transaction state in 2PC
+// Transaction state in 2PC
 #[derive(Debug, Clone, PartialEq)]
 pub enum TransactionState {
     Init,
@@ -568,20 +568,20 @@ pub enum TransactionState {
 mod tests {
     use super::*;
 use std::time::SystemTime;
-    
+
     #[test]
     fn test_load_balancer() {
         let lb = LoadBalancer::new();
-        
+
         let nodes = vec![
             WorkerNode::new("node1".to_string(), "localhost:5001".to_string(), 100),
             WorkerNode::new("node2".to_string(), "localhost:5002".to_string(), 100),
         ];
-        
+
         let selected = lb.select_node(&nodes);
         assert!(selected.is_some());
     }
-    
+
     #[test]
     fn test_result_aggregation() {
         let results = vec![
@@ -589,23 +589,21 @@ use std::time::SystemTime;
             QueryResult::new(vec!["count".to_string()], vec![vec!["20".to_string()]]),
             QueryResult::new(vec!["count".to_string()], vec![vec!["30".to_string()]]),
         ];
-        
+
         let aggregated = ResultAggregator::aggregate_partial_results(
             results,
             AggregationType::Count,
         );
-        
+
         assert_eq!(aggregated.rows[0][0], "60");
     }
-    
+
     #[test]
     fn test_fault_tolerance() {
         let ft = FaultToleranceManager::new(3);
-        
+
         ft.mark_failed("node1".to_string());
         assert!(ft.is_failed("node1"));
         assert!(!ft.is_failed("node2"));
     }
 }
-
-

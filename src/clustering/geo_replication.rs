@@ -1,19 +1,19 @@
-/// Cross-Datacenter Geo-Replication
-///
-/// This module provides geo-distributed replication capabilities for multi-datacenter
-/// deployments. Features include:
-/// - Asynchronous replication with configurable consistency levels
-/// - Conflict resolution strategies (Last-Write-Wins, Vector Clocks, Custom)
-/// - Geo-aware read routing for low latency
-/// - Disaster recovery with automatic failover
-/// - WAN optimization with batching and compression
-/// - Multi-master replication support
-///
-/// Designed for:
-/// - Global data distribution
-/// - Low-latency local reads
-/// - High availability across regions
-/// - Compliance with data sovereignty requirements
+// Cross-Datacenter Geo-Replication
+//
+// This module provides geo-distributed replication capabilities for multi-datacenter
+// deployments. Features include:
+// - Asynchronous replication with configurable consistency levels
+// - Conflict resolution strategies (Last-Write-Wins, Vector Clocks, Custom)
+// - Geo-aware read routing for low latency
+// - Disaster recovery with automatic failover
+// - WAN optimization with batching and compression
+// - Multi-master replication support
+//
+// Designed for:
+// - Global data distribution
+// - Low-latency local reads
+// - High availability across regions
+// - Compliance with data sovereignty requirements
 
 use std::collections::VecDeque;
 use std::collections::hash_map::DefaultHasher;
@@ -25,47 +25,47 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 
-/// Datacenter identifier
+// Datacenter identifier
 pub type DatacenterId = String;
 
-/// Replication stream ID
+// Replication stream ID
 pub type StreamId = u64;
 
-/// Logical timestamp for ordering
+// Logical timestamp for ordering
 pub type LogicalTimestamp = u64;
 
-/// Consistency level for reads
+// Consistency level for reads
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConsistencyLevel {
-    /// Read from local datacenter only (lowest latency)
+    // Read from local datacenter only (lowest latency)
     Local,
-    /// Read from local region (nearby datacenters)
+    // Read from local region (nearby datacenters)
     Regional,
-    /// Read from any datacenter (global)
+    // Read from any datacenter (global)
     Global,
-    /// Ensure read reflects recent writes (session consistency)
+    // Ensure read reflects recent writes (session consistency)
     SessionConsistent,
-    /// Strong consistency (linearizable)
+    // Strong consistency (linearizable)
     Strong,
 }
 
-/// Conflict resolution strategy
+// Conflict resolution strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConflictResolution {
-    /// Last write wins based on timestamp
+    // Last write wins based on timestamp
     LastWriteWins,
-    /// Use vector clocks for causality
+    // Use vector clocks for causality
     VectorClock,
-    /// Custom application-level resolution
+    // Custom application-level resolution
     Custom,
-    /// Multi-value - keep all conflicting versions
+    // Multi-value - keep all conflicting versions
     MultiValue,
 }
 
-/// Vector clock for tracking causality
+// Vector clock for tracking causality
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct VectorClock {
-    /// Clock values per datacenter
+    // Clock values per datacenter
     clocks: HashMap<DatacenterId, LogicalTimestamp>,
 }
 
@@ -76,13 +76,13 @@ impl VectorClock {
         }
     }
 
-    /// Increment clock for a datacenter
+    // Increment clock for a datacenter
     pub fn increment(&mut self, dc_id: &str) {
         let counter = self.clocks.entry(dc_id.to_string()).or_insert(0);
         *counter += 1;
     }
 
-    /// Merge with another vector clock
+    // Merge with another vector clock
     pub fn merge(&mut self, other: &VectorClock) {
         for (dc_id, &timestamp) in &other.clocks {
             let entry = self.clocks.entry(dc_id.clone()).or_insert(0);
@@ -90,7 +90,7 @@ impl VectorClock {
         }
     }
 
-    /// Check if this clock happened before another
+    // Check if this clock happened before another
     pub fn happens_before(&self, other: &VectorClock) -> bool {
         let mut strictly_less = false;
 
@@ -113,7 +113,7 @@ impl VectorClock {
         strictly_less
     }
 
-    /// Check if clocks are concurrent (conflicting)
+    // Check if clocks are concurrent (conflicting)
     pub fn is_concurrent(&self, other: &VectorClock) -> bool {
         !self.happens_before(other) && !other.happens_before(self) && self != other
     }
@@ -125,18 +125,18 @@ impl Default for VectorClock {
     }
 }
 
-/// Replicated value with metadata
+// Replicated value with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicatedValue {
-    /// The actual data
+    // The actual data
     pub data: Vec<u8>,
-    /// Version/timestamp
+    // Version/timestamp
     pub timestamp: SystemTime,
-    /// Vector clock for causality tracking
+    // Vector clock for causality tracking
     pub vector_clock: VectorClock,
-    /// Originating datacenter
+    // Originating datacenter
     pub source_dc: DatacenterId,
-    /// Hash of the value for integrity
+    // Hash of the value for integrity
     pub checksum: u64,
 }
 
@@ -155,7 +155,7 @@ impl ReplicatedValue {
         }
     }
 
-    /// Verify checksum
+    // Verify checksum
     pub fn verify_checksum(&self) -> bool {
 
         let mut hasher = DefaultHasher::new();
@@ -164,22 +164,22 @@ impl ReplicatedValue {
     }
 }
 
-/// Replication operation
+// Replication operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationOp {
-    /// Operation ID
+    // Operation ID
     pub id: u64,
-    /// Key being replicated
+    // Key being replicated
     pub key: Vec<u8>,
-    /// Operation type
+    // Operation type
     pub op_type: OpType,
-    /// Value (for puts)
+    // Value (for puts)
     pub value: Option<ReplicatedValue>,
-    /// Source datacenter
+    // Source datacenter
     pub source_dc: DatacenterId,
-    /// Target datacenters
+    // Target datacenters
     pub target_dcs: Vec<DatacenterId>,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
 }
 
@@ -190,28 +190,28 @@ pub enum OpType {
     Merge,
 }
 
-/// Datacenter metadata
+// Datacenter metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Datacenter {
-    /// Datacenter ID
+    // Datacenter ID
     pub id: DatacenterId,
-    /// Geographic region
+    // Geographic region
     pub region: String,
-    /// Availability zone
+    // Availability zone
     pub zone: String,
-    /// Latitude for distance calculations
+    // Latitude for distance calculations
     pub latitude: f64,
-    /// Longitude for distance calculations
+    // Longitude for distance calculations
     pub longitude: f64,
-    /// Endpoint for replication
+    // Endpoint for replication
     pub endpoint: String,
-    /// Priority (higher = preferred for reads)
+    // Priority (higher = preferred for reads)
     pub priority: u8,
-    /// Is this datacenter currently active?
+    // Is this datacenter currently active?
     pub active: bool,
-    /// Last health check
+    // Last health check
     pub last_health_check: SystemTime,
-    /// Replication lag (ms)
+    // Replication lag (ms)
     pub replication_lag_ms: u64,
 }
 
@@ -231,7 +231,7 @@ impl Datacenter {
         }
     }
 
-    /// Calculate distance to another datacenter (Haversine formula)
+    // Calculate distance to another datacenter (Haversine formula)
     pub fn distance_to(&self, other: &Datacenter) -> f64 {
         let lat1 = self.latitude.to_radians();
         let lat2 = other.latitude.to_radians();
@@ -246,26 +246,26 @@ impl Datacenter {
     }
 }
 
-/// Replication configuration
+// Replication configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GeoReplicationConfig {
-    /// Local datacenter ID
+    // Local datacenter ID
     pub local_dc: DatacenterId,
-    /// Conflict resolution strategy
+    // Conflict resolution strategy
     pub conflict_resolution: ConflictResolution,
-    /// Default consistency level
+    // Default consistency level
     pub default_consistency: ConsistencyLevel,
-    /// Enable compression for WAN traffic
+    // Enable compression for WAN traffic
     pub enable_compression: bool,
-    /// Batch size for replication
+    // Batch size for replication
     pub batch_size: usize,
-    /// Batch timeout
+    // Batch timeout
     pub batch_timeout: Duration,
-    /// Maximum replication lag before alerting (ms)
+    // Maximum replication lag before alerting (ms)
     pub max_replication_lag_ms: u64,
-    /// Enable automatic failover
+    // Enable automatic failover
     pub auto_failover: bool,
-    /// Failover detection timeout
+    // Failover detection timeout
     pub failover_timeout: Duration,
 }
 
@@ -285,7 +285,7 @@ impl Default for GeoReplicationConfig {
     }
 }
 
-/// Replication stream for batching
+// Replication stream for batching
 struct ReplicationStream {
     id: StreamId,
     target_dc: DatacenterId,
@@ -323,25 +323,25 @@ impl ReplicationStream {
     }
 }
 
-/// Geo-replication manager
+// Geo-replication manager
 pub struct GeoReplicationManager {
-    /// Configuration
+    // Configuration
     config: GeoReplicationConfig,
-    /// All datacenters in the cluster
+    // All datacenters in the cluster
     datacenters: Arc<RwLock<HashMap<DatacenterId, Datacenter>>>,
-    /// Replication streams
+    // Replication streams
     streams: Arc<RwLock<HashMap<DatacenterId, ReplicationStream>>>,
-    /// Local vector clock
+    // Local vector clock
     vector_clock: Arc<RwLock<VectorClock>>,
-    /// Next operation ID
+    // Next operation ID
     next_op_id: Arc<RwLock<u64>>,
-    /// Next stream ID
+    // Next stream ID
     next_stream_id: Arc<RwLock<StreamId>>,
-    /// Conflict log for manual resolution
+    // Conflict log for manual resolution
     conflicts: Arc<RwLock<Vec<Conflict>>>,
 }
 
-/// Conflict that needs resolution
+// Conflict that needs resolution
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Conflict {
     pub key: Vec<u8>,
@@ -366,7 +366,7 @@ impl GeoReplicationManager {
         }
     }
 
-    /// Add a datacenter to the topology
+    // Add a datacenter to the topology
     pub fn add_datacenter(&self, dc: Datacenter) -> Result<(), DbError> {
         let mut datacenters = self.datacenters.write().unwrap();
         let dc_id = dc.id.clone();
@@ -384,7 +384,7 @@ impl GeoReplicationManager {
         Ok(())
     }
 
-    /// Remove a datacenter
+    // Remove a datacenter
     pub fn remove_datacenter(&self, dc_id: &str) -> Result<(), DbError> {
         let mut datacenters = self.datacenters.write().unwrap();
         datacenters.remove(dc_id);
@@ -395,7 +395,7 @@ impl GeoReplicationManager {
         Ok(())
     }
 
-    /// Replicate a write operation
+    // Replicate a write operation
     pub fn replicate_write(
         &self,
         key: Vec<u8>,
@@ -448,7 +448,7 @@ impl GeoReplicationManager {
         Ok(op_id)
     }
 
-    /// Replicate a delete operation
+    // Replicate a delete operation
     pub fn replicate_delete(&self, key: Vec<u8>) -> Result<u64, DbError> {
         let mut vc = self.vector_clock.write().unwrap();
         vc.increment(&self.config.local_dc);
@@ -487,7 +487,7 @@ impl GeoReplicationManager {
         Ok(op_id)
     }
 
-    /// Flush pending replication operations
+    // Flush pending replication operations
     pub fn flush_streams(&self) -> HashMap<DatacenterId, Vec<ReplicationOp>> {
         let mut streams = self.streams.write().unwrap();
         let mut batches = HashMap::new();
@@ -504,7 +504,7 @@ impl GeoReplicationManager {
         batches
     }
 
-    /// Resolve conflict between two values
+    // Resolve conflict between two values
     pub fn resolve_conflict(
         &self,
         v1: &ReplicatedValue,
@@ -541,7 +541,7 @@ impl GeoReplicationManager {
         }
     }
 
-    /// Record a conflict for later resolution
+    // Record a conflict for later resolution
     pub fn record_conflict(&self, key: Vec<u8>, values: Vec<ReplicatedValue>) {
         let conflict = Conflict {
             key,
@@ -553,7 +553,7 @@ impl GeoReplicationManager {
         self.conflicts.write().unwrap().push(conflict);
     }
 
-    /// Get conflicts that need resolution
+    // Get conflicts that need resolution
     pub fn get_unresolved_conflicts(&self) -> Vec<Conflict> {
         self.conflicts
             .read()
@@ -564,7 +564,7 @@ impl GeoReplicationManager {
             .collect()
     }
 
-    /// Select best datacenter for read based on consistency level
+    // Select best datacenter for read based on consistency level
     pub fn select_read_datacenter(&self, consistency: ConsistencyLevel) -> Result<DatacenterId, DbError> {
         let datacenters = self.datacenters.read().unwrap();
 
@@ -606,7 +606,7 @@ impl GeoReplicationManager {
         }
     }
 
-    /// Get nearest datacenter by geographic distance
+    // Get nearest datacenter by geographic distance
     pub fn get_nearest_datacenter(&self, latitude: f64, longitude: f64) -> Option<DatacenterId> {
         let datacenters = self.datacenters.read().unwrap();
         let temp_dc = Datacenter {
@@ -633,7 +633,7 @@ impl GeoReplicationManager {
             .map(|dc| dc.id.clone())
     }
 
-    /// Check datacenter health
+    // Check datacenter health
     pub fn check_datacenter_health(&self) -> Vec<(DatacenterId, bool)> {
         let mut datacenters = self.datacenters.write().unwrap();
         let mut results = Vec::new();
@@ -655,7 +655,7 @@ impl GeoReplicationManager {
         results
     }
 
-    /// Initiate disaster recovery failover
+    // Initiate disaster recovery failover
     pub fn initiate_failover(&self, failed_dc: &str, target_dc: &str) -> Result<(), DbError> {
         let mut datacenters = self.datacenters.write().unwrap();
 
@@ -673,12 +673,12 @@ impl GeoReplicationManager {
         Ok(())
     }
 
-    /// Get replication topology
+    // Get replication topology
     pub fn get_topology(&self) -> Vec<Datacenter> {
         self.datacenters.read().unwrap().values().cloned().collect()
     }
 
-    /// Get replication lag statistics
+    // Get replication lag statistics
     pub fn get_lag_stats(&self) -> HashMap<DatacenterId, u64> {
         self.datacenters
             .read()

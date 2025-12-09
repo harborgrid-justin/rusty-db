@@ -6,7 +6,7 @@
 use tokio::time::sleep;
 use std::fmt;
 use std::time::SystemTime;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
 use parking_lot::RwLock;
@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::Result;
 use crate::error::DbError;
 
-/// Index type recommendation
+// Index type recommendation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum IndexType {
     BTree,
@@ -40,7 +40,7 @@ impl fmt::Display for IndexType {
     }
 }
 
-/// Column access pattern
+// Column access pattern
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnAccessPattern {
     pub table_name: String,
@@ -64,7 +64,7 @@ impl ColumnAccessPattern {
     }
 }
 
-/// Index candidate with cost-benefit analysis
+// Index candidate with cost-benefit analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexCandidate {
     pub candidate_id: u64,
@@ -92,7 +92,7 @@ impl IndexCandidate {
     }
 }
 
-/// Existing index statistics
+// Existing index statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexStatistics {
     pub index_name: String,
@@ -135,7 +135,7 @@ impl IndexStatistics {
     }
 }
 
-/// Index recommendation engine
+// Index recommendation engine
 pub struct IndexAdvisor {
     column_patterns: Arc<RwLock<HashMap<String, ColumnAccessPattern>>>,
     existing_indexes: Arc<RwLock<HashMap<String, IndexStatistics>>>,
@@ -484,7 +484,7 @@ pub enum ColumnAccessType {
     Join,
 }
 
-/// Index maintenance scheduler
+// Index maintenance scheduler
 pub struct IndexMaintenanceScheduler {
     maintenance_schedule: Arc<RwLock<HashMap<String, MaintenanceTask>>>,
 }
@@ -543,7 +543,7 @@ impl IndexMaintenanceScheduler {
     }
 }
 
-/// Auto-indexing orchestrator
+// Auto-indexing orchestrator
 pub struct AutoIndexingEngine {
     advisor: Arc<IndexAdvisor>,
     maintenance_scheduler: Arc<IndexMaintenanceScheduler>,

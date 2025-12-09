@@ -64,26 +64,26 @@ use std::sync::atomic::{AtomicU64, Ordering};
 // Stack Canary - Stack Buffer Overflow Detection
 // ============================================================================
 
-/// Stack canary for detecting stack buffer overflows
-///
-/// Implements the classic "stack guard" technique used in compilers.
-/// Places a random value on the stack that is validated before function return.
-///
-/// ## Security Properties
-/// - Random canary generation (unpredictable)
-/// - Automatic validation on drop
-/// - Panic on corruption (fail-safe)
-/// - Prevents CWE-121 (Stack-based Buffer Overflow)
+// Stack canary for detecting stack buffer overflows
+//
+// Implements the classic "stack guard" technique used in compilers.
+// Places a random value on the stack that is validated before function return.
+//
+// ## Security Properties
+// - Random canary generation (unpredictable)
+// - Automatic validation on drop
+// - Panic on corruption (fail-safe)
+// - Prevents CWE-121 (Stack-based Buffer Overflow)
 #[derive(Debug, Clone)]
 pub struct StackCanary {
-    /// Primary canary value (randomly generated)
+    // Primary canary value (randomly generated)
     value: u64,
-    /// Validation canary (should match value)
+    // Validation canary (should match value)
     validation: u64,
 }
 
 impl StackCanary {
-    /// Create a new stack canary with random value
+    // Create a new stack canary with random value
     pub fn new() -> Self {
         // Use atomic counter + thread ID for entropy
         static CANARY_COUNTER: AtomicU64 = AtomicU64::new(0xDEADBEEFCAFEBABE);
@@ -96,7 +96,7 @@ impl StackCanary {
         }
     }
 
-    /// Validate canary integrity
+    // Validate canary integrity
     #[inline]
     pub fn validate(&self) -> Result<()> {
         if self.value != self.validation {
@@ -108,7 +108,7 @@ impl StackCanary {
         Ok(())
     }
 
-    /// Get canary value for verification
+    // Get canary value for verification
     #[inline]
     pub fn value(&self) -> u64 {
         self.value
@@ -139,47 +139,47 @@ impl Drop for StackCanary {
 // BoundsCheckedBuffer<T> - Runtime Bounds-Checked Buffer
 // ============================================================================
 
-/// Generic buffer with automatic runtime bounds checking
-///
-/// Provides safe access to buffer contents with comprehensive protection:
-/// - All reads/writes are bounds-checked
-/// - Stack canary for overflow detection
-/// - Integer overflow protection for size calculations
-/// - Safe slice operations
-///
-/// ## Performance
-/// - Bounds checks: ~1-2% overhead
-/// - Optimized for hot paths with inline hints
-/// - Release mode enables additional optimizations
-///
-/// ## Example
-/// ```rust
-/// use rusty_db::security::bounds_protection::BoundsCheckedBuffer;
-///
-/// # fn example() -> rusty_db::Result<()> {
-/// let mut buffer = BoundsCheckedBuffer::<u8>::new(4096)?;
-/// buffer.write(0, 0x42)?;
-/// assert_eq!(buffer.read(0)?, 0x42);
-/// # Ok(())
-/// # }
-/// ```
+// Generic buffer with automatic runtime bounds checking
+//
+// Provides safe access to buffer contents with comprehensive protection:
+// - All reads/writes are bounds-checked
+// - Stack canary for overflow detection
+// - Integer overflow protection for size calculations
+// - Safe slice operations
+//
+// ## Performance
+// - Bounds checks: ~1-2% overhead
+// - Optimized for hot paths with inline hints
+// - Release mode enables additional optimizations
+//
+// ## Example
+// ```rust
+// use rusty_db::security::bounds_protection::BoundsCheckedBuffer;
+//
+// # fn example() -> rusty_db::Result<()> {
+// let mut buffer = BoundsCheckedBuffer::<u8>::new(4096)?;
+// buffer.write(0, 0x42)?;
+// assert_eq!(buffer.read(0)?, 0x42);
+// # Ok(())
+// # }
+// ```
 pub struct BoundsCheckedBuffer<T: Copy + Default> {
-    /// Underlying data storage
+    // Underlying data storage
     data: Vec<T>,
-    /// Buffer capacity
+    // Buffer capacity
     capacity: usize,
-    /// Current logical size
+    // Current logical size
     size: usize,
-    /// Stack canary for overflow detection
+    // Stack canary for overflow detection
     canary: StackCanary,
 }
 
 impl<T: Copy + Default> BoundsCheckedBuffer<T> {
-    /// Create a new bounds-checked buffer with specified capacity
-    ///
-    /// ## Errors
-    /// - Returns error if capacity causes integer overflow
-    /// - Returns error if allocation fails
+    // Create a new bounds-checked buffer with specified capacity
+    //
+    // ## Errors
+    // - Returns error if capacity causes integer overflow
+    // - Returns error if allocation fails
     pub fn new(capacity: usize) -> Result<Self> {
         // Validate capacity doesn't overflow
         let byte_size = OverflowGuard::checked_mul(capacity, size_of::<T>())?;
@@ -200,7 +200,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         })
     }
 
-    /// Create from existing vector with validation
+    // Create from existing vector with validation
     pub fn from_vec(vec: Vec<T>) -> Result<Self> {
         let capacity = vec.len();
         let size = vec.len();
@@ -213,25 +213,25 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         })
     }
 
-    /// Get buffer capacity
+    // Get buffer capacity
     #[inline]
     pub fn capacity(&self) -> usize {
         self.capacity
     }
 
-    /// Get current buffer size
+    // Get current buffer size
     #[inline]
     pub fn len(&self) -> usize {
         self.size
     }
 
-    /// Check if buffer is empty
+    // Check if buffer is empty
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.size == 0
     }
 
-    /// Validate index is within bounds
+    // Validate index is within bounds
     #[inline]
     fn check_bounds(&self, index: usize) -> Result<()> {
         if index >= self.size {
@@ -244,7 +244,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         Ok(())
     }
 
-    /// Validate range is within bounds
+    // Validate range is within bounds
     #[inline]
     fn check_range(&self, start: usize, len: usize) -> Result<()> {
         let end = OverflowGuard::checked_add(start, len)?;
@@ -258,7 +258,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         Ok(())
     }
 
-    /// Read a single element with bounds checking
+    // Read a single element with bounds checking
     #[inline]
     pub fn read(&self, index: usize) -> Result<T> {
         self.check_bounds(index)?;
@@ -266,7 +266,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         Ok(self.data[index])
     }
 
-    /// Write a single element with bounds checking
+    // Write a single element with bounds checking
     #[inline]
     pub fn write(&mut self, index: usize, value: T) -> Result<()> {
         self.check_bounds(index)?;
@@ -275,7 +275,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         Ok(())
     }
 
-    /// Read a slice with bounds checking
+    // Read a slice with bounds checking
     pub fn read_slice(&self, start: usize, len: usize) -> Result<&[T]> {
         self.check_range(start, len)?;
         self.canary.validate()?;
@@ -283,7 +283,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         Ok(&self.data[start..end])
     }
 
-    /// Write a slice with bounds checking
+    // Write a slice with bounds checking
     pub fn write_slice(&mut self, start: usize, data: &[T]) -> Result<()> {
         let len = data.len();
         self.check_range(start, len)?;
@@ -294,7 +294,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         Ok(())
     }
 
-    /// Get mutable slice with bounds checking
+    // Get mutable slice with bounds checking
     pub fn get_mut_slice(&mut self, start: usize, len: usize) -> Result<&mut [T]> {
         self.check_range(start, len)?;
         self.canary.validate()?;
@@ -302,12 +302,12 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         Ok(&mut self.data[start..end])
     }
 
-    /// Fill buffer with value
+    // Fill buffer with value
     pub fn fill(&mut self, value: T) {
         self.data.fill(value);
     }
 
-    /// Zero buffer (for types where zero is valid)
+    // Zero buffer (for types where zero is valid)
     pub fn zero(&mut self)
     where
         T: From<u8>,
@@ -315,7 +315,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         self.fill(T::from(0));
     }
 
-    /// Resize buffer (with bounds checking)
+    // Resize buffer (with bounds checking)
     pub fn resize(&mut self, new_size: usize) -> Result<()> {
         if new_size > self.capacity {
             return Err(DbError::Security(format!(
@@ -327,12 +327,12 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         Ok(())
     }
 
-    /// Get immutable reference to underlying data (safe)
+    // Get immutable reference to underlying data (safe)
     pub fn as_slice(&self) -> &[T] {
         &self.data[..self.size]
     }
 
-    /// Validate buffer integrity
+    // Validate buffer integrity
     pub fn validate(&self) -> Result<()> {
         self.canary.validate()?;
         if self.size > self.capacity {
@@ -357,33 +357,33 @@ impl<T: Copy + Default> Drop for BoundsCheckedBuffer<T> {
 // SafeSlice<'a, T> - Bounds-Checked Slice Wrapper
 // ============================================================================
 
-/// Wrapper around slices providing bounds-checked access
-///
-/// Prevents out-of-bounds reads/writes on existing slice references.
-/// Lighter weight than BoundsCheckedBuffer for temporary views.
-///
-/// ## Example
-/// ```rust
-/// use rusty_db::security::bounds_protection::SafeSlice;
-///
-/// # fn example() -> rusty_db::Result<()> {
-/// let data = vec![1, 2, 3, 4, 5];
-/// let safe = SafeSlice::new(&data);
-/// assert_eq!(safe.get(2)?, &3);
-/// # Ok(())
-/// # }
-/// ```
+// Wrapper around slices providing bounds-checked access
+//
+// Prevents out-of-bounds reads/writes on existing slice references.
+// Lighter weight than BoundsCheckedBuffer for temporary views.
+//
+// ## Example
+// ```rust
+// use rusty_db::security::bounds_protection::SafeSlice;
+//
+// # fn example() -> rusty_db::Result<()> {
+// let data = vec![1, 2, 3, 4, 5];
+// let safe = SafeSlice::new(&data);
+// assert_eq!(safe.get(2)?, &3);
+// # Ok(())
+// # }
+// ```
 pub struct SafeSlice<'a, T> {
-    /// Reference to underlying data
+    // Reference to underlying data
     data: &'a [T],
-    /// Cached length for validation
+    // Cached length for validation
     len: usize,
-    /// Base address canary for pointer validation
+    // Base address canary for pointer validation
     base_canary: u64,
 }
 
 impl<'a, T> SafeSlice<'a, T> {
-    /// Create a new safe slice wrapper
+    // Create a new safe slice wrapper
     pub fn new(data: &'a [T]) -> Self {
         let len = data.len();
         let base_canary = data.as_ptr() as u64 ^ 0xDEADBEEFCAFEBABE;
@@ -395,19 +395,19 @@ impl<'a, T> SafeSlice<'a, T> {
         }
     }
 
-    /// Get length
+    // Get length
     #[inline]
     pub fn len(&self) -> usize {
         self.len
     }
 
-    /// Check if empty
+    // Check if empty
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
-    /// Validate base pointer hasn't been corrupted
+    // Validate base pointer hasn't been corrupted
     #[inline]
     fn validate_base(&self) -> Result<()> {
         let current_canary = self.data.as_ptr() as u64 ^ 0xDEADBEEFCAFEBABE;
@@ -419,7 +419,7 @@ impl<'a, T> SafeSlice<'a, T> {
         Ok(())
     }
 
-    /// Validate index
+    // Validate index
     #[inline]
     fn check_bounds(&self, index: usize) -> Result<()> {
         if index >= self.len {
@@ -431,7 +431,7 @@ impl<'a, T> SafeSlice<'a, T> {
         Ok(())
     }
 
-    /// Get element with bounds checking
+    // Get element with bounds checking
     #[inline]
     pub fn get(&self, index: usize) -> Result<&T> {
         self.check_bounds(index)?;
@@ -439,7 +439,7 @@ impl<'a, T> SafeSlice<'a, T> {
         Ok(&self.data[index])
     }
 
-    /// Get subslice with bounds checking
+    // Get subslice with bounds checking
     pub fn subslice(&self, start: usize, len: usize) -> Result<Self> {
         let end = OverflowGuard::checked_add(start, len)?;
         if end > self.len {
@@ -452,14 +452,14 @@ impl<'a, T> SafeSlice<'a, T> {
         Ok(SafeSlice::new(&self.data[start..end]))
     }
 
-    /// Get underlying slice (validated)
+    // Get underlying slice (validated)
     pub fn as_slice(&self) -> Result<&[T]> {
         self.validate_base()?;
         Ok(self.data)
     }
 }
 
-/// Mutable version of SafeSlice
+// Mutable version of SafeSlice
 pub struct SafeSliceMut<'a, T> {
     data: &'a mut [T],
     len: usize,
@@ -537,21 +537,21 @@ impl<'a, T> SafeSliceMut<'a, T> {
 // SafeIndex Trait - Safe Indexing Operations
 // ============================================================================
 
-/// Trait for safe indexing operations on collections
-///
-/// Provides a uniform interface for bounds-checked access across
-/// different collection types.
+// Trait for safe indexing operations on collections
+//
+// Provides a uniform interface for bounds-checked access across
+// different collection types.
 pub trait SafeIndex<T> {
-    /// Safely get immutable reference to element
+    // Safely get immutable reference to element
     fn safe_get(&self, index: usize) -> Result<&T>;
 
-    /// Safely get mutable reference to element
+    // Safely get mutable reference to element
     fn safe_get_mut(&mut self, index: usize) -> Result<&mut T>;
 
-    /// Safely get slice
+    // Safely get slice
     fn safe_slice(&self, start: usize, end: usize) -> Result<&[T]>;
 
-    /// Get length
+    // Get length
     fn safe_len(&self) -> usize;
 }
 
@@ -625,31 +625,31 @@ impl<T> SafeIndex<T> for Vec<T> {
 // OverflowGuard - Integer Overflow Detection
 // ============================================================================
 
-/// Integer overflow detection and prevention
-///
-/// Provides checked arithmetic operations that return errors instead of
-/// wrapping or panicking. Prevents CWE-190 (Integer Overflow) and
-/// CWE-191 (Integer Underflow).
-///
-/// ## Example
-/// ```rust
-/// use rusty_db::security::bounds_protection::OverflowGuard;
-///
-/// # fn example() -> rusty_db::Result<()> {
-/// let a = 1000usize;
-/// let b = 2000usize;
-/// let sum = OverflowGuard::checked_add(a, b)?;
-/// assert_eq!(sum, 3000);
-///
-/// // This would return an error:
-/// // let overflow = OverflowGuard::checked_add(usize::MAX, 1)?;
-/// # Ok(())
-/// # }
-/// ```
+// Integer overflow detection and prevention
+//
+// Provides checked arithmetic operations that return errors instead of
+// wrapping or panicking. Prevents CWE-190 (Integer Overflow) and
+// CWE-191 (Integer Underflow).
+//
+// ## Example
+// ```rust
+// use rusty_db::security::bounds_protection::OverflowGuard;
+//
+// # fn example() -> rusty_db::Result<()> {
+// let a = 1000usize;
+// let b = 2000usize;
+// let sum = OverflowGuard::checked_add(a, b)?;
+// assert_eq!(sum, 3000);
+//
+// // This would return an error:
+// // let overflow = OverflowGuard::checked_add(usize::MAX, 1)?;
+// # Ok(())
+// # }
+// ```
 pub struct OverflowGuard;
 
 impl OverflowGuard {
-    /// Checked addition
+    // Checked addition
     #[inline]
     pub fn checked_add<T>(a: T, b: T) -> Result<T>
     where
@@ -663,7 +663,7 @@ impl OverflowGuard {
         })
     }
 
-    /// Checked subtraction
+    // Checked subtraction
     #[inline]
     pub fn checked_sub<T>(a: T, b: T) -> Result<T>
     where
@@ -677,7 +677,7 @@ impl OverflowGuard {
         })
     }
 
-    /// Checked multiplication
+    // Checked multiplication
     #[inline]
     pub fn checked_mul<T>(a: T, b: T) -> Result<T>
     where
@@ -691,7 +691,7 @@ impl OverflowGuard {
         })
     }
 
-    /// Checked division
+    // Checked division
     #[inline]
     pub fn checked_div<T>(a: T, b: T) -> Result<T>
     where
@@ -708,14 +708,14 @@ impl OverflowGuard {
         })
     }
 
-    /// Checked pointer offset calculation
+    // Checked pointer offset calculation
     #[inline]
     pub fn checked_offset(base: usize, offset: usize, element_size: usize) -> Result<usize> {
         let byte_offset = Self::checked_mul(offset, element_size)?;
         Self::checked_add(base, byte_offset)
     }
 
-    /// Validate slice range doesn't overflow
+    // Validate slice range doesn't overflow
     #[inline]
     pub fn checked_slice_range(start: usize, len: usize, total_len: usize) -> Result<()> {
         let end = Self::checked_add(start, len)?;
@@ -728,7 +728,7 @@ impl OverflowGuard {
         Ok(())
     }
 
-    /// Saturating addition (doesn't error, just saturates at max)
+    // Saturating addition (doesn't error, just saturates at max)
     #[inline]
     pub fn saturating_add<T>(a: T, b: T) -> T
     where
@@ -737,7 +737,7 @@ impl OverflowGuard {
         a.saturating_add(&b)
     }
 
-    /// Saturating subtraction
+    // Saturating subtraction
     #[inline]
     pub fn saturating_sub<T>(a: T, b: T) -> T
     where
@@ -751,33 +751,33 @@ impl OverflowGuard {
 // SafeString - Secure String Operations
 // ============================================================================
 
-/// Bounds-checked string with format string protection
-///
-/// Prevents:
-/// - CWE-120: Buffer overflow in string operations
-/// - CWE-134: Format string vulnerabilities
-/// - CWE-125: Out-of-bounds reads
-///
-/// ## Example
-/// ```rust
-/// use rusty_db::security::bounds_protection::SafeString;
-///
-/// # fn example() -> rusty_db::Result<()> {
-/// let mut s = SafeString::new(256)?;
-/// s.append("Hello")?;
-/// s.append(", ")?;
-/// s.append("World!")?;
-/// assert_eq!(s.as_str(), "Hello, World!");
-/// # Ok(())
-/// # }
-/// ```
+// Bounds-checked string with format string protection
+//
+// Prevents:
+// - CWE-120: Buffer overflow in string operations
+// - CWE-134: Format string vulnerabilities
+// - CWE-125: Out-of-bounds reads
+//
+// ## Example
+// ```rust
+// use rusty_db::security::bounds_protection::SafeString;
+//
+// # fn example() -> rusty_db::Result<()> {
+// let mut s = SafeString::new(256)?;
+// s.append("Hello")?;
+// s.append(", ")?;
+// s.append("World!")?;
+// assert_eq!(s.as_str(), "Hello, World!");
+// # Ok(())
+// # }
+// ```
 pub struct SafeString {
     buffer: BoundsCheckedBuffer<u8>,
     length: usize,
 }
 
 impl SafeString {
-    /// Create new safe string with capacity
+    // Create new safe string with capacity
     pub fn new(capacity: usize) -> Result<Self> {
         Ok(Self {
             buffer: BoundsCheckedBuffer::new(capacity)?,
@@ -785,7 +785,7 @@ impl SafeString {
         })
     }
 
-    /// Create from existing string
+    // Create from existing string
     pub fn from_str(s: &str) -> Result<Self> {
         let capacity = s.len();
         let mut buffer = BoundsCheckedBuffer::new(capacity)?;
@@ -797,25 +797,25 @@ impl SafeString {
         })
     }
 
-    /// Get current length
+    // Get current length
     #[inline]
     pub fn len(&self) -> usize {
         self.length
     }
 
-    /// Check if empty
+    // Check if empty
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.length == 0
     }
 
-    /// Get remaining capacity
+    // Get remaining capacity
     #[inline]
     pub fn remaining_capacity(&self) -> usize {
         self.buffer.capacity() - self.length
     }
 
-    /// Append string with bounds checking
+    // Append string with bounds checking
     pub fn append(&mut self, s: &str) -> Result<()> {
         let bytes = s.as_bytes();
         let new_len = OverflowGuard::checked_add(self.length, bytes.len())?;
@@ -834,14 +834,14 @@ impl SafeString {
         Ok(())
     }
 
-    /// Append character
+    // Append character
     pub fn append_char(&mut self, c: char) -> Result<()> {
         let mut buf = [0u8; 4];
         let s = c.encode_utf8(&mut buf);
         self.append(s)
     }
 
-    /// Get substring with bounds checking
+    // Get substring with bounds checking
     pub fn substring(&self, start: usize, len: usize) -> Result<&str> {
         let bytes = self.buffer.read_slice(start, len)?;
         std::str::from_utf8(bytes).map_err(|_| {
@@ -849,20 +849,20 @@ impl SafeString {
         })
     }
 
-    /// Get full string
+    // Get full string
     pub fn as_str(&self) -> &str {
         let bytes = &self.buffer.as_slice()[..self.length];
         // SAFETY: We only ever write valid UTF-8
         unsafe { std::str::from_utf8_unchecked(bytes) }
     }
 
-    /// Clear string
+    // Clear string
     pub fn clear(&mut self) {
         self.length = 0;
         self.buffer.zero();
     }
 
-    /// Safe format (prevents format string vulnerabilities)
+    // Safe format (prevents format string vulnerabilities)
     pub fn format_safe(&mut self, args: &[(&str, &str)]) -> Result<()> {
         for (key, value) in args {
             self.append(key)?;
@@ -884,36 +884,36 @@ impl fmt::Display for SafeString {
 // ArrayBoundsChecker<T, N> - Compile-Time Array Protection
 // ============================================================================
 
-/// Fixed-size array with compile-time size tracking and sentinel values
-///
-/// Uses const generics for compile-time size validation and places
-/// canary values before/after the array to detect overflows.
-///
-/// ## Example
-/// ```rust
-/// use rusty_db::security::bounds_protection::ArrayBoundsChecker;
-///
-/// # fn example() -> rusty_db::Result<()> {
-/// let mut arr = ArrayBoundsChecker::<i32, 10>::new();
-/// arr.set(0, 42)?;
-/// assert_eq!(arr.get(0)?, 42);
-/// arr.validate()?; // Check sentinels
-/// # Ok(())
-/// # }
-/// ```
+// Fixed-size array with compile-time size tracking and sentinel values
+//
+// Uses const generics for compile-time size validation and places
+// canary values before/after the array to detect overflows.
+//
+// ## Example
+// ```rust
+// use rusty_db::security::bounds_protection::ArrayBoundsChecker;
+//
+// # fn example() -> rusty_db::Result<()> {
+// let mut arr = ArrayBoundsChecker::<i32, 10>::new();
+// arr.set(0, 42)?;
+// assert_eq!(arr.get(0)?, 42);
+// arr.validate()?; // Check sentinels
+// # Ok(())
+// # }
+// ```
 pub struct ArrayBoundsChecker<T: Copy + Default, const N: usize> {
-    /// Sentinel before array
+    // Sentinel before array
     canary_before: u64,
-    /// The actual array
+    // The actual array
     array: [T; N],
-    /// Sentinel after array
+    // Sentinel after array
     canary_after: u64,
-    /// Phantom data for type safety
+    // Phantom data for type safety
     _phantom: PhantomData<T>,
 }
 
 impl<T: Copy + Default, const N: usize> ArrayBoundsChecker<T, N> {
-    /// Create new array with sentinels
+    // Create new array with sentinels
     pub fn new() -> Self {
         let canary = StackCanary::new();
         Self {
@@ -924,19 +924,19 @@ impl<T: Copy + Default, const N: usize> ArrayBoundsChecker<T, N> {
         }
     }
 
-    /// Get array size (compile-time constant)
+    // Get array size (compile-time constant)
     #[inline]
     pub const fn len(&self) -> usize {
         N
     }
 
-    /// Check if array is empty (compile-time constant)
+    // Check if array is empty (compile-time constant)
     #[inline]
     pub const fn is_empty(&self) -> bool {
         N == 0
     }
 
-    /// Validate sentinels haven't been corrupted
+    // Validate sentinels haven't been corrupted
     #[inline]
     pub fn validate(&self) -> Result<()> {
         if self.canary_before != self.canary_after {
@@ -948,7 +948,7 @@ impl<T: Copy + Default, const N: usize> ArrayBoundsChecker<T, N> {
         Ok(())
     }
 
-    /// Get element with bounds checking
+    // Get element with bounds checking
     #[inline]
     pub fn get(&self, index: usize) -> Result<T> {
         if index >= N {
@@ -961,7 +961,7 @@ impl<T: Copy + Default, const N: usize> ArrayBoundsChecker<T, N> {
         Ok(self.array[index])
     }
 
-    /// Set element with bounds checking
+    // Set element with bounds checking
     #[inline]
     pub fn set(&mut self, index: usize, value: T) -> Result<()> {
         if index >= N {
@@ -975,19 +975,19 @@ impl<T: Copy + Default, const N: usize> ArrayBoundsChecker<T, N> {
         Ok(())
     }
 
-    /// Get slice of array
+    // Get slice of array
     pub fn as_slice(&self) -> Result<&[T]> {
         self.validate()?;
         Ok(&self.array)
     }
 
-    /// Get mutable slice
+    // Get mutable slice
     pub fn as_slice_mut(&mut self) -> Result<&mut [T]> {
         self.validate()?;
         Ok(&mut self.array)
     }
 
-    /// Fill array with value
+    // Fill array with value
     pub fn fill(&mut self, value: T) {
         self.array.fill(value);
     }
@@ -1012,7 +1012,7 @@ impl<T: Copy + Default, const N: usize> Drop for ArrayBoundsChecker<T, N> {
 // Utility Functions
 // ============================================================================
 
-/// Validate that a pointer offset is safe
+// Validate that a pointer offset is safe
 pub fn validate_pointer_offset<T>(
     base: *const T,
     offset: isize,
@@ -1034,7 +1034,7 @@ pub fn validate_pointer_offset<T>(
     Ok(())
 }
 
-/// Safe memory copy with bounds checking
+// Safe memory copy with bounds checking
 pub fn safe_copy<T: Copy>(
     src: &[T],
     src_offset: usize,

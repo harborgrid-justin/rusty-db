@@ -1,7 +1,7 @@
-/// Node Management Module
-///
-/// This module provides types and functionality for managing cluster nodes,
-/// including node identification, roles, status, and basic operations.
+// Node Management Module
+//
+// This module provides types and functionality for managing cluster nodes,
+// including node identification, roles, status, and basic operations.
 
 use std::fmt;
 use std::time::SystemTime;
@@ -9,17 +9,17 @@ use crate::error::DbError;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration};
 
-/// Node identifier - a unique string identifier for cluster nodes
+// Node identifier - a unique string identifier for cluster nodes
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct NodeId(pub String);
 
 impl NodeId {
-    /// Create a new NodeId
+    // Create a new NodeId
     pub fn new(id: String) -> Self {
         Self(id)
     }
 
-    /// Get the inner string value
+    // Get the inner string value
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -31,35 +31,35 @@ impl fmt::Display for NodeId {
     }
 }
 
-/// Node role in the cluster
+// Node role in the cluster
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum NodeRole {
-    /// Leader node - handles write operations
+    // Leader node - handles write operations
     Leader,
-    /// Follower node - replicates from leader
+    // Follower node - replicates from leader
     Follower,
-    /// Candidate node - attempting to become leader
+    // Candidate node - attempting to become leader
     Candidate,
-    /// Observer node - read-only, doesn't participate in consensus
+    // Observer node - read-only, doesn't participate in consensus
     Observer,
 }
 
-/// Node status
+// Node status
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum NodeStatus {
-    /// Node is healthy and operational
+    // Node is healthy and operational
     Healthy,
-    /// Node is experiencing issues but still operational
+    // Node is experiencing issues but still operational
     Degraded,
-    /// Node is not responding
+    // Node is not responding
     Unreachable,
-    /// Node is shutting down
+    // Node is shutting down
     ShuttingDown,
-    /// Node has failed
+    // Node has failed
     Failed,
 }
 
-/// Node information
+// Node information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeInfo {
     pub id: NodeId,
@@ -76,15 +76,15 @@ pub struct NodeInfo {
 }
 
 impl NodeInfo {
-    /// Create a new NodeInfo with default values
-    ///
-    /// # Arguments
-    /// * `id` - Unique node identifier
-    /// * `address` - Network address of the node
-    /// * `port` - Network port of the node
-    ///
-    /// # Returns
-    /// A new NodeInfo instance with default role Follower and status Healthy
+    // Create a new NodeInfo with default values
+    //
+    // # Arguments
+    // * `id` - Unique node identifier
+    // * `address` - Network address of the node
+    // * `port` - Network port of the node
+    //
+    // # Returns
+    // A new NodeInfo instance with default role Follower and status Healthy
     pub fn new(id: NodeId, address: String, port: u16) -> Self {
         Self {
             id,
@@ -101,13 +101,13 @@ impl NodeInfo {
         }
     }
 
-    /// Check if the node is alive based on heartbeat timeout
-    ///
-    /// # Arguments
-    /// * `timeout` - Maximum allowed time since last heartbeat
-    ///
-    /// # Returns
-    /// true if the node is considered alive, false otherwise
+    // Check if the node is alive based on heartbeat timeout
+    //
+    // # Arguments
+    // * `timeout` - Maximum allowed time since last heartbeat
+    //
+    // # Returns
+    // true if the node is considered alive, false otherwise
     pub fn is_alive(&self, timeout: Duration) -> bool {
         match self.last_heartbeat.elapsed() {
             Ok(elapsed) => elapsed < timeout,
@@ -115,17 +115,17 @@ impl NodeInfo {
         }
     }
 
-    /// Update the node's heartbeat timestamp
+    // Update the node's heartbeat timestamp
     pub fn update_heartbeat(&mut self) {
         self.last_heartbeat = SystemTime::now();
     }
 
-    /// Update resource usage metrics
-    ///
-    /// # Arguments
-    /// * `cpu` - CPU usage percentage (0.0 - 100.0)
-    /// * `memory` - Memory usage percentage (0.0 - 100.0)
-    /// * `disk` - Disk usage percentage (0.0 - 100.0)
+    // Update resource usage metrics
+    //
+    // # Arguments
+    // * `cpu` - CPU usage percentage (0.0 - 100.0)
+    // * `memory` - Memory usage percentage (0.0 - 100.0)
+    // * `disk` - Disk usage percentage (0.0 - 100.0)
     pub fn update_resources(&mut self, cpu: f32, memory: f32, disk: f32) {
         self.cpu_usage = cpu;
         self.memory_usage = memory;
@@ -133,15 +133,15 @@ impl NodeInfo {
     }
 }
 
-/// Trait for node lifecycle management
+// Trait for node lifecycle management
 pub trait NodeLifecycle {
-    /// Initialize the node
+    // Initialize the node
     fn initialize(&mut self) -> Result<(), DbError>;
 
-    /// Shutdown the node gracefully
+    // Shutdown the node gracefully
     fn shutdown(&mut self) -> Result<(), DbError>;
 
-    /// Check node health
+    // Check node health
     fn health_check(&self) -> NodeStatus;
 }
 

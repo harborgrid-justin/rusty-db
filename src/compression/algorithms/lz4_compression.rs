@@ -1,4 +1,4 @@
-/// LZ4 Compression Implementation
+// LZ4 Compression Implementation
 
 use crate::compression::{Compressor, CompressionLevel, CompressionAlgorithm, CompressionResult, CompressionStats, CompressionError};
 use parking_lot::Mutex;

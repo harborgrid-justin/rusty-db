@@ -14,83 +14,83 @@ use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 use super::session_control::SessionId;
 
-/// Memory pool identifier
+// Memory pool identifier
 pub type MemoryPoolId = u64;
 
-/// Memory region identifier
+// Memory region identifier
 pub type MemoryRegionId = u64;
 
-/// Memory allocation size in bytes
+// Memory allocation size in bytes
 pub type MemorySize = u64;
 
-/// Memory allocation strategy
+// Memory allocation strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AllocationStrategy {
-    /// Automatic memory management
+    // Automatic memory management
     Automatic,
-    /// Manual memory management
+    // Manual memory management
     Manual,
-    /// Hybrid approach
+    // Hybrid approach
     Hybrid,
 }
 
-/// Memory pressure level
+// Memory pressure level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum MemoryPressure {
-    /// No pressure, plenty of memory
+    // No pressure, plenty of memory
     None,
-    /// Low pressure, can allocate freely
+    // Low pressure, can allocate freely
     Low,
-    /// Medium pressure, should be cautious
+    // Medium pressure, should be cautious
     Medium,
-    /// High pressure, need to free memory
+    // High pressure, need to free memory
     High,
-    /// Critical pressure, OOM imminent
+    // Critical pressure, OOM imminent
     Critical,
 }
 
-/// Memory pool type
+// Memory pool type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MemoryPoolType {
-    /// Shared Global Area (SGA-like)
+    // Shared Global Area (SGA-like)
     SharedGlobal,
-    /// Program Global Area (PGA-like) - per-session
+    // Program Global Area (PGA-like) - per-session
     ProgramGlobal,
-    /// Sort/Hash area
+    // Sort/Hash area
     WorkArea,
-    /// Buffer cache
+    // Buffer cache
     BufferCache,
-    /// Shared pool for SQL/metadata
+    // Shared pool for SQL/metadata
     SharedPool,
-    /// Large pool for large allocations
+    // Large pool for large allocations
     LargePool,
 }
 
-/// Memory pool definition
+// Memory pool definition
 #[derive(Debug, Clone)]
 pub struct MemoryPool {
-    /// Pool identifier
+    // Pool identifier
     pub id: MemoryPoolId,
-    /// Pool name
+    // Pool name
     pub name: String,
-    /// Pool type
+    // Pool type
     pub pool_type: MemoryPoolType,
-    /// Maximum size in bytes
+    // Maximum size in bytes
     pub max_size: MemorySize,
-    /// Current allocated size
+    // Current allocated size
     pub allocated_size: MemorySize,
-    /// Target size (for automatic management)
+    // Target size (for automatic management)
     pub target_size: Option<MemorySize>,
-    /// Minimum size
+    // Minimum size
     pub min_size: MemorySize,
-    /// Whether auto-tuning is enabled
+    // Whether auto-tuning is enabled
     pub auto_tune: bool,
-    /// Creation time
+    // Creation time
     pub created_at: SystemTime,
 }
 
 impl MemoryPool {
-    /// Create a new memory pool
+    // Create a new memory pool
     pub fn new(
         id: MemoryPoolId,
         name: String,
@@ -111,17 +111,17 @@ impl MemoryPool {
         }
     }
 
-    /// Check if allocation is possible
+    // Check if allocation is possible
     pub fn can_allocate(&self, size: MemorySize) -> bool {
         self.allocated_size + size <= self.max_size
     }
 
-    /// Get available memory
+    // Get available memory
     pub fn available(&self) -> MemorySize {
         self.max_size.saturating_sub(self.allocated_size)
     }
 
-    /// Get usage percentage
+    // Get usage percentage
     pub fn usage_pct(&self) -> f64 {
         if self.max_size == 0 {
             0.0
@@ -131,31 +131,31 @@ impl MemoryPool {
     }
 }
 
-/// Session memory quota
+// Session memory quota
 #[derive(Debug, Clone)]
 pub struct SessionMemoryQuota {
-    /// Session identifier
+    // Session identifier
     pub session_id: SessionId,
-    /// Consumer group
+    // Consumer group
     pub group_id: ConsumerGroupId,
-    /// Maximum PGA memory
+    // Maximum PGA memory
     pub max_pga_memory: MemorySize,
-    /// Current PGA usage
+    // Current PGA usage
     pub current_pga_usage: MemorySize,
-    /// Maximum work area size
+    // Maximum work area size
     pub max_work_area: MemorySize,
-    /// Current work area usage
+    // Current work area usage
     pub current_work_area: MemorySize,
-    /// Number of memory allocations
+    // Number of memory allocations
     pub allocation_count: u64,
-    /// Peak memory usage
+    // Peak memory usage
     pub peak_usage: MemorySize,
-    /// Last allocation time
+    // Last allocation time
     pub last_allocation: Option<Instant>,
 }
 
 impl SessionMemoryQuota {
-    /// Create a new session quota
+    // Create a new session quota
     pub fn new(
         session_id: SessionId,
         group_id: ConsumerGroupId,
@@ -175,17 +175,17 @@ impl SessionMemoryQuota {
         }
     }
 
-    /// Check if can allocate
+    // Check if can allocate
     pub fn can_allocate_pga(&self, size: MemorySize) -> bool {
         self.current_pga_usage + size <= self.max_pga_memory
     }
 
-    /// Check if can allocate work area
+    // Check if can allocate work area
     pub fn can_allocate_work_area(&self, size: MemorySize) -> bool {
         self.current_work_area + size <= self.max_work_area
     }
 
-    /// Allocate memory
+    // Allocate memory
     pub fn allocate(&mut self, size: MemorySize, is_work_area: bool) -> Result<()> {
         if is_work_area {
             if !self.can_allocate_work_area(size) {
@@ -210,7 +210,7 @@ impl SessionMemoryQuota {
         Ok(())
     }
 
-    /// Deallocate memory
+    // Deallocate memory
     pub fn deallocate(&mut self, size: MemorySize, is_work_area: bool) {
         if is_work_area {
             self.current_work_area = self.current_work_area.saturating_sub(size);
@@ -219,72 +219,72 @@ impl SessionMemoryQuota {
         }
     }
 
-    /// Get total usage
+    // Get total usage
     pub fn total_usage(&self) -> MemorySize {
         self.current_pga_usage + self.current_work_area
     }
 }
 
-/// Group memory limits
+// Group memory limits
 #[derive(Debug, Clone)]
 pub struct GroupMemoryLimits {
     pub group_id: ConsumerGroupId,
-    /// Maximum total memory for all sessions in group
+    // Maximum total memory for all sessions in group
     pub max_group_memory: Option<MemorySize>,
-    /// Maximum PGA per session
+    // Maximum PGA per session
     pub max_session_pga: Option<MemorySize>,
-    /// Current total usage
+    // Current total usage
     pub current_total_usage: MemorySize,
-    /// Number of active sessions
+    // Number of active sessions
     pub active_sessions: usize,
 }
 
-/// Memory advisor recommendation
+// Memory advisor recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryAdvisorRecommendation {
-    /// Pool being analyzed
+    // Pool being analyzed
     pub pool_id: MemoryPoolId,
-    /// Current size
+    // Current size
     pub current_size: MemorySize,
-    /// Recommended size
+    // Recommended size
     pub recommended_size: MemorySize,
-    /// Estimated benefit
+    // Estimated benefit
     pub estimated_benefit: f64,
-    /// Reason for recommendation
+    // Reason for recommendation
     pub reason: String,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
 }
 
-/// Memory manager
+// Memory manager
 pub struct MemoryManager {
-    /// Memory pools
+    // Memory pools
     pools: Arc<RwLock<HashMap<MemoryPoolId, MemoryPool>>>,
-    /// Session quotas
+    // Session quotas
     session_quotas: Arc<RwLock<HashMap<SessionId, SessionMemoryQuota>>>,
-    /// Group limits
+    // Group limits
     group_limits: Arc<RwLock<HashMap<ConsumerGroupId, GroupMemoryLimits>>>,
-    /// Allocation strategy
+    // Allocation strategy
     strategy: AllocationStrategy,
-    /// Total system memory
+    // Total system memory
     total_system_memory: MemorySize,
-    /// Maximum database memory
+    // Maximum database memory
     max_db_memory: MemorySize,
-    /// Current database memory usage
+    // Current database memory usage
     current_db_usage: Arc<RwLock<MemorySize>>,
-    /// Memory pressure level
+    // Memory pressure level
     pressure_level: Arc<RwLock<MemoryPressure>>,
-    /// Pressure thresholds
+    // Pressure thresholds
     pressure_thresholds: PressureThresholds,
-    /// Next pool ID
+    // Next pool ID
     next_pool_id: Arc<RwLock<MemoryPoolId>>,
-    /// Auto-tuning enabled
+    // Auto-tuning enabled
     auto_tuning_enabled: bool,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<MemoryStats>>,
 }
 
-/// Pressure thresholds (percentage of max memory)
+// Pressure thresholds (percentage of max memory)
 #[derive(Debug, Clone)]
 struct PressureThresholds {
     low: f64,      // 60%
@@ -304,25 +304,25 @@ impl Default for PressureThresholds {
     }
 }
 
-/// Memory statistics
+// Memory statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MemoryStats {
-    /// Total allocations
+    // Total allocations
     pub total_allocations: u64,
-    /// Total deallocations
+    // Total deallocations
     pub total_deallocations: u64,
-    /// Failed allocations (OOM)
+    // Failed allocations (OOM)
     pub failed_allocations: u64,
-    /// Peak memory usage
+    // Peak memory usage
     pub peak_usage: MemorySize,
-    /// Number of memory pressure events
+    // Number of memory pressure events
     pub pressure_events: u64,
-    /// Number of automatic adjustments
+    // Number of automatic adjustments
     pub auto_adjustments: u64,
 }
 
 impl MemoryManager {
-    /// Create a new memory manager
+    // Create a new memory manager
     pub fn new(
         total_system_memory: MemorySize,
         max_db_memory: MemorySize,
@@ -348,7 +348,7 @@ impl MemoryManager {
         Ok(manager)
     }
 
-    /// Create default memory pools
+    // Create default memory pools
     fn create_default_pools(&mut self) -> Result<()> {
         // Calculate default sizes (60% for SGA, 40% for PGA)
         let sga_size = (self.max_db_memory as f64 * 0.60) as MemorySize;
@@ -407,7 +407,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Register a memory pool
+    // Register a memory pool
     fn register_pool(&mut self, pool: MemoryPool) -> Result<()> {
         let mut pools = self.pools.write().unwrap();
         if pools.contains_key(&pool.id) {
@@ -419,7 +419,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Create a session memory quota
+    // Create a session memory quota
     pub fn create_session_quota(
         &self,
         session_id: SessionId,
@@ -463,7 +463,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Remove session quota
+    // Remove session quota
     pub fn remove_session_quota(&self, session_id: SessionId) -> Result<()> {
         let mut quotas = self.session_quotas.write().unwrap();
         if let Some(quota) = quotas.remove(&session_id) {
@@ -481,7 +481,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Allocate memory from a pool
+    // Allocate memory from a pool
     pub fn allocate_from_pool(
         &self,
         pool_id: MemoryPoolId,
@@ -529,7 +529,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Deallocate memory from a pool
+    // Deallocate memory from a pool
     pub fn deallocate_from_pool(
         &self,
         pool_id: MemoryPoolId,
@@ -559,7 +559,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Allocate session memory
+    // Allocate session memory
     pub fn allocate_session_memory(
         &self,
         session_id: SessionId,
@@ -595,7 +595,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Deallocate session memory
+    // Deallocate session memory
     pub fn deallocate_session_memory(
         &self,
         session_id: SessionId,
@@ -615,7 +615,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Update memory pressure level
+    // Update memory pressure level
     fn update_pressure_level(&self) {
         let current_usage = *self.current_db_usage.read().unwrap();
         let usage_ratio = current_usage as f64 / self.max_db_memory as f64;
@@ -643,12 +643,12 @@ impl MemoryManager {
         }
     }
 
-    /// Get current memory pressure
+    // Get current memory pressure
     pub fn get_pressure_level(&self) -> MemoryPressure {
         *self.pressure_level.read().unwrap()
     }
 
-    /// Register group memory limits
+    // Register group memory limits
     pub fn register_group_limits(
         &self,
         group_id: ConsumerGroupId,
@@ -674,7 +674,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Auto-tune memory pools
+    // Auto-tune memory pools
     pub fn auto_tune_pools(&self) -> Vec<MemoryAdvisorRecommendation> {
         if !self.auto_tuning_enabled {
             return Vec::new();
@@ -724,35 +724,35 @@ impl MemoryManager {
         recommendations
     }
 
-    /// Get memory statistics
+    // Get memory statistics
     pub fn get_stats(&self) -> MemoryStats {
         self.stats.read().unwrap().clone()
     }
 
-    /// Get session quota information
+    // Get session quota information
     pub fn get_session_quota(&self, session_id: SessionId) -> Option<SessionMemoryQuota> {
         let quotas = self.session_quotas.read().unwrap();
         quotas.get(&session_id).cloned()
     }
 
-    /// Get pool information
+    // Get pool information
     pub fn get_pool(&self, pool_id: MemoryPoolId) -> Option<MemoryPool> {
         let pools = self.pools.read().unwrap();
         pools.get(&pool_id).cloned()
     }
 
-    /// Get all pools
+    // Get all pools
     pub fn list_pools(&self) -> Vec<MemoryPool> {
         let pools = self.pools.read().unwrap();
         pools.values().cloned().collect()
     }
 
-    /// Get current database memory usage
+    // Get current database memory usage
     pub fn get_db_usage(&self) -> MemorySize {
         *self.current_db_usage.read().unwrap()
     }
 
-    /// Get usage percentage
+    // Get usage percentage
     pub fn get_usage_pct(&self) -> f64 {
         let usage = *self.current_db_usage.read().unwrap();
         (usage as f64 / self.max_db_memory as f64) * 100.0

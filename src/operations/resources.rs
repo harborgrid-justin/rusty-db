@@ -1,12 +1,12 @@
-/// Resource Management and Quotas
-///
-/// This module provides enterprise resource management:
-/// - Memory quotas and limits
-/// - CPU usage tracking
-/// - Disk I/O throttling
-/// - Connection limits and priorities
-/// - Query timeout management
-/// - Resource pools and allocation
+// Resource Management and Quotas
+//
+// This module provides enterprise resource management:
+// - Memory quotas and limits
+// - CPU usage tracking
+// - Disk I/O throttling
+// - Connection limits and priorities
+// - Query timeout management
+// - Resource pools and allocation
 
 use tokio::time::sleep;
 use std::time::SystemTime;
@@ -16,19 +16,19 @@ use crate::error::DbError;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::time::{Duration};
+use std::time::Duration;
 
-/// Resource manager for the database
+// Resource manager for the database
 pub struct ResourceManager {
-    /// Memory manager
+    // Memory manager
     memory_manager: Arc<MemoryManager>,
-    /// CPU manager
+    // CPU manager
     cpu_manager: Arc<CpuManager>,
-    /// Disk I/O manager
+    // Disk I/O manager
     io_manager: Arc<IoManager>,
-    /// Connection manager
+    // Connection manager
     connection_manager: Arc<ConnectionManager>,
-    /// Query timeout manager
+    // Query timeout manager
     timeout_manager: Arc<QueryTimeoutManager>,
 }
 
@@ -43,7 +43,7 @@ impl ResourceManager {
         }
     }
 
-    /// Allocate resources for a query
+    // Allocate resources for a query
     pub fn allocate_query_resources(&self, query_id: String, estimated_memory: u64) -> Result<ResourceAllocation> {
         // Check memory availability
         self.memory_manager.allocate(query_id.clone(), estimated_memory)?;
@@ -58,18 +58,18 @@ impl ResourceManager {
         })
     }
 
-    /// Release resources for a query
+    // Release resources for a query
     pub fn release_query_resources(&self, allocation: &ResourceAllocation) {
         self.memory_manager.release(&allocation.query_id, allocation.allocated_memory);
         self.timeout_manager.complete_query(&allocation.query_id);
     }
 
-    /// Check if query has timed out
+    // Check if query has timed out
     pub fn check_timeout(&self, query_id: &str) -> bool {
         self.timeout_manager.is_timed_out(query_id)
     }
 
-    /// Get resource usage statistics
+    // Get resource usage statistics
     pub fn get_stats(&self) -> ResourceStats {
         ResourceStats {
             memory_used: self.memory_manager.used(),
@@ -81,7 +81,7 @@ impl ResourceManager {
     }
 }
 
-/// Resource configuration
+// Resource configuration
 #[derive(Debug, Clone)]
 pub struct ResourceConfig {
     pub max_memory_bytes: u64,
@@ -103,14 +103,14 @@ impl Default for ResourceConfig {
     }
 }
 
-/// Resource allocation record
+// Resource allocation record
 pub struct ResourceAllocation {
     pub query_id: String,
     pub allocated_memory: u64,
     pub start_time: Instant,
 }
 
-/// Resource usage statistics
+// Resource usage statistics
 #[derive(Debug, Clone)]
 pub struct ResourceStats {
     pub memory_used: u64,
@@ -120,13 +120,13 @@ pub struct ResourceStats {
     pub active_connections: usize,
 }
 
-/// Memory manager
+// Memory manager
 pub struct MemoryManager {
-    /// Total memory limit
+    // Total memory limit
     total_bytes: u64,
-    /// Currently used memory
+    // Currently used memory
     used_bytes: Arc<RwLock<u64>>,
-    /// Memory allocations by query
+    // Memory allocations by query
     allocations: Arc<RwLock<HashMap<String, u64>>>,
 }
 
@@ -139,7 +139,7 @@ impl MemoryManager {
         }
     }
 
-    /// Allocate memory for a query
+    // Allocate memory for a query
     pub fn allocate(&self, query_id: String, bytes: u64) -> Result<()> {
         let mut used = self.used_bytes.write();
 
@@ -157,7 +157,7 @@ impl MemoryManager {
         Ok(())
     }
 
-    /// Release allocated memory
+    // Release allocated memory
     pub fn release(&self, query_id: &str, bytes: u64) {
         let mut used = self.used_bytes.write();
         *used = used.saturating_sub(bytes);
@@ -177,7 +177,7 @@ impl MemoryManager {
     }
 }
 
-/// CPU manager
+// CPU manager
 pub struct CpuManager {
     max_percent: u8,
     current_usage: Arc<RwLock<u8>>,
@@ -204,7 +204,7 @@ impl CpuManager {
     }
 }
 
-/// Disk I/O manager with throttling
+// Disk I/O manager with throttling
 pub struct IoManager {
     max_bytes_per_sec: u64,
     current_rate: Arc<RwLock<u64>>,
@@ -222,7 +222,7 @@ impl IoManager {
         }
     }
 
-    /// Check if I/O operation is allowed (throttling)
+    // Check if I/O operation is allowed (throttling)
     pub fn request_io(&self, bytes: u64) -> Result<()> {
         let mut last_update = self.last_update.write();
         let mut bytes_this_second = self.bytes_this_second.write();
@@ -251,7 +251,7 @@ impl IoManager {
     }
 }
 
-/// Connection manager with priorities
+// Connection manager with priorities
 pub struct ConnectionManager {
     max_connections: usize,
     active_connections: Arc<RwLock<HashMap<String, ConnectionInfo>>>,
@@ -265,7 +265,7 @@ impl ConnectionManager {
         }
     }
 
-    /// Accept a new connection
+    // Accept a new connection
     pub fn accept_connection(&self, connid: String, priority: ConnectionPriority) -> Result<()> {
         let mut conns = self.active_connections.write();
 
@@ -290,7 +290,7 @@ impl ConnectionManager {
         Ok(())
     }
 
-    /// Release a connection
+    // Release a connection
     pub fn release_connection(&self, conn_id: &str) {
         self.active_connections.write().remove(conn_id);
     }
@@ -324,7 +324,7 @@ impl ConnectionManager {
     }
 }
 
-/// Connection information
+// Connection information
 #[derive(Debug, Clone)]
 struct ConnectionInfo {
     id: String,
@@ -332,7 +332,7 @@ struct ConnectionInfo {
     connected_at: SystemTime,
 }
 
-/// Connection priority levels
+// Connection priority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ConnectionPriority {
     Low = 1,
@@ -341,7 +341,7 @@ pub enum ConnectionPriority {
     Critical = 4,
 }
 
-/// Query timeout manager
+// Query timeout manager
 pub struct QueryTimeoutManager {
     default_timeout: Duration,
     query_timeouts: Arc<RwLock<HashMap<String, QueryTimeout>>>,
@@ -355,12 +355,12 @@ impl QueryTimeoutManager {
         }
     }
 
-    /// Register a query with timeout
+    // Register a query with timeout
     pub fn register_query(&self, query_id: String) -> Result<()> {
         self.register_query_with_timeout(query_id, self.default_timeout)
     }
 
-    /// Register query with custom timeout
+    // Register query with custom timeout
     pub fn register_query_with_timeout(&self, query_id: String, timeout: Duration) -> Result<()> {
         let mut timeouts = self.query_timeouts.write();
 
@@ -375,7 +375,7 @@ impl QueryTimeoutManager {
         Ok(())
     }
 
-    /// Check if query has timed out
+    // Check if query has timed out
     pub fn is_timed_out(&self, query_id: &str) -> bool {
         let timeouts = self.query_timeouts.read();
 
@@ -386,20 +386,20 @@ impl QueryTimeoutManager {
         }
     }
 
-    /// Complete query (remove from timeout tracking)
+    // Complete query (remove from timeout tracking)
     pub fn complete_query(&self, query_id: &str) {
         self.query_timeouts.write().remove(query_id);
     }
 }
 
-/// Query timeout tracking
+// Query timeout tracking
 #[derive(Debug, Clone)]
 struct QueryTimeout {
     start_time: Instant,
     timeout: Duration,
 }
 
-/// Resource pool for managing reusable resources
+// Resource pool for managing reusable resources
 pub struct ResourcePool<T> {
     available: Arc<RwLock<Vec<T>>>,
     in_use: Arc<RwLock<usize>>,
@@ -415,7 +415,7 @@ impl<T> ResourcePool<T> {
         }
     }
 
-    /// Acquire resource from pool
+    // Acquire resource from pool
     pub fn acquire(&self) -> Option<T> {
         let mut available = self.available.write();
         if let Some(resource) = available.pop() {
@@ -426,7 +426,7 @@ impl<T> ResourcePool<T> {
         }
     }
 
-    /// Return resource to pool
+    // Return resource to pool
     pub fn release(&self, resource: T) {
         let mut available = self.available.write();
         let mut in_use = self.in_use.write();
@@ -445,7 +445,7 @@ impl<T> ResourcePool<T> {
     }
 }
 
-/// Quota manager for user/database limits
+// Quota manager for user/database limits
 pub struct QuotaManager {
     quotas: Arc<RwLock<HashMap<String, Quota>>>,
 }
@@ -457,12 +457,12 @@ impl QuotaManager {
         }
     }
 
-    /// Set quota for a user
+    // Set quota for a user
     pub fn set_quota(&self, user: String, quota: Quota) {
         self.quotas.write().insert(user, quota);
     }
 
-    /// Check if operation is within quota
+    // Check if operation is within quota
     pub fn check_quota(&self, user: &str, operation: QuotaOperation) -> Result<()> {
         let quotas = self.quotas.read();
 
@@ -497,7 +497,7 @@ impl QuotaManager {
     }
 }
 
-/// User quota definition
+// User quota definition
 #[derive(Debug, Clone)]
 pub struct Quota {
     pub max_storage_bytes: u64,
@@ -505,7 +505,7 @@ pub struct Quota {
     pub max_connections: usize,
 }
 
-/// Quota operation types
+// Quota operation types
 pub enum QuotaOperation {
     Query,
     Storage(u64),

@@ -12,14 +12,14 @@ use std::arch::x86_64::*;
 use std::arch::x86::*;
 use crate::inmemory::column_store::ColumnDataType;
 
-/// Cache line size for alignment
+// Cache line size for alignment
 pub const CACHE_LINE_SIZE: usize = 64;
 
-/// Vector width for SIMD operations (number of elements)
+// Vector width for SIMD operations (number of elements)
 pub const VECTOR_WIDTH_I64: usize = 4; // 256-bit SIMD / 64-bit elements
 pub const VECTOR_WIDTH_I32: usize = 8; // 256-bit SIMD / 32-bit elements
 
-/// Cache-line aligned data structure
+// Cache-line aligned data structure
 #[repr(align(64))]
 pub struct CacheLine<T> {
     pub data: T,
@@ -31,7 +31,7 @@ impl<T> CacheLine<T> {
     }
 }
 
-/// Comparison operators for vectorized filters
+// Comparison operators for vectorized filters
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ComparisonOp {
     Equal,
@@ -42,7 +42,7 @@ pub enum ComparisonOp {
     GreaterThanOrEqual,
 }
 
-/// Vector mask for SIMD operations
+// Vector mask for SIMD operations
 pub struct VectorMask {
     pub mask: Vec<bool>,
     pub count: usize,
@@ -93,7 +93,7 @@ impl VectorMask {
     }
 }
 
-/// Batch of vector data for SIMD processing
+// Batch of vector data for SIMD processing
 pub struct VectorBatch {
     pub data: Vec<u8>,
     pub count: usize,
@@ -148,13 +148,13 @@ impl VectorBatch {
     }
 }
 
-/// SIMD operator trait
+// SIMD operator trait
 pub trait SimdOperator: Send + Sync {
     fn vector_width(&self) -> usize;
     fn supports_type(&self, data_type: ColumnDataType) -> bool;
 }
 
-/// Vectorized filter operations
+// Vectorized filter operations
 pub struct VectorizedFilter {
     vector_width: usize,
 }
@@ -164,7 +164,7 @@ impl VectorizedFilter {
         Self { vector_width }
     }
 
-    /// Filter Int64 values using SIMD
+    // Filter Int64 values using SIMD
     pub fn filter_int64<F>(&self, batch: &VectorBatch, predicate: F) -> Vec<bool>
     where
         F: Fn(i64) -> bool,
@@ -195,7 +195,7 @@ impl VectorizedFilter {
         results
     }
 
-    /// Compare Int64 values with SIMD
+    // Compare Int64 values with SIMD
     pub fn compare_int64(&self, batch: &VectorBatch, op: ComparisonOp, value: i64) -> VectorMask {
         let values = batch.as_i64_slice();
         let mut mask = vec![false; values.len()];
@@ -275,7 +275,7 @@ impl VectorizedFilter {
         VectorMask::from_vec(mask)
     }
 
-    /// Range filter (between min and max)
+    // Range filter (between min and max)
     pub fn range_filter_int64(&self, batch: &VectorBatch, min: i64, max: i64) -> VectorMask {
         let values = batch.as_i64_slice();
         let mut mask = vec![false; values.len()];
@@ -287,7 +287,7 @@ impl VectorizedFilter {
         VectorMask::from_vec(mask)
     }
 
-    /// IN predicate (value in set)
+    // IN predicate (value in set)
     pub fn in_filter_int64(&self, batch: &VectorBatch, set: &[i64]) -> VectorMask {
         let values = batch.as_i64_slice();
         let mut mask = vec![false; values.len()];
@@ -301,7 +301,7 @@ impl VectorizedFilter {
         VectorMask::from_vec(mask)
     }
 
-    /// Combine two masks with AND
+    // Combine two masks with AND
     pub fn and_masks(&self, mask1: &VectorMask, mask2: &VectorMask) -> VectorMask {
         assert_eq!(mask1.len(), mask2.len());
 
@@ -313,7 +313,7 @@ impl VectorizedFilter {
         VectorMask::from_vec(result)
     }
 
-    /// Combine two masks with OR
+    // Combine two masks with OR
     pub fn or_masks(&self, mask1: &VectorMask, mask2: &VectorMask) -> VectorMask {
         assert_eq!(mask1.len(), mask2.len());
 
@@ -325,7 +325,7 @@ impl VectorizedFilter {
         VectorMask::from_vec(result)
     }
 
-    /// Negate mask
+    // Negate mask
     pub fn not_mask(&self, mask: &VectorMask) -> VectorMask {
         let result: Vec<bool> = mask.mask.iter().map(|&x| !x).collect();
         VectorMask::from_vec(result)
@@ -350,7 +350,7 @@ impl SimdOperator for VectorizedFilter {
     }
 }
 
-/// Vectorized aggregation operations
+// Vectorized aggregation operations
 pub struct VectorizedAggregator {
     vector_width: usize,
 }
@@ -360,7 +360,7 @@ impl VectorizedAggregator {
         Self { vector_width }
     }
 
-    /// Sum Int64 values using SIMD
+    // Sum Int64 values using SIMD
     pub fn sum_int64(&self, batch: &VectorBatch) -> i64 {
         let values = batch.as_i64_slice();
 
@@ -399,7 +399,7 @@ impl VectorizedAggregator {
         total
     }
 
-    /// Count non-null values
+    // Count non-null values
     pub fn count(&self, batch: &VectorBatch, null_mask: Option<&[bool]>) -> usize {
         if let Some(mask) = null_mask {
             mask.iter().filter(|&&is_null| !is_null).count()
@@ -408,19 +408,19 @@ impl VectorizedAggregator {
         }
     }
 
-    /// Min Int64 value
+    // Min Int64 value
     pub fn min_int64(&self, batch: &VectorBatch) -> Option<i64> {
         let values = batch.as_i64_slice();
         values.iter().copied().min()
     }
 
-    /// Max Int64 value
+    // Max Int64 value
     pub fn max_int64(&self, batch: &VectorBatch) -> Option<i64> {
         let values = batch.as_i64_slice();
         values.iter().copied().max()
     }
 
-    /// Average of Int64 values
+    // Average of Int64 values
     pub fn avg_int64(&self, batch: &VectorBatch) -> Option<f64> {
         if batch.count == 0 {
             return None;
@@ -430,7 +430,7 @@ impl VectorizedAggregator {
         Some(sum as f64 / batch.count as f64)
     }
 
-    /// Sum Float64 values using SIMD
+    // Sum Float64 values using SIMD
     pub fn sum_float64(&self, batch: &VectorBatch) -> f64 {
         let values = batch.as_f64_slice();
 
@@ -469,7 +469,7 @@ impl VectorizedAggregator {
         total
     }
 
-    /// Conditional sum (SUM with WHERE clause)
+    // Conditional sum (SUM with WHERE clause)
     pub fn conditional_sum_int64(&self, batch: &VectorBatch, mask: &VectorMask) -> i64 {
         let values = batch.as_i64_slice();
         let mut sum = 0i64;
@@ -483,12 +483,12 @@ impl VectorizedAggregator {
         sum
     }
 
-    /// Conditional count
+    // Conditional count
     pub fn conditional_count(&self, mask: &VectorMask) -> usize {
         mask.count
     }
 
-    /// Variance calculation
+    // Variance calculation
     pub fn variance_int64(&self, batch: &VectorBatch) -> Option<f64> {
         if batch.count < 2 {
             return None;
@@ -508,7 +508,7 @@ impl VectorizedAggregator {
         Some(sum_sq_diff / batch.count as f64)
     }
 
-    /// Standard deviation
+    // Standard deviation
     pub fn stddev_int64(&self, batch: &VectorBatch) -> Option<f64> {
         self.variance_int64(batch).map(|v| v.sqrt())
     }
@@ -532,7 +532,7 @@ impl SimdOperator for VectorizedAggregator {
     }
 }
 
-/// Vectorized gather/scatter operations
+// Vectorized gather/scatter operations
 pub struct VectorGatherScatter {
     vector_width: usize,
 }
@@ -542,7 +542,7 @@ impl VectorGatherScatter {
         Self { vector_width }
     }
 
-    /// Gather values at specified indices
+    // Gather values at specified indices
     pub fn gather_int64(&self, values: &[i64], indices: &[usize]) -> Vec<i64> {
         let mut result = Vec::with_capacity(indices.len());
 
@@ -555,7 +555,7 @@ impl VectorGatherScatter {
         result
     }
 
-    /// Scatter values to specified indices
+    // Scatter values to specified indices
     pub fn scatter_int64(&self, values: &[i64], indices: &[usize], dest: &mut [i64]) {
         for (i, &idx) in indices.iter().enumerate() {
             if idx < dest.len() && i < values.len() {
@@ -564,7 +564,7 @@ impl VectorGatherScatter {
         }
     }
 
-    /// Compress (remove non-selected values)
+    // Compress (remove non-selected values)
     pub fn compress_int64(&self, values: &[i64], mask: &VectorMask) -> Vec<i64> {
         let mut result = Vec::with_capacity(mask.count);
 
@@ -577,7 +577,7 @@ impl VectorGatherScatter {
         result
     }
 
-    /// Expand (insert default values for non-selected)
+    // Expand (insert default values for non-selected)
     pub fn expand_int64(&self, values: &[i64], mask: &VectorMask, default: i64) -> Vec<i64> {
         let mut result = vec![default; mask.len()];
         let mut value_idx = 0;
@@ -593,7 +593,7 @@ impl VectorGatherScatter {
     }
 }
 
-/// Cache-conscious batch processor
+// Cache-conscious batch processor
 pub struct BatchProcessor {
     batch_size: usize,
     cache_line_size: usize,
@@ -607,7 +607,7 @@ impl BatchProcessor {
         }
     }
 
-    /// Process data in cache-friendly batches
+    // Process data in cache-friendly batches
     pub fn process_batches<F>(&self, data: &[i64], mut processor: F)
     where
         F: FnMut(&[i64]),
@@ -617,28 +617,28 @@ impl BatchProcessor {
         }
     }
 
-    /// Calculate optimal batch size for cache
+    // Calculate optimal batch size for cache
     pub fn optimal_batch_size(&self, element_size: usize) -> usize {
         // Try to fit batch in L1 cache (typically 32KB)
         let l1_cache_size = 32 * 1024;
         l1_cache_size / element_size
     }
 
-    /// Prefetch data for next batch
+    // Prefetch data for next batch
     pub fn prefetch(&self, _data: &[i64], _offset: usize) {
         // In production, would use prefetch intrinsics
         // _mm_prefetch / __builtin_prefetch
     }
 }
 
-/// Branch-free selection using masks
+// Branch-free selection using masks
 pub fn branchfree_select_i64(condition: bool, true_val: i64, false_val: i64) -> i64 {
     // Branch-free conditional selection
     let mask = -(condition as i64);
     (true_val & mask) | (false_val & !mask)
 }
 
-/// Parallel column scan
+// Parallel column scan
 pub fn parallel_scan_int64<F>(values: &[i64], predicate: F, num_threads: usize) -> Vec<bool>
 where
     F: Fn(i64) -> bool + Send + Sync + 'static,
@@ -674,7 +674,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::document_store::jsonpath::ComparisonOp;
+    use super::ComparisonOp;
     use crate::inmemory::{VectorBatch, VectorMask, VectorizedAggregator, VectorizedFilter};
     use crate::inmemory::column_store::ColumnDataType;
     use crate::inmemory::vectorized_ops::{branchfree_select_i64, VectorGatherScatter};
@@ -758,5 +758,3 @@ mod tests {
         assert_eq!(branchfree_select_i64(false, 42, 99), 99);
     }
 }
-
-

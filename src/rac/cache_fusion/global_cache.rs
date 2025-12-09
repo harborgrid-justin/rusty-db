@@ -28,56 +28,56 @@ use tokio::sync::{mpsc};
 // Constants
 // ============================================================================
 
-/// Maximum block size for cache fusion transfers (default 8KB)
+// Maximum block size for cache fusion transfers (default 8KB)
 pub const MAX_BLOCK_SIZE: usize = 8192;
 
-/// Maximum number of concurrent block transfers
+// Maximum number of concurrent block transfers
 pub const MAX_CONCURRENT_TRANSFERS: usize = 1024;
 
-/// Block transfer timeout
+// Block transfer timeout
 pub const TRANSFER_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// GCS message timeout
+// GCS message timeout
 pub const GCS_MESSAGE_TIMEOUT: Duration = Duration::from_millis(500);
 
 // ============================================================================
 // Block Mode and Resource Types
 // ============================================================================
 
-/// Cache Fusion block access mode (similar to Oracle's cache coherency modes)
+// Cache Fusion block access mode (similar to Oracle's cache coherency modes)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum BlockMode {
-    /// Null mode - no access rights
+    // Null mode - no access rights
     Null,
 
-    /// Shared mode - read-only access, multiple instances can hold
+    // Shared mode - read-only access, multiple instances can hold
     Shared,
 
-    /// Exclusive mode - write access, only one instance can hold
+    // Exclusive mode - write access, only one instance can hold
     Exclusive,
 
-    /// Shared Current - shared read with potential for upgrade
+    // Shared Current - shared read with potential for upgrade
     SharedCurrent,
 
-    /// Exclusive Current - current version for modifications
+    // Exclusive Current - current version for modifications
     ExclusiveCurrent,
 
-    /// Past Image - historical version for consistency
+    // Past Image - historical version for consistency
     PastImage,
 }
 
 impl BlockMode {
-    /// Check if mode allows read access
+    // Check if mode allows read access
     pub fn can_read(&self) -> bool {
         !matches!(self, BlockMode::Null)
     }
 
-    /// Check if mode allows write access
+    // Check if mode allows write access
     pub fn can_write(&self) -> bool {
         matches!(self, BlockMode::Exclusive | BlockMode::ExclusiveCurrent)
     }
 
-    /// Check if mode is compatible with another mode
+    // Check if mode is compatible with another mode
     pub fn is_compatible(&self, other: &BlockMode) -> bool {
         match (self, other) {
             (BlockMode::Null, _) | (_, BlockMode::Null) => true,
@@ -89,7 +89,7 @@ impl BlockMode {
         }
     }
 
-    /// Get the downgrade mode when transferring to another instance
+    // Get the downgrade mode when transferring to another instance
     pub fn downgrade_for_transfer(&self) -> BlockMode {
         match self {
             BlockMode::Exclusive | BlockMode::ExclusiveCurrent => BlockMode::Shared,
@@ -97,7 +97,7 @@ impl BlockMode {
         }
     }
 
-    /// Get priority for block acquisition (higher = more priority)
+    // Get priority for block acquisition (higher = more priority)
     pub fn priority(&self) -> u8 {
         match self {
             BlockMode::Null => 0,
@@ -110,82 +110,82 @@ impl BlockMode {
     }
 }
 
-/// Global cache resource identifier
+// Global cache resource identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ResourceId {
-    /// Data file identifier
+    // Data file identifier
     pub file_id: u32,
 
-    /// Block number within file
+    // Block number within file
     pub block_number: PageId,
 
-    /// Class of resource (data, undo, temp, etc.)
+    // Class of resource (data, undo, temp, etc.)
     pub class: ResourceClass,
 }
 
-/// Resource class for different types of blocks
+// Resource class for different types of blocks
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ResourceClass {
-    /// Data block
+    // Data block
     Data,
 
-    /// Index block
+    // Index block
     Index,
 
-    /// Undo block
+    // Undo block
     Undo,
 
-    /// Temp block
+    // Temp block
     Temp,
 
-    /// System block
+    // System block
     System,
 }
 
-/// Block state in the global cache
+// Block state in the global cache
 #[derive(Debug, Clone)]
 pub struct BlockState {
-    /// Resource identifier
+    // Resource identifier
     pub resource_id: ResourceId,
 
-    /// Current access mode
+    // Current access mode
     pub mode: BlockMode,
 
-    /// Current lock holder instance
+    // Current lock holder instance
     pub holder: Option<NodeId>,
 
-    /// Past image holders for read consistency
+    // Past image holders for read consistency
     pub past_image_holders: HashSet<NodeId>,
 
-    /// Modification SCN (System Change Number)
+    // Modification SCN (System Change Number)
     pub scn: u64,
 
-    /// Lock Value Block - carries state information
+    // Lock Value Block - carries state information
     pub lvb: LockValueBlock,
 
-    /// Timestamp of last access
+    // Timestamp of last access
     pub last_access: Instant,
 
-    /// Number of transfers for this block
+    // Number of transfers for this block
     pub transfer_count: u64,
 }
 
-/// Lock Value Block - carries state with lock grants
+// Lock Value Block - carries state with lock grants
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LockValueBlock {
-    /// Most recent SCN
+    // Most recent SCN
     pub current_scn: u64,
 
-    /// Master instance for this resource
+    // Master instance for this resource
     pub master_instance: NodeId,
 
-    /// Dirty flag
+    // Dirty flag
     pub is_dirty: bool,
 
-    /// Version number for optimistic locking
+    // Version number for optimistic locking
     pub version: u64,
 
-    /// Custom metadata
+    // Custom metadata
     pub metadata: Vec<u8>,
 }
 
@@ -205,10 +205,10 @@ impl Default for LockValueBlock {
 // Cache Fusion Messages
 // ============================================================================
 
-/// Messages exchanged in the Cache Fusion protocol
+// Messages exchanged in the Cache Fusion protocol
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CacheFusionMessage {
-    /// Request block in specific mode
+    // Request block in specific mode
     BlockRequest {
         resource_id: ResourceId,
         requested_mode: BlockMode,
@@ -217,7 +217,7 @@ pub enum CacheFusionMessage {
         force_current: bool,
     },
 
-    /// Grant block access
+    // Grant block access
     BlockGrant {
         resource_id: ResourceId,
         granted_mode: BlockMode,
@@ -226,7 +226,7 @@ pub enum CacheFusionMessage {
         needs_write_back: bool,
     },
 
-    /// Transfer block from one instance to another
+    // Transfer block from one instance to another
     BlockTransfer {
         resource_id: ResourceId,
         block_data: Vec<u8>,
@@ -235,41 +235,41 @@ pub enum CacheFusionMessage {
         scn: u64,
     },
 
-    /// Notify block has been modified
+    // Notify block has been modified
     BlockInvalidate {
         resource_id: ResourceId,
         new_scn: u64,
         invalidator: NodeId,
     },
 
-    /// Downgrade block mode
+    // Downgrade block mode
     BlockDowngrade {
         resource_id: ResourceId,
         from_mode: BlockMode,
         to_mode: BlockMode,
     },
 
-    /// Request past image for read consistency
+    // Request past image for read consistency
     PastImageRequest {
         resource_id: ResourceId,
         as_of_scn: u64,
         requestor: NodeId,
     },
 
-    /// Deliver past image
+    // Deliver past image
     PastImageResponse {
         resource_id: ResourceId,
         block_data: Vec<u8>,
         scn: u64,
     },
 
-    /// Write back dirty block to disk
+    // Write back dirty block to disk
     WriteBackRequest {
         resource_id: ResourceId,
         coordinator: NodeId,
     },
 
-    /// Confirm write back completed
+    // Confirm write back completed
     WriteBackComplete {
         resource_id: ResourceId,
         success: bool,
@@ -280,34 +280,34 @@ pub enum CacheFusionMessage {
 // Global Cache Service (GCS)
 // ============================================================================
 
-/// Global Cache Service - coordinates block sharing across cluster instances
+// Global Cache Service - coordinates block sharing across cluster instances
 pub struct GlobalCacheService {
-    /// Local node identifier
+    // Local node identifier
     node_id: NodeId,
 
-    /// Global resource directory (resource -> master mapping)
+    // Global resource directory (resource -> master mapping)
     resource_directory: Arc<RwLock<HashMap<ResourceId, NodeId>>>,
 
-    /// Local block cache states
+    // Local block cache states
     local_cache: Arc<RwLock<HashMap<ResourceId, BlockState>>>,
 
-    /// Pending block requests
+    // Pending block requests
     pending_requests: Arc<Mutex<HashMap<ResourceId, Vec<BlockRequest>>>>,
 
-    /// Message sender for inter-node communication
+    // Message sender for inter-node communication
     message_tx: mpsc::UnboundedSender<(NodeId, CacheFusionMessage)>,
 
-    /// Message receiver
+    // Message receiver
     message_rx: Arc<Mutex<mpsc::UnboundedReceiver<(NodeId, CacheFusionMessage)>>>,
 
-    /// Block transfer statistics
+    // Block transfer statistics
     stats: Arc<RwLock<GcsStatistics>>,
 
-    /// Configuration
+    // Configuration
     config: GcsConfig,
 }
 
-/// Block request tracking
+// Block request tracking
 #[derive(Debug)]
 struct BlockRequest {
     resource_id: ResourceId,
@@ -318,7 +318,7 @@ struct BlockRequest {
     response_tx: oneshot::Sender<Result<BlockGrant, DbError>>,
 }
 
-/// Block grant response
+// Block grant response
 #[derive(Debug, Clone)]
 pub struct BlockGrant {
     pub resource_id: ResourceId,
@@ -328,31 +328,31 @@ pub struct BlockGrant {
     pub needs_write_back: bool,
 }
 
-/// GCS configuration
+// GCS configuration
 #[derive(Debug, Clone)]
 pub struct GcsConfig {
-    /// Enable zero-copy transfers
+    // Enable zero-copy transfers
     pub enable_zero_copy: bool,
 
-    /// Enable predictive prefetching
+    // Enable predictive prefetching
     pub enable_prefetch: bool,
 
-    /// Maximum retry attempts for block requests
+    // Maximum retry attempts for block requests
     pub max_retries: u32,
 
-    /// Adaptive mode switching threshold
+    // Adaptive mode switching threshold
     pub adaptive_threshold: usize,
 
-    /// Message batching window (milliseconds) - NEW: Batch requests for efficiency
+    // Message batching window (milliseconds) - NEW: Batch requests for efficiency
     pub batch_window_ms: u64,
 
-    /// Maximum messages per batch - NEW: Limit batch size
+    // Maximum messages per batch - NEW: Limit batch size
     pub batch_size: usize,
 
-    /// Enable work-stealing for parallel operations - NEW
+    // Enable work-stealing for parallel operations - NEW
     pub enable_work_stealing: bool,
 
-    /// Speculation threshold for slow operations (std deviations) - NEW
+    // Speculation threshold for slow operations (std deviations) - NEW
     pub speculation_threshold: f64,
 }
 
@@ -371,64 +371,64 @@ impl Default for GcsConfig {
     }
 }
 
-/// GCS statistics
+// GCS statistics
 #[derive(Debug, Default, Clone)]
 pub struct GcsStatistics {
-    /// Total block requests
+    // Total block requests
     pub total_requests: u64,
 
-    /// Successful block grants
+    // Successful block grants
     pub successful_grants: u64,
 
-    /// Failed requests
+    // Failed requests
     pub failed_requests: u64,
 
-    /// Cache hits (local cache)
+    // Cache hits (local cache)
     pub cache_hits: u64,
 
-    /// Cache misses requiring network transfer
+    // Cache misses requiring network transfer
     pub cache_misses: u64,
 
-    /// Total bytes transferred
+    // Total bytes transferred
     pub bytes_transferred: u64,
 
-    /// Average transfer latency
+    // Average transfer latency
     pub avg_transfer_latency_us: u64,
 
-    /// Number of write-backs to disk
+    // Number of write-backs to disk
     pub write_backs: u64,
 
-    /// Number of downgrades
+    // Number of downgrades
     pub downgrades: u64,
 
-    /// Number of past image requests
+    // Number of past image requests
     pub past_image_requests: u64,
 
     // Advanced metrics for 100+ node clusters
-    /// Batched requests count
+    // Batched requests count
     pub batched_requests: u64,
 
-    /// Prefetch hits (predicted correctly)
+    // Prefetch hits (predicted correctly)
     pub prefetch_hits: u64,
 
-    /// Prefetch misses (wrong prediction)
+    // Prefetch misses (wrong prediction)
     pub prefetch_misses: u64,
 
-    /// Deadlocks detected and resolved
+    // Deadlocks detected and resolved
     pub deadlocks_detected: u64,
 
-    /// Work stealing operations
+    // Work stealing operations
     pub work_steals: u64,
 
-    /// Speculative executions
+    // Speculative executions
     pub speculative_executions: u64,
 
-    /// P99 latency in microseconds
+    // P99 latency in microseconds
     pub p99_latency_us: u64,
 }
 
 impl GlobalCacheService {
-    /// Create a new Global Cache Service instance
+    // Create a new Global Cache Service instance
     pub fn new(node_id: NodeId, config: GcsConfig) -> Self {
         let (message_tx, message_rx) = mpsc::unbounded_channel();
 
@@ -444,7 +444,7 @@ impl GlobalCacheService {
         }
     }
 
-    /// Request a block in specific mode (main entry point for cache fusion)
+    // Request a block in specific mode (main entry point for cache fusion)
     pub async fn request_block(
         &self,
         resource_id: ResourceId,
@@ -525,7 +525,7 @@ impl GlobalCacheService {
         }
     }
 
-    /// Check local cache for block availability
+    // Check local cache for block availability
     async fn check_local_cache(
         &self,
         resource_id: &ResourceId,
@@ -550,7 +550,7 @@ impl GlobalCacheService {
         Ok(None)
     }
 
-    /// Handle block request locally (when we are the master)
+    // Handle block request locally (when we are the master)
     async fn handle_local_block_request(
         &self,
         resource_id: ResourceId,
@@ -592,7 +592,7 @@ impl GlobalCacheService {
         })
     }
 
-    /// Transfer block to another instance (RDMA-like zero-copy)
+    // Transfer block to another instance (RDMA-like zero-copy)
     pub async fn transfer_block(
         &self,
         resource_id: ResourceId,
@@ -640,7 +640,7 @@ impl GlobalCacheService {
         Ok(())
     }
 
-    /// Request past image for read consistency
+    // Request past image for read consistency
     pub async fn request_past_image(
         &self,
         resource_id: ResourceId,
@@ -667,7 +667,7 @@ impl GlobalCacheService {
         Ok(vec![0; MAX_BLOCK_SIZE])
     }
 
-    /// Invalidate block across all instances
+    // Invalidate block across all instances
     pub async fn invalidate_block(&self, resource_id: ResourceId, new_scn: u64) -> Result<(), DbError> {
         let message = CacheFusionMessage::BlockInvalidate {
             resource_id: resource_id.clone(),
@@ -686,7 +686,7 @@ impl GlobalCacheService {
         Ok(())
     }
 
-    /// Write back dirty block to disk
+    // Write back dirty block to disk
     pub async fn write_back_block(&self, resource_id: ResourceId) -> Result<(), DbError> {
         self.stats.write().write_backs += 1;
 
@@ -702,7 +702,7 @@ impl GlobalCacheService {
         Ok(())
     }
 
-    /// Get master instance for a resource
+    // Get master instance for a resource
     async fn get_master_instance(&self, resource_id: &ResourceId) -> Result<NodeId, DbError> {
         let dir = self.resource_directory.read();
 
@@ -714,7 +714,7 @@ impl GlobalCacheService {
         }
     }
 
-    /// Find instance holding past image
+    // Find instance holding past image
     async fn find_past_image_holder(
         &self,
         resource_id: &ResourceId,
@@ -731,12 +731,12 @@ impl GlobalCacheService {
         Ok(self.node_id.clone())
     }
 
-    /// Get GCS statistics
+    // Get GCS statistics
     pub fn get_statistics(&self) -> GcsStatistics {
         self.stats.read().clone()
     }
 
-    /// Process incoming cache fusion message
+    // Process incoming cache fusion message
     pub async fn process_message(
         &self,
         source: NodeId,

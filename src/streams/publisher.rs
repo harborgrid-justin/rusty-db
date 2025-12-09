@@ -7,7 +7,7 @@ use tokio::time::sleep;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Duration;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Instant, SystemTime};
@@ -18,7 +18,7 @@ use tokio::sync::{mpsc, Semaphore};
 use tokio::time::interval;
 use crate::error::{DbError, Result};
 
-/// Event serialization format
+// Event serialization format
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SerializationFormat {
     Json,
@@ -28,26 +28,26 @@ pub enum SerializationFormat {
     Binary,
 }
 
-/// Published event with metadata
+// Published event with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublishedEvent {
-    /// Event ID
+    // Event ID
     pub id: u64,
-    /// Topic name
+    // Topic name
     pub topic: String,
-    /// Partition ID
+    // Partition ID
     pub partition: u32,
-    /// Offset within partition
+    // Offset within partition
     pub offset: u64,
-    /// Event key for partitioning and ordering
+    // Event key for partitioning and ordering
     pub key: Option<Vec<u8>>,
-    /// Event payload
+    // Event payload
     pub payload: Vec<u8>,
-    /// Event headers
+    // Event headers
     pub headers: HashMap<String, String>,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
-    /// Serialization format
+    // Serialization format
     pub format: SerializationFormat,
 }
 
@@ -86,22 +86,22 @@ impl PublishedEvent {
     }
 }
 
-/// Topic configuration
+// Topic configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TopicConfig {
-    /// Topic name
+    // Topic name
     pub name: String,
-    /// Number of partitions
+    // Number of partitions
     pub num_partitions: u32,
-    /// Replication factor
+    // Replication factor
     pub replication_factor: u32,
-    /// Retention period
+    // Retention period
     pub retention_period: Duration,
-    /// Maximum message size
+    // Maximum message size
     pub max_message_size: usize,
-    /// Compression enabled
+    // Compression enabled
     pub compression_enabled: bool,
-    /// Ordering guarantee
+    // Ordering guarantee
     pub ordering: OrderingGuarantee,
 }
 
@@ -119,46 +119,46 @@ impl TopicConfig {
     }
 }
 
-/// Ordering guarantee level
+// Ordering guarantee level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OrderingGuarantee {
-    /// No ordering guarantees
+    // No ordering guarantees
     Unordered,
-    /// Events with same key are ordered
+    // Events with same key are ordered
     KeyOrdered,
-    /// Events within same partition are ordered
+    // Events within same partition are ordered
     PartitionOrdered,
-    /// All events are globally ordered
+    // All events are globally ordered
     GloballyOrdered,
 }
 
-/// Acknowledgment mode
+// Acknowledgment mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AckMode {
-    /// No acknowledgment
+    // No acknowledgment
     NoAck,
-    /// Acknowledge after writing to leader
+    // Acknowledge after writing to leader
     Leader,
-    /// Acknowledge after replication to all replicas
+    // Acknowledge after replication to all replicas
     AllReplicas,
 }
 
-/// Publisher acknowledgment
+// Publisher acknowledgment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublishAck {
-    /// Event ID
+    // Event ID
     pub event_id: u64,
-    /// Topic
+    // Topic
     pub topic: String,
-    /// Partition
+    // Partition
     pub partition: u32,
-    /// Offset
+    // Offset
     pub offset: u64,
-    /// Acknowledgment timestamp
+    // Acknowledgment timestamp
     pub timestamp: SystemTime,
 }
 
-/// Partition state
+// Partition state
 #[derive(Debug)]
 struct PartitionState {
     partition_id: u32,
@@ -201,7 +201,7 @@ impl PartitionState {
     }
 }
 
-/// Topic instance
+// Topic instance
 struct Topic {
     config: TopicConfig,
     partitions: Vec<Arc<PartitionState>>,
@@ -250,53 +250,53 @@ impl Topic {
     }
 }
 
-/// Publisher statistics
+// Publisher statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PublisherStats {
-    /// Total events published
+    // Total events published
     pub total_events: u64,
-    /// Total bytes published
+    // Total bytes published
     pub total_bytes: u64,
-    /// Events published per second
+    // Events published per second
     pub events_per_second: f64,
-    /// Average event size
+    // Average event size
     pub avg_event_size: f64,
-    /// Average publish latency (ms)
+    // Average publish latency (ms)
     pub avg_publish_latency_ms: f64,
-    /// P95 publish latency (ms)
+    // P95 publish latency (ms)
     pub p95_publish_latency_ms: f64,
-    /// P99 publish latency (ms)
+    // P99 publish latency (ms)
     pub p99_publish_latency_ms: f64,
-    /// Number of failed publishes
+    // Number of failed publishes
     pub failed_publishes: u64,
-    /// Backpressure activations
+    // Backpressure activations
     pub backpressure_events: u64,
-    /// Current backpressure state
+    // Current backpressure state
     pub is_backpressured: bool,
 }
 
-/// Publisher configuration
+// Publisher configuration
 #[derive(Debug, Clone)]
 pub struct PublisherConfig {
-    /// Maximum inflight events per partition
+    // Maximum inflight events per partition
     pub max_inflight: usize,
-    /// Batch size for event processing
+    // Batch size for event processing
     pub batch_size: usize,
-    /// Batch timeout
+    // Batch timeout
     pub batch_timeout: Duration,
-    /// Acknowledgment mode
+    // Acknowledgment mode
     pub ack_mode: AckMode,
-    /// Enable compression
+    // Enable compression
     pub enable_compression: bool,
-    /// Compression threshold (bytes)
+    // Compression threshold (bytes)
     pub compression_threshold: usize,
-    /// Default serialization format
+    // Default serialization format
     pub default_format: SerializationFormat,
-    /// Enable backpressure
+    // Enable backpressure
     pub enable_backpressure: bool,
-    /// Backpressure threshold
+    // Backpressure threshold
     pub backpressure_threshold: usize,
-    /// Publish timeout
+    // Publish timeout
     pub publish_timeout: Duration,
 }
 
@@ -317,26 +317,26 @@ impl Default for PublisherConfig {
     }
 }
 
-/// Event Publisher
+// Event Publisher
 pub struct EventPublisher {
-    /// Configuration
+    // Configuration
     config: PublisherConfig,
-    /// Topics
+    // Topics
     topics: Arc<RwLock<HashMap<String, Arc<Topic>>>>,
-    /// Next event ID
+    // Next event ID
     next_event_id: Arc<AtomicU64>,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<PublisherStats>>,
-    /// Backpressure semaphore
+    // Backpressure semaphore
     backpressure_sem: Arc<Semaphore>,
-    /// Pending acknowledgments
+    // Pending acknowledgments
     pending_acks: Arc<RwLock<HashMap<u64, tokio::sync::oneshot::Sender<Result<PublishAck>>>>>,
-    /// Shutdown flag
+    // Shutdown flag
     shutdown: Arc<AtomicBool>,
 }
 
 impl EventPublisher {
-    /// Create a new event publisher
+    // Create a new event publisher
     pub fn new(config: PublisherConfig) -> Self {
         let max_permits = if config.enable_backpressure {
             config.backpressure_threshold
@@ -355,7 +355,7 @@ impl EventPublisher {
         }
     }
 
-    /// Create a new topic
+    // Create a new topic
     pub async fn create_topic(&self, config: TopicConfig) -> Result<()> {
         let topic_name = config.name.clone();
         let topic = Arc::new(Topic::new(config));
@@ -371,7 +371,7 @@ impl EventPublisher {
         Ok(())
     }
 
-    /// Delete a topic
+    // Delete a topic
     pub async fn delete_topic(&self, topic_name: &str) -> Result<()> {
         let mut topics = self.topics.write();
         topics.remove(topic_name)
@@ -379,12 +379,12 @@ impl EventPublisher {
         Ok(())
     }
 
-    /// List all topics
+    // List all topics
     pub fn list_topics(&self) -> Vec<String> {
         self.topics.read().keys().cloned().collect()
     }
 
-    /// Get topic configuration
+    // Get topic configuration
     pub fn get_topic_config(&self, topic_name: &str) -> Result<TopicConfig> {
         let topics = self.topics.read();
         let topic = topics.get(topic_name)
@@ -392,7 +392,7 @@ impl EventPublisher {
         Ok(topic.config.clone())
     }
 
-    /// Publish an event
+    // Publish an event
     pub async fn publish(&self, mut event: PublishedEvent) -> Result<PublishAck> {
         let start_time = Instant::now();
 
@@ -468,7 +468,7 @@ impl EventPublisher {
         Ok(ack)
     }
 
-    /// Publish a batch of events
+    // Publish a batch of events
     pub async fn publish_batch(&self, events: Vec<PublishedEvent>) -> Result<Vec<PublishAck>> {
         let mut acks = Vec::new();
 
@@ -480,7 +480,7 @@ impl EventPublisher {
         Ok(acks)
     }
 
-    /// Publish with custom partitioner
+    // Publish with custom partitioner
     pub async fn publish_with_partitioner<F>(
         &self,
         event: PublishedEvent,
@@ -502,7 +502,7 @@ impl EventPublisher {
         self.publish(event).await
     }
 
-    /// Get events from partition (for internal consumption)
+    // Get events from partition (for internal consumption)
     pub async fn read_partition(
         &self,
         topic_name: &str,
@@ -521,7 +521,7 @@ impl EventPublisher {
         Ok(partition.dequeue_batch(max_events))
     }
 
-    /// Get partition offset
+    // Get partition offset
     pub fn get_partition_offset(&self, topic_name: &str, partition_id: u32) -> Result<u64> {
         let topics = self.topics.read();
         let topic = topics.get(topic_name)
@@ -535,7 +535,7 @@ impl EventPublisher {
         Ok(partition.next_offset.load(Ordering::SeqCst))
     }
 
-    /// Flush all pending events
+    // Flush all pending events
     pub async fn flush(&self) -> Result<()> {
         // Wait for all pending acknowledgments
         while self.pending_acks.read().len() > 0 {
@@ -544,17 +544,17 @@ impl EventPublisher {
         Ok(())
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_statistics(&self) -> PublisherStats {
         self.stats.read().clone()
     }
 
-    /// Check if backpressure is active
+    // Check if backpressure is active
     pub fn is_backpressured(&self) -> bool {
         self.backpressure_sem.available_permits() == 0
     }
 
-    /// Shutdown the publisher
+    // Shutdown the publisher
     pub async fn shutdown(&self) -> Result<()> {
         self.shutdown.store(true, Ordering::SeqCst);
         self.flush().await?;
@@ -578,13 +578,13 @@ impl EventPublisher {
     }
 }
 
-/// Event serializer trait
+// Event serializer trait
 pub trait EventSerializer {
     fn serialize<T: Serialize>(&self, value: &T, format: SerializationFormat) -> Result<Vec<u8>>;
     fn deserialize<T: for<'de> Deserialize<'de>>(&self, data: &[u8], format: SerializationFormat) -> Result<T>;
 }
 
-/// Default event serializer
+// Default event serializer
 pub struct DefaultSerializer;
 
 impl EventSerializer for DefaultSerializer {
@@ -625,12 +625,12 @@ impl EventSerializer for DefaultSerializer {
     }
 }
 
-/// Partitioner trait for custom partitioning logic
+// Partitioner trait for custom partitioning logic
 pub trait Partitioner: Send + Sync {
     fn partition(&self, event: &PublishedEvent, num_partitions: u32) -> u32;
 }
 
-/// Round-robin partitioner
+// Round-robin partitioner
 pub struct RoundRobinPartitioner {
     counter: AtomicU64,
 }
@@ -650,7 +650,7 @@ impl Partitioner for RoundRobinPartitioner {
     }
 }
 
-/// Hash-based partitioner
+// Hash-based partitioner
 pub struct HashPartitioner;
 
 impl Partitioner for HashPartitioner {

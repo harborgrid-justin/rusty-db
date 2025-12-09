@@ -25,30 +25,30 @@ use super::crypto::{sha256, Hash256, hash_to_hex};
 // Audit Event Types
 // ============================================================================
 
-/// Type of audit event
+// Type of audit event
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AuditEventType {
-    /// Table creation
+    // Table creation
     TableCreate,
-    /// Row insertion
+    // Row insertion
     RowInsert,
-    /// Block finalization
+    // Block finalization
     BlockFinalize,
-    /// Query execution
+    // Query execution
     QueryExecute,
-    /// Verification performed
+    // Verification performed
     Verification,
-    /// Retention policy change
+    // Retention policy change
     RetentionPolicy,
-    /// Legal hold applied
+    // Legal hold applied
     LegalHold,
-    /// Access attempt
+    // Access attempt
     Access,
-    /// Configuration change
+    // Configuration change
     ConfigChange,
-    /// Export operation
+    // Export operation
     Export,
-    /// Import operation
+    // Import operation
     Import,
 }
 
@@ -70,16 +70,16 @@ impl fmt::Display for AuditEventType {
     }
 }
 
-/// Severity level of audit event
+// Severity level of audit event
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum AuditSeverity {
-    /// Informational
+    // Informational
     Info,
-    /// Warning
+    // Warning
     Warning,
-    /// Error
+    // Error
     Error,
-    /// Critical security event
+    // Critical security event
     Critical,
 }
 
@@ -87,39 +87,39 @@ pub enum AuditSeverity {
 // Audit Event
 // ============================================================================
 
-/// An audit event record
+// An audit event record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditEvent {
-    /// Event ID
+    // Event ID
     pub event_id: u64,
-    /// Event type
+    // Event type
     pub event_type: AuditEventType,
-    /// Severity
+    // Severity
     pub severity: AuditSeverity,
-    /// Timestamp
+    // Timestamp
     pub timestamp: u64,
-    /// User/session ID
+    // User/session ID
     pub user: String,
-    /// Session ID
+    // Session ID
     pub session_id: Option<SessionId>,
-    /// Table ID (if applicable)
+    // Table ID (if applicable)
     pub table_id: Option<TableId>,
-    /// Block ID (if applicable)
+    // Block ID (if applicable)
     pub block_id: Option<BlockId>,
-    /// Row ID (if applicable)
+    // Row ID (if applicable)
     pub row_id: Option<RowId>,
-    /// Description
+    // Description
     pub description: String,
-    /// Additional details
+    // Additional details
     pub details: HashMap<String, String>,
-    /// Source IP address
+    // Source IP address
     pub source_ip: Option<String>,
-    /// Hash of this event (for integrity)
+    // Hash of this event (for integrity)
     pub event_hash: Hash256,
 }
 
 impl AuditEvent {
-    /// Create a new audit event
+    // Create a new audit event
     pub fn new(
         event_id: u64,
         event_type: AuditEventType,
@@ -149,7 +149,7 @@ impl AuditEvent {
         event
     }
 
-    /// Compute hash of this event
+    // Compute hash of this event
     fn compute_hash(&self) -> Hash256 {
         let mut data = Vec::new();
         data.extend_from_slice(&self.event_id.to_le_bytes());
@@ -160,54 +160,54 @@ impl AuditEvent {
         sha256(&data)
     }
 
-    /// Verify event integrity
+    // Verify event integrity
     pub fn verify(&self) -> bool {
         let computed = self.compute_hash();
         computed == self.event_hash
     }
 
-    /// Set session ID
+    // Set session ID
     pub fn with_session(mut self, session_id: SessionId) -> Self {
         self.session_id = Some(session_id);
         self.event_hash = self.compute_hash();
         self
     }
 
-    /// Set table ID
+    // Set table ID
     pub fn with_table(mut self, table_id: TableId) -> Self {
         self.table_id = Some(table_id);
         self.event_hash = self.compute_hash();
         self
     }
 
-    /// Set block ID
+    // Set block ID
     pub fn with_block(mut self, block_id: BlockId) -> Self {
         self.block_id = Some(block_id);
         self.event_hash = self.compute_hash();
         self
     }
 
-    /// Set row ID
+    // Set row ID
     pub fn with_row(mut self, row_id: RowId) -> Self {
         self.row_id = Some(row_id);
         self.event_hash = self.compute_hash();
         self
     }
 
-    /// Set source IP
+    // Set source IP
     pub fn with_source_ip(mut self, ip: String) -> Self {
         self.source_ip = Some(ip);
         self.event_hash = self.compute_hash();
         self
     }
 
-    /// Add detail
+    // Add detail
     pub fn add_detail(&mut self, key: String, value: String) {
         self.details.insert(key, value);
         self.event_hash = self.compute_hash();
     }
 
-    /// Get event hash as hex
+    // Get event hash as hex
     pub fn hash_hex(&self) -> String {
         hash_to_hex(&self.event_hash)
     }
@@ -217,18 +217,18 @@ impl AuditEvent {
 // Audit Logger
 // ============================================================================
 
-/// Configuration for audit logger
+// Configuration for audit logger
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditConfig {
-    /// Maximum events to keep in memory
+    // Maximum events to keep in memory
     pub max_events: usize,
-    /// Enable persistent logging
+    // Enable persistent logging
     pub persistent: bool,
-    /// Log file path
+    // Log file path
     pub log_path: Option<String>,
-    /// Enable encryption of audit logs
+    // Enable encryption of audit logs
     pub encrypt_logs: bool,
-    /// Minimum severity to log
+    // Minimum severity to log
     pub min_severity: AuditSeverity,
 }
 
@@ -244,24 +244,24 @@ impl Default for AuditConfig {
     }
 }
 
-/// Audit logger
+// Audit logger
 pub struct AuditLogger {
-    /// Configuration
+    // Configuration
     config: AuditConfig,
-    /// Events (in-memory circular buffer)
+    // Events (in-memory circular buffer)
     events: Arc<RwLock<VecDeque<AuditEvent>>>,
-    /// Next event ID
+    // Next event ID
     next_event_id: Arc<RwLock<u64>>,
-    /// Event index by type
+    // Event index by type
     type_index: Arc<RwLock<HashMap<AuditEventType, Vec<u64>>>>,
-    /// Event index by user
+    // Event index by user
     user_index: Arc<RwLock<HashMap<String, Vec<u64>>>>,
-    /// Event index by table
+    // Event index by table
     table_index: Arc<RwLock<HashMap<TableId, Vec<u64>>>>,
 }
 
 impl AuditLogger {
-    /// Create a new audit logger
+    // Create a new audit logger
     pub fn new(config: AuditConfig) -> Self {
         Self {
             config,
@@ -273,7 +273,7 @@ impl AuditLogger {
         }
     }
 
-    /// Log an audit event
+    // Log an audit event
     pub fn log(&self, event: AuditEvent) -> Result<u64> {
         if event.severity < self.config.min_severity {
             return Ok(event.event_id);
@@ -313,7 +313,7 @@ impl AuditLogger {
         Ok(event_id)
     }
 
-    /// Remove event from indices
+    // Remove event from indices
     fn remove_from_indices(&self, event: &AuditEvent) {
         let mut type_index = self.type_index.write().unwrap();
         if let Some(events) = type_index.get_mut(&event.event_type) {
@@ -333,7 +333,7 @@ impl AuditLogger {
         }
     }
 
-    /// Create and log a new event
+    // Create and log a new event
     pub fn log_event(
         &self,
         event_type: AuditEventType,
@@ -349,7 +349,7 @@ impl AuditLogger {
         self.log(event)
     }
 
-    /// Get events by filter
+    // Get events by filter
     pub fn get_events(&self, filter: Option<AuditFilter>) -> Vec<AuditEvent> {
         let events = self.events.read().unwrap();
 
@@ -363,7 +363,7 @@ impl AuditLogger {
         }
     }
 
-    /// Get events by type
+    // Get events by type
     pub fn get_events_by_type(&self, event_type: AuditEventType) -> Vec<AuditEvent> {
         let type_index = self.type_index.read().unwrap();
         let events = self.events.read().unwrap();
@@ -378,7 +378,7 @@ impl AuditLogger {
         }
     }
 
-    /// Get events by user
+    // Get events by user
     pub fn get_events_by_user(&self, user: &str) -> Vec<AuditEvent> {
         let user_index = self.user_index.read().unwrap();
         let events = self.events.read().unwrap();
@@ -393,7 +393,7 @@ impl AuditLogger {
         }
     }
 
-    /// Get events by table
+    // Get events by table
     pub fn get_events_by_table(&self, table_id: TableId) -> Vec<AuditEvent> {
         let table_index = self.table_index.read().unwrap();
         let events = self.events.read().unwrap();
@@ -408,12 +408,12 @@ impl AuditLogger {
         }
     }
 
-    /// Get event count
+    // Get event count
     pub fn event_count(&self) -> usize {
         self.events.read().unwrap().len()
     }
 
-    /// Verify all events
+    // Verify all events
     pub fn verify_all(&self) -> bool {
         let events = self.events.read().unwrap();
         events.iter().all(|e| e.verify())
@@ -424,23 +424,23 @@ impl AuditLogger {
 // Audit Filter
 // ============================================================================
 
-/// Filter for querying audit events
+// Filter for querying audit events
 #[derive(Debug, Clone)]
 pub struct AuditFilter {
-    /// Filter by event type
+    // Filter by event type
     pub event_type: Option<AuditEventType>,
-    /// Filter by severity (minimum)
+    // Filter by severity (minimum)
     pub min_severity: Option<AuditSeverity>,
-    /// Filter by user
+    // Filter by user
     pub user: Option<String>,
-    /// Filter by time range
+    // Filter by time range
     pub time_range: Option<(u64, u64)>,
-    /// Filter by table
+    // Filter by table
     pub table_id: Option<TableId>,
 }
 
 impl AuditFilter {
-    /// Check if event matches filter
+    // Check if event matches filter
     pub fn matches(&self, event: &AuditEvent) -> bool {
         if let Some(event_type) = self.event_type {
             if event.event_type != event_type {
@@ -480,29 +480,29 @@ impl AuditFilter {
 // Audit Report
 // ============================================================================
 
-/// Audit report
+// Audit report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditReport {
-    /// Report timestamp
+    // Report timestamp
     pub timestamp: u64,
-    /// Report period
+    // Report period
     pub period: (u64, u64),
-    /// Total events
+    // Total events
     pub total_events: usize,
-    /// Events by type
+    // Events by type
     pub events_by_type: HashMap<String, usize>,
-    /// Events by severity
+    // Events by severity
     pub events_by_severity: HashMap<String, usize>,
-    /// Events by user
+    // Events by user
     pub events_by_user: HashMap<String, usize>,
-    /// Critical events
+    // Critical events
     pub critical_events: Vec<AuditEvent>,
-    /// Summary
+    // Summary
     pub summary: String,
 }
 
 impl AuditReport {
-    /// Generate report from events
+    // Generate report from events
     pub fn generate(events: &[AuditEvent], start_time: u64, end_time: u64) -> Self {
         let mut events_by_type = HashMap::new();
         let mut events_by_severity = HashMap::new();
@@ -536,13 +536,13 @@ impl AuditReport {
         }
     }
 
-    /// Export to JSON
+    // Export to JSON
     pub fn to_json(&self) -> Result<String> {
         serde_json::to_string_pretty(self)
             .map_err(|e| DbError::Serialization(format!("Failed to serialize report: {}", e)))
     }
 
-    /// Export to CSV
+    // Export to CSV
     pub fn to_csv(&self) -> String {
         let mut csv = String::new();
         csv.push_str("Metric,Value\n");
@@ -558,39 +558,39 @@ impl AuditReport {
 // Query Audit Log
 // ============================================================================
 
-/// Query audit entry
+// Query audit entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryAuditEntry {
-    /// Query ID
+    // Query ID
     pub query_id: u64,
-    /// Timestamp
+    // Timestamp
     pub timestamp: u64,
-    /// User
+    // User
     pub user: String,
-    /// SQL query
+    // SQL query
     pub query: String,
-    /// Execution time (ms)
+    // Execution time (ms)
     pub execution_time_ms: u64,
-    /// Rows returned
+    // Rows returned
     pub rows_returned: usize,
-    /// Success status
+    // Success status
     pub success: bool,
-    /// Error (if any)
+    // Error (if any)
     pub error: Option<String>,
 }
 
-/// Query audit logger
+// Query audit logger
 pub struct QueryAuditLogger {
-    /// Queries
+    // Queries
     queries: Arc<RwLock<VecDeque<QueryAuditEntry>>>,
-    /// Max queries to keep
+    // Max queries to keep
     max_queries: usize,
-    /// Next query ID
+    // Next query ID
     next_query_id: Arc<RwLock<u64>>,
 }
 
 impl QueryAuditLogger {
-    /// Create new query audit logger
+    // Create new query audit logger
     pub fn new(maxqueries: usize) -> Self {
         Self {
             queries: Arc::new(RwLock::new(VecDeque::new())),
@@ -599,7 +599,7 @@ impl QueryAuditLogger {
         }
     }
 
-    /// Log a query
+    // Log a query
     pub fn log_query(
         &self,
         user: String,
@@ -633,7 +633,7 @@ impl QueryAuditLogger {
         id
     }
 
-    /// Get recent queries
+    // Get recent queries
     pub fn get_recent_queries(&self, count: usize) -> Vec<QueryAuditEntry> {
         let queries = self.queries.read().unwrap();
         queries.iter()
@@ -643,7 +643,7 @@ impl QueryAuditLogger {
             .collect()
     }
 
-    /// Get queries by user
+    // Get queries by user
     pub fn get_user_queries(&self, user: &str) -> Vec<QueryAuditEntry> {
         let queries = self.queries.read().unwrap();
         queries.iter()

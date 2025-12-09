@@ -14,7 +14,7 @@ use super::metrics_core::*;
 // SECTION 5: DASHBOARD DATA API (600+ lines)
 // ============================================================================
 
-/// Time-series data point
+// Time-series data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesPoint {
     pub timestamp: SystemTime,
@@ -22,7 +22,7 @@ pub struct TimeSeriesPoint {
     pub labels: BTreeMap<String, String>,
 }
 
-/// Time-series query
+// Time-series query
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesQuery {
     pub metric_name: String,
@@ -44,7 +44,7 @@ pub enum AggregationFunction {
     Percentile(u8),
 }
 
-/// Time-series result
+// Time-series result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesResult {
     pub metric_name: String,
@@ -52,7 +52,7 @@ pub struct TimeSeriesResult {
     pub points: Vec<TimeSeriesPoint>,
 }
 
-/// Real-time metric stream
+// Real-time metric stream
 pub struct MetricStream {
     subscribers: Arc<RwLock<Vec<Arc<dyn MetricSubscriber>>>>,
 }
@@ -86,7 +86,7 @@ impl Default for MetricStream {
     }
 }
 
-/// Dashboard widget configuration
+// Dashboard widget configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DashboardWidget {
     pub id: String,
@@ -117,7 +117,7 @@ pub enum WidgetType {
     Alert,
 }
 
-/// Custom dashboard definition
+// Custom dashboard definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Dashboard {
     pub id: String,
@@ -150,7 +150,7 @@ impl Dashboard {
     }
 }
 
-/// Dashboard manager
+// Dashboard manager
 pub struct DashboardManager {
     dashboards: Arc<RwLock<HashMap<String, Dashboard>>>,
 }
@@ -192,7 +192,7 @@ impl Default for DashboardManager {
     }
 }
 
-/// Time-series database for historical metrics
+// Time-series database for historical metrics
 pub struct TimeSeriesDatabase {
     data: Arc<RwLock<HashMap<String, VecDeque<TimeSeriesPoint>>>>,
     max_points_per_metric: usize,

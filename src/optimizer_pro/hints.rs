@@ -16,16 +16,16 @@ use std::collections::{HashMap};
 // Hint Parser
 // ============================================================================
 
-/// Optimizer hint parser
+// Optimizer hint parser
 pub struct HintParser {
-    /// Supported hints registry
+    // Supported hints registry
     supported_hints: HashMap<String, HintDefinition>,
-    /// Hint validation rules
+    // Hint validation rules
     validation_rules: Vec<Box<dyn HintValidationRule>>,
 }
 
 impl HintParser {
-    /// Create a new hint parser
+    // Create a new hint parser
     pub fn new() -> Self {
         let mut parser = Self {
             supported_hints: HashMap::new(),
@@ -38,7 +38,7 @@ impl HintParser {
         parser
     }
 
-    /// Register standard Oracle-compatible hints
+    // Register standard Oracle-compatible hints
     fn register_standard_hints(&mut self) {
         // Access path hints
         self.register_hint(HintDefinition {
@@ -232,17 +232,17 @@ impl HintParser {
         });
     }
 
-    /// Register hint definition
+    // Register hint definition
     fn register_hint(&mut self, definition: HintDefinition) {
         self.supported_hints.insert(definition.name.clone(), definition);
     }
 
-    /// Register validation rules
+    // Register validation rules
     fn register_validation_rules(&mut self) {
         // Add validation rules
     }
 
-    /// Parse hints from query text
+    // Parse hints from query text
     pub fn parse_hints(&self, query_text: &str) -> Result<Vec<OptimizerHint>> {
         let mut hints = Vec::new();
 
@@ -264,7 +264,7 @@ impl HintParser {
         Ok(hints)
     }
 
-    /// Extract hint block from query
+    // Extract hint block from query
     fn extract_hint_block(&self, query_text: &str) -> Option<String> {
         // Find /*+ ... */ pattern
         if let Some(start) = query_text.find("/*+") {
@@ -276,7 +276,7 @@ impl HintParser {
         None
     }
 
-    /// Split hint block into individual hints
+    // Split hint block into individual hints
     fn split_hints(&self, hint_block: &str) -> Vec<String> {
         hint_block
             .split_whitespace()
@@ -285,7 +285,7 @@ impl HintParser {
             .collect()
     }
 
-    /// Parse a single hint
+    // Parse a single hint
     #[inline]
     fn parse_single_hint(&self, hint_str: &str) -> Result<Option<OptimizerHint>> {
         // Parse hint name and parameters
@@ -369,12 +369,12 @@ impl HintParser {
         Ok(Some(hint))
     }
 
-    /// Get supported hints
+    // Get supported hints
     pub fn get_supported_hints(&self) -> Vec<&HintDefinition> {
         self.supported_hints.values().collect()
     }
 
-    /// Get hint definition
+    // Get hint definition
     pub fn get_hint_definition(&self, name: &str) -> Option<&HintDefinition> {
         self.supported_hints.get(&name.to_uppercase())
     }
@@ -384,7 +384,7 @@ impl HintParser {
 // Optimizer Hints
 // ============================================================================
 
-/// Optimizer hint types
+// Optimizer hint types
 #[derive(Debug, Clone, PartialEq)]
 pub enum OptimizerHint {
     // Access path hints
@@ -470,9 +470,9 @@ impl fmt::Display for OptimizerHint {
 // Hint Validation
 // ============================================================================
 
-/// Hint validator
+// Hint validator
 pub struct HintValidator {
-    /// Conflict rules
+    // Conflict rules
     conflict_rules: Vec<ConflictRule>,
 }
 
@@ -487,7 +487,7 @@ impl HintValidator {
         validator
     }
 
-    /// Register conflict rules
+    // Register conflict rules
     fn register_conflict_rules(&mut self) {
         // Join method conflicts
         self.conflict_rules.push(ConflictRule {
@@ -521,7 +521,7 @@ impl HintValidator {
         });
     }
 
-    /// Validate hints
+    // Validate hints
     pub fn validate(&self, hints: &[OptimizerHint]) -> Result<()> {
         // Check for conflicts
         for i in 0..hints.len() {
@@ -548,7 +548,7 @@ impl HintValidator {
         Ok(())
     }
 
-    /// Check for conflict between two hints
+    // Check for conflict between two hints
     fn check_conflict(&self, hint1: &OptimizerHint, hint2: &OptimizerHint) -> Option<&ConflictRule> {
         let name1 = self.get_hint_name(hint1);
         let name2 = self.get_hint_name(hint2);
@@ -559,7 +559,7 @@ impl HintValidator {
         })
     }
 
-    /// Get hint name
+    // Get hint name
     fn get_hint_name(&self, hint: &OptimizerHint) -> String {
         match hint {
             OptimizerHint::FullTableScan { .. } => "FULL".to_string(),
@@ -577,7 +577,7 @@ impl HintValidator {
         }
     }
 
-    /// Resolve conflicts
+    // Resolve conflicts
     pub fn resolve_conflicts(&self, hints: Vec<OptimizerHint>) -> Vec<OptimizerHint> {
         // Apply resolution strategy (e.g., last hint wins)
         let mut resolved = Vec::new();
@@ -595,7 +595,7 @@ impl HintValidator {
         resolved
     }
 
-    /// Get hint type for conflict resolution
+    // Get hint type for conflict resolution
     fn get_hint_type(&self, hint: &OptimizerHint) -> String {
         match hint {
             OptimizerHint::UseNestedLoop { .. }
@@ -616,7 +616,7 @@ impl HintValidator {
 // Supporting Types
 // ============================================================================
 
-/// Hint definition
+// Hint definition
 #[derive(Debug, Clone)]
 pub struct HintDefinition {
     pub name: String,
@@ -625,7 +625,7 @@ pub struct HintDefinition {
     pub parameters: Vec<String>,
 }
 
-/// Hint category
+// Hint category
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HintCategory {
     AccessPath,
@@ -639,12 +639,12 @@ pub enum HintCategory {
     Cardinality,
 }
 
-/// Hint validation rule
+// Hint validation rule
 trait HintValidationRule: Send + Sync {
     fn validate(&self, hint: &OptimizerHint) -> Result<()>;
 }
 
-/// Conflict rule
+// Conflict rule
 #[derive(Debug, Clone)]
 struct ConflictRule {
     hint1: String,
@@ -653,7 +653,7 @@ struct ConflictRule {
     message: String,
 }
 
-/// Conflict severity
+// Conflict severity
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ConflictSeverity {
     Error,
@@ -665,9 +665,9 @@ enum ConflictSeverity {
 // Hint Reporter
 // ============================================================================
 
-/// Hint usage reporter
+// Hint usage reporter
 pub struct HintReporter {
-    /// Hint usage statistics
+    // Hint usage statistics
     usage_stats: std::sync::RwLock<HashMap<String, HintUsageStats>>,
 }
 
@@ -678,7 +678,7 @@ impl HintReporter {
         }
     }
 
-    /// Record hint usage
+    // Record hint usage
     pub fn record_usage(&self, hint: &OptimizerHint, effective: bool) {
         let hint_name = format!("{:?}", hint);
         let mut stats = self.usage_stats.write().unwrap();
@@ -696,7 +696,7 @@ impl HintReporter {
         entry.last_used = std::time::SystemTime::now();
     }
 
-    /// Get usage report
+    // Get usage report
     pub fn get_usage_report(&self) -> Vec<(String, HintUsageStats)> {
         self.usage_stats
             .read()
@@ -706,7 +706,7 @@ impl HintReporter {
             .collect()
     }
 
-    /// Get effectiveness ratio
+    // Get effectiveness ratio
     pub fn get_effectiveness_ratio(&self, hint_name: &str) -> f64 {
         let stats = self.usage_stats.read().unwrap();
 
@@ -720,7 +720,7 @@ impl HintReporter {
     }
 }
 
-/// Hint usage statistics
+// Hint usage statistics
 #[derive(Debug, Clone)]
 pub struct HintUsageStats {
     pub total_uses: u64,

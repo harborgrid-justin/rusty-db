@@ -32,36 +32,36 @@ use std::collections::HashMap;
 use parking_lot::RwLock;
 use regex::Regex;
 
-/// Security predicate type
+// Security predicate type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SecurityPredicate {
-    /// Static SQL predicate
+    // Static SQL predicate
     Static(String),
-    /// Dynamic predicate based on context
+    // Dynamic predicate based on context
     Dynamic {
-        /// Template with placeholders
+        // Template with placeholders
         template: String,
-        /// Context variables to substitute
+        // Context variables to substitute
         variables: Vec<String>,
     },
-    /// Function-based predicate
+    // Function-based predicate
     Function {
-        /// Function name
+        // Function name
         name: String,
-        /// Function arguments
+        // Function arguments
         args: Vec<String>,
     },
-    /// Composite predicate (AND/OR)
+    // Composite predicate (AND/OR)
     Composite {
-        /// Operator (AND/OR)
+        // Operator (AND/OR)
         operator: String,
-        /// Sub-predicates
+        // Sub-predicates
         predicates: Vec<SecurityPredicate>,
     },
 }
 
 impl SecurityPredicate {
-    /// Evaluate predicate with context
+    // Evaluate predicate with context
     pub fn evaluate(&self, context: &HashMap<String, String>) -> Result<String> {
         match self {
             Self::Static(sql) => Ok(sql.clone()),
@@ -102,7 +102,7 @@ impl SecurityPredicate {
         }
     }
 
-    /// Parse predicate from string
+    // Parse predicate from string
     pub fn parse(s: &str) -> Result<Self> {
         // Simple parser - in production would use proper SQL parser
         if s.contains("${") {
@@ -125,50 +125,50 @@ impl SecurityPredicate {
     }
 }
 
-/// VPD policy scope
+// VPD policy scope
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PolicyScope {
-    /// Apply to SELECT queries
+    // Apply to SELECT queries
     Select,
-    /// Apply to INSERT operations
+    // Apply to INSERT operations
     Insert,
-    /// Apply to UPDATE operations
+    // Apply to UPDATE operations
     Update,
-    /// Apply to DELETE operations
+    // Apply to DELETE operations
     Delete,
-    /// Apply to all DML operations
+    // Apply to all DML operations
     All,
 }
 
-/// VPD policy
+// VPD policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VpdPolicy {
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Table name
+    // Table name
     pub table_name: String,
-    /// Schema name (optional)
+    // Schema name (optional)
     pub schema_name: Option<String>,
-    /// Security predicate
+    // Security predicate
     pub predicate: SecurityPredicate,
-    /// Policy scope
+    // Policy scope
     pub scope: Vec<PolicyScope>,
-    /// Enabled flag
+    // Enabled flag
     pub enabled: bool,
-    /// Priority (higher applies first)
+    // Priority (higher applies first)
     pub priority: i32,
-    /// Apply to specific users (None = all users)
+    // Apply to specific users (None = all users)
     pub apply_to_users: Option<Vec<String>>,
-    /// Apply to specific roles (None = all roles)
+    // Apply to specific roles (None = all roles)
     pub apply_to_roles: Option<Vec<String>>,
-    /// Exempt users (bypass policy)
+    // Exempt users (bypass policy)
     pub exempt_users: Option<Vec<String>>,
-    /// Created timestamp
+    // Created timestamp
     pub created_at: i64,
 }
 
 impl VpdPolicy {
-    /// Create a new VPD policy
+    // Create a new VPD policy
     pub fn new(name: String, table_name: String, predicate: SecurityPredicate) -> Self {
         Self {
             name,
@@ -185,7 +185,7 @@ impl VpdPolicy {
         }
     }
 
-    /// Check if policy applies to user and operation
+    // Check if policy applies to user and operation
     pub fn applies_to(
         &self,
         user_id: &str,
@@ -226,60 +226,60 @@ impl VpdPolicy {
     }
 }
 
-/// Column security policy
+// Column security policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnPolicy {
-    /// Policy name
+    // Policy name
     pub name: String,
-    /// Table name
+    // Table name
     pub table_name: String,
-    /// Column name
+    // Column name
     pub column_name: String,
-    /// Action when policy applies
+    // Action when policy applies
     pub action: ColumnAction,
-    /// Apply to specific users
+    // Apply to specific users
     pub apply_to_users: Option<Vec<String>>,
-    /// Apply to specific roles
+    // Apply to specific roles
     pub apply_to_roles: Option<Vec<String>>,
-    /// Enabled flag
+    // Enabled flag
     pub enabled: bool,
 }
 
-/// Column security action
+// Column security action
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ColumnAction {
-    /// Hide column from result
+    // Hide column from result
     Hide,
-    /// Return NULL
+    // Return NULL
     Nullify,
-    /// Redact with mask
+    // Redact with mask
     Redact(String),
 }
 
-/// Query rewrite result
+// Query rewrite result
 #[derive(Debug, Clone)]
 pub struct RewrittenQuery {
-    /// Original query
+    // Original query
     pub original: String,
-    /// Rewritten query with security predicates
+    // Rewritten query with security predicates
     pub rewritten: String,
-    /// Applied policies
+    // Applied policies
     pub applied_policies: Vec<String>,
-    /// Hidden columns
+    // Hidden columns
     pub hidden_columns: Vec<String>,
 }
 
-/// Main VPD Engine
+// Main VPD Engine
 pub struct VpdEngine {
-    /// Row-level security policies
+    // Row-level security policies
     row_policies: RwLock<HashMap<String, VpdPolicy>>,
-    /// Column-level security policies
+    // Column-level security policies
     column_policies: RwLock<HashMap<String, ColumnPolicy>>,
-    /// Policy statistics
+    // Policy statistics
     stats: RwLock<VpdStats>,
 }
 
-/// VPD statistics
+// VPD statistics
 #[derive(Debug, Default)]
 struct VpdStats {
     total_rewrites: u64,
@@ -289,7 +289,7 @@ struct VpdStats {
 }
 
 impl VpdEngine {
-    /// Create a new VPD engine
+    // Create a new VPD engine
     pub fn new() -> Result<Self> {
         Ok(Self {
             row_policies: RwLock::new(HashMap::new()),
@@ -298,7 +298,7 @@ impl VpdEngine {
         })
     }
 
-    /// Create a row-level security policy
+    // Create a row-level security policy
     pub fn create_policy(&mut self, table_name: &str, predicate: &str) -> Result<()> {
         let policy_name = format!("vpd_{}", table_name);
         let pred = SecurityPredicate::parse(predicate)?;
@@ -313,20 +313,20 @@ impl VpdEngine {
         Ok(())
     }
 
-    /// Create a policy with custom configuration
+    // Create a policy with custom configuration
     pub fn create_policy_custom(&mut self, policy: VpdPolicy) -> Result<()> {
         self.row_policies.write().insert(policy.name.clone(), policy);
         Ok(())
     }
 
-    /// Drop a policy
+    // Drop a policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
         self.row_policies.write().remove(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         Ok(())
     }
 
-    /// Enable a policy
+    // Enable a policy
     pub fn enable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
         let policy = policies.get_mut(name)
@@ -335,7 +335,7 @@ impl VpdEngine {
         Ok(())
     }
 
-    /// Disable a policy
+    // Disable a policy
     pub fn disable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
         let policy = policies.get_mut(name)
@@ -344,7 +344,7 @@ impl VpdEngine {
         Ok(())
     }
 
-    /// Create a column security policy
+    // Create a column security policy
     pub fn create_column_policy(
         &mut self,
         name: String,
@@ -366,7 +366,7 @@ impl VpdEngine {
         Ok(())
     }
 
-    /// Rewrite query with security predicates
+    // Rewrite query with security predicates
     pub fn rewrite_query(
         &self,
         query: &str,
@@ -421,7 +421,7 @@ impl VpdEngine {
         })
     }
 
-    /// Extract table name from query (simplified)
+    // Extract table name from query (simplified)
     fn extract_table_name(&self, query: &str) -> Result<String> {
         // Simplified extraction - real implementation would use SQL parser
         let from_regex = Regex::new(r"(?i)FROM\s+([a-zA-Z0-9_]+)")
@@ -434,7 +434,7 @@ impl VpdEngine {
         }
     }
 
-    /// Inject security predicate into query
+    // Inject security predicate into query
     fn inject_predicate(&self, query: &str, predicate: &str) -> Result<String> {
         // Simplified injection - real implementation would use SQL AST manipulation
         let where_regex = Regex::new(r"(?i)(WHERE\s+)")
@@ -462,7 +462,7 @@ impl VpdEngine {
         }
     }
 
-    /// Apply column-level security policies
+    // Apply column-level security policies
     fn apply_column_policies(
         &self,
         query: &mut String,
@@ -512,7 +512,7 @@ impl VpdEngine {
         Ok(hidden_columns)
     }
 
-    /// Remove column from SELECT list
+    // Remove column from SELECT list
     fn remove_column(&self, query: &str, column_name: &str) -> Result<String> {
         // Simplified - real implementation would parse SELECT list properly
         let pattern = format!(r"(?i),?\s*{}\s*,?", regex::escape(column_name));
@@ -521,7 +521,7 @@ impl VpdEngine {
         Ok(regex.replace_all(query, "").to_string())
     }
 
-    /// Replace column with NULL
+    // Replace column with NULL
     fn nullify_column(&self, query: &str, column_name: &str) -> Result<String> {
         let pattern = format!(r"(?i)\b{}\b", regex::escape(column_name));
         let regex = Regex::new(&pattern)
@@ -529,7 +529,7 @@ impl VpdEngine {
         Ok(regex.replace_all(query, "NULL").to_string())
     }
 
-    /// Replace column with redacted value
+    // Replace column with redacted value
     fn redact_column(&self, query: &str, column_name: &str, mask: &str) -> Result<String> {
         let pattern = format!(r"(?i)\b{}\b", regex::escape(column_name));
         let regex = Regex::new(&pattern)
@@ -537,22 +537,22 @@ impl VpdEngine {
         Ok(regex.replace_all(query, mask).to_string())
     }
 
-    /// List all policies
+    // List all policies
     pub fn list_policies(&self) -> Vec<String> {
         self.row_policies.read().keys().cloned().collect()
     }
 
-    /// Get policy details
+    // Get policy details
     pub fn get_policy(&self, name: &str) -> Option<VpdPolicy> {
         self.row_policies.read().get(name).cloned()
     }
 
-    /// List all column policies
+    // List all column policies
     pub fn list_column_policies(&self) -> Vec<String> {
         self.column_policies.read().keys().cloned().collect()
     }
 
-    /// Get VPD statistics
+    // Get VPD statistics
     pub fn get_stats(&self) -> (u64, u64, u64, u64) {
         let stats = self.stats.read();
         (stats.total_rewrites, stats.policies_applied, stats.columns_hidden, stats.policy_violations)

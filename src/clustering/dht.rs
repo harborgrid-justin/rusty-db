@@ -1,17 +1,17 @@
-/// Distributed Hash Table (DHT) Implementation
-///
-/// This module implements a distributed hash table for data partitioning and routing.
-/// Features include:
-/// - Consistent hashing with virtual nodes for balanced distribution
-/// - Range-based partitioning as an alternative strategy
-/// - Automatic rebalancing when nodes join or leave
-/// - Hot spot detection and dynamic shard splitting
-/// - Replication factor configuration
-///
-/// The DHT is used for:
-/// - Determining which node stores which data
-/// - Routing queries to the correct nodes
-/// - Rebalancing data across the cluster
+// Distributed Hash Table (DHT) Implementation
+//
+// This module implements a distributed hash table for data partitioning and routing.
+// Features include:
+// - Consistent hashing with virtual nodes for balanced distribution
+// - Range-based partitioning as an alternative strategy
+// - Automatic rebalancing when nodes join or leave
+// - Hot spot detection and dynamic shard splitting
+// - Replication factor configuration
+//
+// The DHT is used for:
+// - Determining which node stores which data
+// - Routing queries to the correct nodes
+// - Rebalancing data across the cluster
 
 use std::collections::HashSet;
 use std::collections::hash_map::DefaultHasher;
@@ -22,39 +22,39 @@ use std::hash::{Hash, Hasher};
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
-/// Hash ring position (0 to 2^64-1)
+// Hash ring position (0 to 2^64-1)
 pub type HashPosition = u64;
 
-/// Node identifier in DHT
+// Node identifier in DHT
 pub type DhtNodeId = String;
 
-/// Partition/Shard identifier
+// Partition/Shard identifier
 pub type ShardId = u64;
 
-/// Key type for data storage
+// Key type for data storage
 pub type DataKey = Vec<u8>;
 
-/// Hashing strategy for the DHT
+// Hashing strategy for the DHT
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HashStrategy {
-    /// Consistent hashing with virtual nodes
+    // Consistent hashing with virtual nodes
     ConsistentHash,
-    /// Range-based partitioning
+    // Range-based partitioning
     RangeBased,
-    /// Rendezvous hashing (HRW - Highest Random Weight)
+    // Rendezvous hashing (HRW - Highest Random Weight)
     RendezvousHash,
 }
 
-/// Virtual node in the hash ring
+// Virtual node in the hash ring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VirtualNode {
-    /// Position on the hash ring
+    // Position on the hash ring
     pub position: HashPosition,
-    /// Actual node ID this virtual node belongs to
+    // Actual node ID this virtual node belongs to
     pub node_id: DhtNodeId,
-    /// Virtual node index (0..num_vnodes-1)
+    // Virtual node index (0..num_vnodes-1)
     pub vnode_index: u32,
-    /// Timestamp when added to ring
+    // Timestamp when added to ring
     pub added_at: SystemTime,
 }
 
@@ -69,22 +69,22 @@ impl VirtualNode {
     }
 }
 
-/// Range partition definition
+// Range partition definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RangePartition {
-    /// Partition ID
+    // Partition ID
     pub id: ShardId,
-    /// Start of range (inclusive)
+    // Start of range (inclusive)
     pub start: HashPosition,
-    /// End of range (exclusive)
+    // End of range (exclusive)
     pub end: HashPosition,
-    /// Primary node responsible for this range
+    // Primary node responsible for this range
     pub primary_node: DhtNodeId,
-    /// Replica nodes for this range
+    // Replica nodes for this range
     pub replicas: Vec<DhtNodeId>,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: SystemTime,
-    /// Last split timestamp (if any)
+    // Last split timestamp (if any)
     pub last_split: Option<SystemTime>,
 }
 
@@ -101,7 +101,7 @@ impl RangePartition {
         }
     }
 
-    /// Check if hash falls within this partition
+    // Check if hash falls within this partition
     pub fn contains(&self, hash: HashPosition) -> bool {
         if self.start < self.end {
             hash >= self.start && hash < self.end
@@ -111,7 +111,7 @@ impl RangePartition {
         }
     }
 
-    /// Get size of partition
+    // Get size of partition
     pub fn size(&self) -> u64 {
         if self.start < self.end {
             self.end - self.start
@@ -121,20 +121,20 @@ impl RangePartition {
     }
 }
 
-/// Hot spot detection metrics
+// Hot spot detection metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HotSpotMetrics {
-    /// Shard ID
+    // Shard ID
     pub shard_id: ShardId,
-    /// Requests per second
+    // Requests per second
     pub requests_per_second: f64,
-    /// Data size in bytes
+    // Data size in bytes
     pub data_size: u64,
-    /// Number of keys
+    // Number of keys
     pub key_count: u64,
-    /// Average key size
+    // Average key size
     pub avg_key_size: u64,
-    /// Last measurement time
+    // Last measurement time
     pub measured_at: SystemTime,
 }
 
@@ -150,32 +150,32 @@ impl HotSpotMetrics {
         }
     }
 
-    /// Check if this shard is a hot spot
+    // Check if this shard is a hot spot
     pub fn is_hot_spot(&self, threshold_rps: f64, threshold_size: u64) -> bool {
         self.requests_per_second > threshold_rps || self.data_size > threshold_size
     }
 }
 
-/// Rebalancing operation
+// Rebalancing operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RebalanceOperation {
-    /// Operation ID
+    // Operation ID
     pub id: String,
-    /// Source shard
+    // Source shard
     pub source_shard: ShardId,
-    /// Target shard (for splits)
+    // Target shard (for splits)
     pub target_shard: Option<ShardId>,
-    /// Source node
+    // Source node
     pub source_node: DhtNodeId,
-    /// Target node
+    // Target node
     pub target_node: DhtNodeId,
-    /// Range to move
+    // Range to move
     pub hash_range: (HashPosition, HashPosition),
-    /// Status
+    // Status
     pub status: RebalanceStatus,
-    /// Started at
+    // Started at
     pub started_at: SystemTime,
-    /// Completed at
+    // Completed at
     pub completed_at: Option<SystemTime>,
 }
 
@@ -188,22 +188,22 @@ pub enum RebalanceStatus {
     Cancelled,
 }
 
-/// DHT configuration
+// DHT configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DhtConfig {
-    /// Hash strategy to use
+    // Hash strategy to use
     pub strategy: HashStrategy,
-    /// Number of virtual nodes per physical node
+    // Number of virtual nodes per physical node
     pub virtual_nodes_per_node: u32,
-    /// Replication factor
+    // Replication factor
     pub replication_factor: usize,
-    /// Hot spot detection threshold (requests/sec)
+    // Hot spot detection threshold (requests/sec)
     pub hot_spot_rps_threshold: f64,
-    /// Hot spot detection threshold (data size in bytes)
+    // Hot spot detection threshold (data size in bytes)
     pub hot_spot_size_threshold: u64,
-    /// Enable automatic rebalancing
+    // Enable automatic rebalancing
     pub auto_rebalance: bool,
-    /// Minimum time between rebalances
+    // Minimum time between rebalances
     pub rebalance_interval_secs: u64,
 }
 
@@ -221,25 +221,25 @@ impl Default for DhtConfig {
     }
 }
 
-/// Main DHT structure
+// Main DHT structure
 pub struct DistributedHashTable {
-    /// Configuration
+    // Configuration
     config: DhtConfig,
-    /// Hash ring for consistent hashing (position -> virtual node)
+    // Hash ring for consistent hashing (position -> virtual node)
     hash_ring: Arc<RwLock<BTreeMap<HashPosition, VirtualNode>>>,
-    /// Range partitions for range-based partitioning
+    // Range partitions for range-based partitioning
     partitions: Arc<RwLock<Vec<RangePartition>>>,
-    /// Node metadata
+    // Node metadata
     nodes: Arc<RwLock<HashMap<DhtNodeId, NodeMetadata>>>,
-    /// Hot spot metrics
+    // Hot spot metrics
     metrics: Arc<RwLock<HashMap<ShardId, HotSpotMetrics>>>,
-    /// Active rebalancing operations
+    // Active rebalancing operations
     rebalance_ops: Arc<RwLock<Vec<RebalanceOperation>>>,
-    /// Next shard ID
+    // Next shard ID
     next_shard_id: Arc<RwLock<ShardId>>,
 }
 
-/// Node metadata in DHT
+// Node metadata in DHT
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeMetadata {
     pub id: DhtNodeId,
@@ -292,14 +292,14 @@ impl DistributedHashTable {
         }
     }
 
-    /// Hash a key to a position on the ring
+    // Hash a key to a position on the ring
     fn hash_key(&self, key: &[u8]) -> HashPosition {
         let mut hasher = DefaultHasher::new();
         key.hash(&mut hasher);
         hasher.finish()
     }
 
-    /// Hash node ID with virtual node index
+    // Hash node ID with virtual node index
     fn hash_vnode(&self, node_id: &str, vnode_index: u32) -> HashPosition {
         let mut hasher = DefaultHasher::new();
         node_id.hash(&mut hasher);
@@ -307,7 +307,7 @@ impl DistributedHashTable {
         hasher.finish()
     }
 
-    /// Add a node to the DHT
+    // Add a node to the DHT
     pub fn add_node(&self, metadata: NodeMetadata) -> Result<(), DbError> {
         let node_id = metadata.id.clone();
 
@@ -331,7 +331,7 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Add node using consistent hashing
+    // Add node using consistent hashing
     fn add_node_consistent_hash(&self, mut metadata: NodeMetadata) -> Result<(), DbError> {
         let mut ring = self.hash_ring.write().unwrap();
         let node_id = metadata.id.clone();
@@ -351,7 +351,7 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Add node using range-based partitioning
+    // Add node using range-based partitioning
     fn add_node_range_based(&self, metadata: NodeMetadata) -> Result<(), DbError> {
         let mut partitions = self.partitions.write().unwrap();
         let mut nodes = self.nodes.write().unwrap();
@@ -376,7 +376,7 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Add node using rendezvous hashing
+    // Add node using rendezvous hashing
     fn add_node_rendezvous(&self, metadata: NodeMetadata) -> Result<(), DbError> {
         let mut nodes = self.nodes.write().unwrap();
         nodes.insert(metadata.id.clone(), metadata);
@@ -384,7 +384,7 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Remove a node from the DHT
+    // Remove a node from the DHT
     pub fn remove_node(&self, node_id: &str) -> Result<(), DbError> {
         match self.config.strategy {
             HashStrategy::ConsistentHash => {
@@ -411,7 +411,7 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Remove node from consistent hash ring
+    // Remove node from consistent hash ring
     fn remove_node_consistent_hash(&self, node_id: &str) -> Result<(), DbError> {
         let mut ring = self.hash_ring.write().unwrap();
 
@@ -421,7 +421,7 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Remove node from range-based partitions
+    // Remove node from range-based partitions
     fn remove_node_range_based(&self, node_id: &str) -> Result<(), DbError> {
         let mut partitions = self.partitions.write().unwrap();
         let nodes = self.nodes.read().unwrap();
@@ -444,13 +444,13 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Remove node from rendezvous hash
+    // Remove node from rendezvous hash
     fn remove_node_rendezvous(&self, _node_id: &str) -> Result<(), DbError> {
         // Node removal handled by nodes map
         Ok(())
     }
 
-    /// Find which node should handle a key
+    // Find which node should handle a key
     pub fn get_node_for_key(&self, key: &[u8]) -> Result<DhtNodeId, DbError> {
         match self.config.strategy {
             HashStrategy::ConsistentHash => self.get_node_consistent_hash(key),
@@ -459,7 +459,7 @@ impl DistributedHashTable {
         }
     }
 
-    /// Get node using consistent hashing
+    // Get node using consistent hashing
     fn get_node_consistent_hash(&self, key: &[u8]) -> Result<DhtNodeId, DbError> {
         let hash = self.hash_key(key);
         let ring = self.hash_ring.read().unwrap();
@@ -481,7 +481,7 @@ impl DistributedHashTable {
         Err(DbError::Internal("No nodes available".into()))
     }
 
-    /// Get node using range-based partitioning
+    // Get node using range-based partitioning
     fn get_node_range_based(&self, key: &[u8]) -> Result<DhtNodeId, DbError> {
         let hash = self.hash_key(key);
         let partitions = self.partitions.read().unwrap();
@@ -495,7 +495,7 @@ impl DistributedHashTable {
         Err(DbError::Internal("No partition found for key".into()))
     }
 
-    /// Get node using rendezvous hashing
+    // Get node using rendezvous hashing
     fn get_node_rendezvous(&self, key: &[u8]) -> Result<DhtNodeId, DbError> {
 
         let nodes = self.nodes.read().unwrap();
@@ -522,7 +522,7 @@ impl DistributedHashTable {
         best_node.ok_or_else(|| DbError::Internal("No node found".into()))
     }
 
-    /// Get replica nodes for a key
+    // Get replica nodes for a key
     pub fn get_replica_nodes(&self, key: &[u8]) -> Result<Vec<DhtNodeId>, DbError> {
         let primary = self.get_node_for_key(key)?;
         let mut replicas = vec![primary.clone()];
@@ -592,7 +592,7 @@ impl DistributedHashTable {
         Ok(replicas)
     }
 
-    /// Update metrics for hot spot detection
+    // Update metrics for hot spot detection
     pub fn update_metrics(&self, shard_id: ShardId, rps: f64, data_size: u64, key_count: u64) {
         let mut metrics = self.metrics.write().unwrap();
         let metric = metrics.entry(shard_id).or_insert_with(|| HotSpotMetrics::new(shard_id));
@@ -604,7 +604,7 @@ impl DistributedHashTable {
         metric.measured_at = SystemTime::now();
     }
 
-    /// Detect hot spots
+    // Detect hot spots
     pub fn detect_hot_spots(&self) -> Vec<ShardId> {
         let metrics = self.metrics.read().unwrap();
         metrics
@@ -617,7 +617,7 @@ impl DistributedHashTable {
             .collect()
     }
 
-    /// Split a hot partition
+    // Split a hot partition
     pub fn split_hot_partition(&self, shardid: ShardId) -> Result<(), DbError> {
         let mut partitions = self.partitions.write().unwrap();
         let nodes = self.nodes.read().unwrap();
@@ -635,7 +635,7 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Split a partition at an index
+    // Split a partition at an index
     fn split_partition(
         &self,
         idx: usize,
@@ -657,7 +657,7 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Find largest partition
+    // Find largest partition
     fn find_largest_partition(&self, partitions: &[RangePartition]) -> Option<usize> {
         partitions
             .iter()
@@ -666,7 +666,7 @@ impl DistributedHashTable {
             .map(|(i, _)| i)
     }
 
-    /// Find least loaded node
+    // Find least loaded node
     fn find_least_loaded_node(
         &self,
         nodes: &HashMap<DhtNodeId, NodeMetadata>,
@@ -679,7 +679,7 @@ impl DistributedHashTable {
             .map(|n| n.id.clone())
     }
 
-    /// Trigger rebalancing
+    // Trigger rebalancing
     pub fn trigger_rebalance(&self) -> Result<(), DbError> {
         // Detect hot spots
         let hot_spots = self.detect_hot_spots();
@@ -691,12 +691,12 @@ impl DistributedHashTable {
         Ok(())
     }
 
-    /// Get all nodes
+    // Get all nodes
     pub fn get_nodes(&self) -> Vec<NodeMetadata> {
         self.nodes.read().unwrap().values().cloned().collect()
     }
 
-    /// Get partition info
+    // Get partition info
     pub fn get_partitions(&self) -> Vec<RangePartition> {
         self.partitions.read().unwrap().clone()
     }

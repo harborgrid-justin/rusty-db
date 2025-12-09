@@ -13,7 +13,7 @@ use parking_lot::RwLock;
 use std::time::{Duration};
 
 
-/// Query execution operator types
+// Query execution operator types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum OperatorType {
     TableScan,
@@ -61,7 +61,7 @@ impl fmt::Display for OperatorType {
     }
 }
 
-/// Wait event categories
+// Wait event categories
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum WaitEventType {
     CpuExecution,
@@ -95,7 +95,7 @@ impl fmt::Display for WaitEventType {
     }
 }
 
-/// Wait event details
+// Wait event details
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WaitEvent {
     pub event_type: WaitEventType,
@@ -120,7 +120,7 @@ impl WaitEvent {
     }
 }
 
-/// Execution plan operator node
+// Execution plan operator node
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlanOperator {
     pub id: usize,
@@ -176,7 +176,7 @@ impl PlanOperator {
         self
     }
 
-    /// Calculate total time including children
+    // Calculate total time including children
     pub fn total_time(&self) -> Duration {
         let mut total = self.actual_time.unwrap_or(Duration::ZERO);
         for child in &self.children {
@@ -185,7 +185,7 @@ impl PlanOperator {
         total
     }
 
-    /// Calculate total rows including children
+    // Calculate total rows including children
     pub fn total_rows(&self) -> u64 {
         let mut total = self.actual_rows.unwrap_or(0);
         for child in &self.children {
@@ -194,7 +194,7 @@ impl PlanOperator {
         total
     }
 
-    /// Check for estimation errors
+    // Check for estimation errors
     pub fn estimation_accuracy(&self) -> Option<f64> {
         self.actual_rows.map(|actual| {
             if self.estimated_rows == 0 {
@@ -211,7 +211,7 @@ impl PlanOperator {
         })
     }
 
-    /// Format as tree for display
+    // Format as tree for display
     pub fn format_tree(&self, indent: usize) -> String {
         let mut output = String::new();
         let prefix = "  ".repeat(indent);
@@ -263,7 +263,7 @@ impl PlanOperator {
     }
 }
 
-/// Query execution profile
+// Query execution profile
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryProfile {
     pub query_id: u64,
@@ -406,7 +406,7 @@ impl QueryProfile {
     }
 }
 
-/// Query profiler that tracks and stores query execution profiles
+// Query profiler that tracks and stores query execution profiles
 pub struct QueryProfiler {
     profiles: Arc<RwLock<VecDeque<QueryProfile>>>,
     max_profiles: usize,
@@ -537,7 +537,7 @@ impl Default for QueryProfiler {
     }
 }
 
-/// Profile builder for constructing query profiles incrementally
+// Profile builder for constructing query profiles incrementally
 pub struct ProfileBuilder {
     profile: QueryProfile,
     parse_start: Option<Instant>,
@@ -702,5 +702,3 @@ assert_eq!(*profile.total_execution_time(), Duration::from_millis(130));
         assert!(profile.parse_time >= Duration::from_millis(10));
     }
 }
-
-

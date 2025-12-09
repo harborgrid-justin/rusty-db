@@ -9,7 +9,7 @@ use super::{Event, EventValue, Watermark};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
-use std::time::{Duration};
+use std::time::Duration;
 
 /// Window identifier
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -1072,5 +1072,3 @@ use std::time::UNIX_EPOCH;
         // Results depend on trigger policy and watermark
     }
 }
-
-

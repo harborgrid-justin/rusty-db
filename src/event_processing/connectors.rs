@@ -13,7 +13,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
 
 /// Connector type
 #[derive(Debug, Clone, Serialize, Deserialize)]

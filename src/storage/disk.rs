@@ -12,7 +12,7 @@ use std::time::Instant;
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
-/// I/O operation priority levels
+// I/O operation priority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum IoPriority {
     Low = 0,
@@ -21,7 +21,7 @@ pub enum IoPriority {
     Critical = 3,
 }
 
-/// I/O operation type
+// I/O operation type
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum IoOpType {
     Read,
@@ -29,7 +29,7 @@ pub enum IoOpType {
     Sync,
 }
 
-/// I/O operation descriptor
+// I/O operation descriptor
 #[derive(Debug, Clone)]
 struct IoOperation {
     op_type: IoOpType,
@@ -64,7 +64,7 @@ impl IoOperation {
     }
 }
 
-/// I/O scheduler with deadline-aware prioritization
+// I/O scheduler with deadline-aware prioritization
 struct IoScheduler {
     read_queue: VecDeque<IoOperation>,
     write_queue: VecDeque<IoOperation>,
@@ -138,7 +138,7 @@ impl IoScheduler {
     }
 }
 
-/// Read-ahead buffer for sequential access patterns
+// Read-ahead buffer for sequential access patterns
 struct ReadAheadBuffer {
     buffer: HashMap<PageId, Vec<u8>>,
     max_pages: usize,
@@ -205,7 +205,7 @@ impl ReadAheadBuffer {
     }
 }
 
-/// Write-behind buffer for batching writes
+// Write-behind buffer for batching writes
 struct WriteBehindBuffer {
     buffer: HashMap<PageId, Vec<u8>>,
     max_pages: usize,
@@ -275,7 +275,7 @@ impl WriteBehindBuffer {
     }
 }
 
-/// Direct I/O configuration
+// Direct I/O configuration
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct DirectIoConfig {
@@ -294,7 +294,7 @@ impl Default for DirectIoConfig {
     }
 }
 
-/// Hardware-accelerated CRC32C checksum (SSE4.2 on x86_64)
+// Hardware-accelerated CRC32C checksum (SSE4.2 on x86_64)
 #[inline]
 pub fn hardware_crc32c(data: &[u8]) -> u32 {
     #[cfg(target_arch = "x86_64")]
@@ -333,7 +333,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
     !crc
 }
 
-/// Software fallback CRC32C
+// Software fallback CRC32C
 fn software_crc32c(data: &[u8]) -> u32 {
     const CRC32C_TABLE: [u32; 256] = generate_crc32c_table();
     let mut crc: u32 = 0xFFFFFFFF;
@@ -365,7 +365,7 @@ const fn generate_crc32c_table() -> [u32; 256] {
     table
 }
 
-/// Vectored I/O batch for efficient multi-page operations
+// Vectored I/O batch for efficient multi-page operations
 #[derive(Debug, Clone)]
 pub struct VectoredIoBatch {
     pub pages: Vec<Page>,
@@ -403,7 +403,7 @@ impl VectoredIoBatch {
     }
 }
 
-/// Write coalescing engine for merging adjacent writes
+// Write coalescing engine for merging adjacent writes
 struct WriteCoalescer {
     pending_writes: HashMap<PageId, (Page, u64)>,
     coalesce_window_us: u64,
@@ -456,7 +456,7 @@ impl WriteCoalescer {
     }
 }
 
-/// io_uring operation descriptor (placeholder for future implementation)
+// io_uring operation descriptor (placeholder for future implementation)
 #[derive(Debug, Clone)]
 pub struct IoUringOp {
     pub op_type: IoOpType,
@@ -488,7 +488,7 @@ impl IoUringOp {
     }
 }
 
-/// io_uring interface (simulated for now, real implementation would use io-uring crate)
+// io_uring interface (simulated for now, real implementation would use io-uring crate)
 pub struct IoUring {
     submission_queue: VecDeque<IoUringOp>,
     completion_queue: VecDeque<(u64, Result<usize>)>,
@@ -534,7 +534,7 @@ impl IoUring {
     }
 }
 
-/// Advanced disk manager with I/O optimizations
+// Advanced disk manager with I/O optimizations
 #[derive(Clone)]
 pub struct DiskManager {
     data_file: Arc<Mutex<File>>,
@@ -793,14 +793,14 @@ impl DiskManager {
         *self.num_pages.lock().unwrap_or_else(|e| e.into_inner())
     }
 
-    /// Async read operation (simulated - would use io_uring in production)
+    // Async read operation (simulated - would use io_uring in production)
     pub fn read_page_async(&self, page_id: PageId, priority: IoPriority) -> Result<()> {
         let op = IoOperation::new(IoOpType::Read, page_id, priority);
         self.scheduler.lock().unwrap().schedule(op);
         Ok(())
     }
 
-    /// Async write operation (simulated - would use io_uring in production)
+    // Async write operation (simulated - would use io_uring in production)
     pub fn write_page_async(&self, page: &Page, priority: IoPriority) -> Result<()> {
         let op = IoOperation::new(IoOpType::Write, page.id, priority);
         self.scheduler.lock().unwrap().schedule(op);
@@ -813,7 +813,7 @@ impl DiskManager {
         Ok(())
     }
 
-    /// Process pending async operations
+    // Process pending async operations
     pub fn process_async_ops(&self, max_ops: usize) -> Result<usize> {
         let mut processed = 0;
 
@@ -852,7 +852,7 @@ impl DiskManager {
         *self.stats.write() = DiskStats::default();
     }
 
-    /// Vectored read - read multiple pages in a single syscall
+    // Vectored read - read multiple pages in a single syscall
     pub fn read_pages_vectored(&self, page_ids: &[PageId]) -> Result<Vec<Page>> {
         let start = Instant::now();
 
@@ -889,7 +889,7 @@ impl DiskManager {
         Ok(pages)
     }
 
-    /// Vectored write - write multiple pages in a single syscall
+    // Vectored write - write multiple pages in a single syscall
     pub fn write_pages_vectored(&self, pages: &[Page]) -> Result<()> {
         let start = Instant::now();
 
@@ -928,7 +928,7 @@ impl DiskManager {
         Ok(())
     }
 
-    /// Write with coalescing - batches writes automatically
+    // Write with coalescing - batches writes automatically
     pub fn write_page_coalesced(&self, page: &Page) -> Result<()> {
         let offset = page.id as u64 * self.page_size as u64;
 
@@ -948,7 +948,7 @@ impl DiskManager {
         Ok(())
     }
 
-    /// Flush coalesced writes
+    // Flush coalesced writes
     pub fn flush_coalesced_writes(&self) -> Result<()> {
         let batch = {
             let mut coalescer = self.write_coalescer.lock()
@@ -963,7 +963,7 @@ impl DiskManager {
         Ok(())
     }
 
-    /// Submit async read via io_uring
+    // Submit async read via io_uring
     pub fn read_page_io_uring(&self, page_id: PageId) -> Result<()> {
         let offset = page_id as u64 * self.page_size as u64;
         let op = IoUringOp::read(page_id, offset, self.page_size);
@@ -977,7 +977,7 @@ impl DiskManager {
         Ok(())
     }
 
-    /// Submit async write via io_uring
+    // Submit async write via io_uring
     pub fn write_page_io_uring(&self, page: &Page) -> Result<()> {
         let offset = page.id as u64 * self.page_size as u64;
         let op = IoUringOp::write(page.id, offset, page.data.clone());
@@ -991,14 +991,14 @@ impl DiskManager {
         Ok(())
     }
 
-    /// Submit pending io_uring operations
+    // Submit pending io_uring operations
     pub fn submit_io_uring_batch(&self) -> Result<usize> {
         let mut io_uring = self.io_uring.lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         io_uring.submit_batch()
     }
 
-    /// Wait for io_uring completions
+    // Wait for io_uring completions
     pub fn wait_io_uring_completions(&self, min_complete: usize) -> Result<Vec<(u64, Result<usize>)>> {
         let mut io_uring = self.io_uring.lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
@@ -1012,13 +1012,13 @@ impl DiskManager {
         Ok(completions)
     }
 
-    /// Compute hardware-accelerated checksum for a page
+    // Compute hardware-accelerated checksum for a page
     pub fn compute_hardware_checksum(&self, data: &[u8]) -> u32 {
         self.stats.write().hardware_crc_ops += 1;
         hardware_crc32c(data)
     }
 
-    /// Select adaptive page size based on workload
+    // Select adaptive page size based on workload
     pub fn select_adaptive_page_size(&self, data_size: usize, access_pattern: &str) -> usize {
         if !self.adaptive_page_size {
             return self.page_size;
@@ -1037,12 +1037,12 @@ impl DiskManager {
         }
     }
 
-    /// Get enhanced statistics
+    // Get enhanced statistics
     pub fn get_enhanced_stats(&self) -> DiskStats {
         self.stats.read().clone()
     }
 
-    /// Calculate current IOPS
+    // Calculate current IOPS
     pub fn calculate_iops(&self, duration_secs: f64) -> f64 {
         let stats = self.stats.read();
         stats.total_iops as f64 / duration_secs
@@ -1052,7 +1052,7 @@ impl DiskManager {
 #[cfg(test)]
 mod tests {
     use tempfile::tempdir;
-    use crate::api::IoScheduler;
+    use super::IoScheduler;
     use crate::DbError;
     use crate::storage::disk::{IoOpType, IoOperation};
     use crate::storage::{DiskManager, IoPriority};
@@ -1119,15 +1119,15 @@ mod tests {
 
     #[test]
     fn test_io_scheduler() {
-        let mut scheduler = IoScheduler::new(0);
+        let mut scheduler = IoScheduler::new();
 
         let op1 = IoOperation::new(IoOpType::Read, 1, IoPriority::Normal);
         let op2 = IoOperation::new(IoOpType::Write, 2, IoPriority::High);
         let op3 = IoOperation::new(IoOpType::Sync, 3, IoPriority::Critical);
 
-        scheduler.schedule(op1, ScheduleInfo {});
-        scheduler.schedule(op2, ScheduleInfo {});
-        scheduler.schedule(op3, ScheduleInfo {});
+        scheduler.schedule(op1);
+        scheduler.schedule(op2);
+        scheduler.schedule(op3);
 
         assert_eq!(scheduler.pending_count(), 3);
 

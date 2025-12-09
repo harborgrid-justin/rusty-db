@@ -1,7 +1,7 @@
-/// Cursor Management System for RustyDB
-///
-/// This module provides comprehensive cursor support including explicit cursors,
-/// REF CURSORs, cursor variables, and bulk operations (BULK COLLECT, FORALL).
+// Cursor Management System for RustyDB
+//
+// This module provides comprehensive cursor support including explicit cursors,
+// REF CURSORs, cursor variables, and bulk operations (BULK COLLECT, FORALL).
 
 use crate::{Result, DbError};
 use crate::procedures::parser::{PlSqlType, Expression};
@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 
-/// Cursor parameter
+// Cursor parameter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CursorParameter {
     pub name: String,
@@ -19,7 +19,7 @@ pub struct CursorParameter {
     pub default_value: Option<Expression>,
 }
 
-/// Cursor attribute values
+// Cursor attribute values
 #[derive(Debug, Clone, Default)]
 pub struct CursorAttributes {
     pub is_open: bool,
@@ -28,7 +28,7 @@ pub struct CursorAttributes {
     pub row_count: usize,
 }
 
-/// Explicit cursor definition
+// Explicit cursor definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExplicitCursor {
     pub name: String,
@@ -37,16 +37,16 @@ pub struct ExplicitCursor {
     pub return_type: Option<CursorReturnType>,
 }
 
-/// Cursor return type (for strongly-typed cursors)
+// Cursor return type (for strongly-typed cursors)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CursorReturnType {
-    /// Return row type of a table
+    // Return row type of a table
     RowType { table_name: String },
-    /// Return a custom record type
+    // Return a custom record type
     RecordType { fields: Vec<(String, PlSqlType)> },
 }
 
-/// REF CURSOR (weakly-typed cursor variable)
+// REF CURSOR (weakly-typed cursor variable)
 #[derive(Debug, Clone)]
 pub struct RefCursor {
     pub id: String,
@@ -54,7 +54,7 @@ pub struct RefCursor {
     pub state: CursorState,
 }
 
-/// Cursor state during execution
+// Cursor state during execution
 #[derive(Debug, Clone)]
 pub struct CursorState {
     pub is_open: bool,
@@ -126,7 +126,7 @@ impl Default for CursorState {
     }
 }
 
-/// A row fetched from a cursor
+// A row fetched from a cursor
 #[derive(Debug, Clone)]
 pub struct CursorRow {
     pub columns: HashMap<String, RuntimeValue>,
@@ -154,7 +154,7 @@ impl Default for CursorRow {
     }
 }
 
-/// Cursor FOR loop iterator
+// Cursor FOR loop iterator
 pub struct CursorForLoop {
     cursor_name: String,
     record_name: String,
@@ -175,16 +175,16 @@ impl CursorForLoop {
     }
 }
 
-/// Bulk collection limit
+// Bulk collection limit
 #[derive(Debug, Clone)]
 pub enum BulkLimit {
-    /// No limit (collect all rows)
+    // No limit (collect all rows)
     Unlimited,
-    /// Limit to N rows
+    // Limit to N rows
     Limited(usize),
 }
 
-/// Bulk collect operation
+// Bulk collect operation
 pub struct BulkCollect {
     pub target_collection: String,
     pub limit: BulkLimit,
@@ -203,7 +203,7 @@ impl BulkCollect {
         self
     }
 
-    /// Collect rows from cursor into collection
+    // Collect rows from cursor into collection
     pub fn collect_from_cursor(&self, cursor: &mut CursorState) -> Vec<CursorRow> {
         let mut collected = Vec::new();
 
@@ -224,7 +224,7 @@ impl BulkCollect {
     }
 }
 
-/// FORALL statement for bulk DML operations
+// FORALL statement for bulk DML operations
 pub struct ForAll {
     pub index_variable: String,
     pub lower_bound: i64,
@@ -249,7 +249,7 @@ impl ForAll {
         self
     }
 
-    /// Execute bulk DML operation
+    // Execute bulk DML operation
     pub fn execute(&self) -> Result<BulkDmlResult> {
         let mut rows_affected = 0;
         let mut exceptions = Vec::new();
@@ -267,14 +267,14 @@ impl ForAll {
     }
 }
 
-/// Result of bulk DML operation
+// Result of bulk DML operation
 #[derive(Debug, Clone)]
 pub struct BulkDmlResult {
     pub rows_affected: usize,
     pub exceptions: Vec<BulkException>,
 }
 
-/// Exception that occurred during bulk operation
+// Exception that occurred during bulk operation
 #[derive(Debug, Clone)]
 pub struct BulkException {
     pub index: usize,
@@ -282,7 +282,7 @@ pub struct BulkException {
     pub error_message: String,
 }
 
-/// Cursor manager
+// Cursor manager
 pub struct CursorManager {
     cursors: Arc<RwLock<HashMap<String, ExplicitCursor>>>,
     cursor_states: Arc<RwLock<HashMap<String, CursorState>>>,
@@ -298,7 +298,7 @@ impl CursorManager {
         }
     }
 
-    /// Declare an explicit cursor
+    // Declare an explicit cursor
     pub fn declare_cursor(&self, cursor: ExplicitCursor) -> Result<()> {
         let mut cursors = self.cursors.write();
 
@@ -312,7 +312,7 @@ impl CursorManager {
         Ok(())
     }
 
-    /// Open a cursor with parameters
+    // Open a cursor with parameters
     pub fn open_cursor(
         &self,
         cursor_name: &str,
@@ -352,7 +352,7 @@ impl CursorManager {
         Ok(())
     }
 
-    /// Fetch from cursor
+    // Fetch from cursor
     pub fn fetch_cursor(&self, cursor_name: &str) -> Result<Option<CursorRow>> {
         let mut cursor_states = self.cursor_states.write();
 
@@ -369,7 +369,7 @@ impl CursorManager {
         Ok(state.fetch())
     }
 
-    /// Close a cursor
+    // Close a cursor
     pub fn close_cursor(&self, cursor_name: &str) -> Result<()> {
         let mut cursor_states = self.cursor_states.write();
 
@@ -387,7 +387,7 @@ impl CursorManager {
         Ok(())
     }
 
-    /// Get cursor attributes
+    // Get cursor attributes
     pub fn get_attributes(&self, cursor_name: &str) -> Result<CursorAttributes> {
         let cursor_states = self.cursor_states.read();
 
@@ -415,7 +415,7 @@ impl CursorManager {
         })
     }
 
-    /// Create a REF CURSOR
+    // Create a REF CURSOR
     pub fn create_ref_cursor(&self, id: String) -> Result<String> {
         let mut ref_cursors = self.ref_cursors.write();
 
@@ -429,7 +429,7 @@ impl CursorManager {
         Ok(id)
     }
 
-    /// Open a REF CURSOR with a query
+    // Open a REF CURSOR with a query
     pub fn open_ref_cursor(&self, id: &str, query: String) -> Result<()> {
         let mut ref_cursors = self.ref_cursors.write();
 
@@ -450,7 +450,7 @@ impl CursorManager {
         Ok(())
     }
 
-    /// Fetch from REF CURSOR
+    // Fetch from REF CURSOR
     pub fn fetch_ref_cursor(&self, id: &str) -> Result<Option<CursorRow>> {
         let mut ref_cursors = self.ref_cursors.write();
 
@@ -467,7 +467,7 @@ impl CursorManager {
         Ok(ref_cursor.state.fetch())
     }
 
-    /// Close a REF CURSOR
+    // Close a REF CURSOR
     pub fn close_ref_cursor(&self, id: &str) -> Result<()> {
         let mut ref_cursors = self.ref_cursors.write();
 
@@ -487,7 +487,7 @@ impl CursorManager {
         Ok(())
     }
 
-    /// Bulk collect from cursor
+    // Bulk collect from cursor
     pub fn bulk_collect(
         &self,
         cursor_name: &str,
@@ -514,13 +514,13 @@ impl CursorManager {
         Ok(bulk_collect.collect_from_cursor(state))
     }
 
-    /// List all declared cursors
+    // List all declared cursors
     pub fn list_cursors(&self) -> Vec<String> {
         let cursors = self.cursors.read();
         cursors.keys().cloned().collect()
     }
 
-    /// Get cursor definition
+    // Get cursor definition
     pub fn get_cursor(&self, cursor_name: &str) -> Result<ExplicitCursor> {
         let cursors = self.cursors.read();
         cursors.get(cursor_name)
@@ -537,7 +537,7 @@ impl Default for CursorManager {
     }
 }
 
-/// Cursor expression (for cursor variables in expressions)
+// Cursor expression (for cursor variables in expressions)
 #[derive(Debug, Clone)]
 pub struct CursorExpression {
     pub query: String,
@@ -549,18 +549,18 @@ impl CursorExpression {
     }
 }
 
-/// Cursor-based operations helper
+// Cursor-based operations helper
 pub struct CursorOperations;
 
 impl CursorOperations {
-    /// Convert cursor rows to array of values
+    // Convert cursor rows to array of values
     pub fn rows_to_array(rows: Vec<CursorRow>, column_name: &str) -> Vec<RuntimeValue> {
         rows.iter()
             .filter_map(|row| row.get(column_name).cloned())
             .collect()
     }
 
-    /// Convert cursor rows to hash map (key-value pairs)
+    // Convert cursor rows to hash map (key-value pairs)
     pub fn rows_to_map(
         rows: Vec<CursorRow>,
         key_column: &str,
@@ -577,27 +577,27 @@ impl CursorOperations {
         map
     }
 
-    /// Count rows in cursor result
+    // Count rows in cursor result
     pub fn count_rows(rows: &[CursorRow]) -> usize {
         rows.len()
     }
 
-    /// Check if cursor result is empty
+    // Check if cursor result is empty
     pub fn is_empty(rows: &[CursorRow]) -> bool {
         rows.is_empty()
     }
 
-    /// Get first row from cursor result
+    // Get first row from cursor result
     pub fn first_row(rows: &[CursorRow]) -> Option<&CursorRow> {
         rows.first()
     }
 
-    /// Get last row from cursor result
+    // Get last row from cursor result
     pub fn last_row(rows: &[CursorRow]) -> Option<&CursorRow> {
         rows.last()
     }
 
-    /// Filter cursor rows by predicate
+    // Filter cursor rows by predicate
     pub fn filter_rows<F>(rows: Vec<CursorRow>, predicate: F) -> Vec<CursorRow>
     where
         F: Fn(&CursorRow) -> bool,
@@ -605,7 +605,7 @@ impl CursorOperations {
         rows.into_iter().filter(predicate).collect()
     }
 
-    /// Map cursor rows to new values
+    // Map cursor rows to new values
     pub fn map_rows<F>(rows: Vec<CursorRow>, mapper: F) -> Vec<CursorRow>
     where
         F: Fn(CursorRow) -> CursorRow,
@@ -742,5 +742,3 @@ mod tests {
         assert_eq!(ids.len(), 5);
     }
 }
-
-

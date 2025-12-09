@@ -14,14 +14,14 @@ use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::collections::{HashMap, BinaryHeap};
-use std::time::{Duration};
-use parking_lot::{RwLock};
+use std::time::Duration;
+use parking_lot::RwLock;
 use std::thread;
 
 use crate::inmemory::column_store::ColumnStore;
 use crate::inmemory::compression::HybridCompressor;
 
-/// Population priority levels
+// Population priority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PopulationPriority {
     Critical = 4,
@@ -31,22 +31,22 @@ pub enum PopulationPriority {
     Background = 0,
 }
 
-/// Population strategy
+// Population strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PopulationStrategy {
-    /// Populate all columns immediately
+    // Populate all columns immediately
     Immediate,
-    /// Populate based on access patterns
+    // Populate based on access patterns
     OnDemand,
-    /// Populate in priority order
+    // Populate in priority order
     Priority,
-    /// Populate during idle time
+    // Populate during idle time
     Lazy,
-    /// Populate frequently accessed columns
+    // Populate frequently accessed columns
     HotData,
 }
 
-/// Population task
+// Population task
 #[derive(Debug, Clone)]
 pub struct PopulationTask {
     pub task_id: u64,
@@ -121,7 +121,7 @@ impl Ord for PopulationTask {
     }
 }
 
-/// Progress tracking for population
+// Progress tracking for population
 #[derive(Debug, Clone)]
 pub struct PopulationProgress {
     pub task_id: u64,
@@ -179,7 +179,7 @@ impl PopulationProgress {
     }
 }
 
-/// Statistics about population operations
+// Statistics about population operations
 #[derive(Debug, Clone, Default)]
 pub struct PopulationStats {
     pub total_tasks: usize,
@@ -193,7 +193,7 @@ pub struct PopulationStats {
     pub average_population_time_ms: u64,
 }
 
-/// Memory pressure handler
+// Memory pressure handler
 pub struct MemoryPressureHandler {
     max_memory: AtomicUsize,
     current_memory: AtomicUsize,
@@ -273,7 +273,7 @@ impl MemoryPressureHandler {
     }
 }
 
-/// Population worker thread
+// Population worker thread
 struct PopulationWorker {
     worker_id: usize,
     running: Arc<AtomicBool>,
@@ -382,7 +382,7 @@ impl PopulationWorker {
     }
 }
 
-/// Main population manager
+// Main population manager
 pub struct PopulationManager {
     next_task_id: AtomicU64,
     task_queue: Arc<Mutex<BinaryHeap<PopulationTask>>>,

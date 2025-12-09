@@ -14,7 +14,7 @@ use super::metrics_core::*;
 // SECTION 3: HEALTH CHECK SYSTEM (500+ lines)
 // ============================================================================
 
-/// Health check status
+// Health check status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HealthStatus {
     Healthy,
@@ -42,7 +42,7 @@ impl HealthStatus {
     }
 }
 
-/// Health check result
+// Health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckResult {
     pub status: HealthStatus,
@@ -98,13 +98,13 @@ impl HealthCheckResult {
     }
 }
 
-/// Trait for implementing health checks
+// Trait for implementing health checks
 pub trait HealthChecker: Send + Sync {
     fn name(&self) -> &str;
     fn check(&self) -> HealthCheckResult;
 }
 
-/// Liveness probe - is the service alive?
+// Liveness probe - is the service alive?
 pub struct LivenessProbe {
     started: AtomicBool,
     startup_time: RwLock<Option<SystemTime>>,
@@ -159,7 +159,7 @@ impl Default for LivenessProbe {
     }
 }
 
-/// Readiness probe - is the service ready to accept traffic?
+// Readiness probe - is the service ready to accept traffic?
 pub struct ReadinessProbe {
     dependencies: Arc<RwLock<Vec<Arc<dyn HealthChecker>>>>,
     min_healthy_dependencies: usize,
@@ -226,7 +226,7 @@ impl HealthChecker for ReadinessProbe {
     }
 }
 
-/// Startup probe - has the service completed initialization?
+// Startup probe - has the service completed initialization?
 pub struct StartupProbe {
     initialization_checks: Arc<RwLock<Vec<(String, Arc<AtomicBool>)>>>,
 }
@@ -291,7 +291,7 @@ impl Default for StartupProbe {
     }
 }
 
-/// Database connection health check
+// Database connection health check
 pub struct DatabaseHealthCheck {
     name: String,
     active_connections: Arc<RwLock<usize>>,
@@ -346,7 +346,7 @@ impl HealthChecker for DatabaseHealthCheck {
     }
 }
 
-/// Memory health check
+// Memory health check
 pub struct MemoryHealthCheck {
     max_memory_bytes: u64,
     current_usage: Arc<RwLock<u64>>,
@@ -394,7 +394,7 @@ impl HealthChecker for MemoryHealthCheck {
     }
 }
 
-/// Self-healing trigger based on health checks
+// Self-healing trigger based on health checks
 pub struct SelfHealingTrigger {
     name: String,
     health_checker: Arc<dyn HealthChecker>,
@@ -439,7 +439,7 @@ impl SelfHealingTrigger {
     }
 }
 
-/// Health check coordinator
+// Health check coordinator
 pub struct HealthCheckCoordinator {
     checkers: Arc<RwLock<Vec<Arc<dyn HealthChecker>>>>,
     liveness_probe: Arc<LivenessProbe>,

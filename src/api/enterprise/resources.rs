@@ -17,7 +17,7 @@ use super::registry::*;
 // SECTION 3: RESOURCE ORCHESTRATION (500+ lines)
 // ============================================================================
 
-/// Resource budget configuration
+// Resource budget configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceBudget {
     pub memory_limit: usize,
@@ -27,7 +27,7 @@ pub struct ResourceBudget {
     pub cpu_quota: f32,
 }
 
-/// Memory budget allocator
+// Memory budget allocator
 pub struct MemoryBudgetAllocator {
     total_budget: usize,
     allocations: Arc<RwLock<HashMap<String, usize>>>,
@@ -79,7 +79,7 @@ impl MemoryBudgetAllocator {
     }
 }
 
-/// Connection quota manager
+// Connection quota manager
 pub struct ConnectionQuotaManager {
     total_quota: usize,
     quotas: Arc<RwLock<HashMap<String, usize>>>,
@@ -142,7 +142,7 @@ impl ConnectionQuotaManager {
     }
 }
 
-/// Thread pool coordinator
+// Thread pool coordinator
 pub struct ThreadPoolCoordinator {
     pools: Arc<RwLock<HashMap<String, tokio::runtime::Handle>>>,
     thread_budgets: Arc<RwLock<HashMap<String, usize>>>,
@@ -175,7 +175,7 @@ impl ThreadPoolCoordinator {
     }
 }
 
-/// I/O scheduler
+// I/O scheduler
 pub struct IoScheduler {
     pending_operations: Arc<Mutex<VecDeque<IoOperation>>>,
     active_operations: Arc<RwLock<HashMap<String, IoOperation>>>,
@@ -274,7 +274,7 @@ impl IoScheduler {
     }
 }
 
-/// Priority manager
+// Priority manager
 pub struct PriorityManager {
     priorities: Arc<RwLock<HashMap<String, usize>>>,
     priority_queues: Arc<RwLock<BTreeMap<usize, VecDeque<String>>>>,
@@ -315,7 +315,7 @@ impl PriorityManager {
     }
 }
 
-/// Resource contention handler
+// Resource contention handler
 pub struct ResourceContentionHandler {
     contentions: Arc<RwLock<Vec<ResourceContention>>>,
     resolution_strategies: Arc<RwLock<HashMap<String, Box<dyn ContentionResolver>>>>,
@@ -388,7 +388,7 @@ impl ResourceContentionHandler {
     }
 }
 
-/// Resource orchestrator
+// Resource orchestrator
 pub struct ResourceOrchestrator {
     memory_allocator: Arc<MemoryBudgetAllocator>,
     connection_manager: Arc<ConnectionQuotaManager>,

@@ -11,16 +11,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{Result, DbError};
 
-/// Consumer group identifier
+// Consumer group identifier
 pub type ConsumerGroupId = u64;
 
-/// User identifier
+// User identifier
 pub type UserId = u64;
 
-/// Session identifier
+// Session identifier
 pub type SessionId = u64;
 
-/// Priority level for consumer groups (0-7, where 0 is highest priority)
+// Priority level for consumer groups (0-7, where 0 is highest priority)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PriorityLevel(u8);
 
@@ -51,64 +51,64 @@ impl PriorityLevel {
     }
 }
 
-/// Consumer group category
+// Consumer group category
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GroupCategory {
-    /// Interactive user sessions
+    // Interactive user sessions
     Interactive,
-    /// Batch processing jobs
+    // Batch processing jobs
     Batch,
-    /// Background maintenance tasks
+    // Background maintenance tasks
     Maintenance,
-    /// Real-time analytics
+    // Real-time analytics
     Analytics,
-    /// System-level operations
+    // System-level operations
     System,
-    /// Custom user-defined category
+    // Custom user-defined category
     Custom(String),
 }
 
-/// Consumer group definition
+// Consumer group definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsumerGroup {
-    /// Unique identifier
+    // Unique identifier
     pub id: ConsumerGroupId,
-    /// Group name
+    // Group name
     pub name: String,
-    /// Group description
+    // Group description
     pub description: Option<String>,
-    /// Priority level
+    // Priority level
     pub priority: PriorityLevel,
-    /// Category
+    // Category
     pub category: GroupCategory,
-    /// CPU allocation percentage (0-100)
+    // CPU allocation percentage (0-100)
     pub cpu_allocation_pct: u8,
-    /// Maximum sessions allowed in this group
+    // Maximum sessions allowed in this group
     pub max_sessions: Option<usize>,
-    /// Maximum idle time before termination
+    // Maximum idle time before termination
     pub max_idle_time: Option<Duration>,
-    /// Maximum execution time for queries
+    // Maximum execution time for queries
     pub max_execution_time: Option<Duration>,
-    /// Parallel degree of parallelism limit
+    // Parallel degree of parallelism limit
     pub parallel_degree_limit: Option<u32>,
-    /// Memory limit in bytes
+    // Memory limit in bytes
     pub memory_limit: Option<u64>,
-    /// I/O bandwidth limit in bytes/sec
+    // I/O bandwidth limit in bytes/sec
     pub io_bandwidth_limit: Option<u64>,
-    /// IOPS limit
+    // IOPS limit
     pub iops_limit: Option<u32>,
-    /// Whether this group is active
+    // Whether this group is active
     pub is_active: bool,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: SystemTime,
-    /// Last modified timestamp
+    // Last modified timestamp
     pub modified_at: SystemTime,
-    /// Current number of active sessions
+    // Current number of active sessions
     pub current_sessions: usize,
 }
 
 impl ConsumerGroup {
-    /// Create a new consumer group
+    // Create a new consumer group
     pub fn new(
         id: ConsumerGroupId,
         name: String,
@@ -137,7 +137,7 @@ impl ConsumerGroup {
         }
     }
 
-    /// Check if the group can accept a new session
+    // Check if the group can accept a new session
     pub fn can_accept_session(&self) -> bool {
         if !self.is_active {
             return false;
@@ -148,7 +148,7 @@ impl ConsumerGroup {
         true
     }
 
-    /// Increment session count
+    // Increment session count
     pub fn increment_sessions(&mut self) -> Result<()> {
         if !self.can_accept_session() {
             return Err(DbError::ResourceExhausted(
@@ -159,7 +159,7 @@ impl ConsumerGroup {
         Ok(())
     }
 
-    /// Decrement session count
+    // Decrement session count
     pub fn decrement_sessions(&mut self) {
         if self.current_sessions > 0 {
             self.current_sessions -= 1;
@@ -167,52 +167,52 @@ impl ConsumerGroup {
     }
 }
 
-/// Automatic consumer group assignment rule
+// Automatic consumer group assignment rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssignmentRule {
-    /// Rule identifier
+    // Rule identifier
     pub id: u64,
-    /// Rule name
+    // Rule name
     pub name: String,
-    /// Rule priority (lower number = higher priority)
+    // Rule priority (lower number = higher priority)
     pub priority: u32,
-    /// Condition for matching
+    // Condition for matching
     pub condition: RuleCondition,
-    /// Target consumer group
+    // Target consumer group
     pub target_group_id: ConsumerGroupId,
-    /// Whether the rule is enabled
+    // Whether the rule is enabled
     pub is_enabled: bool,
 }
 
-/// Rule condition for automatic group assignment
+// Rule condition for automatic group assignment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RuleCondition {
-    /// Match by username
+    // Match by username
     Username(String),
-    /// Match by username pattern (regex)
+    // Match by username pattern (regex)
     UsernamePattern(String),
-    /// Match by client program name
+    // Match by client program name
     ProgramName(String),
-    /// Match by client machine
+    // Match by client machine
     MachineName(String),
-    /// Match by service name
+    // Match by service name
     ServiceName(String),
-    /// Match by module name
+    // Match by module name
     ModuleName(String),
-    /// Match by time of day
+    // Match by time of day
     TimeOfDay { start_hour: u8, end_hour: u8 },
-    /// Match by day of week
+    // Match by day of week
     DayOfWeek(Vec<u8>), // 0=Sunday, 6=Saturday
-    /// Compound condition (AND)
+    // Compound condition (AND)
     And(Vec<RuleCondition>),
-    /// Compound condition (OR)
+    // Compound condition (OR)
     Or(Vec<RuleCondition>),
-    /// Negation
+    // Negation
     Not(Box<RuleCondition>),
 }
 
 impl RuleCondition {
-    /// Evaluate the condition against session attributes
+    // Evaluate the condition against session attributes
     pub fn evaluate(&self, attrs: &SessionAttributes) -> bool {
         match self {
             RuleCondition::Username(name) => attrs.username == *name,
@@ -252,7 +252,7 @@ impl RuleCondition {
     }
 }
 
-/// Session attributes for rule evaluation
+// Session attributes for rule evaluation
 #[derive(Debug, Clone)]
 pub struct SessionAttributes {
     pub username: String,
@@ -263,7 +263,7 @@ pub struct SessionAttributes {
     pub action_name: Option<String>,
 }
 
-/// User to consumer group mapping
+// User to consumer group mapping
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserGroupMapping {
     pub user_id: UserId,
@@ -273,7 +273,7 @@ pub struct UserGroupMapping {
     pub created_at: SystemTime,
 }
 
-/// Session to consumer group mapping
+// Session to consumer group mapping
 #[derive(Debug, Clone)]
 pub struct SessionGroupMapping {
     pub session_id: SessionId,
@@ -284,43 +284,43 @@ pub struct SessionGroupMapping {
     pub switch_reason: SwitchReason,
 }
 
-/// Reason for consumer group switch
+// Reason for consumer group switch
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SwitchReason {
-    /// Initial assignment
+    // Initial assignment
     Initial,
-    /// Manual switch by user
+    // Manual switch by user
     Manual,
-    /// Automatic switch by rule
+    // Automatic switch by rule
     Automatic,
-    /// Administrative override
+    // Administrative override
     Administrative,
-    /// Workload-based adjustment
+    // Workload-based adjustment
     WorkloadBased,
 }
 
-/// Consumer group manager
+// Consumer group manager
 pub struct ConsumerGroupManager {
-    /// All consumer groups
+    // All consumer groups
     groups: Arc<RwLock<HashMap<ConsumerGroupId, ConsumerGroup>>>,
-    /// Groups indexed by name
+    // Groups indexed by name
     groups_by_name: Arc<RwLock<HashMap<String, ConsumerGroupId>>>,
-    /// User to group mappings
+    // User to group mappings
     user_mappings: Arc<RwLock<HashMap<UserId, UserGroupMapping>>>,
-    /// Session to group mappings
+    // Session to group mappings
     session_mappings: Arc<RwLock<HashMap<SessionId, SessionGroupMapping>>>,
-    /// Assignment rules
+    // Assignment rules
     assignment_rules: Arc<RwLock<Vec<AssignmentRule>>>,
-    /// Default group for unmapped users
+    // Default group for unmapped users
     default_group_id: ConsumerGroupId,
-    /// Next group ID
+    // Next group ID
     next_group_id: Arc<RwLock<ConsumerGroupId>>,
-    /// Next rule ID
+    // Next rule ID
     next_rule_id: Arc<RwLock<u64>>,
 }
 
 impl ConsumerGroupManager {
-    /// Create a new consumer group manager
+    // Create a new consumer group manager
     pub fn new() -> Result<Self> {
         let mut manager = Self {
             groups: Arc::new(RwLock::new(HashMap::new())),
@@ -338,7 +338,7 @@ impl ConsumerGroupManager {
         Ok(manager)
     }
 
-    /// Create default system consumer groups
+    // Create default system consumer groups
     fn create_system_groups(&mut self) -> Result<()> {
         // SYS_GROUP - System operations
         let sys_group = ConsumerGroup::new(
@@ -386,7 +386,7 @@ impl ConsumerGroupManager {
         Ok(())
     }
 
-    /// Register a new consumer group
+    // Register a new consumer group
     fn register_group(&mut self, group: ConsumerGroup) -> Result<()> {
         let id = group.id;
         let name = group.name.clone();
@@ -411,7 +411,7 @@ impl ConsumerGroupManager {
         Ok(())
     }
 
-    /// Create a new consumer group
+    // Create a new consumer group
     pub fn create_group(
         &self,
         name: String,
@@ -444,7 +444,7 @@ impl ConsumerGroupManager {
         Ok(id)
     }
 
-    /// Get consumer group by ID
+    // Get consumer group by ID
     pub fn get_group(&self, group_id: ConsumerGroupId) -> Result<ConsumerGroup> {
         let groups = self.groups.read().unwrap();
         groups.get(&group_id)
@@ -454,7 +454,7 @@ impl ConsumerGroupManager {
             ))
     }
 
-    /// Get consumer group by name
+    // Get consumer group by name
     pub fn get_group_by_name(&self, name: &str) -> Result<ConsumerGroup> {
         let groups_by_name = self.groups_by_name.read().unwrap();
         let group_id = groups_by_name.get(name)
@@ -464,7 +464,7 @@ impl ConsumerGroupManager {
         self.get_group(*group_id)
     }
 
-    /// Update consumer group configuration
+    // Update consumer group configuration
     pub fn update_group<F>(&self, group_id: ConsumerGroupId, update_fn: F) -> Result<()>
     where
         F: FnOnce(&mut ConsumerGroup),
@@ -480,7 +480,7 @@ impl ConsumerGroupManager {
         Ok(())
     }
 
-    /// Delete a consumer group
+    // Delete a consumer group
     pub fn delete_group(&self, group_id: ConsumerGroupId) -> Result<()> {
         // Don't allow deleting system groups
         if group_id < 100 {
@@ -501,7 +501,7 @@ impl ConsumerGroupManager {
         Ok(())
     }
 
-    /// Map a user to a consumer group
+    // Map a user to a consumer group
     pub fn map_user_to_group(
         &self,
         user_id: UserId,
@@ -525,7 +525,7 @@ impl ConsumerGroupManager {
         Ok(())
     }
 
-    /// Remove user to group mapping
+    // Remove user to group mapping
     pub fn unmap_user(&self, user_id: UserId) -> Result<()> {
         let mut user_mappings = self.user_mappings.write().unwrap();
         user_mappings.remove(&user_id)
@@ -535,7 +535,7 @@ impl ConsumerGroupManager {
         Ok(())
     }
 
-    /// Assign session to consumer group (initial assignment)
+    // Assign session to consumer group (initial assignment)
     pub fn assign_session(
         &self,
         session_id: SessionId,
@@ -584,7 +584,7 @@ impl ConsumerGroupManager {
         Ok(group_id)
     }
 
-    /// Switch session to a different consumer group
+    // Switch session to a different consumer group
     pub fn switch_session_group(
         &self,
         session_id: SessionId,
@@ -629,7 +629,7 @@ impl ConsumerGroupManager {
         Ok(())
     }
 
-    /// Remove session mapping
+    // Remove session mapping
     pub fn remove_session(&self, session_id: SessionId) -> Result<()> {
         let mut session_mappings = self.session_mappings.write().unwrap();
         let mapping = session_mappings.remove(&session_id)
@@ -646,7 +646,7 @@ impl ConsumerGroupManager {
         Ok(())
     }
 
-    /// Add an assignment rule
+    // Add an assignment rule
     pub fn add_assignment_rule(
         &self,
         name: String,
@@ -682,7 +682,7 @@ impl ConsumerGroupManager {
         Ok(rule_id)
     }
 
-    /// Apply assignment rules to determine consumer group
+    // Apply assignment rules to determine consumer group
     fn apply_assignment_rules(&self, attrs: &SessionAttributes) -> Option<ConsumerGroupId> {
         let rules = self.assignment_rules.read().unwrap();
 
@@ -699,13 +699,13 @@ impl ConsumerGroupManager {
         None
     }
 
-    /// Get all consumer groups
+    // Get all consumer groups
     pub fn list_groups(&self) -> Vec<ConsumerGroup> {
         let groups = self.groups.read().unwrap();
         groups.values().cloned().collect()
     }
 
-    /// Get session's current consumer group
+    // Get session's current consumer group
     pub fn get_session_group(&self, session_id: SessionId) -> Result<ConsumerGroupId> {
         let session_mappings = self.session_mappings.read().unwrap();
         session_mappings.get(&session_id)
@@ -715,7 +715,7 @@ impl ConsumerGroupManager {
             ))
     }
 
-    /// Get statistics for a consumer group
+    // Get statistics for a consumer group
     pub fn get_group_statistics(&self, group_id: ConsumerGroupId) -> Result<GroupStatistics> {
         let group = self.get_group(group_id)?;
 
@@ -730,7 +730,7 @@ impl ConsumerGroupManager {
     }
 }
 
-/// Consumer group statistics
+// Consumer group statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GroupStatistics {
     pub group_id: ConsumerGroupId,

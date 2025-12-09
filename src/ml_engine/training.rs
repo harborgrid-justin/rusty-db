@@ -14,24 +14,24 @@ use rand::prelude::SliceRandom;
 // Training Configuration
 // ============================================================================
 
-/// Training configuration
+// Training configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingConfig {
-    /// Batch size for mini-batch training
+    // Batch size for mini-batch training
     pub batch_size: usize,
-    /// Maximum number of epochs
+    // Maximum number of epochs
     pub max_epochs: usize,
-    /// Learning rate
+    // Learning rate
     pub learning_rate: f64,
-    /// Early stopping configuration
+    // Early stopping configuration
     pub early_stopping: Option<EarlyStoppingConfig>,
-    /// Learning rate schedule
+    // Learning rate schedule
     pub lr_schedule: Option<LearningRateSchedule>,
-    /// Validation split ratio
+    // Validation split ratio
     pub validation_split: f64,
-    /// Enable progress monitoring
+    // Enable progress monitoring
     pub verbose: bool,
-    /// Random seed
+    // Random seed
     pub random_seed: Option<u64>,
 }
 
@@ -50,16 +50,16 @@ impl Default for TrainingConfig {
     }
 }
 
-/// Early stopping configuration
+// Early stopping configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EarlyStoppingConfig {
-    /// Patience (epochs without improvement)
+    // Patience (epochs without improvement)
     pub patience: usize,
-    /// Minimum delta for improvement
+    // Minimum delta for improvement
     pub min_delta: f64,
-    /// Metric to monitor
+    // Metric to monitor
     pub monitor: String,
-    /// Restore best weights
+    // Restore best weights
     pub restore_best_weights: bool,
 }
 
@@ -74,28 +74,28 @@ impl Default for EarlyStoppingConfig {
     }
 }
 
-/// Learning rate schedule
+// Learning rate schedule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LearningRateSchedule {
-    /// Exponential decay
+    // Exponential decay
     ExponentialDecay {
         initial_lr: f64,
         decay_rate: f64,
         decay_steps: usize,
     },
-    /// Step decay
+    // Step decay
     StepDecay {
         initial_lr: f64,
         drop_factor: f64,
         drop_every: usize,
     },
-    /// Cosine annealing
+    // Cosine annealing
     CosineAnnealing {
         initial_lr: f64,
         min_lr: f64,
         period: usize,
     },
-    /// Reduce on plateau
+    // Reduce on plateau
     ReduceOnPlateau {
         factor: f64,
         patience: usize,
@@ -128,24 +128,24 @@ impl LearningRateSchedule {
 // Training Progress Monitoring
 // ============================================================================
 
-/// Training progress tracker
+// Training progress tracker
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingProgress {
-    /// Current epoch
+    // Current epoch
     pub epoch: usize,
-    /// Training loss history
+    // Training loss history
     pub train_loss: Vec<f64>,
-    /// Validation loss history
+    // Validation loss history
     pub val_loss: Vec<f64>,
-    /// Training metrics history
+    // Training metrics history
     pub train_metrics: Vec<EvaluationMetrics>,
-    /// Validation metrics history
+    // Validation metrics history
     pub val_metrics: Vec<EvaluationMetrics>,
-    /// Learning rate history
+    // Learning rate history
     pub learning_rates: Vec<f64>,
-    /// Epoch times in seconds
+    // Epoch times in seconds
     pub epoch_times: Vec<f64>,
-    /// Total training time
+    // Total training time
     pub total_time: f64,
 }
 
@@ -212,48 +212,48 @@ impl Default for TrainingProgress {
 // Distributed Training
 // ============================================================================
 
-/// Distributed training coordinator
+// Distributed training coordinator
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DistributedTrainingConfig {
-    /// Number of worker nodes
+    // Number of worker nodes
     pub num_workers: usize,
-    /// Synchronization strategy
+    // Synchronization strategy
     pub sync_strategy: SyncStrategy,
-    /// Communication backend
+    // Communication backend
     pub backend: CommunicationBackend,
-    /// All-reduce algorithm
+    // All-reduce algorithm
     pub all_reduce_algorithm: AllReduceAlgorithm,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SyncStrategy {
-    /// Synchronous training (wait for all workers)
+    // Synchronous training (wait for all workers)
     Synchronous,
-    /// Asynchronous training (no waiting)
+    // Asynchronous training (no waiting)
     Asynchronous,
-    /// Data parallel (replicate model across workers)
+    // Data parallel (replicate model across workers)
     DataParallel,
-    /// Model parallel (split model across workers)
+    // Model parallel (split model across workers)
     ModelParallel,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CommunicationBackend {
-    /// In-memory (single machine)
+    // In-memory (single machine)
     InMemory,
-    /// gRPC for network communication
+    // gRPC for network communication
     GRPC,
-    /// Message passing interface
+    // Message passing interface
     MPI,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AllReduceAlgorithm {
-    /// Ring all-reduce
+    // Ring all-reduce
     Ring,
-    /// Tree all-reduce
+    // Tree all-reduce
     Tree,
-    /// Butterfly all-reduce
+    // Butterfly all-reduce
     Butterfly,
 }
 
@@ -272,7 +272,7 @@ impl Default for DistributedTrainingConfig {
 // Mini-Batch Iterator
 // ============================================================================
 
-/// Mini-batch iterator for training
+// Mini-batch iterator for training
 pub struct MiniBatchIterator<'a> {
     dataset: &'a Dataset,
     batch_size: usize,
@@ -345,7 +345,7 @@ impl<'a> Iterator for MiniBatchIterator<'a> {
 // Training Engine
 // ============================================================================
 
-/// Main training coordinator
+// Main training coordinator
 pub struct TrainingEngine {
     config: TrainingConfig,
     distributed_config: Option<DistributedTrainingConfig>,
@@ -369,7 +369,7 @@ impl TrainingEngine {
         self
     }
 
-    /// Train a model
+    // Train a model
     pub fn train(
         &self,
         algorithm: Algorithm,

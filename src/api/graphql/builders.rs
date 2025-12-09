@@ -16,7 +16,7 @@ use super::models::*;
 // ADDITIONAL UTILITIES & HELPERS
 // ============================================================================
 
-/// Query builder for constructing complex queries programmatically
+// Query builder for constructing complex queries programmatically
 pub struct QueryBuilder {
     table: String,
     where_clauses: Vec<WhereClause>,
@@ -98,7 +98,7 @@ impl QueryBuilder {
     }
 }
 
-/// Built query ready for execution
+// Built query ready for execution
 #[derive(Clone, Debug)]
 pub struct BuiltQuery {
     pub table: String,
@@ -109,7 +109,7 @@ pub struct BuiltQuery {
     pub select_fields: Vec<String>,
 }
 
-/// Mutation builder for constructing complex mutations
+// Mutation builder for constructing complex mutations
 pub struct MutationBuilder {
     table: String,
     operation: MutationOperation,
@@ -170,14 +170,14 @@ impl MutationBuilder {
     }
 }
 
-/// Built mutation ready for execution
+// Built mutation ready for execution
 #[derive(Clone, Debug)]
 pub struct BuiltMutation {
     pub table: String,
     pub operation: MutationOperation,
 }
 
-/// Schema introspection utilities
+// Schema introspection utilities
 pub struct SchemaIntrospector {
     engine: Arc<GraphQLEngine>,
 }
@@ -187,7 +187,7 @@ impl SchemaIntrospector {
         Self { engine }
     }
 
-    /// Get all available types in the schema
+    // Get all available types in the schema
     pub async fn get_types(&self) -> GqlResult<Vec<TypeInfo>> {
         Ok(vec![
             TypeInfo {
@@ -208,7 +208,7 @@ impl SchemaIntrospector {
         ])
     }
 
-    /// Get all available queries
+    // Get all available queries
     pub async fn get_queries(&self) -> GqlResult<Vec<FieldInfo>> {
         Ok(vec![
             FieldInfo {
@@ -226,7 +226,7 @@ impl SchemaIntrospector {
         ])
     }
 
-    /// Get all available mutations
+    // Get all available mutations
     pub async fn get_mutations(&self) -> GqlResult<Vec<FieldInfo>> {
         Ok(vec![
             FieldInfo {
@@ -244,7 +244,7 @@ impl SchemaIntrospector {
         ])
     }
 
-    /// Get all available subscriptions
+    // Get all available subscriptions
     pub async fn get_subscriptions(&self) -> GqlResult<Vec<FieldInfo>> {
         Ok(vec![
             FieldInfo {
@@ -257,7 +257,7 @@ impl SchemaIntrospector {
     }
 }
 
-/// Type information
+// Type information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct TypeInfo {
     pub name: String,
@@ -265,7 +265,7 @@ pub struct TypeInfo {
     pub description: Option<String>,
 }
 
-/// Type kind enum
+// Type kind enum
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
 pub enum TypeKind {
     Scalar,
@@ -278,7 +278,7 @@ pub enum TypeKind {
     NonNull,
 }
 
-/// Field information
+// Field information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct FieldInfo {
     pub name: String,
@@ -287,7 +287,7 @@ pub struct FieldInfo {
     pub arguments: Vec<ArgumentInfo>,
 }
 
-/// Argument information
+// Argument information
 #[derive(SimpleObject, Clone, Debug)]
 pub struct ArgumentInfo {
     pub name: String,
@@ -296,7 +296,7 @@ pub struct ArgumentInfo {
     pub description: Option<String>,
 }
 
-/// Query optimizer for analyzing and improving query performance
+// Query optimizer for analyzing and improving query performance
 pub struct QueryOptimizer {
     stats_cache: Arc<RwLock<HashMap<String, TableStats>>>,
 }
@@ -308,7 +308,7 @@ impl QueryOptimizer {
         }
     }
 
-    /// Analyze a query and suggest optimizations
+    // Analyze a query and suggest optimizations
     pub async fn analyze(&self, query: &BuiltQuery) -> OptimizationSuggestions {
         let mut suggestions = OptimizationSuggestions {
             suggestions: vec![],
@@ -340,20 +340,20 @@ impl QueryOptimizer {
         suggestions
     }
 
-    /// Update statistics for a table
+    // Update statistics for a table
     pub async fn update_stats(&self, table: String, stats: TableStats) {
         let mut cache = self.stats_cache.write().await;
         cache.insert(table, stats);
     }
 
-    /// Get statistics for a table
+    // Get statistics for a table
     pub async fn get_stats(&self, table: &str) -> Option<TableStats> {
         let cache = self.stats_cache.read().await;
         cache.get(table).cloned()
     }
 }
 
-/// Optimization suggestions
+// Optimization suggestions
 #[derive(SimpleObject, Clone, Debug)]
 pub struct OptimizationSuggestions {
     pub suggestions: Vec<String>,
@@ -361,7 +361,7 @@ pub struct OptimizationSuggestions {
     pub estimated_rows: i64,
 }
 
-/// Table statistics for optimization
+// Table statistics for optimization
 #[derive(Clone, Debug)]
 pub struct TableStats {
     pub row_count: i64,
@@ -371,7 +371,7 @@ pub struct TableStats {
     pub last_analyze: Option<DateTime>,
 }
 
-/// GraphQL request validator
+// GraphQL request validator
 pub struct RequestValidator {
     max_query_size: usize,
     allowed_operations: HashSet<String>,
@@ -389,7 +389,7 @@ impl RequestValidator {
         self.allowed_operations.insert(operation.into());
     }
 
-    /// Validate a GraphQL request
+    // Validate a GraphQL request
     pub fn validate(&self, query: &str) -> Result<(), DbError> {
         // Check query size
         if query.len() > self.max_query_size {

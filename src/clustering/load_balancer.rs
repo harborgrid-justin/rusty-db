@@ -1,20 +1,20 @@
-/// Load Balancing and Connection Management
-///
-/// This module provides intelligent load balancing across cluster nodes.
-/// Features include:
-/// - Connection pooling with automatic scaling
-/// - Read replica selection with health awareness
-/// - Latency-based routing for optimal performance
-/// - Circuit breaker pattern for fault tolerance
-/// - Sticky sessions for cache affinity
-/// - Request rate limiting
-///
-/// Load balancing strategies:
-/// - Round-robin
-/// - Least connections
-/// - Weighted round-robin
-/// - Latency-based
-/// - Locality-aware
+// Load Balancing and Connection Management
+//
+// This module provides intelligent load balancing across cluster nodes.
+// Features include:
+// - Connection pooling with automatic scaling
+// - Read replica selection with health awareness
+// - Latency-based routing for optimal performance
+// - Circuit breaker pattern for fault tolerance
+// - Sticky sessions for cache affinity
+// - Request rate limiting
+//
+// Load balancing strategies:
+// - Round-robin
+// - Least connections
+// - Weighted round-robin
+// - Latency-based
+// - Locality-aware
 
 use std::collections::VecDeque;
 use std::time::SystemTime;
@@ -26,70 +26,70 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 use tokio::sync::Semaphore;
 
-/// Backend node identifier
+// Backend node identifier
 pub type BackendId = String;
 
-/// Connection identifier
+// Connection identifier
 pub type ConnectionId = u64;
 
-/// Load balancing strategy
+// Load balancing strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LoadBalanceStrategy {
-    /// Round-robin across all nodes
+    // Round-robin across all nodes
     RoundRobin,
-    /// Select node with least active connections
+    // Select node with least active connections
     LeastConnections,
-    /// Weighted round-robin based on node capacity
+    // Weighted round-robin based on node capacity
     WeightedRoundRobin,
-    /// Select node with lowest latency
+    // Select node with lowest latency
     LatencyBased,
-    /// Prefer local/nearby nodes
+    // Prefer local/nearby nodes
     LocalityAware,
-    /// Random selection
+    // Random selection
     Random,
 }
 
-/// Backend node status
+// Backend node status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BackendStatus {
-    /// Node is healthy and accepting connections
+    // Node is healthy and accepting connections
     Healthy,
-    /// Node is degraded but still functional
+    // Node is degraded but still functional
     Degraded,
-    /// Node is temporarily unavailable (circuit open)
+    // Node is temporarily unavailable (circuit open)
     CircuitOpen,
-    /// Node is permanently down
+    // Node is permanently down
     Down,
 }
 
-/// Backend node information
+// Backend node information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Backend {
-    /// Backend ID
+    // Backend ID
     pub id: BackendId,
-    /// Address
+    // Address
     pub address: String,
-    /// Port
+    // Port
     pub port: u16,
-    /// Node role (primary, replica, etc.)
+    // Node role (primary, replica, etc.)
     pub role: NodeRole,
-    /// Status
+    // Status
     pub status: BackendStatus,
-    /// Weight for weighted load balancing
+    // Weight for weighted load balancing
     pub weight: u32,
-    /// Current active connections
+    // Current active connections
     pub active_connections: usize,
-    /// Maximum connections
+    // Maximum connections
     pub max_connections: usize,
-    /// Average latency (milliseconds)
+    // Average latency (milliseconds)
     pub avg_latency_ms: f64,
-    /// Request success rate (0.0 - 1.0)
+    // Request success rate (0.0 - 1.0)
     pub success_rate: f64,
-    /// Last health check
+    // Last health check
     pub last_health_check: SystemTime,
-    /// Geographic region
+    // Geographic region
     pub region: String,
-    /// Availability zone
+    // Availability zone
     pub zone: String,
 }
 
@@ -120,13 +120,13 @@ impl Backend {
         }
     }
 
-    /// Check if backend can accept new connections
+    // Check if backend can accept new connections
     pub fn can_accept_connection(&self) -> bool {
         self.status == BackendStatus::Healthy
             && self.active_connections < self.max_connections
     }
 
-    /// Get utilization ratio
+    // Get utilization ratio
     pub fn utilization(&self) -> f64 {
         if self.max_connections == 0 {
             0.0
@@ -136,7 +136,7 @@ impl Backend {
     }
 }
 
-/// Connection pool for a backend
+// Connection pool for a backend
 struct ConnectionPool {
     backend_id: BackendId,
     available: Arc<RwLock<VecDeque<Connection>>>,
@@ -146,7 +146,7 @@ struct ConnectionPool {
     max_size: usize,
 }
 
-/// Connection to a backend
+// Connection to a backend
 #[derive(Debug, Clone)]
 struct Connection {
     id: ConnectionId,
@@ -225,7 +225,7 @@ impl ConnectionPool {
     }
 }
 
-/// Circuit breaker state
+// Circuit breaker state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CircuitState {
     Closed,   // Normal operation
@@ -233,7 +233,7 @@ enum CircuitState {
     HalfOpen, // Testing if backend recovered
 }
 
-/// Circuit breaker for a backend
+// Circuit breaker for a backend
 struct CircuitBreaker {
     state: RwLock<CircuitState>,
     failure_count: RwLock<usize>,
@@ -317,28 +317,28 @@ impl CircuitBreaker {
     }
 }
 
-/// Load balancer configuration
+// Load balancer configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoadBalancerConfig {
-    /// Load balancing strategy
+    // Load balancing strategy
     pub strategy: LoadBalanceStrategy,
-    /// Health check interval
+    // Health check interval
     pub health_check_interval: Duration,
-    /// Health check timeout
+    // Health check timeout
     pub health_check_timeout: Duration,
-    /// Connection pool min size
+    // Connection pool min size
     pub pool_min_size: usize,
-    /// Connection pool max size
+    // Connection pool max size
     pub pool_max_size: usize,
-    /// Connection max lifetime
+    // Connection max lifetime
     pub connection_max_lifetime: Duration,
-    /// Circuit breaker failure threshold
+    // Circuit breaker failure threshold
     pub circuit_breaker_threshold: usize,
-    /// Circuit breaker timeout
+    // Circuit breaker timeout
     pub circuit_breaker_timeout: Duration,
-    /// Enable sticky sessions
+    // Enable sticky sessions
     pub enable_sticky_sessions: bool,
-    /// Session timeout
+    // Session timeout
     pub session_timeout: Duration,
 }
 
@@ -359,7 +359,7 @@ impl Default for LoadBalancerConfig {
     }
 }
 
-/// Session affinity tracking
+// Session affinity tracking
 struct Session {
     session_id: String,
     backend_id: BackendId,
@@ -373,21 +373,21 @@ impl Session {
     }
 }
 
-/// Main load balancer
+// Main load balancer
 pub struct LoadBalancer {
-    /// Configuration
+    // Configuration
     config: LoadBalancerConfig,
-    /// All backend nodes
+    // All backend nodes
     backends: Arc<RwLock<HashMap<BackendId, Backend>>>,
-    /// Connection pools
+    // Connection pools
     pools: Arc<RwLock<HashMap<BackendId, ConnectionPool>>>,
-    /// Circuit breakers
+    // Circuit breakers
     circuit_breakers: Arc<RwLock<HashMap<BackendId, CircuitBreaker>>>,
-    /// Round-robin counter
+    // Round-robin counter
     round_robin_index: Arc<RwLock<usize>>,
-    /// Next connection ID
+    // Next connection ID
     next_conn_id: Arc<RwLock<ConnectionId>>,
-    /// Active sessions
+    // Active sessions
     sessions: Arc<RwLock<HashMap<String, Session>>>,
 }
 
@@ -404,7 +404,7 @@ impl LoadBalancer {
         }
     }
 
-    /// Add a backend to the load balancer
+    // Add a backend to the load balancer
     pub fn add_backend(&self, backend: Backend) -> Result<(), DbError> {
         let backend_id = backend.id.clone();
 
@@ -429,7 +429,7 @@ impl LoadBalancer {
         Ok(())
     }
 
-    /// Remove a backend
+    // Remove a backend
     pub fn remove_backend(&self, backend_id: &str) -> Result<(), DbError> {
         self.backends.write().unwrap().remove(backend_id);
         self.pools.write().unwrap().remove(backend_id);
@@ -437,7 +437,7 @@ impl LoadBalancer {
         Ok(())
     }
 
-    /// Select backend based on strategy
+    // Select backend based on strategy
     pub fn select_backend(&self, session_id: Option<&str>) -> Result<BackendId, DbError> {
         // Check for session affinity
         if self.config.enable_sticky_sessions {
@@ -477,7 +477,7 @@ impl LoadBalancer {
         Ok(backend_id)
     }
 
-    /// Round-robin selection
+    // Round-robin selection
     fn select_round_robin(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
         let available: Vec<_> = backends
@@ -496,7 +496,7 @@ impl LoadBalancer {
         Ok(selected.id.clone())
     }
 
-    /// Least connections selection
+    // Least connections selection
     fn select_least_connections(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
         let pools = self.pools.read().unwrap();
@@ -512,7 +512,7 @@ impl LoadBalancer {
         Ok(selected.id.clone())
     }
 
-    /// Weighted round-robin selection
+    // Weighted round-robin selection
     fn select_weighted_round_robin(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
         let available: Vec<_> = backends
@@ -541,7 +541,7 @@ impl LoadBalancer {
         Ok(available[0].id.clone())
     }
 
-    /// Latency-based selection
+    // Latency-based selection
     fn select_latency_based(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
 
@@ -558,7 +558,7 @@ impl LoadBalancer {
         Ok(selected.id.clone())
     }
 
-    /// Locality-aware selection
+    // Locality-aware selection
     fn select_locality_aware(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
 
@@ -584,7 +584,7 @@ impl LoadBalancer {
         Ok(selected.id.clone())
     }
 
-    /// Random selection
+    // Random selection
     fn select_random(&self) -> Result<BackendId, DbError> {
         use rand::seq::SliceRandom;
 
@@ -604,7 +604,7 @@ impl LoadBalancer {
         Ok(selected.id.clone())
     }
 
-    /// Check if backend is available
+    // Check if backend is available
     fn is_backend_available(&self, backend_id: &str) -> bool {
         let backends = self.backends.read().unwrap();
         let circuit_breakers = self.circuit_breakers.read().unwrap();
@@ -622,7 +622,7 @@ impl LoadBalancer {
         false
     }
 
-    /// Acquire a connection
+    // Acquire a connection
     pub async fn acquire_connection(&self, session_id: Option<&str>) -> Result<(BackendId, ConnectionId), DbError> {
         let backend_id = self.select_backend(session_id)?;
 
@@ -642,7 +642,7 @@ impl LoadBalancer {
         Ok((backend_id, conn.id))
     }
 
-    /// Release a connection
+    // Release a connection
     pub fn release_connection(&self, backend_id: &str, conn_id: ConnectionId) {
         let pools = self.pools.read().unwrap();
         if let Some(pool) = pools.get(backend_id) {
@@ -656,7 +656,7 @@ impl LoadBalancer {
         }
     }
 
-    /// Record request result for circuit breaker and metrics
+    // Record request result for circuit breaker and metrics
     pub fn record_request_result(&self, backend_id: &str, success: bool, latency_ms: f64) {
         // Update circuit breaker
         let circuit_breakers = self.circuit_breakers.read().unwrap();
@@ -690,17 +690,17 @@ impl LoadBalancer {
         }
     }
 
-    /// Get all backends
+    // Get all backends
     pub fn get_backends(&self) -> Vec<Backend> {
         self.backends.read().unwrap().values().cloned().collect()
     }
 
-    /// Get backend by ID
+    // Get backend by ID
     pub fn get_backend(&self, backend_id: &str) -> Option<Backend> {
         self.backends.read().unwrap().get(backend_id).cloned()
     }
 
-    /// Clean up expired sessions
+    // Clean up expired sessions
     pub fn cleanup_sessions(&self) {
         let mut sessions = self.sessions.write().unwrap();
         sessions.retain(|_, session| !session.is_expired(self.config.session_timeout));
@@ -744,5 +744,3 @@ mod tests {
         assert_eq!(lb.get_backends().len(), 1);
     }
 }
-
-

@@ -54,21 +54,21 @@ use sha2::{Sha256, Digest};
 
 use crate::{Result, DbError};
 
-/// Environment type for configuration profiles
+// Environment type for configuration profiles
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Environment {
-    /// Development environment
+    // Development environment
     Development,
-    /// Testing environment
+    // Testing environment
     Testing,
-    /// Staging environment
+    // Staging environment
     Staging,
-    /// Production environment
+    // Production environment
     Production,
 }
 
 impl Environment {
-    /// Get environment from string
+    // Get environment from string
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "development" | "dev" => Some(Environment::Development),
@@ -79,7 +79,7 @@ impl Environment {
         }
     }
 
-    /// Convert environment to string
+    // Convert environment to string
     pub fn as_str(&self) -> &'static str {
         match self {
             Environment::Development => "development",
@@ -90,29 +90,29 @@ impl Environment {
     }
 }
 
-/// Configuration value types
+// Configuration value types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ConfigValue {
-    /// String value
+    // String value
     String(String),
-    /// Integer value
+    // Integer value
     Integer(i64),
-    /// Float value
+    // Float value
     Float(f64),
-    /// Boolean value
+    // Boolean value
     Boolean(bool),
-    /// Array of values
+    // Array of values
     Array(Vec<ConfigValue>),
-    /// Nested object
+    // Nested object
     Object(HashMap<String, ConfigValue>),
-    /// Encrypted value (stored as base64)
+    // Encrypted value (stored as base64)
     Encrypted(String),
-    /// Null value
+    // Null value
     Null,
 }
 
 impl ConfigValue {
-    /// Get value as string
+    // Get value as string
     pub fn as_string(&self) -> Option<&str> {
         match self {
             ConfigValue::String(s) => Some(s),
@@ -120,7 +120,7 @@ impl ConfigValue {
         }
     }
 
-    /// Get value as integer
+    // Get value as integer
     pub fn as_integer(&self) -> Option<i64> {
         match self {
             ConfigValue::Integer(i) => Some(*i),
@@ -128,7 +128,7 @@ impl ConfigValue {
         }
     }
 
-    /// Get value as float
+    // Get value as float
     pub fn as_float(&self) -> Option<f64> {
         match self {
             ConfigValue::Float(f) => Some(*f),
@@ -136,7 +136,7 @@ impl ConfigValue {
         }
     }
 
-    /// Get value as boolean
+    // Get value as boolean
     pub fn as_boolean(&self) -> Option<bool> {
         match self {
             ConfigValue::Boolean(b) => Some(*b),
@@ -144,7 +144,7 @@ impl ConfigValue {
         }
     }
 
-    /// Get value as array
+    // Get value as array
     pub fn as_array(&self) -> Option<&Vec<ConfigValue>> {
         match self {
             ConfigValue::Array(a) => Some(a),
@@ -152,7 +152,7 @@ impl ConfigValue {
         }
     }
 
-    /// Get value as object
+    // Get value as object
     pub fn as_object(&self) -> Option<&HashMap<String, ConfigValue>> {
         match self {
             ConfigValue::Object(o) => Some(o),
@@ -160,110 +160,110 @@ impl ConfigValue {
         }
     }
 
-    /// Check if value is encrypted
+    // Check if value is encrypted
     pub fn is_encrypted(&self) -> bool {
         matches!(self, ConfigValue::Encrypted(_))
     }
 }
 
-/// Configuration validation rule
+// Configuration validation rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ValidationRule {
-    /// Required field
+    // Required field
     Required,
-    /// Minimum value (for numbers)
+    // Minimum value (for numbers)
     Min(f64),
-    /// Maximum value (for numbers)
+    // Maximum value (for numbers)
     Max(f64),
-    /// Minimum length (for strings/arrays)
+    // Minimum length (for strings/arrays)
     MinLength(usize),
-    /// Maximum length (for strings/arrays)
+    // Maximum length (for strings/arrays)
     MaxLength(usize),
-    /// Pattern match (regex)
+    // Pattern match (regex)
     Pattern(String),
-    /// Allowed values
+    // Allowed values
     Enum(Vec<String>),
-    /// Custom validation function name
+    // Custom validation function name
     Custom(String),
 }
 
-/// Schema definition for configuration
+// Schema definition for configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigSchema {
-    /// Field path (e.g., "database.max_connections")
+    // Field path (e.g., "database.max_connections")
     pub path: String,
-    /// Field description
+    // Field description
     pub description: String,
-    /// Expected value type
+    // Expected value type
     pub value_type: String,
-    /// Default value
+    // Default value
     pub default: Option<ConfigValue>,
-    /// Validation rules
+    // Validation rules
     pub rules: Vec<ValidationRule>,
-    /// Whether this field is sensitive and should be encrypted
+    // Whether this field is sensitive and should be encrypted
     pub sensitive: bool,
 }
 
-/// Configuration change record
+// Configuration change record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigChange {
-    /// Configuration key
+    // Configuration key
     pub key: String,
-    /// Old value
+    // Old value
     pub old_value: Option<ConfigValue>,
-    /// New value
+    // New value
     pub new_value: ConfigValue,
-    /// Timestamp of change
+    // Timestamp of change
     pub timestamp: SystemTime,
-    /// User or system that made the change
+    // User or system that made the change
     pub changed_by: String,
-    /// Reason for change
+    // Reason for change
     pub reason: Option<String>,
 }
 
-/// Configuration snapshot for rollback
+// Configuration snapshot for rollback
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigSnapshot {
-    /// Snapshot ID
+    // Snapshot ID
     pub id: String,
-    /// Environment
+    // Environment
     pub environment: Environment,
-    /// Complete configuration at this point
+    // Complete configuration at this point
     pub config: HashMap<String, ConfigValue>,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
-    /// Description
+    // Description
     pub description: String,
 }
 
-/// Configuration watcher for receiving updates
+// Configuration watcher for receiving updates
 pub type ConfigWatcher = mpsc::UnboundedReceiver<ConfigValue>;
 
-/// Internal watcher channel
+// Internal watcher channel
 type WatcherChannel = mpsc::UnboundedSender<ConfigValue>;
 
-/// Configuration manager implementation
+// Configuration manager implementation
 pub struct ConfigManager {
-    /// Current environment
+    // Current environment
     environment: Environment,
-    /// Current configuration values
+    // Current configuration values
     config: Arc<RwLock<HashMap<String, ConfigValue>>>,
-    /// Configuration schema
+    // Configuration schema
     schema: Arc<RwLock<HashMap<String, ConfigSchema>>>,
-    /// Configuration change history
+    // Configuration change history
     history: Arc<RwLock<Vec<ConfigChange>>>,
-    /// Configuration snapshots
+    // Configuration snapshots
     snapshots: Arc<RwLock<Vec<ConfigSnapshot>>>,
-    /// Watchers for configuration changes
+    // Watchers for configuration changes
     watchers: Arc<RwLock<HashMap<String, Vec<WatcherChannel>>>>,
-    /// Encryption key for sensitive values
+    // Encryption key for sensitive values
     encryption_key: Arc<Vec<u8>>,
-    /// Configuration file path
+    // Configuration file path
     config_path: Arc<RwLock<Option<PathBuf>>>,
 }
 
 impl ConfigManager {
-    /// Create a new configuration manager
+    // Create a new configuration manager
     pub fn new(environment: Environment) -> Self {
         let encryption_key = Self::derive_encryption_key("rustydb-config-key");
 
@@ -279,7 +279,7 @@ impl ConfigManager {
         }
     }
 
-    /// Load configuration from file
+    // Load configuration from file
     pub async fn load_from_file(&self, path: impl AsRef<Path>) -> Result<()> {
         let path = path.as_ref();
         let contents = tokio::fs::read_to_string(path).await
@@ -297,7 +297,7 @@ impl ConfigManager {
         Ok(())
     }
 
-    /// Save configuration to file
+    // Save configuration to file
     pub async fn save_to_file(&self, path: Option<&Path>) -> Result<()> {
         let config = self.config.read().await;
         let json = serde_json::to_string_pretty(&*config)
@@ -318,7 +318,7 @@ impl ConfigManager {
         Ok(())
     }
 
-    /// Set a configuration value
+    // Set a configuration value
     pub async fn set(
         &self,
         key: impl Into<String>,
@@ -327,7 +327,7 @@ impl ConfigManager {
         self.set_with_metadata(key, value, "system", None).await
     }
 
-    /// Set a configuration value with metadata
+    // Set a configuration value with metadata
     pub async fn set_with_metadata(
         &self,
         key: impl Into<String>,
@@ -380,7 +380,7 @@ impl ConfigManager {
         Ok(())
     }
 
-    /// Get a configuration value
+    // Get a configuration value
     pub async fn get(&self, key: &str) -> Result<ConfigValue> {
         let config = self.config.read().await;
         let value = config.get(key)
@@ -395,44 +395,44 @@ impl ConfigManager {
         }
     }
 
-    /// Get configuration value with default
+    // Get configuration value with default
     pub async fn get_or_default(&self, key: &str, default: ConfigValue) -> ConfigValue {
         self.get(key).await.unwrap_or(default)
     }
 
-    /// Check if a key exists
+    // Check if a key exists
     pub async fn has(&self, key: &str) -> bool {
         let config = self.config.read().await;
         config.contains_key(key)
     }
 
-    /// Remove a configuration value
+    // Remove a configuration value
     pub async fn remove(&self, key: &str) -> Result<ConfigValue> {
         let mut config = self.config.write().await;
         config.remove(key)
             .ok_or_else(|| DbError::NotFound(format!("Config key not found: {}", key)))
     }
 
-    /// Get all configuration keys
+    // Get all configuration keys
     pub async fn keys(&self) -> Vec<String> {
         let config = self.config.read().await;
         config.keys().cloned().collect()
     }
 
-    /// Get all configuration as a map
+    // Get all configuration as a map
     pub async fn get_all(&self) -> HashMap<String, ConfigValue> {
         let config = self.config.read().await;
         config.clone()
     }
 
-    /// Register a schema definition
+    // Register a schema definition
     pub async fn register_schema(&self, schema: ConfigSchema) -> Result<()> {
         let mut schemas = self.schema.write().await;
         schemas.insert(schema.path.clone(), schema);
         Ok(())
     }
 
-    /// Validate a value against its schema
+    // Validate a value against its schema
     async fn validate_value(&self, key: &str, value: &ConfigValue) -> Result<()> {
         let schemas = self.schema.read().await;
         if let Some(schema) = schemas.get(key) {
@@ -520,13 +520,13 @@ impl ConfigManager {
         Ok(())
     }
 
-    /// Check if a key is marked as sensitive
+    // Check if a key is marked as sensitive
     async fn is_sensitive(&self, key: &str) -> bool {
         let schemas = self.schema.read().await;
         schemas.get(key).map(|s| s.sensitive).unwrap_or(false)
     }
 
-    /// Encrypt a configuration value
+    // Encrypt a configuration value
     fn encrypt_value(&self, value: ConfigValue) -> Result<ConfigValue> {
         let plaintext = serde_json::to_string(&value)
             .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))?;
@@ -548,7 +548,7 @@ impl ConfigManager {
         Ok(ConfigValue::Encrypted(encoded))
     }
 
-    /// Decrypt a configuration value
+    // Decrypt a configuration value
     fn decrypt_value(&self, value: ConfigValue) -> Result<ConfigValue> {
         if let ConfigValue::Encrypted(encoded) = value {
             let combined = general_purpose::STANDARD.decode(&encoded)
@@ -576,14 +576,14 @@ impl ConfigManager {
         }
     }
 
-    /// Derive encryption key from passphrase
+    // Derive encryption key from passphrase
     fn derive_encryption_key(passphrase: &str) -> Vec<u8> {
         let mut hasher = Sha256::new();
         hasher.update(passphrase.as_bytes());
         hasher.finalize().to_vec()
     }
 
-    /// Watch for changes to a configuration key
+    // Watch for changes to a configuration key
     pub async fn watch(&self, key: impl Into<String>) -> ConfigWatcher {
         let key = key.into();
         let (tx, rx) = mpsc::unbounded_channel();
@@ -594,7 +594,7 @@ impl ConfigManager {
         rx
     }
 
-    /// Notify watchers of configuration change
+    // Notify watchers of configuration change
     async fn notify_watchers(&self, key: &str, value: ConfigValue) {
         let watchers = self.watchers.read().await;
         if let Some(channels) = watchers.get(key) {
@@ -604,7 +604,7 @@ impl ConfigManager {
         }
     }
 
-    /// Create a configuration snapshot
+    // Create a configuration snapshot
     pub async fn create_snapshot(&self, description: impl Into<String>) -> Result<String> {
         let config = self.config.read().await.clone();
 
@@ -623,7 +623,7 @@ impl ConfigManager {
         Ok(id)
     }
 
-    /// Restore from a snapshot
+    // Restore from a snapshot
     pub async fn restore_snapshot(&self, snapshot_id: &str) -> Result<()> {
         let snapshots = self.snapshots.read().await;
         let snapshot = snapshots.iter()
@@ -636,19 +636,19 @@ impl ConfigManager {
         Ok(())
     }
 
-    /// Get configuration change history
+    // Get configuration change history
     pub async fn get_history(&self) -> Vec<ConfigChange> {
         let history = self.history.read().await;
         history.clone()
     }
 
-    /// Get all snapshots
+    // Get all snapshots
     pub async fn get_snapshots(&self) -> Vec<ConfigSnapshot> {
         let snapshots = self.snapshots.read().await;
         snapshots.clone()
     }
 
-    /// Get current environment
+    // Get current environment
     pub fn environment(&self) -> Environment {
         self.environment
     }

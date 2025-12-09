@@ -6,7 +6,8 @@
 use log::warn;
 use rusty_db::{DatabaseConfig, Result, VERSION};
 use rusty_db::network::Server;
-use tracing::{info};
+use rusty_db::api::{RestApiServer, ApiConfig};
+use tracing::{info, error};
 use tracing_subscriber;
 
 #[tokio::main]
@@ -29,6 +30,8 @@ async fn main() -> Result<()> {
     info!("Configuration:");
     info!("  Data directory: {}", config.data_dir);
     info!("  Port: {}", config.port);
+    info!("  REST API port: {}", config.api_port);
+    info!("  REST API enabled: {}", config.enable_rest_api);
     info!("  Page size: {} bytes", config.page_size);
     info!("  Buffer pool size: {} pages", config.buffer_pool_size);
 
@@ -47,16 +50,43 @@ async fn main() -> Result<()> {
 
     info!("Core subsystems initialized successfully");
 
+    // Start REST API server if enabled
+    if config.enable_rest_api {
+        let api_port = config.api_port;
+        tokio::spawn(async move {
+            let api_config = ApiConfig {
+                port: api_port,
+                ..ApiConfig::default()
+            };
+            match RestApiServer::new(api_config).await {
+                Ok(api_server) => {
+                    let api_addr = format!("0.0.0.0:{}", api_port);
+                    info!("Starting REST API server on {}", api_addr);
+                    if let Err(e) = api_server.run(&api_addr).await {
+                        error!("REST API server error: {}", e);
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to create REST API server: {}", e);
+                }
+            }
+        });
+    }
+
     // Start network server
     let server = Server::new();
-let addr = format!("127.0.0.1:{}", config.port);
+    let addr = format!("127.0.0.1:{}", config.port);
 
     info!("Starting network server on {}", addr);
     println!();
     println!("╭─────────────────────────────────────────────────────────╮");
     println!("│  RustyDB is ready to accept connections                │");
     println!("│  Connect using: rusty-db-cli                            │");
-    println!("│  Default port: {}                                      │", config.port);
+    println!("│  Native protocol port: {}                              │", config.port);
+    if config.enable_rest_api {
+        println!("│  REST API: http://0.0.0.0:{}                          │", config.api_port);
+        println!("│  GraphQL: http://0.0.0.0:{}/graphql                   │", config.api_port);
+    }
     println!("╰─────────────────────────────────────────────────────────╯");
     println!();
 

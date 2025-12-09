@@ -12,7 +12,7 @@ use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
-/// Snapshot metadata
+// Snapshot metadata
 #[repr(C)]
 #[repr(align(64))] // Cache-line aligned for hot-path performance
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,7 +79,7 @@ impl Snapshot {
     }
 }
 
-/// Snapshot type
+// Snapshot type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SnapshotType {
     Manual,
@@ -88,7 +88,7 @@ pub enum SnapshotType {
     Automatic,
 }
 
-/// Snapshot status
+// Snapshot status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SnapshotStatus {
     Creating,
@@ -97,7 +97,7 @@ pub enum SnapshotStatus {
     Error { message: String },
 }
 
-/// Snapshot retention policy
+// Snapshot retention policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapshotRetention {
     pub max_age_hours: Option<u64>,
@@ -117,7 +117,7 @@ impl Default for SnapshotRetention {
     }
 }
 
-/// Copy-on-write block tracking
+// Copy-on-write block tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CowBlock {
     pub block_id: u64,
@@ -127,7 +127,7 @@ pub struct CowBlock {
     pub written_at: SystemTime,
 }
 
-/// Copy-on-write tracker for snapshots
+// Copy-on-write tracker for snapshots
 pub struct CowTracker {
     blocks: Arc<RwLock<HashMap<(u32, u64), CowBlock>>>,
     snapshot_id: String,
@@ -141,7 +141,7 @@ impl CowTracker {
         }
     }
 
-    /// Record original block data before write (copy-on-write)
+    // Record original block data before write (copy-on-write)
     pub fn record_block(&self, file_id: u32, block_id: u64, data: Vec<u8>) {
         let key = (file_id, block_id);
         let mut blocks = self.blocks.write();
@@ -158,25 +158,25 @@ impl CowTracker {
         }
     }
 
-    /// Get original block data
+    // Get original block data
     pub fn get_block(&self, file_id: u32, block_id: u64) -> Option<Vec<u8>> {
         let blocks = self.blocks.read();
         blocks.get(&(file_id, block_id)).map(|b| b.original_data.clone())
     }
 
-    /// Get total size of COW blocks
+    // Get total size of COW blocks
     pub fn get_size(&self) -> u64 {
         let blocks = self.blocks.read();
         blocks.values().map(|b| b.original_data.len() as u64).sum()
     }
 
-    /// Get number of COW blocks
+    // Get number of COW blocks
     pub fn get_block_count(&self) -> usize {
         self.blocks.read().len()
     }
 }
 
-/// Snapshot clone for creating writable copies
+// Snapshot clone for creating writable copies
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapshotClone {
     pub clone_id: String,
@@ -198,7 +198,7 @@ pub enum ClonePurpose {
     Custom(String),
 }
 
-/// Snapshot schedule configuration
+// Snapshot schedule configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapshotSchedule {
     pub schedule_id: String,
@@ -270,7 +270,7 @@ impl SnapshotSchedule {
     }
 }
 
-/// Snapshot manager
+// Snapshot manager
 pub struct SnapshotManager {
     snapshots: Arc<RwLock<BTreeMap<String, Snapshot>>>,
     clones: Arc<RwLock<HashMap<String, SnapshotClone>>>,
@@ -296,7 +296,7 @@ impl SnapshotManager {
         })
     }
 
-    /// Create a new snapshot
+    // Create a new snapshot
     pub fn create_snapshot(
         &self,
         snapshot_name: String,
@@ -352,7 +352,7 @@ impl SnapshotManager {
         Ok(())
     }
 
-    /// Clone a snapshot for testing or development
+    // Clone a snapshot for testing or development
     pub fn clone_snapshot(
         &self,
         parent_snapshot_id: &str,
@@ -397,7 +397,7 @@ impl SnapshotManager {
         Ok(clone_id)
     }
 
-    /// Delete a snapshot
+    // Delete a snapshot
     pub fn delete_snapshot(&self, snapshot_id: &str) -> Result<()> {
         // Check if snapshot has clones
         let snapshot = self.snapshots.read().get(snapshot_id).cloned()
@@ -426,7 +426,7 @@ impl SnapshotManager {
         Ok(())
     }
 
-    /// Delete a clone
+    // Delete a clone
     pub fn delete_clone(&self, clone_id: &str) -> Result<()> {
         let clone = self.clones.read().get(clone_id).cloned()
             .ok_or_else(|| DbError::BackupError("Clone not found".to_string()))?;
@@ -446,21 +446,21 @@ impl SnapshotManager {
         Ok(())
     }
 
-    /// Add a snapshot schedule
+    // Add a snapshot schedule
     pub fn add_schedule(&self, schedule: SnapshotSchedule) -> Result<()> {
         let schedule_id = schedule.schedule_id.clone();
         self.schedules.write().insert(schedule_id, schedule);
         Ok(())
     }
 
-    /// Remove a snapshot schedule
+    // Remove a snapshot schedule
     pub fn remove_schedule(&self, schedule_id: &str) -> Result<()> {
         self.schedules.write().remove(schedule_id)
             .ok_or_else(|| DbError::BackupError("Schedule not found".to_string()))?;
         Ok(())
     }
 
-    /// Execute due scheduled snapshots
+    // Execute due scheduled snapshots
     pub fn execute_schedules(&self) -> Result<Vec<String>> {
         let mut created_snapshots = Vec::new();
         let mut schedules = self.schedules.write();
@@ -491,17 +491,17 @@ impl SnapshotManager {
         Ok(created_snapshots)
     }
 
-    /// Get snapshot by ID
+    // Get snapshot by ID
     pub fn get_snapshot(&self, snapshot_id: &str) -> Option<Snapshot> {
         self.snapshots.read().get(snapshot_id).cloned()
     }
 
-    /// List all snapshots
+    // List all snapshots
     pub fn list_snapshots(&self) -> Vec<Snapshot> {
         self.snapshots.read().values().cloned().collect()
     }
 
-    /// List snapshots for a specific database
+    // List snapshots for a specific database
     pub fn list_snapshots_for_database(&self, database_name: &str) -> Vec<Snapshot> {
         self.snapshots.read()
             .values()
@@ -510,17 +510,17 @@ impl SnapshotManager {
             .collect()
     }
 
-    /// List all clones
+    // List all clones
     pub fn list_clones(&self) -> Vec<SnapshotClone> {
         self.clones.read().values().cloned().collect()
     }
 
-    /// Get clone by ID
+    // Get clone by ID
     pub fn get_clone(&self, clone_id: &str) -> Option<SnapshotClone> {
         self.clones.read().get(clone_id).cloned()
     }
 
-    /// Apply retention policies and cleanup old snapshots
+    // Apply retention policies and cleanup old snapshots
     pub fn apply_retention_policies(&self) -> Result<Vec<String>> {
         let mut deleted_snapshots = Vec::new();
         let snapshots: Vec<Snapshot> = self.snapshots.read().values().cloned().collect();
@@ -537,7 +537,7 @@ impl SnapshotManager {
         Ok(deleted_snapshots)
     }
 
-    /// Get snapshot storage statistics
+    // Get snapshot storage statistics
     pub fn get_storage_statistics(&self) -> SnapshotStatistics {
         let snapshots = self.snapshots.read();
         let clones = self.clones.read();
@@ -584,7 +584,7 @@ impl SnapshotManager {
     }
 }
 
-/// Snapshot storage statistics
+// Snapshot storage statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapshotStatistics {
     pub total_snapshots: usize,
@@ -662,5 +662,3 @@ mod tests {
         assert!(schedule.next_execution.is_some());
     }
 }
-
-

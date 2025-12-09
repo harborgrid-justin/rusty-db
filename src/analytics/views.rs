@@ -17,48 +17,48 @@ use crate::catalog::Schema;
 // View Types
 // =============================================================================
 
-/// View definition - a virtual table based on a SQL query.
-///
-/// Views provide a logical abstraction over base tables without storing
-/// data physically. They are evaluated at query time.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// let view = View {
-///     name: "active_users".to_string(),
-///     query: "SELECT * FROM users WHERE active = true".to_string(),
-///     schema: user_schema,
-///     updatable: true,
-///     check_option: Some(CheckOption::Cascaded),
-/// };
-/// ```
+// View definition - a virtual table based on a SQL query.
+//
+// Views provide a logical abstraction over base tables without storing
+// data physically. They are evaluated at query time.
+//
+// # Example
+//
+// ```rust,ignore
+// let view = View {
+//     name: "active_users".to_string(),
+//     query: "SELECT * FROM users WHERE active = true".to_string(),
+//     schema: user_schema,
+//     updatable: true,
+//     check_option: Some(CheckOption::Cascaded),
+// };
+// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct View {
-    /// Name of the view
+    // Name of the view
     pub name: String,
 
-    /// SQL query defining the view
+    // SQL query defining the view
     pub query: String,
 
-    /// Schema of the view's result set
+    // Schema of the view's result set
     pub schema: Schema,
 
-    /// Whether the view supports INSERT/UPDATE/DELETE
+    // Whether the view supports INSERT/UPDATE/DELETE
     pub updatable: bool,
 
-    /// Check option for updatable views
+    // Check option for updatable views
     pub check_option: Option<CheckOption>,
 }
 
-/// Check option for updatable views.
-///
-/// Controls validation of data modifications through views.
+// Check option for updatable views.
+//
+// Controls validation of data modifications through views.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CheckOption {
-    /// Only check the view's own WHERE clause
+    // Only check the view's own WHERE clause
     Local,
-    /// Check all underlying view WHERE clauses
+    // Check all underlying view WHERE clauses
     Cascaded,
 }
 
@@ -66,55 +66,55 @@ pub enum CheckOption {
 // Materialized View Types
 // =============================================================================
 
-/// Materialized view definition with pre-computed data.
-///
-/// Unlike regular views, materialized views store their query results
-/// physically, providing faster read performance at the cost of storage
-/// and refresh overhead.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// let mv = MaterializedView {
-///     name: "daily_sales_summary".to_string(),
-///     query: "SELECT date, SUM(amount) FROM sales GROUP BY date".to_string(),
-///     schema: sales_schema,
-///     last_refreshed: SystemTime::now(),
-///     refresh_schedule: Some(RefreshSchedule::daily()),
-///     data: vec![],
-///     indexes: vec![],
-///     statistics: ViewStatistics::default(),
-/// };
-/// ```
+// Materialized view definition with pre-computed data.
+//
+// Unlike regular views, materialized views store their query results
+// physically, providing faster read performance at the cost of storage
+// and refresh overhead.
+//
+// # Example
+//
+// ```rust,ignore
+// let mv = MaterializedView {
+//     name: "daily_sales_summary".to_string(),
+//     query: "SELECT date, SUM(amount) FROM sales GROUP BY date".to_string(),
+//     schema: sales_schema,
+//     last_refreshed: SystemTime::now(),
+//     refresh_schedule: Some(RefreshSchedule::daily()),
+//     data: vec![],
+//     indexes: vec![],
+//     statistics: ViewStatistics::default(),
+// };
+// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaterializedView {
-    /// Name of the materialized view
+    // Name of the materialized view
     pub name: String,
 
-    /// SQL query defining the view
+    // SQL query defining the view
     pub query: String,
 
-    /// Schema of the result set
+    // Schema of the result set
     pub schema: Schema,
 
-    /// Last refresh timestamp
+    // Last refresh timestamp
     pub last_refreshed: SystemTime,
 
-    /// Optional automatic refresh schedule
+    // Optional automatic refresh schedule
     pub refresh_schedule: Option<RefreshSchedule>,
 
-    /// Cached query result data
+    // Cached query result data
     pub data: Vec<Vec<String>>,
 
-    /// Indexes on the materialized view
+    // Indexes on the materialized view
     pub indexes: Vec<MaterializedViewIndex>,
 
-    /// Access and performance statistics
+    // Access and performance statistics
     pub statistics: ViewStatistics,
 }
 
 impl MaterializedView {
-    /// Create a new materialized view.
+    // Create a new materialized view.
     pub fn new(name: String, query: String, schema: Schema) -> Self {
         Self {
             name,
@@ -128,7 +128,7 @@ impl MaterializedView {
         }
     }
 
-    /// Check if the materialized view needs refresh.
+    // Check if the materialized view needs refresh.
     pub fn needs_refresh(&self) -> bool {
         if let Some(schedule) = &self.refresh_schedule {
             SystemTime::now() >= schedule.next_refresh
@@ -137,7 +137,7 @@ impl MaterializedView {
         }
     }
 
-    /// Get the age of the data in seconds.
+    // Get the age of the data in seconds.
     pub fn data_age_seconds(&self) -> u64 {
         SystemTime::now()
             .duration_since(self.last_refreshed)
@@ -145,12 +145,12 @@ impl MaterializedView {
             .unwrap_or(0)
     }
 
-    /// Add an index to the materialized view.
+    // Add an index to the materialized view.
     pub fn add_index(&mut self, index: MaterializedViewIndex) {
         self.indexes.push(index);
     }
 
-    /// Update the data and refresh timestamp.
+    // Update the data and refresh timestamp.
     pub fn update_data(&mut self, data: Vec<Vec<String>>) {
         self.data = data;
         self.last_refreshed = SystemTime::now();
@@ -163,21 +163,21 @@ impl MaterializedView {
     }
 }
 
-/// Refresh schedule for materialized views.
+// Refresh schedule for materialized views.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefreshSchedule {
-    /// Interval between refreshes
+    // Interval between refreshes
     pub interval: Duration,
 
-    /// Next scheduled refresh time
+    // Next scheduled refresh time
     pub next_refresh: SystemTime,
 
-    /// Whether auto-refresh is enabled
+    // Whether auto-refresh is enabled
     pub auto_refresh: bool,
 }
 
 impl RefreshSchedule {
-    /// Create a schedule that refreshes every N seconds.
+    // Create a schedule that refreshes every N seconds.
     pub fn every_seconds(seconds: u64) -> Self {
         Self {
             interval: Duration::from_secs(seconds),
@@ -186,37 +186,37 @@ impl RefreshSchedule {
         }
     }
 
-    /// Create a schedule that refreshes every N minutes.
+    // Create a schedule that refreshes every N minutes.
     pub fn every_minutes(minutes: u64) -> Self {
         Self::every_seconds(minutes * 60)
     }
 
-    /// Create a schedule that refreshes every N hours.
+    // Create a schedule that refreshes every N hours.
     pub fn every_hours(hours: u64) -> Self {
         Self::every_seconds(hours * 3600)
     }
 
-    /// Create a daily refresh schedule.
+    // Create a daily refresh schedule.
     pub fn daily() -> Self {
         Self::every_hours(24)
     }
 }
 
-/// Index on a materialized view.
+// Index on a materialized view.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaterializedViewIndex {
-    /// Index name
+    // Index name
     pub name: String,
 
-    /// Indexed columns
+    // Indexed columns
     pub columns: Vec<String>,
 
-    /// Whether the index enforces uniqueness
+    // Whether the index enforces uniqueness
     pub unique: bool,
 }
 
 impl MaterializedViewIndex {
-    /// Create a new non-unique index.
+    // Create a new non-unique index.
     pub fn new(name: String, columns: Vec<String>) -> Self {
         Self {
             name,
@@ -225,7 +225,7 @@ impl MaterializedViewIndex {
         }
     }
 
-    /// Create a new unique index.
+    // Create a new unique index.
     pub fn unique(name: String, columns: Vec<String>) -> Self {
         Self {
             name,
@@ -239,24 +239,24 @@ impl MaterializedViewIndex {
 // View Statistics
 // =============================================================================
 
-/// Statistics for a view or materialized view.
-///
-/// Tracks access patterns and performance metrics.
+// Statistics for a view or materialized view.
+//
+// Tracks access patterns and performance metrics.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ViewStatistics {
-    /// Number of rows in the view
+    // Number of rows in the view
     pub row_count: u64,
 
-    /// Size of data in bytes
+    // Size of data in bytes
     pub data_size_bytes: u64,
 
-    /// Last access timestamp
+    // Last access timestamp
     pub last_accessed: SystemTime,
 
-    /// Total number of accesses
+    // Total number of accesses
     pub access_count: u64,
 
-    /// Average query time in milliseconds
+    // Average query time in milliseconds
     pub avg_query_time_ms: f64,
 }
 
@@ -273,7 +273,7 @@ impl Default for ViewStatistics {
 }
 
 impl ViewStatistics {
-    /// Record an access to the view.
+    // Record an access to the view.
     pub fn record_access(&mut self, query_time_ms: f64) {
         self.access_count += 1;
         self.last_accessed = SystemTime::now();
@@ -283,7 +283,7 @@ impl ViewStatistics {
         self.avg_query_time_ms = (total_time + query_time_ms) / self.access_count as f64;
     }
 
-    /// Get the access frequency (accesses per hour).
+    // Get the access frequency (accesses per hour).
     pub fn access_frequency_per_hour(&self) -> f64 {
         // This would need first_accessed to calculate properly
         // Simplified: assume 1 hour of operation

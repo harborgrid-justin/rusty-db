@@ -6,7 +6,7 @@ use crate::error::DbError;
 use crate::catalog::{Column, DataType};
 use crate::security::injection_prevention::InjectionPreventionGuard;
 
-/// Parsed SQL statement
+// Parsed SQL statement
 #[derive(Debug, Clone)]
 pub enum SqlStatement {
     CreateTable {
@@ -96,7 +96,7 @@ pub enum AlterAction {
     DropConstraint(String),
 }
 
-/// SQL parser wrapper with integrated injection prevention
+// SQL parser wrapper with integrated injection prevention
 pub struct SqlParser {
     dialect: GenericDialect,
     injection_guard: InjectionPreventionGuard,
@@ -109,7 +109,7 @@ impl SqlParser {
             injection_guard: InjectionPreventionGuard::new(),
         }
     }
-    
+
     pub fn parse(&self, sql: &str) -> Result<Vec<SqlStatement>> {
         // LAYER 1-6: Multi-layer injection prevention
         // This validates and sanitizes the input through:
@@ -132,13 +132,13 @@ impl SqlParser {
 
         Ok(statements)
     }
-    
+
     fn convert_statement(&self, stmt: Statement) -> Result<SqlStatement> {
         match stmt {
             Statement::CreateTable { name, columns, .. } => {
                 let table_name = name.to_string();
                 let mut cols = Vec::new();
-                
+
                 for col in columns {
                     let data_type = match col.data_type {
                         sqlparser::ast::DataType::Int(_) => DataType::Integer,
@@ -158,7 +158,7 @@ impl SqlParser {
                         sqlparser::ast::DataType::Timestamp(_, _) => DataType::Timestamp,
                         _ => DataType::Text,
                     };
-                    
+
                     cols.push(Column {
                         name: col.name.to_string(),
                         data_type,
@@ -168,7 +168,7 @@ impl SqlParser {
                         default: None,
                     });
                 }
-                
+
                 Ok(SqlStatement::CreateTable {
                     name: table_name,
                     columns: cols,
@@ -183,7 +183,7 @@ impl SqlParser {
                 if let SetExpr::Select(select) = *query.body {
                     let table = self.extract_table_name(&select.from)?;
                     let columns = self.extract_columns(&select.projection)?;
-                    
+
                     Ok(SqlStatement::Select {
                         table,
                         columns,
@@ -201,7 +201,7 @@ impl SqlParser {
             Statement::Insert { table_name, columns, .. } => {
                 let table = table_name.to_string();
                 let cols: Vec<String> = columns.iter().map(|c| c.to_string()).collect();
-                
+
                 // TODO: Parse source values from the INSERT statement
                 // For now, return empty values - this will be enhanced in future versions
                 Ok(SqlStatement::Insert {
@@ -219,21 +219,21 @@ impl SqlParser {
             _ => Err(DbError::SqlParse("Unsupported statement type".to_string())),
         }
     }
-    
+
     fn extract_table_name(&self, from: &[TableWithJoins]) -> Result<String> {
         if from.is_empty() {
             return Err(DbError::SqlParse("No table specified".to_string()));
         }
-        
+
         match &from[0].relation {
             TableFactor::Table { name, .. } => Ok(name.to_string()),
             _ => Err(DbError::SqlParse("Unsupported table factor".to_string())),
         }
     }
-    
+
     fn extract_columns(&self, projection: &[SelectItem]) -> Result<Vec<String>> {
         let mut columns = Vec::new();
-        
+
         for item in projection {
             match item {
                 SelectItem::UnnamedExpr(Expr::Identifier(ident)) => {
@@ -245,7 +245,7 @@ impl SqlParser {
                 _ => {}
             }
         }
-        
+
         Ok(columns)
     }
 }
@@ -259,13 +259,13 @@ impl Default for SqlParser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_parse_create_table() -> Result<()> {
         let parser = SqlParser::new();
         let sql = "CREATE TABLE users (id INT, name VARCHAR(255))";
         let stmts = parser.parse(sql)?;
-        
+
         assert_eq!(stmts.len(), 1);
         match &stmts[0] {
             SqlStatement::CreateTable { name, columns } => {
@@ -274,16 +274,16 @@ mod tests {
             }
             _ => panic!("Expected CreateTable"),
         }
-        
+
         Ok(())
     }
-    
+
     #[test]
     fn test_parse_select() -> Result<()> {
         let parser = SqlParser::new();
         let sql = "SELECT id, name FROM users";
         let stmts = parser.parse(sql)?;
-        
+
         assert_eq!(stmts.len(), 1);
         match &stmts[0] {
             SqlStatement::Select { table, columns, .. } => {
@@ -292,9 +292,7 @@ mod tests {
             }
             _ => panic!("Expected Select"),
         }
-        
+
         Ok(())
     }
 }
-
-

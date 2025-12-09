@@ -54,28 +54,28 @@ use crate::error::{Result, DbError};
 // Core Configuration
 // ============================================================================
 
-/// Comprehensive configuration for the database core
+// Comprehensive configuration for the database core
 #[derive(Debug, Clone)]
 pub struct CoreConfig {
-    /// Data directory for database files
+    // Data directory for database files
     pub data_dir: String,
 
-    /// Buffer Pool Configuration
+    // Buffer Pool Configuration
     pub buffer_pool: BufferPoolConfig,
 
-    /// I/O Subsystem Configuration
+    // I/O Subsystem Configuration
     pub io_config: IoConfig,
 
-    /// Worker Thread Pool Configuration
+    // Worker Thread Pool Configuration
     pub worker_config: WorkerConfig,
 
-    /// Memory Arena Configuration
+    // Memory Arena Configuration
     pub memory_config: MemoryConfig,
 
-    /// Monitoring and Metrics
+    // Monitoring and Metrics
     pub monitoring: MonitoringConfig,
 
-    /// Feature Flags
+    // Feature Flags
     pub features: FeatureFlags,
 }
 
@@ -93,22 +93,22 @@ impl Default for CoreConfig {
     }
 }
 
-/// Buffer pool configuration
+// Buffer pool configuration
 #[derive(Debug, Clone)]
 pub struct BufferPoolConfig {
-    /// Total buffer pool size in bytes (default: 1GB)
+    // Total buffer pool size in bytes (default: 1GB)
     pub size_bytes: usize,
-    /// Page size in bytes (default: 4KB)
+    // Page size in bytes (default: 4KB)
     pub page_size: usize,
-    /// Eviction policy: CLOCK, LRU, LRU-K, 2Q
+    // Eviction policy: CLOCK, LRU, LRU-K, 2Q
     pub eviction_policy: EvictionPolicy,
-    /// Number of partitions for lock-free access
+    // Number of partitions for lock-free access
     pub num_partitions: usize,
-    /// Enable per-core frame pools
+    // Enable per-core frame pools
     pub per_core_pools: bool,
-    /// Batch flush threshold (pages)
+    // Batch flush threshold (pages)
     pub batch_flush_threshold: usize,
-    /// Background flush interval (ms)
+    // Background flush interval (ms)
     pub flush_interval_ms: u64,
 }
 
@@ -126,37 +126,37 @@ impl Default for BufferPoolConfig {
     }
 }
 
-/// Eviction policies for buffer pool
+// Eviction policies for buffer pool
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EvictionPolicy {
-    /// CLOCK algorithm (default)
+    // CLOCK algorithm (default)
     Clock,
-    /// Least Recently Used
+    // Least Recently Used
     Lru,
-    /// LRU-K (K=2)
+    // LRU-K (K=2)
     LruK,
-    /// Two-Queue (2Q)
+    // Two-Queue (2Q)
     TwoQueue,
 }
 
-/// I/O subsystem configuration
+// I/O subsystem configuration
 #[derive(Debug, Clone)]
 pub struct IoConfig {
-    /// Number of I/O worker threads
+    // Number of I/O worker threads
     pub num_io_threads: usize,
-    /// Enable Direct I/O (bypass OS cache)
+    // Enable Direct I/O (bypass OS cache)
     pub direct_io: bool,
-    /// Enable async I/O (IOCP on Windows, io_uring on Linux)
+    // Enable async I/O (IOCP on Windows, io_uring on Linux)
     pub async_io: bool,
-    /// I/O queue depth
+    // I/O queue depth
     pub queue_depth: usize,
-    /// Read-ahead size in pages
+    // Read-ahead size in pages
     pub readahead_pages: usize,
-    /// Write buffer size in bytes
+    // Write buffer size in bytes
     pub write_buffer_bytes: usize,
-    /// Enable I/O batching
+    // Enable I/O batching
     pub enable_batching: bool,
-    /// I/O timeout in milliseconds
+    // I/O timeout in milliseconds
     pub timeout_ms: u64,
 }
 
@@ -175,20 +175,20 @@ impl Default for IoConfig {
     }
 }
 
-/// Worker thread pool configuration
+// Worker thread pool configuration
 #[derive(Debug, Clone)]
 pub struct WorkerConfig {
-    /// Number of worker threads for query execution
+    // Number of worker threads for query execution
     pub num_workers: usize,
-    /// Number of background workers
+    // Number of background workers
     pub num_background_workers: usize,
-    /// Thread stack size in bytes
+    // Thread stack size in bytes
     pub stack_size_bytes: usize,
-    /// Thread priority (0-100, higher is better)
+    // Thread priority (0-100, higher is better)
     pub priority: u8,
-    /// Enable work stealing
+    // Enable work stealing
     pub work_stealing: bool,
-    /// Task queue capacity per worker
+    // Task queue capacity per worker
     pub queue_capacity: usize,
 }
 
@@ -205,20 +205,20 @@ impl Default for WorkerConfig {
     }
 }
 
-/// Memory arena configuration
+// Memory arena configuration
 #[derive(Debug, Clone)]
 pub struct MemoryConfig {
-    /// Total memory limit in bytes (0 = unlimited)
+    // Total memory limit in bytes (0 = unlimited)
     pub total_limit_bytes: usize,
-    /// Arena size for small allocations
+    // Arena size for small allocations
     pub small_arena_size: usize,
-    /// Arena size for large allocations
+    // Arena size for large allocations
     pub large_arena_size: usize,
-    /// Enable NUMA-aware allocation
+    // Enable NUMA-aware allocation
     pub numa_aware: bool,
-    /// Enable huge pages
+    // Enable huge pages
     pub use_huge_pages: bool,
-    /// Memory pressure threshold (0.0-1.0)
+    // Memory pressure threshold (0.0-1.0)
     pub pressure_threshold: f64,
 }
 
@@ -235,20 +235,20 @@ impl Default for MemoryConfig {
     }
 }
 
-/// Monitoring configuration
+// Monitoring configuration
 #[derive(Debug, Clone)]
 pub struct MonitoringConfig {
-    /// Enable metrics collection
+    // Enable metrics collection
     pub enabled: bool,
-    /// Metrics collection interval (ms)
+    // Metrics collection interval (ms)
     pub collection_interval_ms: u64,
-    /// Enable tracing
+    // Enable tracing
     pub tracing_enabled: bool,
-    /// Trace sampling rate (0.0-1.0)
+    // Trace sampling rate (0.0-1.0)
     pub trace_sample_rate: f64,
-    /// Enable health checks
+    // Enable health checks
     pub health_checks: bool,
-    /// Health check interval (ms)
+    // Health check interval (ms)
     pub health_check_interval_ms: u64,
 }
 
@@ -265,18 +265,18 @@ impl Default for MonitoringConfig {
     }
 }
 
-/// Feature flags for runtime toggles
+// Feature flags for runtime toggles
 #[derive(Debug, Clone)]
 pub struct FeatureFlags {
-    /// Enable SIMD optimizations
+    // Enable SIMD optimizations
     pub simd: bool,
-    /// Enable IOCP on Windows
+    // Enable IOCP on Windows
     pub iocp: bool,
-    /// Enable io_uring on Linux
+    // Enable io_uring on Linux
     pub io_uring: bool,
-    /// Enable compression
+    // Enable compression
     pub compression: bool,
-    /// Enable encryption at rest
+    // Enable encryption at rest
     pub encryption: bool,
 }
 
@@ -296,7 +296,7 @@ impl Default for FeatureFlags {
 // Core Database Initialization
 // ============================================================================
 
-/// Main database core coordinator
+// Main database core coordinator
 pub struct DatabaseCore {
     config: CoreConfig,
     state: Arc<RwLock<CoreState>>,
@@ -308,7 +308,7 @@ pub struct DatabaseCore {
     shutdown_signal: Arc<AtomicBool>,
 }
 
-/// Core state tracking
+// Core state tracking
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CoreState {
     Uninitialized,
@@ -322,7 +322,7 @@ pub enum CoreState {
 }
 
 impl DatabaseCore {
-    /// Initialize the database core with the given configuration
+    // Initialize the database core with the given configuration
     pub async fn initialize(config: CoreConfig) -> Result<Arc<Self>> {
         let start = Instant::now();
         let state = Arc::new(RwLock::new(CoreState::Bootstrapping));
@@ -391,7 +391,7 @@ impl DatabaseCore {
         }))
     }
 
-    /// Bootstrap phase: load config, initialize logging
+    // Bootstrap phase: load config, initialize logging
     fn bootstrap_phase(config: &CoreConfig) -> Result<()> {
         // Initialize tracing subscriber
         if config.monitoring.tracing_enabled {
@@ -408,27 +408,27 @@ impl DatabaseCore {
         Ok(())
     }
 
-    /// Initialize memory arena system
+    // Initialize memory arena system
     fn initialize_memory_arena(config: &MemoryConfig) -> Result<Arc<MemoryArena>> {
         Ok(Arc::new(MemoryArena::new(config.clone())))
     }
 
-    /// Initialize I/O engine
+    // Initialize I/O engine
     fn initialize_io_engine(config: &IoConfig) -> Result<Arc<IoEngine>> {
         Ok(Arc::new(IoEngine::new(config.clone())))
     }
 
-    /// Initialize buffer pool manager
+    // Initialize buffer pool manager
     fn initialize_buffer_pool(config: &BufferPoolConfig) -> Result<Arc<BufferPoolManager>> {
         Ok(Arc::new(BufferPoolManager::new(config.clone())))
     }
 
-    /// Initialize worker thread pool
+    // Initialize worker thread pool
     fn initialize_worker_pool(config: &WorkerConfig) -> Result<Arc<WorkerPool>> {
         Ok(Arc::new(WorkerPool::new(config.clone())))
     }
 
-    /// Run the database core
+    // Run the database core
     pub async fn run(&self) -> Result<()> {
         println!("Database core running...");
 
@@ -443,7 +443,7 @@ impl DatabaseCore {
         Ok(())
     }
 
-    /// Start background tasks (flush, metrics, health checks)
+    // Start background tasks (flush, metrics, health checks)
     async fn start_background_tasks(&self) -> Result<()> {
         // Background flush task
         if self.config.buffer_pool.flush_interval_ms > 0 {
@@ -489,7 +489,7 @@ impl DatabaseCore {
         Ok(())
     }
 
-    /// Graceful shutdown
+    // Graceful shutdown
     pub async fn shutdown(&self) -> Result<()> {
         println!("\n╔════════════════════════════════════════════════════════╗");
         println!("║         Initiating Graceful Shutdown                  ║");
@@ -523,32 +523,32 @@ impl DatabaseCore {
         Ok(())
     }
 
-    /// Get current state
+    // Get current state
     pub fn get_state(&self) -> CoreState {
         *self.state.read()
     }
 
-    /// Get metrics
+    // Get metrics
     pub fn get_metrics(&self) -> Arc<CoreMetrics> {
         self.metrics.clone()
     }
 
-    /// Get buffer pool reference
+    // Get buffer pool reference
     pub fn buffer_pool(&self) -> Arc<BufferPoolManager> {
         self.buffer_pool.clone()
     }
 
-    /// Get I/O engine reference
+    // Get I/O engine reference
     pub fn io_engine(&self) -> Arc<IoEngine> {
         self.io_engine.clone()
     }
 
-    /// Get worker pool reference
+    // Get worker pool reference
     pub fn worker_pool(&self) -> Arc<WorkerPool> {
         self.worker_pool.clone()
     }
 
-    /// Get memory arena reference
+    // Get memory arena reference
     pub fn memory_arena(&self) -> Arc<MemoryArena> {
         self.memory_arena.clone()
     }
@@ -558,7 +558,7 @@ impl DatabaseCore {
 // Buffer Pool Manager
 // ============================================================================
 
-/// Buffer pool manager coordinating page cache
+// Buffer pool manager coordinating page cache
 pub struct BufferPoolManager {
     config: BufferPoolConfig,
     num_pages: usize,
@@ -739,7 +739,7 @@ impl BufferPoolManager {
 // I/O Engine
 // ============================================================================
 
-/// High-performance I/O engine
+// High-performance I/O engine
 pub struct IoEngine {
     config: IoConfig,
     thread_pool: Mutex<Vec<std::thread::JoinHandle<()>>>,
@@ -821,7 +821,7 @@ impl IoEngine {
 // Worker Thread Pool
 // ============================================================================
 
-/// Worker thread pool for query execution
+// Worker thread pool for query execution
 pub struct WorkerPool {
     config: WorkerConfig,
     workers: Mutex<Vec<Worker>>,
@@ -920,7 +920,7 @@ impl WorkerPool {
 // Memory Arena
 // ============================================================================
 
-/// Memory arena for efficient allocation
+// Memory arena for efficient allocation
 pub struct MemoryArena {
     config: MemoryConfig,
     allocated_bytes: AtomicUsize,
@@ -1008,7 +1008,7 @@ pub struct MemoryUsage {
 // Core Metrics
 // ============================================================================
 
-/// Core metrics collection
+// Core metrics collection
 pub struct CoreMetrics {
     config: MonitoringConfig,
     uptime_start: Instant,

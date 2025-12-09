@@ -1,7 +1,7 @@
-//! Example: Using the High-Performance Buffer Pool Manager
-//!
-//! This example demonstrates how to use RustyDB's buffer pool manager
-//! optimized for Windows/MSVC with zero-allocation hot paths.
+// Example: Using the High-Performance Buffer Pool Manager
+//
+// This example demonstrates how to use RustyDB's buffer pool manager
+// optimized for Windows/MSVC with zero-allocation hot paths.
 
 use rusty_db::buffer::{
     BufferPoolBuilder, EvictionPolicyType,
@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-/// Example 1: Simple buffer pool with default settings
+// Example 1: Simple buffer pool with default settings
 fn example_1_simple() -> Result<()> {
     println!("Example 1: Simple Buffer Pool");
     println!("------------------------------");
@@ -61,7 +61,7 @@ fn example_1_simple() -> Result<()> {
     Ok(())
 }
 
-/// Example 2: OLTP-optimized buffer pool
+// Example 2: OLTP-optimized buffer pool
 fn example_2_oltp() -> Result<()> {
     println!("Example 2: OLTP-Optimized Buffer Pool");
     println!("--------------------------------------");
@@ -91,7 +91,7 @@ fn example_2_oltp() -> Result<()> {
     Ok(())
 }
 
-/// Example 3: OLAP-optimized buffer pool
+// Example 3: OLAP-optimized buffer pool
 fn example_3_olap() -> Result<()> {
     println!("Example 3: OLAP-Optimized Buffer Pool");
     println!("--------------------------------------");
@@ -120,7 +120,7 @@ fn example_3_olap() -> Result<()> {
     Ok(())
 }
 
-/// Example 4: Custom configuration
+// Example 4: Custom configuration
 fn example_4_custom() -> Result<()> {
     println!("Example 4: Custom Configuration");
     println!("--------------------------------");
@@ -147,7 +147,7 @@ fn example_4_custom() -> Result<()> {
     Ok(())
 }
 
-/// Example 5: Statistics and monitoring
+// Example 5: Statistics and monitoring
 fn example_5_stats() -> Result<()> {
     println!("Example 5: Statistics and Monitoring");
     println!("-------------------------------------");
@@ -192,7 +192,7 @@ fn example_5_stats() -> Result<()> {
     Ok(())
 }
 
-/// Example 6: Multiple page operations
+// Example 6: Multiple page operations
 fn example_6_multi_page() -> Result<()> {
     println!("Example 6: Multiple Page Operations");
     println!("------------------------------------");

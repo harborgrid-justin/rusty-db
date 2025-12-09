@@ -29,27 +29,27 @@ use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// A rewrite rule that transforms queries.
+// A rewrite rule that transforms queries.
 #[derive(Debug, Clone)]
 pub struct RewriteRule {
-    /// Rule identifier
+    // Rule identifier
     pub id: String,
-    /// Rule name for display
+    // Rule name for display
     pub name: String,
-    /// Rule priority (higher = applied first)
+    // Rule priority (higher = applied first)
     pub priority: i32,
-    /// Pattern to match in query
+    // Pattern to match in query
     pub pattern: String,
-    /// Replacement template
+    // Replacement template
     pub replacement: String,
-    /// Whether rule is enabled
+    // Whether rule is enabled
     pub enabled: bool,
-    /// Conditions for rule application
+    // Conditions for rule application
     pub conditions: Vec<String>,
 }
 
 impl RewriteRule {
-    /// Creates a new rewrite rule.
+    // Creates a new rewrite rule.
     pub fn new(
         id: impl Into<String>,
         name: impl Into<String>,
@@ -67,19 +67,19 @@ impl RewriteRule {
         }
     }
 
-    /// Sets the rule priority.
+    // Sets the rule priority.
     pub fn with_priority(mut self, priority: i32) -> Self {
         self.priority = priority;
         self
     }
 
-    /// Adds a condition for rule application.
+    // Adds a condition for rule application.
     pub fn with_condition(mut self, condition: impl Into<String>) -> Self {
         self.conditions.push(condition.into());
         self
     }
 
-    /// Creates a predicate pushdown rule.
+    // Creates a predicate pushdown rule.
     pub fn predicate_pushdown() -> Self {
         Self::new(
             "pred_pushdown",
@@ -90,7 +90,7 @@ impl RewriteRule {
         .with_priority(100)
     }
 
-    /// Creates a constant folding rule.
+    // Creates a constant folding rule.
     pub fn constant_folding() -> Self {
         Self::new(
             "const_fold",
@@ -101,7 +101,7 @@ impl RewriteRule {
         .with_priority(50)
     }
 
-    /// Creates a redundant join elimination rule.
+    // Creates a redundant join elimination rule.
     pub fn redundant_join_elimination() -> Self {
         Self::new(
             "redundant_join",
@@ -112,36 +112,36 @@ impl RewriteRule {
         .with_priority(90)
     }
 
-    /// Disables the rule.
+    // Disables the rule.
     pub fn disable(mut self) -> Self {
         self.enabled = false;
         self
     }
 }
 
-/// Statistics about query rewriting.
+// Statistics about query rewriting.
 #[derive(Debug, Clone, Default)]
 pub struct RewriteStats {
-    /// Number of rules applied
+    // Number of rules applied
     pub rules_applied: usize,
-    /// Total time spent rewriting (microseconds)
+    // Total time spent rewriting (microseconds)
     pub rewrite_time_us: u64,
-    /// Cost reduction achieved
+    // Cost reduction achieved
     pub cost_reduction: f64,
-    /// Individual rule application counts
+    // Individual rule application counts
     pub rule_counts: HashMap<String, usize>,
 }
 
-/// Query rewriter that applies transformation rules.
+// Query rewriter that applies transformation rules.
 #[derive(Debug)]
 pub struct QueryRewriter {
-    /// Registered rewrite rules
+    // Registered rewrite rules
     rules: Vec<RewriteRule>,
-    /// Statistics about rewrites
+    // Statistics about rewrites
     stats: RewriteStats,
-    /// Maximum iterations to prevent infinite loops
+    // Maximum iterations to prevent infinite loops
     max_iterations: usize,
-    /// Enable detailed logging
+    // Enable detailed logging
     trace_enabled: bool,
 }
 
@@ -152,7 +152,7 @@ impl Default for QueryRewriter {
 }
 
 impl QueryRewriter {
-    /// Creates a new query rewriter with default rules.
+    // Creates a new query rewriter with default rules.
     pub fn new() -> Self {
         Self {
             rules: Vec::new(),
@@ -162,7 +162,7 @@ impl QueryRewriter {
         }
     }
 
-    /// Creates a rewriter with standard optimization rules.
+    // Creates a rewriter with standard optimization rules.
     pub fn with_standard_rules() -> Self {
         let mut rewriter = Self::new();
         rewriter.add_rule(RewriteRule::predicate_pushdown());
@@ -171,26 +171,26 @@ impl QueryRewriter {
         rewriter
     }
 
-    /// Adds a rewrite rule.
+    // Adds a rewrite rule.
     pub fn add_rule(&mut self, rule: RewriteRule) {
         self.rules.push(rule);
         // Sort by priority (descending)
         self.rules.sort_by(|a, b| b.priority.cmp(&a.priority));
     }
 
-    /// Removes a rule by ID.
+    // Removes a rule by ID.
     pub fn remove_rule(&mut self, id: &str) -> bool {
         let len_before = self.rules.len();
         self.rules.retain(|r| r.id != id);
         self.rules.len() < len_before
     }
 
-    /// Enables trace logging.
+    // Enables trace logging.
     pub fn enable_trace(&mut self, enabled: bool) {
         self.trace_enabled = enabled;
     }
 
-    /// Rewrites a query string using registered rules.
+    // Rewrites a query string using registered rules.
     pub fn rewrite(&mut self, query: &str) -> RewriteResult {
         let start = std::time::Instant::now();
         let mut current = query.to_string();
@@ -237,7 +237,7 @@ impl QueryRewriter {
         }
     }
 
-    /// Applies a single rule to the query.
+    // Applies a single rule to the query.
     fn apply_rule(&self, rule: &RewriteRule, query: &str) -> Option<String> {
         // Simple pattern matching (real implementation would use AST)
         if query.contains(&rule.pattern) {
@@ -247,78 +247,78 @@ impl QueryRewriter {
         }
     }
 
-    /// Returns rewrite statistics.
+    // Returns rewrite statistics.
     pub fn stats(&self) -> &RewriteStats {
         &self.stats
     }
 
-    /// Resets statistics.
+    // Resets statistics.
     pub fn reset_stats(&mut self) {
         self.stats = RewriteStats::default();
     }
 }
 
-/// Result of a query rewrite operation.
+// Result of a query rewrite operation.
 #[derive(Debug, Clone)]
 pub struct RewriteResult {
-    /// Original query
+    // Original query
     pub original: String,
-    /// Rewritten query
+    // Rewritten query
     pub rewritten: String,
-    /// Rules that were applied
+    // Rules that were applied
     pub rules_applied: Vec<String>,
-    /// Number of iterations
+    // Number of iterations
     pub iterations: usize,
 }
 
 impl RewriteResult {
-    /// Returns whether any changes were made.
+    // Returns whether any changes were made.
     pub fn was_rewritten(&self) -> bool {
         self.original != self.rewritten
     }
 }
 
-/// Delta operation type for incremental view maintenance.
+// Delta operation type for incremental view maintenance.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DeltaOperation {
-    /// Row insertion
+    // Row insertion
     Insert,
-    /// Row deletion
+    // Row deletion
     Delete,
-    /// Row update (old and new values)
+    // Row update (old and new values)
     Update,
 }
 
-/// A row change for incremental maintenance.
+// A row change for incremental maintenance.
 #[derive(Debug, Clone)]
 pub struct DeltaRow {
-    /// Operation type
+    // Operation type
     pub operation: DeltaOperation,
-    /// Row values (column -> value)
+    // Row values (column -> value)
     pub values: HashMap<String, String>,
-    /// Old values for updates
+    // Old values for updates
     pub old_values: Option<HashMap<String, String>>,
-    /// Timestamp of the change
+    // Timestamp of the change
     pub timestamp: u64,
 }
 
-/// Delta table for tracking changes.
+// Delta table for tracking changes.
 #[derive(Debug)]
 pub struct DeltaTable {
-    /// Table name
+    // Table name
     table_name: String,
-    /// Collected delta rows
+    // Collected delta rows
     deltas: Vec<DeltaRow>,
-    /// Maximum deltas before compaction
+    // Maximum deltas before compaction
     max_deltas: usize,
-    /// Column names
+    // Column names
     columns: Vec<String>,
-    /// Last compaction time
+    // Last compaction time
     last_compaction: std::time::Instant,
 }
 
 impl DeltaTable {
-    /// Creates a new delta table.
+    // Creates a new delta table.
     pub fn new(table_name: impl Into<String>, columns: Vec<String>) -> Self {
         Self {
             table_name: table_name.into(),
@@ -329,7 +329,7 @@ impl DeltaTable {
         }
     }
 
-    /// Records an insert operation.
+    // Records an insert operation.
     pub fn record_insert(&mut self, values: HashMap<String, String>) {
         self.deltas.push(DeltaRow {
             operation: DeltaOperation::Insert,
@@ -340,7 +340,7 @@ impl DeltaTable {
         self.maybe_compact();
     }
 
-    /// Records a delete operation.
+    // Records a delete operation.
     pub fn record_delete(&mut self, values: HashMap<String, String>) {
         self.deltas.push(DeltaRow {
             operation: DeltaOperation::Delete,
@@ -351,7 +351,7 @@ impl DeltaTable {
         self.maybe_compact();
     }
 
-    /// Records an update operation.
+    // Records an update operation.
     pub fn record_update(
         &mut self,
         oldvalues: HashMap<String, String>,
@@ -366,44 +366,44 @@ impl DeltaTable {
         self.maybe_compact();
     }
 
-    /// Returns pending deltas since the given timestamp.
+    // Returns pending deltas since the given timestamp.
     pub fn get_deltas_since(&self, since: u64) -> Vec<&DeltaRow> {
         self.deltas.iter().filter(|d| d.timestamp > since).collect()
     }
 
-    /// Returns all pending deltas.
+    // Returns all pending deltas.
     pub fn get_all_deltas(&self) -> &[DeltaRow] {
         &self.deltas
     }
 
-    /// Clears processed deltas.
+    // Clears processed deltas.
     pub fn clear_deltas(&mut self) {
         self.deltas.clear();
     }
 
-    /// Clears deltas up to the given timestamp.
+    // Clears deltas up to the given timestamp.
     pub fn clear_deltas_before(&mut self, before: u64) {
         self.deltas.retain(|d| d.timestamp >= before);
     }
 
-    /// Returns the number of pending deltas.
+    // Returns the number of pending deltas.
     pub fn delta_count(&self) -> usize {
         self.deltas.len()
     }
 
-    /// Returns the table name.
+    // Returns the table name.
     pub fn table_name(&self) -> &str {
         &self.table_name
     }
 
-    /// Checks if compaction is needed.
+    // Checks if compaction is needed.
     fn maybe_compact(&mut self) {
         if self.deltas.len() > self.max_deltas {
             self.compact();
         }
     }
 
-    /// Compacts the delta log by merging operations.
+    // Compacts the delta log by merging operations.
     pub fn compact(&mut self) {
         // Group operations by key and merge
         // Insert followed by Delete = nothing
@@ -419,7 +419,7 @@ impl DeltaTable {
         self.last_compaction = std::time::Instant::now();
     }
 
-    /// Gets current timestamp in microseconds.
+    // Gets current timestamp in microseconds.
     fn current_timestamp(&self) -> u64 {
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -428,14 +428,14 @@ impl DeltaTable {
     }
 }
 
-/// Incremental view maintenance coordinator.
+// Incremental view maintenance coordinator.
 #[derive(Debug)]
 pub struct IncrementalViewMaintenance {
-    /// Delta tables by source table name
+    // Delta tables by source table name
     delta_tables: Arc<RwLock<HashMap<String, DeltaTable>>>,
-    /// View definitions (view name -> source tables)
+    // View definitions (view name -> source tables)
     view_sources: HashMap<String, Vec<String>>,
-    /// Last refresh timestamps by view
+    // Last refresh timestamps by view
     last_refresh: HashMap<String, u64>,
 }
 
@@ -446,7 +446,7 @@ impl Default for IncrementalViewMaintenance {
 }
 
 impl IncrementalViewMaintenance {
-    /// Creates a new incremental view maintenance coordinator.
+    // Creates a new incremental view maintenance coordinator.
     pub fn new() -> Self {
         Self {
             delta_tables: Arc::new(RwLock::new(HashMap::new())),
@@ -455,21 +455,21 @@ impl IncrementalViewMaintenance {
         }
     }
 
-    /// Registers a delta table for a source table.
+    // Registers a delta table for a source table.
     pub fn register_delta_table(&self, table_name: &str, columns: Vec<String>) {
         self.delta_tables
             .write()
             .insert(table_name.to_string(), DeltaTable::new(table_name, columns));
     }
 
-    /// Registers a view with its source tables.
+    // Registers a view with its source tables.
     pub fn register_view(&mut self, view_name: &str, source_tables: Vec<String>) {
         self.view_sources
             .insert(view_name.to_string(), source_tables);
         self.last_refresh.insert(view_name.to_string(), 0);
     }
 
-    /// Records a change to a source table.
+    // Records a change to a source table.
     pub fn record_change(&self, table_name: &str, row: DeltaRow) {
         if let Some(delta_table) = self.delta_tables.write().get_mut(table_name) {
             match row.operation {
@@ -488,7 +488,7 @@ impl IncrementalViewMaintenance {
         }
     }
 
-    /// Gets pending changes for a view since last refresh.
+    // Gets pending changes for a view since last refresh.
     pub fn get_pending_changes(&self, view_name: &str) -> Vec<ViewDelta> {
         let sources = match self.view_sources.get(view_name) {
             Some(s) => s,
@@ -516,7 +516,7 @@ impl IncrementalViewMaintenance {
         changes
     }
 
-    /// Marks a view as refreshed.
+    // Marks a view as refreshed.
     pub fn mark_refreshed(&mut self, view_name: &str) {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -526,12 +526,12 @@ impl IncrementalViewMaintenance {
         self.last_refresh.insert(view_name.to_string(), now);
     }
 
-    /// Checks if a view needs refresh.
+    // Checks if a view needs refresh.
     pub fn needs_refresh(&self, view_name: &str) -> bool {
         !self.get_pending_changes(view_name).is_empty()
     }
 
-    /// Returns views that need refresh.
+    // Returns views that need refresh.
     pub fn views_needing_refresh(&self) -> Vec<String> {
         self.view_sources
             .keys()
@@ -541,16 +541,16 @@ impl IncrementalViewMaintenance {
     }
 }
 
-/// A change to propagate to a view.
+// A change to propagate to a view.
 #[derive(Debug, Clone)]
 pub struct ViewDelta {
-    /// Source table that changed
+    // Source table that changed
     pub source_table: String,
-    /// Type of change
+    // Type of change
     pub operation: DeltaOperation,
-    /// New/current values
+    // New/current values
     pub values: HashMap<String, String>,
-    /// Old values for updates
+    // Old values for updates
     pub old_values: Option<HashMap<String, String>>,
 }
 

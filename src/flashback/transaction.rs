@@ -26,7 +26,7 @@
 use std::collections::VecDeque;
 use std::fmt;
 use std::collections::HashSet;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};

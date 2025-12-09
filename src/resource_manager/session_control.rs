@@ -16,83 +16,83 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 
-/// Session identifier
+// Session identifier
 pub type SessionId = u64;
 
-/// User identifier
+// User identifier
 pub type UserId = u64;
 
-/// Session state
+// Session state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SessionState {
-    /// Session is inactive (no active query)
+    // Session is inactive (no active query)
     Inactive,
-    /// Session has an active query running
+    // Session has an active query running
     Active,
-    /// Session is waiting for a resource
+    // Session is waiting for a resource
     Waiting,
-    /// Session is blocked by a lock
+    // Session is blocked by a lock
     Blocked,
-    /// Session is idle (connected but inactive)
+    // Session is idle (connected but inactive)
     Idle,
-    /// Session is being killed
+    // Session is being killed
     Killed,
-    /// Session is terminated
+    // Session is terminated
     Terminated,
 }
 
-/// Session priority
+// Session priority
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum SessionPriority {
-    /// Critical priority (always allowed)
+    // Critical priority (always allowed)
     Critical,
-    /// High priority
+    // High priority
     High,
-    /// Normal priority
+    // Normal priority
     Normal,
-    /// Low priority
+    // Low priority
     Low,
 }
 
-/// Session information
+// Session information
 #[derive(Debug, Clone)]
 pub struct SessionInfo {
-    /// Session identifier
+    // Session identifier
     pub session_id: SessionId,
-    /// User identifier
+    // User identifier
     pub user_id: UserId,
-    /// Username
+    // Username
     pub username: String,
-    /// Consumer group
+    // Consumer group
     pub group_id: ConsumerGroupId,
-    /// Session state
+    // Session state
     pub state: SessionState,
-    /// Session priority
+    // Session priority
     pub priority: SessionPriority,
-    /// Connection time
+    // Connection time
     pub connected_at: SystemTime,
-    /// Last active time
+    // Last active time
     pub last_active: Instant,
-    /// Current query start time
+    // Current query start time
     pub current_query_start: Option<Instant>,
-    /// Total queries executed
+    // Total queries executed
     pub total_queries: u64,
-    /// Client program name
+    // Client program name
     pub program_name: Option<String>,
-    /// Client machine
+    // Client machine
     pub machine_name: Option<String>,
-    /// Idle time limit
+    // Idle time limit
     pub idle_timeout: Option<Duration>,
-    /// Maximum execution time limit
+    // Maximum execution time limit
     pub max_execution_time: Option<Duration>,
-    /// Whether this is a system session
+    // Whether this is a system session
     pub is_system: bool,
-    /// Number of times priority was boosted
+    // Number of times priority was boosted
     pub priority_boosts: u32,
 }
 
 impl SessionInfo {
-    /// Create a new session
+    // Create a new session
     pub fn new(
         session_id: SessionId,
         user_id: UserId,
@@ -122,12 +122,12 @@ impl SessionInfo {
         }
     }
 
-    /// Check if session is idle
+    // Check if session is idle
     pub fn is_idle(&self) -> bool {
         self.state == SessionState::Idle || self.state == SessionState::Inactive
     }
 
-    /// Get idle duration
+    // Get idle duration
     pub fn idle_duration(&self) -> Duration {
         if self.is_idle() {
             Instant::now().duration_since(self.last_active)
@@ -136,7 +136,7 @@ impl SessionInfo {
         }
     }
 
-    /// Check if idle timeout exceeded
+    // Check if idle timeout exceeded
     pub fn is_idle_timeout_exceeded(&self) -> bool {
         if let Some(timeout) = self.idle_timeout {
             self.idle_duration() > timeout
@@ -145,12 +145,12 @@ impl SessionInfo {
         }
     }
 
-    /// Get current query execution time
+    // Get current query execution time
     pub fn current_query_duration(&self) -> Option<Duration> {
         self.current_query_start.map(|start| Instant::now().duration_since(start))
     }
 
-    /// Check if execution time limit exceeded
+    // Check if execution time limit exceeded
     pub fn is_execution_timeout_exceeded(&self) -> bool {
         if let Some(max_time) = self.max_execution_time {
             if let Some(duration) = self.current_query_duration() {
@@ -160,7 +160,7 @@ impl SessionInfo {
         false
     }
 
-    /// Start a query
+    // Start a query
     pub fn start_query(&mut self) {
         self.state = SessionState::Active;
         self.current_query_start = Some(Instant::now());
@@ -168,14 +168,14 @@ impl SessionInfo {
         self.last_active = Instant::now();
     }
 
-    /// Complete a query
+    // Complete a query
     pub fn complete_query(&mut self) {
         self.state = SessionState::Inactive;
         self.current_query_start = None;
         self.last_active = Instant::now();
     }
 
-    /// Boost priority
+    // Boost priority
     pub fn boost_priority(&mut self) {
         self.priority = match self.priority {
             SessionPriority::Low => SessionPriority::Normal,
@@ -187,14 +187,14 @@ impl SessionInfo {
     }
 }
 
-/// Active session pool configuration
+// Active session pool configuration
 #[derive(Debug, Clone)]
 pub struct ActiveSessionPoolConfig {
-    /// Maximum active sessions allowed
+    // Maximum active sessions allowed
     pub max_active_sessions: u32,
-    /// Queue timeout for waiting sessions
+    // Queue timeout for waiting sessions
     pub queue_timeout: Duration,
-    /// Whether to allow queuing
+    // Whether to allow queuing
     pub allow_queuing: bool,
 }
 
@@ -208,7 +208,7 @@ impl Default for ActiveSessionPoolConfig {
     }
 }
 
-/// Session waiting in queue
+// Session waiting in queue
 #[derive(Debug, Clone)]
 struct QueuedSession {
     session_id: SessionId,
@@ -224,55 +224,55 @@ impl PartialEq for QueuedSession {
 
 impl Eq for QueuedSession {}
 
-/// Session controller
+// Session controller
 pub struct SessionController {
-    /// All sessions
+    // All sessions
     sessions: Arc<RwLock<HashMap<SessionId, SessionInfo>>>,
-    /// Active sessions (currently executing queries)
+    // Active sessions (currently executing queries)
     active_sessions: Arc<RwLock<HashSet<SessionId>>>,
-    /// Session queue (waiting for active session slot)
+    // Session queue (waiting for active session slot)
     session_queue: Arc<Mutex<VecDeque<QueuedSession>>>,
-    /// Active session pool configuration per group
+    // Active session pool configuration per group
     group_configs: Arc<RwLock<HashMap<ConsumerGroupId, ActiveSessionPoolConfig>>>,
-    /// Group active session counts
+    // Group active session counts
     group_active_counts: Arc<RwLock<HashMap<ConsumerGroupId, u32>>>,
-    /// Global maximum sessions
+    // Global maximum sessions
     global_max_sessions: Option<u32>,
-    /// Next session ID
+    // Next session ID
     next_session_id: Arc<RwLock<SessionId>>,
-    /// Session timeout checker enabled
+    // Session timeout checker enabled
     timeout_checker_enabled: bool,
-    /// Auto-terminate enabled
+    // Auto-terminate enabled
     auto_terminate_enabled: bool,
-    /// Statistics
+    // Statistics
     stats: Arc<RwLock<SessionStats>>,
 }
 
-/// Session statistics
+// Session statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SessionStats {
-    /// Total sessions created
+    // Total sessions created
     pub total_sessions_created: u64,
-    /// Total sessions terminated
+    // Total sessions terminated
     pub total_sessions_terminated: u64,
-    /// Sessions terminated due to idle timeout
+    // Sessions terminated due to idle timeout
     pub idle_timeout_terminations: u64,
-    /// Sessions terminated due to execution timeout
+    // Sessions terminated due to execution timeout
     pub execution_timeout_terminations: u64,
-    /// Sessions killed manually
+    // Sessions killed manually
     pub manual_kills: u64,
-    /// Current active sessions
+    // Current active sessions
     pub current_active_sessions: u32,
-    /// Peak concurrent sessions
+    // Peak concurrent sessions
     pub peak_concurrent_sessions: u32,
-    /// Sessions queued
+    // Sessions queued
     pub sessions_queued: u64,
-    /// Queue timeout events
+    // Queue timeout events
     pub queue_timeouts: u64,
 }
 
 impl SessionController {
-    /// Create a new session controller
+    // Create a new session controller
     pub fn new(global_max_sessions: Option<u32>) -> Self {
         Self {
             sessions: Arc::new(RwLock::new(HashMap::new())),
@@ -288,7 +288,7 @@ impl SessionController {
         }
     }
 
-    /// Create a new session
+    // Create a new session
     pub fn create_session(
         &self,
         user_id: UserId,
@@ -331,7 +331,7 @@ impl SessionController {
         Ok(session_id)
     }
 
-    /// Configure active session pool for a group
+    // Configure active session pool for a group
     pub fn configure_group_pool(
         &self,
         group_id: ConsumerGroupId,
@@ -346,7 +346,7 @@ impl SessionController {
         Ok(())
     }
 
-    /// Start a query (request active session slot)
+    // Start a query (request active session slot)
     pub fn start_query(&self, session_id: SessionId) -> Result<bool> {
         let group_id = {
             let sessions = self.sessions.read().unwrap();
@@ -378,7 +378,7 @@ impl SessionController {
         }
     }
 
-    /// Activate a session
+    // Activate a session
     fn activate_session(&self, session_id: SessionId) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
         let session = sessions.get_mut(&session_id)
@@ -409,7 +409,7 @@ impl SessionController {
         Ok(())
     }
 
-    /// Queue a session
+    // Queue a session
     fn queue_session(&self, session_id: SessionId) -> Result<()> {
         let priority = {
             let sessions = self.sessions.read().unwrap();
@@ -436,7 +436,7 @@ impl SessionController {
         Ok(())
     }
 
-    /// Complete a query
+    // Complete a query
     pub fn complete_query(&self, session_id: SessionId) -> Result<()> {
         let group_id = {
             let mut sessions = self.sessions.write().unwrap();
@@ -475,7 +475,7 @@ impl SessionController {
         Ok(())
     }
 
-    /// Process session queue
+    // Process session queue
     fn process_queue(&self, group_id: ConsumerGroupId) -> Result<()> {
         let mut queue = self.session_queue.lock().unwrap();
 
@@ -510,7 +510,7 @@ impl SessionController {
         Ok(())
     }
 
-    /// Terminate a session
+    // Terminate a session
     pub fn terminate_session(&self, session_id: SessionId, reason: &str) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
         let session = sessions.get_mut(&session_id)
@@ -541,7 +541,7 @@ impl SessionController {
         Ok(())
     }
 
-    /// Kill a session
+    // Kill a session
     pub fn kill_session(&self, session_id: SessionId) -> Result<()> {
         self.terminate_session(session_id, "Manual kill")?;
 
@@ -551,7 +551,7 @@ impl SessionController {
         Ok(())
     }
 
-    /// Check and terminate idle sessions
+    // Check and terminate idle sessions
     pub fn check_idle_timeouts(&self) -> Vec<SessionId> {
         if !self.timeout_checker_enabled || !self.auto_terminate_enabled {
             return Vec::new();
@@ -583,7 +583,7 @@ impl SessionController {
         to_terminate
     }
 
-    /// Check and terminate long-running queries
+    // Check and terminate long-running queries
     pub fn check_execution_timeouts(&self) -> Vec<SessionId> {
         if !self.timeout_checker_enabled || !self.auto_terminate_enabled {
             return Vec::new();
@@ -615,7 +615,7 @@ impl SessionController {
         to_terminate
     }
 
-    /// Boost session priority
+    // Boost session priority
     pub fn boost_session_priority(&self, session_id: SessionId) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
         let session = sessions.get_mut(&session_id)
@@ -625,19 +625,19 @@ impl SessionController {
         Ok(())
     }
 
-    /// Get session information
+    // Get session information
     pub fn get_session(&self, session_id: SessionId) -> Option<SessionInfo> {
         let sessions = self.sessions.read().unwrap();
         sessions.get(&session_id).cloned()
     }
 
-    /// List all sessions
+    // List all sessions
     pub fn list_sessions(&self) -> Vec<SessionInfo> {
         let sessions = self.sessions.read().unwrap();
         sessions.values().cloned().collect()
     }
 
-    /// List active sessions
+    // List active sessions
     pub fn list_active_sessions(&self) -> Vec<SessionInfo> {
         let sessions = self.sessions.read().unwrap();
         let active = self.active_sessions.read().unwrap();
@@ -647,12 +647,12 @@ impl SessionController {
             .collect()
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn get_stats(&self) -> SessionStats {
         self.stats.read().unwrap().clone()
     }
 
-    /// Set session limits
+    // Set session limits
     pub fn set_session_limits(
         &self,
         session_id: SessionId,
@@ -669,12 +669,12 @@ impl SessionController {
         Ok(())
     }
 
-    /// Enable/disable timeout checker
+    // Enable/disable timeout checker
     pub fn set_timeout_checker_enabled(&mut self, enabled: bool) {
         self.timeout_checker_enabled = enabled;
     }
 
-    /// Enable/disable auto-terminate
+    // Enable/disable auto-terminate
     pub fn set_auto_terminate_enabled(&mut self, enabled: bool) {
         self.auto_terminate_enabled = enabled;
     }

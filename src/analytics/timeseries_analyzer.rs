@@ -15,21 +15,21 @@ use std::cmp::Ordering;
 // Time Series Analyzer
 // =============================================================================
 
-/// Time series analyzer for detecting patterns and forecasting.
+// Time series analyzer for detecting patterns and forecasting.
 pub struct TimeSeriesAnalyzer {
-    /// Window size for moving average calculations
+    // Window size for moving average calculations
     window_size: usize,
 }
 
 impl TimeSeriesAnalyzer {
-    /// Create a new analyzer with the given window size.
+    // Create a new analyzer with the given window size.
     pub fn new(window_size: usize) -> Self {
         Self { window_size }
     }
 
-    /// Compute simple moving average.
-    ///
-    /// Returns a vector of moving averages, one per input value.
+    // Compute simple moving average.
+    //
+    // Returns a vector of moving averages, one per input value.
     pub fn moving_average(&self, data: &[f64]) -> Vec<f64> {
         let mut result = Vec::with_capacity(data.len());
 
@@ -47,11 +47,11 @@ impl TimeSeriesAnalyzer {
         result
     }
 
-    /// Compute exponential moving average.
-    ///
-    /// # Arguments
-    /// * `data` - Input time series
-    /// * `alpha` - Smoothing factor (0 < alpha <= 1)
+    // Compute exponential moving average.
+    //
+    // # Arguments
+    // * `data` - Input time series
+    // * `alpha` - Smoothing factor (0 < alpha <= 1)
     pub fn exponential_moving_average(&self, data: &[f64], alpha: f64) -> Vec<f64> {
         if data.is_empty() {
             return Vec::new();
@@ -68,7 +68,7 @@ impl TimeSeriesAnalyzer {
         result
     }
 
-    /// Compute weighted moving average.
+    // Compute weighted moving average.
     pub fn weighted_moving_average(&self, data: &[f64]) -> Vec<f64> {
         let mut result = Vec::with_capacity(data.len());
 
@@ -96,7 +96,7 @@ impl TimeSeriesAnalyzer {
         result
     }
 
-    /// Detect the overall trend in the data.
+    // Detect the overall trend in the data.
     pub fn detect_trend(&self, data: &[f64]) -> Trend {
         if data.len() < 2 {
             return Trend::Stable;
@@ -122,7 +122,7 @@ impl TimeSeriesAnalyzer {
         }
     }
 
-    /// Calculate trend strength (0.0 to 1.0).
+    // Calculate trend strength (0.0 to 1.0).
     pub fn trend_strength(&self, data: &[f64]) -> f64 {
         if data.len() < 2 {
             return 0.0;
@@ -145,9 +145,9 @@ impl TimeSeriesAnalyzer {
         dominant as f64 / max_changes as f64
     }
 
-    /// Detect seasonality using autocorrelation.
-    ///
-    /// Returns true if significant seasonality is detected at the given period.
+    // Detect seasonality using autocorrelation.
+    //
+    // Returns true if significant seasonality is detected at the given period.
     pub fn detect_seasonality(&self, data: &[f64], period: usize) -> bool {
         if data.len() < period * 2 {
             return false;
@@ -172,7 +172,7 @@ impl TimeSeriesAnalyzer {
         autocorr > 0.5 // Threshold for seasonality detection
     }
 
-    /// Find the dominant period in the data.
+    // Find the dominant period in the data.
     pub fn find_period(&self, data: &[f64], maxperiod: usize) -> Option<usize> {
         let max_period = maxperiod.min(data.len() / 2);
 
@@ -192,7 +192,7 @@ impl TimeSeriesAnalyzer {
         best_period
     }
 
-    /// Compute autocorrelation at a specific lag.
+    // Compute autocorrelation at a specific lag.
     fn autocorrelation(&self, data: &[f64], lag: usize) -> f64 {
         if data.len() <= lag {
             return 0.0;
@@ -215,9 +215,9 @@ impl TimeSeriesAnalyzer {
         autocorr / (n as f64 * variance)
     }
 
-    /// Simple linear forecasting.
-    ///
-    /// Extrapolates the trend into the future.
+    // Simple linear forecasting.
+    //
+    // Extrapolates the trend into the future.
     pub fn forecast(&self, data: &[f64], periods: usize) -> Vec<f64> {
         if data.is_empty() {
             return vec![0.0; periods];
@@ -254,7 +254,7 @@ impl TimeSeriesAnalyzer {
             .collect()
     }
 
-    /// Calculate rate of change.
+    // Calculate rate of change.
     pub fn rate_of_change(&self, data: &[f64], period: usize) -> Vec<f64> {
         if data.len() <= period {
             return vec![0.0; data.len()];
@@ -285,14 +285,14 @@ impl Default for TimeSeriesAnalyzer {
 // Trend Types
 // =============================================================================
 
-/// Trend direction.
+// Trend direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Trend {
-    /// Values are increasing
+    // Values are increasing
     Increasing,
-    /// Values are decreasing
+    // Values are decreasing
     Decreasing,
-    /// Values are relatively stable
+    // Values are relatively stable
     Stable,
 }
 
@@ -300,24 +300,24 @@ pub enum Trend {
 // Anomaly Detector
 // =============================================================================
 
-/// Anomaly detector for identifying outliers in data.
+// Anomaly detector for identifying outliers in data.
 pub struct AnomalyDetector {
-    /// Number of standard deviations for outlier threshold
+    // Number of standard deviations for outlier threshold
     threshold_stddev: f64,
 }
 
 impl AnomalyDetector {
-    /// Create a new anomaly detector.
-    ///
-    /// # Arguments
-    /// * `threshold_stddev` - Number of standard deviations for outlier detection
+    // Create a new anomaly detector.
+    //
+    // # Arguments
+    // * `threshold_stddev` - Number of standard deviations for outlier detection
     pub fn new(threshold_stddev: f64) -> Self {
         Self { threshold_stddev }
     }
 
-    /// Detect outliers using z-score method.
-    ///
-    /// Returns indices of outlier values.
+    // Detect outliers using z-score method.
+    //
+    // Returns indices of outlier values.
     pub fn detect_outliers(&self, data: &[f64]) -> Vec<usize> {
         if data.len() < 3 {
             return Vec::new();
@@ -338,9 +338,9 @@ impl AnomalyDetector {
             .collect()
     }
 
-    /// Detect anomalies using IQR (Interquartile Range) method.
-    ///
-    /// More robust to extreme outliers than z-score.
+    // Detect anomalies using IQR (Interquartile Range) method.
+    //
+    // More robust to extreme outliers than z-score.
     pub fn detect_anomalies_iqr(&self, data: &[f64]) -> Vec<usize> {
         if data.len() < 4 {
             return Vec::new();
@@ -366,9 +366,9 @@ impl AnomalyDetector {
             .collect()
     }
 
-    /// Detect anomalies using modified z-score (MAD-based).
-    ///
-    /// Uses Median Absolute Deviation, robust to outliers.
+    // Detect anomalies using modified z-score (MAD-based).
+    //
+    // Uses Median Absolute Deviation, robust to outliers.
     pub fn detect_anomalies_mad(&self, data: &[f64]) -> Vec<usize> {
         if data.len() < 3 {
             return Vec::new();
@@ -401,7 +401,7 @@ impl AnomalyDetector {
             .collect()
     }
 
-    /// Get outlier values.
+    // Get outlier values.
     pub fn get_outlier_values(&self, data: &[f64]) -> Vec<f64> {
         let indices = self.detect_outliers(data);
         indices.iter().map(|&i| data[i]).collect()

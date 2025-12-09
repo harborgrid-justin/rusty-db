@@ -20,40 +20,40 @@ use super::types::*;
 // Audit Logging
 // ============================================================================
 
-/// Audit logger
+// Audit logger
 pub struct AuditLogger {
-    /// Audit events
+    // Audit events
     events: VecDeque<AuditEvent>,
-    /// Max events to keep in memory
+    // Max events to keep in memory
     max_events: usize,
 }
 
-/// Audit event
+// Audit event
 #[derive(Debug, Clone)]
 pub struct AuditEvent {
-    /// Event ID
+    // Event ID
     pub id: String,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
-    /// Event type
+    // Event type
     pub event_type: AuditEventType,
-    /// User ID
+    // User ID
     pub user_id: Option<String>,
-    /// Client IP
+    // Client IP
     pub client_ip: IpAddr,
-    /// Request ID
+    // Request ID
     pub request_id: String,
-    /// Resource
+    // Resource
     pub resource: String,
-    /// Action
+    // Action
     pub action: String,
-    /// Result
+    // Result
     pub result: AuditResult,
-    /// Details
+    // Details
     pub details: HashMap<String, String>,
 }
 
-/// Audit event type
+// Audit event type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AuditEventType {
     Authentication,
@@ -65,7 +65,7 @@ pub enum AuditEventType {
     ConfigChange,
 }
 
-/// Audit result
+// Audit result
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AuditResult {
     Success,
@@ -73,22 +73,22 @@ pub enum AuditResult {
     Denied,
 }
 
-/// Security event
+// Security event
 #[derive(Debug, Clone)]
 pub struct SecurityEvent {
-    /// Event type
+    // Event type
     pub event_type: SecurityEventType,
-    /// Request ID
+    // Request ID
     pub request_id: String,
-    /// Client IP
+    // Client IP
     pub client_ip: IpAddr,
-    /// Reason
+    // Reason
     pub reason: String,
-    /// Timestamp
+    // Timestamp
     pub timestamp: SystemTime,
 }
 
-/// Security event type
+// Security event type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SecurityEventType {
     AuthenticationFailed,
@@ -106,7 +106,7 @@ impl AuditLogger {
         }
     }
 
-    /// Log request
+    // Log request
     pub(crate) fn log_request(&mut self, request: &ApiRequest) {
         let event = AuditEvent {
             id: Uuid::new_v4().to_string(),
@@ -124,7 +124,7 @@ impl AuditLogger {
         self.add_event(event);
     }
 
-    /// Log security event
+    // Log security event
     pub(crate) fn log_security_event(&mut self, event: &SecurityEvent) {
         let audit_event = AuditEvent {
             id: Uuid::new_v4().to_string(),
@@ -146,7 +146,7 @@ impl AuditLogger {
         self.add_event(audit_event);
     }
 
-    /// Add event
+    // Add event
     fn add_event(&mut self, event: AuditEvent) {
         if self.events.len() >= self.max_events {
             self.events.pop_front();
@@ -154,7 +154,7 @@ impl AuditLogger {
         self.events.push_back(event);
     }
 
-    /// Get recent events
+    // Get recent events
     pub fn get_recent_events(&self, count: usize) -> Vec<AuditEvent> {
         self.events.iter()
             .rev()
@@ -163,7 +163,7 @@ impl AuditLogger {
             .collect()
     }
 
-    /// Search events
+    // Search events
     pub fn search_events(&self, filter: &AuditEventFilter) -> Vec<AuditEvent> {
         self.events.iter()
             .filter(|e| filter.matches(e))
@@ -172,18 +172,18 @@ impl AuditLogger {
     }
 }
 
-/// Audit event filter
+// Audit event filter
 #[derive(Debug, Default)]
 pub struct AuditEventFilter {
-    /// Filter by event type
+    // Filter by event type
     pub event_type: Option<AuditEventType>,
-    /// Filter by user ID
+    // Filter by user ID
     pub user_id: Option<String>,
-    /// Filter by client IP
+    // Filter by client IP
     pub client_ip: Option<IpAddr>,
-    /// Filter by time range
+    // Filter by time range
     pub time_range: Option<(SystemTime, SystemTime)>,
-    /// Filter by result
+    // Filter by result
     pub result: Option<AuditResult>,
 }
 

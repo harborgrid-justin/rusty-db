@@ -1,6 +1,6 @@
-/// Tiered Storage Manager for RustyDB
-/// Provides hot/warm/cold data classification with automatic migration
-/// and tier-specific compression strategies
+// Tiered Storage Manager for RustyDB
+// Provides hot/warm/cold data classification with automatic migration
+// and tier-specific compression strategies
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
@@ -11,7 +11,7 @@ use crate::error::{Result, DbError};
 use crate::storage::page::Page;
 use crate::common::PageId;
 
-/// Storage tier classification
+// Storage tier classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StorageTier {
     Hot,    // SSD/Memory - frequently accessed
@@ -45,7 +45,7 @@ impl StorageTier {
     }
 }
 
-/// Compression strategies for different tiers
+// Compression strategies for different tiers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CompressionLevel {
     None,
@@ -53,7 +53,7 @@ pub enum CompressionLevel {
     Best,    // ZSTD for cold tier
 }
 
-/// Access pattern tracking for ML-based prediction
+// Access pattern tracking for ML-based prediction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct AccessPattern {
     page_id: PageId,
@@ -152,8 +152,8 @@ impl AccessPattern {
     }
 }
 
-/// ML-based tier predictor using simple heuristics
-/// In production, would use a trained model
+// ML-based tier predictor using simple heuristics
+// In production, would use a trained model
 struct TierPredictor {
     thresholds: PredictorThresholds,
 }
@@ -211,7 +211,7 @@ impl TierPredictor {
     }
 }
 
-/// Compression engine for different tiers
+// Compression engine for different tiers
 struct CompressionEngine;
 
 impl CompressionEngine {
@@ -283,7 +283,7 @@ impl CompressionEngine {
     }
 }
 
-/// Tiered page storage
+// Tiered page storage
 struct TieredPage {
     page_id: PageId,
     tier: StorageTier,
@@ -331,7 +331,7 @@ impl TieredPage {
     }
 }
 
-/// Migration task for moving data between tiers
+// Migration task for moving data between tiers
 #[derive(Debug, Clone)]
 struct MigrationTask {
     page_id: PageId,
@@ -360,7 +360,7 @@ impl MigrationTask {
     }
 }
 
-/// Main tiered storage manager
+// Main tiered storage manager
 pub struct TieredStorageManager {
     // Page storage by tier
     hot_storage: Arc<RwLock<HashMap<PageId, TieredPage>>>,
@@ -406,7 +406,7 @@ impl TieredStorageManager {
         }
     }
 
-    /// Store a page in the appropriate tier
+    // Store a page in the appropriate tier
     pub fn store_page(&self, page: &Page) -> Result<()> {
         // Get or create access pattern
         let tier = {
@@ -434,7 +434,7 @@ impl TieredStorageManager {
         Ok(())
     }
 
-    /// Retrieve a page from any tier
+    // Retrieve a page from any tier
     pub fn get_page(&self, page_id: PageId) -> Result<Page> {
         // Record access
         {
@@ -467,7 +467,7 @@ impl TieredStorageManager {
         Err(DbError::Storage(format!("Page {} not found in any tier", page_id)))
     }
 
-    /// Record a page write
+    // Record a page write
     pub fn update_page(&self, page: &Page) -> Result<()> {
         // Record write access
         {
@@ -481,7 +481,7 @@ impl TieredStorageManager {
         self.store_page(page)
     }
 
-    /// Consider promoting a page to a higher tier
+    // Consider promoting a page to a higher tier
     fn consider_promotion(&self, page_id: PageId, current_tier: StorageTier) {
         let patterns = self.access_patterns.read();
         if let Some(pattern) = patterns.get(&page_id) {
@@ -494,7 +494,7 @@ impl TieredStorageManager {
         }
     }
 
-    /// Process migration queue
+    // Process migration queue
     pub fn process_migrations(&self, max_migrations: usize) -> Result<usize> {
         let mut migrated = 0;
 
@@ -515,7 +515,7 @@ impl TieredStorageManager {
         Ok(migrated)
     }
 
-    /// Migrate a page between tiers
+    // Migrate a page between tiers
     fn migrate_page(&self, task: MigrationTask) -> Result<()> {
         // Get page from source tier
         let (tiered_page, data) = match task.from_tier {
@@ -578,7 +578,7 @@ impl TieredStorageManager {
         Ok(())
     }
 
-    /// Periodic maintenance: update predictor and trigger migrations
+    // Periodic maintenance: update predictor and trigger migrations
     pub fn maintenance(&self) -> Result<()> {
         // Update predictor thresholds
         {

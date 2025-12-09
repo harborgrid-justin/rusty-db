@@ -96,7 +96,7 @@ use uuid::Uuid;
 #[cfg(unix)]
 use libc::{mmap, munmap, madvise, MAP_ANONYMOUS, MAP_PRIVATE, PROT_READ, PROT_WRITE, MAP_FAILED};
 
-/// Large object allocator specific errors
+// Large object allocator specific errors
 #[derive(Error, Debug)]
 pub enum LargeObjectError {
     #[error("mmap allocation failed: {reason}")]
@@ -124,35 +124,35 @@ pub enum LargeObjectError {
     PrefaultFailed { reason: String },
 }
 
-/// Memory advice types for large allocations
+// Memory advice types for large allocations
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MemoryAdvice {
-    /// Normal access pattern
+    // Normal access pattern
     Normal,
-    /// Sequential access pattern
+    // Sequential access pattern
     Sequential,
-    /// Random access pattern
+    // Random access pattern
     Random,
-    /// Will be needed soon
+    // Will be needed soon
     WillNeed,
-    /// Won't be needed
+    // Won't be needed
     DontNeed,
-    /// Don't fork on copy
+    // Don't fork on copy
     DontFork,
-    /// Do fork on copy
+    // Do fork on copy
     DoFork,
-    /// Mergeable pages
+    // Mergeable pages
     Mergeable,
-    /// Unmergeable pages
+    // Unmergeable pages
     Unmergeable,
-    /// Hugepage allocation
+    // Hugepage allocation
     Hugepage,
-    /// No hugepage allocation
+    // No hugepage allocation
     NoHugepage,
 }
 
 impl MemoryAdvice {
-    /// Converts to platform-specific madvise constant
+    // Converts to platform-specific madvise constant
     #[cfg(unix)]
     fn to_madvise_flag(self) -> libc::c_int {
         match self {
@@ -178,154 +178,154 @@ impl MemoryAdvice {
     }
 }
 
-/// Large allocation information
-///
-/// Tracks detailed information about a large memory allocation
-/// including metadata, timing, and usage patterns.
+// Large allocation information
+//
+// Tracks detailed information about a large memory allocation
+// including metadata, timing, and usage patterns.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LargeAllocation {
-    /// Unique allocation identifier
+    // Unique allocation identifier
     pub allocation_id: AllocationId,
-    /// Memory pointer
+    // Memory pointer
     pub ptr: NonNull<u8>,
-    /// Allocation size
+    // Allocation size
     pub size: usize,
-    /// Requested alignment
+    // Requested alignment
     pub alignment: usize,
-    /// Source component that requested the allocation
+    // Source component that requested the allocation
     pub source: AllocationSource,
-    /// Whether huge pages are used
+    // Whether huge pages are used
     pub uses_huge_pages: bool,
-    /// Huge page type used
+    // Huge page type used
     pub huge_page_type: HugePageType,
-    /// Whether memory is prefaulted
+    // Whether memory is prefaulted
     pub is_prefaulted: bool,
-    /// Applied memory advice
+    // Applied memory advice
     pub memory_advice: Vec<MemoryAdvice>,
-    /// Allocation timestamp
+    // Allocation timestamp
     pub allocated_at: SystemTime,
-    /// Last access timestamp
+    // Last access timestamp
     pub last_accessed: AtomicU64,
-    /// Access count
+    // Access count
     pub access_count: AtomicU64,
-    /// Whether allocation is active
+    // Whether allocation is active
     pub is_active: AtomicBool,
-    /// Memory usage statistics
+    // Memory usage statistics
     pub stats: Arc<AsyncRwLock<AllocationStats>>,
 }
 
-/// Per-allocation statistics
+// Per-allocation statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AllocationStats {
-    /// Number of memory advice operations
+    // Number of memory advice operations
     pub advice_operations: u64,
-    /// Number of access pattern changes
+    // Number of access pattern changes
     pub access_pattern_changes: u64,
-    /// Total prefaulted pages
+    // Total prefaulted pages
     pub prefaulted_pages: u64,
-    /// Memory efficiency score (0.0 to 1.0)
+    // Memory efficiency score (0.0 to 1.0)
     pub efficiency_score: f64,
-    /// Time spent in allocation
+    // Time spent in allocation
     pub allocation_time: Duration,
-    /// Time since last access
+    // Time since last access
     pub idle_time: Duration,
-    /// Whether allocation is in use
+    // Whether allocation is in use
     pub in_use: bool,
-    /// Last updated timestamp
+    // Last updated timestamp
     pub last_updated: SystemTime,
 }
 
-/// Large object allocator statistics
+// Large object allocator statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct LargeObjectStats {
-    /// Total number of large allocations
+    // Total number of large allocations
     pub total_allocations: u64,
-    /// Total number of deallocations
+    // Total number of deallocations
     pub total_deallocations: u64,
-    /// Current active allocations
+    // Current active allocations
     pub active_allocations: usize,
-    /// Total bytes allocated
+    // Total bytes allocated
     pub total_bytes_allocated: u64,
-    /// Total bytes deallocated
+    // Total bytes deallocated
     pub total_bytes_deallocated: u64,
-    /// Current bytes in use
+    // Current bytes in use
     pub bytes_in_use: u64,
-    /// Peak memory usage
+    // Peak memory usage
     pub peak_usage: u64,
-    /// Number of huge page allocations
+    // Number of huge page allocations
     pub huge_page_allocations: u64,
-    /// Number of mmap operations
+    // Number of mmap operations
     pub mmap_operations: u64,
-    /// Number of munmap operations
+    // Number of munmap operations
     pub munmap_operations: u64,
-    /// Number of memory advice operations
+    // Number of memory advice operations
     pub advice_operations: u64,
-    /// Number of prefaulting operations
+    // Number of prefaulting operations
     pub prefaulting_operations: u64,
-    /// Average allocation size
+    // Average allocation size
     pub avg_allocation_size: f64,
-    /// Largest allocation size
+    // Largest allocation size
     pub largest_allocation: usize,
-    /// Total allocation time
+    // Total allocation time
     pub total_allocation_time: Duration,
-    /// Total deallocation time
+    // Total deallocation time
     pub total_deallocation_time: Duration,
-    /// Average allocation latency
+    // Average allocation latency
     pub avg_allocation_latency: Duration,
-    /// Fragmentation ratio
+    // Fragmentation ratio
     pub fragmentation_ratio: f64,
-    /// Huge page efficiency (successful/requested ratio)
+    // Huge page efficiency (successful/requested ratio)
     pub huge_page_efficiency: f64,
-    /// Memory pressure events
+    // Memory pressure events
     pub pressure_events: u64,
-    /// Last updated timestamp
+    // Last updated timestamp
     pub last_updated: SystemTime,
 }
 
-/// Large allocation result
-///
-/// Contains the result of a successful large allocation
-/// with all relevant metadata and handles.
+// Large allocation result
+//
+// Contains the result of a successful large allocation
+// with all relevant metadata and handles.
 #[derive(Debug)]
 pub struct LargeAllocationResult {
-    /// Allocation identifier
+    // Allocation identifier
     pub allocation_id: AllocationId,
-    /// Memory pointer
+    // Memory pointer
     pub ptr: NonNull<u8>,
-    /// Allocation size
+    // Allocation size
     pub size: usize,
-    /// Whether huge pages are used
+    // Whether huge pages are used
     pub uses_huge_pages: bool,
-    /// Applied memory advice
+    // Applied memory advice
     pub memory_advice: Vec<MemoryAdvice>,
 }
 
-/// Main large object allocator
-///
-/// Manages large memory allocations using mmap with support
-/// for huge pages, memory advice, and comprehensive tracking.
+// Main large object allocator
+//
+// Manages large memory allocations using mmap with support
+// for huge pages, memory advice, and comprehensive tracking.
 #[derive(Debug)]
 pub struct LargeObjectAllocator {
-    /// Allocator configuration
+    // Allocator configuration
     config: LargeObjectConfig,
-    /// Registry of active allocations
+    // Registry of active allocations
     allocations: Arc<RwLock<HashMap<AllocationId, Arc<LargeAllocation>>>>,
-    /// Global allocator statistics
+    // Global allocator statistics
     stats: Arc<AsyncRwLock<LargeObjectStats>>,
-    /// Whether allocator is active
+    // Whether allocator is active
     is_active: AtomicBool,
-    /// Creation timestamp
+    // Creation timestamp
     created_at: SystemTime,
-    /// Allocator unique identifier
+    // Allocator unique identifier
     allocator_id: Uuid,
-    /// Next allocation ID
+    // Next allocation ID
     next_allocation_id: AtomicU64,
-    /// Cleanup task handle
+    // Cleanup task handle
     cleanup_handle: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
 }
 
 impl LargeAllocation {
-    /// Creates a new large allocation record
+    // Creates a new large allocation record
     pub fn new(
         ptr: NonNull<u8>,
         size: usize,
@@ -353,7 +353,7 @@ impl LargeAllocation {
         }
     }
 
-    /// Records an access to this allocation
+    // Records an access to this allocation
     pub fn record_access(&self) {
         self.access_count.fetch_add(1, Ordering::Relaxed);
         let now = SystemTime::now()
@@ -363,14 +363,14 @@ impl LargeAllocation {
         self.last_accessed.store(now, Ordering::Relaxed);
     }
 
-    /// Gets the age of this allocation
+    // Gets the age of this allocation
     pub fn age(&self) -> Duration {
         SystemTime::now()
             .duration_since(self.allocated_at)
             .unwrap_or_default()
     }
 
-    /// Gets time since last access
+    // Gets time since last access
     pub fn time_since_last_access(&self) -> Duration {
         let last_access_ns = self.last_accessed.load(Ordering::Relaxed);
         if last_access_ns == 0 {
@@ -383,14 +383,14 @@ impl LargeAllocation {
             .unwrap_or_default()
     }
 
-    /// Checks if allocation is idle
+    // Checks if allocation is idle
     pub fn is_idle(&self, threshold: Duration) -> bool {
         self.time_since_last_access() > threshold
     }
 }
 
 impl LargeObjectAllocator {
-    /// Creates a new large object allocator
+    // Creates a new large object allocator
     pub async fn new(config: LargeObjectConfig) -> Result<Self, LargeObjectError> {
         let allocator = Self {
             config,
@@ -411,7 +411,7 @@ impl LargeObjectAllocator {
         Ok(allocator)
     }
 
-    /// Allocates a large object using mmap
+    // Allocates a large object using mmap
     pub async fn allocate(
         &self,
         size: usize,
@@ -494,7 +494,7 @@ impl LargeObjectAllocator {
         })
     }
 
-    /// Deallocates a large object
+    // Deallocates a large object
     pub async fn deallocate(&self, allocation_id: AllocationId) -> Result<(), MemoryError> {
         let start_time = std::time::Instant::now();
 
@@ -521,7 +521,7 @@ impl LargeObjectAllocator {
         Ok(())
     }
 
-    /// Applies memory advice to an allocation
+    // Applies memory advice to an allocation
     pub async fn apply_memory_advice(
         &self,
         allocation_id: &AllocationId,
@@ -547,7 +547,7 @@ impl LargeObjectAllocator {
         Ok(())
     }
 
-    /// Prefaults memory pages for an allocation
+    // Prefaults memory pages for an allocation
     pub async fn prefault_allocation(
         &self,
         allocation_id: &AllocationId,
@@ -570,7 +570,7 @@ impl LargeObjectAllocator {
         Ok(())
     }
 
-    /// Gets information about an allocation
+    // Gets information about an allocation
     pub async fn get_allocation_info(
         &self,
         allocation_id: &AllocationId,
@@ -584,12 +584,12 @@ impl LargeObjectAllocator {
         Ok((**allocation).clone())
     }
 
-    /// Lists all active allocations
+    // Lists all active allocations
     pub async fn list_allocations(&self) -> Vec<AllocationId> {
         self.allocations.read().keys().cloned().collect()
     }
 
-    /// Gets comprehensive allocator statistics
+    // Gets comprehensive allocator statistics
     pub async fn get_statistics(&self) -> LargeObjectStats {
         let mut stats = self.stats.write().await;
 
@@ -617,7 +617,7 @@ impl LargeObjectAllocator {
         stats.clone()
     }
 
-    /// Determines huge page strategy for allocation
+    // Determines huge page strategy for allocation
     fn determine_huge_page_strategy(
         &self,
         size: usize,
@@ -638,7 +638,7 @@ impl LargeObjectAllocator {
         }
     }
 
-    /// Allocates memory using mmap
+    // Allocates memory using mmap
     async fn allocate_memory(
         &self,
         size: usize,
@@ -711,7 +711,7 @@ impl LargeObjectAllocator {
         }
     }
 
-    /// Deallocates memory using munmap
+    // Deallocates memory using munmap
     async fn deallocate_memory(
         &self,
         ptr: NonNull<u8>,
@@ -745,7 +745,7 @@ use std::alloc::{dealloc};
         Ok(())
     }
 
-    /// Applies madvise to memory region
+    // Applies madvise to memory region
     async fn apply_madvise(
         &self,
         ptr: NonNull<u8>,
@@ -778,7 +778,7 @@ use std::alloc::{dealloc};
         Ok(())
     }
 
-    /// Prefaults memory pages
+    // Prefaults memory pages
     async fn prefault_memory(
         &self,
         ptr: NonNull<u8>,
@@ -799,7 +799,7 @@ use std::alloc::{dealloc};
         Ok(())
     }
 
-    /// Parses memory advice string
+    // Parses memory advice string
     fn parse_memory_advice(&self, advice_str: &str) -> Option<MemoryAdvice> {
         match advice_str {
             "MADV_NORMAL" => Some(MemoryAdvice::Normal),
@@ -813,7 +813,7 @@ use std::alloc::{dealloc};
         }
     }
 
-    /// Updates allocation statistics
+    // Updates allocation statistics
     async fn update_allocation_stats(
         &self,
         size: usize,
@@ -841,7 +841,7 @@ use std::alloc::{dealloc};
         stats.last_updated = SystemTime::now();
     }
 
-    /// Updates deallocation statistics
+    // Updates deallocation statistics
     async fn update_deallocation_stats(&self, size: usize, deallocation_time: Duration) {
         let mut stats = self.stats.write().await;
         stats.total_deallocations += 1;
@@ -851,7 +851,7 @@ use std::alloc::{dealloc};
         stats.last_updated = SystemTime::now();
     }
 
-    /// Starts the background cleanup task
+    // Starts the background cleanup task
     async fn start_cleanup_task(&self) {
         let allocations = Arc::clone(&self.allocations);
         let is_active = Arc::new(AtomicBool::new(true));
@@ -886,7 +886,7 @@ use std::alloc::{dealloc};
         *self.cleanup_handle.lock() = Some(handle);
     }
 
-    /// Performs memory pressure response
+    // Performs memory pressure response
     pub async fn handle_memory_pressure(
         &self,
         level: MemoryPressureLevel,
@@ -917,7 +917,7 @@ use std::alloc::{dealloc};
         Ok(bytes_freed)
     }
 
-    /// Shuts down the allocator gracefully
+    // Shuts down the allocator gracefully
     pub async fn shutdown(&self) -> Result<(), LargeObjectError> {
         self.is_active.store(false, Ordering::Relaxed);
 
@@ -936,9 +936,9 @@ use std::alloc::{dealloc};
     }
 }
 
-/// Utility functions
+// Utility functions
 impl LargeObjectAllocator {
-    /// Calculates memory fragmentation across all large allocations
+    // Calculates memory fragmentation across all large allocations
     pub async fn calculate_fragmentation(&self) -> f64 {
         let allocations = self.allocations.read();
         if allocations.is_empty() {
@@ -958,7 +958,7 @@ impl LargeObjectAllocator {
         }
     }
 
-    /// Gets allocations by source component
+    // Gets allocations by source component
     pub async fn get_allocations_by_source(
         &self,
         source: &AllocationSource,
@@ -971,7 +971,7 @@ impl LargeObjectAllocator {
             .collect()
     }
 
-    /// Gets memory usage by component
+    // Gets memory usage by component
     pub async fn get_usage_by_component(&self) -> HashMap<String, u64> {
         let mut usage_map = HashMap::new();
 

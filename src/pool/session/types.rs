@@ -1,23 +1,23 @@
-/// Session domain types with strong typing
-///
-/// This module provides newtype wrappers for session-related identifiers
-/// to prevent type confusion and enable compile-time safety.
+// Session domain types with strong typing
+//
+// This module provides newtype wrappers for session-related identifiers
+// to prevent type confusion and enable compile-time safety.
 
 use std::fmt;
 use serde::{Deserialize, Serialize};
 
 
-/// Session identifier (SID) - unique per session
+// Session identifier (SID) - unique per session
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SessionId(pub u64);
 
 impl SessionId {
-    /// Create a new session ID
+    // Create a new session ID
     pub fn new(id: u64) -> Self {
         SessionId(id)
     }
 
-    /// Get the inner value
+    // Get the inner value
     pub fn as_u64(&self) -> u64 {
         self.0
     }
@@ -35,7 +35,7 @@ impl From<u64> for SessionId {
     }
 }
 
-/// Cursor identifier - unique per cursor within a session
+// Cursor identifier - unique per cursor within a session
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct CursorId(pub u64);
 
@@ -55,7 +55,7 @@ impl fmt::Display for CursorId {
     }
 }
 
-/// Prepared statement identifier - unique per statement cache
+// Prepared statement identifier - unique per statement cache
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct StatementId(pub u64);
 
@@ -75,16 +75,16 @@ impl fmt::Display for StatementId {
     }
 }
 
-/// Username - domain-specific string wrapper
+// Username - domain-specific string wrapper
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Username(String);
 
 impl Username {
-    /// Create a new username with validation
-    ///
-    /// # Errors
-    ///
-    /// Returns error if username is empty or invalid
+    // Create a new username with validation
+    //
+    // # Errors
+    //
+    // Returns error if username is empty or invalid
     pub fn new(name: impl Into<String>) -> Result<Self, String> {
         let name = name.into();
         if name.is_empty() {
@@ -96,7 +96,7 @@ impl Username {
         Ok(Username(name))
     }
 
-    /// Get the username as a string slice
+    // Get the username as a string slice
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -114,7 +114,7 @@ impl AsRef<str> for Username {
     }
 }
 
-/// Schema name - domain-specific string wrapper
+// Schema name - domain-specific string wrapper
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SchemaName(String);
 

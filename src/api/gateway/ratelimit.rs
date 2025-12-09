@@ -20,91 +20,91 @@ use super::types::*;
 // Rate Limiting & Throttling - Token Bucket, Sliding Window
 // ============================================================================
 
-/// Rate limiter
+// Rate limiter
 pub struct RateLimiter {
-    /// Rate limit configurations
+    // Rate limit configurations
     configs: Arc<RwLock<HashMap<String, RateLimitConfig>>>,
-    /// Token buckets
+    // Token buckets
     buckets: Arc<RwLock<HashMap<String, TokenBucket>>>,
-    /// Sliding windows
+    // Sliding windows
     windows: Arc<RwLock<HashMap<String, SlidingWindow>>>,
-    /// Quota manager
+    // Quota manager
     quota_manager: Arc<QuotaManager>,
 }
 
-/// Rate limit configuration
+// Rate limit configuration
 #[derive(Debug, Clone)]
 pub struct RateLimitConfig {
-    /// Limit type
+    // Limit type
     pub limit_type: RateLimitType,
-    /// Requests per window
+    // Requests per window
     pub requests: u64,
-    /// Window duration (seconds)
+    // Window duration (seconds)
     pub window: u64,
-    /// Burst size
+    // Burst size
     pub burst: Option<u64>,
 }
 
-/// Rate limit type
+// Rate limit type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RateLimitType {
-    /// Token bucket algorithm
+    // Token bucket algorithm
     TokenBucket,
-    /// Sliding window
+    // Sliding window
     SlidingWindow,
-    /// Fixed window
+    // Fixed window
     FixedWindow,
 }
 
-/// Token bucket
+// Token bucket
 pub struct TokenBucket {
-    /// Capacity
+    // Capacity
     capacity: u64,
-    /// Current tokens
+    // Current tokens
     tokens: f64,
-    /// Refill rate (tokens per second)
+    // Refill rate (tokens per second)
     refill_rate: f64,
-    /// Last refill time
+    // Last refill time
     last_refill: Instant,
 }
 
-/// Sliding window
+// Sliding window
 pub struct SlidingWindow {
-    /// Window size (seconds)
+    // Window size (seconds)
     window_size: u64,
-    /// Request timestamps
+    // Request timestamps
     requests: VecDeque<Instant>,
-    /// Max requests
+    // Max requests
     max_requests: u64,
 }
 
-/// Quota manager
+// Quota manager
 pub struct QuotaManager {
-    /// User quotas
+    // User quotas
     quotas: Arc<RwLock<HashMap<String, UserQuota>>>,
 }
 
-/// User quota
+// User quota
 #[derive(Debug, Clone)]
 pub struct UserQuota {
-    /// User ID
+    // User ID
     pub user_id: String,
-    /// Daily limit
+    // Daily limit
     pub daily_limit: u64,
-    /// Monthly limit
+    // Monthly limit
     pub monthly_limit: u64,
-    /// Current daily usage
+    // Current daily usage
     pub daily_usage: u64,
-    /// Current monthly usage
+    // Current monthly usage
     pub monthly_usage: u64,
-    /// Reset timestamp
+    // Reset timestamp
     pub daily_reset: SystemTime,
-    /// Monthly reset timestamp
+    // Monthly reset timestamp
     pub monthly_reset: SystemTime,
 }
 
 impl RateLimiter {
-    /// Create new rate limiter
+    // Create new rate limiter
     pub fn new() -> Self {
         Self {
             configs: Arc::new(RwLock::new(HashMap::new())),
@@ -114,13 +114,13 @@ impl RateLimiter {
         }
     }
 
-    /// Configure rate limit
+    // Configure rate limit
     pub fn configure(&self, key: String, config: RateLimitConfig) {
         let mut configs = self.configs.write();
         configs.insert(key, config);
     }
 
-    /// Check rate limit
+    // Check rate limit
     pub fn check_rate_limit(&self, key: &str, override_config: Option<&RateLimitConfig>) -> Result<(), DbError> {
         let configs = self.configs.read();
         let config = override_config.or_else(|| configs.get(key));
@@ -143,7 +143,7 @@ impl RateLimiter {
         }
     }
 
-    /// Check token bucket
+    // Check token bucket
     fn check_token_bucket(&self, key: &str, config: &RateLimitConfig) -> Result<(), DbError> {
         let mut buckets = self.buckets.write();
 
@@ -157,7 +157,7 @@ impl RateLimiter {
         bucket.consume(1)
     }
 
-    /// Check sliding window
+    // Check sliding window
     fn check_sliding_window(&self, key: &str, config: &RateLimitConfig) -> Result<(), DbError> {
         let mut windows = self.windows.write();
 
@@ -168,13 +168,13 @@ impl RateLimiter {
         window.allow_request()
     }
 
-    /// Check fixed window
+    // Check fixed window
     fn check_fixed_window(&self, key: &str, config: &RateLimitConfig) -> Result<(), DbError> {
         // Simplified implementation using sliding window
         self.check_sliding_window(key, config)
     }
 
-    /// Get rate limit status
+    // Get rate limit status
     pub fn get_status(&self, key: &str) -> Option<RateLimitStatus> {
         let buckets = self.buckets.read();
         if let Some(bucket) = buckets.get(key) {
@@ -196,17 +196,17 @@ impl RateLimiter {
     }
 }
 
-/// Rate limit status
+// Rate limit status
 #[derive(Debug, Clone)]
 pub struct RateLimitStatus {
-    /// Remaining requests
+    // Remaining requests
     pub remaining: u64,
-    /// Reset time
+    // Reset time
     pub reset_at: Instant,
 }
 
 impl TokenBucket {
-    /// Create new token bucket
+    // Create new token bucket
     fn new(capacity: u64, refill_rate: f64) -> Self {
         Self {
             capacity,
@@ -216,7 +216,7 @@ impl TokenBucket {
         }
     }
 
-    /// Refill tokens
+    // Refill tokens
     fn refill(&mut self) {
         let now = Instant::now();
         let elapsed = now.duration_since(self.last_refill).as_secs_f64();
@@ -226,7 +226,7 @@ impl TokenBucket {
         self.last_refill = now;
     }
 
-    /// Consume tokens
+    // Consume tokens
     pub(crate) fn consume(&mut self, amount: u64) -> Result<(), DbError> {
         self.refill();
 
@@ -240,7 +240,7 @@ impl TokenBucket {
 }
 
 impl SlidingWindow {
-    /// Create new sliding window
+    // Create new sliding window
     fn new(window_size: u64, max_requests: u64) -> Self {
         Self {
             window_size,
@@ -249,7 +249,7 @@ impl SlidingWindow {
         }
     }
 
-    /// Clean old requests
+    // Clean old requests
     fn clean_old_requests(&mut self) {
         let cutoff = Instant::now() - Duration::from_secs(self.window_size);
 
@@ -262,7 +262,7 @@ impl SlidingWindow {
         }
     }
 
-    /// Allow request
+    // Allow request
     pub(crate) fn allow_request(&mut self) -> Result<(), DbError> {
         self.clean_old_requests();
 
@@ -282,7 +282,7 @@ impl QuotaManager {
         }
     }
 
-    /// Set user quota
+    // Set user quota
     pub fn set_quota(&self, user_id: String, daily_limit: u64, monthly_limit: u64) {
         let mut quotas = self.quotas.write();
 
@@ -298,7 +298,7 @@ impl QuotaManager {
         });
     }
 
-    /// Check and update quota
+    // Check and update quota
     pub fn check_quota(&self, user_id: &str) -> Result<(), DbError> {
         let mut quotas = self.quotas.write();
 
@@ -336,7 +336,7 @@ impl QuotaManager {
         Ok(())
     }
 
-    /// Get quota status
+    // Get quota status
     pub fn get_quota_status(&self, user_id: &str) -> Option<UserQuota> {
         let quotas = self.quotas.read();
         quotas.get(user_id).cloned()

@@ -14,24 +14,24 @@ use serde::{Serialize, Deserialize};
 // Preprocessor Trait
 // ============================================================================
 
-/// Common trait for all preprocessors
+// Common trait for all preprocessors
 pub trait Preprocessor: Send + Sync {
-    /// Fit the preprocessor to the data
+    // Fit the preprocessor to the data
     fn fit(&mut self, features: &Matrix, feature_names: &FeatureNames) -> Result<()>;
 
-    /// Transform the data
+    // Transform the data
     fn transform(&self, features: &Matrix) -> Result<Matrix>;
 
-    /// Fit and transform in one step
+    // Fit and transform in one step
     fn fit_transform(&mut self, features: &Matrix, feature_names: &FeatureNames) -> Result<Matrix> {
         self.fit(features, feature_names)?;
         self.transform(features)
     }
 
-    /// Check if preprocessor is fitted
+    // Check if preprocessor is fitted
     fn is_fitted(&self) -> bool;
 
-    /// Get output feature names after transformation
+    // Get output feature names after transformation
     fn get_feature_names(&self) -> FeatureNames;
 }
 
@@ -39,40 +39,40 @@ pub trait Preprocessor: Send + Sync {
 // Scaling
 // ============================================================================
 
-/// Scaling strategy
+// Scaling strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ScalingStrategy {
-    /// Standardization (z-score normalization)
+    // Standardization (z-score normalization)
     Standard,
-    /// Min-max normalization to [0, 1]
+    // Min-max normalization to [0, 1]
     MinMax,
-    /// Robust scaling using median and IQR
+    // Robust scaling using median and IQR
     Robust,
-    /// Max absolute scaling
+    // Max absolute scaling
     MaxAbs,
 }
 
-/// Generic scaler trait
+// Generic scaler trait
 pub trait Scaler: Preprocessor {
-    /// Get scaling strategy
+    // Get scaling strategy
     fn strategy(&self) -> ScalingStrategy;
 }
 
-/// Standard scaler (z-score normalization)
+// Standard scaler (z-score normalization)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StandardScaler {
-    /// Feature means
+    // Feature means
     means: Vector,
-    /// Feature standard deviations
+    // Feature standard deviations
     std_devs: Vector,
-    /// Feature names
+    // Feature names
     feature_names: FeatureNames,
-    /// Whether the scaler is fitted
+    // Whether the scaler is fitted
     fitted: bool,
 }
 
 impl StandardScaler {
-    /// Create a new standard scaler
+    // Create a new standard scaler
     pub fn new() -> Self {
         Self {
             means: Vec::new(),
@@ -82,12 +82,12 @@ impl StandardScaler {
         }
     }
 
-    /// Calculate mean of a column
+    // Calculate mean of a column
     fn calculate_mean(features: &Matrix, col: usize) -> f64 {
         features.iter().map(|row| row[col]).sum::<f64>() / features.len() as f64
     }
 
-    /// Calculate standard deviation of a column
+    // Calculate standard deviation of a column
     fn calculate_std(features: &Matrix, col: usize, mean: f64) -> f64 {
         let variance = features.iter()
             .map(|row| (row[col] - mean).powi(2))
@@ -156,28 +156,28 @@ impl Scaler for StandardScaler {
     }
 }
 
-/// Min-max scaler (normalize to [0, 1])
+// Min-max scaler (normalize to [0, 1])
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MinMaxScaler {
-    /// Feature minimums
+    // Feature minimums
     mins: Vector,
-    /// Feature maximums
+    // Feature maximums
     maxs: Vector,
-    /// Feature names
+    // Feature names
     feature_names: FeatureNames,
-    /// Target range
+    // Target range
     feature_range: (f64, f64),
-    /// Whether the scaler is fitted
+    // Whether the scaler is fitted
     fitted: bool,
 }
 
 impl MinMaxScaler {
-    /// Create a new min-max scaler with default range [0, 1]
+    // Create a new min-max scaler with default range [0, 1]
     pub fn new() -> Self {
         Self::with_range(0.0, 1.0)
     }
 
-    /// Create a new min-max scaler with custom range
+    // Create a new min-max scaler with custom range
     pub fn with_range(min: f64, max: f64) -> Self {
         Self {
             mins: Vec::new(),
@@ -188,7 +188,7 @@ impl MinMaxScaler {
         }
     }
 
-    /// Calculate min and max of a column
+    // Calculate min and max of a column
     fn calculate_min_max(features: &Matrix, col: usize) -> (f64, f64) {
         let mut min = f64::INFINITY;
         let mut max = f64::NEG_INFINITY;
@@ -278,40 +278,40 @@ impl Scaler for MinMaxScaler {
 // Encoding
 // ============================================================================
 
-/// Categorical encoder trait
+// Categorical encoder trait
 pub trait Encoder: Preprocessor {
-    /// Handle unknown categories during transform
+    // Handle unknown categories during transform
     fn handle_unknown(&self) -> UnknownHandling;
 }
 
-/// Strategy for handling unknown categories
+// Strategy for handling unknown categories
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UnknownHandling {
-    /// Raise an error
+    // Raise an error
     Error,
-    /// Ignore (set all encoded values to 0)
+    // Ignore (set all encoded values to 0)
     Ignore,
-    /// Use a default value
+    // Use a default value
     UseDefault,
 }
 
-/// One-hot encoder for categorical features
+// One-hot encoder for categorical features
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OneHotEncoder {
-    /// Categories per feature
+    // Categories per feature
     categories: Vec<Vec<String>>,
-    /// Original feature names
+    // Original feature names
     original_feature_names: FeatureNames,
-    /// Output feature names
+    // Output feature names
     output_feature_names: FeatureNames,
-    /// Unknown handling strategy
+    // Unknown handling strategy
     handle_unknown: UnknownHandling,
-    /// Whether the encoder is fitted
+    // Whether the encoder is fitted
     fitted: bool,
 }
 
 impl OneHotEncoder {
-    /// Create a new one-hot encoder
+    // Create a new one-hot encoder
     pub fn new() -> Self {
         Self {
             categories: Vec::new(),
@@ -322,13 +322,13 @@ impl OneHotEncoder {
         }
     }
 
-    /// Create encoder with custom unknown handling
+    // Create encoder with custom unknown handling
     pub fn with_unknown_handling(mut self, strategy: UnknownHandling) -> Self {
         self.handle_unknown = strategy;
         self
     }
 
-    /// Fit on categorical data (strings converted to numbers)
+    // Fit on categorical data (strings converted to numbers)
     pub fn fit_categorical(&mut self, data: &[Vec<String>], feature_names: &FeatureNames) -> Result<()> {
         if data.is_empty() {
             return Err(MLError::InsufficientData("Empty data".to_string()).into());
@@ -362,7 +362,7 @@ impl OneHotEncoder {
         Ok(())
     }
 
-    /// Transform categorical data to one-hot encoded matrix
+    // Transform categorical data to one-hot encoded matrix
     pub fn transform_categorical(&self, data: &[Vec<String>]) -> Result<Matrix> {
         if !self.fitted {
             return Err(MLError::InvalidConfiguration("Encoder not fitted".to_string()).into());
@@ -449,40 +449,40 @@ impl Encoder for OneHotEncoder {
 // Missing Value Imputation
 // ============================================================================
 
-/// Strategy for imputing missing values
+// Strategy for imputing missing values
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ImputationStrategy {
-    /// Replace with mean
+    // Replace with mean
     Mean,
-    /// Replace with median
+    // Replace with median
     Median,
-    /// Replace with most frequent value
+    // Replace with most frequent value
     MostFrequent,
-    /// Replace with constant value
+    // Replace with constant value
     Constant,
-    /// Forward fill
+    // Forward fill
     ForwardFill,
-    /// Backward fill
+    // Backward fill
     BackwardFill,
 }
 
-/// Imputer for handling missing values
+// Imputer for handling missing values
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Imputer {
-    /// Imputation strategy
+    // Imputation strategy
     strategy: ImputationStrategy,
-    /// Fill values per feature
+    // Fill values per feature
     fill_values: Vector,
-    /// Constant fill value (for Constant strategy)
+    // Constant fill value (for Constant strategy)
     constant_value: f64,
-    /// Feature names
+    // Feature names
     feature_names: FeatureNames,
-    /// Whether the imputer is fitted
+    // Whether the imputer is fitted
     fitted: bool,
 }
 
 impl Imputer {
-    /// Create a new imputer with given strategy
+    // Create a new imputer with given strategy
     pub fn new(strategy: ImputationStrategy) -> Self {
         Self {
             strategy,
@@ -493,7 +493,7 @@ impl Imputer {
         }
     }
 
-    /// Create imputer with constant fill value
+    // Create imputer with constant fill value
     pub fn with_constant(value: f64) -> Self {
         Self {
             strategy: ImputationStrategy::Constant,
@@ -504,7 +504,7 @@ impl Imputer {
         }
     }
 
-    /// Calculate fill value for a column based on strategy
+    // Calculate fill value for a column based on strategy
     fn calculate_fill_value(&self, features: &Matrix, col: usize) -> f64 {
         match self.strategy {
             ImputationStrategy::Mean => {
@@ -646,36 +646,36 @@ impl Preprocessor for Imputer {
 // Feature Selection
 // ============================================================================
 
-/// Feature selection methods
+// Feature selection methods
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SelectionMethod {
-    /// Select top k features by variance
+    // Select top k features by variance
     VarianceThreshold,
-    /// Select top k features by correlation with target
+    // Select top k features by correlation with target
     SelectKBest,
-    /// Select features by percentile
+    // Select features by percentile
     SelectPercentile,
 }
 
-/// Feature selector
+// Feature selector
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeatureSelector {
-    /// Selection method
+    // Selection method
     method: SelectionMethod,
-    /// Selected feature indices
+    // Selected feature indices
     selected_indices: Vec<usize>,
-    /// Original feature names
+    // Original feature names
     original_feature_names: FeatureNames,
-    /// Selected feature names
+    // Selected feature names
     selected_feature_names: FeatureNames,
-    /// Threshold or k value
+    // Threshold or k value
     threshold: f64,
-    /// Whether the selector is fitted
+    // Whether the selector is fitted
     fitted: bool,
 }
 
 impl FeatureSelector {
-    /// Create a new feature selector
+    // Create a new feature selector
     pub fn new(method: SelectionMethod, threshold: f64) -> Self {
         Self {
             method,
@@ -687,7 +687,7 @@ impl FeatureSelector {
         }
     }
 
-    /// Fit selector with target values
+    // Fit selector with target values
     pub fn fit_with_target(&mut self, features: &Matrix, target: &Vector, feature_names: &FeatureNames) -> Result<()> {
         if features.is_empty() {
             return Err(MLError::InsufficientData("Empty feature matrix".to_string()).into());
@@ -825,12 +825,12 @@ impl Preprocessor for FeatureSelector {
 // Data Splitting
 // ============================================================================
 
-/// Data splitter for train/test split
+// Data splitter for train/test split
 #[derive(Debug, Clone)]
 pub struct DataSplitter;
 
 impl DataSplitter {
-    /// Split dataset into train and test sets
+    // Split dataset into train and test sets
     pub fn train_test_split(
         dataset: &Dataset,
         test_size: f64,
@@ -885,7 +885,7 @@ impl DataSplitter {
         Ok((train_dataset, test_dataset))
     }
 
-    /// Create k-fold cross-validation splits
+    // Create k-fold cross-validation splits
     pub fn k_fold_split(dataset: &Dataset, k: usize, shuffle: bool) -> Result<Vec<(Dataset, Dataset)>> {
         if k < 2 {
             return Err(MLError::InvalidConfiguration(

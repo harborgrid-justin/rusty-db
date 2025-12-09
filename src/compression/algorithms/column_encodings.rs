@@ -1,4 +1,4 @@
-/// Column-Oriented Encodings - BitPacker, FOR, Delta, RLE
+// Column-Oriented Encodings - BitPacker, FOR, Delta, RLE
 
 use crate::compression::{CompressionResult, CompressionStats, CompressionError};
 use parking_lot::Mutex;

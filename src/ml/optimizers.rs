@@ -5,18 +5,18 @@
 
 use serde::{Serialize, Deserialize};
 
-/// Common trait for all optimizers
+// Common trait for all optimizers
 pub trait Optimizer: Send + Sync {
-    /// Perform one optimization step
+    // Perform one optimization step
     fn step(&mut self, weights: &mut [f64], gradients: &[f64]);
 
-    /// Get current learning rate
+    // Get current learning rate
     fn get_learning_rate(&self) -> f64;
 
-    /// Reset optimizer state
+    // Reset optimizer state
     fn reset(&mut self);
 
-    /// Set learning rate
+    // Set learning rate
     fn set_learning_rate(&mut self, lr: f64);
 }
 
@@ -24,22 +24,22 @@ pub trait Optimizer: Send + Sync {
 // SGD with Momentum
 // ============================================================================
 
-/// Stochastic Gradient Descent with Momentum
-///
-/// Accelerates SGD by accumulating velocity in directions of consistent gradient.
-/// Typical momentum value: 0.9
+// Stochastic Gradient Descent with Momentum
+//
+// Accelerates SGD by accumulating velocity in directions of consistent gradient.
+// Typical momentum value: 0.9
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SGDMomentum {
-    /// Learning rate
+    // Learning rate
     learning_rate: f64,
-    /// Momentum coefficient (0.0 to 1.0)
+    // Momentum coefficient (0.0 to 1.0)
     momentum: f64,
-    /// Velocity accumulator
+    // Velocity accumulator
     velocity: Vec<f64>,
 }
 
 impl SGDMomentum {
-    /// Create new SGD with momentum optimizer
+    // Create new SGD with momentum optimizer
     pub fn new(learning_rate: f64, momentum: f64) -> Self {
         Self {
             learning_rate,
@@ -48,7 +48,7 @@ impl SGDMomentum {
         }
     }
 
-    /// Initialize velocity vector
+    // Initialize velocity vector
     fn ensure_velocity(&mut self, size: usize) {
         if self.velocity.len() != size {
             self.velocity = vec![0.0; size];
@@ -86,37 +86,37 @@ impl Optimizer for SGDMomentum {
 // Adam Optimizer
 // ============================================================================
 
-/// Adam (Adaptive Moment Estimation) Optimizer
-///
-/// Combines ideas from RMSProp and momentum. Maintains per-parameter adaptive
-/// learning rates. Generally the best default optimizer for deep learning.
-///
-/// Reference: Kingma & Ba, 2014 - "Adam: A Method for Stochastic Optimization"
+// Adam (Adaptive Moment Estimation) Optimizer
+//
+// Combines ideas from RMSProp and momentum. Maintains per-parameter adaptive
+// learning rates. Generally the best default optimizer for deep learning.
+//
+// Reference: Kingma & Ba, 2014 - "Adam: A Method for Stochastic Optimization"
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdamOptimizer {
-    /// Learning rate (alpha)
+    // Learning rate (alpha)
     learning_rate: f64,
-    /// Exponential decay rate for first moment (typically 0.9)
+    // Exponential decay rate for first moment (typically 0.9)
     beta1: f64,
-    /// Exponential decay rate for second moment (typically 0.999)
+    // Exponential decay rate for second moment (typically 0.999)
     beta2: f64,
-    /// Small constant for numerical stability
+    // Small constant for numerical stability
     epsilon: f64,
-    /// First moment vector (mean of gradients)
+    // First moment vector (mean of gradients)
     m: Vec<f64>,
-    /// Second moment vector (uncentered variance of gradients)
+    // Second moment vector (uncentered variance of gradients)
     v: Vec<f64>,
-    /// Timestep counter
+    // Timestep counter
     t: usize,
 }
 
 impl AdamOptimizer {
-    /// Create new Adam optimizer with default hyperparameters
+    // Create new Adam optimizer with default hyperparameters
     pub fn new(learning_rate: f64) -> Self {
         Self::with_params(learning_rate, 0.9, 0.999, 1e-8)
     }
 
-    /// Create Adam optimizer with custom hyperparameters
+    // Create Adam optimizer with custom hyperparameters
     pub fn with_params(learning_rate: f64, beta1: f64, beta2: f64, epsilon: f64) -> Self {
         Self {
             learning_rate,
@@ -129,7 +129,7 @@ impl AdamOptimizer {
         }
     }
 
-    /// Initialize moment vectors
+    // Initialize moment vectors
     fn ensure_moments(&mut self, size: usize) {
         if self.m.len() != size {
             self.m = vec![0.0; size];
@@ -186,35 +186,35 @@ impl Optimizer for AdamOptimizer {
 // Learning Rate Schedulers
 // ============================================================================
 
-/// Learning rate scheduling strategy
+// Learning rate scheduling strategy
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum LRSchedule {
-    /// Constant learning rate
+    // Constant learning rate
     Constant,
-    /// Exponential decay: lr = lr0 * gamma^epoch
+    // Exponential decay: lr = lr0 * gamma^epoch
     ExponentialDecay { gamma: f64 },
-    /// Step decay: lr = lr0 * gamma^(epoch // step_size)
+    // Step decay: lr = lr0 * gamma^(epoch // step_size)
     StepDecay { gamma: f64, step_size: usize },
-    /// Cosine annealing: lr = lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(pi * epoch / T_max))
+    // Cosine annealing: lr = lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(pi * epoch / T_max))
     CosineAnnealing { lr_min: f64, t_max: usize },
-    /// Linear warmup then exponential decay
+    // Linear warmup then exponential decay
     WarmupExponential { warmup_steps: usize, gamma: f64 },
 }
 
-/// Learning rate scheduler
+// Learning rate scheduler
 pub struct LRScheduler {
-    /// Initial learning rate
+    // Initial learning rate
     initial_lr: f64,
-    /// Current learning rate
+    // Current learning rate
     current_lr: f64,
-    /// Scheduling strategy
+    // Scheduling strategy
     schedule: LRSchedule,
-    /// Current epoch/step
+    // Current epoch/step
     current_step: usize,
 }
 
 impl LRScheduler {
-    /// Create new scheduler
+    // Create new scheduler
     pub fn new(initial_lr: f64, schedule: LRSchedule) -> Self {
         Self {
             initial_lr,
@@ -224,7 +224,7 @@ impl LRScheduler {
         }
     }
 
-    /// Update learning rate for next epoch/step
+    // Update learning rate for next epoch/step
     pub fn step(&mut self) -> f64 {
         self.current_step += 1;
 
@@ -261,12 +261,12 @@ impl LRScheduler {
         self.current_lr
     }
 
-    /// Get current learning rate
+    // Get current learning rate
     pub fn get_lr(&self) -> f64 {
         self.current_lr
     }
 
-    /// Reset scheduler
+    // Reset scheduler
     pub fn reset(&mut self) {
         self.current_step = 0;
         self.current_lr = self.initial_lr;
@@ -277,7 +277,7 @@ impl LRScheduler {
 // Optimizer Factory
 // ============================================================================
 
-/// Optimizer type for easy construction
+// Optimizer type for easy construction
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OptimizerType {
     SGD,
@@ -285,7 +285,7 @@ pub enum OptimizerType {
     Adam,
 }
 
-/// Create optimizer from type and learning rate
+// Create optimizer from type and learning rate
 pub fn create_optimizer(optimizer_type: OptimizerType, learning_rate: f64) -> Box<dyn Optimizer> {
     match optimizer_type {
         OptimizerType::SGD => {

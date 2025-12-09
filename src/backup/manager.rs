@@ -14,20 +14,20 @@ use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
 
-/// Backup type enumeration
+// Backup type enumeration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum BackupType {
-    /// Full backup - complete copy of all data
+    // Full backup - complete copy of all data
     Full,
-    /// Incremental backup - only changes since last backup
+    // Incremental backup - only changes since last backup
     Incremental,
-    /// Differential backup - changes since last full backup
+    // Differential backup - changes since last full backup
     Differential,
-    /// Archive log backup - transaction logs only
+    // Archive log backup - transaction logs only
     ArchiveLog,
 }
 
-/// Backup status tracking
+// Backup status tracking
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum BackupStatus {
     Pending,
@@ -37,7 +37,7 @@ pub enum BackupStatus {
     Cancelled,
 }
 
-/// Backup metadata for tracking and cataloging
+// Backup metadata for tracking and cataloging
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupMetadata {
     pub backup_id: String,
@@ -105,18 +105,18 @@ impl BackupMetadata {
     }
 }
 
-/// Block-level change tracking for incremental backups
+// Block-level change tracking for incremental backups
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BlockChangeMap {
-    /// Bitmap tracking which blocks have changed
+    // Bitmap tracking which blocks have changed
     changed_blocks: HashMap<u64, BlockChangeInfo>,
-    /// Starting SCN for this change map
+    // Starting SCN for this change map
     start_scn: u64,
-    /// Ending SCN for this change map
+    // Ending SCN for this change map
     end_scn: u64,
-    /// Total number of blocks tracked
+    // Total number of blocks tracked
     total_blocks: u64,
-    /// Number of changed blocks
+    // Number of changed blocks
     changed_count: u64,
 }
 
@@ -188,7 +188,7 @@ impl BlockChangeMap {
     }
 }
 
-/// Backup configuration
+// Backup configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupConfig {
     pub backup_dir: PathBuf,
@@ -218,7 +218,7 @@ impl Default for BackupConfig {
     }
 }
 
-/// Retention policy for backup lifecycle management
+// Retention policy for backup lifecycle management
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetentionPolicy {
     pub keep_hourly: usize,
@@ -299,7 +299,7 @@ impl RetentionPolicy {
     }
 }
 
-/// Main backup manager orchestrating all backup operations
+// Main backup manager orchestrating all backup operations
 pub struct BackupManager {
     config: BackupConfig,
     retention_policy: RetentionPolicy,
@@ -325,14 +325,14 @@ impl BackupManager {
         })
     }
 
-    /// Generate a new SCN (System Change Number)
+    // Generate a new SCN (System Change Number)
     pub fn generate_scn(&self) -> u64 {
         let mut scn = self.current_scn.lock();
         *scn += 1;
         *scn
     }
 
-    /// Create a full backup
+    // Create a full backup
     pub fn create_full_backup(&self, database_name: &str) -> Result<String> {
         let backup_id = self.generate_backup_id("FULL");
         let mut metadata = BackupMetadata::new(
@@ -377,7 +377,7 @@ impl BackupManager {
         Ok(backup_id)
     }
 
-    /// Create an incremental backup
+    // Create an incremental backup
     pub fn create_incremental_backup(&self, database_name: &str, parent_backup_id: &str) -> Result<String> {
         // Verify parent backup exists
         let parent = self.backups.read().get(parent_backup_id).cloned()
@@ -417,7 +417,7 @@ impl BackupManager {
         Ok(backup_id)
     }
 
-    /// Create a differential backup
+    // Create a differential backup
     pub fn create_differential_backup(&self, database_name: &str, base_backup_id: &str) -> Result<String> {
         // Verify base backup exists and is a full backup
         let base = self.backups.read().get(base_backup_id).cloned()
@@ -581,7 +581,7 @@ impl BackupManager {
         Ok(())
     }
 
-    /// Apply retention policy and remove obsolete backups
+    // Apply retention policy and remove obsolete backups
     pub fn apply_retention_policy(&self) -> Result<Vec<String>> {
         let mut backups = self.backups.write();
         let mut to_remove = Vec::new();
@@ -609,17 +609,17 @@ impl BackupManager {
         Ok(to_remove)
     }
 
-    /// Get backup metadata
+    // Get backup metadata
     pub fn get_backup(&self, backup_id: &str) -> Option<BackupMetadata> {
         self.backups.read().get(backup_id).cloned()
     }
 
-    /// List all backups
+    // List all backups
     pub fn list_backups(&self) -> Vec<BackupMetadata> {
         self.backups.read().values().cloned().collect()
     }
 
-    /// List backups by type
+    // List backups by type
     pub fn list_backups_by_type(&self, backup_type: BackupType) -> Vec<BackupMetadata> {
         self.backups.read()
             .values()
@@ -628,7 +628,7 @@ impl BackupManager {
             .collect()
     }
 
-    /// Cancel an active backup
+    // Cancel an active backup
     pub fn cancel_backup(&self, backup_id: &str) -> Result<()> {
         if !self.active_backups.read().contains(backup_id) {
             return Err(DbError::BackupError("Backup not active".to_string()));
@@ -644,7 +644,7 @@ impl BackupManager {
         Ok(())
     }
 
-    /// Get backup statistics
+    // Get backup statistics
     pub fn get_statistics(&self) -> BackupStatistics {
         let backups = self.backups.read();
         let total_backups = backups.len();
@@ -681,7 +681,7 @@ impl BackupManager {
     }
 }
 
-/// Backup statistics
+// Backup statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupStatistics {
     pub total_backups: usize,
@@ -755,5 +755,3 @@ use std::time::UNIX_EPOCH;
         assert!(!policy.should_keep(&old_backup, &vec![]));
     }
 }
-
-

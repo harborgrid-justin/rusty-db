@@ -13,32 +13,32 @@ use std::time::{SystemTime, UNIX_EPOCH};
 // Model Definition
 // ============================================================================
 
-/// A trained machine learning model
+// A trained machine learning model
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Model {
-    /// Unique model identifier
+    // Unique model identifier
     pub id: ModelId,
-    /// Model name
+    // Model name
     pub name: String,
-    /// Algorithm type
+    // Algorithm type
     pub algorithm: Algorithm,
-    /// Model parameters/weights
+    // Model parameters/weights
     pub parameters: ModelParameters,
-    /// Hyperparameters used for training
+    // Hyperparameters used for training
     pub hyperparameters: Hyperparameters,
-    /// Training statistics
+    // Training statistics
     pub training_stats: TrainingStats,
-    /// Evaluation metrics
+    // Evaluation metrics
     pub metrics: EvaluationMetrics,
-    /// Model version
+    // Model version
     pub version: u32,
-    /// Creation timestamp
+    // Creation timestamp
     pub created_at: u64,
-    /// Last updated timestamp
+    // Last updated timestamp
     pub updated_at: u64,
-    /// Model status
+    // Model status
     pub status: ModelStatus,
-    /// Tags for organization
+    // Tags for organization
     pub tags: Vec<String>,
 }
 
@@ -115,7 +115,7 @@ impl Model {
     }
 }
 
-/// Model parameters (weights, tree structures, etc.)
+// Model parameters (weights, tree structures, etc.)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ModelParameters {
     LinearModel {
@@ -144,7 +144,7 @@ pub enum ModelParameters {
     },
 }
 
-/// Neural network layer definition
+// Neural network layer definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkLayer {
     pub weights: Vec<Vec<f64>>,
@@ -161,18 +161,18 @@ pub enum ActivationType {
     Softmax,
 }
 
-/// Model status in lifecycle
+// Model status in lifecycle
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ModelStatus {
-    /// Model is being trained
+    // Model is being trained
     Training,
-    /// Model is trained and ready for deployment
+    // Model is trained and ready for deployment
     Ready,
-    /// Model is deployed
+    // Model is deployed
     Deployed(DeploymentConfig),
-    /// Model is archived
+    // Model is archived
     Archived,
-    /// Model training failed
+    // Model training failed
     Failed(String),
 }
 
@@ -180,20 +180,20 @@ pub enum ModelStatus {
 // Deployment Configuration
 // ============================================================================
 
-/// Model deployment configuration
+// Model deployment configuration
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DeploymentConfig {
-    /// Deployment environment
+    // Deployment environment
     pub environment: DeploymentEnvironment,
-    /// Traffic allocation (for A/B testing)
+    // Traffic allocation (for A/B testing)
     pub traffic_allocation: f64,
-    /// Deployment timestamp
+    // Deployment timestamp
     pub deployed_at: u64,
-    /// Endpoint URL
+    // Endpoint URL
     pub endpoint: Option<String>,
-    /// Auto-scaling configuration
+    // Auto-scaling configuration
     pub scaling: ScalingConfig,
-    /// Performance SLA
+    // Performance SLA
     pub sla: PerformanceSLA,
 }
 
@@ -220,14 +220,14 @@ pub enum DeploymentEnvironment {
     Production,
 }
 
-/// Auto-scaling configuration
+// Auto-scaling configuration
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ScalingConfig {
-    /// Minimum instances
+    // Minimum instances
     pub min_instances: u32,
-    /// Maximum instances
+    // Maximum instances
     pub max_instances: u32,
-    /// Target requests per second per instance
+    // Target requests per second per instance
     pub target_rps: f64,
 }
 
@@ -241,14 +241,14 @@ impl Default for ScalingConfig {
     }
 }
 
-/// Performance SLA requirements
+// Performance SLA requirements
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PerformanceSLA {
-    /// Maximum latency in milliseconds (p99)
+    // Maximum latency in milliseconds (p99)
     pub max_latency_ms: f64,
-    /// Minimum accuracy/score
+    // Minimum accuracy/score
     pub min_accuracy: f64,
-    /// Maximum error rate
+    // Maximum error rate
     pub max_error_rate: f64,
 }
 
@@ -266,7 +266,7 @@ impl Default for PerformanceSLA {
 // Model Metadata
 // ============================================================================
 
-/// Model metadata for registry
+// Model metadata for registry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelMetadata {
     pub id: ModelId,
@@ -304,28 +304,28 @@ impl From<&Model> for ModelMetadata {
 // A/B Testing
 // ============================================================================
 
-/// A/B test configuration
+// A/B test configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ABTest {
-    /// Test identifier
+    // Test identifier
     pub id: String,
-    /// Test name
+    // Test name
     pub name: String,
-    /// Model variants
+    // Model variants
     pub variants: Vec<ABVariant>,
-    /// Traffic split strategy
+    // Traffic split strategy
     pub split_strategy: SplitStrategy,
-    /// Test start time
+    // Test start time
     pub start_time: u64,
-    /// Test end time
+    // Test end time
     pub end_time: Option<u64>,
-    /// Success metric
+    // Success metric
     pub metric: String,
-    /// Current results
+    // Current results
     pub results: HashMap<String, ABResults>,
 }
 
-/// A/B test variant
+// A/B test variant
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ABVariant {
     pub name: String,
@@ -335,15 +335,15 @@ pub struct ABVariant {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SplitStrategy {
-    /// Random traffic split
+    // Random traffic split
     Random,
-    /// Hash-based consistent split
+    // Hash-based consistent split
     Consistent,
-    /// Bandit algorithm (Thompson sampling)
+    // Bandit algorithm (Thompson sampling)
     Bandit,
 }
 
-/// A/B test results
+// A/B test results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ABResults {
     pub requests: u64,
@@ -385,15 +385,15 @@ impl Default for ABResults {
 // Model Store
 // ============================================================================
 
-/// Model registry and storage
+// Model registry and storage
 pub struct ModelStore {
-    /// All registered models
+    // All registered models
     models: HashMap<ModelId, Model>,
-    /// Model name to ID mapping
+    // Model name to ID mapping
     name_to_id: HashMap<String, Vec<ModelId>>,
-    /// Active A/B tests
+    // Active A/B tests
     ab_tests: HashMap<String, ABTest>,
-    /// Next model ID
+    // Next model ID
     next_id: u64,
 }
 
@@ -407,7 +407,7 @@ impl ModelStore {
         }
     }
 
-    /// Register a new model
+    // Register a new model
     pub fn register_model(&mut self, mut model: Model) -> Result<ModelId> {
         let id = ModelId::new(self.next_id);
         self.next_id += 1;
@@ -425,27 +425,27 @@ impl ModelStore {
         Ok(id)
     }
 
-    /// Get a model by ID
+    // Get a model by ID
     pub fn get_model(&self, id: ModelId) -> Result<&Model> {
         self.models
             .get(&id)
             .ok_or_else(|| crate::DbError::InvalidInput(format!("Model not found: {:?}", id)))
     }
 
-    /// Get a mutable model by ID
+    // Get a mutable model by ID
     pub fn get_model_mut(&mut self, id: ModelId) -> Result<&mut Model> {
         self.models
             .get_mut(&id)
             .ok_or_else(|| crate::DbError::InvalidInput(format!("Model not found: {:?}", id)))
     }
 
-    /// Get model metadata
+    // Get model metadata
     pub fn get_metadata(&self, id: ModelId) -> Result<ModelMetadata> {
         let model = self.get_model(id)?;
         Ok(ModelMetadata::from(model))
     }
 
-    /// List all models
+    // List all models
     pub fn list_models(&self) -> Vec<ModelMetadata> {
         self.models
             .values()
@@ -453,7 +453,7 @@ impl ModelStore {
             .collect()
     }
 
-    /// Find models by name
+    // Find models by name
     pub fn find_by_name(&self, name: &str) -> Vec<&Model> {
         self.name_to_id
             .get(name)
@@ -465,14 +465,14 @@ impl ModelStore {
             .unwrap_or_default()
     }
 
-    /// Get latest version of a named model
+    // Get latest version of a named model
     pub fn get_latest_version(&self, name: &str) -> Option<&Model> {
         self.find_by_name(name)
             .into_iter()
             .max_by_key(|m| m.version)
     }
 
-    /// Create a new version of a model
+    // Create a new version of a model
     pub fn create_version(&mut self, base_id: ModelId, new_model: Model) -> Result<ModelId> {
         let base = self.get_model(base_id)?;
         let mut versioned_model = new_model;
@@ -482,7 +482,7 @@ impl ModelStore {
         self.register_model(versioned_model)
     }
 
-    /// Delete a model
+    // Delete a model
     pub fn delete_model(&mut self, id: ModelId) -> Result<()> {
         let model = self.models.remove(&id)
             .ok_or_else(|| crate::DbError::InvalidInput(format!("Model not found: {:?}", id)))?;
@@ -498,7 +498,7 @@ impl ModelStore {
         Ok(())
     }
 
-    /// Archive a model
+    // Archive a model
     pub fn archive_model(&mut self, id: ModelId) -> Result<()> {
         let model = self.get_model_mut(id)?;
         model.status = ModelStatus::Archived;
@@ -509,13 +509,13 @@ impl ModelStore {
         Ok(())
     }
 
-    /// Deploy a model
+    // Deploy a model
     pub fn deploy_model(&mut self, id: ModelId, config: DeploymentConfig) -> Result<()> {
         let model = self.get_model_mut(id)?;
         model.deploy(config)
     }
 
-    /// Create an A/B test
+    // Create an A/B test
     pub fn create_ab_test(&mut self, test: ABTest) -> Result<()> {
         // Validate that all variant models exist
         for variant in &test.variants {
@@ -537,12 +537,12 @@ impl ModelStore {
         Ok(())
     }
 
-    /// Get A/B test
+    // Get A/B test
     pub fn get_ab_test(&self, id: &str) -> Option<&ABTest> {
         self.ab_tests.get(id)
     }
 
-    /// Update A/B test results
+    // Update A/B test results
     pub fn update_ab_results(&mut self, test_id: &str, variant: &str, results: ABResults) -> Result<()> {
         let test = self.ab_tests.get_mut(test_id)
             .ok_or_else(|| crate::DbError::InvalidInput("A/B test not found".into()))?;
@@ -551,7 +551,7 @@ impl ModelStore {
         Ok(())
     }
 
-    /// Get winning variant from A/B test
+    // Get winning variant from A/B test
     pub fn get_winner(&self, test_id: &str) -> Option<(String, ModelId)> {
         let test = self.ab_tests.get(test_id)?;
 
@@ -566,14 +566,14 @@ impl ModelStore {
         Some((variant.name.clone(), variant.model_id))
     }
 
-    /// Serialize model to bytes
+    // Serialize model to bytes
     pub fn serialize_model(&self, id: ModelId) -> Result<Vec<u8>> {
         let model = self.get_model(id)?;
         bincode::serialize(model)
             .map_err(|e| crate::DbError::Internal(format!("Serialization error: {}", e)))
     }
 
-    /// Deserialize model from bytes
+    // Deserialize model from bytes
     pub fn deserialize_model(&mut self, bytes: &[u8]) -> Result<ModelId> {
         let model: Model = bincode::deserialize(bytes)
             .map_err(|e| crate::DbError::Internal(format!("Deserialization error: {}", e)))?;
@@ -581,14 +581,14 @@ impl ModelStore {
         self.register_model(model)
     }
 
-    /// Export model metadata to JSON
+    // Export model metadata to JSON
     pub fn export_metadata(&self, id: ModelId) -> Result<String> {
         let metadata = self.get_metadata(id)?;
         serde_json::to_string_pretty(&metadata)
             .map_err(|e| crate::DbError::Internal(format!("JSON export error: {}", e)))
     }
 
-    /// Search models by tags
+    // Search models by tags
     pub fn search_by_tags(&self, tags: &[String]) -> Vec<&Model> {
         self.models
             .values()
@@ -598,7 +598,7 @@ impl ModelStore {
             .collect()
     }
 
-    /// Get models by status
+    // Get models by status
     pub fn get_by_status(&self, status: &ModelStatus) -> Vec<&Model> {
         self.models
             .values()
@@ -606,7 +606,7 @@ impl ModelStore {
             .collect()
     }
 
-    /// Get model performance summary
+    // Get model performance summary
     pub fn get_performance_summary(&self, id: ModelId) -> Result<PerformanceSummary> {
         let model = self.get_model(id)?;
 
@@ -628,7 +628,7 @@ impl Default for ModelStore {
     }
 }
 
-/// Performance summary for a model
+// Performance summary for a model
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceSummary {
     pub model_id: ModelId,

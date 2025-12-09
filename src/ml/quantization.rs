@@ -14,21 +14,21 @@ use super::{Vector};
 // Quantized Weights
 // ============================================================================
 
-/// 8-bit quantized weights with scale and zero-point
+// 8-bit quantized weights with scale and zero-point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuantizedWeights {
-    /// Quantized weight values (int8)
+    // Quantized weight values (int8)
     pub values: Vec<i8>,
-    /// Quantization scale factor
+    // Quantization scale factor
     pub scale: f64,
-    /// Zero point for asymmetric quantization
+    // Zero point for asymmetric quantization
     pub zero_point: i8,
-    /// Original shape information
+    // Original shape information
     pub shape: Vec<usize>,
 }
 
 impl QuantizedWeights {
-    /// Create new quantized weights
+    // Create new quantized weights
     pub fn new(values: Vec<i8>, scale: f64, zero_point: i8, shape: Vec<usize>) -> Self {
         Self {
             values,
@@ -38,7 +38,7 @@ impl QuantizedWeights {
         }
     }
 
-    /// Get memory size in bytes
+    // Get memory size in bytes
     pub fn memory_size(&self) -> usize {
         self.values.len() + size_of::<f64>() + size_of::<i8>()
     }
@@ -48,25 +48,25 @@ impl QuantizedWeights {
 // Quantization Strategies
 // ============================================================================
 
-/// Quantization method
+// Quantization method
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum QuantizationMethod {
-    /// Symmetric quantization (zero_point = 0)
+    // Symmetric quantization (zero_point = 0)
     Symmetric,
-    /// Asymmetric quantization (optimized range)
+    // Asymmetric quantization (optimized range)
     Asymmetric,
-    /// Per-channel quantization (different scales per output channel)
+    // Per-channel quantization (different scales per output channel)
     PerChannel,
 }
 
-/// Quantization configuration
+// Quantization configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuantizationConfig {
-    /// Quantization method
+    // Quantization method
     pub method: QuantizationMethod,
-    /// Number of bits (typically 8)
+    // Number of bits (typically 8)
     pub bits: u8,
-    /// Calibration percentile for outlier handling
+    // Calibration percentile for outlier handling
     pub calibration_percentile: f64,
 }
 
@@ -84,7 +84,7 @@ impl Default for QuantizationConfig {
 // Quantization Functions
 // ============================================================================
 
-/// Quantize a vector of weights to 8-bit integers
+// Quantize a vector of weights to 8-bit integers
 pub fn quantize_weights(weights: &[f64], config: &QuantizationConfig) -> QuantizedWeights {
     match config.method {
         QuantizationMethod::Symmetric => quantize_symmetric(weights),
@@ -96,7 +96,7 @@ pub fn quantize_weights(weights: &[f64], config: &QuantizationConfig) -> Quantiz
     }
 }
 
-/// Symmetric quantization: zero_point = 0, scale = max(|weights|) / 127
+// Symmetric quantization: zero_point = 0, scale = max(|weights|) / 127
 fn quantize_symmetric(weights: &[f64]) -> QuantizedWeights {
     if weights.is_empty() {
         return QuantizedWeights::new(Vec::new(), 1.0, 0, vec![weights.len()]);
@@ -125,7 +125,7 @@ fn quantize_symmetric(weights: &[f64]) -> QuantizedWeights {
     QuantizedWeights::new(values, scale, 0, vec![weights.len()])
 }
 
-/// Asymmetric quantization: optimizes for actual weight distribution
+// Asymmetric quantization: optimizes for actual weight distribution
 fn quantize_asymmetric(weights: &[f64], calibration_percentile: f64) -> QuantizedWeights {
     if weights.is_empty() {
         return QuantizedWeights::new(Vec::new(), 1.0, 0, vec![weights.len()]);
@@ -166,7 +166,7 @@ fn quantize_asymmetric(weights: &[f64], calibration_percentile: f64) -> Quantize
     QuantizedWeights::new(values, scale, zero_point, vec![weights.len()])
 }
 
-/// Dequantize weights back to float64
+// Dequantize weights back to float64
 pub fn dequantize_weights(qweights: &QuantizedWeights) -> Vector {
     qweights
         .values
@@ -182,12 +182,12 @@ pub fn dequantize_weights(qweights: &QuantizedWeights) -> Vector {
 // Quantized Inference Operations
 // ============================================================================
 
-/// Quantized dot product: computes dot product in int8, converts to float at end
-///
-/// This is faster because:
-/// 1. INT8 operations are faster than FP64
-/// 2. Less memory bandwidth required
-/// 3. Can use SIMD INT8 instructions
+// Quantized dot product: computes dot product in int8, converts to float at end
+//
+// This is faster because:
+// 1. INT8 operations are faster than FP64
+// 2. Less memory bandwidth required
+// 3. Can use SIMD INT8 instructions
 pub fn quantized_dot_product(
     qa: &QuantizedWeights,
     qb: &QuantizedWeights,
@@ -210,7 +210,7 @@ pub fn quantized_dot_product(
     int_sum as f64 * qa.scale * qb.scale
 }
 
-/// Quantized matrix-vector multiplication
+// Quantized matrix-vector multiplication
 pub fn quantized_matrix_vector_multiply(
     qmatrix: &[QuantizedWeights],
     qvector: &QuantizedWeights,
@@ -221,12 +221,12 @@ pub fn quantized_matrix_vector_multiply(
         .collect()
 }
 
-/// Fast approximation: quantized prediction for linear models
-///
-/// Input: quantized weights, float input features
-/// Output: float prediction
-///
-/// This avoids quantizing input features, only weights are quantized
+// Fast approximation: quantized prediction for linear models
+//
+// Input: quantized weights, float input features
+// Output: float prediction
+//
+// This avoids quantizing input features, only weights are quantized
 pub fn quantized_linear_predict(
     qweights: &QuantizedWeights,
     features: &[f64],
@@ -244,7 +244,7 @@ pub fn quantized_linear_predict(
     sum
 }
 
-/// Batch quantized predictions for better throughput
+// Batch quantized predictions for better throughput
 pub fn quantized_linear_predict_batch(
     qweights: &QuantizedWeights,
     features_batch: &[Vec<f64>],
@@ -260,21 +260,21 @@ pub fn quantized_linear_predict_batch(
 // Quantization Statistics
 // ============================================================================
 
-/// Calculate quantization error metrics
+// Calculate quantization error metrics
 #[derive(Debug, Clone)]
 pub struct QuantizationStats {
-    /// Mean absolute error
+    // Mean absolute error
     pub mae: f64,
-    /// Mean squared error
+    // Mean squared error
     pub mse: f64,
-    /// Maximum absolute error
+    // Maximum absolute error
     pub max_error: f64,
-    /// Signal-to-noise ratio in dB
+    // Signal-to-noise ratio in dB
     pub snr_db: f64,
 }
 
 impl QuantizationStats {
-    /// Compute quantization error statistics
+    // Compute quantization error statistics
     pub fn compute(original: &[f64], quantized: &QuantizedWeights) -> Self {
         let dequantized = dequantize_weights(quantized);
 
@@ -327,14 +327,14 @@ impl QuantizationStats {
 // Quantized Model Wrapper
 // ============================================================================
 
-/// Wrapper for quantized linear model
+// Wrapper for quantized linear model
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuantizedLinearModel {
-    /// Quantized weights
+    // Quantized weights
     pub weights: QuantizedWeights,
-    /// Bias term (kept as float)
+    // Bias term (kept as float)
     pub bias: f64,
-    /// Original model metrics (for comparison)
+    // Original model metrics (for comparison)
     pub quantization_stats: Option<QuantizationStatsData>,
 }
 
@@ -347,7 +347,7 @@ pub struct QuantizationStatsData {
 }
 
 impl QuantizedLinearModel {
-    /// Create quantized model from float weights
+    // Create quantized model from float weights
     pub fn from_weights(
         weights: &[f64],
         bias: f64,
@@ -368,17 +368,17 @@ impl QuantizedLinearModel {
         }
     }
 
-    /// Predict single sample
+    // Predict single sample
     pub fn predict(&self, features: &[f64]) -> f64 {
         quantized_linear_predict(&self.weights, features, self.bias)
     }
 
-    /// Predict batch
+    // Predict batch
     pub fn predict_batch(&self, features_batch: &[Vec<f64>]) -> Vector {
         quantized_linear_predict_batch(&self.weights, features_batch, self.bias)
     }
 
-    /// Get model memory size
+    // Get model memory size
     pub fn memory_size(&self) -> usize {
         self.weights.memory_size() + size_of::<f64>()
     }

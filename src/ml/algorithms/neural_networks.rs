@@ -34,7 +34,7 @@ use super::{Algorithm, ModelType};
 
 // Placeholder structures for future implementation
 
-/// Multi-layer perceptron neural network (placeholder)
+// Multi-layer perceptron neural network (placeholder)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NeuralNetwork {
     _layers: Vec<usize>,
@@ -42,7 +42,7 @@ pub struct NeuralNetwork {
 }
 
 impl NeuralNetwork {
-    /// Create a new neural network (placeholder)
+    // Create a new neural network (placeholder)
     pub fn new(_layer_sizes: Vec<usize>) -> Self {
         Self {
             _layers: _layer_sizes,

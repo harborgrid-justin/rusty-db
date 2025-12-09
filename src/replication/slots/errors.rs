@@ -2,7 +2,7 @@
 
 use thiserror::Error;
 
-/// Replication slot specific errors
+// Replication slot specific errors
 #[derive(Error, Debug)]
 pub enum SlotError {
     #[error("Slot not found: {slot_name}")]

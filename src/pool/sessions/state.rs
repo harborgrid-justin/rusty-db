@@ -1,22 +1,22 @@
-//! Session state management
-//!
-//! Core session state types and management functionality
+// Session state management
+//
+// Core session state types and management functionality
 
 use std::collections::{HashMap, HashSet};
 use std::time::{SystemTime, Duration};
 use serde::{Serialize, Deserialize};
 use crate::common::{TransactionId, Value};
 
-/// Session identifier type
+// Session identifier type
 pub type SID = u64;
 
-/// Cursor identifier
+// Cursor identifier
 pub type CursorId = u64;
 
-/// Prepared statement identifier
+// Prepared statement identifier
 pub type StatementId = u64;
 
-/// Session state representing all context for a database session
+// Session state representing all context for a database session
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionState {
     pub session_id: SID,
@@ -79,7 +79,7 @@ impl SessionState {
     }
 }
 
-/// Session settings
+// Session settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionSettings {
     pub autocommit: bool,
@@ -115,7 +115,7 @@ impl Default for SessionSettings {
     }
 }
 
-/// Transaction state
+// Transaction state
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TransactionState {
     None,
@@ -131,7 +131,7 @@ pub enum TransactionState {
     },
 }
 
-/// Isolation level
+// Isolation level
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum IsolationLevel {
     ReadUncommitted,
@@ -140,7 +140,7 @@ pub enum IsolationLevel {
     Serializable,
 }
 
-/// Optimizer mode
+// Optimizer mode
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum OptimizerMode {
     AllRows,
@@ -149,7 +149,7 @@ pub enum OptimizerMode {
     Choose,
 }
 
-/// Cursor sharing mode
+// Cursor sharing mode
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CursorSharingMode {
     Exact,
@@ -157,7 +157,7 @@ pub enum CursorSharingMode {
     Similar,
 }
 
-/// Cursor state
+// Cursor state
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CursorState {
     pub cursor_id: CursorId,
@@ -172,7 +172,7 @@ pub struct CursorState {
     pub scrollable: bool,
 }
 
-/// Cursor status
+// Cursor status
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CursorStatus {
     Open,
@@ -182,7 +182,7 @@ pub enum CursorStatus {
     Fetching,
 }
 
-/// Prepared statement
+// Prepared statement
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PreparedStatement {
     pub statement_id: StatementId,
@@ -196,7 +196,7 @@ pub struct PreparedStatement {
     pub total_execution_time: u64,
 }
 
-/// Session status
+// Session status
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum SessionStatus {
     Active,
@@ -207,7 +207,7 @@ pub enum SessionStatus {
     Migrating,
 }
 
-/// Client information
+// Client information
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ClientInfo {
     pub program: Option<String>,
@@ -221,7 +221,7 @@ pub struct ClientInfo {
     pub client_identifier: Option<String>,
 }
 
-/// Resource usage statistics
+// Resource usage statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ResourceUsage {
     pub cpu_time_ms: u64,

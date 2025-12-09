@@ -13,17 +13,17 @@ use std::hash::{Hash, Hasher};
 // Revolutionary Optimization Structures
 // ============================================================================
 
-/// Cascades-style memo table for plan memoization with equivalence classes
-///
-/// Stores optimized plans keyed by their logical equivalence, enabling:
-/// - O(1) lookup of previously optimized equivalent expressions
-/// - Sharing of common subplans across different queries
-/// - Property-based pruning (sort order, partitioning, etc.)
+// Cascades-style memo table for plan memoization with equivalence classes
+//
+// Stores optimized plans keyed by their logical equivalence, enabling:
+// - O(1) lookup of previously optimized equivalent expressions
+// - Sharing of common subplans across different queries
+// - Property-based pruning (sort order, partitioning, etc.)
 #[derive(Debug)]
 pub struct MemoTable {
-    /// Map from plan hash to optimized plan
+    // Map from plan hash to optimized plan
     plans: HashMap<u64, PlanNode>,
-    /// Equivalence classes for logical plan equivalence
+    // Equivalence classes for logical plan equivalence
     equivalence_classes: HashMap<u64, EquivalenceClass>,
 }
 
@@ -49,44 +49,44 @@ impl MemoTable {
     }
 }
 
-/// Equivalence class for logically equivalent expressions
+// Equivalence class for logically equivalent expressions
 #[derive(Debug, Clone)]
 pub struct EquivalenceClass {
-    /// Group ID
+    // Group ID
     pub group_id: u64,
-    /// Member expressions (logically equivalent)
+    // Member expressions (logically equivalent)
     pub members: Vec<PlanNode>,
-    /// Best physical plan for this group
+    // Best physical plan for this group
     pub best_plan: Option<PlanNode>,
-    /// Lowest cost found
+    // Lowest cost found
     pub best_cost: f64,
 }
 
-/// Materialized view for query rewriting
+// Materialized view for query rewriting
 #[derive(Debug, Clone)]
 pub struct MaterializedView {
-    /// View name
+    // View name
     pub name: String,
-    /// View definition (query plan)
+    // View definition (query plan)
     pub definition: PlanNode,
-    /// Indexed columns
+    // Indexed columns
     pub indexed_columns: Vec<String>,
-    /// View statistics
+    // View statistics
     pub statistics: SingleTableStatistics,
 }
 
-/// Expression hash for common subexpression elimination
+// Expression hash for common subexpression elimination
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ExpressionHash(pub u64);
 
-/// Adaptive statistics for runtime feedback
+// Adaptive statistics for runtime feedback
 #[derive(Debug)]
 pub struct AdaptiveStatistics {
-    /// Actual vs estimated cardinality errors
+    // Actual vs estimated cardinality errors
     pub cardinality_errors: Vec<CardinalityError>,
-    /// Query execution feedback
+    // Query execution feedback
     pub execution_feedback: Vec<ExecutionFeedback>,
-    /// Correction factors
+    // Correction factors
     pub correction_factors: HashMap<String, f64>,
 }
 
@@ -130,7 +130,7 @@ pub struct ExecutionFeedback {
     pub estimated_cost: f64,
 }
 
-/// BitSet for efficient subset enumeration in DPccp
+// BitSet for efficient subset enumeration in DPccp
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BitSet {
     bits: u64,

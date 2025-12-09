@@ -1,17 +1,17 @@
-/// Advanced Hash Index Implementations
-///
-/// This module provides production-grade hash indexing with:
-/// - Extendible hashing for dynamic growth
-/// - Linear hashing as alternative
-/// - Swiss table implementation (10x faster, SIMD-accelerated)
-/// - Bucket splitting without full rehashing
-/// - Concurrent access support
-/// - Overflow handling
-///
-/// ## Performance Improvements (v2.0)
-/// - Now uses xxHash3-AVX2 instead of SipHash (10x faster)
-/// - Swiss table option for SIMD-accelerated probing
-/// - Cache-efficient layouts reducing miss rate by 78%
+// Advanced Hash Index Implementations
+//
+// This module provides production-grade hash indexing with:
+// - Extendible hashing for dynamic growth
+// - Linear hashing as alternative
+// - Swiss table implementation (10x faster, SIMD-accelerated)
+// - Bucket splitting without full rehashing
+// - Concurrent access support
+// - Overflow handling
+//
+// ## Performance Improvements (v2.0)
+// - Now uses xxHash3-AVX2 instead of SipHash (10x faster)
+// - Swiss table option for SIMD-accelerated probing
+// - Cache-efficient layouts reducing miss rate by 78%
 
 use std::collections::HashSet;
 use crate::Result;
@@ -20,15 +20,15 @@ use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 use std::sync::Arc;
 
-/// Extendible Hash Index
-///
-/// Grows dynamically by doubling directory size and splitting buckets
+// Extendible Hash Index
+//
+// Grows dynamically by doubling directory size and splitting buckets
 pub struct ExtendibleHashIndex<K: Hash + Eq + Clone, V: Clone> {
-    /// Directory of bucket pointers
+    // Directory of bucket pointers
     directory: Arc<RwLock<Vec<Arc<RwLock<Bucket<K, V>>>>>>,
-    /// Global depth (number of bits used for indexing)
+    // Global depth (number of bits used for indexing)
     global_depth: Arc<RwLock<usize>>,
-    /// Bucket capacity
+    // Bucket capacity
     bucket_capacity: usize,
 }
 
@@ -43,7 +43,7 @@ impl<K: Hash + Eq + Clone, V: Clone> Clone for ExtendibleHashIndex<K, V> {
 }
 
 impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
-    /// Create a new extendible hash index
+    // Create a new extendible hash index
     pub fn new(bucket_capacity: usize) -> Self {
         let initial_depth = 2;
         let directory_size = 1 << initial_depth;
@@ -60,7 +60,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
         }
     }
 
-    /// Insert a key-value pair
+    // Insert a key-value pair
     pub fn insert(&self, key: K, value: V) -> Result<()> {
         loop {
             let hash = self.hash(&key);
@@ -93,7 +93,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
         }
     }
 
-    /// Get a value by key
+    // Get a value by key
     pub fn get(&self, key: &K) -> Result<Option<V>> {
         let hash = self.hash(key);
         let global_depth = *self.global_depth.read();
@@ -113,7 +113,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
         Ok(None)
     }
 
-    /// Delete a key
+    // Delete a key
     pub fn delete(&self, key: &K) -> Result<bool> {
         let hash = self.hash(key);
         let global_depth = *self.global_depth.read();
@@ -130,7 +130,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
         Ok(bucket_lock.entries.len() < initial_len)
     }
 
-    /// Split a bucket
+    // Split a bucket
     fn split_bucket(&self, index: usize, local_depth: usize) -> Result<()> {
         let directory = self.directory.read();
         let old_bucket = directory[index].clone();
@@ -172,7 +172,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
         Ok(())
     }
 
-    /// Increase global depth (double directory size)
+    // Increase global depth (double directory size)
     fn increase_global_depth(&self) -> Result<()> {
         let mut global_depth = self.global_depth.write();
         let mut directory = self.directory.write();
@@ -189,9 +189,9 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
         Ok(())
     }
 
-    /// Hash a key
-    ///
-    /// Now uses xxHash3-AVX2 for 10x faster hashing
+    // Hash a key
+    //
+    // Now uses xxHash3-AVX2 for 10x faster hashing
     fn hash(&self, key: &K) -> usize {
         // Fast path for string keys
         if std::any::TypeId::of::<K>() == std::any::TypeId::of::<String>() {
@@ -206,12 +206,12 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
         hasher.finish() as usize
     }
 
-    /// Get directory index from hash value
+    // Get directory index from hash value
     fn get_index(&self, hash: usize, depth: usize) -> usize {
         hash & ((1 << depth) - 1)
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn stats(&self) -> ExtendibleHashStats {
         let directory = self.directory.read();
         let global_depth = *self.global_depth.read();
@@ -236,7 +236,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
     }
 }
 
-/// Bucket for extendible hashing
+// Bucket for extendible hashing
 struct Bucket<K, V> {
     entries: Vec<(K, V)>,
     local_depth: usize,
@@ -251,19 +251,19 @@ impl<K, V> Bucket<K, V> {
     }
 }
 
-/// Linear Hash Index
-///
-/// Grows incrementally by splitting one bucket at a time
+// Linear Hash Index
+//
+// Grows incrementally by splitting one bucket at a time
 pub struct LinearHashIndex<K: Hash + Eq + Clone, V: Clone> {
-    /// Buckets
+    // Buckets
     buckets: Arc<RwLock<Vec<Arc<RwLock<LinearBucket<K, V>>>>>>,
-    /// Next bucket to split
+    // Next bucket to split
     next_to_split: Arc<RwLock<usize>>,
-    /// Level (determines hash function)
+    // Level (determines hash function)
     level: Arc<RwLock<usize>>,
-    /// Bucket capacity
+    // Bucket capacity
     bucket_capacity: usize,
-    /// Load factor threshold for splitting
+    // Load factor threshold for splitting
     load_factor_threshold: f64,
 }
 
@@ -280,7 +280,7 @@ impl<K: Hash + Eq + Clone, V: Clone> Clone for LinearHashIndex<K, V> {
 }
 
 impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
-    /// Create a new linear hash index
+    // Create a new linear hash index
     pub fn new(initial_buckets: usize, bucket_capacity: usize) -> Self {
         let mut buckets = Vec::with_capacity(initial_buckets);
         for _ in 0..initial_buckets {
@@ -296,7 +296,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
         }
     }
 
-    /// Insert a key-value pair
+    // Insert a key-value pair
     pub fn insert(&self, key: K, value: V) -> Result<()> {
         let hash = self.hash(&key);
         let bucket_idx = self.find_bucket(hash);
@@ -322,7 +322,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
         Ok(())
     }
 
-    /// Get a value by key
+    // Get a value by key
     pub fn get(&self, key: &K) -> Result<Option<V>> {
         let hash = self.hash(key);
         let bucket_idx = self.find_bucket(hash);
@@ -341,7 +341,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
         Ok(None)
     }
 
-    /// Delete a key
+    // Delete a key
     pub fn delete(&self, key: &K) -> Result<bool> {
         let hash = self.hash(key);
         let bucket_idx = self.find_bucket(hash);
@@ -357,7 +357,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
         Ok(bucket_lock.entries.len() < initial_len)
     }
 
-    /// Find bucket for a hash value
+    // Find bucket for a hash value
     fn find_bucket(&self, hash: usize) -> usize {
         let level = *self.level.read();
         let next_to_split = *self.next_to_split.read();
@@ -376,7 +376,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
         }
     }
 
-    /// Split the next bucket
+    // Split the next bucket
     fn split_next_bucket(&self) -> Result<()> {
         let mut next_to_split = self.next_to_split.write();
         let mut level = self.level.write();
@@ -423,7 +423,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
         Ok(())
     }
 
-    /// Calculate current load factor
+    // Calculate current load factor
     fn current_load_factor(&self) -> f64 {
         let buckets = self.buckets.read();
         let total_entries: usize = buckets
@@ -435,9 +435,9 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
         total_entries as f64 / capacity as f64
     }
 
-    /// Hash a key
-    ///
-    /// Now uses xxHash3-AVX2 for 10x faster hashing
+    // Hash a key
+    //
+    // Now uses xxHash3-AVX2 for 10x faster hashing
     fn hash(&self, key: &K) -> usize {
         // Fast path for string keys
         if std::any::TypeId::of::<K>() == std::any::TypeId::of::<String>() {
@@ -452,7 +452,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
         hasher.finish() as usize
     }
 
-    /// Get statistics
+    // Get statistics
     pub fn stats(&self) -> LinearHashStats {
         let buckets = self.buckets.read();
         let level = *self.level.read();
@@ -479,7 +479,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
     }
 }
 
-/// Bucket for linear hashing
+// Bucket for linear hashing
 struct LinearBucket<K, V> {
     entries: Vec<(K, V)>,
     overflow_count: usize,
@@ -494,7 +494,7 @@ impl<K, V> LinearBucket<K, V> {
     }
 }
 
-/// Extendible hash statistics
+// Extendible hash statistics
 #[derive(Debug, Clone)]
 pub struct ExtendibleHashStats {
     pub global_depth: usize,
@@ -503,7 +503,7 @@ pub struct ExtendibleHashStats {
     pub total_entries: usize,
 }
 
-/// Linear hash statistics
+// Linear hash statistics
 #[derive(Debug, Clone)]
 pub struct LinearHashStats {
     pub num_buckets: usize,
