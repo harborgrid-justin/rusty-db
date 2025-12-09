@@ -440,7 +440,7 @@ impl HierarchicalLockManager {
                     return Err(DbError::DeadlockDetected(format!(
                         "Deadlock detected involving transactions: {:?}",
                         cycle
-                    ))));
+                    )))));
                 }
             }
 
@@ -464,7 +464,7 @@ impl HierarchicalLockManager {
                 return Err(DbError::Timeout(format!(
                     "Lock timeout for transaction {} on resource {:?}",
                     txn_id, resource
-                ))));
+                )))));
             }
 
             // Wait for notification

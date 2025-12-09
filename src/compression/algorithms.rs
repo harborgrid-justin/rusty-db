@@ -518,7 +518,7 @@ impl DictionaryCompressor {
             } else {
                 return Err(CompressionError::DecompressionFailed(
                     format!("Invalid code: {}", code)
-                )));
+                ))));
             };
 
             result.extend_from_slice(&entry);
@@ -921,7 +921,7 @@ impl Compressor for AdaptiveCompressor {
         if compressor_idx >= self.compressors.len() {
             return Err(CompressionError::UnsupportedAlgorithm(
                 format!("Invalid algorithm index: {}", compressor_idx)
-            )));
+            ))));
         }
 
         let decompressed_size = self.compressors[compressor_idx].decompress(&input[1..], output)?;
@@ -1648,7 +1648,7 @@ impl EnhancedDictionaryEncoder {
             if index as usize >= dict_entries.len() {
                 return Err(CompressionError::DecompressionFailed(
                     format!("Invalid dictionary index: {}", index)
-                )));
+                ))));
             }
             data.push(dict_entries[index as usize].clone());
         }
@@ -1797,7 +1797,7 @@ impl CascadedCompressor {
             _ => return Err(CompressionError::UnsupportedAlgorithm(
                 format!("Unknown encoding: {}", encoding)
             )),
-        });
+        }));
 
         let mut stats = self.stats.lock().unwrap();
         stats.blocks_decompressed += 1;

@@ -359,7 +359,7 @@ impl VersionStore {
             VersionBound::Timestamp(_ts) => true, // Would need timestamp mapping
             VersionBound::Minvalue => true,
             VersionBound::Maxvalue => false,
-        });
+        }));
 
         let before_end = match end {
             VersionBound::SCN(scn) => version.scn_created <= *scn,
@@ -404,7 +404,7 @@ impl VersionStore {
             .find(|v| v.scn_created == scn)
             .ok_or_else(|| DbError::Validation(
                 format!("Version not found at SCN {}", scn)
-            ))?;
+            ))?);
 
         Ok(VersionMetadata {
             scn_created: version.scn_created,
@@ -444,10 +444,10 @@ impl VersionStore {
         let versions = self.get_row_version_deque(table_id, row_id)?;
 
         let v1 = versions.iter().find(|v| v.scn_created == scn1)
-            .ok_or_else(|| DbError::Validation(format!("Version at SCN {} not found", scn1)))?;
+            .ok_or_else(|| DbError::Validation(format!("Version at SCN {} not found", scn1)))?);
 
         let v2 = versions.iter().find(|v| v.scn_created == scn2)
-            .ok_or_else(|| DbError::Validation(format!("Version at SCN {} not found", scn2)))?;
+            .ok_or_else(|| DbError::Validation(format!("Version at SCN {} not found", scn2)))?);
 
         let mut changed_columns = Vec::new();
         for (i, (val1, val2)) in v1.values.iter().zip(&v2.values).enumerate() {

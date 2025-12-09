@@ -350,7 +350,7 @@ impl ScoringEngine {
             let perturbed_pred = self.predict(model, vec![perturbed])?;
             let contribution = baseline_value - perturbed_pred[0].value;
 
-            contributions.insert(format!("feature_{}", i), contribution));
+            contributions.insert(format!("feature_{}", i), contribution)));
         }
 
         Ok(contributions)
@@ -389,7 +389,7 @@ impl ScoringEngine {
         pmml.push_str("<PMML version=\"4.4\" xmlns=\"http://www.dmg.org/PMML-4_4\">\n");
         pmml.push_str("  <Header>\n");
         pmml.push_str(&"    <Application name=\"RustyDB\" version=\"1.0\"/>\n".to_string());
-        pmml.push_str(&format!("    <Timestamp>{}</Timestamp>\n", model.created_at)));
+        pmml.push_str(&format!("    <Timestamp>{}</Timestamp>\n", model.created_at))));
         pmml.push_str("  </Header>\n");
 
         // Data dictionary
@@ -413,7 +413,7 @@ impl ScoringEngine {
                         pmml.push_str(&format!(
                             "      <NumericPredictor name=\"x{}\" coefficient=\"{}\"/>\n",
                             i, weight
-                        )));
+                        ))));
                     }
 
                     pmml.push_str("    </RegressionTable>\n");
@@ -460,7 +460,7 @@ impl ScoringEngine {
 
     fn parse_pmml_value(&self, pmml: &str, attr: &str) -> Result<f64> {
         // Simplified attribute parsing
-        let search = format!("{}=\"", attr));
+        let search = format!("{}=\"", attr)));
         if let Some(start) = pmml.find(&search) {
             let value_start = start + search.len();
             if let Some(end) = pmml[value_start..].find('\"') {

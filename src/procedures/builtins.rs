@@ -205,7 +205,7 @@ impl DbmsSql {
 
         let cursor = cursors.get_mut(&cursor_id).ok_or_else(||
             DbError::NotFound(format!("Cursor {} not found", cursor_id))
-        )?;
+        )?);
 
         cursor.sql = Some(sql);
         cursor.parsed = true;
@@ -219,7 +219,7 @@ impl DbmsSql {
 
         let cursor = cursors.get_mut(&cursor_id).ok_or_else(||
             DbError::NotFound(format!("Cursor {} not found", cursor_id))
-        )?;
+        )?);
 
         cursor.bind_variables.insert(name, value);
 
@@ -232,7 +232,7 @@ impl DbmsSql {
 
         let cursor = cursors.get_mut(&cursor_id).ok_or_else(||
             DbError::NotFound(format!("Cursor {} not found", cursor_id))
-        )?;
+        )?);
 
         if !cursor.parsed {
             return Err(DbError::InvalidInput("Cursor has not been parsed".to_string()));
@@ -249,7 +249,7 @@ impl DbmsSql {
         let mut cursors = self.cursors.write();
 
         if cursors.remove(&cursor_id).is_none() {
-            return Err(DbError::NotFound(format!("Cursor {} not found", cursor_id))));
+            return Err(DbError::NotFound(format!("Cursor {} not found", cursor_id)))));
         }
 
         Ok(())
@@ -316,7 +316,7 @@ impl UtlFile {
         let directories = self.directories.read();
         let dir_path = directories.get(&directory).ok_or_else(||
             DbError::NotFound(format!("Directory '{}' not found", directory))
-        )?;
+        )?);
 
         let file_path = dir_path.join(&file_name);
 
@@ -325,7 +325,7 @@ impl UtlFile {
             "W" => FileMode::Write,
             "A" => FileMode::Append,
             _ => return Err(DbError::InvalidInput(format!("Invalid file mode: {}", mode))),
-        });
+        }));
 
         let file = match file_mode {
             FileMode::Read => File::open(&file_path)
@@ -368,7 +368,7 @@ impl UtlFile {
 
         let handle = handles.get_mut(&handle_id).ok_or_else(||
             DbError::NotFound(format!("File handle {} not found", handle_id))
-        )?;
+        )?);
 
         if handle.mode == FileMode::Read {
             return Err(DbError::InvalidInput("Cannot write to file opened for reading".to_string()));
@@ -388,7 +388,7 @@ impl UtlFile {
 
         let handle = handles.get_mut(&handle_id).ok_or_else(||
             DbError::NotFound(format!("File handle {} not found", handle_id))
-        )?;
+        )?);
 
         if handle.mode != FileMode::Read {
             return Err(DbError::InvalidInput("Cannot read from file opened for writing".to_string()));
@@ -419,7 +419,7 @@ impl UtlFile {
         let mut handles = self.file_handles.write();
 
         if handles.remove(&handle_id).is_none() {
-            return Err(DbError::NotFound(format!("File handle {} not found", handle_id))));
+            return Err(DbError::NotFound(format!("File handle {} not found", handle_id)))));
         }
 
         Ok(())
@@ -486,21 +486,21 @@ impl DbmsScheduler {
     }
 
     /// Create a job
-    pub ffn create_job(
+    pub fffn create_job(
         &self,
         name: String,
         job_type: String,
         job_action: String,
-        start_date: Option<String>,
+        startdate: Option<String>,
         repeatinterval: Option<String>,
         enabled: bool,
-    ) Result<()> {
+    )esult<()> {
         let mut jobs = self.jobs.write();
 
         if jobs.contains_key(&name) {
             return Err(DbError::AlreadyExists(
                 format!("Job '{}' already exists", name)
-            )));
+            ))));
         }
 
         let job_type_enum = match job_type.to_uppercase().as_str() {
@@ -508,7 +508,7 @@ impl DbmsScheduler {
             "STORED_PROCEDURE" => JobType::StoredProcedure,
             "EXECUTABLE" => JobType::Executable,
             _ => return Err(DbError::InvalidInput(format!("Invalid job type: {}", job_type))),
-        });
+        }));
 
         let schedule = if let Some(interval) = repeat_interval {
             Schedule::Recurring { interval }
@@ -538,7 +538,7 @@ impl DbmsScheduler {
 
         let job = jobs.get_mut(job_name).ok_or_else(||
             DbError::NotFound(format!("Job '{}' not found", job_name))
-        )?;
+        )?);
 
         job.enabled = true;
         Ok(())
@@ -550,7 +550,7 @@ impl DbmsScheduler {
 
         let job = jobs.get_mut(job_name).ok_or_else(||
             DbError::NotFound(format!("Job '{}' not found", job_name))
-        )?;
+        )?);
 
         job.enabled = false;
         Ok(())
@@ -561,7 +561,7 @@ impl DbmsScheduler {
         let mut jobs = self.jobs.write();
 
         if jobs.remove(job_name).is_none() {
-            return Err(DbError::NotFound(format!("Job '{}' not found", job_name))));
+            return Err(DbError::NotFound(format!("Job '{}' not found", job_name)))));
         }
 
         Ok(())
@@ -573,10 +573,10 @@ impl DbmsScheduler {
 
         let job = jobs.get(job_name).ok_or_else(||
             DbError::NotFound(format!("Job '{}' not found", job_name))
-        )?;
+        )?);
 
         if !job.enabled {
-            return Err(DbError::InvalidInput(format!("Job '{}' is disabled", job_name))));
+            return Err(DbError::InvalidInput(format!("Job '{}' is disabled", job_name)))));
         }
 
         // TODO: Execute the job action
@@ -643,7 +643,7 @@ impl DbmsLock {
             "SHARED" | "S" => LockMode::Shared,
             "UPDATE" | "U" => LockMode::Update,
             _ => return Err(DbError::InvalidInput(format!("Invalid lock mode: {}", lock_mode))),
-        });
+        }));
 
         let mut locks = self.locks.write();
 

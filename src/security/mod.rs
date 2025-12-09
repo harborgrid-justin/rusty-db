@@ -328,7 +328,7 @@ impl IntegratedSecurityManager {
 
         // Audit the grant
         let mut context = HashMap::new();
-        context.insert("privilege".to_string(), format!("{:?}", privilege)));
+        context.insert("privilege".to_string(), format!("{:?}", privilege))));
         context.insert("grantee".to_string(), grantee.to_string());
 
         self.audit.log_event(

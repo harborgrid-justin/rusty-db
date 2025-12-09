@@ -808,7 +808,7 @@ impl DiskManager {
         // Buffer the write
         self.write_behind.lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?
-            .add(page.id, page.data.clone()));
+            .add(page.id, page.data.clone());
 
         Ok(())
     }
@@ -1128,5 +1128,3 @@ mod tests {
         assert_eq!(next.op_type, IoOpType::Sync);
     }
 }
-
-

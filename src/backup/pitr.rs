@@ -168,7 +168,7 @@ impl FlashbackQuery {
 
     pub fn execute(&mut self, log_miner: &LogMiner) -> Result<usize> {
         // Reconstruct data as it existed at target SCN
-        let entries = log_miner.get_entries_until_scn(self.target_scn));
+        let entries = log_miner.get_entries_until_scn(self.target_scn)));
 
         // Build result set by applying undo operations
         let mut data_state = HashMap::new();
@@ -263,7 +263,7 @@ impl LogMiner {
         // Simulate some log entries
         for i in 0..100 {
             let scn = log_file.start_scn + i;
-            let txn_id = format!("TXN-{}", i % 10));
+            let txn_id = format!("TXN-{}", i % 10)));
 
             let entry = TransactionLogEntry {
                 scn,
@@ -281,7 +281,7 @@ impl LogMiner {
                 undo_sql: Some(format!("UNDO for {}", i)),
                 redo_sql: Some(format!("REDO for {}", i)),
                 committed: false,
-            });
+            }));
 
             entries.insert(scn, entry.clone());
             active_txns.entry(txn_id).or_insert_with(Vec::new).push(entry);
@@ -303,7 +303,7 @@ impl LogMiner {
                 end_scn: start_scn + ((i + 1) * 1000),
                 timestamp: SystemTime::now(),
                 size_bytes: 1024 * 1024 * 10, // 10MB
-            });
+            }));
 
             if let Some(end) = end_scn {
                 if seq.start_scn > end {
@@ -391,7 +391,7 @@ impl PitrManager {
 
         let mut restore_points = self.restore_points.write();
         if restore_points.contains_key(&name) {
-            return Err(DbError::BackupError(format!("Restore point {} already exists", name))));
+            return Err(DbError::BackupError(format!("Restore point {} already exists", name)))));
         }
 
         restore_points.insert(name, restore_point.clone());
@@ -402,7 +402,7 @@ impl PitrManager {
     pub fn drop_restore_point(&self, name: &str) -> Result<()> {
         let mut restore_points = self.restore_points.write();
         restore_points.remove(name)
-            .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?;
+            .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?);
         Ok(())
     }
 
@@ -419,7 +419,7 @@ impl PitrManager {
         recovery_mode: RecoveryMode,
         recovery_path: PathBuf,
     ) -> Result<String> {
-        let session_id = format!("RECOVERY-{}", uuid::Uuid::new_v4()));
+        let session_id = format!("RECOVERY-{}", uuid::Uuid::new_v4())));
         let mut session = RecoverySession::new(
             session_id.clone(),
             recovery_target.clone(),
@@ -441,7 +441,7 @@ impl PitrManager {
                 let restore_points = self.restore_points.read();
                 restore_points.get(name)
                     .map(|rp| rp.scn)
-                    .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?;
+                    .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?);
                 restore_points.get(name).map(|rp| rp.scn)
             }
             RecoveryTarget::Latest => None,
@@ -536,7 +536,7 @@ impl PitrManager {
                 return Err(DbError::BackupError(
                     format!("Recovery did not reach target SCN. Current: {}, Target: {}",
                         session.current_scn, target_scn)
-                )));
+                ))));
             }
         }
 

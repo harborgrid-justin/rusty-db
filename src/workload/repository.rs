@@ -431,7 +431,7 @@ impl WorkloadRepository {
         // Update index
         index.by_time.insert(snapshot.timestamp, snapshot_id);
 
-        let date_key = format!("{:?}", snapshot.timestamp));
+        let date_key = format!("{:?}", snapshot.timestamp)));
         index.by_date.entry(date_key).or_insert_with(Vec::new).push(snapshot_id);
 
         // Store snapshot
@@ -538,14 +538,14 @@ impl WorkloadRepository {
         snapshot1_id: SnapshotId,
         snapshot2_id: SnapshotId,
     ) -> Result<SnapshotComparison> {
-        let snapshots = self.snapshots.read());
+        let snapshots = self.snapshots.read()));
 
         let snap1 = snapshots
             .get(&snapshot1_id)
-            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot1_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot1_id)))?);
         let snap2 = snapshots
             .get(&snapshot2_id)
-            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot2_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot2_id)))?);
 
         Ok(SnapshotComparison::new(snap1.clone(), snap2.clone()))
     }

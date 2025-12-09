@@ -660,7 +660,7 @@ impl TransactionManager {
     }
     
     pub fn abort(&self, txn_id: TransactionId) -> Result<()> {
-        let mut active_txns = self.active_txns.write());
+        let mut active_txns = self.active_txns.write()));
         
         if let Some(txn) = active_txns.get_mut(&txn_id) {
             txn.state = TransactionState::Aborted;
@@ -714,7 +714,7 @@ impl TwoPhaseCommitCoordinator {
     }
     
     pub fn register_participant(&self, txn_id: TransactionId, participant: ParticipantInfo) {
-        let mut participants = self.participants.write());
+        let mut participants = self.participants.write()));
         participants.entry(txn_id).or_insert_with(Vec::new).push(participant);
     }
     
@@ -739,7 +739,7 @@ impl TwoPhaseCommitCoordinator {
     }
     
     pub fn commit_phase(&self, txn_id: TransactionId) -> Result<()> {
-        let mut participants = self.participants.write());
+        let mut participants = self.participants.write()));
         
         if let Some(participant_list) = participants.get_mut(&txn_id) {
             for participant in participant_list {
@@ -753,7 +753,7 @@ impl TwoPhaseCommitCoordinator {
     }
     
     pub fn abort_phase(&self, txn_id: TransactionId) -> Result<()> {
-        let mut participants = self.participants.write());
+        let mut participants = self.participants.write()));
         
         if let Some(participant_list) = participants.get_mut(&txn_id) {
             for participant in participant_list {
@@ -792,7 +792,7 @@ impl RecoveryManager {
     }
     
     pub fn recover(&self) -> Result<()> {
-        let entries = self.wal_manager.replay()?;
+        let entries = self.wal_manager.replay()?);
         
         let mut active_txns: HashMap<TransactionId, Vec<WALEntry>> = HashMap::new();
         let mut last_checkpoint_lsn = 0;
@@ -1681,7 +1681,7 @@ impl TransactionMonitor {
                 alert_type: AlertType::LongRunning,
                 timestamp: SystemTime::now(),
                 details: format!("Transaction running for {:?}", elapsed),
-            }));
+            })));
         }
         
         if txn.write_set.len() > self.large_transaction_threshold {
@@ -1690,7 +1690,7 @@ impl TransactionMonitor {
                 alert_type: AlertType::LargeTransaction,
                 timestamp: SystemTime::now(),
                 details: format!("Transaction has {} writes", txn.write_set.len()),
-            }));
+            })));
         }
     }
     
@@ -1890,7 +1890,7 @@ impl TransactionMigrationManager {
     pub fn export_transaction(&self, txn: &Transaction) -> Result<PathBuf> {
         std::fs::create_dir_all(&self.export_dir)?;
         
-        let export_path = self.export_dir.join(format!("txn_{}.json", txn.id)));
+        let export_path = self.export_dir.join(format!("txn_{}.json", txn.id))));
         let serialized = serde_json::to_string_pretty(txn)
             .map_err(|e| DbError::Serialization(e.to_string()))?;
         
@@ -1900,7 +1900,7 @@ impl TransactionMigrationManager {
     }
     
     pub fn import_transaction(&self, txn_id: TransactionId) -> Result<Transaction> {
-        let import_path = self.export_dir.join(format!("txn_{}.json", txn_id)));
+        let import_path = self.export_dir.join(format!("txn_{}.json", txn_id))));
         let serialized = std::fs::read_to_string(import_path)?;
         
         serde_json::from_str(&serialized)
@@ -2264,7 +2264,7 @@ impl TransactionReplicationManager {
     }
     
     pub fn add_replica(&self, replica: ReplicaNode) {
-        self.replicas.write().push(replica));
+        self.replicas.write().push(replica)));
     }
     
     pub fn replicate_transaction(&self, entry: ReplicationEntry) -> Result<()> {
@@ -2429,7 +2429,7 @@ pub mod transaction_utils {
         // Check write-write conflicts
         for key in &txn1.write_set {
             if txn2.write_set.contains(key) {
-                return true);
+                return true));
             }
         }
         
@@ -2480,18 +2480,18 @@ impl TransactionValidator {
                 ValidationConstraint::MaxDuration(max_duration) => {
                     let duration = SystemTime::now().duration_since(txn.start_time).unwrap_or(Duration::from_secs(0));
                     if duration > *max_duration {
-                        return Err(DbError::Transaction(format!("Transaction exceeded max duration: {:?}", max_duration))));
+                        return Err(DbError::Transaction(format!("Transaction exceeded max duration: {:?}", max_duration)))));
                     }
                 }
                 ValidationConstraint::MaxOperations(max_ops) => {
                     let total_ops = txn.read_set.len() + txn.write_set.len();
                     if total_ops > *max_ops {
-                        return Err(DbError::Transaction(format!("Transaction exceeded max operations: {}", max_ops))));
+                        return Err(DbError::Transaction(format!("Transaction exceeded max operations: {}", max_ops)))));
                     }
                 }
                 ValidationConstraint::RequiredIsolationLevel(required_level) => {
                     if txn.isolation_level != *required_level {
-                        return Err(DbError::Transaction(format!("Transaction requires isolation level: {:?}", required_level))));
+                        return Err(DbError::Transaction(format!("Transaction requires isolation level: {:?}", required_level)))));
                     }
                 }
                 _ => {}
@@ -2617,7 +2617,7 @@ impl TransactionClusterManager {
     }
     
     pub fn commit_cluster(&self, cluster_id: &str) -> Result<()> {
-        let mut clusters = self.clusters.write());
+        let mut clusters = self.clusters.write()));
         
         if let Some(cluster) = clusters.get_mut(cluster_id) {
             cluster.state = ClusterState::Committing;
@@ -2630,7 +2630,7 @@ impl TransactionClusterManager {
     }
     
     pub fn abort_cluster(&self, cluster_id: &str) -> Result<()> {
-        let mut clusters = self.clusters.write());
+        let mut clusters = self.clusters.write()));
         
         if let Some(cluster) = clusters.get_mut(cluster_id) {
             cluster.state = ClusterState::Aborting;
@@ -2666,7 +2666,7 @@ pub mod test_utils {
     
     /// Generate conflict scenario
     pub fn generate_conflict_scenario() -> (Transaction, Transaction) {
-        let mut txn1 = Transaction::new(1, IsolationLevel::ReadCommitted));
+        let mut txn1 = Transaction::new(1, IsolationLevel::ReadCommitted)));
         let mut txn2 = Transaction::new(2, IsolationLevel::ReadCommitted);
         
         txn1.write_set.insert("key1".to_string());

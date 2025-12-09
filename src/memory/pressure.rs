@@ -392,7 +392,7 @@ impl SystemMemoryInfo {
         let meminfo = fs::read_to_string("/proc/meminfo")
             .map_err(|e| PressureError::SystemInfoUnavailable {
                 reason: format!("Cannot read /proc/meminfo: {}", e),
-            })?;
+            })?);
 
         let mut total_memory = 0;
         let mut free_memory = 0;
@@ -447,7 +447,7 @@ impl SystemMemoryInfo {
         let status = fs::read_to_string("/proc/self/status")
             .map_err(|e| PressureError::SystemInfoUnavailable {
                 reason: format!("Cannot read /proc/self/status: {}", e),
-            })?;
+            })?);
 
         let mut rss = 0;
         let mut virtual_size = 0;
@@ -819,7 +819,7 @@ impl MemoryPressureManager {
                 },
                 context: format!("Pressure level: {}, Memory usage: {:.2}%",
                     level, memory_info.usage_ratio * 100.0),
-            }));
+            })));
 
             // Limit history size
             if history.len() > config.max_pressure_events {

@@ -465,12 +465,12 @@ impl StreamJoinOperator {
 
         // Add left event payload with "left_" prefix
         for (key, value) in &left.payload {
-            joined = joined.with_payload(format!("left_{}", key), value.clone()));
+            joined = joined.with_payload(format!("left_{}", key), value.clone())));
         }
 
         // Add right event payload with "right_" prefix
         for (key, value) in &right.payload {
-            joined = joined.with_payload(format!("right_{}", key), value.clone()));
+            joined = joined.with_payload(format!("right_{}", key), value.clone())));
         }
 
         joined = joined.with_source(self.name.clone());
@@ -1240,7 +1240,7 @@ mod tests {
     #[test]
     fn test_map_operator() {
         let mut map = MapOperator::new("test_map", |mut e: Event| {
-            e.event_type = format!("{}_mapped", e.event_type));
+            e.event_type = format!("{}_mapped", e.event_type)));
             e
         });
 

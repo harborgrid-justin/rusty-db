@@ -330,7 +330,7 @@ impl PluginRegistry {
                 return Err(DbError::Internal(format!(
                     "Plugin already registered: {}",
                     name
-                ))));
+                )))));
             }
         }
 
@@ -366,13 +366,13 @@ impl PluginRegistry {
             let plugins = self.plugins.read();
             let instance = plugins
                 .get(name)
-                .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
+                .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?);
 
             if instance.state != PluginState::Registered {
                 return Err(DbError::Internal(format!(
                     "Plugin {} is not in REGISTERED state",
                     name
-                ))));
+                )))));
             }
 
             // Check dependencies
@@ -381,7 +381,7 @@ impl PluginRegistry {
                     return Err(DbError::Internal(format!(
                         "Plugin {} requires dependency: {}",
                         name, dep
-                    ))));
+                    )))));
                 }
             }
         }
@@ -390,7 +390,7 @@ impl PluginRegistry {
         let mut plugins = self.plugins.write();
         let instance = plugins
             .get_mut(name)
-            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
+            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?);
 
         // Initialize
         debug!("Initializing plugin: {}", name);
@@ -406,13 +406,13 @@ impl PluginRegistry {
         let mut plugins = self.plugins.write();
         let instance = plugins
             .get_mut(name)
-            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
+            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?);
 
         if instance.state != PluginState::Initialized && instance.state != PluginState::Stopped {
             return Err(DbError::Internal(format!(
                 "Plugin {} cannot be started from state: {}",
                 name, instance.state
-            ))));
+            )))));
         }
 
         debug!("Starting plugin: {}", name);
@@ -428,13 +428,13 @@ impl PluginRegistry {
         let mut plugins = self.plugins.write();
         let instance = plugins
             .get_mut(name)
-            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
+            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?);
 
         if instance.state != PluginState::Started {
             return Err(DbError::Internal(format!(
                 "Plugin {} is not started",
                 name
-            ))));
+            )))));
         }
 
         debug!("Stopping plugin: {}", name);
@@ -465,7 +465,7 @@ impl PluginRegistry {
 
     /// Get plugin state
     pub fn get_state(&self, name: &str) -> Result<PluginState> {
-        let plugins = self.plugins.read());
+        let plugins = self.plugins.read()));
         plugins
             .get(name)
             .map(|p| p.state)
@@ -474,7 +474,7 @@ impl PluginRegistry {
 
     /// Get plugin metadata
     pub fn get_metadata(&self, name: &str) -> Option<PluginMetadata> {
-        let plugins = self.plugins.read());
+        let plugins = self.plugins.read()));
         plugins.get(name).map(|p| p.metadata.clone())
     }
 
@@ -521,7 +521,7 @@ impl PluginRegistry {
 
     /// Start all plugins
     pub async fn start_all(&self) -> Result<()> {
-        info!("Starting all plugins..."));
+        info!("Starting all plugins...")));
 
         let plugin_names: Vec<String> = {
             let plugins = self.plugins.read();
@@ -550,7 +550,7 @@ impl PluginRegistry {
 
     /// Stop all plugins
     pub async fn stop_all(&self) -> Result<()> {
-        info!("Stopping all plugins..."));
+        info!("Stopping all plugins...")));
 
         let plugin_names: Vec<String> = {
             let plugins = self.plugins.read();
@@ -727,7 +727,7 @@ use std::time::Instant;
         for i in 0..3 {
             let plugin = Box::new(TestPlugin {
                 name: format!("plugin-{}", i),
-            }));
+            })));
             registry.register(plugin, HashMap::new()).unwrap();
         }
 

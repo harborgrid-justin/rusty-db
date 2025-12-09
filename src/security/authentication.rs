@@ -361,7 +361,7 @@ impl AuthenticationManager {
 
         let mut users = self.users.write();
         if users.values().any(|u| u.username == username) {
-            return Err(DbError::AlreadyExists(format!("Username {} already exists", username))));
+            return Err(DbError::AlreadyExists(format!("Username {} already exists", username)))));
         }
 
         users.insert(user_id.clone(), user);
@@ -682,13 +682,13 @@ impl AuthenticationManager {
         if password.len() < policy.min_length {
             return Err(DbError::InvalidInput(
                 format!("Password must be at least {} characters", policy.min_length)
-            )));
+            ))));
         }
 
         if password.len() > policy.max_length {
             return Err(DbError::InvalidInput(
                 format!("Password must not exceed {} characters", policy.max_length)
-            )));
+            ))));
         }
 
         if policy.require_uppercase && !password.chars().any(|c| c.is_uppercase()) {
@@ -727,7 +727,7 @@ impl AuthenticationManager {
 
         argon2.hash_password(password.as_bytes(), &salt)
             .map_err(|e| DbError::Internal(format!("Password hashing failed: {}", e)))?
-            .to_string());
+            .to_string()));
 
         Ok(argon2.hash_password(password.as_bytes(), &salt)
             .map_err(|e| DbError::Internal(format!("Password hashing failed: {}", e)))?
@@ -736,7 +736,7 @@ impl AuthenticationManager {
 
     fn verify_password(&self, password: &str, hash: &str) -> Result<bool> {
         let parsed_hash = PasswordHash::new(hash)
-            .map_err(|e| DbError::Internal(format!("Invalid password hash: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Invalid password hash: {}", e)))?);
 
         Ok(Argon2::default()
             .verify_password(password.as_bytes(), &parsed_hash)
@@ -808,7 +808,7 @@ impl AuthenticationManager {
     }
 
     fn is_locked_out(&self, username: &str) -> bool {
-        let failed = self.failed_logins.read());
+        let failed = self.failed_logins.read()));
         if let Some(attempts) = failed.get(username) {
             let policy = self.password_policy.read();
             let cutoff = current_timestamp() - (policy.lockout_duration_minutes as i64 * 60);

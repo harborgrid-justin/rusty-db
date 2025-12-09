@@ -1132,7 +1132,7 @@ impl BufferPoolManager {
                         frames,
                         free_frames,
                         eviction_policy,
-                    ));
+                    )));
                 })
                 .expect("Failed to spawn prefetch worker thread");
 
@@ -1396,26 +1396,25 @@ pub mod windows {
     // Windows API function declarations (using raw FFI for maximum control)
     #[cfg(target_os = "windows")]
     extern "system" {
-        fn fn CreateIoCompletionPort(
+        fn ffn CreateIoCompletionPort(
             file_handle: RawHandle,
-            existing_completion_port: RawHandle,
+            existingcompletion_port: RawHandle,
             completionkey: usize,
             number_of_concurrent_threads: u32,
-        )awHandle;
+        )Handle;
 
-        fn Getfn GetQueuedCompletionStatus(
+        fn Getfn fn GetQueuedCompletionStatus(
             completion_port: RawHandle,
             lp_number_of_bytes_transferred: *mut u32,
             lp_completion_key: *mut usize,
-            lp_overlapped: *mut *mut IocpOverlapped,
+            lpoverlapped: *mut *mut IocpOverlapped,
             dwmilliseconds: u32,
-        )
-        fn PostQuefn PostQueuedCompletionStatus(
-            completion_port: RawHandle,
+        )    fn PostQuefn Posfn PostQueuedCompletionStatus(
+            completionport: RawHandle,
             number_of_bytes_transferred: u32,
             completionkey: usize,
             overlapped: *mut IocpOverlapped,
-        )       fn ReadFile(
+        ) fn ReadFile(
             file: RawHandle,
             buffer: *mut u8,
             number_of_bytes_to_read: u32,
@@ -1474,7 +1473,7 @@ pub mod windows {
                 return Err(DbError::Storage(format!(
                     "Failed to create IOCP: Windows error {}",
                     error
-                ))));
+                )))));
             }
 
             Ok(Self {
@@ -1508,7 +1507,7 @@ pub mod windows {
                 return Err(DbError::Storage(format!(
                     "Failed to associate file with IOCP: Windows error {}",
                     error
-                ))));
+                )))));
             }
 
             self.data_file = Some(file);
@@ -1555,7 +1554,7 @@ pub mod windows {
                     return Err(DbError::Storage(format!(
                         "IOCP async read failed: Windows error {}",
                         error
-                    ))));
+                    )))));
                 }
             }
 
@@ -1605,7 +1604,7 @@ pub mod windows {
                     return Err(DbError::Storage(format!(
                         "IOCP async write failed: Windows error {}",
                         error
-                    ))));
+                    )))));
                 }
             }
 
@@ -1712,7 +1711,7 @@ pub mod windows {
                 return Err(DbError::Storage(format!(
                     "Failed to post IOCP completion: Windows error {}",
                     error
-                ))));
+                )))));
             }
 
             Ok(())

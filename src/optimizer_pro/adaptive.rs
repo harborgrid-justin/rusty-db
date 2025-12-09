@@ -81,7 +81,7 @@ impl AdaptiveExecutor {
                 "Plan corrected: switched from {:?} to {:?}",
                 plan.operator,
                 corrected_plan.operator
-            )));
+            ))));
 
             // Re-execute with corrected plan
             let corrected_rows = self.execute_with_monitoring(
@@ -145,7 +145,7 @@ impl AdaptiveExecutor {
                     right.cardinality,
                     execution_id,
                 )? {
-                    corrections.push(format!("Adaptive join switch: {:?}", better_method)));
+                    corrections.push(format!("Adaptive join switch: {:?}", better_method))));
                 }
 
                 self.execute_nested_loop_join(left, right, condition.as_ref(), *join_type, execution_id)
@@ -328,7 +328,7 @@ impl AdaptiveExecutor {
             created_at: SystemTime::now(),
             usage_count: 0,
             last_used: SystemTime::now(),
-        });
+        }));
 
         self.plan_directives.write().unwrap().add_directive(directive);
 
@@ -617,7 +617,7 @@ impl AdaptiveJoinSelector {
         }
 
         // Check performance history
-        let key = format!("{}_{}", left_cardinality / 1000, right_cardinality / 1000));
+        let key = format!("{}_{}", left_cardinality / 1000, right_cardinality / 1000)));
         if let Some(perf) = self.performance_history.read().unwrap().get(&key) {
             return Ok(Some(perf.best_method));
         }
@@ -633,7 +633,7 @@ impl AdaptiveJoinSelector {
         method: JoinMethod,
         execution_time: Duration,
     ) {
-        let key = format!("{}_{}", left_cardinality / 1000, right_cardinality / 1000));
+        let key = format!("{}_{}", left_cardinality / 1000, right_cardinality / 1000)));
 
         let mut history = self.performance_history.write().unwrap();
 

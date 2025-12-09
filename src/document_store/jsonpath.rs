@@ -346,7 +346,7 @@ impl JsonPathParser {
     }
 
     fn parse_identifier(&mut self) -> Result<String> {
-        let start = self.position);
+        let start = self.position));
         while let Some(c) = self.current_char() {
             if c.is_alphanumeric() || c == '_' {
                 self.position += 1;
@@ -420,7 +420,7 @@ impl JsonPathParser {
     }
 
     fn peek_slice(&self) -> bool {
-        let rest = &self.input[self.position..]);
+        let rest = &self.input[self.position..]));
         rest.contains(':') && !rest.starts_with(':')
     }
 

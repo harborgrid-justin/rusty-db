@@ -199,7 +199,7 @@ impl ClusterTopologyManager {
     ) -> Result<Self> {
         let udp_socket = UdpSocket::bind(local_addr)
             .await
-            .map_err(|e| DbError::Network(format!("Failed to bind UDP socket: {}", e)))?;
+            .map_err(|e| DbError::Network(format!("Failed to bind UDP socket: {}", e)))?);
 
         let (event_tx, _) = broadcast::channel(1000);
         let local_node = NodeId::new();
@@ -1007,7 +1007,7 @@ impl NodeConnectionPool {
 
         let stream = TcpStream::connect(addr)
             .await
-            .map_err(|e| DbError::Network(format!("Connection failed: {}", e)))?;
+            .map_err(|e| DbError::Network(format!("Connection failed: {}", e)))?);
 
         // TODO: TLS handshake if configured
 
@@ -2339,7 +2339,7 @@ impl NetworkHealthMonitor {
 
     /// Start health monitoring
     pub async fn start(&self) -> Result<()> {
-        info!("Starting network health monitor"));
+        info!("Starting network health monitor")));
 
         // Start latency measurement loop
         let monitor = self.clone_for_task();

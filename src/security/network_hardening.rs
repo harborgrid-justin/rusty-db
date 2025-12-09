@@ -691,7 +691,7 @@ impl DDoSMitigator {
                 ip,
                 DDoSAttackType::VolumeFlood,
                 format!("High request rate: {:.2} req/s", request_rate),
-            ));
+            )));
             return Ok(DDoSAnalysisResult::Blocked(DDoSAttackType::VolumeFlood));
         }
 
@@ -701,7 +701,7 @@ impl DDoSMitigator {
                 ip,
                 DDoSAttackType::CacheBusting,
                 format!("Low entropy: {:.2}", entropy),
-            ));
+            )));
             return Ok(DDoSAnalysisResult::Suspicious);
         }
 
@@ -711,7 +711,7 @@ impl DDoSMitigator {
                 ip,
                 DDoSAttackType::ApplicationLayer,
                 format!("Low endpoint diversity: {}", pattern.endpoints.len()),
-            ));
+            )));
             return Ok(DDoSAnalysisResult::Suspicious);
         }
 
@@ -720,7 +720,7 @@ impl DDoSMitigator {
 
     fn detect_attack(&self, ip: IpAddr, attack_type: DDoSAttackType, reason: String) {
         let mut attacks = self.active_attacks.write();
-        let attack_id = format!("{}_{}_{}", ip, format!("{:?}", attack_type), std::time::Instant::now().elapsed().as_secs()));
+        let attack_id = format!("{}_{}_{}", ip, format!("{:?}", attack_type), std::time::Instant::now().elapsed().as_secs())));
 
         let attack = DDoSAttack {
             attack_id: attack_id.clone(),
@@ -852,7 +852,7 @@ impl ProtocolValidator {
         if !rules.allowed_methods.contains(method) {
             stats.validation_failed += 1;
             stats.method_violations += 1;
-            return Err(DbError::InvalidOperation(format!("Invalid method: {}", method))));
+            return Err(DbError::InvalidOperation(format!("Invalid method: {}", method)))));
         }
 
         // Validate URI length
@@ -898,7 +898,7 @@ impl ProtocolValidator {
             if !rules.allowed_content_types.contains(ct) {
                 stats.validation_failed += 1;
                 stats.protocol_violations += 1;
-                return Err(DbError::InvalidOperation(format!("Invalid content type: {}", ct))));
+                return Err(DbError::InvalidOperation(format!("Invalid content type: {}", ct)))));
             }
         }
 
@@ -1024,13 +1024,13 @@ impl TLSEnforcer {
             return Err(DbError::InvalidOperation(format!(
                 "TLS version {:?} below minimum {:?}",
                 version, config.min_version
-            ))));
+            )))));
         }
 
         // Check cipher suite
         if !config.allowed_ciphers.iter().any(|c| c == cipher) {
             stats.weak_cipher_rejected += 1;
-            return Err(DbError::InvalidOperation(format!("Cipher not allowed: {}", cipher))));
+            return Err(DbError::InvalidOperation(format!("Cipher not allowed: {}", cipher)))));
         }
 
         // Check PFS requirement
@@ -1243,7 +1243,7 @@ impl NetworkAnomalyDetector {
                 anomaly_type: AnomalyType::RequestRateSpike,
                 severity: rr_zscore.abs(),
                 description: format!("Request rate anomaly: {:.2} req/s (z-score: {:.2})", current_rr, rr_zscore),
-            }));
+            })));
             stats.anomalies_detected += 1;
             stats.request_rate_anomalies += 1;
         }
@@ -1255,7 +1255,7 @@ impl NetworkAnomalyDetector {
                 anomaly_type: AnomalyType::ResponseTimeSpike,
                 severity: rt_zscore.abs(),
                 description: format!("Response time anomaly: {:.2} ms (z-score: {:.2})", current_rt, rt_zscore),
-            }));
+            })));
             stats.anomalies_detected += 1;
             stats.response_time_anomalies += 1;
         }
@@ -1267,7 +1267,7 @@ impl NetworkAnomalyDetector {
                 anomaly_type: AnomalyType::ErrorRateSpike,
                 severity: er_zscore.abs(),
                 description: format!("Error rate anomaly: {:.2}% (z-score: {:.2})", current_er * 100.0, er_zscore),
-            }));
+            })));
             stats.anomalies_detected += 1;
             stats.error_rate_anomalies += 1;
         }
@@ -1616,7 +1616,7 @@ impl NetworkHardeningManager {
         }
 
         // 3. Rate limiting
-        let rate_key = format!("ip:{}", ip));
+        let rate_key = format!("ip:{}", ip)));
         if !self.rate_limiter.check_rate_limit(&rate_key, ip)? {
             self.ip_reputation.record_violation(ip, ViolationType::RateLimitExceeded);
             return Ok(false);

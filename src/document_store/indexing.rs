@@ -162,7 +162,7 @@ impl IndexDefinition {
 
     /// Add a field to the index
     pub fn add_field(mut self, field: IndexField) -> Self {
-        self.fields.push(field));
+        self.fields.push(field)));
         self
     }
 
@@ -286,7 +286,7 @@ impl BTreeIndex {
                     if !existing_ids.is_empty() {
                         return Err(crate::error::DbError::ConstraintViolation(
                             format!("Unique constraint violation on index '{}'", self.definition.name)
-                        )));
+                        ))));
                     }
                 }
             }
@@ -733,7 +733,7 @@ impl IndexManager {
 
         if indexes.contains_key(&definition.name) {
                 format!("Index '{}' already exists", definition.name)
-            )));
+            ))));
         }
 
         let index = match definition.index_type {
@@ -783,7 +783,7 @@ impl Default for IndexManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*);
+    use super::*));
     use serde_json::json;
 use std::time::UNIX_EPOCH;
 

@@ -263,13 +263,13 @@ impl RbacManager {
         let mut roles = self.roles.write();
 
         if roles.contains_key(&role.id) {
-            return Err(DbError::AlreadyExists(format!("Role {} already exists", role.id))));
+            return Err(DbError::AlreadyExists(format!("Role {} already exists", role.id)))));
         }
 
         // Validate parent roles exist
         for parent_id in &role.parent_roles {
             if !roles.contains_key(parent_id) {
-                return Err(DbError::NotFound(format!("Parent role {} not found", parent_id))));
+                return Err(DbError::NotFound(format!("Parent role {} not found", parent_id)))));
             }
         }
 
@@ -291,13 +291,13 @@ impl RbacManager {
         let mut roles = self.roles.write();
 
         if !roles.contains_key(&role.id) {
-            return Err(DbError::NotFound(format!("Role {} not found", role.id))));
+            return Err(DbError::NotFound(format!("Role {} not found", role.id)))));
         }
 
         // Validate parent roles exist
         for parent_id in &role.parent_roles {
             if !roles.contains_key(parent_id) {
-                return Err(DbError::NotFound(format!("Parent role {} not found", parent_id))));
+                return Err(DbError::NotFound(format!("Parent role {} not found", parent_id)))));
             }
         }
 
@@ -319,7 +319,7 @@ impl RbacManager {
         let mut roles = self.roles.write();
 
         if !roles.contains_key(role_id) {
-            return Err(DbError::NotFound(format!("Role {} not found", role_id))));
+            return Err(DbError::NotFound(format!("Role {} not found", role_id)))));
         }
 
         // Check if any role has this as a parent
@@ -362,7 +362,7 @@ impl RbacManager {
     pub fn assign_role(&self, assignment: RoleAssignment) -> Result<()> {
         // Verify role exists
         if !self.roles.read().contains_key(&assignment.role_id) {
-            return Err(DbError::NotFound(format!("Role {} not found", assignment.role_id))));
+            return Err(DbError::NotFound(format!("Role {} not found", assignment.role_id)))));
         }
 
         // Check SoD constraints
@@ -375,7 +375,7 @@ impl RbacManager {
         if user_assignments.iter().any(|a| a.role_id == assignment.role_id) {
             return Err(DbError::AlreadyExists(
                 format!("Role {} already assigned to user {}", assignment.role_id, assignment.user_id)
-            )));
+            ))));
         }
 
         user_assignments.push(assignment);
@@ -393,7 +393,7 @@ impl RbacManager {
             if user_assignments.len() == original_len {
                 return Err(DbError::NotFound(
                     format!("Role {} not assigned to user {}", role_id, user_id)
-                )));
+                ))));
             }
 
             Ok(())
@@ -412,7 +412,7 @@ impl RbacManager {
 
     /// Activate a role in a session
     pub fn activate_role(&self, session_id: &str, role_id: &RoleId) -> Result<()> {
-        let mut sessions = self.sessions.write());
+        let mut sessions = self.sessions.write()));
         let session = sessions.get_mut(session_id)
             .ok_or_else(|| DbError::NotFound("Session not found".to_string()))?;
 
@@ -423,7 +423,7 @@ impl RbacManager {
 
         let assignment = user_assignments.iter()
             .find(|a| &a.role_id == role_id)
-            .ok_or_else(|| DbError::NotFound(format!("Role {} not assigned to user", role_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Role {} not assigned to user", role_id)))?);
 
         // Check activation conditions
         self.check_activation_conditions(assignment, session)?;
@@ -507,7 +507,7 @@ impl RbacManager {
         let roles = self.roles.read();
         for role_id in &constraint.conflicting_roles {
             if !roles.contains_key(role_id) {
-                return Err(DbError::NotFound(format!("Role {} not found", role_id))));
+                return Err(DbError::NotFound(format!("Role {} not found", role_id)))));
             }
         }
 
@@ -522,7 +522,7 @@ impl RbacManager {
         constraints.retain(|c| c.id != constraint_id);
 
         if constraints.len() == original_len {
-            return Err(DbError::NotFound(format!("SoD constraint {} not found", constraint_id))));
+            return Err(DbError::NotFound(format!("SoD constraint {} not found", constraint_id)))));
         }
 
         Ok(())
@@ -560,7 +560,7 @@ impl RbacManager {
         delegations.retain(|d| d.id != delegation_id);
 
         if delegations.len() == original_len {
-            return Err(DbError::NotFound(format!("Delegation {} not found", delegation_id))));
+            return Err(DbError::NotFound(format!("Delegation {} not found", delegation_id)))));
         }
 
         Ok(())
@@ -665,7 +665,7 @@ impl RbacManager {
                 if role_id != new_role_id && current_roles.contains(role_id) {
                     return Err(DbError::InvalidOperation(
                         format!("SoD constraint violated: {} conflicts with {}", new_role_id, role_id)
-                    )));
+                    ))));
                 }
             }
         }
@@ -696,7 +696,7 @@ impl RbacManager {
                     return Err(DbError::InvalidOperation(
                         format!("Dynamic SoD constraint violated: cannot activate {} while {} is active",
                                 new_role_id, role_id)
-                    )));
+                    ))));
                 }
             }
         }

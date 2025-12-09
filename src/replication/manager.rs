@@ -529,7 +529,7 @@ impl ReplicationManager {
         let replica = ReplicaNode::new(replica_id.clone(), address.clone(), role.clone())
             .map_err(|e| ReplicationManagerError::InvalidConfiguration {
                 reason: format!("Invalid replica configuration: {}", e),
-            })?;
+            })?);
 
         // Add to replica service
         self.replica_service.add_replica(replica.clone()).await
@@ -640,7 +640,7 @@ impl ReplicationManager {
         let wal_entry = WalEntry::new(lsn, operation.clone(), table_name.clone(), data.clone())
             .map_err(|e| ReplicationManagerError::InvalidConfiguration {
                 reason: format!("Failed to create WAL entry: {}", e),
-            })?;
+            })?);
 
         // Append to WAL
         self.wal_service.append(wal_entry).await

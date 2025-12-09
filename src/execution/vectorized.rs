@@ -60,7 +60,7 @@ impl ColumnBatch {
             return Err(DbError::Execution(
                 format!("Row has {} values but schema has {} columns",
                         values.len(), self.schema.len())
-            )));
+            ))));
         }
 
         for (col_idx, value) in values.into_iter().enumerate() {
@@ -393,7 +393,7 @@ impl VectorizedExecutor {
         result_schema.push(format!("{}({})",
             agg_type.to_string(),
             batches.first().map(|b| b.schema.get(agg_col).cloned()).flatten().unwrap_or_default()
-        )));
+        ))));
 
         let mut result_types = group_by_cols.iter()
             .filter_map(|&idx| batches.first()?.types.get(idx).cloned())

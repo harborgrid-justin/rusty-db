@@ -976,7 +976,7 @@ impl SlabAllocator {
         if stats.fragmentation_ratio > 0.5 {
             return Err(MemoryError::OutOfMemory {
                 reason: format!("High fragmentation ratio: {:.2}", stats.fragmentation_ratio),
-            }));
+            })));
         }
 
         Ok(())

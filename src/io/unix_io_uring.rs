@@ -351,7 +351,7 @@ impl IoUringEngine {
                 return Err(DbError::Internal(format!(
                     "Unsupported operation: {:?}",
                     request.op_type
-                ))));
+                )))));
             }
         };
 

@@ -92,7 +92,7 @@ impl IndexAdvisor {
                             priority: self.calculate_priority(benefit, cost),
                             estimated_benefit: benefit,
                             estimated_cost: cost,
-                        }));
+                        })));
                     }
                 }
             }
@@ -115,7 +115,7 @@ impl IndexAdvisor {
                             priority: self.calculate_priority(benefit, cost),
                             estimated_benefit: benefit,
                             estimated_cost: cost,
-                        }));
+                        })));
                     }
                 }
             }
@@ -142,7 +142,7 @@ impl IndexAdvisor {
                             priority: self.calculate_priority(benefit, cost),
                             estimated_benefit: benefit,
                             estimated_cost: cost,
-                        }));
+                        })));
                     }
                 }
             }
@@ -170,7 +170,7 @@ impl IndexAdvisor {
                     priority: Priority::Medium,
                     estimated_benefit: index.maintenance_cost,
                     estimated_cost: 0.0,
-                }));
+                })));
             }
         }
 
@@ -214,7 +214,7 @@ impl IndexAdvisor {
                             estimated_cost: self.estimate_composite_index_cost(
                                 &indexes[i].columns,
                             ),
-                        }));
+                        })));
                     }
                 }
             }
@@ -246,7 +246,7 @@ impl IndexAdvisor {
                             priority: Priority::Medium,
                             estimated_benefit: idx1.maintenance_cost,
                             estimated_cost: 0.0,
-                        }));
+                        })));
                     } else if self.is_prefix_index(idx2, idx1) {
                         recommendations.push(IndexRecommendation {
                             recommendation_type: RecommendationType::DropIndex,
@@ -259,7 +259,7 @@ impl IndexAdvisor {
                             priority: Priority::Medium,
                             estimated_benefit: idx2.maintenance_cost,
                             estimated_cost: 0.0,
-                        }));
+                        })));
                     }
                 }
             }

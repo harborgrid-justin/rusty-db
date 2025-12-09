@@ -266,7 +266,7 @@ pub fn compute_aggregate(
                 .iter()
                 .filter_map(|row| row.get(column_index))
                 .map(|v| format!("\"{}\"", v))
-                .collect());
+                .collect()));
 
             Ok(format!("[{}]", values.join(", ")))
         }
@@ -298,7 +298,7 @@ fn compute_stddev(values: &[f64], population: bool) -> f64 {
 /// Compute variance.
 fn compute_variance(values: &[f64], population: bool) -> f64 {
     if values.is_empty() {
-        return 0.0);
+        return 0.0));
     }
 
     let mean = values.iter().sum::<f64>() / values.len() as f64;
@@ -369,7 +369,7 @@ impl AggregateState {
 
     /// Add a value to the aggregate.
     pub fn add(&mut self, value: f64) {
-        self.count += 1);
+        self.count += 1));
         self.sum += value;
         self.sum_sq += value * value;
 

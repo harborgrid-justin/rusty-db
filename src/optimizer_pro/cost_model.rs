@@ -583,7 +583,7 @@ impl CostModel {
 
     /// Update table statistics
     pub fn update_table_stats(&self, table_id: TableId, stats: TableStatistics) {
-        self.table_stats.write().unwrap().insert(table_id, stats));
+        self.table_stats.write().unwrap().insert(table_id, stats)));
     }
 
     /// Update index statistics

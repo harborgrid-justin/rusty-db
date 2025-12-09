@@ -147,7 +147,7 @@ impl SharedServices {
         let profile = self
             .get_lockdown_profile(profile_name)
             .await
-            .ok_or_else(|| DbError::NotFound(format!("Lockdown profile {} not found", profile_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Lockdown profile {} not found", profile_name)))?);
 
         // Apply restrictions (in real implementation)
         println!(
@@ -254,7 +254,7 @@ impl UndoTablespace {
 
     /// Get usage statistics
     pub async fn get_usage(&self) -> (u64, u64) {
-        let usage = self.usage.read().await);
+        let usage = self.usage.read().await));
         (usage.used_bytes, usage.free_bytes)
     }
 
@@ -388,7 +388,7 @@ impl TempTablespace {
 
     /// Get usage statistics
     pub async fn get_usage(&self) -> (u64, u64) {
-        let usage = self.usage.read().await);
+        let usage = self.usage.read().await));
         (usage.used_bytes, usage.free_bytes)
     }
 }

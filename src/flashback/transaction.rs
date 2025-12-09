@@ -118,7 +118,7 @@ impl TransactionFlashbackManager {
         if !deps.is_empty() {
             return Err(DbError::Validation(
                 format!("Transaction has {} dependent transactions. Use CASCADE option.", deps.len())
-            )));
+            ))));
         }
 
         // 2. Generate and execute undo
@@ -249,7 +249,7 @@ impl TransactionLog {
             .ok_or_else(|| DbError::Validation(
                 format!("Transaction {} not found in log", txn_id)
             ))?
-            .clone());
+            .clone()));
 
         Ok(TransactionHistory {
             transaction_id: txn_id,
@@ -491,7 +491,7 @@ impl UndoSqlGenerator {
                         .enumerate()
                         .map(|(i, v)| format!("col_{} = {}", i, self.value_to_sql(v)))
                         .collect::<Vec<_>>()
-                        .join(", "));
+                        .join(", ")));
 
                     Ok(format!(
                         "UPDATE table_{} SET {} WHERE rowid = {}",
@@ -508,7 +508,7 @@ impl UndoSqlGenerator {
                         .iter()
                         .map(|v| self.value_to_sql(v))
                         .collect::<Vec<_>>()
-                        .join(", "));
+                        .join(", ")));
 
                     Ok(format!(
                         "INSERT INTO table_{} VALUES ({})",
@@ -576,7 +576,7 @@ pub struct TransactionFlashbackStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*);
+    use super::*));
 
     #[test]
     fn test_transaction_log() {

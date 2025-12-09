@@ -305,7 +305,7 @@ mod tests {
 
     #[test]
     fn test_recovery_manager_creation() {
-        let wal_path = temp_wal_path());
+        let wal_path = temp_wal_path()));
         let wal = Arc::new(WALManager::new(wal_path.clone(), 10, true).unwrap());
         let vs = Arc::new(VersionStore::new());
 

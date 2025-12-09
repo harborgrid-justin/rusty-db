@@ -352,7 +352,7 @@ impl VersionIndex {
         row_id: RowId,
         version: RowVersion,
     ) -> Result<()> {
-        let table_chains = self.chains.entry(table_id).or_insert_with(HashMap::new));
+        let table_chains = self.chains.entry(table_id).or_insert_with(HashMap::new)));
         let chain = table_chains.entry(row_id).or_insert_with(|| VersionChain::new(row_id));
         chain.add_version(version);
         Ok(())

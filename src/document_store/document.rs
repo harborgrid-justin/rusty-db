@@ -51,7 +51,7 @@ impl DocumentId {
         match id_type {
             IdGenerationType::Uuid => {
                 let uuid = Uuid::parse_str(s)
-                    .map_err(|e| crate::error::DbError::InvalidInput(format!("Invalid UUID: {}", e)))?;
+                    .map_err(|e| crate::error::DbError::InvalidInput(format!("Invalid UUID: {}", e)))?);
                 Ok(DocumentId::Uuid(uuid))
             }
             IdGenerationType::AutoIncrement => {
@@ -319,7 +319,7 @@ impl Document {
         collection: String,
         json: serdejson::Value,
     ) -> Result<Self> {
-        let content = DocumentContent::Json(json));
+        let content = DocumentContent::Json(json)));
         let content_hash = content.hash();
         let size = content.size();
 
@@ -419,7 +419,7 @@ impl DocumentChunk {
     ) -> Self {
         let mut hasher = Sha256::new();
         hasher.update(&data);
-        let checksum = format!("{:x}", hasher.finalize()));
+        let checksum = format!("{:x}", hasher.finalize())));
         let size = data.len();
 
         Self {
@@ -436,7 +436,7 @@ impl DocumentChunk {
     pub fn verify(&self) -> bool {
         let mut hasher = Sha256::new();
         hasher.update(&self.data);
-        let calculated_checksum = format!("{:x}", hasher.finalize()));
+        let calculated_checksum = format!("{:x}", hasher.finalize())));
         calculated_checksum == self.checksum
     }
 }
@@ -499,7 +499,7 @@ impl LargeDocumentHandler {
         let total_chunks = sorted_chunks[0].total_chunks;
         if sorted_chunks.len() != total_chunks as usize {
                 format!("Missing chunks: expected {}, got {}", total_chunks, sorted_chunks.len())
-            )));
+            ))));
         }
 
         // Verify chunk integrity and reassemble
@@ -507,11 +507,11 @@ impl LargeDocumentHandler {
         for (i, chunk) in sorted_chunks.iter().enumerate() {
             if chunk.chunk_number != i as u32 {
                     format!("Chunk sequence error: expected {}, got {}", i, chunk.chunk_number)
-                )));
+                ))));
             }
             if !chunk.verify() {
                     format!("Chunk {} checksum verification failed", i)
-                )));
+                ))));
             }
             data.extend_from_slice(&chunk.data);
         }

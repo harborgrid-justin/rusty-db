@@ -570,9 +570,9 @@ impl AsyncIoEngine {
             let handle = std::thread::Builder::new()
                 .name(format!("io-worker-{}", i))
                 .spawn(move || {
-                    Self::worker_loop(cp, sd));
+                    Self::worker_loop(cp, sd)));
                 })
-                .map_err(|e| DbError::Internal(format!("Failed to spawn I/O worker: {}", e)))?;
+                .map_err(|e| DbError::Internal(format!("Failed to spawn I/O worker: {}", e)))?);
 
             workers.push(handle);
         }

@@ -637,7 +637,7 @@ impl FileSnapshotManager {
             return Err(SnapshotError::StorageError {
                 operation: "validate".to_string(),
                 reason: format!("Storage path does not exist: {:?}", config.storage_path),
-            }));
+            })));
         }
 
         if config.chunk_size == 0 {
@@ -722,7 +722,7 @@ impl FileSnapshotManager {
 
     /// Saves snapshot metadata to file
     async fn save_snapshot_metadata(&self, metadata: &SnapshotMetadata) -> Result<(), SnapshotError> {
-        let metadata_path = self.config.storage_path.join(format!("{}.metadata", metadata.snapshot_id)));
+        let metadata_path = self.config.storage_path.join(format!("{}.metadata", metadata.snapshot_id))));
 
         let contents = serde_json::to_string_pretty(metadata)
             .map_err(|e| SnapshotError::StorageError {
@@ -747,7 +747,7 @@ impl FileSnapshotManager {
 
     /// Starts background cleanup task
     async fn start_background_cleanup(&self) {
-        let config = Arc::clone(&self.config));
+        let config = Arc::clone(&self.config)));
         let metadata_cache = Arc::clone(&self.metadata_cache);
 
         let handle = tokio::spawn(async move {
@@ -898,7 +898,7 @@ impl FileSnapshotManager {
 
     /// Creates a full snapshot implementation
     async fn create_full_snapshot_impl(&self, replica_id: &ReplicaId) -> Result<SnapshotId, SnapshotError> {
-        let snapshot_id = SnapshotId::generate());
+        let snapshot_id = SnapshotId::generate()));
 
         // Check for concurrent operations
         {
@@ -1152,7 +1152,7 @@ impl SnapshotManager for FileSnapshotManager {
         }
 
         // Delete metadata file
-        let metadata_path = self.config.storage_path.join(format!("{}.metadata", snapshot_id)));
+        let metadata_path = self.config.storage_path.join(format!("{}.metadata", snapshot_id))));
         if metadata_path.exists() {
             tokio::fs::remove_file(&metadata_path)
                 .await

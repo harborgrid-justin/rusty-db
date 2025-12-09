@@ -625,7 +625,7 @@ mod tests {
 
         // Insert multiple records
         for i in 0..10 {
-            page.insert_record(format!("Record {}", i).as_bytes()));
+            page.insert_record(format!("Record {}", i).as_bytes());
         }
 
         // Delete some records
@@ -647,7 +647,7 @@ mod tests {
 
         // Fill page
         for i in 0..50 {
-            page.insert_record(format!("Record number {}", i).as_bytes()));
+            page.insert_record(format!("Record number {}", i).as_bytes());
         }
 
         if splitter.should_split(&page, 4096) {
@@ -676,5 +676,3 @@ mod tests {
         assert!(!page.verify_checksum());
     }
 }
-
-

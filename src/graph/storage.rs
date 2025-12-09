@@ -214,7 +214,7 @@ pub struct CSRGraph {
 impl CSRGraph {
     /// Build CSR representation from adjacency list
     pub fn from_adjacency_list(adj_list: &AdjacencyList) -> Self {
-        let vertices: Vec<VertexId> = adj_list.vertices.keys().copied().collect());
+        let vertices: Vec<VertexId> = adj_list.vertices.keys().copied().collect()));
         let num_vertices = vertices.len();
 
         // Create vertex mapping
@@ -486,7 +486,7 @@ impl GraphStorageManager {
         // Create directory if it doesn't exist
         if !base_dir.exists() {
             std::fs::create_dir_all(&base_dir)
-                .map_err(|e| DbError::Internal(format!("Failed to create directory: {}", e)))?;
+                .map_err(|e| DbError::Internal(format!("Failed to create directory: {}", e)))?);
         }
 
         Ok(Self { base_dir, format })
@@ -494,7 +494,7 @@ impl GraphStorageManager {
 
     /// Save a graph to disk
     pub fn save_graph(&self, graph: &PropertyGraph, name: &str) -> Result<()> {
-        let file_path = self.base_dir.join(format!("{}.graph", name)));
+        let file_path = self.base_dir.join(format!("{}.graph", name))));
 
         match self.format {
             StorageFormat::AdjacencyList => {
@@ -506,7 +506,7 @@ impl GraphStorageManager {
                 let adj_list = AdjacencyList::from_graph(graph);
                 let csr = CSRGraph::from_adjacency_list(&adj_list);
                 let data = bincode::serialize(&csr)
-                    .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))?;
+                    .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))?);
                 self.write_file(&file_path, &data)?;
             }
             _ => {
@@ -519,7 +519,7 @@ impl GraphStorageManager {
 
     /// Load a graph from disk
     pub fn load_graph(&self, name: &str) -> Result<PropertyGraph> {
-        let file_path = self.base_dir.join(format!("{}.graph", name)));
+        let file_path = self.base_dir.join(format!("{}.graph", name))));
 
         let data = self.read_file(&file_path)?;
 
@@ -530,7 +530,7 @@ impl GraphStorageManager {
             }
             StorageFormat::CSR => {
                 let csr: CSRGraph = bincode::deserialize(&data)
-                    .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?;
+                    .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?);
                 Ok(Self::csr_to_graph(&csr)?)
             }
             _ => {
@@ -542,10 +542,10 @@ impl GraphStorageManager {
     /// Write data to file
     fn write_file(&self, path: &Path, data: &[u8]) -> Result<()> {
         let mut file = File::create(path)
-            .map_err(|e| DbError::Internal(format!("Failed to create file: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Failed to create file: {}", e)))?);
 
         file.write_all(data)
-            .map_err(|e| DbError::Internal(format!("Failed to write file: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Failed to write file: {}", e)))?);
 
         Ok(())
     }
@@ -553,11 +553,11 @@ impl GraphStorageManager {
     /// Read data from file
     fn read_file(&self, path: &Path) -> Result<Vec<u8>> {
         let mut file = File::open(path)
-            .map_err(|e| DbError::Internal(format!("Failed to open file: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Failed to open file: {}", e)))?);
 
         let mut data = Vec::new();
         file.read_to_end(&mut data)
-            .map_err(|e| DbError::Internal(format!("Failed to read file: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Failed to read file: {}", e)))?);
 
         Ok(data)
     }
@@ -767,10 +767,10 @@ impl MemoryMappedGraph {
             .write(true)
             .create(true)
             .open(&self.file_path)
-            .map_err(|e| DbError::Internal(format!("Failed to open file: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Failed to open file: {}", e)))?);
 
         file.write_all(&data)
-            .map_err(|e| DbError::Internal(format!("Failed to write: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Failed to write: {}", e)))?);
 
         self.file_size = data.len();
 

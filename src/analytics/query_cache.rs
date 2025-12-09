@@ -255,11 +255,11 @@ impl QueryCache {
 
     /// Invalidate queries referencing a specific table.
     pub fn invalidate_table(&self, table_name: &str) {
-        let pattern = format!("FROM {}", table_name));
+        let pattern = format!("FROM {}", table_name)));
         self.invalidate_pattern(&pattern);
 
         // Also check for JOIN references
-        let join_pattern = format!("JOIN {}", table_name));
+        let join_pattern = format!("JOIN {}", table_name)));
         self.invalidate_pattern(&join_pattern);
     }
 

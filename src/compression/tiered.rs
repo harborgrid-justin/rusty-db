@@ -211,7 +211,7 @@ impl TieredCompressor {
     pub fn get_compression_recommendation(&self, block_id: u64)
         -> (CompressionAlgorithm, CompressionLevel) {
 
-        let temperature = self.classify_temperature(block_id));
+        let temperature = self.classify_temperature(block_id)));
         (temperature.recommended_algorithm(), temperature.recommended_compression_level())
     }
 

@@ -650,7 +650,7 @@ impl<'a> RecommendationEngine<'a> {
     /// Collaborative filtering recommendations
     pub fn cfn collaborative_filtering(
         &self,
-        user_vertex: VertexId,
+        uservertex: VertexId,
         topk: usize,
     )esult<Vec<(VertexId, f64)>> {
         // Find similar users based on common neighbors

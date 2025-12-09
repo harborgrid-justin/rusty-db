@@ -168,7 +168,7 @@ impl MultiMasterReplication {
         if groups.contains_key(&group.id) {
             return Err(DbError::Replication(
                 format!("Group {} already exists", group.id)
-            )));
+            ))));
         }
 
         groups.insert(group.id.clone(), group);
@@ -182,12 +182,12 @@ impl MultiMasterReplication {
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?;
+            ))?);
 
         if group.members.iter().any(|s| s.site_id == site.site_id) {
             return Err(DbError::Replication(
                 format!("Site {} already in group", site.site_id)
-            )));
+            ))));
         }
 
         group.members.push(site);
@@ -201,7 +201,7 @@ impl MultiMasterReplication {
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?;
+            ))?);
 
         group.members.retain(|s| s.site_id != site_id);
         Ok(())
@@ -216,7 +216,7 @@ impl MultiMasterReplication {
                     format!("Group {} not found", group_id)
                 ))?
                 .clone()
-        });
+        }));
 
         // Update vector clock
         {
@@ -292,7 +292,7 @@ impl MultiMasterReplication {
     pub async fn apply_operation(&self, op: &ReplicationOp) -> Result<()> {
         // Check if already applied
         {
-            let mut applied = self.applied_ops.read());
+            let mut applied = self.applied_ops.read()));
             if applied.contains(&op.op_id) {
                 return Ok(()); // Already applied
             }
@@ -404,7 +404,7 @@ impl MultiMasterReplication {
     pub async fn receive_operation(&self, op: ReplicationOp) -> Result<()> {
         // Queue for processing
         self.op_tx.send(op)
-            .map_err(|e| DbError::Replication(format!("Failed to queue operation: {}", e)))?;
+            .map_err(|e| DbError::Replication(format!("Failed to queue operation: {}", e)))?);
 
         Ok(())
     }
@@ -427,7 +427,7 @@ impl MultiMasterReplication {
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?;
+            ))?);
 
         for site in &mut group.members {
             if site.site_id == site_id {
@@ -441,7 +441,7 @@ impl MultiMasterReplication {
 
     /// Check for failed sites (no heartbeat)
     pub fn check_failed_sites(&self, timeout_ms: u64) -> HashMap<String, Vec<String>> {
-        let groups = self.groups.read());
+        let groups = self.groups.read()));
         let cutoff = Self::current_timestamp() - timeout_ms;
         let mut failed = HashMap::new();
 
@@ -466,7 +466,7 @@ impl MultiMasterReplication {
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?;
+            ))?);
 
         for site in &mut group.members {
             if site.site_id == site_id {
@@ -480,12 +480,12 @@ impl MultiMasterReplication {
 
     /// Mark a site as active
     pub fn mark_site_active(&self, group_id: &str, site_id: &str) -> Result<()> {
-        let mut groups = self.groups.write());
+        let mut groups = self.groups.write()));
 
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?;
+            ))?);
 
         for site in &mut group.members {
             if site.site_id == site_id {
@@ -521,7 +521,7 @@ impl MultiMasterReplication {
         let group = self.get_group(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?;
+            ))?);
 
         let mut site_checksums = HashMap::new();
 
@@ -559,7 +559,7 @@ impl MultiMasterReplication {
 
     /// Update vector clock from remote
     pub fn update_vector_clock(&self, remoteclock: &HashMap<String, u64>) {
-        let mut clock = self.vector_clock.write());
+        let mut clock = self.vector_clock.write()));
 
         for (site_id, remote_count) in remote_clock {
             let local_count = clock.entry(site_id.clone()).or_insert(0);

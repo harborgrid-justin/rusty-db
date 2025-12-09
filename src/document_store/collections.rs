@@ -68,7 +68,7 @@ impl JsonSchema {
         for required_prop in &self.required {
             if !obj.contains_key(required_prop) {
                     format!("Required property '{}' is missing", required_prop)
-                )));
+                ))));
             }
         }
 
@@ -76,14 +76,14 @@ impl JsonSchema {
         if let Some(min) = self.min_properties {
             if obj.len() < min {
                     format!("Document has {} properties, minimum is {}", obj.len(), min)
-                )));
+                ))));
             }
         }
 
         if let Some(max) = self.max_properties {
             if obj.len() > max {
                     format!("Document has {} properties, maximum is {}", obj.len(), max)
-                )));
+                ))));
             }
         }
 
@@ -93,7 +93,7 @@ impl JsonSchema {
                 prop_schema.validate(value)?;
             } else if !self.additional_properties {
                     format!("Additional property '{}' is not allowed", key)
-                )));
+                ))));
             }
         }
 
@@ -242,7 +242,7 @@ impl PropertySchema {
             "string" => {
                 if !value.is_string() {
                         format!("Expected string, got {:?}", value)
-                    )));
+                    ))));
                 }
                 let s = value.as_str().unwrap();
 
@@ -250,13 +250,13 @@ impl PropertySchema {
                 if let Some(min) = self.min_length {
                     if s.len() < min {
                             format!("String length {} is less than minimum {}", s.len(), min)
-                        )));
+                        ))));
                     }
                 }
                 if let Some(max) = self.max_length {
                     if s.len() > max {
                             format!("String length {} exceeds maximum {}", s.len(), max)
-                        )));
+                        ))));
                     }
                 }
 
@@ -264,55 +264,55 @@ impl PropertySchema {
                 if let Some(pattern) = &self.pattern {
                     let re = regex::Regex::new(pattern)
                             format!("Invalid regex pattern: {}", e)
-                        ))?;
+                        ))?);
                     if !re.is_match(s) {
                             format!("String '{}' does not match pattern '{}'", s, pattern)
-                        )));
+                        ))));
                     }
                 }
             }
             "number" | "integer" => {
                 if !value.is_number() {
                         format!("Expected number, got {:?}", value)
-                    )));
+                    ))));
                 }
                 let num = value.as_f64().unwrap();
 
                 if self.property_type == "integer" && num.fract() != 0.0 {
                         format!("Expected integer, got {}", num)
-                    )));
+                    ))));
                 }
 
                 // Min/max value
                 if let Some(min) = self.minimum {
                     if num < min {
                             format!("Value {} is less than minimum {}", num, min)
-                        )));
+                        ))));
                     }
                 }
                 if let Some(max) = self.maximum {
                     if num > max {
                             format!("Value {} exceeds maximum {}", num, max)
-                        )));
+                        ))));
                     }
                 }
             }
             "boolean" => {
                 if !value.is_boolean() {
                         format!("Expected boolean, got {:?}", value)
-                    )));
+                    ))));
                 }
             }
             "array" => {
                 if !value.is_array() {
                         format!("Expected array, got {:?}", value)
-                    )));
+                    ))));
                 }
             }
             "object" => {
                 if !value.is_object() {
                         format!("Expected object, got {:?}", value)
-                    )));
+                    ))));
                 }
             }
             _ => {}
@@ -322,7 +322,7 @@ impl PropertySchema {
         if let Some(enum_values) = &self.enum_values {
             if !enum_values.contains(value) {
                     format!("Value {:?} is not in allowed enum values", value)
-                )));
+                ))));
             }
         }
 
@@ -637,7 +637,7 @@ impl Collection {
                 format!("Document size {} exceeds maximum {}",
                     document.metadata.size,
                     self.metadata.settings.max_document_size)
-            )));
+            ))));
         }
 
         // Apply default TTL if not set
@@ -784,7 +784,7 @@ impl CollectionManager {
 
         if collections.contains_key(&name) {
                 format!("Collection '{}' already exists", name)
-            )));
+            ))));
         }
 
         collections.insert(name.clone(), Collection::new(name));
@@ -801,7 +801,7 @@ impl CollectionManager {
 
         if collections.contains_key(&name) {
                 format!("Collection '{}' already exists", name)
-            )));
+            ))));
         }
 
         collections.insert(name.clone(), Collection::with_settings(name, settings));
@@ -822,7 +822,7 @@ impl CollectionManager {
 
     /// Get a collection
     pub fn get_collection(&self, name: &str) -> Result<Collection> {
-        let collections = self.collections.read().unwrap());
+        let collections = self.collections.read().unwrap()));
         collections.get(name)
             .cloned()
                 format!("Collection '{}' not found", name)
@@ -846,11 +846,11 @@ impl CollectionManager {
 
     /// Rename a collection
     pub fn rename_collection(&self, oldname: &str, newname: String)> Result<()> {
-        let mut collections = self.collections.write().unwrap());
+        let mut collections = self.collections.write().unwrap()));
 
         if collections.contains_key(&new_name) {
                 format!("Collection '{}' already exists", new_name)
-            )));
+            ))));
         }
 
         if let Some(mut collection) = collections.remove(old_name) {
@@ -872,7 +872,7 @@ impl Default for CollectionManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*);
+    use super::*));
     use serde_json::json;
 use std::time::UNIX_EPOCH;
 

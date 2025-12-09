@@ -142,7 +142,7 @@ pub struct ReplicatedValue {
 impl ReplicatedValue {
     pub fn new(data: Vec<u8>, source_dc: DatacenterId, vector_clock: VectorClock) -> Self {
         use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+use std::hash::{Hasher};
 
         let mut hasher = DefaultHasher::new();
         data.hash(&mut hasher);

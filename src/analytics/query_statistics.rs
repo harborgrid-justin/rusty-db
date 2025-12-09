@@ -88,7 +88,7 @@ impl QueryExecution {
         // Replace quoted strings
         while let Some(start) = result.find('\'') {
             if let Some(end) = result[start + 1..].find('\'') {
-                result = format!("{}?{}", &result[..start], &result[start + end + 2..]));
+                result = format!("{}?{}", &result[..start], &result[start + end + 2..])));
             } else {
                 break;
             }
@@ -471,7 +471,7 @@ impl WorkloadAnalyzer {
                             stat.execution_count, stat.avg_time_ms
                         ),
                         priority: self.calculate_priority(stat),
-                    }));
+                    })));
                 }
             }
         }

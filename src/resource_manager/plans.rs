@@ -366,13 +366,13 @@ impl ResourcePlanManager {
         if plans.contains_key(&id) {
             return Err(DbError::AlreadyExists(
                 format!("Resource plan with ID {} already exists", id)
-            )));
+            ))));
         }
 
         if plans_by_name.contains_key(&name) {
             return Err(DbError::AlreadyExists(
                 format!("Resource plan {} already exists", name)
-            )));
+            ))));
         }
 
         plans_by_name.insert(name, id);
@@ -400,7 +400,7 @@ impl ResourcePlanManager {
             if !plans.contains_key(&parent_id) {
                 return Err(DbError::NotFound(
                     format!("Parent plan {} not found", parent_id)
-                )));
+                ))));
             }
             false
         } else {
@@ -429,7 +429,7 @@ impl ResourcePlanManager {
         if plans_by_name.contains_key(&name) {
             return Err(DbError::AlreadyExists(
                 format!("Resource plan {} already exists", name)
-            )));
+            ))));
         }
 
         plans_by_name.insert(name, id);
@@ -450,11 +450,11 @@ impl ResourcePlanManager {
 
     /// Get resource plan by name
     pub fn get_plan_by_name(&self, name: &str) -> Result<ResourcePlan> {
-        let plans_by_name = self.plans_by_name.read().unwrap());
+        let plans_by_name = self.plans_by_name.read().unwrap()));
         let plan_id = plans_by_name.get(name)
             .ok_or_else(|| DbError::NotFound(
                 format!("Resource plan {} not found", name)
-            ))?;
+            ))?);
         self.get_plan(*plan_id)
     }
 
@@ -467,7 +467,7 @@ impl ResourcePlanManager {
         let plan = plans.get_mut(&plan_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Resource plan {} not found", plan_id)
-            ))?;
+            ))?);
 
         update_fn(plan);
         plan.modified_at = SystemTime::now();
@@ -499,7 +499,7 @@ impl ResourcePlanManager {
         let plan = plans.remove(&plan_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Resource plan {} not found", plan_id)
-            ))?;
+            ))?);
 
         plans_by_name.remove(&plan.name);
 
@@ -549,13 +549,13 @@ impl ResourcePlanManager {
         let plan_directives = directives.get_mut(&plan_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("No directives for plan {}", plan_id)
-            ))?;
+            ))?);
 
         let directive = plan_directives.iter_mut()
             .find(|d| d.id == directive_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Directive {} not found", directive_id)
-            ))?;
+            ))?);
 
         update_fn(directive);
         Ok(())
@@ -576,7 +576,7 @@ impl ResourcePlanManager {
         if !plan.is_enabled {
             return Err(DbError::Configuration(
                 format!("Cannot activate disabled plan {}", plan.name)
-            )));
+            ))));
         }
 
         // Deactivate current plan
@@ -777,12 +777,12 @@ impl ResourcePlanManager {
                     warnings.push(format!(
                         "Total CPU allocation exceeds 100%: {}%",
                         total_pct
-                    )));
+                    ))));
                 } else if total_pct < 100 {
                     warnings.push(format!(
                         "Total CPU allocation is less than 100%: {}%",
                         total_pct
-                    )));
+                    ))));
                 }
             }
             CpuManagementMethod::Shares => {
@@ -801,7 +801,7 @@ impl ResourcePlanManager {
                     warnings.push(format!(
                         "Sub-plan {} should not be a top-level plan",
                         sub_plan.name
-                    )));
+                    ))));
                 }
             }
         }

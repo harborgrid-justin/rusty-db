@@ -481,7 +481,7 @@ impl MaterializedView {
                 self.index
                     .entry(format!("{}:{}", field, s))
                     .or_insert_with(Vec::new)
-                    .push(id));
+                    .push(id)));
             }
         }
 
@@ -520,7 +520,7 @@ impl MaterializedView {
                     self.index
                         .entry(format!("{}:{}", field, s))
                         .or_insert_with(Vec::new)
-                        .push(id));
+                        .push(id)));
                 }
             }
         }

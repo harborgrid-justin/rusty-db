@@ -833,7 +833,7 @@ use std::time::Duration;
         let lsm: LSMTreeIndex<i32, String> = LSMTreeIndex::new(LSMConfig::default());
 
         for i in 1..=10 {
-            lsm.insert(i, format!("value_{}", i)).unwrap());
+            lsm.insert(i, format!("value_{}", i)).unwrap()));
         }
 
         let results = lsm.range(&3, &7).unwrap();

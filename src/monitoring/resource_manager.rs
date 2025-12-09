@@ -369,7 +369,7 @@ impl ResourceManager {
                             return Err(format!(
                                 "Connection limit exceeded for group {}: {}/{}",
                                 group_name, limit.current_value, limit.max_value
-                            )));
+                            ))));
                         }
                         _ => {}
                     }
@@ -451,7 +451,7 @@ impl ResourceManager {
 
     pub fn record_cpu_time(&self, query_id: u64, cpu_time_us: u64) {
         if let Some(usage) = self.active_queries.write().get_mut(&query_id) {
-            usage.record_cpu(cpu_time_us));
+            usage.record_cpu(cpu_time_us)));
         }
     }
 

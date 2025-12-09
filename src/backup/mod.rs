@@ -243,7 +243,7 @@ impl BackupSystem {
             format!("{}-snapshot", database_name),
             database_name.to_string(),
             SnapshotType::Manual,
-        )?;
+        )?);
 
         Ok(snapshot_id)
     }

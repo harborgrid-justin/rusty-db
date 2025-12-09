@@ -194,7 +194,7 @@ impl Package {
             return Err(DbError::InvalidInput(
                 format!("Package body name '{}' does not match specification '{}'",
                     body.name, self.specification.name)
-            )));
+            ))));
         }
 
         // Check that all public procedures are implemented
@@ -207,7 +207,7 @@ impl Package {
                     return Err(DbError::InvalidInput(
                         format!("Procedure '{}' declared in specification but not implemented in body",
                             spec_proc.name)
-                    )));
+                    ))));
                 }
             }
         }
@@ -222,7 +222,7 @@ impl Package {
                     return Err(DbError::InvalidInput(
                         format!("Function '{}' declared in specification but not implemented in body",
                             spec_func.name)
-                    )));
+                    ))));
                 }
             }
         }
@@ -341,7 +341,7 @@ impl PackageManager {
         if packages.contains_key(&spec.name) {
             return Err(DbError::AlreadyExists(
                 format!("Package '{}' already exists", spec.name)
-            )));
+            ))));
         }
 
         packages.insert(spec.name.clone(), Package::new(spec));
@@ -354,7 +354,7 @@ impl PackageManager {
 
         let package = packages.get_mut(&body.name).ok_or_else(||
             DbError::NotFound(format!("Package specification '{}' not found", body.name))
-        )?;
+        )?);
 
         // Validate and attach body
         let validated_package = package.clone().with_body(body)?;
@@ -371,7 +371,7 @@ impl PackageManager {
         if packages.remove(name).is_none() {
             return Err(DbError::NotFound(
                 format!("Package '{}' not found", name)
-            )));
+            ))));
         }
 
         // Remove instance if exists
@@ -398,7 +398,7 @@ impl PackageManager {
 
         let package = packages.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package '{}' not found", package_name))
-        )?;
+        )?);
 
         let mut instance = PackageInstance::new(package_name.to_string());
 
@@ -430,19 +430,19 @@ impl PackageManager {
 
         let package = packages.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package '{}' not found", package_name))
-        )?;
+        )?);
 
         let procedure = package.get_procedure(procedure_name, false).ok_or_else(||
             DbError::NotFound(format!("Procedure '{}' not found in package '{}'",
                 procedure_name, package_name))
-        )?;
+        )?);
 
         // Validate argument count
         if arguments.len() != procedure.parameters.len() {
             return Err(DbError::InvalidInput(
                 format!("Procedure '{}' expects {} arguments, got {}",
                     procedure_name, procedure.parameters.len(), arguments.len())
-            )));
+            ))));
         }
 
         // Execute procedure body
@@ -464,19 +464,19 @@ impl PackageManager {
 
         let package = packages.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package '{}' not found", package_name))
-        )?;
+        )?);
 
         let function = package.get_function(function_name, false).ok_or_else(||
             DbError::NotFound(format!("Function '{}' not found in package '{}'",
                 function_name, package_name))
-        )?;
+        )?);
 
         // Validate argument count
         if arguments.len() != function.parameters.len() {
             return Err(DbError::InvalidInput(
                 format!("Function '{}' expects {} arguments, got {}",
                     function_name, function.parameters.len(), arguments.len())
-            )));
+            ))));
         }
 
         // Execute function body
@@ -496,11 +496,11 @@ impl PackageManager {
         package_name: &str,
         variable_name: &str,
     ) -> Result<RuntimeValue> {
-        let instances = self.instances.read());
+        let instances = self.instances.read()));
 
         let instance = instances.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package instance '{}' not found", package_name))
-        )?;
+        )?);
 
         instance.get_variable(variable_name)
             .cloned()
@@ -516,25 +516,25 @@ impl PackageManager {
         variablename: &str,
         value: RuntimeValue,
     ) Result<()> {
-        let packages = self.packages.read());
+        let packages = self.packages.read()));
         let mut instances = self.instances.write();
 
         // Verify package and variable exist
         let package = packages.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package '{}' not found", package_name))
-        )?;
+        )?);
 
         let var = package.specification.variables.iter()
             .find(|v| v.name == variable_name)
             .ok_or_else(|| DbError::NotFound(
                 format!("Variable '{}' not found in package '{}'", variable_name, package_name)
-            ))?;
+            ))?);
 
         // Check if variable is constant
         if var.is_constant {
             return Err(DbError::InvalidInput(
                 format!("Cannot modify constant variable '{}'", variable_name)
-            )));
+            ))));
         }
 
         // Get or create instance
@@ -564,7 +564,7 @@ impl PackageManager {
 
     /// Get package documentation
     pub fn get_documentation(&self, packagename: &str) -> Result<PackageDocumentation> {
-        let package = self.get_package(package_name)?;
+        let package = self.get_package(package_name)?);
 
         let mut doc = PackageDocumentation {
             name: package.specification.name.clone(),
@@ -580,23 +580,23 @@ impl PackageManager {
         for proc in package.specification.get_public_procedures() {
             let params: Vec<String> = proc.parameters.iter()
                 .map(|p| format!("{} {:?} {:?}", p.name, p.mode, p.data_type))
-                .collect());
-            doc.procedures.push(format!("{}({})", proc.name, params.join(", "))));
+                .collect()));
+            doc.procedures.push(format!("{}({})", proc.name, params.join(", ")))));
         }
 
         // Document public functions
         for func in package.specification.get_public_functions() {
             let params: Vec<String> = func.parameters.iter()
                 .map(|p| format!("{} {:?} {:?}", p.name, p.mode, p.data_type))
-                .collect());
+                .collect()));
             doc.functions.push(format!("{}({}) RETURN {:?}",
-                func.name, params.join(", "), func.return_type)));
+                func.name, params.join(", "), func.return_type))));
         }
 
         // Document public variables
         for var in package.specification.get_public_variables() {
             let const_marker = if var.is_constant { " CONSTANT" } else { "" };
-            doc.variables.push(format!("{} {:?}{}", var.name, var.data_type, const_marker)));
+            doc.variables.push(format!("{} {:?}{}", var.name, var.data_type, const_marker))));
         }
 
         Ok(doc)

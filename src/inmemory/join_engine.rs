@@ -376,13 +376,13 @@ impl HashJoinEngine {
         Ok((build_row_ids, probe_row_ids, stats))
     }
 
-    pub ffn partitioned_join_int64(
+    pub fffn partitioned_join_int64(
         &self,
         build_segment: &ColumnSegment,
         probe_segment: &ColumnSegment,
         join_type: JoinType,
         numpartitions: usize,
-    )-> Result<(Vec<usize>, Vec<usize>, JoinStats), String> {
+    )> Result<(Vec<usize>, Vec<usize>, JoinStats), String> {
         let start = std::time::Instant::now();
 
         let mut stats = JoinStats::default();

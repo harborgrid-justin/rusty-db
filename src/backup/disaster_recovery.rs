@@ -252,7 +252,7 @@ impl FailoverEvent {
     }
 
     pub fn complete(&mut self, data_loss: Option<u64>) {
-        self.end_time = Some(SystemTime::now()));
+        self.end_time = Some(SystemTime::now())));
         if let Ok(duration) = self.end_time.unwrap().duration_since(self.start_time) {
             self.recovery_time_seconds = Some(duration.as_secs());
         }
@@ -463,7 +463,7 @@ impl DisasterRecoveryManager {
         if standby.replication_lag_seconds > self.config.max_lag_tolerance_seconds {
             return Err(DbError::BackupError(
                 format!("Standby lag too high: {} seconds", standby.replication_lag_seconds)
-            )));
+            ))));
         }
 
         Ok(())
@@ -534,20 +534,20 @@ impl DisasterRecoveryManager {
             rpo_target_met: false,
             issues_found: Vec::new(),
             recommendations: Vec::new(),
-        });
+        }));
 
         // Check if standby is healthy
         for (name, standby) in self.standbys.read().iter() {
             if !standby.is_healthy {
                 test_result.issues_found.push(
                     format!("Standby {} is not healthy", name)
-                ));
+                )));
             }
 
             if standby.is_lagging(self.config.max_lag_tolerance_seconds) {
                 test_result.issues_found.push(
                     format!("Standby {} has excessive lag: {} seconds", name, standby.replication_lag_seconds)
-                ));
+                )));
                 test_result.recommendations.push(
                     "Increase replication bandwidth or reduce write load".to_string()
                 );
@@ -561,7 +561,7 @@ impl DisasterRecoveryManager {
                 test_result.recommendations.push(
                     format!("RTO not meeting target. Average: {}s, Target: {}s",
                         avg_rto, self.rto_config.target_seconds)
-                ));
+                )));
             }
         }
 

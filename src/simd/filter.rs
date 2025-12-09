@@ -712,7 +712,7 @@ impl SimdFilter {
             _ => {
                 return Err(DbError::InvalidArgument(
                     format!("Unsupported predicate: {:?}", predicate)
-                )));
+                ))));
             }
         }
 

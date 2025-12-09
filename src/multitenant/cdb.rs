@@ -253,14 +253,14 @@ impl CdbResourcePool {
             return Err(DbError::ResourceExhausted(
                 format!("Insufficient memory: requested {}, available {}",
                     limits.memory_bytes, self.total_memory - self.allocated_memory)
-            )));
+            ))));
         }
 
         if self.allocated_cpu_shares + limits.cpu_shares > self.total_cpu_shares {
             return Err(DbError::ResourceExhausted(
                 format!("Insufficient CPU shares: requested {}, available {}",
                     limits.cpu_shares, self.total_cpu_shares - self.allocated_cpu_shares)
-            )));
+            ))));
         }
 
         if self.allocated_io_bandwidth + limits.io_bandwidth_bytes_per_sec > self.total_io_bandwidth {
@@ -268,7 +268,7 @@ impl CdbResourcePool {
                 format!("Insufficient I/O bandwidth: requested {}, available {}",
                     limits.io_bandwidth_bytes_per_sec,
                     self.total_io_bandwidth - self.allocated_io_bandwidth)
-            )));
+            ))));
         }
 
         // Allocate resources
@@ -381,7 +381,7 @@ impl CdbRegistry {
 
     /// Get a PDB by ID
     pub async fn get(&self, pdb_id: PdbId) -> Result<Arc<RwLock<PluggableDatabase>>> {
-        let pdbs = self.pdbs.read().await);
+        let pdbs = self.pdbs.read().await));
         pdbs.get(&pdb_id)
             .cloned()
             .ok_or_else(|| DbError::NotFound(format!("PDB not found: {:?}", pdb_id)))
@@ -389,7 +389,7 @@ impl CdbRegistry {
 
     /// Get a PDB ID by name
     pub async fn get_id_by_name(&self, name: &str) -> Result<PdbId> {
-        let name_to_id = self.name_to_id.read().await);
+        let name_to_id = self.name_to_id.read().await));
         name_to_id
             .get(name)
             .copied()
@@ -466,7 +466,7 @@ impl BackgroundProcessManager {
             self.start_process(
                 format!("DBWR{}", i),
                 BackgroundProcessType::DatabaseWriter,
-            ).await?;
+            ).await?);
         }
 
         // Start LGWR processes
@@ -474,7 +474,7 @@ impl BackgroundProcessManager {
             self.start_process(
                 format!("LGWR{}", i),
                 BackgroundProcessType::LogWriter,
-            ).await?;
+            ).await?);
         }
 
         // Start CKPT processes
@@ -482,7 +482,7 @@ impl BackgroundProcessManager {
             self.start_process(
                 format!("CKPT{}", i),
                 BackgroundProcessType::Checkpoint,
-            ).await?;
+            ).await?);
         }
 
         // Start PMON if enabled
@@ -514,7 +514,7 @@ impl BackgroundProcessManager {
             self.start_process(
                 format!("RECO{}", i),
                 BackgroundProcessType::Recoverer,
-            ).await?;
+            ).await?);
         }
 
         Ok(())
@@ -718,7 +718,7 @@ impl ContainerDatabase {
         if self.registry.count().await >= self.config.max_pdbs {
             return Err(DbError::LimitExceeded(
                 format!("Maximum PDB limit reached: {}", self.config.max_pdbs)
-            )));
+            ))));
         }
 
         // Allocate resources

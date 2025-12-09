@@ -471,7 +471,7 @@ impl TieredStorageManager {
     pub fn update_page(&self, page: &Page) -> Result<()> {
         // Record write access
         {
-            let mut patterns = self.access_patterns.write());
+            let mut patterns = self.access_patterns.write()));
             let pattern = patterns.entry(page.id)
                 .or_insert_with(|| AccessPattern::new(page.id));
             pattern.record_access(true);

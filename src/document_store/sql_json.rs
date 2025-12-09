@@ -243,7 +243,7 @@ impl JsonTableFunction {
 }
 
 /// JSON_QUERY function - extract JSON fragments
-pub struct JsonQueryFunction);
+pub struct JsonQueryFunction));
 
 impl JsonQueryFunction {
     /// Execute JSON_QUERY
@@ -370,7 +370,7 @@ impl JsonExistsFunction {
         path: &str,
         filter: &str,
     ) -> Result<bool> {
-        let full_path = format!("{}[?({})]", path, filter));
+        let full_path = format!("{}[?({})]", path, filter)));
         Self::execute(json, &full_path)
     }
 }
@@ -585,7 +585,7 @@ impl TransformOperation {
                         .or_insert_with(|| Value::Object(serde_json::Map::new()));
                 } else {
                         format!("Cannot navigate path: {}", path)
-                    )));
+                    ))));
                 }
             }
         }
@@ -611,10 +611,10 @@ impl TransformOperation {
                 if let Value::Object(obj) = current {
                     current = obj.get_mut(*part)
                             format!("Path not found: {}", path)
-                        ))?;
+                        ))?);
                 } else {
                         format!("Cannot navigate path: {}", path)
-                    )));
+                    ))));
                 }
             }
         }

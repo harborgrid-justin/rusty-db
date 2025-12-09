@@ -337,7 +337,7 @@ impl CrashDetector {
             // Handle crashes
             for (pid, health) in crashed {
                 let elapsed = health.last_heartbeat.elapsed();
-                let reason = format!("Process {} crashed or hung (no heartbeat for {:?})", pid, elapsed));
+                let reason = format!("Process {} crashed or hung (no heartbeat for {:?})", pid, elapsed)));
 
                 // Update statistics
                 {
@@ -444,7 +444,7 @@ impl TransactionRollbackManager {
     ) -> Result<()> {
         let mut txns = self.transactions.write();
         let state = txns.get_mut(&txn_id)
-            .ok_or_else(|| DbError::NotFound(format!("Transaction {} not found", txn_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Transaction {} not found", txn_id)))?);
 
         let op = TransactionOperation {
             op_id: state.operations.len() as u64,
@@ -469,7 +469,7 @@ impl TransactionRollbackManager {
             let txns = self.transactions.read();
             txns.get(&txn_id).cloned()
                 .ok_or_else(|| DbError::NotFound(format!("Transaction {} not found", txn_id)))?
-        });
+        }));
 
         // Rollback operations in reverse order
         let mut operations_undone = 0;
@@ -658,7 +658,7 @@ impl CorruptionDetector {
                 actual_checksum: 0x87654321,
                 detected_at: SystemTime::now(),
                 repaired: false,
-            });
+            }));
 
             self.stats.write().total_corruptions_detected += 1;
 
@@ -741,7 +741,7 @@ impl DataRepairer {
 
     /// Register replica
     pub fn register_replica(&self, replica: ReplicaInfo) {
-        self.replicas.write().push(replica));
+        self.replicas.write().push(replica)));
     }
 
     /// Repair page from replica
@@ -928,7 +928,7 @@ impl StateSnapshotManager {
             lsn: snapshot_id * 1000,
             file_path: format!("checkpoints/snapshot_{}.ckpt", snapshot_id),
             compressed: true,
-        });
+        }));
 
         self.snapshots.write().insert(snapshot_id, snapshot.clone());
 
@@ -955,7 +955,7 @@ impl StateSnapshotManager {
             let snapshots = self.snapshots.read();
             snapshots.get(&snapshot_id).cloned()
                 .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot_id)))?
-        });
+        }));
 
         tracing::info!("Restoring from snapshot {} (LSN {})", snapshot_id, snapshot.lsn);
 
@@ -1333,7 +1333,7 @@ impl SelfHealer {
             target,
             executed_at: Some(SystemTime::now()),
             success: Some(success),
-        });
+        }));
 
         self.actions.write().push(action);
 
@@ -1518,7 +1518,7 @@ impl AutoRecoveryManager {
                     detected_at: SystemTime::now(),
                     description: reason.clone(),
                     context: HashMap::new(),
-                });
+                }));
                 manager.handle_failure(failure);
             });
         }
@@ -1538,7 +1538,7 @@ impl AutoRecoveryManager {
                         ("expected_checksum".to_string(), format!("0x{:x}", corruption.expected_checksum)),
                         ("actual_checksum".to_string(), format!("0x{:x}", corruption.actual_checksum)),
                     ]),
-                });
+                }));
                 manager.handle_failure(failure);
             });
         }
@@ -1555,7 +1555,7 @@ impl AutoRecoveryManager {
                         detected_at: SystemTime::now(),
                         description: format!("Critical health score: {}", metrics.overall_score.0),
                         context: HashMap::new(),
-                    });
+                    }));
                     manager.handle_failure(failure);
                 }
             });

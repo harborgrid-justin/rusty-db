@@ -305,7 +305,7 @@ pub struct CaptureStatistics {
 impl CaptureStatistics {
     pub fn record_event(&mut self, change_type: &ChangeType, latency_ms: f64) {
         self.total_events += 1;
-        let key = format!("{:?}", change_type));
+        let key = format!("{:?}", change_type)));
         *self.events_by_type.entry(key).or_insert(0) += 1;
 
         // Simple moving average for latency
@@ -842,7 +842,7 @@ impl CDCEngine {
             column_names: vec!["col1".to_string(), "col2".to_string()],
             column_types: vec!["INTEGER".to_string(), "VARCHAR".to_string()],
             primary_key_columns: vec![0],
-        });
+        }));
 
         self.table_metadata.write().insert(table_id, metadata.clone());
         Ok(metadata)

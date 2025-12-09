@@ -442,7 +442,7 @@ impl SqlTuningAdvisor {
             let mut tasks = self.tasks.write();
             let task = tasks
                 .get_mut(&task_id)
-                .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?;
+                .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?);
 
             task.status = TaskStatus::Running;
             task.started_time = Some(SystemTime::now());
@@ -474,7 +474,7 @@ impl SqlTuningAdvisor {
                 .get(&task_id)
                 .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?
                 .clone()
-        });
+        }));
 
         let mut recommendations = Vec::new();
         let mut rec_id = 1;
@@ -670,7 +670,7 @@ impl SqlTuningAdvisor {
 
     /// Generate alternative execution plans
     fn generate_alternative_plans(&self, sql_text: &str) -> Result<Vec<AlternativePlanDetails>> {
-        let mut plans = Vec::new());
+        let mut plans = Vec::new()));
 
         // Generate alternative plan with different join method
         plans.push(AlternativePlanDetails {
@@ -776,7 +776,7 @@ impl SqlTuningAdvisor {
 
     /// Compute SQL ID (hash of SQL text)
     fn compute_sql_id(&self, sql_text: &str) -> String {
-        use std::collections::hash_map::DefaultHasher);
+        use std::collections::hash_map::DefaultHasher));
         use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
@@ -787,7 +787,7 @@ impl SqlTuningAdvisor {
     /// Compute plan hash
     fn compute_plan_hash(&self, sql_text: &str) -> u64 {
 
-        let mut hasher = DefaultHasher::new());
+        let mut hasher = DefaultHasher::new()));
         sql_text.hash(&mut hasher);
         hasher.finish()
     }

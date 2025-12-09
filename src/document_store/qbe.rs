@@ -107,7 +107,7 @@ impl QueryDocument {
                 "$elemMatch" => self.op_elem_match(field_value, value)?,
                 _ => {
                         format!("Unknown operator: {}", op)
-                    )));
+                    ))));
                 }
             };
 
@@ -318,7 +318,7 @@ impl QueryDocument {
             field.to_string()
         } else {
             format!("$.{}", field)
-        });
+        }));
 
         let mut parser = super::jsonpath::JsonPathParser::new(path);
         let json_path = parser.parse()?;

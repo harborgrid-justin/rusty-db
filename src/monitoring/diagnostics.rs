@@ -300,12 +300,12 @@ impl HealthCheck for ConnectionHealthCheck {
             (HealthStatus::Warning, format!("Connection pool at {:.1}% capacity", usage))
         } else {
             (HealthStatus::Healthy, format!("Connection pool healthy ({:.1}% used)", usage))
-        });
+        }));
 
         let mut result = HealthCheckResult::new(self.name(), status, message);
         result.add_detail("current_connections", current.to_string());
         result.add_detail("max_connections", self.max_connections.to_string());
-        result.add_detail("usage_percent", format!("{:.1}", usage)));
+        result.add_detail("usage_percent", format!("{:.1}", usage))));
         result.set_duration(start.elapsed());
 
         result
@@ -347,12 +347,12 @@ impl HealthCheck for MemoryHealthCheck {
             (HealthStatus::Warning, format!("Memory usage at {:.1}%", usage))
         } else {
             (HealthStatus::Healthy, format!("Memory usage healthy ({:.1}%)", usage))
-        });
+        }));
 
         let mut result = HealthCheckResult::new(self.name(), status, message);
         result.add_detail("current_bytes", current.to_string());
         result.add_detail("max_bytes", self.max_memory_bytes.to_string());
-        result.add_detail("usage_percent", format!("{:.1}", usage)));
+        result.add_detail("usage_percent", format!("{:.1}", usage))));
         result.set_duration(start.elapsed());
 
         result
@@ -495,7 +495,7 @@ impl DiagnosticRepository {
         }
 
         // Generate file path
-        let filename = format!("dump_{}_{}.txt", dump_type, dump_id));
+        let filename = format!("dump_{}_{}.txt", dump_type, dump_id)));
         let path = self.adr_base.join("dumps").join(file_name);
         dump = dump.with_file_path(path);
 
@@ -507,8 +507,8 @@ impl DiagnosticRepository {
     fn generate_system_state_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== SYSTEM STATE DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now())));
-        dump.push_str(&format!("Active Incidents: {}\n", self.get_active_incidents().len())));
+        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now()))));
+        dump.push_str(&format!("Active Incidents: {}\n", self.get_active_incidents().len()))));
         dump.push_str("\n");
         dump
     }
@@ -516,7 +516,7 @@ impl DiagnosticRepository {
     fn generate_process_state_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== PROCESS STATE DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now())));
+        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now()))));
         dump.push_str("\n");
         dump
     }
@@ -524,7 +524,7 @@ impl DiagnosticRepository {
     fn generate_memory_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== MEMORY DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now())));
+        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now()))));
         dump.push_str("\n");
         dump
     }
@@ -532,7 +532,7 @@ impl DiagnosticRepository {
     fn generate_lock_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== LOCK DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now())));
+        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now()))));
         dump.push_str("\n");
         dump
     }
@@ -540,7 +540,7 @@ impl DiagnosticRepository {
     fn generate_transaction_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== TRANSACTION DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now())));
+        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now()))));
         dump.push_str("\n");
         dump
     }
@@ -548,7 +548,7 @@ impl DiagnosticRepository {
     fn generate_buffer_cache_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== BUFFER CACHE DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now())));
+        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now()))));
         dump.push_str("\n");
         dump
     }
@@ -556,7 +556,7 @@ impl DiagnosticRepository {
     fn generate_error_stack_dump(&self) -> String {
         let mut dump = String::new();
         dump.push_str("=== ERROR STACK DUMP ===\n\n");
-        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now())));
+        dump.push_str(&format!("Timestamp: {:?}\n", std::time::SystemTime::now()))));
         dump.push_str("\n");
         dump
     }
@@ -613,19 +613,19 @@ impl DiagnosticRepository {
         report.push_str("=== System Health Report ===\n\n");
 
         let overall = self.get_overall_health();
-        report.push_str(&format!("Overall Status: {}\n\n", overall)));
+        report.push_str(&format!("Overall Status: {}\n\n", overall))));
 
         let results = self.run_health_checks();
         for result in results {
-            report.push_str(&format!("Check: {}\n", result.check_name)));
-            report.push_str(&format!("  Status: {}\n", result.status)));
-            report.push_str(&format!("  Message: {}\n", result.message)));
-            report.push_str(&format!("  Duration: {:?}\n", result.duration)));
+            report.push_str(&format!("Check: {}\n", result.check_name))));
+            report.push_str(&format!("  Status: {}\n", result.status))));
+            report.push_str(&format!("  Message: {}\n", result.message))));
+            report.push_str(&format!("  Duration: {:?}\n", result.duration))));
 
             if !result.details.is_empty() {
                 report.push_str("  Details:\n");
                 for (key, value) in &result.details {
-                    report.push_str(&format!("    {}: {}\n", key, value)));
+                    report.push_str(&format!("    {}: {}\n", key, value))));
                 }
             }
             report.push_str("\n");

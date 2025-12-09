@@ -341,7 +341,7 @@ impl ServiceBus {
                 "Message size {} exceeds maximum {}",
                 message.payload.len(),
                 self.config.max_message_size
-            ))));
+            )))));
         }
 
         // Check if message has expired
@@ -351,7 +351,7 @@ impl ServiceBus {
 
         // Acquire backpressure permit
         let permit = self.backpressure.acquire().await
-            .map_err(|e| DbError::Internal(format!("Backpressure acquire failed: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Backpressure acquire failed: {}", e)))?);
 
         // Update statistics
         {
@@ -374,7 +374,7 @@ impl ServiceBus {
                 match channel.send(message.clone()) {
                     Ok(_) => delivery_count += 1,
                     Err(e) => {
-                        failed_deliveries.push(format!("Failed to send: {}", e)));
+                        failed_deliveries.push(format!("Failed to send: {}", e))));
                     }
                 }
             }
@@ -394,7 +394,7 @@ impl ServiceBus {
                     format!("All deliveries failed: {:?}", failed_deliveries),
                     1,
                 )
-                .await);
+                .await));
             }
         } else {
             // No subscribers - send to DLQ
@@ -420,7 +420,7 @@ impl ServiceBus {
                             format!("Max retries exceeded: {}", e),
                             attempts,
                         )
-                        .await);
+                        .await));
                         return Err(e);
                     }
                     // Exponential backoff
@@ -506,7 +506,7 @@ impl ServiceBus {
 
     /// Get dead letter queue contents
     pub async fn get_dead_letters(&self) -> Vec<DeadLetter> {
-        let dlq = self.dead_letter_queue.read().await);
+        let dlq = self.dead_letter_queue.read().await));
         dlq.clone()
     }
 

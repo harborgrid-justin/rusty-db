@@ -93,7 +93,7 @@ impl PartitionManager {
             return Err(DbError::AlreadyExists(format!(
                 "Partitioned table '{}' already exists",
                 table_name
-            ))));
+            )));
         }
         
         let partition_count = Self::calculate_partition_count(&strategy);
@@ -160,7 +160,7 @@ impl PartitionManager {
         tablename: &str,
         partitionname: String,
         partition_def: PartitionDefinition,
-    )> Result<()> {
+    ) -> Result<()> {
         let metadata = self.partitions.get_mut(table_name)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Partitioned table '{}' not found",
@@ -204,7 +204,7 @@ impl PartitionManager {
     }
     
     /// Drop a partition
-    pub fn dfn drop_partition(
+    pub fn drop_partition(
         &mut self,
         tablename: &str,
         partitionname: &str,
@@ -240,7 +240,7 @@ impl PartitionManager {
     }
     
     /// List all partitions for a table
-    pub fn list_fn list_partitions(&self, tablename: &str)lt<Vec<String>> {
+    pub fn list_partitions(&self, table_name: &str) -> Result<Vec<String>> {
         let metadata = self.partitions.get(table_name)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Partitioned table '{}' not found",
@@ -300,7 +300,7 @@ impl PartitionManager {
                 (None, Some(upper)) => value < upper.as_str(),
                 (Some(lower), None) => value >= lower.as_str(),
                 (Some(lower), Some(upper)) => value >= lower.as_str() && value < upper.as_str(),
-            });
+            };
             
             if in_range {
                 return Ok(range.name.clone());
@@ -317,7 +317,7 @@ impl PartitionManager {
         // Simple hash function for partitioning
         let hash = value.bytes().fold(0u64, |acc, b| {
             acc.wrapping_mul(31).wrapping_add(b as u64)
-        }));
+        });
         
         let partition_idx = (hash % num_partitions as u64) as usize;
         format!("partition_{}", partition_idx)
@@ -329,7 +329,7 @@ impl PartitionManager {
     ) -> Result<String> {
         for list in lists {
             if list.values.contains(&value.to_string()) {
-                return Ok(list.name.clone()));
+                return Ok(list.name.clone());
             }
         }
         
@@ -354,7 +354,7 @@ pub enum PartitionDefinition {
 
 /// Partition pruning optimizer
 /// Eliminates partitions that don't match query predicates
-pub struct PartitionPruner);
+pub struct PartitionPruner;
 
 impl PartitionPruner {
     /// Prune partitions based on query predicate
@@ -457,7 +457,7 @@ impl PartitionPruner {
         }
     }
     
-    fn prune_fn prune_hash_partitions(
+    fn prune_hash_partitions(
         column: &str,
         numpartitions: usize,
         predicate: &QueryPredicate,
@@ -466,7 +466,7 @@ impl PartitionPruner {
             // Keep all partitions
             return (0..num_partitions)
                 .map(|i| format!("partition_{}", i))
-                .collect());
+                .collect();
         }
         
         match predicate.operator {
@@ -493,7 +493,7 @@ impl PartitionPruner {
         predicate: &QueryPredicate,
     ) -> Vec<String> {
         if predicate.column != column {
-            return lists.iter().map(|p| p.name.clone()).collect());
+            return lists.iter().map(|p| p.name.clone()).collect();
         }
         
         match predicate.operator {
@@ -820,7 +820,7 @@ pub mod pruning {
         
         /// Add partition statistics for better pruning decisions
         pub fn add_statistics(&mut self, table: String, partition: String, stats: PartitionStatistics) {
-            let key = format!("{}:{}", table, partition));
+            let key = format!("{}:{}", table, partition);
             self.statistics.insert(key, stats);
         }
         
@@ -856,7 +856,7 @@ pub mod pruning {
         }
         
         fn partition_matches_rule(&self, table: &str, partition: &str, rule: &PruningRule) -> bool {
-            let key = format!("{}:{}", table, partition));
+            let key = format!("{}:{}", table, partition);
             
             if let Some(stats) = self.statistics.get(&key) {
                 // Use statistics to determine if partition could contain matching rows
@@ -890,7 +890,7 @@ pub mod pruning {
             partitions
                 .iter()
                 .filter_map(|p| {
-                    let key = format!("{}:{}", table, p));
+                    let key = format!("{}:{}", table, p);
                     self.statistics.get(&key).map(|s| s.row_count)
                 })
                 .sum()
@@ -976,7 +976,7 @@ pub mod auto_management {
                 PartitionInterval::Monthly => Duration::from_secs(86400 * 30),
                 PartitionInterval::Yearly => Duration::from_secs(86400 * 365),
                 PartitionInterval::Custom(d) => d,
-            });
+            };
             
             time + advance_duration
         }
@@ -1061,7 +1061,7 @@ pub mod auto_management {
         }
         
         fn is_task_due(&self, task: &MaintenanceTask, current_time: SystemTime) -> bool {
-            let task_key = format!("{}:{:?}", task.table, task.task_type));
+            let task_key = format!("{}:{:?}", task.table, task.task_type);
             
             if let Some(&last_run) = self.last_run.get(&task_key) {
                 let interval = match &task.schedule {
@@ -1078,7 +1078,7 @@ pub mod auto_management {
         }
         
         pub fn mark_task_run(&mut self, task: &MaintenanceTask, run_time: SystemTime) {
-            let task_key = format!("{}:{:?}", task.table, task.task_type));
+            let task_key = format!("{}:{:?}", task.table, task.task_type);
             self.last_run.insert(task_key, run_time);
         }
     }
@@ -1253,7 +1253,7 @@ pub mod dynamic {
             let mut new_partitions = Vec::new();
             
             for (i, split_point) in split_points.iter().enumerate() {
-                let new_partition_name = format!("{}_{}_split_{}", table, partition, i));
+                let new_partition_name = format!("{}_{}_split_{}", table, partition, i);
                 new_partitions.push(new_partition_name);
                 
                 // In actual implementation, would:
@@ -1280,7 +1280,7 @@ pub mod dynamic {
             table: &str,
             partitions: &[String],
         ) -> Result<String> {
-            let merged_name = format!("{}_merged_{}", table, partitions.len()));
+            let merged_name = format!("{}_merged_{}", table, partitions.len());
             
             // In actual implementation, would:
             // 1. Create new partition
@@ -1652,7 +1652,7 @@ pub mod monitoring {
         ) {
             for (table, partition) in partitions {
                 let health = self.check_partition_health(table, partition, stats);
-                let key = format!("{}:{}", table, partition));
+                let key = format!("{}:{}", table, partition);
                 self.health_checks.insert(key, health);
             }
         }
@@ -1663,7 +1663,7 @@ pub mod monitoring {
             partition: &str,
             stats: &HashMap<String, PartitionStatistics>,
         ) -> PartitionHealth {
-            let key = format!("{}:{}", table, partition));
+            let key = format!("{}:{}", table, partition);
             let mut issues = Vec::new();
             let mut status = HealthStatus::Healthy;
             
@@ -1772,7 +1772,7 @@ pub mod monitoring {
         }
         
         pub fn record_read(&mut self, table: &str, partition: &str) {
-            let key = format!("{}:{}", table, partition));
+            let key = format!("{}:{}", table, partition);
             let metrics = self.metrics.entry(key).or_insert(PartitionMetrics {
                 table: table.to_string(),
                 partition: partition.to_string(),
@@ -1788,7 +1788,7 @@ pub mod monitoring {
         }
         
         pub fn record_write(&mut self, table: &str, partition: &str) {
-            let key = format!("{}:{}", table, partition));
+            let key = format!("{}:{}", table, partition);
             let metrics = self.metrics.entry(key).or_insert(PartitionMetrics {
                 table: table.to_string(),
                 partition: partition.to_string(),
@@ -1804,7 +1804,7 @@ pub mod monitoring {
         }
         
         pub fn record_scan(&mut self, table: &str, partition: &str, duration_ms: f64) {
-            let key = format!("{}:{}", table, partition));
+            let key = format!("{}:{}", table, partition);
             let metrics = self.metrics.entry(key).or_insert(PartitionMetrics {
                 table: table.to_string(),
                 partition: partition.to_string(),
@@ -1897,10 +1897,10 @@ pub mod balancing {
             let mut recommendations = Vec::new();
             if !is_balanced {
                 if let Some(ref large) = largest {
-                    recommendations.push(format!("Consider splitting partition: {}", large)));
+                    recommendations.push(format!("Consider splitting partition: {}", large));
                 }
                 if let Some(ref small) = smallest {
-                    recommendations.push(format!("Consider merging partition: {}", small)));
+                    recommendations.push(format!("Consider merging partition: {}", small));
                 }
             }
             
@@ -2058,7 +2058,7 @@ pub mod routing {
             strategy: &PartitionStrategy,
         ) -> Vec<String> {
             // Try cache first
-            let cache_key = format!("{}:{:?}", table, query_predicates));
+            let cache_key = format!("{}:{:?}", table, query_predicates);
             if let Some(cached) = self.routing_cache.get(&cache_key) {
                 return cached.clone();
             }
@@ -2076,7 +2076,7 @@ pub mod routing {
             target_partitions
         }
         
-        fn determifn determine_target_partitions(
+        fn determine_target_partitions(
             &self,
             predicates: &[String],
             all_partitions: &[String],
@@ -2278,10 +2278,10 @@ pub mod integration {
             columns: &[(String, String)],
             strategy: &PartitionStrategy,
         ) -> String {
-            let mut sql = format!("CREATE TABLE {} (\n", table_name));
+            let mut sql = format!("CREATE TABLE {} (\n", table_name);
             
             for (i, (col_name, col_type)) in columns.iter().enumerate() {
-                sql.push_str(&format!("    {} {}", col_name, col_type)));
+                sql.push_str(&format!("    {} {}", col_name, col_type));
                 if i < columns.len() - 1 {
                     sql.push_str(",\n");
                 }
@@ -2297,11 +2297,11 @@ pub mod integration {
         fn strategy_to_sql(strategy: &PartitionStrategy) -> String {
             match strategy {
                 PartitionStrategy::Range { column, ranges } => {
-                    let mut sql = format!("PARTITION BY RANGE ({})", column));
+                    let mut sql = format!("PARTITION BY RANGE ({})", column);
                     if !ranges.is_empty() {
                         sql.push_str(" (\n");
                         for (i, range) in ranges.iter().enumerate() {
-                            sql.push_str(&format!("    PARTITION {} VALUES LESS THAN (", range.name)));
+                            sql.push_str(&format!("    PARTITION {} VALUES LESS THAN (", range.name));
                             if let Some(ref upper) = range.upper_bound {
                                 sql.push_str(upper);
                             } else {
@@ -2320,11 +2320,11 @@ pub mod integration {
                     format!("PARTITION BY HASH ({}) PARTITIONS {}", column, num_partitions)
                 }
                 PartitionStrategy::List { column, lists } => {
-                    let mut sql = format!("PARTITION BY LIST ({})", column));
+                    let mut sql = format!("PARTITION BY LIST ({})", column);
                     if !lists.is_empty() {
                         sql.push_str(" (\n");
                         for (i, list) in lists.iter().enumerate() {
-                            sql.push_str(&format!("    PARTITION {} VALUES IN (", list.name)));
+                            sql.push_str(&format!("    PARTITION {} VALUES IN (", list.name));
                             sql.push_str(&list.values.join(", "));
                             sql.push(')');
                             if i < lists.len() - 1 {
@@ -2430,7 +2430,7 @@ pub mod integration {
                     return Err(DbError::InvalidInput(format!(
                         "Partition '{}' must have at least one value",
                         list.name
-                    ))));
+                    )));
                 }
             }
             Ok(())

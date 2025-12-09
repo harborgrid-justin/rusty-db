@@ -180,7 +180,7 @@ pub struct KafkaSourceConnector {
 
 impl SourceConnector for KafkaSourceConnector {
     fn start(&mut self) -> Result<()> {
-        self.connector.is_running = true);
+        self.connector.is_running = true));
         // In a real implementation, initialize Kafka consumer here
         Ok(())
     }
@@ -297,10 +297,10 @@ impl JdbcSinkConnector {
         let mut values = Vec::new();
 
         columns.push("event_id".to_string());
-        values.push(format!("'{}'", event.id)));
+        values.push(format!("'{}'", event.id))));
 
         columns.push("event_type".to_string());
-        values.push(format!("'{}'", event.event_type)));
+        values.push(format!("'{}'", event.event_type))));
 
         for (key, value) in &event.payload {
             columns.push(key.clone());
@@ -336,7 +336,7 @@ impl SinkConnector for JdbcSinkConnector {
     }
 
     fn stop(&mut self) -> Result<()> {
-        self.flush()?;
+        self.flush()?);
         // In a real implementation, close database connection
         Ok(())
     }
@@ -465,7 +465,7 @@ impl FileSinkConnector {
                         event.id,
                         event.event_type,
                         serde_json::to_string(&event.payload).unwrap_or_default()
-                    ));
+                    )));
                     write!(writer, "{}", csv_line).map_err(|e| {
                     })?;
                     self.current_size += csv_line.len() as u64;
@@ -502,7 +502,7 @@ impl FileSinkConnector {
             .unwrap()
             .as_secs();
 
-        let new_path = self.file_path.with_extension(format!("{}.old", timestamp)));
+        let new_path = self.file_path.with_extension(format!("{}.old", timestamp))));
         std::fs::rename(&self.file_path, &new_path).map_err(|e| {
         })?;
 

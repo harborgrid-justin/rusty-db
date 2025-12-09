@@ -283,7 +283,7 @@ impl HCCEngine {
         -> CompressionResult<Vec<Vec<u8>>> {
 
         if rows.is_empty() {
-            return Ok(Vec::new()));
+            return Ok(Vec::new())));
         }
 
         let num_columns = column_types.len();
@@ -474,7 +474,7 @@ impl HCCEngine {
             if checksum != metadata.checksum {
                 return Err(CompressionError::CorruptedData(
                     format!("Checksum mismatch for column {}", metadata.column_id)
-                )));
+                ))));
             }
 
             decompressed_columns.push(decompressed);
@@ -498,7 +498,7 @@ impl HCCEngine {
             if col_idx >= cu.num_columns {
                 return Err(CompressionError::InvalidInput(
                     format!("Column index {} out of range", col_idx)
-                )));
+                ))));
             }
 
             let compressed_col = &cu.compressed_columns[col_idx];

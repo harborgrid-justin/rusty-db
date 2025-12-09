@@ -416,7 +416,7 @@ impl ConflictResolver {
             strategy: ConflictResolutionStrategy::LastWriterWins, // default
             resolved: false,
             resolution: None,
-        });
+        }));
 
         // Update statistics atomically (lock-free)
         let shard = self.select_shard(&conflict.id);
@@ -613,14 +613,14 @@ impl ConflictResolver {
         let handler = handlers.get(handler_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Custom handler '{}' not found", handler_name)
-            ))?;
+            ))?);
 
         handler(conflict)
     }
 
     /// CRDT-based resolution
     fn resolve_crdt(&self, conflict: &Conflict) -> Result<ConflictResolution> {
-        let key = format!("{}:{}", conflict.local_change.table);
+        let key = format!("{}:{}", conflict.local_change.table));
                          String::from_utf8_lossy(&conflict.local_change.row_key));
 
         let mut crdt_state = self.crdt_state.write();
@@ -773,7 +773,7 @@ impl ConflictResolver {
 
     /// Get conflict statistics aggregated across all shards
     pub fn get_stats(&self) -> ConflictStats {
-        let mut stats = ConflictStats::default());
+        let mut stats = ConflictStats::default()));
 
         // Aggregate stats from all shards
         for shard in self.shards.iter() {

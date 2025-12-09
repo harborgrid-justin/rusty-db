@@ -225,7 +225,7 @@ impl KeyManager {
         if let KeyStorageBackend::LocalFile { ref path } = config.storage_backend {
             create_dir_all(path).map_err(|e| {
                 DbError::BackupError(format!("Failed to create key directory: {}", e))
-            })?;
+            })?);
         }
 
         Ok(Self {
@@ -239,14 +239,14 @@ impl KeyManager {
 
     /// Create a new encryption key
     pub fn create_key(&self, algorithm: EncryptionAlgorithm) -> Result<String> {
-        let key_id = format!("KEY-{}", uuid::Uuid::new_v4()));
+        let key_id = format!("KEY-{}", uuid::Uuid::new_v4())));
         let key = EncryptionKey::new(key_id.clone(), algorithm.clone());
 
         self.keys.write().insert(key_id.clone(), key);
         self.key_versions.write().insert(key_id.clone(), vec![1]);
 
         // Set as active key for this algorithm
-        let algo_key = format!("{:?}", algorithm));
+        let algo_key = format!("{:?}", algorithm)));
         self.active_keys.write().insert(algo_key, key_id.clone());
 
         self.audit(KeyOperation::Create, &key_id, "system", AuditResult::Success);
@@ -269,7 +269,7 @@ impl KeyManager {
         let old_key = self.get_key(key_id)?;
 
         // Create new version
-        let new_key_id = format!("KEY-{}", uuid::Uuid::new_v4()));
+        let new_key_id = format!("KEY-{}", uuid::Uuid::new_v4())));
         let mut new_key = EncryptionKey::new(new_key_id.clone(), old_key.algorithm.clone());
         new_key.key_version = old_key.key_version + 1;
         new_key.master_key_id = Some(key_id.to_string());
@@ -283,7 +283,7 @@ impl KeyManager {
             .push(new_key.key_version);
 
         // Update active key
-        let algo_key = format!("{:?}", old_key.algorithm));
+        let algo_key = format!("{:?}", old_key.algorithm)));
         self.active_keys.write().insert(algo_key, new_key_id.clone());
 
         self.audit(KeyOperation::Rotate, key_id, "system", AuditResult::Success);
@@ -293,10 +293,10 @@ impl KeyManager {
 
     /// Get active key for an algorithm
     pub fn get_active_key(&self, algorithm: &EncryptionAlgorithm) -> Result<EncryptionKey> {
-        let algo_key = format!("{:?}", algorithm));
+        let algo_key = format!("{:?}", algorithm)));
         let active_keys = self.active_keys.read();
         let key_id = active_keys.get(&algo_key)
-            .ok_or_else(|| DbError::BackupError(format!("No active key for {:?}", algorithm)))?;
+            .ok_or_else(|| DbError::BackupError(format!("No active key for {:?}", algorithm)))?);
 
         self.get_key(key_id)
     }
@@ -385,11 +385,11 @@ impl BackupEncryptionManager {
 
         // Read source file
         let mut source_file = File::open(&source_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to open source file: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to open source file: {}", e)))?);
 
         let mut source_data = Vec::new();
         source_file.read_to_end(&mut source_data)
-            .map_err(|e| DbError::BackupError(format!("Failed to read source file: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to read source file: {}", e)))?);
 
         let original_size = source_data.len() as u64;
 
@@ -401,10 +401,10 @@ impl BackupEncryptionManager {
 
         // Write encrypted file
         let mut dest_file = File::create(&destination_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?);
 
         dest_file.write_all(&encrypted_data)
-            .map_err(|e| DbError::BackupError(format!("Failed to write encrypted data: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to write encrypted data: {}", e)))?);
 
         let encrypted_size = encrypted_data.len() as u64;
 
@@ -420,7 +420,7 @@ impl BackupEncryptionManager {
             original_size_bytes: original_size,
             encrypted_size_bytes: encrypted_size,
             checksum: format!("SHA256-{}", uuid::Uuid::new_v4()),
-        });
+        }));
 
         self.encrypted_backups.write().insert(backup_id, encrypted_backup.clone());
 
@@ -443,11 +443,11 @@ impl BackupEncryptionManager {
 
         // Read encrypted file
         let mut source_file = File::open(&source_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to open encrypted file: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to open encrypted file: {}", e)))?);
 
         let mut encrypted_data = Vec::new();
         source_file.read_to_end(&mut encrypted_data)
-            .map_err(|e| DbError::BackupError(format!("Failed to read encrypted file: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to read encrypted file: {}", e)))?);
 
         // Decrypt data
         let decrypted_data = self.decrypt_data(
@@ -460,10 +460,10 @@ impl BackupEncryptionManager {
 
         // Write decrypted file
         let mut dest_file = File::create(&destination_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?);
 
         dest_file.write_all(&decrypted_data)
-            .map_err(|e| DbError::BackupError(format!("Failed to write decrypted data: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to write decrypted data: {}", e)))?);
 
         Ok(())
     }
@@ -484,7 +484,7 @@ impl BackupEncryptionManager {
 
         loop {
             let bytes_read = input.read(&mut buffer)
-                .map_err(|e| DbError::BackupError(format!("Failed to read: {}", e)))?;
+                .map_err(|e| DbError::BackupError(format!("Failed to read: {}", e)))?);
 
             if bytes_read == 0 {
                 break;
@@ -501,7 +501,7 @@ impl BackupEncryptionManager {
             )?;
 
             output.write_all(&encrypted_chunk)
-                .map_err(|e| DbError::BackupError(format!("Failed to write: {}", e)))?;
+                .map_err(|e| DbError::BackupError(format!("Failed to write: {}", e)))?);
 
             total_encrypted += encrypted_chunk.len() as u64;
         }
@@ -528,7 +528,7 @@ impl BackupEncryptionManager {
         algorithm: &EncryptionAlgorithm,
     ) -> Result<(Vec<u8>, Option<Vec<u8>>)> {
         // Simulate encryption
-        let mut encrypted = data.to_vec());
+        let mut encrypted = data.to_vec()));
 
         // XOR with key for simulation
         for (i, byte) in encrypted.iter_mut().enumerate() {

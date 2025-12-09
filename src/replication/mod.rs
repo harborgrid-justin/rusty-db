@@ -637,7 +637,7 @@ impl ReplicationManager {
         if replicas.remove(replica_id).is_none() {
             return Err(DbError::NotFound(
                 format!("Replica '{}' not found", replica_id)
-            )));
+            ))));
         }
 
         Ok(())
@@ -672,7 +672,7 @@ impl ReplicationManager {
         if !self.is_primary {
             return Err(DbError::InvalidOperation(
                 "Only primary can replicate operations".to_string()
-            )));
+            ))));
         }
 
         // Create log entry
@@ -694,7 +694,7 @@ impl ReplicationManager {
         // Send to replication channel
         if let Some(sender) = &self.log_sender {
             sender.send(entry.clone())
-                .map_err(|e| DbError::Internal(format!("Failed to send log entry: {}", e)))?;
+                .map_err(|e| DbError::Internal(format!("Failed to send log entry: {}", e)))?);
         }
 
         // Handle based on replication mode
@@ -736,7 +736,7 @@ impl ReplicationManager {
         if !replicas.contains_key(new_primary_id) {
             return Err(DbError::NotFound(
                 format!("Replica '{}' not found", new_primary_id)
-            )));
+            ))));
         }
 
         // TODO: Implement actual failover logic:
@@ -765,7 +765,7 @@ impl ReplicationManager {
 
     /// Append entry to WAL
     pub fn append_to_wal(&self, entry: WALEntry) -> Result<()> {
-        let mut wal = self.wal.write());
+        let mut wal = self.wal.write()));
         wal.push_back(entry);
 
         // Limit WAL size to prevent unbounded growth
@@ -848,7 +848,7 @@ impl ReplicationManager {
         let conflict = conflicts.get_mut(&conflict_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Conflict {} not found", conflict_id)
-            ))?;
+            ))?);
 
         let resolved_version = match self.conflict_strategy {
             ConflictResolutionStrategy::LastWriteWins => {
@@ -914,7 +914,7 @@ impl ReplicationManager {
             .unwrap_or_default()
             .as_secs() as i64;
 
-        let snapshot_id = format!("snapshot_{}_{}", lsn, timestamp));
+        let snapshot_id = format!("snapshot_{}_{}", lsn, timestamp)));
 
         let snapshot = ReplicationSnapshot {
             snapshot_id: snapshot_id.clone(),
@@ -947,14 +947,14 @@ impl ReplicationManager {
 
     /// Delete a snapshot
     pub fn delete_snapshot(&self, snapshot_id: &str) -> Result<()> {
-        let mut snapshots = self.snapshots.write());
+        let mut snapshots = self.snapshots.write()));
         let initial_len = snapshots.len();
         snapshots.retain(|s| s.snapshot_id != snapshot_id);
 
         if snapshots.len() == initial_len {
             return Err(DbError::NotFound(
                 format!("Snapshot '{}' not found", snapshot_id)
-            )));
+            ))));
         }
 
         Ok(())
@@ -1011,7 +1011,7 @@ impl ReplicationManager {
 
     /// Perform health check on all replicas
     pub async fn health_check_all_replicas(&self) -> HashMap<String, bool> {
-        let replicas = self.get_replicas());
+        let replicas = self.get_replicas()));
         let mut results = HashMap::new();
 
         for replica in replicas {
@@ -1064,7 +1064,7 @@ impl ReplicationManager {
         if !replicas.contains_key(parent_replica_id) {
             return Err(DbError::NotFound(
                 format!("Parent replica '{}' not found", parent_replica_id)
-            )));
+            ))));
         }
         drop(replicas);
 
@@ -1096,7 +1096,7 @@ impl ReplicationManager {
 
     /// Get replication chain (for chain replication topology)
     pub fn get_replication_chain(&self) -> Vec<String> {
-        let replicas = self.replicas.read());
+        let replicas = self.replicas.read()));
         replicas.keys().cloned().collect()
     }
 
@@ -1149,7 +1149,7 @@ impl ReplicationManager {
         if !replicas.contains_key(replica_id) {
             return Err(DbError::NotFound(
                 format!("Replica '{}' not found", replica_id)
-            )));
+            ))));
         }
         drop(replicas);
 
@@ -1193,7 +1193,7 @@ impl ReplicationManager {
 
     /// Change replication mode
     pub fn set_mode(&mut self, mode: ReplicationMode) -> Result<()> {
-        self.mode = mode);
+        self.mode = mode));
         Ok(())
     }
 
@@ -1268,7 +1268,7 @@ impl ReplicationManager {
 
     /// Get lag monitor for a replica
     pub fn get_lag_monitor(&self, replica_id: &str) -> Result<LagMonitor> {
-        let monitors = self.lag_monitors.read());
+        let monitors = self.lag_monitors.read()));
         monitors.get(replica_id)
             .cloned()
             .ok_or_else(|| DbError::NotFound(
@@ -1289,7 +1289,7 @@ impl ReplicationManager {
             max_bytes_per_second,
             current_bytes_per_second: 0,
             enabled: true,
-        });
+        }));
         *self.bandwidth_throttle.write() = Some(throttle);
         Ok(())
     }
@@ -1332,7 +1332,7 @@ impl ReplicationManager {
             .unwrap_or_default()
             .as_secs() as i64;
 
-        let checkpoint_id = format!("checkpoint_{}_{}", replica_id, timestamp));
+        let checkpoint_id = format!("checkpoint_{}_{}", replica_id, timestamp)));
 
         let checkpoint = ReplicationCheckpoint {
             checkpoint_id: checkpoint_id.clone(),
@@ -1359,7 +1359,7 @@ impl ReplicationManager {
 
     /// List checkpoints for a replica
     pub fn list_checkpoints(&self, replicaid: Option<&str>) -> Vec<ReplicationCheckpoint> {
-        let checkpoints = self.checkpoints.read());
+        let checkpoints = self.checkpoints.read()));
         if let Some(id) = replica_id {
             checkpoints.iter()
                 .filter(|c| c.replica_id == id)
@@ -1395,7 +1395,7 @@ impl ReplicationManager {
         if slots.contains_key(&slot_name) {
             return Err(DbError::InvalidOperation(
                 format!("Logical slot '{}' already exists", slot_name)
-            )));
+            ))));
         }
 
         let slot = LogicalSlot {
@@ -1417,7 +1417,7 @@ impl ReplicationManager {
         slots.remove(slot_name)
             .ok_or_else(|| DbError::NotFound(
                 format!("Logical slot '{}' not found", slot_name)
-            ))?;
+            ))?);
 
         Ok(())
     }
@@ -1439,7 +1439,7 @@ impl ReplicationManager {
 
     /// Advance logical slot
     pub fn advance_logical_slot(&self, slot_name: &str, lsn: u64) -> Result<()> {
-        let mut slots = self.logical_slots.write());
+        let mut slots = self.logical_slots.write()));
 
         if let Some(slot) = slots.get_mut(slot_name) {
             if lsn >= slot.confirmed_flush_lsn {
@@ -1461,12 +1461,12 @@ impl ReplicationManager {
 
     /// Create a physical replication slot
     pub fn create_physical_slot(&self, slot_name: String, temporary: bool) -> Result<()> {
-        let mut slots = self.physical_slots.write());
+        let mut slots = self.physical_slots.write()));
 
         if slots.contains_key(&slot_name) {
             return Err(DbError::InvalidOperation(
                 format!("Physical slot '{}' already exists", slot_name)
-            )));
+            ))));
         }
 
         let slot = PhysicalSlot {
@@ -1487,7 +1487,7 @@ impl ReplicationManager {
         slots.remove(slot_name)
             .ok_or_else(|| DbError::NotFound(
                 format!("Physical slot '{}' not found", slot_name)
-            ))?;
+            ))?);
 
         Ok(())
     }
@@ -1511,7 +1511,7 @@ impl ReplicationManager {
 
     /// Configure geo-replication
     pub fn configure_geo_replication(&self, config: GeoReplicationConfig) -> Result<()> {
-        *self.geo_config.write() = Some(config));
+        *self.geo_config.write() = Some(config)));
         Ok(())
     }
 
@@ -1742,7 +1742,7 @@ impl ReplicationManager {
 
     /// Clean old snapshots (keep only N most recent)
     pub fn clean_old_snapshots(&self, keep_count: usize) -> Result<usize> {
-        let mut snapshots = self.snapshots.write());
+        let mut snapshots = self.snapshots.write()));
         let total = snapshots.len();
 
         if total <= keep_count {
@@ -1813,7 +1813,7 @@ impl ReplicationManager {
         let replica = self.get_replica(replica_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Replica '{}' not found", replica_id)
-            ))?;
+            ))?);
 
         let health = self.get_replica_health(replica_id)?;
         let lag = self.get_lag_monitor(replica_id)?;
@@ -2097,7 +2097,7 @@ mod tests {
                 status: ReplicaStatus::Active,
                 lag_bytes: i * 100,
                 last_sync: i as i64,
-            });
+            }));
             rm.add_replica(replica)?;
 
             let health = ReplicationHealth {
@@ -2108,7 +2108,7 @@ mod tests {
                 pending_transactions: i as usize,
                 error_count: if i > 2 { 5 } else { 0 },
                 last_error: None,
-            });
+            }));
             rm.update_replica_health(health)?;
         }
 
@@ -2332,7 +2332,7 @@ mod tests {
                 status: ReplicaStatus::Active,
                 lag_bytes: 0,
                 last_sync: 0,
-            });
+            }));
             rm.add_replica(replica)?;
 
             let health = ReplicationHealth {
@@ -2343,7 +2343,7 @@ mod tests {
                 pending_transactions: 0,
                 error_count: if i == 2 { 15 } else { 0 },
                 last_error: if i == 2 { Some("Test error".to_string()) } else { None },
-            });
+            }));
             rm.update_replica_health(health)?;
         }
 
@@ -2370,7 +2370,7 @@ mod tests {
                 vec![(i + 1) as u8],
                 i as i64,
                 (i + 1) as i64,
-            )?;
+            )?);
         }
 
         assert_eq!(rm.get_conflict_count(), 5);
@@ -2600,7 +2600,7 @@ mod tests {
                 status: ReplicaStatus::Active,
                 lag_bytes: i * 100,
                 last_sync: 0,
-            });
+            }));
             rm.add_replica(replica)?;
         }
 
@@ -2628,7 +2628,7 @@ mod tests {
                 status: ReplicaStatus::Active,
                 lag_bytes: 0,
                 last_sync: 0,
-            });
+            }));
             rm.add_replica(replica)?;
 
             let health = ReplicationHealth {
@@ -2639,7 +2639,7 @@ mod tests {
                 pending_transactions: 0,
                 error_count: 0,
                 last_error: None,
-            });
+            }));
             rm.update_replica_health(health)?;
         }
 
@@ -2775,7 +2775,7 @@ mod tests {
                 status: ReplicaStatus::Active,
                 lag_bytes: 0,
                 last_sync: 0,
-            });
+            }));
             rm.add_replica(replica)?;
         }
 
@@ -2950,7 +2950,7 @@ use std::time::SystemTime;
                 status,
                 lag_bytes: 0,
                 last_sync: 0,
-            });
+            }));
             rm.add_replica(replica)?;
         }
 
@@ -2972,9 +2972,9 @@ use std::time::SystemTime;
                 status: ReplicaStatus::Active,
                 lag_bytes: 0,
                 last_sync: 0,
-            });
+            }));
             rm.add_replica(replica)?;
-            rm.update_lag(&format!("r{}", i), i * 1000)?;
+            rm.update_lag(&format!("r{}", i), i * 1000)?);
         }
 
         assert_eq!(rm.average_replication_lag(), 3000); // (1000+2000+3000+4000+5000)/5
@@ -3027,7 +3027,7 @@ use std::time::SystemTime;
                 status: ReplicaStatus::Active,
                 lag_bytes: 0,
                 last_sync: 0,
-            });
+            }));
             rm.add_replica(replica)?;
 
             let is_healthy = i <= 2;
@@ -3039,12 +3039,12 @@ use std::time::SystemTime;
                 pending_transactions: 0,
                 error_count: 0,
                 last_error: None,
-            });
+            }));
             rm.update_replica_health(health)?;
 
             // Set critical lag for r3 and r4
             if i > 2 {
-                rm.update_lag(&format!("r{}", i), 20_000_000)?;
+                rm.update_lag(&format!("r{}", i), 20_000_000)?);
             }
         }
 
@@ -3090,7 +3090,7 @@ use std::time::SystemTime;
 
         // Create multiple snapshots
         for i in 1..=10 {
-            let mut snapshot = rm.create_snapshot(vec![format!("table{}", i)])?;
+            let mut snapshot = rm.create_snapshot(vec![format!("table{}", i)])?);
             snapshot.size_bytes = i * 1000;
             rm.snapshots.write().pop(); // Remove auto-added
             rm.snapshots.write().push(snapshot);
@@ -3276,7 +3276,7 @@ use std::time::SystemTime;
                 vec![(i + 1) as u8],
                 i as i64,
                 (i + 1) as i64,
-            )?;
+            )?);
         }
 
         assert_eq!(rm.get_resolved_conflicts_count(), 0);

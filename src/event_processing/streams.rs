@@ -312,7 +312,7 @@ impl EventStream {
             return Err(crate::error::DbError::InvalidOperation(format!(
                 "Stream {} is not active (state: {:?})",
                 self.id, state
-            ))));
+            )))));
         }
         drop(state);
 

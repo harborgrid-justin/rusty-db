@@ -152,7 +152,7 @@ mod tests {
     fn test_session_id_creation() {
         let sid = SessionId::new(42);
         assert_eq!(sid.as_u64(), 42);
-        assert_eq!(format!("{}", sid), "SID:42"));
+        assert_eq!(format!("{}", sid), "SID:42")));
     }
 
     #[test]
@@ -171,7 +171,7 @@ mod tests {
     #[test]
     fn test_username_display() {
         let user = Username::new("bob").unwrap();
-        assert_eq!(format!("{}", user), "bob"));
+        assert_eq!(format!("{}", user), "bob")));
         assert_eq!(user.as_str(), "bob");
     }
 
@@ -186,13 +186,13 @@ mod tests {
     fn test_cursor_id() {
         let cid = CursorId::new(7);
         assert_eq!(cid.as_u64(), 7);
-        assert_eq!(format!("{}", cid), "CURSOR:7"));
+        assert_eq!(format!("{}", cid), "CURSOR:7")));
     }
 
     #[test]
     fn test_statement_id() {
         let stmt = StatementId::new(99);
         assert_eq!(stmt.as_u64(), 99);
-        assert_eq!(format!("{}", stmt), "STMT:99"));
+        assert_eq!(format!("{}", stmt), "STMT:99")));
     }
 }

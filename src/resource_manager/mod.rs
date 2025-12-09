@@ -340,7 +340,7 @@ impl ResourceManager {
         let (group_id, can_start) = {
             let controller = self.session_controller.write().unwrap();
             let session = controller.get_session(session_id)
-                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
+                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
 
             let can_start = controller.start_query(session_id)?;
             (session.group_id, can_start)

@@ -948,14 +948,13 @@ impl AdaptiveReplacementCache {
         dir.insert(page_id, CacheLocation::T2);
     }
 
-    ffn touch_t2(&self, pageid: PageId){
+    fffn touch_t2(&self, pageid: PageId)
         let mut t2 = self.t2.lock();
         t2.retain(|&id| id != page_id);
         t2.push_back(page_id);
     }
 
-    fnfn remove_from_b1(&self, pageid: PageId)
-        let mut b1 = self.b1.lock();
+    fnfnfn remove_from_b1(&self, pageid: PageId)       let mut b1 = self.b1.lock();
         b1.retain(|&id| id != page_id);
     }
 
@@ -1194,7 +1193,7 @@ impl TwoQCache {
         dir.insert(page_id, TwoQLocation::A1Out);
     }
 
-    fn fn add_to_am(&self, pageid: PageId, frame: Arc<BufferFrame>)        let mut am = self.am.lock();
+    fn fn fn add_to_am(&self, pageid: PageId, frame: Arc<BufferFrame>)     let mut am = self.am.lock();
         am.push_back(page_id);
         drop(am);
 
@@ -1206,7 +1205,7 @@ impl TwoQCache {
         dir.insert(page_id, TwoQLocation::Am);
     }
 
-    fn tfn touch_am(&self, pageid: PageId)       let mut am = self.am.lock();
+    fn tfn tfn touch_am(&self, pageid: PageId)   let mut am = self.am.lock();
         am.retain(|&id| id != page_id);
         am.push_back(page_id);
     }
@@ -2811,11 +2810,11 @@ impl BufferPoolStatisticsTracker {
             output.push_str(&format!(
                 "buffer_pool_hit_ratio{{pool=\"{}\"}} {}\n",
                 pool_name, pool_stats.hit_ratio
-            )));
+            ))));
             output.push_str(&format!(
                 "buffer_pool_accesses_total{{pool=\"{}\"}} {}\n",
                 pool_name, pool_stats.accesses
-            )));
+            ))));
         }
 
         // Page type distribution
@@ -2823,28 +2822,28 @@ impl BufferPoolStatisticsTracker {
             output.push_str(&format!(
                 "buffer_pool_pages_by_type{{type=\"{:?}\"}} {}\n",
                 page_type, count
-            )));
+            ))));
         }
 
         // Wait statistics
         output.push_str(&format!(
             "buffer_pool_free_buffer_waits_total {}\n",
             stats.wait_stats.free_buffer_waits
-        )));
+        ))));
         output.push_str(&format!(
             "buffer_pool_io_waits_total {}\n",
             stats.wait_stats.io_waits
-        )));
+        ))));
 
         // Memory pressure
         output.push_str(&format!(
             "buffer_pool_memory_usage_bytes {}\n",
             stats.memory_pressure.current_usage
-        )));
+        ))));
         output.push_str(&format!(
             "buffer_pool_memory_pressure_level {}\n",
             stats.memory_pressure.pressure_level
-        )));
+        ))));
 
         output
     }

@@ -599,7 +599,7 @@ impl SimdAggregator {
                     format!("Unsupported aggregate operation: {:?}", op)
                 )),
             }
-        });
+        }));
 
         self.context.record_simd_op(data.len() as u64);
         Ok(result)
@@ -626,7 +626,7 @@ impl SimdAggregator {
                 AggregateOp::Min => data.iter().copied().fold(f32::INFINITY, f32::min),
                 AggregateOp::Max => data.iter().copied().fold(f32::NEG_INFINITY, f32::max),
                 AggregateOp::Avg => {
-                    let sum: f32 = data.iter().sum());
+                    let sum: f32 = data.iter().sum()));
                     sum / data.len() as f32
                 }
                 AggregateOp::Count => data.len() as f32,
@@ -634,7 +634,7 @@ impl SimdAggregator {
                     format!("Unsupported aggregate operation: {:?}", op)
                 )),
             }
-        });
+        }));
 
         self.context.record_simd_op(data.len() as u64);
         Ok(result)
@@ -664,7 +664,7 @@ impl SimdAggregator {
                     format!("Unsupported aggregate operation: {:?}", op)
                 )),
             }
-        });
+        }));
 
         self.context.record_simd_op(data.len() as u64);
         Ok(result)
@@ -694,7 +694,7 @@ impl SimdAggregator {
                     format!("Unsupported aggregate operation: {:?}", op)
                 )),
             }
-        });
+        }));
 
         self.context.record_simd_op(data.len() as u64);
         Ok(result)

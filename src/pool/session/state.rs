@@ -506,14 +506,14 @@ use std::time::Duration;
         assert_eq!(
             format!("{}", IsolationLevel::ReadCommitted),
             "READ_COMMITTED"
-        ));
-        assert_eq!(format!("{}", IsolationLevel::Serializable), "SERIALIZABLE"));
+        )));
+        assert_eq!(format!("{}", IsolationLevel::Serializable), "SERIALIZABLE")));
     }
 
     #[test]
     fn test_session_status_display() {
-        assert_eq!(format!("{}", SessionStatus::Active), "ACTIVE"));
-        assert_eq!(format!("{}", SessionStatus::Killed), "KILLED"));
+        assert_eq!(format!("{}", SessionStatus::Active), "ACTIVE")));
+        assert_eq!(format!("{}", SessionStatus::Killed), "KILLED")));
     }
 
     #[test]

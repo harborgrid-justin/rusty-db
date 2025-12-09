@@ -500,7 +500,7 @@ impl Quadtree {
         node: &mut QuadtreeNode,
         id: u64,
         point: Coordinate,
-        max_points: usize,
+        maxpoints: usize,
         maxdepth: usize,
     )> Result<()> {
         if !node.bounds.contains_coord(&point) {

@@ -488,15 +488,15 @@ impl<'a> AshReportGenerator<'a> {
         report.push_str("=== Active Session History Summary ===\n\n");
 
         let sample_count = self.ash.get_sample_count();
-        report.push_str(&format!("Total Samples: {}\n", sample_count)));
-        report.push_str(&format!("Sample Interval: {:?}\n\n", self.ash.get_sample_interval())));
+        report.push_str(&format!("Total Samples: {}\n", sample_count))));
+        report.push_str(&format!("Sample Interval: {:?}\n\n", self.ash.get_sample_interval()))));
 
         // Session state summary
         report.push_str("Session State Breakdown:\n");
         let state_summary = self.ash.get_session_state_summary();
         for (state, count) in state_summary.iter() {
             let percentage = (*count as f64 / sample_count as f64) * 100.0;
-            report.push_str(&format!("  {}: {} ({:.2}%)\n", state, count, percentage)));
+            report.push_str(&format!("  {}: {} ({:.2}%)\n", state, count, percentage))));
         }
         report.push_str("\n");
 
@@ -511,7 +511,7 @@ impl<'a> AshReportGenerator<'a> {
                 wait_class,
                 *time_us as f64 / 1000.0,
                 percentage
-            )));
+            ))));
         }
         report.push_str("\n");
 
@@ -525,8 +525,8 @@ impl<'a> AshReportGenerator<'a> {
                 sql.sql_id,
                 sql.total_db_time_us as f64 / 1000.0,
                 sql.total_samples
-            )));
-            report.push_str(&format!("     {}\n", sql.sql_text)));
+            ))));
+            report.push_str(&format!("     {}\n", sql.sql_text))));
         }
 
         report
@@ -548,12 +548,12 @@ impl<'a> AshReportGenerator<'a> {
                 sample.session_id,
                 sample.blocking_session.unwrap(),
                 sample.sample_time
-            )));
+            ))));
             if let Some(sql) = &sample.sql_text {
-                report.push_str(&format!("  SQL: {}\n", sql)));
+                report.push_str(&format!("  SQL: {}\n", sql))));
             }
             if let Some(wait_event) = &sample.wait_event {
-                report.push_str(&format!("  Wait Event: {}\n", wait_event)));
+                report.push_str(&format!("  Wait Event: {}\n", wait_event))));
             }
             report.push_str("\n");
         }

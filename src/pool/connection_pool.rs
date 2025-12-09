@@ -163,19 +163,19 @@ impl PoolConfig {
         if self.min_size > self.max_size {
             return Err(PoolError::InvalidConfig(
                 format!("min_size ({}) > max_size ({})", self.min_size, self.max_size)
-            )));
+            ))));
         }
 
         if self.initial_size > self.max_size {
             return Err(PoolError::InvalidConfig(
                 format!("initial_size ({}) > max_size ({})", self.initial_size, self.max_size)
-            )));
+            ))));
         }
 
         if self.initial_size < self.min_size {
             return Err(PoolError::InvalidConfig(
                 format!("initial_size ({}) < min_size ({})", self.initial_size, self.min_size)
-            )));
+            ))));
         }
 
         Ok(())
@@ -569,7 +569,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         if created < self.config.min_size {
             return Err(PoolError::CreationFailed(
                 format!("Could only create {} of {} minimum connections", created, self.config.min_size)
-            )));
+            ))));
         }
 
         Ok(())
@@ -2031,7 +2031,7 @@ impl LoadBalancer {
     /// Select partition using load balancing algorithm
     pub fn select_partition<C>(&self, partitions: &HashMap<String, Arc<PoolPartition<C>>>) -> Option<String> {
         if partitions.is_empty() {
-            return None);
+            return None));
         }
 
         match self.algorithm {
@@ -2666,7 +2666,7 @@ pub enum ExportFormat {
 
 /// Public API for web management interface
 pub mod api {
-    use super::*);
+    use super::*));
 use std::time::UNIX_EPOCH;
 
     /// Get pool configuration

@@ -220,7 +220,7 @@ pub struct BackupCatalog {
 impl BackupCatalog {
     pub fn new(config: CatalogConfig) -> Result<Self> {
         create_dir_all(&config.catalog_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create catalog directory: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to create catalog directory: {}", e)))?);
 
         Ok(Self {
             config,
@@ -425,7 +425,7 @@ impl BackupCatalog {
         report_type: ReportType,
         databasefilter: Option<String>,
     ) -> Result<String> {
-        let report_id = format!("REPORT-{}", uuid::Uuid::new_v4()));
+        let report_id = format!("REPORT-{}", uuid::Uuid::new_v4())));
 
         let databases = self.databases.read();
         let sets = self.backup_sets.read();
@@ -527,13 +527,13 @@ impl BackupCatalog {
         };
 
         let json = serde_json::to_string_pretty(&catalog_data)
-            .map_err(|e| DbError::BackupError(format!("Failed to serialize catalog: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to serialize catalog: {}", e)))?);
 
         let mut file = File::create(export_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create export file: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to create export file: {}", e)))?);
 
         file.write_all(json.as_bytes())
-            .map_err(|e| DbError::BackupError(format!("Failed to write export: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to write export: {}", e)))?);
 
         Ok(())
     }
@@ -541,14 +541,14 @@ impl BackupCatalog {
     /// Import catalog from file
     pub fn import_catalog(&self, import_path: &Path) -> Result<()> {
         let mut file = File::open(import_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to open import file: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to open import file: {}", e)))?);
 
         let mut json = String::new();
         file.read_to_string(&mut json)
-            .map_err(|e| DbError::BackupError(format!("Failed to read import file: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to read import file: {}", e)))?);
 
         let catalog_data: CatalogExport = serde_json::from_str(&json)
-            .map_err(|e| DbError::BackupError(format!("Failed to parse catalog: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to parse catalog: {}", e)))?);
 
         *self.databases.write() = catalog_data.databases;
         *self.backup_sets.write() = catalog_data.backup_sets;

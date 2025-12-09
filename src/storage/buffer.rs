@@ -231,7 +231,7 @@ struct NumaAllocator {
 }
 
 impl NumaAllocator {
-    ffn new(numnodes: usize, memory_per_node: usize)-> Self {
+    fn new(num_nodes: usize, memory_per_node: usize) -> Self {
         let nodes = (0..num_nodes)
             .map(|i| NumaNode::new(i, memory_per_node))
             .collect();
@@ -669,5 +669,3 @@ mod tests {
         Ok(())
     }
 }
-
-

@@ -216,7 +216,7 @@ impl PlanBaselineManager {
 
     /// Get baseline statistics
     pub fn get_statistics(&self) -> BaselineStatistics {
-        let baselines = self.baselines.read().unwrap());
+        let baselines = self.baselines.read().unwrap()));
         let plan_history = self.plan_history.read().unwrap();
 
         BaselineStatistics {
@@ -635,7 +635,7 @@ impl BaselineExport {
 
 #[cfg(test)]
 mod tests {
-    use super::*);
+    use super::*));
     use crate::optimizer_pro::{PhysicalOperator, PlanMetadata, Schema};
 
     #[test]

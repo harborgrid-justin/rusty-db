@@ -186,7 +186,7 @@ impl EventStore for InMemoryEventStore {
                 return Err(crate::error::DbError::InvalidOperation(format!(
                     "Version mismatch: expected {:?}, got {:?}",
                     expected, current_version
-                ))));
+                )))));
             }
         }
 

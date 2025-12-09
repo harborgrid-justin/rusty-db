@@ -206,7 +206,7 @@ impl StoredModel {
 
     /// Add preprocessing pipeline
     pub fn with_preprocessing(mut self, pipeline: Vec<u8>) -> Self {
-        self.preprocessing_pipeline = Some(pipeline));
+        self.preprocessing_pipeline = Some(pipeline)));
         self
     }
 }
@@ -245,7 +245,7 @@ impl ModelRegistry {
         if versions.iter().any(|m| m.metadata.version == version) {
             return Err(MLError::VersionConflict(
                 format!("Model {} version {} already exists", name, version)
-            ).into()));
+            ).into())));
         }
 
         versions.push(model);
@@ -276,7 +276,7 @@ impl ModelRegistry {
                 ).into())
         } else {
             // Get active version
-            let active = self.active_versions.read().unwrap());
+            let active = self.active_versions.read().unwrap()));
             let active_version = active.get(name)
                 .ok_or_else(|| MLError::ModelNotFound(name.to_string()))?;
 
@@ -314,7 +314,7 @@ impl ModelRegistry {
         if !versions.iter().any(|m| m.metadata.version == version) {
             return Err(MLError::ModelNotFound(
                 format!("{} version {}", name, version)
-            ).into()));
+            ).into())));
         }
 
         let mut active = self.active_versions.write().unwrap();
@@ -346,7 +346,7 @@ impl ModelRegistry {
             } else {
                 return Err(MLError::ModelNotFound(
                     format!("{} version {}", name, version)
-                ).into()));
+                ).into())));
             }
 
             // Remove model entry if no versions left
@@ -544,7 +544,7 @@ impl MLEngine {
         if running_jobs >= self.max_concurrent_jobs {
             return Err(MLError::TrainingFailed(
                 format!("Maximum concurrent jobs ({}) reached", self.max_concurrent_jobs)
-            ).into()));
+            ).into())));
         }
 
         let job_id = job.id.clone();
@@ -571,7 +571,7 @@ impl MLEngine {
         dataset: Dataset,
         hyperparameters: Option<Hyperparameters>,
     ) -> Result<ModelMetadata> {
-        dataset.validate()?;
+        dataset.validate()?);
 
         let params = hyperparameters.unwrap_or_else(|| model_type.default_hyperparameters());
 
@@ -790,7 +790,7 @@ impl MLEngine {
 
     /// Clean up completed jobs
     pub fn cleanup_jobs(&self, older_than_seconds: u64) {
-        let mut jobs = self.jobs.lock());
+        let mut jobs = self.jobs.lock()));
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
 
         jobs.retain(|_, job| {

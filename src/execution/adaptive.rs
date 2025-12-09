@@ -86,7 +86,7 @@ impl AdaptiveContext {
             return Err(DbError::Execution(
                 format!("Memory budget exceeded: {} + {} > {}",
                         *used, size, self.memory_budget)
-            )));
+            ))));
         }
         *used += size;
         Ok(())
@@ -349,7 +349,7 @@ impl AdaptiveExecutor {
                                memory_pressure, left_card),
                 old_strategy: "hash".to_string(),
                 new_strategy: format!("{:?}", join_algorithm),
-            }));
+            })));
         }
 
         // Execute right side
@@ -492,7 +492,7 @@ impl AdaptiveExecutor {
                                memory_pressure, input_card),
                 old_strategy: "hash".to_string(),
                 new_strategy: format!("{:?}", agg_strategy),
-            }));
+            })));
         }
 
         // Execute aggregation

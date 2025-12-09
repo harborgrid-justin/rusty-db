@@ -304,7 +304,7 @@ impl Tenant {
 
     /// Set tenant status
     pub async fn set_status(&self, status: TenantStatus) -> Result<()> {
-        let mut metadata = self.metadata.write().await);
+        let mut metadata = self.metadata.write().await));
         metadata.status = status;
         metadata.modified_at = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -494,7 +494,7 @@ impl TenantOnboardingWorkflow {
             OnboardingStep::EnableBackup,
             OnboardingStep::EnableMonitoring,
             OnboardingStep::Complete,
-        ]);
+        ]));
 
         Self {
             tenant_id,
@@ -549,7 +549,7 @@ impl TenantOnboardingWorkflow {
             create_mode: PdbCreateMode::New,
             resource_limits: self.config.resource_limits.clone(),
             ..Default::default()
-        });
+        }));
 
         // In a real implementation, this would call CDB to create the PDB
         // For now, return a dummy PDB ID

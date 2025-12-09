@@ -426,7 +426,7 @@ impl<'a> PatternMatcher<'a> {
     /// Check if a vertex matches a pattern
     fn vertex_matches_pattern(&self, vertex_id: VertexId, pattern: &VertexPattern) -> Result<bool> {
         let vertex = self.graph.get_vertex(vertex_id)
-            .ok_or_else(|| DbError::Internal(format!("Vertex {} not found", vertex_id)))?;
+            .ok_or_else(|| DbError::Internal(format!("Vertex {} not found", vertex_id)))?);
 
         // Check labels
         if !pattern.labels.is_empty() {
@@ -1074,7 +1074,7 @@ impl<'a> QueryExecutor<'a> {
             match item {
                 ReturnItem::Vertex(var) => columns.push(var.clone()),
                 ReturnItem::VertexProperty(var, prop) => {
-                    columns.push(format!("{}.{}", var, prop)));
+                    columns.push(format!("{}.{}", var, prop))));
                 }
                 ReturnItem::Count(_) => columns.push("count".to_string()),
                 _ => columns.push("result".to_string()),

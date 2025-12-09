@@ -591,14 +591,14 @@ impl ArenaAllocator {
         if contexts.len() >= self.config.max_contexts {
             return Err(ArenaError::ContextHierarchyViolation {
                 reason: format!("Maximum context limit reached: {}", self.config.max_contexts),
-            }));
+            })));
         }
 
         // Check if context already exists
         if contexts.contains_key(&id) {
             return Err(ArenaError::ContextHierarchyViolation {
                 reason: format!("Context already exists: {}", id),
-            }));
+            })));
         }
 
         // Validate parent relationship
@@ -739,7 +739,7 @@ impl ArenaAllocator {
         let new_block = MemoryBlock::new(block_size, use_mmap)
             .map_err(|e| MemoryError::OutOfMemory {
                 reason: format!("Block allocation failed: {}", e),
-            })?;
+            })?);
 
         // Link the new block to the chain
         self.link_block_to_context(context, Arc::clone(&new_block)).await;

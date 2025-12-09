@@ -528,7 +528,7 @@ impl AllocationMetadata {
 
     /// Sets guard patterns
     pub fn set_guards(&mut self, front_guard: u64, rear_guard: u64) {
-        self.front_guard = Some(front_guard));
+        self.front_guard = Some(front_guard)));
         self.rear_guard = Some(rear_guard);
     }
 
@@ -643,7 +643,7 @@ impl MemoryDebugger {
         let allocation_metadata = allocations.get(&allocation_id)
             .ok_or_else(|| DebugError::TrackingFailed {
                 reason: format!("Allocation {} not found", allocation_id),
-            })?;
+            })?);
 
         let mut metadata = allocation_metadata.lock();
 
@@ -1156,7 +1156,7 @@ impl MemoryDebugger {
             profile.total_allocations,
             profile.peak_memory_usage,
             profile.top_allocators.first().map(|p| &p.source),
-        ));
+        )));
 
         Ok(report)
     }

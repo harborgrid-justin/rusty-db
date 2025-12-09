@@ -144,7 +144,7 @@ impl ConstraintManager {
                                     actions.push(CascadeAction::Delete {
                                         table: referencing_table.clone(),
                                         condition: format!("{}={}", fk.columns[0], referenced_value),
-                                    }));
+                                    })));
                                 }
                                 ReferentialAction::SetNull => {
                                     actions.push(CascadeAction::Update {

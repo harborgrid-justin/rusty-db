@@ -789,7 +789,7 @@ pub fn import_block(data: &[u8]) -> Result<Block> {
 
 /// Export entire blockchain to bytes
 pub fn export_blockchain(table: &BlockchainTable) -> Result<Vec<u8>> {
-    let blocks = table.blocks.read().unwrap());
+    let blocks = table.blocks.read().unwrap()));
     let all_blocks: Vec<Block> = blocks.values().cloned().collect();
 
     bincode::serialize(&all_blocks)
@@ -802,7 +802,7 @@ pub fn export_blockchain(table: &BlockchainTable) -> Result<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*);
+    use super::*));
 
     #[test]
     fn test_ledger_row() {

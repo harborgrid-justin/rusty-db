@@ -166,7 +166,7 @@ impl CorruptionDetector {
 
     pub async fn repair_page(&self, page_id: u64, backupdata: &[u8]) -> Result<()> {
         // Write backup data to page
-        tracing::info!("Repairing page {} with {} bytes from backup", page_id, backup_data.len()));
+        tracing::info!("Repairing page {} with {} bytes from backup", page_id, backup_data.len())));
 
         // Remove from corrupted set
         self.corrupted_pages.write().remove(&page_id);
@@ -706,7 +706,7 @@ impl SelfHealingEngine {
                 Severity::High,
                 format!("Page {} is corrupted", corruption.page_id),
                 format!("page_{}", corruption.page_id),
-            ));
+            )));
 
             let action = HealingAction::RepairDataBlock {
                 page_id: corruption.page_id,
@@ -724,7 +724,7 @@ impl SelfHealingEngine {
                 Severity::Medium,
                 format!("Index {} requires rebuild", index_name),
                 index_name.clone(),
-            ));
+            )));
 
             let action = HealingAction::RebuildIndex { index_name };
             self.execute_healing(issue.issue_id, action).await?;
@@ -749,7 +749,7 @@ impl SelfHealingEngine {
                 Severity::High,
                 format!("Memory leak detected: {} MB/min growth", growth_rate),
                 "memory".to_string(),
-            ));
+            )));
 
             self.execute_healing(issue.issue_id, HealingAction::ForceCheckpoint).await?;
         }
@@ -761,7 +761,7 @@ impl SelfHealingEngine {
                 Severity::Critical,
                 format!("Node {} has failed", failed_node),
                 failed_node.clone(),
-            ));
+            )));
 
             if let Ok(new_primary) = self.failover_orchestrator.perform_failover(&failed_node).await {
                 let action = HealingAction::PromoteReplica { node_id: new_primary };

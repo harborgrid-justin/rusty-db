@@ -187,7 +187,7 @@ impl TimeSeriesAnalyzer {
                 // Find last point before timestamp
                 let prev = self.series.points.iter()
                     .filter(|p| p.timestamp <= timestamp)
-                    .last());
+                    .last()));
                 Ok(prev.map(|p| p.value).unwrap_or(0.0))
             }
             InterpolationMethod::Next => {
@@ -286,7 +286,7 @@ impl TimeSeriesAnalyzer {
     /// Get bucket key for timestamp
     fn get_bucket_key(&self, timestamp: SystemTime, bucket: &TimeBucket) -> Result<u64> {
         let secs = timestamp.duration_since(UNIX_EPOCH)
-            .unwrap_or(Duration::from_secs(0)).as_secs());
+            .unwrap_or(Duration::from_secs(0)).as_secs()));
         let bucket_secs = bucket.duration.as_secs();
 
         let bucket_key = match bucket.alignment {
@@ -438,7 +438,7 @@ impl TimeSeriesAnalyzer {
                 period: None,
                 strength: 0.0,
                 patterns: Vec::new(),
-            }));
+            })));
         }
 
         // Simple autocorrelation-based detection

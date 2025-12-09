@@ -119,7 +119,7 @@ impl MaskingPolicy {
         // Check table pattern if specified
         if let Some(ref table_pat) = self.table_pattern {
             let table_regex = Regex::new(table_pat)
-                .map_err(|e| DbError::InvalidInput(format!("Invalid table pattern: {}", e)))?;
+                .map_err(|e| DbError::InvalidInput(format!("Invalid table pattern: {}", e)))?);
             if !table_regex.is_match(table) {
                 return Ok(false);
             }
@@ -127,7 +127,7 @@ impl MaskingPolicy {
 
         // Check column pattern
         let col_regex = Regex::new(&self.column_pattern)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid column pattern: {}", e)))?;
+            .map_err(|e| DbError::InvalidInput(format!("Invalid column pattern: {}", e)))?);
         Ok(col_regex.is_match(column))
     }
 }
@@ -261,11 +261,11 @@ impl MaskingEngine {
     pub fn create_policy_custom(&mut self, policy: MaskingPolicy) -> Result<()> {
         // Validate regex patterns
         Regex::new(&policy.column_pattern)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid column pattern: {}", e)))?;
+            .map_err(|e| DbError::InvalidInput(format!("Invalid column pattern: {}", e)))?);
 
         if let Some(ref table_pat) = policy.table_pattern {
             Regex::new(table_pat)
-                .map_err(|e| DbError::InvalidInput(format!("Invalid table pattern: {}", e)))?;
+                .map_err(|e| DbError::InvalidInput(format!("Invalid table pattern: {}", e)))?);
         }
 
         self.policies.write().insert(policy.name.clone(), policy);
@@ -275,7 +275,7 @@ impl MaskingEngine {
     /// Drop a masking policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
         self.policies.write().remove(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
         Ok(())
     }
 
@@ -283,7 +283,7 @@ impl MaskingEngine {
     pub fn enable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
         let policy = policies.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
         policy.enabled = true;
         Ok(())
     }
@@ -292,7 +292,7 @@ impl MaskingEngine {
     pub fn disable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
         let policy = policies.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
         policy.enabled = false;
         Ok(())
     }
@@ -339,7 +339,7 @@ impl MaskingEngine {
     ) -> Result<String> {
         // Check consistency cache if key provided
         if let Some(key) = consistency_key {
-            let cache_key = format!("{}:{}", key, value));
+            let cache_key = format!("{}:{}", key, value)));
             let cache = self.consistency_cache.read();
             if let Some(cached) = cache.get(&cache_key) {
                 self.stats.write().cache_hits += 1;
@@ -368,7 +368,7 @@ impl MaskingEngine {
             }
 
             MaskingType::Shuffle => {
-                let mut chars: Vec<char> = value.chars().collect());
+                let mut chars: Vec<char> = value.chars().collect()));
                 use rand::seq::SliceRandom;
                 chars.shuffle(&mut rand::thread_rng());
                 chars.iter().collect()
@@ -377,7 +377,7 @@ impl MaskingEngine {
             MaskingType::Substitution { table } => {
                 let tables = self.substitution_tables.read();
                 let sub_table = tables.get(table)
-                    .ok_or_else(|| DbError::NotFound(format!("Substitution table not found: {}", table)))?;
+                    .ok_or_else(|| DbError::NotFound(format!("Substitution table not found: {}", table)))?);
 
                 if let Some(key) = consistency_key {
                     sub_table.get_consistent(value, key).to_string()
@@ -416,16 +416,16 @@ impl MaskingEngine {
             }
 
             MaskingType::Custom { function_name } => {
-                let functions = self.custom_functions.read());
+                let functions = self.custom_functions.read()));
                 let func = functions.get(function_name)
-                    .ok_or_else(|| DbError::NotFound(format!("Custom function not found: {}", function_name)))?;
+                    .ok_or_else(|| DbError::NotFound(format!("Custom function not found: {}", function_name)))?);
                 func(value)?
             }
         };
 
         // Cache the result if consistency key provided
         if let Some(key) = consistency_key {
-            let cache_key = format!("{}:{}", key, value));
+            let cache_key = format!("{}:{}", key, value)));
             self.consistency_cache.write().insert(cache_key, masked.clone());
         }
 
@@ -459,7 +459,7 @@ impl MaskingEngine {
                 "*".repeat(local.len())
             } else {
                 format!("{}{}", &local[..1], "*".repeat(local.len() - 1))
-            });
+            }));
             Ok(format!("{}{}", masked_local, domain))
         } else {
             Ok("***@***.***".to_string())
@@ -468,7 +468,7 @@ impl MaskingEngine {
 
     /// Mask credit card (show last 4 digits)
     fn mask_credit_card(&self, value: &str) -> String {
-        let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect());
+        let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect()));
         if digits.len() >= 4 {
             let prefix_len = digits.len() - 4;
             format!("{}{}",  "*".repeat(prefix_len), &digits[prefix_len..])
@@ -479,7 +479,7 @@ impl MaskingEngine {
 
     /// Mask SSN (show last 4 digits)
     fn mask_ssn(&self, value: &str) -> String {
-        let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect());
+        let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect()));
         if digits.len() == 9 {
             format!("***-**-{}", &digits[5..])
         } else {
@@ -489,7 +489,7 @@ impl MaskingEngine {
 
     /// Mask phone number
     fn mask_phone(&self, value: &str) -> String {
-        let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect());
+        let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect()));
         if digits.len() >= 4 {
             let prefix_len = digits.len() - 4;
             format!("({}) ***-{}", "*".repeat(3), &digits[prefix_len..])
@@ -504,7 +504,7 @@ impl MaskingEngine {
         name: String,
         function: MaskingFunction,
     ) {
-        self.custom_functions.write().insert(name, function));
+        self.custom_functions.write().insert(name, function)));
     }
 
     /// Add a substitution table
@@ -687,7 +687,7 @@ mod tests {
         // Register custom function
         let custom_fn: MaskingFunction = Box::new(|value: &str| {
             Ok(format!("CUSTOM_{}", value.to_uppercase()))
-        }));
+        })));
         engine.register_custom_function("my_mask".to_string(), custom_fn);
 
         // Use custom function

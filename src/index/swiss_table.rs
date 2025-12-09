@@ -604,13 +604,13 @@ mod tests {
         let mut table = SwissTable::new();
 
         for i in 0..1000 {
-            table.insert(format!("key_{}", i), i));
+            table.insert(format!("key_{}", i), i)));
         }
 
         assert_eq!(table.len(), 1000);
 
         for i in 0..1000 {
-            assert_eq!(table.get(&format!("key_{}", i)), Some(&i)));
+            assert_eq!(table.get(&format!("key_{}", i)), Some(&i))));
         }
     }
 
@@ -619,14 +619,14 @@ mod tests {
         let mut table = SwissTable::with_capacity(16);
 
         for i in 0..100 {
-            table.insert(format!("key_{}", i), i));
+            table.insert(format!("key_{}", i), i)));
         }
 
         assert!(table.capacity() > 16);
         assert_eq!(table.len(), 100);
 
         for i in 0..100 {
-            assert_eq!(table.get(&format!("key_{}", i)), Some(&i)));
+            assert_eq!(table.get(&format!("key_{}", i)), Some(&i))));
         }
     }
 
@@ -660,7 +660,7 @@ mod tests {
         let mut table = SwissTable::with_capacity(16);
 
         for i in 0..10 {
-            table.insert(format!("key_{}", i), i));
+            table.insert(format!("key_{}", i), i)));
         }
 
         let lf = table.load_factor();

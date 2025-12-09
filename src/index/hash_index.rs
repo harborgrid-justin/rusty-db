@@ -549,12 +549,12 @@ mod tests {
 
         // Insert enough to cause splits
         for i in 0..20 {
-            index.insert(i, format!("value_{}", i)).unwrap());
+            index.insert(i, format!("value_{}", i)).unwrap()));
         }
 
         // Verify all values
         for i in 0..20 {
-            assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i))));
+            assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i)))));
         }
 
         let stats = index.stats();
@@ -580,12 +580,12 @@ mod tests {
 
         // Insert enough to trigger splits
         for i in 0..20 {
-            index.insert(i, format!("value_{}", i)).unwrap());
+            index.insert(i, format!("value_{}", i)).unwrap()));
         }
 
         // Verify all values
         for i in 0..20 {
-            assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i))));
+            assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i)))));
         }
 
         let stats = index.stats();

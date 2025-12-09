@@ -699,7 +699,7 @@ mod tests {
 
         // Fill memtable
         for i in 0..20 {
-            let key = format!("key{:02}", i).into_bytes());
+            let key = format!("key{:02}", i).into_bytes()));
             let value = b"value".to_vec();
             lsm.put(key, value).unwrap();
         }

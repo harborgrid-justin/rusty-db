@@ -351,7 +351,7 @@ impl SessionController {
         let group_id = {
             let sessions = self.sessions.read().unwrap();
             let session = sessions.get(&session_id)
-                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
+                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
             session.group_id
         };
 
@@ -382,7 +382,7 @@ impl SessionController {
     fn activate_session(&self, session_id: SessionId) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
         let session = sessions.get_mut(&session_id)
-            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
 
         session.start_query();
         let group_id = session.group_id;
@@ -414,7 +414,7 @@ impl SessionController {
         let priority = {
             let sessions = self.sessions.read().unwrap();
             let session = sessions.get(&session_id)
-                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
+                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
             session.priority
         };
 
@@ -441,7 +441,7 @@ impl SessionController {
         let group_id = {
             let mut sessions = self.sessions.write().unwrap();
             let session = sessions.get_mut(&session_id)
-                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
+                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
 
             session.complete_query();
             session.group_id
@@ -514,7 +514,7 @@ impl SessionController {
     pub fn terminate_session(&self, session_id: SessionId, reason: &str) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
         let session = sessions.get_mut(&session_id)
-            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
 
         session.state = SessionState::Terminated;
         let group_id = session.group_id;
@@ -619,7 +619,7 @@ impl SessionController {
     pub fn boost_session_priority(&self, session_id: SessionId) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
         let session = sessions.get_mut(&session_id)
-            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
 
         session.boost_priority();
         Ok(())
@@ -661,7 +661,7 @@ impl SessionController {
     ) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
         let session = sessions.get_mut(&session_id)
-            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
 
         session.idle_timeout = idle_timeout;
         session.max_execution_time = max_execution_time;

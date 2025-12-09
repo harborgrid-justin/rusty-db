@@ -34,7 +34,7 @@ impl ParallelExecutor {
             .thread_name("rustydb-worker")
             .enable_all()
             .build()
-            .map_err(|e| DbError::Internal(format!("Failed to create runtime: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Failed to create runtime: {}", e)))?);
 
         Ok(Self {
             worker_count,
@@ -131,7 +131,7 @@ impl ParallelExecutor {
         };
         
         let (left_result, right_result) = tokio::try_join!(left_handle, right_handle)
-            .map_err(|e| DbError::Internal(format!("Join execution failed: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Join execution failed: {}", e)))?);
         
         // Perform hash join
         self.hash_join_parallel(left_result, right_result).await
@@ -166,7 +166,7 @@ impl ParallelExecutor {
         
         // Wait for hash table construction
         for handle in handles {
-            handle.await.map_err(|e| DbError::Internal(format!("Hash table build failed: {}", e)))?;
+            handle.await.map_err(|e| DbError::Internal(format!("Hash table build failed: {}", e)))?);
         }
         
         // Probe phase - partition left relation

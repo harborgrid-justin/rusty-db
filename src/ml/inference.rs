@@ -373,7 +373,7 @@ impl ModelCache {
     pub fn warmup(&self, registry: &ModelRegistry, model_names: Vec<String>) -> Result<()> {
         for name in model_names {
             let stored_model = registry.get(&name, None)?;
-            let key = format!("{}:{}", name, stored_model.metadata.version));
+            let key = format!("{}:{}", name, stored_model.metadata.version)));
             self.put(key, &stored_model);
         }
         Ok(())
@@ -436,32 +436,32 @@ impl BatchPredictor {
         match model_type {
             ModelType::LinearRegression => {
                 let model: LinearRegression = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
                 model.predict(features)
             }
             ModelType::LogisticRegression => {
                 let model: LogisticRegression = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
                 model.predict(features)
             }
             ModelType::DecisionTree => {
                 let model: DecisionTree = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
                 model.predict(features)
             }
             ModelType::RandomForest => {
                 let model: RandomForest = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
                 model.predict(features)
             }
             ModelType::KMeans => {
                 let model: KMeansClustering = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
                 model.predict(features)
             }
             ModelType::NaiveBayes => {
                 let model: NaiveBayes = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
                 model.predict(features)
             }
         }
@@ -553,7 +553,7 @@ impl InferenceEngine {
         // Get model from cache or registry
         let cache_key = model_version.as_ref()
             .map(|v| format!("{}:{}", model_name, v))
-            .unwrap_or_else(|| model_name.to_string()));
+            .unwrap_or_else(|| model_name.to_string())));
 
         let (model_type, model_data, feature_names, cache_hit, actual_version) =
             if let Some((mt, data, names)) = self.cache.get(&cache_key) {
@@ -653,12 +653,12 @@ impl InferenceEngine {
         let importance_scores = match stored.metadata.model_type {
             ModelType::LinearRegression => {
                 let model: LinearRegression = bincode::deserialize(&stored.model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
                 model.feature_importance()
             }
             ModelType::LogisticRegression => {
                 let model: LogisticRegression = bincode::deserialize(&stored.model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
                 model.feature_importance()
             }
             _ => None,

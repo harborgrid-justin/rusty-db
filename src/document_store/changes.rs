@@ -169,7 +169,7 @@ impl ResumeToken {
 
     /// Decode token from string
     pub fn decode(s: &str) -> Result<Self> {
-        let parts: Vec<&str> = s.split(':').collect());
+        let parts: Vec<&str> = s.split(':').collect()));
         if parts.len() != 2 {
             return Err(crate::error::DbError::InvalidInput(
                 "Invalid resume token format".to_string()
@@ -508,7 +508,7 @@ impl DiffGenerator {
                         key.clone()
                     } else {
                         format!("{}.{}", path, key)
-                    });
+                    }));
 
                     if let Some(new_value) = new_obj.get(key) {
                         if old_value != new_value {
@@ -526,7 +526,7 @@ impl DiffGenerator {
                             key.clone()
                         } else {
                             format!("{}.{}", path, key)
-                        });
+                        }));
                         operations.push(DiffOperation::Add {
                             path: field_path,
                             value: new_value.clone(),
@@ -644,7 +644,7 @@ impl DiffOperation {
                         .or_insert_with(|| Value::Object(serde_json::Map::new()));
                 } else {
                         format!("Cannot navigate path: {}", path)
-                    )));
+                    ))));
                 }
             }
         }
@@ -672,10 +672,10 @@ impl DiffOperation {
                 if let Value::Object(obj) = current {
                     current = obj.get_mut(*part)
                             format!("Path not found: {}", path)
-                        ))?;
+                        ))?);
                 } else {
                         format!("Cannot navigate path: {}", path)
-                    )));
+                    ))));
                 }
             }
         }

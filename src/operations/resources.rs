@@ -148,7 +148,7 @@ impl MemoryManager {
                 "Insufficient memory: requested {}, available {}",
                 bytes,
                 self.total_bytes - *used
-            ))));
+            )))));
         }
         
         *used += bytes;

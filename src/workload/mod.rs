@@ -330,7 +330,7 @@ impl WorkloadIntelligence {
             start_snapshot_id,
             end_snapshot_id,
             AnalysisScope::Database,
-        )?;
+        )?);
 
         self.advisor.execute_analysis(analysis_id)?;
 

@@ -243,7 +243,7 @@ impl ConnectionManager {
 
     async fn acquire_connection(&self) -> Result<()> {
         let _permit = self.accept_connections.acquire().await
-            .map_err(|e| DbError::Internal(format!("Connection acquire failed: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Connection acquire failed: {}", e)))?);
 
         let mut count = self.active_connections.lock().await;
         *count += 1;
@@ -281,7 +281,7 @@ impl ConnectionManager {
                     return Err(DbError::Internal(format!(
                         "Timeout waiting for connections to drain. {} active connections remaining",
                         count
-                    ))));
+                    )))));
                 }
             }
 
@@ -380,7 +380,7 @@ impl LifecycleManager {
             return Err(DbError::Internal(format!(
                 "Startup failed - unhealthy components: {:?}",
                 unhealthy
-            ))));
+            )))));
         }
 
         // Update system state
@@ -429,7 +429,7 @@ impl LifecycleManager {
             }
 
             if visiting.contains(node) {
-                return Err(DbError::Internal(format!("Circular dependency detected: {}", node))));
+                return Err(DbError::Internal(format!("Circular dependency detected: {}", node)))));
             }
 
             visiting.insert(node.to_string());
@@ -465,7 +465,7 @@ impl LifecycleManager {
             components.get(name)
                 .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", name)))?
                 .component.clone()
-        });
+        }));
 
         component.initialize().await?;
 
@@ -481,7 +481,7 @@ impl LifecycleManager {
             components.get(name)
                 .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", name)))?
                 .component.clone()
-        });
+        }));
 
         self.update_component_state(name, ComponentState::Stopped, ComponentState::Starting).await;
 
@@ -499,7 +499,7 @@ impl LifecycleManager {
             components.get(name)
                 .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", name)))?
                 .component.clone()
-        });
+        }));
 
         self.update_component_state(name, ComponentState::Running, ComponentState::Stopping).await;
 
@@ -612,14 +612,14 @@ impl LifecycleManager {
             components.get(name)
                 .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", name)))?
                 .component.clone()
-        });
+        }));
 
         let metadata = component.metadata();
         if !metadata.hot_reloadable {
             return Err(DbError::Internal(format!(
                 "Component '{}' does not support hot reload",
                 name
-            ))));
+            )))));
         }
 
         component.reload().await?;

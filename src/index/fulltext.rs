@@ -339,12 +339,12 @@ impl DocumentStore {
                     let start = i.saturating_sub(5);
                     let end = (i + 10).min(doc.tokens.len());
                     let snippet: Vec<_> = doc.tokens[start..end].to_vec();
-                    return format!("...{}...", snippet.join(" ")));
+                    return format!("...{}...", snippet.join(" "))));
                 }
             }
             // No match found, return beginning of document
             let snippet: Vec<_> = doc.tokens.iter().take(10).cloned().collect();
-            return format!("{}...", snippet.join(" ")));
+            return format!("{}...", snippet.join(" "))));
         }
         String::new()
     }
@@ -644,7 +644,7 @@ impl Highlighter {
             if let Ok(re) = regex::Regex::new(&format!("(?i){}", pattern)) {
                 result = re.replace_all(&result, |caps: &regex::Captures| {
                     format!("{}{}{}", prefix, &caps[0], suffix)
-                }).to_string());
+                }).to_string()));
             }
         }
         

@@ -547,7 +547,7 @@ impl ApiGateway {
                 client_ip: request.client_ip,
                 reason: format!("Security filter: {}", e),
                 timestamp: SystemTime::now(),
-            }));
+            })));
 
             return Ok(ApiResponse {
                 status_code: 403,
@@ -598,7 +598,7 @@ impl ApiGateway {
                                     client_ip: request.client_ip,
                                     reason: format!("Missing permissions: {:?}", route.required_permissions),
                                     timestamp: SystemTime::now(),
-                                }));
+                                })));
 
                                 return Ok(ApiResponse {
                                     status_code: 403,
@@ -634,7 +634,7 @@ impl ApiGateway {
         }
 
         // Rate limiting
-        let rate_limit_key = format!("{}:{}", request.client_ip, route.id));
+        let rate_limit_key = format!("{}:{}", request.client_ip, route.id)));
         if let Err(_) = self.rate_limiter.check_rate_limit(
             &rate_limit_key,
             route.rate_limit.as_ref()
@@ -1214,7 +1214,7 @@ impl JwtValidator {
         let signature = BASE64.decode(parts[2])
             .map_err(|_| DbError::InvalidOperation("Invalid JWT signature".to_string()))?;
 
-        let message = format!("{}.{}", parts[0], parts[1]));
+        let message = format!("{}.{}", parts[0], parts[1])));
         self.verify_signature(&message, &signature)?;
 
         // Validate claims
@@ -2578,7 +2578,7 @@ impl AuditLogger {
             action: format!("{:?}", request.method),
             result: AuditResult::Success,
             details: HashMap::new(),
-        });
+        }));
 
         self.add_event(event);
     }
@@ -2596,7 +2596,7 @@ impl AuditLogger {
             action: format!("{:?}", event.event_type),
             result: AuditResult::Denied,
             details: {
-                let mut details = HashMap::new());
+                let mut details = HashMap::new()));
                 details.insert("reason".to_string(), event.reason.clone());
                 details
             },

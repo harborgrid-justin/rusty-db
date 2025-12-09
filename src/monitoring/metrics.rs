@@ -348,7 +348,7 @@ impl MetricRegistry {
     }
 
     pub fn register_counter(&self, name: impl Into<String>, help: impl Into<String>) -> Counter {
-        let full_name = format!("{}_{}", self.prefix, name.into()));
+        let full_name = format!("{}_{}", self.prefix, name.into())));
         let counter = Counter::new(full_name.clone(), help);
         self.metrics.write().insert(full_name, Metric::Counter(counter.clone()));
         counter
@@ -360,14 +360,14 @@ impl MetricRegistry {
         help: impl Into<String>,
         labels: HashMap<String, String>,
     ) -> Counter {
-        let full_name = format!("{}_{}", self.prefix, name.into()));
+        let full_name = format!("{}_{}", self.prefix, name.into())));
         let counter = Counter::new(full_name.clone(), help).with_labels(labels);
         self.metrics.write().insert(full_name, Metric::Counter(counter.clone()));
         counter
     }
 
     pub fn register_gauge(&self, name: impl Into<String>, help: impl Into<String>) -> Gauge {
-        let full_name = format!("{}_{}", self.prefix, name.into()));
+        let full_name = format!("{}_{}", self.prefix, name.into())));
         let gauge = Gauge::new(full_name.clone(), help);
         self.metrics.write().insert(full_name, Metric::Gauge(gauge.clone()));
         gauge
@@ -379,7 +379,7 @@ impl MetricRegistry {
         help: impl Into<String>,
         labels: HashMap<String, String>,
     ) -> Gauge {
-        let full_name = format!("{}_{}", self.prefix, name.into()));
+        let full_name = format!("{}_{}", self.prefix, name.into())));
         let gauge = Gauge::new(full_name.clone(), help).with_labels(labels);
         self.metrics.write().insert(full_name, Metric::Gauge(gauge.clone()));
         gauge
@@ -391,7 +391,7 @@ impl MetricRegistry {
         help: impl Into<String>,
         buckets: Vec<f64>,
     ) -> Histogram {
-        let full_name = format!("{}_{}", self.prefix, name.into()));
+        let full_name = format!("{}_{}", self.prefix, name.into())));
         let histogram = Histogram::new(full_name.clone(), help, buckets);
         self.metrics.write().insert(full_name, Metric::Histogram(histogram.clone()));
         histogram
@@ -404,26 +404,26 @@ impl MetricRegistry {
         buckets: Vec<f64>,
         labels: HashMap<String, String>,
     ) -> Histogram {
-        let full_name = format!("{}_{}", self.prefix, name.into()));
+        let full_name = format!("{}_{}", self.prefix, name.into())));
         let histogram = Histogram::new(full_name.clone(), help, buckets).with_labels(labels);
         self.metrics.write().insert(full_name, Metric::Histogram(histogram.clone()));
         histogram
     }
 
     pub fn register_summary(&self, name: impl Into<String>, help: impl Into<String>) -> Summary {
-        let full_name = format!("{}_{}", self.prefix, name.into()));
+        let full_name = format!("{}_{}", self.prefix, name.into())));
         let summary = Summary::new(full_name.clone(), help);
         self.metrics.write().insert(full_name, Metric::Summary(summary.clone()));
         summary
     }
 
     pub fn unregister(&self, name: &str) -> Option<Metric> {
-        let full_name = format!("{}_{}", self.prefix, name));
+        let full_name = format!("{}_{}", self.prefix, name)));
         self.metrics.write().remove(&full_name)
     }
 
     pub fn get_metric(&self, name: &str) -> Option<Metric> {
-        let full_name = format!("{}_{}", self.prefix, name));
+        let full_name = format!("{}_{}", self.prefix, name)));
         self.metrics.read().get(&full_name).cloned()
     }
 
@@ -439,28 +439,28 @@ impl MetricRegistry {
         for (_, metric) in metrics.iter() {
             match metric {
                 Metric::Counter(counter) => {
-                    output.push_str(&format!("# HELP {} {}\n", counter.name(), counter.help())));
-                    output.push_str(&format!("# TYPE {} counter\n", counter.name())));
+                    output.push_str(&format!("# HELP {} {}\n", counter.name(), counter.help()))));
+                    output.push_str(&format!("# TYPE {} counter\n", counter.name()))));
                     output.push_str(&format!(
                         "{}{} {}\n",
                         counter.name(),
                         Self::format_labels(counter.labels()),
                         counter.get()
-                    )));
+                    ))));
                 }
                 Metric::Gauge(gauge) => {
-                    output.push_str(&format!("# HELP {} {}\n", gauge.name(), gauge.help())));
-                    output.push_str(&format!("# TYPE {} gauge\n", gauge.name())));
+                    output.push_str(&format!("# HELP {} {}\n", gauge.name(), gauge.help()))));
+                    output.push_str(&format!("# TYPE {} gauge\n", gauge.name()))));
                     output.push_str(&format!(
                         "{}{} {}\n",
                         gauge.name(),
                         Self::format_labels(gauge.labels()),
                         gauge.get()
-                    )));
+                    ))));
                 }
                 Metric::Histogram(histogram) => {
-                    output.push_str(&format!("# HELP {} {}\n", histogram.name(), histogram.help())));
-                    output.push_str(&format!("# TYPE {} histogram\n", histogram.name())));
+                    output.push_str(&format!("# HELP {} {}\n", histogram.name(), histogram.help()))));
+                    output.push_str(&format!("# TYPE {} histogram\n", histogram.name()))));
 
                     let buckets = histogram.get_buckets();
                     for bucket in &buckets {
@@ -471,7 +471,7 @@ impl MetricRegistry {
                             histogram.name(),
                             Self::format_labels(&labels),
                             bucket.count
-                        )));
+                        ))));
                     }
 
                     output.push_str(&format!(
@@ -479,17 +479,17 @@ impl MetricRegistry {
                         histogram.name(),
                         Self::format_labels(histogram.labels()),
                         histogram.get_sum()
-                    )));
+                    ))));
                     output.push_str(&format!(
                         "{}_count{} {}\n",
                         histogram.name(),
                         Self::format_labels(histogram.labels()),
                         histogram.get_count()
-                    )));
+                    ))));
                 }
                 Metric::Summary(summary) => {
-                    output.push_str(&format!("# HELP {} {}\n", summary.name(), summary.help())));
-                    output.push_str(&format!("# TYPE {} summary\n", summary.name())));
+                    output.push_str(&format!("# HELP {} {}\n", summary.name(), summary.help()))));
+                    output.push_str(&format!("# TYPE {} summary\n", summary.name()))));
 
                     for q in &[0.5, 0.9, 0.99] {
                         if let Some(value) = summary.get_quantile(*q) {
@@ -500,7 +500,7 @@ impl MetricRegistry {
                                 summary.name(),
                                 Self::format_labels(&labels),
                                 value
-                            )));
+                            ))));
                         }
                     }
 
@@ -509,13 +509,13 @@ impl MetricRegistry {
                         summary.name(),
                         Self::format_labels(summary.labels()),
                         summary.get_sum()
-                    )));
+                    ))));
                     output.push_str(&format!(
                         "{}_count{} {}\n",
                         summary.name(),
                         Self::format_labels(summary.labels()),
                         summary.get_count()
-                    )));
+                    ))));
                 }
             }
             output.push('\n');
@@ -532,7 +532,7 @@ impl MetricRegistry {
         let label_pairs: Vec<String> = labels
             .iter()
             .map(|(k, v)| format!("{}=\"{}\"", k, v))
-            .collect());
+            .collect()));
 
         format!("{{{}}}", label_pairs.join(","))
     }
@@ -559,7 +559,7 @@ impl MetricAggregator {
     }
 
     pub fn record(&self, metricname: impl Into<String>, value: f64) {
-        let now = SystemTime::now());
+        let now = SystemTime::now()));
         let name = metric_name.into();
 
         let mut aggs = self.aggregations.write();

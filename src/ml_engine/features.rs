@@ -361,7 +361,7 @@ impl OneHotEncoder {
             if self.feature_indices.contains(&i) {
                 if let Some(categories) = self.categories.get(&i) {
                     for &category in categories {
-                        new_feature_names.push(format!("{}_{}", name, category)));
+                        new_feature_names.push(format!("{}_{}", name, category))));
                     }
                 }
             } else {
@@ -540,7 +540,7 @@ impl Imputer {
     }
 
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
-        let n_features = dataset.num_features());
+        let n_features = dataset.num_features()));
         self.fill_values = vec![0.0; n_features];
 
         for i in 0..n_features {
@@ -697,7 +697,7 @@ impl PolynomialTransform {
                             "{}*{}",
                             dataset.feature_names[i],
                             dataset.feature_names[j]
-                        )));
+                        ))));
                     }
                 }
             }

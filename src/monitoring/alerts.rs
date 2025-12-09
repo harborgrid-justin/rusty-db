@@ -437,7 +437,7 @@ impl AlertManager {
                     rule.severity,
                     format!("Threshold exceeded: {} = {:.2} (threshold: {:.2})",
                         metric_name, value, rule.threshold),
-                ));
+                )));
 
                 self.last_trigger_time.write().insert(rule.name.clone(), Instant::now());
             }
@@ -463,7 +463,7 @@ impl AlertManager {
                         rule.category,
                         rule.severity,
                         format!("Anomaly detected in {}: {:.2}", metric_name, value),
-                    ));
+                    )));
                 }
             }
         }

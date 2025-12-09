@@ -513,12 +513,12 @@ impl CapacityPlanner {
                 recommended_actions.push(format!(
                     "URGENT: Storage will be full in {} days. Expand capacity immediately.",
                     days
-                )));
+                ))));
             } else if days < 90 {
                 recommended_actions.push(format!(
                     "Plan storage expansion within {} days to avoid disruption.",
                     days
-                )));
+                ))));
             }
         }
 

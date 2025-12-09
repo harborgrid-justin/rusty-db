@@ -502,7 +502,7 @@ impl FileManager {
                 "Invalid page size: expected {}, got {}",
                 PAGE_SIZE,
                 data.len()
-            ))));
+            )))));
         }
         self.write(handleOptions::new(offset), data).await
     }
@@ -543,7 +543,7 @@ impl FileManager {
             return Err(DbError::Internal(format!(
                 "Read failed: error code {}",
                 completion.error_code
-            ))));
+            )))));
         }
 
         // Extract the requested data from the aligned buffer
@@ -614,7 +614,7 @@ impl FileManager {
             return Err(DbError::Internal(format!(
                 "Write failed: error code {}",
                 completion.error_code
-            ))));
+            )))));
         }
 
         // Sync if requested

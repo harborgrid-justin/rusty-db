@@ -905,7 +905,7 @@ impl Optimizer {
         use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         // Simplified hashing - in production would use structural hashing
-        format!("{:?}", plan).hash(&mut hasher));
+        format!("{:?}", plan).hash(&mut hasher)));
         hasher.finish()
     }
 

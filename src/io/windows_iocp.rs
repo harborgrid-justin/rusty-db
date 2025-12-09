@@ -297,7 +297,7 @@ impl WindowsIocp {
                 return Err(DbError::Internal(format!(
                     "Unsupported operation type: {:?}",
                     request.op_type
-                ))));
+                )))));
             }
         };
 
@@ -329,7 +329,7 @@ impl WindowsIocp {
         if result == 0 {
             let error = unsafe { windows_sys::Win32::Foundation::GetLastError() };
             if error != windows_sys::Win32::Foundation::ERROR_IO_PENDING {
-                return Err(DbError::IoError(format!("ReadFile failed: {}", error))));
+                return Err(DbError::IoError(format!("ReadFile failed: {}", error)))));
             }
         }
 
@@ -356,7 +356,7 @@ impl WindowsIocp {
         if result == 0 {
             let error = unsafe { windows_sys::Win32::Foundation::GetLastError() };
             if error != windows_sys::Win32::Foundation::ERROR_IO_PENDING {
-                return Err(DbError::IoError(format!("WriteFile failed: {}", error))));
+                return Err(DbError::IoError(format!("WriteFile failed: {}", error)))));
             }
         }
 
@@ -371,7 +371,7 @@ impl WindowsIocp {
 
         if result == 0 {
             let error = unsafe { windows_sys::Win32::Foundation::GetLastError() };
-            return Err(DbError::IoError(format!("FlushFileBuffers failed: {}", error))));
+            return Err(DbError::IoError(format!("FlushFileBuffers failed: {}", error)))));
         }
 
         // Mark as completed immediately

@@ -759,7 +759,7 @@ impl AnalyticsManager {
     pub fn create_view(&self, view: View) -> Result<()> {
         let mut views = self.views.write();
         if views.contains_key(&view.name) {
-            return Err(crate::error::DbError::Catalog(format!("View {} already exists", view.name))));
+            return Err(crate::error::DbError::Catalog(format!("View {} already exists", view.name)))));
         }
         views.insert(view.name.clone(), view);
         Ok(())
@@ -930,7 +930,7 @@ impl AnalyticsManager {
     }
     
     pub fn estimate_selectivity(&self, table: &str, column: &str, value: &str) -> f64 {
-        let key = format!("{}_{}", table, column));
+        let key = format!("{}_{}", table, column)));
         if let Some(histogram) = self.get_histogram(&key) {
             return histogram.estimate_selectivity(value);
         }
@@ -945,7 +945,7 @@ impl AnalyticsManager {
     }
     
     pub fn estimate_range_selectivity(&self, table: &str, column: &str, lower: &str, upper: &str) -> f64 {
-        let key = format!("{}_{}", table, column));
+        let key = format!("{}_{}", table, column)));
         if let Some(histogram) = self.get_histogram(&key) {
             return histogram.estimate_range_selectivity(lower, upper);
         }
@@ -1529,7 +1529,7 @@ impl ParallelQueryExecutor {
         partitions
     }
     
-    pub ffn hash_partition(&self, data: Vec<Vec<String>>, key_index: usize, numpartitions: usize)-> Vec<Vec<Vec<String>>> {
+    pub fffn hash_partition(&self, data: Vec<Vec<String>>, key_index: usize, numpartitions: usize)> Vec<Vec<Vec<String>>> {
         let mut partitions = vec![Vec::new(); num_partitions];
         
         for row in data {
@@ -2506,7 +2506,7 @@ impl MultidimensionalAggregator {
         cube
     }
     
-    fnfn aggregate_by_dimensions(&self, _data: &[Vec<String>], dimensions: &[usize], _cube: &mut AggregationCube)        // In production, perform actual grouping and aggregation
+    fnfnfn aggregate_by_dimensions(&self, data: &[Vec<String>], dimensions: &[usize], _cube: &mut AggregationCube)      // In production, perform actual grouping and aggregation
     }
     
     pub fn rollup(&self, data: &[Vec<String>], hierarchy: &[String]) -> Vec<Vec<String>> {
@@ -2634,7 +2634,7 @@ impl WorkloadAnalyzer {
                         columns: vec!["id".to_string()], // Simplified
                         reason: format!("Slow query accessing {} executed {} times", table, query.frequency),
                         estimated_benefit: query.frequency as f64 * query.avg_duration_ms * 0.5,
-                    }));
+                    })));
                 }
             }
         }

@@ -114,7 +114,7 @@ impl HybridClock {
             if skew > self.skew_tolerance.as_millis() as u64 {
                 return Err(DbError::Transaction(
                     format!("Clock skew too large: {}ms", skew)
-                )));
+                ))));
             }
         }
 
@@ -589,7 +589,7 @@ impl SnapshotIsolationManager {
 
     /// Record a write operation
     pub fn record_write(&self, txn_id: TransactionId, key: String) -> std::result::Result<(), DbError> {
-        let mut txns = self.active_txns.write());
+        let mut txns = self.active_txns.write()));
         if let Some(snapshot) = txns.get_mut(&txn_id) {
             snapshot.write_set.insert(key.clone());
             drop(txns);
@@ -608,10 +608,10 @@ impl SnapshotIsolationManager {
 
     /// Check for write-write conflicts
     pub fn check_write_conflicts(&self, txn_id: TransactionId) -> std::result::Result<(), DbError> {
-        let txns = self.active_txns.read());
+        let txns = self.active_txns.read()));
         let snapshot = txns.get(&txn_id).ok_or_else(|| {
             DbError::Transaction(format!("Transaction {} not found", txn_id))
-        })?;
+        })?);
 
         if snapshot.read_only {
             return Ok(());
@@ -633,7 +633,7 @@ impl SnapshotIsolationManager {
                         return Err(DbError::Transaction(format!(
                             "Write-write conflict between txn {} and {}",
                             txn_id, other_txn
-                        ))));
+                        )))));
                     }
                 }
             }
@@ -651,7 +651,7 @@ impl SnapshotIsolationManager {
         let txns = self.active_txns.read();
         let snapshot = txns.get(&txn_id).ok_or_else(|| {
             DbError::Transaction(format!("Transaction {} not found", txn_id))
-        })?;
+        })?);
 
         if snapshot.read_only {
             return Ok(());
@@ -664,7 +664,7 @@ impl SnapshotIsolationManager {
                 return Err(DbError::Transaction(format!(
                     "Write-skew detected: transaction {} read data modified by commit at {:?}",
                     txn_id, commit_ts
-                ))));
+                )))));
             }
         }
 

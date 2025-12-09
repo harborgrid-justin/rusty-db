@@ -378,7 +378,7 @@ impl DataWarehouseManager {
             return Err(DbError::AlreadyExists(format!(
                 "Star schema: {}",
                 schema.name
-            ))));
+            )))));
         }
 
         schemas.insert(schema.name.clone(), schema);
@@ -394,11 +394,11 @@ impl DataWarehouseManager {
     )> Result<()> {
         let mut schemas = self.schemas.write();
         let schema = schemas.get_mut(schema_name)
-            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?);
 
         let dimension = schema.dimension_tables.iter_mut()
             .find(|d| d.name == dimension_name)
-            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?);
 
         // Create bitmap index
         let index = BitmapIndex {
@@ -411,7 +411,7 @@ impl DataWarehouseManager {
                 compression_ratio: 1.0,
                 avg_bitmap_density: 0.0,
             },
-        });
+        }));
 
         dimension.bitmap_indexes.push(index);
         Ok(())
@@ -428,15 +428,15 @@ impl DataWarehouseManager {
     )<()> {
         let mut schemas = self.schemas.write();
         let schema = schemas.get_mut(schema_name)
-            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?);
 
         let dimension = schema.dimension_tables.iter_mut()
             .find(|d| d.name == dimension_name)
-            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?);
 
         let index = dimension.bitmap_indexes.iter_mut()
             .find(|idx| idx.name == index_name)
-            .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?);
 
         // Get or create bitmap for value
         let bitmap = index.bitmaps.entry(value)
@@ -457,18 +457,18 @@ impl DataWarehouseManager {
     ) -> Result<BitVector> {
         let schemas = self.schemas.read();
         let schema = schemas.get(schema_name)
-            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?);
 
         let dimension = schema.dimension_tables.iter()
             .find(|d| d.name == dimension_name)
-            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?);
 
         let index = dimension.bitmap_indexes.iter()
             .find(|idx| idx.name == index_name)
-            .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?);
 
         let bitmap = index.bitmaps.get(value)
-            .ok_or_else(|| DbError::NotFound(format!("Value: {}", value)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Value: {}", value)))?);
 
         Ok(bitmap.clone())
     }
@@ -483,11 +483,11 @@ impl DataWarehouseManager {
     ){
         let schemas = self.schemas.read();
         let schema = schemas.get(schema_name)
-            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?);
 
         let dimension = schema.dimension_tables.iter()
             .find(|d| d.name == dimension_name)
-            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?);
 
         match &dimension.scd_type {
             SlowlyChangingDimensionType::Type1 => {
@@ -545,7 +545,7 @@ impl DataWarehouseManager {
             PartitioningStrategy::List { column: _, partitions } => {
                 for partition in partitions {
                     if partition.values.contains(&value.to_string()) {
-                        return Ok(partition.name.clone()));
+                        return Ok(partition.name.clone())));
                     }
                 }
                 Err(DbError::NotFound("No matching partition".to_string()))

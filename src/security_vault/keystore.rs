@@ -158,7 +158,7 @@ impl KeyStore {
     pub fn new<P: AsRef<Path>>(data_dir: P) -> Result<Self> {
         let data_dir = data_dir.as_ref().to_path_buf();
         fs::create_dir_all(&data_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create keystore directory: {}", e)))?;
+            .map_err(|e| DbError::IoError(format!("Failed to create keystore directory: {}", e)))?);
 
         Ok(Self {
             data_dir,
@@ -183,12 +183,12 @@ impl KeyStore {
                 .map_err(|e| DbError::InvalidInput(format!("Invalid salt: {}", e)))?
         } else {
             SaltString::generate(&mut ArgonRng)
-        });
+        }));
 
         // Derive key from password using Argon2
         let argon2 = Argon2::default();
         let password_hash = argon2.hash_password(password.as_bytes(), &salt_str)
-            .map_err(|e| DbError::Encryption(format!("Failed to hash password: {}", e)))?;
+            .map_err(|e| DbError::Encryption(format!("Failed to hash password: {}", e)))?);
 
         // Extract key material from hash
         let hash_str = password_hash.hash.ok_or_else(|| {
@@ -312,12 +312,12 @@ impl KeyStore {
     pub fn get_dek(&self, id: &str) -> Result<Vec<u8>> {
         let deks = self.deks.read();
         let dek = deks.get(id)
-            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?);
 
         if dek.status != KeyStatus::Active {
             return Err(DbError::InvalidOperation(format!(
                 "DEK is not active: {:?}", dek.status
-            ))));
+            )))));
         }
 
         Ok(dek.key_material.clone())
@@ -340,7 +340,7 @@ impl KeyStore {
         // Update DEK
         let mut deks = self.deks.write();
         let dek = deks.get_mut(id)
-            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?);
 
         dek.key_material = key_material.clone();
         dek.encrypted_material = encrypted_material;
@@ -378,7 +378,7 @@ impl KeyStore {
     pub fn set_dek_expiration(&mut self, id: &str, days: u32) -> Result<()> {
         let mut deks = self.deks.write();
         let dek = deks.get_mut(id)
-            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?);
 
         let expires_at = chrono::Utc::now().timestamp() + (days as i64 * 86400);
         dek.expires_at = Some(expires_at);
@@ -404,7 +404,7 @@ impl KeyStore {
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         let ciphertext = cipher.encrypt(nonce, plaintext)
-            .map_err(|e| DbError::Encryption(format!("MEK encryption failed: {}", e)))?;
+            .map_err(|e| DbError::Encryption(format!("MEK encryption failed: {}", e)))?);
 
         Ok((nonce_bytes, ciphertext))
     }
@@ -422,7 +422,7 @@ impl KeyStore {
         let nonce = Nonce::from_slice(nonce);
 
         let plaintext = cipher.decrypt(nonce, ciphertext)
-            .map_err(|e| DbError::Encryption(format!("MEK decryption failed: {}", e)))?;
+            .map_err(|e| DbError::Encryption(format!("MEK decryption failed: {}", e)))?);
 
         Ok(plaintext)
     }
@@ -455,7 +455,7 @@ impl KeyStore {
     pub fn deactivate_dek(&mut self, id: &str) -> Result<()> {
         let mut deks = self.deks.write();
         let dek = deks.get_mut(id)
-            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?);
 
         dek.status = KeyStatus::Deactivated;
         Ok(())
@@ -465,7 +465,7 @@ impl KeyStore {
     pub fn mark_dek_compromised(&mut self, id: &str) -> Result<()> {
         let mut deks = self.deks.write();
         let dek = deks.get_mut(id)
-            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?);
 
         dek.status = KeyStatus::Compromised;
         Ok(())
@@ -515,19 +515,19 @@ impl KeyStore {
         let metadata_path = self.data_dir.join("metadata.json");
         let metadata = self.metadata.read();
         let json = serde_json::to_string_pretty(&*metadata)
-            .map_err(|e| DbError::Serialization(format!("Failed to serialize metadata: {}", e)))?;
+            .map_err(|e| DbError::Serialization(format!("Failed to serialize metadata: {}", e)))?);
 
         fs::write(&metadata_path, json)
-            .map_err(|e| DbError::IoError(format!("Failed to write metadata: {}", e)))?;
+            .map_err(|e| DbError::IoError(format!("Failed to write metadata: {}", e)))?);
 
         // Persist DEKs (encrypted)
         let deks_path = self.data_dir.join("deks.bin");
         let deks = self.deks.read();
         let serialized = bincode::serialize(&*deks)
-            .map_err(|e| DbError::Serialization(format!("Failed to serialize DEKs: {}", e)))?;
+            .map_err(|e| DbError::Serialization(format!("Failed to serialize DEKs: {}", e)))?);
 
         fs::write(&deks_path, serialized)
-            .map_err(|e| DbError::IoError(format!("Failed to write DEKs: {}", e)))?;
+            .map_err(|e| DbError::IoError(format!("Failed to write DEKs: {}", e)))?);
 
         Ok(())
     }
@@ -538,9 +538,9 @@ impl KeyStore {
         let metadata_path = self.data_dir.join("metadata.json");
         if metadata_path.exists() {
             let json = fs::read_to_string(&metadata_path)
-                .map_err(|e| DbError::IoError(format!("Failed to read metadata: {}", e)))?;
+                .map_err(|e| DbError::IoError(format!("Failed to read metadata: {}", e)))?);
             let loaded_metadata: KeyStoreMetadata = serde_json::from_str(&json)
-                .map_err(|e| DbError::Serialization(format!("Failed to parse metadata: {}", e)))?;
+                .map_err(|e| DbError::Serialization(format!("Failed to parse metadata: {}", e)))?);
             *self.metadata.write() = loaded_metadata;
         }
 
@@ -551,9 +551,9 @@ impl KeyStore {
         let deks_path = self.data_dir.join("deks.bin");
         if deks_path.exists() {
             let data = fs::read(&deks_path)
-                .map_err(|e| DbError::IoError(format!("Failed to read DEKs: {}", e)))?;
+                .map_err(|e| DbError::IoError(format!("Failed to read DEKs: {}", e)))?);
             let loaded_deks: HashMap<String, DataEncryptionKey> = bincode::deserialize(&data)
-                .map_err(|e| DbError::Serialization(format!("Failed to parse DEKs: {}", e)))?;
+                .map_err(|e| DbError::Serialization(format!("Failed to parse DEKs: {}", e)))?);
             *self.deks.write() = loaded_deks;
         }
 

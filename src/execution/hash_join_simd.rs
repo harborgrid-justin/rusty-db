@@ -405,7 +405,7 @@ mod tests {
         // Build side: 10K rows
         let mut build_rows = Vec::new();
         for i in 0..10_000 {
-            build_rows.push(vec![format!("{}", i), format!("name_{}", i)]));
+            build_rows.push(vec![format!("{}", i), format!("name_{}", i)])));
         }
         let build = QueryResult::new(
             vec!["id".to_string(), "name".to_string()],
@@ -416,7 +416,7 @@ mod tests {
         let mut probe_rows = Vec::new();
         for i in 0..100_000 {
             let id = i % 10_000; // Ensure matches
-            probe_rows.push(vec![format!("{}", id), format!("value_{}", i)]));
+            probe_rows.push(vec![format!("{}", id), format!("value_{}", i)])));
         }
         let probe = QueryResult::new(
             vec!["id".to_string(), "value".to_string()],

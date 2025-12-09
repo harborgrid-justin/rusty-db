@@ -173,7 +173,7 @@ impl MigrationCoordinator for DataMigrationManager {
         // Check active migrations
         {
             let active = self.active_migrations.read()
-                .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
+                .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?);
             if active.contains_key(task_id) {
                 return Ok(MigrationStatus::InProgress);
             }
@@ -265,7 +265,7 @@ pub struct TransferResult {
 
 /// Trait for cluster coordination access
 pub trait ClusterCoordinator {
-    fn get_nodes(&self) -> Result<Vec<NodeInfo>, DbError>);
+    fn get_nodes(&self) -> Result<Vec<NodeInfo>, DbError>));
     fn get_node_load(&self, nodeid: &NodeId) -> Result<f64, DbError>;
 }
 

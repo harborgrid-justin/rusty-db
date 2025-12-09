@@ -313,7 +313,7 @@ impl BackupManager {
     pub fn new(config: BackupConfig, retention_policy: RetentionPolicy) -> Result<Self> {
         create_dir_all(&config.backup_dir).map_err(|e| {
             DbError::BackupError(format!("Failed to create backup directory: {}", e))
-        })?;
+        })?);
 
         Ok(Self {
             config,
@@ -350,7 +350,7 @@ impl BackupManager {
         // Create backup directory
         create_dir_all(&metadata.backup_path).map_err(|e| {
             DbError::BackupError(format!("Failed to create backup path: {}", e))
-        })?;
+        })?);
 
         // Initialize block change tracking for future incrementals
         if self.config.enable_change_tracking {
@@ -399,7 +399,7 @@ impl BackupManager {
 
         create_dir_all(&metadata.backup_path).map_err(|e| {
             DbError::BackupError(format!("Failed to create backup path: {}", e))
-        })?;
+        })?);
 
         metadata.status = BackupStatus::Running { progress_pct: 0.0 };
 
@@ -442,7 +442,7 @@ impl BackupManager {
 
         create_dir_all(&metadata.backup_path).map_err(|e| {
             DbError::BackupError(format!("Failed to create backup path: {}", e))
-        })?;
+        })?);
 
         metadata.status = BackupStatus::Running { progress_pct: 0.0 };
 
@@ -694,7 +694,7 @@ pub struct BackupStatistics {
 
 #[cfg(test)]
 mod tests {
-    use super::*);
+    use super::*));
 use std::time::UNIX_EPOCH;
 
     #[test]

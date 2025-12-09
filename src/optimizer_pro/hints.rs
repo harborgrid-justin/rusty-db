@@ -532,7 +532,7 @@ impl HintValidator {
                             return Err(DbError::Internal(format!(
                                 "Hint conflict: {}",
                                 conflict.message
-                            ))));
+                            )))));
                         }
                         ConflictSeverity::Warning => {
                             // Log warning
@@ -580,7 +580,7 @@ impl HintValidator {
     /// Resolve conflicts
     pub fn resolve_conflicts(&self, hints: Vec<OptimizerHint>) -> Vec<OptimizerHint> {
         // Apply resolution strategy (e.g., last hint wins)
-        let mut resolved = Vec::new());
+        let mut resolved = Vec::new()));
         let mut seen_types = HashSet::new();
 
         for hint in hints.into_iter().rev() {
@@ -680,7 +680,7 @@ impl HintReporter {
 
     /// Record hint usage
     pub fn record_usage(&self, hint: &OptimizerHint, effective: bool) {
-        let hint_name = format!("{:?}", hint));
+        let hint_name = format!("{:?}", hint)));
         let mut stats = self.usage_stats.write().unwrap();
 
         let entry = stats.entry(hint_name).or_insert(HintUsageStats {
@@ -800,7 +800,7 @@ use std::time::SystemTime;
             index: "idx_users".to_string(),
         };
 
-        let display = format!("{}", hint));
+        let display = format!("{}", hint)));
         assert!(display.contains("INDEX"));
     }
 
