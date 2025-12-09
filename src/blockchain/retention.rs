@@ -61,8 +61,8 @@ impl RetentionPeriod {
     }
 }
 
-impl std::fmt::Display for RetentionPeriod {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for RetentionPeriod {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             RetentionPeriod::None => write!(f, "None"),
             RetentionPeriod::Days(d) => write!(f, "{} days", d),

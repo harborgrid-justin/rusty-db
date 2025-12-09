@@ -128,8 +128,8 @@ pub struct DegradationTrigger {
     pub custom_condition: Option<Arc<dyn Fn() -> bool + Send + Sync>>,
 }
 
-impl std::fmt::Debug for DegradationTrigger {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for DegradationTrigger {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("DegradationTrigger")
             .field("name", &self.name)
             .field("cpu_threshold", &self.cpu_threshold)
@@ -601,7 +601,7 @@ mod tests {
         let mut rejected = 0;
         for _ in 0..1000 {
             if shedder.should_accept(5) {
-                _accepted += 1;
+                accepted += 1;
             } else {
                 rejected += 1;
             }

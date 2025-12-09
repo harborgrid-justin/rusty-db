@@ -70,8 +70,8 @@ pub enum WorkloadClass {
     ETL,            // Extract-Transform-Load
 }
 
-impl std::fmt::Display for WorkloadClass {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for WorkloadClass {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             WorkloadClass::OLTP => write!(f, "OLTP"),
             WorkloadClass::OLAP => write!(f, "OLAP"),
@@ -232,7 +232,7 @@ impl KMeansClassifier {
     fn calculate_max_shift(&self, newcentroids: &[Vec<f64>]) -> f64 {
         self.centroids
             .iter()
-            .zip(new_centroids)
+            .zip(newcentroids)
             .map(|(old, new)| self.euclidean_distance(old, new))
             .fold(0.0, f64::max)
     }
@@ -277,7 +277,7 @@ impl PerformancePredictor {
     }
 
     pub fn train(&mut self, features: &[QueryFeatures], executiontimes: &[f64]) -> Result<()> {
-        if features.len() != execution_times.len() {
+        if features.len() != executiontimes.len() {
             return Err(DbError::Internal("Feature and label count mismatch".to_string()));
         }
 
@@ -289,7 +289,7 @@ impl PerformancePredictor {
         let x_data: Vec<Vec<f64>> = features.iter().map(|f| f.to_vector()).collect();
 
         // Normalize execution times (log scale)
-        let y_data: Vec<f64> = execution_times.iter().map(|&t| (t + 1.0).ln()).collect();
+        let y_data: Vec<f64> = executiontimes.iter().map(|&t| (t + 1.0).ln()).collect();
 
         // Gradient descent
         let epochs = 1000;
@@ -567,7 +567,7 @@ impl TimeSeriesAnalyzer {
         let points: Vec<(f64, f64)> = self.time_series
             .iter()
             .enumerate()
-            .map(|(i, p)| (i, p.value))
+            .map(|(i, p)| (i as f64, p.value))
             .collect();
 
         let (slope, r_squared) = self.linear_regression(&points);

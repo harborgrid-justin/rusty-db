@@ -162,7 +162,7 @@ impl DashboardManager {
         }
     }
 
-    pub fn create_dashboard(&self, dashboard: Dashboard) -> std::result::Result<(), DbError> {
+    pub fn create_dashboard(&self, dashboard: Dashboard) -> Result<(), DbError> {
         self.dashboards.write().insert(dashboard.id.clone(), dashboard);
         Ok(())
     }
@@ -171,12 +171,12 @@ impl DashboardManager {
         self.dashboards.read().get(id).cloned()
     }
 
-    pub fn update_dashboard(&self, dashboard: Dashboard) -> std::result::Result<(), DbError> {
+    pub fn update_dashboard(&self, dashboard: Dashboard) -> Result<(), DbError> {
         self.dashboards.write().insert(dashboard.id.clone(), dashboard);
         Ok(())
     }
 
-    pub fn delete_dashboard(&self, id: &str) -> std::result::Result<(), DbError> {
+    pub fn delete_dashboard(&self, id: &str) -> Result<(), DbError> {
         self.dashboards.write().remove(id);
         Ok(())
     }

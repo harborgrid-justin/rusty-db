@@ -559,7 +559,7 @@ mod tests {
         });
 
         // Drop read lock to allow writer
-        drop(_r);
+        drop(r);
 
         handle.join().unwrap();
 

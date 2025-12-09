@@ -569,6 +569,8 @@ impl<'de> Deserialize<'de> for VariableLengthRecord {
 
 #[cfg(test)]
 mod tests {
+    use crate::storage::page::VariableLengthRecord;
+    use crate::storage::{Page, PageSplitter, SlottedPage};
 
     #[test]
     fn test_page_creation() {

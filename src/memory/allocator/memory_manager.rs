@@ -1,13 +1,13 @@
 //\! Unified Memory Manager
-//\! 
+//\!
 //\! Integration layer for all allocators.
 
 use super::common::*;
-use super::slab_allocator::SlabAllocator;
-use super::arena_allocator::{ArenaAllocator, MemoryContext};
-use super::large_object_allocator::LargeObjectAllocator;
-use super::pressure_manager::MemoryPressureManager;
-use super::debugger::MemoryDebugger;
+use super::slab_allocator::{SlabAllocator, SlabAllocatorStats};
+use super::arena_allocator::{ArenaAllocator, ArenaAllocatorStats, MemoryContext};
+use super::large_object_allocator::{LargeObjectAllocator, LargeObjectAllocatorStats};
+use super::pressure_manager::{MemoryPressureManager, MemoryPressureStats, MemoryUsage};
+use super::debugger::{MemoryDebugger, MemoryDebuggerStats};
 
 pub struct MemoryManager {
     /// Slab allocator for small objects

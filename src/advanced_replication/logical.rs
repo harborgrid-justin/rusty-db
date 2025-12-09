@@ -566,7 +566,7 @@ impl LogicalReplication {
         for publication in publications.values() {
             for table_pub in &publication.tables {
                 if table_pub.schema_name == schema && table_pub.table_name == table {
-                    match change_type {
+                    match changetype {
                         SchemaChangeType::AddColumn(ref col_name) => {
                             // Column additions are generally safe
                             println!("Column {} added to {}.{}", col_name, schema, table);

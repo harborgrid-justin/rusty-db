@@ -112,7 +112,7 @@ pub struct DistributedTracingManager {
 }
 
 pub trait SpanExporter: Send + Sync {
-    fn export(&self, spans: &[Span]) -> std::result::Result<(), DbError>;
+    fn export(&self, spans: &[Span]) -> Result<(), DbError>;
 }
 
 impl DistributedTracingManager {
@@ -205,7 +205,7 @@ impl CorrelationIdPropagator {
     pub async fn set_correlation_id(&self, correlationid: CorrelationId) {
         let thread_id = std::thread::current().id();
         let mut storage = self.context_storage.write().await;
-        storage.insert(thread_id, correlation_id);
+        storage.insert(thread_id, correlationid);
     }
 
     pub async fn get_correlation_id(&self) -> Option<CorrelationId> {
@@ -335,9 +335,9 @@ impl RetryPolicyExecutor {
         policies.insert(operation.to_string(), policy);
     }
 
-    pub async fn execute_with_retry<F, T, E>(&self, operation: &str, mut f: F) -> std::result::Result<T, E>
+    pub async fn execute_with_retry<F, T, E>(&self, operation: &str, mut f: F) -> Result<T, E>
     where
-        F: FnMut() -> std::result::Result<T, E>,
+        F: FnMut() -> Result<T, E>,
     {
         let policy = {
             let policies = self.policies.read().unwrap();
@@ -472,9 +472,9 @@ impl CircuitBreakerCoordinator {
         &self,
         name: &str,
         f: F,
-    ) -> std::result::Result<T, String>
+    ) -> Result<T, String>
     where
-        F: FnOnce() -> std::result::Result<T, E>,
+        F: FnOnce() -> Result<T, E>,
         E: fmt::Display,
     {
         let breaker = self.get_breaker(name)
@@ -499,4 +499,3 @@ impl CircuitBreakerCoordinator {
         }
     }
 }
-

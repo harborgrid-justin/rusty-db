@@ -76,7 +76,7 @@ impl CompressionAlgorithm {
             }
             CompressionAlgorithm::Delta => {
                 // Best for sorted numeric data
-                is_sorted
+                issorted
             }
             CompressionAlgorithm::BitPacking => {
                 // Good for small value ranges
@@ -308,7 +308,7 @@ impl QueryResultCompressor {
         }
 
         // Count unique values
-        let mut unique: std::collections::HashSet<&str> = std::collections::HashSet::new();
+        let mut unique: HashSet<&str> = HashSet::new();
         for s in data {
             unique.insert(s);
         }

@@ -26,8 +26,8 @@ pub enum IndexType {
     Covering,
 }
 
-impl std::fmt::Display for IndexType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for IndexType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             IndexType::BTree => write!(f, "B-Tree"),
             IndexType::Hash => write!(f, "Hash"),

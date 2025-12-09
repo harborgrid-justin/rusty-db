@@ -328,12 +328,12 @@ impl DedupEngine {
             chunk_hash: hash,
             chunk_data: chunk.to_vec(),
             reference_count: 1,
-            first_seen: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
+            first_seen: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_secs(),
-            last_accessed: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
+            last_accessed: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_secs(),
             size: chunk.len(),
@@ -367,8 +367,8 @@ impl DedupEngine {
     fn increment_reference(&self, chunk_hash: u64) {
         if let Some(entry) = self.chunk_store.write().unwrap().get_mut(&chunk_hash) {
             entry.reference_count += 1;
-            entry.last_accessed = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
+            entry.last_accessed = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
 
@@ -567,6 +567,7 @@ impl Default for CrossTableDedup {
 
 #[cfg(test)]
 mod tests {
+    use crate::compression::dedup::{CrossTableDedup, DedupEngine};
 
     #[test]
     fn test_chunk_boundaries() {

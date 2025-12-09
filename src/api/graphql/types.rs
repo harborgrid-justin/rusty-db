@@ -102,7 +102,7 @@ impl DateTime {
 
 /// Custom scalar type for JSON values
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Json(serde_json::Value);
+pub struct Json(pub serde_json::Value);
 
 #[async_graphql::Scalar]
 impl async_graphql::ScalarType for Json {
@@ -141,7 +141,7 @@ impl async_graphql::ScalarType for Binary {
 
 /// Custom scalar type for large integers
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BigInt(i64);
+pub struct BigInt(pub i64);
 
 #[async_graphql::Scalar]
 impl async_graphql::ScalarType for BigInt {

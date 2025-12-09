@@ -215,11 +215,11 @@ impl PipelineStage {
                 let cmp = compare_json_values(&a_val, &b_val);
                 let cmp = if *order < 0 { cmp.reverse() } else { cmp };
 
-                if cmp != std::cmp::Ordering::Equal {
+                if cmp != Ordering::Equal {
                     return cmp;
                 }
             }
-            std::cmp::Ordering::Equal
+            Ordering::Equal
         });
 
         Ok(documents)
@@ -566,7 +566,7 @@ impl Accumulator {
                 Ok(Value::Array(arr))
             }
             Accumulator::AddToSet { expr } => {
-                let mut set = std::collections::HashSet::new();
+                let mut set = HashSet::new();
                 let mut arr = Vec::new();
                 for doc in documents {
                     let val = expr.evaluate(doc)?;
@@ -604,19 +604,19 @@ fn get_field_value(doc: &Value, field: &str) -> Value {
 }
 
 /// Helper function to compare JSON values
-fn compare_json_values(a: &Value, b: &Value) -> std::cmp::Ordering {
+fn compare_json_values(a: &Value, b: &Value) -> Ordering {
     match (a, b) {
         (Value::Number(n1), Value::Number(n2)) => {
             let f1 = n1.as_f64().unwrap_or(0.0);
             let f2 = n2.as_f64().unwrap_or(0.0);
-            f1.partial_cmp(&f2).unwrap_or(std::cmp::Ordering::Equal)
+            f1.partial_cmp(&f2).unwrap_or(Ordering::Equal)
         }
         (Value::String(s1), Value::String(s2)) => s1.cmp(s2),
         (Value::Bool(b1), Value::Bool(b2)) => b1.cmp(b2),
-        (Value::Null, Value::Null) => std::cmp::Ordering::Equal,
-        (Value::Null, _) => std::cmp::Ordering::Less,
-        (_, Value::Null) => std::cmp::Ordering::Greater,
-        _ => std::cmp::Ordering::Equal,
+        (Value::Null, Value::Null) => Ordering::Equal,
+        (Value::Null, _) => Ordering::Less,
+        (_, Value::Null) => Ordering::Greater,
+        _ => Ordering::Equal,
     }
 }
 

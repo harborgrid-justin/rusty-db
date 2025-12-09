@@ -34,7 +34,7 @@ impl QueryDocument {
                 conditions: obj.into_iter().collect(),
             })
         } else {
-            Err(crate::error::DbError::InvalidInput(
+            Err(DbError::InvalidInput(
                 "Query must be a JSON object".to_string()
             ))
         }
@@ -107,7 +107,7 @@ impl QueryDocument {
                 "$all" => self.op_all(field_value, value),
                 "$elemMatch" => self.op_elem_match(field_value, value)?,
                 _ => {
-                    return Err(crate::error::DbError::InvalidInput(
+                    return Err(DbError::InvalidInput(
                         format!("Unknown operator: {}", op)
                     ));
                 }
@@ -130,7 +130,7 @@ impl QueryDocument {
     }
 
     fn op_gt(&self, field_value: &Value, query_value: &Value) -> bool {
-        compare_values(field_value, query_value) == Some(std::cmp::Ordering::Greater)
+        compare_values(field_value, query_value) == Some(Ordering::Greater)
     }
 
     fn op_gte(&self, field_value: &Value, query_value: &Value) -> bool {
@@ -141,7 +141,7 @@ impl QueryDocument {
     }
 
     fn op_lt(&self, field_value: &Value, query_value: &Value) -> bool {
-        compare_values(field_value, query_value) == Some(std::cmp::Ordering::Less)
+        compare_values(field_value, query_value) == Some(Ordering::Less)
     }
 
     fn op_lte(&self, field_value: &Value, query_value: &Value) -> bool {
@@ -269,7 +269,7 @@ impl QueryDocument {
             }
             Ok(true)
         } else {
-            Err(crate::error::DbError::InvalidInput(
+            Err(DbError::InvalidInput(
                 "$and requires an array".to_string()
             ))
         }
@@ -293,7 +293,7 @@ impl QueryDocument {
             }
             Ok(false)
         } else {
-            Err(crate::error::DbError::InvalidInput(
+            Err(DbError::InvalidInput(
                 "$or requires an array".to_string()
             ))
         }
@@ -312,7 +312,7 @@ impl QueryDocument {
             }
             Ok(true)
         } else {
-            Err(crate::error::DbError::InvalidInput(
+            Err(DbError::InvalidInput(
                 "$not requires an object".to_string()
             ))
         }
@@ -344,7 +344,7 @@ impl Default for QueryDocument {
 }
 
 /// Compare two JSON values
-fn compare_values(a: &Value, b: &Value) -> Option<std::cmp::Ordering> {
+fn compare_values(a: &Value, b: &Value) -> Option<Ordering> {
     match (a, b) {
         (Value::Number(n1), Value::Number(n2)) => {
             let f1 = n1.as_f64()?;
@@ -425,7 +425,7 @@ impl Projection {
             }
             Ok(Self { fields })
         } else {
-            Err(crate::error::DbError::InvalidInput(
+            Err(DbError::InvalidInput(
                 "Projection must be a JSON object".to_string()
             ))
         }

@@ -345,7 +345,7 @@ impl<T: 'static> Default for LockFreeStack<T> {
     }
 }
 
-impl<T> Drop for LockFreeStack<T> {
+impl<T: 'static> Drop for LockFreeStack<T> {
     fn drop(&mut self) {
         // Pop all items to properly drop them
         while self.pop().is_some() {}
@@ -409,7 +409,7 @@ impl<T: 'static> EliminationArray<T> {
         let slot_idx = fastrand::usize(..range.min(self.slots.len()));
         let slot = &self.slots[slot_idx];
 
-        if is_push {
+        if ispush {
             // Try to deposit value for a pop to collect
             if slot.state.compare_exchange(
                 EMPTY,
@@ -666,5 +666,3 @@ mod tests {
         assert!(stack.is_empty());
     }
 }
-
-

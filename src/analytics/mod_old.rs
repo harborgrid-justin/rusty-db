@@ -784,7 +784,7 @@ impl AnalyticsManager {
     
     // Materialized view management
     pub fn create_materialized_view(&self, mv: MaterializedView) -> Result<()> {
-        let mut mvs = self.materialized_views.write());
+        let mut mvs = self.materialized_views.write())
         if mvs.contains_key(&mv.name) {
         }
         mvs.insert(mv.name.clone(), mv);
@@ -819,7 +819,7 @@ impl AnalyticsManager {
     }
     
     pub fn refresh_all_materialized_views(&self) -> Result<()> {
-        let names: Vec<String> = self.materialized_views.read().keys().cloned().collect());
+        let names: Vec<String> = self.materialized_views.read().keys().cloned().collect())
         for name in names {
             self.refresh_materialized_view(&name)?;
         }
@@ -837,7 +837,7 @@ impl AnalyticsManager {
     }
     
     pub fn get_materialized_view_stats(&self, name: &str) -> Result<ViewStatistics> {
-        let mvs = self.materialized_views.read());
+        let mvs = self.materialized_views.read())
         mvs.get(name)
             .map(|mv| mv.statistics.clone())
     }
@@ -931,7 +931,7 @@ impl AnalyticsManager {
     }
     
     pub fn estimate_selectivity(&self, table: &str, column: &str, value: &str) -> f64 {
-        let key = format!("{}_{}", table, column)));
+        let key = format!("{}_{}", table, column)))
         if let Some(histogram) = self.get_histogram(&key) {
             return histogram.estimate_selectivity(value);
         }
@@ -946,7 +946,7 @@ impl AnalyticsManager {
     }
     
     pub fn estimate_range_selectivity(&self, table: &str, column: &str, lower: &str, upper: &str) -> f64 {
-        let key = format!("{}_{}", table, column)));
+        let key = format!("{}_{}", table, column)))
         if let Some(histogram) = self.get_histogram(&key) {
             return histogram.estimate_range_selectivity(lower, upper);
         }
@@ -2478,56 +2478,57 @@ pub struct MultidimensionalAggregator {
 }
 
 impl MultidimensionalAggregator {
-    pub fn new(dimensions: Vec<String>, measures: Vec<String>) -> Self {
-        Self {
-            dimensions,
-            measures,
+        pub fn new(dimensions: Vec<String>, measures: Vec<String>) -> Self {
+            Self {
+                dimensions,
+                measures,
+            }
         }
-    }
-    
-    pub fn compute_cube(&self, data: &[Vec<String>]) -> AggregationCube {
-        let mut cube = AggregationCube {
-            cells: HashMap::new(),
-        };
         
-        // Generate all possible dimension combinations (power set)
-        let num_dims = self.dimensions.len();
-        for i in 0..(1 << num_dims) {
-            let mut active_dims = Vec::new();
-            for j in 0..num_dims {
-                if i & (1 << j) != 0 {
-                    active_dims.push(j);
+        pub fn compute_cube(&self, data: &[Vec<String>]) -> AggregationCube {
+            let mut cube = AggregationCube {
+                cells: HashMap::new(),
+            };
+            
+            // Generate all possible dimension combinations (power set)
+            let num_dims = self.dimensions.len();
+            for i in 0..(1 << num_dims) {
+                let mut active_dims = Vec::new();
+                for j in 0..num_dims {
+                    if i & (1 << j) != 0 {
+                        active_dims.push(j);
+                    }
                 }
+                
+                // Group by active dimensions and aggregate
+                self.aggregate_by_dimensions(data, &active_dims, &mut cube);
             }
             
-            // Group by active dimensions and aggregate
-            self.aggregate_by_dimensions(data, &active_dims, &mut cube);
+            cube
         }
         
-        cube
-    }
-    
-    fnfnfn aggregate_by_dimensions(&self, data: &[Vec<String>], dimensions: &[usize], _cube: &mut AggregationCube)      // In production, perform actual grouping and aggregation
-    }
-    
-    pub fn rollup(&self, data: &[Vec<String>], hierarchy: &[String]) -> Vec<Vec<String>> {
-        // Compute aggregates at each level of the hierarchy
-        let mut results = Vec::new();
-        
-        for level in 0..hierarchy.len() {
-            let dims = &hierarchy[0..=level];
-            // Aggregate by these dimensions
-            results.extend(self.aggregate_at_level(data, dims));
+        fn aggregate_by_dimensions(&self, data: &[Vec<String>], dimensions: &[usize], _cube: &mut AggregationCube) {
+            // In production, perform actual grouping and aggregation
         }
         
-        results
+        pub fn rollup(&self, data: &[Vec<String>], hierarchy: &[String]) -> Vec<Vec<String>> {
+            // Compute aggregates at each level of the hierarchy
+            let mut results = Vec::new();
+            
+            for level in 0..hierarchy.len() {
+                let dims = &hierarchy[0..=level];
+                // Aggregate by these dimensions
+                results.extend(self.aggregate_at_level(data, dims));
+            }
+            
+            results
+        }
+        
+        fn aggregate_at_level(&self, _data: &[Vec<String>], _dimensions: &[String]) -> Vec<Vec<String>> {
+            // Simplified - return empty
+            Vec::new()
+        }
     }
-    
-    fn aggregate_at_level(&self, _data: &[Vec<String>], _dimensions: &[String]) -> Vec<Vec<String>> {
-        // Simplified - return empty
-        Vec::new()
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct AggregationCube {
@@ -2635,7 +2636,7 @@ impl WorkloadAnalyzer {
                         columns: vec!["id".to_string()], // Simplified
                         reason: format!("Slow query accessing {} executed {} times", table, query.frequency),
                         estimated_benefit: query.frequency as f64 * query.avg_duration_ms * 0.5,
-                    })));
+                    })))
                 }
             }
         }

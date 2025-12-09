@@ -106,7 +106,7 @@ impl SecurityFilter {
     }
 
     /// Validate request
-    pub fn validate_request(&self, request: &ApiRequest) -> Result<()> {
+    pub fn validate_request(&self, request: &ApiRequest) -> Result<(), DbError> {
         // IP filtering
         self.ip_filter.check_ip(request.client_ip)?;
 
@@ -146,7 +146,7 @@ impl RequestValidator {
     }
 
     /// Validate request
-    fn validate(&self, request: &ApiRequest) -> Result<()> {
+    fn validate(&self, request: &ApiRequest) -> Result<(), DbError> {
         // Check path length
         if request.path.len() > self.max_path_length {
             return Err(DbError::InvalidOperation("Path too long".to_string()));
@@ -204,7 +204,7 @@ impl ThreatDetector {
     }
 
     /// Detect threats in request
-    fn detect_threats(&self, request: &ApiRequest) -> Result<()> {
+    fn detect_threats(&self, request: &ApiRequest) -> Result<(), DbError> {
         // Check path
         self.check_path_traversal(&request.path)?;
 
@@ -229,7 +229,7 @@ impl ThreatDetector {
     }
 
     /// Check for SQL injection
-    fn check_sql_injection(&self, input: &str) -> Result<()> {
+    pub(crate) fn check_sql_injection(&self, input: &str) -> Result<(), DbError> {
         for pattern in &self.sql_injection_patterns {
             if pattern.is_match(input) {
                 return Err(DbError::InvalidOperation("Potential SQL injection detected".to_string()));
@@ -239,7 +239,7 @@ impl ThreatDetector {
     }
 
     /// Check for XSS
-    fn check_xss(&self, input: &str) -> Result<()> {
+    pub(crate) fn check_xss(&self, input: &str) -> Result<(), DbError> {
         for pattern in &self.xss_patterns {
             if pattern.is_match(input) {
                 return Err(DbError::InvalidOperation("Potential XSS attack detected".to_string()));
@@ -249,7 +249,7 @@ impl ThreatDetector {
     }
 
     /// Check for path traversal
-    fn check_path_traversal(&self, input: &str) -> Result<()> {
+    fn check_path_traversal(&self, input: &str) -> Result<(), DbError> {
         for pattern in &self.path_traversal_patterns {
             if pattern.is_match(input) {
                 return Err(DbError::InvalidOperation("Path traversal attempt detected".to_string()));
@@ -269,7 +269,7 @@ impl IpFilter {
     }
 
     /// Check IP address
-    fn check_ip(&self, ip: IpAddr) -> Result<()> {
+    pub(crate) fn check_ip(&self, ip: IpAddr) -> Result<(), DbError> {
         match self.mode {
             IpFilterMode::None => Ok(()),
             IpFilterMode::Blacklist => {
@@ -377,4 +377,3 @@ impl CsrfManager {
         });
     }
 }
-

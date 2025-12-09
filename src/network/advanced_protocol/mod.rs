@@ -17,6 +17,7 @@
 
 use std::sync::Arc;
 use std::collections::HashMap;
+use bytes::Bytes;
 use crate::error::Result;
 
 pub mod errors;
@@ -62,6 +63,12 @@ pub struct Packet {
     pub header: PacketHeader,
     pub payload: Vec<u8>,
 }
+
+impl<'a> Packet {
+        pub(crate) fn new(p0: &&MessageType, p1: Bytes) -> &'a &'a Packet {
+            todo!()
+        }
+    }
 
 #[derive(Debug, Clone)]
 pub struct ProtocolCapabilities {
@@ -147,6 +154,37 @@ pub enum ConnectionState {
     Authenticated,
     Closing,
     Closed,
+    Authenticating,
+    Ready,
+}
+
+impl ConnectionState {
+
+    pub(crate) fn can_transition_to(&self, target: ConnectionState) -> bool {
+        match (self, target) {
+            // From Connecting
+            (ConnectionState::Connecting, ConnectionState::Connected) => true,
+            (ConnectionState::Connecting, ConnectionState::Closed) => true,
+
+            // From Connected
+            (ConnectionState::Connected, ConnectionState::Authenticated) => true,
+            (ConnectionState::Connected, ConnectionState::Closing) => true,
+            (ConnectionState::Connected, ConnectionState::Closed) => true,
+
+            // From Authenticated
+            (ConnectionState::Authenticated, ConnectionState::Closing) => true,
+            (ConnectionState::Authenticated, ConnectionState::Closed) => true,
+
+            // From Closing
+            (ConnectionState::Closing, ConnectionState::Closed) => true,
+
+            // From Closed - no transitions allowed
+            (ConnectionState::Closed, _) => false,
+
+            // Same state transitions not allowed
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

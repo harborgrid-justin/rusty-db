@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
 
     // Start network server
     let server = Server::new();
-    let addr = format!("127.0.0.1:{}", config.port)));
+    let addr = format!("127.0.0.1:{}", config.port)))
 
     info!("Starting network server on {}", addr);
     println!();

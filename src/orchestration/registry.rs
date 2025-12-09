@@ -69,7 +69,7 @@ impl ServiceMetadata {
     pub fn new(name: String, typename: &'static str, lifetime: ServiceLifetime) -> Self {
         Self {
             name,
-            type_name,
+            type_name: typename,
             lifetime,
             dependencies: Vec::new(),
             description: None,

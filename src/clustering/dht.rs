@@ -623,7 +623,7 @@ impl DistributedHashTable {
         let nodes = self.nodes.read().unwrap();
 
         // Find partition to split
-        if let Some(idx) = partitions.iter().position(|p| p.id == shard_id) {
+        if let Some(idx) = partitions.iter().position(|p| p.id == shardid) {
             let new_node = self.find_least_loaded_node(&nodes, None)
                 .ok_or_else(|| DbError::Internal("No available node for split".into()))?;
 
@@ -752,5 +752,3 @@ mod tests {
         assert!(metrics.is_hot_spot(10000.0, 10 * 1024 * 1024 * 1024));
     }
 }
-
-

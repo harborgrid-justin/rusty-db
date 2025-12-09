@@ -7,7 +7,7 @@ use std::collections::{HashMap, BTreeMap, VecDeque};
 use std::time::{Duration, SystemTime, Instant, UNIX_EPOCH};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-
+use crate::api::MetricsRegistry;
 use crate::error::DbError;
 use super::metrics_core::*;
 
@@ -202,7 +202,7 @@ impl PrometheusPushGateway {
         self
     }
 
-    pub async fn push(&self, metricsdata: String) -> std::result::Result<(), DbError> {
+    pub async fn push(&self, metricsdata: String) -> Result<(), DbError> {
         let url = self.build_url();
 
         // In a real implementation, this would use an HTTP client like reqwest
@@ -213,7 +213,7 @@ impl PrometheusPushGateway {
         Ok(())
     }
 
-    pub async fn delete(&self) -> std::result::Result<(), DbError> {
+    pub async fn delete(&self) -> Result<(), DbError> {
         let url = self.build_url();
 
         // DELETE request to remove metrics
@@ -312,7 +312,7 @@ impl RemoteWriteClient {
         buffer.push(ts);
     }
 
-    pub async fn flush(&self) -> std::result::Result<(), DbError> {
+    pub async fn flush(&self) -> Result<(), DbError> {
         let mut buffer = self.buffer.lock().unwrap();
         if buffer.is_empty() {
             return Ok(());

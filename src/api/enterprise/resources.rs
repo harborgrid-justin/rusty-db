@@ -43,7 +43,7 @@ impl MemoryBudgetAllocator {
         }
     }
 
-    pub fn allocate(&self, service: &str, amount: usize) -> std::result::Result<(), DbError> {
+    pub fn allocate(&self, service: &str, amount: usize) -> Result<(), DbError> {
         let mut allocations = self.allocations.write().unwrap();
         let mut reserved = self.reserved.write().unwrap();
 
@@ -58,7 +58,7 @@ impl MemoryBudgetAllocator {
         Ok(())
     }
 
-    pub fn deallocate(&self, service: &str) -> std::result::Result<(), DbError> {
+    pub fn deallocate(&self, service: &str) -> Result<(), DbError> {
         let mut allocations = self.allocations.write().unwrap();
         let mut reserved = self.reserved.write().unwrap();
 
@@ -95,7 +95,7 @@ impl ConnectionQuotaManager {
         }
     }
 
-    pub fn set_quota(&self, service: &str, quota: usize) -> std::result::Result<(), DbError> {
+    pub fn set_quota(&self, service: &str, quota: usize) -> Result<(), DbError> {
         let mut quotas = self.quotas.write().unwrap();
         let total_allocated: usize = quotas.values().sum();
 
@@ -109,7 +109,7 @@ impl ConnectionQuotaManager {
         Ok(())
     }
 
-    pub fn acquire_connection(&self, service: &str) -> std::result::Result<(), DbError> {
+    pub fn acquire_connection(&self, service: &str) -> Result<(), DbError> {
         let quotas = self.quotas.read().unwrap();
         let mut active = self.active_connections.write().unwrap();
 
@@ -181,6 +181,18 @@ pub struct IoScheduler {
     active_operations: Arc<RwLock<HashMap<String, IoOperation>>>,
     bandwidth_limit: Arc<RwLock<usize>>,
     current_bandwidth: Arc<RwLock<usize>>,
+}
+
+impl IoScheduler {
+        pub(crate) fn next_operation(&self) -> Option<&IoOperation> {
+            todo!()
+        }
+    }
+
+impl IoScheduler {
+    pub(crate) fn pending_count(&self) -> &usize {
+        todo!()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -264,7 +276,7 @@ impl IoScheduler {
 /// Priority manager
 pub struct PriorityManager {
     priorities: Arc<RwLock<HashMap<String, usize>>>,
-    priority_queues: Arc<RwLock<BTreeMap<usize<String>>>>,
+    priority_queues: Arc<RwLock<BTreeMap<usize, Vec<String>>>>,
 }
 
 impl PriorityManager {
@@ -326,7 +338,7 @@ pub enum ContentionSeverity {
 }
 
 pub trait ContentionResolver: Send + Sync {
-    fn resolve(&self, contention: &ResourceContention) -> std::result::Result<String, DbError>;
+    fn resolve(&self, contention: &ResourceContention) -> Result<String, DbError>;
 }
 
 impl ResourceContentionHandler {
@@ -347,7 +359,7 @@ impl ResourceContentionHandler {
         strategies.insert(resource_type.to_string(), resolver);
     }
 
-    pub fn resolve_contentions(&self) -> std::result::Result<Vec<String>, DbError> {
+    pub fn resolve_contentions(&self) -> Result<Vec<String>, DbError> {
         let mut contentions = self.contentions.write().unwrap();
         let strategies = self.resolution_strategies.read().unwrap();
         let mut resolutions = Vec::new();
@@ -421,7 +433,7 @@ impl ResourceOrchestrator {
         &self.contention_handler
     }
 
-    pub async fn orchestrate_resources(&self) -> std::result::Result<(), DbError> {
+    pub async fn orchestrate_resources(&self) -> Result<(), DbError> {
         // Resolve any resource contentions
         self.contention_handler.resolve_contentions()?;
 
@@ -433,4 +445,3 @@ impl ResourceOrchestrator {
         Ok(())
     }
 }
-

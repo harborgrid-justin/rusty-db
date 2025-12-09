@@ -262,7 +262,7 @@ impl LogMiner {
 
         // Simulate some log entries
         for i in 0..100 {
-            let scn = log_file.start_scn + i;
+            let scn = logfile.start_scn + i;
             let txn_id = format!("TXN-{}", i % 10);
 
             let entry = TransactionLogEntry {
@@ -663,5 +663,3 @@ mod tests {
         assert_eq!(query.target_scn, 1000);
     }
 }
-
-

@@ -14,7 +14,8 @@ pub mod builders;
 pub mod helpers;
 
 // Re-export main types and functions
-pub use types::*;
+// Note: types::DatabaseSchema is shadowed by models::DatabaseSchema
+pub use types::{DateTime, Json, Binary, BigInt, DataType, SortOrder, FilterOp, AggregateFunc, JoinType, IsolationLevel};
 pub use models::*;
 pub use queries::{QueryRoot, JoinInput, SearchResult, SearchMatch, QueryPlan, PlanOperation};
 pub use mutations::{

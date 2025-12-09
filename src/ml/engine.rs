@@ -144,8 +144,8 @@ impl ModelVersion {
     }
 }
 
-impl std::fmt::Display for ModelVersion {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ModelVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
     }
 }
@@ -167,8 +167,8 @@ pub enum ModelStatus {
     Failed,
 }
 
-impl std::fmt::Display for ModelStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ModelStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ModelStatus::Training => write!(f, "Training"),
             ModelStatus::Trained => write!(f, "Trained"),

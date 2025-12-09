@@ -92,7 +92,6 @@ fn num_cpus() -> usize {
 }
 
 /// Central analytics manager coordinating all subsystems.
-#[derive(Debug)]
 pub struct AnalyticsManager {
     /// Configuration
     config: AnalyticsConfig,
@@ -179,7 +178,7 @@ impl AnalyticsManager {
     // ========================================================================
 
     /// Checks the cache for a query result.
-    pub fn get_cached(&self, query: &str) -> Option<CachedResult> {
+    pub fn get_cached(&self, query: &str) -> Option<Vec<Vec<String>>> {
         if !self.config.cache_enabled {
             return None;
         }
@@ -187,9 +186,9 @@ impl AnalyticsManager {
     }
 
     /// Stores a result in the cache.
-    pub fn cache_result(&self, query: &str, result: CachedResult) {
+    pub fn cache_result(&self, query: &str, result: Vec<Vec<String>>) {
         if self.config.cache_enabled {
-            self.cache.put(query, result);
+            self.cache.put(String::from(query), result, 0);
         }
     }
 
@@ -200,7 +199,7 @@ impl AnalyticsManager {
 
     /// Returns cache statistics.
     pub fn cache_stats(&self) -> CacheStats {
-        self.cache.stats()
+        self.cache.get_stats()
     }
 
     /// Clears the entire cache.
@@ -509,7 +508,7 @@ use std::time::Duration;
             result: vec![],
             timestamp: (),
             data: vec![],
-            created_at: std::time::Instant::now(),
+            created_at: Instant::now(),
             size_bytes: 100,
             access_count: 0,
             query_hash: 123,
@@ -526,7 +525,7 @@ use std::time::Duration;
     #[test]
     fn test_uptime() {
         let manager = AnalyticsManager::new();
-        std::thread::sleep(std::time::Duration::from_millis(10));
+        std::thread::sleep(Duration::from_millis(10));
 
         assert!(manager.uptime().as_millis() >= 10);
     }

@@ -229,7 +229,7 @@ impl BackupSystem {
             backup_id,
             target,
             RecoveryMode::Complete,
-            recovery_path,
+            recoverypath,
         )?;
 
         // Perform recovery
@@ -354,5 +354,3 @@ use std::collections::HashMap;
         assert!(stats.snapshot_stats.total_snapshots > 0);
     }
 }
-
-

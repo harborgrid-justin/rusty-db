@@ -4,7 +4,6 @@
 // and automatic error handling and retry logic.
 // Optimized with lock-free ring buffers for maximum throughput.
 
-use tokio::time::sleep;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
@@ -13,7 +12,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
@@ -295,7 +294,7 @@ impl ApplyEngine {
     pub fn queue_change(&self, change: ApplyChange) -> Result<()> {
         // Check if already applied
         {
-            let mut applied = self.applied_changes.read();
+            let applied = self.applied_changes.read();
             if applied.contains(&change.id) {
                 return Ok(()); // Already applied
             }
@@ -494,7 +493,7 @@ impl ApplyEngine {
     /// Check if dependencies are satisfied
     #[inline]
     fn dependencies_satisfied(&self, deps: &[String]) -> Result<bool> {
-        let mut applied = self.applied_changes.read();
+        let applied = self.applied_changes.read();
 
         for dep in deps {
             if !applied.contains(dep) {
@@ -511,7 +510,7 @@ impl ApplyEngine {
 
         // In a real implementation, this would apply to the storage engine
         // For now, simulate with a small delay
-        tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
+        tokio::time::sleep(Duration::from_millis(1)).await;
 
         // Update statistics
         {
@@ -666,7 +665,6 @@ impl Default for ApplyEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_queue_change() {

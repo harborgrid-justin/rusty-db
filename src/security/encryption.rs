@@ -318,7 +318,7 @@ impl EncryptionManager {
     }
 
     /// Get a key by ID
-    pub fn get_key(&self, key_id: &KeyId) -> Result<EncryptionKey> {
+    pub fn get_key(&self, key_id: &str) -> Result<EncryptionKey> {
         self.keys.read()
             .get(key_id)
             .cloned()
@@ -535,7 +535,7 @@ impl EncryptionManager {
     }
 
     /// Encrypt data with a specific key
-    pub fn encrypt_data(&self, key_id: &KeyId, plaintext: &[u8]) -> Result<Vec<u8>> {
+    pub fn encrypt_data(&self, key_id: &str, plaintext: &[u8]) -> Result<Vec<u8>> {
         let key = self.get_key(key_id)?;
 
         if !key.is_active {
@@ -552,7 +552,7 @@ impl EncryptionManager {
     }
 
     /// Decrypt data with a specific key
-    pub fn decrypt_data(&self, key_id: &KeyId, ciphertext: &[u8]) -> Result<Vec<u8>> {
+    pub fn decrypt_data(&self, key_id: &str, ciphertext: &[u8]) -> Result<Vec<u8>> {
         let key = self.get_key(key_id)?;
 
         // Even deprecated keys can decrypt (for rotation)

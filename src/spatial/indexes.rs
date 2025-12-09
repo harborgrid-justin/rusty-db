@@ -720,7 +720,7 @@ impl SpatialIndex for GridIndex {
     fn search(&self, query: &BoundingBox) -> Vec<u64> {
         let cells = self.get_cells_for_bbox(query);
         let mut results = Vec::new();
-        let mut seen = std::collections::HashSet::new();
+        let mut seen = HashSet::new();
 
         for cell in cells {
             if let Some(entries) = self.grid.get(&cell) {

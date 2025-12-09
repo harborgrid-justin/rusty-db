@@ -2,14 +2,13 @@
 //
 // Part of the comprehensive monitoring system for RustyDB
 
-use std::sync::{Arc, Mutex, atomic::{AtomicU64, AtomicBool, Ordering}};
+use std::sync::{Arc};
 use std::collections::{HashMap, BTreeMap, VecDeque};
-use std::time::{Duration, SystemTime, Instant, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 
 use crate::error::DbError;
-use super::metrics_core::*;
 
 // SECTION 4: ALERTING ENGINE (600+ lines)
 // ============================================================================
@@ -57,7 +56,7 @@ impl Alert {
         value: f64,
     ) -> Self {
         let id = uuid::Uuid::new_v4().to_string();
-        let fingerprint = format!("{}{}", rule_name, std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+        let fingerprint = format!("{}{}", rule_name, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
 
         Self {
             id,
@@ -349,7 +348,7 @@ pub struct AlertInhibitionRule {
 /// Notification channel trait
 pub trait NotificationChannel: Send + Sync {
     fn name(&self) -> &str;
-    fn send(&self, alert: &Alert) -> std::result::Result<(), DbError>;
+    fn send(&self, alert: &Alert) -> Result<(), DbError>;
 }
 
 /// Webhook notification channel
@@ -379,7 +378,7 @@ impl NotificationChannel for WebhookChannel {
         &self.name
     }
 
-    fn send(&self, alert: &Alert) -> std::result::Result<(), DbError> {
+    fn send(&self, alert: &Alert) -> Result<(), DbError> {
         // In real implementation, would use HTTP client
         println!("Sending alert to webhook {}: {:?}", self.url, alert);
         Ok(())
@@ -410,7 +409,7 @@ impl NotificationChannel for EmailChannel {
         &self.name
     }
 
-    fn send(&self, alert: &Alert) -> std::result::Result<(), DbError> {
+    fn send(&self, alert: &Alert) -> Result<(), DbError> {
         println!("Sending email alert from {} to {:?}: {}", self.from, self.to, alert.message);
         Ok(())
     }
@@ -438,7 +437,7 @@ impl NotificationChannel for SlackChannel {
         &self.name
     }
 
-    fn send(&self, alert: &Alert) -> std::result::Result<(), DbError> {
+    fn send(&self, alert: &Alert) -> Result<(), DbError> {
         println!("Sending Slack alert to {}: {}", self.channel, alert.message);
         Ok(())
     }

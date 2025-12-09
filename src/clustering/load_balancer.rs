@@ -551,7 +551,7 @@ impl LoadBalancer {
             .min_by(|a, b| {
                 a.avg_latency_ms
                     .partial_cmp(&b.avg_latency_ms)
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                    .unwrap_or(Ordering::Equal)
             })
             .ok_or_else(|| DbError::Internal("No available backends".into()))?;
 

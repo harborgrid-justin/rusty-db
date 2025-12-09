@@ -12,7 +12,8 @@ use sha2::{Sha256, Digest};
 use hmac::Hmac;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
-
+use crate::api::gateway::{AuthorizationEngine, SecurityEvent, SecurityEventType, SecurityFilter, AuthenticationManager, AuditLogger};
+use crate::api::RateLimiter;
 use crate::error::DbError;
 use super::types::*;
 
@@ -91,7 +92,7 @@ impl ApiGateway {
     }
 
     /// Process incoming request
-    pub async fn process_request(&self, request: ApiRequest) -> std::result::Result<ApiResponse, DbError> {
+    pub async fn process_request(&self, request: ApiRequest) -> Result<ApiResponse, DbError> {
         let start = Instant::now();
 
         // Update metrics
@@ -298,7 +299,7 @@ impl ApiGateway {
     }
 
     /// Forward request to backend service
-    async fn forward_to_backend(&self, _request: &ApiRequest, route: &Route) -> std::result::Result<ApiResponse, DbError> {
+    async fn forward_to_backend(&self, _request: &ApiRequest, route: &Route) -> Result<ApiResponse, DbError> {
         // Select endpoint using load balancing
         let endpoint = self.select_endpoint(&route.backend)?;
 
@@ -313,7 +314,7 @@ impl ApiGateway {
     }
 
     /// Select backend endpoint using load balancing strategy
-    fn select_endpoint(&self, backend: &BackendService) -> std::result::Result<ServiceEndpoint, DbError> {
+    fn select_endpoint(&self, backend: &BackendService) -> Result<ServiceEndpoint, DbError> {
         let healthy_endpoints: Vec<_> = backend.endpoints.iter()
             .filter(|e| *e.healthy.read())
             .collect();
@@ -379,4 +380,3 @@ impl Clone for GatewayMetrics {
         }
     }
 }
-

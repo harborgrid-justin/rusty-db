@@ -26,8 +26,8 @@ pub struct DistributedQueryExecutor {
     router: QueryRouter,
 }
 
-impl std::fmt::Debug for DistributedQueryExecutor {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for DistributedQueryExecutor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("DistributedQueryExecutor")
             .field("router", &self.router)
             .finish_non_exhaustive()

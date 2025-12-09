@@ -34,7 +34,6 @@
 /// - Time: O(n/32) for n-byte input with AVX2
 /// - Space: O(1)
 /// - Expected collisions: ~2^-64 for uniform distribution
-#[inline]
 use std::collections::HashSet;
 pub fn xxhash3_avx2(data: &[u8], seed: u64) -> u64 {
     if is_x86_feature_detected!("avx2") {
@@ -409,7 +408,7 @@ mod tests {
         assert_eq!(hashes, hashes2);
 
         // Check uniqueness (probabilistic)
-        let unique_count = hashes.iter().collect::<std::collections::HashSet<_>>().len();
+        let unique_count = hashes.iter().collect::<HashSet<_>>().len();
         assert_eq!(unique_count, strings.len(), "All hashes should be unique");
     }
 
@@ -450,7 +449,7 @@ mod tests {
         }
 
         // Check that all hashes are unique (high probability)
-        let unique = hashes.iter().collect::<std::collections::HashSet<_>>();
+        let unique = hashes.iter().collect::<HashSet<_>>();
         assert!(unique.len() > 995, "Hash function should have low collision rate");
 
         // Check distribution across buckets

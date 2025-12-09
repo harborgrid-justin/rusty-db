@@ -42,7 +42,7 @@ impl<K: Hash + Eq + Clone, V: Clone> Clone for ExtendibleHashIndex<K, V> {
     }
 }
 
-impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
+impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
     /// Create a new extendible hash index
     pub fn new(bucket_capacity: usize) -> Self {
         let initial_depth = 2;
@@ -217,7 +217,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
         let global_depth = *self.global_depth.read();
 
         let mut total_entries = 0;
-        let mut unique_buckets = std::collections::HashSet::new();
+        let mut unique_buckets = HashSet::new();
 
         for bucket_ref in directory.iter() {
             let bucket_ptr = Arc::as_ptr(bucket_ref);
@@ -279,7 +279,7 @@ impl<K: Hash + Eq + Clone, V: Clone> Clone for LinearHashIndex<K, V> {
     }
 }
 
-impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
+impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
     /// Create a new linear hash index
     pub fn new(initial_buckets: usize, bucket_capacity: usize) -> Self {
         let mut buckets = Vec::with_capacity(initial_buckets);
@@ -592,5 +592,3 @@ mod tests {
         assert!(stats.num_buckets > 2);
     }
 }
-
-

@@ -84,12 +84,12 @@ impl WaitQueue {
     }
 
     /// Enqueue a waiter
-    pub async fn enqueue(&self) -> std::result::Result<(), PoolError> {
+    pub async fn enqueue(&self) -> Result<(), PoolError> {
         self.enqueue_with_priority(QueuePriority::Normal).await
     }
 
     /// Enqueue with priority
-    pub async fn enqueue_with_priority(&self, priority: QueuePriority) -> std::result::Result<(), PoolError> {
+    pub async fn enqueue_with_priority(&self, priority: QueuePriority) -> Result<(), PoolError> {
         let mut queue = self.entries.lock().unwrap();
 
         if queue.len() >= self.max_size {

@@ -43,7 +43,8 @@ use sha2::{Sha256, Digest};
 use hmac::Hmac;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
-
+use crate::api::gateway::{AuthorizationEngine, SecurityFilter, AuthenticationManager, AuditLogger};
+use crate::api::{RateLimitConfig, RateLimiter};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
@@ -359,31 +360,40 @@ pub enum BodyTransform {
 /// API Gateway core engine
 pub struct ApiGateway {
     /// Configuration
-    config: Arc<RwLock<GatewayConfig>>,
+    pub(crate) config: Arc<RwLock<GatewayConfig>>,
     /// Route registry
-    routes: Arc<RwLock<HashMap<String, Route>>>,
+    pub(crate) routes: Arc<RwLock<HashMap<String, Route>>>,
     /// Authentication manager
-    auth_manager: Arc<AuthenticationManager>,
+    pub(crate) auth_manager: Arc<AuthenticationManager>,
     /// Authorization engine
-    authz_engine: Arc<AuthorizationEngine>,
+    pub(crate) authz_engine: Arc<AuthorizationEngine>,
     /// Rate limiter
-    rate_limiter: Arc<RateLimiter>,
+    pub(crate) rate_limiter: Arc<RateLimiter>,
     /// Security filter
-    security_filter: Arc<SecurityFilter>,
+    pub(crate) security_filter: Arc<SecurityFilter>,
     /// Service registry
-    service_registry: Arc<RwLock<ServiceRegistry>>,
+    pub(crate) service_registry: Arc<RwLock<ServiceRegistry>>,
     /// Request metrics
-    metrics: Arc<RwLock<GatewayMetrics>>,
+    pub(crate) metrics: Arc<RwLock<GatewayMetrics>>,
     /// Audit logger
-    audit_logger: Arc<Mutex<AuditLogger>>,
+    pub(crate) audit_logger: Arc<Mutex<AuditLogger>>,
 }
 
 /// Service registry
 pub struct ServiceRegistry {
     /// Registered services
-    services: HashMap<String, BackendService>,
+    pub(crate) services: HashMap<String, BackendService>,
     /// Service health status
-    health_status: HashMap<String, bool>,
+    pub(crate) health_status: HashMap<String, bool>,
+}
+
+impl Default for ServiceRegistry {
+    fn default() -> Self {
+        Self {
+            services: HashMap::new(),
+            health_status: HashMap::new(),
+        }
+    }
 }
 
 /// Gateway metrics
@@ -450,11 +460,15 @@ impl ApiGateway {
     /// Create a new API gateway
     pub fn new(config: GatewayConfig) -> Self {
         Self {
-            config,
+            config: Arc::new(RwLock::new(config)),
             routes: Default::default(),
-            middleware: Default::default(),
-            backends: Default::default(),
+            auth_manager: Arc::new(AuthenticationManager::new()),
+            authz_engine: Arc::new(AuthorizationEngine::new()),
+            rate_limiter: Arc::new(RateLimiter::new()),
+            security_filter: Arc::new(SecurityFilter::new()),
             metrics: Default::default(),
+            service_registry: Arc::new(RwLock::new(ServiceRegistry::default())),
+            audit_logger: Arc::new(Mutex::new(AuditLogger::new())),
         }
     }
 }

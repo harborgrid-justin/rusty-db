@@ -359,8 +359,8 @@ impl DeltaTable {
     ) {
         self.deltas.push(DeltaRow {
             operation: DeltaOperation::Update,
-            values: new_values,
-            old_values: Some(old_values),
+            values: newvalues,
+            old_values: Some(oldvalues),
             timestamp: self.current_timestamp(),
         });
         self.maybe_compact();

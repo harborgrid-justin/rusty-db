@@ -284,6 +284,12 @@ pub struct QueryProfile {
 }
 
 impl QueryProfile {
+        pub(crate) fn total_execution_time(&self) -> &Duration {
+            &self.total_execution_time
+        }
+    }
+
+impl QueryProfile {
     pub fn new(query_id: u64, sql: impl Into<String>) -> Self {
         Self {
             query_id,

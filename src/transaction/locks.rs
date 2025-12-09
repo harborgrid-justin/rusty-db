@@ -790,6 +790,7 @@ impl LockEscalationManager {
 
 #[cfg(test)]
 mod tests {
+    use crate::transaction::locks::{HierarchicalLockManager, LockManagerConfig, LockMode, LockResource, WaitForGraph};
 
     #[test]
     fn test_lock_compatibility() {

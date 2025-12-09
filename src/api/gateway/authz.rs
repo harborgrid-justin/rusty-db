@@ -12,7 +12,7 @@ use sha2::{Sha256, Digest};
 use hmac::Hmac;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
-
+use crate::api::Session;
 use crate::error::DbError;
 use super::types::*;
 
@@ -152,7 +152,7 @@ impl AuthorizationEngine {
     }
 
     /// Authorize session for permissions
-    pub fn authorize(&self, session: &Session, required_permissions: &[String]) -> Result<bool> {
+    pub fn authorize(&self, session: &Session, required_permissions: &[String]) -> Result<bool, DbError> {
         // Check RBAC first
         if self.rbac.has_permissions(&session.user_id, required_permissions) {
             return Ok(true);
@@ -174,7 +174,7 @@ impl AuthorizationEngine {
     }
 
     /// Evaluate policy
-    pub fn evaluate_policy(&self, subject: &str, resource: &str, action: &str) -> Result<bool> {
+    pub fn evaluate_policy(&self, subject: &str, resource: &str, action: &str) -> Result<bool, DbError> {
         self.policy_engine.evaluate(subject, resource, action)
     }
 }
@@ -331,7 +331,7 @@ impl PolicyEngine {
     }
 
     /// Evaluate policies
-    pub fn evaluate(&self, subject: &str, resource: &str, action: &str) -> Result<bool> {
+    pub fn evaluate(&self, subject: &str, resource: &str, action: &str) -> Result<bool, DbError> {
         let policies = self.policies.read();
 
         let mut allow = false;
@@ -395,4 +395,3 @@ impl PolicyEngine {
         policies.values().cloned().collect()
     }
 }
-

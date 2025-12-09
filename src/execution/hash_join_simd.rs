@@ -369,6 +369,7 @@ pub struct SimdHashJoinStats {
 
 #[cfg(test)]
 mod tests {
+    use crate::execution::{QueryResult, SimdHashJoin, SimdHashJoinConfig};
 
     #[test]
     fn test_basic_join() {

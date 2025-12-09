@@ -319,8 +319,8 @@ impl Default for LockManager {
     }
 }
 
-impl std::fmt::Debug for LockManager {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for LockManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("LockManager")
             .field("total_resources", &self.total_locked_resources())
             .finish()

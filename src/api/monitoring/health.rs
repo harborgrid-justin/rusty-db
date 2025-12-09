@@ -400,7 +400,7 @@ pub struct SelfHealingTrigger {
     health_checker: Arc<dyn HealthChecker>,
     consecutive_failures: Arc<AtomicU64>,
     failure_threshold: u64,
-    healing_action: Arc<dyn Fn() -> std::result::Result<(), DbError> + Send + Sync>,
+    healing_action: Arc<dyn Fn() -> Result<(), DbError> + Send + Sync>,
 }
 
 impl SelfHealingTrigger {
@@ -408,7 +408,7 @@ impl SelfHealingTrigger {
         name: String,
         health_checker: Arc<dyn HealthChecker>,
         failure_threshold: u64,
-        healing_action: Arc<dyn Fn() -> std::result::Result<(), DbError> + Send + Sync>,
+        healing_action: Arc<dyn Fn() -> Result<(), DbError> + Send + Sync>,
     ) -> Self {
         Self {
             name,
@@ -419,7 +419,7 @@ impl SelfHealingTrigger {
         }
     }
 
-    pub fn check_and_heal(&self) -> std::result::Result<(), DbError> {
+    pub fn check_and_heal(&self) -> Result<(), DbError> {
         let result = self.health_checker.check();
 
         if !result.status.is_healthy() {

@@ -432,10 +432,10 @@ impl GeodeticCalculator {
         let mut iter_limit = 100;
 
         let mut cos_sq_alpha = 0.0;
-        let sin_sigma = 0.0;
-        let cos_sigma = 1.0;
-        let sigma = 0.0;
-        let cos_2_sigma_m = 0.0;
+        let mut sin_sigma = 0.0;
+        let mut cos_sigma = 1.0;
+        let mut sigma = 0.0;
+        let mut cos_2_sigma_m = 0.0;
 
         loop {
             let sin_lambda = lambda.sin();

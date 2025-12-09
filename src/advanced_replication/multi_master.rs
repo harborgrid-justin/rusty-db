@@ -11,7 +11,7 @@ use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::error::DbError;
 use super::conflicts::{ConflictResolver, ConflictingChange, ConflictResolutionStrategy};
 
@@ -276,7 +276,7 @@ impl MultiMasterReplication {
     async fn send_to_site(&self, _op: &ReplicationOp, site: &SiteInfo) -> Result<()> {
         // In a real implementation, this would send over network
         // For now, simulate with a small delay
-        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+        tokio::time::sleep(Duration::from_millis(10)).await;
 
         // Simulate 95% success rate
         if rand::random::<f64>() < 0.95 {

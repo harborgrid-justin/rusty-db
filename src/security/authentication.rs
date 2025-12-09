@@ -341,7 +341,7 @@ impl AuthenticationManager {
             user_id: user_id.clone(),
             username: username.clone(),
             email,
-            password_hash,
+            password_hash: password_hash.clone(),
             created_at: now,
             last_login: None,
             last_password_change: now,
@@ -356,7 +356,7 @@ impl AuthenticationManager {
             mfa_enabled: false,
             mfa_secret: None,
             mfa_backup_codes: Vec::new(),
-            password_history: vec![password_hash.clone()],
+            password_history: vec![password_hash],
             metadata: HashMap::new(),
         };
 
@@ -491,7 +491,7 @@ impl AuthenticationManager {
     }
 
     /// Validate a session
-    pub fn validate_session(&self, session_id: &SessionId) -> Result<AuthSession> {
+    pub fn validate_session(&self, session_id: &str) -> Result<AuthSession> {
         let mut sessions = self.sessions.write();
         let session = sessions.get_mut(session_id)
             .ok_or_else(|| DbError::Network("Invalid session".to_string()))?;

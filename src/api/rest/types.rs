@@ -11,6 +11,11 @@ use std::time::{Duration};
 use tokio::sync::{RwLock, Semaphore};
 use utoipa::ToSchema;
 use uuid::Uuid;
+use axum::{
+    response::{IntoResponse, Response},
+    http::StatusCode,
+    Json,
+};
 
 use crate::common::*;
 use crate::error::DbError;
@@ -129,7 +134,22 @@ impl From<DbError> for ApiError {
     }
 }
 
-pub type ApiResult<T> = std::result::Result<T, ApiError>;
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        let status = match self.code.as_str() {
+            "NOT_FOUND" => StatusCode::NOT_FOUND,
+            "INVALID_INPUT" | "VALIDATION_ERROR" => StatusCode::BAD_REQUEST,
+            "UNAUTHORIZED" => StatusCode::UNAUTHORIZED,
+            "FORBIDDEN" => StatusCode::FORBIDDEN,
+            "CONFLICT" => StatusCode::CONFLICT,
+            "RATE_LIMITED" => StatusCode::TOO_MANY_REQUESTS,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        (status, Json(self)).into_response()
+    }
+}
+
+pub type ApiResult<T> = Result<T, ApiError>;
 
 /// Query execution tracking
 #[derive(Debug, Clone)]
@@ -164,7 +184,7 @@ impl RateLimiter {
         Self {
             requests: HashMap::new(),
             window_secs,
-            max_requests,
+            max_requests: maxrequests,
         }
     }
 

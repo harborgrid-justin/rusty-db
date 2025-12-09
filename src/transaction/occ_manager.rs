@@ -207,8 +207,8 @@ impl Default for OptimisticConcurrencyControl {
     }
 }
 
-impl std::fmt::Debug for OptimisticConcurrencyControl {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for OptimisticConcurrencyControl {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let stats = self.stats();
         f.debug_struct("OptimisticConcurrencyControl")
             .field("validations", &stats.validations)

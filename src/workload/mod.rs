@@ -311,8 +311,8 @@ impl WorkloadIntelligence {
                 free_memory_bytes: summary.memory_usage.free_memory_bytes,
                 swap_total_bytes: 8 * 1024 * 1024 * 1024,
                 swap_free_bytes: 7 * 1024 * 1024 * 1024,
-                network_rx_bytes_per_sec: 1024 * 1024.0,
-                network_tx_bytes_per_sec: 512 * 1024.0,
+                network_rx_bytes_per_sec: 1024.0 * 1024.0,
+                network_tx_bytes_per_sec: 512.0 * 1024.0,
             },
             tablespace_usage: vec![],
             segment_stats: vec![],
@@ -402,5 +402,3 @@ mod tests {
         assert!(findings.is_some());
     }
 }
-
-

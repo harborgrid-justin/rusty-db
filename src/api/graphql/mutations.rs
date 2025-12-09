@@ -12,6 +12,7 @@ use std::time::Instant;
 use crate::error::DbError;
 use super::types::*;
 use super::models::*;
+use super::{GraphQLEngine, AuthorizationContext};
 
 // ============================================================================
 // PART 3: MUTATION OPERATIONS (500+ lines)
@@ -428,4 +429,3 @@ pub struct TransactionExecutionResult {
     pub execution_time_ms: f64,
     pub error: Option<String>,
 }
-

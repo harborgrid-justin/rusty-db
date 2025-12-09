@@ -203,7 +203,7 @@ impl DeadlockDetector {
         }
 
         // Update statistics
-        self.stats.lock().unwrap().detection_runs += 1;
+        self.stats.lock().detection_runs += 1;
 
         let graph = self.wait_for_graph.read();
 
@@ -227,7 +227,7 @@ impl DeadlockDetector {
 
     /// Forces immediate deadlock detection, ignoring rate limiting.
     pub fn force_detect(&self) -> Option<Vec<TransactionId>> {
-        self.stats.lock().unwrap().detection_runs += 1;
+        self.stats.lock().detection_runs += 1;
         let graph = self.wait_for_graph.read();
 
         for &txn_id in graph.keys() {
@@ -335,12 +335,12 @@ impl DeadlockDetector {
 
     /// Records that a victim was aborted.
     pub fn record_victim_aborted(&self) {
-        self.stats.lock().unwrap().victims_aborted += 1;
+        self.stats.lock().victims_aborted += 1;
     }
 
     /// Returns deadlock detection statistics.
     pub fn stats(&self) -> DeadlockStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     /// Returns the number of transactions in the wait-for graph.
@@ -383,8 +383,8 @@ impl Default for DeadlockDetector {
     }
 }
 
-impl std::fmt::Debug for DeadlockDetector {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for DeadlockDetector {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("DeadlockDetector")
             .field("waiting_count", &self.waiting_count())
             .field("edge_count", &self.edge_count())

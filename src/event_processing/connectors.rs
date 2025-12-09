@@ -426,7 +426,7 @@ impl FileSinkConnector {
             .create(true)
             .append(true)
             .open(&self.file_path)
-            .map_err(|e| crate::error::DbError::Io(format!("Failed to open file: {}", e)))?;
+.map_err(|e| crate::error::DbError::Io(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to open file: {}", e))))?;
 
         self.writer = Some(Arc::new(Mutex::new(BufWriter::new(file))));
         Ok(())
@@ -447,7 +447,7 @@ impl FileSinkConnector {
                         crate::error::DbError::Serialization(format!("Failed to serialize: {}", e))
                     })?;
                     writeln!(writer, "{}", json).map_err(|e| {
-                        crate::error::DbError::Io(format!("Failed to write: {}", e))
+                        crate::error::DbError::IoError(format!("Failed to write: {}", e))
                     })?;
                     self.current_size += json.len() as u64;
                 }
@@ -457,7 +457,7 @@ impl FileSinkConnector {
                         crate::error::DbError::Serialization(format!("Failed to serialize: {}", e))
                     })?;
                     writeln!(writer, "{}", json).map_err(|e| {
-                        crate::error::DbError::Io(format!("Failed to write: {}", e))
+                        crate::error::DbError::IoError(format!("Failed to write: {}", e))
                     })?;
                     self.current_size += json.len() as u64;
                 }
@@ -855,5 +855,3 @@ mod tests {
         assert!(manager.get_sink("default").is_some());
     }
 }
-
-

@@ -99,7 +99,7 @@ pub enum SecurityEventType {
 }
 
 impl AuditLogger {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             events: VecDeque::new(),
             max_events: 10000,
@@ -107,7 +107,7 @@ impl AuditLogger {
     }
 
     /// Log request
-    fn log_request(&mut self, request: &ApiRequest) {
+    pub(crate) fn log_request(&mut self, request: &ApiRequest) {
         let event = AuditEvent {
             id: Uuid::new_v4().to_string(),
             timestamp: SystemTime::now(),
@@ -125,7 +125,7 @@ impl AuditLogger {
     }
 
     /// Log security event
-    fn log_security_event(&mut self, event: &SecurityEvent) {
+    pub(crate) fn log_security_event(&mut self, event: &SecurityEvent) {
         let audit_event = AuditEvent {
             id: Uuid::new_v4().to_string(),
             timestamp: event.timestamp,
@@ -227,10 +227,11 @@ impl AuditEventFilter {
 mod tests {
     use super::*;
 use std::time::UNIX_EPOCH;
+    use crate::api::gateway::{IpFilter, IpFilterMode, RbacManager, Role, SlidingWindow, ThreatDetector, TokenBucket};
 
     #[test]
     fn test_token_bucket() {
-        let mut bucket = TokenBucket::new(10, 1.0);
+        let mut bucket = TokenBucket::new();
 
         // Should allow 10 requests initially
         for _ in 0..10 {
@@ -243,7 +244,7 @@ use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_sliding_window() {
-        let mut window = SlidingWindow::new(60, 10);
+        let mut window = SlidingWindow::new();
 
         // Should allow 10 requests
         for _ in 0..10 {
@@ -273,7 +274,7 @@ use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_ip_filter() {
-        let filter = IpFilter::new(IpFilterMode::Blacklist);
+        let filter = IpFilter::new();
         let test_ip = "192.168.1.1".parse().unwrap();
 
         // Should allow initially

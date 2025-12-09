@@ -43,41 +43,41 @@
 /// ```
 
 // =============================================================================
-// Submodule declarations
+// Submodule declarations - Commented out as they're declared in parent mod.rs
 // =============================================================================
 
-pub mod plan_cache;
-pub mod workload_analysis;
-pub mod adaptive_optimizer;
-pub mod performance_stats;
+// pub mod plan_cache;
+// pub mod workload_analysis;
+// pub mod adaptive_optimizer;
+// pub mod performance_stats;
 
 // =============================================================================
 // Re-exports for convenient access
 // =============================================================================
 
 // Plan caching
-pub use plan_cache::{
+pub use super::plan_cache::{
     CacheStatistics,
     QueryPlan,
     QueryPlanCache,
 };
 
 // Workload analysis
-pub use workload_analysis::{
+pub use super::workload_analysis::{
     QueryExecution,
     WorkloadAnalysis,
     WorkloadAnalyzer,
 };
 
 // Adaptive optimization
-pub use adaptive_optimizer::{
+pub use super::adaptive_optimizer::{
     AdaptiveQueryOptimizer,
     OptimizationSuggestions,
     QueryStatistics,
 };
 
 // Performance statistics
-pub use performance_stats::{
+pub use super::performance_stats::{
     GlobalPerformanceStats,
     PerformanceStatsCollector,
     QueryPerformanceStats,

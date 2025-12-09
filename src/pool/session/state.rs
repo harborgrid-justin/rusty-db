@@ -292,8 +292,8 @@ pub enum IsolationLevel {
     Snapshot,
 }
 
-impl std::fmt::Display for IsolationLevel {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for IsolationLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             IsolationLevel::ReadUncommitted => write!(f, "READ_UNCOMMITTED"),
             IsolationLevel::ReadCommitted => write!(f, "READ_COMMITTED"),
@@ -362,8 +362,8 @@ pub enum SessionStatus {
     Cached,
 }
 
-impl std::fmt::Display for SessionStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for SessionStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             SessionStatus::Active => write!(f, "ACTIVE"),
             SessionStatus::Inactive => write!(f, "INACTIVE"),

@@ -2,14 +2,16 @@
 //
 // Core GraphQL engine that interfaces with the database
 
-use async_graphql::{Context, Error, Result as GqlResult};
+use async_graphql::{Context, Error, Result as GqlResult, ID};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
-
+use tokio::sync::{broadcast, RwLock};
+use crate::api::{JoinInput, PersistedQueries, RowChange, RowDeleted, RowInserted, RowUpdated, SubscriptionManager, TableChange, TransactionResult, TransactionOperation};
 use crate::error::DbError;
-use super::types::*;
-use super::models::*;
+use super::types::{DateTime, BigInt, Json, IsolationLevel};
+use super::models::{DatabaseSchema, TableType, ColumnType, IndexInfo, ConstraintInfo, QueryResult, QuerySuccess, RowType, TableStatistics, ColumnStatistics, AggregateInput, AggregateResult, OrderBy, FilterCondition, RowConnection, WhereClause, PageInfo, RowEdge, FieldValue};
+use super::complexity::{QueryCache, RateLimiter};
+use super::queries::{QueryPlan, SearchResult};
 
 // ============================================================================
 // GRAPHQL ENGINE - Core Implementation
@@ -101,7 +103,7 @@ impl GraphQLEngine {
         _order_by: Option<Vec<OrderBy>>,
         _limit: Option<i32>,
         _offset: Option<i32>,
-    ) -> Result<(Vec<RowType>, i64, bool)> {
+    ) -> Result<(Vec<RowType>, i64, bool), DbError> {
         Ok((vec![], 0, false))
     }
 
@@ -112,7 +114,7 @@ impl GraphQLEngine {
         _where_clause: Option<WhereClause>,
         _order_by: Option<Vec<OrderBy>>,
         _limit: Option<i32>,
-    ) -> Result<(Vec<RowType>, i64, bool)> {
+    ) -> Result<(Vec<RowType>, i64, bool), DbError> {
         Ok((vec![], 0, false))
     }
 
@@ -157,7 +159,7 @@ impl GraphQLEngine {
         Ok(0)
     }
 
-    pub async fn execute_sql(&self, _sql: &str, _params: Option<Vec<Json>>) -> Result<(Vec<RowType>, i64)> {
+    pub async fn execute_sql(&self, _sql: &str, _params: Option<Vec<Json>>) -> Result<(Vec<RowType>, i64), DbError> {
         Ok((vec![], 0))
     }
 
@@ -190,15 +192,15 @@ impl GraphQLEngine {
     }
 
     // Mutation operations
-    pub async fn insert_one(&self, _table: &str, _data: HashMap<String, Json>) -> Result<RowType> {
+    pub async fn insert_one(&self, _table: &str, _data: HashMap<String, Json>) -> Result<RowType, DbError> {
         Err(DbError::NotImplemented("insert_one".to_string()))
     }
 
-    pub async fn insert_many(&self, _table: &str, _data: Vec<HashMap<String, Json>>) -> Result<Vec<RowType>> {
+    pub async fn insert_many(&self, _table: &str, _data: Vec<HashMap<String, Json>>) -> Result<Vec<RowType>, DbError> {
         Err(DbError::NotImplemented("insert_many".to_string()))
     }
 
-    pub async fn update_one(&self, _table: &str, _id: &ID, _data: HashMap<String, Json>) -> Result<Option<RowType>> {
+    pub async fn update_one(&self, _table: &str, _id: &ID, _data: HashMap<String, Json>) -> Result<Option<RowType>, DbError> {
         Ok(None)
     }
 
@@ -207,15 +209,15 @@ impl GraphQLEngine {
         _table: &str,
         _where_clause: WhereClause,
         _data: HashMap<String, Json>,
-    ) -> Result<Vec<RowType>> {
+    ) -> Result<Vec<RowType>, DbError> {
         Ok(vec![])
     }
 
-    pub async fn delete_one(&self, _table: &str, _id: &ID) -> Result<bool> {
+    pub async fn delete_one(&self, _table: &str, _id: &ID) -> Result<bool, DbError> {
         Ok(false)
     }
 
-    pub async fn delete_many(&self, _table: &str, _where_clause: WhereClause) -> Result<i32> {
+    pub async fn delete_many(&self, _table: &str, _where_clause: WhereClause) -> Result<i32, DbError> {
         Ok(0)
     }
 
@@ -224,11 +226,11 @@ impl GraphQLEngine {
         _table: &str,
         _unique_fields: Vec<String>,
         _data: HashMap<String, Json>,
-    ) -> Result<(RowType, bool)> {
+    ) -> Result<(RowType, bool), DbError> {
         Err(DbError::NotImplemented("upsert".to_string()))
     }
 
-    pub async fn bulk_insert(&self, _table: &str, _data: Vec<HashMap<String, Json>>, _batch_size: i32) -> Result<i32> {
+    pub async fn bulk_insert(&self, _table: &str, _data: Vec<HashMap<String, Json>>, _batch_size: i32) -> Result<i32, DbError> {
         Ok(0)
     }
 
@@ -261,7 +263,7 @@ impl GraphQLEngine {
         &self,
         _operations: Vec<TransactionOperation>,
         _isolation_level: Option<IsolationLevel>,
-    ) -> Result<Vec<String>> {
+    ) -> Result<Vec<String>, DbError> {
         Ok(vec![])
     }
 
@@ -311,4 +313,3 @@ impl GraphQLEngine {
         self.subscription_manager.register_subscription(table, None).await
     }
 }
-

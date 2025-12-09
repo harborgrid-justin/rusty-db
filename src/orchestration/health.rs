@@ -351,7 +351,7 @@ impl HealthAggregator {
         Self {
             checkers: RwLock::new(HashMap::new()),
             history: RwLock::new(Vec::new()),
-            max_history,
+            max_history: maxhistory,
             cascading_detector: Arc::new(CascadingFailureDetector::new()),
         }
     }
@@ -658,7 +658,7 @@ mod tests {
             HealthCheckResult::healthy("test".into())
         }));
 
-        let checker = HealthChecker::new(check::from_secs(1));
+        let checker = HealthChecker::new(check::fromsecs(1), Default::default());
         let result = checker.check_now().await;
 
         assert_eq!(result.status, HealthStatus::Healthy);
@@ -677,8 +677,8 @@ mod tests {
             HealthCheckResult::degraded("service2".into(), "slow".into())
         }));
 
-        let checker1 = Arc::new(HealthChecker::new(check1::from_secs(1)));
-        let checker2 = Arc::new(HealthChecker::new(check2::from_secs(1)));
+        let checker1 = Arc::new(HealthChecker::new(check1::from_secs(1), Default::default()));
+        let checker2 = Arc::new(HealthChecker::new(check2::from_secs(1), Default::default()));
 
         aggregator.register(checker1);
         aggregator.register(checker2);

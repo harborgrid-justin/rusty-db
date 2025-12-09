@@ -4,7 +4,7 @@ use crate::storage::page::Page;
 use parking_lot::RwLock;
 use std::collections::{HashMap, VecDeque};
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -783,10 +783,10 @@ impl DiskManager {
         *num_pages += 1;
 
         // Write empty page
-        let page = Page::new(page_id, self.page_size);
+        let page = Page::new(page_id as PageId as PageId, self.page_size);
         self.write_page(&page)?;
 
-        Ok(page_id)
+        Ok(page_id as PageId as PageId)
     }
 
     pub fn get_num_pages(&self) -> u32 {
@@ -819,7 +819,7 @@ impl DiskManager {
 
         for _ in 0..max_ops {
             let op = {
-                let mut scheduler = self.scheduler.lock();
+                let mut scheduler = self.scheduler.lock().unwrap();
                 scheduler.next_operation()
             };
 
@@ -1052,9 +1052,13 @@ impl DiskManager {
 #[cfg(test)]
 mod tests {
     use tempfile::tempdir;
+    use crate::api::IoScheduler;
+    use crate::DbError;
+    use crate::storage::disk::{IoOpType, IoOperation};
+    use crate::storage::{DiskManager, IoPriority};
 
     #[test]
-    fn test_disk_manager() -> Result<()> {
+    fn test_disk_manager() -> Result<(), DbError> {
         let dir = tempdir().unwrap();
         let dm = DiskManager::new(dir.path().to_str().unwrap(), 4096)?;
 
@@ -1072,7 +1076,7 @@ mod tests {
     }
 
     #[test]
-    fn test_read_ahead() -> Result<()> {
+    fn test_read_ahead() -> Result<(), DbError> {
         let dir = tempdir().unwrap();
         let dm = DiskManager::new(dir.path().to_str().unwrap(), 4096)?;
 
@@ -1093,7 +1097,7 @@ mod tests {
     }
 
     #[test]
-    fn test_write_behind() -> Result<()> {
+    fn test_write_behind() -> Result<(), DbError> {
         let dir = tempdir().unwrap();
         let dm = DiskManager::new(dir.path().to_str().unwrap(), 4096)?;
 
@@ -1111,15 +1115,15 @@ mod tests {
 
     #[test]
     fn test_io_scheduler() {
-        let mut scheduler = IoScheduler::new();
+        let mut scheduler = IoScheduler::new(0);
 
         let op1 = IoOperation::new(IoOpType::Read, 1, IoPriority::Normal);
         let op2 = IoOperation::new(IoOpType::Write, 2, IoPriority::High);
         let op3 = IoOperation::new(IoOpType::Sync, 3, IoPriority::Critical);
 
-        scheduler.schedule(op1);
-        scheduler.schedule(op2);
-        scheduler.schedule(op3);
+        scheduler.schedule(op1, ScheduleInfo {});
+        scheduler.schedule(op2, ScheduleInfo {});
+        scheduler.schedule(op3, ScheduleInfo {});
 
         assert_eq!(scheduler.pending_count(), 3);
 

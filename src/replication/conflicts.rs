@@ -608,11 +608,11 @@ impl ConflictResolver {
         conflictdata: ConflictData,
     ) -> Result<Uuid, ConflictResolutionError> {
         let conflict_id = Uuid::new_v4();
-        let severity = self.determine_conflict_severity(&conflict_data);
+        let severity = self.determine_conflict_severity(&conflictdata);
 
         let conflict_info = ConflictInfo {
             conflict_id,
-            data: conflict_data.clone(),
+            data: conflictdata.clone(),
             detected_at: SystemTime::now(),
             status: ConflictStatus::Pending,
             resolution_attempts: 0,
@@ -637,7 +637,7 @@ impl ConflictResolver {
         // Publish event
         let _ = self.event_sender.send(ConflictEvent::ConflictDetected {
             conflict_id,
-            table_name: conflict_data.table_name.as_str().to_string(),
+            table_name: conflictdata.table_name.as_str().to_string(),
             severity,
         });
 
@@ -802,14 +802,13 @@ impl ConflictResolver {
         }
 
         // Try global custom resolvers
-        let global_resolvers = self.global_resolvers.read();
+        let global_resolvers: Vec<_> = self.global_resolvers.read().iter().cloned().collect();
         for resolver in global_resolvers.iter() {
             if resolver.can_resolve(conflict_data).await {
                 let resolved_data = resolver.resolve(conflict_data).await?;
                 return Ok((ConflictResolutionStrategy::Custom, resolved_data));
             }
         }
-        drop(global_resolvers);
 
         // Use default strategy
         match self.config.default_strategy {
@@ -987,6 +986,9 @@ pub struct ConflictResolutionStatistics {
 
 #[cfg(test)]
 mod tests {
+    use std::time::{Duration, SystemTime};
+    use crate::replication::conflicts::{ConflictData, ConflictResolver, ConflictResolverConfig, ConflictSeverity, CustomConflictResolver, FirstWriteWinsResolver, LastWriteWinsResolver};
+    use crate::replication::types::{ReplicationOperation, TableName};
 
     #[tokio::test]
     async fn test_conflict_resolver_creation() {

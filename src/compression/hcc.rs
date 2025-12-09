@@ -184,7 +184,7 @@ impl HCCEngine {
 
             ColumnDataType::Varchar | ColumnDataType::Binary => {
                 // Use dictionary or LZ4 based on cardinality
-                let unique_count = column.chunks(32).collect::<std::collections::HashSet<_>>().len();
+                let unique_count = column.chunks(32).collect::<HashSet<_>>().len();
                 let total_chunks = (column.len() + 31) / 32;
 
                 if unique_count < total_chunks / 3 {
@@ -253,7 +253,11 @@ impl HCCEngine {
                 // Delta encoding
                 let delta_encoder = DeltaEncoder::new();
                 let decoded = delta_encoder.decode(data)?;
-                Ok(decoded)
+                let mut bytes = Vec::with_capacity(decoded.len() * 4);
+                for value in decoded {
+                    bytes.extend_from_slice(&value.to_le_bytes());
+                }
+                Ok(bytes)
             }
             3 => {
                 // RLE
@@ -370,12 +374,12 @@ impl HCCEngine {
             column_metadata,
             compressed_columns,
             compression_level: self.strategy.compression_level(),
-            created_at: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_secs(),
-            last_accessed: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
+            last_accessed: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_secs(),
         };
@@ -651,7 +655,7 @@ impl HCCEngine {
 
     fn estimate_distinct_values(&self, column: &[u8], col_type: &ColumnDataType) -> usize {
         let sample_size = column.len().min(1000);
-        let mut seen = std::collections::HashSet::new();
+        let mut seen = HashSet::new();
         let cell_size = col_type.size_hint();
 
         for i in (0..sample_size).step_by(cell_size) {
@@ -854,6 +858,8 @@ impl Default for HCCAdvisor {
 
 #[cfg(test)]
 mod tests {
+    use crate::compression::hcc::{HCCAdvisor, HCCEngine, HCCStrategy};
+    use crate::inmemory::column_store::ColumnDataType;
 
     #[test]
     fn test_hcc_compression() {

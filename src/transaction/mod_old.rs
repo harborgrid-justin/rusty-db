@@ -660,8 +660,8 @@ impl TransactionManager {
     }
     
     pub fn abort(&self, txn_id: TransactionId) -> Result<()> {
-        let mut active_txns = self.active_txns.write()));
-        
+        let mut active_txns = self.active_txns.write()))
+
         if let Some(txn) = active_txns.get_mut(&txn_id) {
             txn.state = TransactionState::Aborted;
             self.lock_manager.release_all_locks(txn_id)?;
@@ -714,7 +714,7 @@ impl TwoPhaseCommitCoordinator {
     }
     
     pub fn register_participant(&self, txn_id: TransactionId, participant: ParticipantInfo) {
-        let mut participants = self.participants.write()));
+        let mut participants = self.participants.write()))
         participants.entry(txn_id).or_insert_with(Vec::new).push(participant);
     }
     
@@ -739,8 +739,8 @@ impl TwoPhaseCommitCoordinator {
     }
     
     pub fn commit_phase(&self, txn_id: TransactionId) -> Result<()> {
-        let mut participants = self.participants.write()));
-        
+        let mut participants = self.participants.write()))
+
         if let Some(participant_list) = participants.get_mut(&txn_id) {
             for participant in participant_list {
                 participant.state = ParticipantState::Committed;
@@ -753,8 +753,8 @@ impl TwoPhaseCommitCoordinator {
     }
     
     pub fn abort_phase(&self, txn_id: TransactionId) -> Result<()> {
-        let mut participants = self.participants.write()));
-        
+        let mut participants = self.participants.write()))
+
         if let Some(participant_list) = participants.get_mut(&txn_id) {
             for participant in participant_list {
                 participant.state = ParticipantState::Aborted;
@@ -1681,7 +1681,7 @@ impl TransactionMonitor {
                 alert_type: AlertType::LongRunning,
                 timestamp: SystemTime::now(),
                 details: format!("Transaction running for {:?}", elapsed),
-            })));
+            })))
         }
         
         if txn.write_set.len() > self.large_transaction_threshold {
@@ -1690,7 +1690,7 @@ impl TransactionMonitor {
                 alert_type: AlertType::LargeTransaction,
                 timestamp: SystemTime::now(),
                 details: format!("Transaction has {} writes", txn.write_set.len()),
-            })));
+            })))
         }
     }
     
@@ -2264,7 +2264,7 @@ impl TransactionReplicationManager {
     }
     
     pub fn add_replica(&self, replica: ReplicaNode) {
-        self.replicas.write().push(replica)));
+        self.replicas.write().push(replica)))
     }
     
     pub fn replicate_transaction(&self, entry: ReplicationEntry) -> Result<()> {
@@ -2429,7 +2429,7 @@ pub mod transaction_utils {
         // Check write-write conflicts
         for key in &txn1.write_set {
             if txn2.write_set.contains(key) {
-                return true));
+                return true))
             }
         }
         
@@ -2617,8 +2617,8 @@ impl TransactionClusterManager {
     }
     
     pub fn commit_cluster(&self, cluster_id: &str) -> Result<()> {
-        let mut clusters = self.clusters.write()));
-        
+        let mut clusters = self.clusters.write()))
+
         if let Some(cluster) = clusters.get_mut(cluster_id) {
             cluster.state = ClusterState::Committing;
             // In production, would commit all transactions in cluster
@@ -2630,8 +2630,8 @@ impl TransactionClusterManager {
     }
     
     pub fn abort_cluster(&self, cluster_id: &str) -> Result<()> {
-        let mut clusters = self.clusters.write()));
-        
+        let mut clusters = self.clusters.write()))
+
         if let Some(cluster) = clusters.get_mut(cluster_id) {
             cluster.state = ClusterState::Aborting;
             // In production, would abort all transactions in cluster
@@ -2666,7 +2666,7 @@ pub mod test_utils {
     
     /// Generate conflict scenario
     pub fn generate_conflict_scenario() -> (Transaction, Transaction) {
-        let mut txn1 = Transaction::new(1, IsolationLevel::ReadCommitted)));
+        let mut txn1 = Transaction::new(1, IsolationLevel::ReadCommitted)))
         let mut txn2 = Transaction::new(2, IsolationLevel::ReadCommitted);
         
         txn1.write_set.insert("key1".to_string());

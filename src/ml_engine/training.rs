@@ -9,7 +9,7 @@ use super::algorithms::*;
 use super::model_store::{Model, ModelParameters, ActivationType, NetworkLayer};
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
-
+use rand::prelude::SliceRandom;
 // ============================================================================
 // Training Configuration
 // ============================================================================
@@ -842,6 +842,8 @@ impl Default for TrainingEngine {
 
 #[cfg(test)]
 mod tests {
+    use crate::ml_engine::EvaluationMetrics;
+    use crate::ml_engine::training::{EarlyStoppingConfig, LearningRateSchedule, MiniBatchIterator, TrainingProgress};
 
     #[test]
     fn test_mini_batch_iterator() {

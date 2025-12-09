@@ -1,5 +1,5 @@
 /// Resource Management and Quotas
-/// 
+///
 /// This module provides enterprise resource management:
 /// - Memory quotas and limits
 /// - CPU usage tracking
@@ -42,33 +42,33 @@ impl ResourceManager {
             timeout_manager: Arc::new(QueryTimeoutManager::new(config.default_query_timeout)),
         }
     }
-    
+
     /// Allocate resources for a query
     pub fn allocate_query_resources(&self, query_id: String, estimated_memory: u64) -> Result<ResourceAllocation> {
         // Check memory availability
         self.memory_manager.allocate(query_id.clone(), estimated_memory)?;
-        
+
         // Register query with timeout
         self.timeout_manager.register_query(query_id.clone())?;
-        
+
         Ok(ResourceAllocation {
             query_id,
             allocated_memory: estimated_memory,
             start_time: Instant::now(),
         })
     }
-    
+
     /// Release resources for a query
     pub fn release_query_resources(&self, allocation: &ResourceAllocation) {
         self.memory_manager.release(&allocation.query_id, allocation.allocated_memory);
         self.timeout_manager.complete_query(&allocation.query_id);
     }
-    
+
     /// Check if query has timed out
     pub fn check_timeout(&self, query_id: &str) -> bool {
         self.timeout_manager.is_timed_out(query_id)
     }
-    
+
     /// Get resource usage statistics
     pub fn get_stats(&self) -> ResourceStats {
         ResourceStats {
@@ -138,11 +138,11 @@ impl MemoryManager {
             allocations: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-    
+
     /// Allocate memory for a query
     pub fn allocate(&self, query_id: String, bytes: u64) -> Result<()> {
         let mut used = self.used_bytes.write();
-        
+
         if *used + bytes > self.total_bytes {
             return Err(DbError::InvalidOperation(format!(
                 "Insufficient memory: requested {}, available {}",
@@ -150,28 +150,28 @@ impl MemoryManager {
                 self.total_bytes - *used
             )));
         }
-        
+
         *used += bytes;
         self.allocations.write().insert(query_id, bytes);
-        
+
         Ok(())
     }
-    
+
     /// Release allocated memory
     pub fn release(&self, query_id: &str, bytes: u64) {
         let mut used = self.used_bytes.write();
         *used = used.saturating_sub(bytes);
         self.allocations.write().remove(query_id);
     }
-    
+
     pub fn used(&self) -> u64 {
         *self.used_bytes.read()
     }
-    
+
     pub fn total(&self) -> u64 {
         self.total_bytes
     }
-    
+
     pub fn available(&self) -> u64 {
         self.total_bytes - *self.used_bytes.read()
     }
@@ -190,15 +190,15 @@ impl CpuManager {
             current_usage: Arc::new(RwLock::new(0)),
         }
     }
-    
+
     pub fn usage(&self) -> u8 {
         *self.current_usage.read()
     }
-    
+
     pub fn update_usage(&self, usage: u8) {
         *self.current_usage.write() = usage;
     }
-    
+
     pub fn is_overloaded(&self) -> bool {
         *self.current_usage.read() > self.max_percent
     }
@@ -221,31 +221,31 @@ impl IoManager {
             bytes_this_second: Arc::new(RwLock::new(0)),
         }
     }
-    
+
     /// Check if I/O operation is allowed (throttling)
     pub fn request_io(&self, bytes: u64) -> Result<()> {
         let mut last_update = self.last_update.write();
         let mut bytes_this_second = self.bytes_this_second.write();
-        
+
         let now = Instant::now();
         if now.duration_since(*last_update) >= Duration::from_secs(1) {
             // Reset counter for new second
             *bytes_this_second = 0;
             *last_update = now;
         }
-        
+
         if *bytes_this_second + bytes > self.max_bytes_per_sec {
             return Err(DbError::InvalidOperation(
                 "I/O rate limit exceeded".to_string()
             ));
         }
-        
+
         *bytes_this_second += bytes;
         *self.current_rate.write() = *bytes_this_second;
-        
+
         Ok(())
     }
-    
+
     pub fn current_rate(&self) -> u64 {
         *self.current_rate.read()
     }
@@ -264,11 +264,11 @@ impl ConnectionManager {
             active_connections: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-    
+
     /// Accept a new connection
     pub fn accept_connection(&self, connid: String, priority: ConnectionPriority) -> Result<()> {
         let mut conns = self.active_connections.write();
-        
+
         if conns.len() >= self.max_connections {
             // Try to evict low-priority connection
             if !self.try_evict_low_priority(&mut conns, priority) {
@@ -277,28 +277,28 @@ impl ConnectionManager {
                 ));
             }
         }
-        
+
         conns.insert(
-            conn_id.clone(),
+            connid.clone(),
             ConnectionInfo {
-                id: conn_id,
+                id: connid,
                 priority,
                 connected_at: SystemTime::now(),
             },
         );
-        
+
         Ok(())
     }
-    
+
     /// Release a connection
     pub fn release_connection(&self, conn_id: &str) {
         self.active_connections.write().remove(conn_id);
     }
-    
+
     pub fn active_count(&self) -> usize {
         self.active_connections.read().len()
     }
-    
+
     fn try_evict_low_priority(
         &self,
         conns: &mut HashMap<String, ConnectionInfo>,
@@ -306,15 +306,15 @@ impl ConnectionManager {
     ) -> bool {
         // Find lowest priority connection
         let mut lowest: Option<(String, ConnectionPriority)> = None;
-        
+
         for (id, info) in conns.iter() {
-            if info.priority < new_priority {
+            if info.priority < newpriority {
                 if lowest.is_none() || info.priority < lowest.as_ref().unwrap().1 {
                     lowest = Some((id.clone(), info.priority));
                 }
             }
         }
-        
+
         if let Some((id, _)) = lowest {
             conns.remove(&id);
             true
@@ -354,16 +354,16 @@ impl QueryTimeoutManager {
             query_timeouts: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-    
+
     /// Register a query with timeout
     pub fn register_query(&self, query_id: String) -> Result<()> {
         self.register_query_with_timeout(query_id, self.default_timeout)
     }
-    
+
     /// Register query with custom timeout
     pub fn register_query_with_timeout(&self, query_id: String, timeout: Duration) -> Result<()> {
         let mut timeouts = self.query_timeouts.write();
-        
+
         timeouts.insert(
             query_id,
             QueryTimeout {
@@ -371,21 +371,21 @@ impl QueryTimeoutManager {
                 timeout,
             },
         );
-        
+
         Ok(())
     }
-    
+
     /// Check if query has timed out
     pub fn is_timed_out(&self, query_id: &str) -> bool {
         let timeouts = self.query_timeouts.read();
-        
+
         if let Some(query_timeout) = timeouts.get(query_id) {
             query_timeout.start_time.elapsed() > query_timeout.timeout
         } else {
             false
         }
     }
-    
+
     /// Complete query (remove from timeout tracking)
     pub fn complete_query(&self, query_id: &str) {
         self.query_timeouts.write().remove(query_id);
@@ -414,7 +414,7 @@ impl<T> ResourcePool<T> {
             max_size,
         }
     }
-    
+
     /// Acquire resource from pool
     pub fn acquire(&self) -> Option<T> {
         let mut available = self.available.write();
@@ -425,21 +425,21 @@ impl<T> ResourcePool<T> {
             None
         }
     }
-    
+
     /// Return resource to pool
     pub fn release(&self, resource: T) {
         let mut available = self.available.write();
         let mut in_use = self.in_use.write();
-        
+
         if *in_use > 0 {
             *in_use -= 1;
         }
-        
+
         if available.len() < self.max_size {
             available.push(resource);
         }
     }
-    
+
     pub fn size(&self) -> usize {
         self.available.read().len() + *self.in_use.read()
     }
@@ -456,16 +456,16 @@ impl QuotaManager {
             quotas: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-    
+
     /// Set quota for a user
     pub fn set_quota(&self, user: String, quota: Quota) {
         self.quotas.write().insert(user, quota);
     }
-    
+
     /// Check if operation is within quota
     pub fn check_quota(&self, user: &str, operation: QuotaOperation) -> Result<()> {
         let quotas = self.quotas.read();
-        
+
         if let Some(quota) = quotas.get(user) {
             match operation {
                 QuotaOperation::Query => {
@@ -515,84 +515,84 @@ pub enum QuotaOperation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_memory_manager() {
         let manager = MemoryManager::new(1000);
-        
+
         assert!(manager.allocate("query1".to_string(), 300).is_ok());
         assert_eq!(manager.used(), 300);
         assert_eq!(manager.available(), 700);
-        
+
         assert!(manager.allocate("query2".to_string(), 500).is_ok());
         assert_eq!(manager.used(), 800);
-        
+
         // Should fail - not enough memory
         assert!(manager.allocate("query3".to_string(), 300).is_err());
-        
+
         // Release memory
         manager.release("query1", 300);
         assert_eq!(manager.used(), 500);
-        
+
         // Now should succeed
         assert!(manager.allocate("query3".to_string(), 300).is_ok());
     }
-    
+
     #[test]
     fn test_io_throttling() {
         let manager = IoManager::new(1000);
-        
+
         assert!(manager.request_io(500).is_ok());
         assert!(manager.request_io(400).is_ok());
-        
+
         // Should fail - exceeds limit
         assert!(manager.request_io(200).is_err());
     }
-    
+
     #[test]
     fn test_connection_manager() {
         let manager = ConnectionManager::new(3);
-        
+
         assert!(manager.accept_connection("conn1".to_string(), ConnectionPriority::Normal).is_ok());
         assert!(manager.accept_connection("conn2".to_string(), ConnectionPriority::High).is_ok());
         assert!(manager.accept_connection("conn3".to_string(), ConnectionPriority::Low).is_ok());
-        
+
         assert_eq!(manager.active_count(), 3);
-        
+
         // Should evict low priority connection
         assert!(manager.accept_connection("conn4".to_string(), ConnectionPriority::High).is_ok());
         assert_eq!(manager.active_count(), 3);
     }
-    
+
     #[test]
     fn test_query_timeout() {
         let manager = QueryTimeoutManager::new(Duration::from_millis(100));
-        
+
         manager.register_query("query1".to_string()).unwrap();
         assert!(!manager.is_timed_out("query1"));
-        
+
         std::thread::sleep(Duration::from_millis(150));
         assert!(manager.is_timed_out("query1"));
     }
-    
+
     #[test]
     fn test_resource_pool() {
         let pool: ResourcePool<i32> = ResourcePool::new(5);
-        
+
         pool.release(1);
         pool.release(2);
-        
+
         assert_eq!(pool.size(), 2);
-        
+
         let item = pool.acquire();
         assert!(item.is_some());
         assert_eq!(pool.size(), 2); // Still 2 total (1 in use, 1 available)
     }
-    
+
     #[test]
     fn test_quota_manager() {
         let manager = QuotaManager::new();
-        
+
         manager.set_quota(
             "user1".to_string(),
             Quota {
@@ -601,10 +601,8 @@ mod tests {
                 max_connections: 5,
             },
         );
-        
+
         assert!(manager.check_quota("user1", QuotaOperation::Storage(500)).is_ok());
         assert!(manager.check_quota("user1", QuotaOperation::Storage(1500)).is_err());
     }
 }
-
-

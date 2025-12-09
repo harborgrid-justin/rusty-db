@@ -2,16 +2,12 @@
 //
 // Part of the Enterprise Integration Layer for RustyDB
 
-use std::collections::{HashMap, BTreeMap, VecDeque};
-use std::sync::{Arc, RwLock, Mutex};
+use std::collections::{HashMap};
+use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
-use std::fmt;
-use tokio::time::sleep;
 use serde::{Serialize, Deserialize};
-use uuid::Uuid;
-
+use crate::api::{CorrelationId, RateLimitConfig};
 use crate::error::DbError;
-use super::registry::*;
 
 // ============================================================================
 // SECTION 4: API FACADE LAYER (700+ lines)
@@ -58,11 +54,11 @@ pub struct RequestRouter {
 }
 
 pub trait RouteHandler: Send + Sync {
-    fn handle(&self, request: UnifiedApiRequest) -> std::result::Result<UnifiedApiResponse, DbError>;
+    fn handle(&self, request: UnifiedApiRequest) -> Result<UnifiedApiResponse, DbError>;
 }
 
 pub trait Middleware: Send + Sync {
-    fn process(&self, request: &mut UnifiedApiRequest) -> std::result::Result<(), DbError>;
+    fn process(&self, request: &mut UnifiedApiRequest) -> Result<(), DbError>;
 }
 
 impl RequestRouter {
@@ -83,7 +79,7 @@ impl RequestRouter {
         mw.push(middleware);
     }
 
-    pub fn route(&self, mut request: UnifiedApiRequest) -> std::result::Result<UnifiedApiResponse, DbError> {
+    pub fn route(&self, mut request: UnifiedApiRequest) -> Result<UnifiedApiResponse, DbError> {
         // Apply middleware
         {
             let middleware = self.middleware.read().unwrap();
@@ -115,7 +111,7 @@ pub struct ResponseAggregator {
 }
 
 pub trait AggregationStrategy: Send + Sync {
-    fn aggregate(&self, responses: Vec<UnifiedApiResponse>) -> std::result::Result<UnifiedApiResponse, DbError>;
+    fn aggregate(&self, responses: Vec<UnifiedApiResponse>) -> Result<UnifiedApiResponse, DbError>;
 }
 
 impl ResponseAggregator {
@@ -130,7 +126,7 @@ impl ResponseAggregator {
         strategies.insert(name.to_string(), strategy);
     }
 
-    pub fn aggregate(&self, strategy_name: &str, responses: Vec<UnifiedApiResponse>) -> std::result::Result<UnifiedApiResponse, DbError> {
+    pub fn aggregate(&self, strategy_name: &str, responses: Vec<UnifiedApiResponse>) -> Result<UnifiedApiResponse, DbError> {
         let strategies = self.aggregation_strategies.read().unwrap();
         if let Some(strategy) = strategies.get(strategy_name) {
             strategy.aggregate(responses)
@@ -167,7 +163,7 @@ impl BatchRequestHandler {
         }
     }
 
-    pub async fn handle_batch(&self, batch: BatchRequest) -> std::result::Result<BatchResponse, DbError> {
+    pub async fn handle_batch(&self, batch: BatchRequest) -> Result<BatchResponse, DbError> {
         if batch.requests.len() > self.max_batch_size {
             return Err(DbError::InvalidInput(format!(
                 "Batch size {} exceeds maximum {}",
@@ -266,7 +262,7 @@ pub struct BackwardCompatibilityLayer {
 }
 
 pub trait RequestTransformer: Send + Sync {
-    fn transform(&self, request: &mut UnifiedApiRequest) -> std::result::Result<(), DbError>;
+    fn transform(&self, request: &mut UnifiedApiRequest) -> Result<(), DbError>;
 }
 
 impl BackwardCompatibilityLayer {
@@ -281,7 +277,7 @@ impl BackwardCompatibilityLayer {
         transformers.insert(from_version.to_string(), transformer);
     }
 
-    pub fn transform_request(&self, request: &mut UnifiedApiRequest) -> std::result::Result<(), DbError> {
+    pub fn transform_request(&self, request: &mut UnifiedApiRequest) -> Result<(), DbError> {
         let transformers = self.transformers.read().unwrap();
         if let Some(transformer) = transformers.get(&request.api_version) {
             transformer.transform(request)?;
@@ -339,7 +335,7 @@ impl RateLimiter {
         });
     }
 
-    pub fn check_rate_limit(&self, key: &str) -> std::result::Result<(), DbError> {
+    pub fn check_rate_limit(&self, key: &str, option: Option<&RateLimitConfig>) -> Result<(), DbError> {
         let limits = self.limits.read().unwrap();
         let limit = limits.get(key)
             .ok_or_else(|| DbError::NotFound(format!("Rate limit not found for: {}", key)))?;
@@ -384,10 +380,10 @@ impl ApiGatewayCoordinator {
         }
     }
 
-    pub async fn process_request(&self, mut request: UnifiedApiRequest) -> std::result::Result<UnifiedApiResponse, DbError> {
+    pub async fn process_request(&self, mut request: UnifiedApiRequest) -> Result<UnifiedApiResponse, DbError> {
         // Check rate limit
         let rate_key = format!("{}:{}", request.correlation_id.as_str(), request.endpoint);
-        self.rate_limiter.check_rate_limit(&rate_key)?;
+        self.rate_limiter.check_rate_limit(&rate_key, None)?;
 
         // Check version
         if !self.version_manager.is_version_supported(&request.api_version) {
@@ -404,7 +400,7 @@ impl ApiGatewayCoordinator {
         self.router.route(request)
     }
 
-    pub async fn process_batch(&self, batch: BatchRequest) -> std::result::Result<BatchResponse, DbError> {
+    pub async fn process_batch(&self, batch: BatchRequest) -> Result<BatchResponse, DbError> {
         self.batch_handler.handle_batch(batch).await
     }
 

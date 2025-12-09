@@ -431,6 +431,7 @@ impl VersionStore {
             Value::Timestamp(_) => 8,
             Value::Json(j) => j.to_string().len(),
             Value::Array(a) => a.iter().map(|v| self.estimate_value_size(v)).sum(),
+            Value::Text => 4,
         }
     }
 
@@ -560,8 +561,8 @@ pub enum VersionOperation {
     Delete,
 }
 
-impl std::fmt::Display for VersionOperation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for VersionOperation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             VersionOperation::Insert => write!(f, "I"),
             VersionOperation::Update => write!(f, "U"),

@@ -50,8 +50,9 @@ use tokio::time::sleep;
 use std::sync::Arc;
 use std::time::{Instant, Duration};
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::hint::black_box;
+use std::thread;
 
 // ============================================================================
 // Benchmark Configuration
@@ -666,7 +667,7 @@ pub fn bench_buffer_eviction(config: &BenchConfig) -> BenchMetrics {
             buffer_pool.unpin_page(&page);
         } else {
             // Simulate page load from disk (cache miss)
-            std::thread::sleep(Duration::from_micros(10));
+            thread::sleep(Duration::from_micros(10));
         }
     }
 
@@ -907,7 +908,7 @@ pub fn bench_transaction_overhead(config: &BenchConfig) -> BenchMetrics {
         black_box(txn_id);
 
         // Simulate minimal work
-        std::thread::sleep(Duration::from_nanos(100));
+        thread::sleep(Duration::from_nanos(100));
 
         // Simulate transaction commit
         black_box(txn_id);
@@ -1156,6 +1157,8 @@ mod criterion_benches {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::atomic::Ordering;
+    use crate::bench::{BenchConfig, BenchMetrics, Page};
 
     #[test]
     fn test_bench_config_default() {

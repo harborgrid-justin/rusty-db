@@ -280,6 +280,8 @@ pub mod lirs;
 pub mod prefetch;
 pub mod hugepages;
 pub mod lockfree_latch;
+mod page_table;
+mod frame_manager;
 
 // Re-export main types
 pub use eviction::{

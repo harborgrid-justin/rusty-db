@@ -29,7 +29,6 @@ pub trait TransactionParticipant {
 }
 
 /// Distributed transaction coordinator
-#[derive(Debug)]
 pub struct ClusterTransactionCoordinator {
     coordinator: Arc<dyn ClusterAccess>,
     active_transactions: Arc<RwLock<HashMap<TransactionId, DistributedTransaction>>>,
@@ -48,7 +47,7 @@ impl ClusterTransactionCoordinator {
     pub fn get_transaction_status(&self, txn_id: &TransactionId) -> Result<TransactionStatus, DbError> {
         let transactions = self.active_transactions.read()
             .map_err(|_| DbError::LockError("Failed to read active transactions".to_string()))?;
-        
+
         if let Some(txn) = transactions.get(txn_id) {
             Ok(txn.status)
         } else {
@@ -62,7 +61,7 @@ impl ClusterTransactionCoordinator {
 
         let initial_count = transactions.len();
         transactions.retain(|_, txn| !matches!(txn.status, TransactionStatus::Committed | TransactionStatus::Aborted));
-        
+
         Ok(initial_count - transactions.len())
     }
 
@@ -105,7 +104,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
         let participants = {
             let transactions = self.active_transactions.read()
                 .map_err(|_| DbError::LockError("Failed to read active transactions".to_string()))?;
-            
+
             if let Some(txn) = transactions.get(txn_id) {
                 txn.participants.clone()
             } else {
@@ -127,7 +126,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
         {
             let mut transactions = self.active_transactions.write()
                 .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
-            
+
             if let Some(txn) = transactions.get_mut(txn_id) {
                 txn.status = if can_commit {
                     TransactionStatus::Prepared
@@ -139,10 +138,10 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
 
         self.log_transaction_event(TransactionLogEntry {
             txn_id: txn_id.clone(),
-            event: if can_commit { 
-                TransactionEvent::Prepared 
-            } else { 
-                TransactionEvent::Aborted 
+            event: if can_commit {
+                TransactionEvent::Prepared
+            } else {
+                TransactionEvent::Aborted
             },
             timestamp: SystemTime::now(),
             node_id: self.coordinator.get_local_node_id()?,
@@ -155,7 +154,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
         let participants = {
             let transactions = self.active_transactions.read()
                 .map_err(|_| DbError::LockError("Failed to read active transactions".to_string()))?;
-            
+
             if let Some(txn) = transactions.get(txn_id) {
                 if !matches!(txn.status, TransactionStatus::Prepared) {
                     return Err(DbError::InvalidOperation("Transaction not prepared".to_string()));
@@ -176,7 +175,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
         {
             let mut transactions = self.active_transactions.write()
                 .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
-            
+
             if let Some(txn) = transactions.get_mut(txn_id) {
                 txn.status = TransactionStatus::Committed;
             }
@@ -196,7 +195,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
         let participants = {
             let transactions = self.active_transactions.read()
                 .map_err(|_| DbError::LockError("Failed to read active transactions".to_string()))?;
-            
+
             if let Some(txn) = transactions.get(txn_id) {
                 txn.participants.clone()
             } else {
@@ -213,7 +212,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
         {
             let mut transactions = self.active_transactions.write()
                 .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
-            
+
             if let Some(txn) = transactions.get_mut(txn_id) {
                 txn.status = TransactionStatus::Aborted;
             }
@@ -329,7 +328,7 @@ mod tests {
 
         assert!(txn_coord.prepare(&txn_id).unwrap());
         assert!(txn_coord.commit(&txn_id).unwrap());
-        
+
         assert!(matches!(
             txn_coord.get_transaction_status(&txn_id).unwrap(),
             TransactionStatus::Committed
@@ -347,7 +346,7 @@ mod tests {
 
         let txn_id = txn_coord.begin_transaction(vec![]).unwrap();
         assert!(txn_coord.abort(&txn_id).is_ok());
-        
+
         assert!(matches!(
             txn_coord.get_transaction_status(&txn_id).unwrap(),
             TransactionStatus::Aborted

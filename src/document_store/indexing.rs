@@ -233,7 +233,7 @@ pub struct BTreeIndex {
     /// Definition of the index
     definition: IndexDefinition,
     /// Index entries (key -> document IDs)
-    entries: BTreeMap<IndexKey<DocumentId>>,
+    entries: BTreeMap<IndexKey, Vec<DocumentId>>,
     /// Reverse index (document ID -> keys)
     reverse_index: HashMap<DocumentId, Vec<IndexKey>>,
     /// Statistics for adaptive optimization
@@ -297,7 +297,7 @@ impl BTreeIndex {
             self.entries
                 .entry(key.clone())
                 .or_insert_with(HashSet::new)
-                .insert(doc_id.clone());
+   .insert(doc_id.clone());
         }
 
         self.reverse_index.insert(doc_id, keys);
@@ -320,7 +320,7 @@ impl BTreeIndex {
     }
 
     /// Look up documents by exact key with statistics
-    pub fn lookup(&self, key: &IndexKey) -> HashSet<DocumentId> {
+    pub fn lookup(&self, key: &IndexKey) -> Vec<DocumentId> {
         self.stats.lookups.fetch_add(1, AtomicOrdering::Relaxed);
         let result = self.entries.get(key).cloned().unwrap_or_default();
         if !result.is_empty() {
@@ -645,7 +645,7 @@ pub struct TTLIndex {
     /// Index definition
     definition: IndexDefinition,
     /// Expiration times (document ID -> expiration timestamp)
-    expiration_times: BTreeMap<u64<DocumentId>>,
+    expiration_times: BTreeMap<DocumentId, u64>,
 }
 
 impl TTLIndex {

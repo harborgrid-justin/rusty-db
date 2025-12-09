@@ -40,6 +40,7 @@ pub enum IndexKey {
 pub type IndexValue = u64;
 
 /// Simple B-Tree index implementation (for backward compatibility)
+#[derive(Clone)]
 pub struct BTreeIndex {
     name: String,
     tree: Arc<RwLock<BTreeMap<IndexKey, Vec<IndexValue>>>>,

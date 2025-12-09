@@ -326,7 +326,7 @@ pub unsafe fn hash_fnv1a_avx2(data: &[u8]) -> u32 {
         let bytes = &data[offset..offset + 32];
 
         for &byte in bytes {
-            hash ^= byte;
+            hash ^= byte as u32;
             hash = hash.wrapping_mul(FNV_PRIME);
         }
     }
@@ -705,8 +705,8 @@ impl StringHashBuilder {
     pub fn build_hash_table(
         &mut self,
         strings: &[String],
-    ) -> std::collections::HashMap<u64, Vec<usize>> {
-        let mut table = std::collections::HashMap::new();
+    ) -> HashMap<u64, Vec<usize>> {
+        let mut table = HashMap::new();
 
         for (i, text) in strings.iter().enumerate() {
             let hash = self.hash_string(text);

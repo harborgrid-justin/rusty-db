@@ -3,6 +3,7 @@
 //! Background writer, write coalescing, double-write buffer, and flush lists.
 
 use super::common::*;
+use super::checkpoint::DirtyPage;
 use serde::{Serialize, Deserialize};
 
 pub struct BackgroundWriter {
@@ -354,4 +355,3 @@ pub struct FlushListStatsSnapshot {
     pub pages_flushed: u64,
     pub flush_operations: u64,
 }
-

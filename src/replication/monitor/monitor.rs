@@ -43,13 +43,13 @@ pub trait HealthMonitor: Send + Sync {
 /// Replication health monitor implementation
 pub struct ReplicationHealthMonitor {
     /// Configuration
-    config: Arc<HealthMonitorConfig>,
+    pub(crate) config: Arc<HealthMonitorConfig>,
     /// Health history per replica
-    history: Arc<RwLock<HashMap<ReplicaId, VecDeque<HealthHistoryEntry>>>>,
+    pub(crate) history: Arc<RwLock<HashMap<ReplicaId, VecDeque<HealthHistoryEntry>>>>,
     /// Active alerts
-    alerts: Arc<RwLock<HashMap<String, HealthAlert>>>,
+    pub(crate) alerts: Arc<RwLock<HashMap<String, HealthAlert>>>,
     /// Statistics
-    statistics: Arc<RwLock<HashMap<ReplicaId, HealthStatistics>>>,
+    pub(crate) statistics: Arc<RwLock<HashMap<ReplicaId, HealthStatistics>>>,
     /// Background task handle
     monitor_handle: Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
 }
@@ -109,7 +109,7 @@ impl ReplicationHealthMonitor {
         *self.monitor_handle.write() = Some(handle);
     }
 
-    fn collect_metrics(&self, replica_id: &ReplicaId) -> Result<HealthMetrics, HealthMonitorError> {
+    pub(crate) fn collect_metrics(&self, replica_id: &ReplicaId) -> Result<HealthMetrics, HealthMonitorError> {
         // Simplified metric collection - in production this would query actual systems
         Ok(HealthMetrics {
             replication_lag_bytes: 50 * 1024 * 1024, // 50MB
@@ -124,7 +124,7 @@ impl ReplicationHealthMonitor {
         })
     }
 
-    fn calculate_component_health(&self, metrics: &HealthMetrics) -> HealthComponents {
+    pub(crate) fn calculate_component_health(&self, metrics: &HealthMetrics) -> HealthComponents {
         let thresholds = &self.config.thresholds;
 
         // Lag component
@@ -217,7 +217,7 @@ impl ReplicationHealthMonitor {
         }
     }
 
-    fn calculate_overall_score(&self, components: &HealthComponents) -> f64 {
+    pub(crate) fn calculate_overall_score(&self, components: &HealthComponents) -> f64 {
         // Weighted average of component scores
         let weights = [0.3, 0.2, 0.2, 0.15, 0.15]; // lag, connection, throughput, error, resource
         let scores = [
@@ -231,7 +231,7 @@ impl ReplicationHealthMonitor {
         weights.iter().zip(scores.iter()).map(|(w, s)| w * s).sum()
     }
 
-    fn determine_overall_status(&self, score: f64) -> ReplicaHealthStatus {
+    pub(crate) fn determine_overall_status(&self, score: f64) -> ReplicaHealthStatus {
         if score >= 90.0 {
             ReplicaHealthStatus::Healthy
         } else if score >= 70.0 {
@@ -243,7 +243,7 @@ impl ReplicationHealthMonitor {
         }
     }
 
-    fn identify_issues(&self, components: &HealthComponents, metrics: &HealthMetrics) -> Vec<HealthIssue> {
+    pub(crate) fn identify_issues(&self, components: &HealthComponents, metrics: &HealthMetrics) -> Vec<HealthIssue> {
         let mut issues = Vec::new();
         let now = SystemTime::now();
 
@@ -284,7 +284,7 @@ impl ReplicationHealthMonitor {
         issues
     }
 
-    fn record_health_history(&self, result: &HealthCheckResult) {
+    pub(crate) fn record_health_history(&self, result: &HealthCheckResult) {
         let mut history = self.history.write();
         let entries = history.entry(result.replica_id.clone()).or_insert_with(VecDeque::new);
 
@@ -304,7 +304,7 @@ impl ReplicationHealthMonitor {
         }
     }
 
-    fn update_statistics(&self, replica_id: &ReplicaId, result: &HealthCheckResult) {
+    pub(crate) fn update_statistics(&self, replica_id: &ReplicaId, result: &HealthCheckResult) {
         let mut statistics = self.statistics.write();
         let stats = statistics.entry(replica_id.clone()).or_insert_with(HealthStatistics::default);
 

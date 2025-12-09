@@ -180,6 +180,7 @@ impl Default for ViewManager {
 
 #[cfg(test)]
 mod tests {
+    use crate::api::ColumnType;
     use super::*;
     use crate::catalog::{Schema, Column, ColumnType};
 
@@ -187,17 +188,19 @@ mod tests {
     fn test_view_management() {
         let manager = ViewManager::new();
 
-        let schema = Schema {
-            name: "test_view".to_string(),
-            columns: vec![
-                Column {
-                    name: "id".to_string(),
-                    column_type: ColumnType::Integer,
-                    nullable: false,
-                    default_value: None,
-                },
-            ],
-        };
+let schema = Schema {
+                  name: "test_view".to_string(),
+                  columns: vec![
+                      Column {
+                          name: "id".to_string(),
+                          data_type: ColumnType::Integer,
+                          nullable: false,
+                          default_value: None,
+                          default: None,
+                      },
+                  ],
+                  primary_key: None,
+              };
 
         let view = View {
             name: "test_view".to_string(),

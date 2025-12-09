@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
+use sha2::Digest;
 use crate::common::{Value, RowId, TableId};
 use crate::Result;
 use crate::error::DbError;
@@ -89,7 +90,7 @@ impl LedgerRow {
             block_id,
             version,
             &data_hash,
-            &previous_hash,
+            &previoushash,
             timestamp,
         );
 
@@ -100,7 +101,7 @@ impl LedgerRow {
             version,
             data,
             data_hash,
-            previous_hash,
+            previous_hash: previoushash,
             row_hash,
             timestamp,
             creator,
@@ -126,8 +127,8 @@ impl LedgerRow {
         hasher.update(&table_id.to_le_bytes());
         hasher.update(&block_id.to_le_bytes());
         hasher.update(&version.to_le_bytes());
-        hasher.update(data_hash);
-        hasher.update(previous_hash);
+        hasher.update(datahash);
+        hasher.update(previoushash);
         hasher.update(&timestamp.to_le_bytes());
 
         let result = hasher.finalize();
@@ -228,7 +229,7 @@ impl Block {
         Self {
             block_id,
             table_id,
-            previous_block_hash,
+            previous_block_hash: previousblock_hash,
             rows: Vec::new(),
             merkle_root: [0u8; 32],
             block_hash: [0u8; 32],

@@ -987,7 +987,12 @@ pub struct WalStats {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
     use tempfile::TempDir;
+    use crate::replication;
+    use crate::replication::ReplicationOperation;
+    use crate::replication::types::{LogSequenceNumber, ReplicaId, TableName, WalEntry};
+    use crate::replication::wal::{WalBuffer, WalConfig, WalError, WalManager, WalSegment};
 
     #[tokio::test]
     async fn test_wal_manager_creation() {
@@ -1021,7 +1026,7 @@ mod tests {
         let table_name = TableName::new("test_table").unwrap();
         let entry = WalEntry::new(
             LogSequenceNumber::new(1),
-            ReplicationOperation::Insert,
+            replication::types::ReplicationOperation::Insert,
             table_name,
             b"test data".to_vec(),
         ).unwrap();
@@ -1084,7 +1089,7 @@ mod tests {
         let table_name = TableName::new("test").unwrap();
         let entry = WalEntry::new(
             LogSequenceNumber::new(1),
-            ReplicationOperation::Insert,
+            rusty_db::replication::types::ReplicationOperation::Insert,
             table_name,
             b"data".to_vec(),
         ).unwrap();

@@ -256,6 +256,14 @@ impl TopologicalOps {
         }
         false
     }
+
+    fn polygon_intersects(p0: &Polygon, p1: &Polygon) -> bool {
+        todo!()
+    }
+
+    fn linestring_intersects(p0: &LineString, p1: &LineString) -> bool {
+        todo!()
+    }
 }
 
 /// Distance calculations
@@ -340,6 +348,18 @@ impl DistanceOps {
         }
 
         min_dist
+    }
+
+    fn point_polygon_distance(p0: &Coordinate, p1: &Polygon) -> f64 {
+        todo!()
+    }
+
+    fn point_linestring_distance(p0: &Coordinate, p1: &LineString) -> f64 {
+        todo!()
+    }
+
+    fn point_distance(p0: &Coordinate, p1: &Coordinate) -> f64 {
+        todo!()
     }
 }
 

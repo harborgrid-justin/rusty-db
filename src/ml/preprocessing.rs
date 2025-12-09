@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use crate::error::Result;
 use super::{Dataset, Vector, Matrix, FeatureNames, MLError};
 use std::collections::{HashMap};
+use rand::prelude::SliceRandom;
 use serde::{Serialize, Deserialize};
 
 // ============================================================================

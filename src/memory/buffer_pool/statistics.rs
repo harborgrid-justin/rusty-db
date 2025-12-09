@@ -15,7 +15,7 @@ pub struct BufferPoolStatisticsTracker {
     /// Buffer busy waits
     busy_waits: BusyWaitStatistics,
     /// Memory pressure
-    memory_pressure: MemoryPressureMonitor,
+    pub(crate) memory_pressure: MemoryPressureMonitor,
     /// Real-time metrics
     realtime_metrics: RealtimeMetrics,
 }

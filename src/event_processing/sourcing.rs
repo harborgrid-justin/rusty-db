@@ -23,8 +23,8 @@ impl AggregateId {
     }
 }
 
-impl std::fmt::Display for AggregateId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for AggregateId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -182,7 +182,7 @@ impl EventStore for InMemoryEventStore {
         let mut versions = self.versions.write().unwrap();
         let current_version = versions.get(aggregate_id).copied().unwrap_or(Version::zero());
 
-        if let Some(expected) = expected_version {
+        if let Some(expected) = expectedversion {
             if current_version != expected {
                 return Err(crate::error::DbError::InvalidOperation(format!(
                     "Version mismatch: expected {:?}, got {:?}",
@@ -234,7 +234,7 @@ impl EventStore for InMemoryEventStore {
             .get(aggregate_id)
             .map(|evs| {
                 evs.iter()
-                    .filter(|e| e.version >= from_version)
+                    .filter(|e| e.version >= fromversion)
                     .cloned()
                     .collect()
             })
@@ -802,5 +802,3 @@ use std::time::UNIX_EPOCH;
         assert_eq!(events.len(), 1);
     }
 }
-
-

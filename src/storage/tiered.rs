@@ -500,7 +500,7 @@ impl TieredStorageManager {
 
         for _ in 0..max_migrations {
             let task = {
-                let mut queue = self.migration_queue.lock();
+                let mut queue = self.migration_queue.lock().unwrap();
                 queue.pop_front()
             };
 
@@ -725,5 +725,3 @@ mod tests {
         assert!(stats.total_migrations > 0 || stats.hot_pages > 0);
     }
 }
-
-

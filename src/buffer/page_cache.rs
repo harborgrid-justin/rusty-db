@@ -16,6 +16,7 @@ use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
+use async_graphql::ResultExt;
 
 /// Standard page size (4KB) - Windows default page size
 pub const PAGE_SIZE: usize = 4096;
@@ -662,7 +663,7 @@ impl PerCoreFramePool {
     /// Return a frame to this core's pool
     #[inline]
     pub fn deallocate(&self, frame_id: FrameId) -> bool {
-        let mut frames = self.free_frames.lock();
+        let mut frames = self.free_frames.lock().unwrap();
         if frames.len() >= self.max_frames {
             return false;
         }
@@ -673,9 +674,9 @@ impl PerCoreFramePool {
 
     /// Add frames to this pool
     #[inline]
-    pub fn add_frames(&self, frames: Vec<FrameId>) {
-        let mut pool = self.free_frames.lock();
-        pool.extend(frames);
+    pub fn add_frames(&self, new_frames: Vec<FrameId>) {
+        let mut pool = self.free_frames.lock().unwrap();
+        pool.extend(new_frames);
     }
 
     /// Get number of free frames

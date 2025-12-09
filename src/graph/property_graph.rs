@@ -1126,8 +1126,8 @@ impl Default for PropertyGraph {
     }
 }
 
-impl std::fmt::Debug for PropertyGraph {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for PropertyGraph {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("PropertyGraph")
             .field("vertices", &self.vertices)
             .field("edges", &self.edges)

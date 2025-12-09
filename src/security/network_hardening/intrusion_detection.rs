@@ -341,6 +341,7 @@ struct BaselineStats {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Anomaly {
+    #[serde(skip, default = "Instant::now")]
     pub timestamp: Instant,
     pub anomaly_type: AnomalyType,
     pub severity: f64,

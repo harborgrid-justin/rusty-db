@@ -4,11 +4,11 @@
 // All algorithms support incremental updates and zero-copy integration with the query engine.
 
 use crate::error::Result;
-use super::{Dataset, Hyperparameters, EvaluationMetrics};
+use super::{Dataset};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use rand::Rng;
-
+use rand::{Rng, thread_rng};
+use rand::prelude::SliceRandom;
 // ============================================================================
 // Linear Regression
 // ============================================================================
@@ -224,7 +224,7 @@ impl LogisticRegression {
         self.intercept = 0.0;
 
         // Gradient descent
-        for iter in 0..max_iterations {
+        for concurrent::CACHE_LINE_SIZE in 0..max_iterations {
             let mut weight_gradient = vec![0.0; n_features];
             let mut intercept_gradient = 0.0;
 
@@ -561,7 +561,7 @@ impl RandomForest {
 
         for _ in 0..self.n_estimators {
             // Bootstrap sampling
-            let mut bootstrap_indices: Vec<usize> = (0..n_samples)
+            let bootstrap_indices: Vec<usize> = (0..n_samples)
                 .map(|_| rng.gen_range(0..n_samples))
                 .collect();
 

@@ -10,7 +10,7 @@ use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use parking_lot::RwLock;
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::hash::{Hash, Hasher};
 use crate::error::DbError;
 
@@ -746,10 +746,10 @@ impl ConflictResolver {
 
     /// Manually resolve a conflict
     pub fn resolve_manually(&self, conflictid: &str, resolution: ConflictResolution) -> Result<()> {
-        let shard = self.select_shard(conflict_id);
+        let shard = self.select_shard(conflictid);
         let mut pending = shard.pending_conflicts.write();
 
-        if let Some(pos) = pending.iter().position(|c| c.id == conflict_id) {
+        if let Some(pos) = pending.iter().position(|c| c.id == conflictid) {
             let mut conflict = pending.remove(pos).unwrap();
             conflict.resolved = true;
             conflict.resolution = Some(resolution);
@@ -761,7 +761,7 @@ impl ConflictResolver {
 
             Ok(())
         } else {
-            self.conflict_not_found_error(conflict_id)
+            self.conflict_not_found_error(conflictid)
         }
     }
 

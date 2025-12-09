@@ -725,7 +725,7 @@ impl JsonPathEvaluator {
 
 /// High-level JSONPath query API
 pub fn query(jsonpath: &str, value: &Value) -> Result<Vec<Value>> {
-    let mut parser = JsonPathParser::new(json_path.to_string());
+    let mut parser = JsonPathParser::new(jsonpath.to_string());
     let path = parser.parse()?;
     JsonPathEvaluator::evaluate(&path, value)
 }

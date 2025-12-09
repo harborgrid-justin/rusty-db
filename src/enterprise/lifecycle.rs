@@ -245,14 +245,14 @@ impl ConnectionManager {
         let _permit = self.accept_connections.acquire().await
             .map_err(|e| DbError::Internal(format!("Connection acquire failed: {}", e)))?;
 
-        let mut count = self.active_connections.lock().unwrap().await;
+        let mut count = self.active_connections.lock().unwrap();
         *count += 1;
 
         Ok(())
     }
 
     async fn release_connection(&self) {
-        let mut count = self.active_connections.lock().unwrap().await;
+        let mut count = self.active_connections.lock().unwrap();
         if *count > 0 {
             *count -= 1;
         }
@@ -268,7 +268,7 @@ impl ConnectionManager {
 
         loop {
             let count = {
-                let count = self.active_connections.lock().unwrap().await;
+                let count = self.active_connections.lock().unwrap();
                 *count
             };
 

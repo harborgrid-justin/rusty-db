@@ -11,7 +11,7 @@
 use std::collections::HashSet;
 use std::collections::{HashMap};
 use std::fs::{File, OpenOptions};
-use std::io::{Read};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};

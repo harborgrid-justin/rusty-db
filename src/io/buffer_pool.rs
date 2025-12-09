@@ -320,7 +320,7 @@ impl BufferPool {
         if size > self.config.buffer_size {
             // Size exceeds pool buffer size, allocate new
             if self.config.enable_stats {
-                self.stats.lock().unwrap().oversized_allocations += 1;
+                self.stats.lock().oversized_allocations += 1;
             }
             return AlignedBuffer::new(size, self.config.alignment);
         }
@@ -406,7 +406,7 @@ impl BufferPool {
             }
             BufferAllocationStrategy::AlwaysNew => {
                 if self.config.enable_stats {
-                    self.stats.lock().unwrap().direct_allocations += 1;
+                    self.stats.lock().direct_allocations += 1;
                 }
                 AlignedBuffer::new(size, self.config.alignment)
             }
@@ -430,7 +430,7 @@ impl BufferPool {
                 self.available.fetch_add(1, Ordering::Relaxed);
 
                 if self.config.enable_stats {
-                    self.stats.lock().unwrap().deallocations += 1;
+                    self.stats.lock().deallocations += 1;
                 }
 
                 return;
@@ -467,7 +467,7 @@ impl BufferPool {
 
     /// Get statistics
     pub fn stats(&self) -> BufferPoolStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     /// Reset statistics
@@ -680,8 +680,8 @@ mod tests {
         assert_eq!(stats.pool_hits, 2);
         assert_eq!(stats.hit_rate(), 100.0);
 
-        drop(_buf1);
-        drop(_buf2);
+        drop(buf1);
+        drop(buf2);
 
         let stats = pool.stats();
         assert_eq!(stats.deallocations, 2);

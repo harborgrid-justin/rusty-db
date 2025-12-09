@@ -109,6 +109,9 @@ pub struct ResourceGroup {
     pub total_memory_bytes: u64,
     pub total_io_bytes: u64,
     pub created_at: SystemTime,
+    pub max_memory_mb: i32,
+    pub max_cpu_percent: f64,
+    pub max_concurrent_queries: i32,
 }
 
 impl ResourceGroup {

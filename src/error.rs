@@ -4,55 +4,55 @@ use thiserror::Error;
 pub enum DbError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    
+
     #[error("SQL parsing error: {0}")]
     SqlParse(String),
-    
+
     #[error("Transaction error: {0}")]
     Transaction(String),
-    
+
     #[error("Storage error: {0}")]
     Storage(String),
-    
+
     #[error("Catalog error: {0}")]
     Catalog(String),
-    
+
     #[error("Index error: {0}")]
     Index(String),
-    
+
     #[error("Execution error: {0}")]
     Execution(String),
-    
+
     #[error("Network error: {0}")]
     Network(String),
-    
+
     #[error("Serialization error: {0}")]
     Serialization(String),
-    
+
     #[error("Lock timeout")]
     LockTimeout,
-    
+
     #[error("Lock error: {0}")]
     LockError(String),
-    
+
     #[error("Service unavailable: {0}")]
     Unavailable(String),
-    
+
     #[error("Deadlock detected")]
     Deadlock,
-    
+
     #[error("Not found: {0}")]
     NotFound(String),
-    
+
     #[error("Already exists: {0}")]
     AlreadyExists(String),
-    
+
     #[error("Invalid input: {0}")]
     InvalidInput(String),
-    
+
     #[error("Invalid operation: {0}")]
     InvalidOperation(String),
-    
+
     #[error("Not implemented: {0}")]
     NotImplemented(String),
 
@@ -177,6 +177,12 @@ pub enum DbError {
     ParseError(String),
 }
 
+impl DbError {
+    pub(crate) fn NotSupported(p0: String) -> DbError {
+        todo!()
+    }
+}
+
 impl Clone for DbError {
     fn clone(&self) -> Self {
         match self {
@@ -244,4 +250,28 @@ impl Clone for DbError {
 
 pub type Result<T> = std::result::Result<T, DbError>;
 
+// Error conversions for common error types
 
+impl From<Box<bincode::ErrorKind>> for DbError {
+    fn from(e: Box<bincode::ErrorKind>) -> Self {
+        DbError::Serialization(e.to_string())
+    }
+}
+
+impl From<serde_json::Error> for DbError {
+    fn from(e: serde_json::Error) -> Self {
+        DbError::Serialization(e.to_string())
+    }
+}
+
+impl From<bson::ser::Error> for DbError {
+    fn from(e: bson::ser::Error) -> Self {
+        DbError::Serialization(e.to_string())
+    }
+}
+
+impl From<bson::de::Error> for DbError {
+    fn from(e: bson::de::Error) -> Self {
+        DbError::Serialization(e.to_string())
+    }
+}

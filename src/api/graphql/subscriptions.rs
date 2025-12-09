@@ -6,6 +6,7 @@ use async_graphql::{
     Context, Enum, Error, Object, Result as GqlResult, SimpleObject, Subscription, ID,
 };
 use futures_util::stream::Stream;
+use futures_util::StreamExt;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::pin::Pin;
@@ -16,6 +17,7 @@ use tokio_stream::wrappers::BroadcastStream;
 use crate::error::DbError;
 use super::types::*;
 use super::models::*;
+use super::GraphQLEngine;
 
 // ============================================================================
 // PART 4: SUBSCRIPTION SYSTEM (600+ lines)
@@ -481,4 +483,3 @@ fn compute_rows_hash(rows: &[RowType]) -> u64 {
     }
     hasher.finish()
 }
-

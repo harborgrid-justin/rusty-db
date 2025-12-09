@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
-
+use crate::api::GraphQLEngine;
 use crate::error::DbError;
 use super::types::*;
 use super::models::*;
@@ -390,12 +390,12 @@ impl RequestValidator {
     }
 
     /// Validate a GraphQL request
-    pub fn validate(&self, query: &str) -> Result<()> {
+    pub fn validate(&self, query: &str) -> Result<(), DbError> {
         // Check query size
         if query.len() > self.max_query_size {
-            return Err(DbError::InvalidInput {
-                message: format!("Query exceeds maximum size of {} bytes", self.max_query_size),
-            });
+            return Err(DbError::InvalidInput(
+                format!("Query exceeds maximum size of {} bytes", self.max_query_size),
+            ));
         }
         Ok(())
     }

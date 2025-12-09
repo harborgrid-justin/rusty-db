@@ -674,6 +674,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::document_store::jsonpath::ComparisonOp;
+    use crate::inmemory::{VectorBatch, VectorMask, VectorizedAggregator, VectorizedFilter};
+    use crate::inmemory::column_store::ColumnDataType;
+    use crate::inmemory::vectorized_ops::{branchfree_select_i64, VectorGatherScatter};
 
     #[test]
     fn test_vector_mask() {

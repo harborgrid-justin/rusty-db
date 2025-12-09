@@ -208,7 +208,7 @@ impl CascadedCompressor {
         Ok(result)
     }
 
-    pub fn decompress_u32(&self, compressed: &[u8]) -> CompressionResult<Vec<u32>> {
+    pub fn decompress_u32(&self, compressed: &[u8], x: &mut Vec<utoipa::openapi::RefOr<T>>) -> CompressionResult<Vec<u32>> {
         if compressed.is_empty() {
             return Ok(Vec::new());
         }
@@ -273,19 +273,19 @@ mod tests {
 
         let sorted = vec![100, 101, 102, 103, 104, 105];
         let compressed = compressor.compress_u32(&sorted).unwrap();
-        let decompressed = compressor.decompress_u32(&compressed).unwrap();
+        let decompressed = compressor.decompress_u32(&compressed, &mut vec![]).unwrap();
         assert_eq!(sorted, decompressed);
         assert_eq!(compressed[0], 1); // FOR encoding
 
         let monotonic = (0..100).collect::<Vec<u32>>();
         let compressed = compressor.compress_u32(&monotonic).unwrap();
-        let decompressed = compressor.decompress_u32(&compressed).unwrap();
+        let decompressed = compressor.decompress_u32(&compressed, &mut vec![]).unwrap();
         assert_eq!(monotonic, decompressed);
         assert_eq!(compressed[0], 2); // Delta encoding
 
         let repetitive = vec![42; 50];
         let compressed = compressor.compress_u32(&repetitive).unwrap();
-        let decompressed = compressor.decompress_u32(&compressed).unwrap();
+        let decompressed = compressor.decompress_u32(&compressed, &mut vec![]).unwrap();
         assert_eq!(repetitive, decompressed);
         assert_eq!(compressed[0], 3); // RLE encoding
     }

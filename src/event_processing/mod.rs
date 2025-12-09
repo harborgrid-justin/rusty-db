@@ -563,7 +563,7 @@ mod tests {
     #[test]
     fn test_watermark_lateness() {
         let now = SystemTime::now();
-        let watermark = Watermark::new(now::from_secs(5));
+        let watermark = Watermark::new(now::from_secs(5), Default::default());
 
         let recent_event = now - Duration::from_secs(3);
         assert!(!watermark.is_late(recent_event));

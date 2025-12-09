@@ -457,13 +457,13 @@ impl CollectionStats {
         }
 
         // Update version distribution
-        if let Some(count) = self.version_distribution.get_mut(&old_version) {
+        if let Some(count) = self.version_distribution.get_mut(&oldversion) {
             *count = count.saturating_sub(1);
             if *count == 0 {
-                self.version_distribution.remove(&old_version);
+                self.version_distribution.remove(&oldversion);
             }
         }
-        *self.version_distribution.entry(new_version).or_insert(0) += 1;
+        *self.version_distribution.entry(newversion).or_insert(0) += 1;
 
         self.update_timestamp();
     }
@@ -681,7 +681,7 @@ impl Collection {
     }
 
     /// Get a document by ID
-    pub fn get(&self, id: &DocumentId) -> Result<Document> {
+    pub fn get(&self, id: &DocumentId) -> Option<Document> {
         let docs = self.documents.read().unwrap();
         docs.get(id)
             .cloned()

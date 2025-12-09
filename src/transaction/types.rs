@@ -57,8 +57,8 @@ impl Default for IsolationLevel {
     }
 }
 
-impl std::fmt::Display for IsolationLevel {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for IsolationLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             IsolationLevel::ReadUncommitted => write!(f, "READ UNCOMMITTED"),
             IsolationLevel::ReadCommitted => write!(f, "READ COMMITTED"),
@@ -210,8 +210,8 @@ impl LockMode {
     }
 }
 
-impl std::fmt::Display for LockMode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for LockMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             LockMode::Shared => write!(f, "S"),
             LockMode::Exclusive => write!(f, "X"),
@@ -497,6 +497,10 @@ impl Transaction {
 
 #[cfg(test)]
 mod tests {
+    use crate::common::LockMode;
+    use crate::IsolationLevel;
+    use crate::network::distributed::TransactionState;
+    use crate::transaction::{Transaction, Version};
 
     #[test]
     fn test_isolation_level_default() {
@@ -525,13 +529,16 @@ mod tests {
     }
 
     #[test]
-    fn test_transaction_new() {
-        let txn = Transaction::new(1, IsolationLevel::Serializable);
-        assert_eq!(txn.id, 1);
-        assert_eq!(txn.state, TransactionState::Active);
-        assert_eq!(txn.isolation_level, IsolationLevel::Serializable);
-        assert!(!txn.is_readonly);
-    }
+use crate::transaction::types::{IsolationLevel, TransactionState};
+        use crate::transaction::Transaction;
+
+        fn test_transaction_new() {
+            let txn = Transaction::new(1, IsolationLevel::Serializable);
+            assert_eq!(txn.id, 1);
+            assert_eq!(txn.state, TransactionState::Active);
+            assert_eq!(txn.isolation_level, IsolationLevel::Serializable);
+            assert!(!txn.is_readonly);
+        }
 
     #[test]
     fn test_transaction_savepoint() {

@@ -121,7 +121,7 @@ impl RateLimiter {
     }
 
     /// Check rate limit
-    pub fn check_rate_limit(&self, key: &str, override_config: Option<&RateLimitConfig>) -> Result<()> {
+    pub fn check_rate_limit(&self, key: &str, override_config: Option<&RateLimitConfig>) -> Result<(), DbError> {
         let configs = self.configs.read();
         let config = override_config.or_else(|| configs.get(key));
 
@@ -144,7 +144,7 @@ impl RateLimiter {
     }
 
     /// Check token bucket
-    fn check_token_bucket(&self, key: &str, config: &RateLimitConfig) -> Result<()> {
+    fn check_token_bucket(&self, key: &str, config: &RateLimitConfig) -> Result<(), DbError> {
         let mut buckets = self.buckets.write();
 
         let bucket = buckets.entry(key.to_string()).or_insert_with(|| {
@@ -158,7 +158,7 @@ impl RateLimiter {
     }
 
     /// Check sliding window
-    fn check_sliding_window(&self, key: &str, config: &RateLimitConfig) -> Result<()> {
+    fn check_sliding_window(&self, key: &str, config: &RateLimitConfig) -> Result<(), DbError> {
         let mut windows = self.windows.write();
 
         let window = windows.entry(key.to_string()).or_insert_with(|| {
@@ -169,7 +169,7 @@ impl RateLimiter {
     }
 
     /// Check fixed window
-    fn check_fixed_window(&self, key: &str, config: &RateLimitConfig) -> Result<()> {
+    fn check_fixed_window(&self, key: &str, config: &RateLimitConfig) -> Result<(), DbError> {
         // Simplified implementation using sliding window
         self.check_sliding_window(key, config)
     }
@@ -227,7 +227,7 @@ impl TokenBucket {
     }
 
     /// Consume tokens
-    fn consume(&mut self, amount: u64) -> Result<()> {
+    pub(crate) fn consume(&mut self, amount: u64) -> Result<(), DbError> {
         self.refill();
 
         if self.tokens >= amount as f64 {
@@ -263,7 +263,7 @@ impl SlidingWindow {
     }
 
     /// Allow request
-    fn allow_request(&mut self) -> Result<()> {
+    pub(crate) fn allow_request(&mut self) -> Result<(), DbError> {
         self.clean_old_requests();
 
         if self.requests.len() < self.max_requests as usize {
@@ -299,7 +299,7 @@ impl QuotaManager {
     }
 
     /// Check and update quota
-    pub fn check_quota(&self, user_id: &str) -> Result<()> {
+    pub fn check_quota(&self, user_id: &str) -> Result<(), DbError> {
         let mut quotas = self.quotas.write();
 
         let quota = match quotas.get_mut(user_id) {
@@ -342,4 +342,3 @@ impl QuotaManager {
         quotas.get(user_id).cloned()
     }
 }
-

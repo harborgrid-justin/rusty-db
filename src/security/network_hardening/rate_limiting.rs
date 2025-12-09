@@ -315,6 +315,7 @@ pub struct DDoSAttack {
     pub attack_id: String,
     pub attack_type: DDoSAttackType,
     pub source_ips: HashSet<IpAddr>,
+    #[serde(skip, default = "Instant::now")]
     pub start_time: Instant,
     pub request_count: u64,
     pub mitigation_actions: Vec<MitigationAction>,

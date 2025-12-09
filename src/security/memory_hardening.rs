@@ -42,6 +42,7 @@ use std::ptr::{self, NonNull};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::collections::HashMap;
+#[cfg(unix)]
 use libc::mprotect;
 use parking_lot::RwLock;
 use std::time::{Duration};
@@ -731,7 +732,7 @@ impl SecureZeroingAllocator {
 
         // Update statistics
         self.stats.total_allocations.fetch_add(1, Ordering::Relaxed);
-        self.stats.bytes_allocated.fetch_add(size, Ordering::Relaxed);
+        self.stats.bytes_allocated.fetch_add(size as u64, Ordering::Relaxed);
         self.stats.active_allocations.fetch_add(1, Ordering::Relaxed);
 
         NonNull::new(ptr)
@@ -784,7 +785,7 @@ impl SecureZeroingAllocator {
 
         // Update statistics
         self.stats.total_deallocations.fetch_add(1, Ordering::Relaxed);
-        self.stats.bytes_deallocated.fetch_add(size, Ordering::Relaxed);
+        self.stats.bytes_deallocated.fetch_add(size as u64, Ordering::Relaxed);
         self.stats.active_allocations.fetch_sub(1, Ordering::Relaxed);
 
         Ok(())
@@ -937,7 +938,7 @@ impl IsolatedHeap {
 
         // Update statistics
         self.stats.total_allocations.fetch_add(1, Ordering::Relaxed);
-        self.stats.bytes_allocated.fetch_add(size, Ordering::Relaxed);
+        self.stats.bytes_allocated.fetch_add(size as u64, Ordering::Relaxed);
 
         NonNull::new(ptr)
             .ok_or_else(|| DbError::Other("Invalid allocation pointer".into()))

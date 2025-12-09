@@ -296,7 +296,7 @@ impl OccManager {
     }
 
     /// Read a value (Phase 1: Read)
-    pub fn read(&self, txn_id: TxnId, key: &Key) -> std::result::Result<Option<Value>, DbError> {
+    pub fn read(&self, txn_id: TxnId, key: &Key) -> Result<Option<Value>, DbError> {
         let active_txns = self.active_txns.read();
         let txn_arc = active_txns.get(&txn_id)
             .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
@@ -331,7 +331,7 @@ impl OccManager {
     }
 
     /// Write a value (Phase 1: Read, deferred write)
-    pub fn write(&self, txn_id: TxnId, key: Key, value: Value) -> std::result::Result<(), DbError> {
+    pub fn write(&self, txn_id: TxnId, key: Key, value: Value) -> Result<(), DbError> {
         let active_txns = self.active_txns.read();
         let txn_arc = active_txns.get(&txn_id)
             .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
@@ -352,7 +352,7 @@ impl OccManager {
     }
 
     /// Commit transaction (Phase 2: Validation, Phase 3: Write)
-    pub fn commit(&self, txn_id: TxnId) -> std::result::Result<(), DbError> {
+    pub fn commit(&self, txn_id: TxnId) -> Result<(), DbError> {
         let start = Instant::now();
 
         // Get transaction
@@ -419,7 +419,7 @@ impl OccManager {
     }
 
     /// Validate transaction (Phase 2)
-    fn validate_transaction(&self, txn: &OccTransaction) -> std::result::Result<bool, DbError> {
+    fn validate_transaction(&self, txn: &OccTransaction) -> Result<bool, DbError> {
         match self.strategy {
             ValidationStrategy::Backward => self.validate_backward(txn),
             ValidationStrategy::Forward => self.validate_forward(txn),
@@ -429,7 +429,7 @@ impl OccManager {
     }
 
     /// Backward validation: Check against committed transactions
-    fn validate_backward(&self, txn: &OccTransaction) -> std::result::Result<bool, DbError> {
+    fn validate_backward(&self, txn: &OccTransaction) -> Result<bool, DbError> {
         let committed = self.committed_txns.read();
 
         // Check all committed transactions that overlap with this transaction
@@ -456,7 +456,7 @@ impl OccManager {
     }
 
     /// Forward validation: Check against active transactions
-    fn validate_forward(&self, txn: &OccTransaction) -> std::result::Result<bool, DbError> {
+    fn validate_forward(&self, txn: &OccTransaction) -> Result<bool, DbError> {
         let active_txns = self.active_txns.read();
         let my_write_keys = txn.write_keys();
 
@@ -491,7 +491,7 @@ impl OccManager {
     }
 
     /// Hybrid validation: Choose strategy based on read/write set sizes
-    fn validate_hybrid(&self, txn: &OccTransaction) -> std::result::Result<bool, DbError> {
+    fn validate_hybrid(&self, txn: &OccTransaction) -> Result<bool, DbError> {
         // Use backward validation for small read sets
         // Use forward validation for large read sets or large write sets
         if txn.read_set.len() < 10 {
@@ -502,14 +502,14 @@ impl OccManager {
     }
 
     /// Serial validation: Single-threaded validation (safest but slowest)
-    fn validate_serial(&self, txn: &OccTransaction) -> std::result::Result<bool, DbError> {
+    fn validate_serial(&self, txn: &OccTransaction) -> Result<bool, DbError> {
         // This would use a global validation lock
         // For now, use backward validation
         self.validate_backward(txn)
     }
 
     /// Apply writes to database (Phase 3)
-    fn apply_writes(&self, txn: &OccTransaction) -> std::result::Result<(), DbError> {
+    fn apply_writes(&self, txn: &OccTransaction) -> Result<(), DbError> {
         let mut db = self.database.write();
 
         for write_rec in &txn.write_set {
@@ -526,7 +526,7 @@ impl OccManager {
     }
 
     /// Abort transaction
-    pub fn abort(&self, txn_id: TxnId) -> std::result::Result<(), DbError> {
+    pub fn abort(&self, txn_id: TxnId) -> Result<(), DbError> {
         let active_txns = self.active_txns.read();
         if let Some(txn_arc) = active_txns.get(&txn_id) {
             let mut txn = txn_arc.write();

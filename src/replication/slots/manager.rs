@@ -50,13 +50,13 @@ pub trait SlotManager: Send + Sync {
 /// Replication slot manager implementation
 pub struct ReplicationSlotManager {
     /// Configuration
-    config: Arc<SlotManagerConfig>,
+    pub(crate) config: Arc<SlotManagerConfig>,
     /// Slots storage
-    slots: Arc<RwLock<HashMap<SlotName, Arc<RwLock<SlotInfo>>>>>,
+    pub(crate) slots: Arc<RwLock<HashMap<SlotName, Arc<RwLock<SlotInfo>>>>>,
     /// Active slots tracking
-    active_slots: Arc<RwLock<HashSet<SlotName>>>,
+    pub(crate) active_slots: Arc<RwLock<HashSet<SlotName>>>,
     /// Slot metrics
-    metrics: Arc<RwLock<HashMap<SlotName, AtomicSlotMetrics>>>,
+    pub(crate) metrics: Arc<RwLock<HashMap<SlotName, AtomicSlotMetrics>>>,
     /// Background task handles
     cleanup_handle: Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
     monitoring_handle: Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
@@ -153,7 +153,7 @@ impl ReplicationSlotManager {
             })
     }
 
-    async fn save_slot_to_disk(&self, slot_info: &SlotInfo) -> Result<(), SlotError> {
+    pub(crate) async fn save_slot_to_disk(&self, slot_info: &SlotInfo) -> Result<(), SlotError> {
         let path = self.config.storage_path.join(format!("{}.slot", slot_info.slot_name));
         let contents = serde_json::to_string_pretty(slot_info)
             .map_err(|e| SlotError::WriteFailed {
@@ -230,7 +230,7 @@ impl ReplicationSlotManager {
         *self.monitoring_handle.write() = Some(handle);
     }
 
-    fn calculate_slot_health(&self, slot_info: &SlotInfo) -> SlotHealth {
+    pub(crate) fn calculate_slot_health(&self, slot_info: &SlotInfo) -> SlotHealth {
         let mut issues = Vec::new();
         let mut recommendations = Vec::new();
 

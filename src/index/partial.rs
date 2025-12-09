@@ -89,24 +89,27 @@ impl<K: Ord + Clone, V: Clone> PartialIndex<K, V> {
     {
         let mut index = self.index.write();
 
-        if let Some(values) = index.get_mut(key) {
+        let (deleted, should_remove) = if let Some(values) = index.get_mut(key) {
             let initial_len = values.len();
             values.retain(|v| v != value);
 
-            if values.is_empty() {
-                index.remove(key);
-            }
-
+            let should_remove = values.is_empty();
             let deleted = values.len() < initial_len;
-            if deleted {
-                let mut stats = self.stats.write();
-                stats.total_entries -= 1;
-            }
-
-            Ok(deleted)
+            (deleted, should_remove)
         } else {
-            Ok(false)
+            (false, false)
+        };
+
+        if should_remove {
+            index.remove(key);
         }
+
+        if deleted {
+            let mut stats = self.stats.write();
+            stats.total_entries -= 1;
+        }
+
+        Ok(deleted)
     }
 
     /// Get statistics
@@ -703,5 +706,3 @@ use std::collections::HashMap;
         assert_eq!(result, ComputedValue::Integer(50));
     }
 }
-
-

@@ -5,7 +5,7 @@
 
 use std::io;
 use tokio::net::TcpStream;
-use tokio::io::{AsyncReadExt, stdin, AsyncBufReadExt, BufReader};
+use tokio::io::{AsyncReadExt, stdin, AsyncBufReadExt, BufReader, AsyncWriteExt};
 use rusty_db::network::protocol::{Request, Response};
 use rusty_db::Result;
 use rusty_db::error::DbError;
@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
     println!("Connecting to RustyDB server at {}...", addr);
 
     let mut stream = TcpStream::connect(addr).await
-        .map_err(|e| DbError::Network(format!("Failed to connect: {}", e)))?);
+        .map_err(|e| DbError::Network(format!("Failed to connect: {}", e)))?)
 
     println!("Connected successfully!");
     println!("Type SQL commands or 'exit' to quit.");
@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
 
     loop {
         print!("rustydb> ");
-        std::io::Write::flush(&mut std::io::stdout()).unwrap();
+        io::Write::flush(&mut io::stdout())?;
 
         input.clear();
         reader.read_line(&mut input).await

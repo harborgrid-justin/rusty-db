@@ -115,8 +115,8 @@ pub enum AuthMethod {
     Custom,
 }
 
-impl std::fmt::Display for AuthMethod {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for AuthMethod {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AuthMethod::Database => write!(f, "DATABASE"),
             AuthMethod::Ldap => write!(f, "LDAP"),
@@ -287,7 +287,7 @@ impl Authenticator for DatabaseAuthenticator {
 /// Implements JWT or custom token authentication.
 pub struct TokenAuthenticator {
     /// Valid tokens (token -> username, expiry)
-    tokens: parking_lot::RwLock<HashMap<String, (String)>>,
+    tokens: parking_lot::RwLock<HashMap<String, String>>,
 }
 
 impl TokenAuthenticator {
@@ -307,15 +307,15 @@ impl TokenAuthenticator {
     /// # Returns
     ///
     /// Generated token string
-    pub fn issue_token(&self, username: String, validity: std::time::Duration) -> String {
-        use uuid::Uuid;
+pub fn issue_token(&self, username: String, validity: std::time::Duration) -> String {
+    use uuid::Uuid;
 
-        let token = Uuid::new_v4().to_string();
-        let expiry = SystemTime::now() + validity;
+    let token = Uuid::new_v4().to_string();
+    let expiry = SystemTime::now() + validity;
 
-        self.tokens.write().insert(token.clone(), (username, expiry));
-        token
-    }
+    self.tokens.write().insert(token.clone(), (username.clone()));
+    token
+}
 
     /// Revoke a token
     pub fn revoke_token(&self, token: &str) {
@@ -323,16 +323,16 @@ impl TokenAuthenticator {
     }
 
     /// Check if token is valid and not expired
-    fn is_token_valid(&self, token: &str) -> Option<String> {
-        let tokens = self.tokens.read();
-        tokens.get(token).and_then(|(username, expiry)| {
-            if SystemTime::now() < *expiry {
-                Some(username.clone())
-            } else {
-                None
-            }
-        })
-    }
+fn is_token_valid(&self, token: &str) -> Option<String> {
+    let tokens = self.tokens.read();
+    tokens.get(token).and_then(|(username, expiry)| {
+        if SystemTime::now() < *expiry {
+            Some(username.clone())
+        } else {
+            None
+        }
+    })
+}
 }
 
 impl Authenticator for TokenAuthenticator {
@@ -437,7 +437,7 @@ use std::time::Duration;
     #[tokio::test]
     async fn test_token_authenticator() {
         let auth = TokenAuthenticator::new();
-        let token = auth.issue_token("carol".to_string(), std::time::Duration::from_secs(3600));
+        let token = auth.issue_token("carol".to_string(), Duration::from_secs(3600));
 
         let creds = Credentials::Token { token: token.clone() };
         let result = auth.authenticate(&creds).await.unwrap();
@@ -450,10 +450,10 @@ use std::time::Duration;
     #[tokio::test]
     async fn test_token_validation() {
         let auth = TokenAuthenticator::new();
-        let token = auth.issue_token("dave".to_string(), std::time::Duration::from_secs(3600));
+        let token = auth.issue_token("dave".to_string(), Duration::from_secs(3600));
 
         assert!(auth.validate_token(&token).await.unwrap());
-        
+
         auth.revoke_token(&token);
         assert!(!auth.validate_token(&token).await.unwrap());
     }
@@ -461,14 +461,14 @@ use std::time::Duration;
     #[tokio::test]
     async fn test_token_refresh() {
         let auth = TokenAuthenticator::new();
-        let old_token = auth.issue_token("eve".to_string(), std::time::Duration::from_secs(3600));
+        let old_token = auth.issue_token("eve".to_string(), Duration::from_secs(3600));
 
         let new_token = auth.refresh_token(&old_token).await.unwrap();
         assert_ne!(old_token, new_token);
 
         // Old token should be revoked
         assert!(!auth.validate_token(&old_token).await.unwrap());
-        
+
         // New token should be valid
         assert!(auth.validate_token(&new_token).await.unwrap());
     }

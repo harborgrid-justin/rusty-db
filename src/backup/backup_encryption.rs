@@ -349,12 +349,12 @@ impl KeyManager {
                 result,
             };
 
-            self.audit_log.lock().unwrap().push(entry);
+            self.audit_log.lock().push(entry);
         }
     }
 
     pub fn get_audit_log(&self) -> Vec<KeyAuditEntry> {
-        self.audit_log.lock().unwrap().clone()
+        self.audit_log.lock().clone()
     }
 }
 

@@ -430,8 +430,8 @@ impl ChangeStreamManager {
     /// Create a new change stream manager
     pub fn new(maxevents: usize) -> Self {
         Self {
-            events: Arc::new(RwLock::new(VecDeque::with_capacity(max_events))),
-            max_events,
+            events: Arc::new(RwLock::new(VecDeque::with_capacity(maxevents))),
+            max_events: maxevents,
             cursors: Arc::new(RwLock::new(HashMap::new())),
         }
     }

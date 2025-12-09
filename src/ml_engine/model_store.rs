@@ -7,7 +7,7 @@ use crate::error::Result;
 use super::{Algorithm, ModelId, Hyperparameters, TrainingStats, EvaluationMetrics};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // ============================================================================
 // Model Definition

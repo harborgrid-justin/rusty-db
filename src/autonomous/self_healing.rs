@@ -494,7 +494,7 @@ impl MemoryLeakDetector {
         let points: Vec<(f64, f64)> = snapshots
             .iter()
             .enumerate()
-            .map(|(i, s)| (i, s.total_memory_mb as f64))
+            .map(|(i, s)| (i as f64, s.total_memory_mb as f64))
             .collect();
 
         let growth_rate = self.calculate_slope(&points);

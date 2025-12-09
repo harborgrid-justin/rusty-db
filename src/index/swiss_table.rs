@@ -568,6 +568,7 @@ impl ProbeSeq {
 
 #[cfg(test)]
 mod tests {
+    use crate::index::swiss_table::SwissTable;
 
     #[test]
     fn test_basic_operations() {

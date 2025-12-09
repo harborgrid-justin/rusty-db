@@ -19,8 +19,8 @@ pub enum ConsolidationError {
     MetricsUnavailable(String),
 }
 
-impl std::fmt::Display for ConsolidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ConsolidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ConsolidationError::InsufficientCapacity(msg) => write!(f, "Insufficient capacity: {}", msg),
             ConsolidationError::ConflictingAffinityRules(msg) => write!(f, "Conflicting affinity rules: {}", msg),

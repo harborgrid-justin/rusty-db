@@ -128,8 +128,8 @@ impl OLTPCompressor {
             compressed_size: final_size,
             block_format: final_format,
             checksum: utils::crc32(&uncompressed_data),
-            last_modified: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
+            last_modified: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_secs(),
         };
@@ -570,6 +570,8 @@ pub struct CompressionRecommendation {
 
 #[cfg(test)]
 mod tests {
+    use crate::compression::CompressionLevel;
+    use crate::compression::oltp::{OLTPCompressionAdvisor, OLTPCompressor, TableStats};
 
     #[test]
     fn test_oltp_block_compression() {

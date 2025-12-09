@@ -130,7 +130,7 @@ pub fn compute_aggregate(
         }
 
         AggregateFunction::CountDistinct => {
-            let distinct: std::collections::HashSet<_> = data
+            let distinct: HashSet<_> = data
                 .iter()
                 .filter_map(|row| row.get(column_index))
                 .collect();
@@ -166,15 +166,38 @@ pub fn compute_aggregate(
                 .filter_map(|row| row.get(column_index))
                 .min()
                 .cloned()
-                .ok_or_else(|| crate::error::DbError::Execution("No values to minimize".to_string()))
+                .ok_or_else(|| DbError::Execution("No values to minimize".to_string()))
         }
-
-        AggregateFunction::Max => {
-            data.iter()
-                .filter_map(|row| row.get(column_index))
-                .max()
-                .cloned()
-        }
+        
+AggregateFunction::Max => {
+              data.iter()
+                  .filter_map(|row| row.get(column_index))
+                  .max()
+                  .cloned()
+                  .ok_or_else(|| DbError::Execution("No values to maximize".to_string()))
+          }
+          
+          AggregateFunction::Mode => {
+              counts
+                  .into_iter()
+                  .max_by_key(|(_, count)| *count)
+                  .map(|(value, _)| value)
+                  .ok_or_else(|| DbError::Execution("No mode found".to_string()))
+          }
+          
+          AggregateFunction::FirstValue => {
+              data.first()
+                  .and_then(|row| row.get(column_index))
+                  .cloned()
+                  .ok_or_else(|| DbError::Execution("No first value found".to_string()))
+          }
+          
+          AggregateFunction::LastValue => {
+              data.last()
+                  .and_then(|row| row.get(column_index))
+                  .cloned()
+                  .ok_or_else(|| DbError::Execution("No last value found".to_string()))
+          }
 
         AggregateFunction::StdDev | AggregateFunction::StdDevPop => {
             let values = extract_numeric_values(data, column_index);
@@ -321,7 +344,7 @@ fn compute_percentile(values: &[f64], percentile: f64) -> f64 {
     }
 
     let mut sorted = values.to_vec();
-    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
     let index = ((sorted.len() as f64 - 1.0) * percentile / 100.0) as usize;
     sorted[index.min(sorted.len() - 1)]

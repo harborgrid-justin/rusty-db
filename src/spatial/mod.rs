@@ -472,8 +472,8 @@ mod tests {
             .transform(&wgs84, well_known_srid::WGS84, well_known_srid::WEB_MERCATOR)
             .unwrap();
 
-        assert!(mercator.x != wgs84.x);
-        assert!(mercator.y != wgs84.y);
+        assert_ne!(mercator.x, wgs84.x);
+        assert_ne!(mercator.y, wgs84.y);
     }
 
     #[test]

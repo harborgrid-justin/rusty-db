@@ -139,7 +139,7 @@ impl ColumnStatistics {
 
         let non_null: Vec<_> = data.iter().filter(|v| !v.is_empty() && *v != "NULL").collect();
 
-        let distinct: std::collections::HashSet<_> = non_null.iter().collect();
+        let distinct: HashSet<_> = non_null.iter().collect();
         self.distinct_count = distinct.len() as u64;
 
         self.min_value = non_null.iter().min().map(|v| (*v).clone());
@@ -348,11 +348,11 @@ impl HistogramManager {
         let min = data.first().unwrap().clone();
         let max = data.last().unwrap().clone();
 
-        let bucket_size = data.len() / num_buckets;
+        let bucket_size = data.len() / numbuckets;
 
-        for i in 0..num_buckets {
+        for i in 0..numbuckets {
             let start = i * bucket_size;
-            let end = if i == num_buckets - 1 {
+            let end = if i == numbuckets - 1 {
                 data.len()
             } else {
                 (i + 1) * bucket_size
@@ -360,7 +360,7 @@ impl HistogramManager {
 
             if start < data.len() {
                 let bucket_data = &data[start..end.min(data.len())];
-                let distinct: std::collections::HashSet<_> = bucket_data.iter().collect();
+                let distinct: HashSet<_> = bucket_data.iter().collect();
 
                 histogram.buckets.push(HistogramBucket {
                     lower_bound: bucket_data.first().unwrap_or(&min).clone(),
@@ -384,10 +384,10 @@ impl HistogramManager {
         }
 
         data.sort();
-        let bucket_size = (data.len() + num_buckets - 1) / num_buckets;
+        let bucket_size = (data.len() + numbuckets - 1) / numbuckets;
 
         for chunk in data.chunks(bucket_size) {
-            let distinct: std::collections::HashSet<_> = chunk.iter().collect();
+            let distinct: HashSet<_> = chunk.iter().collect();
 
             histogram.buckets.push(HistogramBucket {
                 lower_bound: chunk.first().unwrap().clone(),

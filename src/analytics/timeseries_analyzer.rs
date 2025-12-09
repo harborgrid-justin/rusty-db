@@ -174,7 +174,7 @@ impl TimeSeriesAnalyzer {
 
     /// Find the dominant period in the data.
     pub fn find_period(&self, data: &[f64], maxperiod: usize) -> Option<usize> {
-        let max_period = max_period.min(data.len() / 2);
+        let max_period = maxperiod.min(data.len() / 2);
 
         let mut best_period = None;
         let mut best_autocorr = 0.5; // Minimum threshold
@@ -347,7 +347,7 @@ impl AnomalyDetector {
         }
 
         let mut sorted = data.to_vec();
-        sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
         let q1_idx = sorted.len() / 4;
         let q3_idx = 3 * sorted.len() / 4;
@@ -375,12 +375,12 @@ impl AnomalyDetector {
         }
 
         let mut sorted = data.to_vec();
-        sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
         let median = sorted[sorted.len() / 2];
 
         let mut deviations: Vec<f64> = data.iter().map(|x| (x - median).abs()).collect();
-        deviations.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        deviations.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
         let mad = deviations[deviations.len() / 2];
 

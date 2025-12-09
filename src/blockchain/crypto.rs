@@ -310,8 +310,8 @@ impl MerkleNode {
 
         Self {
             hash,
-            left: Some(left_hash),
-            right: Some(right_hash),
+            left: Some(lefthash),
+            right: Some(righthash),
         }
     }
 }
@@ -742,6 +742,9 @@ impl RangeProof {
 pub fn secure_random(size: usize) -> Vec<u8> {
     let mut rng = rand::thread_rng();
     let mut bytes = vec![0u8; size];
+use rand::{thread_rng, RngCore};
+    
+    let mut rng = thread_rng();
     rng.fill_bytes(&mut bytes);
     bytes
 }

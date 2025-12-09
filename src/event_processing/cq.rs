@@ -23,8 +23,8 @@ impl CQId {
     }
 }
 
-impl std::fmt::Display for CQId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for CQId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -609,8 +609,8 @@ impl QueryOptimizer {
         // Simplified optimization
         // In a real implementation, this would parse and optimize the query plan
         Ok(OptimizedQuery {
-            original: _query.to_string(),
-            optimized: _query.to_string(),
+            original: query.to_string(),
+            optimized: query.to_string(),
             rules_applied: self.optimizations.clone(),
         })
     }
@@ -821,5 +821,3 @@ mod tests {
         assert!(metrics.events_processed > 0);
     }
 }
-
-

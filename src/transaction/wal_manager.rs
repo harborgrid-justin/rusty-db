@@ -395,7 +395,7 @@ impl WALManager {
 
     /// Returns the number of buffered entries.
     pub fn buffered_count(&self) -> usize {
-        self.log_buffer.lock().unwrap().len()
+        self.log_buffer.lock().len()
     }
 
     /// Checks if the log file exists.
@@ -414,8 +414,8 @@ impl WALManager {
     }
 }
 
-impl std::fmt::Debug for WALManager {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for WALManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("WALManager")
             .field("log_path", &self.log_path)
             .field("current_lsn", &*self.current_lsn.lock())

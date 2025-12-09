@@ -128,7 +128,7 @@ unsafe impl Sync for OverlappedIo {}
 #[cfg(windows)]
 impl OverlappedIo {
     /// Create new overlapped I/O
-    pub fn new(request_id: u64, offset: u64) -> Self {
+    pub unsafe fn new(request_id: u64, offset: u64) -> Self {
         let mut overlapped: windows_sys::Win32::System::IO::OVERLAPPED = unsafe { std::mem::zeroed() };
 
         // Set offset (split into high and low parts)
@@ -282,7 +282,7 @@ impl WindowsIocp {
     }
 
     /// Submit an I/O request
-    pub fn submit(&self, request: &mut IoRequest) -> Result<()> {
+    pub unsafe fn submit(&self, request: &mut IoRequest) -> Result<()> {
         // Create overlapped structure
         let mut overlapped = Box::new(OverlappedIo::new(request.id, request.offset));
 
@@ -303,9 +303,9 @@ impl WindowsIocp {
         };
 
         // Store overlapped for later completion
-        self.pending_ops.lock().unwrap().insert(request.id, overlapped);
+        self.pending_ops.lock().insert(request.id, overlapped);
         self.pending_count.fetch_add(1, Ordering::Relaxed);
-        self.stats.lock().unwrap().submissions += 1;
+        self.stats.lock().submissions += 1;
 
         Ok(())
     }
@@ -386,7 +386,7 @@ impl WindowsIocp {
         let mut submitted = 0;
 
         for request in requests {
-            if self.submit(request).is_ok() {
+            if unsafe { self.submit(request).is_ok() } {
                 submitted += 1;
             } else {
                 break;
@@ -420,7 +420,7 @@ impl WindowsIocp {
             if overlapped_ptr.is_null() {
                 // Timeout or no more completions
                 if result == 0 {
-                    self.stats.lock().unwrap().timeouts += 1;
+                    self.stats.lock().timeouts += 1;
                 }
                 break;
             }
@@ -434,7 +434,7 @@ impl WindowsIocp {
             let request_id = overlapped.request_id;
 
             // Remove from pending
-            self.pending_ops.lock().unwrap().remove(&request_id);
+            self.pending_ops.lock().remove(&request_id);
             self.pending_count.fetch_sub(1, Ordering::Relaxed);
 
             let error_code = if result == 0 {
@@ -471,7 +471,7 @@ impl WindowsIocp {
 
     /// Get statistics
     pub fn stats(&self) -> IocpStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     /// Get pending count
@@ -554,7 +554,7 @@ use std::collections::HashMap;
 
     #[test]
     fn test_overlapped_io() {
-        let overlapped = OverlappedIo::new(42, 4096);
+        let overlapped = unsafe { OverlappedIo::new(42, 4096) };
         assert_eq!(overlapped.request_id, 42);
     }
 

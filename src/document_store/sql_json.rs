@@ -140,7 +140,7 @@ impl JsonTableFunction {
         );
 
         // Parse row path
-        let mut parser = JsonPathParser::new(row_path.to_string());
+        let mut parser = JsonPathParser::new(rowpath.to_string());
         let path = parser.parse()?;
 
         // Extract rows using row path

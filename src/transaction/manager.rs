@@ -311,8 +311,8 @@ impl Default for TransactionManager {
     }
 }
 
-impl std::fmt::Debug for TransactionManager {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for TransactionManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("TransactionManager")
             .field("active_count", &self.active_count())
             .field("next_txn_id", &*self.next_txn_id.lock())

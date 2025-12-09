@@ -39,8 +39,8 @@ pub struct ClusterFailoverManager {
     suspected_nodes: Arc<RwLock<HashMap<NodeId, std::time::Instant>>>,
 }
 
-impl std::fmt::Debug for ClusterFailoverManager {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for ClusterFailoverManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ClusterFailoverManager")
             .field("config", &self.config)
             .finish_non_exhaustive()

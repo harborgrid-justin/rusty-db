@@ -59,10 +59,10 @@ impl ParallelQueryExecutor {
         data: Vec<Vec<String>>,
         numpartitions: usize,
     ) -> Vec<Vec<Vec<String>>> {
-        let mut partitions = vec![Vec::new(); num_partitions];
+        let mut partitions = vec![Vec::new(); numpartitions];
 
         for (i, row) in data.into_iter().enumerate() {
-            partitions[i % num_partitions].push(row);
+            partitions[i % numpartitions].push(row);
         }
 
         partitions

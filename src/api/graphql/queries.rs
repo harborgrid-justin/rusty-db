@@ -2,16 +2,16 @@
 //
 // Query resolvers for the GraphQL API
 
-use async_graphql::{
-    Context, Error, InputObject, Object, Result as GqlResult, SimpleObject, ID,
-};
+use async_graphql::{Context, Error, ErrorExtensions, InputObject, Object, Result as GqlResult, SimpleObject, ID};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
 use crate::error::DbError;
-use super::types::*;
-use super::models::*;
+use super::types::{DateTime, BigInt, Json, JoinType};
+use super::models::{DatabaseSchema, TableType, ColumnType, IndexInfo, ConstraintInfo, QueryResult, QuerySuccess, QueryError, RowType, AggregateInput, AggregateResult, OrderBy, FilterCondition, RowConnection, WhereClause};
+use super::GraphQLEngine;
+use crate::api::AuthorizationContext;
 
 // ============================================================================
 // PART 2: QUERY OPERATIONS (600+ lines)
@@ -285,4 +285,3 @@ pub struct PlanOperation {
     pub rows: BigInt,
     pub children: Vec<PlanOperation>,
 }
-

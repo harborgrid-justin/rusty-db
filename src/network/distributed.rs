@@ -346,7 +346,7 @@ impl FaultToleranceManager {
                         return Err(e);
                     }
                     // Exponential backoff
-                    tokio::time::sleep(tokio::time::Duration::from_millis(
+                    tokio::time::sleep(Duration::from_millis(
                         100 * 2u64.pow(attempts as u32)
                     )).await;
                 }
@@ -561,6 +561,7 @@ pub enum TransactionState {
     Committing,
     Committed,
     Aborted,
+    Active,
 }
 
 #[cfg(test)]

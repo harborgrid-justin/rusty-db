@@ -39,8 +39,8 @@ pub struct DataMigrationManager {
     completed_migrations: Arc<RwLock<Vec<MigrationResult>>>,
 }
 
-impl std::fmt::Debug for DataMigrationManager {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for DataMigrationManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("DataMigrationManager").finish_non_exhaustive()
     }
 }

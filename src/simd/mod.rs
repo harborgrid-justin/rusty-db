@@ -446,6 +446,12 @@ pub struct SimdContext {
 }
 
 impl SimdContext {
+    pub(crate) fn clone(&self) -> SimdContext {
+        todo!()
+    }
+}
+
+impl SimdContext {
     /// Create new SIMD context
     pub fn new() -> Self {
         Self {

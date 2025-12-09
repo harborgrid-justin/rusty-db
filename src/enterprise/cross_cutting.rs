@@ -353,7 +353,7 @@ impl CircuitBreaker {
     pub async fn call<F, T, E>(&self, f: F) -> Result<T>
     where
         F: Future<Output = std::result::Result<T, E>>,
-        E: std::fmt::Display,
+        E: fmt::Display,
     {
         // Check if we should attempt the call
         let should_attempt = self.should_attempt().await;

@@ -1824,6 +1824,8 @@ impl Default for BufferPoolBuilder {
 
 #[cfg(test)]
 mod tests {
+    use crate::buffer::{BufferPoolBuilder, BufferPoolConfig, BufferPoolManager, EvictionPolicyType};
+    use crate::buffer::manager::{FreeFrameManager, PageTable};
 
     #[test]
     fn test_buffer_pool_creation() {

@@ -458,6 +458,8 @@ pub struct MigrationStats {
 
 #[cfg(test)]
 mod tests {
+    use crate::compression::{CompressionAlgorithm, CompressionLevel, DataTemperature};
+    use crate::compression::tiered::TieredCompressor;
 
     #[test]
     fn test_temperature_classification() {

@@ -50,6 +50,7 @@ pub enum ColumnDataType {
     Binary,
     Timestamp,
     Decimal,
+    Integer,
 }
 
 impl ColumnDataType {

@@ -282,8 +282,8 @@ pub enum OperationType {
     Delete,
 }
 
-impl std::fmt::Display for OperationType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for OperationType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             OperationType::Insert => write!(f, "INSERT"),
             OperationType::Update => write!(f, "UPDATE"),

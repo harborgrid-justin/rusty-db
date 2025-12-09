@@ -398,7 +398,7 @@ impl WindowFunctionBuilder {
     pub fn execute(self, data: &[Vec<String>]) -> Result<Vec<String>> {
         let function = self
             .function
-            .ok_or_else(|| crate::error::DbError::Execution("No window function specified".to_string()))?;
+            .ok_or_else(|| DbError::Execution("No window function specified".to_string()))?;
 
         apply_window_function(
             data,

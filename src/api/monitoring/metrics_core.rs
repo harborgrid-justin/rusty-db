@@ -88,7 +88,7 @@ impl MetricId {
 pub struct CounterMetric {
     value: AtomicU64,
     created: SystemTime,
-    help: String,
+    pub(crate) help: String,
 }
 
 impl CounterMetric {
@@ -122,7 +122,7 @@ impl CounterMetric {
 pub struct GaugeMetric {
     value: Arc<RwLock<f64>>,
     created: SystemTime,
-    help: String,
+    pub(crate) help: String,
 }
 
 impl GaugeMetric {
@@ -173,7 +173,7 @@ pub struct HistogramMetric {
     sum: Arc<RwLock<f64>>,
     count: AtomicU64,
     created: SystemTime,
-    help: String,
+    pub(crate) help: String,
 }
 
 impl HistogramMetric {
@@ -238,7 +238,7 @@ pub struct SummaryMetric {
     max_age: Duration,
     max_samples: usize,
     created: SystemTime,
-    help: String,
+    pub(crate) help: String,
 }
 
 impl SummaryMetric {

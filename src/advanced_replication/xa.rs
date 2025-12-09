@@ -351,7 +351,7 @@ impl XaTransactionManager {
 
         // In a real implementation, would send prepare over network
         // For now, simulate with a delay and random vote
-        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+        tokio::time::sleep(Duration::from_millis(10)).await;
 
         // 95% vote commit
         if rand::random::<f64>() < 0.95 {
@@ -490,7 +490,7 @@ impl XaTransactionManager {
             ))?;
 
         // In a real implementation, would send commit over network
-        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+        tokio::time::sleep(Duration::from_millis(10)).await;
 
         // 99% success rate
         if rand::random::<f64>() < 0.99 {
@@ -560,7 +560,7 @@ impl XaTransactionManager {
             ))?;
 
         // In a real implementation, would send rollback over network
-        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+        tokio::time::sleep(Duration::from_millis(10)).await;
 
         Ok(())
     }

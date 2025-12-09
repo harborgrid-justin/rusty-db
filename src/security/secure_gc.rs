@@ -245,8 +245,8 @@ impl<T> DerefMut for SecureDrop<T> {
 }
 
 // No Debug implementation to prevent accidental leaks
-impl<T> std::fmt::Debug for SecureDrop<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<T> fmt::Debug for SecureDrop<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("SecureDrop<T> { <redacted> }")
     }
 }
@@ -301,8 +301,8 @@ impl<T> SensitiveData<T> {
 }
 
 // Explicitly no Debug or Display implementations
-impl<T> std::fmt::Debug for SensitiveData<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<T> fmt::Debug for SensitiveData<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("SensitiveData { <redacted> }")
     }
 }

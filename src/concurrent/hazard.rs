@@ -532,7 +532,7 @@ mod tests {
         });
 
         // Drop guard
-        drop(_guard);
+        drop(guard);
 
         // Force reclamation
         HazardDomain::reclaim_all();

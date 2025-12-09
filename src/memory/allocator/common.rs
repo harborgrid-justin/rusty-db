@@ -1,19 +1,18 @@
 // Common types, constants, and imports for memory allocator modules
 
-use std::alloc::{GlobalAlloc, Layout, System};
-use std::cell::RefCell;
-use std::collections::{HashMap, VecDeque};
-use std::ptr::{self, NonNull};
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize};
-use std::sync::{Arc, Mutex, RwLock, Weak};
-use std::time::{Duration, Instant, SystemTime};
 // Note: std::backtrace::Backtrace is nightly-only, not used in stable builds
 // use std::backtrace::Backtrace;
 
-use crate::error::{DbError, Result};
+pub use crate::error::{DbError, Result};
 
 // Re-export commonly used types
-pub use std::sync::atomic::Ordering;
+pub use std::alloc::{GlobalAlloc, Layout, System};
+pub use std::cell::RefCell;
+pub use std::sync::atomic::{Ordering, AtomicBool, AtomicU64, AtomicUsize};
+pub use std::ptr::{self, NonNull};
+pub use std::collections::{HashMap, VecDeque};
+pub use std::sync::{Arc, Mutex, RwLock, Weak};
+pub use std::time::{Duration, Instant, SystemTime};
 
 // ============================================================================
 // Constants and Configuration

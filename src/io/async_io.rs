@@ -4,7 +4,6 @@
 // across Windows IOCP and Unix io_uring.
 
 use tokio::sync::oneshot;
-use tokio::time::sleep;
 use std::time::Instant;
 use crate::error::{Result, DbError};
 use std::sync::atomic::{AtomicU8, AtomicU64, AtomicUsize, Ordering};
@@ -386,7 +385,7 @@ impl IoCompletionPort {
         self.pending.fetch_add(1, Ordering::Relaxed);
 
         #[cfg(windows)]
-        self.backend.submit(request)?;
+        unsafe { self.backend.submit(request)?; }
 
         #[cfg(unix)]
         self.backend.submit(request)?;

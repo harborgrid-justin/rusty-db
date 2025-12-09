@@ -610,10 +610,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
             self.keys.len()
         } else {
             // Binary search for larger key sets
-            match self.keys.binary_search_by(|k| k.cmp(key)) {
-                Ok(idx) => idx,
-                Err(idx) => idx,
-            }
+            self.keys.binary_search_by(|k| k.cmp(key)).unwrap_or_else(|idx| idx)
         }
     }
 

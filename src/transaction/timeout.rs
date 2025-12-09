@@ -153,8 +153,8 @@ impl Default for TimeoutManager {
     }
 }
 
-impl std::fmt::Debug for TimeoutManager {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for TimeoutManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("TimeoutManager")
             .field("default_timeout", &self.default_timeout)
             .field("tracked_count", &self.tracked_count())

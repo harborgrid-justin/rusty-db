@@ -7,7 +7,6 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::Result;
-use crate::error::DbError;
 
 use super::super::IntegratedSecurityManager;
 use super::super::rbac::RoleId;

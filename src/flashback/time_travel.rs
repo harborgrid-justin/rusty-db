@@ -23,7 +23,7 @@
 use std::collections::BTreeMap;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
 use crate::error::{Result, DbError};
@@ -172,7 +172,7 @@ impl TimeTravelEngine {
         let mut results = Vec::new();
         for row in rows {
             if let Some(bitemporal) = row.bitemporal_metadata {
-                if bitemporal.is_valid_at(valid_time) {
+                if bitemporal.is_valid_at(validtime) {
                     results.push(BiTemporalRow {
                         row_id: row.row_id,
                         values: row.values,

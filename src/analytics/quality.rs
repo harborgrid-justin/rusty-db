@@ -550,7 +550,7 @@ impl TableQualityReport {
     pub fn issues_by_severity(&self, minseverity: u8) -> Vec<&QualityIssue> {
         self.issues
             .iter()
-            .filter(|i| i.severity >= min_severity)
+            .filter(|i| i.severity >= minseverity)
             .collect()
     }
 }

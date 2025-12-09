@@ -455,8 +455,8 @@ pub struct WorkStealingPool<T> {
 impl<T> WorkStealingPool<T> {
     /// Create a new work-stealing pool with the given number of workers
     pub fn new(numworkers: usize) -> (Self, Vec<Worker<T>>) {
-        let mut workers = Vec::with_capacity(num_workers);
-        for _ in 0..num_workers {
+        let mut workers = Vec::with_capacity(numworkers);
+        for _ in 0..numworkers {
             workers.push(Arc::new(WorkStealingDeque::new()));
         }
 
@@ -465,7 +465,7 @@ impl<T> WorkStealingPool<T> {
         };
 
         // Create worker handles
-        let mut worker_handles = Vec::with_capacity(num_workers);
+        let mut worker_handles = Vec::with_capacity(numworkers);
         for (i, deque) in workers.iter().enumerate() {
             let mut stealers = Vec::new();
             for (j, other) in workers.iter().enumerate() {
@@ -680,5 +680,3 @@ mod tests {
         }
     }
 }
-
-

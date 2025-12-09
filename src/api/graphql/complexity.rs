@@ -9,12 +9,12 @@ use async_graphql::extensions::{Extension, ExtensionContext, ExtensionFactory, N
 use async_graphql::parser::types::ExecutableDocument;
 use futures_util::Future;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::pin::Pin;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-
+use crate::api::RowType;
 use crate::error::DbError;
 
 // ============================================================================
@@ -35,7 +35,7 @@ impl ComplexityAnalyzer {
         }
     }
 
-    pub fn analyze(&self, _doc: &ExecutableDocument) -> std::result::Result<ComplexityMetrics, DbError> {
+    pub fn analyze(&self, _doc: &ExecutableDocument) -> Result<ComplexityMetrics, DbError> {
         // Simplified implementation - full analysis requires async-graphql internals
         let metrics = ComplexityMetrics {
             total_complexity: 10, // Default estimate
@@ -68,7 +68,7 @@ impl ComplexityAnalyzer {
         _selection_set: &async_graphql::parser::types::SelectionSet,
         metrics: &mut ComplexityMetrics,
         depth: usize,
-    ) -> std::result::Result<(), DbError> {
+    ) -> Result<(), DbError> {
         // Simplified implementation
         metrics.max_depth = metrics.max_depth.max(depth);
         metrics.field_count += 1;
@@ -112,7 +112,7 @@ impl RateLimiter {
         limits.insert(key.to_string(), limit);
     }
 
-    pub async fn check_rate_limit(&self, key: &str) -> Result<()> {
+    pub async fn check_rate_limit(&self, key: &str) -> Result<(), DbError> {
         let limits = self.limits.read().await;
         let limit = limits.get(key).cloned().unwrap_or(RateLimit {
             max_requests: 1000,
@@ -177,23 +177,23 @@ impl AuthorizationContext {
         self.roles.contains(role)
     }
 
-    pub fn has_permission(&self, permission: &str) -> std::result::Result<bool, DbError> {
+    pub fn has_permission(&self, permission: &str) -> Result<bool, DbError> {
         Ok(self.permissions.contains(permission))
     }
 
-    pub fn can_read(&self, table: &str) -> std::result::Result<bool, DbError> {
+    pub fn can_read(&self, table: &str) -> Result<bool, DbError> {
         Ok(self.permissions.contains(&format!("read:{}", table))
             || self.permissions.contains("read:*")
             || self.has_role("admin"))
     }
 
-    pub fn can_write(&self, table: &str) -> Result<bool> {
+    pub fn can_write(&self, table: &str) -> Result<bool, DbError> {
         Ok(self.permissions.contains(&format!("write:{}", table))
             || self.permissions.contains("write:*")
             || self.has_role("admin"))
     }
 
-    pub fn can_delete(&self, table: &str) -> Result<bool> {
+    pub fn can_delete(&self, table: &str) -> Result<bool, DbError> {
         Ok(self.permissions.contains(&format!("delete:{}", table))
             || self.permissions.contains("delete:*")
             || self.has_role("admin"))
@@ -427,4 +427,3 @@ impl DepthLimitExtension {
         Self { max_depth }
     }
 }
-

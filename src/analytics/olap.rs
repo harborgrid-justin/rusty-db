@@ -119,7 +119,7 @@ impl OlapCube {
             .filter(|(keys, _)| {
                 // Check if all filters match
                 for (i, dim) in self.dimensions.iter().enumerate() {
-                    if let Some(filter_value) = dimension_filters.get(dim) {
+                    if let Some(filter_value) = dimensionfilters.get(dim) {
                         if keys.get(i).map(|k| k != filter_value).unwrap_or(true) {
                             return false;
                         }

@@ -52,8 +52,8 @@ pub enum AuditEventType {
     Import,
 }
 
-impl std::fmt::Display for AuditEventType {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for AuditEventType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             AuditEventType::TableCreate => write!(f, "TABLE_CREATE"),
             AuditEventType::RowInsert => write!(f, "ROW_INSERT"),
@@ -594,7 +594,7 @@ impl QueryAuditLogger {
     pub fn new(maxqueries: usize) -> Self {
         Self {
             queries: Arc::new(RwLock::new(VecDeque::new())),
-            max_queries,
+            max_queries: maxqueries,
             next_query_id: Arc::new(RwLock::new(0)),
         }
     }

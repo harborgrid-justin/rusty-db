@@ -141,7 +141,7 @@ impl Epoch {
                     }
                     if let Some(participant) = p_ref.as_ref() {
                         let epoch = participant.enter();
-                        LOCAL_EPOCH.with(|e| e.set(epoch));
+                        LOCAL_EPOCH.set(epoch);
                         is_pinned.set(true);
                     }
                 });
@@ -189,7 +189,7 @@ impl Epoch {
         });
 
         // Periodically try to collect garbage
-        if LOCAL_EPOCH.with(|e| e.get()) % 100 == 0 {
+        if LOCAL_EPOCH.get() % 100 == 0 {
             Self::try_collect();
         }
     }
@@ -247,7 +247,7 @@ impl Drop for EpochGuard {
             if let Some(participant) = p.borrow().as_ref() {
                 participant.leave();
                 if participant.pin_count.load(Ordering::Relaxed) == 0 {
-                    IS_PINNED.with(|is_pinned| is_pinned.set(false));
+                    IS_PINNED.set(false);
                 }
             }
         });

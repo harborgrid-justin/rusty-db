@@ -13,6 +13,7 @@ use axum::{
 use std::cmp::Ordering;
 use std::sync::Arc;
 use std::time::SystemTime;
+use uuid::Uuid;
 
 use super::types::*;
 
@@ -21,8 +22,8 @@ pub async fn request_logger_middleware<B>(
     State(state): State<Arc<ApiState>>,
     headers: HeaderMap,
     req: Request<B>,
-    next: Next<B>,
-) -> std::result::Result<Response, ApiError> {
+    next: Next,
+) -> Result<Response, ApiError> {
     let method = req.method().to_string();
     let uri = req.uri().to_string();
     let start = SystemTime::now();
@@ -64,8 +65,8 @@ pub async fn rate_limit_middleware<B>(
     State(state): State<Arc<ApiState>>,
     headers: HeaderMap,
     req: Request<B>,
-    next: Next<B>,
-) -> std::result::Result<Response, ApiError> {
+    next: Next,
+) -> Result<Response, ApiError> {
     // Extract identifier (IP or API key)
     let identifier = headers
         .get("X-Forwarded-For")
@@ -91,10 +92,10 @@ pub async fn rate_limit_middleware<B>(
 #[async_trait::async_trait]
 pub trait AuthMiddleware: Send + Sync {
     /// Verify authentication token
-    async fn verify_token(&self, token: &str) -> Result<bool>;
+    async fn verify_token(&self, token: &str) -> Result<bool, DbError>;
 
     /// Extract user information from request
-    async fn extract_user(&self, headers: &HeaderMap) -> Result<Option<UserInfo>>;
+    async fn extract_user(&self, headers: &HeaderMap) -> Result<Option<UserInfo>, DbError>;
 }
 
 /// Default authentication middleware implementation
@@ -111,7 +112,7 @@ impl DefaultAuthMiddleware {
 
 #[async_trait::async_trait]
 impl AuthMiddleware for DefaultAuthMiddleware {
-    async fn verify_token(&self, token: &str) -> Result<bool> {
+    async fn verify_token(&self, token: &str) -> Result<bool, DbError> {
         if !self.enabled {
             return Ok(true);
         }
@@ -123,7 +124,7 @@ impl AuthMiddleware for DefaultAuthMiddleware {
         }
     }
 
-    async fn extract_user(&self, headers: &HeaderMap) -> Result<Option<UserInfo>> {
+    async fn extract_user(&self, headers: &HeaderMap) -> Result<Option<UserInfo>, DbError> {
         // TODO: Implement user extraction from headers
         Ok(None)
     }
@@ -179,7 +180,7 @@ pub struct ValidationMiddleware;
 
 impl ValidationMiddleware {
     /// Validate request size
-    pub fn check_request_size<B>(req: &Request<B>, max_size: usize) -> Result<()> {
+    pub fn check_request_size<B>(req: &Request<B>, max_size: usize) -> Result<(), DbError> {
         if let Some(content_length) = req.headers().get("content-length") {
             if let Ok(length) = content_length.to_str().unwrap_or("0").parse::<usize>() {
                 if length > max_size {
@@ -191,7 +192,7 @@ impl ValidationMiddleware {
     }
 
     /// Validate content type
-    pub fn check_content_type<B>(req: &Request<B>, expected: &str) -> Result<()> {
+    pub fn check_content_type<B>(req: &Request<B>, expected: &str) -> Result<(), DbError> {
         if let Some(content_type) = req.headers().get("content-type") {
             if let Ok(ct) = content_type.to_str() {
                 if !ct.contains(expected) {
@@ -342,8 +343,8 @@ impl TimeoutMiddleware {
     pub async fn apply_timeout<B>(
         &self,
         req: Request<B>,
-        next: Next<B>,
-    ) -> std::result::Result<Response, ApiError> {
+        next: Next,
+    ) -> Result<Response, ApiError> {
         match tokio::time::timeout(self.timeout_duration, next.run(req)).await {
             Ok(response) => Ok(response),
             Err(_) => Err(ApiError::new("TIMEOUT", "Request timed out")),
@@ -355,7 +356,7 @@ impl TimeoutMiddleware {
 pub struct HealthCheckMiddleware;
 
 impl HealthCheckMiddleware {
-    pub async fn perform_health_checks() -> Result<HealthResponse> {
+    pub async fn perform_health_checks() -> Result<HealthResponse, DbError> {
         let mut checks = std::collections::HashMap::new();
 
         // Database health check

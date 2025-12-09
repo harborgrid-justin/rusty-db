@@ -23,7 +23,6 @@
 //                          FallbackHandler
 // ```
 
-use tokio::time::sleep;
 use std::time::{SystemTime};
 use std::collections::VecDeque;
 use std::time::Instant;
@@ -34,6 +33,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration};
+use log::kv::value;
 use parking_lot::RwLock;
 use tokio::sync::Semaphore;
 use tokio::time::timeout;
@@ -1457,6 +1457,7 @@ impl From<DbError> for String {
 
 #[cfg(test)]
 mod tests {
+    use std::thread::sleep;
     use super::*;
 
     #[tokio::test]
@@ -1500,20 +1501,20 @@ mod tests {
         // Start two concurrent operations
         let handle1 = tokio::spawn(async move {
             b1.call(async {
-                tokio::time::sleep(Duration::from_millis(100)).await;
+                tokio::time::sleep(Duration::from_millis(100)).await.await;
                 Ok::<_, DbError>(())
             }).await
         });
 
         let handle2 = tokio::spawn(async move {
             b2.call(async {
-                tokio::time::sleep(Duration::from_millis(100)).await;
+                tokio::time::sleep(Duration::from_millis(100)).await.await;
                 Ok::<_, DbError>(())
             }).await
         });
 
         // Third should be blocked
-        tokio::time::sleep(Duration::from_millis(10)).await;
+        tokio::time::sleep(Duration::from_millis(10)).await.await;
 
         let handle3 = tokio::spawn(async move {
             b3.call(async {

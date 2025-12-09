@@ -68,7 +68,7 @@ impl StorageGrowthPredictor {
         let points: Vec<(f64, f64)> = data
             .iter()
             .enumerate()
-            .map(|(i, p)| (i, p.value))
+            .map(|(i, p)| (i as f64, p.value))
             .collect();
 
         let (slope, intercept, std_error) = self.fit_linear_model(&points);
@@ -330,7 +330,7 @@ impl ResourceExhaustionForecaster {
         let points: Vec<(f64, f64)> = history
             .iter()
             .enumerate()
-            .map(|(i, p)| (i, p.value))
+            .map(|(i, p)| (i as f64, p.value))
             .collect();
 
         let slope = self.calculate_trend_slope(&points);

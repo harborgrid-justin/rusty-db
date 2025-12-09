@@ -14,7 +14,9 @@ use tokio::sync::RwLock;
 
 use crate::error::DbError;
 use super::types::*;
+use super::GraphQLEngine;
 
+#[derive(SimpleObject, Clone, Debug)]
 pub struct DatabaseSchema {
     /// Schema name
     pub name: String,
@@ -438,4 +440,3 @@ pub struct RowConnection {
     pub page_info: PageInfo,
     pub total_count: BigInt,
 }
-

@@ -241,7 +241,7 @@ impl WALEntry {
 /// Group commit buffer for batching log writes
 struct GroupCommitBuffer {
     entries: Vec<WALEntry>,
-    waiters: Vec<tokio::sync::oneshot::Sender<Result<LSN>>>,
+    waiters: Vec<oneshot::Sender<Result<LSN>>>,
     size_bytes: usize,
     oldest_entry_time: Option<Instant>,
 }
@@ -256,7 +256,7 @@ impl GroupCommitBuffer {
         }
     }
 
-    fn add(&mut self, entry: WALEntry, waiter: tokio::sync::oneshot::Sender<Result<LSN>>) {
+    fn add(&mut self, entry: WALEntry, waiter: oneshot::Sender<Result<LSN>>) {
         self.size_bytes += entry.size as usize;
         if self.oldest_entry_time.is_none() {
             self.oldest_entry_time = Some(Instant::now());
@@ -289,7 +289,7 @@ impl GroupCommitBuffer {
         false
     }
 
-    fn take(&mut self) -> (Vec<WALEntry>, Vec<tokio::sync::oneshot::Sender<Result<LSN>>>) {
+    fn take(&mut self) -> (Vec<WALEntry>, Vec<oneshot::Sender<Result<LSN>>>) {
         self.oldest_entry_time = None;
         self.size_bytes = 0;
         (
@@ -474,8 +474,8 @@ impl WALManager {
 
         // Group commit handling
         if self.config.enable_group_commit {
-            let (tx, rx) = tokio::sync::oneshot::channel();
-            self.commit_buffer.lock().unwrap().add(entry, tx);
+            let (tx, rx) = oneshot::channel();
+            self.commit_buffer.lock().add(entry, tx);
 
             // Check if we should flush
             self.maybe_flush_buffer().await?;
@@ -578,7 +578,7 @@ impl WALManager {
         // Serialize all entries
         let serialized: Vec<Vec<u8>> = entries.iter()
             .map(|e| bincode::serialize(e))
-            .collect::<Result<Vec<_>, _>>()
+            .collect::<Result<Vec<_>>>()
             .map_err(|e| DbError::SerializationError(format!("Batch serialization failed: {}", e)))?;
 
         // Prepare IoSlice for writev
@@ -965,7 +965,9 @@ impl CheckpointCoordinator {
 
 #[cfg(test)]
 mod tests {
+    use std::time::{Duration, SystemTime};
     use tempfile::tempdir;
+    use crate::transaction::wal::{GroupCommitBuffer, LogRecord, WALConfig, WALEntry, WALManager};
 
     #[tokio::test]
     async fn test_wal_append_and_read() {
@@ -1018,5 +1020,3 @@ mod tests {
         assert!(buffer.should_flush(100, Duration::from_secs(1)));
     }
 }
-
-

@@ -34,7 +34,6 @@
 // ```
 
 use tokio::sync::oneshot;
-use tokio::time::sleep;
 use std::fmt;
 use std::sync::Mutex;
 use std::any::Any;
@@ -45,7 +44,7 @@ use std::time::Duration;
 
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::timeout;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 use crate::DbError;
 use crate::error::Result;
 
@@ -123,17 +122,17 @@ impl ActorRef {
         self.tx
             .send(envelope)
             .await
-            .map_err(|_| crate::DbError::Internal("Actor mailbox closed".into()))?;
+            .map_err(|_| DbError::Internal("Actor mailbox closed".into()))?;
 
         let response = timeout(timeout_duration, rx)
             .await
-            .map_err(|_| crate::DbError::Internal("Request timeout".into()))?
-            .map_err(|_| crate::DbError::Internal("Response channel closed".into()))?;
+            .map_err(|_| DbError::Internal("Request timeout".into()))?
+            .map_err(|_| DbError::Internal("Response channel closed".into()))?;
 
         response
             .downcast::<R>()
             .map(|boxed| *boxed)
-            .map_err(|_| crate::DbError::Internal("Invalid response type".into()))
+            .map_err(|_| DbError::Internal("Invalid response type".into()))
     }
 
     /// Stop the actor
@@ -141,7 +140,7 @@ impl ActorRef {
         self.tx
             .send(ActorMessage::Stop)
             .await
-            .map_err(|_| crate::DbError::Internal("Actor mailbox closed".into()))?;
+            .map_err(|_| DbError::Internal("Actor mailbox closed".into()))?;
         Ok(())
     }
 }
@@ -270,7 +269,7 @@ impl ActorContext {
         if let Some(self_ref) = &self.self_ref {
             self_ref.stop().await
         } else {
-            Err(crate::DbError::Internal("No self reference available".into()))
+            Err(DbError::Internal("No self reference available".into()))
         }
     }
 }
@@ -352,7 +351,7 @@ impl ActorSystem {
 
     /// Configure supervision strategy
     pub async fn configure_supervision(&self, config: SupervisorConfig) {
-        *self.supervisor_config.lock().unwrap().await = config;
+        *self.supervisor_config.lock().unwrap() = config;
     }
 
     /// Spawn a new actor
@@ -382,7 +381,7 @@ impl ActorSystem {
         let actor_ref_clone = actor_ref.clone();
         let join_handle = tokio::spawn(async move {
             let mut shutdown_rx = {
-                let guard = system.shutdown_tx.lock().unwrap().await;
+                let guard = system.shutdown_tx.lock().unwrap();
                 guard.as_ref().map(|tx| tx.subscribe())
             };
 
@@ -516,8 +515,8 @@ impl ActorSystem {
     }
 
     /// Handle actor failure according to supervision strategy
-    async fn handle_actor_failure(&self, id: ActorId, error: crate::DbError) {
-        let config = self.supervisor_config.lock().unwrap().await;
+    async fn handle_actor_failure(&self, id: ActorId, error: DbError) {
+        let config = self.supervisor_config.lock().unwrap();
         let strategy = config.strategy;
         drop(config);
 
@@ -569,7 +568,7 @@ impl ActorSystem {
 
         // Send shutdown signal
         {
-            let mut guard = self.shutdown_tx.lock().unwrap().await;
+            let mut guard = self.shutdown_tx.lock().unwrap();
             if let Some(tx) = guard.take() {
                 let _ = tx.send(());
             }
@@ -656,7 +655,7 @@ mod tests {
                 self.counter += count;
                 Ok(())
             } else {
-                Err(crate::DbError::Internal("Unknown message type".into()))
+                Err(DbError::Internal("Unknown message type".into()))
             }
         }
 
@@ -668,7 +667,7 @@ mod tests {
             if msg.downcast_ref::<String>().is_some() {
                 Ok(Box::new(self.counter))
             } else {
-                Err(crate::DbError::Internal("Unknown request type".into()))
+                Err(DbError::Internal("Unknown request type".into()))
             }
         }
     }
@@ -686,7 +685,7 @@ mod tests {
         actor_ref.send(5usize).await.unwrap();
         actor_ref.send(3usize).await.unwrap();
 
-        tokio::time::sleep(Duration::from_millis(50)).await;
+        sleep(Duration::from_millis(50)).await;
 
         let result: usize = actor_ref
             .ask("get".to_string(), Duration::from_secs(1))
@@ -728,7 +727,7 @@ mod tests {
 
         system.broadcast(10usize).await.unwrap();
 
-        tokio::time::sleep(Duration::from_millis(50)).await;
+        sleep(Duration::from_millis(50)).await;
 
         for i in 0..5 {
             let actor_ref = system.find_actor(&format!("actor-{}", i)).await.unwrap();

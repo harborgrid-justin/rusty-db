@@ -22,8 +22,8 @@ pub enum ProvisioningError {
     WorkflowError(String),
 }
 
-impl std::fmt::Display for ProvisioningError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ProvisioningError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ProvisioningError::TemplateNotFound(name) => write!(f, "Template not found: {}", name),
             ProvisioningError::InvalidConfiguration(msg) => write!(f, "Invalid configuration: {}", msg),
@@ -827,7 +827,7 @@ mod tests {
         ).await.unwrap();
 
         // Wait for workflow to complete
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        sleep(Duration::from_secs(2)).await;
 
         // Verify request is completed
         let requests = service.requests.read().await;

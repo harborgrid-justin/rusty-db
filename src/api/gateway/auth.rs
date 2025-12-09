@@ -225,7 +225,7 @@ impl AuthenticationManager {
     }
 
     /// Authenticate request
-    pub async fn authenticate(&self, request: &ApiRequest) -> std::result::Result<Session, DbError> {
+    pub async fn authenticate(&self, request: &ApiRequest) -> Result<Session, DbError> {
         // Try different authentication methods in order
 
         // 1. Try JWT bearer token
@@ -258,7 +258,7 @@ impl AuthenticationManager {
     }
 
     /// Create session from JWT claims
-    fn create_session_from_jwt(&self, claims: JwtClaims, request: &ApiRequest) -> std::result::Result<Session, DbError> {
+    fn create_session_from_jwt(&self, claims: JwtClaims, request: &ApiRequest) -> Result<Session, DbError> {
         let session = Session {
             session_id: Uuid::new_v4().to_string(),
             user_id: claims.sub.clone(),
@@ -283,7 +283,7 @@ impl AuthenticationManager {
     }
 
     /// Authenticate using API key
-    async fn authenticate_api_key(&self, api_key: &str, request: &ApiRequest) -> std::result::Result<Session, DbError> {
+    async fn authenticate_api_key(&self, api_key: &str, request: &ApiRequest) -> Result<Session, DbError> {
         let key_store = self.api_key_store.read();
 
         // Hash the provided key
@@ -340,7 +340,7 @@ impl AuthenticationManager {
     }
 
     /// Generate new API key
-    pub fn generate_api_key(&self, user_id: String, scopes: Vec<String>) -> std::result::Result<String, DbError> {
+    pub fn generate_api_key(&self, user_id: String, scopes: Vec<String>) -> Result<String, DbError> {
         let key = Uuid::new_v4().to_string();
         let key_hash = Self::hash_api_key(&key);
 
@@ -396,7 +396,7 @@ impl JwtValidator {
     }
 
     /// Validate JWT token
-    pub fn validate(&self, token: &str) -> std::result::Result<JwtClaims, DbError> {
+    pub fn validate(&self, token: &str) -> Result<JwtClaims, DbError> {
         // Parse token
         let parts: Vec<&str> = token.split('.').collect();
         if parts.len() != 3 {
@@ -429,7 +429,7 @@ impl JwtValidator {
     }
 
     /// Verify signature
-    fn verify_signature(&self, message: &str, signature: &[u8]) -> std::result::Result<(), DbError> {
+    fn verify_signature(&self, message: &str, signature: &[u8]) -> Result<(), DbError> {
         // TODO: Implement proper signature verification based on algorithm
         // For now, just check signature is not empty
         if signature.is_empty() {
@@ -439,7 +439,7 @@ impl JwtValidator {
     }
 
     /// Validate claims
-    fn validate_claims(&self, claims: &JwtClaims) -> std::result::Result<(), DbError> {
+    fn validate_claims(&self, claims: &JwtClaims) -> Result<(), DbError> {
         // Check issuer
         if claims.iss != self.issuer {
             return Err(DbError::InvalidOperation("Invalid issuer".to_string()));
@@ -493,13 +493,13 @@ impl OAuthProvider {
     }
 
     /// Exchange authorization code for token
-    pub async fn exchange_code(&self, code: &str) -> Result<OAuthToken> {
+    pub async fn exchange_code(&self, code: &str) -> Result<OAuthToken, DbError> {
         // TODO: Implement actual OAuth token exchange
         Err(DbError::InvalidOperation("Not implemented".to_string()))
     }
 
     /// Refresh access token
-    pub async fn refresh_token(&self, refreshtoken: &str) -> Result<OAuthToken> {
+    pub async fn refresh_token(&self, refreshtoken: &str) -> Result<OAuthToken, DbError> {
         // TODO: Implement token refresh
         Err(DbError::InvalidOperation("Not implemented".to_string()))
     }
@@ -577,7 +577,7 @@ impl MtlsValidator {
     }
 
     /// Validate client certificate
-    pub fn validate_certificate(&self, cert: &[u8]) -> Result<bool> {
+    pub fn validate_certificate(&self, cert: &[u8]) -> Result<bool, DbError> {
         // TODO: Implement proper certificate validation
         Ok(true)
     }

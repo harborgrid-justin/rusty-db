@@ -26,8 +26,8 @@ pub enum ContainerError {
     InsufficientPrivileges(String),
 }
 
-impl std::fmt::Display for ContainerError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ContainerError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ContainerError::PdbAlreadyExists(name) => write!(f, "PDB already exists: {}", name),
             ContainerError::PdbNotFound(name) => write!(f, "PDB not found: {}", name),
@@ -285,7 +285,7 @@ impl ContainerDatabase {
             snapshots: Arc::new(RwLock::new(HashMap::new())),
             active_clones: Arc::new(RwLock::new(HashMap::new())),
             active_relocations: Arc::new(RwLock::new(HashMap::new())),
-            max_pdbs,
+            max_pdbs: maxpdbs,
             current_scn: Arc::new(RwLock::new(1)),
             archived_logs: Arc::new(RwLock::new(Vec::new())),
         }
@@ -956,7 +956,7 @@ use std::time::UNIX_EPOCH;
         assert!(clone_id.is_ok());
 
         // Wait for clone to complete
-        tokio::time::sleep(Duration::from_millis(200)).await;
+        sleep(Duration::from_millis(200)).await;
 
         let pdbs = cdb.list_pdbs().await;
         assert_eq!(pdbs.len(), 2);
@@ -986,5 +986,3 @@ use std::time::UNIX_EPOCH;
         assert_eq!(config.state, PdbState::Closed);
     }
 }
-
-

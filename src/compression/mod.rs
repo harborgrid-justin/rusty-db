@@ -519,6 +519,7 @@ pub mod utils {
 
 #[cfg(test)]
 mod tests {
+    use crate::compression::{utils, CompressionAlgorithm, CompressionLevel, CompressionMetadata, CompressionStats, DataTemperature};
 
     #[test]
     fn test_compression_stats() {

@@ -260,7 +260,7 @@ impl CubeBuilder {
             HashMap::new();
 
         for row in &self.source_data {
-            let key: Vec<Option<String>> = grouping_columns.iter()
+            let key: Vec<Option<String>> = groupingcolumns.iter()
                 .map(|col| row.get(col).cloned())
                 .collect();
 
@@ -687,5 +687,3 @@ use std::time::SystemTime;
         assert!(cube.aggregations.len() > 0);
     }
 }
-
-

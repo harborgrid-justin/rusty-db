@@ -12,6 +12,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
+use uuid::Uuid;
 
 use crate::error::DbError;
 use crate::api::rest::types::*;
@@ -337,4 +338,3 @@ pub async fn rollback_transaction(
     // TODO: Implement transaction rollback
     Ok(StatusCode::OK)
 }
-

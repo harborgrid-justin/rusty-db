@@ -132,7 +132,9 @@ pub mod window;
 pub mod cube;
 pub mod timeseries;
 pub mod warehouse;
-
+mod query_cache_impl;
+mod view_management;
+mod mod_new;
 // ============================================================================
 // Re-exports for Convenience
 // ============================================================================

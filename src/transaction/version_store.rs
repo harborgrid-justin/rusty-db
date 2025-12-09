@@ -192,8 +192,8 @@ impl Default for VersionStore {
     }
 }
 
-impl std::fmt::Debug for VersionStore {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for VersionStore {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let versions = self.versions.read();
         f.debug_struct("VersionStore")
             .field("key_count", &versions.len())

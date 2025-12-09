@@ -7,7 +7,8 @@ use std::collections::{HashMap, BTreeMap, VecDeque};
 use std::time::{Duration, SystemTime, Instant, UNIX_EPOCH};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-
+use crate::api::{DashboardManager, HealthCheckCoordinator, MetricsRegistry, PrometheusExporter, TimeSeriesDatabase, TimeSeriesQuery, TimeSeriesResult, HealthCheckResult, HealthStatus, Alert, AlertSeverity, Dashboard};
+use crate::api::monitoring::{MetricStream, AlertManager, RetentionPolicy, TimeSeriesPoint};
 use crate::error::DbError;
 use super::metrics_core::*;
 
@@ -29,7 +30,7 @@ impl MetricsExporter {
         Self { tsdb }
     }
 
-    pub fn export(&self, query: TimeSeriesQuery, format: ExportFormat) -> std::result::Result<String, DbError> {
+    pub fn export(&self, query: TimeSeriesQuery, format: ExportFormat) -> Result<String, DbError> {
         let result = self.tsdb.query(query);
 
         match format {
@@ -39,12 +40,12 @@ impl MetricsExporter {
         }
     }
 
-    fn export_json(&self, result: &TimeSeriesResult) -> std::result::Result<String, DbError> {
+    fn export_json(&self, result: &TimeSeriesResult) -> Result<String, DbError> {
         serde_json::to_string_pretty(result)
             .map_err(|e| DbError::Internal(format!("JSON serialization error: {}", e)))
     }
 
-    fn export_csv(&self, result: &TimeSeriesResult) -> Result<String> {
+    fn export_csv(&self, result: &TimeSeriesResult) -> Result<String, DbError> {
         let mut csv = String::from("timestamp,value\n");
 
         for point in &result.points {
@@ -57,7 +58,7 @@ impl MetricsExporter {
         Ok(csv)
     }
 
-    fn export_prometheus(&self, result: &TimeSeriesResult) -> Result<String> {
+    fn export_prometheus(&self, result: &TimeSeriesResult) -> Result<String, DbError> {
         let mut output = String::new();
 
         for point in &result.points {
@@ -213,7 +214,7 @@ impl MonitoringApi {
         self.tsdb.query(query)
     }
 
-    pub fn export_metrics(&self, query: TimeSeriesQuery, format: ExportFormat) -> Result<String> {
+    pub fn export_metrics(&self, query: TimeSeriesQuery, format: ExportFormat) -> Result<String, DbError> {
         self.exporter.export(query, format)
     }
 
@@ -258,7 +259,7 @@ impl MonitoringApi {
 
     // Dashboard methods
 
-    pub fn create_dashboard(&self, dashboard: Dashboard) -> std::result::Result<(), DbError> {
+    pub fn create_dashboard(&self, dashboard: Dashboard) -> Result<(), DbError> {
         self.dashboard_manager.create_dashboard(dashboard)
     }
 
@@ -275,6 +276,8 @@ impl MonitoringApi {
 mod tests {
     use super::*;
 use std::time::UNIX_EPOCH;
+    use crate::api::HealthCheckCoordinator;
+    use crate::api::monitoring::{ComparisonOperator, LivenessProbe, ThresholdAlertRule};
 
     #[test]
     fn test_counter_metric() {

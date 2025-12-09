@@ -613,7 +613,7 @@ mod tests {
         assert_eq!(BuiltInFunctions::abs_int(-5), 5);
         assert_eq!(BuiltInFunctions::ceil(3.2), 4);
         assert_eq!(BuiltInFunctions::floor(3.8), 3);
-        assert_eq!(BuiltInFunctions::round(3.14159, 2), 3.14);
+        assert_eq!(BuiltInFunctions::round(std::f64::consts::PI, 2), 3.14);
     }
 
     #[test]

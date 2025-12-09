@@ -32,21 +32,21 @@
 /// ```
 
 // =============================================================================
-// Submodule declarations
+// Submodule declarations - Commented out as they're declared in parent mod.rs
 // =============================================================================
 
-// New refactored modules
-pub mod view_management;
-pub mod query_cache_impl;
+// New refactored modules - declared in parent mod.rs
+// pub mod view_management;
+// pub mod query_cache_impl;
 
-// Existing legacy submodules
-pub mod caching;
-pub mod materialized_views;
-pub mod approximate;
-pub mod window;
-pub mod cube;
-pub mod timeseries;
-pub mod warehouse;
+// Existing legacy submodules - declared in parent mod.rs
+// pub mod caching;
+// pub mod materialized_views;
+// pub mod approximate;
+// pub mod window;
+// pub mod cube;
+// pub mod timeseries;
+// pub mod warehouse;
 
 // =============================================================================
 // Re-exports from existing code (from mod_old.rs)
@@ -62,7 +62,7 @@ use crate::catalog::Schema;
 use std::time::{Duration, SystemTime};
 
 // Re-export new modules
-pub use view_management::{
+pub use super::view_management::{
     CheckOption,
     MaterializedView,
     MaterializedViewIndex,
@@ -72,7 +72,7 @@ pub use view_management::{
     ViewStatistics,
 };
 
-pub use query_cache_impl::{
+pub use super::query_cache_impl::{
     CacheStats,
     QueryCache,
 };

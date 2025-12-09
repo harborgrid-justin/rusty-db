@@ -4,8 +4,8 @@
 // trend analysis, predictive analytics, and alert generation with ML model serving.
 
 use std::collections::VecDeque;
-use std::time::{SystemTime, UNIX_EPOCH};
-use super::{Event, EventValue};
+use std::time::{SystemTime};
+use super::{Event};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -375,7 +375,7 @@ impl TrendAnalyzer {
         let start_time = self.history.front().unwrap().0;
 
         for (i, (timestamp, value)) in self.history.iter().enumerate() {
-            let x = i;
+            let x = i as f64;
             sum_x += x;
             sum_y += value;
             sum_xy += x * value;
@@ -398,7 +398,7 @@ impl TrendAnalyzer {
         let mut ss_res = 0.0;
 
         for (i, (_, value)) in self.history.iter().enumerate() {
-            let x = i;
+            let x = i as f64;
             let predicted = (slope * x) + ((sum_y - slope * sum_x) / n);
             ss_res += (value - predicted).powi(2);
             ss_tot += (value - mean_y).powi(2);
@@ -561,7 +561,7 @@ impl PredictiveAnalyzer {
         let mut sum_x2 = 0.0;
 
         for (i, &value) in self.history.iter().enumerate() {
-            let x = i;
+            let x = i as f64;
             sum_x += x;
             sum_y += value;
             sum_xy += x * value;
@@ -930,5 +930,3 @@ use std::time::UNIX_EPOCH;
         assert!(dashboard.get_latest("value").is_some());
     }
 }
-
-

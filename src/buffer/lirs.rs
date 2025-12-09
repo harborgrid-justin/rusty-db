@@ -357,7 +357,7 @@ impl LirsEvictionPolicy {
 
     /// Get status change count (indicates adaptation)
     pub fn status_changes(&self) -> u64 {
-        self.state.lock().unwrap().status_changes
+        self.state.lock().status_changes
     }
 }
 
@@ -490,7 +490,7 @@ impl EvictionPolicy for LirsEvictionPolicy {
     }
 
     fn reset(&self) {
-        let capacity = self.state.lock().unwrap().capacity;
+        let capacity = self.state.lock().capacity;
         *self.state.lock() = LirsState::new(capacity);
         self.victim_searches.store(0, Ordering::Relaxed);
         self.total_accesses.store(0, Ordering::Relaxed);
@@ -648,7 +648,7 @@ mod tests {
         // Most should be LIR due to high ratio
         if total > 0 {
             let lir_ratio = lir_count / total;
-            assert!(lir_ratio > 0.8); // At least 80% should be LIR
+            assert!(lir_ratio > 0.8 as usize); // At least 80% should be LIR
         }
     }
 }

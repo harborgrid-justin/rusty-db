@@ -404,7 +404,7 @@ impl<T: 'static> Default for LockFreeQueue<T> {
     }
 }
 
-impl<T> Drop for LockFreeQueue<T> {
+impl<T: 'static> Drop for LockFreeQueue<T> {
     fn drop(&mut self) {
         // Drain the queue to properly drop all items
         while self.dequeue().is_some() {}
@@ -627,5 +627,3 @@ mod tests {
         assert_eq!(items, vec![1, 2, 3]);
     }
 }
-
-

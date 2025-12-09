@@ -328,7 +328,7 @@ impl ArcEvictionPolicy {
 
     /// Get current target T1 size (for monitoring)
     pub fn target_t1(&self) -> usize {
-        self.state.lock().unwrap().target_t1
+        self.state.lock().target_t1
     }
 
     /// Get list sizes (for monitoring and debugging)
@@ -339,7 +339,7 @@ impl ArcEvictionPolicy {
 
     /// Get adaptation count
     pub fn adaptations(&self) -> u64 {
-        self.state.lock().unwrap().adaptations
+        self.state.lock().adaptations
     }
 }
 
@@ -445,7 +445,7 @@ impl EvictionPolicy for ArcEvictionPolicy {
     }
 
     fn reset(&self) {
-        let capacity = self.state.lock().unwrap().capacity;
+        let capacity = self.state.lock().capacity;
         *self.state.lock() = ArcState::new(capacity);
         self.victim_searches.store(0, Ordering::Relaxed);
         self.total_accesses.store(0, Ordering::Relaxed);

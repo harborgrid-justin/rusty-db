@@ -284,8 +284,8 @@ impl RecoveryManager {
     }
 }
 
-impl std::fmt::Debug for RecoveryManager {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for RecoveryManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("RecoveryManager")
             .field("checkpoint_interval", &self.checkpoint_interval)
             .field("time_since_checkpoint", &self.time_since_checkpoint())

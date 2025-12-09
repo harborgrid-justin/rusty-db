@@ -155,7 +155,7 @@ impl SecurityEventCorrelator {
         let user_events = windows.entry(user_id).or_insert_with(VecDeque::new);
         user_events.push_back(event.clone());
 
-        let cutoff = super::common::current_timestamp() - 3600;
+        let cutoff = current_timestamp() - 3600;
         while let Some(front) = user_events.front() {
             if front.timestamp < cutoff {
                 user_events.pop_front();
@@ -220,7 +220,7 @@ impl SecurityEventCorrelator {
         affected_users: Vec<String>,
     ) -> Result<()> {
         let incident = SecurityIncident {
-            id: format!("INC_{}", super::common::generate_id()),
+            id: format!("INC_{}", generate_id()),
             title,
             description,
             severity,
@@ -228,8 +228,8 @@ impl SecurityEventCorrelator {
             affected_users: affected_users.into_iter().collect(),
             affected_resources: HashSet::new(),
             events: Vec::new(),
-            created_at: super::common::current_timestamp(),
-            updated_at: super::common::current_timestamp(),
+            created_at: current_timestamp(),
+            updated_at: current_timestamp(),
             status: IncidentStatus::New,
         };
 
@@ -382,7 +382,7 @@ impl ThreatIntelligence {
                 ip_address: ip.to_string(),
                 score: 0.5,
                 category: ReputationCategory::Unknown,
-                last_updated: super::common::current_timestamp(),
+                last_updated: current_timestamp(),
                 sources: Vec::new(),
             }
         })

@@ -335,7 +335,7 @@ impl KMeansClusterer {
 
         // Choose remaining centroids using k-means++
         for _ in 1..self.k {
-            let mut distances: Vec<f64> = points
+            let distances: Vec<f64> = points
                 .iter()
                 .map(|(_, coord)| {
                     centroids
@@ -754,7 +754,7 @@ impl HotSpotAnalysis {
         let mut sum_values = 0.0;
         let mut sum_weights = 0.0;
 
-        for (j, (_, other_coord, value)) in self.points.iter().enumerate() {
+        for (concurrent::CACHE_LINE_SIZE, (_, other_coord, value)) in self.points.iter().enumerate() {
             let distance = point_coord.distance_2d(other_coord);
 
             if distance <= self.distance_threshold {

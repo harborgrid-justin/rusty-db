@@ -247,7 +247,7 @@ impl PatternDetector {
         }
 
         // Count unique pages
-        let mut unique_pages = std::collections::HashSet::new();
+        let mut unique_pages = HashSet::new();
         for &page_id in &self.history {
             unique_pages.insert(page_id);
         }
@@ -509,7 +509,7 @@ impl PrefetchEngine {
 
     /// Trigger prefetch based on detected pattern
     fn trigger_prefetch(&self, last_page: PageId, pattern: AccessPattern, confidence: f64) {
-        let window_size = self.window.lock().unwrap().size;
+        let window_size = self.window.lock().size;
 
         let pages_to_prefetch: Vec<PageId> = match pattern {
             AccessPattern::SequentialForward => {
@@ -567,12 +567,12 @@ impl PrefetchEngine {
 
     /// Record prefetch hit (prefetched page was accessed)
     pub fn record_prefetch_hit(&self) {
-        self.window.lock().unwrap().record_hit();
+        self.window.lock().record_hit();
     }
 
     /// Record prefetch miss (prefetched page was not accessed)
     pub fn record_prefetch_miss(&self) {
-        self.window.lock().unwrap().record_miss();
+        self.window.lock().record_miss();
     }
 
     /// Check if should throttle prefetching

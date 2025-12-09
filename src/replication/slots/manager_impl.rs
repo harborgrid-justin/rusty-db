@@ -138,10 +138,12 @@ impl SlotManager for ReplicationSlotManager {
         slot_name: &SlotName,
         target_lsn: LogSequenceNumber,
     ) -> Result<(), SlotError> {
-        let slots = self.slots.read();
-        let slot_arc = slots.get(slot_name).ok_or_else(|| SlotError::SlotNotFound {
-            slot_name: slot_name.to_string(),
-        })?;
+        let slot_arc = {
+            let slots = self.slots.read();
+            slots.get(slot_name).cloned().ok_or_else(|| SlotError::SlotNotFound {
+                slot_name: slot_name.to_string(),
+            })?
+        };
 
         {
             let mut slot_info = slot_arc.write();
@@ -158,7 +160,7 @@ impl SlotManager for ReplicationSlotManager {
             slot_info.last_active = SystemTime::now();
         }
 
-        let slot_info = slot_arc.read();
+        let slot_info = slot_arc.read().clone();
         self.save_slot_to_disk(&slot_info).await?;
 
         Ok(())

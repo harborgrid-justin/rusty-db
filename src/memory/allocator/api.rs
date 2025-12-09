@@ -3,6 +3,8 @@
 use super::common::*;
 use super::memory_manager::*;
 use super::utils::{format_memory_size, parse_memory_size, calculate_optimal_slab_size, classify_allocation_size};
+use super::pressure_manager::{MemoryUsage, MemoryPressureEvent};
+use super::debugger::{ComponentBreakdown, MemoryReport};
 
 pub struct MemoryApi {
     manager: Arc<MemoryManager>,

@@ -27,9 +27,16 @@ use tokio::sync::{RwLock, Semaphore};
 use utoipa::{OpenApi, ToSchema};
 use utoipa_swagger_ui::SwaggerUi;
 use uuid::Uuid;
-
+use crate::api::ApiConfig;
 use crate::error::DbError;
 use crate::common::*;
+use super::types::{ApiState, ApiMetrics, RateLimiter, QueryRequest};
+use super::handlers::db::{execute_query, execute_batch, get_table, create_table, update_table, delete_table, get_schema, begin_transaction, commit_transaction, rollback_transaction};
+use super::handlers::admin::{get_config, update_config, create_backup, get_health, run_maintenance, get_users, create_user, get_user, update_user, delete_user, get_roles, create_role, get_role, update_role, delete_role};
+use super::handlers::monitoring::{get_metrics, get_prometheus_metrics, get_session_stats, get_query_stats, get_performance_data, get_logs, get_alerts, acknowledge_alert};
+use super::handlers::pool::{get_pools, get_pool, update_pool, get_pool_stats, drain_pool, get_connections, get_connection, kill_connection, get_sessions, get_session, terminate_session};
+use super::handlers::cluster::{get_cluster_nodes, add_cluster_node, get_cluster_node, remove_cluster_node, get_cluster_topology, trigger_failover, get_replication_status, get_cluster_config, update_cluster_config};
+use super::middleware::{request_logger_middleware, rate_limit_middleware};
 
 
 /// REST API server with dependency injection
@@ -40,7 +47,7 @@ pub struct RestApiServer {
 
 impl RestApiServer {
     /// Create a new REST API server with injected dependencies
-    pub async fn new(config: ApiConfig) -> std::result::Result<Self, DbError> {
+    pub async fn new(config: ApiConfig) -> Result<Self, DbError> {
         let state = Arc::new(ApiState {
             config: config.clone(),
             connection_semaphore: Arc::new(Semaphore::new(config.max_connections)),
@@ -129,7 +136,7 @@ impl RestApiServer {
         router = router
             .layer(TraceLayer::new_for_http())
             .layer(TimeoutLayer::new(Duration::from_secs(self.config.request_timeout_secs)))
-            .layer(RequestBodyLimitLayer::new(self.config.max_body_size as u64))
+            .layer(RequestBodyLimitLayer::new(self.config.max_body_size as u64 as usize))
             .layer(middleware::from_fn_with_state(
                 self.state.clone(),
                 request_logger_middleware,
@@ -163,7 +170,7 @@ impl RestApiServer {
     }
 
     /// Run the API server
-    pub async fn run(&self, addr: &str) -> std::result::Result<(), DbError> {
+    pub async fn run(&self, addr: &str) -> Result<(), DbError> {
         let router = self.build_router();
 
         let listener = tokio::net::TcpListener::bind(addr)
@@ -225,6 +232,8 @@ async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
 
 #[cfg(test)]
 mod tests {
+    use crate::api::{ApiConfig, ApiError, RestApiServer};
+    use crate::api::rest_api::{PaginatedResponse, PaginationParams, RateLimiter};
 
     #[test]
     fn test_api_config_default() {

@@ -473,11 +473,11 @@ impl ShardingEngine {
 
         // In a real implementation, would move data between shards
         // For now, simulate with a delay
-        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        tokio::time::sleep(Duration::from_millis(100)).await;
 
         // Update progress
         for progress in (0..=100).step_by(10) {
-            tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+            tokio::time::sleep(Duration::from_millis(10)).await;
 
             let mut plans = self.rebalance_plans.write();
             if let Some(p) = plans.get_mut(plan_id) {

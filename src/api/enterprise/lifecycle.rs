@@ -63,7 +63,7 @@ pub struct StartupOrchestrator {
 #[derive(Clone)]
 struct StartupPhaseHandler {
     phase: StartupPhase,
-    handler: Arc<dyn Fn() -> std::result::Result<(), DbError> + Send + Sync>,
+    handler: Arc<dyn Fn() -> Result<(), DbError> + Send + Sync>,
 }
 
 impl StartupOrchestrator {
@@ -77,7 +77,7 @@ impl StartupOrchestrator {
 
     pub fn register_phase<F>(&self, phase: StartupPhase, handler: F)
     where
-        F: Fn() -> std::result::Result<(), DbError> + Send + Sync + 'static,
+        F: Fn() -> Result<(), DbError> + Send + Sync + 'static,
     {
         let mut phases = self.phases.write().unwrap();
         phases.push(StartupPhaseHandler {
@@ -86,7 +86,7 @@ impl StartupOrchestrator {
         });
     }
 
-    pub async fn execute_startup(&self) -> std::result::Result<(), DbError> {
+    pub async fn execute_startup(&self) -> Result<(), DbError> {
         let phases = self.phases.read().unwrap().clone();
 
         for phase_handler in phases {
@@ -139,7 +139,7 @@ pub struct ShutdownCoordinator {
 #[derive(Clone)]
 struct ShutdownPhaseHandler {
     phase: ShutdownPhase,
-    handler: Arc<dyn Fn() -> std::result::Result<(), DbError> + Send + Sync>,
+    handler: Arc<dyn Fn() -> Result<(), DbError> + Send + Sync>,
 }
 
 impl ShutdownCoordinator {
@@ -154,7 +154,7 @@ impl ShutdownCoordinator {
 
     pub fn register_phase<F>(&self, phase: ShutdownPhase, handler: F)
     where
-        F: Fn() -> std::result::Result<(), DbError> + Send + Sync + 'static,
+        F: Fn() -> Result<(), DbError> + Send + Sync + 'static,
     {
         let mut phases = self.phases.write().unwrap();
         phases.push(ShutdownPhaseHandler {
@@ -171,7 +171,7 @@ impl ShutdownCoordinator {
         self.shutdown_signal.notified().await;
     }
 
-    pub async fn execute_shutdown(&self) -> std::result::Result<(), DbError> {
+    pub async fn execute_shutdown(&self) -> Result<(), DbError> {
         let phases = self.phases.read().unwrap().clone();
 
         for phase_handler in phases {
@@ -224,8 +224,8 @@ pub struct HotReloadManager {
 }
 
 pub trait ReloadHandler: Send + Sync {
-    fn reload(&self) -> std::result::Result<(), DbError>;
-    fn validate(&self) -> std::result::Result<(), DbError>;
+    fn reload(&self) -> Result<(), DbError>;
+    fn validate(&self) -> Result<(), DbError>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -249,7 +249,7 @@ impl HotReloadManager {
         handlers.insert(component.to_string(), handler);
     }
 
-    pub fn reload_component(&self, component: &str) -> std::result::Result<(), DbError> {
+    pub fn reload_component(&self, component: &str) -> Result<(), DbError> {
         let handlers = self.reload_handlers.read().unwrap();
         let handler = handlers.get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
@@ -329,7 +329,7 @@ impl RollingUpgradeCoordinator {
         *upgrade_plan = Some(plan);
     }
 
-    pub async fn execute_upgrade(&self) -> std::result::Result<(), DbError> {
+    pub async fn execute_upgrade(&self) -> Result<(), DbError> {
         let plan = {
             let plan_lock = self.upgrade_plan.read().unwrap();
             plan_lock.clone().ok_or_else(|| DbError::InvalidInput("No upgrade plan set".to_string()))?
@@ -389,8 +389,8 @@ pub struct StatePersistenceManager {
 }
 
 pub trait PersistenceHandler: Send + Sync {
-    fn persist(&self) -> std::result::Result<Vec<u8>, DbError>;
-    fn restore(&self, data: &[u8]) -> std::result::Result<(), DbError>;
+    fn persist(&self) -> Result<Vec<u8>, DbError>;
+    fn restore(&self, data: &[u8]) -> Result<(), DbError>;
 }
 
 impl StatePersistenceManager {
@@ -406,7 +406,7 @@ impl StatePersistenceManager {
         handlers.insert(component.to_string(), handler);
     }
 
-    pub fn persist_state(&self, component: &str) -> std::result::Result<(), DbError> {
+    pub fn persist_state(&self, component: &str) -> Result<(), DbError> {
         let handlers = self.persistence_handlers.read().unwrap();
         let handler = handlers.get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
@@ -419,7 +419,7 @@ impl StatePersistenceManager {
         Ok(())
     }
 
-    pub fn restore_state(&self, component: &str) -> std::result::Result<(), DbError> {
+    pub fn restore_state(&self, component: &str) -> Result<(), DbError> {
         let storage = self.state_storage.read().unwrap();
         let data = storage.get(component)
             .ok_or_else(|| DbError::NotFound(format!("No persisted state for: {}", component)))?;
@@ -433,7 +433,7 @@ impl StatePersistenceManager {
         Ok(())
     }
 
-    pub fn persist_all(&self) -> std::result::Result<(), DbError> {
+    pub fn persist_all(&self) -> Result<(), DbError> {
         let handlers = self.persistence_handlers.read().unwrap();
         for component in handlers.keys() {
             self.persist_state(component)?;
@@ -449,8 +449,8 @@ pub struct RecoveryOrchestrator {
 }
 
 pub trait RecoveryStrategy: Send + Sync {
-    fn recover(&self) -> std::result::Result<(), DbError>;
-    fn validate_recovery(&self) -> std::result::Result<bool, DbError>;
+    fn recover(&self) -> Result<(), DbError>;
+    fn validate_recovery(&self) -> Result<bool, DbError>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -475,7 +475,7 @@ impl RecoveryOrchestrator {
         strategies.insert(component.to_string(), strategy);
     }
 
-    pub async fn recover_component(&self, component: &str) -> std::result::Result<(), DbError> {
+    pub async fn recover_component(&self, component: &str) -> Result<(), DbError> {
         let start = Instant::now();
 
         let strategies = self.recovery_strategies.read().unwrap();
@@ -535,7 +535,7 @@ impl SystemLifecycleManager {
         }
     }
 
-    pub async fn startup(&self) -> std::result::Result<(), DbError> {
+    pub async fn startup(&self) -> Result<(), DbError> {
         {
             let mut state = self.system_state.write().unwrap();
             *state = SystemState::Starting;
@@ -551,7 +551,7 @@ impl SystemLifecycleManager {
         Ok(())
     }
 
-    pub async fn shutdown(&self) -> std::result::Result<(), DbError> {
+    pub async fn shutdown(&self) -> Result<(), DbError> {
         {
             let mut state = self.system_state.write().unwrap();
             *state = SystemState::ShuttingDown;

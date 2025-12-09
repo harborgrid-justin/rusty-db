@@ -244,8 +244,11 @@ impl ColumnScan {
             selection.add(i);
         }
 
+        // Clone filters to avoid borrowing self
+        let filters = self.filters.clone();
+
         // Apply filters with early termination
-        for filter in &self.filters {
+        for filter in &filters {
             if selection.is_empty() {
                 break;
             }
@@ -502,7 +505,7 @@ impl ColumnScan {
         }
 
         let value = match &filter.values[0] {
-            Value::Text(v) => v,
+            Value::String(v) => v,
             _ => return Err(DbError::InvalidArgument("Expected text value".to_string())),
         };
 

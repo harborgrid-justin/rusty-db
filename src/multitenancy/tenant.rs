@@ -25,8 +25,8 @@ pub enum TenantError {
     InvalidConfiguration(String),
 }
 
-impl std::fmt::Display for TenantError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for TenantError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TenantError::TenantNotFound(id) => write!(f, "Tenant not found: {}", id),
             TenantError::TenantAlreadyExists(id) => write!(f, "Tenant already exists: {}", id),

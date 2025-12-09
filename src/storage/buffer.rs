@@ -333,14 +333,14 @@ impl BackgroundFlusher {
     }
 
     fn mark_dirty(&self, page_id: PageId) {
-        let mut dirty = self.dirty_pages.lock();
+        let mut dirty = self.dirty_pages.lock().unwrap();
         if !dirty.contains(&page_id) {
             dirty.push(page_id);
         }
     }
 
     fn get_batch_to_flush(&self) -> Vec<PageId> {
-        let mut dirty = self.dirty_pages.lock();
+        let mut dirty = self.dirty_pages.lock().unwrap();
         let batch_size = self.batch_size.min(dirty.len());
 
         if batch_size == 0 {
@@ -350,7 +350,7 @@ impl BackgroundFlusher {
         // Coalesce sequential pages for better I/O
         dirty.sort_unstable();
 
-        let batch: Vec<PageId> = dirty.drain(..batch_size).collect();
+        let batch: Vec<PageId> = dirty.drain(..).collect();
         batch
     }
 
@@ -640,7 +640,7 @@ mod tests {
 
     #[test]
     fn test_buffer_pool() -> Result<()> {
-        let dir = tempdir().unwrap();
+        let dir = tempdir()?;
         let dm = DiskManager::new(dir.path().to_str().unwrap(), 4096)?;
         let bp = BufferPoolManager::new(10, dm);
 
@@ -655,7 +655,7 @@ mod tests {
 
     #[test]
     fn test_cow_semantics() -> Result<()> {
-        let dir = tempdir().unwrap();
+        let dir = tempdir()?;
         let dm = DiskManager::new(dir.path().to_str().unwrap(), 4096)?;
         let bp = BufferPoolManager::new(10, dm);
 

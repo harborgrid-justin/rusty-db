@@ -121,8 +121,8 @@ pub enum MLError {
     InvalidHyperparameters(String),
 }
 
-impl std::fmt::Display for MLError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for MLError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             MLError::ModelNotFound(name) => write!(f, "Model not found: {}", name),
             MLError::InvalidConfiguration(msg) => write!(f, "Invalid configuration: {}", msg),

@@ -13,7 +13,6 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use uuid::Uuid;
 
-use crate::error::DbError;
 use super::super::types::*;
 use std::time::UNIX_EPOCH;
 

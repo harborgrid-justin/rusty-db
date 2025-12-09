@@ -180,6 +180,8 @@ impl QueryCache {
                 size_bytes,
                 access_count: 0,
                 last_access: now,
+                query_hash: 0,
+                created_at: Instant::now(),
             },
         );
 
@@ -214,7 +216,7 @@ impl QueryCache {
     }
 
     /// Estimate the size of a result set in bytes.
-    fn estimate_size(result: &[Vec<String>]) -> usize {
+    fn estimate_size(result: &CachedResult) -> usize {
         let mut size = size_of::<Vec<Vec<String>>>();
         for row in result {
             size += size_of::<Vec<String>>();

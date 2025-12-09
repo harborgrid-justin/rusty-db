@@ -995,6 +995,7 @@ pub struct ClusterTopology {
 
 #[cfg(test)]
 mod tests {
+    use crate::rac::cache_fusion::ResourceClass;
     use super::*;
 
     #[test]

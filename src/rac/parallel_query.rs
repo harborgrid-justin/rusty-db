@@ -287,7 +287,7 @@ pub enum DistributionType {
 // ============================================================================
 
 /// Execution state for a parallel query
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct QueryExecutionState {
     /// Query identifier
     pub query_id: u64,
@@ -770,7 +770,7 @@ impl ParallelQueryCoordinator {
                 Ok((tuples, rows_processed)) => {
                     // Add results to buffer
                     if let Some(buffer) = result_buffer {
-                        let mut buf = buffer.lock();
+                        let mut buf = buffer.lock().unwrap();
                         for tuple in tuples {
                             buf.push_back(tuple);
                         }
@@ -870,7 +870,7 @@ impl ParallelQueryCoordinator {
 
     /// Process query messages
     pub async fn process_messages(&self) {
-        let mut rx = self.message_rx.lock().unwrap().await;
+        let mut rx = self.message_rx.lock().await;
 
         while let Some(message) = rx.recv().await {
             match message {
@@ -906,7 +906,7 @@ impl ParallelQueryCoordinator {
         let queries = self.active_queries.read();
 
         if let Some(state) = queries.get(&query_id) {
-            let mut buffer = state.result_buffer.lock();
+            let mut buffer = state.result_buffer.lock().unwrap();
 
             for tuple in chunk.tuples {
                 buffer.push_back(tuple);
@@ -992,9 +992,9 @@ impl ParallelQueryCoordinator {
         Ok(())
     }
 
-    /// Get query execution state
-    pub fn get_query_state(&self, query_id: u64) -> Option<QueryExecutionState> {
-        self.active_queries.read().get(&query_id).cloned()
+    /// Get query execution status
+    pub fn get_query_status(&self, query_id: u64) -> Option<ExecutionStatus> {
+        self.active_queries.read().get(&query_id).map(|s| s.status)
     }
 
     /// Get active queries

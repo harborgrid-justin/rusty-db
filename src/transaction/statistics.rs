@@ -128,12 +128,12 @@ impl TransactionStatistics {
         *self.total_aborts.lock() = 0;
         *self.total_deadlocks.lock() = 0;
         *self.total_timeouts.lock() = 0;
-        self.commit_latency_ms.lock().unwrap().clear();
+        self.commit_latency_ms.lock().clear();
     }
 
     /// Returns the p99 commit latency.
     pub fn p99_latency(&self) -> u64 {
-        let mut latencies = self.commit_latency_ms.lock().unwrap().clone();
+        let mut latencies = self.commit_latency_ms.lock().clone();
         if latencies.is_empty() {
             return 0;
         }

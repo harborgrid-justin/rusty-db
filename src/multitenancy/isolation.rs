@@ -23,8 +23,8 @@ pub enum IsolationError {
     LockContentionTimeout(String),
 }
 
-impl std::fmt::Display for IsolationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for IsolationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             IsolationError::ResourceExhausted(msg) => write!(f, "Resource exhausted: {}", msg),
             IsolationError::AllocationFailed(msg) => write!(f, "Allocation failed: {}", msg),

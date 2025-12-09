@@ -204,7 +204,7 @@ impl MemoryPressureManager {
     }
 
     /// Emergency memory release
-    fn emergency_release(&self) -> Result<()> {
+    pub(crate) fn emergency_release(&self) -> Result<()> {
         self.stats.emergency_releases.fetch_add(1, Ordering::Relaxed);
 
         // Trigger all callbacks with emergency level

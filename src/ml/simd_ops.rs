@@ -466,6 +466,8 @@ unsafe fn simd_sum_sse2(vector: &[f64]) -> f64 {
 
 #[cfg(test)]
 mod tests {
+    use crate::ml::{simd_dot_product, simd_euclidean_distance, simd_matrix_vector_multiply};
+    use crate::ml::simd_ops::{simd_scalar_multiply, simd_sum, simd_vector_add};
 
     #[test]
     fn test_simd_dot_product() {

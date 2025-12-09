@@ -35,16 +35,15 @@
 // ```
 
 use tokio::time::sleep;
-use std::collections::{HashMap, VecDeque, BTreeMap};
-use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool};
-use std::sync::{Arc, RwLock};
-use std::time::{Duration, Instant};
-use parking_lot::{Mutex, RwLock as PRwLock};
 use serde::{Serialize, Deserialize};
 use crate::error::Result;
 
-// Re-export commonly used types
-pub use std::sync::atomic::Ordering;
+// Re-export commonly used types for other modules
+pub use std::collections::{HashMap, VecDeque, BTreeMap};
+pub use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
+pub use std::sync::{Arc, RwLock};
+pub use std::time::{Duration, Instant};
+pub use parking_lot::{Mutex, RwLock as PRwLock};
 
 // ============================================================================
 // SECTION 1: MULTI-TIER BUFFER POOL (700+ lines)
@@ -91,13 +90,13 @@ pub enum PoolType {
 #[derive(Debug)]
 pub struct BufferFrame {
     /// Page identifier
-    page_id: Option<PageId>,
+    pub(crate) page_id: Option<PageId>,
     /// Actual page data (typically 8KB, 16KB, or 32KB)
     data: Vec<u8>,
     /// Pin count - number of active references
     pin_count: AtomicUsize,
     /// Dirty flag - has been modified
-    dirty: AtomicBool,
+    pub(crate) dirty: AtomicBool,
     /// Access count for replacement policy
     access_count: AtomicU64,
     /// Last access timestamp

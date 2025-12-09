@@ -181,8 +181,8 @@ impl AuditRecord {
         let mut record = Self {
             id,
             timestamp,
-            user_id,
-            session_id,
+            user_id: userid,
+            session_id: sessionid,
             client_ip,
             action,
             object_name: None,
@@ -192,7 +192,7 @@ impl AuditRecord {
             rows_affected: None,
             policy_name: None,
             context: HashMap::new(),
-            previous_hash,
+            previous_hash: previoushash,
             hash: String::new(),
             severity,
         };

@@ -110,6 +110,7 @@ pub enum Value {
 
     /// Array of values
     Array(Vec<Value>),
+    Text,
 }
 
 impl Value {
@@ -131,6 +132,7 @@ impl Value {
             Value::Timestamp(_) => "TIMESTAMP",
             Value::Json(_) => "JSON",
             Value::Array(_) => "ARRAY",
+            Value::Text => "TEXT",
         }
     }
 
@@ -147,12 +149,13 @@ impl Value {
             Value::Timestamp(t) => format!("TIMESTAMP({})", t),
             Value::Json(j) => j.to_string(),
             Value::Array(a) => format!("[{}]", a.len()),
+            Value::Text => "TEXT".to_string(),
         }
     }
 }
 
-impl std::fmt::Display for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_display_string())
     }
 }
@@ -191,25 +194,26 @@ impl std::hash::Hash for Value {
             Value::Timestamp(t) => t.hash(state),
             Value::Json(j) => j.to_string().hash(state),
             Value::Array(a) => a.hash(state),
+            Value::Text => "TEXT".hash(state),
         }
     }
 }
 
 impl PartialOrd for Value {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self, other) {
-            (Value::Null, Value::Null) => Some(std::cmp::Ordering::Equal),
-            (Value::Null, _) => Some(std::cmp::Ordering::Less),
-            (_, Value::Null) => Some(std::cmp::Ordering::Greater),
+            (Value::Null, Value::Null) => Some(Ordering::Equal),
+            (Value::Null, _) => Some(Ordering::Less),
+            (_, Value::Null) => Some(Ordering::Greater),
             (Value::Boolean(a), Value::Boolean(b)) => a.partial_cmp(b),
             (Value::Integer(a), Value::Integer(b)) => a.partial_cmp(b),
             (Value::Float(a), Value::Float(b)) => {
                 if a.is_nan() && b.is_nan() {
-                    Some(std::cmp::Ordering::Equal)
+                    Some(Ordering::Equal)
                 } else if a.is_nan() {
-                    Some(std::cmp::Ordering::Greater)
+                    Some(Ordering::Greater)
                 } else if b.is_nan() {
-                    Some(std::cmp::Ordering::Less)
+                    Some(Ordering::Less)
                 } else {
                     a.partial_cmp(b)
                 }
@@ -225,8 +229,8 @@ impl PartialOrd for Value {
 }
 
 impl Ord for Value {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap_or(std::cmp::Ordering::Equal)
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap_or(Ordering::Equal)
     }
 }
 
@@ -514,6 +518,33 @@ pub enum LockMode {
 
     /// Shared intent exclusive lock
     SharedIntentExclusive,
+    Update,
+    Update,
+}
+
+impl LockMode {
+
+    pub(crate) fn strength(&self) -> u8 {
+        match self {
+            LockMode::Shared => 1,
+            LockMode::IntentShared => 2,
+            LockMode::Update => 3,
+            LockMode::IntentExclusive => 4,
+            LockMode::SharedIntentExclusive => 5,
+            LockMode::Exclusive => 6,
+        }
+    }
+
+    pub(crate) fn is_compatible(&self, other: &LockMode) -> bool {
+        // Basic compatibility: shared locks are compatible with each other
+        match (self, other) {
+            (LockMode::Shared, LockMode::Shared) => true,
+            (LockMode::IntentShared, LockMode::IntentShared) => true,
+            (LockMode::IntentShared, LockMode::Shared) => true,
+            (LockMode::Shared, LockMode::IntentShared) => true,
+            _ => false, // Exclusive locks are not compatible with anything
+        }
+    }
 }
 
 /// Lock resource types
