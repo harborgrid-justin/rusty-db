@@ -46,16 +46,16 @@ impl IndexAdvisor {
         let mut recommendations = Vec::new();
 
         // Detect missing indexes
-        recommendations.extend(self.detect_missing_indexes()?);
+        recommendations.extend(self.detect_missing_indexes()?;
 
         // Detect unused indexes
-        recommendations.extend(self.detect_unused_indexes()?);
+        recommendations.extend(self.detect_unused_indexes()?;
 
         // Suggest index consolidation
-        recommendations.extend(self.suggest_consolidation()?);
+        recommendations.extend(self.suggest_consolidation()?;
 
         // Identify redundant indexes
-        recommendations.extend(self.identify_redundant_indexes()?);
+        recommendations.extend(self.identify_redundant_indexes()?;
 
         // Sort by priority
         recommendations.sort_by(|a, b| b.priority.cmp(&a.priority));

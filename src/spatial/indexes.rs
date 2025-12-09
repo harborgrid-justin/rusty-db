@@ -100,7 +100,7 @@ impl RTree {
         entries.sort_by_key(|(_, bbox)| self.hilbert_value(&bbox.center()));
 
         // Build tree bottom-up
-        self.root = Some(self.build_level(&entries, 0)?);
+        self.root = Some(self.build_level(&entries, 0)?;
         self.size = entries.len();
 
         Ok(())
@@ -131,7 +131,7 @@ impl RTree {
         // Split entries into groups
         let mut child_nodes = Vec::new();
         for chunk in entries.chunks(self.max_entries) {
-            child_nodes.push(self.build_level(chunk, level)?);
+            child_nodes.push(self.build_level(chunk, level)?;
         }
 
         // Create internal node

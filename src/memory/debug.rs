@@ -643,7 +643,7 @@ impl MemoryDebugger {
         let allocation_metadata = allocations.get(&allocation_id)
             .ok_or_else(|| DebugError::TrackingFailed {
                 reason: format!("Allocation {} not found", allocation_id),
-            })?);
+            })?;
 
         let mut metadata = allocation_metadata.lock();
 

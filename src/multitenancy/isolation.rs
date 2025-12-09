@@ -270,7 +270,7 @@ impl IoBandwidthAllocator {
         let bucket = buckets.get_mut(tenant_id)
             .ok_or_else(|| IsolationError::InvalidConfiguration(
                 format!("Tenant {} not configured", tenant_id)
-            ))?);
+            ))?;
 
         if bucket.consume(bytes) {
             Ok(())
@@ -587,7 +587,7 @@ impl NetworkIsolator {
         let config = tenant_ports.get(tenant_id)
             .ok_or_else(|| IsolationError::InvalidConfiguration(
                 format!("Tenant {} not configured", tenant_id)
-            ))?);
+            ))?;
 
         Ok(config.current_connections < config.max_connections)
     }
@@ -598,7 +598,7 @@ impl NetworkIsolator {
         let config = tenant_ports.get_mut(tenant_id)
             .ok_or_else(|| IsolationError::InvalidConfiguration(
                 format!("Tenant {} not configured", tenant_id)
-            ))?);
+            ))?;
 
         if config.current_connections >= config.max_connections {
             return Err(IsolationError::ResourceExhausted("Max connections reached".to_string()));
@@ -804,7 +804,7 @@ impl BufferPoolPartitioner {
         let partition = partitions.get_mut(tenant_id)
             .ok_or_else(|| IsolationError::InvalidConfiguration(
                 format!("Tenant {} not configured", tenant_id)
-            ))?);
+            ))?;
 
         if partition.allocated_bytes + page_size > partition.quota_bytes {
             // Evict pages

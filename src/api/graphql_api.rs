@@ -364,7 +364,7 @@ impl TableType {
 
     /// Get table statistics
     async fn statistics(&self, ctx: &Context<'_>) -> GqlResult<TableStatistics> {
-        let engine = ctx.data::<Arc<GraphQLEngine>>()?);
+        let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_table_statistics(&self.name).await
     }
 
@@ -819,7 +819,7 @@ impl QueryRoot {
         last: Option<i32>,
         before: Option<String>,
     ) -> GqlResult<RowConnection> {
-        let engine = ctx.data::<Arc<GraphQLEngine>>()?);
+        let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.query_table_connection(
             &table,
             where_clause,
@@ -912,7 +912,7 @@ impl QueryRoot {
         fields: Option<Vec<String>>,
         limit: Option<i32>,
     ) -> GqlResult<SearchResult> {
-        let engine = ctx.data::<Arc<GraphQLEngine>>()?);
+        let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.search(&query, tables, fields, limit).await
     }
 
@@ -1263,7 +1263,7 @@ impl MutationRoot {
         ctx: &Context<'_>,
         isolation_level: Option<IsolationLevel>,
     ) -> GqlResult<TransactionResult> {
-        let engine = ctx.data::<Arc<GraphQLEngine>>()?);
+        let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.begin_transaction(isolation_level).await
     }
 

@@ -205,7 +205,7 @@ impl DbmsSql {
 
         let cursor = cursors.get_mut(&cursor_id).ok_or_else(||
             DbError::NotFound(format!("Cursor {} not found", cursor_id))
-        )?);
+        )?;
 
         cursor.sql = Some(sql);
         cursor.parsed = true;
@@ -219,7 +219,7 @@ impl DbmsSql {
 
         let cursor = cursors.get_mut(&cursor_id).ok_or_else(||
             DbError::NotFound(format!("Cursor {} not found", cursor_id))
-        )?);
+        )?;
 
         cursor.bind_variables.insert(name, value);
 
@@ -232,7 +232,7 @@ impl DbmsSql {
 
         let cursor = cursors.get_mut(&cursor_id).ok_or_else(||
             DbError::NotFound(format!("Cursor {} not found", cursor_id))
-        )?);
+        )?;
 
         if !cursor.parsed {
             return Err(DbError::InvalidInput("Cursor has not been parsed".to_string()));
@@ -316,7 +316,7 @@ impl UtlFile {
         let directories = self.directories.read();
         let dir_path = directories.get(&directory).ok_or_else(||
             DbError::NotFound(format!("Directory '{}' not found", directory))
-        )?);
+        )?;
 
         let file_path = dir_path.join(&file_name);
 
@@ -368,7 +368,7 @@ impl UtlFile {
 
         let handle = handles.get_mut(&handle_id).ok_or_else(||
             DbError::NotFound(format!("File handle {} not found", handle_id))
-        )?);
+        )?;
 
         if handle.mode == FileMode::Read {
             return Err(DbError::InvalidInput("Cannot write to file opened for reading".to_string()));
@@ -388,7 +388,7 @@ impl UtlFile {
 
         let handle = handles.get_mut(&handle_id).ok_or_else(||
             DbError::NotFound(format!("File handle {} not found", handle_id))
-        )?);
+        )?;
 
         if handle.mode != FileMode::Read {
             return Err(DbError::InvalidInput("Cannot read from file opened for writing".to_string()));
@@ -538,7 +538,7 @@ impl DbmsScheduler {
 
         let job = jobs.get_mut(job_name).ok_or_else(||
             DbError::NotFound(format!("Job '{}' not found", job_name))
-        )?);
+        )?;
 
         job.enabled = true;
         Ok(())
@@ -550,7 +550,7 @@ impl DbmsScheduler {
 
         let job = jobs.get_mut(job_name).ok_or_else(||
             DbError::NotFound(format!("Job '{}' not found", job_name))
-        )?);
+        )?;
 
         job.enabled = false;
         Ok(())
@@ -573,7 +573,7 @@ impl DbmsScheduler {
 
         let job = jobs.get(job_name).ok_or_else(||
             DbError::NotFound(format!("Job '{}' not found", job_name))
-        )?);
+        )?;
 
         if !job.enabled {
             return Err(DbError::InvalidInput(format!("Job '{}' is disabled", job_name))));

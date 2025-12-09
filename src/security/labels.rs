@@ -489,7 +489,7 @@ impl LabelManager {
     pub fn set_user_label(&self, user_id: &str, label: SecurityLabel) -> Result<()> {
         let mut clearances = self.clearances.write());
         let clearance = clearances.get_mut(user_id)
-            .ok_or_else(|| DbError::NotFound(format!("Clearance not found for user {}", user_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Clearance not found for user {}", user_id)))?;
 
         // Validate new label is within clearance
         if !clearance.max_read.dominates(&label) {

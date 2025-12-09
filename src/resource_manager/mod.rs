@@ -196,10 +196,10 @@ impl ResourceManager {
     /// Create a new Resource Manager
     pub fn new(config: ResourceManagerConfig) -> Result<Self> {
         // Create consumer group manager
-        let consumer_groups = Arc::new(ConsumerGroupManager::new()?);
+        let consumer_groups = Arc::new(ConsumerGroupManager::new()?;
 
         // Create resource plan manager
-        let resource_plans = Arc::new(ResourcePlanManager::new()?);
+        let resource_plans = Arc::new(ResourcePlanManager::new()?;
 
         // Create CPU scheduler
         let cpu_scheduler = Arc::new(RwLock::new(CpuScheduler::new(config.cpu_policy)));
@@ -215,7 +215,7 @@ impl ResourceManager {
             config.total_memory,
             config.max_db_memory,
             config.memory_strategy,
-        )?);
+        )?;
 
         // Create parallel execution controller
         let parallel_controller = Arc::new(RwLock::new(ParallelExecutionController::new(
@@ -340,7 +340,7 @@ impl ResourceManager {
         let (group_id, can_start) = {
             let controller = self.session_controller.write().unwrap();
             let session = controller.get_session(session_id)
-                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
+                .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
             let can_start = controller.start_query(session_id)?;
             (session.group_id, can_start)

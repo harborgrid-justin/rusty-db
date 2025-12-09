@@ -351,7 +351,7 @@ impl ServiceBus {
 
         // Acquire backpressure permit
         let permit = self.backpressure.acquire().await
-            .map_err(|e| DbError::Internal(format!("Backpressure acquire failed: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Backpressure acquire failed: {}", e)))?;
 
         // Update statistics
         {

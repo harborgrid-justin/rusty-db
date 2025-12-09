@@ -204,12 +204,12 @@ impl CoordinateTransformer {
         let source_srs = self
             .registry
             .get(source_srid)
-            .ok_or_else(|| DbError::InvalidInput(format!("Unknown SRID: {}", source_srid)))?);
+            .ok_or_else(|| DbError::InvalidInput(format!("Unknown SRID: {}", source_srid)))?;
 
         let target_srs = self
             .registry
             .get(target_srid)
-            .ok_or_else(|| DbError::InvalidInput(format!("Unknown SRID: {}", target_srid)))?);
+            .ok_or_else(|| DbError::InvalidInput(format!("Unknown SRID: {}", target_srid)))?;
 
         // Transform to WGS84 if needed
         let wgs84_coord = if source_srid != well_known_srid::WGS84 {

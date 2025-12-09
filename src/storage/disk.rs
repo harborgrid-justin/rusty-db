@@ -635,7 +635,7 @@ impl DiskManager {
         // Check read-ahead buffer first
         {
             let mut read_ahead = self.read_ahead.lock()
-                .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+                .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
             if let Some(data) = read_ahead.get(page_id) {
                 let mut stats = self.stats.write();
                 stats.read_ahead_hits += 1;
@@ -662,7 +662,7 @@ impl DiskManager {
 
     fn read_from_disk(&self, page_id: PageId) -> Result<Page> {
         let mut file = self.data_file.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let offset = page_id as u64 * self.page_size as u64;
 
         file.seek(SeekFrom::Start(offset))?;
@@ -675,7 +675,7 @@ impl DiskManager {
 
     fn trigger_read_ahead(&self, page_id: PageId) -> Result<()> {
         let mut read_ahead = self.read_ahead.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let next_pages = read_ahead.predict_next_pages();
 
         // Prefetch predicted pages
@@ -696,7 +696,7 @@ impl DiskManager {
 
         // Try write-behind buffer first
         let mut write_behind = self.write_behind.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         if write_behind.add(page.id, page.data.clone()) {
             drop(write_behind);
 
@@ -726,7 +726,7 @@ impl DiskManager {
 
     fn write_to_disk(&self, page: &Page) -> Result<()> {
         let mut file = self.data_file.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let offset = page.id as u64 * self.page_size as u64;
 
         file.seek(SeekFrom::Start(offset))?;
@@ -742,7 +742,7 @@ impl DiskManager {
 
     fn flush_write_behind_if_needed(&self) -> Result<()> {
         let mut write_behind = self.write_behind.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
 
         if write_behind.should_flush() {
             let batch = write_behind.get_flush_batch();
@@ -759,7 +759,7 @@ impl DiskManager {
 
     pub fn flush_all_writes(&self) -> Result<()> {
         let mut write_behind = self.write_behind.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let batch = write_behind.flush_all();
         drop(write_behind);
 
@@ -770,7 +770,7 @@ impl DiskManager {
 
         // Force sync
         let file = self.data_file.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         file.sync_all()?;
 
         Ok(())
@@ -778,7 +778,7 @@ impl DiskManager {
 
     pub fn allocate_page(&self) -> Result<PageId> {
         let mut num_pages = self.num_pages.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let page_id = *num_pages;
         *num_pages += 1;
 
@@ -861,7 +861,7 @@ impl DiskManager {
         }
 
         let mut file = self.data_file.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
 
         let mut pages = Vec::with_capacity(page_ids.len());
         let mut bufs: Vec<Vec<u8>> = page_ids.iter()
@@ -898,7 +898,7 @@ impl DiskManager {
         }
 
         let mut file = self.data_file.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
 
         // Sort pages by ID for sequential writes
         let mut sorted_pages: Vec<_> = pages.iter().collect();
@@ -934,7 +934,7 @@ impl DiskManager {
 
         let should_flush = {
             let mut coalescer = self.write_coalescer.lock()
-                .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+                .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
             coalescer.add_write(page.clone(), offset)
         };
 
@@ -952,7 +952,7 @@ impl DiskManager {
     pub fn flush_coalesced_writes(&self) -> Result<()> {
         let batch = {
             let mut coalescer = self.write_coalescer.lock()
-                .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+                .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
             coalescer.get_coalesced_batch()
         };
 
@@ -969,7 +969,7 @@ impl DiskManager {
         let op = IoUringOp::read(page_id, offset, self.page_size);
 
         let mut io_uring = self.io_uring.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         io_uring.submit_op(op)?;
 
         self.stats.write().io_uring_ops += 1;
@@ -983,7 +983,7 @@ impl DiskManager {
         let op = IoUringOp::write(page.id, offset, page.data.clone());
 
         let mut io_uring = self.io_uring.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         io_uring.submit_op(op)?;
 
         self.stats.write().io_uring_ops += 1;
@@ -994,14 +994,14 @@ impl DiskManager {
     /// Submit pending io_uring operations
     pub fn submit_io_uring_batch(&self) -> Result<usize> {
         let mut io_uring = self.io_uring.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         io_uring.submit_batch()
     }
 
     /// Wait for io_uring completions
     pub fn wait_io_uring_completions(&self, min_complete: usize) -> Result<Vec<(u64, Result<usize>)>> {
         let mut io_uring = self.io_uring.lock()
-            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?);
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         io_uring.wait_completions(min_complete)?;
 
         let mut completions = Vec::new();

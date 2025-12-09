@@ -465,11 +465,11 @@ impl PlSqlParser {
                 let num_str: String = chars[start..i].iter().collect();
                 if is_float {
                     let val: f64 = num_str.parse().map_err(|_|
-                        DbError::SqlParse(format!("Invalid float: {}", num_str)))?);
+                        DbError::SqlParse(format!("Invalid float: {}", num_str)))?;
                     self.tokens.push(Token::FloatLit(val));
                 } else {
                     let val: i64 = num_str.parse().map_err(|_|
-                        DbError::SqlParse(format!("Invalid integer: {}", num_str)))?);
+                        DbError::SqlParse(format!("Invalid integer: {}", num_str)))?;
                     self.tokens.push(Token::IntegerLit(val));
                 }
                 continue;
@@ -650,7 +650,7 @@ impl PlSqlParser {
         // Optional DECLARE section
         if self.match_token(&Token::Declare) {
             while !self.check(&Token::Begin) && !self.check(&Token::Eof) {
-                declarations.push(self.parse_declaration()?);
+                declarations.push(self.parse_declaration()?;
             }
         }
 
@@ -658,13 +658,13 @@ impl PlSqlParser {
         self.consume(&Token::Begin, "Expected BEGIN")?;
 
         while !self.check(&Token::Exception) && !self.check(&Token::End) && !self.check(&Token::Eof) {
-            statements.push(self.parse_statement()?);
+            statements.push(self.parse_statement()?;
         }
 
         // Optional EXCEPTION section
         if self.match_token(&Token::Exception) {
             while !self.check(&Token::End) && !self.check(&Token::Eof) {
-                exception_handlers.push(self.parse_exception_handler()?);
+                exception_handlers.push(self.parse_exception_handler()?;
             }
         }
 
@@ -812,13 +812,13 @@ impl PlSqlParser {
 
     /// Parse IF statement
     fn parse_if_statement(&mut self) -> Result<Statement> {
-        self.consume(&Token::If, "Expected IF")?);
+        self.consume(&Token::If, "Expected IF")?;
         let condition = self.parse_expression()?;
         self.consume(&Token::Then, "Expected THEN")?;
 
         let mut then_block = Vec::new();
         while !self.check(&Token::Elsif) && !self.check(&Token::Else) && !self.check(&Token::End) {
-            then_block.push(self.parse_statement()?);
+            then_block.push(self.parse_statement()?;
         }
 
         let mut elsif_blocks = Vec::new();
@@ -827,7 +827,7 @@ impl PlSqlParser {
             self.consume(&Token::Then, "Expected THEN")?;
             let mut elsif_stmts = Vec::new();
             while !self.check(&Token::Elsif) && !self.check(&Token::Else) && !self.check(&Token::End) {
-                elsif_stmts.push(self.parse_statement()?);
+                elsif_stmts.push(self.parse_statement()?;
             }
             elsif_blocks.push((elsif_cond, elsif_stmts));
         }
@@ -835,7 +835,7 @@ impl PlSqlParser {
         let else_block = if self.match_token(&Token::Else) {
             let mut else_stmts = Vec::new();
             while !self.check(&Token::End) {
-                else_stmts.push(self.parse_statement()?);
+                else_stmts.push(self.parse_statement()?;
             }
             Some(else_stmts)
         } else {
@@ -860,7 +860,7 @@ impl PlSqlParser {
 
         let mut statements = Vec::new();
         while !self.check(&Token::End) {
-            statements.push(self.parse_statement()?);
+            statements.push(self.parse_statement()?;
         }
 
         self.consume(&Token::End, "Expected END")?;
@@ -878,7 +878,7 @@ impl PlSqlParser {
 
         let mut statements = Vec::new();
         while !self.check(&Token::End) {
-            statements.push(self.parse_statement()?);
+            statements.push(self.parse_statement()?;
         }
 
         self.consume(&Token::End, "Expected END")?;
@@ -905,7 +905,7 @@ impl PlSqlParser {
 
             let mut statements = Vec::new();
             while !self.check(&Token::End) {
-                statements.push(self.parse_statement()?);
+                statements.push(self.parse_statement()?;
             }
 
             self.consume(&Token::End, "Expected END")?;
@@ -928,7 +928,7 @@ impl PlSqlParser {
 
             let mut statements = Vec::new();
             while !self.check(&Token::End) {
-                statements.push(self.parse_statement()?);
+                statements.push(self.parse_statement()?;
             }
 
             self.consume(&Token::End, "Expected END")?;
@@ -1029,7 +1029,7 @@ impl PlSqlParser {
 
         let mut columns = Vec::new();
         loop {
-            columns.push(self.consume_identifier("Expected column name")?);
+            columns.push(self.consume_identifier("Expected column name")?;
             if !self.match_token(&Token::Comma) {
                 break;
             }
@@ -1039,7 +1039,7 @@ impl PlSqlParser {
 
         let mut into_vars = Vec::new();
         loop {
-            into_vars.push(self.consume_identifier("Expected variable name")?);
+            into_vars.push(self.consume_identifier("Expected variable name")?;
             if !self.match_token(&Token::Comma) {
                 break;
             }
@@ -1073,7 +1073,7 @@ impl PlSqlParser {
         self.consume(&Token::LeftParen, "Expected '('")?;
         let mut columns = Vec::new();
         loop {
-            columns.push(self.consume_identifier("Expected column name")?);
+            columns.push(self.consume_identifier("Expected column name")?;
             if !self.match_token(&Token::Comma) {
                 break;
             }
@@ -1084,7 +1084,7 @@ impl PlSqlParser {
         self.consume(&Token::LeftParen, "Expected '('")?;
         let mut values = Vec::new();
         loop {
-            values.push(self.parse_expression()?);
+            values.push(self.parse_expression()?;
             if !self.match_token(&Token::Comma) {
                 break;
             }
@@ -1163,7 +1163,7 @@ impl PlSqlParser {
         if self.match_token(&Token::LeftParen) {
             if !self.check(&Token::RightParen) {
                 loop {
-                    arguments.push(self.parse_expression()?);
+                    arguments.push(self.parse_expression()?;
                     if !self.match_token(&Token::Comma) {
                         break;
                     }
@@ -1185,7 +1185,7 @@ impl PlSqlParser {
 
         let mut into_vars = Vec::new();
         loop {
-            into_vars.push(self.consume_identifier("Expected variable name")?);
+            into_vars.push(self.consume_identifier("Expected variable name")?;
             if !self.match_token(&Token::Comma) {
                 break;
             }
@@ -1222,7 +1222,7 @@ impl PlSqlParser {
 
             let mut statements = Vec::new();
             while !self.check(&Token::When) && !self.check(&Token::Else) && !self.check(&Token::End) {
-                statements.push(self.parse_statement()?);
+                statements.push(self.parse_statement()?;
             }
 
             when_clauses.push((condition, statements));
@@ -1231,7 +1231,7 @@ impl PlSqlParser {
         let else_clause = if self.match_token(&Token::Else) {
             let mut statements = Vec::new();
             while !self.check(&Token::End) {
-                statements.push(self.parse_statement()?);
+                statements.push(self.parse_statement()?;
             }
             Some(statements)
         } else {
@@ -1266,7 +1266,7 @@ impl PlSqlParser {
             let mut arguments = Vec::new();
             if !self.check(&Token::RightParen) {
                 loop {
-                    arguments.push(self.parse_expression()?);
+                    arguments.push(self.parse_expression()?;
                     if !self.match_token(&Token::Comma) {
                         break;
                     }
@@ -1283,7 +1283,7 @@ impl PlSqlParser {
 
     /// Parse exception handler
     fn parse_exception_handler(&mut self) -> Result<ExceptionHandler> {
-        self.consume(&Token::When, "Expected WHEN")?);
+        self.consume(&Token::When, "Expected WHEN")?;
 
         let exception_name = self.consume_identifier("Expected exception name")?;
         let exception_type = match exception_name.to_uppercase().as_str() {
@@ -1301,7 +1301,7 @@ impl PlSqlParser {
 
         let mut statements = Vec::new();
         while !self.check(&Token::When) && !self.check(&Token::End) {
-            statements.push(self.parse_statement()?);
+            statements.push(self.parse_statement()?;
         }
 
         Ok(ExceptionHandler {
@@ -1477,7 +1477,7 @@ impl PlSqlParser {
                     let mut arguments = Vec::new();
                     if !self.check(&Token::RightParen) {
                         loop {
-                            arguments.push(self.parse_expression()?);
+                            arguments.push(self.parse_expression()?;
                             if !self.match_token(&Token::Comma) {
                                 break;
                             }

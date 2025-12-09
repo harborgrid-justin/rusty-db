@@ -366,7 +366,7 @@ impl PluginRegistry {
             let plugins = self.plugins.read();
             let instance = plugins
                 .get(name)
-                .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?);
+                .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
 
             if instance.state != PluginState::Registered {
                 return Err(DbError::Internal(format!(
@@ -390,7 +390,7 @@ impl PluginRegistry {
         let mut plugins = self.plugins.write();
         let instance = plugins
             .get_mut(name)
-            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?);
+            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
 
         // Initialize
         debug!("Initializing plugin: {}", name);
@@ -406,7 +406,7 @@ impl PluginRegistry {
         let mut plugins = self.plugins.write();
         let instance = plugins
             .get_mut(name)
-            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?);
+            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
 
         if instance.state != PluginState::Initialized && instance.state != PluginState::Stopped {
             return Err(DbError::Internal(format!(
@@ -428,7 +428,7 @@ impl PluginRegistry {
         let mut plugins = self.plugins.write();
         let instance = plugins
             .get_mut(name)
-            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?);
+            .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
 
         if instance.state != PluginState::Started {
             return Err(DbError::Internal(format!(

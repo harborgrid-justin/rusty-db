@@ -466,7 +466,7 @@ impl BackgroundProcessManager {
             self.start_process(
                 format!("DBWR{}", i),
                 BackgroundProcessType::DatabaseWriter,
-            ).await?);
+            ).await?;
         }
 
         // Start LGWR processes
@@ -474,7 +474,7 @@ impl BackgroundProcessManager {
             self.start_process(
                 format!("LGWR{}", i),
                 BackgroundProcessType::LogWriter,
-            ).await?);
+            ).await?;
         }
 
         // Start CKPT processes
@@ -482,7 +482,7 @@ impl BackgroundProcessManager {
             self.start_process(
                 format!("CKPT{}", i),
                 BackgroundProcessType::Checkpoint,
-            ).await?);
+            ).await?;
         }
 
         // Start PMON if enabled
@@ -514,7 +514,7 @@ impl BackgroundProcessManager {
             self.start_process(
                 format!("RECO{}", i),
                 BackgroundProcessType::Recoverer,
-            ).await?);
+            ).await?;
         }
 
         Ok(())

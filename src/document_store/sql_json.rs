@@ -611,7 +611,7 @@ impl TransformOperation {
                 if let Value::Object(obj) = current {
                     current = obj.get_mut(*part)
                             format!("Path not found: {}", path)
-                        ))?);
+                        ))?;
                 } else {
                         format!("Cannot navigate path: {}", path)
                     )));

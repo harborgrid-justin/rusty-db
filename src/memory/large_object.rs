@@ -506,7 +506,7 @@ impl LargeObjectAllocator {
         let allocation = allocation.ok_or_else(|| MemoryError::InvalidConfiguration {
             field: "allocation_id".to_string(),
             reason: format!("Allocation not found: {}", allocation_id),
-        })?);
+        })?;
 
         // Mark as inactive
         allocation.is_active.store(false, Ordering::Relaxed);

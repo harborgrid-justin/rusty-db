@@ -268,7 +268,7 @@ impl LinearRegression {
         dataset: &Dataset,
         params: &Hyperparameters,
     ) -> Result<()> {
-        dataset.validate()?);
+        dataset.validate()?;
 
         let target = dataset.target.as_ref()
             .ok_or_else(|| MLError::InvalidConfiguration("No target provided".to_string()))?;

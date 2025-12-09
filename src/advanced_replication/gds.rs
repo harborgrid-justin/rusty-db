@@ -257,7 +257,7 @@ impl GlobalDataServices {
         let service = services.get(service_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Service {} not found", service_name)
-            ))?);
+            ))?;
 
         let decision = match request.request_type {
             RequestType::Write | RequestType::Transaction => {
@@ -549,7 +549,7 @@ impl GlobalDataServices {
         let service = services.get_mut(service_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Service {} not found", service_name)
-            ))?);
+            ))?;
 
         service.state = ServiceState::FailingOver;
 
@@ -606,7 +606,7 @@ impl GlobalDataServices {
         let service = services.get_mut(service_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Service {} not found", service_name)
-            ))?);
+            ))?;
 
         for region in &mut service.regions {
             if region.region_id == region_id {
@@ -630,7 +630,7 @@ impl GlobalDataServices {
         let service = services.get_mut(service_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Service {} not found", service_name)
-            ))?);
+            ))?;
 
         for region in &mut service.regions {
             for db in &mut region.databases {

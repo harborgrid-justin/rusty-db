@@ -322,7 +322,7 @@ impl PrivilegeAnalyzer {
     pub fn grant_to_role(&mut self, role_name: &str, privilege: PrivilegeType) -> Result<()> {
         let mut roles = self.roles.write();
         let role = roles.get_mut(role_name)
-            .ok_or_else(|| DbError::NotFound(format!("Role not found: {}", role_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Role not found: {}", role_name)))?;
 
         role.add_privilege(privilege);
         Ok(())

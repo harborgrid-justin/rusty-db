@@ -266,7 +266,7 @@ impl XaTransactionManager {
         let txn = transactions.get_mut(xid)
             .ok_or_else(|| DbError::Replication(
                 format!("Transaction {:?} not found", xid)
-            ))?);
+            ))?;
 
         if txn.state != XaState::Active {
             return Err(DbError::Replication(
@@ -347,7 +347,7 @@ impl XaTransactionManager {
         let rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
-            ))?);
+            ))?;
 
         // In a real implementation, would send prepare over network
         // For now, simulate with a delay and random vote
@@ -487,7 +487,7 @@ impl XaTransactionManager {
         let rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
-            ))?);
+            ))?;
 
         // In a real implementation, would send commit over network
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
@@ -557,7 +557,7 @@ impl XaTransactionManager {
         let rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
-            ))?);
+            ))?;
 
         // In a real implementation, would send rollback over network
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
@@ -593,7 +593,7 @@ impl XaTransactionManager {
         in_doubt.remove(xid)
             .ok_or_else(|| DbError::Replication(
                 format!("In-doubt transaction {:?} not found", xid)
-            ))?);
+            ))?;
 
         // Log
         self.log_entry(XaLogEntry {
@@ -617,7 +617,7 @@ impl XaTransactionManager {
         let mut txn = in_doubt.remove(xid)
             .ok_or_else(|| DbError::Replication(
                 format!("In-doubt transaction {:?} not found", xid)
-            ))?);
+            ))?;
 
         // Attempt to commit remaining branches
         for rm_id in &txn.resource_managers {
@@ -658,7 +658,7 @@ impl XaTransactionManager {
         let mut txn = in_doubt.remove(xid)
             .ok_or_else(|| DbError::Replication(
                 format!("In-doubt transaction {:?} not found", xid)
-            ))?);
+            ))?;
 
         // Attempt to rollback all branches
         for rm_id in &txn.resource_managers {

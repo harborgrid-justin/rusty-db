@@ -445,7 +445,7 @@ impl ConsolidationPlanner {
         let host = hosts.get_mut(&target_host)
             .ok_or_else(|| ConsolidationError::InvalidPlacement(
                 format!("Host {} not found", target_host)
-            ))?);
+            ))?;
 
         if !host.can_accommodate(&profile) {
             return Err(ConsolidationError::InsufficientCapacity(
@@ -576,7 +576,7 @@ impl ConsolidationPlanner {
         let placement = placements.get(tenant_id)
             .ok_or_else(|| ConsolidationError::InvalidPlacement(
                 format!("Tenant {} not placed", tenant_id)
-            ))?);
+            ))?;
 
         let profile = placement.workload_profile.clone();
         drop(placements);

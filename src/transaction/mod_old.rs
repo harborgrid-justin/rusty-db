@@ -792,7 +792,7 @@ impl RecoveryManager {
     }
     
     pub fn recover(&self) -> Result<()> {
-        let entries = self.wal_manager.replay()?);
+        let entries = self.wal_manager.replay()?;
         
         let mut active_txns: HashMap<TransactionId, Vec<WALEntry>> = HashMap::new();
         let mut last_checkpoint_lsn = 0;
@@ -2708,7 +2708,7 @@ pub struct EnterpriseTransactionManager {
 
 impl EnterpriseTransactionManager {
     pub fn new(wal_path: PathBuf) -> Result<Self> {
-        let wal_manager = Arc::new(WALManager::new(wal_path, 100, true)?);
+        let wal_manager = Arc::new(WALManager::new(wal_path, 100, true)?;
         let version_store = Arc::new(VersionStore::new());
         let recovery_manager = Arc::new(RecoveryManager::new(
             Arc::clone(&wal_manager),

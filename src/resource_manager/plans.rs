@@ -454,7 +454,7 @@ impl ResourcePlanManager {
         let plan_id = plans_by_name.get(name)
             .ok_or_else(|| DbError::NotFound(
                 format!("Resource plan {} not found", name)
-            ))?);
+            ))?;
         self.get_plan(*plan_id)
     }
 
@@ -467,7 +467,7 @@ impl ResourcePlanManager {
         let plan = plans.get_mut(&plan_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Resource plan {} not found", plan_id)
-            ))?);
+            ))?;
 
         update_fn(plan);
         plan.modified_at = SystemTime::now();
@@ -499,7 +499,7 @@ impl ResourcePlanManager {
         let plan = plans.remove(&plan_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Resource plan {} not found", plan_id)
-            ))?);
+            ))?;
 
         plans_by_name.remove(&plan.name);
 
@@ -549,13 +549,13 @@ impl ResourcePlanManager {
         let plan_directives = directives.get_mut(&plan_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("No directives for plan {}", plan_id)
-            ))?);
+            ))?;
 
         let directive = plan_directives.iter_mut()
             .find(|d| d.id == directive_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Directive {} not found", directive_id)
-            ))?);
+            ))?;
 
         update_fn(directive);
         Ok(())

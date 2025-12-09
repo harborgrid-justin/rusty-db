@@ -570,7 +570,7 @@ impl CDCEngine {
 
         // Parse after image from data
         if self.config.filter.capture_after_image {
-            event.after_image = Some(self.parse_row_data(data, &table_metadata)?);
+            event.after_image = Some(self.parse_row_data(data, &table_metadata)?;
         }
 
         // Generate column changes
@@ -670,7 +670,7 @@ impl CDCEngine {
 
         // Parse before image
         if self.config.filter.capture_before_image {
-            event.before_image = Some(self.parse_row_data(deleted_data, &table_metadata)?);
+            event.before_image = Some(self.parse_row_data(deleted_data, &table_metadata)?;
         }
 
         // Generate column changes

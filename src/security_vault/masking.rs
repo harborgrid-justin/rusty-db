@@ -119,7 +119,7 @@ impl MaskingPolicy {
         // Check table pattern if specified
         if let Some(ref table_pat) = self.table_pattern {
             let table_regex = Regex::new(table_pat)
-                .map_err(|e| DbError::InvalidInput(format!("Invalid table pattern: {}", e)))?);
+                .map_err(|e| DbError::InvalidInput(format!("Invalid table pattern: {}", e)))?;
             if !table_regex.is_match(table) {
                 return Ok(false);
             }
@@ -127,7 +127,7 @@ impl MaskingPolicy {
 
         // Check column pattern
         let col_regex = Regex::new(&self.column_pattern)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid column pattern: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Invalid column pattern: {}", e)))?;
         Ok(col_regex.is_match(column))
     }
 }
@@ -261,11 +261,11 @@ impl MaskingEngine {
     pub fn create_policy_custom(&mut self, policy: MaskingPolicy) -> Result<()> {
         // Validate regex patterns
         Regex::new(&policy.column_pattern)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid column pattern: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Invalid column pattern: {}", e)))?;
 
         if let Some(ref table_pat) = policy.table_pattern {
             Regex::new(table_pat)
-                .map_err(|e| DbError::InvalidInput(format!("Invalid table pattern: {}", e)))?);
+                .map_err(|e| DbError::InvalidInput(format!("Invalid table pattern: {}", e)))?;
         }
 
         self.policies.write().insert(policy.name.clone(), policy);
@@ -275,7 +275,7 @@ impl MaskingEngine {
     /// Drop a masking policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
         self.policies.write().remove(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         Ok(())
     }
 
@@ -283,7 +283,7 @@ impl MaskingEngine {
     pub fn enable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
         let policy = policies.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = true;
         Ok(())
     }
@@ -292,7 +292,7 @@ impl MaskingEngine {
     pub fn disable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
         let policy = policies.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = false;
         Ok(())
     }
@@ -377,7 +377,7 @@ impl MaskingEngine {
             MaskingType::Substitution { table } => {
                 let tables = self.substitution_tables.read();
                 let sub_table = tables.get(table)
-                    .ok_or_else(|| DbError::NotFound(format!("Substitution table not found: {}", table)))?);
+                    .ok_or_else(|| DbError::NotFound(format!("Substitution table not found: {}", table)))?;
 
                 if let Some(key) = consistency_key {
                     sub_table.get_consistent(value, key).to_string()
@@ -418,7 +418,7 @@ impl MaskingEngine {
             MaskingType::Custom { function_name } => {
                 let functions = self.custom_functions.read());
                 let func = functions.get(function_name)
-                    .ok_or_else(|| DbError::NotFound(format!("Custom function not found: {}", function_name)))?);
+                    .ok_or_else(|| DbError::NotFound(format!("Custom function not found: {}", function_name)))?;
                 func(value)?
             }
         };

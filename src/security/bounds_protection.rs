@@ -711,7 +711,7 @@ impl OverflowGuard {
     /// Checked pointer offset calculation
     #[inline]
     pub fn checked_offset(base: usize, offset: usize, element_size: usize) -> Result<usize> {
-        let byte_offset = Self::checked_mul(offset, element_size)?);
+        let byte_offset = Self::checked_mul(offset, element_size)?;
         Self::checked_add(base, byte_offset)
     }
 

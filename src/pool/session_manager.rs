@@ -2338,7 +2338,7 @@ impl SessionManager {
     /// Terminate session
     pub async fn terminate_session(&self, session_id: SID, graceful: bool) -> Result<()> {
         let session = self.sessions.write().remove(&session_id)
-            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         // Fire logoff event
         self.event_manager.fire_logoff(&session, graceful).await?;
@@ -2374,7 +2374,7 @@ impl SessionManager {
     ) -> Result<()> {
         let mut sessions = self.sessions.write());
         let session = sessions.get_mut(&session_id)
-            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         session.set_variable(name.to_string(), Value::String(value.to_string()));
         session.touch();
@@ -2844,7 +2844,7 @@ impl SessionCloner {
     ) -> Result<SessionState> {
         let strategies = self.strategies.read();
         let strategy = strategies.get(strategy)
-            .ok_or_else(|| DbError::NotFound(format!("Cloning strategy {} not found", strategy)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Cloning strategy {} not found", strategy)))?;
 
         let mut cloned = SessionState::new(
             source.session_id + 1000000, // Offset for cloned sessions

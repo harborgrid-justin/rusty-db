@@ -542,10 +542,10 @@ impl WorkloadRepository {
 
         let snap1 = snapshots
             .get(&snapshot1_id)
-            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot1_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot1_id)))?;
         let snap2 = snapshots
             .get(&snapshot2_id)
-            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot2_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot2_id)))?;
 
         Ok(SnapshotComparison::new(snap1.clone(), snap2.clone()))
     }

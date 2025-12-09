@@ -385,7 +385,7 @@ impl FeatureFlagManager {
     pub async fn unregister(&self, name: &str) -> Result<()> {
         let mut features = self.features.write().await;
         features.remove(name)
-            .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
         Ok(())
     }
@@ -412,7 +412,7 @@ impl FeatureFlagManager {
 
             let features = self.features.read().await;
             let feature = features.get(name)
-                .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?);
+                .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
             // Check dependencies
             for dep in &feature.dependencies {
@@ -483,7 +483,7 @@ impl FeatureFlagManager {
     pub async fn update(&self, name: &str, updater: impl FnOnce(&mut Feature)) -> Result<()> {
         let mut features = self.features.write().await;
         let feature = features.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
         updater(feature);
         feature.updated_at = SystemTime::now();

@@ -779,7 +779,7 @@ impl CpuScheduler {
 
         let mut tasks = self.tasks.write().unwrap();
         let task = tasks.get_mut(&task_id)
-            .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?;
 
         task.state = TaskState::Ready;
 

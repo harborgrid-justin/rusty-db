@@ -549,7 +549,7 @@ impl<'a> ServiceAreaAnalyzer<'a> {
         let mut areas = Vec::new();
 
         for &max_cost in cost_intervals {
-            areas.push(self.calculate(center, max_cost)?);
+            areas.push(self.calculate(center, max_cost)?;
         }
 
         Ok(areas)

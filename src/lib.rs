@@ -42,7 +42,7 @@
 // async fn main() -> Result<()> {
 //     let config = Config::default();
 //     let server = Server::new();
-//     server.run(&format!("127.0.0.1:{}", config.port)).await?);
+//     server.run(&format!("127.0.0.1:{}", config.port)).await?;
 //     Ok(())
 // }
 // ```

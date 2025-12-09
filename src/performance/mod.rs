@@ -1841,7 +1841,7 @@ impl BenchmarkRunner {
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         
         let benchmark = benchmarks.get(benchmark_id)
-            .ok_or_else(|| DbError::NotFound(format!("Benchmark {} not found", benchmark_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Benchmark {} not found", benchmark_id)))?;
         
         let mut execution_times = Vec::new();
         
@@ -2129,7 +2129,7 @@ impl AdaptiveCachingStrategy {
             for (i, strategy) in self.strategies.iter().enumerate() {
                 if format!("{:?}", strategy) == *best_strategy_name {
                     let mut current = self.current_strategy.write()
-                        .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?);
+                        .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
                     *current = i;
                     return Ok(strategy.clone());
                 }

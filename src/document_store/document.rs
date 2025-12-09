@@ -51,7 +51,7 @@ impl DocumentId {
         match id_type {
             IdGenerationType::Uuid => {
                 let uuid = Uuid::parse_str(s)
-                    .map_err(|e| crate::error::DbError::InvalidInput(format!("Invalid UUID: {}", e)))?);
+                    .map_err(|e| crate::error::DbError::InvalidInput(format!("Invalid UUID: {}", e)))?;
                 Ok(DocumentId::Uuid(uuid))
             }
             IdGenerationType::AutoIncrement => {

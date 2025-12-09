@@ -277,7 +277,7 @@ impl ServiceRegistry {
         let factories = self.factories.read();
         let factory = factories
             .get(&type_id)
-            .ok_or_else(|| DbError::Internal(format!("Service not registered: {:?}", type_id)))?);
+            .ok_or_else(|| DbError::Internal(format!("Service not registered: {:?}", type_id)))?;
 
         let metadata = factory.metadata().clone();
 
@@ -328,7 +328,7 @@ impl ServiceRegistry {
         let named = self.named_services.read();
         let type_id = named
             .get(name)
-            .ok_or_else(|| DbError::Internal(format!("Service not found: {}", name)))?);
+            .ok_or_else(|| DbError::Internal(format!("Service not found: {}", name)))?;
 
         let type_id = *type_id;
         drop(named);
@@ -345,7 +345,7 @@ impl ServiceRegistry {
         let factories = self.factories.read();
         let factory = factories
             .get(&type_id)
-            .ok_or_else(|| DbError::Internal(format!("Service not found: {}", name)))?);
+            .ok_or_else(|| DbError::Internal(format!("Service not found: {}", name)))?;
 
         let instance = factory.create(self)?;
         Ok(Arc::new(RwLock::new(instance)))

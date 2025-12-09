@@ -467,7 +467,7 @@ impl WindowManager {
                     .partition_key
                     .clone()
                     .unwrap_or_else(|| event.id.to_string());
-                assigned_windows.extend(self.add_to_session_window(event, key, *gap)?);
+                assigned_windows.extend(self.add_to_session_window(event, key, *gap)?;
             }
             _ => {
                 let windows = self.window_type.get_windows(event.event_time);

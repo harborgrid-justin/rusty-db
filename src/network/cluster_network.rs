@@ -199,7 +199,7 @@ impl ClusterTopologyManager {
     ) -> Result<Self> {
         let udp_socket = UdpSocket::bind(local_addr)
             .await
-            .map_err(|e| DbError::Network(format!("Failed to bind UDP socket: {}", e)))?);
+            .map_err(|e| DbError::Network(format!("Failed to bind UDP socket: {}", e)))?;
 
         let (event_tx, _) = broadcast::channel(1000);
         let local_node = NodeId::new();
@@ -1007,7 +1007,7 @@ impl NodeConnectionPool {
 
         let stream = TcpStream::connect(addr)
             .await
-            .map_err(|e| DbError::Network(format!("Connection failed: {}", e)))?);
+            .map_err(|e| DbError::Network(format!("Connection failed: {}", e)))?;
 
         // TODO: TLS handshake if configured
 
@@ -2782,7 +2782,7 @@ impl ClusterNetworkManager {
     /// Create a new cluster network manager
     pub async fn new(local_addr: SocketAddr) -> Result<Self> {
         let config = SwimConfig::default();
-        let topology = Arc::new(ClusterTopologyManager::new(local_addr, config).await?);
+        let topology = Arc::new(ClusterTopologyManager::new(local_addr, config).await?;
         let local_node = topology.local_node;
 
         let connection_pool = Arc::new(NodeConnectionPool::new(local_node, None));

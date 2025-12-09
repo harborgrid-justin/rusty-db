@@ -108,11 +108,11 @@ impl JsonPathParser {
                         let path = self.parse_single_segment()?;
                         segments.push(JsonPath::RecursiveDescent(Box::new(path)));
                     } else {
-                        segments.push(self.parse_single_segment()?);
+                        segments.push(self.parse_single_segment()?;
                     }
                 }
                 Some('[') => {
-                    segments.push(self.parse_bracket_segment()?);
+                    segments.push(self.parse_bracket_segment()?;
                 }
                 _ => break,
             }

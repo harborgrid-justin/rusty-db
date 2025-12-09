@@ -336,7 +336,7 @@ impl SinkConnector for JdbcSinkConnector {
     }
 
     fn stop(&mut self) -> Result<()> {
-        self.flush()?);
+        self.flush()?;
         // In a real implementation, close database connection
         Ok(())
     }

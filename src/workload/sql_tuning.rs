@@ -442,7 +442,7 @@ impl SqlTuningAdvisor {
             let mut tasks = self.tasks.write();
             let task = tasks
                 .get_mut(&task_id)
-                .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?);
+                .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?;
 
             task.status = TaskStatus::Running;
             task.started_time = Some(SystemTime::now());
@@ -486,19 +486,19 @@ impl SqlTuningAdvisor {
         for issue in &plan_analysis.issues {
             match issue.issue_type {
                 IssueType::MissingIndex => {
-                    recommendations.push(self.recommend_index(&task.sql_text, rec_id)?);
+                    recommendations.push(self.recommend_index(&task.sql_text, rec_id)?;
                     rec_id += 1;
                 }
                 IssueType::FullTableScan => {
-                    recommendations.push(self.recommend_index(&task.sql_text, rec_id)?);
+                    recommendations.push(self.recommend_index(&task.sql_text, rec_id)?;
                     rec_id += 1;
                 }
                 IssueType::SuboptimalJoinOrder => {
-                    recommendations.push(self.recommend_sql_profile(&task.sql_text, rec_id)?);
+                    recommendations.push(self.recommend_sql_profile(&task.sql_text, rec_id)?;
                     rec_id += 1;
                 }
                 IssueType::StaleStatistics => {
-                    recommendations.push(self.recommend_statistics_collection(rec_id)?);
+                    recommendations.push(self.recommend_statistics_collection(rec_id)?;
                     rec_id += 1;
                 }
                 _ => {}

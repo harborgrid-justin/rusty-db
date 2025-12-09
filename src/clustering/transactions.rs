@@ -58,7 +58,7 @@ impl ClusterTransactionCoordinator {
 
     pub fn cleanup_completed_transactions(&self) -> Result<usize, DbError> {
         let mut transactions = self.active_transactions.write()
-            .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?);
+            .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
         
         let initial_count = transactions.len();
         transactions.retain(|_, txn| !matches!(txn.status, TransactionStatus::Committed | TransactionStatus::Aborted));

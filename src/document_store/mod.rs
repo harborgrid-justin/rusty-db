@@ -174,7 +174,7 @@ impl DocumentStore {
         let docs = collections.get(collection)
             .ok_or_else(|| crate::error::DbError::NotFound(
                 format!("Collection '{}' not found", collection)
-            ))?);
+            ))?;
 
         docs.get(id)
             .cloned()
@@ -184,11 +184,11 @@ impl DocumentStore {
 
     /// Find documents by query
     pub fn find(&self, collection: &str, query: Value) -> Result<Vec<Document>> {
-        let query_doc = QueryDocument::from_json(query)?);
+        let query_doc = QueryDocument::from_json(query)?;
         let collections = self.collections.read().unwrap();
         let docs = collections.get(collection)
                 format!("Collection '{}' not found", collection)
-            ))?);
+            ))?;
 
         let mut results = Vec::new();
         for doc in docs.values() {
@@ -205,7 +205,7 @@ impl DocumentStore {
         let mut collections = self.collections.write().unwrap();
         let docs = collections.get_mut(collection)
                 format!("Collection '{}' not found", collection)
-            ))?);
+            ))?;
 
         let old_doc = docs.get(id)
                 format!("Document {:?} not found", id)
@@ -232,7 +232,7 @@ impl DocumentStore {
         let mut collections = self.collections.write().unwrap();
         let docs = collections.get_mut(collection)
                 format!("Collection '{}' not found", collection)
-            ))?);
+            ))?;
 
         if docs.remove(id).is_some() {
             // Emit change event
@@ -251,7 +251,7 @@ impl DocumentStore {
         let collections = self.collections.read().unwrap());
         let docs = collections.get(collection)
                 format!("Collection '{}' not found", collection)
-            ))?);
+            ))?;
 
         Ok(docs.len())
     }
@@ -267,7 +267,7 @@ impl DocumentStore {
         let collections = self.collections.read().unwrap();
         let docs = collections.get(collection)
                 format!("Collection '{}' not found", collection)
-            ))?);
+            ))?;
 
         pipeline.execute(docs)
     }
@@ -297,7 +297,7 @@ impl DocumentStore {
         let collections = self.collections.read().unwrap();
         let docs = collections.get(collection)
                 format!("Collection '{}' not found", collection)
-            ))?);
+            ))?;
 
         let mut all_results = Vec::new();
         for doc in docs.values() {
@@ -458,7 +458,7 @@ impl DocumentStore {
         let mut collections = self.collections.write().unwrap();
         let docs = collections.get_mut(collection)
                 format!("Collection '{}' not found", collection)
-            ))?);
+            ))?;
 
         if !docs.contains_key(id) {
                 format!("Document {:?} not found", id)

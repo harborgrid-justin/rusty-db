@@ -611,7 +611,7 @@ impl SnapshotIsolationManager {
         let txns = self.active_txns.read());
         let snapshot = txns.get(&txn_id).ok_or_else(|| {
             DbError::Transaction(format!("Transaction {} not found", txn_id))
-        })?);
+        })?;
 
         if snapshot.read_only {
             return Ok(());
@@ -651,7 +651,7 @@ impl SnapshotIsolationManager {
         let txns = self.active_txns.read();
         let snapshot = txns.get(&txn_id).ok_or_else(|| {
             DbError::Transaction(format!("Transaction {} not found", txn_id))
-        })?);
+        })?;
 
         if snapshot.read_only {
             return Ok(());

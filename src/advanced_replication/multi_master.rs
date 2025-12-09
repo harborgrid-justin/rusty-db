@@ -182,7 +182,7 @@ impl MultiMasterReplication {
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?);
+            ))?;
 
         if group.members.iter().any(|s| s.site_id == site.site_id) {
             return Err(DbError::Replication(
@@ -201,7 +201,7 @@ impl MultiMasterReplication {
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?);
+            ))?;
 
         group.members.retain(|s| s.site_id != site_id);
         Ok(())
@@ -404,7 +404,7 @@ impl MultiMasterReplication {
     pub async fn receive_operation(&self, op: ReplicationOp) -> Result<()> {
         // Queue for processing
         self.op_tx.send(op)
-            .map_err(|e| DbError::Replication(format!("Failed to queue operation: {}", e)))?);
+            .map_err(|e| DbError::Replication(format!("Failed to queue operation: {}", e)))?;
 
         Ok(())
     }
@@ -427,7 +427,7 @@ impl MultiMasterReplication {
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?);
+            ))?;
 
         for site in &mut group.members {
             if site.site_id == site_id {
@@ -466,7 +466,7 @@ impl MultiMasterReplication {
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?);
+            ))?;
 
         for site in &mut group.members {
             if site.site_id == site_id {
@@ -485,7 +485,7 @@ impl MultiMasterReplication {
         let group = groups.get_mut(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?);
+            ))?;
 
         for site in &mut group.members {
             if site.site_id == site_id {
@@ -521,7 +521,7 @@ impl MultiMasterReplication {
         let group = self.get_group(group_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Group {} not found", group_id)
-            ))?);
+            ))?;
 
         let mut site_checksums = HashMap::new();
 

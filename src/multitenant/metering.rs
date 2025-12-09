@@ -120,7 +120,7 @@ impl MeteringEngine {
 
         let tenant_metrics = all_metrics
             .get(&tenant_id)
-            .ok_or_else(|| DbError::NotFound(format!("No metrics for tenant {:?}", tenant_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No metrics for tenant {:?}", tenant_id)))?;
 
         // Filter metrics by time range
         let filtered: Vec<_> = tenant_metrics
@@ -419,7 +419,7 @@ impl QuotaEnforcer {
         let quotas = self.quotas.read().await;
         let quota = quotas
             .get(&tenant_id)
-            .ok_or_else(|| DbError::NotFound(format!("No quota for tenant {:?}", tenant_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No quota for tenant {:?}", tenant_id)))?;
 
         let usage = self
             .current_usage
@@ -486,7 +486,7 @@ impl QuotaEnforcer {
         let quotas = self.quotas.read().await;
         let quota = quotas
             .get(&tenant_id)
-            .ok_or_else(|| DbError::NotFound(format!("No quota for tenant {:?}", tenant_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No quota for tenant {:?}", tenant_id)))?;
 
         match quota.enforcement_mode {
             EnforcementMode::Soft => {

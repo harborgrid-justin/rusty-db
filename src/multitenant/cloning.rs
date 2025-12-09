@@ -223,12 +223,12 @@ impl CloningEngine {
         let snapshot_manager_guard = snapshot_manager.read().await;
         let snapshots = snapshot_manager_guard.get(&source_pdb_id).ok_or_else(|| {
             DbError::NotFound(format!("No snapshots for PDB {:?}", source_pdb_id))
-        })?);
+        })?;
 
         let snapshot = snapshots
             .iter()
             .find(|s| s.id == snapshot_id)
-            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot_id)))?;
 
         // Clone snapshot data before releasing lock
         let snapshot_scn = snapshot.scn;

@@ -479,7 +479,7 @@ impl ReadModelProjection {
         // Update read model based on event
         // Simplified implementation
         let key = format!("{}:{}", event.aggregate_type, event.aggregate_id));
-        self.data.write().insert(key, bincode::serialize(&event)?);
+        self.data.write().insert(key, bincode::serialize(&event)?;
         Ok(())
     }
 
@@ -700,7 +700,7 @@ impl SchemaRegistry {
     /// Validate event against schema
     pub fn validate_event(&self, event_type: &str, event_data: &[u8]) -> Result<bool> {
         let schema = self.get_latest_schema(event_type)
-            .ok_or_else(|| DbError::NotFound(format!("Schema for '{}' not found", event_type)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Schema for '{}' not found", event_type)))?;
 
         // In production, use jsonschema or avro validation
         let _ = (schema, event_data);

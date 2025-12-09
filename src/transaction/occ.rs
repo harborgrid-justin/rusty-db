@@ -299,7 +299,7 @@ impl OccManager {
     pub fn read(&self, txn_id: TxnId, key: &Key) -> std::result::Result<Option<Value>, DbError> {
         let active_txns = self.active_txns.read();
         let txn_arc = active_txns.get(&txn_id)
-            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?);
+            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
 
         let mut txn = txn_arc.write();
 
@@ -334,7 +334,7 @@ impl OccManager {
     pub fn write(&self, txn_id: TxnId, key: Key, value: Value) -> std::result::Result<(), DbError> {
         let active_txns = self.active_txns.read();
         let txn_arc = active_txns.get(&txn_id)
-            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?);
+            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
 
         let mut txn = txn_arc.write();
 

@@ -283,10 +283,10 @@ impl ConfigManager {
     pub async fn load_from_file(&self, path: impl AsRef<Path>) -> Result<()> {
         let path = path.as_ref();
         let contents = tokio::fs::read_to_string(path).await
-            .map_err(|e| DbError::IoError(format!("Failed to read config file: {}", e)))?);
+            .map_err(|e| DbError::IoError(format!("Failed to read config file: {}", e)))?;
 
         let config: HashMap<String, ConfigValue> = serde_json::from_str(&contents)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid config JSON: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Invalid config JSON: {}", e)))?;
 
         let mut current_config = self.config.write().await;
         *current_config = config;
@@ -301,7 +301,7 @@ impl ConfigManager {
     pub async fn save_to_file(&self, path: Option<&Path>) -> Result<()> {
         let config = self.config.read().await;
         let json = serde_json::to_string_pretty(&*config)
-            .map_err(|e| DbError::Internal(format!("Failed to serialize config: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Failed to serialize config: {}", e)))?;
 
         let save_path = if let Some(p) = path {
             p.to_path_buf()
@@ -313,7 +313,7 @@ impl ConfigManager {
         };
 
         tokio::fs::write(&save_path, json).await
-            .map_err(|e| DbError::IoError(format!("Failed to write config file: {}", e)))?);
+            .map_err(|e| DbError::IoError(format!("Failed to write config file: {}", e)))?;
 
         Ok(())
     }
@@ -494,7 +494,7 @@ impl ConfigManager {
                     ValidationRule::Pattern(pattern) => {
                         if let Some(s) = value.as_string() {
                             let re = regex::Regex::new(pattern)
-                                .map_err(|e| DbError::Internal(format!("Invalid pattern: {}", e)))?);
+                                .map_err(|e| DbError::Internal(format!("Invalid pattern: {}", e)))?;
                             if !re.is_match(s) {
                                 return Err(DbError::InvalidInput(
                                     format!("Value '{}' does not match pattern '{}'", s, pattern)
@@ -529,16 +529,16 @@ impl ConfigManager {
     /// Encrypt a configuration value
     fn encrypt_value(&self, value: ConfigValue) -> Result<ConfigValue> {
         let plaintext = serde_json::to_string(&value)
-            .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))?;
 
         let cipher = Aes256Gcm::new_from_slice(&self.encryption_key)
-            .map_err(|e| DbError::Internal(format!("Cipher init error: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Cipher init error: {}", e)))?;
 
         let nonce_bytes = rand::random::<[u8; 12]>();
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         let ciphertext = cipher.encrypt(nonce, plaintext.as_bytes())
-            .map_err(|e| DbError::Internal(format!("Encryption error: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Encryption error: {}", e)))?;
 
         // Combine nonce and ciphertext
         let mut combined = nonce_bytes.to_vec();
@@ -552,7 +552,7 @@ impl ConfigManager {
     fn decrypt_value(&self, value: ConfigValue) -> Result<ConfigValue> {
         if let ConfigValue::Encrypted(encoded) = value {
             let combined = general_purpose::STANDARD.decode(&encoded)
-                .map_err(|e| DbError::Internal(format!("Base64 decode error: {}", e)))?);
+                .map_err(|e| DbError::Internal(format!("Base64 decode error: {}", e)))?;
 
             if combined.len() < 12 {
                 return Err(DbError::Internal("Invalid encrypted value".to_string()));
@@ -562,13 +562,13 @@ impl ConfigManager {
             let nonce = Nonce::from_slice(nonce_bytes);
 
             let cipher = Aes256Gcm::new_from_slice(&self.encryption_key)
-                .map_err(|e| DbError::Internal(format!("Cipher init error: {}", e)))?);
+                .map_err(|e| DbError::Internal(format!("Cipher init error: {}", e)))?;
 
             let plaintext = cipher.decrypt(nonce, ciphertext)
-                .map_err(|e| DbError::Internal(format!("Decryption error: {}", e)))?);
+                .map_err(|e| DbError::Internal(format!("Decryption error: {}", e)))?;
 
             let decrypted_value: ConfigValue = serde_json::from_slice(&plaintext)
-                .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?);
+                .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?;
 
             Ok(decrypted_value)
         } else {
@@ -628,7 +628,7 @@ impl ConfigManager {
         let snapshots = self.snapshots.read().await;
         let snapshot = snapshots.iter()
             .find(|s| s.id == snapshot_id)
-            .ok_or_else(|| DbError::NotFound(format!("Snapshot not found: {}", snapshot_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Snapshot not found: {}", snapshot_id)))?;
 
         let mut config = self.config.write().await;
         *config = snapshot.config.clone();

@@ -225,7 +225,7 @@ impl LogicalReplication {
         pubs.remove(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Publication {} not found", name)
-            ))?);
+            ))?;
 
         Ok(())
     }
@@ -241,7 +241,7 @@ impl LogicalReplication {
         let pub_entry = pubs.get_mut(pub_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Publication {} not found", pub_name)
-            ))?);
+            ))?;
 
         pub_entry.tables.push(table);
         Ok(())
@@ -268,7 +268,7 @@ impl LogicalReplication {
         subs.remove(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?);
+            ))?;
 
         Ok(())
     }
@@ -280,7 +280,7 @@ impl LogicalReplication {
         let sub = subs.get_mut(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?);
+            ))?;
 
         sub.enabled = true;
         Ok(())
@@ -293,7 +293,7 @@ impl LogicalReplication {
         let sub = subs.get_mut(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?);
+            ))?;
 
         sub.enabled = false;
         Ok(())
@@ -324,7 +324,7 @@ impl LogicalReplication {
 
         // Queue change for replication
         self.change_tx.send(change.clone())
-            .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?);
+            .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?;
 
         // Update statistics
         {
@@ -517,7 +517,7 @@ impl LogicalReplication {
         let sub = subs.get_mut(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?);
+            ))?;
 
         sub.last_lsn = lsn;
         Ok(())
@@ -535,7 +535,7 @@ impl LogicalReplication {
         let sub = subs.get(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?);
+            ))?;
 
         Ok(sub.state.clone())
     }
@@ -547,7 +547,7 @@ impl LogicalReplication {
         let sub = subs.get_mut(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?);
+            ))?;
 
         sub.state = state;
         Ok(())

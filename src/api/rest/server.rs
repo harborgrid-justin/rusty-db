@@ -168,13 +168,13 @@ impl RestApiServer {
 
         let listener = tokio::net::TcpListener::bind(addr)
             .await
-            .map_err(|e| DbError::Network(format!("Failed to bind to {}: {}", addr, e)))?);
+            .map_err(|e| DbError::Network(format!("Failed to bind to {}: {}", addr, e)))?;
 
         tracing::info!("REST API server listening on {}", addr);
 
         axum::serve(listener, router)
             .await
-            .map_err(|e| DbError::Network(format!("Server error: {}", e)))?);
+            .map_err(|e| DbError::Network(format!("Server error: {}", e)))?;
 
         Ok(())
     }

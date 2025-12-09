@@ -769,7 +769,7 @@ impl AutoTuner {
             current - step
         };
 
-        let new_value = new_value.max(config.min_value.as_i64()?).min(config.max_value.as_i64()?);
+        let new_value = new_value.max(config.min_value.as_i64()?).min(config.max_value.as_i64()?;
 
         Some(TuningAction {
             parameter: parameter.clone(),

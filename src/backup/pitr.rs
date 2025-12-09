@@ -402,7 +402,7 @@ impl PitrManager {
     pub fn drop_restore_point(&self, name: &str) -> Result<()> {
         let mut restore_points = self.restore_points.write();
         restore_points.remove(name)
-            .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?);
+            .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?;
         Ok(())
     }
 
@@ -441,7 +441,7 @@ impl PitrManager {
                 let restore_points = self.restore_points.read();
                 restore_points.get(name)
                     .map(|rp| rp.scn)
-                    .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?);
+                    .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?;
                 restore_points.get(name).map(|rp| rp.scn)
             }
             RecoveryTarget::Latest => None,

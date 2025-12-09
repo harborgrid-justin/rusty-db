@@ -336,7 +336,7 @@ impl EncryptionManager {
             KeyType::TableEncryption,
             algorithm.clone(),
             Some("MASTER_KEY".to_string()),
-        )?);
+        )?;
 
         let config = TdeConfig {
             tablespace_id: tablespace_id.clone(),
@@ -442,7 +442,7 @@ impl EncryptionManager {
     /// Start key rotation
     pub fn start_key_rotation(&self, old_key_id: &KeyId) -> Result<String> {
         // Get the old key
-        let old_key = self.get_key(old_key_id)?);
+        let old_key = self.get_key(old_key_id)?;
 
         if old_key.rotation_state != KeyRotationState::Active {
             return Err(DbError::InvalidOperation(

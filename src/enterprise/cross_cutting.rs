@@ -665,7 +665,7 @@ impl Bulkhead {
         F: Future<Output = Result<T>>,
     {
         let _permit = self.semaphore.acquire().await
-            .map_err(|e| DbError::Internal(format!("Bulkhead acquire failed: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Bulkhead acquire failed: {}", e)))?;
 
         f.await
     }

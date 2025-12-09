@@ -341,7 +341,7 @@ impl EventStream {
     pub fn publish_batch(&self, events: Vec<Event>) -> Result<Vec<StreamPosition>> {
         let mut positions = Vec::new();
         for event in events {
-            positions.push(self.publish(event)?);
+            positions.push(self.publish(event)?;
         }
         Ok(positions)
     }
@@ -1084,7 +1084,7 @@ impl StreamManager {
 
     /// Create a new stream
     pub fn create_stream(&self, id: StreamId, config: StreamConfig) -> Result<Arc<EventStream>> {
-        let stream = Arc::new(EventStream::new(id.clone(), config)?);
+        let stream = Arc::new(EventStream::new(id.clone(), config)?;
 
         let mut streams = self.streams.write().unwrap();
         streams.insert(id, stream.clone());

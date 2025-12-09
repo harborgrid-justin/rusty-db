@@ -210,7 +210,7 @@ impl Slab {
     unsafe fn new(size_class_info: &SizeClass, size_class: usize, color: usize) -> Result<Self> {
         // Allocate slab memory with proper alignment
         let layout = Layout::from_size_align(SLAB_SIZE, SLAB_SIZE)
-            .map_err(|e| DbError::OutOfMemory(format!("Invalid slab layout: {}", e)))?);
+            .map_err(|e| DbError::OutOfMemory(format!("Invalid slab layout: {}", e)))?;
 
         let base = System.alloc(layout);
         if base.is_null() {
@@ -543,7 +543,7 @@ impl SlabAllocator {
         }
 
         let size_class = self.size_to_class(size)
-            .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?);
+            .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?;
 
         self.stats.allocations.fetch_add(1, Ordering::Relaxed);
         self.stats.bytes_allocated.fetch_add(size as u64, Ordering::Relaxed);
@@ -611,7 +611,7 @@ impl SlabAllocator {
     /// Deallocate memory back to slab allocator
     pub unsafe fn deallocate(&self, ptr: NonNull<u8>, size: usize) -> Result<()> {
         let size_class = self.size_to_class(size)
-            .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?);
+            .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?;
 
         self.stats.deallocations.fetch_add(1, Ordering::Relaxed);
 
@@ -729,7 +729,7 @@ impl ArenaChunk {
     /// Create a new arena chunk
     unsafe fn new(size: usize) -> Result<Self> {
         let layout = Layout::from_size_align(size, 16)
-            .map_err(|e| DbError::OutOfMemory(format!("Invalid arena layout: {}", e)))?);
+            .map_err(|e| DbError::OutOfMemory(format!("Invalid arena layout: {}", e)))?;
 
         let base = System.alloc(layout);
         if base.is_null() {
@@ -1182,7 +1182,7 @@ impl LargeObject {
         {
             // Fallback to regular allocation on non-Unix systems
             let layout = Layout::from_size_align(size, 4096)
-                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?);
+                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?;
 
             let ptr = System.alloc(layout);
             if ptr.is_null() {
@@ -2173,7 +2173,7 @@ impl MemoryManager {
             // Use system allocator for medium sizes
             unsafe {
                 let layout = Layout::from_size_align(size, 16)
-                    .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?);
+                    .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?;
                 let ptr = System.alloc(layout);
                 if ptr.is_null() {
                     return Err(DbError::OutOfMemory("System allocation failed".to_string()));
@@ -2284,7 +2284,7 @@ impl MemoryPool {
         // Pre-allocate all objects
         unsafe {
             let layout = Layout::from_size_align(object_size, 16)
-                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?);
+                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?;
 
             for _ in 0..capacity {
                 let ptr = System.alloc(layout);
@@ -2402,7 +2402,7 @@ impl MemoryZone {
     pub fn new(name: String, size: usize, zone_type: ZoneType) -> Result<Self> {
         unsafe {
             let layout = Layout::from_size_align(size, 4096)
-                .map_err(|e| DbError::OutOfMemory(format!("Invalid zone layout: {}", e)))?);
+                .map_err(|e| DbError::OutOfMemory(format!("Invalid zone layout: {}", e)))?;
 
             let base = System.alloc(layout);
             if base.is_null() {
@@ -2512,7 +2512,7 @@ impl BuddyAllocator {
 
         unsafe {
             let layout = Layout::from_size_align(size, size)
-                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?);
+                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?;
 
             let base = System.alloc(layout);
             if base.is_null() {
@@ -3042,7 +3042,7 @@ pub fn parse_memory_size(s: &str) -> Result<u64> {
     };
 
     let num: f64 = num_str.trim().parse()
-        .map_err(|e| DbError::InvalidArgument(format!("Invalid memory size: {}", e)))?);
+        .map_err(|e| DbError::InvalidArgument(format!("Invalid memory size: {}", e)))?;
 
     Ok((num * multiplier as f64) as u64)
 }

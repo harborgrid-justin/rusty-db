@@ -694,7 +694,7 @@ impl ReplicationManager {
         // Send to replication channel
         if let Some(sender) = &self.log_sender {
             sender.send(entry.clone())
-                .map_err(|e| DbError::Internal(format!("Failed to send log entry: {}", e)))?);
+                .map_err(|e| DbError::Internal(format!("Failed to send log entry: {}", e)))?;
         }
 
         // Handle based on replication mode
@@ -848,7 +848,7 @@ impl ReplicationManager {
         let conflict = conflicts.get_mut(&conflict_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Conflict {} not found", conflict_id)
-            ))?);
+            ))?;
 
         let resolved_version = match self.conflict_strategy {
             ConflictResolutionStrategy::LastWriteWins => {
@@ -1417,7 +1417,7 @@ impl ReplicationManager {
         slots.remove(slot_name)
             .ok_or_else(|| DbError::NotFound(
                 format!("Logical slot '{}' not found", slot_name)
-            ))?);
+            ))?;
 
         Ok(())
     }
@@ -1487,7 +1487,7 @@ impl ReplicationManager {
         slots.remove(slot_name)
             .ok_or_else(|| DbError::NotFound(
                 format!("Physical slot '{}' not found", slot_name)
-            ))?);
+            ))?;
 
         Ok(())
     }
@@ -1813,7 +1813,7 @@ impl ReplicationManager {
         let replica = self.get_replica(replica_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Replica '{}' not found", replica_id)
-            ))?);
+            ))?;
 
         let health = self.get_replica_health(replica_id)?;
         let lag = self.get_lag_monitor(replica_id)?;
@@ -2370,7 +2370,7 @@ mod tests {
                 vec![(i + 1) as u8],
                 i as i64,
                 (i + 1) as i64,
-            )?);
+            )?;
         }
 
         assert_eq!(rm.get_conflict_count(), 5);
@@ -2974,7 +2974,7 @@ use std::time::SystemTime;
                 last_sync: 0,
             });
             rm.add_replica(replica)?;
-            rm.update_lag(&format!("r{}", i), i * 1000)?);
+            rm.update_lag(&format!("r{}", i), i * 1000)?;
         }
 
         assert_eq!(rm.average_replication_lag(), 3000); // (1000+2000+3000+4000+5000)/5
@@ -3044,7 +3044,7 @@ use std::time::SystemTime;
 
             // Set critical lag for r3 and r4
             if i > 2 {
-                rm.update_lag(&format!("r{}", i), 20_000_000)?);
+                rm.update_lag(&format!("r{}", i), 20_000_000)?;
             }
         }
 
@@ -3090,7 +3090,7 @@ use std::time::SystemTime;
 
         // Create multiple snapshots
         for i in 1..=10 {
-            let mut snapshot = rm.create_snapshot(vec![format!("table{}", i)])?);
+            let mut snapshot = rm.create_snapshot(vec![format!("table{}", i)])?;
             snapshot.size_bytes = i * 1000;
             rm.snapshots.write().pop(); // Remove auto-added
             rm.snapshots.write().push(snapshot);
@@ -3276,7 +3276,7 @@ use std::time::SystemTime;
                 vec![(i + 1) as u8],
                 i as i64,
                 (i + 1) as i64,
-            )?);
+            )?;
         }
 
         assert_eq!(rm.get_resolved_conflicts_count(), 0);

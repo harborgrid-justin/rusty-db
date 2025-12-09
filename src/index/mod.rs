@@ -299,7 +299,7 @@ impl IndexManager {
         let indexes = self.indexes.read();
         let index = indexes
             .get(name)
-            .ok_or_else(|| DbError::Internal(format!("Index '{}' not found", name)))?);
+            .ok_or_else(|| DbError::Internal(format!("Index '{}' not found", name)))?;
 
         Ok(match index {
             Index::BPlusTree(idx) => {

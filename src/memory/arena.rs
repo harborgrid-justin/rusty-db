@@ -739,7 +739,7 @@ impl ArenaAllocator {
         let new_block = MemoryBlock::new(block_size, use_mmap)
             .map_err(|e| MemoryError::OutOfMemory {
                 reason: format!("Block allocation failed: {}", e),
-            })?);
+            })?;
 
         // Link the new block to the chain
         self.link_block_to_context(context, Arc::clone(&new_block)).await;

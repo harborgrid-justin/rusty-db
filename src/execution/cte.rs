@@ -2531,13 +2531,13 @@ pub mod advanced {
                 .ok_or_else(|| DbError::NotFound(format!(
                     "CTE '{}' not materialized",
                     self.outer_cte
-                )))?);
+                )))?;
             
             let inner_result = context.get_materialized(&self.inner_cte)
                 .ok_or_else(|| DbError::NotFound(format!(
                     "CTE '{}' not materialized",
                     self.inner_cte
-                )))?);
+                )))?;
             
             // Perform lateral join
             let mut result_rows = Vec::new();

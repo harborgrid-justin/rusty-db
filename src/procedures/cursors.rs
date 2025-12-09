@@ -323,7 +323,7 @@ impl CursorManager {
 
         let cursor = cursors.get(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?);
+        )?;
 
         // Check if cursor is already open
         if let Some(state) = cursor_states.get(cursor_name) {
@@ -358,7 +358,7 @@ impl CursorManager {
 
         let state = cursor_states.get_mut(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found or not open", cursor_name))
-        )?);
+        )?;
 
         if !state.is_open {
             return Err(DbError::InvalidInput(
@@ -375,7 +375,7 @@ impl CursorManager {
 
         let state = cursor_states.get_mut(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?);
+        )?;
 
         if !state.is_open {
             return Err(DbError::InvalidInput(
@@ -393,7 +393,7 @@ impl CursorManager {
 
         let state = cursor_states.get(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?);
+        )?;
 
         let found = if state.is_open {
             Some(state.is_found())
@@ -435,7 +435,7 @@ impl CursorManager {
 
         let ref_cursor = ref_cursors.get_mut(id).ok_or_else(||
             DbError::NotFound(format!("REF CURSOR '{}' not found", id))
-        )?);
+        )?;
 
         if ref_cursor.state.is_open {
             return Err(DbError::InvalidInput(
@@ -456,7 +456,7 @@ impl CursorManager {
 
         let ref_cursor = ref_cursors.get_mut(id).ok_or_else(||
             DbError::NotFound(format!("REF CURSOR '{}' not found", id))
-        )?);
+        )?;
 
         if !ref_cursor.state.is_open {
             return Err(DbError::InvalidInput(
@@ -473,7 +473,7 @@ impl CursorManager {
 
         let ref_cursor = ref_cursors.get_mut(id).ok_or_else(||
             DbError::NotFound(format!("REF CURSOR '{}' not found", id))
-        )?);
+        )?;
 
         if !ref_cursor.state.is_open {
             return Err(DbError::InvalidInput(
@@ -497,7 +497,7 @@ impl CursorManager {
 
         let state = cursor_states.get_mut(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?);
+        )?;
 
         if !state.is_open {
             return Err(DbError::InvalidInput(

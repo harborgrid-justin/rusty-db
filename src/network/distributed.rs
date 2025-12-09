@@ -240,7 +240,7 @@ impl QueryScheduler {
     pub async fn schedule(&self, query: ScheduledQuery) -> Result<(), DbError> {
         // Wait for available slot
         let _permit = self.semaphore.acquire().await
-            .map_err(|e| DbError::Internal(format!("Semaphore error: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Semaphore error: {}", e)))?;
         
         // Add to queue
         self.queue.write().push(query);

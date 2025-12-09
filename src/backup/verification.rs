@@ -400,7 +400,7 @@ impl VerificationManager {
 
         // Check file size
         let meta = metadata(backup_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to read metadata: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to read metadata: {}", e)))?;
 
         if meta.len() == 0 {
             return Ok(false);
@@ -447,7 +447,7 @@ impl VerificationManager {
         // Create test directory
         let test_dir = self.restore_test_config.test_directory.join(&test_id);
         std::fs::create_dir_all(&test_dir)
-            .map_err(|e| DbError::BackupError(format!("Failed to create test directory: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to create test directory: {}", e)))?;
 
         let mut errors = Vec::new();
         let mut success = true;

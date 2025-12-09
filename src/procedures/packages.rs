@@ -354,7 +354,7 @@ impl PackageManager {
 
         let package = packages.get_mut(&body.name).ok_or_else(||
             DbError::NotFound(format!("Package specification '{}' not found", body.name))
-        )?);
+        )?;
 
         // Validate and attach body
         let validated_package = package.clone().with_body(body)?;
@@ -398,7 +398,7 @@ impl PackageManager {
 
         let package = packages.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package '{}' not found", package_name))
-        )?);
+        )?;
 
         let mut instance = PackageInstance::new(package_name.to_string());
 
@@ -430,12 +430,12 @@ impl PackageManager {
 
         let package = packages.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package '{}' not found", package_name))
-        )?);
+        )?;
 
         let procedure = package.get_procedure(procedure_name, false).ok_or_else(||
             DbError::NotFound(format!("Procedure '{}' not found in package '{}'",
                 procedure_name, package_name))
-        )?);
+        )?;
 
         // Validate argument count
         if arguments.len() != procedure.parameters.len() {
@@ -464,12 +464,12 @@ impl PackageManager {
 
         let package = packages.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package '{}' not found", package_name))
-        )?);
+        )?;
 
         let function = package.get_function(function_name, false).ok_or_else(||
             DbError::NotFound(format!("Function '{}' not found in package '{}'",
                 function_name, package_name))
-        )?);
+        )?;
 
         // Validate argument count
         if arguments.len() != function.parameters.len() {
@@ -500,7 +500,7 @@ impl PackageManager {
 
         let instance = instances.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package instance '{}' not found", package_name))
-        )?);
+        )?;
 
         instance.get_variable(variable_name)
             .cloned()
@@ -522,13 +522,13 @@ impl PackageManager {
         // Verify package and variable exist
         let package = packages.get(package_name).ok_or_else(||
             DbError::NotFound(format!("Package '{}' not found", package_name))
-        )?);
+        )?;
 
         let var = package.specification.variables.iter()
             .find(|v| v.name == variable_name)
             .ok_or_else(|| DbError::NotFound(
                 format!("Variable '{}' not found in package '{}'", variable_name, package_name)
-            ))?);
+            ))?;
 
         // Check if variable is constant
         if var.is_constant {
@@ -564,7 +564,7 @@ impl PackageManager {
 
     /// Get package documentation
     pub fn get_documentation(&self, packagename: &str) -> Result<PackageDocumentation> {
-        let package = self.get_package(package_name)?);
+        let package = self.get_package(package_name)?;
 
         let mut doc = PackageDocumentation {
             name: package.specification.name.clone(),

@@ -481,7 +481,7 @@ impl GuaranteedRestorePoints {
         self.points.remove(name)
             .ok_or_else(|| DbError::Validation(
                 format!("Restore point '{}' not found", name)
-            ))?);
+            ))?;
         Ok(())
     }
 

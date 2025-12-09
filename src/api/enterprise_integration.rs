@@ -1078,7 +1078,7 @@ impl CircuitBreakerCoordinator {
         E: fmt::Display,
     {
         let breaker = self.get_breaker(name)
-            .ok_or_else(|| format!("Circuit breaker not found: {}", name))?);
+            .ok_or_else(|| format!("Circuit breaker not found: {}", name))?;
 
         if breaker.is_open() {
             breaker.try_reset();
@@ -1201,7 +1201,7 @@ impl ConnectionQuotaManager {
         let mut active = self.active_connections.write().unwrap();
 
         let quota = quotas.get(service)
-            .ok_or_else(|| DbError::NotFound(format!("No quota for service: {}", service)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No quota for service: {}", service)))?;
 
         let current = active.entry(service.to_string()).or_insert(0);
         if *current >= *quota {
@@ -1850,7 +1850,7 @@ impl RateLimiter {
     pub fn check_rate_limit(&self, key: &str) -> std::result::Result<(), DbError> {
         let limits = self.limits.read().unwrap();
         let limit = limits.get(key)
-            .ok_or_else(|| DbError::NotFound(format!("Rate limit not found for: {}", key)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Rate limit not found for: {}", key)))?;
 
         let requests_per_second = limit.requests_per_second;
         let burst_size = limit.burst_size;
@@ -2168,7 +2168,7 @@ impl HotReloadManager {
     pub fn reload_component(&self, component: &str) -> std::result::Result<(), DbError> {
         let handlers = self.reload_handlers.read().unwrap();
         let handler = handlers.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         // Validate before reload
         handler.validate()?;
@@ -2325,7 +2325,7 @@ impl StatePersistenceManager {
     pub fn persist_state(&self, component: &str) -> std::result::Result<(), DbError> {
         let handlers = self.persistence_handlers.read().unwrap();
         let handler = handlers.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         let data = handler.persist()?;
 
@@ -2338,11 +2338,11 @@ impl StatePersistenceManager {
     pub fn restore_state(&self, component: &str) -> std::result::Result<(), DbError> {
         let storage = self.state_storage.read().unwrap();
         let data = storage.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("No persisted state for: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No persisted state for: {}", component)))?;
 
         let handlers = self.persistence_handlers.read().unwrap();
         let handler = handlers.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         handler.restore(data)?;
 
@@ -2396,7 +2396,7 @@ impl RecoveryOrchestrator {
 
         let strategies = self.recovery_strategies.read().unwrap();
         let strategy = strategies.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         let result = strategy.recover();
 

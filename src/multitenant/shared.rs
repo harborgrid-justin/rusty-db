@@ -147,7 +147,7 @@ impl SharedServices {
         let profile = self
             .get_lockdown_profile(profile_name)
             .await
-            .ok_or_else(|| DbError::NotFound(format!("Lockdown profile {} not found", profile_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Lockdown profile {} not found", profile_name)))?;
 
         // Apply restrictions (in real implementation)
         println!(

@@ -173,7 +173,7 @@ impl MigrationCoordinator for DataMigrationManager {
         // Check active migrations
         {
             let active = self.active_migrations.read()
-                .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?);
+                .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
             if active.contains_key(task_id) {
                 return Ok(MigrationStatus::InProgress);
             }

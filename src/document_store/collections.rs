@@ -264,7 +264,7 @@ impl PropertySchema {
                 if let Some(pattern) = &self.pattern {
                     let re = regex::Regex::new(pattern)
                             format!("Invalid regex pattern: {}", e)
-                        ))?);
+                        ))?;
                     if !re.is_match(s) {
                             format!("String '{}' does not match pattern '{}'", s, pattern)
                         )));
@@ -673,7 +673,7 @@ impl Collection {
         // Validate against schema if enabled
         if self.metadata.settings.schema_validation_enabled {
             if let Some(schema) = &self.metadata.schema {
-                let json = document.as_json()?);
+                let json = document.as_json()?;
                 if let Err(e) = schema.validate(&json) {
                     match self.metadata.settings.validation_action {
                         ValidationAction::Error => return Err(e),

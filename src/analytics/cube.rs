@@ -382,7 +382,7 @@ impl CubeQuery {
         // Find dimension index
         let dim_index = cube.dimensions.iter()
             .position(|d| d.name == dimension)
-            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension)))?;
 
         // Filter aggregations matching the slice
         for (key, result) in &cube.aggregations {
@@ -406,7 +406,7 @@ impl CubeQuery {
         for (dim_name, value) in &filters {
             let index = cube.dimensions.iter()
                 .position(|d| &d.name == dim_name)
-                .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dim_name)))?);
+                .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dim_name)))?;
             filter_indices.insert(index, value);
         }
 
@@ -445,12 +445,12 @@ impl CubeQuery {
         // Find hierarchy
         let hier = cube.hierarchies.iter()
             .find(|h| h.name == hierarchy)
-            .ok_or_else(|| DbError::NotFound(format!("Hierarchy: {}", hierarchy)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Hierarchy: {}", hierarchy)))?;
 
         // Find current level and next level
         let current_index = hier.levels.iter()
             .position(|l| l == current_level)
-            .ok_or_else(|| DbError::NotFound(format!("Level: {}", current_level)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Level: {}", current_level)))?;
 
         if current_index + 1 >= hier.levels.len() {
             return Err(DbError::InvalidInput(
@@ -474,12 +474,12 @@ impl CubeQuery {
         // Find hierarchy
         let hier = cube.hierarchies.iter()
             .find(|h| h.name == hierarchy)
-            .ok_or_else(|| DbError::NotFound(format!("Hierarchy: {}", hierarchy)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Hierarchy: {}", hierarchy)))?;
 
         // Find current level and parent level
         let current_index = hier.levels.iter()
             .position(|l| l == current_level)
-            .ok_or_else(|| DbError::NotFound(format!("Level: {}", current_level)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Level: {}", current_level)))?;
 
         if current_index == 0 {
             return Err(DbError::InvalidInput(
@@ -541,7 +541,7 @@ impl CubeQuery {
         for dim_name in dimensions {
             let dim_index = cube.dimensions.iter()
                 .position(|d| &d.name == dim_name)
-                .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dim_name)))?);
+                .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dim_name)))?;
 
             let value = key.values.get(dim_index)
                 .and_then(|v| v.clone())

@@ -750,7 +750,7 @@ impl InstanceRecoveryManager {
 
         // Wait for all workers to complete
         for handle in handles {
-            handle.await.map_err(|e| DbError::Internal(format!("Recovery task failed: {}", e)))??);
+            handle.await.map_err(|e| DbError::Internal(format!("Recovery task failed: {}", e)))??;
         }
 
         Ok(())

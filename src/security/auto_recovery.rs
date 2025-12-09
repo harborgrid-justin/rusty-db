@@ -444,7 +444,7 @@ impl TransactionRollbackManager {
     ) -> Result<()> {
         let mut txns = self.transactions.write();
         let state = txns.get_mut(&txn_id)
-            .ok_or_else(|| DbError::NotFound(format!("Transaction {} not found", txn_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Transaction {} not found", txn_id)))?;
 
         let op = TransactionOperation {
             op_id: state.operations.len() as u64,

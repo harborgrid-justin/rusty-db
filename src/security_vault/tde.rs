@@ -359,7 +359,7 @@ impl TdeEngine {
         let ts_enc = configs.get(tablespace_name)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Tablespace encryption not configured: {}", tablespace_name
-            )))?);
+            )))?;
 
         if !ts_enc.config.enabled {
             return Err(DbError::InvalidInput(format!(
@@ -399,7 +399,7 @@ impl TdeEngine {
         let ts_enc = configs.get(tablespace_name)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Tablespace encryption not configured: {}", tablespace_name
-            )))?);
+            )))?;
 
         let plaintext = self.decrypt_internal(
             &encrypted.algorithm,
@@ -430,7 +430,7 @@ impl TdeEngine {
         let col_enc = configs.get(&key)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Column encryption not configured: {}.{}", table_name, column_name
-            )))?);
+            )))?;
 
         if !col_enc.config.enabled {
             return Err(DbError::InvalidInput(format!(
@@ -474,7 +474,7 @@ impl TdeEngine {
         let col_enc = configs.get(&key)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Column encryption not configured: {}.{}", table_name, column_name
-            )))?);
+            )))?;
 
         let plaintext = self.decrypt_internal(
             &encrypted.algorithm,
@@ -503,7 +503,7 @@ impl TdeEngine {
         let ts_enc = configs.get(tablespace_name)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Tablespace encryption not configured: {}", tablespace_name
-            )))?);
+            )))?;
 
         if !ts_enc.config.enabled {
             return Err(DbError::InvalidInput(format!(
@@ -551,7 +551,7 @@ impl TdeEngine {
         let ts_enc = configs.get(tablespace_name)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Tablespace encryption not configured: {}", tablespace_name
-            )))?);
+            )))?;
 
         let mut results = Vec::with_capacity(encrypted_blocks.len());
 
@@ -584,7 +584,7 @@ impl TdeEngine {
         let ts_enc = configs.get_mut(tablespace_name)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Tablespace encryption not configured: {}", tablespace_name
-            )))?);
+            )))?;
 
         if new_dek.len() != ts_enc.config.algorithm.key_size() {
             return Err(DbError::InvalidInput("Invalid key size".to_string()));
@@ -609,7 +609,7 @@ impl TdeEngine {
         let col_enc = configs.get_mut(&key)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Column encryption not configured: {}.{}", table_name, column_name
-            )))?);
+            )))?;
 
         if new_dek.len() != col_enc.config.algorithm.key_size() {
             return Err(DbError::InvalidInput("Invalid key size".to_string()));
@@ -687,7 +687,7 @@ impl TdeEngine {
         };
 
         let ciphertext = ciphertext
-            .map_err(|e| DbError::Encryption(format!("AES-GCM encryption failed: {}", e)))?);
+            .map_err(|e| DbError::Encryption(format!("AES-GCM encryption failed: {}", e)))?;
 
         Ok((nonce_bytes, ciphertext))
     }
@@ -742,7 +742,7 @@ impl TdeEngine {
         };
 
         let ciphertext = ciphertext
-            .map_err(|e| DbError::Encryption(format!("ChaCha20 encryption failed: {}", e)))?);
+            .map_err(|e| DbError::Encryption(format!("ChaCha20 encryption failed: {}", e)))?;
 
         Ok((nonce_bytes, ciphertext))
     }
@@ -816,7 +816,7 @@ impl TdeEngine {
         self.tablespace_configs.write().remove(tablespace_name)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Tablespace encryption not found: {}", tablespace_name
-            )))?);
+            )))?;
         Ok(())
     }
 
@@ -830,7 +830,7 @@ impl TdeEngine {
         self.column_configs.write().remove(&key)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Column encryption not found: {}.{}", table_name, column_name
-            )))?);
+            )))?;
         Ok(())
     }
 }

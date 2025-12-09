@@ -540,7 +540,7 @@ impl RuntimeExecutor {
                 // Evaluate arguments
                 let mut arg_values = Vec::new();
                 for arg in arguments {
-                    arg_values.push(self.evaluate_expression(ctx, arg)?);
+                    arg_values.push(self.evaluate_expression(ctx, arg)?;
                 }
 
                 // TODO: Integrate with procedure manager to call other procedures
@@ -703,7 +703,7 @@ impl RuntimeExecutor {
             Expression::FunctionCall { name, arguments } => {
                 let mut arg_values = Vec::new();
                 for arg in arguments {
-                    arg_values.push(self.evaluate_expression(ctx, arg)?);
+                    arg_values.push(self.evaluate_expression(ctx, arg)?;
                 }
                 self.call_function(name, arg_values)
             }
@@ -730,7 +730,7 @@ impl RuntimeExecutor {
                 if let (RuntimeValue::Integer(l), RuntimeValue::Integer(r)) = (left, right) {
                     Ok(RuntimeValue::Integer(l + r))
                 } else {
-                    let l = left.as_float()?);
+                    let l = left.as_float()?;
                     let r = right.as_float()?;
                     Ok(RuntimeValue::Float(l + r))
                 }
@@ -844,7 +844,7 @@ impl RuntimeExecutor {
     fn apply_unary_op(&self, op: &UnaryOperator, val: &RuntimeValue) -> Result<RuntimeValue> {
         match op {
             UnaryOperator::Not => {
-                let b = val.as_boolean()?);
+                let b = val.as_boolean()?;
                 Ok(RuntimeValue::Boolean(!b))
             }
 

@@ -193,7 +193,7 @@ impl TriggerManager {
 
         let trigger = triggers.remove(name).ok_or_else(||
             DbError::NotFound(format!("Trigger '{}' not found", name))
-        )?);
+        )?;
 
         // Remove from table triggers index
         if let Some(table_trigs) = table_triggers.get_mut(&trigger.table_name) {
@@ -209,7 +209,7 @@ impl TriggerManager {
 
         let trigger = triggers.get_mut(name).ok_or_else(||
             DbError::NotFound(format!("Trigger '{}' not found", name))
-        )?);
+        )?;
 
         trigger.enabled = true;
         Ok(())
@@ -221,7 +221,7 @@ impl TriggerManager {
 
         let trigger = triggers.get_mut(name).ok_or_else(||
             DbError::NotFound(format!("Trigger '{}' not found", name))
-        )?);
+        )?;
 
         trigger.enabled = false;
         Ok(())

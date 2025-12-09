@@ -284,7 +284,7 @@ impl SnapshotManager {
     pub fn new(snapshot_dir: PathBuf) -> Result<Self> {
         create_dir_all(&snapshot_dir).map_err(|e| {
             DbError::BackupError(format!("Failed to create snapshot directory: {}", e))
-        })?);
+        })?;
 
         Ok(Self {
             snapshots: Arc::new(RwLock::new(BTreeMap::new())),
@@ -320,7 +320,7 @@ impl SnapshotManager {
         let snapshot_path = self.snapshot_dir.join(&snapshot_id);
         create_dir_all(&snapshot_path).map_err(|e| {
             DbError::BackupError(format!("Failed to create snapshot directory: {}", e))
-        })?);
+        })?;
 
         // Initialize COW tracker
         let cow_tracker = CowTracker::new(snapshot_id.clone());
@@ -417,7 +417,7 @@ impl SnapshotManager {
         if snapshot_path.exists() {
             std::fs::remove_dir_all(&snapshot_path).map_err(|e| {
                 DbError::BackupError(format!("Failed to delete snapshot: {}", e))
-            })?);
+            })?;
         }
 
         // Remove from snapshots map

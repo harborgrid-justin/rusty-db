@@ -225,7 +225,7 @@ impl KeyManager {
         if let KeyStorageBackend::LocalFile { ref path } = config.storage_backend {
             create_dir_all(path).map_err(|e| {
                 DbError::BackupError(format!("Failed to create key directory: {}", e))
-            })?);
+            })?;
         }
 
         Ok(Self {
@@ -296,7 +296,7 @@ impl KeyManager {
         let algo_key = format!("{:?}", algorithm));
         let active_keys = self.active_keys.read();
         let key_id = active_keys.get(&algo_key)
-            .ok_or_else(|| DbError::BackupError(format!("No active key for {:?}", algorithm)))?);
+            .ok_or_else(|| DbError::BackupError(format!("No active key for {:?}", algorithm)))?;
 
         self.get_key(key_id)
     }
@@ -385,11 +385,11 @@ impl BackupEncryptionManager {
 
         // Read source file
         let mut source_file = File::open(&source_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to open source file: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to open source file: {}", e)))?;
 
         let mut source_data = Vec::new();
         source_file.read_to_end(&mut source_data)
-            .map_err(|e| DbError::BackupError(format!("Failed to read source file: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to read source file: {}", e)))?;
 
         let original_size = source_data.len() as u64;
 
@@ -401,10 +401,10 @@ impl BackupEncryptionManager {
 
         // Write encrypted file
         let mut dest_file = File::create(&destination_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?;
 
         dest_file.write_all(&encrypted_data)
-            .map_err(|e| DbError::BackupError(format!("Failed to write encrypted data: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to write encrypted data: {}", e)))?;
 
         let encrypted_size = encrypted_data.len() as u64;
 
@@ -443,11 +443,11 @@ impl BackupEncryptionManager {
 
         // Read encrypted file
         let mut source_file = File::open(&source_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to open encrypted file: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to open encrypted file: {}", e)))?;
 
         let mut encrypted_data = Vec::new();
         source_file.read_to_end(&mut encrypted_data)
-            .map_err(|e| DbError::BackupError(format!("Failed to read encrypted file: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to read encrypted file: {}", e)))?;
 
         // Decrypt data
         let decrypted_data = self.decrypt_data(
@@ -460,10 +460,10 @@ impl BackupEncryptionManager {
 
         // Write decrypted file
         let mut dest_file = File::create(&destination_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?;
 
         dest_file.write_all(&decrypted_data)
-            .map_err(|e| DbError::BackupError(format!("Failed to write decrypted data: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to write decrypted data: {}", e)))?;
 
         Ok(())
     }
@@ -484,7 +484,7 @@ impl BackupEncryptionManager {
 
         loop {
             let bytes_read = input.read(&mut buffer)
-                .map_err(|e| DbError::BackupError(format!("Failed to read: {}", e)))?);
+                .map_err(|e| DbError::BackupError(format!("Failed to read: {}", e)))?;
 
             if bytes_read == 0 {
                 break;
@@ -501,7 +501,7 @@ impl BackupEncryptionManager {
             )?;
 
             output.write_all(&encrypted_chunk)
-                .map_err(|e| DbError::BackupError(format!("Failed to write: {}", e)))?);
+                .map_err(|e| DbError::BackupError(format!("Failed to write: {}", e)))?;
 
             total_encrypted += encrypted_chunk.len() as u64;
         }

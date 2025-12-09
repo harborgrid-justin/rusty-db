@@ -101,7 +101,7 @@ pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<Hash256> {
     type HmacSha256 = Hmac<Sha256>;
 
     let mut mac = HmacSha256::new_from_slice(key)
-        .map_err(|e| DbError::Internal(format!("HMAC key error: {}", e)))?);
+        .map_err(|e| DbError::Internal(format!("HMAC key error: {}", e)))?;
     mac.update(data);
     let result = mac.finalize();
     let bytes = result.into_bytes();
@@ -779,7 +779,7 @@ pub fn hex_to_hash(hex: &str) -> Result<Vec<u8>> {
     let mut bytes = Vec::with_capacity(hex.len() / 2);
     for i in (0..hex.len()).step_by(2) {
         let byte = u8::from_str_radix(&hex[i..i + 2], 16)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid hex string: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Invalid hex string: {}", e)))?;
         bytes.push(byte);
     }
 

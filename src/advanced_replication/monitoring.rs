@@ -492,7 +492,7 @@ impl ReplicationMonitor {
         let alert = alerts.get_mut(alert_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Alert {} not found", alert_id)
-            ))?);
+            ))?;
 
         alert.acknowledged = true;
         Ok(())

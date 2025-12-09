@@ -354,7 +354,7 @@ impl RetentionManager {
     pub fn release_legal_hold(&self, hold_id: &str) -> Result<()> {
         let mut holds = self.legal_holds.write().unwrap();
         let hold = holds.get_mut(hold_id)
-            .ok_or_else(|| DbError::NotFound(format!("Legal hold {} not found", hold_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Legal hold {} not found", hold_id)))?;
         hold.release();
         Ok(())
     }

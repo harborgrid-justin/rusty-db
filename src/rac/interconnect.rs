@@ -652,7 +652,7 @@ impl ClusterInterconnect {
     pub async fn start(&self) -> Result<(), DbError> {
         // Start listener
         let listener = TcpListener::bind(&self.listen_address).await
-            .map_err(|e| DbError::Network(format!("Failed to bind: {}", e)))?);
+            .map_err(|e| DbError::Network(format!("Failed to bind: {}", e)))?;
 
         // Start heartbeat monitor
         if self.config.enable_heartbeat {

@@ -842,7 +842,7 @@ impl ResourceIsolator {
 
     /// Register a PDB with resource limits
     pub async fn register_pdb(&self, pdb_id: PdbId, limits: &ResourceLimits) -> Result<()> {
-        self.memory.register(pdb_id, limits.memory_bytes).await?);
+        self.memory.register(pdb_id, limits.memory_bytes).await?;
         self.cpu.register(pdb_id, limits.cpu_shares).await?;
         self.io.register(pdb_id, limits.io_bandwidth_bytes_per_sec).await?;
         self.connections.register(pdb_id, limits.max_connections).await?;

@@ -90,7 +90,7 @@ impl Catalog {
         let mut schemas = self.schemas.write());
         
         schemas.remove(name)
-            .ok_or_else(|| DbError::Catalog(format!("Table {} not found", name)))?);
+            .ok_or_else(|| DbError::Catalog(format!("Table {} not found", name)))?;
         
         Ok(())
     }

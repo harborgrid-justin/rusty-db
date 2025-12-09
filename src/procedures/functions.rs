@@ -260,7 +260,7 @@ impl FunctionManager {
         name: &str,
         arguments: Vec<RuntimeValue>,
     ) -> Result<Vec<HashMap<String, RuntimeValue>>> {
-        let function = self.get_function(name)?);
+        let function = self.get_function(name)?;
 
         match function {
             UserFunction::Table(func) => {
@@ -284,7 +284,7 @@ impl FunctionManager {
 
     /// Initialize aggregate state
     pub fn initialize_aggregate(&self, name: &str) -> Result<AggregateState> {
-        let function = self.get_function(name)?);
+        let function = self.get_function(name)?;
 
         match function {
             UserFunction::Aggregate(func) => {
@@ -304,7 +304,7 @@ impl FunctionManager {
         state: &mut AggregateState,
         value: RuntimeValue,
     ) -> Result<()> {
-        let function = self.get_function(name)?);
+        let function = self.get_function(name)?;
 
         match function {
             UserFunction::Aggregate(func) => {
@@ -324,7 +324,7 @@ impl FunctionManager {
         name: &str,
         state: &AggregateState,
     ) -> Result<RuntimeValue> {
-        let function = self.get_function(name)?);
+        let function = self.get_function(name)?;
 
         match function {
             UserFunction::Aggregate(func) => {
@@ -343,7 +343,7 @@ impl FunctionManager {
 
     /// Get function signature for documentation
     pub fn get_signature(&self, name: &str) -> Result<String> {
-        let function = self.get_function(name)?);
+        let function = self.get_function(name)?;
 
         let signature = match &function {
             UserFunction::Scalar(func) => {

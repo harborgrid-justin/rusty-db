@@ -745,7 +745,7 @@ impl SecurityEventCorrelator {
                     EventSeverity::High,
                     Some("T1110".to_string()),
                     vec![trigger_event.user_id.clone()],
-                )?);
+                )?;
             }
 
             // Check for unusual access patterns
@@ -760,7 +760,7 @@ impl SecurityEventCorrelator {
                     EventSeverity::Medium,
                     Some("T1078".to_string()),
                     vec![trigger_event.user_id.clone()],
-                )?);
+                )?;
             }
         }
 
@@ -1159,11 +1159,11 @@ impl ComplianceValidator {
     pub fn assess_control(&self, frameworkid: &str, controlid: &str) -> Result<ControlAssessment> {
         let frameworks = self.frameworks.read();
         let framework = frameworks.get(framework_id)
-            .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?);
+            .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?;
 
         let control = framework.controls.iter()
             .find(|c| c.id == control_id)
-            .ok_or_else(|| DbError::Network(format!("Control {} not found", control_id)))?);
+            .ok_or_else(|| DbError::Network(format!("Control {} not found", control_id)))?;
 
         // Perform automated check if available
         let (status, score) = if control.automated_check {
@@ -1195,7 +1195,7 @@ impl ComplianceValidator {
     pub fn calculate_framework_score(&self, frameworkid: &str) -> Result<f64> {
         let frameworks = self.frameworks.read();
         let framework = frameworks.get(framework_id)
-            .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?);
+            .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?;
 
         let assessments = self.assessments.read();
         let mut total_score = 0.0;

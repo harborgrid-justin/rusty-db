@@ -728,7 +728,7 @@ impl MediaRecoveryManager {
         let archive_path = self.archive_dir.join(file_name);
 
         std::fs::copy(segment_path, archive_path)
-            .map_err(|e| DbError::IOError(format!("Failed to archive segment: {}", e)))?);
+            .map_err(|e| DbError::IOError(format!("Failed to archive segment: {}", e)))?;
 
         Ok(())
     }

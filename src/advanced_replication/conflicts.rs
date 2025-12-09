@@ -613,7 +613,7 @@ impl ConflictResolver {
         let handler = handlers.get(handler_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Custom handler '{}' not found", handler_name)
-            ))?);
+            ))?;
 
         handler(conflict)
     }

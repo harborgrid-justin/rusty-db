@@ -137,7 +137,7 @@ impl HCCEngine {
                     }
 
                     let mut result = vec![1u8]; // Marker: typed compression
-                    result.extend_from_slice(&cascaded.compress_u32(&values)?);
+                    result.extend_from_slice(&cascaded.compress_u32(&values)?;
                     Ok(result)
                 } else {
                     // Fall back to LZ4 for odd sizes
@@ -161,7 +161,7 @@ impl HCCEngine {
                     }
 
                     let mut result = vec![2u8]; // Marker: delta encoding
-                    result.extend_from_slice(&delta_encoder.encode(&values)?);
+                    result.extend_from_slice(&delta_encoder.encode(&values)?;
                     Ok(result)
                 } else {
                     let mut output = vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
@@ -177,7 +177,7 @@ impl HCCEngine {
                 // Bit packing for booleans (8:1 compression minimum)
                 let rle_encoder = RLEEncoder::new();
                 let mut result = vec![3u8]; // Marker: RLE
-                result.extend_from_slice(&rle_encoder.encode(column)?);
+                result.extend_from_slice(&rle_encoder.encode(column)?;
                 Ok(result)
             }
 

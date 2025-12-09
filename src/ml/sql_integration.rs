@@ -449,7 +449,7 @@ impl MLSqlParser {
 
     /// Execute CREATE MODEL
     fn execute_create_model(&self, sql: &str) -> Result<MLExecutionResult> {
-        let stmt = CreateModelStatement::parse(sql)?);
+        let stmt = CreateModelStatement::parse(sql)?;
         let model_type = stmt.get_model_type()?;
         let hyperparameters = stmt.get_hyperparameters();
 
@@ -464,7 +464,7 @@ impl MLSqlParser {
 
     /// Execute DROP MODEL
     fn execute_drop_model(&self, sql: &str) -> Result<MLExecutionResult> {
-        let stmt = DropModelStatement::parse(sql)?);
+        let stmt = DropModelStatement::parse(sql)?;
 
         match self.ml_engine.registry().delete(&stmt.name, stmt.version) {
             Ok(_) => Ok(MLExecutionResult::ModelDropped {

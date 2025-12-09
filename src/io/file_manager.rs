@@ -449,7 +449,7 @@ impl FileManager {
             buffer_size: PAGE_SIZE,
             alignment: SECTOR_SIZE,
             enable_stats: true,
-        })?);
+        })?;
 
         let io_engine = crate::io::get_io_engine()?;
 

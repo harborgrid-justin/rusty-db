@@ -375,7 +375,7 @@ impl EventPublisher {
     pub async fn delete_topic(&self, topic_name: &str) -> Result<()> {
         let mut topics = self.topics.write();
         topics.remove(topic_name)
-            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?;
         Ok(())
     }
 
@@ -388,7 +388,7 @@ impl EventPublisher {
     pub fn get_topic_config(&self, topic_name: &str) -> Result<TopicConfig> {
         let topics = self.topics.read();
         let topic = topics.get(topic_name)
-            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?;
         Ok(topic.config.clone())
     }
 
@@ -427,7 +427,7 @@ impl EventPublisher {
         let partition = topic.get_partition(partition_id)
             .ok_or_else(|| DbError::InvalidOperation(
                 format!("Partition {} not found", partition_id)
-            ))?);
+            ))?;
 
         // Allocate offset
         let offset = partition.allocate_offset();
@@ -491,7 +491,7 @@ impl EventPublisher {
     {
         let topics = self.topics.read();
         let topic = topics.get(&event.topic)
-            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", event.topic)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", event.topic)))?;
 
         let num_partitions = topic.config.num_partitions;
         drop(topics);
@@ -511,12 +511,12 @@ impl EventPublisher {
     ) -> Result<Vec<PublishedEvent>> {
         let topics = self.topics.read();
         let topic = topics.get(topic_name)
-            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?;
 
         let partition = topic.get_partition(partition_id)
             .ok_or_else(|| DbError::InvalidOperation(
                 format!("Partition {} not found", partition_id)
-            ))?);
+            ))?;
 
         Ok(partition.dequeue_batch(max_events))
     }
@@ -525,12 +525,12 @@ impl EventPublisher {
     pub fn get_partition_offset(&self, topic_name: &str, partition_id: u32) -> Result<u64> {
         let topics = self.topics.read();
         let topic = topics.get(topic_name)
-            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?;
 
         let partition = topic.get_partition(partition_id)
             .ok_or_else(|| DbError::InvalidOperation(
                 format!("Partition {} not found", partition_id)
-            ))?);
+            ))?;
 
         Ok(partition.next_offset.load(Ordering::SeqCst))
     }

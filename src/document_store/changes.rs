@@ -94,7 +94,7 @@ impl ChangeEvent {
             collection,
             Some(document.metadata.id.clone()),
         );
-        event.full_document = Some(document.as_json()?);
+        event.full_document = Some(document.as_json()?;
         Ok(event)
     }
 
@@ -113,7 +113,7 @@ impl ChangeEvent {
 
         let update_desc = UpdateDescription::generate(old_doc, new_doc)?;
         event.update_description = Some(update_desc);
-        event.full_document = Some(new_doc.as_json()?);
+        event.full_document = Some(new_doc.as_json()?;
 
         Ok(event)
     }
@@ -130,7 +130,7 @@ impl ChangeEvent {
             collection,
             Some(document.metadata.id.clone()),
         );
-        event.full_document = Some(document.as_json()?);
+        event.full_document = Some(document.as_json()?;
         Ok(event)
     }
 }
@@ -672,7 +672,7 @@ impl DiffOperation {
                 if let Value::Object(obj) = current {
                     current = obj.get_mut(*part)
                             format!("Path not found: {}", path)
-                        ))?);
+                        ))?;
                 } else {
                         format!("Cannot navigate path: {}", path)
                     )));

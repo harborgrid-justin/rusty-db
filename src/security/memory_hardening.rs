@@ -248,7 +248,7 @@ impl GuardedMemory {
 
         // Allocate memory
         let layout = Layout::from_size_align(total_size, PAGE_SIZE)
-            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?);
+            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?;
 
         let base_ptr = unsafe { alloc(layout) };
         if base_ptr.is_null() {
@@ -707,7 +707,7 @@ impl SecureZeroingAllocator {
 
         // Allocate with alignment
         let layout = Layout::from_size_align(size, 16)
-            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?);
+            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?;
 
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {
@@ -888,7 +888,7 @@ impl IsolatedHeap {
     pub fn new(size: usize) -> Result<Self> {
         // Allocate heap region
         let layout = Layout::from_size_align(size, PAGE_SIZE)
-            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?);
+            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?;
 
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {

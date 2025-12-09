@@ -571,7 +571,7 @@ impl MLEngine {
         dataset: Dataset,
         hyperparameters: Option<Hyperparameters>,
     ) -> Result<ModelMetadata> {
-        dataset.validate()?);
+        dataset.validate()?;
 
         let params = hyperparameters.unwrap_or_else(|| model_type.default_hyperparameters());
 

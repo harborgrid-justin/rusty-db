@@ -120,7 +120,7 @@ impl<T: Clone> RTree<T> {
                         let child_clone = child.clone();
                         drop(entries);
                         drop(node);
-                        results.extend(self.search_recursive(child_clone, query_bbox)?);
+                        results.extend(self.search_recursive(child_clone, query_bbox)?;
                         return Ok(results);
                     }
                 }

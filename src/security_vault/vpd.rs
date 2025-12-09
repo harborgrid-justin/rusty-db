@@ -108,7 +108,7 @@ impl SecurityPredicate {
         if s.contains("${") {
             // Dynamic predicate
             let var_regex = Regex::new(r"\$\{([^}]+)\}")
-                .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?);
+                .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?;
 
             let variables: Vec<String> = var_regex.captures_iter(s)
                 .map(|cap| cap[1].to_string())
@@ -322,7 +322,7 @@ impl VpdEngine {
     /// Drop a policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
         self.row_policies.write().remove(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         Ok(())
     }
 
@@ -330,7 +330,7 @@ impl VpdEngine {
     pub fn enable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
         let policy = policies.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = true;
         Ok(())
     }
@@ -339,7 +339,7 @@ impl VpdEngine {
     pub fn disable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
         let policy = policies.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = false;
         Ok(())
     }
@@ -425,7 +425,7 @@ impl VpdEngine {
     fn extract_table_name(&self, query: &str) -> Result<String> {
         // Simplified extraction - real implementation would use SQL parser
         let from_regex = Regex::new(r"(?i)FROM\s+([a-zA-Z0-9_]+)")
-            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?;
 
         if let Some(cap) = from_regex.captures(query) {
             Ok(cap[1].to_string())
@@ -438,7 +438,7 @@ impl VpdEngine {
     fn inject_predicate(&self, query: &str, predicate: &str) -> Result<String> {
         // Simplified injection - real implementation would use SQL AST manipulation
         let where_regex = Regex::new(r"(?i)(WHERE\s+)")
-            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?;
 
         if where_regex.is_match(query) {
             // Query already has WHERE clause - AND the predicate
@@ -449,7 +449,7 @@ impl VpdEngine {
         } else {
             // No WHERE clause - add one
             let order_regex = Regex::new(r"(?i)(ORDER\s+BY|GROUP\s+BY|LIMIT|$)")
-                .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?);
+                .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?;
 
             let rewritten = order_regex.replace(query, |caps: &regex::Captures| {
                 if caps[0].is_empty() {
@@ -517,7 +517,7 @@ impl VpdEngine {
         // Simplified - real implementation would parse SELECT list properly
         let pattern = format!(r"(?i),?\s*{}\s*,?", regex::escape(column_name)));
         let regex = Regex::new(&pattern)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?;
         Ok(regex.replace_all(query, "").to_string())
     }
 
@@ -525,7 +525,7 @@ impl VpdEngine {
     fn nullify_column(&self, query: &str, column_name: &str) -> Result<String> {
         let pattern = format!(r"(?i)\b{}\b", regex::escape(column_name)));
         let regex = Regex::new(&pattern)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?;
         Ok(regex.replace_all(query, "NULL").to_string())
     }
 
@@ -533,7 +533,7 @@ impl VpdEngine {
     fn redact_column(&self, query: &str, column_name: &str, mask: &str) -> Result<String> {
         let pattern = format!(r"(?i)\b{}\b", regex::escape(column_name)));
         let regex = Regex::new(&pattern)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?;
         Ok(regex.replace_all(query, mask).to_string())
     }
 

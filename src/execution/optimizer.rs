@@ -957,16 +957,16 @@ impl Optimizer {
 
         let optimized = match plan {
             PlanNode::Join { join_type, left, right, condition } => {
-                let left = Box::new(self.eliminate_common_subexpressions(*left)?);
-                let right = Box::new(self.eliminate_common_subexpressions(*right)?);
+                let left = Box::new(self.eliminate_common_subexpressions(*left)?;
+                let right = Box::new(self.eliminate_common_subexpressions(*right)?;
                 PlanNode::Join { join_type, left, right, condition }
             }
             PlanNode::Filter { input, predicate } => {
-                let input = Box::new(self.eliminate_common_subexpressions(*input)?);
+                let input = Box::new(self.eliminate_common_subexpressions(*input)?;
                 PlanNode::Filter { input, predicate }
             }
             PlanNode::Aggregate { input, group_by, aggregates, having } => {
-                let input = Box::new(self.eliminate_common_subexpressions(*input)?);
+                let input = Box::new(self.eliminate_common_subexpressions(*input)?;
                 PlanNode::Aggregate { input, group_by, aggregates, having }
             }
             other => other,

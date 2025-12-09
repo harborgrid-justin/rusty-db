@@ -920,7 +920,7 @@ impl WktParser {
             .strip_prefix("POINT")
             .and_then(|s| s.trim().strip_prefix('('))
             .and_then(|s| s.strip_suffix(')'))
-            .ok_or_else(|| DbError::InvalidInput("Invalid POINT WKT".to_string()))?);
+            .ok_or_else(|| DbError::InvalidInput("Invalid POINT WKT".to_string()))?;
 
         let parts: Vec<&str> = coords_str.split_whitespace().collect();
         if parts.len() < 2 {
@@ -972,7 +972,7 @@ impl WktParser {
         let mut interiors = Vec::new();
         for ring_str in rings.iter().skip(1) {
             let coords = Self::parse_coordinate_list(ring_str)?;
-            interiors.push(LinearRing::new(coords)?);
+            interiors.push(LinearRing::new(coords)?;
         }
 
         Ok(Geometry::Polygon(Polygon::new(exterior, interiors)))
@@ -1132,7 +1132,7 @@ impl WkbParser {
                 offset += 16;
             }
 
-            interiors.push(LinearRing::new(interior_coords)?);
+            interiors.push(LinearRing::new(interior_coords)?;
         }
 
         Ok(Geometry::Polygon(Polygon::new(exterior, interiors)))

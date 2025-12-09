@@ -736,7 +736,7 @@ impl AuthenticationManager {
 
     fn verify_password(&self, password: &str, hash: &str) -> Result<bool> {
         let parsed_hash = PasswordHash::new(hash)
-            .map_err(|e| DbError::Internal(format!("Invalid password hash: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Invalid password hash: {}", e)))?;
 
         Ok(Argon2::default()
             .verify_password(password.as_bytes(), &parsed_hash)

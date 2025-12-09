@@ -423,7 +423,7 @@ impl RbacManager {
 
         let assignment = user_assignments.iter()
             .find(|a| &a.role_id == role_id)
-            .ok_or_else(|| DbError::NotFound(format!("Role {} not assigned to user", role_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Role {} not assigned to user", role_id)))?;
 
         // Check activation conditions
         self.check_activation_conditions(assignment, session)?;

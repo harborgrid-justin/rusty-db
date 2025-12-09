@@ -380,7 +380,7 @@ impl QueryCoordinator {
         for (idx, &shard_id) in plan.shards.iter().enumerate() {
             let node_id = self.shard_map.get_node(shard_id).ok_or_else(|| {
                 DbError::Internal(format!("No node found for shard {}", shard_id))
-            })?);
+            })?;
 
             let task = QueryTask {
                 id: format!("{}-{}", plan.query_id, idx),

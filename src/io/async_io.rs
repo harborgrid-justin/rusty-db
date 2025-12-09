@@ -361,12 +361,12 @@ impl IoCompletionPort {
         #[cfg(windows)]
         let backend = Arc::new(crate::io::windows_iocp::WindowsIocp::new(
             crate::io::windows_iocp::IocpConfig::default(),
-        )?);
+        )?;
 
         #[cfg(unix)]
         let backend = Arc::new(crate::io::unix_io_uring::IoUringEngine::new(
             crate::io::unix_io_uring::IoUringConfig::default(),
-        )?);
+        )?;
 
         Ok(Self {
             pending: AtomicU64::new(0),
@@ -558,7 +558,7 @@ pub struct AsyncIoEngine {
 impl AsyncIoEngine {
     /// Create a new async I/O engine
     pub fn new(config: crate::io::IoEngineConfig) -> Result<Self> {
-        let completion_port = Arc::new(IoCompletionPort::new(config.ring_size)?);
+        let completion_port = Arc::new(IoCompletionPort::new(config.ring_size)?;
         let shutdown = Arc::new(AtomicU8::new(0));
 
         // Spawn worker threads
@@ -572,7 +572,7 @@ impl AsyncIoEngine {
                 .spawn(move || {
                     Self::worker_loop(cp, sd));
                 })
-                .map_err(|e| DbError::Internal(format!("Failed to spawn I/O worker: {}", e)))?);
+                .map_err(|e| DbError::Internal(format!("Failed to spawn I/O worker: {}", e)))?;
 
             workers.push(handle);
         }

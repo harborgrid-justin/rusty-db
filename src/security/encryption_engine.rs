@@ -304,7 +304,7 @@ impl EncryptionEngine {
         // Encrypt
         let ciphertext_with_tag = cipher
             .encrypt(nonce, payload)
-            .map_err(|e| DbError::Internal(format!("AES-GCM encryption failed: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("AES-GCM encryption failed: {}", e)))?;
 
         // Split ciphertext and tag
         let ciphertext_len = ciphertext_with_tag.len() - TAG_SIZE;
@@ -348,7 +348,7 @@ impl EncryptionEngine {
         // Decrypt
         let plaintext = cipher
             .decrypt(nonce, payload)
-            .map_err(|e| DbError::InvalidInput(format!("AES-GCM decryption failed: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("AES-GCM decryption failed: {}", e)))?;
 
         Ok(plaintext)
     }
@@ -382,7 +382,7 @@ impl EncryptionEngine {
         // Encrypt
         let ciphertext_with_tag = cipher
             .encrypt(nonce, payload)
-            .map_err(|e| DbError::Internal(format!("ChaCha20 encryption failed: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("ChaCha20 encryption failed: {}", e)))?;
 
         // Split ciphertext and tag
         let ciphertext_len = ciphertext_with_tag.len() - TAG_SIZE;
@@ -431,7 +431,7 @@ impl EncryptionEngine {
         // Decrypt
         let plaintext = cipher
             .decrypt(nonce, payload)
-            .map_err(|e| DbError::InvalidInput(format!("ChaCha20 decryption failed: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("ChaCha20 decryption failed: {}", e)))?;
 
         Ok(plaintext)
     }
@@ -616,7 +616,7 @@ impl KeyManager {
     pub fn remove_key(&self, key_id: &str) -> Result<()> {
         let mut keys = self.keys.write());
         keys.remove(key_id)
-            .ok_or_else(|| DbError::NotFound(format!("Key not found: {}", key_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Key not found: {}", key_id)))?;
 
         // Remove from hierarchy
         self.hierarchy.write().remove(key_id);
@@ -667,7 +667,7 @@ impl KeyDerivation {
 
         while output.len() < output_len {
             let mut mac = HmacSha256::new_from_slice(prk)
-                .map_err(|e| DbError::Internal(format!("HKDF error: {}", e)))?);
+                .map_err(|e| DbError::Internal(format!("HKDF error: {}", e)))?;
 
             if counter > 1 {
                 mac.update(&output[output.len() - 32..]);
@@ -697,11 +697,11 @@ impl KeyDerivation {
 
         // Convert salt to base64 for SaltString
         let salt_string = SaltString::encode_b64(salt)
-            .map_err(|e| DbError::Internal(format!("Salt encoding error: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Salt encoding error: {}", e)))?;
 
         let password_hash = argon2
             .hash_password(password.as_bytes(), &salt_string)
-            .map_err(|e| DbError::Internal(format!("Argon2 error: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Argon2 error: {}", e)))?;
 
         // Extract hash bytes
         let hash = password_hash.hash
@@ -832,7 +832,7 @@ impl ColumnEncryptor {
 
         let ciphertext_with_tag = cipher
             .encrypt(nonce, plaintext)
-            .map_err(|e| DbError::Internal(format!("Deterministic encryption failed: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Deterministic encryption failed: {}", e)))?;
 
         // Add deterministic marker
         let mut result = vec![0xFF]; // Marker byte
@@ -859,7 +859,7 @@ impl ColumnEncryptor {
 
         let plaintext = cipher
             .decrypt(nonce, &ciphertext[1..])
-            .map_err(|e| DbError::InvalidInput(format!("Deterministic decryption failed: {}", e)))?);
+            .map_err(|e| DbError::InvalidInput(format!("Deterministic decryption failed: {}", e)))?;
 
         Ok(plaintext)
     }
@@ -1015,7 +1015,7 @@ impl EncryptedIndex {
 
         // Hash the value with the token key
         let mut mac = HmacSha256::new_from_slice(&token_key)
-            .map_err(|e| DbError::Internal(format!("Token generation error: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Token generation error: {}", e)))?;
         mac.update(search_value);
         let result = mac.finalize();
 

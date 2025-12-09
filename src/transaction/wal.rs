@@ -400,7 +400,7 @@ impl WALManager {
             .create(true)
             .append(true)
             .open(&wal_path)
-            .map_err(|e| DbError::IOError(format!("Failed to open WAL: {}", e)))?);
+            .map_err(|e| DbError::IOError(format!("Failed to open WAL: {}", e)))?;
 
         let manager = Self {
             wal_path,
@@ -554,11 +554,11 @@ impl WALManager {
     /// Write a single entry to WAL
     fn write_entry(&self, entry: &WALEntry) -> Result<()> {
         let serialized = bincode::serialize(entry)
-            .map_err(|e| DbError::SerializationError(format!("Failed to serialize WAL entry: {}", e)))?);
+            .map_err(|e| DbError::SerializationError(format!("Failed to serialize WAL entry: {}", e)))?;
 
         let mut file = self.wal_file.lock();
         file.write_all(&serialized)
-            .map_err(|e| DbError::IOError(format!("Failed to write WAL entry: {}", e)))?);
+            .map_err(|e| DbError::IOError(format!("Failed to write WAL entry: {}", e)))?;
 
         // Update statistics
         let mut stats = self.stats.write();
@@ -579,7 +579,7 @@ impl WALManager {
         let serialized: Vec<Vec<u8>> = entries.iter()
             .map(|e| bincode::serialize(e))
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| DbError::SerializationError(format!("Batch serialization failed: {}", e)))?);
+            .map_err(|e| DbError::SerializationError(format!("Batch serialization failed: {}", e)))?;
 
         // Prepare IoSlice for writev
         let slices: Vec<IoSlice> = serialized.iter()
@@ -596,7 +596,7 @@ impl WALManager {
         while total_written < total_size {
             let written = file.get_mut()
                 .write_vectored(&slices[total_written..])
-                .map_err(|e| DbError::IOError(format!("Vectored write failed: {}", e)))?);
+                .map_err(|e| DbError::IOError(format!("Vectored write failed: {}", e)))?;
             total_written += written;
         }
 
@@ -614,11 +614,11 @@ impl WALManager {
     fn sync(&self) -> Result<()> {
         let mut file = self.wal_file.lock();
         file.flush()
-            .map_err(|e| DbError::IOError(format!("Failed to flush WAL: {}", e)))?);
+            .map_err(|e| DbError::IOError(format!("Failed to flush WAL: {}", e)))?;
 
         file.get_mut()
             .sync_all()
-            .map_err(|e| DbError::IOError(format!("Failed to sync WAL: {}", e)))?);
+            .map_err(|e| DbError::IOError(format!("Failed to sync WAL: {}", e)))?;
 
         self.stats.write().fsyncs += 1;
 
@@ -677,7 +677,7 @@ impl WALManager {
     /// Read log records starting from LSN
     pub fn read_from(&self, startlsn: LSN) -> Result<Vec<WALEntry>> {
         let file = File::open(&self.wal_path)
-            .map_err(|e| DbError::IOError(format!("Failed to open WAL for reading: {}", e)))?);
+            .map_err(|e| DbError::IOError(format!("Failed to open WAL for reading: {}", e)))?;
 
         let mut reader = BufReader::new(file);
         let mut entries = Vec::new();

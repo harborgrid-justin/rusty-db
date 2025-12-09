@@ -120,7 +120,7 @@ impl PartitionManager {
             .ok_or_else(|| DbError::NotFound(format!(
                 "Partitioned table '{}' not found",
                 table_name
-            )))?);
+            )))?;
         
         match &metadata.strategy {
             PartitionStrategy::Range { ranges, .. } => {
@@ -165,7 +165,7 @@ impl PartitionManager {
             .ok_or_else(|| DbError::NotFound(format!(
                 "Partitioned table '{}' not found",
                 table_name
-            )))?);
+            )))?;
         
         match &mut metadata.strategy {
             PartitionStrategy::Range { ranges, .. } => {
@@ -213,7 +213,7 @@ impl PartitionManager {
             .ok_or_else(|| DbError::NotFound(format!(
                 "Partitioned table '{}' not found",
                 table_name
-            )))?);
+            )))?;
         
         match &mut metadata.strategy {
             PartitionStrategy::Range { ranges, .. } => {
@@ -245,7 +245,7 @@ impl PartitionManager {
             .ok_or_else(|| DbError::NotFound(format!(
                 "Partitioned table '{}' not found",
                 table_name
-            )))?);
+            )))?;
         
         Ok(match &metadata.strategy {
             PartitionStrategy::Range { ranges, .. } => {

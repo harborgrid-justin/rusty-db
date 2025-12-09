@@ -355,7 +355,7 @@ impl LogicalReplication {
     /// Remove replication rule
     pub fn remove_rule(&self, rule_id: u64) -> Result<()> {
         self.rules.write().remove(&rule_id)
-            .ok_or_else(|| DbError::NotFound(format!("Rule {} not found", rule_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Rule {} not found", rule_id)))?;
         Ok(())
     }
 
@@ -382,7 +382,7 @@ impl LogicalReplication {
     /// Drop replication slot
     pub fn drop_slot(&self, name: &str) -> Result<()> {
         self.slots.write().remove(name)
-            .ok_or_else(|| DbError::NotFound(format!("Slot '{}' not found", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Slot '{}' not found", name)))?;
         Ok(())
     }
 

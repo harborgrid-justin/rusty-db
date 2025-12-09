@@ -309,7 +309,7 @@ impl ApplyEngine {
 
         // Queue the change
         self.change_tx.send(change)
-            .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?);
+            .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?;
 
         let mut stats = self.stats.write();
         stats.total_changes += 1;

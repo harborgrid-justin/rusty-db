@@ -377,7 +377,7 @@ impl SqlMonitor {
 
             let execution = active
                 .get_mut(&execution_id)
-                .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?);
+                .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?;
 
             let now = SystemTime::now();
             execution.elapsed_time = now.duration_since(execution.start_time).unwrap_or_default();
@@ -401,7 +401,7 @@ impl SqlMonitor {
                 AlertType::LongRunningQuery,
                 AlertSeverity::Warning,
                 format!("Query has been running for {} seconds", elapsed_secs),
-            )?);
+            )?;
         }
 
         Ok(())
@@ -419,7 +419,7 @@ impl SqlMonitor {
 
         let execution = active
             .get_mut(&execution_id)
-            .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?;
 
         let wait_detail = WaitEventDetail {
             wait_class: wait_class.clone(),
@@ -451,7 +451,7 @@ impl SqlMonitor {
 
         let execution = active
             .get_mut(&execution_id)
-            .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?;
 
         // Find or create operation metrics
         if let Some(op) = execution.plan_operations.iter_mut().find(|o| o.operation_id == operation_id) {

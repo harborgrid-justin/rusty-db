@@ -436,32 +436,32 @@ impl BatchPredictor {
         match model_type {
             ModelType::LinearRegression => {
                 let model: LinearRegression = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
                 model.predict(features)
             }
             ModelType::LogisticRegression => {
                 let model: LogisticRegression = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
                 model.predict(features)
             }
             ModelType::DecisionTree => {
                 let model: DecisionTree = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
                 model.predict(features)
             }
             ModelType::RandomForest => {
                 let model: RandomForest = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
                 model.predict(features)
             }
             ModelType::KMeans => {
                 let model: KMeansClustering = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
                 model.predict(features)
             }
             ModelType::NaiveBayes => {
                 let model: NaiveBayes = bincode::deserialize(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
                 model.predict(features)
             }
         }
@@ -653,12 +653,12 @@ impl InferenceEngine {
         let importance_scores = match stored.metadata.model_type {
             ModelType::LinearRegression => {
                 let model: LinearRegression = bincode::deserialize(&stored.model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
                 model.feature_importance()
             }
             ModelType::LogisticRegression => {
                 let model: LogisticRegression = bincode::deserialize(&stored.model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?);
+                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
                 model.feature_importance()
             }
             _ => None,

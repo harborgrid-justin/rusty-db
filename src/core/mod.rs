@@ -402,7 +402,7 @@ impl DatabaseCore {
 
         // Create data directory if it doesn't exist
         std::fs::create_dir_all(&config.data_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create data directory: {}", e)))?);
+            .map_err(|e| DbError::IoError(format!("Failed to create data directory: {}", e)))?;
 
         Ok(())
     }

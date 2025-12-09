@@ -460,7 +460,7 @@ impl ConsumerGroupManager {
         let group_id = groups_by_name.get(name)
             .ok_or_else(|| DbError::NotFound(
                 format!("Consumer group {} not found", name)
-            ))?);
+            ))?;
         self.get_group(*group_id)
     }
 
@@ -473,7 +473,7 @@ impl ConsumerGroupManager {
         let group = groups.get_mut(&group_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Consumer group {} not found", group_id)
-            ))?);
+            ))?;
 
         update_fn(group);
         group.modified_at = SystemTime::now();
@@ -495,7 +495,7 @@ impl ConsumerGroupManager {
         let group = groups.remove(&group_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Consumer group {} not found", group_id)
-            ))?);
+            ))?;
 
         groups_by_name.remove(&group.name);
         Ok(())
@@ -531,7 +531,7 @@ impl ConsumerGroupManager {
         user_mappings.remove(&user_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("User {} mapping not found", user_id)
-            ))?);
+            ))?;
         Ok(())
     }
 
@@ -598,7 +598,7 @@ impl ConsumerGroupManager {
         let mapping = session_mappings.get_mut(&session_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Session {} not found", session_id)
-            ))?);
+            ))?;
 
         let old_group_id = mapping.group_id;
         if old_group_id == new_group_id {
@@ -635,7 +635,7 @@ impl ConsumerGroupManager {
         let mapping = session_mappings.remove(&session_id)
             .ok_or_else(|| DbError::NotFound(
                 format!("Session {} not found", session_id)
-            ))?);
+            ))?;
 
         // Decrement session count
         let mut groups = self.groups.write().unwrap();
@@ -717,7 +717,7 @@ impl ConsumerGroupManager {
 
     /// Get statistics for a consumer group
     pub fn get_group_statistics(&self, group_id: ConsumerGroupId) -> Result<GroupStatistics> {
-        let group = self.get_group(group_id)?);
+        let group = self.get_group(group_id)?;
 
         Ok(GroupStatistics {
             group_id,

@@ -211,7 +211,7 @@ impl OLTPCompressor {
             .position(|loc| loc.row_id == row_id)
             .ok_or_else(|| CompressionError::InvalidInput(
                 format!("Row {} not found", row_id)
-            ))?);
+            ))?;
 
         // Check if new row fits in place
         if new_row.len() <= rows[row_index].len() && !self.enable_row_chaining {
@@ -302,7 +302,7 @@ impl OLTPCompressor {
             .position(|loc| loc.row_id == row_id)
             .ok_or_else(|| CompressionError::InvalidInput(
                 format!("Row {} not found", row_id)
-            ))?);
+            ))?;
 
         rows.remove(row_index);
 

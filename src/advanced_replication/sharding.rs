@@ -282,7 +282,7 @@ impl ShardingEngine {
         let sharded_table = tables.get(table)
             .ok_or_else(|| DbError::Replication(
                 format!("Table {} is not sharded", table)
-            ))?);
+            ))?;
 
         let shard_ids = self.determine_shards(&sharded_table.strategy, shard_key)?;
 
@@ -335,7 +335,7 @@ impl ShardingEngine {
         let sharded_table = tables.get(table)
             .ok_or_else(|| DbError::Replication(
                 format!("Table {} is not sharded", table)
-            ))?);
+            ))?;
 
         // Get all shards for this table
         let shard_ids: Vec<String> = sharded_table.shards.iter()
@@ -399,7 +399,7 @@ impl ShardingEngine {
         let shard = shards.get(shard_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Shard {} not found", shard_id)
-            ))?);
+            ))?;
 
         // In a real implementation, would execute on the shard's server
         // For now, return empty result
@@ -429,12 +429,12 @@ impl ShardingEngine {
         let source = shards.get(source_shard)
             .ok_or_else(|| DbError::Replication(
                 format!("Source shard {} not found", source_shard)
-            ))?);
+            ))?;
 
         let _target = shards.get(target_shard)
             .ok_or_else(|| DbError::Replication(
                 format!("Target shard {} not found", target_shard)
-            ))?);
+            ))?;
 
         let plan = RebalancePlan {
             id: format!("rebalance-{}", uuid::Uuid::new_v4()),
@@ -564,7 +564,7 @@ impl ShardingEngine {
         let shard = shards.get(shard_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Shard {} not found", shard_id)
-            ))?);
+            ))?;
 
         Ok(ShardStatistics {
             shard_id: shard.id.clone(),
@@ -608,7 +608,7 @@ impl ShardingEngine {
         shards.remove(shard_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Shard {} not found", shard_id)
-            ))?);
+            ))?;
 
         let mut stats = self.stats.write();
         stats.total_shards = stats.total_shards.saturating_sub(1);
@@ -624,7 +624,7 @@ impl ShardingEngine {
         let shard = shards.get_mut(shard_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Shard {} not found", shard_id)
-            ))?);
+            ))?;
 
         let old_status = shard.status.clone();
         shard.status = status.clone();

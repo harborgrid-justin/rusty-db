@@ -392,7 +392,7 @@ impl AuditVault {
     pub fn new<P: AsRef<Path>>(data_dir: P, retention_days: u32) -> Result<Self> {
         let data_dir = data_dir.as_ref().to_path_buf();
         fs::create_dir_all(&data_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create audit directory: {}", e)))?);
+            .map_err(|e| DbError::IoError(format!("Failed to create audit directory: {}", e)))?;
 
         Ok(Self {
             data_dir,
@@ -415,7 +415,7 @@ impl AuditVault {
     /// Drop an audit policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
         self.policies.write().remove(name)
-            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         Ok(())
     }
 
@@ -524,13 +524,13 @@ impl AuditVault {
             .create(true)
             .append(true)
             .open(&log_file)
-            .map_err(|e| DbError::IoError(format!("Failed to open audit log: {}", e)))?);
+            .map_err(|e| DbError::IoError(format!("Failed to open audit log: {}", e)))?;
 
         for record in buffer.iter() {
             let json = serde_json::to_string(record)
-                .map_err(|e| DbError::Serialization(format!("Failed to serialize record: {}", e)))?);
+                .map_err(|e| DbError::Serialization(format!("Failed to serialize record: {}", e)))?;
             writeln!(file, "{}", json)
-                .map_err(|e| DbError::IoError(format!("Failed to write audit log: {}", e)))?);
+                .map_err(|e| DbError::IoError(format!("Failed to write audit log: {}", e)))?;
         }
 
         buffer.clear();
@@ -554,7 +554,7 @@ impl AuditVault {
         }
 
         let content = fs::read_to_string(&log_file)
-            .map_err(|e| DbError::IoError(format!("Failed to read audit log: {}", e)))?);
+            .map_err(|e| DbError::IoError(format!("Failed to read audit log: {}", e)))?;
 
         let mut records = Vec::new();
         for line in content.lines() {
@@ -563,7 +563,7 @@ impl AuditVault {
             }
 
             let record: AuditRecord = serde_json::from_str(line)
-                .map_err(|e| DbError::Serialization(format!("Failed to parse record: {}", e)))?);
+                .map_err(|e| DbError::Serialization(format!("Failed to parse record: {}", e)))?;
 
             // Apply filters
             if record.timestamp < start_date || record.timestamp > end_date {
@@ -598,7 +598,7 @@ impl AuditVault {
         }
 
         let content = fs::read_to_string(&log_file)
-            .map_err(|e| DbError::IoError(format!("Failed to read audit log: {}", e)))?);
+            .map_err(|e| DbError::IoError(format!("Failed to read audit log: {}", e)))?;
 
         let mut previous_hash = String::from("0");
 
@@ -608,7 +608,7 @@ impl AuditVault {
             }
 
             let record: AuditRecord = serde_json::from_str(line)
-                .map_err(|e| DbError::Serialization(format!("Failed to parse record: {}", e)))?);
+                .map_err(|e| DbError::Serialization(format!("Failed to parse record: {}", e)))?;
 
             // Verify hash
             if !record.verify_hash() {
@@ -730,7 +730,7 @@ impl AuditVault {
         }
 
         let content = fs::read_to_string(&log_file)
-            .map_err(|e| DbError::IoError(format!("Failed to read audit log: {}", e)))?);
+            .map_err(|e| DbError::IoError(format!("Failed to read audit log: {}", e)))?;
 
         let mut kept_records = Vec::new();
         let mut purged_count = 0;
@@ -741,7 +741,7 @@ impl AuditVault {
             }
 
             let record: AuditRecord = serde_json::from_str(line)
-                .map_err(|e| DbError::Serialization(format!("Failed to parse record: {}", e)))?);
+                .map_err(|e| DbError::Serialization(format!("Failed to parse record: {}", e)))?;
 
             if record.timestamp >= cutoff {
                 kept_records.push(line.to_string());
@@ -752,7 +752,7 @@ impl AuditVault {
 
         // Write back kept records
         fs::write(&log_file, kept_records.join("\n"))
-            .map_err(|e| DbError::IoError(format!("Failed to write audit log: {}", e)))?);
+            .map_err(|e| DbError::IoError(format!("Failed to write audit log: {}", e)))?;
 
         Ok(purged_count)
     }
