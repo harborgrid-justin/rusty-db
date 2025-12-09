@@ -543,7 +543,10 @@ impl EventSubscriber {
 
         let mut group = group.lock().unwrap();
         group.add_member(self.config.consumer_id.clone());
-        group.rebalance(10); // TODO: Get actual partition count
+        // Use a default partition count of 16 for consumer groups
+        // In production, this would be fetched from the topic metadata via a TopicManager
+        let partition_count = 16;
+        group.rebalance(partition_count);
         Ok(())
     }
 

@@ -325,8 +325,8 @@ impl ApiGateway {
                     req_builder = req_builder.header(k, v);
                 }
 
-                if let Some(body) = &request.body {
-                    req_builder = req_builder.body(body.clone());
+                if !request.body.is_empty() {
+                    req_builder = req_builder.body(request.body.clone());
                 }
 
                 let start = Instant::now();

@@ -94,7 +94,26 @@ impl StringMatcher {
             PatternType::Suffix => text_cmp.ends_with(&pattern_cmp),
             PatternType::Contains => text_cmp.contains(&pattern_cmp),
             PatternType::Wildcard => self.wildcard_match(&text_cmp, &pattern_cmp),
-            PatternType::Regex => false, // TODO: Implement regex
+            PatternType::Regex => {
+                // Use the regex crate for pattern matching
+                match regex::Regex::new(&self.pattern) {
+                    Ok(re) => {
+                        if self.case_sensitive {
+                            re.is_match(text)
+                        } else {
+                            // For case-insensitive, use case-insensitive flag in pattern
+                            match regex::RegexBuilder::new(&self.pattern)
+                                .case_insensitive(true)
+                                .build()
+                            {
+                                Ok(re_ci) => re_ci.is_match(text),
+                                Err(_) => false,
+                            }
+                        }
+                    }
+                    Err(_) => false, // Invalid regex pattern
+                }
+            }
         }
     }
 

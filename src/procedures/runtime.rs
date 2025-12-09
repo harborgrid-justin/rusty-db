@@ -93,8 +93,16 @@ pub struct CursorState {
     pub is_open: bool,
     pub current_row: usize,
     pub rows: Vec<HashMap<String, RuntimeValue>>,
-    bulk_exceptions: Vec<_>,
+    bulk_exceptions: Vec<BulkException>,
     position: i32,
+}
+
+// Bulk exception for FORALL operations
+#[derive(Debug, Clone, PartialEq)]
+pub struct BulkException {
+    pub index: usize,
+    pub error_code: i32,
+    pub error_message: String,
 }
 
 // Execution context for a PL/SQL block
@@ -356,8 +364,8 @@ impl ExecutionContext {
             if !cursor.is_open {
                 return Err(DbError::Runtime(format!("Cursor '{}' is not open", name)));
             }
-            if cursor.position < cursor.rows.len() {
-                let row = cursor.rows[cursor.position].clone();
+            if (cursor.position as usize) < cursor.rows.len() {
+                let row = cursor.rows[cursor.position as usize].clone();
                 cursor.position += 1;
                 Ok(Some(row))
             } else {
@@ -662,7 +670,7 @@ impl RuntimeExecutor {
 
             Statement::Savepoint { name } => {
                 // Integrate with transaction manager
-                ctx.create_savepoint(name.clone());
+                ctx.create_savepoint(&name);
 
                 if ctx.is_debug() {
                     ctx.add_output(format!("SAVEPOINT {} created", name));
@@ -700,7 +708,7 @@ impl RuntimeExecutor {
                     }
                     _ => {
                         // Store the call for later execution by the procedure manager
-                        ctx.record_procedure_call(name.clone(), arg_values);
+                        ctx.record_procedure_call(&name, arg_values);
 
                         if ctx.is_debug() {
                             ctx.add_output(format!("CALL {}(...)", name));

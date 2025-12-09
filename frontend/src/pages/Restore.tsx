@@ -10,6 +10,7 @@ import {
 import { RestoreWizard } from '../components/backup/RestoreWizard';
 import { useBackups, useRestoreProgress, useRestoreHistory } from '../hooks/useBackup';
 import { backupService } from '../services/backupService';
+import { configService } from '../services/configService';
 import type { RestoreRequest } from '../types';
 import { useUIStore } from '../stores/uiStore';
 import { formatBytes, formatDate, formatDuration, formatRelativeTime } from '../utils/format';
@@ -102,11 +103,36 @@ export default function RestorePage() {
   const [showWizard, setShowWizard] = useState(false);
   const [restoreId, setRestoreId] = useState<string | null>(null);
   const [initialBackupId, setInitialBackupId] = useState<string | undefined>();
+  const [databases, setDatabases] = useState<string[]>([]);
+  const [databasesLoading, setDatabasesLoading] = useState(true);
 
   const { backups, loading: backupsLoading } = useBackups({ status: 'completed' });
   const { history, loading: historyLoading, refetch: refetchHistory } =
     useRestoreHistory(10);
   const { addNotification } = useUIStore();
+
+  // Fetch available databases
+  useEffect(() => {
+    const fetchDatabases = async () => {
+      try {
+        setDatabasesLoading(true);
+        const response = await configService.getAvailableDatabases();
+        if (response.data) {
+          setDatabases(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch databases:', error);
+        addNotification({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to load available databases',
+        });
+      } finally {
+        setDatabasesLoading(false);
+      }
+    };
+    fetchDatabases();
+  }, [addNotification]);
 
   // Check URL params for backup ID
   useEffect(() => {
@@ -211,11 +237,11 @@ export default function RestorePage() {
         <div className="card p-6">
           <RestoreWizard
             backups={backups}
-            databases={[]} // TODO: Fetch available databases
+            databases={databases}
             onRestore={handleStartRestore}
             onCancel={handleCancel}
             initialBackupId={initialBackupId}
-            loading={false}
+            loading={databasesLoading}
           />
         </div>
       ) : isRestoring && restoreProgress ? (

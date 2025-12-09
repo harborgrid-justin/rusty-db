@@ -294,6 +294,13 @@ class ConfigurationService {
   }>>> {
     return get('/config/diff');
   }
+
+  /**
+   * Get list of available databases for backup/restore operations
+   */
+  async getAvailableDatabases(): Promise<ApiResponse<string[]>> {
+    return get<string[]>('/databases');
+  }
 }
 
 // ============================================================================

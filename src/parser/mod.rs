@@ -6,6 +6,12 @@ use crate::error::DbError;
 use crate::catalog::{Column, DataType};
 use crate::security::injection_prevention::InjectionPreventionGuard;
 
+pub mod expression;
+pub mod string_functions;
+
+pub use expression::*;
+pub use string_functions::*;
+
 // Parsed SQL statement
 #[derive(Debug, Clone)]
 pub enum SqlStatement {
@@ -25,11 +31,24 @@ pub enum SqlStatement {
         having: Option<String>,
         order_by: Vec<OrderByClause>,
         limit: Option<usize>,
+        offset: Option<usize>,
+        distinct: bool,
+    },
+    SelectInto {
+        target_table: String,
+        source_table: String,
+        columns: Vec<String>,
+        filter: Option<String>,
     },
     Insert {
         table: String,
         columns: Vec<String>,
         values: Vec<Vec<String>>,
+    },
+    InsertIntoSelect {
+        table: String,
+        columns: Vec<String>,
+        source_query: String,
     },
     Update {
         table: String,
@@ -49,10 +68,44 @@ pub enum SqlStatement {
     CreateView {
         name: String,
         query: String,
+        or_replace: bool,
+    },
+    DropView {
+        name: String,
+    },
+    DropIndex {
+        name: String,
+    },
+    TruncateTable {
+        name: String,
     },
     AlterTable {
         name: String,
         action: AlterAction,
+    },
+    CreateDatabase {
+        name: String,
+    },
+    DropDatabase {
+        name: String,
+    },
+    BackupDatabase {
+        database: String,
+        path: String,
+    },
+    CreateProcedure {
+        name: String,
+        parameters: Vec<(String, DataType)>,
+        body: String,
+    },
+    ExecProcedure {
+        name: String,
+        arguments: Vec<String>,
+    },
+    Union {
+        left: Box<SqlStatement>,
+        right: Box<SqlStatement>,
+        all: bool,
     },
     GrantPermission {
         permission: String,
@@ -92,8 +145,34 @@ pub struct OrderByClause {
 pub enum AlterAction {
     AddColumn(Column),
     DropColumn(String),
-    AddConstraint(String),
+    AlterColumn {
+        column_name: String,
+        new_type: DataType,
+    },
+    ModifyColumn {
+        column_name: String,
+        new_type: DataType,
+        nullable: Option<bool>,
+    },
+    AddConstraint(ConstraintType),
     DropConstraint(String),
+    DropDefault(String),
+}
+
+#[derive(Debug, Clone)]
+pub enum ConstraintType {
+    PrimaryKey(Vec<String>),
+    ForeignKey {
+        columns: Vec<String>,
+        ref_table: String,
+        ref_columns: Vec<String>,
+    },
+    Unique(Vec<String>),
+    Check(String),
+    Default {
+        column: String,
+        value: String,
+    },
 }
 
 // SQL parser wrapper with integrated injection prevention
@@ -174,15 +253,32 @@ impl SqlParser {
                     columns: cols,
                 })
             }
-            Statement::Drop { names, .. } => {
-                Ok(SqlStatement::DropTable {
-                    name: names[0].to_string(),
-                })
+            Statement::Drop { names, object_type, .. } => {
+                use sqlparser::ast::ObjectType;
+                match object_type {
+                    ObjectType::Table => {
+                        Ok(SqlStatement::DropTable {
+                            name: names[0].to_string(),
+                        })
+                    }
+                    ObjectType::View => {
+                        Ok(SqlStatement::DropView {
+                            name: names[0].to_string(),
+                        })
+                    }
+                    ObjectType::Index => {
+                        Ok(SqlStatement::DropIndex {
+                            name: names[0].to_string(),
+                        })
+                    }
+                    _ => Err(DbError::SqlParse(format!("Unsupported DROP object type: {:?}", object_type))),
+                }
             }
             Statement::Query(query) => {
                 if let SetExpr::Select(select) = *query.body {
                     let table = self.extract_table_name(&select.from)?;
                     let columns = self.extract_columns(&select.projection)?;
+                    let distinct = select.distinct.is_some();
 
                     Ok(SqlStatement::Select {
                         table,
@@ -193,27 +289,71 @@ impl SqlParser {
                         having: None,
                         order_by: Vec::new(),
                         limit: None,
+                        offset: None,
+                        distinct,
                     })
                 } else {
                     Err(DbError::SqlParse("Unsupported query type".to_string()))
                 }
             }
-            Statement::Insert { table_name, columns, .. } => {
+            Statement::Insert { table_name, columns, source, .. } => {
                 let table = table_name.to_string();
                 let cols: Vec<String> = columns.iter().map(|c| c.to_string()).collect();
 
-                // TODO: Parse source values from the INSERT statement
-                // For now, return empty values - this will be enhanced in future versions
+                // Parse source values from the INSERT statement
+                let mut values: Vec<Vec<String>> = Vec::new();
+
+                if let Some(src) = source {
+                    if let SetExpr::Values(vals) = *src.body {
+                        for row in vals.rows {
+                            let mut row_values = Vec::new();
+                            for expr in row {
+                                let value = self.extract_literal_value(&expr);
+                                row_values.push(value);
+                            }
+                            values.push(row_values);
+                        }
+                    }
+                }
+
                 Ok(SqlStatement::Insert {
                     table,
                     columns: cols,
-                    values: vec![],
+                    values,
                 })
             }
             Statement::Delete { from, .. } => {
                 Ok(SqlStatement::Delete {
                     table: from[0].relation.to_string(),
                     filter: None,
+                })
+            }
+            Statement::Truncate { table_name, .. } => {
+                Ok(SqlStatement::TruncateTable {
+                    name: table_name.to_string(),
+                })
+            }
+            Statement::CreateIndex { name, table_name, columns, unique, .. } => {
+                let index_name = name.as_ref()
+                    .map(|n| n.to_string())
+                    .unwrap_or_else(|| format!("idx_{}", table_name.to_string()));
+                let table = table_name.to_string();
+                let cols: Vec<String> = columns.iter()
+                    .map(|col| col.expr.to_string())
+                    .collect();
+
+                Ok(SqlStatement::CreateIndex {
+                    name: index_name,
+                    table,
+                    columns: cols,
+                    unique,
+                })
+            }
+            Statement::CreateView { name, query, .. } => {
+                Ok(SqlStatement::CreateView {
+                    name: name.to_string(),
+                    query: query.to_string(),
+                    or_replace: false,
                 })
             }
             _ => Err(DbError::SqlParse("Unsupported statement type".to_string())),
@@ -247,6 +387,25 @@ impl SqlParser {
         }
 
         Ok(columns)
+    }
+
+    /// Extract a literal value from an expression
+    fn extract_literal_value(&self, expr: &Expr) -> String {
+        match expr {
+            Expr::Value(val) => match val {
+                sqlparser::ast::Value::Number(n, _) => n.clone(),
+                sqlparser::ast::Value::SingleQuotedString(s) => s.clone(),
+                sqlparser::ast::Value::DoubleQuotedString(s) => s.clone(),
+                sqlparser::ast::Value::Boolean(b) => b.to_string(),
+                sqlparser::ast::Value::Null => "NULL".to_string(),
+                _ => val.to_string(),
+            },
+            Expr::Identifier(ident) => ident.to_string(),
+            Expr::UnaryOp { op, expr } => {
+                format!("{}{}", op, self.extract_literal_value(expr))
+            },
+            _ => expr.to_string(),
+        }
     }
 }
 
@@ -286,11 +445,120 @@ mod tests {
 
         assert_eq!(stmts.len(), 1);
         match &stmts[0] {
-            SqlStatement::Select { table, columns, .. } => {
+            SqlStatement::Select { table, columns, distinct, .. } => {
                 assert_eq!(table, "users");
                 assert_eq!(columns.len(), 2);
+                assert!(!distinct);
             }
             _ => panic!("Expected Select"),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_select_distinct() -> Result<()> {
+        let parser = SqlParser::new();
+        let sql = "SELECT DISTINCT id FROM users";
+        let stmts = parser.parse(sql)?;
+
+        assert_eq!(stmts.len(), 1);
+        match &stmts[0] {
+            SqlStatement::Select { table, columns, distinct, .. } => {
+                assert_eq!(table, "users");
+                assert_eq!(columns.len(), 1);
+                assert!(distinct);
+            }
+            _ => panic!("Expected Select with DISTINCT"),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_drop_index() -> Result<()> {
+        let parser = SqlParser::new();
+        let sql = "DROP INDEX idx_users_email";
+        let stmts = parser.parse(sql)?;
+
+        assert_eq!(stmts.len(), 1);
+        match &stmts[0] {
+            SqlStatement::DropIndex { name } => {
+                assert_eq!(name, "idx_users_email");
+            }
+            _ => panic!("Expected DropIndex"),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_drop_view() -> Result<()> {
+        let parser = SqlParser::new();
+        let sql = "DROP VIEW active_users";
+        let stmts = parser.parse(sql)?;
+
+        assert_eq!(stmts.len(), 1);
+        match &stmts[0] {
+            SqlStatement::DropView { name } => {
+                assert_eq!(name, "active_users");
+            }
+            _ => panic!("Expected DropView"),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_truncate_table() -> Result<()> {
+        let parser = SqlParser::new();
+        let sql = "TRUNCATE TABLE users";
+        let stmts = parser.parse(sql)?;
+
+        assert_eq!(stmts.len(), 1);
+        match &stmts[0] {
+            SqlStatement::TruncateTable { name } => {
+                assert_eq!(name, "users");
+            }
+            _ => panic!("Expected TruncateTable"),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_create_index() -> Result<()> {
+        let parser = SqlParser::new();
+        let sql = "CREATE INDEX idx_users_email ON users (email)";
+        let stmts = parser.parse(sql)?;
+
+        assert_eq!(stmts.len(), 1);
+        match &stmts[0] {
+            SqlStatement::CreateIndex { name, table, columns, unique } => {
+                assert_eq!(name, "idx_users_email");
+                assert_eq!(table, "users");
+                assert_eq!(columns.len(), 1);
+                assert!(!unique);
+            }
+            _ => panic!("Expected CreateIndex"),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_create_view() -> Result<()> {
+        let parser = SqlParser::new();
+        let sql = "CREATE VIEW active_users AS SELECT * FROM users WHERE active = true";
+        let stmts = parser.parse(sql)?;
+
+        assert_eq!(stmts.len(), 1);
+        match &stmts[0] {
+            SqlStatement::CreateView { name, query } => {
+                assert_eq!(name, "active_users");
+                assert!(query.contains("SELECT"));
+            }
+            _ => panic!("Expected CreateView"),
         }
 
         Ok(())

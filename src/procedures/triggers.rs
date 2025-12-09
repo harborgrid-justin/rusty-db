@@ -114,9 +114,60 @@ impl Trigger {
 
     // Evaluate the WHEN condition
     pub fn evaluate_condition(&self, context: &TriggerRowContext) -> Result<bool> {
-        if let Some(_cond) = &self.condition {
-            // TODO: Evaluate condition expression
-            // For now, always return true
+        if let Some(cond) = &self.condition {
+            // Evaluate the condition expression against the row context
+            let condition_str = &cond.expression;
+
+            // Parse and evaluate simple conditions like:
+            // - NEW.column = value
+            // - OLD.column <> value
+            // - NEW.column IS NOT NULL
+            // - NEW.column > OLD.column
+
+            let upper = condition_str.to_uppercase();
+
+            // Handle NEW.column references
+            if upper.contains("NEW.") {
+                if let Some(new_values) = &context.new_values {
+                    // Extract column name and evaluate
+                    for (col, val) in new_values {
+                        let new_ref = format!("NEW.{}", col.to_uppercase());
+                        if upper.contains(&new_ref) {
+                            // Simple IS NOT NULL check
+                            if upper.contains("IS NOT NULL") {
+                                if let RuntimeValue::Null = val {
+                                    return Ok(false);
+                                }
+                            }
+                            // Simple IS NULL check
+                            if upper.contains("IS NULL") && !upper.contains("IS NOT NULL") {
+                                if let RuntimeValue::Null = val {
+                                    return Ok(true);
+                                } else {
+                                    return Ok(false);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Handle OLD.column references for UPDATE triggers
+            if upper.contains("OLD.") && upper.contains("NEW.") {
+                // Change detection: NEW.col <> OLD.col
+                if let (Some(new_values), Some(old_values)) = (&context.new_values, &context.old_values) {
+                    for (col, new_val) in new_values {
+                        if let Some(old_val) = old_values.get(col) {
+                            let pattern = format!("NEW.{}", col.to_uppercase());
+                            if upper.contains(&pattern) && upper.contains("<>") {
+                                return Ok(new_val != old_val);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Default: if we can't evaluate, return true (fire the trigger)
             Ok(true)
         } else {
             Ok(true)

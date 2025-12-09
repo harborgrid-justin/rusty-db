@@ -239,6 +239,38 @@ impl QueryRoot {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.explain(&table, where_clause, order_by).await
     }
+
+    // ========================================================================
+    // ADVANCED QUERY OPERATIONS
+    // ========================================================================
+
+    // Execute UNION query
+    async fn execute_union(
+        &self,
+        ctx: &Context<'_>,
+        queries: Vec<String>,
+        union_all: Option<bool>,
+    ) -> GqlResult<QueryResult> {
+        let start = Instant::now();
+        let engine = ctx.data::<Arc<GraphQLEngine>>()?;
+
+        match engine.execute_union(queries, union_all.unwrap_or(false)).await {
+            Ok((rows, total_count)) => {
+                let execution_time = start.elapsed().as_secs_f64() * 1000.0;
+                Ok(QueryResult::Success(QuerySuccess {
+                    rows,
+                    total_count: BigInt(total_count),
+                    execution_time_ms: execution_time,
+                    has_more: false,
+                }))
+            }
+            Err(e) => Ok(QueryResult::Error(QueryError {
+                message: e.to_string(),
+                code: "UNION_ERROR".to_string(),
+                details: Some(format!("{:?}", e)),
+            })),
+        }
+    }
 }
 
 // Input type for join operations

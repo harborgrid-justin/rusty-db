@@ -335,7 +335,7 @@ impl WALManager {
     /// # Errors
     ///
     /// Returns an error if reading the log fails.
-    pub fn replay(&self) -> TransactionResult<Vec<WALEntry>> {
+    pub fn read_all(&self) -> TransactionResult<Vec<WALEntry>> {
         let mut entries = Vec::new();
 
         if !self.log_path.exists() {
@@ -378,8 +378,63 @@ impl WALManager {
     ///
     /// This is a placeholder implementation. In production, this would
     /// create a new log file and copy only entries >= before_lsn.
-    pub fn truncate(&self, _before_lsn: LogSequenceNumber) -> TransactionResult<()> {
-        // TODO: Implement log truncation/compaction
+    pub fn truncate(&self, before_lsn: LogSequenceNumber) -> TransactionResult<()> {
+        // Flush any pending entries first
+        self.flush()?;
+
+        // Read all existing entries
+        let all_entries = self.read_all()?;
+
+        // Filter entries to keep (those with LSN >= before_lsn)
+        let entries_to_keep: Vec<WALEntry> = all_entries
+            .into_iter()
+            .filter(|entry| {
+                let entry_lsn = match entry {
+                    WALEntry::Begin { .. } => 0, // Keep all Begin entries for safety
+                    WALEntry::Commit { lsn, .. } => *lsn,
+                    WALEntry::Abort { lsn, .. } => *lsn,
+                    WALEntry::Insert { lsn, .. } => *lsn,
+                    WALEntry::Update { lsn, .. } => *lsn,
+                    WALEntry::Delete { lsn, .. } => *lsn,
+                    WALEntry::Checkpoint { lsn, .. } => *lsn,
+                    WALEntry::Savepoint { lsn, .. } => *lsn,
+                    WALEntry::RollbackToSavepoint { lsn, .. } => *lsn,
+                    WALEntry::Compensation { lsn, .. } => *lsn,
+                    WALEntry::End { lsn, .. } => *lsn,
+                };
+                entry_lsn >= before_lsn
+            })
+            .collect();
+
+        // Create a temporary file for the compacted log
+        let temp_path = self.log_path.with_extension("tmp");
+
+        {
+            let mut temp_file = OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(&temp_path)
+                .map_err(TransactionError::WalWriteError)?;
+
+            // Write kept entries to temp file
+            for entry in &entries_to_keep {
+                let serialized = serde_json::to_vec(&entry)?;
+                let length = serialized.len() as u32;
+                temp_file.write_all(&length.to_le_bytes())
+                    .map_err(TransactionError::WalWriteError)?;
+                temp_file.write_all(&serialized)
+                    .map_err(TransactionError::WalWriteError)?;
+            }
+
+            temp_file.sync_all()
+                .map_err(TransactionError::WalWriteError)?;
+        }
+
+        // Replace original log with compacted log
+        std::fs::rename(&temp_path, &self.log_path)
+            .map_err(TransactionError::WalWriteError)?;
+
         Ok(())
     }
 
@@ -411,6 +466,12 @@ impl WALManager {
         std::fs::metadata(&self.log_path)
             .map(|m| m.len())
             .map_err(TransactionError::WalReadError)
+    }
+
+    /// Replay all WAL entries for recovery.
+    /// Returns all entries from the WAL file in order.
+    pub fn replay(&self) -> TransactionResult<Vec<WALEntry>> {
+        self.read_all()
     }
 }
 

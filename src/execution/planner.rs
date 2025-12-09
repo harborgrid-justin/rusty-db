@@ -81,7 +81,9 @@ impl Planner {
                 group_by,
                 having,
                 order_by,
-                limit
+                limit,
+                offset,
+                distinct: _,
             } => {
                 // Start with table scan
                 let mut plan = PlanNode::TableScan {
@@ -149,7 +151,7 @@ impl Planner {
                     plan = PlanNode::Limit {
                         input: Box::new(plan),
                         limit: *limit_val,
-                        offset: None,
+                        offset: *offset,
                     };
                 }
 

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   CloudArrowUpIcon,
@@ -12,6 +12,7 @@ import { CreateBackupModal } from '../components/backup/CreateBackupModal';
 import { BackupProgress } from '../components/backup/BackupProgress';
 import { useBackups, useBackupProgress, useStorageUsage } from '../hooks/useBackup';
 import { backupService } from '../services/backupService';
+import { configService } from '../services/configService';
 import type { CreateBackupConfig } from '../services/backupService';
 import type { Backup, BackupType, BackupStatus } from '../types';
 import { useUIStore } from '../stores/uiStore';
@@ -30,10 +31,26 @@ export default function BackupPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [runningBackupId, setRunningBackupId] = useState<string | null>(null);
+  const [databases, setDatabases] = useState<string[]>([]);
 
   const { backups, loading, error, refetch } = useBackups(filters);
   const { usage, loading: usageLoading } = useStorageUsage();
   const { addNotification, showConfirmDialog, hideConfirmDialog } = useUIStore();
+
+  // Fetch available databases
+  useEffect(() => {
+    const fetchDatabases = async () => {
+      try {
+        const response = await configService.getAvailableDatabases();
+        if (response.data) {
+          setDatabases(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch databases:', error);
+      }
+    };
+    fetchDatabases();
+  }, []);
 
   // Track running backup progress
   const { progress: backupProgress } = useBackupProgress(runningBackupId, {
@@ -402,7 +419,7 @@ export default function BackupPage() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onCreate={handleCreateBackup}
-        databases={[]} // TODO: Fetch available databases
+        databases={databases}
       />
     </div>
   );

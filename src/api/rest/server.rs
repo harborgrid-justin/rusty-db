@@ -12,7 +12,7 @@ use axum::{
     middleware::{self, Next},
     body::Body,
 };
-use tower::{ServiceBuilder, ServiceExt};
+use tower::ServiceBuilder;
 use tower_http::{
     cors::{CorsLayer, Any},
     trace::TraceLayer,
@@ -37,6 +37,8 @@ use super::handlers::monitoring::{get_metrics, get_prometheus_metrics, get_sessi
 use super::handlers::pool::{get_pools, get_pool, update_pool, get_pool_stats, drain_pool, get_connections, get_connection, kill_connection, get_sessions, get_session, terminate_session};
 use super::handlers::cluster::{get_cluster_nodes, add_cluster_node, get_cluster_node, remove_cluster_node, get_cluster_topology, trigger_failover, get_replication_status, get_cluster_config, update_cluster_config};
 use super::middleware::{request_logger_middleware, rate_limit_middleware};
+use super::handlers::{CATALOG, TXN_MANAGER, SQL_PARSER};
+use crate::execution::Executor;
 
 
 // REST API server with dependency injection
@@ -211,14 +213,47 @@ async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
         if let Ok(msg) = msg {
             match msg {
                 Message::Text(text) => {
-                    if let Ok(_request) = serde_json::from_str::<QueryRequest>(&text) {
-                        // TODO: Execute query and stream results
-                        let response = json!({
-                            "status": "success",
-                            "rows": []
-                        });
+                    if let Ok(request) = serde_json::from_str::<QueryRequest>(&text) {
+                        let catalog_guard = CATALOG.read();
+                        let catalog_snapshot = (*catalog_guard).clone();
+                        drop(catalog_guard);
+                        let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-                        if socket.send(Message::Text(response.to_string())).await.is_err() {
+                        let response = match SQL_PARSER.parse(&request.sql) {
+                            Ok(stmts) => {
+                                let stmt = match stmts.into_iter().next() {
+                                    Some(s) => s,
+                                    None => {
+                                        let _ = socket.send(Message::Text(json!({"status": "error", "message": "No valid SQL statement"}).to_string().into())).await;
+                                        continue;
+                                    }
+                                };
+                                match executor.execute(stmt) {
+                                    Ok(result) => {
+                                        let rows: Vec<Vec<serde_json::Value>> = result.rows.iter().map(|row| {
+                                            row.iter().map(|val| serde_json::Value::String(val.clone())).collect()
+                                        }).collect();
+
+                                        json!({
+                                            "status": "success",
+                                            "rows": rows,
+                                            "columns": result.columns,
+                                            "rows_affected": result.rows_affected
+                                        })
+                                    },
+                                    Err(e) => json!({
+                                        "status": "error",
+                                        "message": e.to_string()
+                                    })
+                                }
+                            },
+                            Err(e) => json!({
+                                "status": "error",
+                                "message": e.to_string()
+                            })
+                        };
+
+                        if socket.send(Message::Text(response.to_string().into())).await.is_err() {
                             break;
                         }
                     }

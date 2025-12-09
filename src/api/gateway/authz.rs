@@ -387,7 +387,7 @@ impl PolicyEngine {
 
             // Evaluate conditions
             if !policy.conditions.is_empty() {
-                if !abac.evaluate(subject, resource, &policy.conditions) {
+                if !abac.evaluate(subject, resource, action, &policy.conditions) {
                     continue;
                 }
             }

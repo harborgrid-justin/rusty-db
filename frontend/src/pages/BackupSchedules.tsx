@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CalendarIcon,
@@ -15,6 +15,7 @@ import {
 import { ScheduleForm } from '../components/backup/ScheduleForm';
 import { useBackupSchedules } from '../hooks/useBackup';
 import { backupService } from '../services/backupService';
+import { configService } from '../services/configService';
 import type { CreateScheduleConfig } from '../services/backupService';
 import type { BackupSchedule } from '../types';
 import { useUIStore } from '../stores/uiStore';
@@ -194,10 +195,30 @@ function ScheduleCard({
 export default function BackupSchedulesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<BackupSchedule | undefined>();
+  const [databases, setDatabases] = useState<string[]>([]);
+  const [databasesLoading, setDatabasesLoading] = useState(true);
 
   const { schedules, loading, error, refetch, toggleSchedule, deleteSchedule } =
     useBackupSchedules();
   const { addNotification, showConfirmDialog, hideConfirmDialog } = useUIStore();
+
+  // Fetch available databases
+  useEffect(() => {
+    const fetchDatabases = async () => {
+      try {
+        setDatabasesLoading(true);
+        const response = await configService.getAvailableDatabases();
+        if (response.data) {
+          setDatabases(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch databases:', error);
+      } finally {
+        setDatabasesLoading(false);
+      }
+    };
+    fetchDatabases();
+  }, []);
 
   const handleCreateOrUpdate = useCallback(
     async (config: CreateScheduleConfig) => {
@@ -397,8 +418,8 @@ export default function BackupSchedulesPage() {
                 schedule={editingSchedule}
                 onSubmit={handleCreateOrUpdate}
                 onCancel={handleCancel}
-                databases={[]} // TODO: Fetch available databases
-                loading={false}
+                databases={databases}
+                loading={databasesLoading}
               />
             </div>
           </motion.div>

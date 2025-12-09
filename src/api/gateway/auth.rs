@@ -205,7 +205,7 @@ pub struct MtlsValidator {
     // Trusted CA certificates
     trusted_cas: Arc<RwLock<Vec<Vec<u8>>>>,
     // Certificate revocation list
-    crl: Arc<RwLock<HashSet<String>>>,
+    crl: Arc<RwLock<HashSet<Vec<u8>>>>,
 }
 
 // MFA manager
@@ -693,7 +693,7 @@ impl MtlsValidator {
         let mut trusted = false;
         for ca_cert_der in cas.iter() {
             if let Ok((_, ca_cert)) = X509Certificate::from_der(ca_cert_der) {
-                if x509.verify_signature(&ca_cert.subject_pki).is_ok() {
+                if x509.verify_signature(Some(&ca_cert.subject_pki)).is_ok() {
                     trusted = true;
                     break;
                 }
@@ -705,7 +705,7 @@ impl MtlsValidator {
         }
 
         // Check CRL
-        let serial = x509.serial.as_ref().to_vec();
+        let serial = x509.serial.to_bytes_be();
         let crl = self.crl.read();
         if crl.contains(&serial) {
             return Ok(false);

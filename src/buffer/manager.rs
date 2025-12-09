@@ -393,13 +393,13 @@ impl FreeFrameManager {
 #[inline]
 fn get_current_core_id() -> usize {
     // On Linux, we can use sched_getcpu
-    #[cfg(all(target_os = "linux", feature = "libc"))]
+    #[cfg(target_os = "linux")]
     {
         unsafe { libc::sched_getcpu() as usize }
     }
 
     // On other platforms, use thread ID as proxy
-    #[cfg(not(all(target_os = "linux", feature = "libc")))]
+    #[cfg(not(target_os = "linux"))]
     {
         // Use a hash of the thread ID to get a pseudo-random core ID
         use std::collections::hash_map::DefaultHasher;

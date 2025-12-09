@@ -1,90 +1,91 @@
 [package]
-name = "rusty-db"
-version = "0.1.0"
-edition = "2021"
 authors = ["RustyDB Contributors"]
 description = "Enterprise-grade Rust-based database management system"
+edition = "2021"
 license = "MIT OR Apache-2.0"
+name = "rusty-db"
+version = "0.1.0"
 
 [dependencies]
-tokio = { version = "1.35", features = ["full"] }
+bincode = "1.3"
+bytes = "1.5"
+chrono = { version = "0.4", features = ["serde"] }
+crc32fast = "1.3"
+log = "0.4"
+parking_lot = "0.12"
+rand = "0.8"
+regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sqlparser = "0.42"
-bincode = "1.3"
-bytes = "1.5"
-parking_lot = "0.12"
 thiserror = "1.0"
+tokio = { version = "1.35", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
-log = "0.4"
-regex = "1.10"
-rand = "0.8"
-crc32fast = "1.3"
-chrono = { version = "0.4", features = ["serde"] }
 # Security and cryptography dependencies
-argon2 = "0.5"
 aes-gcm = "0.10"
-chacha20poly1305 = "0.10"
-sha2 = "0.10"
-hmac = "0.12"
-base64 = "0.21"
-uuid = { version = "1.6", features = ["v4", "serde"] }
-ed25519-dalek = { version = "2.1", features = ["rand_core"] }
-rsa = "0.9"
+argon2 = "0.5"
 async-trait = "0.1"
-rmp-serde = "1.1"
+base64 = "0.21"
 bson = "2.7"
-futures = "0.3"
-num_cpus = "1.16"
-num-traits = "0.2"
+chacha20poly1305 = "0.10"
 crossbeam = "0.8"
-once_cell = "1.19"
+ed25519-dalek = { version = "2.1", features = ["rand_core"] }
+futures = "0.3"
+hmac = "0.12"
 libc = "0.2"
+num-traits = "0.2"
+num_cpus = "1.16"
+once_cell = "1.19"
 rayon = "1.8"
+rmp-serde = "1.1"
+rsa = { version = "0.9", features = ["sha2"] }
+sha2 = "0.10"
+uuid = { version = "1.6", features = ["serde", "v4"] }
 # Web framework and API dependencies
-axum = { version = "0.7", features = ["ws", "macros"] }
-tower = { version = "0.4", features = ["limit", "timeout"] }
-tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "limit"] }
-hyper = "1.0"
-http = "1.0"
-utoipa = { version = "4.0", features = ["axum_extras", "chrono", "uuid"] }
-utoipa-swagger-ui = { version = "4.0", features = ["axum"] }
-tokio-tungstenite = "0.21"
-async-stream = "0.3"
 async-graphql = { version = "7.0", features = ["chrono", "uuid"] }
 async-graphql-axum = "7.0"
-futures-util = "0.3"
-tokio-stream = { version = "0.1", features = ["sync"] }
-hex = "0.4"
-fastrand = "2.0"
-unicode-normalization = "0.1"
-lazy_static = "1.4"
-stats = "0.0.1"
-result = "1.0.0"
-size = "0.5.0"
-state = "0.6.0"
-context = "3.0.0"
-source = "0.2.1"
-logs = "0.7.1"
-key = "1.2.6"
-tokio-test = "0.4.4"
+async-stream = "0.3"
+axum = { version = "0.8", features = ["macros", "ws"] }
 check = "1.0.0"
-handlers = "0.10.0"
-generic-array = "1.3.5"
-now = "0.1.3"
+context = "3.0.0"
 counts = "1.0.6"
-reqwest = { version = "0.12.25", features = ["json", "rustls-tls"] }
-sha1 = "0.10.6"
-x509-parser = { version = "0.18.0", features = ["verify"] }
+fastrand = "2.0"
 flate2 = "1.1.5"
+futures-util = "0.3"
+generic-array = "1.3.5"
+handlers = "0.10.0"
+hex = "0.4"
+http = "1.0"
+hyper = "1.0"
+key = "1.2.6"
+lazy_static = "1.4"
+logs = "0.7.1"
+now = "0.1.3"
+reqwest = { version = "0.12.25", features = ["json", "rustls-tls"] }
+result = "1.0.0"
+sha1 = "0.10.6"
+size = "0.5.0"
+source = "0.2.1"
+state = "0.6.0"
+stats = "0.0.1"
+sys-info = "0.9.1"
+tokio-stream = { version = "0.1", features = ["sync"] }
+tokio-test = "0.4.4"
+tokio-tungstenite = "0.21"
+tower = { version = "0.4", features = ["limit", "timeout"] }
+tower-http = { version = "0.5", features = ["cors", "limit", "timeout", "trace"] }
+unicode-normalization = "0.1"
+utoipa = { version = "5.0", features = ["axum_extras", "chrono", "uuid"] }
+utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
+x509-parser = { version = "0.18.0", features = ["verify"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.52", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_IO"] }
 
 [dev-dependencies]
-tempfile = "3.8"
 criterion = "0.5"
+tempfile = "3.8"
 
 [[bin]]
 name = "rusty-db-server"
@@ -95,19 +96,19 @@ name = "rusty-db-cli"
 path = "src/cli.rs"
 
 [profile.release]
-opt-level = 3
-lto = true
 codegen-units = 1
-panic = "abort"
 debug = false
+lto = true
+opt-level = 3
+panic = "abort"
 
 [profile.bench]
-opt-level = 3
-lto = true
 codegen-units = 1
+lto = true
+opt-level = 3
 
 [features]
 default = []
-simd = []
 iocp = []
+simd = []
 stats = []

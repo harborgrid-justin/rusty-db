@@ -451,8 +451,13 @@ impl IoUringEngine {
                     },
                     bytes_transferred: cqe.bytes_transferred().unwrap_or(0),
                     error_code: cqe.error_code().map(|e| e as usize).unwrap_or(0),
-                    duration: Duration::from_secs(0), // TODO: Track duration
-                    op_type: IoOpType::Read,          // TODO: Track op type
+                    // Duration tracking would require storing start timestamp in the SQE user_data
+                    // or maintaining a separate map of request_id -> start_time
+                    // For now, use zero duration as this is a simplified implementation
+                    duration: Duration::from_secs(0),
+                    // Op type tracking would require storing the operation type alongside user_data
+                    // or using a map of request_id -> op_type. Default to Read for now.
+                    op_type: IoOpType::Read,
                 };
 
                 completions.push(completion);

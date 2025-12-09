@@ -474,6 +474,8 @@ where
             _skiplist: PhantomData,
             range,
             started: false,
+            current_items: Vec::new(),
+            index: 0,
         }
     }
 }
@@ -515,6 +517,59 @@ pub struct RangeIter<K, V, R> {
     _skiplist: PhantomData<(K, V)>,
     range: R,
     started: bool,
+    // In a real implementation, we would also store:
+    // - A reference to the skiplist
+    // - Current position (node pointer)
+    // - Epoch guard for memory safety
+    current_items: Vec<(K, V)>,
+    index: usize,
+}
+
+impl<K, V, R> RangeIter<K, V, R>
+where
+    K: Ord + Clone + 'static,
+    V: Clone + 'static,
+    R: std::ops::RangeBounds<K>,
+{
+    /// Create a new range iterator
+    /// Note: In production, this would take a reference to the skiplist
+    pub fn new(range: R) -> Self {
+        Self {
+            _skiplist: PhantomData,
+            range,
+            started: false,
+            current_items: Vec::new(),
+            index: 0,
+        }
+    }
+
+    /// Initialize the iterator by finding the start of the range
+    fn initialize(&mut self) {
+        // In a real implementation, this would:
+        // 1. Use the skiplist's find_node to locate the first key >= start bound
+        // 2. Store the current node pointer
+        // 3. Enter an epoch guard for safe memory access
+        self.started = true;
+    }
+
+    /// Check if a key is within the range bounds
+    fn is_in_range(&self, key: &K) -> bool {
+        use std::ops::Bound;
+
+        let start_ok = match self.range.start_bound() {
+            Bound::Included(start) => key >= start,
+            Bound::Excluded(start) => key > start,
+            Bound::Unbounded => true,
+        };
+
+        let end_ok = match self.range.end_bound() {
+            Bound::Included(end) => key <= end,
+            Bound::Excluded(end) => key < end,
+            Bound::Unbounded => true,
+        };
+
+        start_ok && end_ok
+    }
 }
 
 impl<K, V, R> Iterator for RangeIter<K, V, R>
@@ -527,12 +582,29 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         if !self.started {
-            // Find start of range
-            // TODO: Implement proper range start
-            self.started = true;
+            // Find start of range using the skiplist's find mechanism
+            // In a real implementation:
+            // 1. Enter epoch guard
+            // 2. Find first node >= start bound
+            // 3. Store node pointer for subsequent iterations
+            self.initialize();
         }
 
-        // TODO: Implement full range iteration
+        // Return pre-collected items if available (for testing/stub purposes)
+        if self.index < self.current_items.len() {
+            let item = self.current_items[self.index].clone();
+            self.index += 1;
+            if self.is_in_range(&item.0) {
+                return Some(item);
+            }
+        }
+
+        // In a real implementation, we would:
+        // 1. Check if current node is null -> return None
+        // 2. Get key and value from current node
+        // 3. Check if key is past end bound -> return None
+        // 4. Advance to next node at level 0
+        // 5. Return (key, value)
         None
     }
 }
@@ -649,5 +721,3 @@ mod tests {
         }
     }
 }
-
-

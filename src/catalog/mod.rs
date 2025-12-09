@@ -55,15 +55,25 @@ impl Schema {
     }
 }
 
+// View definition
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct View {
+    pub name: String,
+    pub query: String,
+}
+
 // Catalog manages database metadata
+#[derive(Clone)]
 pub struct Catalog {
     schemas: Arc<RwLock<HashMap<String, Schema>>>,
+    views: Arc<RwLock<HashMap<String, View>>>,
 }
 
 impl Catalog {
     pub fn new() -> Self {
         Self {
             schemas: Arc::new(RwLock::new(HashMap::new())),
+            views: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -97,6 +107,38 @@ impl Catalog {
 
     pub fn list_tables(&self) -> Vec<String> {
         self.schemas.read().keys().cloned().collect()
+    }
+
+    pub fn create_view(&self, name: String, query: String) -> Result<()> {
+        let mut views = self.views.write();
+
+        if views.contains_key(&name) {
+            return Err(DbError::Catalog(format!("View {} already exists", name)));
+        }
+
+        views.insert(name.clone(), View { name, query });
+        Ok(())
+    }
+
+    pub fn get_view(&self, name: &str) -> Result<View> {
+        let views = self.views.read();
+
+        views.get(name)
+            .cloned()
+            .ok_or_else(|| DbError::Catalog(format!("View {} not found", name)))
+    }
+
+    pub fn drop_view(&self, name: &str) -> Result<()> {
+        let mut views = self.views.write();
+
+        views.remove(name)
+            .ok_or_else(|| DbError::Catalog(format!("View {} not found", name)))?;
+
+        Ok(())
+    }
+
+    pub fn list_views(&self) -> Vec<String> {
+        self.views.read().keys().cloned().collect()
     }
 }
 

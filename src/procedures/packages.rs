@@ -5,7 +5,7 @@
 // with public and private visibility control.
 
 use crate::{Result, DbError};
-use crate::procedures::parser::{PlSqlBlock, PlSqlType};
+use crate::procedures::parser::{PlSqlBlock, PlSqlType, Expression, LiteralValue, UnaryOperator};
 use crate::procedures::runtime::{RuntimeExecutor, RuntimeValue};
 use crate::procedures::functions::{ScalarFunction, TableFunction};
 use serde::{Deserialize, Serialize};
@@ -334,6 +334,77 @@ impl PackageManager {
         }
     }
 
+    /// Parse a string value and evaluate it to a RuntimeValue
+    fn parse_and_evaluate_string_value(&self, value_str: &str) -> RuntimeValue {
+        let trimmed = value_str.trim();
+
+        // Try to parse as integer
+        if let Ok(i) = trimmed.parse::<i64>() {
+            return RuntimeValue::Integer(i);
+        }
+
+        // Try to parse as float
+        if let Ok(f) = trimmed.parse::<f64>() {
+            return RuntimeValue::Float(f);
+        }
+
+        // Check for boolean
+        match trimmed.to_uppercase().as_str() {
+            "TRUE" => return RuntimeValue::Boolean(true),
+            "FALSE" => return RuntimeValue::Boolean(false),
+            "NULL" => return RuntimeValue::Null,
+            _ => {}
+        }
+
+        // Check for quoted string
+        if (trimmed.starts_with('\'') && trimmed.ends_with('\'')) ||
+           (trimmed.starts_with('"') && trimmed.ends_with('"')) {
+            let unquoted = &trimmed[1..trimmed.len()-1];
+            return RuntimeValue::String(unquoted.to_string());
+        }
+
+        // Default to string
+        RuntimeValue::String(trimmed.to_string())
+    }
+
+    /// Evaluate an initial value expression and return a RuntimeValue
+    fn evaluate_initial_value(&self, expr: &Expression) -> Result<RuntimeValue> {
+        match expr {
+            Expression::Literal(lit) => match lit {
+                LiteralValue::Integer(i) => Ok(RuntimeValue::Integer(*i)),
+                LiteralValue::Float(f) => Ok(RuntimeValue::Float(*f)),
+                LiteralValue::String(s) => Ok(RuntimeValue::String(s.clone())),
+                LiteralValue::Boolean(b) => Ok(RuntimeValue::Boolean(*b)),
+                LiteralValue::Null => Ok(RuntimeValue::Null),
+                LiteralValue::Date(d) => Ok(RuntimeValue::String(d.clone())),
+                LiteralValue::Timestamp(t) => Ok(RuntimeValue::String(t.clone())),
+            },
+            Expression::Variable(name) => {
+                // Variable reference - would need context to resolve
+                Ok(RuntimeValue::String(name.clone()))
+            },
+            Expression::UnaryOp { op, operand } => {
+                let val = self.evaluate_initial_value(operand)?;
+                match op {
+                    UnaryOperator::Minus => match val {
+                        RuntimeValue::Integer(i) => Ok(RuntimeValue::Integer(-i)),
+                        RuntimeValue::Float(f) => Ok(RuntimeValue::Float(-f)),
+                        _ => Ok(val),
+                    },
+                    UnaryOperator::Not => match val {
+                        RuntimeValue::Boolean(b) => Ok(RuntimeValue::Boolean(!b)),
+                        _ => Ok(val),
+                    },
+                    _ => Ok(val),
+                }
+            },
+            _ => {
+                // For complex expressions, return null and let runtime handle it
+                Ok(RuntimeValue::Null)
+            }
+        }
+    }
+
     // Create package specification
     pub fn create_package_spec(&self, spec: PackageSpecification) -> Result<()> {
         let mut packages = self.packages.write();
@@ -404,10 +475,13 @@ impl PackageManager {
 
         // Initialize package variables
         for var in &package.specification.variables {
-            if let Some(_init_val) = &var.initial_value {
-                // TODO: Parse and evaluate initial value
-                instance.set_variable(var.name.clone(), RuntimeValue::Null);
-            }
+            let initial_value = if let Some(init_str) = &var.initial_value {
+                // Parse and evaluate the initial value expression from string
+                self.parse_and_evaluate_string_value(init_str)
+            } else {
+                RuntimeValue::Null
+            };
+            instance.set_variable(var.name.clone(), initial_value);
         }
 
         // Run initialization block if present

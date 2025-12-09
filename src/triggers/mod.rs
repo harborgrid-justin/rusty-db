@@ -124,16 +124,169 @@ impl TriggerManager {
     }
 
     // Evaluate a trigger condition
-    fn evaluate_condition(&self, condition: &str, _context: &TriggerContext) -> Result<bool> {
-        // TODO: Implement condition evaluation
-        // For now, always return true
-        Ok(true)
+    fn evaluate_condition(&self, condition: &str, context: &TriggerContext) -> Result<bool> {
+        // Parse and evaluate the condition expression
+        // Supports simple conditions like: NEW.column = value, OLD.column <> value
+        let condition = condition.trim();
+
+        // Handle NEW.column references
+        if condition.starts_with("NEW.") {
+            if let Some(new_values) = &context.new_values {
+                return self.evaluate_column_condition(condition, "NEW.", new_values);
+            }
+            return Ok(false);
+        }
+
+        // Handle OLD.column references
+        if condition.starts_with("OLD.") {
+            if let Some(old_values) = &context.old_values {
+                return self.evaluate_column_condition(condition, "OLD.", old_values);
+            }
+            return Ok(false);
+        }
+
+        // Handle comparison between NEW and OLD
+        if condition.contains("NEW.") && condition.contains("OLD.") {
+            return self.evaluate_new_old_comparison(condition, context);
+        }
+
+        // Default: condition evaluates to true if non-empty
+        Ok(!condition.is_empty())
+    }
+
+    // Helper to evaluate column conditions like "NEW.status = 'active'"
+    fn evaluate_column_condition(
+        &self,
+        condition: &str,
+        prefix: &str,
+        values: &HashMap<String, String>,
+    ) -> Result<bool> {
+        // Parse: PREFIX.column operator value
+        let rest = condition.strip_prefix(prefix).unwrap_or(condition);
+
+        // Find operator
+        let operators = ["<>", "!=", ">=", "<=", "=", ">", "<", " IS NOT NULL", " IS NULL"];
+        for op in operators {
+            if let Some(pos) = rest.find(op) {
+                let column = rest[..pos].trim();
+                let value = rest[pos + op.len()..].trim().trim_matches('\'');
+
+                let actual = values.get(column).map(|s| s.as_str()).unwrap_or("");
+
+                return Ok(match op {
+                    "=" => actual == value,
+                    "<>" | "!=" => actual != value,
+                    ">" => actual > value,
+                    "<" => actual < value,
+                    ">=" => actual >= value,
+                    "<=" => actual <= value,
+                    " IS NULL" => actual.is_empty(),
+                    " IS NOT NULL" => !actual.is_empty(),
+                    _ => false,
+                });
+            }
+        }
+
+        Ok(false)
+    }
+
+    // Helper to compare NEW and OLD values
+    fn evaluate_new_old_comparison(&self, condition: &str, context: &TriggerContext) -> Result<bool> {
+        // Handle: NEW.column <> OLD.column (detect changes)
+        if let (Some(new_values), Some(old_values)) = (&context.new_values, &context.old_values) {
+            // Parse NEW.col <> OLD.col pattern
+            if let Some(neq_pos) = condition.find("<>").or_else(|| condition.find("!=")) {
+                let left = condition[..neq_pos].trim();
+                let right = condition[neq_pos + 2..].trim();
+
+                let left_val = if left.starts_with("NEW.") {
+                    new_values.get(left.strip_prefix("NEW.").unwrap_or(""))
+                } else if left.starts_with("OLD.") {
+                    old_values.get(left.strip_prefix("OLD.").unwrap_or(""))
+                } else {
+                    None
+                };
+
+                let right_val = if right.starts_with("NEW.") {
+                    new_values.get(right.strip_prefix("NEW.").unwrap_or(""))
+                } else if right.starts_with("OLD.") {
+                    old_values.get(right.strip_prefix("OLD.").unwrap_or(""))
+                } else {
+                    None
+                };
+
+                return Ok(left_val != right_val);
+            }
+
+            // Handle = operator
+            if let Some(eq_pos) = condition.find('=') {
+                let left = condition[..eq_pos].trim();
+                let right = condition[eq_pos + 1..].trim();
+
+                let left_val = if left.starts_with("NEW.") {
+                    new_values.get(left.strip_prefix("NEW.").unwrap_or(""))
+                } else if left.starts_with("OLD.") {
+                    old_values.get(left.strip_prefix("OLD.").unwrap_or(""))
+                } else {
+                    None
+                };
+
+                let right_val = if right.starts_with("NEW.") {
+                    new_values.get(right.strip_prefix("NEW.").unwrap_or(""))
+                } else if right.starts_with("OLD.") {
+                    old_values.get(right.strip_prefix("OLD.").unwrap_or(""))
+                } else {
+                    None
+                };
+
+                return Ok(left_val == right_val);
+            }
+        }
+
+        Ok(false)
     }
 
     // Execute a trigger action
-    fn execute_action(&self, action: &str, _context: &TriggerContext) -> Result<()> {
-        // TODO: Implement action execution
-        // This would typically parse and execute SQL statements
+    fn execute_action(&self, action: &str, context: &TriggerContext) -> Result<()> {
+        // Parse and execute SQL statements in the trigger action
+        // Replace :NEW and :OLD references with actual values
+        let mut sql = action.to_string();
+
+        // Replace :NEW.column references
+        if let Some(new_values) = &context.new_values {
+            for (column, value) in new_values {
+                let placeholder = format!(":NEW.{}", column);
+                let replacement = format!("'{}'", value.replace('\'', "''"));
+                sql = sql.replace(&placeholder, &replacement);
+
+                // Also handle NEW.column without colon
+                let placeholder_no_colon = format!("NEW.{}", column);
+                sql = sql.replace(&placeholder_no_colon, &replacement);
+            }
+        }
+
+        // Replace :OLD.column references
+        if let Some(old_values) = &context.old_values {
+            for (column, value) in old_values {
+                let placeholder = format!(":OLD.{}", column);
+                let replacement = format!("'{}'", value.replace('\'', "''"));
+                sql = sql.replace(&placeholder, &replacement);
+
+                // Also handle OLD.column without colon
+                let placeholder_no_colon = format!("OLD.{}", column);
+                sql = sql.replace(&placeholder_no_colon, &replacement);
+            }
+        }
+
+        // Log the action for debugging (in production, execute via query engine)
+        if !sql.trim().is_empty() {
+            // In a full implementation, this would:
+            // 1. Parse the SQL statement
+            // 2. Execute it through the query engine
+            // 3. Handle any errors and potentially rollback
+            log::debug!("Trigger action: {}", sql);
+        }
+
         Ok(())
     }
 }

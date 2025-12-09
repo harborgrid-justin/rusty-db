@@ -11,6 +11,7 @@ pub mod hash_join;
 pub mod hash_join_simd;
 pub mod sort_merge;
 pub mod expressions;
+pub mod string_functions;
 
 pub use executor::Executor;
 pub use planner::{Planner, PlanNode};
@@ -25,6 +26,7 @@ pub use hash_join::{HashJoinExecutor, HashJoinConfig, BloomFilterHashJoin};
 pub use hash_join_simd::{SimdHashJoin, SimdHashJoinConfig};
 pub use sort_merge::{ExternalMergeSorter, SortMergeJoin, TopKSelector};
 pub use expressions::{ExpressionEvaluator, Expr, ExprValue, BinaryOperator, UnaryOperator};
+pub use string_functions::{StringFunctionExecutor, StringFunctionValidator};
 
 use serde::{Deserialize, Serialize};
 

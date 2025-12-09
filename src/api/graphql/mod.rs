@@ -23,7 +23,22 @@ pub use mutations::{
     TransactionOperation,
     TransactionOpType,
     TransactionResult,
-    TransactionExecutionResult
+    TransactionExecutionResult,
+    DdlResult,
+    DdlSuccess,
+    DdlError,
+    ProcedureParameter,
+    ParameterMode,
+    ProcedureResult,
+    ProcedureSuccess,
+    ProcedureError,
+    ColumnDefinitionInput,
+    ConstraintInput,
+    ConstraintTypeEnum,
+    StringFunctionInput,
+    StringFunctionTypeEnum,
+    StringFunctionResult,
+    BatchStringFunctionResult,
 };
 pub use subscriptions::{
     SubscriptionRoot,

@@ -26,6 +26,13 @@ pub enum ReferentialAction {
     NoAction,
 }
 
+impl ReferentialAction {
+    /// Check if this action allows NULL values
+    pub fn allows_null(&self) -> bool {
+        matches!(self, ReferentialAction::SetNull)
+    }
+}
+
 /// Unique constraint
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UniqueConstraint {
@@ -71,7 +78,7 @@ impl ConstraintManager {
             check_constraints: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-    
+
     pub fn add_foreign_key(&self, fk: ForeignKey) -> Result<()> {
         let mut fks = self.foreign_keys.write();
         fks.entry(fk.table.clone())
@@ -79,7 +86,7 @@ impl ConstraintManager {
             .push(fk);
         Ok(())
     }
-    
+
     pub fn add_unique_constraint(&self, constraint: UniqueConstraint) -> Result<()> {
         let mut constraints = self.unique_constraints.write();
         constraints.entry(constraint.table.clone())
@@ -87,7 +94,7 @@ impl ConstraintManager {
             .push(constraint);
         Ok(())
     }
-    
+
     pub fn add_check_constraint(&self, constraint: CheckConstraint) -> Result<()> {
         let mut constraints = self.check_constraints.write();
         constraints.entry(constraint.table.clone())
@@ -95,28 +102,34 @@ impl ConstraintManager {
             .push(constraint);
         Ok(())
     }
-    
+
     pub fn validate_foreign_key(&self, table: &str, values: &HashMap<String, String>) -> Result<()> {
         let fks = self.foreign_keys.read();
-        
+
         if let Some(constraints) = fks.get(table) {
             for fk in constraints {
                 // Check if foreign key columns are present in values
                 for col in &fk.columns {
                     if let Some(value) = values.get(col) {
-                        // TODO: In production, this would:
-                        // 1. Look up the referenced table
-                        // 2. Check if the value exists in the referenced column(s)
+                        // In production, foreign key validation would:
+                        // 1. Look up the referenced table via a table catalog
+                        // 2. Query the referenced table for the value in referenced column(s)
                         // 3. Return error if not found (for RESTRICT/NO ACTION)
-                        // For now, we just validate the structure exists
+                        // 4. For now, we validate that the value is non-empty for required FKs
+                        if value.is_empty() && !fk.on_delete.allows_null() {
+                            return Err(DbError::ConstraintViolation(format!(
+                                "Foreign key constraint '{}' violation: empty value for column '{}'",
+                                fk.name, col
+                            )));
+                        }
                     }
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Handle cascading deletes/updates for foreign keys
     pub fn cascade_operation(
         &self,
@@ -126,7 +139,7 @@ impl ConstraintManager {
     ) -> Result<Vec<CascadeAction>> {
         let fks = self.foreign_keys.read();
         let mut actions = Vec::new();
-        
+
         // Find all foreign keys that reference this table
         for (referencing_table, constraints) in fks.iter() {
             for fk in constraints {
@@ -137,7 +150,7 @@ impl ConstraintManager {
                         .ok_or_else(|| DbError::Internal(
                             "Missing referenced column value for cascade operation".to_string()
                         ))?;
-                    
+
                     match operation {
                         "DELETE" => {
                             match fk.on_delete {
@@ -180,33 +193,33 @@ impl ConstraintManager {
                 }
             }
         }
-        
+
         Ok(actions)
     }
-    
+
     pub fn validate_unique(&self, table: &str, values: &HashMap<String, String>) -> Result<()> {
         let constraints = self.unique_constraints.read();
-        
+
         if let Some(unique_constraints) = constraints.get(table) {
             for constraint in unique_constraints {
                 // Validate uniqueness
                 // In production, this would check existing data
             }
         }
-        
+
         Ok(())
     }
-    
+
     pub fn validate_check(&self, table: &str, values: &HashMap<String, String>) -> Result<()> {
         let constraints = self.check_constraints.read();
-        
+
         if let Some(check_constraints) = constraints.get(table) {
             for constraint in check_constraints {
                 // Evaluate check expression
                 // In production, this would parse and evaluate the expression
             }
         }
-        
+
         Ok(())
     }
 }
@@ -220,7 +233,7 @@ impl Default for ConstraintManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_foreign_key() -> Result<()> {
         let cm = ConstraintManager::new();
@@ -233,10 +246,8 @@ mod tests {
             on_delete: ReferentialAction::Cascade,
             on_update: ReferentialAction::Cascade,
         };
-        
+
         cm.add_foreign_key(fk)?;
         Ok(())
     }
 }
-
-

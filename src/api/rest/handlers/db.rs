@@ -5,7 +5,7 @@
 
 use axum::{
     extract::{Path, Query, State},
-    response::{Json as AxumJson},
+    Json as AxumJson,
     http::StatusCode,
 };
 use serde_json::json;
@@ -22,13 +22,7 @@ use crate::transaction::TransactionManager;
 use crate::execution::{Executor, QueryResult};
 use std::time::UNIX_EPOCH;
 use parking_lot::RwLock;
-
-// Lazy-initialized shared state for database operations
-lazy_static::lazy_static! {
-    static ref CATALOG: Arc<Catalog> = Arc::new(Catalog::new());
-    static ref TXN_MANAGER: Arc<TransactionManager> = Arc::new(TransactionManager::new());
-    static ref SQL_PARSER: SqlParser = SqlParser::new();
-}
+use super::{CATALOG, TXN_MANAGER, SQL_PARSER};
 
 /// Helper function to format DataType enum as a string for display
 fn format_data_type(data_type: &DataType) -> String {
@@ -76,13 +70,26 @@ pub async fn execute_query(
             query_id,
             sql: request.sql.clone(),
             started_at: start,
-            session_id: SessionId(1), // TODO: Get from context
+            session_id: SessionId(1), // Default session
             status: "running".to_string(),
         });
     }
 
-    // TODO: Execute query against actual database engine
-    // For now, return mock response
+    // Parse SQL
+    let stmts = SQL_PARSER.parse(&request.sql)
+        .map_err(|e| ApiError::new("SQL_PARSE_ERROR", &e.to_string()))?;
+
+    // Get first statement
+    let stmt = stmts.into_iter().next()
+        .ok_or_else(|| ApiError::new("SQL_PARSE_ERROR", "No valid SQL statement found"))?;
+
+    // Execute query
+    let catalog_guard = CATALOG.read();
+    let catalog_snapshot = (*catalog_guard).clone();
+    drop(catalog_guard);
+    let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
+    let result = executor.execute(stmt)
+        .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     let execution_time = start.elapsed().unwrap_or_default().as_millis() as u64;
 
@@ -92,26 +99,33 @@ pub async fn execute_query(
         queries.remove(&query_id);
     }
 
+    // Convert QueryResult to QueryResponse
+    let columns_meta: Vec<ColumnMetadata> = result.columns.iter().map(|name| ColumnMetadata {
+        name: name.clone(),
+        data_type: "TEXT".to_string(),
+        nullable: true,
+        precision: None,
+        scale: None,
+    }).collect();
+
+    let rows: Vec<HashMap<String, serde_json::Value>> = result.rows.iter().map(|row| {
+        let mut map = HashMap::new();
+        for (i, val) in row.iter().enumerate() {
+            if let Some(col_name) = result.columns.get(i) {
+                map.insert(col_name.clone(), serde_json::Value::String(val.clone()));
+            }
+        }
+        map
+    }).collect();
+
     let response = QueryResponse {
         query_id: query_id.to_string(),
-        rows: vec![],
-        columns: vec![
-            ColumnMetadata {
-                name: "id".to_string(),
-                data_type: "INTEGER".to_string(),
-                nullable: false,
-                precision: None,
-                scale: None,
-            },
-        ],
-        row_count: 0,
-        affected_rows: None,
+        row_count: rows.len(),
+        rows,
+        columns: columns_meta,
+        affected_rows: Some(result.rows_affected),
         execution_time_ms: execution_time,
-        plan: if request.explain.unwrap_or(false) {
-            Some("Sequential Scan on table".to_string())
-        } else {
-            None
-        },
+        plan: None,
         warnings: vec![],
         has_more: false,
     };
@@ -145,29 +159,48 @@ pub async fn execute_batch(
     let mut success_count = 0;
     let mut failure_count = 0;
 
+    let catalog_guard = CATALOG.read();
+    let catalog_snapshot = (*catalog_guard).clone();
+    drop(catalog_guard);
+    let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
+
     for (index, statement) in request.statements.iter().enumerate() {
         let stmt_start = SystemTime::now();
 
-        // TODO: Execute actual statement
-        let success = !statement.is_empty();
+        let result = match SQL_PARSER.parse(statement) {
+            Ok(stmts) => {
+                if let Some(stmt) = stmts.into_iter().next() {
+                    executor.execute(stmt)
+                } else {
+                    Err(DbError::SqlParse("No valid SQL statement found".to_string()))
+                }
+            }
+            Err(e) => Err(DbError::SqlParse(e.to_string())),
+        };
+
+        let success = result.is_ok();
+        let (affected_rows, error) = match result {
+            Ok(res) => (Some(res.rows_affected), None),
+            Err(e) => (None, Some(e.to_string())),
+        };
 
         if success {
             success_count += 1;
         } else {
             failure_count += 1;
-
-            if request.stop_on_error {
-                break;
-            }
         }
 
         results.push(BatchStatementResult {
             statement_index: index,
             success,
-            affected_rows: Some(0),
-            error: if !success { Some("Execution failed".to_string()) } else { None },
+            affected_rows,
+            error,
             execution_time_ms: stmt_start.elapsed().unwrap_or_default().as_millis() as u64,
         });
+
+        if !success && request.stop_on_error {
+            break;
+        }
     }
 
     let total_time = start.elapsed().unwrap_or_default().as_millis() as u64;
@@ -200,13 +233,24 @@ pub async fn get_table(
     State(_state): State<Arc<ApiState>>,
     Path(name): Path<String>,
 ) -> ApiResult<AxumJson<TableInfo>> {
-    // TODO: Implement actual table lookup
+    let catalog = CATALOG.read();
+    let schema = catalog.get_table(&name)
+        .map_err(|_| ApiError::new("NOT_FOUND", &format!("Table {} not found", name)))?;
+
+    let columns = schema.columns.iter().map(|c| ColumnMetadata {
+        name: c.name.clone(),
+        data_type: format_data_type(&c.data_type),
+        nullable: c.nullable,
+        precision: None,
+        scale: None,
+    }).collect();
+
     let table = TableInfo {
-        name: name.clone(),
+        name: schema.name.clone(),
         schema: "public".to_string(),
         row_count: 0,
         size_bytes: 0,
-        columns: vec![],
+        columns,
         indexes: vec![],
     };
 

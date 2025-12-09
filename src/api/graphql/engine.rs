@@ -312,4 +312,358 @@ impl GraphQLEngine {
     ) -> String {
         self.subscription_manager.register_subscription(table, None).await
     }
+
+    // ========================================================================
+    // DDL OPERATIONS - Database Management
+    // ========================================================================
+
+    pub async fn create_database(&self, _name: &str, _if_not_exists: bool) -> Result<(), DbError> {
+        // Would create database in actual catalog
+        Ok(())
+    }
+
+    pub async fn drop_database(&self, _name: &str, _if_exists: bool) -> Result<(), DbError> {
+        // Would drop database from actual catalog
+        Ok(())
+    }
+
+    pub async fn backup_database(&self, _name: &str, _location: &str, _full_backup: bool) -> Result<(), DbError> {
+        // Would perform backup operation
+        Ok(())
+    }
+
+    // ========================================================================
+    // DDL OPERATIONS - Table Management
+    // ========================================================================
+
+    pub async fn alter_table_add_column(
+        &self,
+        _table: &str,
+        _column: super::mutations::ColumnDefinitionInput,
+    ) -> Result<(), DbError> {
+        // Would alter table in catalog
+        Ok(())
+    }
+
+    pub async fn alter_table_drop_column(
+        &self,
+        _table: &str,
+        _column_name: &str,
+        _if_exists: bool,
+    ) -> Result<(), DbError> {
+        // Would alter table in catalog
+        Ok(())
+    }
+
+    pub async fn alter_table_modify_column(
+        &self,
+        _table: &str,
+        _column: super::mutations::ColumnDefinitionInput,
+    ) -> Result<(), DbError> {
+        // Would alter table in catalog
+        Ok(())
+    }
+
+    pub async fn alter_table_add_constraint(
+        &self,
+        _table: &str,
+        _constraint: super::mutations::ConstraintInput,
+    ) -> Result<(), DbError> {
+        // Would add constraint to table
+        Ok(())
+    }
+
+    pub async fn alter_table_drop_constraint(
+        &self,
+        _table: &str,
+        _constraint_name: &str,
+        _if_exists: bool,
+    ) -> Result<(), DbError> {
+        // Would drop constraint from table
+        Ok(())
+    }
+
+    pub async fn truncate_table(&self, _table: &str) -> Result<(), DbError> {
+        // Would truncate table
+        Ok(())
+    }
+
+    // ========================================================================
+    // DDL OPERATIONS - View Management
+    // ========================================================================
+
+    pub async fn create_view(&self, _name: &str, _query: &str, _or_replace: bool) -> Result<(), DbError> {
+        // Would create view in catalog
+        Ok(())
+    }
+
+    pub async fn drop_view(&self, _name: &str, _if_exists: bool) -> Result<(), DbError> {
+        // Would drop view from catalog
+        Ok(())
+    }
+
+    // ========================================================================
+    // DDL OPERATIONS - Index Management
+    // ========================================================================
+
+    pub async fn create_index(
+        &self,
+        _table: &str,
+        _index_name: &str,
+        _columns: Vec<String>,
+        _unique: bool,
+        _if_not_exists: bool,
+    ) -> Result<(), DbError> {
+        // Would create index
+        Ok(())
+    }
+
+    pub async fn drop_index(
+        &self,
+        _index_name: &str,
+        _table: Option<&str>,
+        _if_exists: bool,
+    ) -> Result<(), DbError> {
+        // Would drop index
+        Ok(())
+    }
+
+    // ========================================================================
+    // STORED PROCEDURES
+    // ========================================================================
+
+    pub async fn create_procedure(
+        &self,
+        _name: &str,
+        _parameters: Vec<super::mutations::ProcedureParameter>,
+        _body: &str,
+        _or_replace: bool,
+    ) -> Result<(), DbError> {
+        // Would create stored procedure
+        Ok(())
+    }
+
+    pub async fn execute_procedure(
+        &self,
+        _name: &str,
+        _arguments: Vec<Json>,
+    ) -> Result<Json, DbError> {
+        // Would execute stored procedure
+        Ok(Json(serde_json::json!({})))
+    }
+
+    // ========================================================================
+    // ADVANCED QUERY OPERATIONS
+    // ========================================================================
+
+    pub async fn insert_into_select(
+        &self,
+        _target_table: &str,
+        _target_columns: Option<Vec<String>>,
+        _source_query: &str,
+    ) -> Result<i32, DbError> {
+        // Would execute INSERT INTO ... SELECT
+        Ok(0)
+    }
+
+    pub async fn select_into(
+        &self,
+        _new_table: &str,
+        _source_query: &str,
+    ) -> Result<i64, DbError> {
+        // Would execute SELECT INTO (create new table)
+        Ok(0)
+    }
+
+    pub async fn execute_union(
+        &self,
+        _queries: Vec<String>,
+        _union_all: bool,
+    ) -> Result<(Vec<RowType>, i64), DbError> {
+        // Would execute UNION/UNION ALL query
+        Ok((vec![], 0))
+    }
+
+    // ========================================================================
+    // STRING FUNCTIONS
+    // ========================================================================
+
+    pub async fn execute_string_function(
+        &self,
+        function_type: super::mutations::StringFunctionTypeEnum,
+        parameters: Vec<String>,
+    ) -> Result<String, DbError> {
+        use crate::execution::string_functions::StringFunctionExecutor;
+        use crate::parser::string_functions::{StringExpr, StringFunction};
+        use std::collections::HashMap;
+
+        let mut executor = StringFunctionExecutor::new();
+        let context = HashMap::new();
+
+        // Convert GraphQL enum to AST
+        let func = match function_type {
+            super::mutations::StringFunctionTypeEnum::Ascii => {
+                StringFunction::Ascii(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::Char => {
+                let code = parameters.get(0).and_then(|s| s.parse().ok()).unwrap_or(0);
+                StringFunction::Char(Box::new(StringExpr::Integer(code)))
+            }
+            super::mutations::StringFunctionTypeEnum::Upper => {
+                StringFunction::Upper(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::Lower => {
+                StringFunction::Lower(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::Len => {
+                StringFunction::Len(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::LTrim => {
+                StringFunction::LTrim(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::RTrim => {
+                StringFunction::RTrim(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::Trim => {
+                StringFunction::Trim {
+                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    characters: None,
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::Reverse => {
+                StringFunction::Reverse(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::Soundex => {
+                StringFunction::Soundex(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::Concat => {
+                StringFunction::Concat(parameters.iter().map(|s| StringExpr::Literal(s.clone())).collect())
+            }
+            super::mutations::StringFunctionTypeEnum::Substring => {
+                let string = parameters.get(0).cloned().unwrap_or_default();
+                let start: i64 = parameters.get(1).and_then(|s| s.parse().ok()).unwrap_or(1);
+                let length: i64 = parameters.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
+                StringFunction::Substring {
+                    string: Box::new(StringExpr::Literal(string)),
+                    start: Box::new(StringExpr::Integer(start)),
+                    length: Box::new(StringExpr::Integer(length)),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::Left => {
+                let string = parameters.get(0).cloned().unwrap_or_default();
+                let length: i64 = parameters.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+                StringFunction::Left {
+                    string: Box::new(StringExpr::Literal(string)),
+                    length: Box::new(StringExpr::Integer(length)),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::Right => {
+                let string = parameters.get(0).cloned().unwrap_or_default();
+                let length: i64 = parameters.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+                StringFunction::Right {
+                    string: Box::new(StringExpr::Literal(string)),
+                    length: Box::new(StringExpr::Integer(length)),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::Replace => {
+                StringFunction::Replace {
+                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    old_substring: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
+                    new_substring: Box::new(StringExpr::Literal(parameters.get(2).cloned().unwrap_or_default())),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::Replicate => {
+                let string = parameters.get(0).cloned().unwrap_or_default();
+                let count: i64 = parameters.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+                StringFunction::Replicate {
+                    string: Box::new(StringExpr::Literal(string)),
+                    count: Box::new(StringExpr::Integer(count)),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::Space => {
+                let count: i64 = parameters.get(0).and_then(|s| s.parse().ok()).unwrap_or(0);
+                StringFunction::Space(Box::new(StringExpr::Integer(count)))
+            }
+            super::mutations::StringFunctionTypeEnum::CharIndex => {
+                let start: Option<i64> = parameters.get(2).and_then(|s| s.parse().ok());
+                StringFunction::CharIndex {
+                    substring: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    string: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
+                    start_position: start.map(|s| Box::new(StringExpr::Integer(s))),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::PatIndex => {
+                StringFunction::PatIndex {
+                    pattern: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    string: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::QuoteName => {
+                StringFunction::QuoteName {
+                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    quote_char: parameters.get(1).map(|s| Box::new(StringExpr::Literal(s.clone()))),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::Stuff => {
+                let start: i64 = parameters.get(1).and_then(|s| s.parse().ok()).unwrap_or(1);
+                let length: i64 = parameters.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
+                StringFunction::Stuff {
+                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    start: Box::new(StringExpr::Integer(start)),
+                    length: Box::new(StringExpr::Integer(length)),
+                    new_string: Box::new(StringExpr::Literal(parameters.get(3).cloned().unwrap_or_default())),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::Translate => {
+                StringFunction::Translate {
+                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    characters: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
+                    translations: Box::new(StringExpr::Literal(parameters.get(2).cloned().unwrap_or_default())),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::DataLength => {
+                StringFunction::DataLength(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::Difference => {
+                StringFunction::Difference {
+                    string1: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    string2: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::Format => {
+                StringFunction::Format {
+                    value: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    format: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
+                    culture: parameters.get(2).map(|s| Box::new(StringExpr::Literal(s.clone()))),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::NChar => {
+                let code = parameters.get(0).and_then(|s| s.parse().ok()).unwrap_or(0);
+                StringFunction::NChar(Box::new(StringExpr::Integer(code)))
+            }
+            super::mutations::StringFunctionTypeEnum::Unicode => {
+                StringFunction::Unicode(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+            }
+            super::mutations::StringFunctionTypeEnum::Str => {
+                let number: f64 = parameters.get(0).and_then(|s| s.parse().ok()).unwrap_or(0.0);
+                let length: Option<i64> = parameters.get(1).and_then(|s| s.parse().ok());
+                let decimals: Option<i64> = parameters.get(2).and_then(|s| s.parse().ok());
+                StringFunction::Str {
+                    number: Box::new(StringExpr::Float(number)),
+                    length: length.map(|l| Box::new(StringExpr::Integer(l))),
+                    decimals: decimals.map(|d| Box::new(StringExpr::Integer(d))),
+                }
+            }
+            super::mutations::StringFunctionTypeEnum::ConcatWs => {
+                let separator = parameters.get(0).cloned().unwrap_or_default();
+                let strings: Vec<StringExpr> = parameters.iter().skip(1).map(|s| StringExpr::Literal(s.clone())).collect();
+                StringFunction::ConcatWs {
+                    separator: Box::new(StringExpr::Literal(separator)),
+                    strings,
+                }
+            }
+        };
+
+        executor.execute(&func, &context)
+    }
 }

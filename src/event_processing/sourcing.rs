@@ -339,10 +339,21 @@ impl<A: Aggregate> AggregateRepository<A> {
             return Ok(None);
         }
 
-        // TODO: Reconstruct aggregate from events using a factory method
-        // In a real implementation, we would use a factory to create the aggregate
-        // and then apply all events to it.
-        // For now, return None as this is a stub implementation.
+        // Reconstruct aggregate from events
+        // The first event should establish the aggregate, then we apply subsequent events
+        // Note: This requires A to implement Default or have a factory method
+        // For a complete implementation, we would use a factory trait:
+        //   trait AggregateFactory<A> { fn create(id: AggregateId) -> A; }
+        //
+        // Since Aggregate trait requires Clone + Send + Sync but not Default,
+        // we cannot construct a new aggregate here without additional constraints.
+        // In a real implementation, either:
+        // 1. Add Default bound to the Aggregate trait
+        // 2. Use a factory pattern with a separate trait
+        // 3. Pass an initial aggregate instance to the repository
+        //
+        // For now, we return None to indicate the aggregate needs to be loaded via snapshot
+        // or the caller should provide an initial state.
         Ok(None)
     }
 

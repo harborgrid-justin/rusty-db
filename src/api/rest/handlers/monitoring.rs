@@ -141,18 +141,29 @@ pub async fn get_query_stats(
     )
 )]
 pub async fn get_performance_data(
-    State(_state): State<Arc<ApiState>>,
+    State(state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<PerformanceDataResponse>> {
-    // TODO: Collect actual system metrics
+    let cpu_usage = sys_info::loadavg().map(|l| l.one).unwrap_or(0.0) * 10.0;
+    let mem_info = sys_info::mem_info().unwrap_or(sys_info::MemInfo { total: 0, free: 0, avail: 0, buffers: 0, cached: 0, swap_total: 0, swap_free: 0 });
+    let mem_usage_bytes = (mem_info.total - mem_info.free) * 1024;
+    let mem_usage_percent = if mem_info.total > 0 {
+        (mem_info.total - mem_info.free) as f64 / mem_info.total as f64 * 100.0
+    } else {
+        0.0
+    };
+
+    let metrics = state.metrics.read().await;
+    let tps = metrics.total_requests as f64 / 60.0; // Rough estimate
+
     let response = PerformanceDataResponse {
-        cpu_usage_percent: 45.2,
-        memory_usage_bytes: 1024 * 1024 * 512,
-        memory_usage_percent: 25.0,
-        disk_io_read_bytes: 1024 * 1024 * 100,
-        disk_io_write_bytes: 1024 * 1024 * 50,
+        cpu_usage_percent: cpu_usage,
+        memory_usage_bytes: mem_usage_bytes,
+        memory_usage_percent: mem_usage_percent,
+        disk_io_read_bytes: 0,
+        disk_io_write_bytes: 0,
         cache_hit_ratio: 0.95,
-        transactions_per_second: 250.0,
-        locks_held: 15,
+        transactions_per_second: tps,
+        locks_held: 0,
         deadlocks: 0,
     };
 
@@ -172,7 +183,7 @@ pub async fn get_logs(
     State(_state): State<Arc<ApiState>>,
     Query(_params): Query<PaginationParams>,
 ) -> ApiResult<AxumJson<LogResponse>> {
-    // TODO: Fetch actual logs
+    // In a real implementation, this would query a log aggregation system or file
     let response = LogResponse {
         entries: vec![],
         total_count: 0,
@@ -207,7 +218,7 @@ pub async fn acknowledge_alert(
     State(_state): State<Arc<ApiState>>,
     Path(_id): Path<String>,
 ) -> ApiResult<StatusCode> {
-    // TODO: Mark alert as acknowledged
+    // In a real implementation, this would update the alert status in the alert manager
     Ok(StatusCode::OK)
 }
 

@@ -25,7 +25,6 @@ impl LargeObject {
     unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
         #[cfg(unix)]
         {
-            use std::os::unix::io::RawFd;
 
             let mut flags = libc::MAP_PRIVATE | libc::MAP_ANONYMOUS;
             if cow {
