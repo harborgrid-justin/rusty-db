@@ -191,7 +191,7 @@ impl Default for RestApiServer {
     fn default() -> Self {
         // This would normally inject dependencies, but for default we create them
         futures::executor::block_on(async {
-            Self::new(ApiConfig::default()).unwrap()
+            Self::new(ApiConfig::default()).await.unwrap()
         })
     }
 }

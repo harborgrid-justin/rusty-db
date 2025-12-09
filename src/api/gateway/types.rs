@@ -456,19 +456,3 @@ impl Default for ServiceDiscoveryConfig {
     }
 }
 
-impl ApiGateway {
-    /// Create a new API gateway
-    pub fn new(config: GatewayConfig) -> Self {
-        Self {
-            config: Arc::new(RwLock::new(config)),
-            routes: Default::default(),
-            auth_manager: Arc::new(AuthenticationManager::new()),
-            authz_engine: Arc::new(AuthorizationEngine::new()),
-            rate_limiter: Arc::new(RateLimiter::new()),
-            security_filter: Arc::new(SecurityFilter::new()),
-            metrics: Default::default(),
-            service_registry: Arc::new(RwLock::new(ServiceRegistry::default())),
-            audit_logger: Arc::new(Mutex::new(AuditLogger::new())),
-        }
-    }
-}

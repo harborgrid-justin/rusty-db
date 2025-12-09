@@ -666,7 +666,7 @@ impl KeyDerivation {
         let mut counter = 1u8;
 
         while output.len() < outputlen {
-            let mut mac = HmacSha256::new_from_slice(prk)
+            let mut mac = <HmacSha256 as Mac>::new_from_slice(prk)
                 .map_err(|e| DbError::Internal(format!("HKDF error: {}", e)))?;
 
             if counter > 1 {
@@ -1014,7 +1014,7 @@ impl EncryptedIndex {
         )?;
 
         // Hash the value with the token key
-        let mut mac = HmacSha256::new_from_slice(&token_key)
+        let mut mac = <HmacSha256 as Mac>::new_from_slice(&token_key)
             .map_err(|e| DbError::Internal(format!("Token generation error: {}", e)))?;
         mac.update(searchvalue);
         let result = mac.finalize();

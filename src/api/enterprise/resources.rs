@@ -277,7 +277,7 @@ impl IoScheduler {
 /// Priority manager
 pub struct PriorityManager {
     priorities: Arc<RwLock<HashMap<String, usize>>>,
-    priority_queues: Arc<RwLock<BTreeMap<usize, Vec<String>>>>,
+    priority_queues: Arc<RwLock<BTreeMap<usize, VecDeque<String>>>>,
 }
 
 impl PriorityManager {

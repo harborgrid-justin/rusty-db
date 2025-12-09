@@ -199,26 +199,6 @@ impl FileSnapshotManager {
             })
     }
 
-    async fn save_snapshot_metadata(&self, metadata: &SnapshotMetadata) -> Result<(), SnapshotError> {
-        let metadata_path = self.config.storage_path.join(format!("{}.metadata", metadata.snapshot_id));
-        let contents = serde_json::to_string_pretty(metadata)
-            .map_err(|e| SnapshotError::StorageError {
-                operation: "serialize_metadata".to_string(),
-                reason: e.to_string(),
-            })?;
-        tokio::fs::write(&metadata_path, contents)
-            .await
-            .map_err(|e| SnapshotError::StorageError {
-                operation: "write_metadata".to_string(),
-                reason: e.to_string(),
-            })?;
-        Ok(())
-    }
-
-    fn get_snapshot_data_path(&self, snapshot_id: &SnapshotId) -> PathBuf {
-        self.config.storage_path.join(format!("{}.snapshot", snapshot_id))
-    }
-
     async fn start_background_cleanup(&self) {
         let config = Arc::clone(&self.config);
         let metadata_cache = Arc::clone(&self.metadata_cache);
@@ -238,67 +218,6 @@ impl FileSnapshotManager {
         });
 
         *self.cleanup_handle.lock() = Some(handle);
-    }
-
-    async fn update_statistics(&self) {
-        let cache = self.metadata_cache.read();
-        let snapshots: Vec<_> = cache.values().collect();
-        if snapshots.is_empty() {
-            return;
-        }
-
-        let total_snapshots = snapshots.len();
-        let full_snapshots = snapshots.iter().filter(|s| s.snapshot_type == SnapshotType::Full).count();
-        let incremental_snapshots = snapshots.iter().filter(|s| s.snapshot_type == SnapshotType::Incremental).count();
-        let total_storage_bytes: u64 = snapshots.iter().map(|s| s.size_bytes).sum();
-        let compressed_storage_bytes: u64 = snapshots.iter()
-            .map(|s| s.compressed_size_bytes.unwrap_or(s.size_bytes))
-            .sum();
-
-        let average_compression_ratio = if total_storage_bytes > 0 {
-            compressed_storage_bytes as f64 / total_storage_bytes as f64
-        } else {
-            1.0
-        };
-
-        let oldest_snapshot_age = snapshots.iter()
-            .map(|s| s.created_at)
-            .min()
-            .map(|oldest| SystemTime::now().duration_since(oldest).unwrap_or_default());
-
-        let success_rate = {
-            let successful = snapshots.iter().filter(|s| s.status == SnapshotStatus::Completed).count();
-            if total_snapshots > 0 {
-                (successful as f64 / total_snapshots as f64) * 100.0
-            } else {
-                100.0
-            }
-        };
-
-        let storage_efficiency = StorageEfficiency {
-            deduplication_ratio: 1.0,
-            compression_effectiveness: 1.0 - average_compression_ratio,
-            space_savings: if total_storage_bytes > 0 {
-                ((total_storage_bytes - compressed_storage_bytes) as f64 / total_storage_bytes as f64) * 100.0
-            } else {
-                0.0
-            },
-            average_size_reduction: average_compression_ratio,
-        };
-
-        let mut stats = self.statistics.write();
-        *stats = SnapshotStatistics {
-            total_snapshots,
-            full_snapshots,
-            incremental_snapshots,
-            total_storage_bytes,
-            compressed_storage_bytes,
-            average_compression_ratio,
-            oldest_snapshot_age,
-            average_creation_time: Duration::from_secs(120),
-            success_rate,
-            storage_efficiency,
-        };
     }
 
     pub(super) async fn compress_data(&self, data: &[u8], algorithm: &CompressionType) -> Result<Vec<u8>, SnapshotError> {

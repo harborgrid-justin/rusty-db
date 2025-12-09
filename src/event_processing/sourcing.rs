@@ -312,13 +312,14 @@ impl<A: Aggregate> AggregateRepository<A> {
         // Try to load from snapshot first
         let snapshot_store = self.snapshot_store.read().unwrap();
         if let Some(snapshot) = snapshot_store.get_snapshot(aggregate_id) {
+            let snapshot = snapshot.clone();
+            let snapshot_version = snapshot.version;
+            let mut aggregate = snapshot.state;
             drop(snapshot_store);
-
-            let mut aggregate = snapshot.state.clone();
 
             // Load events since snapshot
             let event_store = self.event_store.read().unwrap();
-            let events = event_store.get_events_from_version(aggregate_id, snapshot.version)?;
+            let events = event_store.get_events_from_version(aggregate_id, snapshot_version)?;
             drop(event_store);
 
             for envelope in events {
@@ -338,22 +339,11 @@ impl<A: Aggregate> AggregateRepository<A> {
             return Ok(None);
         }
 
-        // Reconstruct aggregate from events
-        let mut aggregate: Option<Box<dyn Aggregate>> = None;
-
-        for envelope in events {
-            if aggregate.is_none() {
-                // First event - need to create aggregate (simplified)
-                // In real implementation, use a factory method
-                continue;
-            }
-
-            if let Some(ref mut agg) = aggregate {
-                agg.apply_event(&envelope.event)?;
-            }
-        }
-
-        Ok(aggregate)
+        // TODO: Reconstruct aggregate from events using a factory method
+        // In a real implementation, we would use a factory to create the aggregate
+        // and then apply all events to it.
+        // For now, return None as this is a stub implementation.
+        Ok(None)
     }
 
     /// Save an aggregate

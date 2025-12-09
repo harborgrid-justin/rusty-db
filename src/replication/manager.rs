@@ -489,7 +489,7 @@ impl ReplicationManager {
     /// Gracefully shuts down all background tasks and connections.
     pub async fn stop(&self) -> Result<(), ReplicationManagerError> {
         // Send shutdown signal
-        if let Some(sender) = self.shutdown_sender.lock().unwrap().take() {
+        if let Some(sender) = self.shutdown_sender.lock().take() {
             let _ = sender.send(());
         }
 
@@ -1061,16 +1061,10 @@ mod tests {
         }
 
         async fn get_latest_lsn(&self) -> Result<LogSequenceNumber, DbError> {
-            Ok(LogSequenceNumber::new(1000))
+            Ok(LogSequenceNumber(1000))
         }
 
-impl LogSequenceNumber {
-                    pub fn new(value: u64) -> Self {
-                        Self(value)
-                    }
-                }
-
-                async fn get_stats(&self) -> Result<WalStats, DbError> {
+        async fn get_stats(&self) -> Result<WalStats, DbError> {
                     Ok(WalStats {
                         total_entries: 0,
                         size_bytes: 0,

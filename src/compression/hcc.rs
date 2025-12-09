@@ -240,8 +240,7 @@ impl HCCEngine {
             1 => {
                 // Cascaded integer compression
                 let cascaded = CascadedCompressor::new();
-                let mut values = Vec::new();
-                cascaded.decompress_u32(data, &mut values)?;
+                let values = cascaded.decompress_u32(data)?;
 
                 let mut bytes = Vec::with_capacity(values.len() * 4);
                 for value in values {

@@ -470,7 +470,7 @@ impl<T: 'static> EliminationArray<T> {
 }
 
 /// An elimination-backoff stack for high contention scenarios
-pub struct EliminationStack<T> {
+pub struct EliminationStack<T: 'static> {
     stack: LockFreeStack<T>,
     elimination_array: EliminationArray<T>,
 }

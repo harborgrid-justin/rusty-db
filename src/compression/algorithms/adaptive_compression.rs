@@ -208,7 +208,7 @@ impl CascadedCompressor {
         Ok(result)
     }
 
-pub fn decompress_u32<T>(&self, compressed: &[u8], x: &mut Vec<utoipa::openapi::RefOr<T>>) -> CompressionResult<Vec<u32>> {
+pub fn decompress_u32(&self, compressed: &[u8]) -> CompressionResult<Vec<u32>> {
             if compressed.is_empty() {
                 return Ok(Vec::new());
             }

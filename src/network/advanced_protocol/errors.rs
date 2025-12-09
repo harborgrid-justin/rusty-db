@@ -1,9 +1,8 @@
 // Protocol Error Types
-    
+
     use std::io;
     use thiserror::Error;
-    use network::connection_management::ConnectionState;
-use crate::network::ConnectionState;
+    use crate::network::ConnectionState;
 
 #[derive(Debug, Error)]
     pub enum ProtocolError {

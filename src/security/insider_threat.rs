@@ -748,7 +748,7 @@ impl AnomalyDetector {
         result_rows: u64,
         baseline: &UserBehaviorBaseline,
     ) -> AnomalyScore {
-        let mut score = 0.0;
+        let mut score: f64 = 0.0;
         let mut anomalies = Vec::new();
         let mut z_scores = HashMap::new();
 

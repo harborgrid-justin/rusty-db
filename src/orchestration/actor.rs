@@ -35,7 +35,7 @@
 
 use tokio::sync::oneshot;
 use std::fmt;
-use std::sync::Mutex;
+use parking_lot::Mutex;
 use std::any::Any;
 use std::collections::HashMap;
 
@@ -351,7 +351,7 @@ impl ActorSystem {
 
     /// Configure supervision strategy
     pub async fn configure_supervision(&self, config: SupervisorConfig) {
-        *self.supervisor_config.lock().unwrap() = config;
+        *self.supervisor_config.lock() = config;
     }
 
     /// Spawn a new actor
@@ -381,7 +381,7 @@ impl ActorSystem {
         let actor_ref_clone = actor_ref.clone();
         let join_handle = tokio::spawn(async move {
             let mut shutdown_rx = {
-                let guard = system.shutdown_tx.lock().unwrap();
+                let guard = system.shutdown_tx.lock();
                 guard.as_ref().map(|tx| tx.subscribe())
             };
 
@@ -516,9 +516,10 @@ impl ActorSystem {
 
     /// Handle actor failure according to supervision strategy
     async fn handle_actor_failure(&self, id: ActorId, error: DbError) {
-        let config = self.supervisor_config.lock().unwrap();
-        let strategy = config.strategy;
-        drop(config);
+        let strategy = {
+            let config = self.supervisor_config.lock();
+            config.strategy
+        };
 
         match strategy {
             SupervisionStrategy::Restart => {
@@ -568,7 +569,7 @@ impl ActorSystem {
 
         // Send shutdown signal
         {
-            let mut guard = self.shutdown_tx.lock().unwrap();
+            let mut guard = self.shutdown_tx.lock();
             if let Some(tx) = guard.take() {
                 let _ = tx.send(());
             }
