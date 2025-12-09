@@ -252,11 +252,11 @@ impl ShardingEngine {
     pub fn create_sharded_table(&self, table: ShardedTable) -> Result<()> {
         let mut tables = self.tables.write();
 
-        let key = format!("{}.{}", table.schema_name, table.table_name)));
+        let key = format!("{}.{}", table.schema_name, table.table_name);
         if tables.contains_key(&key) {
             return Err(DbError::Replication(
                 format!("Table {} is already sharded", key)
-            ))));
+            ));
         }
 
         // Validate shards
@@ -282,7 +282,7 @@ impl ShardingEngine {
         let sharded_table = tables.get(table)
             .ok_or_else(|| DbError::Replication(
                 format!("Table {} is not sharded", table)
-            ))?);
+            ))?;
 
         let shard_ids = self.determine_shards(&sharded_table.strategy, shard_key)?;
 
@@ -300,7 +300,7 @@ impl ShardingEngine {
             ShardingStrategy::Range { ranges } => {
                 for range in ranges {
                     if key >= &range.start && key < &range.end {
-                        return Ok(vec![range.shard_id.clone()])));
+                        return Ok(vec![range.shard_id.clone()]);
                     }
                 }
                 Err(DbError::Replication(
@@ -310,7 +310,7 @@ impl ShardingEngine {
             ShardingStrategy::List { lists } => {
                 for list in lists {
                     if list.values.contains(key) {
-                        return Ok(vec![list.shard_id.clone()])));
+                        return Ok(vec![list.shard_id.clone()]);
                     }
                 }
                 Err(DbError::Replication(
@@ -318,7 +318,7 @@ impl ShardingEngine {
                 ))
             }
             ShardingStrategy::Composite { strategies } => {
-                let mut all_shards = Vec::new()));
+                let mut all_shards = Vec::new();
                 for strategy in strategies {
                     let shards = self.determine_shards(strategy, key)?;
                     all_shards.extend(shards);
@@ -335,7 +335,7 @@ impl ShardingEngine {
         let sharded_table = tables.get(table)
             .ok_or_else(|| DbError::Replication(
                 format!("Table {} is not sharded", table)
-            ))?);
+            ))?;
 
         // Get all shards for this table
         let shard_ids: Vec<String> = sharded_table.shards.iter()
@@ -358,7 +358,7 @@ impl ShardingEngine {
                                  sql.to_uppercase().contains("COUNT") ||
                                  sql.to_uppercase().contains("SUM"),
             sort_columns: vec![],
-        }));
+        };
 
         let mut stats = self.stats.write();
         stats.cross_shard_queries += 1;
@@ -399,7 +399,7 @@ impl ShardingEngine {
         let shard = shards.get(shard_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Shard {} not found", shard_id)
-            ))?);
+            ))?;
 
         // In a real implementation, would execute on the shard's server
         // For now, return empty result
@@ -421,20 +421,20 @@ impl ShardingEngine {
     pub fn plan_rebalance(
         &self,
         table: &str,
-        sourceshard: &str,
-        targetshard: &str,
+        source_shard: &str,
+        target_shard: &str,
     ) -> Result<RebalancePlan> {
         let shards = self.shards.read();
 
         let source = shards.get(source_shard)
             .ok_or_else(|| DbError::Replication(
                 format!("Source shard {} not found", source_shard)
-            ))?);
+            ))?;
 
         let _target = shards.get(target_shard)
             .ok_or_else(|| DbError::Replication(
                 format!("Target shard {} not found", target_shard)
-            ))?);
+            ))?;
 
         let plan = RebalancePlan {
             id: format!("rebalance-{}", uuid::Uuid::new_v4()),
@@ -445,7 +445,7 @@ impl ShardingEngine {
             estimated_duration: source.row_count / 1000, // 1000 rows per second
             state: RebalanceState::Planned,
             progress: 0,
-        }));
+        };
 
         self.rebalance_plans.write().insert(plan.id.clone(), plan.clone());
 
@@ -461,7 +461,7 @@ impl ShardingEngine {
                     format!("Rebalance plan {} not found", plan_id)
                 ))?
                 .clone()
-        }));
+        };
 
         // Update state to in progress
         {
@@ -558,13 +558,13 @@ impl ShardingEngine {
 
     /// Get shard statistics
     #[inline]
-    pub fn get_shard_stats(&self, shardid: &str) -> Result<ShardStatistics> {
+    pub fn get_shard_stats(&self, shard_id: &str) -> Result<ShardStatistics> {
         let shards = self.shards.read();
 
         let shard = shards.get(shard_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Shard {} not found", shard_id)
-            ))?);
+            ))?;
 
         Ok(ShardStatistics {
             shard_id: shard.id.clone(),
@@ -589,7 +589,7 @@ impl ShardingEngine {
         if shards.contains_key(&shard.id) {
             return Err(DbError::Replication(
                 format!("Shard {} already exists", shard.id)
-            ))));
+            ));
         }
 
         shards.insert(shard.id.clone(), shard);
@@ -608,7 +608,7 @@ impl ShardingEngine {
         shards.remove(shard_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Shard {} not found", shard_id)
-            ))?);
+            ))?;
 
         let mut stats = self.stats.write();
         stats.total_shards = stats.total_shards.saturating_sub(1);
@@ -624,7 +624,7 @@ impl ShardingEngine {
         let shard = shards.get_mut(shard_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Shard {} not found", shard_id)
-            ))?);
+            ))?;
 
         let old_status = shard.status.clone();
         shard.status = status.clone();

@@ -563,7 +563,7 @@ impl ParallelExecutionController {
             let mut executions = self.active_executions.write().unwrap();
             executions.remove(&query_id)
                 .ok_or_else(|| DbError::NotFound(format!("Query {} not found", query_id)))?
-        }));
+        };
 
         // Free servers
         {

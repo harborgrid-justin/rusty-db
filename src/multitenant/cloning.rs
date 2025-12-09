@@ -211,8 +211,8 @@ impl CloningEngine {
     /// Create a snapshot clone
     pub async fn create_snapshot_clone(
         &self,
-        snapshotid: u64,
-        source_pdbid: PdbId,
+        snapshot_id: u64,
+        source_pdb_id: PdbId,
         _clone_name: &str,
     ) -> Result<(u64, PdbId)> {
         let clone_id = self.allocate_clone_id().await;
@@ -223,12 +223,12 @@ impl CloningEngine {
         let snapshot_manager_guard = snapshot_manager.read().await;
         let snapshots = snapshot_manager_guard.get(&source_pdb_id).ok_or_else(|| {
             DbError::NotFound(format!("No snapshots for PDB {:?}", source_pdb_id))
-        })?);
+        })?;
 
         let snapshot = snapshots
             .iter()
             .find(|s| s.id == snapshot_id)
-            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot_id)))?;
 
         // Clone snapshot data before releasing lock
         let snapshot_scn = snapshot.scn;
@@ -342,7 +342,7 @@ impl CloningEngine {
 
     /// Delete a clone
     pub async fn delete_clone(&self, clone_id: u64) -> Result<()> {
-        let mut clones = self.clones.write().await));
+        let mut clones = self.clones.write().await;
 
         if let Some(meta) = clones.get_mut(&clone_id) {
             meta.status = CloneStatus::Deleting;
@@ -384,7 +384,7 @@ impl CloningEngine {
 
     /// Allocate a new clone ID
     async fn allocate_clone_id(&self) -> u64 {
-        let mut next_id = self.next_id.write().await));
+        let mut next_id = self.next_id.write().await;
         let id = *next_id;
         *next_id += 1;
         id
@@ -468,7 +468,7 @@ impl CopyOnWriteEngine {
         block_id: u64,
         block_data: Vec<u8>,
     ) -> Result<()> {
-        let mut layers = self.layers.write().await));
+        let mut layers = self.layers.write().await;
 
         if let Some(layer) = layers.get_mut(&clone_pdb_id) {
             let block_size = block_data.len();
@@ -487,7 +487,7 @@ impl CopyOnWriteEngine {
 
     /// Get CoW layer statistics
     pub async fn get_layer_stats(&self, clone_pdb_id: PdbId) -> Result<CowLayerStats> {
-        let layers = self.layers.read().await));
+        let layers = self.layers.read().await;
 
         if let Some(layer) = layers.get(&clone_pdb_id) {
             Ok(CowLayerStats {
@@ -616,7 +616,7 @@ impl CloneFromBackup {
 
 #[cfg(test)]
 mod tests {
-    use super::*));
+    use super::*;
 
     #[tokio::test]
     async fn test_full_clone() {

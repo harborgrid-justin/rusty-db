@@ -268,7 +268,7 @@ impl LinearRegression {
         dataset: &Dataset,
         params: &Hyperparameters,
     ) -> Result<()> {
-        dataset.validate()?);
+        dataset.validate()?;
 
         let target = dataset.target.as_ref()
             .ok_or_else(|| MLError::InvalidConfiguration("No target provided".to_string()))?;
@@ -603,7 +603,7 @@ impl DecisionTree {
         min_samples_leaf: usize,
     ) -> TreeNode {
         if indices.len() < min_samples_split || depth >= max_depth {
-            return self.create_leaf(&targets, &indices)));
+            return self.create_leaf(&targets, &indices);
         }
 
         // Find best split
@@ -854,7 +854,7 @@ impl RandomForest {
 
     /// Bootstrap sampling
     fn bootstrap_sample(&self, n_samples: usize) -> Vec<usize> {
-        use rand::Rng));
+        use rand::Rng;
         let mut rng = rand::thread_rng();
         (0..n_samples)
             .map(|_| rng.gen_range(0..n_samples))
@@ -1146,7 +1146,7 @@ impl NaiveBayes {
 
     /// Calculate Gaussian probability density
     fn gaussian_pdf(&self, x: f64, mean: f64, variance: f64) -> f64 {
-        let epsilon = 1e-9));
+        let epsilon = 1e-9;
         let var = variance.max(epsilon);
         let exponent = -(x - mean).powi(2) / (2.0 * var);
         (1.0 / (2.0 * std::f64::consts::PI * var).sqrt()) * exponent.exp()
@@ -1272,7 +1272,7 @@ impl Algorithm for NaiveBayes {
 
 #[cfg(test)]
 mod tests {
-    use super::*));
+    use super::*;
 
     #[test]
     fn test_linear_regression() {

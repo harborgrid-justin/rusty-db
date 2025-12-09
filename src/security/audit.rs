@@ -394,7 +394,7 @@ impl AuditManager {
         if policies.contains_key(&policy.id) {
             return Err(DbError::AlreadyExists(
                 format!("Audit policy {} already exists", policy.id)
-            ))));
+            ));
         }
 
         policies.insert(policy.id.clone(), policy);
@@ -408,7 +408,7 @@ impl AuditManager {
         if policies.remove(policy_id).is_none() {
             return Err(DbError::NotFound(
                 format!("Audit policy {} not found", policy_id)
-            ))));
+            ));
         }
 
         Ok(())
@@ -429,7 +429,7 @@ impl AuditManager {
 
     /// Query audit records
     pub fn query(&self, filter: AuditFilter) -> Vec<AuditRecord> {
-        let records = self.records.read()));
+        let records = self.records.read();
         let mut results: Vec<AuditRecord> = records.iter()
             .filter(|r| self.matches_filter(r, &filter))
             .cloned()
@@ -692,7 +692,7 @@ impl AuditManager {
             record.username,
             format!("{:?}", record.action),
             record.success
-        )));
+        );
 
         let mut hasher = Sha256::new();
         hasher.update(data.as_bytes());
@@ -703,7 +703,7 @@ impl AuditManager {
     fn matches_filter(&self, record: &AuditRecord, filter: &AuditFilter) -> bool {
         if let Some(start_time) = filter.start_time {
             if record.timestamp / 1_000_000 < start_time {
-                return false));
+                return false;
             }
         }
 

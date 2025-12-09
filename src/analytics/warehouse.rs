@@ -9,7 +9,7 @@
 /// - Data quality and validation
 /// - Aggregate awareness and query rewriting
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -378,7 +378,7 @@ impl DataWarehouseManager {
             return Err(DbError::AlreadyExists(format!(
                 "Star schema: {}",
                 schema.name
-            )))));
+            )));
         }
 
         schemas.insert(schema.name.clone(), schema);
@@ -388,17 +388,17 @@ impl DataWarehouseManager {
     /// Create bitmap index on dimension
     pub fn create_bitmap_index(
         &self,
-        schemaname: &str,
-        dimensionname: &str,
+        schema_name: &str,
+        dimension_name: &str,
         column: &str,
-    )> Result<()> {
+    ) -> Result<()> {
         let mut schemas = self.schemas.write();
         let schema = schemas.get_mut(schema_name)
-            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
 
         let dimension = schema.dimension_tables.iter_mut()
             .find(|d| d.name == dimension_name)
-            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
 
         // Create bitmap index
         let index = BitmapIndex {
@@ -411,32 +411,32 @@ impl DataWarehouseManager {
                 compression_ratio: 1.0,
                 avg_bitmap_density: 0.0,
             },
-        }));
+        };
 
         dimension.bitmap_indexes.push(index);
         Ok(())
     }
 
     /// Add dimension value to bitmap index
-    pub fn afn add_to_bitmap_index(
+    pub fn add_to_bitmap_index(
         &self,
-        schemaname: &str,
-        dimensionname: &str,
-        indexname: &str,
+        schema_name: &str,
+        dimension_name: &str,
+        index_name: &str,
         value: String,
         row_id: usize,
-    )<()> {
+    ) -> Result<()> {
         let mut schemas = self.schemas.write();
         let schema = schemas.get_mut(schema_name)
-            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
 
         let dimension = schema.dimension_tables.iter_mut()
             .find(|d| d.name == dimension_name)
-            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
 
         let index = dimension.bitmap_indexes.iter_mut()
             .find(|idx| idx.name == index_name)
-            .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?;
 
         // Get or create bitmap for value
         let bitmap = index.bitmaps.entry(value)
@@ -450,44 +450,44 @@ impl DataWarehouseManager {
     /// Query using bitmap indexes
     pub fn query_with_bitmap(
         &self,
-        schemaname: &str,
-        dimensionname: &str,
-        indexname: &str,
+        schema_name: &str,
+        dimension_name: &str,
+        index_name: &str,
         value: &str,
     ) -> Result<BitVector> {
         let schemas = self.schemas.read();
         let schema = schemas.get(schema_name)
-            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
 
         let dimension = schema.dimension_tables.iter()
             .find(|d| d.name == dimension_name)
-            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
 
         let index = dimension.bitmap_indexes.iter()
             .find(|idx| idx.name == index_name)
-            .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?;
 
         let bitmap = index.bitmaps.get(value)
-            .ok_or_else(|| DbError::NotFound(format!("Value: {}", value)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Value: {}", value)))?;
 
         Ok(bitmap.clone())
     }
 
     /// Handle slowly changing dimension update
-    pub fn update_scdfn update_scd(
+    pub fn update_scd(
         &self,
-        schemaname: &str,
-        dimensionname: &str,
+        schema_name: &str,
+        dimension_name: &str,
         _key: String,
         _new_attributes: HashMap<String, String>,
-    ){
+    ) -> Result<()> {
         let schemas = self.schemas.read();
         let schema = schemas.get(schema_name)
-            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
 
         let dimension = schema.dimension_tables.iter()
             .find(|d| d.name == dimension_name)
-            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
 
         match &dimension.scd_type {
             SlowlyChangingDimensionType::Type1 => {
@@ -545,7 +545,7 @@ impl DataWarehouseManager {
             PartitioningStrategy::List { column: _, partitions } => {
                 for partition in partitions {
                     if partition.values.contains(&value.to_string()) {
-                        return Ok(partition.name.clone())));
+                        return Ok(partition.name.clone());
                     }
                 }
                 Err(DbError::NotFound("No matching partition".to_string()))

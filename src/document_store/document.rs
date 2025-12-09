@@ -51,11 +51,12 @@ impl DocumentId {
         match id_type {
             IdGenerationType::Uuid => {
                 let uuid = Uuid::parse_str(s)
-                    .map_err(|e| crate::error::DbError::InvalidInput(format!("Invalid UUID: {}", e)))?);
+                    .map_err(|e| crate::error::DbError::InvalidInput(format!("Invalid UUID: {}", e)))?;
                 Ok(DocumentId::Uuid(uuid))
             }
             IdGenerationType::AutoIncrement => {
                 let id = s.parse::<u64>()
+                    .map_err(|_| crate::error::DbError::InvalidInput("Invalid auto-increment ID".to_string()))?;
                 Ok(DocumentId::AutoIncrement(id))
             }
             IdGenerationType::Custom => Ok(DocumentId::Custom(s.to_string())),
@@ -242,11 +243,11 @@ impl DocumentContent {
             DocumentContent::Json(v) => Ok(v.clone()),
             DocumentContent::Bson(doc) => {
                 // Convert BSON to JSON via serialization
-                let json = serde_json::to_value(doc)
+                let json = serde_json::to_value(doc)?;
                 Ok(json)
             }
             DocumentContent::Bytes(bytes) => {
-                let json: serde_json::Value = serde_json::from_slice(bytes)
+                let json: serde_json::Value = serde_json::from_slice(bytes)?;
                 Ok(json)
             }
         }
@@ -256,15 +257,16 @@ impl DocumentContent {
     pub fn to_bson(&self) -> Result<bson::Document> {
         match self {
             DocumentContent::Json(v) => {
-                let bson_value = bson::to_bson(v)
+                let bson_value = bson::to_bson(v)?;
                 if let bson::Bson::Document(doc) = bson_value {
                     Ok(doc)
                 } else {
+                    Err(crate::error::DbError::InvalidInput("Cannot convert to BSON Document".to_string()))
                 }
             }
             DocumentContent::Bson(doc) => Ok(doc.clone()),
             DocumentContent::Bytes(bytes) => {
-                let doc = bson::from_slice(bytes)
+                let doc = bson::from_slice(bytes)?;
                 Ok(doc)
             }
         }
@@ -319,7 +321,7 @@ impl Document {
         collection: String,
         json: serdejson::Value,
     ) -> Result<Self> {
-        let content = DocumentContent::Json(json)));
+        let content = DocumentContent::Json(json);
         let content_hash = content.hash();
         let size = content.size();
 
@@ -419,7 +421,7 @@ impl DocumentChunk {
     ) -> Self {
         let mut hasher = Sha256::new();
         hasher.update(&data);
-        let checksum = format!("{:x}", hasher.finalize())));
+        let checksum = format!("{:x}", hasher.finalize());
         let size = data.len();
 
         Self {
@@ -436,7 +438,7 @@ impl DocumentChunk {
     pub fn verify(&self) -> bool {
         let mut hasher = Sha256::new();
         hasher.update(&self.data);
-        let calculated_checksum = format!("{:x}", hasher.finalize())));
+        let calculated_checksum = format!("{:x}", hasher.finalize());
         calculated_checksum == self.checksum
     }
 }
@@ -456,10 +458,10 @@ impl LargeDocumentHandler {
     /// Split a document into chunks
     pub fn chunk_document(&self, document: &Document) -> Result<Vec<DocumentChunk>> {
         let bytes = match &document.content {
-            DocumentContent::Json(v) => serde_json::to_vec(v)
+            DocumentContent::Json(v) => serde_json::to_vec(v)?,
             DocumentContent::Bson(doc) => {
-                let mut buf = Vec::new());
-                doc.to_writer(&mut buf)
+                let mut buf = Vec::new();
+                doc.to_writer(&mut buf)?;
                 buf
             }
             DocumentContent::Bytes(bytes) => bytes.clone(),
@@ -489,6 +491,7 @@ impl LargeDocumentHandler {
     /// Reassemble chunks into a document
     pub fn reassemble_chunks(&self, chunks: Vec<DocumentChunk>) -> Result<Vec<u8>> {
         if chunks.is_empty() {
+            return Err(crate::error::DbError::InvalidInput("No chunks provided".to_string()));
         }
 
         // Sort chunks by chunk number
@@ -498,20 +501,23 @@ impl LargeDocumentHandler {
         // Verify all chunks are present
         let total_chunks = sorted_chunks[0].total_chunks;
         if sorted_chunks.len() != total_chunks as usize {
+            return Err(crate::error::DbError::InvalidInput(
                 format!("Missing chunks: expected {}, got {}", total_chunks, sorted_chunks.len())
-            ))));
+            ));
         }
 
         // Verify chunk integrity and reassemble
         let mut data = Vec::new();
         for (i, chunk) in sorted_chunks.iter().enumerate() {
             if chunk.chunk_number != i as u32 {
+                return Err(crate::error::DbError::InvalidInput(
                     format!("Chunk sequence error: expected {}, got {}", i, chunk.chunk_number)
-                ))));
+                ));
             }
             if !chunk.verify() {
+                return Err(crate::error::DbError::InvalidInput(
                     format!("Chunk {} checksum verification failed", i)
-                ))));
+                ));
             }
             data.extend_from_slice(&chunk.data);
         }

@@ -379,7 +379,7 @@ impl WindowExecutor {
     }
 
     fn cume_dist(&self, spec: &WindowSpec, sorted_indices: &[usize]) -> Result<Vec<(usize, String)>> {
-        let n = sorted_indices.len()));
+        let n = sorted_indices.len();
         let mut results = Vec::new();
 
         for i in 0..n {
@@ -396,7 +396,7 @@ impl WindowExecutor {
             }
 
             let cume = count as f64 / n as f64;
-            results.push((sorted_indices[i], format!("{:.6}", cume)))));
+            results.push((sorted_indices[i], format!("{:.6}", cume)));
         }
 
         Ok(results)

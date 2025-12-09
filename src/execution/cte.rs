@@ -45,7 +45,7 @@ impl CteContext {
             return Err(DbError::AlreadyExists(format!(
                 "CTE '{}' already defined",
                 cte.name
-            )))));
+            )));
         }
         self.definitions.insert(cte.name.clone(), cte);
         Ok(())
@@ -99,7 +99,7 @@ impl RecursiveCteEvaluator {
     pub fn evaluate(
         &self,
         cte_name: &str,
-        baseresult: QueryResult,
+        base_result: QueryResult,
         recursive_plan: &PlanNode,
     ) -> Result<QueryResult, DbError> {
         let mut all_rows = base_result.rows.clone();
@@ -135,7 +135,7 @@ impl RecursiveCteEvaluator {
                 return Err(DbError::InvalidOperation(format!(
                     "Recursive CTE '{}' exceeded maximum iterations ({})",
                     cte_name, self.max_iterations
-                )))));
+                )));
             }
         }
         
@@ -394,7 +394,7 @@ impl CteDependencyGraph {
             return Err(DbError::InvalidOperation(format!(
                 "Circular dependency detected in CTE '{}'",
                 name
-            )))));
+            )));
         }
         
         if visited.contains(name) {
@@ -623,7 +623,7 @@ impl NestedCteHandler {
             return Err(DbError::InvalidOperation(format!(
                 "Maximum CTE nesting level ({}) exceeded",
                 self.max_nesting_level
-            )))));
+            )));
         }
         self.nesting_level += 1;
         Ok(())
@@ -1215,22 +1215,22 @@ impl CteExecutionEngine {
     pub fn execute_with_optimization(
         &mut self,
         ctes: Vec<CteDefinition>,
-        mainquery: PlanNode,
+        main_query: PlanNode,
     ) -> Result<QueryResult, DbError> {
         // Build dependency graph
         let mut dep_graph = CteDependencyGraph::new();
         dep_graph.build(&ctes);
-        
+
         // Check for circular dependencies
         if dep_graph.has_circular_dependency() {
             return Err(DbError::InvalidOperation(
                 "Circular dependency detected in CTEs".to_string()
             ));
         }
-        
+
         // Get optimal execution order
         let execution_order = dep_graph.topological_sort(&ctes)?;
-        
+
         // Execute CTEs in order
         let mut context = CteContext::new();
         for cte_name in execution_order {
@@ -1238,7 +1238,7 @@ impl CteExecutionEngine {
                 self.execute_single_cte(cte, &mut context)?;
             }
         }
-        
+
         // Execute main query
         self.execute_main_query(&main_query, &context)
     }
@@ -1432,7 +1432,7 @@ impl IncrementalCteEvaluator {
     pub fn evaluate_incremental(
         &mut self,
         cte_name: &str,
-        baseresult: QueryResult,
+        base_result: QueryResult,
         recursive_plan: &PlanNode,
     ) -> Result<QueryResult, DbError> {
         let mut all_rows = base_result.rows.clone();
@@ -1460,13 +1460,13 @@ impl IncrementalCteEvaluator {
             self.delta_cache.insert(
                 format!("{}_iteration_{}", cte_name, iteration),
                 delta.clone(),
-            )));
-            
+            );
+
             if iteration == max_iterations - 1 {
                 return Err(DbError::InvalidOperation(format!(
                     "Incremental evaluation exceeded max iterations for CTE '{}'",
                     cte_name
-                )))));
+                )));
             }
         }
         
@@ -1554,18 +1554,18 @@ impl MaterializationStrategySelector {
         &self,
         cte: &CteDefinition,
         reference_count: usize,
-        estimatedcost: f64,
+        estimated_cost: f64,
     ) -> MaterializationStrategy {
         // Recursive CTEs must be materialized
         if cte.recursive {
             return MaterializationStrategy::AlwaysMaterialize;
         }
-        
+
         // Multiple references -> materialize
         if reference_count >= self.threshold_multiple_refs {
             return MaterializationStrategy::AlwaysMaterialize;
         }
-        
+
         // High cost -> materialize
         if estimated_cost >= self.threshold_cost {
             return MaterializationStrategy::AlwaysMaterialize;
@@ -1586,22 +1586,22 @@ pub struct CtePlanVisualizer;
 
 impl CtePlanVisualizer {
     /// Generate a visual representation of CTE execution plan
-    pub fn visualize(ctes: &[CteDefinition], mainquery: &PlanNode) -> String {
+    pub fn visualize(ctes: &[CteDefinition], main_query: &PlanNode) -> String {
         let mut output = String::new();
         output.push_str("CTE Execution Plan:\n");
         output.push_str("==================\n\n");
-        
+
         for (i, cte) in ctes.iter().enumerate() {
-            output.push_str(&format!("CTE {}: {}\n", i + 1, cte.name))));
-            output.push_str(&format!("  Columns: {:?}\n", cte.columns))));
-            output.push_str(&format!("  Recursive: {}\n", cte.recursive))));
-            output.push_str(&format!("  Query Plan:\n{}\n", Self::visualize_plan(&cte.query, 4)))));
+            output.push_str(&format!("CTE {}: {}\n", i + 1, cte.name));
+            output.push_str(&format!("  Columns: {:?}\n", cte.columns));
+            output.push_str(&format!("  Recursive: {}\n", cte.recursive));
+            output.push_str(&format!("  Query Plan:\n{}\n", Self::visualize_plan(&cte.query, 4)));
             output.push_str("\n");
         }
-        
+
         output.push_str("Main Query:\n");
         output.push_str(&Self::visualize_plan(main_query, 2));
-        
+
         output
     }
     
@@ -1693,12 +1693,12 @@ impl CteMemoryManager {
     }
     
     /// Allocate memory for a CTE result
-    pub ffn allocate(&mut self, cte_name: String, sizebytes: usize)-> Result<(), DbError> {
+    pub fn allocate(&mut self, cte_name: String, size_bytes: usize) -> Result<(), DbError> {
         if self.current_usage + size_bytes > self.memory_limit {
             return Err(DbError::Internal(format!(
                 "Out of memory: Cannot allocate {} bytes for CTE '{}'. Current usage: {}, Limit: {}",
                 size_bytes, cte_name, self.current_usage, self.memory_limit
-            )))));
+            )));
         }
         
         self.current_usage += size_bytes;
@@ -1895,13 +1895,13 @@ impl CteProfiler {
         report.push_str("======================\n\n");
         
         for profile in self.get_top_ctes_by_time(10) {
-            report.push_str(&format!("CTE: {}\n", profile.cte_name))));
-            report.push_str(&format!("  Executions: {}\n", profile.execution_count))));
-            report.push_str(&format!("  Total Time: {} ms\n", profile.total_time_ms))));
-            report.push_str(&format!("  Avg Time: {:.2} ms\n", profile.avg_time_ms))));
-            report.push_str(&format!("  Min Time: {} ms\n", profile.min_time_ms))));
-            report.push_str(&format!("  Max Time: {} ms\n", profile.max_time_ms))));
-            report.push_str(&format!("  Avg Rows: {:.0}\n", profile.avg_rows_produced))));
+            report.push_str(&format!("CTE: {}\n", profile.cte_name));
+            report.push_str(&format!("  Executions: {}\n", profile.execution_count));
+            report.push_str(&format!("  Total Time: {} ms\n", profile.total_time_ms));
+            report.push_str(&format!("  Avg Time: {:.2} ms\n", profile.avg_time_ms));
+            report.push_str(&format!("  Min Time: {} ms\n", profile.min_time_ms));
+            report.push_str(&format!("  Max Time: {} ms\n", profile.max_time_ms));
+            report.push_str(&format!("  Avg Rows: {:.0}\n", profile.avg_rows_produced));
             report.push_str("\n");
         }
         
@@ -2531,14 +2531,14 @@ pub mod advanced {
                 .ok_or_else(|| DbError::NotFound(format!(
                     "CTE '{}' not materialized",
                     self.outer_cte
-                )))?);
-            
+                )))?;
+
             let inner_result = context.get_materialized(&self.inner_cte)
                 .ok_or_else(|| DbError::NotFound(format!(
                     "CTE '{}' not materialized",
                     self.inner_cte
-                )))?);
-            
+                )))?;
+
             // Perform lateral join
             let mut result_rows = Vec::new();
             for outer_row in &outer_result.rows {
@@ -2625,8 +2625,8 @@ pub mod advanced {
             &self,
             cte: &CteDefinition,
         ) -> Result<Vec<QueryResult>, DbError> {
-            let mut results = Vec::new()));
-            
+            let mut results = Vec::new();
+
             for partition_id in 0..self.partition_count {
                 let partition_result = self.execute_partition(cte, partition_id)?;
                 results.push(partition_result);
@@ -2687,7 +2687,7 @@ pub mod transformation {
             match plan {
                 PlanNode::Subquery { plan: subplan, .. } => {
                     // Extract subquery into CTE
-                    let cte_name = format!("__subquery_{}", counter)));
+                    let cte_name = format!("__subquery_{}", counter);
                     *counter += 1;
                     
                     let cte = CteDefinition {
@@ -2750,7 +2750,7 @@ pub mod transformation {
         }
         
         fn count_expressions(plan: &PlanNode, freq: &mut HashMap<String, usize>) {
-            let expr_key = format!("{:?}", plan)));
+            let expr_key = format!("{:?}", plan);
             *freq.entry(expr_key).or_insert(0) += 1;
             
             match plan {
@@ -2941,7 +2941,7 @@ pub mod integration {
     
     impl CteSqlGenerator {
         /// Generate SQL WITH clause from CTE definitions
-        pub fn generate_sql(ctes: &[CteDefinition], mainquery: &str) -> String {
+        pub fn generate_sql(ctes: &[CteDefinition], main_query: &str) -> String {
             if ctes.is_empty() {
                 return main_query.to_string();
             }
@@ -2956,8 +2956,8 @@ pub mod integration {
                 if cte.recursive {
                     sql.push_str("RECURSIVE ");
                 }
-                
-                sql.push_str(&format!("{} (", cte.name))));
+
+                sql.push_str(&format!("{} (", cte.name));
                 sql.push_str(&cte.columns.join(", "));
                 sql.push_str(") AS (\n  ");
                 sql.push_str(&Self::plan_to_sql(&cte.query));
@@ -2979,7 +2979,7 @@ pub mod integration {
                     format!("{} WHERE {}", Self::plan_to_sql(input), predicate)
                 }
                 PlanNode::Project { input, columns } => {
-                    let base = Self::plan_to_sql(input)));
+                    let base = Self::plan_to_sql(input);
                     // Replace SELECT clause
                     if let Some(pos) = base.find("SELECT") {
                         let after_select = &base[pos + 6..];
@@ -3002,8 +3002,8 @@ pub mod integration {
     }
     
     /// CTE Validator - Validates CTE definitions for correctness
-    pub struct CteValidator));
-    
+    pub struct CteValidator;
+
     impl CteValidator {
         /// Validate a CTE definition
         pub fn validate(cte: &CteDefinition) -> Result<(), DbError> {
@@ -3051,7 +3051,7 @@ pub mod integration {
                     return Err(DbError::AlreadyExists(format!(
                         "Duplicate CTE name: {}",
                         cte.name
-                    )))));
+                    )));
                 }
             }
             
@@ -3098,7 +3098,7 @@ pub mod integration {
 /// CTE Documentation and Examples
 pub mod documentation {
     /// Comprehensive CTE usage examples
-    pub struct CteExamples));
+    pub struct CteExamples;
     
     impl CteExamples {
         /// Example 1: Sales Report with CTEs

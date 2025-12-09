@@ -165,7 +165,7 @@ impl TimeTravelEngine {
         validtime: Timestamp,
     ) -> Result<Vec<BiTemporalRow>> {
         // First, find rows valid at the transaction time
-        let scn = self.timestamp_to_scn(transaction_time)?;
+        let scn = self.timestamp_to_scn(transactiontime)?;
         let rows = self.query_as_of_scn(table_id, scn, None)?;
 
         // Then filter by valid time
@@ -352,7 +352,7 @@ impl VersionIndex {
         row_id: RowId,
         version: RowVersion,
     ) -> Result<()> {
-        let table_chains = self.chains.entry(table_id).or_insert_with(HashMap::new)));
+        let table_chains = self.chains.entry(table_id).or_insert_with(HashMap::new);
         let chain = table_chains.entry(row_id).or_insert_with(|| VersionChain::new(row_id));
         chain.add_version(version);
         Ok(())

@@ -86,7 +86,7 @@ impl AdaptiveContext {
             return Err(DbError::Execution(
                 format!("Memory budget exceeded: {} + {} > {}",
                         *used, size, self.memory_budget)
-            ))));
+            ));
         }
         *used += size;
         Ok(())
@@ -130,7 +130,7 @@ pub struct RuntimeStatistics {
     /// Execution start time
     pub start_time: Option<Instant>,
     /// Operator timings
-    pub operator_timings: HashMap<String>,
+    pub operator_timings: HashMap<String, Duration>,
 }
 
 impl RuntimeStatistics {
@@ -173,7 +173,7 @@ pub struct Histogram {
 }
 
 impl Histogram {
-    pub fn new(column: String, numbuckets: usize) -> Self {
+    pub fn new(column: String, num_buckets: usize) -> Self {
         Self {
             column,
             buckets: vec![HistogramBucket::default(); num_buckets],
@@ -349,7 +349,7 @@ impl AdaptiveExecutor {
                                memory_pressure, left_card),
                 old_strategy: "hash".to_string(),
                 new_strategy: format!("{:?}", join_algorithm),
-            })));
+            });
         }
 
         // Execute right side
@@ -492,7 +492,7 @@ impl AdaptiveExecutor {
                                memory_pressure, input_card),
                 old_strategy: "hash".to_string(),
                 new_strategy: format!("{:?}", agg_strategy),
-            })));
+            });
         }
 
         // Execute aggregation
@@ -544,7 +544,7 @@ impl AdaptiveExecutor {
     fn sort_based_aggregation(
         &self,
         input: QueryResult,
-        groupby: Vec<String>,
+        group_by: Vec<String>,
         aggregates: Vec<crate::execution::planner::AggregateExpr>,
     ) -> Result<QueryResult, DbError> {
         // Sort input by group keys

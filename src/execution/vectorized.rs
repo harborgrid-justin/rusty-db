@@ -60,7 +60,7 @@ impl ColumnBatch {
             return Err(DbError::Execution(
                 format!("Row has {} values but schema has {} columns",
                         values.len(), self.schema.len())
-            ))));
+            ));
         }
 
         for (col_idx, value) in values.into_iter().enumerate() {
@@ -360,7 +360,7 @@ impl VectorizedExecutor {
         &self,
         batches: Vec<ColumnBatch>,
         group_by_cols: &[usize],
-        aggcol: usize,
+        agg_col: usize,
         agg_type: AggregationType,
     ) -> Result<ColumnBatch, DbError> {
         let mut groups: HashMap<Vec<String>, AggregateState> = HashMap::new();
@@ -393,7 +393,7 @@ impl VectorizedExecutor {
         result_schema.push(format!("{}({})",
             agg_type.to_string(),
             batches.first().map(|b| b.schema.get(agg_col).cloned()).flatten().unwrap_or_default()
-        ))));
+        ));
 
         let mut result_types = group_by_cols.iter()
             .filter_map(|&idx| batches.first()?.types.get(idx).cloned())
@@ -415,7 +415,7 @@ impl VectorizedExecutor {
     }
 
     /// Adaptive batch size adjustment based on memory pressure
-    pub fn adjust_batch_size(&mut self, memorypressure: f64) {
+    pub fn adjust_batch_size(&mut self, memory_pressure: f64) {
         let stats = self.stats.read();
         let avg_row_size = stats.avg_row_size();
         drop(stats);
@@ -614,7 +614,7 @@ impl VectorizedHashTable {
     }
 
     /// Insert batch into hash table
-    pub fn insert_batch(&mut self, batch: &ColumnBatch, keycolumns: &[usize]) {
+    pub fn insert_batch(&mut self, batch: &ColumnBatch, key_columns: &[usize]) {
         for row_idx in 0..batch.row_count {
             let key_values: Vec<ColumnValue> = key_columns.iter()
                 .filter_map(|&col_idx| {
@@ -639,7 +639,7 @@ impl VectorizedHashTable {
     pub fn probe_batch(
         &self,
         batch: &ColumnBatch,
-        keycolumns: &[usize],
+        key_columns: &[usize],
     ) -> Vec<Vec<(Vec<ColumnValue>, Vec<ColumnValue>)>> {
         let mut results = vec![Vec::new(); batch.row_count];
 

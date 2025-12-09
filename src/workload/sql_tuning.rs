@@ -442,7 +442,7 @@ impl SqlTuningAdvisor {
             let mut tasks = self.tasks.write();
             let task = tasks
                 .get_mut(&task_id)
-                .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?);
+                .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?;
 
             task.status = TaskStatus::Running;
             task.started_time = Some(SystemTime::now());
@@ -474,7 +474,7 @@ impl SqlTuningAdvisor {
                 .get(&task_id)
                 .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?
                 .clone()
-        }));
+        };
 
         let mut recommendations = Vec::new();
         let mut rec_id = 1;
@@ -486,19 +486,19 @@ impl SqlTuningAdvisor {
         for issue in &plan_analysis.issues {
             match issue.issue_type {
                 IssueType::MissingIndex => {
-                    recommendations.push(self.recommend_index(&task.sql_text, rec_id)?;
+                    recommendations.push(self.recommend_index(&task.sql_text, rec_id)?);
                     rec_id += 1;
                 }
                 IssueType::FullTableScan => {
-                    recommendations.push(self.recommend_index(&task.sql_text, rec_id)?;
+                    recommendations.push(self.recommend_index(&task.sql_text, rec_id)?);
                     rec_id += 1;
                 }
                 IssueType::SuboptimalJoinOrder => {
-                    recommendations.push(self.recommend_sql_profile(&task.sql_text, rec_id)?;
+                    recommendations.push(self.recommend_sql_profile(&task.sql_text, rec_id)?);
                     rec_id += 1;
                 }
                 IssueType::StaleStatistics => {
-                    recommendations.push(self.recommend_statistics_collection(rec_id)?;
+                    recommendations.push(self.recommend_statistics_collection(rec_id)?);
                     rec_id += 1;
                 }
                 _ => {}
@@ -607,7 +607,7 @@ impl SqlTuningAdvisor {
     }
 
     /// Recommend index creation
-    fn recommend_index(&self, sql_text: &str, recid: u32) -> Result<TuningRecommendation> {
+    fn recommend_index(&self, sql_text: &str, rec_id: u32) -> Result<TuningRecommendation> {
         Ok(TuningRecommendation {
             recommendation_id: rec_id,
             recommendation_type: RecommendationType::Index,
@@ -670,7 +670,7 @@ impl SqlTuningAdvisor {
 
     /// Generate alternative execution plans
     fn generate_alternative_plans(&self, sql_text: &str) -> Result<Vec<AlternativePlanDetails>> {
-        let mut plans = Vec::new()));
+        let mut plans = Vec::new();
 
         // Generate alternative plan with different join method
         plans.push(AlternativePlanDetails {
@@ -776,7 +776,7 @@ impl SqlTuningAdvisor {
 
     /// Compute SQL ID (hash of SQL text)
     fn compute_sql_id(&self, sql_text: &str) -> String {
-        use std::collections::hash_map::DefaultHasher));
+        use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
@@ -786,8 +786,10 @@ impl SqlTuningAdvisor {
 
     /// Compute plan hash
     fn compute_plan_hash(&self, sql_text: &str) -> u64 {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
 
-        let mut hasher = DefaultHasher::new()));
+        let mut hasher = DefaultHasher::new();
         sql_text.hash(&mut hasher);
         hasher.finish()
     }

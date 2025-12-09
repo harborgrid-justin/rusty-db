@@ -20,7 +20,7 @@
 use std::fmt;
 use std::collections::VecDeque;
 use std::fs::{File, OpenOptions};
-use std::io::{Read};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -436,7 +436,7 @@ mod tests {
 
     #[test]
     fn test_wal_manager_creation() {
-        let path = temp_log_path()));
+        let path = temp_log_path();
         let wal = WALManager::new(path.clone(), 100, true);
         assert!(wal.is_ok());
         let _ = std::fs::remove_file(path);

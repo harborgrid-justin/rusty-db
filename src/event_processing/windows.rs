@@ -467,7 +467,7 @@ impl WindowManager {
                     .partition_key
                     .clone()
                     .unwrap_or_else(|| event.id.to_string());
-                assigned_windows.extend(self.add_to_session_window(event, key, *gap)?;
+                assigned_windows.extend(self.add_to_session_window(event, key, *gap)?);
             }
             _ => {
                 let windows = self.window_type.get_windows(event.event_time);
@@ -1047,13 +1047,13 @@ use std::time::UNIX_EPOCH;
         };
         let mut state = WindowState::new(window);
 
-        assert!(!policy.should_trigger(&state, None::now()));
+        assert!(!policy.should_trigger(&state, None, SystemTime::now()));
 
         for _ in 0..10 {
             state.add_event(Event::new("test"), false);
         }
 
-        assert!(policy.should_trigger(&state, None::now()));
+        assert!(policy.should_trigger(&state, None, SystemTime::now()));
     }
 
     #[test]

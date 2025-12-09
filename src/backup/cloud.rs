@@ -166,7 +166,7 @@ pub struct BandwidthThrottler {
 }
 
 impl BandwidthThrottler {
-    pub fn new(limitmbps: Option<u64>) -> Self {
+    pub fn new(limit_mbps: Option<u64>) -> Self {
         Self {
             limit_bytes_per_sec: limit_mbps.map(|mbps| mbps * 1024 * 1024),
             window_size: Duration::from_secs(1),
@@ -251,10 +251,10 @@ impl CloudBackupManager {
         // Get file size
         let file_size = metadata(&source_path)
             .map_err(|e| DbError::BackupError(format!("Failed to read file metadata: {}", e)))?
-            .len()));
+            .len();
 
         // Create upload session
-        let session_id = format!("UPLOAD-{}", uuid::Uuid::new_v4())));
+        let session_id = format!("UPLOAD-{}", uuid::Uuid::new_v4());
         let mut session = UploadSession::new(
             session_id.clone(),
             backup_id.clone(),
@@ -286,14 +286,14 @@ impl CloudBackupManager {
 
         // Read file
         let mut file = File::open(&session.source_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to open file: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to open file: {}", e)))?;
 
         let mut buffer = vec![0u8; 1024 * 1024]; // 1MB buffer
         let mut total_uploaded = 0u64;
 
         loop {
             let bytes_read = file.read(&mut buffer)
-                .map_err(|e| DbError::BackupError(format!("Failed to read file: {}", e)))?);
+                .map_err(|e| DbError::BackupError(format!("Failed to read file: {}", e)))?;
 
             if bytes_read == 0 {
                 break;
@@ -354,7 +354,7 @@ impl CloudBackupManager {
         let num_parts = ((session.total_size_bytes + chunk_size - 1) / chunk_size) as u32;
 
         let mut file = File::open(&session.source_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to open file: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to open file: {}", e)))?;
 
         let mut parts = Vec::new();
 
@@ -418,7 +418,7 @@ impl CloudBackupManager {
     ) -> Result<UploadPart> {
         let mut buffer = vec![0u8; chunk_size as usize];
         let bytes_read = file.read(&mut buffer)
-            .map_err(|e| DbError::BackupError(format!("Failed to read part: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to read part: {}", e)))?;
 
         buffer.truncate(bytes_read);
 
@@ -443,7 +443,7 @@ impl CloudBackupManager {
                         checksum: format!("CHECKSUM-{}", part_num),
                         upload_time: Some(SystemTime::now()),
                         etag: Some(etag),
-                    })));
+                    });
                 }
                 Err(e) => {
                     last_error = Some(e);
@@ -474,11 +474,11 @@ impl CloudBackupManager {
     /// Download a backup from cloud storage
     pub fn download_backup(&self, backup_id: &str, destination_path: PathBuf) -> Result<()> {
         let backup = self.backups.read().get(backup_id).cloned()
-            .ok_or_else(|| DbError::BackupError("Backup not found in cloud".to_string()))?);
+            .ok_or_else(|| DbError::BackupError("Backup not found in cloud".to_string()))?;
 
         // Simulate download
         let mut file = File::create(&destination_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?);
+            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?;
 
         let mut downloaded = 0u64;
         let chunk_size = 1024 * 1024; // 1MB chunks
@@ -495,7 +495,7 @@ impl CloudBackupManager {
             // Simulate download
             let data = vec![0u8; to_download as usize];
             file.write_all(&data)
-                .map_err(|e| DbError::BackupError(format!("Failed to write data: {}", e)))?);
+                .map_err(|e| DbError::BackupError(format!("Failed to write data: {}", e)))?;
 
             downloaded += to_download;
         }
@@ -573,7 +573,7 @@ impl CloudBackupManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*));
+    use super::*;
 
     #[test]
     fn test_bandwidth_throttler() {

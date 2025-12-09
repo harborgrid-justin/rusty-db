@@ -576,7 +576,7 @@ impl GlobalCacheService {
     async fn check_local_cache(
         &self,
         resource_id: &ResourceId,
-        requestedmode: BlockMode,
+        requested_mode: BlockMode,
     ) -> Result<Option<BlockGrant>, DbError> {
         let cache = self.local_cache.read();
 
@@ -645,9 +645,9 @@ impl GlobalCacheService {
         resource_id: ResourceId,
         target_node: NodeId,
         block_data: Vec<u8>,
-        sourcemode: BlockMode,
-        targetmode: BlockMode,
-    )> Result<(), DbError> {
+        source_mode: BlockMode,
+        target_mode: BlockMode,
+    ) -> Result<(), DbError> {
         let start = Instant::now();
 
         // Update local cache state
@@ -715,7 +715,7 @@ impl GlobalCacheService {
     }
 
     /// Invalidate block across all instances
-    pub async fn ifn invalidate_block(&self, resource_id: ResourceId, newscn: u64)Result<(), DbError> {
+    pub async fn invalidate_block(&self, resource_id: ResourceId, new_scn: u64) -> Result<(), DbError> {
         let message = CacheFusionMessage::BlockInvalidate {
             resource_id: resource_id.clone(),
             new_scn,
@@ -864,14 +864,14 @@ impl GlobalCacheService {
         Ok(())
     }
 
-    async fn hafn handle_block_transfer(
+    async fn handle_block_transfer(
         &self,
         resource_id: ResourceId,
         block_data: Vec<u8>,
-        _sourcemode: BlockMode,
-        targetmode: BlockMode,
+        _source_mode: BlockMode,
+        target_mode: BlockMode,
         scn: u64,
-    )esult<(), DbError> {
+    ) -> Result<(), DbError> {
         let mut cache = self.local_cache.write();
 
         let state = cache.entry(resource_id.clone()).or_insert_with(|| {
@@ -896,12 +896,12 @@ impl GlobalCacheService {
         Ok(())
     }
 
-    async fn handfn handle_block_invalidate(
+    async fn handle_block_invalidate(
         &self,
         resource_id: ResourceId,
-        newscn: u64,
+        new_scn: u64,
         _invalidator: NodeId,
-    )ult<(), DbError> {
+    ) -> Result<(), DbError> {
         let mut cache = self.local_cache.write();
 
         if let Some(state) = cache.get_mut(&resource_id) {
@@ -943,7 +943,7 @@ pub struct GlobalEnqueueService {
     wait_queue: Arc<Mutex<VecDeque<LockWaiter>>>,
 
     /// Deadlock detection graph
-    wait_for_graph: Arc<RwLock<HashMap<NodeId<NodeId>>>>,
+    wait_for_graph: Arc<RwLock<HashMap<NodeId, Vec<NodeId>>>>,
 
     /// GES statistics
     stats: Arc<RwLock<GesStatistics>>,
@@ -1161,7 +1161,7 @@ impl GlobalEnqueueService {
     fn has_cycle(
         &self,
         node: &NodeId,
-        graph: &HashMap<NodeId<NodeId>>,
+        graph: &HashMap<NodeId, Vec<NodeId>>,
         visited: &mut HashSet<NodeId>,
         rec_stack: &mut HashSet<NodeId>,
     ) -> bool {

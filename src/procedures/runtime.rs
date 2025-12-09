@@ -157,7 +157,7 @@ impl ExecutionContext {
     /// Set a variable value
     #[inline]
     pub fn set_variable(&mut self, name: String, value: RuntimeValue) {
-        self.variables.insert(name, value)));
+        self.variables.insert(name, value);
     }
 
     /// Get a variable value
@@ -176,7 +176,7 @@ impl ExecutionContext {
 
     /// Set an output parameter
     pub fn set_output(&mut self, name: String, value: RuntimeValue) {
-        self.output_params.insert(name, value)));
+        self.output_params.insert(name, value);
     }
 
     /// Get all output parameters
@@ -336,7 +336,7 @@ impl RuntimeExecutor {
         if decl.not_null && value.is_null() {
             return Err(DbError::Runtime(
                 format!("Variable '{}' cannot be null", decl.name)
-            ))));
+            ));
         }
 
         ctx.set_variable(decl.name.clone(), value);
@@ -522,7 +522,7 @@ impl RuntimeExecutor {
                 // TODO: Integrate with transaction manager
                 if ctx.is_debug() {
                     if let Some(sp) = to_savepoint {
-                        ctx.add_output(format!("ROLLBACK TO SAVEPOINT {}", sp))));
+                        ctx.add_output(format!("ROLLBACK TO SAVEPOINT {}", sp));
                     } else {
                         ctx.add_output("ROLLBACK executed".to_string());
                     }
@@ -532,7 +532,7 @@ impl RuntimeExecutor {
             Statement::Savepoint { name } => {
                 // TODO: Integrate with transaction manager
                 if ctx.is_debug() {
-                    ctx.add_output(format!("SAVEPOINT {} created", name))));
+                    ctx.add_output(format!("SAVEPOINT {} created", name));
                 }
             }
 
@@ -540,12 +540,12 @@ impl RuntimeExecutor {
                 // Evaluate arguments
                 let mut arg_values = Vec::new();
                 for arg in arguments {
-                    arg_values.push(self.evaluate_expression(ctx, arg)?;
+                    arg_values.push(self.evaluate_expression(ctx, arg)?);
                 }
 
                 // TODO: Integrate with procedure manager to call other procedures
                 if ctx.is_debug() {
-                    ctx.add_output(format!("CALL {}({:?})", name, arg_values))));
+                    ctx.add_output(format!("CALL {}({:?})", name, arg_values));
                 }
             }
 
@@ -562,7 +562,7 @@ impl RuntimeExecutor {
                         into_vars,
                         from,
                         where_clause
-                    ))));
+                    ));
                 }
 
                 // For now, set variables to NULL
@@ -578,7 +578,7 @@ impl RuntimeExecutor {
                         "INSERT INTO {} ({}) VALUES",
                         table,
                         columns.join(", ")
-                    ))));
+                    ));
                 }
             }
 
@@ -589,7 +589,7 @@ impl RuntimeExecutor {
                         "UPDATE {} SET ... WHERE {:?}",
                         table,
                         where_clause
-                    ))));
+                    ));
                 }
             }
 
@@ -600,28 +600,28 @@ impl RuntimeExecutor {
                         "DELETE FROM {} WHERE {:?}",
                         table,
                         where_clause
-                    ))));
+                    ));
                 }
             }
 
             Statement::OpenCursor { cursor, arguments } => {
                 // TODO: Implement cursor opening
                 if ctx.is_debug() {
-                    ctx.add_output(format!("OPEN cursor {}", cursor))));
+                    ctx.add_output(format!("OPEN cursor {}", cursor));
                 }
             }
 
             Statement::FetchCursor { cursor, into_vars } => {
                 // TODO: Implement cursor fetching
                 if ctx.is_debug() {
-                    ctx.add_output(format!("FETCH {} INTO {:?}", cursor, into_vars))));
+                    ctx.add_output(format!("FETCH {} INTO {:?}", cursor, into_vars));
                 }
             }
 
             Statement::CloseCursor { cursor } => {
                 // TODO: Implement cursor closing
                 if ctx.is_debug() {
-                    ctx.add_output(format!("CLOSE cursor {}", cursor))));
+                    ctx.add_output(format!("CLOSE cursor {}", cursor));
                 }
             }
 
@@ -703,7 +703,7 @@ impl RuntimeExecutor {
             Expression::FunctionCall { name, arguments } => {
                 let mut arg_values = Vec::new();
                 for arg in arguments {
-                    arg_values.push(self.evaluate_expression(ctx, arg)?;
+                    arg_values.push(self.evaluate_expression(ctx, arg)?);
                 }
                 self.call_function(name, arg_values)
             }
@@ -730,7 +730,7 @@ impl RuntimeExecutor {
                 if let (RuntimeValue::Integer(l), RuntimeValue::Integer(r)) = (left, right) {
                     Ok(RuntimeValue::Integer(l + r))
                 } else {
-                    let l = left.as_float()?);
+                    let l = left.as_float()?;
                     let r = right.as_float()?;
                     Ok(RuntimeValue::Float(l + r))
                 }
@@ -844,7 +844,7 @@ impl RuntimeExecutor {
     fn apply_unary_op(&self, op: &UnaryOperator, val: &RuntimeValue) -> Result<RuntimeValue> {
         match op {
             UnaryOperator::Not => {
-                let b = val.as_boolean()?);
+                let b = val.as_boolean()?;
                 Ok(RuntimeValue::Boolean(!b))
             }
 
@@ -947,7 +947,7 @@ impl RuntimeExecutor {
     fn handle_exception(
         &self,
         ctx: &mut ExecutionContext,
-        exceptionname: &str,
+        exception_name: &str,
         handlers: &[ExceptionHandler],
     ) -> Result<()> {
         for handler in handlers {
@@ -960,7 +960,7 @@ impl RuntimeExecutor {
                 ExceptionType::ValueError => exception_name == "VALUE_ERROR",
                 ExceptionType::InvalidCursor => exception_name == "INVALID_CURSOR",
                 ExceptionType::DupValOnIndex => exception_name == "DUP_VAL_ON_INDEX",
-            }));
+            };
 
             if matches {
                 ctx.clear_exception();
@@ -993,7 +993,7 @@ pub struct ExecutionResult {
 
 #[cfg(test)]
 mod tests {
-    use super::*));
+    use super::*;
     use crate::procedures::parser::PlSqlParser;
 
     #[test]

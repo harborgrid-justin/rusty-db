@@ -101,7 +101,7 @@ impl CounterMetric {
     }
 
     pub fn inc(&self) {
-        self.value.fetch_add(1, Ordering::Relaxed)));
+        self.value.fetch_add(1, Ordering::Relaxed);
     }
 
     pub fn inc_by(&self, delta: u64) {
@@ -286,7 +286,7 @@ impl SummaryMetric {
         let mut result = HashMap::new();
         for &q in &self.quantiles {
             let index = ((obs.len() - 1) as f64 * q) as usize;
-            result.insert(format!("{}", q), obs[index])));
+            result.insert(format!("{}", q), obs[index]);
         }
         result
     }
@@ -414,7 +414,7 @@ impl MetricAggregator {
     }
 
     pub fn add_point(&self, value: f64) {
-        let mut points = self.data_points.write()));
+        let mut points = self.data_points.write();
         points.push_back((SystemTime::now(), value));
 
         // Limit raw points
@@ -755,14 +755,14 @@ impl PrometheusExporter {
         let mut output = String::new();
 
         // HELP line
-        output.push_str(&format!("# HELP {} {}\n", id.name, counter.help))));
+        output.push_str(&format!("# HELP {} {}\n", id.name, counter.help));
 
         // TYPE line
-        output.push_str(&format!("# TYPE {} counter\n", id.name))));
+        output.push_str(&format!("# TYPE {} counter\n", id.name));
 
         // Metric line
         let labels = self.format_labels(&id.labels);
-        output.push_str(&format!("{}{} {}\n", id.name, labels, counter.get()))));
+        output.push_str(&format!("{}{} {}\n", id.name, labels, counter.get()));
 
         output
     }
@@ -770,11 +770,11 @@ impl PrometheusExporter {
     fn format_gauge(&self, id: &MetricId, gauge: &GaugeMetric) -> String {
         let mut output = String::new();
 
-        output.push_str(&format!("# HELP {} {}\n", id.name, gauge.help))));
-        output.push_str(&format!("# TYPE {} gauge\n", id.name))));
+        output.push_str(&format!("# HELP {} {}\n", id.name, gauge.help));
+        output.push_str(&format!("# TYPE {} gauge\n", id.name));
 
         let labels = self.format_labels(&id.labels);
-        output.push_str(&format!("{}{} {}\n", id.name, labels, gauge.get()))));
+        output.push_str(&format!("{}{} {}\n", id.name, labels, gauge.get()));
 
         output
     }
@@ -782,8 +782,8 @@ impl PrometheusExporter {
     fn format_histogram(&self, id: &MetricId, histogram: &HistogramMetric) -> String {
         let mut output = String::new();
 
-        output.push_str(&format!("# HELP {} {}\n", id.name, histogram.help))));
-        output.push_str(&format!("# TYPE {} histogram\n", id.name))));
+        output.push_str(&format!("# HELP {} {}\n", id.name, histogram.help));
+        output.push_str(&format!("# TYPE {} histogram\n", id.name));
 
         // Buckets
         let buckets = histogram.get_buckets();
@@ -797,15 +797,15 @@ impl PrometheusExporter {
             bucket_labels.insert("le".to_string(), le);
 
             let labels = self.format_labels(&bucket_labels);
-            output.push_str(&format!("{}_bucket{} {}\n", id.name, labels, bucket.count))));
+            output.push_str(&format!("{}_bucket{} {}\n", id.name, labels, bucket.count));
         }
 
         // Sum
         let labels = self.format_labels(&id.labels);
-        output.push_str(&format!("{}_sum{} {}\n", id.name, labels, histogram.get_sum()))));
+        output.push_str(&format!("{}_sum{} {}\n", id.name, labels, histogram.get_sum()));
 
         // Count
-        output.push_str(&format!("{}_count{} {}\n", id.name, labels, histogram.get_count()))));
+        output.push_str(&format!("{}_count{} {}\n", id.name, labels, histogram.get_count()));
 
         output
     }
@@ -813,8 +813,8 @@ impl PrometheusExporter {
     fn format_summary(&self, id: &MetricId, summary: &SummaryMetric) -> String {
         let mut output = String::new();
 
-        output.push_str(&format!("# HELP {} {}\n", id.name, summary.help))));
-        output.push_str(&format!("# TYPE {} summary\n", id.name))));
+        output.push_str(&format!("# HELP {} {}\n", id.name, summary.help));
+        output.push_str(&format!("# TYPE {} summary\n", id.name));
 
         // Quantiles
         let quantiles = summary.get_quantiles();
@@ -823,15 +823,15 @@ impl PrometheusExporter {
             quantile_labels.insert("quantile".to_string(), quantile);
 
             let labels = self.format_labels(&quantile_labels);
-            output.push_str(&format!("{}{} {}\n", id.name, labels, value))));
+            output.push_str(&format!("{}{} {}\n", id.name, labels, value));
         }
 
         // Sum
         let labels = self.format_labels(&id.labels);
-        output.push_str(&format!("{}_sum{} {}\n", id.name, labels, summary.get_sum()))));
+        output.push_str(&format!("{}_sum{} {}\n", id.name, labels, summary.get_sum()));
 
         // Count
-        output.push_str(&format!("{}_count{} {}\n", id.name, labels, summary.get_count()))));
+        output.push_str(&format!("{}_count{} {}\n", id.name, labels, summary.get_count()));
 
         output
     }
@@ -843,7 +843,7 @@ impl PrometheusExporter {
 
         let label_pairs: Vec<String> = labels.iter()
             .map(|(k, v)| format!("{}=\"{}\"", k, v))
-            .collect()));
+            .collect();
 
         format!("{{{}}}", label_pairs.join(","))
     }
@@ -874,7 +874,7 @@ impl PrometheusPushGateway {
     }
 
     pub fn with_grouping_label(mut self, key: String, value: String) -> Self {
-        self.grouping_labels.insert(key, value)));
+        self.grouping_labels.insert(key, value);
         self
     }
 
@@ -904,14 +904,14 @@ impl PrometheusPushGateway {
     }
 
     fn build_url(&self) -> String {
-        let mut url = format!("{}/metrics/job/{}", self.gateway_url, self.job_name)));
+        let mut url = format!("{}/metrics/job/{}", self.gateway_url, self.job_name);
 
         // Add instance
-        url.push_str(&format!("/instance/{}", self.instance_name))));
+        url.push_str(&format!("/instance/{}", self.instance_name));
 
         // Add grouping labels
         for (key, value) in &self.grouping_labels {
-            url.push_str(&format!("/{}/{}", key, value))));
+            url.push_str(&format!("/{}/{}", key, value));
         }
 
         url
@@ -1296,7 +1296,7 @@ impl HealthChecker for ReadinessProbe {
             timestamp: SystemTime::now(),
             duration: Duration::from_micros(timer.elapsed_micros()),
             details: HashMap::new(),
-        }));
+        };
 
         result = result.with_detail(
             "dependency_results".to_string(),
@@ -1401,7 +1401,7 @@ impl HealthChecker for DatabaseHealthCheck {
     }
 
     fn check(&self) -> HealthCheckResult {
-        let timer = Timer::new()));
+        let timer = Timer::new();
         let active = *self.active_connections.read();
         let usage_pct = active as f64 / self.max_connections as f64;
 
@@ -1450,7 +1450,7 @@ impl HealthChecker for MemoryHealthCheck {
     }
 
     fn check(&self) -> HealthCheckResult {
-        let timer = Timer::new()));
+        let timer = Timer::new();
         let current = *self.current_usage.read();
         let usage_pct = current as f64 / self.max_memory_bytes as f64;
 
@@ -1501,7 +1501,7 @@ impl SelfHealingTrigger {
     }
 
     pub fn check_and_heal(&self) -> std::result::Result<(), DbError> {
-        let result = self.health_checker.check()));
+        let result = self.health_checker.check();
 
         if !result.status.is_healthy() {
             let failures = self.consecutive_failures.fetch_add(1, Ordering::SeqCst) + 1;
@@ -1634,7 +1634,7 @@ impl Alert {
         value: f64,
     ) -> Self {
         let id = uuid::Uuid::new_v4().to_string();
-        let fingerprint = format!("{}{}", rule_name, std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs())));
+        let fingerprint = format!("{}{}", rule_name, std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
 
         Self {
             id,
@@ -1758,7 +1758,7 @@ impl ThresholdAlertRule {
                         },
                         self.threshold,
                         value
-                    )));
+                    );
 
                     let mut alert = Alert::new(
                         self.name.clone(),
@@ -1830,7 +1830,7 @@ impl MultiConditionAlertRule {
         };
 
         if triggered {
-            let message = format!("Multi-condition alert: {}", self.name)));
+            let message = format!("Multi-condition alert: {}", self.name);
             let mut alert = Alert::new(
                 self.name.clone(),
                 self.severity,
@@ -2537,13 +2537,13 @@ impl MetricsExporter {
     }
 
     fn export_csv(&self, result: &TimeSeriesResult) -> Result<String> {
-        let mut csv = String::from("timestamp,value\n")));
+        let mut csv = String::from("timestamp,value\n");
 
         for point in &result.points {
             let ts = point.timestamp.duration_since(UNIX_EPOCH)
                 .map_err(|e| DbError::Internal(format!("Time error: {}", e)))?
-                .as_secs()));
-            csv.push_str(&format!("{},{}\n", ts, point.value))));
+                .as_secs();
+            csv.push_str(&format!("{},{}\n", ts, point.value));
         }
 
         Ok(csv)
@@ -2555,17 +2555,17 @@ impl MetricsExporter {
         for point in &result.points {
             let labels: Vec<String> = point.labels.iter()
                 .map(|(k, v)| format!("{}=\"{}\"", k, v))
-                .collect()));
+                .collect();
 
             let label_str = if labels.is_empty() {
                 String::new()
             } else {
                 format!("{{{}}}", labels.join(","))
-            }));
+            };
 
             let ts = point.timestamp.duration_since(UNIX_EPOCH)
                 .map_err(|e| DbError::Internal(format!("Time error: {}", e)))?
-                .as_millis()));
+                .as_millis();
 
             output.push_str(&format!(
                 "{}{} {} {}\n",
@@ -2573,7 +2573,7 @@ impl MetricsExporter {
                 label_str,
                 point.value,
                 ts
-            ))));
+            ));
         }
 
         Ok(output)
@@ -2649,7 +2649,7 @@ impl MonitoringApi {
             name,
             labels,
             format!("{} counter", name),
-        )));
+        );
         counter.inc();
     }
 
@@ -2658,7 +2658,7 @@ impl MonitoringApi {
             name,
             labels,
             format!("{} gauge", name),
-        )));
+        );
         gauge.set(value);
     }
 
@@ -2668,7 +2668,7 @@ impl MonitoringApi {
             labels,
             format!("{} histogram", name),
             vec![0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0],
-        )));
+        );
         histogram.observe(value);
 
         // Also record in time-series database

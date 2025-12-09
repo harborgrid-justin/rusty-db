@@ -673,15 +673,15 @@ pub async fn get_prometheus_metrics(
     let mut output = String::new();
     output.push_str("# HELP rustydb_total_requests Total number of requests\n");
     output.push_str("# TYPE rustydb_total_requests counter\n");
-    output.push_str(&format!("rustydb_total_requests {}\n", metrics.total_requests))));
+    output.push_str(&format!("rustydb_total_requests {}\n", metrics.total_requests));
 
     output.push_str("# HELP rustydb_successful_requests Number of successful requests\n");
     output.push_str("# TYPE rustydb_successful_requests counter\n");
-    output.push_str(&format!("rustydb_successful_requests {}\n", metrics.successful_requests))));
+    output.push_str(&format!("rustydb_successful_requests {}\n", metrics.successful_requests));
 
     output.push_str("# HELP rustydb_avg_response_time_ms Average response time in milliseconds\n");
     output.push_str("# TYPE rustydb_avg_response_time_ms gauge\n");
-    output.push_str(&format!("rustydb_avg_response_time_ms {}\n", metrics.avg_response_time_ms))));
+    output.push_str(&format!("rustydb_avg_response_time_ms {}\n", metrics.avg_response_time_ms));
 
     Ok(output)
 }

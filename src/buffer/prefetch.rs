@@ -62,7 +62,7 @@ pub enum AccessPattern {
 
 impl AccessPattern {
     /// Get confidence score (0.0-1.0)
-    fn confidence_score(&self, historylen: usize) -> f64 {
+    fn confidence_score(&self, history_len: usize) -> f64 {
         match self {
             AccessPattern::Unknown => 0.0,
             AccessPattern::SequentialForward | AccessPattern::SequentialBackward => {
@@ -343,7 +343,7 @@ struct PrefetchWindow {
 }
 
 impl PrefetchWindow {
-    fn new(initialsize: usize, minsize: usize, maxsize: usize) -> Self {
+    fn new(initial_size: usize, min_size: usize, max_size: usize) -> Self {
         Self {
             size: initial_size,
             min_size,

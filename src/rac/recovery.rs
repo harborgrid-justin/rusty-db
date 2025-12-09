@@ -653,7 +653,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Freeze resources during recovery
-    async fn freeze_resources(&self, failedinstance: &NodeId) -> Result<(), DbError> {
+    async fn freeze_resources(&self, failed_instance: &NodeId) -> Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
             state.phase = RecoveryPhase::Freezing;
@@ -750,7 +750,7 @@ impl InstanceRecoveryManager {
 
         // Wait for all workers to complete
         for handle in handles {
-            handle.await.map_err(|e| DbError::Internal(format!("Recovery task failed: {}", e)))??);
+            handle.await.map_err(|e| DbError::Internal(format!("Recovery task failed: {}", e)))??;
         }
 
         Ok(())
@@ -776,7 +776,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Reclaim locks from failed instance
-    async ffn reclaim_locks(&self, failedinstance: &NodeId)-> Result<(), DbError> {
+    async fn reclaim_locks(&self, failed_instance: &NodeId) -> Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
             state.phase = RecoveryPhase::LockReclamation;

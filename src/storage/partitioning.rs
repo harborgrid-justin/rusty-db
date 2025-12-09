@@ -157,8 +157,8 @@ impl PartitionManager {
     /// Add a new partition
     pub fn add_partition(
         &mut self,
-        tablename: &str,
-        partitionname: String,
+        table_name: &str,
+        partition_name: String,
         partition_def: PartitionDefinition,
     ) -> Result<()> {
         let metadata = self.partitions.get_mut(table_name)
@@ -206,9 +206,9 @@ impl PartitionManager {
     /// Drop a partition
     pub fn drop_partition(
         &mut self,
-        tablename: &str,
-        partitionname: &str,
-    )sult<()> {
+        table_name: &str,
+        partition_name: &str,
+    ) -> Result<()> {
         let metadata = self.partitions.get_mut(table_name)
             .ok_or_else(|| DbError::NotFound(format!(
                 "Partitioned table '{}' not found",
@@ -459,9 +459,9 @@ impl PartitionPruner {
     
     fn prune_hash_partitions(
         column: &str,
-        numpartitions: usize,
+        num_partitions: usize,
         predicate: &QueryPredicate,
-    )tring> {
+    ) -> Vec<String> {
         if predicate.column != column {
             // Keep all partitions
             return (0..num_partitions)
@@ -783,6 +783,8 @@ mod tests {
 
 /// Advanced Partition Pruning Engine
 pub mod pruning {
+    use super::*;
+    use std::collections::HashMap;
 
     /// Partition pruning optimizer
     pub struct PartitionPruningOptimizer {
@@ -900,6 +902,8 @@ pub mod pruning {
 
 /// Automatic Partition Management
 pub mod auto_management {
+    use super::*;
+    use std::collections::HashMap;
     use std::time::Duration;
 
     /// Automatic partition creator
@@ -1013,7 +1017,7 @@ pub mod auto_management {
     /// Partition maintenance scheduler
     pub struct PartitionMaintenanceScheduler {
         tasks: Vec<MaintenanceTask>,
-        last_run: HashMap<String>,
+        last_run: HashMap<String, SystemTime>,
     }
     
     #[derive(Debug, Clone)]
@@ -1086,6 +1090,8 @@ pub mod auto_management {
 
 /// Partition-Wise Operations
 pub mod partition_wise {
+    use super::*;
+    use std::collections::HashMap;
 
     /// Partition-wise join executor
     pub struct PartitionWiseJoinExecutor {
@@ -1239,6 +1245,7 @@ pub mod partition_wise {
 
 /// Dynamic Partition Operations
 pub mod dynamic {
+    use super::*;
 
     /// Dynamic partition splitter
     pub struct PartitionSplitter;
@@ -1348,6 +1355,8 @@ pub mod dynamic {
 
 /// Partition Cost Model and Optimizer
 pub mod optimizer {
+    use super::*;
+    use std::collections::HashMap;
 
     /// Partition access cost estimator
     pub struct PartitionCostEstimator {
@@ -1387,7 +1396,7 @@ pub mod optimizer {
             &self,
             left_partitions: usize,
             right_partitions: usize,
-            partitionwise: bool,
+            partition_wise: bool,
         ) -> f64 {
             if partition_wise && left_partitions == right_partitions {
                 // Partition-wise join: linear cost
@@ -1474,7 +1483,9 @@ pub mod optimizer {
 
 /// Partition Parallel Execution Engine
 pub mod parallel {
-    use std::sync::Arc;
+    use super::*;
+    use std::collections::HashMap;
+    use std::sync::{Arc, Mutex};
 
     /// Parallel partition scanner
     pub struct ParallelPartitionScanner {
@@ -1597,6 +1608,9 @@ pub mod parallel {
 
 /// Partition Monitoring and Health Checks
 pub mod monitoring {
+    use super::*;
+    use std::collections::HashMap;
+    use std::time::{Duration, SystemTime};
 
     /// Partition health monitor
     pub struct PartitionHealthMonitor {
@@ -1843,6 +1857,8 @@ pub mod monitoring {
 
 /// Partition Data Distribution and Balancing
 pub mod balancing {
+    use super::*;
+    use std::collections::HashMap;
 
     /// Partition load balancer
     pub struct PartitionLoadBalancer {
@@ -1965,6 +1981,8 @@ pub mod balancing {
 
 /// Partition Compression and Storage Optimization
 pub mod compression {
+    use super::*;
+    use std::collections::HashMap;
 
     /// Partition compressor
     pub struct PartitionCompressor {
@@ -2036,6 +2054,8 @@ pub mod compression {
 
 /// Partition Query Router
 pub mod routing {
+    use super::*;
+    use std::collections::HashMap;
 
     /// Smart partition router
     pub struct PartitionRouter {
@@ -2054,7 +2074,7 @@ pub mod routing {
             &mut self,
             table: &str,
             query_predicates: &[String],
-            allpartitions: &[String],
+            all_partitions: &[String],
             strategy: &PartitionStrategy,
         ) -> Vec<String> {
             // Try cache first
@@ -2081,7 +2101,7 @@ pub mod routing {
             predicates: &[String],
             all_partitions: &[String],
             strategy: &PartitionStrategy,
-        )ing> {
+        ) -> Vec<String> {
             // Placeholder: analyze predicates and strategy to determine partitions
             // For now, return all partitions (conservative)
             all_partitions.to_vec()
@@ -2267,6 +2287,7 @@ use std::time::UNIX_EPOCH;
 
 /// Partition Integration Utilities
 pub mod integration {
+    use super::*;
 
     /// Partition SQL generator
     pub struct PartitionSqlGenerator;

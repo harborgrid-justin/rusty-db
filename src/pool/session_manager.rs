@@ -589,7 +589,7 @@ pub struct AuthenticationProvider {
     privilege_cache: Arc<RwLock<HashMap<String, PrivilegeSet>>>,
 
     /// Active roles per user
-    active_roles: Arc<RwLock<HashMap<String<String>>>>,
+    active_roles: Arc<RwLock<HashMap<String, HashSet<String>>>>,
 
     /// LDAP configuration
     ldap_config: Option<LdapConfig>,
@@ -804,7 +804,7 @@ impl AuthenticationProvider {
     /// Generate session token
     fn generate_token(&self, username: &str) -> String {
         let uuid = Uuid::new_v4();
-        let data = format!("{}-{}-{}", username, uuid, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs())));
+        let data = format!("{}-{}-{}", username, uuid, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
         let mut hasher = Sha256::new();
         hasher.update(data.as_bytes());
         let result = hasher.finalize();
@@ -1040,7 +1040,7 @@ impl ResourceController {
     pub fn create_consumer_group(&self, name: String, group: ConsumerGroup) -> Result<()> {
         let mut groups = self.consumer_groups.write();
         if groups.contains_key(&name) {
-            return Err(DbError::AlreadyExists(format!("Consumer group {} already exists", name)))));
+            return Err(DbError::AlreadyExists(format!("Consumer group {} already exists", name)));
         }
         groups.insert(name, group);
         Ok(())
@@ -1050,7 +1050,7 @@ impl ResourceController {
     pub fn assign_to_group(&self, session_id: SID, group_name: String) -> Result<()> {
         // Verify group exists
         if !self.consumer_groups.read().contains_key(&group_name) {
-            return Err(DbError::NotFound(format!("Consumer group {} not found", group_name)))));
+            return Err(DbError::NotFound(format!("Consumer group {} not found", group_name)));
         }
 
         self.session_groups.write().insert(session_id, group_name);
@@ -1069,7 +1069,7 @@ impl ResourceController {
                 if usage + requested > max_memory {
                     return Err(DbError::ResourceExhausted(
                         format!("Memory quota exceeded: {} + {} > {}", usage, requested, max_memory)
-                    ))));
+                    ));
                 }
             }
         }
@@ -1108,7 +1108,7 @@ impl ResourceController {
                 if usage > max_cpu {
                     return Err(DbError::ResourceExhausted(
                         format!("CPU time limit exceeded: {} > {}", usage, max_cpu)
-                    ))));
+                    ));
                 }
             }
         }
@@ -1138,7 +1138,7 @@ impl ResourceController {
                 if usage + io_ops > max_iops {
                     return Err(DbError::ResourceExhausted(
                         format!("IOPS limit exceeded: {} + {} > {}", usage, io_ops, max_iops)
-                    ))));
+                    ));
                 }
             }
         }
@@ -1170,7 +1170,7 @@ impl ResourceController {
                 if usage + requested > max_temp {
                     return Err(DbError::ResourceExhausted(
                         format!("Temp space limit exceeded: {} + {} > {}", usage, requested, max_temp)
-                    ))));
+                    ));
                 }
             }
         }
@@ -1429,7 +1429,7 @@ impl SessionPool {
 
             // Update tag index
             for (key, value) in &session.tags {
-                let tag = format!("{}={}", key, value)));
+                let tag = format!("{}={}", key, value);
                 self.tag_index.write()
                     .entry(tag)
                     .or_insert_with(HashSet::new)
@@ -1470,7 +1470,7 @@ impl SessionPool {
         let mut candidates: Option<HashSet<SID>> = None;
 
         for (key, value) in tags {
-            let tag = format!("{}={}", key, value)));
+            let tag = format!("{}={}", key, value);
             if let Some(sessions) = tag_index.get(&tag) {
                 candidates = Some(match candidates {
                     None => sessions.clone(),
@@ -1850,9 +1850,9 @@ impl SessionEventManager {
     pub async fn fire_state_change(
         &self,
         session: &SessionState,
-        oldstatus: SessionStatus,
-        newstatus: SessionStatus,
-    )> Result<()> {
+        old_status: SessionStatus,
+        new_status: SessionStatus,
+    ) -> Result<()> {
         // Execute callbacks for new status
         let callbacks_guard = self.state_callbacks.read();
         let callbacks_map: &HashMap<_, _> = &*callbacks_guard;
@@ -2182,8 +2182,8 @@ impl AuditLogEntry {
             }
             SessionEvent::StateChange { session_id, old_status, new_status, timestamp } => {
                 let mut details = HashMap::new();
-                details.insert("old_status".to_string(), format!("{:?}", old_status))));
-                details.insert("new_status".to_string(), format!("{:?}", new_status))));
+                details.insert("old_status".to_string(), format!("{:?}", old_status));
+                details.insert("new_status".to_string(), format!("{:?}", new_status));
                 ("STATE_CHANGE".to_string(), Some(*session_id), details)
             }
             SessionEvent::IdleTimeout { session_id, idle_time, timestamp } => {
@@ -2338,7 +2338,7 @@ impl SessionManager {
     /// Terminate session
     pub async fn terminate_session(&self, session_id: SID, graceful: bool) -> Result<()> {
         let session = self.sessions.write().remove(&session_id)
-            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         // Fire logoff event
         self.event_manager.fire_logoff(&session, graceful).await?;
@@ -2372,9 +2372,9 @@ impl SessionManager {
         name: &str,
         value: &str,
     ) -> Result<()> {
-        let mut sessions = self.sessions.write()));
+        let mut sessions = self.sessions.write();
         let session = sessions.get_mut(&session_id)
-            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         session.set_variable(name.to_string(), Value::String(value.to_string()));
         session.touch();
@@ -2590,7 +2590,7 @@ impl SessionMigrationCoordinator {
         if migrations.contains_key(&session_id) {
             return Err(DbError::InvalidOperation(
                 format!("Session {} already being migrated", session_id)
-            ))));
+            ));
         }
 
         let state = MigrationState {
@@ -2778,28 +2778,28 @@ impl HealthCheckPolicy {
         // Check idle time
         if let Some(max_idle) = self.max_idle_time {
             if session.idle_time() > max_idle {
-                return Some(format!("Session idle for {:?}", session.idle_time()))));
+                return Some(format!("Session idle for {:?}", session.idle_time()));
             }
         }
 
         // Check session age
         if let Some(max_age) = self.max_session_age {
             if session.age() > max_age {
-                return Some(format!("Session age {:?} exceeds limit", session.age()))));
+                return Some(format!("Session age {:?} exceeds limit", session.age()));
             }
         }
 
         // Check open cursors
         if let Some(max_cursors) = self.max_open_cursors {
             if session.cursors.len() > max_cursors {
-                return Some(format!("Too many open cursors: {}", session.cursors.len()))));
+                return Some(format!("Too many open cursors: {}", session.cursors.len()));
             }
         }
 
         // Check memory usage
         if let Some(max_memory) = self.max_memory_usage {
             if session.resource_usage.memory_used > max_memory {
-                return Some(format!("Memory usage {} exceeds limit", session.resource_usage.memory_used))));
+                return Some(format!("Memory usage {} exceeds limit", session.resource_usage.memory_used));
             }
         }
 
@@ -2844,7 +2844,7 @@ impl SessionCloner {
     ) -> Result<SessionState> {
         let strategies = self.strategies.read();
         let strategy = strategies.get(strategy)
-            .ok_or_else(|| DbError::NotFound(format!("Cloning strategy {} not found", strategy)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Cloning strategy {} not found", strategy)))?;
 
         let mut cloned = SessionState::new(
             source.session_id + 1000000, // Offset for cloned sessions
@@ -3040,7 +3040,7 @@ impl SessionValidator {
         // Check for orphaned cursors
         for (cursor_id, cursor) in &session.cursors {
             if cursor.status == CursorStatus::Closed {
-                report.warnings.push(format!("Cursor {} is closed but not removed", cursor_id))));
+                report.warnings.push(format!("Cursor {} is closed but not removed", cursor_id));
             }
         }
 
@@ -3052,7 +3052,7 @@ impl SessionValidator {
         // Check transaction state
         if let TransactionState::Active { .. } = session.transaction_state {
             if session.status != SessionStatus::Active {
-                report.errors.push(format!("Session has active transaction but status is {:?}", session.status))));
+                report.errors.push(format!("Session has active transaction but status is {:?}", session.status));
                 report.valid = false;
             }
         }
@@ -3073,7 +3073,7 @@ impl SessionValidator {
         let required_vars = vec!["TIMEZONE", "NLS_LANGUAGE"];
         for var in required_vars {
             if !session.session_variables.contains_key(var) {
-                issues.push(format!("Missing required variable: {}", var))));
+                issues.push(format!("Missing required variable: {}", var));
             }
         }
 
@@ -3093,7 +3093,7 @@ impl SessionValidator {
                     "Memory usage {} exceeds limit {}",
                     session.resource_usage.memory_used,
                     max_memory
-                ))));
+                ));
             }
         }
 
@@ -3103,7 +3103,7 @@ impl SessionValidator {
                     "CPU time {} exceeds limit {}",
                     session.resource_usage.cpu_time,
                     max_cpu
-                ))));
+                ));
             }
         }
 

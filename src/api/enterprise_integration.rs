@@ -327,7 +327,7 @@ impl VersionCompatibilityChecker {
                         return Err(DbError::Configuration(format!(
                             "Version incompatibility: {} version {} does not satisfy constraints",
                             service, version
-                        )))));
+                        )));
                     }
                     return Ok(false);
                 }
@@ -442,7 +442,7 @@ impl ServiceEventBus {
     }
 
     pub fn publish(&self, event: ServiceEvent) {
-        let event_type = format!("{:?}", event.event_type)));
+        let event_type = format!("{:?}", event.event_type);
         let subscribers = self.subscribers.read().unwrap();
         if let Some(handlers) = subscribers.get(&event_type) {
             for handler in handlers {
@@ -535,7 +535,7 @@ impl ServiceRegistry {
                 return Err(DbError::Configuration(format!(
                     "Missing dependency: {}",
                     dep
-                )))));
+                )));
             }
         }
         Ok(())
@@ -571,7 +571,7 @@ impl ServiceRegistry {
 
     /// Stop a service
     pub fn stop_service(&self, service_id: &str) -> std::result::Result<(), DbError> {
-        let services = self.services.read().unwrap()));
+        let services = self.services.read().unwrap();
         if let Some(registration) = services.get(service_id) {
             registration.lifecycle_handler.stop()?;
 
@@ -619,7 +619,7 @@ impl ServiceRegistry {
 
 /// Correlation ID for request tracing
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct CorrelationId(String)));
+pub struct CorrelationId(String);
 
 impl CorrelationId {
     pub fn new() -> Self {
@@ -1078,12 +1078,12 @@ impl CircuitBreakerCoordinator {
         E: fmt::Display,
     {
         let breaker = self.get_breaker(name)
-            .ok_or_else(|| format!("Circuit breaker not found: {}", name))?);
+            .ok_or_else(|| format!("Circuit breaker not found: {}", name))?;
 
         if breaker.is_open() {
             breaker.try_reset();
             if breaker.is_open() {
-                return Err(format!("Circuit breaker open for: {}", name))));
+                return Err(format!("Circuit breaker open for: {}", name));
             }
         }
 
@@ -1131,7 +1131,7 @@ impl MemoryBudgetAllocator {
     }
 
     pub fn allocate(&self, service: &str, amount: usize) -> std::result::Result<(), DbError> {
-        let mut allocations = self.allocations.write().unwrap()));
+        let mut allocations = self.allocations.write().unwrap();
         let mut reserved = self.reserved.write().unwrap();
 
         if *reserved + amount > self.total_budget {
@@ -1201,13 +1201,13 @@ impl ConnectionQuotaManager {
         let mut active = self.active_connections.write().unwrap();
 
         let quota = quotas.get(service)
-            .ok_or_else(|| DbError::NotFound(format!("No quota for service: {}", service)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No quota for service: {}", service)))?;
 
         let current = active.entry(service.to_string()).or_insert(0);
         if *current >= *quota {
             return Err(DbError::ResourceExhausted(
                 format!("Connection quota exceeded for service: {}", service)
-            ))));
+            ));
         }
 
         *current += 1;
@@ -1681,7 +1681,7 @@ impl BatchRequestHandler {
                 "Batch size {} exceeds maximum {}",
                 batch.requests.len(),
                 self.max_batch_size
-            )))));
+            )));
         }
 
         let mut responses = Vec::new();
@@ -1850,7 +1850,7 @@ impl RateLimiter {
     pub fn check_rate_limit(&self, key: &str) -> std::result::Result<(), DbError> {
         let limits = self.limits.read().unwrap();
         let limit = limits.get(key)
-            .ok_or_else(|| DbError::NotFound(format!("Rate limit not found for: {}", key)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Rate limit not found for: {}", key)))?;
 
         let requests_per_second = limit.requests_per_second;
         let burst_size = limit.burst_size;
@@ -1894,7 +1894,7 @@ impl ApiGatewayCoordinator {
 
     pub async fn process_request(&self, mut request: UnifiedApiRequest) -> std::result::Result<UnifiedApiResponse, DbError> {
         // Check rate limit
-        let rate_key = format!("{}:{}", request.correlation_id.as_str(), request.endpoint)));
+        let rate_key = format!("{}:{}", request.correlation_id.as_str(), request.endpoint);
         self.rate_limiter.check_rate_limit(&rate_key)?;
 
         // Check version
@@ -1902,7 +1902,7 @@ impl ApiGatewayCoordinator {
             return Err(DbError::InvalidInput(format!(
                 "API version {} is not supported",
                 request.api_version
-            )))));
+            )));
         }
 
         // Apply backward compatibility
@@ -2032,7 +2032,7 @@ impl StartupOrchestrator {
         }
 
         {
-            let mut current = self.current_phase.write().unwrap()));
+            let mut current = self.current_phase.write().unwrap();
             *current = StartupPhase::Ready;
         }
 
@@ -2168,7 +2168,7 @@ impl HotReloadManager {
     pub fn reload_component(&self, component: &str) -> std::result::Result<(), DbError> {
         let handlers = self.reload_handlers.read().unwrap();
         let handler = handlers.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         // Validate before reload
         handler.validate()?;
@@ -2185,7 +2185,7 @@ impl HotReloadManager {
                 Ok(_) => "Reload successful".to_string(),
                 Err(e) => format!("Reload failed: {}", e),
             },
-        }));
+        };
 
         let mut history = self.reload_history.write().unwrap();
         history.push(event);
@@ -2325,7 +2325,7 @@ impl StatePersistenceManager {
     pub fn persist_state(&self, component: &str) -> std::result::Result<(), DbError> {
         let handlers = self.persistence_handlers.read().unwrap();
         let handler = handlers.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         let data = handler.persist()?;
 
@@ -2338,11 +2338,11 @@ impl StatePersistenceManager {
     pub fn restore_state(&self, component: &str) -> std::result::Result<(), DbError> {
         let storage = self.state_storage.read().unwrap();
         let data = storage.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("No persisted state for: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No persisted state for: {}", component)))?;
 
         let handlers = self.persistence_handlers.read().unwrap();
         let handler = handlers.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         handler.restore(data)?;
 
@@ -2396,7 +2396,7 @@ impl RecoveryOrchestrator {
 
         let strategies = self.recovery_strategies.read().unwrap();
         let strategy = strategies.get(component)
-            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         let result = strategy.recover();
 
@@ -2413,7 +2413,7 @@ impl RecoveryOrchestrator {
                 Ok(_) => "Recovery completed but validation failed".to_string(),
                 Err(e) => format!("Recovery failed: {}", e),
             },
-        }));
+        };
 
         let mut history = self.recovery_history.write().unwrap();
         history.push(event);
@@ -2659,7 +2659,7 @@ impl EnterpriseIntegrator {
                 ("endpoint".to_string(), request.endpoint.clone()),
                 ("method".to_string(), format!("{:?}", request.method)),
             ]),
-        ).await));
+        ).await;
 
         // Process through gateway
         let result = self.api_gateway.process_request(request).await;

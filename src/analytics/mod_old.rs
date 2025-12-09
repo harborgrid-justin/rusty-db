@@ -759,7 +759,7 @@ impl AnalyticsManager {
     pub fn create_view(&self, view: View) -> Result<()> {
         let mut views = self.views.write();
         if views.contains_key(&view.name) {
-            return Err(crate::error::DbError::Catalog(format!("View {} already exists", view.name)))));
+            return Err(crate::error::DbError::Catalog(format!("View {} already exists", view.name)));
         }
         views.insert(view.name.clone(), view);
         Ok(())
@@ -1519,17 +1519,17 @@ impl ParallelQueryExecutor {
         base_parallelism.max(1).min(self.num_workers)
     }
     
-    pub fn partition_data(&self, data: Vec<Vec<String>>, numpartitions: usize) -> Vec<Vec<Vec<String>>> {
+    pub fn partition_data(&self, data: Vec<Vec<String>>, num_partitions: usize) -> Vec<Vec<Vec<String>>> {
         let mut partitions = vec![Vec::new(); num_partitions];
-        
+
         for (i, row) in data.into_iter().enumerate() {
             partitions[i % num_partitions].push(row);
         }
-        
+
         partitions
     }
     
-    pub fffn hash_partition(&self, data: Vec<Vec<String>>, key_index: usize, numpartitions: usize)> Vec<Vec<Vec<String>>> {
+    pub fn hash_partition(&self, data: Vec<Vec<String>>, key_index: usize, num_partitions: usize) -> Vec<Vec<Vec<String>>> {
         let mut partitions = vec![Vec::new(); num_partitions];
         
         for row in data {

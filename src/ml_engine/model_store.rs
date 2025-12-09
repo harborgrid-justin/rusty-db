@@ -104,7 +104,7 @@ impl Model {
 
     pub fn deploy(&mut self, deployment: DeploymentConfig) -> Result<()> {
         if self.status != ModelStatus::Ready {
-            return Err(DbError::InvalidInput("Model not ready for deployment".into()));
+            return Err(crate::DbError::InvalidInput("Model not ready for deployment".into()));
         }
         self.status = ModelStatus::Deployed(deployment);
         self.updated_at = SystemTime::now()
@@ -429,19 +429,19 @@ impl ModelStore {
     pub fn get_model(&self, id: ModelId) -> Result<&Model> {
         self.models
             .get(&id)
-            .ok_or_else(|| DbError::InvalidInput(format!("Model not found: {:?}", id)))
+            .ok_or_else(|| crate::DbError::InvalidInput(format!("Model not found: {:?}", id)))
     }
 
     /// Get a mutable model by ID
     pub fn get_model_mut(&mut self, id: ModelId) -> Result<&mut Model> {
         self.models
             .get_mut(&id)
-            .ok_or_else(|| DbError::InvalidInput(format!("Model not found: {:?}", id)))
+            .ok_or_else(|| crate::DbError::InvalidInput(format!("Model not found: {:?}", id)))
     }
 
     /// Get model metadata
     pub fn get_metadata(&self, id: ModelId) -> Result<ModelMetadata> {
-        let model = self.get_model(id)?);
+        let model = self.get_model(id)?;
         Ok(ModelMetadata::from(model))
     }
 
@@ -485,7 +485,7 @@ impl ModelStore {
     /// Delete a model
     pub fn delete_model(&mut self, id: ModelId) -> Result<()> {
         let model = self.models.remove(&id)
-            .ok_or_else(|| DbError::InvalidInput(format!("Model not found: {:?}", id)))?);
+            .ok_or_else(|| crate::DbError::InvalidInput(format!("Model not found: {:?}", id)))?;
 
         // Remove from name index
         if let Some(ids) = self.name_to_id.get_mut(&model.name) {
@@ -528,7 +528,7 @@ impl ModelStore {
             .sum();
 
         if (total_traffic - 1.0).abs() > 1e-6 {
-            return Err(DbError::InvalidInput(
+            return Err(crate::DbError::InvalidInput(
                 "Traffic allocations must sum to 1.0".into()
             ));
         }
@@ -545,7 +545,7 @@ impl ModelStore {
     /// Update A/B test results
     pub fn update_ab_results(&mut self, test_id: &str, variant: &str, results: ABResults) -> Result<()> {
         let test = self.ab_tests.get_mut(test_id)
-            .ok_or_else(|| DbError::InvalidInput("A/B test not found".into()))?;
+            .ok_or_else(|| crate::DbError::InvalidInput("A/B test not found".into()))?;
 
         test.results.insert(variant.to_string(), results);
         Ok(())
@@ -570,13 +570,13 @@ impl ModelStore {
     pub fn serialize_model(&self, id: ModelId) -> Result<Vec<u8>> {
         let model = self.get_model(id)?;
         bincode::serialize(model)
-            .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))
+            .map_err(|e| crate::DbError::Internal(format!("Serialization error: {}", e)))
     }
 
     /// Deserialize model from bytes
     pub fn deserialize_model(&mut self, bytes: &[u8]) -> Result<ModelId> {
         let model: Model = bincode::deserialize(bytes)
-            .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?);
+            .map_err(|e| crate::DbError::Internal(format!("Deserialization error: {}", e)))?;
 
         self.register_model(model)
     }
@@ -585,7 +585,7 @@ impl ModelStore {
     pub fn export_metadata(&self, id: ModelId) -> Result<String> {
         let metadata = self.get_metadata(id)?;
         serde_json::to_string_pretty(&metadata)
-            .map_err(|e| DbError::Internal(format!("JSON export error: {}", e)))
+            .map_err(|e| crate::DbError::Internal(format!("JSON export error: {}", e)))
     }
 
     /// Search models by tags
@@ -608,7 +608,7 @@ impl ModelStore {
 
     /// Get model performance summary
     pub fn get_performance_summary(&self, id: ModelId) -> Result<PerformanceSummary> {
-        let model = self.get_model(id)?);
+        let model = self.get_model(id)?;
 
         Ok(PerformanceSummary {
             model_id: id,

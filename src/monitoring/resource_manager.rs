@@ -135,7 +135,7 @@ impl ResourceGroup {
         }
     }
 
-    pub fn remove_session(&mut self, sessionid: u64) {
+    pub fn remove_session(&mut self, session_id: u64) {
         self.active_sessions.retain(|&id| id != session_id);
     }
 
@@ -369,7 +369,7 @@ impl ResourceManager {
                             return Err(format!(
                                 "Connection limit exceeded for group {}: {}/{}",
                                 group_name, limit.current_value, limit.max_value
-                            ))));
+                            ));
                         }
                         _ => {}
                     }
@@ -451,7 +451,7 @@ impl ResourceManager {
 
     pub fn record_cpu_time(&self, query_id: u64, cpu_time_us: u64) {
         if let Some(usage) = self.active_queries.write().get_mut(&query_id) {
-            usage.record_cpu(cpu_time_us)));
+            usage.record_cpu(cpu_time_us);
         }
     }
 
@@ -475,7 +475,7 @@ impl ResourceManager {
         self.active_queries.read().values().cloned().collect()
     }
 
-    pub fn get_group_statistics(&self, groupname: &str) -> Option<ResourceGroupStatistics> {
+    pub fn get_group_statistics(&self, group_name: &str) -> Option<ResourceGroupStatistics> {
         self.groups.read().get(group_name).map(|group| {
             ResourceGroupStatistics {
                 name: group.name.clone(),

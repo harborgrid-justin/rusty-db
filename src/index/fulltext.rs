@@ -225,7 +225,7 @@ pub struct SearchResult {
 #[derive(Clone)]
 struct InvertedIndex {
     /// Term -> set of document IDs containing the term
-    index: HashMap<String<DocumentId>>,
+    index: HashMap<String, HashSet<DocumentId>>,
 }
 
 impl InvertedIndex {
@@ -330,7 +330,7 @@ impl DocumentStore {
         false
     }
     
-    fn get_snippet(&self, doc_id: DocumentId, querytokens: &[String]) -> String {
+    fn get_snippet(&self, doc_id: DocumentId, query_tokens: &[String]) -> String {
         if let Some(doc) = self.documents.get(&doc_id) {
             // Find first occurrence of query term
             for (i, token) in doc.tokens.iter().enumerate() {
@@ -339,12 +339,12 @@ impl DocumentStore {
                     let start = i.saturating_sub(5);
                     let end = (i + 10).min(doc.tokens.len());
                     let snippet: Vec<_> = doc.tokens[start..end].to_vec();
-                    return format!("...{}...", snippet.join(" "))));
+                    return format!("...{}...", snippet.join(" "));
                 }
             }
             // No match found, return beginning of document
             let snippet: Vec<_> = doc.tokens.iter().take(10).cloned().collect();
-            return format!("{}...", snippet.join(" "))));
+            return format!("{}...", snippet.join(" "));
         }
         String::new()
     }
@@ -644,7 +644,7 @@ impl Highlighter {
             if let Ok(re) = regex::Regex::new(&format!("(?i){}", pattern)) {
                 result = re.replace_all(&result, |caps: &regex::Captures| {
                     format!("{}{}{}", prefix, &caps[0], suffix)
-                }).to_string()));
+                }).to_string();
             }
         }
         

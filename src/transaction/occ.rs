@@ -299,7 +299,7 @@ impl OccManager {
     pub fn read(&self, txn_id: TxnId, key: &Key) -> std::result::Result<Option<Value>, DbError> {
         let active_txns = self.active_txns.read();
         let txn_arc = active_txns.get(&txn_id)
-            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?);
+            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
 
         let mut txn = txn_arc.write();
 
@@ -307,7 +307,7 @@ impl OccManager {
             return Err(DbError::Transaction(format!(
                 "Transaction {} not in reading state",
                 txn_id
-            )))));
+            )));
         }
 
         // Check write set first (read your own writes)
@@ -334,7 +334,7 @@ impl OccManager {
     pub fn write(&self, txn_id: TxnId, key: Key, value: Value) -> std::result::Result<(), DbError> {
         let active_txns = self.active_txns.read();
         let txn_arc = active_txns.get(&txn_id)
-            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?);
+            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
 
         let mut txn = txn_arc.write();
 
@@ -342,7 +342,7 @@ impl OccManager {
             return Err(DbError::Transaction(format!(
                 "Transaction {} not in reading state",
                 txn_id
-            )))));
+            )));
         }
 
         // Add to write set (actual write happens during commit)
@@ -359,7 +359,7 @@ impl OccManager {
         let active_txns = self.active_txns.read();
         let txn_arc = active_txns.get(&txn_id)
             .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?
-            .clone()));
+            .clone();
         drop(active_txns);
 
         let mut txn = txn_arc.write();
@@ -368,7 +368,7 @@ impl OccManager {
             return Err(DbError::Transaction(format!(
                 "Transaction {} not in reading state",
                 txn_id
-            )))));
+            )));
         }
 
         // Fast path: read-only transactions always succeed
@@ -391,7 +391,7 @@ impl OccManager {
             return Err(DbError::Transaction(format!(
                 "Transaction {} validation failed",
                 txn_id
-            )))));
+            )));
         }
 
         self.stats.validations_passed.fetch_add(1, Ordering::Relaxed);

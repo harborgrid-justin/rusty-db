@@ -792,8 +792,8 @@ impl RecoveryManager {
     }
     
     pub fn recover(&self) -> Result<()> {
-        let entries = self.wal_manager.replay()?);
-        
+        let entries = self.wal_manager.replay()?;
+
         let mut active_txns: HashMap<TransactionId, Vec<WALEntry>> = HashMap::new();
         let mut last_checkpoint_lsn = 0;
         
@@ -1889,18 +1889,18 @@ impl TransactionMigrationManager {
     
     pub fn export_transaction(&self, txn: &Transaction) -> Result<PathBuf> {
         std::fs::create_dir_all(&self.export_dir)?;
-        
-        let export_path = self.export_dir.join(format!("txn_{}.json", txn.id))));
+
+        let export_path = self.export_dir.join(format!("txn_{}.json", txn.id));
         let serialized = serde_json::to_string_pretty(txn)
             .map_err(|e| DbError::Serialization(e.to_string()))?;
-        
+
         std::fs::write(&export_path, serialized)?;
-        
+
         Ok(export_path)
     }
-    
+
     pub fn import_transaction(&self, txn_id: TransactionId) -> Result<Transaction> {
-        let import_path = self.export_dir.join(format!("txn_{}.json", txn_id))));
+        let import_path = self.export_dir.join(format!("txn_{}.json", txn_id));
         let serialized = std::fs::read_to_string(import_path)?;
         
         serde_json::from_str(&serialized)
@@ -2480,18 +2480,18 @@ impl TransactionValidator {
                 ValidationConstraint::MaxDuration(max_duration) => {
                     let duration = SystemTime::now().duration_since(txn.start_time).unwrap_or(Duration::from_secs(0));
                     if duration > *max_duration {
-                        return Err(DbError::Transaction(format!("Transaction exceeded max duration: {:?}", max_duration)))));
+                        return Err(DbError::Transaction(format!("Transaction exceeded max duration: {:?}", max_duration)));
                     }
                 }
                 ValidationConstraint::MaxOperations(max_ops) => {
                     let total_ops = txn.read_set.len() + txn.write_set.len();
                     if total_ops > *max_ops {
-                        return Err(DbError::Transaction(format!("Transaction exceeded max operations: {}", max_ops)))));
+                        return Err(DbError::Transaction(format!("Transaction exceeded max operations: {}", max_ops)));
                     }
                 }
                 ValidationConstraint::RequiredIsolationLevel(required_level) => {
                     if txn.isolation_level != *required_level {
-                        return Err(DbError::Transaction(format!("Transaction requires isolation level: {:?}", required_level)))));
+                        return Err(DbError::Transaction(format!("Transaction requires isolation level: {:?}", required_level)));
                     }
                 }
                 _ => {}

@@ -232,7 +232,7 @@ impl ActorContext {
 
     /// Set the self reference
     pub fn set_self_ref(&mut self, actor_ref: ActorRef) {
-        self.self_ref = Some(actor_ref)));
+        self.self_ref = Some(actor_ref);
     }
 
     /// Get the actor ID
@@ -517,7 +517,7 @@ impl ActorSystem {
 
     /// Handle actor failure according to supervision strategy
     async fn handle_actor_failure(&self, id: ActorId, error: crate::DbError) {
-        let config = self.supervisor_config.lock().await));
+        let config = self.supervisor_config.lock().await;
         let strategy = config.strategy;
         drop(config);
 
@@ -723,7 +723,7 @@ mod tests {
             system
                 .spawn(actor, Some(format!("actor-{}", i)), 10)
                 .await
-                .unwrap()));
+                .unwrap();
         }
 
         system.broadcast(10usize).await.unwrap();
@@ -731,7 +731,7 @@ mod tests {
         tokio::time::sleep(Duration::from_millis(50)).await;
 
         for i in 0..5 {
-            let actor_ref = system.find_actor(&format!("actor-{}", i)).await.unwrap()));
+            let actor_ref = system.find_actor(&format!("actor-{}", i)).await.unwrap();
             let result: usize = actor_ref
                 .ask("get".to_string(), Duration::from_secs(1))
                 .await

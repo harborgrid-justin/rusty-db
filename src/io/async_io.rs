@@ -339,7 +339,7 @@ pub struct IoCompletionPort {
     completions: crossbeam::queue::ArrayQueue<IoCompletion>,
 
     /// Map of request ID to completion channel
-    waiters: Arc<RwLock<HashMap<u64::Sender<IoCompletion>>>>,
+    waiters: Arc<RwLock<HashMap<u64, oneshot::Sender<IoCompletion>>>>,
 
     /// Notification for new completions
     notify: Arc<Notify>,
@@ -361,12 +361,12 @@ impl IoCompletionPort {
         #[cfg(windows)]
         let backend = Arc::new(crate::io::windows_iocp::WindowsIocp::new(
             crate::io::windows_iocp::IocpConfig::default(),
-        )?;
+        )?);
 
         #[cfg(unix)]
         let backend = Arc::new(crate::io::unix_io_uring::IoUringEngine::new(
             crate::io::unix_io_uring::IoUringConfig::default(),
-        )?;
+        )?);
 
         Ok(Self {
             pending: AtomicU64::new(0),
@@ -421,7 +421,7 @@ impl IoCompletionPort {
     /// Poll for completed I/O operations
     ///
     /// Returns the number of completions retrieved.
-    pub fn poll(&self, maxcompletions: usize) -> Result<usize> {
+    pub fn poll(&self, max_completions: usize) -> Result<usize> {
         #[cfg(windows)]
         let completions = self.backend.poll(max_completions)?;
 
@@ -558,7 +558,7 @@ pub struct AsyncIoEngine {
 impl AsyncIoEngine {
     /// Create a new async I/O engine
     pub fn new(config: crate::io::IoEngineConfig) -> Result<Self> {
-        let completion_port = Arc::new(IoCompletionPort::new(config.ring_size)?;
+        let completion_port = Arc::new(IoCompletionPort::new(config.ring_size)?);
         let shutdown = Arc::new(AtomicU8::new(0));
 
         // Spawn worker threads
@@ -570,9 +570,9 @@ impl AsyncIoEngine {
             let handle = std::thread::Builder::new()
                 .name(format!("io-worker-{}", i))
                 .spawn(move || {
-                    Self::worker_loop(cp, sd)));
+                    Self::worker_loop(cp, sd)
                 })
-                .map_err(|e| DbError::Internal(format!("Failed to spawn I/O worker: {}", e)))?);
+                .map_err(|e| DbError::Internal(format!("Failed to spawn I/O worker: {}", e)))?;
 
             workers.push(handle);
         }

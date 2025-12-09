@@ -240,7 +240,7 @@ impl EncryptionManager {
     }
 
     /// Initialize with a master key
-    pub fn initialize_master_key(&self, masterkey: Vec<u8>) -> Result<KeyId> {
+    pub fn initialize_master_key(&self, master_key: Vec<u8>) -> Result<KeyId> {
         if master_key.len() != 32 {
             return Err(DbError::InvalidInput("Master key must be 32 bytes".to_string()));
         }
@@ -274,12 +274,12 @@ impl EncryptionManager {
         &self,
         key_type: KeyType,
         algorithm: EncryptionAlgorithm,
-        parentkeyid: Option<KeyId>,
+        parent_key_id: Option<KeyId>,
     ) -> Result<KeyId> {
         // Verify parent key exists if specified
         if let Some(ref parent_id) = parent_key_id {
             if !self.keys.read().contains_key(parent_id) {
-                return Err(DbError::NotFound(format!("Parent key {} not found", parent_id)))));
+                return Err(DbError::NotFound(format!("Parent key {} not found", parent_id)));
             }
         }
 
@@ -295,7 +295,7 @@ impl EncryptionManager {
             *counter
         };
 
-        let key_id = format!("KEY_{:08}_{}", version, key_type_prefix(&key_type))));
+        let key_id = format!("KEY_{:08}_{}", version, key_type_prefix(&key_type));
 
         let key = EncryptionKey {
             id: key_id.clone(),
@@ -336,7 +336,7 @@ impl EncryptionManager {
             KeyType::TableEncryption,
             algorithm.clone(),
             Some("MASTER_KEY".to_string()),
-        )?);
+        )?;
 
         let config = TdeConfig {
             tablespace_id: tablespace_id.clone(),
@@ -360,7 +360,7 @@ impl EncryptionManager {
         if configs.remove(tablespace_id).is_none() {
             return Err(DbError::NotFound(
                 format!("TDE not configured for tablespace {}", tablespace_id)
-            ))));
+            ));
         }
 
         Ok(())
@@ -417,7 +417,7 @@ impl EncryptionManager {
             if table_encryptions.remove(column_id).is_none() {
                 return Err(DbError::NotFound(
                     format!("Column encryption not found for {}.{}", table_id, column_id)
-                ))));
+                ));
             }
             Ok(())
         } else {
@@ -442,7 +442,7 @@ impl EncryptionManager {
     /// Start key rotation
     pub fn start_key_rotation(&self, old_key_id: &KeyId) -> Result<String> {
         // Get the old key
-        let old_key = self.get_key(old_key_id)?);
+        let old_key = self.get_key(old_key_id)?;
 
         if old_key.rotation_state != KeyRotationState::Active {
             return Err(DbError::InvalidOperation(
@@ -458,7 +458,7 @@ impl EncryptionManager {
         )?;
 
         // Create rotation job
-        let job_id = format!("ROT_{:08}", self.rotation_jobs.read().len() + 1)));
+        let job_id = format!("ROT_{:08}", self.rotation_jobs.read().len() + 1);
 
         let job = KeyRotationJob {
             id: job_id.clone(),
@@ -497,7 +497,7 @@ impl EncryptionManager {
         job_id: &str,
         blocks_completed: u64,
     ) -> Result<()> {
-        let mut jobs = self.rotation_jobs.write()));
+        let mut jobs = self.rotation_jobs.write();
 
         if let Some(job) = jobs.get_mut(job_id) {
             job.blocks_reencrypted = blocks_completed;
@@ -525,7 +525,7 @@ impl EncryptionManager {
 
     /// Configure HSM integration
     pub fn configure_hsm(&self, config: HsmConfig) -> Result<()> {
-        *self.hsm_config.write() = Some(config)));
+        *self.hsm_config.write() = Some(config);
         Ok(())
     }
 
@@ -606,7 +606,7 @@ impl EncryptionManager {
 
     /// Get encryption statistics
     pub fn get_statistics(&self) -> EncryptionStatistics {
-        let keys = self.keys.read()));
+        let keys = self.keys.read();
         let tde_configs = self.tde_configs.read();
         let column_encryptions = self.column_encryptions.read();
         let rotation_jobs = self.rotation_jobs.read();

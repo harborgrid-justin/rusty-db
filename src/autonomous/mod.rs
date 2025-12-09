@@ -117,11 +117,11 @@ pub struct AutonomousDatabase {
 impl AutonomousDatabase {
     /// Create a new autonomous database manager
     pub fn new(config: AutonomousConfig) -> Self {
-        let auto_tuner = Arc::new(AutoTuner::new(config.tuning_aggressiveness));
-        let healing_engine = Arc::new(SelfHealingEngine::new());
-        let ml_analyzer = Arc::new(WorkloadMLAnalyzer::new());
-        let auto_indexing = Arc::new(AutoIndexingEngine::new());
-        let capacity_planner = Arc::new(CapacityPlanner::new());
+        let mut auto_tuner = AutoTuner::new(config.tuning_aggressiveness);
+        let mut healing_engine = SelfHealingEngine::new();
+        let ml_analyzer = WorkloadMLAnalyzer::new();
+        let mut auto_indexing = AutoIndexingEngine::new();
+        let capacity_planner = CapacityPlanner::new();
 
         // Configure components based on config
         if !config.enable_auto_tuning {
@@ -142,11 +142,11 @@ impl AutonomousDatabase {
 
         Self {
             config: Arc::new(RwLock::new(config)),
-            auto_tuner,
-            healing_engine,
-            ml_analyzer,
-            auto_indexing,
-            capacity_planner,
+            auto_tuner: Arc::new(auto_tuner),
+            healing_engine: Arc::new(healing_engine),
+            ml_analyzer: Arc::new(ml_analyzer),
+            auto_indexing: Arc::new(auto_indexing),
+            capacity_planner: Arc::new(capacity_planner),
         }
     }
 

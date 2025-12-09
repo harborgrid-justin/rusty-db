@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::common::{TableId, RowId};
+use crate::common::{TableId, RowId, SessionId};
 use crate::Result;
 use crate::error::DbError;
 use super::ledger::BlockId;
@@ -511,7 +511,7 @@ impl AuditReport {
 
         for event in events {
             *events_by_type.entry(event.event_type.to_string()).or_insert(0) += 1;
-            *events_by_severity.entry(format!("{:?}", event.severity)).or_insert(0) += 1));
+            *events_by_severity.entry(format!("{:?}", event.severity)).or_insert(0) += 1;
             *events_by_user.entry(event.user.clone()).or_insert(0) += 1;
 
             if event.severity == AuditSeverity::Critical {
@@ -522,7 +522,7 @@ impl AuditReport {
         let summary = format!(
             "Audit report for period {} - {}: {} total events, {} critical",
             start_time, end_time, events.len(), critical_events.len()
-        )));
+        );
 
         Self {
             timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
@@ -544,12 +544,12 @@ impl AuditReport {
 
     /// Export to CSV
     pub fn to_csv(&self) -> String {
-        let mut csv = String::new()));
+        let mut csv = String::new();
         csv.push_str("Metric,Value\n");
-        csv.push_str(&format!("Total Events,{}\n", self.total_events))));
-        csv.push_str(&format!("Critical Events,{}\n", self.critical_events.len()))));
-        csv.push_str(&format!("Period Start,{}\n", self.period.0))));
-        csv.push_str(&format!("Period End,{}\n", self.period.1))));
+        csv.push_str(&format!("Total Events,{}\n", self.total_events));
+        csv.push_str(&format!("Critical Events,{}\n", self.critical_events.len()));
+        csv.push_str(&format!("Period Start,{}\n", self.period.0));
+        csv.push_str(&format!("Period End,{}\n", self.period.1));
         csv
     }
 }

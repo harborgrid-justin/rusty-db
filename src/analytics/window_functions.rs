@@ -265,7 +265,7 @@ pub fn apply_window_function(
                 } else {
                     0.0
                 };
-                result.push(format!("{:.6}", percent_rank))));
+                result.push(format!("{:.6}", percent_rank));
             }
         }
 
@@ -273,7 +273,7 @@ pub fn apply_window_function(
             let n = data.len();
             for i in 0..n {
                 let cume_dist = (i + 1) as f64 / n as f64;
-                result.push(format!("{:.6}", cume_dist))));
+                result.push(format!("{:.6}", cume_dist));
             }
         }
     }

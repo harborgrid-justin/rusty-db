@@ -373,7 +373,7 @@ impl ThreatScorer {
         let join_count = query_upper.matches("JOIN").count();
         if join_count >= 3 {
             score += 5;
-            factors.push(format!("Multiple table joins ({})", join_count))));
+            factors.push(format!("Multiple table joins ({})", join_count));
         }
 
         // SQL injection patterns
@@ -395,10 +395,10 @@ impl ThreatScorer {
 
         if estimated_rows > 10000 {
             score += 15;
-            factors.push(format!("Large result set (>{} rows)", estimated_rows))));
+            factors.push(format!("Large result set (>{} rows)", estimated_rows));
         } else if estimated_rows > 1000 {
             score += 10;
-            factors.push(format!("Medium result set ({} rows)", estimated_rows))));
+            factors.push(format!("Medium result set ({} rows)", estimated_rows));
         }
 
         // Check for LIMIT clause absence
@@ -408,11 +408,11 @@ impl ThreatScorer {
     }
 
     /// Calculate temporal risk (0-25 points)
-    pub ffn calculate_temporal_risk(
+    pub fn calculate_temporal_risk(
         &self,
         timestamp: i64,
-        userbaseline: Option<&UserBehaviorBaseline>,
-    )-> (u8, Vec<String>) {
+        user_baseline: Option<&UserBehaviorBaseline>,
+    ) -> (u8, Vec<String>) {
         let mut score = 0u8;
         let mut factors = Vec::new();
 
@@ -428,7 +428,7 @@ impl ThreatScorer {
         // Off-hours access (10pm - 6am)
         if hour >= 22 || hour < 6 {
             score += 15;
-            factors.push(format!("Off-hours access ({}:00)", hour))));
+            factors.push(format!("Off-hours access ({}:00)", hour));
         }
 
         // Weekend access
@@ -456,12 +456,12 @@ impl ThreatScorer {
     }
 
     /// Calculate behavioral deviation risk (0-25 points)
-    pub fnfn calculate_behavioral_risk(
+    pub fn calculate_behavioral_risk(
         &self,
         query: &str,
         tables: &[String],
-        userbaseline: Option<&UserBehaviorBaseline>,
-    )> (u8, Vec<String>) {
+        user_baseline: Option<&UserBehaviorBaseline>,
+    ) -> (u8, Vec<String>) {
         let mut score = 0u8;
         let mut factors = Vec::new();
 
@@ -475,7 +475,7 @@ impl ThreatScorer {
             for table in tables {
                 if !baseline.frequent_tables.contains_key(table) {
                     score += 10;
-                    factors.push(format!("Accessing new table: {}", table))));
+                    factors.push(format!("Accessing new table: {}", table));
                     break;
                 }
             }
@@ -590,7 +590,7 @@ pub struct BehaviorAnalyzer {
     /// User baselines
     baselines: Arc<RwLock<HashMap<UserId, UserBehaviorBaseline>>>,
     /// Recent queries for baseline building
-    query_history: Arc<RwLock<HashMap<UserId<QueryHistoryEntry>>>>,
+    query_history: Arc<RwLock<HashMap<UserId, VecDeque<QueryHistoryEntry>>>>,
     config: Arc<RwLock<InsiderThreatConfig>>,
 }
 
@@ -632,7 +632,7 @@ impl BehaviorAnalyzer {
             result_rows,
             client_ip,
             location,
-        }));
+        };
 
         let mut history = self.query_history.write();
         let user_history = history.entry(user_id.clone()).or_insert_with(VecDeque::new);
@@ -759,10 +759,10 @@ impl AnomalyDetector {
 
             if z_score.abs() > 3.0 {
                 score += 30.0;
-                anomalies.push(format!("Result set size {} is {} std devs from mean", result_rows, z_score))));
+                anomalies.push(format!("Result set size {} is {} std devs from mean", result_rows, z_score));
             } else if z_score.abs() > 2.0 {
                 score += 15.0;
-                anomalies.push(format!("Result set size moderately anomalous (z-score: {:.2})", z_score))));
+                anomalies.push(format!("Result set size moderately anomalous (z-score: {:.2})", z_score));
             }
         }
 
@@ -785,7 +785,7 @@ pub struct DataExfiltrationGuard {
     /// Recent exfiltration attempts
     attempts: Arc<RwLock<Vec<ExfiltrationAttempt>>>,
     /// Per-user data volume tracking (rolling 1 hour)
-    user_volumes: Arc<RwLock<HashMap<UserId<(i64, u64)>>>>,
+    user_volumes: Arc<RwLock<HashMap<UserId, VecDeque<(i64, u64)>>>>,
     config: Arc<RwLock<InsiderThreatConfig>>,
 }
 
@@ -803,7 +803,7 @@ impl DataExfiltrationGuard {
         &self,
         user_id: &UserId,
         query: &str,
-        estimatedrows: u64,
+        estimated_rows: u64,
         tables: &[String],
     ) -> Option<ExfiltrationAttempt> {
         let config = self.config.read();
@@ -820,7 +820,7 @@ impl DataExfiltrationGuard {
                 blocked: true,
                 reason: format!("Query attempts to access {} rows, exceeding limit of {}",
                     estimated_rows, config.max_rows_without_justification),
-            }));
+            };
 
             self.attempts.write().push(attempt.clone());
             return Some(attempt);
@@ -853,7 +853,7 @@ impl DataExfiltrationGuard {
                 tables_accessed: tables.to_vec(),
                 blocked: true,
                 reason: format!("User has accessed ~{}MB of data in the last hour", volume_mb_estimate),
-            }));
+            };
 
             self.attempts.write().push(attempt.clone());
             return Some(attempt);
@@ -909,7 +909,7 @@ impl PrivilegeEscalationDetector {
 
         for (pattern, esc_type) in &self.dangerous_patterns {
             if pattern.is_match(query) {
-                patterns_matched.push(format!("{:?}: {}", esc_type, pattern.as_str()))));
+                patterns_matched.push(format!("{:?}: {}", esc_type, pattern.as_str()));
                 escalation_type = Some(esc_type.clone());
             }
         }
@@ -967,7 +967,7 @@ impl QuerySanitizer {
             if query_upper.contains(&keyword.to_uppercase()) {
                 return Err(DbError::InvalidInput(
                     format!("Query contains blocked keyword: {}", keyword)
-                ))));
+                ));
             }
         }
 
@@ -1000,8 +1000,8 @@ impl ForensicLogger {
     /// Log forensic record
     pub fn log_record(
         &self,
-        userid: UserId,
-        sessionid: Option<String>,
+        user_id: UserId,
+        session_id: Option<String>,
         query_text: String,
         assessment: QueryRiskAssessment,
         anomaly_score: Option<AnomalyScore>,
@@ -1061,7 +1061,7 @@ impl ForensicLogger {
             record.query_text,
             record.assessment.total_score,
             record.previous_hash
-        )));
+        );
 
         let mut hasher = Sha256::new();
         hasher.update(data.as_bytes());
@@ -1075,7 +1075,7 @@ impl ForensicLogger {
 
     /// Verify audit trail integrity
     pub fn verify_integrity(&self) -> bool {
-        let records = self.records.read()));
+        let records = self.records.read();
         let mut prev_hash = "0".to_string();
 
         for record in records.iter() {
@@ -1121,6 +1121,7 @@ impl InsiderThreatManager {
         let config = Arc::new(RwLock::new(InsiderThreatConfig::default()));
 
         Self {
+            config: config.clone(),
             threat_scorer: Arc::new(ThreatScorer::new(config.clone())),
             behavior_analyzer: Arc::new(BehaviorAnalyzer::new(config.clone())),
             anomaly_detector: Arc::new(AnomalyDetector::new(config.clone())),
@@ -1128,7 +1129,6 @@ impl InsiderThreatManager {
             escalation_detector: Arc::new(PrivilegeEscalationDetector::new()),
             query_sanitizer: Arc::new(QuerySanitizer::new()),
             forensic_logger: Arc::new(ForensicLogger::new(10000)),
-            config,
         }
     }
 
@@ -1184,7 +1184,7 @@ impl InsiderThreatManager {
             return Err(DbError::InvalidOperation(format!(
                 "Privilege escalation attempt blocked: {:?}",
                 escalation.escalation_type
-            )))));
+            )));
         }
 
         // Check for data exfiltration
@@ -1287,7 +1287,7 @@ impl InsiderThreatManager {
                 "Query blocked due to critical threat score ({}). Risk factors: {:?}",
                 assessment.total_score,
                 assessment.risk_factors
-            )))));
+            )));
         }
 
         Ok(assessment)

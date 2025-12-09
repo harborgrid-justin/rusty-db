@@ -118,7 +118,7 @@ impl LruKReplacer {
         history.record_access();
     }
 
-    fn set_evictable(&mut self, pageid: PageId, evictable: bool) {
+    fn set_evictable(&mut self, page_id: PageId, evictable: bool) {
         if evictable && !self.evictable_pages.contains(&page_id) {
             self.evictable_pages.push(page_id);
         } else if !evictable {

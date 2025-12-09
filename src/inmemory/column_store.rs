@@ -306,7 +306,7 @@ impl ColumnSegment {
 
     pub fn write_int64(&mut self, row_idx: usize, value: i64) -> Result<(), String> {
         if row_idx >= self.row_count {
-            return Err("Row index out of bounds".to_string())));
+            return Err("Row index out of bounds".to_string());
         }
 
         match self.data_type {
@@ -322,7 +322,7 @@ impl ColumnSegment {
 
     pub fn is_null(&self, row_idx: usize) -> bool {
         if let Some(ref bitmap) = self.null_bitmap {
-            let byte_idx = row_idx / 8));
+            let byte_idx = row_idx / 8;
             let bit_idx = row_idx % 8;
             if byte_idx < bitmap.len() {
                 return (bitmap[byte_idx] & (1 << bit_idx)) != 0;
@@ -350,7 +350,7 @@ impl ColumnSegment {
         }
     }
 
-    pub fn scan_range(&self, startrow: usize, endrow: usize) -> Result<Vec<u8>, String> {
+    pub fn scan_range(&self, start_row: usize, end_row: usize) -> Result<Vec<u8>, String> {
         if end_row > self.row_count {
             return Err("End row out of bounds".to_string());
         }
@@ -539,7 +539,7 @@ impl ColumnStore {
                 "Row has {} columns, expected {}",
                 row.len(),
                 self.schema.len()
-            ))));
+            ));
         }
 
         self.dual_format.insert_row(row)?;
@@ -559,7 +559,7 @@ impl ColumnStore {
     pub fn scan_column(&self, column_id: u32) -> Result<Vec<Arc<ColumnSegment>>, String> {
         let segments = self.inmemory_area.get_segments(column_id);
         if segments.is_empty() {
-            return Err(format!("Column {} not populated in memory", column_id))));
+            return Err(format!("Column {} not populated in memory", column_id));
         }
         Ok(segments)
     }
@@ -686,7 +686,7 @@ impl ColumnStore {
 
     pub fn enable_column(&self, column_id: u32) -> Result<(), String> {
         if !self.column_metadata.read().contains_key(&column_id) {
-            return Err(format!("Column {} not found", column_id))));
+            return Err(format!("Column {} not found", column_id));
         }
 
         // This would trigger population in a real implementation

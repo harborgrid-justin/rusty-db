@@ -477,7 +477,7 @@ impl ReplicationMonitor {
             ),
             triggered_at: Self::current_timestamp(),
             acknowledged: false,
-        }));
+        };
 
         let mut alerts = self.active_alerts.write();
         alerts.insert(alert.id.clone(), alert);
@@ -492,7 +492,7 @@ impl ReplicationMonitor {
         let alert = alerts.get_mut(alert_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Alert {} not found", alert_id)
-            ))?);
+            ))?;
 
         alert.acknowledged = true;
         Ok(())

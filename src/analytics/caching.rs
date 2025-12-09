@@ -422,7 +422,7 @@ impl CacheWarmer {
     
     /// Register query for cache warming
     pub fn register_warming_query(&mut self, query: String, schedule: WarmingSchedule) {
-        self.warming_queries.push(WarmingQuery { query, schedule })));
+        self.warming_queries.push(WarmingQuery { query, schedule });
     }
     
     /// Execute cache warming

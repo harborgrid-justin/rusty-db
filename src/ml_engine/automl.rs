@@ -428,7 +428,7 @@ impl AutoMLEngine {
         let results = self.run_automl(&dataset, &config)?;
 
         results.best_model
-            .ok_or_else(|| DbError::Internal("No valid model found".into()))
+            .ok_or_else(|| crate::DbError::Internal("No valid model found".into()))
     }
 
     /// Run AutoML search

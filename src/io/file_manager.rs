@@ -22,6 +22,7 @@ use std::os::unix::io::AsRawFd;
 use std::os::unix::fs::OpenOptionsExt;
 
 #[cfg(windows)]
+use std::os::windows::io::AsRawHandle;
 
 // ============================================================================
 // File Handle
@@ -348,7 +349,7 @@ impl DirectIoFile {
     }
 
     /// Set file size
-    pub fn set_size(&self, newsize: u64) -> Result<()> {
+    pub fn set_size(&self, new_size: u64) -> Result<()> {
         self.file
             .set_len(new_size)
             .map_err(|e| DbError::Io(e))?;
@@ -449,7 +450,7 @@ impl FileManager {
             buffer_size: PAGE_SIZE,
             alignment: SECTOR_SIZE,
             enable_stats: true,
-        })?;
+        })?);
 
         let io_engine = crate::io::get_io_engine()?;
 
@@ -492,7 +493,7 @@ impl FileManager {
 
     /// Read a page from file
     pub async fn read_page(&self, handle: FileHandle, offset: u64) -> Result<Vec<u8>> {
-        self.read(handleOptions::new(offset, PAGE_SIZE)).await
+        self.read(handle, ReadOptions::new(offset, PAGE_SIZE)).await
     }
 
     /// Write a page to file
@@ -502,9 +503,9 @@ impl FileManager {
                 "Invalid page size: expected {}, got {}",
                 PAGE_SIZE,
                 data.len()
-            )))));
+            )));
         }
-        self.write(handleOptions::new(offset), data).await
+        self.write(handle, WriteOptions::new(offset), data).await
     }
 
     /// Read data from file
@@ -543,7 +544,7 @@ impl FileManager {
             return Err(DbError::Internal(format!(
                 "Read failed: error code {}",
                 completion.error_code
-            )))));
+            )));
         }
 
         // Extract the requested data from the aligned buffer
@@ -614,7 +615,7 @@ impl FileManager {
             return Err(DbError::Internal(format!(
                 "Write failed: error code {}",
                 completion.error_code
-            )))));
+            )));
         }
 
         // Sync if requested

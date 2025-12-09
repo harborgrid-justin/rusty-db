@@ -76,7 +76,7 @@ impl BackupSystem {
         catalog_config: CatalogConfig,
     ) -> Result<Self> {
         // Initialize core managers
-        let backup_manager = Arc::new(BackupManager::new(backup_config.clone(), retention_policy)?;
+        let backup_manager = Arc::new(BackupManager::new(backup_config.clone(), retention_policy)?);
 
         let pitr_manager = Arc::new(PitrManager::new(
             backup_config.backup_dir.join("logs")
@@ -84,11 +84,11 @@ impl BackupSystem {
 
         let snapshot_manager = Arc::new(SnapshotManager::new(
             backup_config.backup_dir.join("snapshots")
-        )?;
+        )?);
 
         // Initialize encryption
         let key_mgmt_config = KeyManagementConfig::default();
-        let key_manager = Arc::new(KeyManager::new(key_mgmt_config)?;
+        let key_manager = Arc::new(KeyManager::new(key_mgmt_config)?);
         let encryption_manager = Arc::new(BackupEncryptionManager::new(key_manager));
 
         // Initialize disaster recovery
@@ -106,7 +106,7 @@ impl BackupSystem {
         let verification_manager = Arc::new(VerificationManager::new(restore_test_config));
 
         // Initialize catalog
-        let catalog = Arc::new(BackupCatalog::new(catalog_config)?;
+        let catalog = Arc::new(BackupCatalog::new(catalog_config)?);
 
         Ok(Self {
             backup_manager,
@@ -218,6 +218,7 @@ impl BackupSystem {
         let recovery_sets = self.catalog.find_recovery_path(database_name, target_scn)?;
 
         if recovery_sets.is_empty() {
+            return Err(DbError::BackupError(
                 "No suitable backup found for recovery".to_string()
             ));
         }
@@ -243,7 +244,7 @@ impl BackupSystem {
             format!("{}-snapshot", database_name),
             database_name.to_string(),
             SnapshotType::Manual,
-        )?);
+        )?;
 
         Ok(snapshot_id)
     }

@@ -108,11 +108,11 @@ impl JsonPathParser {
                         let path = self.parse_single_segment()?;
                         segments.push(JsonPath::RecursiveDescent(Box::new(path)));
                     } else {
-                        segments.push(self.parse_single_segment()?;
+                        segments.push(self.parse_single_segment()?);
                     }
                 }
                 Some('[') => {
-                    segments.push(self.parse_bracket_segment()?;
+                    segments.push(self.parse_bracket_segment()?);
                 }
                 _ => break,
             }
@@ -340,13 +340,14 @@ impl JsonPathParser {
                 self.expect_char(')')?;
                 Ok(expr)
             }
+            _ => Err(crate::error::DbError::InvalidInput(
                 format!("Unexpected character in filter expression at position {}", self.position)
             ))
         }
     }
 
     fn parse_identifier(&mut self) -> Result<String> {
-        let start = self.position));
+        let start = self.position;
         while let Some(c) = self.current_char() {
             if c.is_alphanumeric() || c == '_' {
                 self.position += 1;
@@ -356,6 +357,7 @@ impl JsonPathParser {
         }
 
         if start == self.position {
+            Err(crate::error::DbError::InvalidInput(
                 "Expected identifier".to_string()
             ))
         } else {
@@ -379,6 +381,7 @@ impl JsonPathParser {
 
         self.input[start..self.position]
             .parse()
+            .map_err(|_| crate::error::DbError::InvalidInput(
                 "Invalid number".to_string()
             ))
     }
@@ -397,6 +400,7 @@ impl JsonPathParser {
             self.position += 1;
         }
 
+        Err(crate::error::DbError::InvalidInput(
             "Unterminated string".to_string()
         ))
     }
@@ -410,6 +414,7 @@ impl JsonPathParser {
             self.position += 1;
             Ok(())
         } else {
+            Err(crate::error::DbError::InvalidInput(
                 format!("Expected '{}', got {:?}", expected, self.current_char())
             ))
         }
@@ -420,7 +425,7 @@ impl JsonPathParser {
     }
 
     fn peek_slice(&self) -> bool {
-        let rest = &self.input[self.position..]));
+        let rest = &self.input[self.position..];
         rest.contains(':') && !rest.starts_with(':')
     }
 

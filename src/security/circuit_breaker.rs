@@ -1457,7 +1457,7 @@ impl From<DbError> for String {
 
 #[cfg(test)]
 mod tests {
-    use super::*));
+    use super::*;
 
     #[tokio::test]
     async fn test_circuit_breaker_closed_state() {

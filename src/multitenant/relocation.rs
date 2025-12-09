@@ -350,7 +350,7 @@ impl RelocationEngine {
         job_id: u64,
         bytes: u64,
     ) -> Result<()> {
-        let mut jobs = relocations.write().await));
+        let mut jobs = relocations.write().await;
         if let Some(job) = jobs.get_mut(&job_id) {
             job.progress.update(bytes);
             Ok(())
@@ -361,7 +361,7 @@ impl RelocationEngine {
 
     /// Get relocation progress
     pub async fn get_progress(&self, job_id: u64) -> Result<RelocationProgress> {
-        let jobs = self.relocations.read().await));
+        let jobs = self.relocations.read().await;
         jobs.get(&job_id)
             .map(|job| job.progress.clone())
             .ok_or_else(|| DbError::NotFound(format!("Relocation job {} not found", job_id)))
@@ -369,7 +369,7 @@ impl RelocationEngine {
 
     /// Cancel a relocation
     pub async fn cancel_relocation(&self, job_id: u64) -> Result<()> {
-        let mut jobs = self.relocations.write().await));
+        let mut jobs = self.relocations.write().await;
         if let Some(job) = jobs.get_mut(&job_id) {
             job.progress.transition(RelocationState::RollingBack);
             // Perform rollback
@@ -406,7 +406,7 @@ struct DataTransfer {
     start_time: Instant,
 }
 
-use std::time::Instant));
+use std::time::Instant;
 
 impl StateTransferProtocol {
     /// Create a new state transfer protocol

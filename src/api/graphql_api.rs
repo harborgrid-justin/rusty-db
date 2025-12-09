@@ -103,7 +103,7 @@ impl DateTime {
 
 /// Custom scalar type for JSON values
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Json(serde_json::Value)));
+pub struct Json(serde_json::Value);
 
 #[async_graphql::Scalar]
 impl async_graphql::ScalarType for Json {
@@ -121,7 +121,7 @@ impl async_graphql::ScalarType for Json {
 
 /// Custom scalar type for Binary data
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Binary(Vec<u8>)));
+pub struct Binary(Vec<u8>);
 
 #[async_graphql::Scalar]
 impl async_graphql::ScalarType for Binary {
@@ -142,7 +142,7 @@ impl async_graphql::ScalarType for Binary {
 
 /// Custom scalar type for large integers
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BigInt(i64)));
+pub struct BigInt(i64);
 
 #[async_graphql::Scalar]
 impl async_graphql::ScalarType for BigInt {
@@ -364,7 +364,7 @@ impl TableType {
 
     /// Get table statistics
     async fn statistics(&self, ctx: &Context<'_>) -> GqlResult<TableStatistics> {
-        let engine = ctx.data::<Arc<GraphQLEngine>>()?);
+        let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_table_statistics(&self.name).await
     }
 
@@ -786,7 +786,7 @@ impl QueryRoot {
         order_by: Option<Vec<OrderBy>>,
         limit: Option<i32>,
     ) -> GqlResult<QueryResult> {
-        let start = Instant::now()));
+        let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
         match engine.query_tables(tables, joins, where_clause, order_by, limit).await {
@@ -819,7 +819,7 @@ impl QueryRoot {
         last: Option<i32>,
         before: Option<String>,
     ) -> GqlResult<RowConnection> {
-        let engine = ctx.data::<Arc<GraphQLEngine>>()?);
+        let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.query_table_connection(
             &table,
             where_clause,
@@ -912,7 +912,7 @@ impl QueryRoot {
         fields: Option<Vec<String>>,
         limit: Option<i32>,
     ) -> GqlResult<SearchResult> {
-        let engine = ctx.data::<Arc<GraphQLEngine>>()?);
+        let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.search(&query, tables, fields, limit).await
     }
 
@@ -1000,7 +1000,7 @@ impl MutationRoot {
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some(format!("No write access to table: {}", table)),
-            }))));
+            }));
         }
 
         match engine.insert_one(&table, data).await {
@@ -1027,7 +1027,7 @@ impl MutationRoot {
         table: String,
         data: Vec<HashMap<String, Json>>,
     ) -> GqlResult<MutationResult> {
-        let start = Instant::now()));
+        let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
         // Check write permissions
@@ -1037,7 +1037,7 @@ impl MutationRoot {
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some(format!("No write access to table: {}", table)),
-            }))));
+            }));
         }
 
         match engine.insert_many(&table, data).await {
@@ -1066,7 +1066,7 @@ impl MutationRoot {
         id: ID,
         data: HashMap<String, Json>,
     ) -> GqlResult<MutationResult> {
-        let start = Instant::now()));
+        let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
         // Check write permissions
@@ -1076,7 +1076,7 @@ impl MutationRoot {
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some(format!("No write access to table: {}", table)),
-            }))));
+            }));
         }
 
         match engine.update_one(&table, &id, data).await {
@@ -1109,7 +1109,7 @@ impl MutationRoot {
         where_clause: WhereClause,
         data: HashMap<String, Json>,
     ) -> GqlResult<MutationResult> {
-        let start = Instant::now()));
+        let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
         // Check write permissions
@@ -1119,7 +1119,7 @@ impl MutationRoot {
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some(format!("No write access to table: {}", table)),
-            }))));
+            }));
         }
 
         match engine.update_many(&table, where_clause, data).await {
@@ -1147,7 +1147,7 @@ impl MutationRoot {
         table: String,
         id: ID,
     ) -> GqlResult<MutationResult> {
-        let start = Instant::now()));
+        let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
         // Check write permissions
@@ -1157,7 +1157,7 @@ impl MutationRoot {
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some(format!("No write access to table: {}", table)),
-            }))));
+            }));
         }
 
         match engine.delete_one(&table, &id).await {
@@ -1189,7 +1189,7 @@ impl MutationRoot {
         table: String,
         where_clause: WhereClause,
     ) -> GqlResult<MutationResult> {
-        let start = Instant::now()));
+        let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
         // Check write permissions
@@ -1199,7 +1199,7 @@ impl MutationRoot {
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some(format!("No write access to table: {}", table)),
-            }))));
+            }));
         }
 
         match engine.delete_many(&table, where_clause).await {
@@ -1227,7 +1227,7 @@ impl MutationRoot {
         unique_fields: Vec<String>,
         data: HashMap<String, Json>,
     ) -> GqlResult<MutationResult> {
-        let start = Instant::now()));
+        let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
         // Check write permissions
@@ -1237,7 +1237,7 @@ impl MutationRoot {
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some(format!("No write access to table: {}", table)),
-            }))));
+            }));
         }
 
         match engine.upsert(&table, unique_fields, data).await {
@@ -1263,7 +1263,7 @@ impl MutationRoot {
         ctx: &Context<'_>,
         isolation_level: Option<IsolationLevel>,
     ) -> GqlResult<TransactionResult> {
-        let engine = ctx.data::<Arc<GraphQLEngine>>()?);
+        let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.begin_transaction(isolation_level).await
     }
 
@@ -1334,7 +1334,7 @@ impl MutationRoot {
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some(format!("No write access to table: {}", table)),
-            }))));
+            }));
         }
 
         match engine.bulk_insert(&table, data, batch_size.unwrap_or(1000)).await {
@@ -1395,7 +1395,7 @@ pub struct TransactionExecutionResult {
 // ============================================================================
 
 /// Root subscription type
-pub struct SubscriptionRoot));
+pub struct SubscriptionRoot;
 
 #[Subscription]
 impl SubscriptionRoot {
@@ -1888,14 +1888,14 @@ impl ComplexityAnalyzer {
             return Err(DbError::InvalidInput(format!(
                 "Query complexity {} exceeds maximum {}",
                 metrics.total_complexity, self.max_complexity
-            )))));
+            )));
         }
 
         if metrics.max_depth > self.max_depth {
             return Err(DbError::InvalidInput(format!(
                 "Query depth {} exceeds maximum {}",
                 metrics.max_depth, self.max_depth
-            )))));
+            )));
         }
 
         Ok(metrics)
@@ -1978,7 +1978,7 @@ impl RateLimiter {
             return Err(DbError::LimitExceeded(format!(
                 "Rate limit exceeded: {} requests per {} seconds",
                 limit.max_requests, limit.window_secs
-            )))));
+            )));
         }
 
         // Record this request
@@ -2055,7 +2055,7 @@ impl QueryCache {
     }
 
     pub async fn get(&self, key: &str) -> Option<Vec<RowType>> {
-        let cache = self.cache.read().await));
+        let cache = self.cache.read().await;
         if let Some(entry) = cache.get(key) {
             if entry.expires_at > Instant::now() {
                 return Some(entry.data.clone());
@@ -3004,7 +3004,7 @@ impl RequestValidator {
                 "Query size {} exceeds maximum {}",
                 query.len(),
                 self.max_query_size
-            )))));
+            )));
         }
 
         // Check for malicious patterns
@@ -3039,7 +3039,7 @@ impl BatchExecutor {
                 "Batch size {} exceeds maximum {}",
                 queries.len(),
                 self.max_batch_size
-            )))));
+            )));
         }
 
         let mut results = Vec::new();
@@ -3091,7 +3091,7 @@ impl ResultFormatter {
                     .fields
                     .iter()
                     .map(|(k, v)| (k.clone(), serde_json::json!(format!("{:?}", v.value))))
-                    .collect()));
+                    .collect();
                 serde_json::Value::Object(map)
             })
             .collect();
@@ -3102,7 +3102,7 @@ impl ResultFormatter {
     /// Format results as CSV
     pub fn to_csv(rows: &[RowType]) -> GqlResult<String> {
         if rows.is_empty() {
-            return Ok(String::new())));
+            return Ok(String::new());
         }
 
         let mut csv = String::new();
@@ -3123,7 +3123,7 @@ impl ResultFormatter {
                             .map(|v| format!("{:?}", v.value))
                             .unwrap_or_default()
                     })
-                    .collect()));
+                    .collect();
                 csv.push_str(&values.join(","));
                 csv.push('\n');
             }
@@ -3166,7 +3166,7 @@ impl ResultFormatter {
                             .map(|v| format!("{:?}", v.value))
                             .unwrap_or_default()
                     })
-                    .collect()));
+                    .collect();
                 md.push_str(&values.join(" | "));
                 md.push_str(" |\n");
             }

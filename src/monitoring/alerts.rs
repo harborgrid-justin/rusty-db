@@ -176,7 +176,7 @@ pub struct ThresholdRule {
 impl ThresholdRule {
     pub fn new(
         name: impl Into<String>,
-        metricname: impl Into<String>,
+        metric_name: impl Into<String>,
         threshold: f64,
         comparison: ComparisonOperator,
         severity: AlertSeverity,
@@ -257,7 +257,7 @@ pub struct AnomalyRule {
 impl AnomalyRule {
     pub fn new(
         name: impl Into<String>,
-        metricname: impl Into<String>,
+        metric_name: impl Into<String>,
         algorithm: AnomalyDetectionAlgorithm,
         sensitivity: f64,
     ) -> Self {
@@ -332,7 +332,7 @@ impl AnomalyRule {
         (current_value - avg).abs() > (avg * self.sensitivity)
     }
 
-    fn detect_exponential_smoothing(&self, history: &[f64], currentvalue: f64) -> bool {
+    fn detect_exponential_smoothing(&self, history: &[f64], current_value: f64) -> bool {
         if history.is_empty() {
             return false;
         }
@@ -354,15 +354,15 @@ pub struct AlertManager {
     alert_history: Arc<RwLock<VecDeque<Alert>>>,
     threshold_rules: Arc<RwLock<HashMap<String, ThresholdRule>>>,
     anomaly_rules: Arc<RwLock<HashMap<String, AnomalyRule>>>,
-    metric_history: Arc<RwLock<HashMap<String<(SystemTime, f64)>>>>,
+    metric_history: Arc<RwLock<HashMap<String, VecDeque<(SystemTime, f64)>>>>,
     last_alert_id: Arc<RwLock<u64>>,
-    last_trigger_time: Arc<RwLock<HashMap<String>>>,
+    last_trigger_time: Arc<RwLock<HashMap<String, SystemTime>>>,
     max_history: usize,
     max_metric_history: usize,
 }
 
 impl AlertManager {
-    pub fn new(max_history: usize, maxmetric_history: usize) -> Self {
+    pub fn new(max_history: usize, max_metric_history: usize) -> Self {
         Self {
             alerts: Arc::new(RwLock::new(HashMap::new())),
             alert_history: Arc::new(RwLock::new(VecDeque::with_capacity(max_history))),
@@ -413,7 +413,7 @@ impl AlertManager {
         self.evaluate_anomaly_rules(&metric_name, value);
     }
 
-    fn evaluate_threshold_rules(&self, metricname: &str, value: f64) {
+    fn evaluate_threshold_rules(&self, metric_name: &str, value: f64) {
         let rules = self.threshold_rules.read();
 
         for rule in rules.values() {
@@ -437,14 +437,14 @@ impl AlertManager {
                     rule.severity,
                     format!("Threshold exceeded: {} = {:.2} (threshold: {:.2})",
                         metric_name, value, rule.threshold),
-                )));
+                );
 
-                self.last_trigger_time.write().insert(rule.name.clone(), Instant::now());
+                self.last_trigger_time.write().insert(rule.name.clone(), SystemTime::now());
             }
         }
     }
 
-    fn evaluate_anomaly_rules(&self, metricname: &str, value: f64) {
+    fn evaluate_anomaly_rules(&self, metric_name: &str, value: f64) {
         let rules = self.anomaly_rules.read();
 
         for rule in rules.values() {
@@ -463,7 +463,7 @@ impl AlertManager {
                         rule.category,
                         rule.severity,
                         format!("Anomaly detected in {}: {:.2}", metric_name, value),
-                    )));
+                    );
                 }
             }
         }

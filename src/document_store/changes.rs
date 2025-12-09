@@ -94,7 +94,7 @@ impl ChangeEvent {
             collection,
             Some(document.metadata.id.clone()),
         );
-        event.full_document = Some(document.as_json()?;
+        event.full_document = Some(document.as_json()?);
         Ok(event)
     }
 
@@ -113,7 +113,7 @@ impl ChangeEvent {
 
         let update_desc = UpdateDescription::generate(old_doc, new_doc)?;
         event.update_description = Some(update_desc);
-        event.full_document = Some(new_doc.as_json()?;
+        event.full_document = Some(new_doc.as_json()?);
 
         Ok(event)
     }
@@ -130,7 +130,7 @@ impl ChangeEvent {
             collection,
             Some(document.metadata.id.clone()),
         );
-        event.full_document = Some(document.as_json()?;
+        event.full_document = Some(document.as_json()?);
         Ok(event)
     }
 }
@@ -169,7 +169,7 @@ impl ResumeToken {
 
     /// Decode token from string
     pub fn decode(s: &str) -> Result<Self> {
-        let parts: Vec<&str> = s.split(':').collect()));
+        let parts: Vec<&str> = s.split(':').collect();
         if parts.len() != 2 {
             return Err(crate::error::DbError::InvalidInput(
                 "Invalid resume token format".to_string()
@@ -177,6 +177,7 @@ impl ResumeToken {
         }
 
         let timestamp = parts[0].parse::<u64>()
+            .map_err(|_| crate::error::DbError::InvalidInput(
                 "Invalid timestamp in resume token".to_string()
             ))?;
 
@@ -508,7 +509,7 @@ impl DiffGenerator {
                         key.clone()
                     } else {
                         format!("{}.{}", path, key)
-                    }));
+                    };
 
                     if let Some(new_value) = new_obj.get(key) {
                         if old_value != new_value {
@@ -526,7 +527,7 @@ impl DiffGenerator {
                             key.clone()
                         } else {
                             format!("{}.{}", path, key)
-                        }));
+                        };
                         operations.push(DiffOperation::Add {
                             path: field_path,
                             value: new_value.clone(),
@@ -621,7 +622,7 @@ impl DiffOperation {
         }
     }
 
-    fn set_value_at_path(root: &mut Value, path: &str, newvalue: Value) -> Result<()> {
+    fn set_value_at_path(root: &mut Value, path: &str, new_value: Value) -> Result<()> {
         if path.is_empty() {
             *root = new_value;
             return Ok(());
@@ -643,8 +644,9 @@ impl DiffOperation {
                     current = obj.entry(part.to_string())
                         .or_insert_with(|| Value::Object(serde_json::Map::new()));
                 } else {
+                    return Err(crate::error::DbError::InvalidInput(
                         format!("Cannot navigate path: {}", path)
-                    ))));
+                    ));
                 }
             }
         }
@@ -671,11 +673,13 @@ impl DiffOperation {
                 // Navigate to the next level
                 if let Value::Object(obj) = current {
                     current = obj.get_mut(*part)
+                        .ok_or_else(|| crate::error::DbError::NotFound(
                             format!("Path not found: {}", path)
-                        ))?);
+                        ))?;
                 } else {
+                    return Err(crate::error::DbError::InvalidInput(
                         format!("Cannot navigate path: {}", path)
-                    ))));
+                    ));
                 }
             }
         }

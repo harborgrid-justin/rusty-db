@@ -11,7 +11,7 @@ use std::time::SystemTime;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use futures::future::BoxFuture;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::TransactionId;
 use super::wal::{WALManager, WALEntry, LogRecord, LSN, PageId};
 
@@ -301,7 +301,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Phase 2: Redo - replay log from minimum recovery LSN
-    async fn redo_phase(&self, startlsn: LSN) -> Result<()> {
+    async fn redo_phase(&self, start_lsn: LSN) -> Result<()> {
         println!("Starting ARIES Redo phase from LSN {}...", start_lsn);
 
         // Read log from start_lsn to end
@@ -640,7 +640,7 @@ impl PointInTimeRecovery {
     }
 
     /// Recover to a specific point in time
-    pub async ffn recover_to_time(&self, targettime: SystemTime)-> Result<()> {
+    pub async fn recover_to_time(&self, target_time: SystemTime) -> Result<()> {
         println!("Starting point-in-time recovery to {:?}", target_time);
 
         // Find the LSN at target time
@@ -655,7 +655,7 @@ impl PointInTimeRecovery {
     }
 
     /// Find LSN at a specific time
-    fn find_lsn_at_time(&self, targettime: SystemTime) -> Result<LSN> {
+    fn find_lsn_at_time(&self, target_time: SystemTime) -> Result<LSN> {
         let entries = self.wal.read_from(1)?;
 
         // Binary search for target time
@@ -719,16 +719,16 @@ impl MediaRecoveryManager {
     }
 
     /// Archive WAL segments
-    pub fnfn archive_segment(&self, segmentpath: &Path)> Result<()> {
+    pub fn archive_segment(&self, segment_path: &Path) -> Result<()> {
         // Copy WAL segment to archive directory
         let filename = segment_path.file_name().ok_or_else(|| {
             DbError::IOError("Invalid segment path".to_string())
         })?;
 
-        let archive_path = self.archive_dir.join(file_name);
+        let archive_path = self.archive_dir.join(filename);
 
         std::fs::copy(segment_path, archive_path)
-            .map_err(|e| DbError::IOError(format!("Failed to archive segment: {}", e)))?);
+            .map_err(|e| DbError::IOError(format!("Failed to archive segment: {}", e)))?;
 
         Ok(())
     }

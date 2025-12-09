@@ -465,12 +465,12 @@ impl StreamJoinOperator {
 
         // Add left event payload with "left_" prefix
         for (key, value) in &left.payload {
-            joined = joined.with_payload(format!("left_{}", key), value.clone())));
+            joined = joined.with_payload(format!("left_{}", key), value.clone());
         }
 
         // Add right event payload with "right_" prefix
         for (key, value) in &right.payload {
-            joined = joined.with_payload(format!("right_{}", key), value.clone())));
+            joined = joined.with_payload(format!("right_{}", key), value.clone());
         }
 
         joined = joined.with_source(self.name.clone());
@@ -511,7 +511,7 @@ impl StreamJoinOperator {
 pub struct DeduplicationOperator {
     name: String,
     key_fields: Vec<String>,
-    seen: HashMap<u64>,
+    seen: HashMap<u64, SystemTime>,
     window_size: Duration,
     duplicate_count: u64,
     unique_count: u64,
@@ -530,7 +530,7 @@ impl DeduplicationOperator {
     }
 
     fn compute_key(&self, event: &Event) -> u64 {
-
+        use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
 
         for field in &self.key_fields {
@@ -573,7 +573,7 @@ impl StreamOperator for DeduplicationOperator {
             self.duplicate_count += 1;
             Ok(vec![]) // Duplicate, filter out
         } else {
-            self.seen.insert(key::now());
+            self.seen.insert(key, SystemTime::now());
             self.unique_count += 1;
             Ok(vec![event])
         }
@@ -873,7 +873,7 @@ impl HyperLogLog {
 
     /// Add string value (computes hash internally)
     pub fn add_string(&mut self, s: &str) {
-
+        use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         s.hash(&mut hasher);
         self.add(hasher.finish());
@@ -881,7 +881,7 @@ impl HyperLogLog {
 
     /// Add integer value (computes hash internally)
     pub fn add_int(&mut self, n: i64) {
-
+        use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         n.hash(&mut hasher);
         self.add(hasher.finish());
@@ -1020,7 +1020,7 @@ use std::hash::{BuildHasher};
 
     /// Hash with seed
     fn hash_with_seed(&self, item: &str, seed: u64) -> u64 {
-
+        use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         hasher.write_u64(seed);
         item.hash(&mut hasher);
@@ -1048,7 +1048,7 @@ use std::hash::{BuildHasher};
 pub struct HeavyHitters {
     k: usize,
     sketch: CountMinSketch,
-    top_items: BTreeMap<u64<String>>, // count -> items
+    top_items: BTreeMap<u64, HashSet<String>>, // count -> items
     item_counts: HashMap<String, u64>,
     min_count: u64,
 }
@@ -1240,7 +1240,7 @@ mod tests {
     #[test]
     fn test_map_operator() {
         let mut map = MapOperator::new("test_map", |mut e: Event| {
-            e.event_type = format!("{}_mapped", e.event_type)));
+            e.event_type = format!("{}_mapped", e.event_type);
             e
         });
 

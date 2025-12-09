@@ -152,6 +152,7 @@ impl KafkaConnector {
 
     fn deserialize_event(&self, data: &[u8]) -> Result<Event> {
         serde_json::from_slice(data).map_err(|e| {
+            crate::error::DbError::Serialization(format!(
                 "Failed to deserialize event: {}",
                 e
             ))
@@ -180,7 +181,7 @@ pub struct KafkaSourceConnector {
 
 impl SourceConnector for KafkaSourceConnector {
     fn start(&mut self) -> Result<()> {
-        self.connector.is_running = true));
+        self.connector.is_running = true;
         // In a real implementation, initialize Kafka consumer here
         Ok(())
     }
@@ -297,10 +298,10 @@ impl JdbcSinkConnector {
         let mut values = Vec::new();
 
         columns.push("event_id".to_string());
-        values.push(format!("'{}'", event.id))));
+        values.push(format!("'{}'", event.id));
 
         columns.push("event_type".to_string());
-        values.push(format!("'{}'", event.event_type))));
+        values.push(format!("'{}'", event.event_type));
 
         for (key, value) in &event.payload {
             columns.push(key.clone());
@@ -336,7 +337,7 @@ impl SinkConnector for JdbcSinkConnector {
     }
 
     fn stop(&mut self) -> Result<()> {
-        self.flush()?);
+        self.flush()?;
         // In a real implementation, close database connection
         Ok(())
     }
@@ -425,8 +426,7 @@ impl FileSinkConnector {
             .create(true)
             .append(true)
             .open(&self.file_path)
-            .map_err(|e| {
-            })?;
+            .map_err(|e| crate::error::DbError::Io(format!("Failed to open file: {}", e)))?;
 
         self.writer = Some(Arc::new(Mutex::new(BufWriter::new(file))));
         Ok(())
@@ -444,16 +444,20 @@ impl FileSinkConnector {
             match self.format {
                 FileFormat::Json => {
                     let json = serde_json::to_string_pretty(event).map_err(|e| {
+                        crate::error::DbError::Serialization(format!("Failed to serialize: {}", e))
                     })?;
                     writeln!(writer, "{}", json).map_err(|e| {
+                        crate::error::DbError::Io(format!("Failed to write: {}", e))
                     })?;
                     self.current_size += json.len() as u64;
                 }
 
                 FileFormat::JsonLines => {
                     let json = serde_json::to_string(event).map_err(|e| {
+                        crate::error::DbError::Serialization(format!("Failed to serialize: {}", e))
                     })?;
                     writeln!(writer, "{}", json).map_err(|e| {
+                        crate::error::DbError::Io(format!("Failed to write: {}", e))
                     })?;
                     self.current_size += json.len() as u64;
                 }
@@ -465,8 +469,9 @@ impl FileSinkConnector {
                         event.id,
                         event.event_type,
                         serde_json::to_string(&event.payload).unwrap_or_default()
-                    )));
+                    );
                     write!(writer, "{}", csv_line).map_err(|e| {
+                        crate::error::DbError::Io(format!("Failed to write: {}", e))
                     })?;
                     self.current_size += csv_line.len() as u64;
                 }
@@ -474,7 +479,8 @@ impl FileSinkConnector {
                 FileFormat::Parquet => {
                     // Parquet writing would require apache-parquet crate
                     // Simplified for now
-                        "Parquet format not yet implemented".to_string(),
+                    return Err(crate::error::DbError::NotImplemented(
+                        "Parquet format not yet implemented".to_string()
                     ));
                 }
             }
@@ -493,6 +499,7 @@ impl FileSinkConnector {
         if let Some(writer) = &self.writer {
             let mut writer = writer.lock().unwrap();
             writer.flush().map_err(|e| {
+                crate::error::DbError::Io(format!("Failed to flush: {}", e))
             })?;
         }
 
@@ -502,8 +509,9 @@ impl FileSinkConnector {
             .unwrap()
             .as_secs();
 
-        let new_path = self.file_path.with_extension(format!("{}.old", timestamp))));
+        let new_path = self.file_path.with_extension(format!("{}.old", timestamp));
         std::fs::rename(&self.file_path, &new_path).map_err(|e| {
+            crate::error::DbError::Io(format!("Failed to rename file: {}", e))
         })?;
 
         // Reset writer
@@ -525,6 +533,7 @@ impl SinkConnector for FileSinkConnector {
         if let Some(writer) = &self.writer {
             let mut writer = writer.lock().unwrap();
             writer.flush().map_err(|e| {
+                crate::error::DbError::Io(format!("Failed to flush: {}", e))
             })?;
         }
 
@@ -562,6 +571,7 @@ impl SinkConnector for FileSinkConnector {
         if let Some(writer) = &self.writer {
             let mut writer = writer.lock().unwrap();
             writer.flush().map_err(|e| {
+                crate::error::DbError::Io(format!("Failed to flush: {}", e))
             })?;
         }
 
@@ -613,6 +623,7 @@ impl HttpWebhookConnector {
 
     fn send_http_request(&self, events: &[Event]) -> Result<()> {
         let payload = serde_json::to_string(events).map_err(|e| {
+            crate::error::DbError::Serialization(format!("Failed to serialize: {}", e))
         })?;
 
         // In a real implementation, use an HTTP client library

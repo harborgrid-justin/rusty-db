@@ -87,7 +87,7 @@ impl QueryDocument {
         }
     }
 
-    fn evaluate_operators(&self, fieldvalue: &Value, operators: &serde_json::Map<String, Value>) -> Result<bool> {
+    fn evaluate_operators(&self, field_value: &Value, operators: &serde_json::Map<String, Value>) -> Result<bool> {
         for (op, value) in operators {
             let result = match op.as_str() {
                 "$eq" => self.op_eq(field_value, value),
@@ -106,8 +106,9 @@ impl QueryDocument {
                 "$all" => self.op_all(field_value, value),
                 "$elemMatch" => self.op_elem_match(field_value, value)?,
                 _ => {
+                    return Err(crate::error::DbError::InvalidInput(
                         format!("Unknown operator: {}", op)
-                    ))));
+                    ));
                 }
             };
 
@@ -267,6 +268,7 @@ impl QueryDocument {
             }
             Ok(true)
         } else {
+            Err(crate::error::DbError::InvalidInput(
                 "$and requires an array".to_string()
             ))
         }
@@ -290,6 +292,7 @@ impl QueryDocument {
             }
             Ok(false)
         } else {
+            Err(crate::error::DbError::InvalidInput(
                 "$or requires an array".to_string()
             ))
         }
@@ -308,6 +311,7 @@ impl QueryDocument {
             }
             Ok(true)
         } else {
+            Err(crate::error::DbError::InvalidInput(
                 "$not requires an object".to_string()
             ))
         }
@@ -318,7 +322,7 @@ impl QueryDocument {
             field.to_string()
         } else {
             format!("$.{}", field)
-        }));
+        };
 
         let mut parser = super::jsonpath::JsonPathParser::new(path);
         let json_path = parser.parse()?;
@@ -420,6 +424,7 @@ impl Projection {
             }
             Ok(Self { fields })
         } else {
+            Err(crate::error::DbError::InvalidInput(
                 "Projection must be a JSON object".to_string()
             ))
         }

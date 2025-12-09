@@ -76,7 +76,7 @@ pub enum RolloutStrategy {
     /// Enable based on custom attributes
     Attributes(HashMap<String, Vec<String>>),
     /// Time-based rollout (start time, end time)
-    TimeBased(SystemTime),
+    TimeBased(SystemTime, SystemTime),
 }
 
 impl RolloutStrategy {
@@ -305,7 +305,7 @@ pub struct ABTest {
 
 impl ABTest {
     /// Select a variant for the given user
-    pub fn select_variant(&self, userid: &str) -> Option<&Variant> {
+    pub fn select_variant(&self, user_id: &str) -> Option<&Variant> {
         if self.variants.is_empty() {
             return None;
         }
@@ -369,7 +369,7 @@ impl FeatureFlagManager {
                         return Err(DbError::InvalidInput(format!(
                             "Cannot register feature '{}' - conflicts with enabled feature '{}'",
                             feature.name, conflict
-                        )))));
+                        )));
                     }
                 }
             }
@@ -385,7 +385,7 @@ impl FeatureFlagManager {
     pub async fn unregister(&self, name: &str) -> Result<()> {
         let mut features = self.features.write().await;
         features.remove(name)
-            .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
         Ok(())
     }
@@ -412,7 +412,7 @@ impl FeatureFlagManager {
 
             let features = self.features.read().await;
             let feature = features.get(name)
-                .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?);
+                .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
             // Check dependencies
             for dep in &feature.dependencies {
@@ -422,7 +422,7 @@ impl FeatureFlagManager {
                         enabled: false,
                         reason: format!("Dependency '{}' not enabled", dep),
                         variant: None,
-                    })));
+                    });
                 }
             }
 
@@ -434,7 +434,7 @@ impl FeatureFlagManager {
                         enabled: false,
                         reason: format!("Conflicts with enabled feature '{}'", conflict),
                         variant: None,
-                    })));
+                    });
                 }
             }
 
@@ -466,7 +466,7 @@ impl FeatureFlagManager {
 
     /// Record feature evaluation for statistics
     async fn record_evaluation(&self, name: &str, context: &EvaluationContext, enabled: bool) {
-        let mut stats = self.stats.write().await));
+        let mut stats = self.stats.write().await;
         let stat = stats.entry(name.to_string()).or_insert_with(FeatureStats::default);
 
         stat.total_evaluations += 1;
@@ -483,7 +483,7 @@ impl FeatureFlagManager {
     pub async fn update(&self, name: &str, updater: impl FnOnce(&mut Feature)) -> Result<()> {
         let mut features = self.features.write().await;
         let feature = features.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
         updater(feature);
         feature.updated_at = SystemTime::now();
@@ -548,7 +548,7 @@ impl FeatureFlagManager {
             if !features.contains_key(&test.feature_id) {
                 return Err(DbError::NotFound(format!(
                     "Feature not found: {}", test.feature_id
-                )))));
+                )));
             }
         }
 
@@ -616,7 +616,7 @@ mod tests {
         // Test multiple users - should see roughly 50% enabled
         let mut enabled_count = 0;
         for i in 0..100 {
-            let context = EvaluationContext::for_user(format!("user{}", i))));
+            let context = EvaluationContext::for_user(format!("user{}", i));
             if manager.is_enabled("test_rollout", &context).await {
                 enabled_count += 1;
             }

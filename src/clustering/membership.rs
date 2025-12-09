@@ -438,7 +438,7 @@ impl SwimMembership {
                 member.state_changed_at = SystemTime::now();
 
                 // Create gossip update
-                let update_key = format!("suspect-{}-{}", member_id, member.incarnation)));
+                let update_key = format!("suspect-{}-{}", member_id, member.incarnation);
                 self.gossip_counters.write().unwrap().insert(update_key, 0);
             }
         }
@@ -459,7 +459,7 @@ impl SwimMembership {
                         failed.push(id.clone());
 
                         // Create gossip update
-                        let update_key = format!("failed-{}", id)));
+                        let update_key = format!("failed-{}", id);
                         self.gossip_counters.write().unwrap().insert(update_key, 0);
                     }
                 }
@@ -477,7 +477,7 @@ impl SwimMembership {
         // Collect updates to gossip
         let mut updates = Vec::new();
         for member in members.values() {
-            let update_key = format!("{}-{}-{:?}", member.id, member.incarnation, member.state)));
+            let update_key = format!("{}-{}-{:?}", member.id, member.incarnation, member.state);
             let count = counters.entry(update_key).or_insert(0);
 
             if *count < self.config.gossip_to_the_dead || member.is_active() {

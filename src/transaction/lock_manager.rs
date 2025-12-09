@@ -81,7 +81,7 @@ impl LockTableEntry {
     }
 
     /// Checks if a transaction already holds a lock on this resource.
-    pub fn is_held_by(&self, txnid: TransactionId) -> Option<LockMode> {
+    pub fn is_held_by(&self, txn_id: TransactionId) -> Option<LockMode> {
         self.holders
             .iter()
             .find(|(id, _)| *id == txn_id)
@@ -118,7 +118,7 @@ pub struct LockManager {
     /// Lock table: resource -> lock holders.
     lock_table: Arc<RwLock<HashMap<String, Vec<(TransactionId, LockMode)>>>>,
     /// Transaction locks: txn_id -> set of held resources.
-    txn_locks: Arc<RwLock<HashMap<TransactionId<String>>>>,
+    txn_locks: Arc<RwLock<HashMap<TransactionId, HashSet<String>>>>,
 }
 
 impl LockManager {
@@ -147,7 +147,7 @@ impl LockManager {
     /// Returns `TransactionError::LockConflict` if the lock cannot be granted.
     pub fn acquire_lock(
         &self,
-        txnid: TransactionId,
+        txn_id: TransactionId,
         resource: String,
         mode: LockMode,
     ) -> TransactionResult<()> {
@@ -229,7 +229,7 @@ impl LockManager {
     ///
     /// * `txn_id` - The transaction releasing the lock.
     /// * `resource` - The resource to unlock.
-    pub ffn release_lock(&self, txnid: TransactionId, resource: &str)-> TransactionResult<()> {
+    pub fn release_lock(&self, txn_id: TransactionId, resource: &str) -> TransactionResult<()> {
         let mut lock_table = self.lock_table.write();
         let mut txn_locks = self.txn_locks.write();
 
@@ -446,7 +446,7 @@ impl ReadWriteLockManager {
     }
 
     /// Releases all locks held by a transaction.
-    pub fn release_all(&self, txnid: TransactionId) {
+    pub fn release_all(&self, txn_id: TransactionId) {
         let mut locks = self.locks.write();
 
         for (_, lock) in locks.iter_mut() {

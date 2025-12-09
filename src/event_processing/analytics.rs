@@ -49,7 +49,7 @@ pub struct DashboardDataPoint {
 /// Real-time dashboard
 pub struct Dashboard {
     name: String,
-    metrics: RwLock<HashMap<String<DashboardDataPoint>>>,
+    metrics: RwLock<HashMap<String, VecDeque<DashboardDataPoint>>>,
     retention_duration: Duration,
     max_points: usize,
 }
@@ -635,7 +635,7 @@ pub struct AlertRule {
 /// Alert engine
 pub struct AlertEngine {
     rules: Vec<AlertRule>,
-    last_alert_times: HashMap<String>,
+    last_alert_times: HashMap<String, SystemTime>,
     anomaly_detectors: HashMap<String, AnomalyDetector>,
 }
 
@@ -708,7 +708,7 @@ impl AlertEngine {
                     threshold,
                     timestamp: now,
                     tags: HashMap::new(),
-                }));
+                };
 
                 alerts.push(alert);
                 self.last_alert_times.insert(rule.name.clone(), now);
@@ -860,7 +860,7 @@ use std::time::UNIX_EPOCH;
 
         // Add increasing values
         for i in 0..20 {
-            analyzer.add_value(i as f64::now());
+            analyzer.add_value(i as f64, SystemTime::now());
         }
 
         let trend = analyzer.analyze().unwrap();

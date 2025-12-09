@@ -188,7 +188,7 @@ impl CostModel {
         let cpu_cost = table_stats.num_tuples as f64 * self.params.cpu_tuple_cost;
 
         // Apply filter selectivity
-        let selectivity = if let Some(filter) = _filter {
+        let selectivity = if let Some(filter) = filter {
             self.selectivity_estimator.estimate(filter, &table_stats)?
         } else {
             1.0
@@ -212,7 +212,7 @@ impl CostModel {
         &self,
         table_id: TableId,
         index_id: IndexId,
-        keyconditions: &[Expression],
+        key_conditions: &[Expression],
         filter: Option<&Expression>,
     ) -> Result<CostEstimate> {
         let table_stats = self.get_table_stats(table_id)?;
@@ -234,7 +234,7 @@ impl CostModel {
             * self.params.cpu_tuple_cost;
 
         // Apply additional filter if present
-        let final_selectivity = if let Some(filter) = _filter {
+        let final_selectivity = if let Some(filter) = filter {
             index_selectivity * self.selectivity_estimator.estimate(filter, &table_stats)?
         } else {
             index_selectivity
@@ -583,7 +583,7 @@ impl CostModel {
 
     /// Update table statistics
     pub fn update_table_stats(&self, table_id: TableId, stats: TableStatistics) {
-        self.table_stats.write().unwrap().insert(table_id, stats)));
+        self.table_stats.write().unwrap().insert(table_id, stats);
     }
 
     /// Update index statistics

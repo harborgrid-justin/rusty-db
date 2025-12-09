@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::TransactionId;
 
 /// Distributed transaction identifier
@@ -603,7 +603,7 @@ impl WaitForGraph {
 
     fn dfs_cycle(
         &self,
-        txnid: TransactionId,
+        txn_id: TransactionId,
         visited: &mut HashSet<TransactionId>,
         rec_stack: &mut HashSet<TransactionId>,
         path: &mut Vec<TransactionId>,
@@ -714,7 +714,7 @@ impl DistributedDeadlockDetector {
     }
 
     /// Merge local graph into global graph (for distributed detection)
-    pub fn update_global_graph(&self, remotegraph: WaitForGraph) {
+    pub fn update_global_graph(&self, remote_graph: WaitForGraph) {
         let mut global = self.global_graph.write();
         let local = self.local_graph.read();
 

@@ -176,7 +176,7 @@ impl MemoryIsolator {
                 return Err(DbError::ResourceExhausted(
                     format!("Memory limit exceeded for PDB {:?}: {} > {}",
                         pdb_id, new_total, alloc.limit_bytes)
-                ))));
+                ));
             }
 
             alloc.current_bytes = new_total;
@@ -194,7 +194,7 @@ impl MemoryIsolator {
 
     /// Deallocate memory for a PDB
     pub async fn deallocate(&self, pdb_id: PdbId, bytes: u64) -> Result<()> {
-        let mut allocations = self.allocations.write().await));
+        let mut allocations = self.allocations.write().await;
 
         if let Some(alloc) = allocations.get_mut(&pdb_id) {
             alloc.current_bytes = alloc.current_bytes.saturating_sub(bytes);
@@ -206,7 +206,7 @@ impl MemoryIsolator {
 
     /// Get current usage for a PDB
     pub async fn get_usage(&self, pdb_id: PdbId) -> Result<(u64, u64)> {
-        let allocations = self.allocations.read().await));
+        let allocations = self.allocations.read().await;
 
         if let Some(alloc) = allocations.get(&pdb_id) {
             Ok((alloc.current_bytes, alloc.limit_bytes))
@@ -217,7 +217,7 @@ impl MemoryIsolator {
 
     /// Get memory statistics
     pub async fn get_stats(&self, pdb_id: PdbId) -> Result<MemoryStats> {
-        let allocations = self.allocations.read().await));
+        let allocations = self.allocations.read().await;
 
         if let Some(alloc) = allocations.get(&pdb_id) {
             Ok(MemoryStats {
@@ -304,7 +304,7 @@ impl CpuScheduler {
             vruntime: 0,
             tasks_executed: 0,
             throttled_count: 0,
-        }));
+        };
 
         self.allocations.write().await.insert(pdb_id, allocation);
         Ok(())
@@ -375,7 +375,7 @@ impl CpuScheduler {
 
     /// Get CPU statistics
     pub async fn get_stats(&self, pdb_id: PdbId) -> Result<CpuStats> {
-        let allocations = self.allocations.read().await));
+        let allocations = self.allocations.read().await;
 
         if let Some(alloc) = allocations.get(&pdb_id) {
             let total_cpu_time: u64 = allocations.values().map(|a| a.cpu_time_micros).sum();
@@ -450,7 +450,7 @@ impl TokenBucket {
     }
 
     fn refill(&mut self) {
-        let now = Instant::now()));
+        let now = Instant::now();
         let elapsed = now.duration_since(self.last_refill);
         let new_tokens = (elapsed.as_secs_f64() * self.refill_rate as f64) as u64;
 
@@ -512,7 +512,7 @@ impl IoBandwidthAllocator {
     pub async fn consume(&self, pdb_id: PdbId, bytes: u64) -> Result<()> {
         loop {
             if self.try_consume(pdb_id, bytes).await? {
-                return Ok(())));
+                return Ok(());
             }
 
             // Wait a bit before retrying
@@ -590,7 +590,7 @@ impl ConnectionLimiter {
             semaphore: Arc::new(Semaphore::new(max_connections as usize)),
             total_attempts: 0,
             rejected_count: 0,
-        }));
+        };
 
         self.limits.write().await.insert(pdb_id, limit);
         Ok(())
@@ -633,7 +633,7 @@ impl ConnectionLimiter {
 
     /// Get connection statistics
     pub async fn get_stats(&self, pdb_id: PdbId) -> Result<ConnectionStats> {
-        let limits = self.limits.read().await));
+        let limits = self.limits.read().await;
 
         if let Some(limit) = limits.get(&pdb_id) {
             Ok(ConnectionStats {
@@ -705,7 +705,7 @@ impl TempSpaceLimiter {
             peak_bytes: 0,
             allocation_count: 0,
             rejection_count: 0,
-        }));
+        };
 
         self.usage.write().await.insert(pdb_id, usage);
         Ok(())
@@ -724,7 +724,7 @@ impl TempSpaceLimiter {
                 return Err(DbError::ResourceExhausted(
                     format!("Temp space limit exceeded for PDB {:?}: {} > {}",
                         pdb_id, new_total, usage.max_bytes)
-                ))));
+                ));
             }
 
             usage.current_bytes = new_total;
@@ -740,7 +740,7 @@ impl TempSpaceLimiter {
 
     /// Deallocate temp space
     pub async fn deallocate(&self, pdb_id: PdbId, bytes: u64) -> Result<()> {
-        let mut usage_map = self.usage.write().await));
+        let mut usage_map = self.usage.write().await;
 
         if let Some(usage) = usage_map.get_mut(&pdb_id) {
             usage.current_bytes = usage.current_bytes.saturating_sub(bytes);
@@ -788,7 +788,7 @@ impl StorageQuotaManager {
             current_bytes: 0,
             soft_limit_bytes: (max_bytes as f64 * 0.9) as u64, // 90% soft limit
             violation_count: 0,
-        }));
+        };
 
         self.quotas.write().await.insert(pdb_id, quota);
         Ok(())
@@ -806,7 +806,7 @@ impl StorageQuotaManager {
                 return Err(DbError::QuotaExceeded(
                     format!("Storage quota exceeded for PDB {:?}: {} > {}",
                         pdb_id, new_total, quota.max_bytes)
-                ))));
+                ));
             }
 
             quota.current_bytes = new_total;
@@ -842,7 +842,7 @@ impl ResourceIsolator {
 
     /// Register a PDB with resource limits
     pub async fn register_pdb(&self, pdb_id: PdbId, limits: &ResourceLimits) -> Result<()> {
-        self.memory.register(pdb_id, limits.memory_bytes).await?);
+        self.memory.register(pdb_id, limits.memory_bytes).await?;
         self.cpu.register(pdb_id, limits.cpu_shares).await?;
         self.io.register(pdb_id, limits.io_bandwidth_bytes_per_sec).await?;
         self.connections.register(pdb_id, limits.max_connections).await?;

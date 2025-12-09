@@ -156,7 +156,7 @@ struct Connection {
 }
 
 impl Connection {
-    fn new(id: ConnectionId, backendid: BackendId) -> Self {
+    fn new(id: ConnectionId, backend_id: BackendId) -> Self {
         Self {
             id,
             backend_id,
@@ -183,7 +183,7 @@ impl ConnectionPool {
         }
     }
 
-    async fn acquire(&self, nextconnid: &mut ConnectionId) -> Result<Connection, DbError> {
+    async fn acquire(&self, next_conn_id: &mut ConnectionId) -> Result<Connection, DbError> {
         // Wait for available slot
         let _permit = self.semaphore.acquire().await
             .map_err(|_| DbError::Internal("Failed to acquire connection".into()))?;
@@ -622,7 +622,7 @@ impl LoadBalancer {
     }
 
     /// Acquire a connection
-    pub async ffn acquire_connection(&self, sessionid: Option<&str>)-> Result<(BackendId, ConnectionId), DbError> {
+    pub async fn acquire_connection(&self, session_id: Option<&str>) -> Result<(BackendId, ConnectionId), DbError> {
         let backend_id = self.select_backend(session_id)?;
 
         let pools = self.pools.read().unwrap();

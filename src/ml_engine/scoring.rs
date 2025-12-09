@@ -127,7 +127,7 @@ impl ScoringEngine {
     fn predict_linear(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         let (weights, intercept) = match &model.parameters {
             ModelParameters::LinearModel { weights, intercept } => (weights, intercept),
-            _ => return Err(DbError::InvalidInput("Invalid model parameters".into())),
+            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
         };
 
         let predictions = features.iter()
@@ -168,7 +168,7 @@ impl ScoringEngine {
     fn predict_ensemble(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         let models = match &model.parameters {
             ModelParameters::EnsembleModel { models } => models,
-            _ => return Err(DbError::InvalidInput("Invalid model parameters".into())),
+            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
         };
 
         let n_samples = features.len();
@@ -200,7 +200,7 @@ impl ScoringEngine {
     fn predict_clustering(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         let centroids = match &model.parameters {
             ModelParameters::ClusteringModel { centroids } => centroids,
-            _ => return Err(DbError::InvalidInput("Invalid model parameters".into())),
+            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
         };
 
         let predictions = features.iter()
@@ -249,7 +249,7 @@ impl ScoringEngine {
     fn predict_neural_network(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         let layers = match &model.parameters {
             ModelParameters::NeuralNetwork { layers } => layers,
-            _ => return Err(DbError::InvalidInput("Invalid model parameters".into())),
+            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
         };
 
         let predictions = features.iter()
@@ -265,7 +265,7 @@ impl ScoringEngine {
     fn predict_timeseries(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         let coefficients = match &model.parameters {
             ModelParameters::TimeSeriesModel { coefficients, .. } => coefficients,
-            _ => return Err(DbError::InvalidInput("Invalid model parameters".into())),
+            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
         };
 
         let predictions = features.iter()
@@ -350,7 +350,7 @@ impl ScoringEngine {
             let perturbed_pred = self.predict(model, vec![perturbed])?;
             let contribution = baseline_value - perturbed_pred[0].value;
 
-            contributions.insert(format!("feature_{}", i), contribution)));
+            contributions.insert(format!("feature_{}", i), contribution);
         }
 
         Ok(contributions)
@@ -389,7 +389,7 @@ impl ScoringEngine {
         pmml.push_str("<PMML version=\"4.4\" xmlns=\"http://www.dmg.org/PMML-4_4\">\n");
         pmml.push_str("  <Header>\n");
         pmml.push_str(&"    <Application name=\"RustyDB\" version=\"1.0\"/>\n".to_string());
-        pmml.push_str(&format!("    <Timestamp>{}</Timestamp>\n", model.created_at))));
+        pmml.push_str(&format!("    <Timestamp>{}</Timestamp>\n", model.created_at));
         pmml.push_str("  </Header>\n");
 
         // Data dictionary
@@ -413,7 +413,7 @@ impl ScoringEngine {
                         pmml.push_str(&format!(
                             "      <NumericPredictor name=\"x{}\" coefficient=\"{}\"/>\n",
                             i, weight
-                        ))));
+                        ));
                     }
 
                     pmml.push_str("    </RegressionTable>\n");
@@ -421,7 +421,7 @@ impl ScoringEngine {
                 }
             }
             _ => {
-                return Err(DbError::InvalidInput("PMML export not supported for this algorithm".into()));
+                return Err(crate::DbError::InvalidInput("PMML export not supported for this algorithm".into()));
             }
         }
 
@@ -436,7 +436,7 @@ impl ScoringEngine {
         // In production, use a proper XML parser
 
         if !pmml.contains("RegressionModel") {
-            return Err(DbError::InvalidInput("Only regression models supported".into()));
+            return Err(crate::DbError::InvalidInput("Only regression models supported".into()));
         }
 
         // Parse intercept
@@ -460,17 +460,17 @@ impl ScoringEngine {
 
     fn parse_pmml_value(&self, pmml: &str, attr: &str) -> Result<f64> {
         // Simplified attribute parsing
-        let search = format!("{}=\"", attr)));
+        let search = format!("{}=\"", attr);
         if let Some(start) = pmml.find(&search) {
             let value_start = start + search.len();
             if let Some(end) = pmml[value_start..].find('\"') {
                 let value_str = &pmml[value_start..value_start + end];
                 return value_str.parse()
-                    .map_err(|_| DbError::InvalidInput("Invalid PMML value".into()));
+                    .map_err(|_| crate::DbError::InvalidInput("Invalid PMML value".into()));
             }
         }
 
-        Err(DbError::InvalidInput("PMML attribute not found".into()))
+        Err(crate::DbError::InvalidInput("PMML attribute not found".into()))
     }
 }
 
@@ -515,7 +515,7 @@ impl RealTimeScoringService {
 
     pub fn submit_request(&mut self, request: ScoringRequest) -> Result<()> {
         if self.request_queue.len() >= self.max_queue_size {
-            return Err(DbError::Internal("Queue full".into()));
+            return Err(crate::DbError::Internal("Queue full".into()));
         }
 
         self.request_queue.push(request);

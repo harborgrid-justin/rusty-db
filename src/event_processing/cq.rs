@@ -481,7 +481,7 @@ impl MaterializedView {
                 self.index
                     .entry(format!("{}:{}", field, s))
                     .or_insert_with(Vec::new)
-                    .push(id)));
+                    .push(id);
             }
         }
 
@@ -520,7 +520,7 @@ impl MaterializedView {
                     self.index
                         .entry(format!("{}:{}", field, s))
                         .or_insert_with(Vec::new)
-                        .push(id)));
+                        .push(id);
                 }
             }
         }
@@ -686,7 +686,7 @@ impl CQManager {
 
     /// Register a continuous query
     pub fn register_query(&self, query: ContinuousQuery) -> Result<CQId> {
-        let executor = Arc::new(CQExecutor::new(query.clone())?;
+        let executor = Arc::new(CQExecutor::new(query.clone())?);
 
         let mut queries = self.queries.write().unwrap();
         queries.insert(query.id.clone(), executor);
