@@ -36,7 +36,7 @@ pub struct ClusterFailoverManager {
     coordinator: Arc<dyn ClusterState>,
     config: FailoverConfig,
     failover_history: Arc<RwLock<Vec<FailoverEvent>>>,
-    suspected_nodes: Arc<RwLock<HashMap<NodeId>>>,
+    suspected_nodes: Arc<RwLock<HashMap<NodeId, std::time::Instant>>>,
 }
 
 impl std::fmt::Debug for ClusterFailoverManager {
@@ -165,9 +165,9 @@ impl FailoverManager for ClusterFailoverManager {
 }
 
 impl FailureDetector for ClusterFailoverManager {
-    fn is_node_failed(&self, nodeid: &NodeId) -> Result<bool, DbError> {
+    fn is_node_failed(&self, node_id: &NodeId) -> Result<bool, DbError> {
         let nodes = self.coordinator.get_all_nodes()?;
-        
+
         if let Some(node) = nodes.iter().find(|n| &n.id == node_id) {
             let last_heartbeat = node.last_heartbeat;
             let elapsed = last_heartbeat.elapsed()

@@ -305,11 +305,11 @@ mod tests {
 
     #[test]
     fn test_recovery_manager_creation() {
-        let wal_path = temp_wal_path()));
+        let wal_path = temp_wal_path();
         let wal = Arc::new(WALManager::new(wal_path.clone(), 10, true).unwrap());
         let vs = Arc::new(VersionStore::new());
 
-        let rm = RecoveryManager::new(wal, vs::from_secs(300));
+        let rm = RecoveryManager::new(wal, vs, Duration::from_secs(300));
 
         assert_eq!(rm.stats().entries_analyzed, 0);
         let _ = std::fs::remove_file(wal_path);
@@ -321,7 +321,7 @@ mod tests {
         let wal = Arc::new(WALManager::new(wal_path.clone(), 10, true).unwrap());
         let vs = Arc::new(VersionStore::new());
 
-        let rm = RecoveryManager::new(wal, vs::from_secs(300));
+        let rm = RecoveryManager::new(wal, vs, Duration::from_secs(300));
 
         let result = rm.recover();
         assert!(result.is_ok());

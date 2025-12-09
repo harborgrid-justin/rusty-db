@@ -216,7 +216,7 @@ impl PlanBaselineManager {
 
     /// Get baseline statistics
     pub fn get_statistics(&self) -> BaselineStatistics {
-        let baselines = self.baselines.read().unwrap()));
+        let baselines = self.baselines.read().unwrap();
         let plan_history = self.plan_history.read().unwrap();
 
         BaselineStatistics {
@@ -295,7 +295,7 @@ impl SqlPlanBaseline {
     }
 
     /// Record execution
-    pub fn record_execution(&mut self, executiontime: Duration) {
+    pub fn record_execution(&mut self, execution_time: Duration) {
         self.execution_count += 1;
 
         // Update average execution time
@@ -362,7 +362,7 @@ impl PlanHistory {
     /// Get evolution candidates
     pub fn get_evolution_candidates(
         &self,
-        currentplans: &[PhysicalPlan],
+        current_plans: &[PhysicalPlan],
         min_executions: u64,
         performance_threshold: f64,
     ) -> Vec<PhysicalPlan> {
@@ -635,7 +635,7 @@ impl BaselineExport {
 
 #[cfg(test)]
 mod tests {
-    use super::*));
+    use super::*;
     use crate::optimizer_pro::{PhysicalOperator, PlanMetadata, Schema};
 
     #[test]

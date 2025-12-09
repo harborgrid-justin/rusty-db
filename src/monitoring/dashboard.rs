@@ -197,7 +197,7 @@ impl ReplicationLag {
         }
     }
 
-    pub fn update_lag(&mut self, lagseconds: f64, lag_bytes: u64, received_lsn: u64, applied_lsn: u64) {
+    pub fn update_lag(&mut self, lag_seconds: f64, lag_bytes: u64, received_lsn: u64, applied_lsn: u64) {
         self.lag_seconds = lag_seconds;
         self.lag_bytes = lag_bytes;
         self.last_received_lsn = received_lsn;

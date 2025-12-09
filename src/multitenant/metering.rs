@@ -113,14 +113,14 @@ impl MeteringEngine {
     pub async fn generate_usage_report(
         &self,
         tenant_id: TenantId,
-        starttime: u64,
-        endtime: u64,
+        start_time: u64,
+        end_time: u64,
     ) -> Result<UsageReport> {
         let all_metrics = self.metrics_store.read().await;
 
         let tenant_metrics = all_metrics
             .get(&tenant_id)
-            .ok_or_else(|| DbError::NotFound(format!("No metrics for tenant {:?}", tenant_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No metrics for tenant {:?}", tenant_id)))?;
 
         // Filter metrics by time range
         let filtered: Vec<_> = tenant_metrics
@@ -247,8 +247,8 @@ impl ResourceUsageTracker {
     pub async fn get_history(
         &self,
         tenant_id: TenantId,
-        starttime: u64,
-        endtime: u64,
+        start_time: u64,
+        end_time: u64,
     ) -> Vec<UsageSnapshot> {
         let history = self.history.read().await;
 
@@ -419,7 +419,7 @@ impl QuotaEnforcer {
         let quotas = self.quotas.read().await;
         let quota = quotas
             .get(&tenant_id)
-            .ok_or_else(|| DbError::NotFound(format!("No quota for tenant {:?}", tenant_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No quota for tenant {:?}", tenant_id)))?;
 
         let usage = self
             .current_usage
@@ -437,21 +437,21 @@ impl QuotaEnforcer {
         let mut quota_exceeded = false;
 
         if memory_usage_percent > 90.0 {
-            warnings.push(format!("Memory usage at {:.1}%", memory_usage_percent))));
+            warnings.push(format!("Memory usage at {:.1}%", memory_usage_percent));
             if memory_usage_percent >= 100.0 {
                 quota_exceeded = true;
             }
         }
 
         if storage_usage_percent > 90.0 {
-            warnings.push(format!("Storage usage at {:.1}%", storage_usage_percent))));
+            warnings.push(format!("Storage usage at {:.1}%", storage_usage_percent));
             if storage_usage_percent >= 100.0 {
                 quota_exceeded = true;
             }
         }
 
         if connection_usage_percent > 90.0 {
-            warnings.push(format!("Connection usage at {:.1}%", connection_usage_percent))));
+            warnings.push(format!("Connection usage at {:.1}%", connection_usage_percent));
             if connection_usage_percent >= 100.0 {
                 quota_exceeded = true;
             }
@@ -486,7 +486,7 @@ impl QuotaEnforcer {
         let quotas = self.quotas.read().await;
         let quota = quotas
             .get(&tenant_id)
-            .ok_or_else(|| DbError::NotFound(format!("No quota for tenant {:?}", tenant_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("No quota for tenant {:?}", tenant_id)))?;
 
         match quota.enforcement_mode {
             EnforcementMode::Soft => {
@@ -503,7 +503,7 @@ impl QuotaEnforcer {
             }
             EnforcementMode::Throttle => {
                 // Throttle operation
-                tokio::time::sleep(Duration::from_millis(100)).await));
+                tokio::time::sleep(Duration::from_millis(100)).await;
                 Ok(())
             }
         }

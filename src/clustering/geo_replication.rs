@@ -658,7 +658,7 @@ impl GeoReplicationManager {
     }
 
     /// Initiate disaster recovery failover
-    pub fn initiate_failover(&self, faileddc: &str, targetdc: &str)> Result<(), DbError> {
+    pub fn initiate_failover(&self, failed_dc: &str, target_dc: &str) -> Result<(), DbError> {
         let mut datacenters = self.datacenters.write().unwrap();
 
         // Mark failed DC as inactive

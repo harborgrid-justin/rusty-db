@@ -85,7 +85,7 @@ impl TriggerManager {
     
     /// Get all triggers for a table
     pub fn get_triggers(&self, table: &str) -> Vec<Trigger> {
-        let triggers = self.triggers.read()));
+        let triggers = self.triggers.read();
         triggers.get(table)
             .map(|t| t.clone())
             .unwrap_or_default()

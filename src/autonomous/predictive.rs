@@ -150,7 +150,7 @@ impl StorageGrowthPredictor {
 
 /// Query response time predictor
 pub struct ResponseTimePredictor {
-    query_history: Arc<RwLock<HashMap<u64<f64>>>>,  // query_hash -> execution times
+    query_history: Arc<RwLock<HashMap<u64, VecDeque<f64>>>>,  // query_hash -> execution times
     max_history_per_query: usize,
 }
 
@@ -281,7 +281,7 @@ impl ResourceExhaustionForecaster {
         Self::add_to_history(&mut self.network_history, network_percent, self.max_history);
     }
 
-    fn add_to_history(history: &mut VecDeque<TimeSeriesDataPoint>, value: f64, maxhistory: usize) {
+    fn add_to_history(history: &mut VecDeque<TimeSeriesDataPoint>, value: f64, max_history: usize) {
         if history.len() >= max_history {
             history.pop_front();
         }
@@ -513,12 +513,12 @@ impl CapacityPlanner {
                 recommended_actions.push(format!(
                     "URGENT: Storage will be full in {} days. Expand capacity immediately.",
                     days
-                ))));
+                ));
             } else if days < 90 {
                 recommended_actions.push(format!(
                     "Plan storage expansion within {} days to avoid disruption.",
                     days
-                ))));
+                ));
             }
         }
 

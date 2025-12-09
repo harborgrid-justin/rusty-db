@@ -215,7 +215,7 @@ impl SecurityPolicyEngine {
         let start = current_timestamp_micros();
 
         // Check cache
-        let cache_key = format!("{}:{}:{}", context.user_id, context.resource, context.action)));
+        let cache_key = format!("{}:{}:{}", context.user_id, context.resource, context.action);
         {
             let cache = self.decision_cache.read();
             if let Some(decision) = cache.get(&cache_key) {
@@ -258,11 +258,11 @@ impl SecurityPolicyEngine {
                         if self.evaluate_conditions(&rule.conditions, context)? {
                             if rule.effect == PolicyEffect::Allow {
                                 final_effect = PolicyEffect::Allow;
-                                reasons.push(format!("Allowed by policy '{}' rule '{}'", policy.name, rule.name))));
+                                reasons.push(format!("Allowed by policy '{}' rule '{}'", policy.name, rule.name));
                             } else if rule.effect == PolicyEffect::Deny {
                                 // Deny overrides allow
                                 final_effect = PolicyEffect::Deny;
-                                reasons.push(format!("Denied by policy '{}' rule '{}'", policy.name, rule.name))));
+                                reasons.push(format!("Denied by policy '{}' rule '{}'", policy.name, rule.name));
                                 break;
                             }
                         }
@@ -452,13 +452,13 @@ impl DefenseOrchestrator {
 
         for (layer, layer_status) in status.iter() {
             if !layer_status.active {
-                gaps.push(format!("Layer {:?} is inactive", layer))));
+                gaps.push(format!("Layer {:?} is inactive", layer));
             } else {
                 active_layers += 1;
                 total_health += layer_status.health;
 
                 if layer_status.health < 0.7 {
-                    gaps.push(format!("Layer {:?} health is low: {:.2}", layer, layer_status.health))));
+                    gaps.push(format!("Layer {:?} health is low: {:.2}", layer, layer_status.health));
                 }
             }
         }
@@ -552,7 +552,7 @@ pub struct DefenseCoverageReport {
 /// Correlates security events to detect attack patterns
 pub struct SecurityEventCorrelator {
     /// Event window storage
-    event_windows: Arc<RwLock<HashMap<String<CorrelatedEvent>>>>,
+    event_windows: Arc<RwLock<HashMap<String, VecDeque<CorrelatedEvent>>>>,
     /// Attack patterns
     attack_patterns: Arc<RwLock<Vec<AttackPattern>>>,
     /// Detected incidents
@@ -745,7 +745,7 @@ impl SecurityEventCorrelator {
                     EventSeverity::High,
                     Some("T1110".to_string()),
                     vec![trigger_event.user_id.clone()],
-                )?);
+                )?;
             }
 
             // Check for unusual access patterns
@@ -760,7 +760,7 @@ impl SecurityEventCorrelator {
                     EventSeverity::Medium,
                     Some("T1078".to_string()),
                     vec![trigger_event.user_id.clone()],
-                )?);
+                )?;
             }
         }
 
@@ -787,7 +787,7 @@ impl SecurityEventCorrelator {
             created_at: current_timestamp(),
             updated_at: current_timestamp(),
             status: IncidentStatus::New,
-        }));
+        };
 
         let mut incidents = self.incidents.write();
         incidents.push(incident);
@@ -1156,14 +1156,14 @@ impl ComplianceValidator {
     }
 
     /// Assess a control
-    pub fn assess_control(&self, frameworkid: &str, controlid: &str) -> Result<ControlAssessment> {
+    pub fn assess_control(&self, framework_id: &str, control_id: &str) -> Result<ControlAssessment> {
         let frameworks = self.frameworks.read();
         let framework = frameworks.get(framework_id)
-            .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?);
+            .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?;
 
         let control = framework.controls.iter()
             .find(|c| c.id == control_id)
-            .ok_or_else(|| DbError::Network(format!("Control {} not found", control_id)))?);
+            .ok_or_else(|| DbError::Network(format!("Control {} not found", control_id)))?;
 
         // Perform automated check if available
         let (status, score) = if control.automated_check {
@@ -1186,16 +1186,16 @@ impl ComplianceValidator {
 
         // Store assessment
         let mut assessments = self.assessments.write();
-        assessments.insert(format!("{}:{}", framework_id, control_id), assessment.clone())));
+        assessments.insert(format!("{}:{}", framework_id, control_id), assessment.clone());
 
         Ok(assessment)
     }
 
     /// Calculate compliance score for a framework
-    pub fn calculate_framework_score(&self, frameworkid: &str) -> Result<f64> {
+    pub fn calculate_framework_score(&self, framework_id: &str) -> Result<f64> {
         let frameworks = self.frameworks.read();
         let framework = frameworks.get(framework_id)
-            .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?);
+            .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?;
 
         let assessments = self.assessments.read();
         let mut total_score = 0.0;
@@ -1203,7 +1203,7 @@ impl ComplianceValidator {
 
         for control in &framework.controls {
             if let Some(assessment) = assessments.get(&format!("{}:{}", framework_id, control.id)) {
-                total_score += assessment.score));
+                total_score += assessment.score;
                 total_controls += 1;
             }
         }
@@ -1257,7 +1257,7 @@ pub struct SecurityMetrics {
     /// Metrics storage
     metrics: Arc<RwLock<HashMap<String, MetricValue>>>,
     /// Time-series data
-    time_series: Arc<RwLock<HashMap<String<TimeSeriesPoint>>>>,
+    time_series: Arc<RwLock<HashMap<String, VecDeque<TimeSeriesPoint>>>>,
 }
 
 /// Metric value
@@ -1651,7 +1651,7 @@ pub struct UnifiedSecurityCore {
 
 impl UnifiedSecurityCore {
     pub fn new(security_manager: Arc<IntegratedSecurityManager>) -> Self {
-        let policy_engine = Arc::new(SecurityPolicyEngine::new())));
+        let policy_engine = Arc::new(SecurityPolicyEngine::new());
         let defense_orchestrator = Arc::new(DefenseOrchestrator::new(security_manager));
         let event_correlator = Arc::new(SecurityEventCorrelator::new());
         let threat_intelligence = Arc::new(ThreatIntelligence::new());
@@ -1750,7 +1750,7 @@ fn generate_id() -> String {
 fn glob_match(pattern: &str, text: &str) -> bool {
     // Simple glob matching - in production use a proper glob library
     if pattern == "*" {
-        return true));
+        return true;
     }
 
     if pattern.contains('*') {

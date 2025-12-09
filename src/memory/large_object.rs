@@ -434,7 +434,7 @@ impl LargeObjectAllocator {
                 size,
                 reason: format!("Size {} below large object threshold {}",
                     size, self.config.threshold_size),
-            })));
+            });
         }
 
         let start_time = std::time::Instant::now();
@@ -506,7 +506,7 @@ impl LargeObjectAllocator {
         let allocation = allocation.ok_or_else(|| MemoryError::InvalidConfiguration {
             field: "allocation_id".to_string(),
             reason: format!("Allocation not found: {}", allocation_id),
-        })?);
+        })?;
 
         // Mark as inactive
         allocation.is_active.store(false, Ordering::Relaxed);
@@ -765,7 +765,7 @@ use std::alloc::{dealloc};
             if result != 0 {
                 return Err(LargeObjectError::MemoryAdviceFailed {
                     reason: format!("madvise failed for advice {:?}", advice),
-                })));
+                });
             }
         }
 

@@ -597,7 +597,7 @@ impl PluggableDatabase {
             && current_state != PdbLifecycleState::Mounted {
             return Err(DbError::InvalidState(
                 format!("Cannot open PDB in state: {:?}", current_state)
-            ))));
+            ));
         }
 
         // Mount first if not mounted
@@ -779,14 +779,14 @@ impl PluggableDatabase {
         if metadata.total_size_bytes >= quota {
             return Err(DbError::QuotaExceeded(
                 format!("Storage quota exceeded: {} >= {}", metadata.total_size_bytes, quota)
-            ))));
+            ));
         }
 
         Ok(())
     }
 
     /// Rename the PDB
-    pub async fn rename(&mut self, newname: String) -> Result<()> {
+    pub async fn rename(&mut self, new_name: String) -> Result<()> {
         let current_state = *self.state.read().await;
 
         if current_state != PdbLifecycleState::Closed {

@@ -133,7 +133,7 @@ impl DependencyGraph {
     pub fn add_node(&mut self, node: DependencyNode) -> Result<()> {
         let id = node.id.clone();
         if self.nodes.contains_key(&id) {
-            return Err(DbError::Internal(format!("Node already exists: {}", id)))));
+            return Err(DbError::Internal(format!("Node already exists: {}", id)));
         }
 
         self.nodes.insert(id.clone(), node);
@@ -147,10 +147,10 @@ impl DependencyGraph {
     pub fn add_edge(&mut self, edge: DependencyEdge) -> Result<()> {
         // Verify both nodes exist
         if !self.nodes.contains_key(&edge.from) {
-            return Err(DbError::Internal(format!("Node not found: {}", edge.from)))));
+            return Err(DbError::Internal(format!("Node not found: {}", edge.from)));
         }
         if !self.nodes.contains_key(&edge.to) {
-            return Err(DbError::Internal(format!("Node not found: {}", edge.to)))));
+            return Err(DbError::Internal(format!("Node not found: {}", edge.to)));
         }
 
         // Add to adjacency list
@@ -173,7 +173,7 @@ impl DependencyGraph {
     /// Remove a node and all its edges
     pub fn remove_node(&mut self, id: &str) -> Result<()> {
         if !self.nodes.contains_key(id) {
-            return Err(DbError::Internal(format!("Node not found: {}", id)))));
+            return Err(DbError::Internal(format!("Node not found: {}", id)));
         }
 
         // Remove node
@@ -336,7 +336,7 @@ impl DependencyGraph {
             return Err(DbError::Internal(format!(
                 "Circular dependency detected: {}",
                 cycle.join(" -> ")
-            )))));
+            )));
         }
 
         let mut in_degree: HashMap<String, usize> = HashMap::new();
@@ -429,7 +429,7 @@ impl DependencyGraph {
                     errors.push(format!(
                         "Node '{}' depends on missing node '{}'",
                         node_id, edge.to
-                    ))));
+                    ));
                 }
             }
         }
@@ -446,7 +446,7 @@ impl DependencyGraph {
 
     /// Get graph statistics
     pub fn statistics(&self) -> GraphStatistics {
-        let total_edges: usize = self.edges.values().map(|e| e.len()).sum()));
+        let total_edges: usize = self.edges.values().map(|e| e.len()).sum();
         let hard_edges = self
             .edges
             .values()

@@ -351,7 +351,7 @@ impl ExternalMergeSorter {
 
     fn estimate_size(&self, data: &QueryResult) -> usize {
         if data.rows.is_empty() {
-            return 0));
+            return 0;
         }
 
         let avg_row_size = data.rows.iter()

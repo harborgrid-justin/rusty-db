@@ -372,14 +372,14 @@ mod tests {
 
         // Insert 1000 items
         for i in 0..1000 {
-            let key = format!("key_{}", i)));
+            let key = format!("key_{}", i);
             bloom.insert(key.as_bytes());
         }
 
         // Test 1000 non-existent items
         let mut false_positives = 0;
         for i in 1000..2000 {
-            let key = format!("key_{}", i)));
+            let key = format!("key_{}", i);
             if bloom.contains(key.as_bytes()) {
                 false_positives += 1;
             }
@@ -444,7 +444,7 @@ mod tests {
         let mut bloom = SimdBloomFilter::new(1000, 0.01);
 
         for i in 0..500 {
-            bloom.insert(format!("key_{}", i).as_bytes())));
+            bloom.insert(format!("key_{}", i).as_bytes());
         }
 
         let stats = bloom.stats();
@@ -479,7 +479,7 @@ mod tests {
 
         // Insert 1M items
         for i in 0..1_000_000 {
-            let key = format!("key_{}", i)));
+            let key = format!("key_{}", i);
             bloom.insert(key.as_bytes());
         }
 

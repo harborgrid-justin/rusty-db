@@ -154,7 +154,7 @@ impl Normalizer {
 
     pub fn transform(&self, dataset: &Dataset) -> Result<Dataset> {
         if !self.fitted {
-            return Err(DbError::InvalidInput("Normalizer not fitted".into()));
+            return Err(crate::DbError::InvalidInput("Normalizer not fitted".into()));
         }
 
         let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
@@ -254,7 +254,7 @@ impl Standardizer {
 
     pub fn transform(&self, dataset: &Dataset) -> Result<Dataset> {
         if !self.fitted {
-            return Err(DbError::InvalidInput("Standardizer not fitted".into()));
+            return Err(crate::DbError::InvalidInput("Standardizer not fitted".into()));
         }
 
         let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
@@ -330,7 +330,7 @@ impl OneHotEncoder {
 
     pub fn transform(&self, dataset: &Dataset) -> Result<Dataset> {
         if !self.fitted {
-            return Err(DbError::InvalidInput("OneHotEncoder not fitted".into()));
+            return Err(crate::DbError::InvalidInput("OneHotEncoder not fitted".into()));
         }
 
         let mut new_feature_names = Vec::new();
@@ -361,7 +361,7 @@ impl OneHotEncoder {
             if self.feature_indices.contains(&i) {
                 if let Some(categories) = self.categories.get(&i) {
                     for &category in categories {
-                        new_feature_names.push(format!("{}_{}", name, category))));
+                        new_feature_names.push(format!("{}_{}", name, category));
                     }
                 }
             } else {
@@ -460,7 +460,7 @@ impl Binner {
 
     pub fn transform(&self, dataset: &Dataset) -> Result<Dataset> {
         if !self.fitted {
-            return Err(DbError::InvalidInput("Binner not fitted".into()));
+            return Err(crate::DbError::InvalidInput("Binner not fitted".into()));
         }
 
         let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
@@ -540,7 +540,7 @@ impl Imputer {
     }
 
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
-        let n_features = dataset.num_features()));
+        let n_features = dataset.num_features();
         self.fill_values = vec![0.0; n_features];
 
         for i in 0..n_features {
@@ -592,7 +592,7 @@ impl Imputer {
 
     pub fn transform(&self, dataset: &Dataset) -> Result<Dataset> {
         if !self.fitted {
-            return Err(DbError::InvalidInput("Imputer not fitted".into()));
+            return Err(crate::DbError::InvalidInput("Imputer not fitted".into()));
         }
 
         let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
@@ -697,7 +697,7 @@ impl PolynomialTransform {
                             "{}*{}",
                             dataset.feature_names[i],
                             dataset.feature_names[j]
-                        ))));
+                        ));
                     }
                 }
             }
@@ -771,7 +771,7 @@ impl VarianceThresholdSelector {
 
     pub fn transform(&self, dataset: &Dataset) -> Result<Dataset> {
         if !self.fitted {
-            return Err(DbError::InvalidInput("Selector not fitted".into()));
+            return Err(crate::DbError::InvalidInput("Selector not fitted".into()));
         }
 
         let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
@@ -858,7 +858,7 @@ impl CorrelationSelector {
 
     pub fn transform(&self, dataset: &Dataset) -> Result<Dataset> {
         if !self.fitted {
-            return Err(DbError::InvalidInput("Selector not fitted".into()));
+            return Err(crate::DbError::InvalidInput("Selector not fitted".into()));
         }
 
         let transformed_features: Vec<Vec<f64>> = dataset.features.iter()

@@ -69,9 +69,9 @@ impl GraphRelationalBridge {
     /// Map foreign key relationships to edges
     pub fn map_foreign_key_to_edges(
         &mut self,
-        sourcetable: String,
-        targettable: String,
-        fk_relationships: &[(Value, Value)
+        source_table: String,
+        target_table: String,
+        fk_relationships: &[(Value, Value)],
         graph: &mut PropertyGraph,
         edge_label: String,
     ) -> Result<()> {
@@ -648,11 +648,11 @@ impl<'a> RecommendationEngine<'a> {
     }
 
     /// Collaborative filtering recommendations
-    pub fn cfn collaborative_filtering(
+    pub fn collaborative_filtering(
         &self,
-        uservertex: VertexId,
-        topk: usize,
-    )esult<Vec<(VertexId, f64)>> {
+        user_vertex: VertexId,
+        top_k: usize,
+    ) -> Result<Vec<(VertexId, f64)>> {
         // Find similar users based on common neighbors
         let user_neighbors = self.graph.get_outgoing_neighbors(user_vertex)?;
         let user_neighbors_set: HashSet<VertexId> = user_neighbors.iter().copied().collect();
@@ -685,11 +685,11 @@ impl<'a> RecommendationEngine<'a> {
     }
 
     /// Content-based recommendations using property similarity
-    pub fn confn content_based(
+    pub fn content_based(
         &self,
-        itemvertex: VertexId,
+        item_vertex: VertexId,
         top_k: usize,
-    )sult<Vec<(VertexId, f64)>> {
+    ) -> Result<Vec<(VertexId, f64)>> {
         let item = self.graph.get_vertex(item_vertex)
             .ok_or_else(|| DbError::Internal("Vertex not found".to_string()))?;
 
@@ -715,13 +715,13 @@ impl<'a> RecommendationEngine<'a> {
     }
 
     /// Random walk with restart for recommendations
-    pub fn randfn random_walk_with_restart(
+    pub fn random_walk_with_restart(
         &self,
-        startvertex: VertexId,
+        start_vertex: VertexId,
         restart_prob: f64,
         num_iterations: usize,
         top_k: usize,
-    )ult<Vec<(VertexId, f64)>> {
+    ) -> Result<Vec<(VertexId, f64)>> {
         let mut scores: HashMap<VertexId, f64> = HashMap::new();
 
         for _ in 0..num_iterations {

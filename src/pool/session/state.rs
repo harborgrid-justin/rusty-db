@@ -220,7 +220,7 @@ impl SessionState {
     }
 
     /// Check if session matches requested tags
-    pub fn matches_tags(&self, requestedtags: &HashMap<String, String>) -> bool {
+    pub fn matches_tags(&self, requested_tags: &HashMap<String, String>) -> bool {
         requested_tags
             .iter()
             .all(|(k, v)| self.tags.get(k).map_or(false, |val| val == v))
@@ -506,14 +506,14 @@ use std::time::Duration;
         assert_eq!(
             format!("{}", IsolationLevel::ReadCommitted),
             "READ_COMMITTED"
-        )));
-        assert_eq!(format!("{}", IsolationLevel::Serializable), "SERIALIZABLE")));
+        );
+        assert_eq!(format!("{}", IsolationLevel::Serializable), "SERIALIZABLE");
     }
 
     #[test]
     fn test_session_status_display() {
-        assert_eq!(format!("{}", SessionStatus::Active), "ACTIVE")));
-        assert_eq!(format!("{}", SessionStatus::Killed), "KILLED")));
+        assert_eq!(format!("{}", SessionStatus::Active), "ACTIVE");
+        assert_eq!(format!("{}", SessionStatus::Killed), "KILLED");
     }
 
     #[test]

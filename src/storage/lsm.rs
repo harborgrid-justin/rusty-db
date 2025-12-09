@@ -369,7 +369,7 @@ pub struct LsmStats {
 }
 
 impl LsmTree {
-    pub fn new(memtable_size: usize, numlevels: usize) -> Self {
+    pub fn new(memtable_size: usize, num_levels: usize) -> Self {
         let mut levels = Vec::new();
         for i in 0..num_levels {
             let max_size = (10_usize.pow(i as u32 + 1)) * 10 * 1024 * 1024; // 10MB * 10^level
@@ -699,7 +699,7 @@ mod tests {
 
         // Fill memtable
         for i in 0..20 {
-            let key = format!("key{:02}", i).into_bytes()));
+            let key = format!("key{:02}", i).into_bytes();
             let value = b"value".to_vec();
             lsm.put(key, value).unwrap();
         }

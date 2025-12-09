@@ -73,13 +73,13 @@ impl ProcedureManager {
     /// Create a new stored procedure
     pub fn create_procedure(&self, procedure: StoredProcedure) -> Result<()> {
         let mut procedures = self.procedures.write();
-        
+
         if procedures.contains_key(&procedure.name) {
             return Err(DbError::AlreadyExists(
                 format!("Procedure '{}' already exists", procedure.name)
-            ))));
+            ));
         }
-        
+
         procedures.insert(procedure.name.clone(), procedure);
         Ok(())
     }
@@ -87,13 +87,13 @@ impl ProcedureManager {
     /// Drop a stored procedure
     pub fn drop_procedure(&self, name: &str) -> Result<()> {
         let mut procedures = self.procedures.write();
-        
+
         if procedures.remove(name).is_none() {
             return Err(DbError::NotFound(
                 format!("Procedure '{}' not found", name)
-            ))));
+            ));
         }
-        
+
         Ok(())
     }
     
@@ -110,7 +110,7 @@ impl ProcedureManager {
     
     /// List all stored procedures
     pub fn list_procedures(&self) -> Vec<String> {
-        let procedures = self.procedures.read()));
+        let procedures = self.procedures.read();
         procedures.keys().cloned().collect()
     }
     
@@ -140,7 +140,7 @@ impl ProcedureManager {
                 if !context.parameters.contains_key(&param.name) {
                     return Err(DbError::InvalidInput(
                         format!("Missing parameter '{}'", param.name)
-                    ))));
+                    ));
                 }
             }
         }

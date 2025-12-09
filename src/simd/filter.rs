@@ -712,7 +712,7 @@ impl SimdFilter {
             _ => {
                 return Err(DbError::InvalidArgument(
                     format!("Unsupported predicate: {:?}", predicate)
-                ))));
+                ));
             }
         }
 
@@ -730,7 +730,7 @@ impl SimdFilter {
             let base_idx = chunk_idx * 8;
             for bit in 0..8 {
                 let idx = base_idx + bit;
-                if idx >= data_len {
+                if idx >= datalen {
                     break;
                 }
                 if (mask & (1 << bit)) != 0 {
@@ -756,6 +756,7 @@ impl Default for SimdFilter {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
     #[test]
     fn test_i32_eq_filter() {

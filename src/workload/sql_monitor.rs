@@ -377,7 +377,7 @@ impl SqlMonitor {
 
             let execution = active
                 .get_mut(&execution_id)
-                .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?);
+                .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?;
 
             let now = SystemTime::now();
             execution.elapsed_time = now.duration_since(execution.start_time).unwrap_or_default();
@@ -401,7 +401,7 @@ impl SqlMonitor {
                 AlertType::LongRunningQuery,
                 AlertSeverity::Warning,
                 format!("Query has been running for {} seconds", elapsed_secs),
-            )?);
+            )?;
         }
 
         Ok(())
@@ -419,7 +419,7 @@ impl SqlMonitor {
 
         let execution = active
             .get_mut(&execution_id)
-            .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?;
 
         let wait_detail = WaitEventDetail {
             wait_class: wait_class.clone(),
@@ -451,7 +451,7 @@ impl SqlMonitor {
 
         let execution = active
             .get_mut(&execution_id)
-            .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?;
 
         // Find or create operation metrics
         if let Some(op) = execution.plan_operations.iter_mut().find(|o| o.operation_id == operation_id) {
@@ -519,7 +519,7 @@ impl SqlMonitor {
 
     /// Get long-running queries
     pub fn get_long_running_queries(&self) -> Vec<SqlExecution> {
-        let config = self.config.read()));
+        let config = self.config.read();
         let threshold = Duration::from_secs(config.long_running_threshold_secs);
 
         self.active_executions
@@ -643,8 +643,10 @@ impl SqlMonitor {
 
     /// Compute hash
     fn compute_hash(&self, text: &str) -> u64 {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
 
-        let mut hasher = DefaultHasher::new()));
+        let mut hasher = DefaultHasher::new();
         text.hash(&mut hasher);
         hasher.finish()
     }
@@ -712,7 +714,7 @@ mod tests {
                     "test_user".to_string(),
                     "test_program".to_string(),
                 )
-                .unwrap()));
+                .unwrap();
 
             monitor.complete_execution(exec_id, ExecutionStatus::Completed).unwrap();
         }

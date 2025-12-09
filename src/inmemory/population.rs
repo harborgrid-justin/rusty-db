@@ -107,13 +107,13 @@ impl PartialEq for PopulationTask {
 impl Eq for PopulationTask {}
 
 impl PartialOrd for PopulationTask {
-    fn partial_cmp(&self, other: &Self) -> Option<CmpOrdering> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for PopulationTask {
-    fn cmp(&self, other: &Self) -> CmpOrdering {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         // Higher priority tasks come first
         self.priority
             .cmp(&other.priority)
@@ -396,7 +396,7 @@ pub struct PopulationManager {
 }
 
 impl PopulationManager {
-    pub fn new(numworkers: usize, max_memory: usize) -> Self {
+    pub fn new(num_workers: usize, max_memory: usize) -> Self {
         let task_queue = Arc::new(Mutex::new(BinaryHeap::new()));
         let progress_tracker = Arc::new(RwLock::new(HashMap::new()));
         let memory_handler = Arc::new(MemoryPressureHandler::new(max_memory, 0.9));
@@ -417,7 +417,7 @@ impl PopulationManager {
         manager
     }
 
-    fn start_workers(&self, numworkers: usize) {
+    fn start_workers(&self, num_workers: usize) {
         self.running.store(true, Ordering::SeqCst);
 
         let mut workers = self.workers.write();

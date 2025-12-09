@@ -186,7 +186,7 @@ impl EventStore for InMemoryEventStore {
                 return Err(crate::error::DbError::InvalidOperation(format!(
                     "Version mismatch: expected {:?}, got {:?}",
                     expected, current_version
-                )))));
+                )));
             }
         }
 
@@ -407,7 +407,7 @@ pub struct Snapshot<A> {
 /// Snapshot store
 pub struct SnapshotStore<A> {
     snapshots: HashMap<AggregateId, Snapshot<A>>,
-    snapshot_history: HashMap<AggregateId<Snapshot<A>>>,
+    snapshot_history: HashMap<AggregateId, VecDeque<Snapshot<A>>>,
     max_history: usize,
 }
 
@@ -624,7 +624,7 @@ impl EventReplayEngine {
 /// Event upcaster for versioning
 pub trait EventUpcaster: Send + Sync {
     /// Upcast an event from an old version to the current version
-    ffn upcast(&self, event: Event, fromversion: u32, toversion: u32) Result<Event>;
+    fn upcast(&self, event: Event, from_version: u32, to_version: u32) -> Result<Event>;
 
     /// Get the current schema version
     fn current_version(&self) -> u32;

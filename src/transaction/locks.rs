@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::{Duration};
 use parking_lot::{Mutex, RwLock, Condvar};
 use serde::{Deserialize, Serialize};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::TransactionId;
 
 /// Lock granularity levels in hierarchical locking
@@ -278,7 +278,7 @@ pub struct HierarchicalLockManager {
     /// Lock table indexed by resource
     lock_table: Arc<RwLock<HashMap<LockResource, Arc<Mutex<LockTableEntry>>>>>,
     /// Transaction lock holdings (for easy release)
-    txn_locks: Arc<RwLock<HashMap<TransactionId<LockResource>>>>,
+    txn_locks: Arc<RwLock<HashMap<TransactionId, HashSet<LockResource>>>>,
     /// Wait-for graph for deadlock detection
     wait_for_graph: Arc<RwLock<WaitForGraph>>,
     /// Configuration
@@ -440,7 +440,7 @@ impl HierarchicalLockManager {
                     return Err(DbError::DeadlockDetected(format!(
                         "Deadlock detected involving transactions: {:?}",
                         cycle
-                    )))));
+                    )));
                 }
             }
 
@@ -464,7 +464,7 @@ impl HierarchicalLockManager {
                 return Err(DbError::Timeout(format!(
                     "Lock timeout for transaction {} on resource {:?}",
                     txn_id, resource
-                )))));
+                )));
             }
 
             // Wait for notification
@@ -633,9 +633,9 @@ impl HierarchicalLockManager {
 #[derive(Debug)]
 pub struct WaitForGraph {
     /// Edges: waiting_txn -> set of transactions it's waiting for
-    edges: HashMap<TransactionId<TransactionId>>,
+    edges: HashMap<TransactionId, HashSet<TransactionId>>,
     /// Transaction start times for victim selection
-    timestamps: HashMap<TransactionId>,
+    timestamps: HashMap<TransactionId, Instant>,
 }
 
 impl WaitForGraph {
@@ -696,7 +696,7 @@ impl WaitForGraph {
 
     fn dfs_cycle(
         &self,
-        txnid: TransactionId,
+        txn_id: TransactionId,
         visited: &mut HashSet<TransactionId>,
         rec_stack: &mut HashSet<TransactionId>,
         path: &mut Vec<TransactionId>,

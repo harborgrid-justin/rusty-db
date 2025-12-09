@@ -305,7 +305,7 @@ pub struct CaptureStatistics {
 impl CaptureStatistics {
     pub fn record_event(&mut self, change_type: &ChangeType, latency_ms: f64) {
         self.total_events += 1;
-        let key = format!("{:?}", change_type)));
+        let key = format!("{:?}", change_type);
         *self.events_by_type.entry(key).or_insert(0) += 1;
 
         // Simple moving average for latency
@@ -570,7 +570,7 @@ impl CDCEngine {
 
         // Parse after image from data
         if self.config.filter.capture_after_image {
-            event.after_image = Some(self.parse_row_data(data, &table_metadata)?;
+            event.after_image = Some(self.parse_row_data(data, &table_metadata)?);
         }
 
         // Generate column changes
@@ -670,7 +670,7 @@ impl CDCEngine {
 
         // Parse before image
         if self.config.filter.capture_before_image {
-            event.before_image = Some(self.parse_row_data(deleted_data, &table_metadata)?;
+            event.before_image = Some(self.parse_row_data(deleted_data, &table_metadata)?);
         }
 
         // Generate column changes
@@ -842,7 +842,7 @@ impl CDCEngine {
             column_names: vec!["col1".to_string(), "col2".to_string()],
             column_types: vec!["INTEGER".to_string(), "VARCHAR".to_string()],
             primary_key_columns: vec![0],
-        }));
+        };
 
         self.table_metadata.write().insert(table_id, metadata.clone());
         Ok(metadata)

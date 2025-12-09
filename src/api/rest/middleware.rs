@@ -194,7 +194,7 @@ impl ValidationMiddleware {
         if let Some(content_type) = req.headers().get("content-type") {
             if let Ok(ct) = content_type.to_str() {
                 if !ct.contains(expected) {
-                    return Err(DbError::InvalidInput(format!("Expected content type: {}", expected)))));
+                    return Err(DbError::InvalidInput(format!("Expected content type: {}", expected)));
                 }
             }
         }

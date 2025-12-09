@@ -538,6 +538,7 @@ mod tests {
 
     #[test]
     fn test_alignment() {
+        use super::align::{align_up, align_down};
 
         assert_eq!(align_up(10, 16), 16);
         assert_eq!(align_up(16, 16), 16);

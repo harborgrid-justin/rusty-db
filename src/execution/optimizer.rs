@@ -232,7 +232,7 @@ impl Optimizer {
             PlanNode::TableScan { table, columns } => {
                 // Check if an index would be beneficial
                 let stats = self.statistics.read();
-                if let Some(table_stats) = _stats.tables.get(&table) {
+                if let Some(table_stats) = stats.tables.get(&table) {
                     // Would evaluate index selectivity here
                     // For now, keep as table scan
                 }
@@ -289,7 +289,7 @@ impl Optimizer {
         match plan {
             PlanNode::TableScan { table, .. } => {
                 let stats = self.statistics.read();
-                if let Some(table_stats) = _stats.tables.get(table) {
+                if let Some(table_stats) = stats.tables.get(table) {
                     table_stats.num_pages as f64
                 } else {
                     cardinality / 100.0 // Assume 100 rows per page
@@ -304,7 +304,7 @@ impl Optimizer {
         match plan {
             PlanNode::TableScan { table, .. } => {
                 let stats = self.statistics.read();
-                if let Some(table_stats) = _stats.tables.get(table) {
+                if let Some(table_stats) = stats.tables.get(table) {
                     table_stats.row_count as f64
                 } else {
                     1000.0 // Default estimate
@@ -390,7 +390,7 @@ impl Optimizer {
     /// Select the best index for a table scan (if available)
     pub fn select_index(&self, table: &str, _filter: Option<&str>) -> Option<String> {
         let stats = self.statistics.read();
-        if let Some(table_stats) = _stats.tables.get(table) {
+        if let Some(table_stats) = stats.tables.get(table) {
             // Select most selective index
             if !table_stats.indexes.is_empty() {
                 return Some(table_stats.indexes[0].name.clone());
@@ -401,7 +401,7 @@ impl Optimizer {
 
     /// Update statistics for a table
     pub fn update_statistics(&self, table: String, stats: SingleTableStatistics) {
-        let statistics = self.statistics.write();
+        let mut statistics = self.statistics.write();
         statistics.tables.insert(table, stats);
     }
 }
@@ -550,7 +550,7 @@ pub enum HistogramType {
 }
 
 impl Histogram {
-    pub fn new(numbuckets: usize) -> Self {
+    pub fn new(num_buckets: usize) -> Self {
         Self {
             buckets: vec![HistogramBucket::default(); num_buckets],
             histogram_type: HistogramType::EquiDepth,
@@ -559,7 +559,7 @@ impl Histogram {
         }
     }
 
-    pub fn new_equi_depth(numbuckets: usize, total_count: usize) -> Self {
+    pub fn new_equi_depth(num_buckets: usize, total_count: usize) -> Self {
         Self {
             buckets: Vec::with_capacity(num_buckets),
             histogram_type: HistogramType::EquiDepth,
@@ -568,7 +568,7 @@ impl Histogram {
         }
     }
 
-    pub fn new_multi_dimensional(dimensions: Vec<String>, numbuckets: usize) -> Self {
+    pub fn new_multi_dimensional(dimensions: Vec<String>, num_buckets: usize) -> Self {
         Self {
             buckets: Vec::with_capacity(num_buckets),
             histogram_type: HistogramType::MultiDimensional,
@@ -636,10 +636,10 @@ impl Histogram {
             0.01
         } else if pattern.starts_with('%') || pattern.ends_with('%') {
             // pattern% or %pattern - moderately selective
-            return 0.05;
+            0.05
         } else {
             // Exact prefix - treat as range
-            return 0.1;
+            0.1
         }
     }
 
@@ -761,8 +761,8 @@ impl CardinalityEstimator {
         &self,
         left_card: f64,
         right_card: f64,
-        leftdistinct: usize,
-        rightdistinct: usize,
+        left_distinct: usize,
+        right_distinct: usize,
     ) -> f64 {
         // Use independence assumption with distinct value adjustment
         let max_distinct = left_distinct.max(right_distinct) as f64;
@@ -905,7 +905,7 @@ impl Optimizer {
         use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         // Simplified hashing - in production would use structural hashing
-        format!("{:?}", plan).hash(&mut hasher)));
+        format!("{:?}", plan).hash(&mut hasher);
         hasher.finish()
     }
 
@@ -949,7 +949,7 @@ impl Optimizer {
         let mut cache = self.cse_cache.write();
 
         let hash = self.hash_plan(&plan);
-        let expr_hash = ExpressionHash(_hash);
+        let expr_hash = ExpressionHash(hash);
 
         if let Some(cached) = cache.get(&expr_hash) {
             return Ok(cached.clone());
@@ -957,16 +957,16 @@ impl Optimizer {
 
         let optimized = match plan {
             PlanNode::Join { join_type, left, right, condition } => {
-                let left = Box::new(self.eliminate_common_subexpressions(*left)?;
-                let right = Box::new(self.eliminate_common_subexpressions(*right)?;
+                let left = Box::new(self.eliminate_common_subexpressions(*left)?);
+                let right = Box::new(self.eliminate_common_subexpressions(*right)?);
                 PlanNode::Join { join_type, left, right, condition }
             }
             PlanNode::Filter { input, predicate } => {
-                let input = Box::new(self.eliminate_common_subexpressions(*input)?;
+                let input = Box::new(self.eliminate_common_subexpressions(*input)?);
                 PlanNode::Filter { input, predicate }
             }
             PlanNode::Aggregate { input, group_by, aggregates, having } => {
-                let input = Box::new(self.eliminate_common_subexpressions(*input)?;
+                let input = Box::new(self.eliminate_common_subexpressions(*input)?);
                 PlanNode::Aggregate { input, group_by, aggregates, having }
             }
             other => other,

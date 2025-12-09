@@ -217,7 +217,7 @@ impl DatabaseFlashbackManager {
         if !logs.covers_scn(target_scn) {
             return Err(DbError::Validation(
                 format!("Flashback logs do not cover SCN {}", target_scn)
-            ))));
+            ));
         }
 
         Ok(())
@@ -294,7 +294,7 @@ impl FlashbackLogs {
         if result.is_empty() {
             return Err(DbError::Validation(
                 format!("No flashback logs found for SCN range {} to {}", start_scn, end_scn)
-            ))));
+            ));
         }
 
         Ok(result)
@@ -463,7 +463,7 @@ impl GuaranteedRestorePoints {
         if self.points.contains_key(&point.name) {
             return Err(DbError::Validation(
                 format!("Restore point '{}' already exists", point.name)
-            ))));
+            ));
         }
 
         self.points.insert(point.name.clone(), point);
@@ -481,7 +481,7 @@ impl GuaranteedRestorePoints {
         self.points.remove(name)
             .ok_or_else(|| DbError::Validation(
                 format!("Restore point '{}' not found", name)
-            ))?);
+            ))?;
         Ok(())
     }
 

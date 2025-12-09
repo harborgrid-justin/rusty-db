@@ -227,7 +227,7 @@ impl ExpressionEvaluator {
     where
         F: Fn(Vec<ExprValue>) -> Result<ExprValue, DbError> + 'static,
     {
-        self.udfs.insert(name, Box::new(func))));
+        self.udfs.insert(name, Box::new(func));
     }
 
     /// Evaluate expression with given row context

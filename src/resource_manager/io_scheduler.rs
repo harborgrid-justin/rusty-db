@@ -456,7 +456,7 @@ impl IoScheduler {
         if allocations.contains_key(&group_id) {
             return Err(DbError::AlreadyExists(
                 format!("Group {} already registered", group_id)
-            ))));
+            ));
         }
 
         allocations.insert(
@@ -693,10 +693,10 @@ impl IoScheduler {
     }
 
     /// Complete an I/O request
-    pub fn complete_request(&self, requestid: IoRequestId) -> Result<()> {
+    pub fn complete_request(&self, request_id: IoRequestId) -> Result<()> {
         let mut requests = self.requests.write().unwrap();
         let request = requests.get_mut(&request_id)
-            .ok_or_else(|| DbError::NotFound(format!("Request {} not found", request_id)))?);
+            .ok_or_else(|| DbError::NotFound(format!("Request {} not found", request_id)))?;
 
         request.completed_at = Some(Instant::now());
         let request_type = request.request_type;

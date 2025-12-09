@@ -56,7 +56,7 @@ impl ExponentialSmoothing {
 
     pub fn fit(&mut self, series: &[f64]) -> Result<()> {
         if series.len() < self.season_length * 2 {
-            return Err(DbError::InvalidInput("Insufficient data for seasonal model".into()));
+            return Err(crate::DbError::InvalidInput("Insufficient data for seasonal model".into()));
         }
 
         // Initialize level, trend, and seasonal components
@@ -207,7 +207,7 @@ impl ARIMAModel {
 
     pub fn fit(&mut self, series: &[f64]) -> Result<()> {
         if series.len() < self.p + self.d + self.q + 1 {
-            return Err(DbError::InvalidInput("Insufficient data for ARIMA model".into()));
+            return Err(crate::DbError::InvalidInput("Insufficient data for ARIMA model".into()));
         }
 
         // Difference the series d times
@@ -683,7 +683,7 @@ impl TimeSeriesEngine {
                 model.fit(&series)?;
                 Ok(model.forecast(horizon))
             }
-            _ => Err(DbError::InvalidInput("Unsupported time series algorithm".into())),
+            _ => Err(crate::DbError::InvalidInput("Unsupported time series algorithm".into())),
         }
     }
 

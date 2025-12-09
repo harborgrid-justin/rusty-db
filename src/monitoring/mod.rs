@@ -258,7 +258,7 @@ impl MonitoringHub {
         sql: String,
         session_id: u64,
         user_id: u64,
-        executiontime: Duration,
+        execution_time: Duration,
         rows_returned: u64,
         bytes_read: u64,
         bytes_written: u64,

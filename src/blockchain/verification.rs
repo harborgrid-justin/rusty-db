@@ -202,7 +202,7 @@ impl BlockVerifier {
                     IssueSeverity::Critical,
                     IssueType::HashMismatch,
                     format!("Row {} hash verification failed", row.row_id),
-                ).with_block(block.block_id).with_row(row.row_id))));
+                ).with_block(block.block_id).with_row(row.row_id));
             }
         }
 
@@ -213,7 +213,7 @@ impl BlockVerifier {
                     IssueSeverity::Critical,
                     IssueType::ChainBreak,
                     format!("Chain break between rows {} and {}", block.rows[i - 1].row_id, block.rows[i].row_id),
-                ).with_block(block.block_id))));
+                ).with_block(block.block_id));
             }
         }
 
@@ -292,7 +292,7 @@ impl BlockVerifier {
                     IssueType::TimestampAnomaly,
                     format!("Row {} has earlier timestamp than row {}",
                             block.rows[i].row_id, block.rows[i - 1].row_id),
-                ).with_block(block.block_id))));
+                ).with_block(block.block_id));
             }
         }
 
@@ -360,7 +360,7 @@ impl ChainVerifier {
                             IssueSeverity::Critical,
                             IssueType::ChainBreak,
                             format!("Block {} does not chain to block {}", block_id, block_id - 1),
-                        ).with_block(block_id))));
+                        ).with_block(block_id));
                     }
                     row_count += curr.rows.len();
                 }
@@ -369,14 +369,14 @@ impl ChainVerifier {
                         IssueSeverity::Critical,
                         IssueType::MissingData,
                         format!("Block {} is missing", block_id - 1),
-                    ).with_block(block_id - 1))));
+                    ).with_block(block_id - 1));
                 }
                 (_, None) => {
                     issues.push(VerificationIssue::new(
                         IssueSeverity::Critical,
                         IssueType::MissingData,
                         format!("Block {} is missing", block_id),
-                    ).with_block(block_id))));
+                    ).with_block(block_id));
                 }
             }
         }
@@ -411,7 +411,7 @@ impl ChainVerifier {
                         IssueSeverity::Critical,
                         IssueType::DuplicateEntry,
                         format!("Duplicate row ID {}", row.row_id),
-                    ).with_block(block.block_id).with_row(row.row_id))));
+                    ).with_block(block.block_id).with_row(row.row_id));
                 }
             }
         }
@@ -473,14 +473,14 @@ impl ParallelVerifier {
                         IssueSeverity::Error,
                         IssueType::Other,
                         format!("Verification error: {}", e),
-                    ))));
+                    ));
                 }
                 Err(e) => {
                     all_issues.push(VerificationIssue::new(
                         IssueSeverity::Error,
                         IssueType::Other,
                         format!("Task error: {}", e),
-                    ))));
+                    ));
                 }
             }
         }
@@ -604,7 +604,7 @@ impl TamperDetector {
                     IssueSeverity::Error,
                     IssueType::Other,
                     format!("Hash chain verification error: {}", e),
-                ))));
+                ));
             }
         }
 
@@ -622,7 +622,7 @@ impl TamperDetector {
                         IssueSeverity::Error,
                         IssueType::Other,
                         format!("Block verification error: {}", e),
-                    ).with_block(block.block_id))));
+                    ).with_block(block.block_id));
                 }
             }
         }
@@ -700,7 +700,7 @@ impl RecoveryManager {
                         description: format!("Restore corrupted block {} from backup",
                                            issue.block_id.unwrap_or(0)),
                         priority: RecoveryPriority::High,
-                    })));
+                    });
                 }
                 IssueType::ChainBreak => {
                     actions.push(RecoveryAction {
@@ -715,14 +715,14 @@ impl RecoveryManager {
                         description: format!("Restore missing block {} from backup",
                                            issue.block_id.unwrap_or(0)),
                         priority: RecoveryPriority::High,
-                    })));
+                    });
                 }
                 _ => {
                     actions.push(RecoveryAction {
                         action_type: RecoveryActionType::Investigate,
                         description: format!("Investigate issue: {}", issue.description),
                         priority: RecoveryPriority::Medium,
-                    })));
+                    });
                 }
             }
         }

@@ -362,7 +362,7 @@ impl CircuitBreaker {
             return Err(DbError::Internal(format!(
                 "Circuit breaker '{}' is open",
                 self.name
-            )))));
+            )));
         }
 
         // Execute the function
@@ -380,7 +380,7 @@ impl CircuitBreaker {
 
     /// Check if we should attempt the call
     async fn should_attempt(&self) -> bool {
-        let state = *self.state.read().await));
+        let state = *self.state.read().await;
 
         match state {
             CircuitState::Closed => true,
@@ -665,7 +665,7 @@ impl Bulkhead {
         F: Future<Output = Result<T>>,
     {
         let _permit = self.semaphore.acquire().await
-            .map_err(|e| DbError::Internal(format!("Bulkhead acquire failed: {}", e)))?);
+            .map_err(|e| DbError::Internal(format!("Bulkhead acquire failed: {}", e)))?;
 
         f.await
     }

@@ -215,7 +215,7 @@ pub struct MemoryPressureStats {
     /// Current memory pressure level
     pub current_level: MemoryPressureLevel,
     /// Time spent at each pressure level
-    pub time_at_level: HashMap<String>,
+    pub time_at_level: HashMap<String, Duration>,
     /// Peak memory usage observed
     pub peak_memory_usage: u64,
     /// Memory reclamation efficiency (freed/requested ratio)
@@ -332,7 +332,7 @@ impl CallbackRegistration {
     }
 
     /// Records callback execution
-    pub fn record_execution(&self, executiontime: Duration, bytes_freed: u64) {
+    pub fn record_execution(&self, execution_time: Duration, bytes_freed: u64) {
         self.invocation_count.fetch_add(1, Ordering::Relaxed);
         self.total_bytes_freed.fetch_add(bytes_freed, Ordering::Relaxed);
 
@@ -354,7 +354,7 @@ impl CallbackRegistration {
     }
 
     /// Gets callback statistics
-    pub fn get_stats(&self) -> (u64, u64) {
+    pub fn get_stats(&self) -> (u64, u64, Duration) {
         (
             self.invocation_count.load(Ordering::Relaxed),
             self.total_bytes_freed.load(Ordering::Relaxed),
@@ -392,7 +392,7 @@ impl SystemMemoryInfo {
         let meminfo = fs::read_to_string("/proc/meminfo")
             .map_err(|e| PressureError::SystemInfoUnavailable {
                 reason: format!("Cannot read /proc/meminfo: {}", e),
-            })?);
+            })?;
 
         let mut total_memory = 0;
         let mut free_memory = 0;
@@ -443,11 +443,12 @@ impl SystemMemoryInfo {
 
     #[cfg(target_os = "linux")]
     fn collect_process_memory_linux() -> Result<(u64, u64), PressureError> {
+        use std::fs;
 
         let status = fs::read_to_string("/proc/self/status")
             .map_err(|e| PressureError::SystemInfoUnavailable {
                 reason: format!("Cannot read /proc/self/status: {}", e),
-            })?);
+            })?;
 
         let mut rss = 0;
         let mut virtual_size = 0;
@@ -713,7 +714,7 @@ impl MemoryPressureManager {
         memory_info: SystemMemoryInfo,
         config: &PressureConfig,
         callbacks: &Arc<RwLock<HashMap<Uuid, Arc<CallbackRegistration>>>>,
-        eventhistory: &Arc<RwLock<VecDeque<PressureEventHistory>>>,
+        event_history: &Arc<RwLock<VecDeque<PressureEventHistory>>>,
         stats: &Arc<AsyncRwLock<MemoryPressureStats>>,
         callback_semaphore: &Arc<Semaphore>,
     ) {
@@ -819,7 +820,7 @@ impl MemoryPressureManager {
                 },
                 context: format!("Pressure level: {}, Memory usage: {:.2}%",
                     level, memory_info.usage_ratio * 100.0),
-            })));
+            });
 
             // Limit history size
             if history.len() > config.max_pressure_events {

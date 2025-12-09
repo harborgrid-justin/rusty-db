@@ -199,7 +199,7 @@ impl ClusterTopologyManager {
     ) -> Result<Self> {
         let udp_socket = UdpSocket::bind(local_addr)
             .await
-            .map_err(|e| DbError::Network(format!("Failed to bind UDP socket: {}", e)))?);
+            .map_err(|e| DbError::Network(format!("Failed to bind UDP socket: {}", e)))?;
 
         let (event_tx, _) = broadcast::channel(1000);
         let local_node = NodeId::new();
@@ -748,7 +748,7 @@ impl ClusterTopologyManager {
     }
 
     /// Add a node to the cluster
-    pub async ffn add_node(&self, nodeinfo: NodeInfo)-> Result<()> {
+    pub async fn add_node(&self, node_info: NodeInfo) -> Result<()> {
         info!("Adding node {} to cluster", node_info.id);
 
         self.members.write().insert(node_info.id, node_info.clone());
@@ -1007,7 +1007,7 @@ impl NodeConnectionPool {
 
         let stream = TcpStream::connect(addr)
             .await
-            .map_err(|e| DbError::Network(format!("Connection failed: {}", e)))?);
+            .map_err(|e| DbError::Network(format!("Connection failed: {}", e)))?;
 
         // TODO: TLS handshake if configured
 
@@ -1862,7 +1862,7 @@ impl FailoverCoordinator {
         }
     }
 
-    async fnfn handle_node_failure(&self, failednode: NodeId)> Result<()> {
+    async fn handle_node_failure(&self, failed_node: NodeId) -> Result<()> {
         // Check if we're the leader
         if !self.leader_election.is_leader().await {
             debug!("Not leader, skipping failover handling");
@@ -1898,7 +1898,7 @@ impl FailoverCoordinator {
         let _ = self.handle_node_failure(node_id).await;
     }
 
-    async fn fn redistribute_load(&self, failednode: NodeId) Result<()> {
+    async fn redistribute_load(&self, failed_node: NodeId) -> Result<()> {
         info!("Redistributing load from failed node {}", failed_node);
 
         // Get alive members to redistribute to
@@ -2112,7 +2112,7 @@ impl SessionMigrationManager {
     }
 
     /// Migrate sessions from failed node
-    pub async fn mfn migrate_sessions(&self, failednode: NodeId)Result<()> {
+    pub async fn migrate_sessions(&self, failed_node: NodeId) -> Result<()> {
         info!("Migrating sessions from failed node {}", failed_node);
 
         let sessions_to_migrate: Vec<_> = self.active_sessions
@@ -2190,7 +2190,7 @@ impl TransactionRecoveryManager {
     }
 
     /// Recover transactions from failed node
-    pub async fn refn recover_transactions(&self, failednode: NodeId)esult<()> {
+    pub async fn recover_transactions(&self, failed_node: NodeId) -> Result<()> {
         info!("Recovering transactions from failed node {}", failed_node);
 
         let transactions_to_recover: Vec<_> = self.pending_transactions
@@ -2339,7 +2339,7 @@ impl NetworkHealthMonitor {
 
     /// Start health monitoring
     pub async fn start(&self) -> Result<()> {
-        info!("Starting network health monitor")));
+        info!("Starting network health monitor");
 
         // Start latency measurement loop
         let monitor = self.clone_for_task();
@@ -2782,7 +2782,7 @@ impl ClusterNetworkManager {
     /// Create a new cluster network manager
     pub async fn new(local_addr: SocketAddr) -> Result<Self> {
         let config = SwimConfig::default();
-        let topology = Arc::new(ClusterTopologyManager::new(local_addr, config).await?;
+        let topology = Arc::new(ClusterTopologyManager::new(local_addr, config).await?);
         let local_node = topology.local_node;
 
         let connection_pool = Arc::new(NodeConnectionPool::new(local_node, None));

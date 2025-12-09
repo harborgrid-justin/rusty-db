@@ -178,7 +178,7 @@ impl OLTPCompressor {
                 if checksum != block.compression_metadata.checksum {
                     return Err(CompressionError::CorruptedData(
                         format!("Block {} checksum mismatch", block.block_id)
-                    ))));
+                    ).into());
                 }
 
                 decompressed
@@ -200,7 +200,7 @@ impl OLTPCompressor {
     }
 
     /// Update a single row in a compressed block
-    pub fn update_row(&self, block: &mut OLTPBlock, row_id: u64, newrow: Vec<u8>)
+    pub fn update_row(&self, block: &mut OLTPBlock, row_id: u64, new_row: Vec<u8>)
         -> CompressionResult<()> {
 
         // Decompress the entire block
@@ -211,7 +211,7 @@ impl OLTPCompressor {
             .position(|loc| loc.row_id == row_id)
             .ok_or_else(|| CompressionError::InvalidInput(
                 format!("Row {} not found", row_id)
-            ))?);
+            ))?;
 
         // Check if new row fits in place
         if new_row.len() <= rows[row_index].len() && !self.enable_row_chaining {
@@ -302,7 +302,7 @@ impl OLTPCompressor {
             .position(|loc| loc.row_id == row_id)
             .ok_or_else(|| CompressionError::InvalidInput(
                 format!("Row {} not found", row_id)
-            ))?);
+            ))?;
 
         rows.remove(row_index);
 
@@ -384,7 +384,7 @@ impl OLTPCompressor {
         Ok(())
     }
 
-    ffn serialize_rows(&self, rows: &[Vec<u8>], baserow_id: u64)        -> CompressionResult<(Vec<u8>, Vec<RowLocation>)> {
+    fn serialize_rows(&self, rows: &[Vec<u8>], base_row_id: u64)        -> CompressionResult<(Vec<u8>, Vec<RowLocation>)> {
 
         let mut data = Vec::new();
         let mut row_directory = Vec::new();

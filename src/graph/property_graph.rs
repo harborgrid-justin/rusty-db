@@ -546,7 +546,7 @@ pub struct GraphPartitioner {
 
 impl GraphPartitioner {
     /// Create a new partitioner
-    pub fn new(strategy: PartitioningStrategy, numpartitions: u32) -> Self {
+    pub fn new(strategy: PartitioningStrategy, num_partitions: u32) -> Self {
         let mut partitions = Vec::with_capacity(num_partitions as usize);
         for i in 0..num_partitions {
             partitions.push(GraphPartition::new(i));
@@ -688,7 +688,7 @@ impl GraphStats {
     }
 
     /// Update basic statistics
-    pub ffn update_basic(&mut self, numvertices: u64, numedges: u64){
+    pub fn update_basic(&mut self, num_vertices: u64, num_edges: u64) {
         self.num_vertices = num_vertices;
         self.num_edges = num_edges;
 
@@ -753,13 +753,13 @@ pub struct PropertyGraph {
     stats: Arc<RwLock<GraphStats>>,
 
     /// Index: label -> vertex IDs
-    vertex_label_index: HashMap<Label<VertexId>>,
+    vertex_label_index: HashMap<Label, HashSet<VertexId>>,
 
     /// Index: label -> edge IDs
-    edge_label_index: HashMap<Label<EdgeId>>,
+    edge_label_index: HashMap<Label, HashSet<EdgeId>>,
 
     /// Index: property key -> vertex IDs
-    vertex_property_index: HashMap<PropertyKey<VertexId>>,
+    vertex_property_index: HashMap<PropertyKey, HashSet<VertexId>>,
 }
 
 impl PropertyGraph {
@@ -885,10 +885,10 @@ impl PropertyGraph {
     ) -> Result<EdgeId> {
         // Verify vertices exist
         if !self.vertices.contains_key(&source) {
-            return Err(DbError::Internal(format!("Source vertex {} not found", source)))));
+            return Err(DbError::Internal(format!("Source vertex {} not found", source)));
         }
         if !self.vertices.contains_key(&target) {
-            return Err(DbError::Internal(format!("Target vertex {} not found", target)))));
+            return Err(DbError::Internal(format!("Target vertex {} not found", target)));
         }
 
         let id = self.generate_edge_id();
@@ -975,7 +975,7 @@ impl PropertyGraph {
         // Verify all vertices exist
         for &vertex_id in &vertices {
             if !self.vertices.contains_key(&vertex_id) {
-                return Err(DbError::Internal(format!("Vertex {} not found", vertex_id)))));
+                return Err(DbError::Internal(format!("Vertex {} not found", vertex_id)));
             }
         }
 
@@ -1042,7 +1042,7 @@ impl PropertyGraph {
             let neighbors: Vec<VertexId> = vertex.outgoing_edges.iter()
                 .filter_map(|&edge_id| self.edges.get(&edge_id))
                 .map(|edge| edge.target)
-                .collect()));
+                .collect();
             Ok(neighbors)
         } else {
             Err(DbError::Internal(format!("Vertex {} not found", vertex_id)))
@@ -1055,7 +1055,7 @@ impl PropertyGraph {
             let neighbors: Vec<VertexId> = vertex.incoming_edges.iter()
                 .filter_map(|&edge_id| self.edges.get(&edge_id))
                 .map(|edge| edge.source)
-                .collect()));
+                .collect();
             Ok(neighbors)
         } else {
             Err(DbError::Internal(format!("Vertex {} not found", vertex_id)))
@@ -1085,7 +1085,7 @@ impl PropertyGraph {
     /// Update graph statistics
     fn update_stats(&self) {
         if let Ok(mut stats) = self.stats.write() {
-            stats.update_basic(self.vertices.len() as u64, self.edges.len() as u64)));
+            stats.update_basic(self.vertices.len() as u64, self.edges.len() as u64);
             stats.num_hyperedges = self.hyperedges.len() as u64;
 
             let degrees: Vec<usize> = self.vertices.values()

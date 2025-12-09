@@ -203,7 +203,7 @@ impl Dataset {
                 return Err(MLError::InvalidConfiguration(
                     format!("Inconsistent feature count at row {}: expected {}, got {}",
                             i, num_features, row.len())
-                ).into())));
+                ).into());
             }
         }
 
@@ -221,7 +221,7 @@ impl Dataset {
                 return Err(MLError::InvalidConfiguration(
                     format!("Weight vector length {} doesn't match sample count {}",
                             weights.len(), self.num_samples())
-                ).into())));
+                ).into());
             }
         }
 

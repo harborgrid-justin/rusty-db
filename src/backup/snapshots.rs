@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::fs::{create_dir_all};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::collections::{HashMap};
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
@@ -284,7 +284,7 @@ impl SnapshotManager {
     pub fn new(snapshot_dir: PathBuf) -> Result<Self> {
         create_dir_all(&snapshot_dir).map_err(|e| {
             DbError::BackupError(format!("Failed to create snapshot directory: {}", e))
-        })?);
+        })?;
 
         Ok(Self {
             snapshots: Arc::new(RwLock::new(BTreeMap::new())),
@@ -320,7 +320,7 @@ impl SnapshotManager {
         let snapshot_path = self.snapshot_dir.join(&snapshot_id);
         create_dir_all(&snapshot_path).map_err(|e| {
             DbError::BackupError(format!("Failed to create snapshot directory: {}", e))
-        })?);
+        })?;
 
         // Initialize COW tracker
         let cow_tracker = CowTracker::new(snapshot_id.clone());
@@ -406,7 +406,7 @@ impl SnapshotManager {
         if !snapshot.clones.is_empty() {
             return Err(DbError::BackupError(
                 format!("Cannot delete snapshot with {} active clones", snapshot.clones.len())
-            ))));
+            ));
         }
 
         // Remove COW tracker
@@ -417,7 +417,7 @@ impl SnapshotManager {
         if snapshot_path.exists() {
             std::fs::remove_dir_all(&snapshot_path).map_err(|e| {
                 DbError::BackupError(format!("Failed to delete snapshot: {}", e))
-            })?);
+            })?;
         }
 
         // Remove from snapshots map
@@ -427,7 +427,7 @@ impl SnapshotManager {
     }
 
     /// Delete a clone
-    pub fn delete_clone(&self, cloneid: &str) -> Result<()> {
+    pub fn delete_clone(&self, clone_id: &str) -> Result<()> {
         let clone = self.clones.read().get(clone_id).cloned()
             .ok_or_else(|| DbError::BackupError("Clone not found".to_string()))?;
 
@@ -469,7 +469,8 @@ impl SnapshotManager {
             if schedule.is_due() {
                 // Create snapshot for each database in the schedule
                 for database_name in &schedule.databases {
-                    let snapshot_name = format!("{}-{}", schedule.name));
+                    let snapshot_name = format!("{}-{}",
+                        schedule.name,
                         SystemTime::now().duration_since(UNIX_EPOCH)
                             .unwrap_or_default().as_secs());
 
@@ -577,7 +578,7 @@ impl SnapshotManager {
     }
 
     fn generate_scn(&self) -> u64 {
-        let mut scn = self.scn_counter.lock()));
+        let mut scn = self.scn_counter.lock();
         *scn += 1;
         *scn
     }
@@ -598,7 +599,7 @@ pub struct SnapshotStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_snapshot_creation() {

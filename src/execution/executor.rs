@@ -294,12 +294,12 @@ impl Executor {
     fn execute_aggregate(
         &self,
         input: QueryResult,
-        groupby: &[String],
+        group_by: &[String],
         aggregates: &[crate::execution::planner::AggregateExpr],
         _having: Option<&str>,
     ) -> Result<QueryResult, DbError> {
         use crate::execution::planner::AggregateFunction;
-        
+
         if group_by.is_empty() {
             // No grouping - single aggregate result
             let mut result_columns = Vec::new();

@@ -87,7 +87,7 @@ impl Default for DeadlockDetectorConfig {
 /// avoid excessive overhead in high-contention scenarios.
 pub struct DeadlockDetector {
     /// Wait-for graph: txn_id -> set of transactions it's waiting for.
-    wait_for_graph: Arc<RwLock<HashMap<TransactionId<TransactionId>>>>,
+    wait_for_graph: Arc<RwLock<HashMap<TransactionId, HashSet<TransactionId>>>>,
     /// Configuration.
     config: DeadlockDetectorConfig,
     /// Last detection time.
@@ -249,7 +249,7 @@ impl DeadlockDetector {
     fn has_cycle(
         &self,
         txn_id: TransactionId,
-        graph: &HashMap<TransactionId<TransactionId>>,
+        graph: &HashMap<TransactionId, HashSet<TransactionId>>,
         visited: &mut HashSet<TransactionId>,
         path: &mut Vec<TransactionId>,
         depth: usize,

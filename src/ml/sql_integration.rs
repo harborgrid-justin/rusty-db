@@ -384,7 +384,7 @@ impl ModelTable {
 
     /// Set prediction column name
     pub fn with_prediction_column(mut self, name: String) -> Self {
-        self.prediction_column = name));
+        self.prediction_column = name;
         self
     }
 
@@ -421,7 +421,7 @@ impl MLSqlParser {
 
     /// Check if SQL statement is ML-related
     pub fn is_ml_statement(sql: &str) -> bool {
-        let sql_upper = sql.trim().to_uppercase()));
+        let sql_upper = sql.trim().to_uppercase();
         sql_upper.starts_with("CREATE MODEL")
             || sql_upper.starts_with("DROP MODEL")
             || sql_upper.starts_with("RETRAIN MODEL")
@@ -449,7 +449,7 @@ impl MLSqlParser {
 
     /// Execute CREATE MODEL
     fn execute_create_model(&self, sql: &str) -> Result<MLExecutionResult> {
-        let stmt = CreateModelStatement::parse(sql)?);
+        let stmt = CreateModelStatement::parse(sql)?;
         let model_type = stmt.get_model_type()?;
         let hyperparameters = stmt.get_hyperparameters();
 
@@ -464,7 +464,7 @@ impl MLSqlParser {
 
     /// Execute DROP MODEL
     fn execute_drop_model(&self, sql: &str) -> Result<MLExecutionResult> {
-        let stmt = DropModelStatement::parse(sql)?);
+        let stmt = DropModelStatement::parse(sql)?;
 
         match self.ml_engine.registry().delete(&stmt.name, stmt.version) {
             Ok(_) => Ok(MLExecutionResult::ModelDropped {
@@ -539,7 +539,7 @@ impl MLExecutionResult {
 // ============================================================================
 
 /// Automatic feature detection from schema
-pub struct FeatureDetector));
+pub struct FeatureDetector;
 
 impl FeatureDetector {
     /// Detect numeric features from column types
@@ -577,14 +577,14 @@ impl FeatureDetector {
             suggestions.push(format!(
                 "Consider standardizing numeric features: {}",
                 numeric.join(", ")
-            ))));
+            ));
         }
 
         if !categorical.is_empty() {
             suggestions.push(format!(
                 "Consider one-hot encoding categorical features: {}",
                 categorical.join(", ")
-            ))));
+            ));
         }
 
         suggestions

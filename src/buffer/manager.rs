@@ -146,7 +146,7 @@ struct PageTable {
 
 impl PageTable {
     /// Create a new partitioned page table
-    fn new(numpartitions: usize, initial_capacity_per_partition: usize) -> Self {
+    fn new(num_partitions: usize, initial_capacity_per_partition: usize) -> Self {
         let mut partitions = Vec::with_capacity(num_partitions);
         for _ in 0..num_partitions {
             partitions.push(RwLock::new(HashMap::with_capacity(
@@ -277,11 +277,11 @@ struct FreeFrameManager {
 
 impl FreeFrameManager {
     /// Create a new free frame manager
-    ffn new(
-        numframes: usize,
-        enableper_core_pools: bool,
+    fn new(
+        num_frames: usize,
+        enable_per_core_pools: bool,
         frames_per_core: usize,
-    )-> Self {
+    ) -> Self {
         let num_cores = num_cpus::get();
 
         let per_core_pools = if enable_per_core_pools {
@@ -534,7 +534,7 @@ impl BufferPoolManager {
     }
 
     /// Create a new buffer pool manager with a disk manager for production I/O
-    pub fn with_disk_manager(config: BufferPoolConfig, diskmanager: Option<Arc<DiskManager>>) -> Self {
+    pub fn with_disk_manager(config: BufferPoolConfig, disk_manager: Option<Arc<DiskManager>>) -> Self {
         let num_frames = config.num_frames;
 
         // Allocate frames
@@ -1132,7 +1132,7 @@ impl BufferPoolManager {
                         frames,
                         free_frames,
                         eviction_policy,
-                    )));
+                    )
                 })
                 .expect("Failed to spawn prefetch worker thread");
 
@@ -1141,9 +1141,9 @@ impl BufferPoolManager {
     }
 
     /// Main loop for prefetch worker threads.
-    fnfn prefetch_worker_loop(
+    fn prefetch_worker_loop(
         shutdown: Arc<AtomicBool>,
-        prefetchqueue: Arc<Mutex<Vec<(PageId, u8)>,
+        prefetch_queue: Arc<Mutex<Vec<(PageId, u8)>>>,
         disk_manager: Option<Arc<DiskManager>>,
         page_table: Arc<PageTable>,
         frames: Arc<Vec<Arc<BufferFrame>>>,
@@ -1225,7 +1225,7 @@ impl BufferPoolManager {
     /// Try to evict a frame for prefetching (low priority eviction).
     fn try_evict_for_prefetch(
         frames: &Arc<Vec<Arc<BufferFrame>>>,
-        evictionpolicy: &Arc<dyn EvictionPolicy>,
+        eviction_policy: &Arc<dyn EvictionPolicy>,
     ) -> Option<FrameId> {
         // Use the eviction policy to find a victim frame
         if let Some(victim_id) = eviction_policy.find_victim(frames) {
@@ -1396,25 +1396,29 @@ pub mod windows {
     // Windows API function declarations (using raw FFI for maximum control)
     #[cfg(target_os = "windows")]
     extern "system" {
-        fn ffn CreateIoCompletionPort(
+        fn CreateIoCompletionPort(
             file_handle: RawHandle,
-            existingcompletion_port: RawHandle,
-            completionkey: usize,
+            existing_completion_port: RawHandle,
+            completion_key: usize,
             number_of_concurrent_threads: u32,
-        )Handle;
+        ) -> RawHandle;
 
-        fn Getfn fn GetQueuedCompletionStatus(
+        fn GetQueuedCompletionStatus(
             completion_port: RawHandle,
             lp_number_of_bytes_transferred: *mut u32,
             lp_completion_key: *mut usize,
             lpoverlapped: *mut *mut IocpOverlapped,
             dwmilliseconds: u32,
-        )    fn PostQuefn Posfn PostQueuedCompletionStatus(
-            completionport: RawHandle,
+        ) -> i32;
+
+        fn PostQueuedCompletionStatus(
+            completion_port: RawHandle,
             number_of_bytes_transferred: u32,
-            completionkey: usize,
+            completion_key: usize,
             overlapped: *mut IocpOverlapped,
-        ) fn ReadFile(
+        ) -> i32;
+
+        fn ReadFile(
             file: RawHandle,
             buffer: *mut u8,
             number_of_bytes_to_read: u32,
@@ -1473,7 +1477,7 @@ pub mod windows {
                 return Err(DbError::Storage(format!(
                     "Failed to create IOCP: Windows error {}",
                     error
-                )))));
+                )));
             }
 
             Ok(Self {
@@ -1507,7 +1511,7 @@ pub mod windows {
                 return Err(DbError::Storage(format!(
                     "Failed to associate file with IOCP: Windows error {}",
                     error
-                )))));
+                )));
             }
 
             self.data_file = Some(file);
@@ -1554,7 +1558,7 @@ pub mod windows {
                     return Err(DbError::Storage(format!(
                         "IOCP async read failed: Windows error {}",
                         error
-                    )))));
+                    )));
                 }
             }
 
@@ -1604,7 +1608,7 @@ pub mod windows {
                     return Err(DbError::Storage(format!(
                         "IOCP async write failed: Windows error {}",
                         error
-                    )))));
+                    )));
                 }
             }
 
@@ -1711,7 +1715,7 @@ pub mod windows {
                 return Err(DbError::Storage(format!(
                     "Failed to post IOCP completion: Windows error {}",
                     error
-                )))));
+                )));
             }
 
             Ok(())

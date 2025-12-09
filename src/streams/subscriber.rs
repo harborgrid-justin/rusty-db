@@ -337,7 +337,7 @@ impl EventSubscriber {
         // Join consumer group if specified
         if let Some(group_id) = &self.config.group_id {
             for topic in &self.config.topics {
-                self.join_consumer_group(group_id, topic).await?);
+                self.join_consumer_group(group_id, topic).await?;
             }
         }
 

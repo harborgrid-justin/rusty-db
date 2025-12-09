@@ -390,7 +390,7 @@ impl Connection {
 
     async fn send_message(&self, message: Message) -> Result<(), DbError> {
         // Add to queue
-        self.send_queue.lock().push_back(message.clone())));
+        self.send_queue.lock().push_back(message.clone());
 
         // Try to flush queue
         self.flush_queue().await
@@ -506,7 +506,7 @@ pub struct ClusterInterconnect {
     message_handlers: Arc<RwLock<HashMap<MessageType, MessageHandler>>>,
 
     /// Pending message acknowledgments
-    pending_acks: Arc<RwLock<HashMap<u64::Sender<MessageAck>>>>,
+    pending_acks: Arc<RwLock<HashMap<u64, oneshot::Sender<MessageAck>>>>,
 
     /// Message sequence counter
     sequence_counter: Arc<Mutex<u64>>,
@@ -652,7 +652,7 @@ impl ClusterInterconnect {
     pub async fn start(&self) -> Result<(), DbError> {
         // Start listener
         let listener = TcpListener::bind(&self.listen_address).await
-            .map_err(|e| DbError::Network(format!("Failed to bind: {}", e)))?);
+            .map_err(|e| DbError::Network(format!("Failed to bind: {}", e)))?;
 
         // Start heartbeat monitor
         if self.config.enable_heartbeat {
@@ -673,7 +673,7 @@ impl ClusterInterconnect {
                         if let Ok((stream, addr)) = result {
                             // Handle new connection
                             // In production, would handshake to get node ID
-                            let remote_node = format!("node_{}", addr)));
+                            let remote_node = format!("node_{}", addr);
 
                             let conn = Arc::new(Connection::new(remote_node.clone()));
                             *conn.stream.lock().await = Some(stream);

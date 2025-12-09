@@ -216,11 +216,11 @@ impl PlanOperator {
         let mut output = String::new();
         let prefix = "  ".repeat(indent);
 
-        output.push_str(&format!("{}[{}] {}\n", prefix, self.id, self.operator_type))));
+        output.push_str(&format!("{}[{}] {}\n", prefix, self.id, self.operator_type));
         output.push_str(&format!(
             "{}  Estimated: {} rows, cost {:.2}\n",
             prefix, self.estimated_rows, self.estimated_cost
-        ))));
+        ));
 
         if let (Some(rows), Some(time)) = (self.actual_rows, self.actual_time) {
             output.push_str(&format!(
@@ -228,22 +228,22 @@ impl PlanOperator {
                 prefix,
                 rows,
                 time.as_secs_f64() * 1000.0
-            ))));
+            ));
 
             if let Some(accuracy) = self.estimation_accuracy() {
-                output.push_str(&format!("{}  Estimation accuracy: {:.2}%\n", prefix, accuracy * 100.0))));
+                output.push_str(&format!("{}  Estimation accuracy: {:.2}%\n", prefix, accuracy * 100.0));
             }
         }
 
         if !self.details.is_empty() {
-            output.push_str(&format!("{}  Details:\n", prefix))));
+            output.push_str(&format!("{}  Details:\n", prefix));
             for (key, value) in &self.details {
-                output.push_str(&format!("{}    {}: {}\n", prefix, key, value))));
+                output.push_str(&format!("{}    {}: {}\n", prefix, key, value));
             }
         }
 
         if !self.wait_events.is_empty() {
-            output.push_str(&format!("{}  Wait Events:\n", prefix))));
+            output.push_str(&format!("{}  Wait Events:\n", prefix));
             for event in &self.wait_events {
                 output.push_str(&format!(
                     "{}    {}: {:.2}ms (count: {})\n",
@@ -251,7 +251,7 @@ impl PlanOperator {
                     event.event_type,
                     event.duration.as_secs_f64() * 1000.0,
                     event.count
-                ))));
+                ));
             }
         }
 
@@ -353,29 +353,29 @@ impl QueryProfile {
 
     pub fn format_summary(&self) -> String {
         let mut output = String::new();
-        output.push_str(&format!("Query ID: {}\n", self.query_id))));
-        output.push_str(&format!("SQL: {}\n", self.sql))));
+        output.push_str(&format!("Query ID: {}\n", self.query_id));
+        output.push_str(&format!("SQL: {}\n", self.sql));
         output.push_str(&format!(
             "Total Execution Time: {:.2}ms\n",
             self.total_execution_time.as_secs_f64() * 1000.0
-        ))));
+        ));
         output.push_str(&format!(
             "  Parse: {:.2}ms\n",
             self.parse_time.as_secs_f64() * 1000.0
-        ))));
+        ));
         output.push_str(&format!(
             "  Optimize: {:.2}ms\n",
             self.optimize_time.as_secs_f64() * 1000.0
-        ))));
+        ));
         output.push_str(&format!(
             "  Execution: {:.2}ms\n",
             self.execution_time.as_secs_f64() * 1000.0
-        ))));
-        output.push_str(&format!("Rows Returned: {}\n", self.rows_returned))));
-        output.push_str(&format!("Bytes Read: {}\n", self.bytes_read))));
-        output.push_str(&format!("Bytes Written: {}\n", self.bytes_written))));
-        output.push_str(&format!("Cache Hit Ratio: {:.2}%\n", self.cache_hit_ratio() * 100.0))));
-        output.push_str(&format!("Locks Acquired: {}\n", self.locks_acquired))));
+        ));
+        output.push_str(&format!("Rows Returned: {}\n", self.rows_returned));
+        output.push_str(&format!("Bytes Read: {}\n", self.bytes_read));
+        output.push_str(&format!("Bytes Written: {}\n", self.bytes_written));
+        output.push_str(&format!("Cache Hit Ratio: {:.2}%\n", self.cache_hit_ratio() * 100.0));
+        output.push_str(&format!("Locks Acquired: {}\n", self.locks_acquired));
 
         if !self.wait_events.is_empty() {
             output.push_str("\nWait Events:\n");
@@ -387,7 +387,7 @@ impl QueryProfile {
                     event_type,
                     total_time.as_secs_f64() * 1000.0,
                     total_count
-                ))));
+                ));
             }
         }
 
@@ -409,7 +409,7 @@ pub struct QueryProfiler {
 }
 
 impl QueryProfiler {
-    pub fn new(maxprofiles: usize) -> Self {
+    pub fn new(max_profiles: usize) -> Self {
         Self {
             profiles: Arc::new(RwLock::new(VecDeque::with_capacity(max_profiles))),
             max_profiles,

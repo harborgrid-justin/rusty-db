@@ -93,7 +93,7 @@ pub trait SnapshotManagement: Send + Sync {
     fn create_snapshot(&self, txn_id: TransactionId);
 
     /// Checks if a version is visible to a transaction.
-    fn is_visible(&self, txn_id: TransactionId, versiontxn_id: TransactionId) -> bool;
+    fn is_visible(&self, txn_id: TransactionId, version_txn_id: TransactionId) -> bool;
 
     /// Removes a snapshot.
     fn remove_snapshot(&self, txn_id: TransactionId);

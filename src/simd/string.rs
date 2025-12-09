@@ -769,6 +769,7 @@ impl Default for CaseInsensitiveComparator {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
     #[test]
     fn test_string_matcher_exact() {

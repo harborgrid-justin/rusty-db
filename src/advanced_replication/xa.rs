@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
@@ -212,7 +212,7 @@ impl XaTransactionManager {
         if rms.contains_key(&rm.id) {
             return Err(DbError::Replication(
                 format!("Resource manager {} already registered", rm.id)
-            ))));
+            ));
         }
 
         rms.insert(rm.id.clone(), rm);
@@ -226,7 +226,7 @@ impl XaTransactionManager {
         if transactions.contains_key(&xid) {
             return Err(DbError::Replication(
                 format!("Transaction {:?} already exists", xid)
-            ))));
+            ));
         }
 
         let txn = XaTransaction {
@@ -250,7 +250,7 @@ impl XaTransactionManager {
             entry_type: LogEntryType::Start,
             timestamp: Self::current_timestamp(),
             data: HashMap::new(),
-        })));
+        });
 
         let mut stats = self.stats.write();
         stats.total_transactions += 1;
@@ -266,12 +266,12 @@ impl XaTransactionManager {
         let txn = transactions.get_mut(xid)
             .ok_or_else(|| DbError::Replication(
                 format!("Transaction {:?} not found", xid)
-            ))?);
+            ))?;
 
         if txn.state != XaState::Active {
             return Err(DbError::Replication(
                 format!("Transaction {:?} not active", xid)
-            ))));
+            ));
         }
 
         txn.state = XaState::Idle;
@@ -289,12 +289,12 @@ impl XaTransactionManager {
                     format!("Transaction {:?} not found", xid)
                 ))?
                 .clone()
-        }));
+        };
 
         if txn.state != XaState::Idle && txn.state != XaState::Active {
             return Err(DbError::Replication(
                 format!("Transaction {:?} not in correct state for prepare", xid)
-            ))));
+            ));
         }
 
         // Send prepare to all resource managers
@@ -335,7 +335,7 @@ impl XaTransactionManager {
             entry_type: LogEntryType::Prepare,
             timestamp: Self::current_timestamp(),
             data: HashMap::new(),
-        })));
+        });
 
         Ok(votes)
     }
@@ -347,7 +347,7 @@ impl XaTransactionManager {
         let rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
-            ))?);
+            ))?;
 
         // In a real implementation, would send prepare over network
         // For now, simulate with a delay and random vote
@@ -363,7 +363,7 @@ impl XaTransactionManager {
 
     /// Commit phase of two-phase commit
     pub async fn xa_commit(&self, xid: &Xid, onephase: bool) -> Result<()> {
-        if one_phase {
+        if onephase {
             // One-phase commit optimization (single RM)
             return self.xa_commit_one_phase(xid).await;
         }
@@ -375,12 +375,12 @@ impl XaTransactionManager {
                     format!("Transaction {:?} not found", xid)
                 ))?
                 .clone()
-        }));
+        };
 
         if txn.state != XaState::Prepared {
             return Err(DbError::Replication(
                 format!("Transaction {:?} not prepared", xid)
-            ))));
+            ));
         }
 
         // Send commit to all prepared resource managers
@@ -439,7 +439,7 @@ impl XaTransactionManager {
             entry_type: LogEntryType::Commit,
             timestamp: Self::current_timestamp(),
             data: HashMap::new(),
-        })));
+        });
 
         Ok(())
     }
@@ -453,7 +453,7 @@ impl XaTransactionManager {
                     format!("Transaction {:?} not found", xid)
                 ))?
                 .clone()
-        }));
+        };
 
         if txn.resource_managers.len() != 1 {
             return Err(DbError::Replication(
@@ -487,7 +487,7 @@ impl XaTransactionManager {
         let rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
-            ))?);
+            ))?;
 
         // In a real implementation, would send commit over network
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
@@ -509,7 +509,7 @@ impl XaTransactionManager {
                     format!("Transaction {:?} not found", xid)
                 ))?
                 .clone()
-        }));
+        };
 
         // Send rollback to all resource managers
         for rm_id in &txn.resource_managers {
@@ -545,7 +545,7 @@ impl XaTransactionManager {
             entry_type: LogEntryType::Rollback,
             timestamp: Self::current_timestamp(),
             data: HashMap::new(),
-        })));
+        });
 
         Ok(())
     }
@@ -557,7 +557,7 @@ impl XaTransactionManager {
         let rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
-            ))?);
+            ))?;
 
         // In a real implementation, would send rollback over network
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
@@ -593,7 +593,7 @@ impl XaTransactionManager {
         in_doubt.remove(xid)
             .ok_or_else(|| DbError::Replication(
                 format!("In-doubt transaction {:?} not found", xid)
-            ))?);
+            ))?;
 
         // Log
         self.log_entry(XaLogEntry {
@@ -602,7 +602,7 @@ impl XaTransactionManager {
             entry_type: LogEntryType::Forget,
             timestamp: Self::current_timestamp(),
             data: HashMap::new(),
-        })));
+        });
 
         let mut stats = self.stats.write();
         stats.in_doubt_transactions = stats.in_doubt_transactions.saturating_sub(1);
@@ -617,7 +617,7 @@ impl XaTransactionManager {
         let mut txn = in_doubt.remove(xid)
             .ok_or_else(|| DbError::Replication(
                 format!("In-doubt transaction {:?} not found", xid)
-            ))?);
+            ))?;
 
         // Attempt to commit remaining branches
         for rm_id in &txn.resource_managers {
@@ -642,7 +642,7 @@ impl XaTransactionManager {
             entry_type: LogEntryType::HeuristicCommit,
             timestamp: Self::current_timestamp(),
             data: HashMap::new(),
-        })));
+        });
 
         let mut stats = self.stats.write();
         stats.heuristic_transactions += 1;
@@ -658,7 +658,7 @@ impl XaTransactionManager {
         let mut txn = in_doubt.remove(xid)
             .ok_or_else(|| DbError::Replication(
                 format!("In-doubt transaction {:?} not found", xid)
-            ))?);
+            ))?;
 
         // Attempt to rollback all branches
         for rm_id in &txn.resource_managers {
@@ -681,7 +681,7 @@ impl XaTransactionManager {
             entry_type: LogEntryType::HeuristicRollback,
             timestamp: Self::current_timestamp(),
             data: HashMap::new(),
-        })));
+        });
 
         let mut stats = self.stats.write();
         stats.heuristic_transactions += 1;
@@ -743,7 +743,6 @@ impl Default for XaTransactionManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_xa_transaction() {

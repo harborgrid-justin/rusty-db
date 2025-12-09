@@ -327,7 +327,7 @@ impl DecisionTree {
             .ok_or_else(|| crate::DbError::InvalidInput("Targets required".into()))?;
 
         let indices: Vec<usize> = (0..dataset.num_samples()).collect();
-        self.root = Some(self.build_tree(&dataset.features, targets, &indices, 0)?;
+        self.root = Some(self.build_tree(&dataset.features, targets, &indices, 0)?);
 
         Ok(())
     }
@@ -371,8 +371,8 @@ impl DecisionTree {
             if left_indices.len() >= self.min_samples_leaf
                 && right_indices.len() >= self.min_samples_leaf
             {
-                let left = Box::new(self.build_tree(features, targets, &left_indices, depth + 1)?;
-                let right = Box::new(self.build_tree(features, targets, &right_indices, depth + 1)?;
+                let left = Box::new(self.build_tree(features, targets, &left_indices, depth + 1)?);
+                let right = Box::new(self.build_tree(features, targets, &right_indices, depth + 1)?);
 
                 return Ok(TreeNode {
                     feature_idx: Some(feature_idx),

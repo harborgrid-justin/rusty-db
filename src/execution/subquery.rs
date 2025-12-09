@@ -129,7 +129,7 @@ impl InEvaluator {
 }
 
 /// Scalar subquery evaluator
-pub struct ScalarSubqueryEvaluator));
+pub struct ScalarSubqueryEvaluator;
 
 impl ScalarSubqueryEvaluator {
     /// Evaluate scalar subquery
@@ -375,7 +375,7 @@ impl SubqueryCache {
 }
 
 /// Subquery optimizer
-pub struct SubqueryOptimizer));
+pub struct SubqueryOptimizer;
 
 impl SubqueryOptimizer {
     /// Optimize subquery execution strategy

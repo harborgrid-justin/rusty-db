@@ -46,16 +46,17 @@ impl IndexAdvisor {
         let mut recommendations = Vec::new();
 
         // Detect missing indexes
-        recommendations.extend(self.detect_missing_indexes()?;
+        recommendations.extend(self.detect_missing_indexes()?);
 
         // Detect unused indexes
-        recommendations.extend(self.detect_unused_indexes()?;
+        recommendations.extend(self.detect_unused_indexes()?);
 
         // Suggest index consolidation
-        recommendations.extend(self.suggest_consolidation()?;
+        recommendations.extend(self.suggest_consolidation()?);
 
         // Identify redundant indexes
-        recommendations.extend(self.identify_redundant_indexes()?;
+        recommendations.extend(self.identify_redundant_indexes()?);
+
 
         // Sort by priority
         recommendations.sort_by(|a, b| b.priority.cmp(&a.priority));
@@ -92,7 +93,7 @@ impl IndexAdvisor {
                             priority: self.calculate_priority(benefit, cost),
                             estimated_benefit: benefit,
                             estimated_cost: cost,
-                        })));
+                        });
                     }
                 }
             }
@@ -115,7 +116,7 @@ impl IndexAdvisor {
                             priority: self.calculate_priority(benefit, cost),
                             estimated_benefit: benefit,
                             estimated_cost: cost,
-                        })));
+                        });
                     }
                 }
             }
@@ -142,7 +143,7 @@ impl IndexAdvisor {
                             priority: self.calculate_priority(benefit, cost),
                             estimated_benefit: benefit,
                             estimated_cost: cost,
-                        })));
+                        });
                     }
                 }
             }
@@ -170,7 +171,7 @@ impl IndexAdvisor {
                     priority: Priority::Medium,
                     estimated_benefit: index.maintenance_cost,
                     estimated_cost: 0.0,
-                })));
+                });
             }
         }
 
@@ -214,7 +215,7 @@ impl IndexAdvisor {
                             estimated_cost: self.estimate_composite_index_cost(
                                 &indexes[i].columns,
                             ),
-                        })));
+                        });
                     }
                 }
             }
@@ -246,7 +247,7 @@ impl IndexAdvisor {
                             priority: Priority::Medium,
                             estimated_benefit: idx1.maintenance_cost,
                             estimated_cost: 0.0,
-                        })));
+                        });
                     } else if self.is_prefix_index(idx2, idx1) {
                         recommendations.push(IndexRecommendation {
                             recommendation_type: RecommendationType::DropIndex,
@@ -259,7 +260,7 @@ impl IndexAdvisor {
                             priority: Priority::Medium,
                             estimated_benefit: idx2.maintenance_cost,
                             estimated_cost: 0.0,
-                        })));
+                        });
                     }
                 }
             }

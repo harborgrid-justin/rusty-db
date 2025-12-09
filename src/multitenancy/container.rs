@@ -269,7 +269,7 @@ impl ContainerDatabase {
         let cdb_id = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
-            .as_secs()));
+            .as_secs();
 
         let mut root_parameters = HashMap::new();
         Self::initialize_default_parameters(&mut root_parameters);
@@ -314,7 +314,7 @@ impl ContainerDatabase {
                     is_inherited: inherited,
                     description: format!("Parameter: {}", name),
                 },
-            )));
+            );
         }
     }
 
@@ -376,7 +376,7 @@ impl ContainerDatabase {
         if pdbs.len() >= self.max_pdbs as usize {
             return Err(ContainerError::ResourceExhausted(
                 format!("Maximum number of PDBs ({}) reached", self.max_pdbs)
-            ))));
+            ));
         }
 
         drop(pdbs);
@@ -428,7 +428,7 @@ impl ContainerDatabase {
         if pdbs.len() >= self.max_pdbs as usize {
             return Err(ContainerError::ResourceExhausted(
                 format!("Maximum number of PDBs ({}) reached", self.max_pdbs)
-            ))));
+            ));
         }
 
         let source_config = source_pdb.read().await;
@@ -526,7 +526,7 @@ impl ContainerDatabase {
             size_mb: source_config.total_size_mb,
             ref_count: 1,
             is_thin: true,
-        }));
+        };
 
         // Create new PDB configuration referencing snapshot
         let mut target_config = source_config.clone();
@@ -665,7 +665,7 @@ impl ContainerDatabase {
         }
 
         // Generate XML metadata file
-        let xml_path = PathBuf::from(format!("/exports/{}.xml", pdb_name))));
+        let xml_path = PathBuf::from(format!("/exports/{}.xml", pdb_name));
 
         // Serialize PDB configuration
         let xml_content = self.generate_pdb_xml_metadata(&pdb_config);
@@ -699,7 +699,7 @@ impl ContainerDatabase {
         if pdbs.len() >= self.max_pdbs as usize {
             return Err(ContainerError::ResourceExhausted(
                 format!("Maximum number of PDBs ({}) reached", self.max_pdbs)
-            ))));
+            ));
         }
 
         drop(pdbs);
@@ -719,7 +719,7 @@ impl ContainerDatabase {
     }
 
     /// Drop a PDB permanently
-    pub async fn drop_pdb(&self, pdb_name: String, includingdatafiles: bool) -> ContainerResult<()> {
+    pub async fn drop_pdb(&self, pdb_name: String, including_datafiles: bool) -> ContainerResult<()> {
         let mut pdbs = self.pdbs.write().await;
 
         let pdb = pdbs.remove(&pdb_name)

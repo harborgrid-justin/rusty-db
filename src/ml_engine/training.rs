@@ -415,7 +415,7 @@ impl TrainingEngine {
                 self.train_neural_network(&train_dataset, &val_dataset, &hyperparameters, gpu_config)?
             }
             _ => {
-                return Err(DbError::InvalidInput("Unsupported algorithm".into()));
+                return Err(crate::DbError::InvalidInput("Unsupported algorithm".into()));
             }
         };
 
@@ -427,7 +427,7 @@ impl TrainingEngine {
             algorithm,
             parameters,
             hyperparameters,
-        )));
+        );
 
         let mut final_stats = stats;
         final_stats.training_time = training_time;
@@ -583,7 +583,7 @@ impl TrainingEngine {
 
         // Serialize tree
         let tree_data = bincode::serialize(&model)
-            .map_err(|e| DbError::Internal(format!("Tree serialization failed: {}", e)))?);
+            .map_err(|e| crate::DbError::Internal(format!("Tree serialization failed: {}", e)))?;
 
         let parameters = ModelParameters::TreeModel { tree_data };
 
@@ -732,7 +732,7 @@ impl TrainingEngine {
         model.fit(train)?;
 
         let distributions = bincode::serialize(&model)
-            .map_err(|e| DbError::Internal(format!("Serialization failed: {}", e)))?);
+            .map_err(|e| crate::DbError::Internal(format!("Serialization failed: {}", e)))?;
 
         let parameters = ModelParameters::BayesModel {
             priors: model.class_priors.clone(),

@@ -44,7 +44,7 @@ impl ResourceManager {
     }
     
     /// Allocate resources for a query
-    pub fn allocate_query_resources(&self, query_id: String, estimatedmemory: u64) -> Result<ResourceAllocation> {
+    pub fn allocate_query_resources(&self, query_id: String, estimated_memory: u64) -> Result<ResourceAllocation> {
         // Check memory availability
         self.memory_manager.allocate(query_id.clone(), estimated_memory)?;
         
@@ -148,7 +148,7 @@ impl MemoryManager {
                 "Insufficient memory: requested {}, available {}",
                 bytes,
                 self.total_bytes - *used
-            )))));
+            )));
         }
         
         *used += bytes;

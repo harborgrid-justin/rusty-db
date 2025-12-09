@@ -560,7 +560,7 @@ impl Accumulator {
             Accumulator::Push { expr } => {
                 let mut arr = Vec::new();
                 for doc in documents {
-                    arr.push(expr.evaluate(doc)?;
+                    arr.push(expr.evaluate(doc)?);
                 }
                 Ok(Value::Array(arr))
             }

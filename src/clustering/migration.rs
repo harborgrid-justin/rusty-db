@@ -169,11 +169,11 @@ impl MigrationCoordinator for DataMigrationManager {
         }
     }
 
-    fn get_migration_status(&self, taskid: &str) -> Result<MigrationStatus, DbError> {
+    fn get_migration_status(&self, task_id: &str) -> Result<MigrationStatus, DbError> {
         // Check active migrations
         {
             let active = self.active_migrations.read()
-                .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?);
+                .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
             if active.contains_key(task_id) {
                 return Ok(MigrationStatus::InProgress);
             }
@@ -265,8 +265,8 @@ pub struct TransferResult {
 
 /// Trait for cluster coordination access
 pub trait ClusterCoordinator {
-    fn get_nodes(&self) -> Result<Vec<NodeInfo>, DbError>));
-    fn get_node_load(&self, nodeid: &NodeId) -> Result<f64, DbError>;
+    fn get_nodes(&self) -> Result<Vec<NodeInfo>, DbError>;
+    fn get_node_load(&self, node_id: &NodeId) -> Result<f64, DbError>;
 }
 
 use std::time::Duration;

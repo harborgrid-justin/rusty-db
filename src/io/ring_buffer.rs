@@ -10,6 +10,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr;
+use std::mem::size_of;
 
 // ============================================================================
 // Ring Buffer Configuration

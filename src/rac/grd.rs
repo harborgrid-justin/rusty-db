@@ -512,7 +512,7 @@ impl GlobalResourceDirectory {
         &self,
         resource_id: &ResourceId,
         accessor: NodeId,
-        iswrite: bool,
+        is_write: bool,
         latency_us: u64,
     ) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(resource_id);
@@ -695,7 +695,7 @@ impl GlobalResourceDirectory {
                 resource_id: request.resource_id.clone(),
                 new_master: request.new_master.clone(),
                 reason: format!("{:?}", request.reason),
-            }));
+            };
 
             let _ = self.message_tx.send(message);
         }
@@ -877,6 +877,8 @@ impl GlobalResourceDirectory {
     /// Maps resources to virtual nodes, which map to physical nodes
     /// Provides better load distribution and minimal remapping on node changes
     fn hash_resource_consistent(&self, resource_id: &ResourceId) -> usize {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
 
         // Hash the resource to a ring position
         let mut hasher = DefaultHasher::new();

@@ -91,7 +91,7 @@ impl RTree {
     }
 
     /// Bulk load entries efficiently
-    pub fn bulk_load(&mut self, mut entries: Vec<(u64)>) -> Result<()> {
+    pub fn bulk_load(&mut self, mut entries: Vec<(u64, BoundingBox)>) -> Result<()> {
         if entries.is_empty() {
             return Ok(());
         }
@@ -100,13 +100,13 @@ impl RTree {
         entries.sort_by_key(|(_, bbox)| self.hilbert_value(&bbox.center()));
 
         // Build tree bottom-up
-        self.root = Some(self.build_level(&entries, 0)?;
+        self.root = Some(self.build_level(&entries, 0)?);
         self.size = entries.len();
 
         Ok(())
     }
 
-    fn build_level(&self, entries: &[(u64)], level: usize) -> Result<RTreeNode> {
+    fn build_level(&self, entries: &[(u64, BoundingBox)], level: usize) -> Result<RTreeNode> {
         if entries.len() <= self.max_entries {
             // Create leaf node
             let mut node_entries = Vec::new();
@@ -131,7 +131,7 @@ impl RTree {
         // Split entries into groups
         let mut child_nodes = Vec::new();
         for chunk in entries.chunks(self.max_entries) {
-            child_nodes.push(self.build_level(chunk, level)?;
+            child_nodes.push(self.build_level(chunk, level)?);
         }
 
         // Create internal node
@@ -354,7 +354,7 @@ impl SpatialIndex for RTree {
         results
     }
 
-    fn nearest(&self, point: &Coordinate, maxdistance: f64) -> Option<u64> {
+    fn nearest(&self, point: &Coordinate, max_distance: f64) -> Option<u64> {
         let query = BoundingBox::new(
             point.x - max_distance,
             point.y - max_distance,
@@ -383,7 +383,7 @@ impl SpatialIndex for RTree {
 }
 
 impl RTree {
-    fn insert_entry(node: &mut RTreeNode, entry: RTreeEntry, maxentries: usize) -> Result<()> {
+    fn insert_entry(node: &mut RTreeNode, entry: RTreeEntry, max_entries: usize) -> Result<()> {
         if node.is_leaf {
             node.bbox.expand(entry.bbox());
             node.entries.push(entry);
@@ -496,13 +496,13 @@ impl Quadtree {
         ]
     }
 
-    ffn insert_into_node(
+    fn insert_into_node(
         node: &mut QuadtreeNode,
         id: u64,
         point: Coordinate,
-        maxpoints: usize,
-        maxdepth: usize,
-    )> Result<()> {
+        max_points: usize,
+        max_depth: usize,
+    ) -> Result<()> {
         if !node.bounds.contains_coord(&point) {
             return Err(DbError::InvalidInput("Point outside node bounds".to_string()));
         }
@@ -649,14 +649,14 @@ impl SpatialIndex for Quadtree {
 
 /// Grid-based spatial index for uniform distributions
 pub struct GridIndex {
-    grid: HashMap<(i32, i32), Vec<(u64)>>,
+    grid: HashMap<(i32, i32), Vec<(u64, BoundingBox)>>,
     cell_size: f64,
     bounds: BoundingBox,
     size: usize,
 }
 
 impl GridIndex {
-    pub fn new(bounds: BoundingBox, cellsize: f64) -> Self {
+    pub fn new(bounds: BoundingBox, cell_size: f64) -> Self {
         Self {
             grid: HashMap::new(),
             cell_size,
@@ -890,7 +890,7 @@ impl ConcurrentSpatialIndex {
 /// Index builder for bulk loading
 pub struct SpatialIndexBuilder {
     index_type: IndexType,
-    entries: Vec<(u64)>,
+    entries: Vec<(u64, BoundingBox)>,
 }
 
 pub enum IndexType {
@@ -965,8 +965,8 @@ mod tests {
         let bounds = BoundingBox::new(0.0, 0.0, 100.0, 100.0);
         let mut qtree = Quadtree::new(bounds);
 
-        qtree.insert(BoundingBox::new(10.0, 10.0, 10.0, 10.0), 1).unwrap();
-        qtree.insert(BoundingBox::new(90.0, 90.0, 90.0, 90.0), 2).unwrap();
+        qtree.insert(1, BoundingBox::new(10.0, 10.0, 10.0, 10.0)).unwrap();
+        qtree.insert(2, BoundingBox::new(90.0, 90.0, 90.0, 90.0)).unwrap();
 
         let query = BoundingBox::new(0.0, 0.0, 50.0, 50.0);
         let results = qtree.search(&query);
@@ -991,8 +991,8 @@ mod tests {
         let bounds = BoundingBox::new(0.0, 0.0, 100.0, 100.0);
         let mut grid = GridIndex::new(bounds, 10.0);
 
-        grid.insert(BoundingBox::new(5.0, 5.0, 7.0, 7.0), 1).unwrap();
-        grid.insert(BoundingBox::new(25.0, 25.0, 27.0, 27.0), 2).unwrap();
+        grid.insert(1, BoundingBox::new(5.0, 5.0, 7.0, 7.0)).unwrap();
+        grid.insert(2, BoundingBox::new(25.0, 25.0, 27.0, 27.0)).unwrap();
 
         let query = BoundingBox::new(0.0, 0.0, 15.0, 15.0);
         let results = grid.search(&query);

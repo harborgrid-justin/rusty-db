@@ -87,7 +87,7 @@ pub enum RetentionPolicy {
 }
 
 impl RetentionPolicy {
-    pub fn should_retain(&self, event: &Event, currenttime: SystemTime) -> bool {
+    pub fn should_retain(&self, event: &Event, current_time: SystemTime) -> bool {
         match self {
             RetentionPolicy::TimeBased { retention } => {
                 if let Ok(age) = current_time.duration_since(event.event_time) {
@@ -312,7 +312,7 @@ impl EventStream {
             return Err(crate::error::DbError::InvalidOperation(format!(
                 "Stream {} is not active (state: {:?})",
                 self.id, state
-            )))));
+            )));
         }
         drop(state);
 
@@ -341,7 +341,7 @@ impl EventStream {
     pub fn publish_batch(&self, events: Vec<Event>) -> Result<Vec<StreamPosition>> {
         let mut positions = Vec::new();
         for event in events {
-            positions.push(self.publish(event)?;
+            positions.push(self.publish(event)?);
         }
         Ok(positions)
     }
@@ -440,7 +440,7 @@ pub struct LazyWatermarkManager {
     watermarks: HashMap<u32, Watermark>,
 
     /// Last propagated watermark per partition
-    last_propagated: HashMap<u32>,
+    last_propagated: HashMap<u32, SystemTime>,
 
     /// Minimum time advancement before propagation (default: 1 second)
     min_advancement: Duration,
@@ -563,7 +563,7 @@ impl LazyWatermarkManager {
     pub fn update_watermark(
         &mut self,
         partition: u32,
-        newwatermark: Watermark,
+        new_watermark: Watermark,
     ) -> Option<Watermark> {
         let should_propagate = if let Some(&last) = self.last_propagated.get(&partition) {
             if let Ok(elapsed) = new_watermark.timestamp.duration_since(last) {
@@ -640,14 +640,14 @@ impl LazyWatermarkManager {
             WatermarkStrategy::Periodic(interval) => {
                 // Generate watermark = latest_event_time - max_lateness
                 let watermark_time = latest_event_time - Duration::from_secs(5);
-                let watermark = Watermark::new(watermark_time::from_secs(10));
+                let watermark = Watermark::new(watermark_time, Duration::from_secs(10));
 
                 self.update_watermark(partition, watermark)
             }
 
             WatermarkStrategy::Ascending => {
                 // For ordered streams, watermark = latest event time
-                let watermark = Watermark::new(latest_event_time::from_secs(0));
+                let watermark = Watermark::new(latest_event_time, Duration::from_secs(0));
                 self.update_watermark(partition, watermark)
             }
 
@@ -662,7 +662,7 @@ impl LazyWatermarkManager {
 
                 if let Ok(skew) = latest_event_time.duration_since(min_time) {
                     if skew <= max_skew {
-                        let watermark = Watermark::new(min_time::from_secs(10));
+                        let watermark = Watermark::new(min_time, Duration::from_secs(10));
                         return self.update_watermark(partition, watermark);
                     }
                 }
@@ -757,9 +757,10 @@ impl StreamPartition {
         // Check message size
         let event_size = self.estimate_size(&event);
         if event_size > self.config.max_message_bytes {
+            return Err(crate::error::DbError::InvalidOperation(format!(
                 "Event size {} exceeds maximum {}",
                 event_size, self.config.max_message_bytes
-            ))));
+            )));
         }
 
         self.log.insert(offset, event);
@@ -901,7 +902,7 @@ pub struct ConsumerGroup {
 impl ConsumerGroup {
     fn new(
         id: String,
-        numpartitions: u32,
+        num_partitions: u32,
         partitions: Vec<Arc<Mutex<StreamPartition>>>,
     ) -> Self {
         Self {
@@ -915,7 +916,7 @@ impl ConsumerGroup {
     }
 
     /// Register a consumer
-    pub fn register_consumer(&self, consumerid: impl Into<String>) -> Result<Consumer> {
+    pub fn register_consumer(&self, consumer_id: impl Into<String>) -> Result<Consumer> {
         let consumer_id = consumer_id.into();
 
         let session = ConsumerSession {
@@ -1084,7 +1085,7 @@ impl StreamManager {
 
     /// Create a new stream
     pub fn create_stream(&self, id: StreamId, config: StreamConfig) -> Result<Arc<EventStream>> {
-        let stream = Arc::new(EventStream::new(id.clone(), config)?;
+        let stream = Arc::new(EventStream::new(id.clone(), config)?);
 
         let mut streams = self.streams.write().unwrap();
         streams.insert(id, stream.clone());

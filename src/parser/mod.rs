@@ -127,7 +127,7 @@ impl SqlParser {
         let mut statements = Vec::new();
 
         for stmt in ast {
-            statements.push(self.convert_statement(stmt)?;
+            statements.push(self.convert_statement(stmt)?);
         }
 
         Ok(statements)
