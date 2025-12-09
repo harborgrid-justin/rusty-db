@@ -44,7 +44,7 @@ use parking_lot::RwLock;
 use tokio::time::timeout;
 use tracing::{debug, info, warn};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 /// Circuit breaker state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

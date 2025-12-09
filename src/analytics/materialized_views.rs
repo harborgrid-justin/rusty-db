@@ -10,7 +10,7 @@
 
 use std::collections::HashSet;
 use std::time::SystemTime;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::catalog::Schema;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -113,7 +113,7 @@ pub struct StalenessInfo {
     pub is_stale: bool,
     pub staleness_duration: Option<Duration>,
     pub pending_changes: usize,
-    pub last_base_table_update: HashMap<String>,
+    pub last_base_table_update: HashMap<String, SystemTime>,
     pub confidence_level: f64, // 0.0 to 1.0
 }
 
@@ -484,11 +484,11 @@ pub enum RefreshMethod {
 /// Dependency graph for materialized views
 pub struct DependencyGraph {
     /// View ID -> Base tables
-    view_to_tables: HashMap<String<String>>,
+    view_to_tables: HashMap<String, HashSet<String>>,
     /// Table -> View IDs
-    table_to_views: HashMap<String<String>>,
+    table_to_views: HashMap<String, HashSet<String>>,
     /// View ID -> Dependent view IDs
-    view_dependencies: HashMap<String<String>>,
+    view_dependencies: HashMap<String, HashSet<String>>,
 }
 
 impl DependencyGraph {

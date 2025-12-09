@@ -201,11 +201,11 @@ pub struct PrivilegeManager {
     /// All privilege grants
     grants: Arc<RwLock<HashMap<String, PrivilegeGrant>>>,
     /// Grants by grantee (for quick lookup)
-    grantee_index: Arc<RwLock<HashMap<PrincipalId<String>>>>,
+    grantee_index: Arc<RwLock<HashMap<PrincipalId, Vec<String>>>>,
     /// Grants by grantor (for dependency tracking)
-    grantor_index: Arc<RwLock<HashMap<PrincipalId<String>>>>,
+    grantor_index: Arc<RwLock<HashMap<PrincipalId, Vec<String>>>>,
     /// Grants by object (for object-level privileges)
-    object_index: Arc<RwLock<HashMap<ObjectId<String>>>>,
+    object_index: Arc<RwLock<HashMap<ObjectId, Vec<String>>>>,
     /// Privilege dependencies
     dependencies: Arc<RwLock<Vec<PrivilegeDependency>>>,
     /// Grant ID counter
@@ -534,7 +534,7 @@ impl PrivilegeManager {
         let object_index = self.object_index.read();
         let grants = self.grants.read();
 
-        if let Some(grant_ids) = object_index.get(object_id) {
+        if let Some(grant_ids) = object_index.get(objectid) {
             grant_ids.iter()
                 .filter_map(|id| grants.get(id))
                 .filter(|g| g.is_active)

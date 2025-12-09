@@ -245,14 +245,14 @@ impl ConnectionManager {
         let _permit = self.accept_connections.acquire().await
             .map_err(|e| DbError::Internal(format!("Connection acquire failed: {}", e)))?;
 
-        let mut count = self.active_connections.lock().await;
+        let mut count = self.active_connections.lock().unwrap().await;
         *count += 1;
 
         Ok(())
     }
 
     async fn release_connection(&self) {
-        let mut count = self.active_connections.lock().await;
+        let mut count = self.active_connections.lock().unwrap().await;
         if *count > 0 {
             *count -= 1;
         }
@@ -268,7 +268,7 @@ impl ConnectionManager {
 
         loop {
             let count = {
-                let count = self.active_connections.lock().await;
+                let count = self.active_connections.lock().unwrap().await;
                 *count
             };
 
@@ -728,13 +728,13 @@ mod tests {
         }
 
         async fn start(&self) -> Result<()> {
-            let mut started = self.started.lock().await;
+            let mut started = self.started.lock().unwrap().await;
             *started = true;
             Ok(())
         }
 
         async fn stop(&self) -> Result<()> {
-            let mut started = self.started.lock().await;
+            let mut started = self.started.lock().unwrap().await;
             *started = false;
             Ok(())
         }
@@ -764,10 +764,10 @@ mod tests {
         manager.register_component(component).await.unwrap();
         manager.startup().await.unwrap();
 
-        assert!(*started.lock().await);
+        assert!(*started.lock().unwrap().await);
 
         manager.shutdown().await.unwrap();
 
-        assert!(!*started.lock().await);
+        assert!(!*started.lock().unwrap().await);
     }
 }

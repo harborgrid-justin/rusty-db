@@ -442,7 +442,7 @@ pub struct ConflictPatternAnalysis {
     /// Conflicts by operation type
     pub conflicts_by_operation: HashMap<ReplicationOperation, usize>,
     /// Average resolution time by strategy
-    pub avg_resolution_time_by_strategy: HashMap<ConflictResolutionStrategy>,
+    pub avg_resolution_time_by_strategy: HashMap<ConflictResolutionStrategy, Duration>,
     /// Most common conflict patterns
     pub common_patterns: Vec<ConflictPattern>,
     /// Recommended optimizations

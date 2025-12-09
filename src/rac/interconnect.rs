@@ -377,7 +377,7 @@ impl Connection {
 
         match TcpStream::connect(address).await {
             Ok(stream) => {
-                *self.stream.lock().await = Some(stream);
+                *self.stream.lock().unwrap().await = Some(stream);
                 *self.state.write() = ConnectionState::Connected;
                 Ok(())
             }
@@ -390,7 +390,7 @@ impl Connection {
 
     async fn send_message(&self, message: Message) -> Result<(), DbError> {
         // Add to queue
-        self.send_queue.lock().push_back(message.clone());
+        self.send_queue.lock().unwrap().push_back(message.clone());
 
         // Try to flush queue
         self.flush_queue().await
@@ -404,7 +404,7 @@ impl Connection {
         };
 
         // Now process messages with stream lock (using tokio::sync::Mutex)
-        let mut stream_guard = self.stream.lock().await;
+        let mut stream_guard = self.stream.lock().unwrap().await;
 
         if let Some(stream) = stream_guard.as_mut() {
             for message in messages_to_send {
@@ -433,7 +433,7 @@ impl Connection {
 
     async fn receive_message(&self) -> Result<Message, DbError> {
         // Use tokio::sync::Mutex which can be held across await
-        let mut stream_guard = self.stream.lock().await;
+        let mut stream_guard = self.stream.lock().unwrap().await;
 
         if let Some(stream) = stream_guard.as_mut() {
             // Read length prefix
@@ -676,7 +676,7 @@ impl ClusterInterconnect {
                             let remote_node = format!("node_{}", addr);
 
                             let conn = Arc::new(Connection::new(remote_node.clone()));
-                            *conn.stream.lock().await = Some(stream);
+                            *conn.stream.lock().unwrap().await = Some(stream);
                             *conn.state.write() = ConnectionState::Connected;
 
                             connections.write().insert(remote_node.clone(), conn.clone());

@@ -29,7 +29,7 @@ use std::sync::Arc;
 use std::time::{Duration};
 use tokio::sync::{RwLock};
 use serde::{Serialize, Deserialize};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::pdb::{PluggableDatabase, PdbId, PdbConfig, PdbLifecycleState, PdbCreateMode};
 use super::isolation::ResourceLimits;
 
@@ -348,7 +348,7 @@ impl CdbRegistry {
 
     /// Register a new PDB
     pub async fn register(&self, pdb: PluggableDatabase) -> Result<PdbId> {
-        let mut next_id = self.next_id.lock().await;
+        let mut next_id = self.next_id.lock().unwrap();
         let pdb_id = PdbId::new(*next_id);
         *next_id += 1;
         drop(next_id);
@@ -546,7 +546,7 @@ impl BackgroundProcessManager {
         tokio::spawn(async move {
             loop {
                 // Check shutdown signal
-                if *shutdown.lock().await {
+                if *shutdown.lock().unwrap() {
                     break;
                 }
 
@@ -569,7 +569,7 @@ impl BackgroundProcessManager {
 
     /// Stop all background processes
     pub async fn stop_all(&self) -> Result<()> {
-        *self.shutdown.lock().await = true;
+        *self.shutdown.lock().unwrap() = true;
 
         // Wait for processes to stop
         tokio::time::sleep(Duration::from_secs(5)).await;

@@ -386,7 +386,7 @@ impl CircuitBreaker {
             CircuitState::Closed => true,
             CircuitState::Open => {
                 // Check if timeout has elapsed
-                let last_failure = self.last_failure.lock().await;
+                let last_failure = self.last_failure.lock().unwrap().await;
                 if let Some(last) = *last_failure {
                     if last.elapsed().as_secs() >= self.timeout {
                         // Transition to half-open
@@ -409,12 +409,12 @@ impl CircuitBreaker {
         match state {
             CircuitState::Closed => {
                 // Reset failure count
-                let mut count = self.failure_count.lock().await;
+                let mut count = self.failure_count.lock().unwrap().await;
                 *count = 0;
             }
             CircuitState::HalfOpen => {
                 // Increment success count
-                let mut success = self.success_count.lock().await;
+                let mut success = self.success_count.lock().unwrap().await;
                 *success += 1;
 
                 if *success >= self.success_threshold {
@@ -423,10 +423,10 @@ impl CircuitBreaker {
                     let mut state = self.state.write().await;
                     *state = CircuitState::Closed;
 
-                    let mut failure_count = self.failure_count.lock().await;
+                    let mut failure_count = self.failure_count.lock().unwrap().await;
                     *failure_count = 0;
 
-                    let mut success_count = self.success_count.lock().await;
+                    let mut success_count = self.success_count.lock().unwrap().await;
                     *success_count = 0;
                 }
             }
@@ -440,7 +440,7 @@ impl CircuitBreaker {
 
         match state {
             CircuitState::Closed => {
-                let mut count = self.failure_count.lock().await;
+                let mut count = self.failure_count.lock().unwrap().await;
                 *count += 1;
 
                 if *count >= self.failure_threshold {
@@ -449,7 +449,7 @@ impl CircuitBreaker {
                     let mut state = self.state.write().await;
                     *state = CircuitState::Open;
 
-                    let mut last_failure = self.last_failure.lock().await;
+                    let mut last_failure = self.last_failure.lock().unwrap().await;
                     *last_failure = Some(Instant::now());
                 }
             }
@@ -458,10 +458,10 @@ impl CircuitBreaker {
                 let mut state = self.state.write().await;
                 *state = CircuitState::Open;
 
-                let mut last_failure = self.last_failure.lock().await;
+                let mut last_failure = self.last_failure.lock().unwrap().await;
                 *last_failure = Some(Instant::now());
 
-                let mut success_count = self.success_count.lock().await;
+                let mut success_count = self.success_count.lock().unwrap().await;
                 *success_count = 0;
             }
             CircuitState::Open => {}
@@ -478,10 +478,10 @@ impl CircuitBreaker {
         let mut state = self.state.write().await;
         *state = CircuitState::Closed;
 
-        let mut failure_count = self.failure_count.lock().await;
+        let mut failure_count = self.failure_count.lock().unwrap().await;
         *failure_count = 0;
 
-        let mut success_count = self.success_count.lock().await;
+        let mut success_count = self.success_count.lock().unwrap().await;
         *success_count = 0;
     }
 }
@@ -563,7 +563,7 @@ impl RateLimiter {
     /// Check if N requests are allowed
     pub async fn allow_n(&self, key: impl Into<String>, n: u32) -> bool {
         let key = key.into();
-        let mut buckets = self.buckets.lock().await;
+        let mut buckets = self.buckets.lock().unwrap().await;
 
         let bucket = buckets
             .entry(key)
@@ -574,7 +574,7 @@ impl RateLimiter {
 
     /// Reset rate limit for a key
     pub async fn reset(&self, key: &str) {
-        let mut buckets = self.buckets.lock().await;
+        let mut buckets = self.buckets.lock().unwrap().await;
         buckets.remove(key);
     }
 }

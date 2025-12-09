@@ -80,8 +80,8 @@ impl HashJoinExecutor {
     #[inline]
     pub fn execute(
         &self,
-        buildside: QueryResult,
-        probeside: QueryResult,
+        build_side: QueryResult,
+        probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
@@ -106,8 +106,8 @@ impl HashJoinExecutor {
     #[inline]
     fn simple_hash_join(
         &self,
-        buildside: QueryResult,
-        probeside: QueryResult,
+        build_side: QueryResult,
+        probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
@@ -154,8 +154,8 @@ impl HashJoinExecutor {
     /// Grace hash join - partitions both sides to disk
     fn grace_hash_join(
         &self,
-        buildside: QueryResult,
-        probeside: QueryResult,
+        build_side: QueryResult,
+        probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
@@ -229,8 +229,8 @@ impl HashJoinExecutor {
     /// Hybrid hash join - keeps hot partitions in memory, spills cold ones
     fn hybrid_hash_join(
         &self,
-        buildside: QueryResult,
-        probeside: QueryResult,
+        build_side: QueryResult,
+        probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
@@ -515,8 +515,8 @@ impl BloomFilterHashJoin {
     /// Execute join with bloom filter optimization
     pub fn execute_with_bloom_filter(
         &mut self,
-        buildside: QueryResult,
-        probeside: QueryResult,
+        build_side: QueryResult,
+        probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {

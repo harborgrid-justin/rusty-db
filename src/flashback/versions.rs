@@ -32,7 +32,7 @@ use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::time_travel::{SCN, Timestamp, RowVersion, current_timestamp};
 
 // ============================================================================

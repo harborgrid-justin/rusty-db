@@ -11,7 +11,7 @@
 use crate::error::DbError;
 use crate::error::Result;
 use crate::spatial::geometry::{
-    Coordinate, LinearRing, Point, Polygon,
+    Coordinate, Geometry, LinearRing, LineString, Point, Polygon,
 };
 
 /// Spatial relationship types based on DE-9IM (Dimensionally Extended 9-Intersection Model)

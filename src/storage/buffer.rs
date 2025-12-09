@@ -423,7 +423,7 @@ impl BufferPoolManager {
                 let pool = self.pool.read();
                 if let Some(frame) = pool.get(&frame_id) {
                     frame.pin();
-                    self.replacer.lock().record_access(page_id);
+                    self.replacer.lock().unwrap().record_access(page_id);
                     self.hit_count.fetch_add(1, Ordering::Relaxed);
 
                     // Return a COW copy
@@ -459,7 +459,7 @@ impl BufferPoolManager {
         }
 
         // Update replacer
-        self.replacer.lock().record_access(page_id);
+        self.replacer.lock().unwrap().record_access(page_id);
 
         Ok(page)
     }
@@ -484,7 +484,7 @@ impl BufferPoolManager {
             page_table.insert(page_id, frame_id);
         }
 
-        self.replacer.lock().record_access(page_id);
+        self.replacer.lock().unwrap().record_access(page_id);
 
         Ok(page)
     }
@@ -536,12 +536,12 @@ impl BufferPoolManager {
 
     fn get_free_frame(&self) -> Result<usize> {
         // Try free list first
-        if let Some(frame_id) = self.free_frames.lock().pop() {
+        if let Some(frame_id) = self.free_frames.lock().unwrap().pop() {
             return Ok(frame_id);
         }
 
         // Evict a page
-        let victim_page_id = self.replacer.lock().evict()
+        let victim_page_id = self.replacer.lock().unwrap().evict()
             .ok_or_else(|| DbError::Storage("No evictable frames".to_string()))?;
 
         let page_table = self.page_table.read();
@@ -588,7 +588,7 @@ impl BufferPoolManager {
                 }
 
                 if !frame.is_pinned() {
-                    self.replacer.lock().set_evictable(page_id, true);
+                    self.replacer.lock().unwrap().set_evictable(page_id, true);
                 }
             }
         }

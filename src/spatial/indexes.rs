@@ -8,7 +8,7 @@
 // - Bulk loading and dynamic maintenance
 
 use std::collections::HashSet;
-use crate::error::Result;
+use crate::error::{DbError, Result};
 use crate::spatial::geometry::{BoundingBox, Coordinate};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};

@@ -10,7 +10,7 @@
 // - Multi-column statistics
 
 use crate::common::{TableId, IndexId, Value};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::optimizer_pro::{
     PhysicalOperator, Expression, BinaryOperator, JoinType, CostParameters,
 };

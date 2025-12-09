@@ -31,7 +31,7 @@ use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
 use tracing::{debug, error, info, warn};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 /// Error severity level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

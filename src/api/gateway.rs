@@ -533,7 +533,7 @@ impl ApiGateway {
         }
 
         // Log request
-        self.audit_logger.lock().log_request(&request);
+        self.audit_logger.lock().unwrap().log_request(&request);
 
         // Security filtering
         if let Err(e) = self.security_filter.validate_request(&request) {
@@ -541,7 +541,7 @@ impl ApiGateway {
             metrics.security_blocks += 1;
             metrics.failed_requests += 1;
 
-            self.audit_logger.lock().log_security_event(&SecurityEvent {
+            self.audit_logger.lock().unwrap().log_security_event(&SecurityEvent {
                 event_type: SecurityEventType::RequestBlocked,
                 request_id: request.request_id.clone(),
                 client_ip: request.client_ip,
@@ -592,7 +592,7 @@ impl ApiGateway {
                                 metrics.authz_failures += 1;
                                 metrics.failed_requests += 1;
 
-                                self.audit_logger.lock().log_security_event(&SecurityEvent {
+                                self.audit_logger.lock().unwrap().log_security_event(&SecurityEvent {
                                     event_type: SecurityEventType::AuthorizationFailed,
                                     request_id: request.request_id.clone(),
                                     client_ip: request.client_ip,
@@ -615,7 +615,7 @@ impl ApiGateway {
                     metrics.auth_failures += 1;
                     metrics.failed_requests += 1;
 
-                    self.audit_logger.lock().log_security_event(&SecurityEvent {
+                    self.audit_logger.lock().unwrap().log_security_event(&SecurityEvent {
                         event_type: SecurityEventType::AuthenticationFailed,
                         request_id: request.request_id.clone(),
                         client_ip: request.client_ip,

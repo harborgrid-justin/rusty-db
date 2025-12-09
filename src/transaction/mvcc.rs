@@ -10,7 +10,7 @@ use std::time::Duration;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};
@@ -416,7 +416,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
             .entry(key)
             .or_insert_with(|| Arc::new(Mutex::new(VersionChain::new(self.config.max_versions))));
 
-        chain.lock().add_version(version);
+        chain.lock().unwrap().add_version(version);
 
         self.stats.write().total_versions += 1;
         self.stats.write().active_versions += 1;

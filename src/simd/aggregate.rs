@@ -4,7 +4,7 @@
 
 use super::{SimdContext, SimdStats};
 use crate::common::Value;
-use crate::error::Result;
+use crate::error::{DbError, Result};
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;

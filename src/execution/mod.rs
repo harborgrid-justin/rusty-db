@@ -13,7 +13,7 @@ pub mod sort_merge;
 pub mod expressions;
 
 pub use executor::Executor;
-pub use planner::Planner;
+pub use planner::{Planner, PlanNode};
 pub use optimizer::{Optimizer, TableStatistics, SingleTableStatistics, ColumnStatistics, IndexStatistics};
 pub use cte::{CteContext, CteDefinition, RecursiveCteEvaluator, CteOptimizer};
 pub use subquery::{SubqueryExpr, SubqueryType, ExistsEvaluator, InEvaluator, ScalarSubqueryEvaluator};

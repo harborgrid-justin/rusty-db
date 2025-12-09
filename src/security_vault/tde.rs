@@ -27,10 +27,11 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use chacha20poly1305::ChaCha20Poly1305;
+use generic_array::GenericArray;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
-use sha2::Digest;
+use sha2::{Digest, Sha256};
 
 /// Cache-aligned crypto buffer for high-performance encryption
 /// Aligned to 64 bytes (typical cache line size) to avoid false sharing

@@ -26,8 +26,7 @@ use std::collections::BTreeMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 
 /// Index key type
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]

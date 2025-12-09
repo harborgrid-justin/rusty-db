@@ -8,7 +8,7 @@
 
 use std::collections::HashSet;
 use std::fmt;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use std::collections::{HashMap};
 
 

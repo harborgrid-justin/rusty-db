@@ -19,7 +19,7 @@ use super::epoch::{Atomic, Epoch, EpochGuard, Owned, Shared};
 use super::Backoff;
 use std::cmp::Ordering as CmpOrdering;
 use std::marker::PhantomData;
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
 /// Maximum height of the skip list
 const MAX_HEIGHT: usize = 32;

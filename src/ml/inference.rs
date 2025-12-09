@@ -605,7 +605,7 @@ impl InferenceEngine {
                 num_samples: metadata.num_samples,
                 inference_time_us: metadata.inference_time_us,
             };
-            self.prediction_logs.lock().push(log);
+            self.prediction_logs.lock().unwrap().push(log);
         }
 
         Ok(PredictionResult::new(predictions).with_metadata(metadata))
@@ -686,12 +686,12 @@ impl InferenceEngine {
 
     /// Get prediction logs
     pub fn get_logs(&self) -> Vec<PredictionLog> {
-        self.prediction_logs.lock().clone()
+        self.prediction_logs.lock().unwrap().clone()
     }
 
     /// Clear prediction logs
     pub fn clear_logs(&self) {
-        self.prediction_logs.lock().clear();
+        self.prediction_logs.lock().unwrap().clear();
     }
 
     /// Get average inference time

@@ -15,7 +15,7 @@ use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc};
 use tokio::time::interval;
-use crate::{Result, DbError};
+use crate::error::{DbError, Result};
 use crate::common::{TransactionId, TableId, Value};
 use super::cdc::{ChangeEvent, ChangeType, CDCEngine};
 use super::publisher::EventPublisher;
@@ -511,7 +511,7 @@ impl LogicalReplication {
 
     /// Get pending conflicts
     pub fn get_conflicts(&self) -> Vec<ReplicationConflict> {
-        self.conflicts.lock().iter().cloned().collect()
+        self.conflicts.lock().unwrap().iter().cloned().collect()
     }
 
     /// Calculate replication lag

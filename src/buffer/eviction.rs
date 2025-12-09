@@ -332,7 +332,7 @@ impl LruEvictionPolicy {
         *self.head.lock() = Some(idx);
 
         // Update tail if list was empty
-        if self.tail.lock().is_none() {
+        if self.tail.lock().unwrap().is_none() {
             *self.tail.lock() = Some(idx);
         }
     }
@@ -657,9 +657,9 @@ impl EvictionPolicy for TwoQEvictionPolicy {
     }
 
     fn reset(&self) {
-        self.a1in.lock().clear();
-        self.a1out.lock().clear();
-        self.am.lock().clear();
+        self.a1in.lock().unwrap().clear();
+        self.a1out.lock().unwrap().clear();
+        self.am.lock().unwrap().clear();
         self.frame_queue.write().clear();
         self.victim_searches.store(0, Ordering::Relaxed);
         self.evictions.store(0, Ordering::Relaxed);

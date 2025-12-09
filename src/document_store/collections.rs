@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::error::Result;
 use super::document::{Document, DocumentId, IdGenerationType};
 

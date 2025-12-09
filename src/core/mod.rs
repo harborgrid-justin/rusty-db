@@ -1048,7 +1048,7 @@ impl CoreMetrics {
     }
 
     pub fn get_samples(&self) -> Vec<MetricsSample> {
-        self.samples.lock().clone()
+        self.samples.lock().unwrap().clone()
     }
 }
 

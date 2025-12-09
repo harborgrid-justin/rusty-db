@@ -940,7 +940,7 @@ impl TransactionStatistics {
     pub fn record_commit(&self, latency_ms: u64) {
         *self.total_commits.lock() += 1;
         *self.active_count.lock() -= 1;
-        self.commit_latency_ms.lock().push(latency_ms);
+        self.commit_latency_ms.lock().unwrap().push(latency_ms);
     }
     
     pub fn record_abort(&self) {
@@ -1461,7 +1461,7 @@ impl LockStatistics {
     
     pub fn record_wait(&self, wait_time_ms: u64) {
         *self.lock_waits.lock() += 1;
-        self.avg_wait_time_ms.lock().push(wait_time_ms);
+        self.avg_wait_time_ms.lock().unwrap().push(wait_time_ms);
     }
     
     pub fn record_timeout(&self) {
@@ -2108,11 +2108,11 @@ impl TransactionResourceManager {
     }
     
     pub fn get_usage(&self, txn_id: TransactionId) -> usize {
-        self.current_memory_usage.lock().get(&txn_id).copied().unwrap_or(0)
+        self.current_memory_usage.lock().unwrap().get(&txn_id).copied().unwrap_or(0)
     }
     
     pub fn clear(&self, txn_id: TransactionId) {
-        self.current_memory_usage.lock().remove(&txn_id);
+        self.current_memory_usage.lock().unwrap().remove(&txn_id);
     }
 }
 
@@ -2268,7 +2268,7 @@ impl TransactionReplicationManager {
     }
     
     pub fn replicate_transaction(&self, entry: ReplicationEntry) -> Result<()> {
-        self.replication_log.lock().push(entry);
+        self.replication_log.lock().unwrap().push(entry);
         
         // In production, would send to replicas
         Ok(())

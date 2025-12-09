@@ -8,7 +8,7 @@
 // - Network routing and optimization
 
 use std::collections::HashSet;
-use crate::error::Result;
+use crate::error::{DbError, Result};
 use crate::spatial::geometry::Coordinate;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};

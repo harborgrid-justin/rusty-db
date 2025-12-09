@@ -489,7 +489,7 @@ impl ReplicationManager {
     /// Gracefully shuts down all background tasks and connections.
     pub async fn stop(&self) -> Result<(), ReplicationManagerError> {
         // Send shutdown signal
-        if let Some(sender) = self.shutdown_sender.lock().take() {
+        if let Some(sender) = self.shutdown_sender.lock().unwrap().take() {
             let _ = sender.send(());
         }
 

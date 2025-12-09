@@ -7,6 +7,11 @@
 
 use super::Vector;
 
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
+#[cfg(target_arch = "x86")]
+use std::arch::x86::*;
+
 // ============================================================================
 // SIMD Dot Product
 // ============================================================================
@@ -50,8 +55,6 @@ fn scalar_dot_product(a: &[f64], b: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 #[inline]
 unsafe fn simd_dot_product_avx2(a: &[f64], b: &[f64]) -> f64 {
-    use std::arch::x86_64::*;
-
     let len = a.len();
     let mut sum = _mm256_setzero_pd();
     let mut i = 0;

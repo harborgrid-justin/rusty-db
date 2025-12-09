@@ -6,7 +6,7 @@
 use tokio::sync::oneshot;
 use tokio::time::sleep;
 use std::time::Instant;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use std::sync::atomic::{AtomicU8, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use parking_lot::{Mutex, RwLock};
@@ -447,7 +447,7 @@ impl IoCompletionPort {
                 // Add to completion queue
                 if self.completions.push(completion).is_err() {
                     // Queue is full, record error
-                    self.stats.lock().queue_overflows += 1;
+                    self.stats.lock().unwrap().queue_overflows += 1;
                 }
             }
         }
@@ -503,7 +503,7 @@ impl IoCompletionPort {
 
     /// Get statistics
     pub fn stats(&self) -> CompletionPortStats {
-        self.stats.lock().clone()
+        self.stats.lock().unwrap().clone()
     }
 }
 

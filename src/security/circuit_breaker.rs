@@ -690,7 +690,7 @@ pub struct TimeoutManager {
     config: TimeoutManagerConfig,
 
     /// Latency samples per endpoint
-    latencies: Arc<RwLock<HashMap<String<Duration>>>>,
+    latencies: Arc<RwLock<HashMap<String, VecDeque<Duration>>>>,
 
     /// Metrics
     metrics: Arc<RwLock<HashMap<String, TimeoutMetrics>>>,

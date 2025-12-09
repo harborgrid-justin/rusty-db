@@ -28,7 +28,7 @@ use std::sync::Arc;
 use std::time::{Duration};
 use tokio::sync::{RwLock, Semaphore};
 use serde::{Serialize, Deserialize};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::pdb::PdbId;
 
 /// Resource limits for a PDB

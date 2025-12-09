@@ -922,7 +922,7 @@ use std::alloc::{dealloc};
         self.is_active.store(false, Ordering::Relaxed);
 
         // Stop cleanup task
-        if let Some(handle) = self.cleanup_handle.lock().take() {
+        if let Some(handle) = self.cleanup_handle.lock().unwrap().take() {
             handle.abort();
         }
 

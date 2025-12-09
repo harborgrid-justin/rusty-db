@@ -273,7 +273,7 @@ impl RecoveryManager {
 
     /// Returns recovery statistics.
     pub fn stats(&self) -> RecoveryStats {
-        self.stats.lock().clone()
+        self.stats.lock().unwrap().clone()
     }
 
     /// Returns time since last checkpoint.

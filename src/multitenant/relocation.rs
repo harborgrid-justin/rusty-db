@@ -30,7 +30,7 @@ use std::sync::Arc;
 use std::time::{Duration};
 use tokio::sync::{RwLock};
 use serde::{Serialize, Deserialize};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::pdb::{PdbId, PdbConfig};
 
 /// Relocation configuration
@@ -425,7 +425,7 @@ impl StateTransferProtocol {
         total_bytes: u64,
     ) -> Result<()> {
         let transfer_id = {
-            let mut next_id = self.next_id.lock().await;
+            let mut next_id = self.next_id.lock().unwrap();
             let id = *next_id;
             *next_id += 1;
             id

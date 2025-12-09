@@ -413,7 +413,7 @@ impl TieredStorageManager {
             let mut patterns = self.access_patterns.write();
             let pattern = patterns.entry(page.id)
                 .or_insert_with(|| AccessPattern::new(page.id));
-            self.predictor.lock().predict(pattern)
+            self.predictor.lock().unwrap().predict(pattern)
         };
 
         let tiered_page = TieredPage::new(page, tier)?;
@@ -485,11 +485,11 @@ impl TieredStorageManager {
     fn consider_promotion(&self, page_id: PageId, current_tier: StorageTier) {
         let patterns = self.access_patterns.read();
         if let Some(pattern) = patterns.get(&page_id) {
-            let predicted_tier = self.predictor.lock().predict(pattern);
+            let predicted_tier = self.predictor.lock().unwrap().predict(pattern);
 
             if predicted_tier != current_tier {
                 let task = MigrationTask::new(page_id, current_tier, predicted_tier);
-                self.migration_queue.lock().push_back(task);
+                self.migration_queue.lock().unwrap().push_back(task);
             }
         }
     }
@@ -583,19 +583,19 @@ impl TieredStorageManager {
         // Update predictor thresholds
         {
             let patterns = self.access_patterns.read();
-            self.predictor.lock().update_thresholds(&patterns);
+            self.predictor.lock().unwrap().update_thresholds(&patterns);
         }
 
         // Scan for pages that should be migrated
         let patterns = self.access_patterns.read();
         for (page_id, pattern) in patterns.iter() {
-            let predicted_tier = self.predictor.lock().predict(pattern);
+            let predicted_tier = self.predictor.lock().unwrap().predict(pattern);
             let current_tier = self.find_page_tier(*page_id);
 
             if let Some(current_tier) = current_tier {
                 if predicted_tier != current_tier {
                     let task = MigrationTask::new(*page_id, current_tier, predicted_tier);
-                    self.migration_queue.lock().push_back(task);
+                    self.migration_queue.lock().unwrap().push_back(task);
                 }
             }
         }

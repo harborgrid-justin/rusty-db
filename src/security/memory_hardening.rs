@@ -44,7 +44,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::time::{Duration};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use rand::Rng;
 
 // ============================================================================
@@ -241,7 +241,7 @@ impl GuardedMemory {
         }
 
         // Align guard size to page boundary
-        let guard_size = align_up(guard_size, PAGE_SIZE);
+        let guard_size = align_up(guardsize, PAGE_SIZE);
 
         // Total size: front_guard + data + back_guard
         let total_size = guard_size + size + guard_size;

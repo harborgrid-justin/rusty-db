@@ -47,7 +47,7 @@
 use std::collections::VecDeque;
 use std::time::SystemTime;
 use crate::common::{TableId, IndexId, Value, Schema};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Instant, Duration};

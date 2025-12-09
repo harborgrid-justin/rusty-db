@@ -352,7 +352,7 @@ impl ActorSystem {
 
     /// Configure supervision strategy
     pub async fn configure_supervision(&self, config: SupervisorConfig) {
-        *self.supervisor_config.lock().await = config;
+        *self.supervisor_config.lock().unwrap().await = config;
     }
 
     /// Spawn a new actor
@@ -382,7 +382,7 @@ impl ActorSystem {
         let actor_ref_clone = actor_ref.clone();
         let join_handle = tokio::spawn(async move {
             let mut shutdown_rx = {
-                let guard = system.shutdown_tx.lock().await;
+                let guard = system.shutdown_tx.lock().unwrap().await;
                 guard.as_ref().map(|tx| tx.subscribe())
             };
 
@@ -517,7 +517,7 @@ impl ActorSystem {
 
     /// Handle actor failure according to supervision strategy
     async fn handle_actor_failure(&self, id: ActorId, error: crate::DbError) {
-        let config = self.supervisor_config.lock().await;
+        let config = self.supervisor_config.lock().unwrap().await;
         let strategy = config.strategy;
         drop(config);
 
@@ -569,7 +569,7 @@ impl ActorSystem {
 
         // Send shutdown signal
         {
-            let mut guard = self.shutdown_tx.lock().await;
+            let mut guard = self.shutdown_tx.lock().unwrap().await;
             if let Some(tx) = guard.take() {
                 let _ = tx.send(());
             }

@@ -28,7 +28,7 @@ use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
 use crate::common::{TableId, RowId, Value, Schema, IndexId};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::time_travel::{SCN, Timestamp, TimeTravelEngine};
 use super::versions::VersionManager;
 

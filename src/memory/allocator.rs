@@ -29,7 +29,7 @@ use std::sync::{Arc, Mutex, RwLock, Weak};
 use std::time::{Duration, Instant, SystemTime};
 use std::backtrace::Backtrace;
 
-use crate::{DbError, Result};
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // Constants and Configuration

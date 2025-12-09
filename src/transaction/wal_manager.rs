@@ -395,7 +395,7 @@ impl WALManager {
 
     /// Returns the number of buffered entries.
     pub fn buffered_count(&self) -> usize {
-        self.log_buffer.lock().len()
+        self.log_buffer.lock().unwrap().len()
     }
 
     /// Checks if the log file exists.

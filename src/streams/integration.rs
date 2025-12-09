@@ -14,7 +14,7 @@ use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio::time::interval;
-use crate::{Result, DbError};
+use crate::error::{DbError, Result};
 use crate::common::{TransactionId, Value};
 use super::cdc::{ChangeEvent, ChangeType};
 use super::publisher::{PublishedEvent, EventPublisher};
@@ -143,7 +143,7 @@ impl OutboxProcessor {
         entry.id = self.next_id.fetch_add(1, Ordering::SeqCst);
         entry.created_at = SystemTime::now();
 
-        self.outbox.lock().push_back(entry.clone());
+        self.outbox.lock().unwrap().push_back(entry.clone());
         Ok(entry.id)
     }
 
@@ -202,7 +202,7 @@ impl OutboxProcessor {
 
                             // Re-queue if retries remain
                             if entry.retry_count < config.max_retries {
-                                outbox.lock().push_back(entry);
+                                outbox.lock().unwrap().push_back(entry);
                             }
                         }
                     }

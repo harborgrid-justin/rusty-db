@@ -9,6 +9,7 @@
 // - **Anomaly Detection**: Identify outliers
 
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 // =============================================================================
 // Time Series Analyzer

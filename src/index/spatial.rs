@@ -8,8 +8,7 @@
 ///
 /// Uses R-tree data structure for efficient spatial queries
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use std::cmp::Ordering;

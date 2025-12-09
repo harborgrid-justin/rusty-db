@@ -465,7 +465,7 @@ impl InstanceRecoveryManager {
 
     /// Process recovery messages
     async fn process_recovery_messages(&self) {
-        let mut rx = self.message_rx.lock().await;
+        let mut rx = self.message_rx.lock().unwrap().await;
 
         while let Some(message) = rx.recv().await {
             match message {
@@ -882,7 +882,7 @@ impl InstanceRecoveryManager {
 
     /// Add redo log entry
     pub fn append_redo_log(&self, entry: RedoLogEntry) -> Result<(), DbError> {
-        self.redo_buffer.lock().append(entry);
+        self.redo_buffer.lock().unwrap().append(entry);
         Ok(())
     }
 

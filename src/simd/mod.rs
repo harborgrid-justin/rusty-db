@@ -53,6 +53,11 @@
 // The engine automatically detects CPU capabilities and falls back to scalar
 // implementations when SIMD is not available.
 
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
+#[cfg(target_arch = "x86")]
+use std::arch::x86::*;
+
 /// SIMD filter operations
 pub mod filter;
 
@@ -143,9 +148,8 @@ pub fn cpu_features() -> &'static CpuFeatures {
 pub fn prefetch_read<T>(ptr: *const T, ahead: usize) {
     #[cfg(target_arch = "x86_64")]
     unsafe {
-        use std::arch::x86_64::_mm_prefetch;
         let prefetch_ptr = ptr.add(ahead) as *const i8;
-        _mm_prefetch(prefetch_ptr, std::arch::x86_64::_MM_HINT_T0);
+        _mm_prefetch(prefetch_ptr, _MM_HINT_T0);
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -160,7 +164,7 @@ pub fn prefetch_nta<T>(ptr: *const T, ahead: usize) {
     #[cfg(target_arch = "x86_64")]
     unsafe {
         let prefetch_ptr = ptr.add(ahead) as *const i8;
-        _mm_prefetch(prefetch_ptr, std::arch::x86_64::_MM_HINT_NTA);
+        _mm_prefetch(prefetch_ptr, _MM_HINT_NTA);
     }
 
     #[cfg(not(target_arch = "x86_64"))]

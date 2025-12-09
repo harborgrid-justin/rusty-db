@@ -10,7 +10,7 @@
 /// - Pivot table generation
 
 use std::collections::HashSet;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;

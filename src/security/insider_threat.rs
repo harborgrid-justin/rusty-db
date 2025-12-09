@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 use sha2::{Sha256, Digest};
@@ -393,12 +393,12 @@ impl ThreatScorer {
         let mut score = 0u8;
         let mut factors = Vec::new();
 
-        if estimated_rows > 10000 {
+        if estimatedrows > 10000 {
             score += 15;
-            factors.push(format!("Large result set (>{} rows)", estimated_rows));
-        } else if estimated_rows > 1000 {
+            factors.push(format!("Large result set (>{} rows)", estimatedrows));
+        } else if estimatedrows > 1000 {
             score += 10;
-            factors.push(format!("Medium result set ({} rows)", estimated_rows));
+            factors.push(format!("Medium result set ({} rows)", estimatedrows));
         }
 
         // Check for LIMIT clause absence
@@ -993,7 +993,7 @@ impl ForensicLogger {
             records: Arc::new(RwLock::new(VecDeque::new())),
             id_counter: Arc::new(RwLock::new(0)),
             previous_hash: Arc::new(RwLock::new(String::from("0"))),
-            max_records,
+            max_records: maxrecords,
         }
     }
 

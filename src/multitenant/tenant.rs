@@ -14,10 +14,10 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::{TenantId, ResourceConsumption};
 use super::pdb::{PdbId, PdbConfig, PdbCreateMode};
 use super::isolation::ResourceLimits;
@@ -706,8 +706,8 @@ impl CrossTenantQueryEngine {
     /// Execute cross-tenant query
     pub async fn execute_query(
         &self,
-        fromtenant: TenantId,
-        totenant: TenantId,
+        from_tenant: TenantId,
+        to_tenant: TenantId,
         query: &str,
     ) -> Result<Vec<Vec<String>>> {
         if !self.is_allowed(from_tenant, to_tenant).await {

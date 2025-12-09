@@ -16,7 +16,7 @@ use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, broadcast};
 use tokio::time::interval;
-use crate::{Result, DbError};
+use crate::error::{DbError, Result};
 use crate::common::{TransactionId, TableId, RowId, Value, LogSequenceNumber};
 use crate::transaction::wal::{LogRecord, WALEntry, LSN};
 

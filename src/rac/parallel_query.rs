@@ -21,7 +21,7 @@ use tokio::sync::oneshot;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Instant;
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::common::{NodeId, TableId, Value, Tuple};
 use crate::rac::interconnect::{ClusterInterconnect, MessageType, MessagePriority};
 use serde::{Deserialize, Serialize};
@@ -419,11 +419,11 @@ impl WorkerPool {
 
     async fn acquire_worker(&self) -> Option<WorkerId> {
         let _permit = self.semaphore.acquire().await.ok()?;
-        self.available_workers.lock().pop_front()
+        self.available_workers.lock().unwrap().pop_front()
     }
 
     fn release_worker(&self, worker_id: WorkerId) {
-        self.available_workers.lock().push_back(worker_id);
+        self.available_workers.lock().unwrap().push_back(worker_id);
         self.active_workers.write().remove(&worker_id);
         self.semaphore.add_permits(1);
     }
@@ -870,7 +870,7 @@ impl ParallelQueryCoordinator {
 
     /// Process query messages
     pub async fn process_messages(&self) {
-        let mut rx = self.message_rx.lock().await;
+        let mut rx = self.message_rx.lock().unwrap().await;
 
         while let Some(message) = rx.recv().await {
             match message {
@@ -942,7 +942,7 @@ impl ParallelQueryCoordinator {
                 state.status = ExecutionStatus::Completed;
 
                 // Send results
-                let results: Vec<_> = state.result_buffer.lock().drain(..).collect();
+                let results: Vec<_> = state.result_buffer.lock().unwrap().drain(..).collect();
                 state.rows_returned = results.len() as u64;
 
                 if let Some(tx) = state.completion_tx.take() {

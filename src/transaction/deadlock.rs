@@ -23,7 +23,7 @@
 
 use std::fmt;
 use std::collections::HashSet;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -203,7 +203,7 @@ impl DeadlockDetector {
         }
 
         // Update statistics
-        self.stats.lock().detection_runs += 1;
+        self.stats.lock().unwrap().detection_runs += 1;
 
         let graph = self.wait_for_graph.read();
 
@@ -227,7 +227,7 @@ impl DeadlockDetector {
 
     /// Forces immediate deadlock detection, ignoring rate limiting.
     pub fn force_detect(&self) -> Option<Vec<TransactionId>> {
-        self.stats.lock().detection_runs += 1;
+        self.stats.lock().unwrap().detection_runs += 1;
         let graph = self.wait_for_graph.read();
 
         for &txn_id in graph.keys() {
@@ -335,12 +335,12 @@ impl DeadlockDetector {
 
     /// Records that a victim was aborted.
     pub fn record_victim_aborted(&self) {
-        self.stats.lock().victims_aborted += 1;
+        self.stats.lock().unwrap().victims_aborted += 1;
     }
 
     /// Returns deadlock detection statistics.
     pub fn stats(&self) -> DeadlockStats {
-        self.stats.lock().clone()
+        self.stats.lock().unwrap().clone()
     }
 
     /// Returns the number of transactions in the wait-for graph.

@@ -2,7 +2,7 @@
 //
 // High-performance asynchronous I/O using Linux io_uring.
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::io::{IoRequest, IoCompletion, IoOpType, IoStatus};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicU32, Ordering};
@@ -358,14 +358,14 @@ impl IoUringEngine {
         // Add to submission queue
         let mut sq = self.sq_entries.lock();
         if sq.len() >= self.config.queue_depth as usize {
-            self.stats.lock().sq_full += 1;
+            self.stats.lock().unwrap().sq_full += 1;
             return Err(DbError::Internal("Submission queue full".to_string()));
         }
 
         sq.push(sqe);
         self.sq_tail.fetch_add(1, Ordering::Release);
         self.pending_count.fetch_add(1, Ordering::Relaxed);
-        self.stats.lock().submissions += 1;
+        self.stats.lock().unwrap().submissions += 1;
 
         // In a real implementation, we would call io_uring_enter here
         self.process_submissions()?;
@@ -474,7 +474,7 @@ impl IoUringEngine {
 
     /// Get statistics
     pub fn stats(&self) -> IoUringStats {
-        self.stats.lock().clone()
+        self.stats.lock().unwrap().clone()
     }
 
     /// Get pending count
@@ -536,7 +536,7 @@ impl IoUringEngine {
     }
 
     pub fn stats(&self) -> IoUringStats {
-        self.stats.lock().clone()
+        self.stats.lock().unwrap().clone()
     }
 
     pub fn pending_count(&self) -> u64 {

@@ -225,7 +225,7 @@ pub struct ReplicationMonitor {
     /// Channel statuses
     channels: Arc<RwLock<HashMap<String, ChannelStatus>>>,
     /// Time series data
-    time_series: Arc<RwLock<HashMap<String<TimeSeriesPoint>>>>,
+    time_series: Arc<RwLock<HashMap<String, VecDeque<TimeSeriesPoint>>>>,
     /// Measurement window (seconds)
     window_seconds: u64,
 }

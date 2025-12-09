@@ -6,8 +6,7 @@
 /// - Computed column indexes
 /// - Index-only scans support
 
-use crate::Result;
-use crate::error::DbError;
+use crate::error::{DbError, Result};
 use parking_lot::RwLock;
 use std::collections::BTreeMap;
 use std::sync::Arc;

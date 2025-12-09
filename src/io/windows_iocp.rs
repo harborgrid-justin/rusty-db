@@ -2,7 +2,7 @@
 //
 // High-performance asynchronous I/O using Windows IOCP.
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::io::{IoRequest, IoCompletion, IoOpType, IoStatus, IoHandle};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -303,9 +303,9 @@ impl WindowsIocp {
         };
 
         // Store overlapped for later completion
-        self.pending_ops.lock().insert(request.id, overlapped);
+        self.pending_ops.lock().unwrap().insert(request.id, overlapped);
         self.pending_count.fetch_add(1, Ordering::Relaxed);
-        self.stats.lock().submissions += 1;
+        self.stats.lock().unwrap().submissions += 1;
 
         Ok(())
     }
@@ -420,7 +420,7 @@ impl WindowsIocp {
             if overlapped_ptr.is_null() {
                 // Timeout or no more completions
                 if result == 0 {
-                    self.stats.lock().timeouts += 1;
+                    self.stats.lock().unwrap().timeouts += 1;
                 }
                 break;
             }
@@ -434,7 +434,7 @@ impl WindowsIocp {
             let request_id = overlapped.request_id;
 
             // Remove from pending
-            self.pending_ops.lock().remove(&request_id);
+            self.pending_ops.lock().unwrap().remove(&request_id);
             self.pending_count.fetch_sub(1, Ordering::Relaxed);
 
             let error_code = if result == 0 {
@@ -471,7 +471,7 @@ impl WindowsIocp {
 
     /// Get statistics
     pub fn stats(&self) -> IocpStats {
-        self.stats.lock().clone()
+        self.stats.lock().unwrap().clone()
     }
 
     /// Get pending count
