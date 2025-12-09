@@ -441,7 +441,7 @@ impl ShardingEngine {
             source_shard: source_shard.to_string(),
             target_shard: target_shard.to_string(),
             row_count: source.row_count / 2, // Move half the rows
-            estimated_duration: (source.row_count / 1000), // 1000 rows per second
+            estimated_duration: source.row_count / 1000, // 1000 rows per second
             state: RebalanceState::Planned,
             progress: 0,
         };

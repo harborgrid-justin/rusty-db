@@ -780,7 +780,7 @@ mod tests {
         let mut block = Block::new(0, 1, [0u8; 32], "user1".to_string());
 
         let data = vec![Value::Integer(1)];
-        let row = super::super::ledger::LedgerRow::new(
+        let row = LedgerRow::new(
             0, 1, 0, 0, data, [0u8; 32], "user1".to_string()
         );
         block.add_row(row).unwrap();

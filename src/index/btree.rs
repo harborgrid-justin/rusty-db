@@ -180,7 +180,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
 
         if root_lock.is_none() {
             // Create initial leaf node
-            let leaf = Node::new_leaf(current_order);
+            let mut leaf = Node::new_leaf(current_order);
             leaf.insert_in_leaf(key, value)?;
             *root_lock = Some(Arc::new(RwLock::new(leaf)));
             *self.height.write() = 1;

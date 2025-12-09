@@ -1,5 +1,5 @@
 /// Table Partitioning Support
-/// 
+///
 /// This module provides comprehensive table partitioning capabilities:
 /// - Range partitioning (by date, number ranges)
 /// - Hash partitioning (for even distribution)
@@ -8,11 +8,12 @@
 /// - Partition pruning optimization
 /// - Dynamic partition management
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
+
 
 /// Partitioning strategy
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -62,7 +63,7 @@ pub struct ListPartition {
 pub struct PartitionMetadata {
     pub table_name: String,
     pub strategy: PartitionStrategy,
-    pub created_at: std::time::SystemTime,
+    pub created_at: SystemTime,
     pub partition_count: usize,
 }
 
@@ -100,7 +101,7 @@ impl PartitionManager {
         let metadata = PartitionMetadata {
             table_name: table_name.clone(),
             strategy,
-            created_at: std::time::SystemTime::now(),
+            created_at: SystemTime::now(),
             partition_count,
         };
         
@@ -536,7 +537,7 @@ pub struct PartitionStatistics {
     pub data_size: usize, // In bytes (alias for size_bytes)
     pub min_value: String,
     pub max_value: String,
-    pub last_modified: std::time::SystemTime,
+    pub last_modified: SystemTime,
 }
 
 /// Partition statistics manager
@@ -569,7 +570,7 @@ impl PartitionStatsManager {
                 data_size: size_bytes,
                 min_value: String::new(),
                 max_value: String::new(),
-                last_modified: std::time::SystemTime::now(),
+                last_modified: SystemTime::now(),
             },
         );
     }
@@ -634,7 +635,7 @@ impl PartitionSplitter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_create_range_partition() {
         let mut manager = PartitionManager::new();
@@ -748,7 +749,7 @@ mod tests {
                     },
                 ],
             },
-            created_at: std::time::SystemTime::now(),
+            created_at: SystemTime::now(),
             partition_count: 2,
         };
         
@@ -783,7 +784,7 @@ mod tests {
 /// Advanced Partition Pruning Engine
 pub mod pruning {
     use super::*;
-    
+
     /// Partition pruning optimizer
     pub struct PartitionPruningOptimizer {
         statistics: HashMap<String, PartitionStatistics>,
@@ -901,8 +902,8 @@ pub mod pruning {
 /// Automatic Partition Management
 pub mod auto_management {
     use super::*;
-    use std::time::{Duration};
-    
+    use std::time::Duration;
+
     /// Automatic partition creator
     pub struct AutoPartitionCreator {
         config: AutoPartitionConfig,
@@ -1088,7 +1089,7 @@ pub mod auto_management {
 /// Partition-Wise Operations
 pub mod partition_wise {
     use super::*;
-    
+
     /// Partition-wise join executor
     pub struct PartitionWiseJoinExecutor {
         parallelism: usize,
@@ -1242,7 +1243,7 @@ pub mod partition_wise {
 /// Dynamic Partition Operations
 pub mod dynamic {
     use super::*;
-    
+
     /// Dynamic partition splitter
     pub struct PartitionSplitter;
     
@@ -1352,7 +1353,7 @@ pub mod dynamic {
 /// Partition Cost Model and Optimizer
 pub mod optimizer {
     use super::*;
-    
+
     /// Partition access cost estimator
     pub struct PartitionCostEstimator {
         io_cost_per_page: f64,
@@ -1479,8 +1480,8 @@ pub mod optimizer {
 /// Partition Parallel Execution Engine
 pub mod parallel {
     use super::*;
-    use std::sync::{Arc};
-    
+    use std::sync::Arc;
+
     /// Parallel partition scanner
     pub struct ParallelPartitionScanner {
         thread_pool_size: usize,
@@ -1603,8 +1604,8 @@ pub mod parallel {
 /// Partition Monitoring and Health Checks
 pub mod monitoring {
     use super::*;
-    use std::time::{Duration};
-    
+    use std::time::Duration;
+
     /// Partition health monitor
     pub struct PartitionHealthMonitor {
         health_checks: HashMap<String, PartitionHealth>,
@@ -1851,7 +1852,7 @@ pub mod monitoring {
 /// Partition Data Distribution and Balancing
 pub mod balancing {
     use super::*;
-    
+
     /// Partition load balancer
     pub struct PartitionLoadBalancer {
         target_size_variance: f64,
@@ -1974,7 +1975,7 @@ pub mod balancing {
 /// Partition Compression and Storage Optimization
 pub mod compression {
     use super::*;
-    
+
     /// Partition compressor
     pub struct PartitionCompressor {
         compression_algorithm: CompressionAlgorithm,
@@ -2046,7 +2047,7 @@ pub mod compression {
 /// Partition Query Router
 pub mod routing {
     use super::*;
-    
+
     /// Smart partition router
     pub struct PartitionRouter {
         routing_cache: HashMap<String, Vec<String>>,
@@ -2106,19 +2107,18 @@ pub mod routing {
 
 #[cfg(test)]
 mod advanced_tests {
-    use super::*;
-    use super::pruning::*;
     use super::auto_management::*;
-    use super::partition_wise::*;
-    use super::dynamic;
-    use super::optimizer::*;
-    use super::parallel::*;
-    use super::monitoring::*;
     use super::balancing::*;
     use super::compression::*;
+    use super::dynamic;
+    use super::monitoring::*;
+    use super::optimizer::*;
+    use super::partition_wise::*;
+    use super::pruning::*;
     use super::routing::*;
+    use super::*;
     use std::time::SystemTime;
-    
+
     #[test]
     fn test_partition_pruning_optimizer() {
         let mut optimizer = PartitionPruningOptimizer::new();
@@ -2288,7 +2288,7 @@ mod advanced_tests {
 /// Partition Integration Utilities
 pub mod integration {
     use super::*;
-    
+
     /// Partition SQL generator
     pub struct PartitionSqlGenerator;
     

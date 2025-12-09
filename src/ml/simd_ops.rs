@@ -512,7 +512,7 @@ mod tests {
         let b = vec![4.0, 6.0, 8.0];
 
         let _result = simd_euclidean_distance(&a, &b);
-        let expected = ((3.0_f64).powi(2) + (4.0_f64).powi(2) + (5.0_f64).powi(2)).sqrt();
+        let expected = (3.0_f64.powi(2) + 4.0_f64.powi(2) + 5.0_f64.powi(2)).sqrt();
 
         assert!((result - expected).abs() < 1e-10);
     }

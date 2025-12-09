@@ -19,13 +19,13 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
 
 use parking_lot::Mutex;
 
 use crate::common::{LogSequenceNumber, TransactionId};
 
-use super::error::{TransactionError, TransactionResult};
+use super::error::TransactionResult;
 use super::version_store::VersionStore;
 use super::wal_manager::{WALEntry, WALManager};
 

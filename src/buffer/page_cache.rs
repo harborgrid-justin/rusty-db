@@ -12,10 +12,10 @@
 //! - MSVC-compatible memory layout
 
 use crate::common::PageId;
+use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
-use parking_lot::{RwLock};
+use std::time::Instant;
 
 /// Standard page size (4KB) - Windows default page size
 pub const PAGE_SIZE: usize = 4096;
@@ -712,7 +712,7 @@ mod tests {
 
     #[test]
     fn test_page_buffer_size() {
-        assert_eq!(std::mem::size_of::<PageBuffer>(), PAGE_SIZE);
+        assert_eq!(size_of::<PageBuffer>(), PAGE_SIZE);
     }
 
     #[test]

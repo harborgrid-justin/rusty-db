@@ -342,14 +342,14 @@ pub struct RuntimeStatsCollector {
     /// Active executions
     executions: Arc<RwLock<HashMap<ExecutionId, ExecutionStats>>>,
     /// Completed executions
-    completed: Arc<RwLock<VecDeque<RuntimeStatistics>>>,
+    completed: Arc<RwLock<std::collections::VecDeque<RuntimeStatistics>>>,
 }
 
 impl RuntimeStatsCollector {
     pub fn new() -> Self {
         Self {
             executions: Arc::new(RwLock::new(HashMap::new())),
-            completed: Arc::new(RwLock::new(VecDeque::new())),
+            completed: Arc::new(RwLock::new(std::collections::VecDeque::new())),
         }
     }
 

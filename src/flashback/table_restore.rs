@@ -462,7 +462,7 @@ impl RecycleBin {
 
         self.tables.get(recycle_name)
             .ok_or_else(|| DbError::Validation(
-                format!("Recycle bin entry not found")
+                "Recycle bin entry not found".to_string()
             ))
     }
 

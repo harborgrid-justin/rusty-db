@@ -2713,7 +2713,7 @@ impl MonitoringApi {
         HealthCheckResult {
             status,
             component: "system".to_string(),
-            message: format!("Overall system health"),
+            message: "Overall system health".to_string(),
             timestamp: SystemTime::now(),
             duration: Duration::from_secs(0),
             details: HashMap::new(),

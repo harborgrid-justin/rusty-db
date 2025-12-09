@@ -456,7 +456,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Get master instance for a resource
-    pub fn get_master(&self, resource_id: &ResourceId) -> std::result::Result<NodeId, DbError> {
+    pub fn get_master(&self, resource_id: &ResourceId) -> Result<NodeId, DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let buckets = self.buckets.read();
 
@@ -477,7 +477,7 @@ impl GlobalResourceDirectory {
         &self,
         resource_id: ResourceId,
         master_instance: NodeId,
-    ) -> std::result::Result<(), DbError> {
+    ) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(&resource_id);
         let mut buckets = self.buckets.write();
 
@@ -509,7 +509,7 @@ impl GlobalResourceDirectory {
         accessor: NodeId,
         is_write: bool,
         latency_us: u64,
-    ) -> std::result::Result<(), DbError> {
+    ) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
 
@@ -598,7 +598,7 @@ impl GlobalResourceDirectory {
         &self,
         resource_id: ResourceId,
         reason: RemasterReason,
-    ) -> std::result::Result<(), DbError> {
+    ) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(&resource_id);
         let buckets = self.buckets.read();
 
@@ -632,7 +632,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Execute pending remaster operations
-    pub async fn execute_remaster(&self) -> std::result::Result<(), DbError> {
+    pub async fn execute_remaster(&self) -> Result<(), DbError> {
         let request = {
             let mut queue = self.remaster_queue.write();
             queue.pop_front()
@@ -669,7 +669,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Perform the actual remaster operation
-    async fn perform_remaster(&self, request: &RemasterRequest) -> std::result::Result<(), DbError> {
+    async fn perform_remaster(&self, request: &RemasterRequest) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(&request.resource_id);
         let mut buckets = self.buckets.write();
 
@@ -699,7 +699,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Freeze resource during remastering
-    fn freeze_resource(&self, resource_id: &ResourceId) -> std::result::Result<(), DbError> {
+    fn freeze_resource(&self, resource_id: &ResourceId) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
 
@@ -714,7 +714,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Unfreeze resource after remastering
-    fn unfreeze_resource(&self, resource_id: &ResourceId) -> std::result::Result<(), DbError> {
+    fn unfreeze_resource(&self, resource_id: &ResourceId) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
 
@@ -730,7 +730,7 @@ impl GlobalResourceDirectory {
 
     /// Perform load balancing across cluster
     /// NEW: Enhanced with proactive balancing and variance tracking
-    pub fn load_balance(&self) -> std::result::Result<(), DbError> {
+    pub fn load_balance(&self) -> Result<(), DbError> {
         let members = self.cluster_members.read();
         let member_count = members.len();
 
@@ -799,7 +799,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Add new cluster member
-    pub fn add_member(&self, node_id: NodeId) -> std::result::Result<(), DbError> {
+    pub fn add_member(&self, node_id: NodeId) -> Result<(), DbError> {
         let mut members = self.cluster_members.write();
         members.insert(node_id);
 
@@ -811,7 +811,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Remove cluster member (failover)
-    pub fn remove_member(&self, node_id: &NodeId) -> std::result::Result<(), DbError> {
+    pub fn remove_member(&self, node_id: &NodeId) -> Result<(), DbError> {
         let mut members = self.cluster_members.write();
         members.remove(node_id);
 
@@ -918,7 +918,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Get resource information
-    pub fn get_resource_info(&self, resource_id: &ResourceId) -> std::result::Result<ResourceEntry, DbError> {
+    pub fn get_resource_info(&self, resource_id: &ResourceId) -> Result<ResourceEntry, DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let buckets = self.buckets.read();
 
@@ -931,7 +931,7 @@ impl GlobalResourceDirectory {
     }
 
     /// Update Lock Value Block for resource
-    pub fn update_lvb(&self, resource_id: &ResourceId, lvb: LockValueBlock) -> std::result::Result<(), DbError> {
+    pub fn update_lvb(&self, resource_id: &ResourceId, lvb: LockValueBlock) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
 
@@ -1014,7 +1014,7 @@ mod tests {
         score.update(100);
         score.update(150);
 
-        assert!(score.access_count == 2);
+        assert_eq!(score.access_count, 2);
         assert!(score.score > 0.0);
     }
 

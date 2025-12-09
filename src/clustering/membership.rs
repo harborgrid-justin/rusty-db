@@ -270,14 +270,14 @@ impl SwimMembership {
     }
 
     /// Add a new member to the cluster
-    pub fn add_member(&self, member: Member) -> std::result::Result<(), DbError> {
+    pub fn add_member(&self, member: Member) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
         members.insert(member.id.clone(), member);
         Ok(())
     }
 
     /// Remove a member from the cluster
-    pub fn remove_member(&self, member_id: &str) -> std::result::Result<(), DbError> {
+    pub fn remove_member(&self, member_id: &str) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
         members.remove(member_id);
         Ok(())
@@ -391,7 +391,7 @@ impl SwimMembership {
     }
 
     /// Handle received ack
-    pub fn handle_ack(&self, from: MemberId, sequence: u64) -> std::result::Result<(), DbError> {
+    pub fn handle_ack(&self, from: MemberId, sequence: u64) -> Result<(), DbError> {
         // Remove from pending pings
         self.pending_pings.write().unwrap().remove(&sequence);
 
@@ -408,7 +408,7 @@ impl SwimMembership {
     }
 
     /// Handle timeout for ping
-    pub fn handle_ping_timeout(&self, sequence: u64) -> std::result::Result<Vec<(MemberId, SwimMessage)>, DbError> {
+    pub fn handle_ping_timeout(&self, sequence: u64) -> Result<Vec<(MemberId, SwimMessage)>, DbError> {
         let pending = {
             let pings = self.pending_pings.read().unwrap();
             pings.get(&sequence).cloned()
@@ -429,7 +429,7 @@ impl SwimMembership {
     }
 
     /// Mark member as suspect
-    fn mark_suspect(&self, member_id: &str) -> std::result::Result<(), DbError> {
+    fn mark_suspect(&self, member_id: &str) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
         if let Some(member) = members.get_mut(member_id) {
             if member.state == MemberState::Alive {
@@ -445,7 +445,7 @@ impl SwimMembership {
     }
 
     /// Check for suspected members that should be marked as failed
-    pub fn check_suspected_members(&self) -> std::result::Result<Vec<MemberId>, DbError> {
+    pub fn check_suspected_members(&self) -> Result<Vec<MemberId>, DbError> {
         let mut failed = Vec::new();
         let mut members = self.members.write().unwrap();
 
@@ -510,7 +510,7 @@ impl SwimMembership {
     }
 
     /// Handle received gossip
-    pub fn handle_gossip(&self, updates: Vec<MembershipUpdate>) -> std::result::Result<(), DbError> {
+    pub fn handle_gossip(&self, updates: Vec<MembershipUpdate>) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
 
         for update in updates {
@@ -573,7 +573,7 @@ impl SwimMembership {
     }
 
     /// Handle join request
-    pub fn handle_join(&self, member: Member) -> std::result::Result<Vec<Member>, DbError> {
+    pub fn handle_join(&self, member: Member) -> Result<Vec<Member>, DbError> {
         let mut members = self.members.write().unwrap();
         members.insert(member.id.clone(), member);
 
@@ -582,7 +582,7 @@ impl SwimMembership {
     }
 
     /// Handle leave notification
-    pub fn handle_leave(&self, member_id: MemberId) -> std::result::Result<(), DbError> {
+    pub fn handle_leave(&self, member_id: MemberId) -> Result<(), DbError> {
         let mut members = self.members.write().unwrap();
         if let Some(member) = members.get_mut(&member_id) {
             member.state = MemberState::Left;

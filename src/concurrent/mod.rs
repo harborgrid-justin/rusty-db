@@ -16,14 +16,14 @@ pub mod rwlock_wp;
 pub mod hazard;
 
 // Re-export main types
-pub use epoch::{Epoch, EpochGuard, Atomic, Owned, Shared};
+pub use epoch::{Atomic, Epoch, EpochGuard, Owned, Shared};
+pub use hashmap::{Bucket, ConcurrentHashMap};
+pub use hazard::{retire, HazardDomain, HazardGuard, HazardScope, HazardStats, Protected};
 pub use queue::{LockFreeQueue, QueueNode};
-pub use stack::{LockFreeStack, StackNode};
-pub use hashmap::{ConcurrentHashMap, Bucket};
-pub use work_stealing::{WorkStealingDeque, Worker, Stealer};
+pub use rwlock_wp::{RwLockReadGuard, RwLockWP, RwLockWriteGuard};
 pub use skiplist::{LockFreeSkipList, SkipListStats};
-pub use rwlock_wp::{RwLockWP, RwLockReadGuard, RwLockWriteGuard};
-pub use hazard::{HazardGuard, HazardDomain, HazardScope, Protected, retire, HazardStats};
+pub use stack::{LockFreeStack, StackNode};
+pub use work_stealing::{Stealer, WorkStealingDeque, Worker};
 
 /// Cache line size for padding to avoid false sharing
 pub const CACHE_LINE_SIZE: usize = 64;
@@ -168,8 +168,6 @@ impl Default for Backoff {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
-    use std::thread;
 
     #[test]
     fn test_tagged_ptr() {

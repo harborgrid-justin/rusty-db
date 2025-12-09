@@ -741,7 +741,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
             if active_count < self.config.max_size {
                 // Try to acquire semaphore permit
                 if let Ok(permit) = self.creation_semaphore.clone().try_acquire_owned() {
-                    match self.create_connection().await {
+                    return match self.create_connection().await {
                         Ok(mut conn) => {
                             conn.state = ConnectionState::Active;
                             conn.acquired_at = Some(Instant::now());
@@ -752,7 +752,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
                             // Release permit after creation
                             drop(permit);
 
-                            return Ok(PooledConnectionGuard {
+                            Ok(PooledConnectionGuard {
                                 connection: Some(conn),
                                 pool: PoolHandle {
                                     idle: Arc::clone(&self.idle),
@@ -760,11 +760,11 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
                                     config: Arc::clone(&self.config),
                                     stats: Arc::clone(&self.stats),
                                 },
-                            });
+                            })
                         }
                         Err(e) => {
                             drop(permit);
-                            return Err(e);
+                            Err(e)
                         }
                     }
                 }

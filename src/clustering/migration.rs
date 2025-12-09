@@ -136,7 +136,7 @@ impl MigrationCoordinator for DataMigrationManager {
         let start_time = SystemTime::now();
         
         // Simulate migration work
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        std::thread::sleep(Duration::from_millis(100));
         
         let end_time = SystemTime::now();
         let duration = end_time.duration_since(start_time)
@@ -256,7 +256,7 @@ pub struct MigrationProgress {
 #[derive(Debug, Clone)]
 pub struct TransferResult {
     pub bytes_transferred: usize,
-    pub transfer_time: std::time::Duration,
+    pub transfer_time: Duration,
     pub checksum: Option<String>,
 }
 

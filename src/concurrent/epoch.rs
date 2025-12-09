@@ -9,11 +9,11 @@
 
 use std::cell::{Cell, RefCell};
 use std::marker::PhantomData;
-use std::mem::{self, ManuallyDrop};
+use std::mem::{self};
 use std::ops::{Deref, DerefMut};
 use std::ptr;
 use std::sync::atomic::{fence, AtomicPtr, AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc};
+use std::sync::Arc;
 
 /// Number of epochs to track (3 provides enough lag for reclamation)
 const EPOCH_COUNT: usize = 3;

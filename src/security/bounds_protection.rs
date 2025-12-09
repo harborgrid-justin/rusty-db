@@ -181,7 +181,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
     /// - Returns error if allocation fails
     pub fn new(capacity: usize) -> Result<Self> {
         // Validate capacity doesn't overflow
-        let byte_size = OverflowGuard::checked_mul(capacity, std::mem::size_of::<T>())?;
+        let byte_size = OverflowGuard::checked_mul(capacity, size_of::<T>())?;
         if byte_size > isize::MAX as usize {
             return Err(DbError::Storage(
                 format!("Buffer capacity {} exceeds maximum allowed size", capacity)

@@ -252,7 +252,7 @@ impl<T> IoRingBuffer<T> {
 
         // Allocate aligned memory
         let layout = Layout::from_size_align(
-            std::mem::size_of::<T>() * config.size,
+            size_of::<T>() * config.size,
             64, // Cache line alignment
         )
         .map_err(|_| DbError::Internal(RingBufferError::AllocationFailed.to_string()))?;
@@ -284,7 +284,7 @@ impl<T> IoRingBuffer<T> {
     pub fn len(&self) -> usize {
         let head = self.head.load(Ordering::Acquire);
         let tail = self.tail.load(Ordering::Acquire);
-        (tail.wrapping_sub(head)) as usize
+        tail.wrapping_sub(head) as usize
     }
 
     /// Check if buffer is empty

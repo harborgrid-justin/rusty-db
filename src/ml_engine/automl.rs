@@ -183,7 +183,7 @@ impl HyperparameterSpace {
                     let _value = if *log_scale {
                         let log_min = min.ln();
                         let log_max = max.ln();
-                        (rng.gen_range(log_min..=log_max)).exp()
+                        rng.gen_range(log_min..=log_max).exp()
                     } else {
                         rng.gen_range(*min..=*max)
                     };

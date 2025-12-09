@@ -15,11 +15,10 @@
 //
 // Scalability: Near-linear to 128+ cores for read-heavy workloads
 
-use crate::error::Result;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use parking_lot::RwLock;
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 
 /// Transaction ID

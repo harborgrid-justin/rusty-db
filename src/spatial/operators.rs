@@ -8,12 +8,11 @@
 //! - Geometric transformations
 //! - Simplification algorithms
 
-use crate::error::Result;
 use crate::error::DbError;
+use crate::error::Result;
 use crate::spatial::geometry::{
-    BoundingBox, Coordinate, LinearRing, Point, Polygon,
+    Coordinate, LinearRing, Point, Polygon,
 };
-use std::collections::HashSet;
 
 /// Spatial relationship types based on DE-9IM (Dimensionally Extended 9-Intersection Model)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

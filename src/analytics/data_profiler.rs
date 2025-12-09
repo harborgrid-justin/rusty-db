@@ -26,9 +26,7 @@
 //! }
 //! ```
 
-use std::collections::{HashMap};
-
-use crate::error::Result;
+use std::collections::HashMap;
 
 /// Inferred data type from column analysis.
 ///

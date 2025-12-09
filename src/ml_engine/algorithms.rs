@@ -39,13 +39,13 @@ impl LinearRegression {
     /// Train using normal equation: w = (X^T X)^-1 X^T y
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
         let targets = dataset.targets.as_ref()
-            .ok_or_else(|| DbError::InvalidInput("Targets required for regression".into()))?;
+            .ok_or_else(|| crate::DbError::InvalidInput("Targets required for regression".into()))?;
 
         let n_samples = dataset.num_samples();
         let n_features = dataset.num_features();
 
         if n_samples == 0 || n_features == 0 {
-            return Err(DbError::InvalidInput("Empty dataset".into()));
+            return Err(crate::DbError::InvalidInput("Empty dataset".into()));
         }
 
         // Compute X^T X
@@ -98,13 +98,13 @@ impl LinearRegression {
     /// Predict values for new samples
     pub fn predict(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
         if self.coefficients.is_empty() {
-            return Err(DbError::InvalidInput("Model not trained".into()));
+            return Err(crate::DbError::InvalidInput("Model not trained".into()));
         }
 
         let mut predictions = Vec::with_capacity(features.len());
         for sample in features {
             if sample.len() != self.coefficients.len() {
-                return Err(DbError::InvalidInput("Feature dimension mismatch".into()));
+                return Err(crate::DbError::InvalidInput("Feature dimension mismatch".into()));
             }
             let pred: f64 = sample.iter()
                 .zip(&self.coefficients)
@@ -142,7 +142,7 @@ impl LinearRegression {
 
             // Check for singular matrix
             if aug[i][i].abs() < 1e-10 {
-                return Err(DbError::InvalidInput("Singular matrix".into()));
+                return Err(crate::DbError::InvalidInput("Singular matrix".into()));
             }
 
             // Eliminate column
@@ -217,7 +217,7 @@ impl LogisticRegression {
     /// Train using gradient descent
     pub fn fit(&mut self, dataset: &Dataset, max_iterations: usize) -> Result<()> {
         let targets = dataset.targets.as_ref()
-            .ok_or_else(|| DbError::InvalidInput("Targets required".into()))?;
+            .ok_or_else(|| crate::DbError::InvalidInput("Targets required".into()))?;
 
         let n_features = dataset.num_features();
         self.weights = vec![0.0; n_features];
@@ -324,7 +324,7 @@ impl DecisionTree {
 
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
         let targets = dataset.targets.as_ref()
-            .ok_or_else(|| DbError::InvalidInput("Targets required".into()))?;
+            .ok_or_else(|| crate::DbError::InvalidInput("Targets required".into()))?;
 
         let indices: Vec<usize> = (0..dataset.num_samples()).collect();
         self.root = Some(self.build_tree(&dataset.features, targets, &indices, 0)?);
@@ -497,7 +497,7 @@ impl DecisionTree {
 
     pub fn predict(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
         let root = self.root.as_ref()
-            .ok_or_else(|| DbError::InvalidInput("Model not trained".into()))?;
+            .ok_or_else(|| crate::DbError::InvalidInput("Model not trained".into()))?;
 
         Ok(features.iter().map(|sample| self.predict_single(root, sample)).collect())
     }
@@ -605,7 +605,7 @@ impl RandomForest {
 
     pub fn predict(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
         if self.trees.is_empty() {
-            return Err(DbError::InvalidInput("Model not trained".into()));
+            return Err(crate::DbError::InvalidInput("Model not trained".into()));
         }
 
         let n_samples = features.len();
@@ -731,7 +731,7 @@ impl KMeans {
 
     pub fn predict(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
         if self.centroids.is_empty() {
-            return Err(DbError::InvalidInput("Model not trained".into()));
+            return Err(crate::DbError::InvalidInput("Model not trained".into()));
         }
 
         Ok(self.assign_clusters(features).iter().map(|&c| c as f64).collect())
@@ -785,7 +785,7 @@ impl NaiveBayes {
 
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
         let targets = dataset.targets.as_ref()
-            .ok_or_else(|| DbError::InvalidInput("Targets required".into()))?;
+            .ok_or_else(|| crate::DbError::InvalidInput("Targets required".into()))?;
 
         let n_features = dataset.num_features();
 
@@ -833,7 +833,7 @@ impl NaiveBayes {
 
     pub fn predict(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
         if self.class_priors.is_empty() {
-            return Err(DbError::InvalidInput("Model not trained".into()));
+            return Err(crate::DbError::InvalidInput("Model not trained".into()));
         }
 
         let mut predictions = Vec::with_capacity(features.len());

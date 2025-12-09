@@ -181,7 +181,7 @@ impl ConnectionPool {
         }
     }
 
-    async fn acquire(&self, next_conn_id: &mut ConnectionId) -> std::result::Result<Connection, DbError> {
+    async fn acquire(&self, next_conn_id: &mut ConnectionId) -> Result<Connection, DbError> {
         // Wait for available slot
         let _permit = self.semaphore.acquire().await
             .map_err(|_| DbError::Internal("Failed to acquire connection".into()))?;
@@ -402,7 +402,7 @@ impl LoadBalancer {
     }
 
     /// Add a backend to the load balancer
-    pub fn add_backend(&self, backend: Backend) -> std::result::Result<(), DbError> {
+    pub fn add_backend(&self, backend: Backend) -> Result<(), DbError> {
         let backend_id = backend.id.clone();
 
         // Add backend
@@ -427,7 +427,7 @@ impl LoadBalancer {
     }
 
     /// Remove a backend
-    pub fn remove_backend(&self, backend_id: &str) -> std::result::Result<(), DbError> {
+    pub fn remove_backend(&self, backend_id: &str) -> Result<(), DbError> {
         self.backends.write().unwrap().remove(backend_id);
         self.pools.write().unwrap().remove(backend_id);
         self.circuit_breakers.write().unwrap().remove(backend_id);
@@ -435,7 +435,7 @@ impl LoadBalancer {
     }
 
     /// Select backend based on strategy
-    pub fn select_backend(&self, session_id: Option<&str>) -> std::result::Result<BackendId, DbError> {
+    pub fn select_backend(&self, session_id: Option<&str>) -> Result<BackendId, DbError> {
         // Check for session affinity
         if self.config.enable_sticky_sessions {
             if let Some(sid) = session_id {
@@ -475,7 +475,7 @@ impl LoadBalancer {
     }
 
     /// Round-robin selection
-    fn select_round_robin(&self) -> std::result::Result<BackendId, DbError> {
+    fn select_round_robin(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
         let available: Vec<_> = backends
             .values()
@@ -494,7 +494,7 @@ impl LoadBalancer {
     }
 
     /// Least connections selection
-    fn select_least_connections(&self) -> std::result::Result<BackendId, DbError> {
+    fn select_least_connections(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
         let pools = self.pools.read().unwrap();
 
@@ -510,7 +510,7 @@ impl LoadBalancer {
     }
 
     /// Weighted round-robin selection
-    fn select_weighted_round_robin(&self) -> std::result::Result<BackendId, DbError> {
+    fn select_weighted_round_robin(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
         let available: Vec<_> = backends
             .values()
@@ -539,7 +539,7 @@ impl LoadBalancer {
     }
 
     /// Latency-based selection
-    fn select_latency_based(&self) -> std::result::Result<BackendId, DbError> {
+    fn select_latency_based(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
 
         let selected = backends
@@ -556,7 +556,7 @@ impl LoadBalancer {
     }
 
     /// Locality-aware selection
-    fn select_locality_aware(&self) -> std::result::Result<BackendId, DbError> {
+    fn select_locality_aware(&self) -> Result<BackendId, DbError> {
         let backends = self.backends.read().unwrap();
 
         // Prefer local region, then zone
@@ -582,7 +582,7 @@ impl LoadBalancer {
     }
 
     /// Random selection
-    fn select_random(&self) -> std::result::Result<BackendId, DbError> {
+    fn select_random(&self) -> Result<BackendId, DbError> {
         use rand::seq::SliceRandom;
 
         let backends = self.backends.read().unwrap();
@@ -620,7 +620,7 @@ impl LoadBalancer {
     }
 
     /// Acquire a connection
-    pub async fn acquire_connection(&self, session_id: Option<&str>) -> std::result::Result<(BackendId, ConnectionId), DbError> {
+    pub async fn acquire_connection(&self, session_id: Option<&str>) -> Result<(BackendId, ConnectionId), DbError> {
         let backend_id = self.select_backend(session_id)?;
 
         let pools = self.pools.read().unwrap();

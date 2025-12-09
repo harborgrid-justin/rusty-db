@@ -6,7 +6,7 @@
 // fine-grained locking with cache-line-padded buckets to minimize contention.
 // The implementation is inspired by Java's ConcurrentHashMap.
 
-use super::epoch::{Atomic, Epoch, EpochGuard, Owned, Shared};
+use super::epoch::{Atomic, Epoch, Owned, Shared};
 use super::Backoff;
 use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hash, Hasher};
@@ -453,7 +453,7 @@ where
                 // Found existing entry
                 let new_value = f(Some(&entry.value));
 
-                if let Some(v) = new_value {
+                return if let Some(v) = new_value {
                     // Update value
                     // Safety: Protected by bucket lock
                     unsafe {
@@ -461,7 +461,7 @@ where
                         entry_mut.value = v.clone();
                     }
                     bucket.unlock();
-                    return Some(v);
+                    Some(v)
                 } else {
                     // Remove entry
                     let next = entry.next.load(Ordering::Acquire, &guard);
@@ -477,7 +477,7 @@ where
                     self.size.fetch_sub(1, Ordering::Relaxed);
                     Epoch::defer(current.as_ptr());
                     bucket.unlock();
-                    return None;
+                    None
                 }
             }
 

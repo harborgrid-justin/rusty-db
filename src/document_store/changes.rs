@@ -694,7 +694,7 @@ mod tests {
 
     #[test]
     fn test_change_event_creation() {
-        let doc = crate::document_store::document::Document::from_json(
+        let doc = Document::from_json(
             DocumentId::new_custom("1"),
             "users".to_string(),
             json!({"name": "Alice"}),
@@ -717,13 +717,13 @@ mod tests {
 
     #[test]
     fn test_update_description() {
-        let old_doc = crate::document_store::document::Document::from_json(
+        let old_doc = Document::from_json(
             DocumentId::new_custom("1"),
             "users".to_string(),
             json!({"name": "Alice", "age": 30}),
         ).unwrap();
 
-        let new_doc = crate::document_store::document::Document::from_json(
+        let new_doc = Document::from_json(
             DocumentId::new_custom("1"),
             "users".to_string(),
             json!({"name": "Alice", "age": 31, "city": "NYC"}),

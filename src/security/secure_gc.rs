@@ -214,7 +214,7 @@ impl<T> Drop for SecureDrop<T> {
         if let Some(mut value) = self.value.take() {
             // Get pointer and size
             let ptr = &mut value as *mut T as *mut u8;
-            let size = mem::size_of::<T>();
+            let size = size_of::<T>();
 
             // Sanitize the memory
             unsafe {
@@ -550,7 +550,7 @@ impl<T> Drop for ReferenceTracker<T> {
         // Take the value and sanitize
         if let Some(mut value) = self.inner.write().take() {
             let ptr = &mut value as *mut T as *mut u8;
-            let size = mem::size_of::<T>();
+            let size = size_of::<T>();
             unsafe {
                 MemorySanitizer::sanitize_ptr(ptr, size);
             }
@@ -948,7 +948,7 @@ mod tests {
         assert_eq!(stats.queue_size, 0);
 
         // Prevent data from being dropped
-        std::mem::forget(data);
+        mem::forget(data);
     }
 
     #[test]

@@ -733,12 +733,12 @@ impl MLEngine {
         // Mark both as A/B testing
         let mut model_a = self.registry.get(name, Some(version_a))?;
         model_a.metadata.status = ModelStatus::ABTesting;
-        model_a.metadata.add_tag(format!("ab_test_a"));
+        model_a.metadata.add_tag("ab_test_a".to_string());
         self.registry.register(model_a)?;
 
         let mut model_b = self.registry.get(name, Some(version_b))?;
         model_b.metadata.status = ModelStatus::ABTesting;
-        model_b.metadata.add_tag(format!("ab_test_b"));
+        model_b.metadata.add_tag("ab_test_b".to_string());
         self.registry.register(model_b)?;
 
         Ok(())

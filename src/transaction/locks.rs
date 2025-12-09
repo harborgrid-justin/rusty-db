@@ -403,13 +403,13 @@ impl HierarchicalLockManager {
 
             // Check if lock is already held by this transaction
             if let Some(&held_mode) = entry.granted.get(&txn_id) {
-                if held_mode == mode {
-                    return Ok(()); // Already have this lock
+                return if held_mode == mode {
+                    Ok(()) // Already have this lock
                 } else if held_mode.strength() >= mode.strength() {
-                    return Ok(()); // Have stronger lock
+                    Ok(()) // Have stronger lock
                 } else {
                     // Need to upgrade
-                    return self.upgrade_lock_internal(txn_id, resource, mode);
+                    self.upgrade_lock_internal(txn_id, resource, mode)
                 }
             }
 

@@ -14,10 +14,10 @@
 //! - Cascading privilege revocation
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::{HashMap, HashSet};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 
@@ -410,7 +410,7 @@ impl PrivilegeManager {
         }
 
         // Check through role hierarchy
-        let _result = self.check_privilege_through_roles(principal, privilege);
+        let result = self.check_privilege_through_roles(principal, privilege);
         if result.has_privilege {
             return result;
         }

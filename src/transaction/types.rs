@@ -289,7 +289,7 @@ impl Version {
 
     /// Returns the size of this version in bytes.
     pub fn size(&self) -> usize {
-        std::mem::size_of::<Self>() + self.data.len()
+        size_of::<Self>() + self.data.len()
     }
 }
 
@@ -485,11 +485,11 @@ impl Transaction {
 
     /// Estimates the memory footprint of this transaction.
     pub fn estimated_size(&self) -> usize {
-        std::mem::size_of::<Transaction>()
-            + self.held_locks.len() * std::mem::size_of::<String>()
-            + self.read_set.len() * std::mem::size_of::<String>()
-            + self.write_set.len() * std::mem::size_of::<String>()
-            + self.savepoints.len() * std::mem::size_of::<Savepoint>()
+        size_of::<Transaction>()
+            + self.held_locks.len() * size_of::<String>()
+            + self.read_set.len() * size_of::<String>()
+            + self.write_set.len() * size_of::<String>()
+            + self.savepoints.len() * size_of::<Savepoint>()
     }
 }
 

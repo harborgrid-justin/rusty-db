@@ -25,11 +25,9 @@
 //! }
 //! ```
 
-use std::collections::{HashMap};
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::sync::Arc;
-
-use crate::error::Result;
 
 /// Quality dimension for analysis.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -84,7 +84,7 @@ impl HashJoinExecutor {
         probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Estimate memory requirements
         let build_size = self.estimate_size(&build_side);
         let probe_size = self.estimate_size(&probe_side);
@@ -110,7 +110,7 @@ impl HashJoinExecutor {
         probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Build phase - pre-allocate hash table with capacity
         let mut hash_table: HashMap<String, Vec<Vec<String>>> =
             HashMap::with_capacity(build_side.rows.len());
@@ -158,7 +158,7 @@ impl HashJoinExecutor {
         probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Ensure temp directory exists
         std::fs::create_dir_all(&self.config.temp_dir)
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -233,7 +233,7 @@ impl HashJoinExecutor {
         probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         let partition_budget = self.config.memory_budget / self.config.num_partitions;
 
         // Phase 1: Partition build side with hot partition detection
@@ -356,7 +356,7 @@ impl HashJoinExecutor {
         data: &QueryResult,
         key_col: usize,
         prefix: &str,
-    ) -> std::result::Result<Vec<PathBuf>, DbError> {
+    ) -> Result<Vec<PathBuf>, DbError> {
         let mut partition_files = Vec::new();
         let mut partition_writers: Vec<BufWriter<File>> = Vec::new();
 
@@ -391,13 +391,13 @@ impl HashJoinExecutor {
     }
 
     /// Load partition from disk
-    fn load_partition(&self, path: &Path) -> std::result::Result<QueryResult, DbError> {
+    fn load_partition(&self, path: &Path) -> Result<QueryResult, DbError> {
         let file = File::open(path)
             .map_err(|e| DbError::IoError(e.to_string()))?;
         let reader = BufReader::new(file);
 
         let mut rows = Vec::new();
-        let mut buf = String::new();
+        let buf = String::new();
         let mut reader = reader;
 
         use std::io::BufRead;
@@ -419,7 +419,7 @@ impl HashJoinExecutor {
         columns: &[String],
         prefix: &str,
         partition_id: usize,
-    ) -> std::result::Result<PathBuf, DbError> {
+    ) -> Result<PathBuf, DbError> {
         let mut counter = self.spill_counter.write();
         *counter += 1;
         let spill_id = *counter;
@@ -519,7 +519,7 @@ impl BloomFilterHashJoin {
         probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Build bloom filter from build side
         let mut bloom = BloomFilter::new(build_side.rows.len(), 0.01);
 

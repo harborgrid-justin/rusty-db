@@ -426,7 +426,7 @@ pub struct SecureBuffer<T> {
 impl<T> SecureBuffer<T> {
     /// Create a new secure buffer with specified capacity
     pub fn new(capacity: usize) -> Result<Self> {
-        let size = capacity * std::mem::size_of::<T>();
+        let size = capacity * size_of::<T>();
         let total_size = size + 2 * CANARY_SIZE; // Add space for canaries
 
         let mut memory = GuardedMemory::new(total_size, PAGE_SIZE)?;
@@ -482,7 +482,7 @@ impl<T> SecureBuffer<T> {
         }
 
         // Read back canary
-        let back_offset = CANARY_SIZE + self.capacity * std::mem::size_of::<T>();
+        let back_offset = CANARY_SIZE + self.capacity * size_of::<T>();
         let back_bytes = self.memory.read(back_offset, CANARY_SIZE)?;
         let back_value = u64::from_le_bytes(back_bytes.try_into().unwrap());
 
@@ -505,11 +505,11 @@ impl<T> SecureBuffer<T> {
         // Verify canaries before write
         self.verify_canaries()?;
 
-        let offset = CANARY_SIZE + index * std::mem::size_of::<T>();
+        let offset = CANARY_SIZE + index * size_of::<T>();
         let bytes = unsafe {
             std::slice::from_raw_parts(
                 data.as_ptr() as *const u8,
-                data.len() * std::mem::size_of::<T>(),
+                data.len() * size_of::<T>(),
             )
         };
 
@@ -537,8 +537,8 @@ impl<T> SecureBuffer<T> {
         // Verify canaries before read
         self.verify_canaries()?;
 
-        let offset = CANARY_SIZE + index * std::mem::size_of::<T>();
-        let size = count * std::mem::size_of::<T>();
+        let offset = CANARY_SIZE + index * size_of::<T>();
+        let size = count * size_of::<T>();
         let bytes = self.memory.read(offset, size)?;
 
         let mut result = vec![T::default(); count];
@@ -559,7 +559,7 @@ impl<T> SecureBuffer<T> {
     /// Caller must ensure proper bounds checking
     #[inline]
     pub unsafe fn as_ptr(&self) -> *const T {
-        (self.memory.as_ptr().add(CANARY_SIZE)) as *const T
+        self.memory.as_ptr().add(CANARY_SIZE) as *const T
     }
 
     /// Get mutable pointer to data (unsafe)
@@ -568,13 +568,13 @@ impl<T> SecureBuffer<T> {
     /// Caller must ensure proper bounds checking
     #[inline]
     pub unsafe fn as_mut_ptr(&mut self) -> *mut T {
-        (self.memory.as_mut_ptr().add(CANARY_SIZE)) as *mut T
+        self.memory.as_mut_ptr().add(CANARY_SIZE) as *mut T
     }
 
     /// Clear buffer (zero all data)
     pub fn clear(&mut self) {
         let offset = CANARY_SIZE;
-        let size = self.capacity * std::mem::size_of::<T>();
+        let size = self.capacity * size_of::<T>();
         unsafe {
             ptr::write_bytes(
                 self.memory.as_mut_ptr().add(offset),

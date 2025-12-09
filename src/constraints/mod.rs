@@ -134,7 +134,7 @@ impl ConstraintManager {
                     let referenced_value = fk.referenced_columns.get(0)
                         .and_then(|col| values.get(col))
                         .ok_or_else(|| crate::error::DbError::InvalidInput(
-                            format!("Missing referenced column value for cascade operation")
+                            "Missing referenced column value for cascade operation".to_string()
                         ))?;
                     
                     match operation {

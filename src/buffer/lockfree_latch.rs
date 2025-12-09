@@ -29,7 +29,7 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::hint::spin_loop;
-use std::time::{Duration};
+use std::time::{Duration, Instant};
 
 // ============================================================================
 // Version-Based Optimistic Latch
@@ -350,7 +350,7 @@ impl HybridLatch {
 
     /// Begin read operation
     pub fn begin_read(&self) -> Option<u64> {
-        let _result = self.optimistic.begin_read();
+        let result = self.optimistic.begin_read();
 
         if result.is_none() {
             // Contention detected
@@ -609,7 +609,7 @@ mod tests {
         let _guard = WriteGuard::new(&latch);
 
         // Try to acquire read with timeout
-        let _result = ReadGuard::try_new(&latch::from_millis(10));
+        let result = ReadGuard::try_new(&latch, Duration::from_millis(10));
         assert!(result.is_none()); // Should timeout
     }
 }

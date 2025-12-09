@@ -616,7 +616,7 @@ mod tests {
 
     #[test]
     fn test_plan_operator() {
-        let mut child = PlanOperator::new(2, OperatorType::IndexScan)
+        let child = PlanOperator::new(2, OperatorType::IndexScan)
             .with_estimates(100, 10.5)
             .with_actuals(95, Duration::from_millis(50));
 

@@ -166,7 +166,7 @@ impl PageTable {
     #[inline(always)]
     fn partition_index(&self, page_id: PageId) -> usize {
         // Fast hash: multiply by large prime and mask
-        ((page_id.wrapping_mul(0x9e3779b97f4a7c15)) as usize) % self.num_partitions
+        (page_id.wrapping_mul(0x9e3779b97f4a7c15) as usize) % self.num_partitions
     }
 
     /// Look up a page in the table
@@ -517,7 +517,7 @@ pub struct BufferPoolManager {
     prefetch_misses: AtomicU64,
 
     /// Background flusher thread handle
-    background_flusher: Mutex<Option<std::thread::JoinHandle<()>>>,
+    background_flusher: Mutex<Option<thread::JoinHandle<()>>>,
 
     /// Shutdown flag
     shutdown: Arc<AtomicBool>,
@@ -842,13 +842,13 @@ impl BufferPoolManager {
         let max_batch_size = self.config.max_flush_batch_size;
         let threshold = self.config.dirty_page_threshold;
 
-        let handle = std::thread::spawn(move || {
+        let handle = thread::spawn(move || {
             // Stats counters (simplified since we can't easily share AtomicU64 across threads)
             let mut _writes_count = 0u64;
             let mut _flush_count = 0u64;
 
             while !shutdown.load(Ordering::Relaxed) {
-                std::thread::sleep(interval);
+                thread::sleep(interval);
 
                 // Check if flush is needed
                 let dirty_count = frames.iter().filter(|f| f.is_dirty()).count();

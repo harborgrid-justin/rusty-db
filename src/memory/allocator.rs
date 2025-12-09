@@ -22,11 +22,11 @@
 
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::RefCell;
-use std::collections::{HashMap};
+use std::collections::{HashMap, VecDeque};
 use std::ptr::{self, NonNull};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, RwLock, Weak};
-use std::time::{Duration};
+use std::sync::{Arc, Mutex, RwLock, Weak};
+use std::time::{Duration, Instant, SystemTime};
 use std::backtrace::Backtrace;
 
 use crate::{DbError, Result};
@@ -262,7 +262,7 @@ impl Slab {
             self.free_count -= 1;
 
             // Zero the memory for security
-            ptr::write_bytes(obj.as_ptr(), 0, std::mem::size_of::<*mut u8>());
+            ptr::write_bytes(obj.as_ptr(), 0, size_of::<*mut u8>());
 
             Some(obj)
         } else {

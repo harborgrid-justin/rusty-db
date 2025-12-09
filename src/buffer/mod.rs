@@ -548,7 +548,7 @@ mod tests {
         // Pin and modify a page
         {
             let guard = pool.pin_page(1).unwrap();
-            let mut _data = guard.write_data();
+            let _data = guard.write_data();
             // Writing automatically marks as dirty
         }
 

@@ -71,7 +71,7 @@ impl Planner {
         Self
     }
     
-    pub fn plan(&self, stmt: &SqlStatement) -> std::result::Result<PlanNode, DbError> {
+    pub fn plan(&self, stmt: &SqlStatement) -> Result<PlanNode, DbError> {
         match stmt {
             SqlStatement::Select { 
                 table, 
@@ -91,7 +91,7 @@ impl Planner {
                         vec!["*".to_string()]
                     } else if columns.contains(&"*".to_string()) {
                         // Mixed wildcard and specific columns is invalid
-                        return Err(crate::error::DbError::SqlParse(
+                        return Err(DbError::SqlParse(
                             "Cannot mix '*' with specific column names".to_string()
                         ));
                     } else {

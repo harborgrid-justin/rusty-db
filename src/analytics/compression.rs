@@ -21,11 +21,9 @@
 //! let original = compressor.decompress(&compressed);
 //! ```
 
-use std::collections::HashMap;
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::sync::Arc;
-
-use crate::error::Result;
 
 /// Compression algorithm for query results.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

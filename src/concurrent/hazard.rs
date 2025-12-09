@@ -12,11 +12,10 @@
 // - Maged M. Michael. "Hazard pointers: Safe memory reclamation for lock-free objects."
 //   IEEE Transactions on Parallel and Distributed Systems, 2004.
 
-use std::sync::atomic::{AtomicPtr, AtomicUsize, Ordering, AtomicBool};
-use std::ptr::{self, NonNull};
 use std::cell::RefCell;
-use std::mem;
 use std::marker::PhantomData;
+use std::ptr::{self, NonNull};
+use std::sync::atomic::{AtomicBool, AtomicPtr, AtomicUsize, Ordering};
 
 /// Maximum number of hazard pointers per thread
 const MAX_HAZARDS_PER_THREAD: usize = 8;

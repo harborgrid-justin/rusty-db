@@ -714,7 +714,7 @@ impl WalEntry {
         data: Vec<u8>,
     ) -> Result<Self, DbError> {
         let timestamp = SystemTime::now();
-        let size_bytes = data.len() + std::mem::size_of::<WalEntry>();
+        let size_bytes = data.len() + size_of::<WalEntry>();
         let checksum = Self::calculate_checksum(&data);
         
         Ok(Self {

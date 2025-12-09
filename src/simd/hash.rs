@@ -19,8 +19,6 @@
 //! - Space: O(1) constant memory
 //! - Cache: Sequential access, 95%+ hit rate
 
-use std::arch::x86_64::*;
-
 /// xxHash3 64-bit hash with AVX2 acceleration
 ///
 /// Provides 10x faster hashing than std DefaultHasher.

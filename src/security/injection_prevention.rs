@@ -449,7 +449,7 @@ impl DangerousPatternDetector {
 
                 threats.push(ThreatDetection {
                     threat_type,
-                    description: format!("Injection pattern detected"),
+                    description: "Injection pattern detected".to_string(),
                     severity: Severity::High,
                     position: None,
                 });

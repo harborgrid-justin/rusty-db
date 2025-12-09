@@ -34,7 +34,7 @@ impl CompilationResult {
         self.errors.push(error);
     }
 
-    pub fn add_warning(&mut selfing: CompilationWarning) {
+    pub fn add_warning(&self, &mut selfing: CompilationWarning) {
         self.warnings.push(warning);
     }
 

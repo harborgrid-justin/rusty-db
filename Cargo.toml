@@ -60,6 +60,17 @@ hex = "0.4"
 fastrand = "2.0"
 unicode-normalization = "0.1"
 lazy_static = "1.4"
+stats = "0.0.1"
+result = "1.0.0"
+size = "0.5.0"
+state = "0.6.0"
+context = "3.0.0"
+source = "0.2.1"
+logs = "0.7.1"
+key = "1.2.6"
+tokio-test = "0.4.4"
+check = "1.0.0"
+handlers = "0.10.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.52", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_IO"] }

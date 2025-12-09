@@ -4,12 +4,11 @@
 //! and batch processing for maximum throughput.
 
 use super::{
-    SelectionVector, SimdContext, SimdStats, FilterOp, PredicateType,
-    filter::SimdFilter, prefetch_read, BATCH_SIZE,
+    filter::SimdFilter, FilterOp, PredicateType, SelectionVector, SimdContext,
+    SimdStats, BATCH_SIZE,
 };
-use crate::common::{Value, Tuple};
+use crate::common::Value;
 use crate::error::Result;
-use std::sync::Arc;
 
 /// Scan strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -261,7 +260,7 @@ impl ColumnScan {
 
     /// Apply single filter to selection
     fn apply_filter(
-        &self,
+        &mut self,
         table: &ColumnarTable,
         filter: &FilterOp,
         input_selection: &SelectionVector,

@@ -14,10 +14,9 @@
 // - Bit 24: Writer lock bit
 // - Bits 25-31: Waiting writers count (7 bits = 127 waiting writers)
 
-use std::sync::atomic::{AtomicU32, Ordering, AtomicUsize};
 use std::cell::UnsafeCell;
 use std::ops::{Deref, DerefMut};
-use std::time::Duration;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 /// Reader count mask (bits 0-23)
 const READER_MASK: u32 = 0x00FF_FFFF;

@@ -79,7 +79,7 @@ impl ExprValue {
     }
 
     /// Coerce to integer
-    pub fn to_integer(&self) -> std::result::Result<i64, DbError> {
+    pub fn to_integer(&self) -> Result<i64, DbError> {
         match self {
             ExprValue::Null => Ok(0),
             ExprValue::Boolean(b) => Ok(if *b { 1 } else { 0 }),
@@ -92,7 +92,7 @@ impl ExprValue {
     }
 
     /// Coerce to float
-    pub fn to_float(&self) -> std::result::Result<f64, DbError> {
+    pub fn to_float(&self) -> Result<f64, DbError> {
         match self {
             ExprValue::Null => Ok(0.0),
             ExprValue::Boolean(b) => Ok(if *b { 1.0 } else { 0.0 }),
@@ -211,7 +211,7 @@ pub enum UnaryOperator {
 /// Expression evaluator
 pub struct ExpressionEvaluator {
     /// Registered user-defined functions
-    udfs: HashMap<String, Box<dyn Fn(Vec<ExprValue>) -> std::result::Result<ExprValue, DbError>>>,
+    udfs: HashMap<String, Box<dyn Fn(Vec<ExprValue>) -> Result<ExprValue, DbError>>>,
 }
 
 impl ExpressionEvaluator {
@@ -224,13 +224,13 @@ impl ExpressionEvaluator {
     /// Register a user-defined function
     pub fn register_udf<F>(&mut self, name: String, func: F)
     where
-        F: Fn(Vec<ExprValue>) -> std::result::Result<ExprValue, DbError> + 'static,
+        F: Fn(Vec<ExprValue>) -> Result<ExprValue, DbError> + 'static,
     {
         self.udfs.insert(name, Box::new(func));
     }
 
     /// Evaluate expression with given row context
-    pub fn eval(&self, expr: &Expr, row: &HashMap<String, ExprValue>) -> std::result::Result<ExprValue, DbError> {
+    pub fn eval(&self, expr: &Expr, row: &HashMap<String, ExprValue>) -> Result<ExprValue, DbError> {
         match expr {
             Expr::Literal(val) => Ok(val.clone()),
 
@@ -250,7 +250,7 @@ impl ExpressionEvaluator {
             }
 
             Expr::Function { name, args } => {
-                let arg_values: std::result::Result<Vec<ExprValue>, DbError> = args.iter()
+                let arg_values: Result<Vec<ExprValue>, DbError> = args.iter()
                     .map(|arg| self.eval(arg, row))
                     .collect();
                 let arg_values = arg_values?;
@@ -305,7 +305,7 @@ impl ExpressionEvaluator {
         left: &ExprValue,
         op: BinaryOperator,
         right: &ExprValue,
-    ) -> std::result::Result<ExprValue, DbError> {
+    ) -> Result<ExprValue, DbError> {
         // NULL propagation (except for AND/OR which have special rules)
         if left.is_null() || right.is_null() {
             return match op {
@@ -411,7 +411,7 @@ impl ExpressionEvaluator {
     }
 
     /// Evaluate unary operation
-    fn eval_unary_op(&self, op: UnaryOperator, val: &ExprValue) -> std::result::Result<ExprValue, DbError> {
+    fn eval_unary_op(&self, op: UnaryOperator, val: &ExprValue) -> Result<ExprValue, DbError> {
         match op {
             UnaryOperator::Not => {
                 if val.is_null() {
@@ -438,7 +438,7 @@ impl ExpressionEvaluator {
     }
 
     /// Evaluate function call
-    fn eval_function(&self, name: &str, args: Vec<ExprValue>) -> std::result::Result<ExprValue, DbError> {
+    fn eval_function(&self, name: &str, args: Vec<ExprValue>) -> Result<ExprValue, DbError> {
         // Check for UDF first
         if let Some(udf) = self.udfs.get(name) {
             return udf(args);
@@ -517,7 +517,7 @@ impl ExpressionEvaluator {
     }
 
     /// Compare two values
-    fn compare_values(&self, left: &ExprValue, right: &ExprValue) -> std::result::Result<i32, DbError> {
+    fn compare_values(&self, left: &ExprValue, right: &ExprValue) -> Result<i32, DbError> {
         if left.is_null() || right.is_null() {
             return Ok(0); // NULL comparison is undefined
         }
@@ -534,7 +534,7 @@ impl ExpressionEvaluator {
     }
 
     /// Check value equality
-    fn values_equal(&self, left: &ExprValue, right: &ExprValue) -> std::result::Result<ExprValue, DbError> {
+    fn values_equal(&self, left: &ExprValue, right: &ExprValue) -> Result<ExprValue, DbError> {
         if left.is_null() || right.is_null() {
             return Ok(ExprValue::Null);
         }

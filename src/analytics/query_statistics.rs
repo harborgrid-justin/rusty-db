@@ -23,11 +23,9 @@
 //! let recommendations = analyzer.analyze(&tracker);
 //! ```
 
-use std::collections::{HashMap};
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::sync::Arc;
-
-use crate::error::Result;
 
 /// A single query execution record.
 #[derive(Debug, Clone)]
@@ -524,7 +522,7 @@ impl WorkloadAnalyzer {
         let freq_score = (stats.execution_count as f64).log10() * 2.0;
         let time_score = (stats.avg_time_ms / 100.0).min(5.0);
         let score = freq_score + time_score;
-        (score.min(10.0).max(1.0)) as u8
+        score.min(10.0).max(1.0) as u8
     }
 
     /// Calculates average query time.

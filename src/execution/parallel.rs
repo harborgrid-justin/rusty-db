@@ -26,7 +26,7 @@ pub struct ParallelExecutor {
 
 impl ParallelExecutor {
     /// Create new executor with fixed-size thread pool
-    pub fn new(worker_count: usize) -> std::result::Result<Self, DbError> {
+    pub fn new(worker_count: usize) -> Result<Self, DbError> {
         // Fixed-size thread pool - no dynamic thread spawning
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(worker_count)
@@ -43,7 +43,7 @@ impl ParallelExecutor {
     }
     
     /// Execute query plan in parallel
-    pub async fn execute_parallel(&self, plan: &PlanNode) -> std::result::Result<QueryResult, DbError> {
+    pub async fn execute_parallel(&self, plan: &PlanNode) -> Result<QueryResult, DbError> {
         match plan {
             PlanNode::TableScan { table, columns } => {
                 self.parallel_table_scan(table, columns).await
@@ -62,7 +62,7 @@ impl ParallelExecutor {
     }
     
     /// Parallel table scan using range partitioning
-    async fn parallel_table_scan(&self, table: &str, columns: &[String]) -> std::result::Result<QueryResult, DbError> {
+    async fn parallel_table_scan(&self, table: &str, columns: &[String]) -> Result<QueryResult, DbError> {
         // Divide table into ranges for parallel scanning
         let chunk_size = 1000; // Rows per chunk
         let num_chunks = 10; // Simulate 10 chunks
@@ -99,7 +99,7 @@ impl ParallelExecutor {
         columns: &[String],
         _chunk_id: usize,
         _chunk_size: usize,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Placeholder: In real implementation, would scan actual table chunk
         Ok(QueryResult::new(columns.to_vec(), Vec::new()))
     }
@@ -111,7 +111,7 @@ impl ParallelExecutor {
         left: &PlanNode,
         right: &PlanNode,
         _condition: &str,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Execute left and right in parallel
         let left_handle = {
             let _left = left.clone();
@@ -140,7 +140,7 @@ impl ParallelExecutor {
         &self,
         left: QueryResult,
         right: QueryResult,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Build hash table from right relation in parallel
         let hash_table = Arc::new(RwLock::new(HashMap::new()));
         
@@ -216,7 +216,7 @@ impl ParallelExecutor {
         group_by: &[String],
         aggregates: &[crate::execution::planner::AggregateExpr],
         _having: &Option<String>,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Execute input plan
         // In real implementation, would execute input
         let input_result = QueryResult::empty();
@@ -234,7 +234,7 @@ impl ParallelExecutor {
         &self,
         input: &QueryResult,
         _aggregates: &[crate::execution::planner::AggregateExpr],
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Partition input data
         let partitions = Self::partition_rows(&input.rows, self.worker_count);
         
@@ -267,7 +267,7 @@ impl ParallelExecutor {
         input: &QueryResult,
         group_by: &[String],
         _aggregates: &[crate::execution::planner::AggregateExpr],
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Partition-based parallel group-by
         let partitions = Self::partition_rows(&input.rows, self.worker_count);
         
@@ -452,7 +452,7 @@ impl ParallelSorter {
         rows: Vec<Vec<String>>,
         column_index: usize,
         num_workers: usize,
-    ) -> std::result::Result<Vec<Vec<String>>, DbError> {
+    ) -> Result<Vec<Vec<String>>, DbError> {
         if rows.len() < 1000 {
             // Small dataset, use sequential sort
             let mut sorted = rows;
@@ -556,7 +556,7 @@ impl ParallelPipeline {
     }
     
     /// Execute pipeline with data flowing through stages
-    pub async fn execute(&self, input: QueryResult) -> std::result::Result<QueryResult, DbError> {
+    pub async fn execute(&self, input: QueryResult) -> Result<QueryResult, DbError> {
         let mut current = input;
         
         for stage in &self.stages {
@@ -578,14 +578,14 @@ impl PipelineStage {
         Self { name, processor }
     }
     
-    async fn process(&self, input: QueryResult) -> std::result::Result<QueryResult, DbError> {
+    async fn process(&self, input: QueryResult) -> Result<QueryResult, DbError> {
         self.processor.process(input).await
     }
 }
 
 /// Pipeline processor trait
 pub trait PipelineProcessor: Send + Sync {
-    fn process(&self, input: QueryResult) -> std::pin::Pin<Box<dyn std::future::Future<Output = std::result::Result<QueryResult, DbError>> + Send>>;
+    fn process(&self, input: QueryResult) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResult, DbError>> + Send>>;
 }
 
 /// Vectorized execution engine

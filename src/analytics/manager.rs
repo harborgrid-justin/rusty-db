@@ -28,21 +28,19 @@
 //! let recommendations = manager.analyze_workload();
 //! ```
 
+use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 
-use crate::error::Result;
-
-use super::query_cache::{QueryCache, CachedResult, CacheStats};
-use super::statistics::{ColumnStatistics, HistogramManager};
-use super::cost_model::{CostModel, CardinalityEstimator};
-use super::parallel::ParallelQueryExecutor;
-use super::query_statistics::{QueryStatisticsTracker, WorkloadAnalyzer, WorkloadAnalysisResult};
-use super::query_rewriter::{QueryRewriter, RewriteResult};
-use super::compression::{QueryResultCompressor, CompressionAlgorithm};
+use super::compression::{CompressionAlgorithm, QueryResultCompressor};
+use super::cost_model::{CardinalityEstimator, CostModel};
 use super::data_profiler::DataProfiler;
+use super::parallel::ParallelQueryExecutor;
 use super::quality::{DataQualityAnalyzer, QueryPerformanceTracker};
+use super::query_cache::{CacheStats, CachedResult, QueryCache};
+use super::query_rewriter::{QueryRewriter, RewriteResult};
+use super::query_statistics::{QueryStatisticsTracker, WorkloadAnalysisResult, WorkloadAnalyzer};
+use super::statistics::{ColumnStatistics, HistogramManager};
 
 /// Configuration for the analytics manager.
 #[derive(Debug, Clone)]
@@ -505,11 +503,16 @@ mod tests {
         let manager = AnalyticsManager::new();
 
         let _result = CachedResult {
+            query: "".to_string(),
+            result: vec![],
+            timestamp: (),
             data: vec![],
             created_at: std::time::Instant::now(),
             size_bytes: 100,
             access_count: 0,
             query_hash: 123,
+            ttl_seconds: 0,
+            last_access: (),
         };
 
         manager.cache_result("SELECT 1", result);

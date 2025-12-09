@@ -2,7 +2,7 @@
 //!
 //! Vectorized aggregate functions (SUM, COUNT, MIN, MAX, AVG) using AVX2 SIMD instructions.
 
-use super::{SimdContext, SimdStats, SelectionVector};
+use super::{SimdContext, SimdStats};
 use crate::common::Value;
 use crate::error::Result;
 
@@ -582,7 +582,7 @@ impl SimdAggregator {
                     AggregateOp::Max => max_f64_avx2(data),
                     AggregateOp::Avg => avg_f64_avx2(data),
                     AggregateOp::Count => data.len() as f64,
-                    _ => return Err(DbError::InvalidArgument(
+                    _ => return Err(crate::DbError::InvalidArgument(
                         format!("Unsupported aggregate operation: {:?}", op)
                     )),
                 }
@@ -594,7 +594,7 @@ impl SimdAggregator {
                 AggregateOp::Max => max_f64_scalar(data),
                 AggregateOp::Avg => avg_f64_scalar(data),
                 AggregateOp::Count => data.len() as f64,
-                _ => return Err(DbError::InvalidArgument(
+                _ => return Err(crate::DbError::InvalidArgument(
                     format!("Unsupported aggregate operation: {:?}", op)
                 )),
             }
@@ -614,7 +614,7 @@ impl SimdAggregator {
                     AggregateOp::Max => max_f32_avx2(data),
                     AggregateOp::Avg => sum_f32_avx2(data) / data.len() as f32,
                     AggregateOp::Count => data.len() as f32,
-                    _ => return Err(DbError::InvalidArgument(
+                    _ => return Err(crate::DbError::InvalidArgument(
                         format!("Unsupported aggregate operation: {:?}", op)
                     )),
                 }
@@ -629,7 +629,7 @@ impl SimdAggregator {
                     sum / data.len() as f32
                 }
                 AggregateOp::Count => data.len() as f32,
-                _ => return Err(DbError::InvalidArgument(
+                _ => return Err(crate::DbError::InvalidArgument(
                     format!("Unsupported aggregate operation: {:?}", op)
                 )),
             }
@@ -648,7 +648,7 @@ impl SimdAggregator {
                     AggregateOp::Min => min_i32_avx2(data) as i64,
                     AggregateOp::Max => max_i32_avx2(data) as i64,
                     AggregateOp::Count => data.len() as i64,
-                    _ => return Err(DbError::InvalidArgument(
+                    _ => return Err(crate::DbError::InvalidArgument(
                         format!("Unsupported aggregate operation: {:?}", op)
                     )),
                 }
@@ -659,7 +659,7 @@ impl SimdAggregator {
                 AggregateOp::Min => min_i32_scalar(data) as i64,
                 AggregateOp::Max => max_i32_scalar(data) as i64,
                 AggregateOp::Count => data.len() as i64,
-                _ => return Err(DbError::InvalidArgument(
+                _ => return Err(crate::DbError::InvalidArgument(
                     format!("Unsupported aggregate operation: {:?}", op)
                 )),
             }
@@ -678,7 +678,7 @@ impl SimdAggregator {
                     AggregateOp::Min => *data.iter().min().unwrap_or(&i64::MAX),
                     AggregateOp::Max => *data.iter().max().unwrap_or(&i64::MIN),
                     AggregateOp::Count => data.len() as i64,
-                    _ => return Err(DbError::InvalidArgument(
+                    _ => return Err(crate::DbError::InvalidArgument(
                         format!("Unsupported aggregate operation: {:?}", op)
                     )),
                 }
@@ -689,7 +689,7 @@ impl SimdAggregator {
                 AggregateOp::Min => *data.iter().min().unwrap_or(&i64::MAX),
                 AggregateOp::Max => *data.iter().max().unwrap_or(&i64::MIN),
                 AggregateOp::Count => data.len() as i64,
-                _ => return Err(DbError::InvalidArgument(
+                _ => return Err(crate::DbError::InvalidArgument(
                     format!("Unsupported aggregate operation: {:?}", op)
                 )),
             }

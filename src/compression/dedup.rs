@@ -2,7 +2,7 @@
 // Eliminates duplicate data across tables and databases
 
 use super::*;
-use std::collections::{HashMap};
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 

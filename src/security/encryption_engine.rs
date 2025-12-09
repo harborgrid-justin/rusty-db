@@ -368,11 +368,11 @@ impl EncryptionEngine {
 
         // Prepare payload with AAD
         let payload = match aad {
-            Some(aad_data) => chacha20poly1305::aead::Payload {
+            Some(aad_data) => Payload {
                 msg: plaintext,
                 aad: aad_data,
             },
-            None => chacha20poly1305::aead::Payload {
+            None => Payload {
                 msg: plaintext,
                 aad: b"",
             },
@@ -417,11 +417,11 @@ impl EncryptionEngine {
 
         // Prepare payload with AAD
         let payload = match aad {
-            Some(aad_data) => chacha20poly1305::aead::Payload {
+            Some(aad_data) => Payload {
                 msg: &ciphertext_with_tag,
                 aad: aad_data,
             },
-            None => chacha20poly1305::aead::Payload {
+            None => Payload {
                 msg: &ciphertext_with_tag,
                 aad: b"",
             },

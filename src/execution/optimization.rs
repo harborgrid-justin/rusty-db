@@ -1,5 +1,5 @@
 /// Advanced Query Optimization Techniques
-/// 
+///
 /// This module provides enterprise-grade query optimization:
 /// - Query plan caching for repeated queries
 /// - Adaptive query optimization based on runtime statistics
@@ -10,10 +10,11 @@
 
 use crate::error::DbError;
 use crate::execution::planner::PlanNode;
+use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
-use std::time::{Duration};
+use std::time::Duration;
+
 
 /// Query plan cache
 pub struct PlanCache {
@@ -484,7 +485,7 @@ impl JoinOrderOptimizer {
     }
     
     /// Find optimal join order for a set of tables
-    pub fn optimize_join_order(&self, tables: Vec<PlanNode>) -> std::result::Result<PlanNode, DbError> {
+    pub fn optimize_join_order(&self, tables: Vec<PlanNode>) -> Result<PlanNode, DbError> {
         if tables.is_empty() {
             return Err(DbError::InvalidInput("No tables to join".to_string()));
         }
@@ -500,11 +501,11 @@ impl JoinOrderOptimizer {
             
             let cost_lr = self.estimate_join_cost(left, right);
             let cost_rl = self.estimate_join_cost(right, left);
-            
-            if cost_lr <= cost_rl {
-                return Ok(self.create_join(left.clone(), right.clone()));
+
+            return if cost_lr <= cost_rl {
+                Ok(self.create_join(left.clone(), right.clone()))
             } else {
-                return Ok(self.create_join(right.clone(), left.clone()));
+                Ok(self.create_join(right.clone(), left.clone()))
             }
         }
         
@@ -513,7 +514,7 @@ impl JoinOrderOptimizer {
         self.greedy_join_order(tables)
     }
     
-    fn greedy_join_order(&self, mut tables: Vec<PlanNode>) -> std::result::Result<PlanNode, DbError> {
+    fn greedy_join_order(&self, mut tables: Vec<PlanNode>) -> Result<PlanNode, DbError> {
         while tables.len() > 1 {
             let mut best_pair = (0, 1);
             let mut best_cost = f64::MAX;
@@ -623,8 +624,7 @@ pub enum IndexType {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::thread;
-    
+
     #[test]
     fn test_plan_cache() {
         let cache = PlanCache::new(10);

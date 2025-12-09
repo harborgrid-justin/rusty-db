@@ -367,14 +367,14 @@ impl<T> MockLockFreeQueue<T> {
         let start = Instant::now();
         self.queue.push(value);
         let latency = start.elapsed().as_nanos() as u64;
-        self.metrics.record_op(latency, std::mem::size_of::<T>() as u64);
+        self.metrics.record_op(latency, size_of::<T>() as u64);
     }
 
     pub fn pop(&self) -> Option<T> {
         let start = Instant::now();
         let _result = self.queue.pop();
         let latency = start.elapsed().as_nanos() as u64;
-        self.metrics.record_op(latency, std::mem::size_of::<T>() as u64);
+        self.metrics.record_op(latency, size_of::<T>() as u64);
         result
     }
 
@@ -732,7 +732,7 @@ pub fn bench_queue_multi_threaded(config: &BenchConfig) -> BenchMetrics {
                 if q.pop().is_some() {
                     consumed += 1;
                 } else {
-                    std::thread::yield_now();
+                    thread::yield_now();
                 }
             }
         });

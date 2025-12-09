@@ -974,7 +974,7 @@ mod tests {
 
         // Check that mean is approximately 0
         let mean_col1 = result.iter().map(|row| row[0]).sum::<f64>() / result.len() as f64;
-        assert!((mean_col1).abs() < 1e-10);
+        assert!(mean_col1.abs() < 1e-10);
     }
 
     #[test]

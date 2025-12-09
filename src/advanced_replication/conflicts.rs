@@ -375,8 +375,8 @@ impl ConflictResolver {
     #[inline(always)]
     fn select_shard(&self, conflict_id: &str) -> &ConflictShard {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
-        std::hash::Hash::hash(conflict_id, &mut hasher);
-        let _hash = std::hash::Hasher::finish(&hasher);
+        Hash::hash(conflict_id, &mut hasher);
+        let _hash = Hasher::finish(&hasher);
         let index = (hash as usize) % NUM_SHARDS;
         &self.shards[index]
     }

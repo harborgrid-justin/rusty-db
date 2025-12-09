@@ -653,7 +653,7 @@ mod tests {
 
         if splitter.should_split(&page, 4096) {
             let new_page = splitter.split(&mut page, 2);
-            assert!(new_page.page.id == 2);
+            assert_eq!(new_page.page.id, 2);
         }
     }
 

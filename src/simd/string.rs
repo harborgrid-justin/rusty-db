@@ -325,7 +325,7 @@ pub unsafe fn hash_fnv1a_avx2(data: &[u8]) -> u32 {
         let bytes = &data[offset..offset + 32];
 
         for &byte in bytes {
-            hash ^= byte as u32;
+            hash ^= byte;
             hash = hash.wrapping_mul(FNV_PRIME);
         }
     }

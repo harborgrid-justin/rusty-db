@@ -7,10 +7,10 @@
 // Reference: "Simple, Fast, and Practical Non-Blocking and Blocking
 // Concurrent Queue Algorithms" by Michael and Scott (1996)
 
-use super::epoch::{Atomic, Epoch, EpochGuard, Owned, Shared};
+use super::epoch::{Atomic, Epoch, Owned};
 use super::Backoff;
 
-use std::sync::atomic::{AtomicPtr, AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
 /// Cache-line padded node to avoid false sharing
 #[repr(C, align(64))]
@@ -559,7 +559,7 @@ mod tests {
                 let mut count = 0;
                 for _ in 0..1000 {
                     while q.dequeue().is_none() {
-                        std::thread::yield_now();
+                        thread::yield_now();
                     }
                     count += 1;
                 }

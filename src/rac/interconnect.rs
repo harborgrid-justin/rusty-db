@@ -367,7 +367,7 @@ impl Connection {
         }
     }
 
-    async fn connect(&self, address: &str) -> std::result::Result<(), DbError> {
+    async fn connect(&self, address: &str) -> Result<(), DbError> {
         *self.state.write() = ConnectionState::Connecting;
 
         match TcpStream::connect(address).await {
@@ -383,7 +383,7 @@ impl Connection {
         }
     }
 
-    async fn send_message(&self, message: Message) -> std::result::Result<(), DbError> {
+    async fn send_message(&self, message: Message) -> Result<(), DbError> {
         // Add to queue
         self.send_queue.lock().push_back(message.clone());
 
@@ -391,7 +391,7 @@ impl Connection {
         self.flush_queue().await
     }
 
-    async fn flush_queue(&self) -> std::result::Result<(), DbError> {
+    async fn flush_queue(&self) -> Result<(), DbError> {
         // Extract messages from queue before acquiring stream lock
         let messages_to_send: Vec<Message> = {
             let mut queue = self.send_queue.lock();
@@ -426,7 +426,7 @@ impl Connection {
         Ok(())
     }
 
-    async fn receive_message(&self) -> std::result::Result<Message, DbError> {
+    async fn receive_message(&self) -> Result<Message, DbError> {
         // Use tokio::sync::Mutex which can be held across await
         let mut stream_guard = self.stream.lock().await;
 
@@ -517,7 +517,7 @@ pub struct ClusterInterconnect {
 }
 
 /// Message handler function type
-type MessageHandler = Arc<dyn Fn(Message) -> std::result::Result<Vec<u8>, DbError> + Send + Sync>;
+type MessageHandler = Arc<dyn Fn(Message) -> Result<Vec<u8>, DbError> + Send + Sync>;
 
 /// Interconnect configuration
 #[derive(Debug, Clone)]
@@ -644,7 +644,7 @@ impl ClusterInterconnect {
     }
 
     /// Start the interconnect service
-    pub async fn start(&self) -> std::result::Result<(), DbError> {
+    pub async fn start(&self) -> Result<(), DbError> {
         // Start listener
         let listener = TcpListener::bind(&self.listen_address).await
             .map_err(|e| DbError::Network(format!("Failed to bind: {}", e)))?;
@@ -694,13 +694,13 @@ impl ClusterInterconnect {
     }
 
     /// Stop the interconnect service
-    pub async fn stop(&self) -> std::result::Result<(), DbError> {
+    pub async fn stop(&self) -> Result<(), DbError> {
         let _ = self.shutdown_tx.send(());
         Ok(())
     }
 
     /// Add a node to the cluster
-    pub async fn add_node(&self, node_id: NodeId, address: String) -> std::result::Result<(), DbError> {
+    pub async fn add_node(&self, node_id: NodeId, address: String) -> Result<(), DbError> {
         let conn = Arc::new(Connection::new(node_id.clone()));
 
         // Connect to remote node
@@ -719,7 +719,7 @@ impl ClusterInterconnect {
     }
 
     /// Remove a node from the cluster
-    pub async fn remove_node(&self, node_id: &NodeId) -> std::result::Result<(), DbError> {
+    pub async fn remove_node(&self, node_id: &NodeId) -> Result<(), DbError> {
         self.connections.write().remove(node_id);
         self.node_health.write().remove(node_id);
 
@@ -735,7 +735,7 @@ impl ClusterInterconnect {
         message_type: MessageType,
         payload: Vec<u8>,
         priority: MessagePriority,
-    ) -> std::result::Result<(), DbError> {
+    ) -> Result<(), DbError> {
         let message_id = self.next_message_id();
         let sequence = self.next_sequence();
 
@@ -761,7 +761,7 @@ impl ClusterInterconnect {
         message_type: MessageType,
         payload: Vec<u8>,
         priority: MessagePriority,
-    ) -> std::result::Result<MessageAck, DbError> {
+    ) -> Result<MessageAck, DbError> {
         let message_id = self.next_message_id();
         let sequence = self.next_sequence();
 
@@ -796,7 +796,7 @@ impl ClusterInterconnect {
         &self,
         destination: NodeId,
         message: Message,
-    ) -> std::result::Result<(), DbError> {
+    ) -> Result<(), DbError> {
         let start = Instant::now();
 
         let connections = self.connections.read();
@@ -820,7 +820,7 @@ impl ClusterInterconnect {
     /// Register a message handler
     pub fn register_handler<F>(&self, message_type: MessageType, handler: F)
     where
-        F: Fn(Message) -> std::result::Result<Vec<u8>, DbError> + Send + Sync + 'static,
+        F: Fn(Message) -> Result<Vec<u8>, DbError> + Send + Sync + 'static,
     {
         self.message_handlers.write().insert(
             message_type,
@@ -889,7 +889,7 @@ impl ClusterInterconnect {
     }
 
     /// Detect split-brain scenario
-    pub fn detect_split_brain(&self) -> std::result::Result<bool, DbError> {
+    pub fn detect_split_brain(&self) -> Result<bool, DbError> {
         let health = self.node_health.read();
         let total_nodes = health.len() + 1; // +1 for local node
 

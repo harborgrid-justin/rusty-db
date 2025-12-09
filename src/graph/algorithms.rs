@@ -176,7 +176,7 @@ impl ConnectedComponentsAlgorithm {
     pub fn compute(graph: &PropertyGraph) -> Result<ConnectedComponents> {
         let mut component_map = HashMap::new();
         let mut component_sizes = HashMap::new();
-        let mut visited = HashSet::new();
+        let mut visited = std::collections::HashSet::new();
         let mut component_id = 0;
 
         for vertex in graph.vertices() {
@@ -211,7 +211,7 @@ impl ConnectedComponentsAlgorithm {
         graph: &PropertyGraph,
         start: VertexId,
         component_id: usize,
-        visited: &mut HashSet<VertexId>,
+        visited: &mut std::collections::HashSet<VertexId>,
         component_map: &mut HashMap<VertexId, usize>,
     ) -> Result<usize> {
         let mut stack = vec![start];
@@ -281,7 +281,7 @@ impl CentralityAlgorithms {
 
         for &source in &vertices {
             // BFS from source
-            let mut queue = VecDeque::new();
+            let mut queue = std::collections::VecDeque::new();
             let mut stack = Vec::new();
             let mut dist: HashMap<VertexId, i32> = HashMap::new();
             let mut paths: HashMap<VertexId, usize> = HashMap::new();
@@ -386,7 +386,7 @@ impl CentralityAlgorithms {
 
     fn bfs_distances(graph: &PropertyGraph, start: VertexId) -> Result<HashMap<VertexId, usize>> {
         let mut distances = HashMap::new();
-        let mut queue = VecDeque::new();
+        let mut queue = std::collections::VecDeque::new();
 
         distances.insert(start, 0);
         queue.push_back(start);
@@ -456,7 +456,7 @@ impl LouvainAlgorithm {
                 let mut best_gain = 0.0;
 
                 // Try moving vertex to neighbor communities
-                let neighbor_communities: HashSet<usize> = neighbors.iter()
+                let neighbor_communities: std::collections::HashSet<usize> = neighbors.iter()
                     .filter_map(|&n| communities.get(&n).copied())
                     .collect();
 
@@ -487,7 +487,7 @@ impl LouvainAlgorithm {
         }
 
         // Renumber communities to be contiguous
-        let unique_communities: HashSet<usize> = communities.values().copied().collect();
+        let unique_communities: std::collections::HashSet<usize> = communities.values().copied().collect();
         let mut community_remap: HashMap<usize, usize> = HashMap::new();
         for (new_id, &old_id) in unique_communities.iter().enumerate() {
             community_remap.insert(old_id, new_id);
@@ -584,7 +584,7 @@ impl TriangleCounting {
 
         for &v1 in &vertices {
             let neighbors_v1 = graph.get_outgoing_neighbors(v1)?;
-            let neighbors_v1_set: HashSet<VertexId> = neighbors_v1.iter().copied().collect();
+            let neighbors_v1_set: std::collections::HashSet<VertexId> = neighbors_v1.iter().copied().collect();
 
             for &v2 in &neighbors_v1 {
                 if v2 <= v1 {
@@ -683,7 +683,7 @@ impl ClusteringCoefficientAlgorithm {
             return Ok(0.0);
         }
 
-        let neighbors_set: HashSet<VertexId> = neighbors.iter().copied().collect();
+        let neighbors_set: std::collections::HashSet<VertexId> = neighbors.iter().copied().collect();
         let mut edges_between_neighbors = 0;
 
         for &n1 in &neighbors {
@@ -719,11 +719,11 @@ impl ClusteringCoefficientAlgorithm {
 
 /// Jaccard similarity between two vertices
 pub fn jaccard_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Result<f64> {
-    let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
+    let neighbors1: std::collections::HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
         .into_iter()
         .collect();
 
-    let neighbors2: HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?
+    let neighbors2: std::collections::HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?
         .into_iter()
         .collect();
 
@@ -739,11 +739,11 @@ pub fn jaccard_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> 
 
 /// Cosine similarity between two vertices (based on neighbor sets)
 pub fn cosine_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Result<f64> {
-    let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
+    let neighbors1: std::collections::HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
         .into_iter()
         .collect();
 
-    let neighbors2: HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?
+    let neighbors2: std::collections::HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?
         .into_iter()
         .collect();
 
@@ -760,11 +760,11 @@ pub fn cosine_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> R
 
 /// Common neighbor count
 pub fn common_neighbors(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Result<usize> {
-    let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
+    let neighbors1: std::collections::HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
         .into_iter()
         .collect();
 
-    let neighbors2: HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?
+    let neighbors2: std::collections::HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?
         .into_iter()
         .collect();
 
@@ -862,8 +862,8 @@ impl InfluenceMaximization {
         graph: &PropertyGraph,
         seed_set: &[VertexId],
     ) -> Result<usize> {
-        let mut influenced = HashSet::new();
-        let mut queue = VecDeque::new();
+        let mut influenced = std::collections::HashSet::new();
+        let mut queue = std::collections::VecDeque::new();
 
         for &seed in seed_set {
             influenced.insert(seed);
@@ -893,7 +893,7 @@ impl InfluenceMaximization {
         graph: &PropertyGraph,
         seed_set: &[VertexId],
     ) -> Result<usize> {
-        let mut influenced = HashSet::new();
+        let mut influenced = std::collections::HashSet::new();
         let mut thresholds: HashMap<VertexId, f64> = HashMap::new();
 
         // Initialize random thresholds

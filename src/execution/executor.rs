@@ -22,7 +22,7 @@ impl Executor {
     
     /// Execute SQL statement (inline for performance)
     #[inline]
-    pub fn execute(&self, stmt: SqlStatement) -> std::result::Result<QueryResult, DbError> {
+    pub fn execute(&self, stmt: SqlStatement) -> Result<QueryResult, DbError> {
         match stmt {
             SqlStatement::CreateTable { name, columns } => {
                 let schema = Schema::new(name.clone(), columns);
@@ -37,7 +37,7 @@ impl Executor {
                 let schema = self.catalog.get_table(&table)?;
                 
                 // Simple implementation - return empty result with schema
-                let mut result_columns = if columns.contains(&"*".to_string()) {
+                let result_columns = if columns.contains(&"*".to_string()) {
                     schema.columns.iter().map(|c| c.name.clone()).collect()
                 } else {
                     columns
@@ -102,7 +102,7 @@ impl Executor {
     
     /// Execute a query plan node (inline for performance)
     #[inline]
-    pub fn execute_plan(&self, plan: PlanNode) -> std::result::Result<QueryResult, DbError> {
+    pub fn execute_plan(&self, plan: PlanNode) -> Result<QueryResult, DbError> {
         match plan {
             PlanNode::TableScan { table, columns } => {
                 self.execute_table_scan(&table, &columns)
@@ -138,7 +138,7 @@ impl Executor {
         }
     }
     
-    fn execute_table_scan(&self, table: &str, columns: &[String]) -> std::result::Result<QueryResult, DbError> {
+    fn execute_table_scan(&self, table: &str, columns: &[String]) -> Result<QueryResult, DbError> {
         let schema = self.catalog.get_table(table)?;
         
         let result_columns = if columns.contains(&"*".to_string()) {
@@ -151,13 +151,13 @@ impl Executor {
         Ok(QueryResult::new(result_columns, Vec::new()))
     }
     
-    fn execute_filter(&self, input: QueryResult, _predicate: &str) -> std::result::Result<QueryResult, DbError> {
+    fn execute_filter(&self, input: QueryResult, _predicate: &str) -> Result<QueryResult, DbError> {
         // TODO: Implement actual filtering based on predicate
         // For now, just pass through the input
         Ok(input)
     }
     
-    fn execute_project(&self, input: QueryResult, columns: &[String]) -> std::result::Result<QueryResult, DbError> {
+    fn execute_project(&self, input: QueryResult, columns: &[String]) -> Result<QueryResult, DbError> {
         // Project only the specified columns
         if columns.contains(&"*".to_string()) {
             return Ok(input);
@@ -173,7 +173,7 @@ impl Executor {
         right: QueryResult,
         join_type: JoinType,
         condition: &str,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Combine column names from both sides
         let mut result_columns = left.columns.clone();
         result_columns.extend(right.columns.clone());
@@ -197,11 +197,10 @@ impl Executor {
                 for left_row in &left.rows {
                     for right_row in &right.rows {
                         // TODO: Check join condition properly
-                        if true { // Replace with: matches_condition(left_row, right_row)
-                            let mut combined_row = left_row.clone();
-                            combined_row.extend(right_row.clone());
-                            result_rows.push(combined_row);
-                        }
+                        // Replace with: matches_condition(left_row, right_row)
+                        let mut combined_row = left_row.clone();
+                        combined_row.extend(right_row.clone());
+                        result_rows.push(combined_row);
                     }
                 }
             }
@@ -211,12 +210,11 @@ impl Executor {
                     let mut found_match = false;
                     for right_row in &right.rows {
                         // TODO: Check join condition properly
-                        if true { // Replace with: matches_condition(left_row, right_row)
-                            let mut combined_row = left_row.clone();
-                            combined_row.extend(right_row.clone());
-                            result_rows.push(combined_row);
-                            found_match = true;
-                        }
+                        // Replace with: matches_condition(left_row, right_row)
+                        let mut combined_row = left_row.clone();
+                        combined_row.extend(right_row.clone());
+                        result_rows.push(combined_row);
+                        found_match = true;
                     }
                     
                     if !found_match {
@@ -232,12 +230,11 @@ impl Executor {
                     let mut found_match = false;
                     for left_row in &left.rows {
                         // TODO: Check join condition properly
-                        if true { // Replace with: matches_condition(left_row, right_row)
-                            let mut combined_row = left_row.clone();
-                            combined_row.extend(right_row.clone());
-                            result_rows.push(combined_row);
-                            found_match = true;
-                        }
+                        // Replace with: matches_condition(left_row, right_row)
+                        let mut combined_row = left_row.clone();
+                        combined_row.extend(right_row.clone());
+                        result_rows.push(combined_row);
+                        found_match = true;
                     }
                     
                     if !found_match {
@@ -255,13 +252,12 @@ impl Executor {
                     let mut found_match = false;
                     for (i, right_row) in right.rows.iter().enumerate() {
                         // TODO: Check join condition properly
-                        if true { // Replace with: matches_condition(left_row, right_row)
-                            let mut combined_row = left_row.clone();
-                            combined_row.extend(right_row.clone());
-                            result_rows.push(combined_row);
-                            found_match = true;
-                            matched_right[i] = true;
-                        }
+                        // Replace with: matches_condition(left_row, right_row)
+                        let mut combined_row = left_row.clone();
+                        combined_row.extend(right_row.clone());
+                        result_rows.push(combined_row);
+                        found_match = true;
+                        matched_right[i] = true;
                     }
                     
                     if !found_match {
@@ -301,7 +297,7 @@ impl Executor {
         group_by: &[String],
         aggregates: &[crate::execution::planner::AggregateExpr],
         _having: Option<&str>,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         use crate::execution::planner::AggregateFunction;
         
         if group_by.is_empty() {
@@ -329,7 +325,7 @@ impl Executor {
             Ok(QueryResult::new(result_columns, vec![result_row]))
         } else {
             // Group by columns
-            let mut _groups: HashMap<Vec<String>, Vec<Vec<String>>> = HashMap::new();
+            let _groups: HashMap<Vec<String>, Vec<Vec<String>>> = HashMap::new();
             
             // TODO: Implement grouping logic
             // For now, return empty result
@@ -341,7 +337,7 @@ impl Executor {
         &self,
         input: QueryResult,
         _order_by: &[crate::parser::OrderByClause],
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // TODO: Implement actual sorting based on order_by clauses
         // For now, just return the input as-is
         Ok(input)
@@ -352,7 +348,7 @@ impl Executor {
         mut input: QueryResult,
         limit: usize,
         offset: Option<usize>,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         let start = offset.unwrap_or(0);
         
         input.rows = input.rows.into_iter()
@@ -370,7 +366,7 @@ mod tests {
     use crate::parser::SqlParser;
     
     #[test]
-    fn test_executor() -> std::result::Result<(), DbError> {
+    fn test_executor() -> Result<(), DbError> {
         let catalog = Arc::new(Catalog::new());
         let txn_manager = Arc::new(TransactionManager::new());
         let executor = Executor::new(catalog, txn_manager);

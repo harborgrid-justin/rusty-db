@@ -333,7 +333,7 @@ impl AuthenticationManager {
 
         let _policy = self.password_policy.read();
         let password_expires_at = policy.expiration_days.map(|days| {
-            now + (days as i64 * 86400)
+            now + (days * 86400)
         });
 
         let user = UserAccount {
@@ -563,7 +563,7 @@ impl AuthenticationManager {
 
         // Update expiration
         user.password_expires_at = policy.expiration_days.map(|days| {
-            current_timestamp() + (days as i64 * 86400)
+            current_timestamp() + (days * 86400)
         });
 
         // Update status if password change was required

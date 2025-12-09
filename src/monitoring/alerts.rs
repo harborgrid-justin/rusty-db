@@ -2,7 +2,7 @@
 // Threshold-based alerting, anomaly detection, alert routing and escalation
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use std::time::{Duration};

@@ -9,9 +9,9 @@
 
 use crate::error::Result;
 use crate::optimizer_pro::{PhysicalPlan, PlanId, QueryFingerprint};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
 
 // ============================================================================
 // Plan Baseline Manager
@@ -634,8 +634,7 @@ impl BaselineExport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::optimizer_pro::{PhysicalOperator, Schema, PlanMetadata};
-    use crate::common::TableId;
+    use crate::optimizer_pro::{PhysicalOperator, PlanMetadata, Schema};
 
     #[test]
     fn test_baseline_creation() {

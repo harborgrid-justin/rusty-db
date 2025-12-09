@@ -9,33 +9,32 @@ pub mod provisioning;
 
 // Re-export main types
 pub use container::{
-    ContainerDatabase, ContainerError, ContainerResult, PdbConfig, PdbState,
-    OpenMode, CloneType, ContainerParameter, CdbStatistics,
+    CdbStatistics, CloneType, ContainerDatabase, ContainerError, ContainerParameter,
+    ContainerResult, OpenMode, PdbConfig, PdbState,
 };
 
 pub use tenant::{
-    Tenant, TenantError, TenantResult, TenantState, TenantPriority,
-    ServiceTier, ResourceQuota, ResourceUsage, TenantManager,
-    TenantMetadata, TenantStatistics, SlaMetrics,
+    ResourceQuota, ResourceUsage, ServiceTier, SlaMetrics, Tenant,
+    TenantError, TenantManager, TenantMetadata, TenantPriority,
+    TenantResult, TenantState, TenantStatistics,
 };
 
 pub use isolation::{
-    MemoryIsolator, IoBandwidthAllocator, CpuScheduler, NetworkIsolator,
-    LockContentionIsolator, BufferPoolPartitioner, IsolationError, IsolationResult,
+    BufferPoolPartitioner, CpuScheduler, IoBandwidthAllocator, IsolationError,
+    IsolationResult, LockContentionIsolator, MemoryIsolator, NetworkIsolator,
 };
 
 pub use consolidation::{
-    ConsolidationPlanner, ConsolidationHost, WorkloadProfile, WorkloadType,
-    ConsolidationMetrics, AffinityRule, AffinityType, ConsolidationPlan,
+    AffinityRule, AffinityType, ConsolidationHost, ConsolidationMetrics,
+    ConsolidationPlan, ConsolidationPlanner, WorkloadProfile, WorkloadType,
 };
 
 pub use provisioning::{
-    ProvisioningService, ProvisioningTemplate, ProvisioningRequest,
-    DeprovisioningRequest, DeprovisioningPolicy, ServiceTier as ProvisioningTier,
+    DeprovisioningPolicy, DeprovisioningRequest, ProvisioningRequest,
+    ProvisioningService, ProvisioningTemplate, ServiceTier as ProvisioningTier,
 };
 
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
 /// Unified multi-tenant database manager integrating all components
 pub struct MultiTenantDatabase {

@@ -3239,7 +3239,7 @@ impl SessionCache {
             self.evict_oldest(&mut cache);
         }
 
-        cache.insert(session.session_id, (session::now()));
+        cache.insert(session.session_id, session::now());
     }
 
     /// Get session from cache

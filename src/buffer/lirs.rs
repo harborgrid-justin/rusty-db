@@ -648,7 +648,7 @@ mod tests {
 
         // Most should be LIR due to high ratio
         if total > 0 {
-            let lir_ratio = lir_count as f64 / total as f64;
+            let lir_ratio = lir_count / total;
             assert!(lir_ratio > 0.8); // At least 80% should be LIR
         }
     }

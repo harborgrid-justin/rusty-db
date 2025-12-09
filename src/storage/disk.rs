@@ -1,13 +1,13 @@
+use crate::common::PageId;
+use crate::error::{DbError, Result};
+use crate::storage::page::Page;
+use parking_lot::RwLock;
+use std::collections::{HashMap, VecDeque};
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom, IoSlice, IoSliceMut};
+use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use std::collections::{HashMap, VecDeque};
 use std::time::Instant;
-use parking_lot::RwLock;
-use crate::error::{Result, DbError};
-use crate::storage::page::Page;
-use crate::common::PageId;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;

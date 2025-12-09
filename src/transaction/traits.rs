@@ -8,7 +8,7 @@ use std::time::Duration;
 use crate::common::TransactionId;
 
 use super::error::TransactionResult;
-use super::types::{IsolationLevel, LockMode, Transaction, TransactionState};
+use super::types::{IsolationLevel, LockMode, TransactionState};
 
 /// Trait for transaction lifecycle management.
 ///

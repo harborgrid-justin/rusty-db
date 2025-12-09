@@ -613,7 +613,7 @@ mod tests {
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         let progress = engine.get_progress(job_id).await.unwrap();
-        assert!(progress.state != RelocationState::Initializing);
+        assert_ne!(progress.state, RelocationState::Initializing);
     }
 
     #[tokio::test]

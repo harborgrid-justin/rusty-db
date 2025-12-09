@@ -77,7 +77,7 @@ impl CardinalityEstimator {
         
         // Estimate distinct values using sqrt heuristic
         let distinct_per_col = (input_card as f64).sqrt();
-        (distinct_per_col.powi(group_by_cols as i32).min(input_card as f64)) as u64
+        distinct_per_col.powi(group_by_cols as i32).min(input_card as f64) as u64
     }
     
     /// Estimate cardinality for a DISTINCT operation.

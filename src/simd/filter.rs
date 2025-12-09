@@ -3,7 +3,7 @@
 //! Vectorized predicate evaluation for filtering rows in table scans.
 //! Supports AVX2 SIMD instructions processing 8-16 elements per operation.
 
-use super::{ComparisonMask, SelectionVector, SimdContext, prefetch_read};
+use super::{SelectionVector, SimdContext};
 use crate::common::Value;
 use crate::error::Result;
 

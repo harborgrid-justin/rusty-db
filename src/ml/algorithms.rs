@@ -1148,7 +1148,7 @@ impl NaiveBayes {
     fn gaussian_pdf(&self, x: f64, mean: f64, variance: f64) -> f64 {
         let epsilon = 1e-9;
         let var = variance.max(epsilon);
-        let exponent = -((x - mean).powi(2)) / (2.0 * var);
+        let exponent = -(x - mean).powi(2) / (2.0 * var);
         (1.0 / (2.0 * std::f64::consts::PI * var).sqrt()) * exponent.exp()
     }
 }

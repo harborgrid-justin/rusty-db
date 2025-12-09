@@ -62,7 +62,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
     /// Insert a key-value pair
     pub fn insert(&self, key: K, value: V) -> Result<()> {
         loop {
-            let _hash = self.hash(&key);
+            let hash = self.hash(&key);
             let global_depth = *self.global_depth.read();
             let index = self.get_index(hash, global_depth);
 
@@ -94,7 +94,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
 
     /// Get a value by key
     pub fn get(&self, key: &K) -> Result<Option<V>> {
-        let _hash = self.hash(key);
+        let hash = self.hash(key);
         let global_depth = *self.global_depth.read();
         let index = self.get_index(hash, global_depth);
 
@@ -114,7 +114,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
 
     /// Delete a key
     pub fn delete(&self, key: &K) -> Result<bool> {
-        let _hash = self.hash(key);
+        let hash = self.hash(key);
         let global_depth = *self.global_depth.read();
         let index = self.get_index(hash, global_depth);
 
@@ -145,7 +145,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
         drop(old_bucket_lock);
 
         for (key, value) in old_entries {
-            let _hash = self.hash(&key);
+            let hash = self.hash(&key);
             let bit = (hash >> local_depth) & 1;
 
             if bit == 0 {
@@ -161,7 +161,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
         let new_bucket_arc = Arc::new(RwLock::new(new_bucket));
 
         let step = 1 << new_depth;
-        for _i in (0..directory.len()).step_by(step) {
+        for i in (0..directory.len()).step_by(step) {
             let idx = i + (1 << local_depth);
             if idx < directory.len() {
                 directory[idx] = new_bucket_arc.clone();
@@ -297,7 +297,7 @@ impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
 
     /// Insert a key-value pair
     pub fn insert(&self, key: K, value: V) -> Result<()> {
-        let _hash = self.hash(&key);
+        let hash = self.hash(&key);
         let bucket_idx = self.find_bucket(hash);
 
         let buckets = self.buckets.read();
@@ -323,7 +323,7 @@ impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
 
     /// Get a value by key
     pub fn get(&self, key: &K) -> Result<Option<V>> {
-        let _hash = self.hash(key);
+        let hash = self.hash(key);
         let bucket_idx = self.find_bucket(hash);
 
         let buckets = self.buckets.read();
@@ -342,7 +342,7 @@ impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
 
     /// Delete a key
     pub fn delete(&self, key: &K) -> Result<bool> {
-        let _hash = self.hash(key);
+        let hash = self.hash(key);
         let bucket_idx = self.find_bucket(hash);
 
         let buckets = self.buckets.read();
@@ -393,7 +393,7 @@ impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
         old_bucket_lock.overflow_count = 0;
 
         for (key, value) in old_entries {
-            let _hash = self.hash(&key);
+            let hash = self.hash(&key);
             let initial_size = buckets.len() >> *level;
             let new_idx = hash % (initial_size * 2);
 

@@ -388,7 +388,7 @@ impl ScoringEngine {
         pmml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         pmml.push_str("<PMML version=\"4.4\" xmlns=\"http://www.dmg.org/PMML-4_4\">\n");
         pmml.push_str("  <Header>\n");
-        pmml.push_str(&format!("    <Application name=\"RustyDB\" version=\"1.0\"/>\n"));
+        pmml.push_str(&"    <Application name=\"RustyDB\" version=\"1.0\"/>\n".to_string());
         pmml.push_str(&format!("    <Timestamp>{}</Timestamp>\n", model.created_at));
         pmml.push_str("  </Header>\n");
 

@@ -580,7 +580,7 @@ mod tests {
                 let mut count = 0;
                 for _ in 0..1000 {
                     while s.pop().is_none() {
-                        std::thread::yield_now();
+                        thread::yield_now();
                     }
                     count += 1;
                 }
@@ -653,7 +653,7 @@ mod tests {
             handles.push(thread::spawn(move || {
                 for _ in 0..100 {
                     while s.pop().is_none() {
-                        std::thread::yield_now();
+                        thread::yield_now();
                     }
                 }
             }));

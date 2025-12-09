@@ -654,7 +654,7 @@ mod tests {
     #[test]
     fn test_flashback_query() {
         let miner = LogMiner::new(PathBuf::from("/tmp/logs"));
-        let mut query = FlashbackQuery::new("test_table".to_string(), std::time::SystemTime::now(), 1000);
+        let mut query = FlashbackQuery::new("test_table".to_string(), SystemTime::now(), 1000);
 
         assert_eq!(query.table_name, "test_table");
         assert_eq!(query.target_scn, 1000);

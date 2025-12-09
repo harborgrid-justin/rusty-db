@@ -587,7 +587,7 @@ impl PlSqlParser {
                         self.tokens.push(Token::Assign);
                         i += 2;
                     } else {
-                        return Err(DbError::SqlParse(format!("Unexpected character: :")));
+                        return Err(DbError::SqlParse("Unexpected character: :".to_string()));
                     }
                 }
                 '=' => {
@@ -620,7 +620,7 @@ impl PlSqlParser {
                         self.tokens.push(Token::NotEqual);
                         i += 2;
                     } else {
-                        return Err(DbError::SqlParse(format!("Unexpected character: !")));
+                        return Err(DbError::SqlParse("Unexpected character: !".to_string()));
                     }
                 }
                 '|' => {
@@ -628,7 +628,7 @@ impl PlSqlParser {
                         self.tokens.push(Token::Concat);
                         i += 2;
                     } else {
-                        return Err(DbError::SqlParse(format!("Unexpected character: |")));
+                        return Err(DbError::SqlParse("Unexpected character: |".to_string()));
                     }
                 }
                 _ => {

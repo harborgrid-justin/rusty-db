@@ -19,7 +19,7 @@ use crate::common::TransactionId;
 use super::types::{IsolationLevel, LockMode, TransactionState};
 
 /// Result type alias for transaction operations.
-pub type TransactionResult<T> = std::result::Result<T, TransactionError>;
+pub type TransactionResult<T> = Result<T, TransactionError>;
 
 /// Comprehensive error type for transaction operations.
 ///

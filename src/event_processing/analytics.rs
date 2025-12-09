@@ -373,7 +373,7 @@ impl TrendAnalyzer {
         let start_time = self.history.front().unwrap().0;
 
         for (i, (timestamp, value)) in self.history.iter().enumerate() {
-            let x = i as f64;
+            let x = i;
             sum_x += x;
             sum_y += value;
             sum_xy += x * value;
@@ -396,7 +396,7 @@ impl TrendAnalyzer {
         let mut ss_res = 0.0;
 
         for (i, (_, value)) in self.history.iter().enumerate() {
-            let x = i as f64;
+            let x = i;
             let predicted = (slope * x) + ((sum_y - slope * sum_x) / n);
             ss_res += (value - predicted).powi(2);
             ss_tot += (value - mean_y).powi(2);
@@ -559,7 +559,7 @@ impl PredictiveAnalyzer {
         let mut sum_x2 = 0.0;
 
         for (i, &value) in self.history.iter().enumerate() {
-            let x = i as f64;
+            let x = i;
             sum_x += x;
             sum_y += value;
             sum_xy += x * value;

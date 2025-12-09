@@ -432,7 +432,7 @@ pub struct SecurityStatistics {
     pub fgac_stats: fgac::FgacStatistics,
     pub active_sessions: usize,
     pub total_users: usize,
-    pub threat_stats: insider_threat::ThreatStatistics,
+    pub threat_stats: ThreatStatistics,
 }
 
 #[cfg(test)]
@@ -552,7 +552,7 @@ mod tests {
     fn test_fgac_policy() {
         let security = IntegratedSecurityManager::new();
 
-        let _policy = fgac::RowLevelPolicy {
+        let _policy = RowLevelPolicy {
             id: "pol1".to_string(),
             name: "Test Policy".to_string(),
             table_id: "employees".to_string(),
@@ -573,7 +573,7 @@ mod tests {
     fn test_rbac_role_creation() {
         let security = IntegratedSecurityManager::new();
 
-        let role = rbac::Role::new("admin".to_string(), "Administrator".to_string());
+        let role = Role::new("admin".to_string(), "Administrator".to_string());
         assert!(security.rbac.create_role(role).is_ok());
     }
 }

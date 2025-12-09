@@ -436,7 +436,7 @@ mod tests {
 
         println!("Memory usage: {} bytes ({:.2} KB)", memory, memory as f64 / 1024.0);
         assert!(memory > 0);
-        assert!(memory % BLOCK_SIZE_BYTES == 0, "Memory should be block-aligned");
+        assert_eq!(memory % BLOCK_SIZE_BYTES, 0, "Memory should be block-aligned");
     }
 
     #[test]

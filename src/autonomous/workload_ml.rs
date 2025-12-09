@@ -564,7 +564,7 @@ impl TimeSeriesAnalyzer {
         let points: Vec<(f64, f64)> = self.time_series
             .iter()
             .enumerate()
-            .map(|(i, p)| (i as f64, p.value))
+            .map(|(i, p)| (i, p.value))
             .collect();
 
         let (slope, r_squared) = self.linear_regression(&points);

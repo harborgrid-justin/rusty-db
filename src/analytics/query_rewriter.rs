@@ -25,11 +25,9 @@
 //! let optimized = rewriter.rewrite(query);
 //! ```
 
-use std::collections::{HashMap};
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::sync::Arc;
-
-use crate::error::Result;
 
 /// A rewrite rule that transforms queries.
 #[derive(Debug, Clone)]

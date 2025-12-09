@@ -353,7 +353,7 @@ impl RetryExecutor {
         Fut: Future<Output = Result<T>>,
     {
         let mut attempt = 0;
-        let mut _last_error = None;
+        let _last_error = None;
 
         loop {
             match f().await {

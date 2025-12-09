@@ -301,10 +301,10 @@ impl CSRGraph {
 
     /// Memory footprint in bytes
     pub fn memory_footprint(&self) -> usize {
-        std::mem::size_of::<Self>() +
-        self.offsets.len() * std::mem::size_of::<usize>() +
-        self.neighbors.len() * std::mem::size_of::<VertexId>() +
-        self.edge_ids.len() * std::mem::size_of::<EdgeId>()
+        size_of::<Self>() +
+        self.offsets.len() * size_of::<usize>() +
+        self.neighbors.len() * size_of::<VertexId>() +
+        self.edge_ids.len() * size_of::<EdgeId>()
     }
 }
 

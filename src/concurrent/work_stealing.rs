@@ -12,7 +12,7 @@ use super::Backoff;
 use std::cell::UnsafeCell;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
-use std::sync::atomic::{fence, AtomicIsize, AtomicPtr, AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{fence, AtomicIsize, AtomicPtr, AtomicU64, Ordering};
 use std::sync::Arc;
 
 /// Minimum buffer size
@@ -120,11 +120,11 @@ pub struct WorkStealingDeque<T> {
     /// Bottom index (owner only)
     bottom: AtomicIsize,
     /// Padding to separate bottom and top into different cache lines
-    _pad1: [u8; 64 - std::mem::size_of::<AtomicIsize>()],
+    _pad1: [u8; 64 - size_of::<AtomicIsize>()],
     /// Top index (shared between owner and stealers)
     top: AtomicIsize,
     /// Padding
-    _pad2: [u8; 64 - std::mem::size_of::<AtomicIsize>()],
+    _pad2: [u8; 64 - size_of::<AtomicIsize>()],
     /// Current buffer
     buffer: AtomicPtr<Buffer<T>>,
     /// Statistics
@@ -142,9 +142,9 @@ impl<T> WorkStealingDeque<T> {
 
         Self {
             bottom: AtomicIsize::new(0),
-            _pad1: [0; 64 - std::mem::size_of::<AtomicIsize>()],
+            _pad1: [0; 64 - size_of::<AtomicIsize>()],
             top: AtomicIsize::new(0),
-            _pad2: [0; 64 - std::mem::size_of::<AtomicIsize>()],
+            _pad2: [0; 64 - size_of::<AtomicIsize>()],
             buffer: AtomicPtr::new(buffer),
             push_count: AtomicU64::new(0),
             pop_count: AtomicU64::new(0),

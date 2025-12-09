@@ -53,9 +53,6 @@
 //! The engine automatically detects CPU capabilities and falls back to scalar
 //! implementations when SIMD is not available.
 
-use crate::error::Result;
-use crate::common::{Value, Tuple};
-
 /// SIMD filter operations
 pub mod filter;
 
@@ -71,12 +68,12 @@ pub mod string;
 /// SIMD-accelerated hash functions (xxHash3, wyhash)
 pub mod hash;
 
+pub use aggregate::{AggregateOp, SimdAggregator};
 // Re-export commonly used types
 pub use filter::{FilterOp, PredicateType, SimdFilter};
-pub use scan::{ColumnScan, ScanStrategy, BatchProcessor};
-pub use aggregate::{SimdAggregator, AggregateOp};
-pub use string::{StringMatcher, PatternType};
-pub use hash::{xxhash3_avx2, wyhash, hash_str, hash_str_batch, HashBuilder};
+pub use hash::{hash_str, hash_str_batch, wyhash, xxhash3_avx2, HashBuilder};
+pub use scan::{BatchProcessor, ColumnScan, ScanStrategy};
+pub use string::{PatternType, StringMatcher};
 
 /// CPU feature detection for SIMD capabilities
 #[derive(Debug, Clone, Copy)]
@@ -129,7 +126,7 @@ impl CpuFeatures {
 
     /// Get optimal number of elements to process per iteration
     pub fn elements_per_iteration<T>(&self) -> usize {
-        self.vector_width() / std::mem::size_of::<T>()
+        self.vector_width() / size_of::<T>()
     }
 }
 
@@ -198,7 +195,7 @@ pub mod align {
     pub fn elements_to_alignment<T>(ptr: *const T, alignment: usize) -> usize {
         let addr = ptr as usize;
         let next_aligned = align_up(addr, alignment);
-        (next_aligned - addr) / std::mem::size_of::<T>()
+        (next_aligned - addr) / size_of::<T>()
     }
 }
 

@@ -81,6 +81,8 @@ pub struct CachedResult {
     
     /// Last access time
     pub last_access: SystemTime,
+    pub query_hash: i32,
+    pub created_at: Instant,
 }
 
 impl QueryCache {
@@ -211,11 +213,11 @@ impl QueryCache {
     
     /// Estimate the size of a result set in bytes.
     fn estimate_size(result: &[Vec<String>]) -> usize {
-        let mut size = std::mem::size_of::<Vec<Vec<String>>>();
+        let mut size = size_of::<Vec<Vec<String>>>();
         for row in result {
-            size += std::mem::size_of::<Vec<String>>();
+            size += size_of::<Vec<String>>();
             for val in row {
-                size += val.len() + std::mem::size_of::<String>();
+                size += val.len() + size_of::<String>();
             }
         }
         size

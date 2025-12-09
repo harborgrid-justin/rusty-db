@@ -9,6 +9,7 @@ pub mod tiered;
 
 use std::sync::Arc;
 use std::error::Error;
+use std::fmt;
 
 
 /// Compression level from 0 (none) to 9 (maximum)

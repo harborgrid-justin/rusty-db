@@ -1133,7 +1133,7 @@ mod tests {
         let event = Event::new("test.event").with_payload("key", "value");
         let position = stream.publish(event).unwrap();
 
-        assert!(position.offset == 0);
+        assert_eq!(position.offset, 0);
     }
 
     #[test]

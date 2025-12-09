@@ -40,7 +40,7 @@ impl QuantizedWeights {
 
     /// Get memory size in bytes
     pub fn memory_size(&self) -> usize {
-        self.values.len() + std::mem::size_of::<f64>() + std::mem::size_of::<i8>()
+        self.values.len() + size_of::<f64>() + size_of::<i8>()
     }
 }
 
@@ -380,7 +380,7 @@ impl QuantizedLinearModel {
 
     /// Get model memory size
     pub fn memory_size(&self) -> usize {
-        self.weights.memory_size() + std::mem::size_of::<f64>()
+        self.weights.memory_size() + size_of::<f64>()
     }
 }
 
@@ -455,7 +455,7 @@ mod tests {
         let weights: Vec<f64> = (0..100).map(|i| i as f64 / 100.0).collect();
         let config = QuantizationConfig::default();
 
-        let original_size = weights.len() * std::mem::size_of::<f64>();
+        let original_size = weights.len() * size_of::<f64>();
         let qweights = quantize_weights(&weights, &config);
         let quantized_size = qweights.memory_size();
 

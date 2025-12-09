@@ -42,7 +42,7 @@ use std::time::Duration;
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::timeout;
 use tracing::{debug, error, info, warn};
-
+use crate::DbError;
 use crate::error::Result;
 
 /// Unique identifier for an actor
@@ -119,17 +119,17 @@ impl ActorRef {
         self.tx
             .send(envelope)
             .await
-            .map_err(|_| DbError::Internal("Actor mailbox closed".into()))?;
+            .map_err(|_| crate::DbError::Internal("Actor mailbox closed".into()))?;
 
         let response = timeout(timeout_duration, rx)
             .await
-            .map_err(|_| DbError::Internal("Request timeout".into()))?
-            .map_err(|_| DbError::Internal("Response channel closed".into()))?;
+            .map_err(|_| crate::DbError::Internal("Request timeout".into()))?
+            .map_err(|_| crate::DbError::Internal("Response channel closed".into()))?;
 
         response
             .downcast::<R>()
             .map(|boxed| *boxed)
-            .map_err(|_| DbError::Internal("Invalid response type".into()))
+            .map_err(|_| crate::DbError::Internal("Invalid response type".into()))
     }
 
     /// Stop the actor
@@ -137,7 +137,7 @@ impl ActorRef {
         self.tx
             .send(ActorMessage::Stop)
             .await
-            .map_err(|_| DbError::Internal("Actor mailbox closed".into()))?;
+            .map_err(|_| crate::DbError::Internal("Actor mailbox closed".into()))?;
         Ok(())
     }
 }
@@ -266,7 +266,7 @@ impl ActorContext {
         if let Some(self_ref) = &self.self_ref {
             self_ref.stop().await
         } else {
-            Err(DbError::Internal("No self reference available".into()))
+            Err(crate::DbError::Internal("No self reference available".into()))
         }
     }
 }
@@ -512,7 +512,7 @@ impl ActorSystem {
     }
 
     /// Handle actor failure according to supervision strategy
-    async fn handle_actor_failure(&self, id: ActorId, error: DbError) {
+    async fn handle_actor_failure(&self, id: ActorId, error: crate::DbError) {
         let config = self.supervisor_config.lock().await;
         let strategy = config.strategy;
         drop(config);
@@ -652,7 +652,7 @@ mod tests {
                 self.counter += count;
                 Ok(())
             } else {
-                Err(DbError::Internal("Unknown message type".into()))
+                Err(crate::DbError::Internal("Unknown message type".into()))
             }
         }
 
@@ -664,7 +664,7 @@ mod tests {
             if msg.downcast_ref::<String>().is_some() {
                 Ok(Box::new(self.counter))
             } else {
-                Err(DbError::Internal("Unknown request type".into()))
+                Err(crate::DbError::Internal("Unknown request type".into()))
             }
         }
     }

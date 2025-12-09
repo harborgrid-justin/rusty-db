@@ -8,7 +8,7 @@
 /// - Cost-benefit analysis
 
 use crate::Result;
-use std::collections::{HashMap};
+use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 /// Index Advisor
@@ -192,7 +192,7 @@ impl IndexAdvisor {
 
         for (table, indexes) in indexes_by_table {
             // Look for indexes that could be consolidated
-            for _i in 0..indexes.len() {
+            for i in 0..indexes.len() {
                 for j in (i + 1)..indexes.len() {
                     if self.can_consolidate(indexes[i], indexes[j]) {
                         let combined_columns = self.combine_columns(
@@ -227,7 +227,7 @@ impl IndexAdvisor {
     fn identify_redundant_indexes(&self) -> Result<Vec<IndexRecommendation>> {
         let mut recommendations = Vec::new();
 
-        for _i in 0..self.existing_indexes.len() {
+        for i in 0..self.existing_indexes.len() {
             for j in (i + 1)..self.existing_indexes.len() {
                 let idx1 = &self.existing_indexes[i];
                 let idx2 = &self.existing_indexes[j];
@@ -371,7 +371,7 @@ impl WorkloadTracker {
 
     fn record_query(&mut self, query: &Query) {
         let pattern = QueryPattern::from_query(query);
-        let _stats = self.query_patterns.entry(pattern).or_insert_with(QueryStats::new);
+        let stats = self.query_patterns.entry(pattern).or_insert_with(QueryStats::new);
 
         stats.execution_count += 1;
         stats.total_execution_time_ms += query.execution_time_ms;

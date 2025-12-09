@@ -34,10 +34,10 @@
 //! └──────────────────────────────────────────────────────────────────────┘
 //! ```
 
-use std::collections::{HashMap};
+use std::collections::{HashMap, VecDeque, BTreeMap};
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::{Duration, Instant};
 use parking_lot::{Mutex, RwLock as PRwLock};
 use serde::{Serialize, Deserialize};
 use crate::error::Result;
@@ -1306,7 +1306,7 @@ impl PagePrefetcher {
         let vec: Vec<&PageId> = history.iter().collect();
         let mut sequential_count = 0;
 
-        for _i in 0..vec.len() - 1 {
+        for i in 0..vec.len() - 1 {
             if vec[i].tablespace_id == vec[i + 1].tablespace_id &&
                vec[i + 1].page_number == vec[i].page_number + 1 {
                 sequential_count += 1;
@@ -1321,7 +1321,7 @@ impl PagePrefetcher {
         let mut predictions = Vec::new();
 
         // Prefetch next 4 pages
-        for _i in 1..=4 {
+        for i in 1..=4 {
             predictions.push(PageId {
                 tablespace_id: last_page.tablespace_id,
                 page_number: last_page.page_number + i,
@@ -1460,7 +1460,7 @@ pub struct LruKPolicy {
     /// K value (typically 2)
     k: usize,
     /// Access history for each page
-    history: PRwLock<HashMap<PageId<Instant>>>,
+    history: PRwLock<HashMap<PageId, VecDeque<Instant>>>,
     /// Correlation period for history
     corr_period: Duration,
     /// Statistics
@@ -1763,7 +1763,7 @@ impl CostAwareReplacement {
         let mut victim = None;
 
         for &page_id in candidates {
-            let _value = self.replacement_value(page_id);
+            let value = self.replacement_value(page_id);
             if value < min_value {
                 min_value = value;
                 victim = Some(page_id);
@@ -2265,7 +2265,7 @@ pub struct DoubleWriteStatsSnapshot {
 /// Flush list manager
 pub struct FlushListManager {
     /// Flush lists per tablespace
-    flush_lists: PRwLock<HashMap<u32<VecDeque<DirtyPage>>>>,
+    flush_lists: PRwLock<HashMap<u32, VecDeque<DirtyPage>>>,
     /// Flush batch size
     batch_size: usize,
     /// Statistics
@@ -2804,7 +2804,7 @@ impl BufferPoolStatisticsTracker {
 
     /// Export metrics in Prometheus format
     pub fn export_prometheus(&self) -> String {
-        let _stats = self.get_comprehensive_stats();
+        let stats = self.get_comprehensive_stats();
         let mut output = String::new();
 
         // Buffer pool hit ratios

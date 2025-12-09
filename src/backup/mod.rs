@@ -301,7 +301,7 @@ mod tests {
 
         // Verify all managers are accessible
         assert!(system.backup_manager().list_backups().is_empty());
-        assert!(system.catalog().get_statistics().total_backup_sets == 0);
+        assert_eq!(system.catalog().get_statistics().total_backup_sets, 0);
     }
 
     #[test]

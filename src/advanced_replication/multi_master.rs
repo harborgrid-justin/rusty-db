@@ -289,7 +289,7 @@ impl MultiMasterReplication {
     pub async fn apply_operation(&self, op: &ReplicationOp) -> Result<()> {
         // Check if already applied
         {
-            let applied = self.applied_ops.read();
+            let mut applied = self.applied_ops.read();
             if applied.contains(&op.op_id) {
                 return Ok(()); // Already applied
             }

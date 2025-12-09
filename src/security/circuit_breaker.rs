@@ -183,9 +183,9 @@ impl CircuitBreaker {
     }
 
     /// Execute operation with circuit breaker protection
-    pub async fn call<F, T, E>(&self, operation: F) -> std::result::Result<T, E>
+    pub async fn call<F, T, E>(&self, operation: F) -> Result<T, E>
     where
-        F: std::future::Future<Output = std::result::Result<T, E>>,
+        F: std::future::Future<Output = Result<T, E>>,
         E: From<DbError>,
     {
         // Check if we should allow the call
@@ -509,9 +509,9 @@ impl Bulkhead {
     }
 
     /// Execute operation with bulkhead protection
-    pub async fn call<F, T, E>(&self, operation: F) -> std::result::Result<T, E>
+    pub async fn call<F, T, E>(&self, operation: F) -> Result<T, E>
     where
-        F: std::future::Future<Output = std::result::Result<T, E>>,
+        F: std::future::Future<Output = Result<T, E>>,
         E: From<DbError>,
     {
         // Check queue size
@@ -703,9 +703,9 @@ impl TimeoutManager {
     }
 
     /// Execute operation with adaptive timeout
-    pub async fn call<F, T, E>(&self, endpoint: &str, operation: F) -> std::result::Result<T, E>
+    pub async fn call<F, T, E>(&self, endpoint: &str, operation: F) -> Result<T, E>
     where
-        F: std::future::Future<Output = std::result::Result<T, E>>,
+        F: std::future::Future<Output = Result<T, E>>,
         E: From<DbError>,
     {
         let timeout_duration = self.calculate_timeout(endpoint);
@@ -848,10 +848,10 @@ impl RetryPolicy {
     }
 
     /// Execute operation with retry
-    pub async fn call<F, Fut, T, E>(&self, mut operation: F) -> std::result::Result<T, E>
+    pub async fn call<F, Fut, T, E>(&self, mut operation: F) -> Result<T, E>
     where
         F: FnMut() -> Fut,
-        Fut: std::future::Future<Output = std::result::Result<T, E>>,
+        Fut: std::future::Future<Output = Result<T, E>>,
         E: From<DbError>,
     {
         let mut attempt = 0;
@@ -1004,7 +1004,7 @@ impl<T: Clone + Send + Sync> FallbackHandler<T> {
     /// Cache response
     pub fn cache_response(&self, key: String, value: T) {
         let mut cache = self.cache.write();
-        cache.insert(key, (value::now()));
+        cache.insert(key, value::now());
     }
 
     /// Get cached response

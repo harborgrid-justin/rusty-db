@@ -491,7 +491,7 @@ impl GraphPartition {
     /// Add a vertex to the partition
     pub fn add_vertex(&mut self, vertex_id: VertexId) {
         self.vertices.insert(vertex_id);
-        self.size_bytes += std::mem::size_of::<VertexId>();
+        self.size_bytes += size_of::<VertexId>();
     }
 
     /// Add an edge to the partition
@@ -500,7 +500,7 @@ impl GraphPartition {
         if is_cut {
             self.cut_edges.insert(edge_id);
         }
-        self.size_bytes += std::mem::size_of::<EdgeId>();
+        self.size_bytes += size_of::<EdgeId>();
     }
 
     /// Get partition load (number of vertices)
@@ -1095,9 +1095,9 @@ impl PropertyGraph {
             }
 
             // Estimate memory usage
-            stats.memory_bytes = self.vertices.len() * std::mem::size_of::<Vertex>()
-                + self.edges.len() * std::mem::size_of::<Edge>()
-                + self.hyperedges.len() * std::mem::size_of::<HyperEdge>();
+            stats.memory_bytes = self.vertices.len() * size_of::<Vertex>()
+                + self.edges.len() * size_of::<Edge>()
+                + self.hyperedges.len() * size_of::<HyperEdge>();
         }
     }
 

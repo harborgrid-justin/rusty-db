@@ -658,7 +658,7 @@ impl HCCEngine {
         let mut seen = std::collections::HashSet::new();
         let cell_size = col_type.size_hint();
 
-        for _i in (0..sample_size).step_by(cell_size) {
+        for i in (0..sample_size).step_by(cell_size) {
             if i + cell_size <= column.len() {
                 seen.insert(&column[i..i + cell_size]);
             }
@@ -879,8 +879,8 @@ mod tests {
         ];
 
         let cu = engine.create_cu(rows, column_types).unwrap();
-        assert!(cu.num_rows == 1000);
-        assert!(cu.num_columns == 2);
+        assert_eq!(cu.num_rows, 1000);
+        assert_eq!(cu.num_columns, 2);
 
         let decompressed = engine.decompress_cu(&cu).unwrap();
         assert_eq!(decompressed.len(), 2);

@@ -22,11 +22,9 @@
 //! let estimate = sampler.estimate_aggregate(&sample, AggregateFunction::Sum);
 //! ```
 
-use std::collections::HashMap;
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::sync::Arc;
-
-use crate::error::Result;
 
 /// Sampling method for approximate query processing.
 #[derive(Debug, Clone, PartialEq, Eq)]

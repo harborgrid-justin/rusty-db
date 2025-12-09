@@ -385,7 +385,7 @@ impl PrefetchWindow {
             self.size = (self.size + 2).min(self.max_size);
         } else if self.hit_rate < 0.5 {
             // Low hit rate - decrease window
-            self.size = (self.size.saturating_sub(2)).max(self.min_size);
+            self.size = self.size.saturating_sub(2).max(self.min_size);
         }
     }
 }

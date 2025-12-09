@@ -292,7 +292,7 @@ impl ApplyEngine {
     pub fn queue_change(&self, change: ApplyChange) -> Result<()> {
         // Check if already applied
         {
-            let applied = self.applied_changes.read();
+            let mut applied = self.applied_changes.read();
             if applied.contains(&change.id) {
                 return Ok(()); // Already applied
             }
@@ -491,7 +491,7 @@ impl ApplyEngine {
     /// Check if dependencies are satisfied
     #[inline]
     fn dependencies_satisfied(&self, deps: &[String]) -> Result<bool> {
-        let applied = self.applied_changes.read();
+        let mut applied = self.applied_changes.read();
 
         for dep in deps {
             if !applied.contains(dep) {

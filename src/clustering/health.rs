@@ -1,10 +1,10 @@
+use crate::clustering::node::{NodeId, NodeInfo};
 /// Cluster Health and Status Management Module
 ///
 /// This module provides types and functionality for monitoring and managing
 /// the health and status of cluster nodes and the overall cluster.
 
 use crate::error::DbError;
-use crate::clustering::node::{NodeId, NodeInfo};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::SystemTime;
@@ -152,7 +152,7 @@ pub struct NodeHealthMetrics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::clustering::node::{NodeInfo, NodeRole, NodeStatus};
+    use crate::clustering::node::{NodeInfo, NodeStatus};
     use std::collections::HashMap;
 
     #[test]

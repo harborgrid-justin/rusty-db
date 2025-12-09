@@ -337,7 +337,7 @@ mod tests {
     #[test]
     fn test_refresh_schedule() {
         let schedule = RefreshSchedule::daily();
-        assert_eq!(schedule.interval::from_secs(86400));
+        assert_eq!(schedule.interval, Duration::from_secs(86400));
         assert!(schedule.auto_refresh);
     }
 }

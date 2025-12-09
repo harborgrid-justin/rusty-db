@@ -536,7 +536,7 @@ impl FullTextIndex {
 
         // Find documents containing the first term
         let first_term = &tokens[0];
-        let mut candidates: HashSet<DocumentId> = if let Some(doc_positions) = self.inverted_index.get(first_term) {
+        let candidates: HashSet<DocumentId> = if let Some(doc_positions) = self.inverted_index.get(first_term) {
             doc_positions.keys().cloned().collect()
         } else {
             return HashSet::new();

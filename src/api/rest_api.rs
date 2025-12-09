@@ -2397,7 +2397,7 @@ impl RequestContext {
 async fn request_logger_middleware(
     State(state): State<Arc<ApiState>>,
     headers: HeaderMap,
-    req: axum::http::Request<Body>,
+    req: http::Request<Body>,
     next: Next,
 ) -> std::result::Result<Response, ApiError> {
     let method = req.method().to_string();
@@ -2440,7 +2440,7 @@ async fn request_logger_middleware(
 async fn rate_limit_middleware(
     State(state): State<Arc<ApiState>>,
     headers: HeaderMap,
-    req: axum::http::Request<Body>,
+    req: http::Request<Body>,
     next: Next,
 ) -> std::result::Result<Response, ApiError> {
     // Extract identifier (IP or API key)
@@ -2613,7 +2613,7 @@ impl QueryResultBuilder {
         self.columns.push(column);
     }
 
-    pub fn add_warning(&mut selfing: String) {
+    pub fn add_warning(&self, &mut selfing: String) {
         self.warnings.push(warning);
     }
 
@@ -2947,7 +2947,7 @@ impl PoolHealthChecker {
             }
         }
 
-        (statusings)
+        statusings
     }
 }
 

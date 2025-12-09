@@ -55,7 +55,7 @@ impl ColumnBatch {
     }
 
     /// Add a row to the batch
-    pub fn add_row(&mut self, values: Vec<ColumnValue>) -> std::result::Result<(), DbError> {
+    pub fn add_row(&mut self, values: Vec<ColumnValue>) -> Result<(), DbError> {
         if values.len() != self.schema.len() {
             return Err(DbError::Execution(
                 format!("Row has {} values but schema has {} columns",
@@ -121,7 +121,7 @@ impl ColumnBatch {
         schema: Vec<String>,
         types: Vec<DataType>,
         rows: Vec<Vec<String>>,
-    ) -> std::result::Result<Self, DbError> {
+    ) -> Result<Self, DbError> {
         let mut batch = Self::new(schema, types);
 
         for row in rows {
@@ -253,7 +253,7 @@ impl VectorizedExecutor {
         data: Vec<Vec<String>>,
         schema: Vec<String>,
         types: Vec<DataType>,
-    ) -> std::result::Result<Vec<ColumnBatch>, DbError> {
+    ) -> Result<Vec<ColumnBatch>, DbError> {
         let mut batches = Vec::new();
         let mut current_batch = ColumnBatch::new(schema.clone(), types.clone());
 
@@ -283,7 +283,7 @@ impl VectorizedExecutor {
         &self,
         batches: Vec<ColumnBatch>,
         predicate: F,
-    ) -> std::result::Result<Vec<ColumnBatch>, DbError>
+    ) -> Result<Vec<ColumnBatch>, DbError>
     where
         F: Fn(&[ColumnValue]) -> bool,
     {
@@ -326,7 +326,7 @@ impl VectorizedExecutor {
         &self,
         batches: Vec<ColumnBatch>,
         column_indices: &[usize],
-    ) -> std::result::Result<Vec<ColumnBatch>, DbError> {
+    ) -> Result<Vec<ColumnBatch>, DbError> {
         let mut result_batches = Vec::new();
 
         for batch in batches {
@@ -362,7 +362,7 @@ impl VectorizedExecutor {
         group_by_cols: &[usize],
         agg_col: usize,
         agg_type: AggregationType,
-    ) -> std::result::Result<ColumnBatch, DbError> {
+    ) -> Result<ColumnBatch, DbError> {
         let mut groups: HashMap<Vec<String>, AggregateState> = HashMap::new();
 
         for batch in &batches {

@@ -52,12 +52,12 @@
 
 use crate::error::DbError;
 use crate::execution::QueryResult;
-use crate::index::swiss_table::SwissTable;
 use crate::index::simd_bloom::JoinBloomFilter;
-use crate::simd::hash::{xxhash3_avx2, hash_str};
-use std::sync::Arc;
+use crate::index::swiss_table::SwissTable;
+use crate::simd::hash::hash_str;
 use parking_lot::RwLock;
 use rayon::prelude::*;
+use std::sync::Arc;
 
 /// Configuration for SIMD hash join
 #[derive(Debug, Clone)]
@@ -120,7 +120,7 @@ impl SimdHashJoin {
         probe_side: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Phase 1: Partition and build
         let partitions = self.partition_and_build(
             &build_side,
@@ -149,7 +149,7 @@ impl SimdHashJoin {
         &self,
         build_side: &QueryResult,
         key_col: usize,
-    ) -> std::result::Result<Vec<Partition>, DbError> {
+    ) -> Result<Vec<Partition>, DbError> {
         let num_partitions = self.config.num_partitions;
 
         // Create partitions
@@ -160,7 +160,7 @@ impl SimdHashJoin {
         let partitions = Arc::new(RwLock::new(partitions));
 
         // Partition build side in parallel
-        build_side.rows.par_iter().try_for_each(|row| -> std::result::Result<(), DbError> {
+        build_side.rows.par_iter().try_for_each(|row| -> Result<(), DbError> {
             if let Some(key) = row.get(key_col) {
                 let _partition_id = self.hash_partition(key);
                 let mut parts = partitions.write();
@@ -210,7 +210,7 @@ impl SimdHashJoin {
         probe_side: &QueryResult,
         key_col: usize,
         partitions: &[Partition],
-    ) -> std::result::Result<Vec<Match>, DbError> {
+    ) -> Result<Vec<Match>, DbError> {
         // Partition probe side
         let probe_partitions: Vec<Vec<usize>> = {
             let mut parts: Vec<Vec<usize>> = vec![Vec::new(); self.config.num_partitions];
@@ -271,7 +271,7 @@ impl SimdHashJoin {
         build_side: &QueryResult,
         probe_side: &QueryResult,
         matches: Vec<Match>,
-    ) -> std::result::Result<QueryResult, DbError> {
+    ) -> Result<QueryResult, DbError> {
         // Pre-allocate result with exact capacity
         let mut result_rows = Vec::with_capacity(matches.len());
         let result_row_size = probe_side.columns.len() + build_side.columns.len();

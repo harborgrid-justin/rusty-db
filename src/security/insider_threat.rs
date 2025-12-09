@@ -666,7 +666,7 @@ impl BehaviorAnalyzer {
 
         // Calculate statistics
         let mut row_sizes: Vec<u64> = Vec::new();
-        let mut session_durations: Vec<f64> = Vec::new();
+        let session_durations: Vec<f64> = Vec::new();
 
         for entry in user_history.iter() {
             // Pattern frequency

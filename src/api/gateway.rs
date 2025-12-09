@@ -2365,7 +2365,7 @@ impl IpFilter {
         match self.mode {
             IpFilterMode::None => Ok(()),
             IpFilterMode::Blacklist => {
-                let blacklist = self.blacklist.read();
+                let mut blacklist = self.blacklist.read();
                 if blacklist.contains(&ip) {
                     Err(DbError::InvalidOperation("IP address blacklisted".to_string()))
                 } else {
@@ -2373,7 +2373,7 @@ impl IpFilter {
                 }
             },
             IpFilterMode::Whitelist => {
-                let whitelist = self.whitelist.read();
+                let mut whitelist = self.whitelist.read();
                 if whitelist.contains(&ip) {
                     Ok(())
                 } else {

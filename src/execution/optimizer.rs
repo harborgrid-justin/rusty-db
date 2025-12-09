@@ -1,10 +1,10 @@
-use crate::execution::planner::{PlanNode, AggregateFunction};
-use crate::parser::JoinType;
 use crate::error::DbError;
-use std::collections::{HashMap};
-use std::sync::Arc;
+use crate::execution::planner::PlanNode;
+use crate::parser::JoinType;
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 
 /// Cost-based query optimizer with Cascades/Volcano framework and advanced cardinality estimation
 ///
@@ -66,7 +66,7 @@ impl Optimizer {
     /// 8. Access path selection with multi-dimensional histograms
     /// 9. Cost-based plan selection
     /// 10. Memoize result
-    pub fn optimize(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    pub fn optimize(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // 1. Check memo table for cached equivalent plan
         let plan_hash = self.hash_plan(&plan);
         if let Some(cached) = self.memo_table.read().lookup(plan_hash) {
@@ -116,7 +116,7 @@ impl Optimizer {
     }
 
     /// Push filters down closer to table scans for early data reduction
-    fn push_down_predicates(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn push_down_predicates(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
             PlanNode::Filter { input, predicate } => {
                 match *input {
@@ -173,13 +173,13 @@ impl Optimizer {
     }
 
     /// Push down projections to eliminate unnecessary columns early
-    fn push_down_projections(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn push_down_projections(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // Simplified implementation - in production would track required columns
         Ok(plan)
     }
 
     /// Reorder joins based on estimated costs using dynamic programming
-    fn reorder_joins(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn reorder_joins(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
             PlanNode::Join { join_type, left, right, condition } => {
                 // Recursively optimize children first
@@ -227,7 +227,7 @@ impl Optimizer {
     }
 
     /// Select optimal access paths (index vs table scan)
-    fn select_access_paths(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn select_access_paths(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
             PlanNode::TableScan { table, columns } => {
                 // Check if an index would be beneficial
@@ -251,13 +251,13 @@ impl Optimizer {
     }
 
     /// Perform constant folding and expression simplification
-    fn constant_folding(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn constant_folding(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // For now, just pass through - could implement expression evaluation
         Ok(plan)
     }
 
     /// Merge adjacent operators when beneficial
-    fn merge_operators(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn merge_operators(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // Could merge consecutive filters, combine limits, etc.
         Ok(plan)
     }
@@ -633,7 +633,7 @@ impl Histogram {
     pub fn estimate_like_selectivity(&self, pattern: &str) -> f64 {
         if pattern.starts_with('%') && pattern.ends_with('%') {
             // %pattern% - very selective
-            return 0.01;
+            0.01
         } else if pattern.starts_with('%') || pattern.ends_with('%') {
             // pattern% or %pattern - moderately selective
             return 0.05;
@@ -912,7 +912,7 @@ impl Optimizer {
     /// Match query against materialized views for rewriting
     ///
     /// Complexity: O(V * M) where V = number of views, M = matching complexity
-    fn match_materialized_views(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn match_materialized_views(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         let views = self.materialized_views.read();
 
         for view in views.iter() {
@@ -925,7 +925,7 @@ impl Optimizer {
         Ok(plan)
     }
 
-    fn try_match_view(&self, plan: &PlanNode, view: &MaterializedView) -> std::result::Result<Option<PlanNode>, DbError> {
+    fn try_match_view(&self, plan: &PlanNode, view: &MaterializedView) -> Result<Option<PlanNode>, DbError> {
         // Simplified view matching - in production would use sophisticated pattern matching
         // Check if plan structurally matches view definition
         match (plan, &view.definition) {
@@ -945,7 +945,7 @@ impl Optimizer {
     /// Eliminate common subexpressions across the query plan
     ///
     /// Complexity: O(N) where N = number of nodes in plan tree
-    fn eliminate_common_subexpressions(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn eliminate_common_subexpressions(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         let mut cache = self.cse_cache.write();
 
         let _hash = self.hash_plan(&plan);
@@ -982,7 +982,7 @@ impl Optimizer {
     /// - Multi-way join predicate pushdown
     /// - Predicate generation from column equivalences (a = b AND b = c => a = c)
     /// - Pushdown through unions and aggregations
-    fn push_down_predicates_advanced(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn push_down_predicates_advanced(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // First pass: standard pushdown
         let mut optimized = self.push_down_predicates(plan)?;
 
@@ -992,7 +992,7 @@ impl Optimizer {
         Ok(optimized)
     }
 
-    fn generate_transitive_predicates(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn generate_transitive_predicates(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // Build equivalence sets from join conditions
         // Generate additional predicates from transitive closure
         // This is simplified - production would build full equivalence sets
@@ -1000,7 +1000,7 @@ impl Optimizer {
     }
 
     /// Pull up predicates for better join reordering opportunities
-    fn pull_up_predicates(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn pull_up_predicates(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
             PlanNode::Join { join_type, left, right, condition } => {
                 // Pull predicates from children up to join level if beneficial
@@ -1024,7 +1024,7 @@ impl Optimizer {
     ///   SELECT * FROM T WHERE x IN (SELECT y FROM S WHERE S.z = T.z)
     /// Into:
     ///   SELECT T.* FROM T SEMI_JOIN S ON T.z = S.z AND T.x = S.y
-    fn decorrelate_subqueries(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn decorrelate_subqueries(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
             PlanNode::Filter { input, predicate } => {
                 // Check if predicate contains correlated subquery
@@ -1048,7 +1048,7 @@ impl Optimizer {
     }
 
     /// Merge views into the query plan for better optimization
-    fn merge_views(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn merge_views(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // View merging allows predicates to be pushed into view definitions
         // This is simplified - production would inline view definitions
         Ok(plan)
@@ -1066,7 +1066,7 @@ impl Optimizer {
     ///    - Consider join(best_plan(S1), best_plan(S2))
     ///    - Keep best plan for S
     /// 4. Prune dominated plans (cost-based branch-and-bound)
-    fn reorder_joins_dpccp(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn reorder_joins_dpccp(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
             PlanNode::Join { join_type, left, right, condition } => {
                 // Recursively optimize children first
@@ -1109,7 +1109,7 @@ impl Optimizer {
         left: PlanNode,
         right: PlanNode,
         condition: String,
-    ) -> std::result::Result<PlanNode, DbError> {
+    ) -> Result<PlanNode, DbError> {
         // Estimate costs for both orders
         let left_card = self.estimate_cardinality(&left);
         let right_card = self.estimate_cardinality(&right);
@@ -1165,7 +1165,7 @@ impl Optimizer {
         tables: &[String],
         join_type: &JoinType,
         condition: &str,
-    ) -> std::result::Result<PlanNode, DbError> {
+    ) -> Result<PlanNode, DbError> {
         // Memo table for subproblems
         let mut dp: HashMap<BitSet, (PlanNode, f64)> = HashMap::new();
 
@@ -1225,7 +1225,7 @@ impl Optimizer {
     }
 
     /// Apply adaptive statistics feedback to adjust cardinality estimates
-    fn apply_adaptive_feedback(&self, plan: PlanNode) -> std::result::Result<PlanNode, DbError> {
+    fn apply_adaptive_feedback(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         // Apply correction factors from past execution feedback
         // This is simplified - production would adjust cost model parameters
         Ok(plan)

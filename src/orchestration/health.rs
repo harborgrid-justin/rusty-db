@@ -327,7 +327,7 @@ impl AggregatedHealth {
             .map(|c| c.status.score() as u32)
             .sum();
 
-        (total_score as f64 / self.total_count as f64)
+        total_score as f64 / self.total_count as f64
     }
 }
 

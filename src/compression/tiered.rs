@@ -5,7 +5,7 @@ use super::*;
 use super::algorithms::*;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Block temperature tracking
 #[derive(Debug, Clone)]
@@ -323,7 +323,7 @@ impl Default for TieredCompressor {
     }
 }
 
-impl super::TieredCompressionManager for TieredCompressor {
+impl TieredCompressionManager for TieredCompressor {
     fn classify_temperature(&self, block_id: u64) -> DataTemperature {
         self.classify_temperature(block_id)
     }
@@ -402,7 +402,7 @@ impl TierMigrationScheduler {
     pub fn should_run_migration(&self) -> bool {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         let last = *self.last_migration.read().unwrap();
-        let _policy = {
+        let policy = {
             let manager = self.manager.read().unwrap();
             manager.policy.clone()
         };
