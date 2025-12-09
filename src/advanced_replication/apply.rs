@@ -12,7 +12,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
-use std::time::{SystemTime};
+use std::time::{Duration, SystemTime};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;

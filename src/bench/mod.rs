@@ -47,7 +47,7 @@
 // - **String Operations**: Pattern matching and comparisons
 
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::{Instant, Duration};
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::collections::HashMap;
 use std::hint::black_box;

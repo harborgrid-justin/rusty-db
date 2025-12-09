@@ -9,7 +9,6 @@
 // - Tamper-evident design
 // - Historical row versioning
 
-use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -130,7 +129,7 @@ impl LedgerRow {
         hasher.update(previous_hash);
         hasher.update(&timestamp.to_le_bytes());
 
-        let _result = hasher.finalize();
+        let result = hasher.finalize();
         let mut hash = [0u8; 32];
         hash.copy_from_slice(&result);
         hash

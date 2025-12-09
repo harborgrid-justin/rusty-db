@@ -15,7 +15,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{Write};
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
-use std::time::{SystemTime};
+use std::time::{Duration, SystemTime};
 use serde::{Deserialize, Serialize};
 use crate::error::Result;
 use crate::common::{TransactionId, LogSequenceNumber};

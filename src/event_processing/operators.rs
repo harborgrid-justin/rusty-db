@@ -3,6 +3,7 @@
 // Implements functional operators for event stream transformations including
 // filter, map, flatmap, aggregations, joins, deduplication, and TopN.
 
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::VecDeque;
 use std::collections::HashSet;
 use super::{Event, EventBatch, EventValue};

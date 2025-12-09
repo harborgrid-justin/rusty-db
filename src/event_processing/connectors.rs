@@ -3,6 +3,7 @@
 // Implements various connectors for streaming data including Kafka-compatible protocol,
 // JDBC/Database sink, file sink (JSON, Parquet), HTTP webhook, and custom connectors.
 
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::Mutex;
 use super::{Event, EventBatch, EventValue, StreamPosition};
 use crate::error::Result;

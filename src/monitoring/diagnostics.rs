@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration};
+use std::time::{Instant, Duration};
 
 use std::path::PathBuf;
 

@@ -50,7 +50,7 @@ use crate::common::{TableId, IndexId, Value, Schema};
 use crate::error::Result;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::{Instant, Duration};
 
 // Submodules
 pub mod cost_model;

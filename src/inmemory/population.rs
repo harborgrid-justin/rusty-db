@@ -7,6 +7,7 @@
 // - Memory pressure handling
 // - Repopulation after modifications
 
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::sync::Arc;

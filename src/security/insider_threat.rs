@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{SystemTime};
+use std::time::{Duration, SystemTime};
 use crate::Result;
 use crate::error::DbError;
 use sha2::{Sha256, Digest};

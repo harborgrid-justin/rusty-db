@@ -13,7 +13,7 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 use crate::error::Result;
 use crate::catalog::Schema;
-use std::time::{SystemTime};
+use std::time::{Duration, SystemTime};
 
 /// Materialized view definition
 #[derive(Debug, Clone, Serialize, Deserialize)]

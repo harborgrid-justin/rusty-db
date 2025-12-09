@@ -3,6 +3,7 @@
 // This module provides real-time and batch prediction capabilities with optimized
 // execution paths, model caching, and prediction explanations.
 
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::time::Instant;
 use crate::error::Result;
 use super::{
