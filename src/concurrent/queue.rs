@@ -7,7 +7,7 @@
 // Reference: "Simple, Fast, and Practical Non-Blocking and Blocking
 // Concurrent Queue Algorithms" by Michael and Scott (1996)
 
-use super::epoch::{Atomic, Epoch, Owned};
+use super::epoch::{Atomic, Epoch, Owned, Shared};
 use super::Backoff;
 
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -313,8 +313,8 @@ impl<T: 'static> LockFreeQueue<T> {
 
         // Build a chain of nodes
         let guard = Epoch::pin();
-        let mut first = None;
-        let mut last = None;
+        let mut first: Option<Shared<'_, QueueNode<T>>> = None;
+        let mut last: Option<Shared<'_, QueueNode<T>>> = None;
 
         for item in items {
             let node = Owned::new(QueueNode::new(item));
@@ -428,7 +428,7 @@ pub struct QueueStats {
 /// An iterator over the queue
 ///
 /// Note: This drains the queue
-pub struct IntoIter<T> {
+pub struct IntoIter<T: 'static> {
     queue: LockFreeQueue<T>,
 }
 
@@ -453,7 +453,7 @@ impl<T: 'static> IntoIterator for LockFreeQueue<T> {
 ///
 /// This queue rejects enqueues when full, making it suitable for
 /// resource-constrained scenarios.
-pub struct BoundedQueue<T> {
+pub struct BoundedQueue<T: 'static> {
     inner: LockFreeQueue<T>,
     capacity: usize,
 }

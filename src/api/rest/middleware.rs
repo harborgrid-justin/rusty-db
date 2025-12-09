@@ -5,6 +5,7 @@
 
 use crate::error::DbError;
 use axum::{
+    body::Body,
     extract::State,
     http::{HeaderMap, Request},
     middleware::Next,
@@ -18,10 +19,10 @@ use uuid::Uuid;
 use super::types::*;
 
 /// Request logger middleware that tracks and updates metrics
-pub async fn request_logger_middleware<B>(
+pub async fn request_logger_middleware(
     State(state): State<Arc<ApiState>>,
     headers: HeaderMap,
-    req: Request<B>,
+    req: Request<Body>,
     next: Next,
 ) -> Result<Response, ApiError> {
     let method = req.method().to_string();
@@ -61,10 +62,10 @@ pub async fn request_logger_middleware<B>(
 }
 
 /// Rate limiting middleware that checks request limits
-pub async fn rate_limit_middleware<B>(
+pub async fn rate_limit_middleware(
     State(state): State<Arc<ApiState>>,
     headers: HeaderMap,
-    req: Request<B>,
+    req: Request<Body>,
     next: Next,
 ) -> Result<Response, ApiError> {
     // Extract identifier (IP or API key)
@@ -340,9 +341,9 @@ impl TimeoutMiddleware {
         Self { timeout_duration }
     }
 
-    pub async fn apply_timeout<B>(
+    pub async fn apply_timeout(
         &self,
-        req: Request<B>,
+        req: Request<Body>,
         next: Next,
     ) -> Result<Response, ApiError> {
         match tokio::time::timeout(self.timeout_duration, next.run(req)).await {

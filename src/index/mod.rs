@@ -184,7 +184,7 @@ impl Index {
             Index::LinearHash(idx) => {
                 idx.get(key).map(|opt| opt.into_iter().collect())
             }
-            Index::Bitmap(idx) => idx.get(key),
+            Index::Bitmap(idx) => idx.get(key).map(|v| v.into_iter().map(|i| i as u64).collect()),
             _ => Err(DbError::Internal("Search not supported for this index type".into())),
         }
     }

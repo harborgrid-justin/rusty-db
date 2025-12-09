@@ -287,7 +287,7 @@ impl Authenticator for DatabaseAuthenticator {
 /// Implements JWT or custom token authentication.
 pub struct TokenAuthenticator {
     /// Valid tokens (token -> username, expiry)
-    tokens: parking_lot::RwLock<HashMap<String, String>>,
+    tokens: parking_lot::RwLock<HashMap<String, (String, SystemTime)>>,
 }
 
 impl TokenAuthenticator {
@@ -313,7 +313,7 @@ pub fn issue_token(&self, username: String, validity: std::time::Duration) -> St
     let token = Uuid::new_v4().to_string();
     let expiry = SystemTime::now() + validity;
 
-    self.tokens.write().insert(token.clone(), username.clone());
+    self.tokens.write().insert(token.clone(), (username, expiry));
     token
 }
 

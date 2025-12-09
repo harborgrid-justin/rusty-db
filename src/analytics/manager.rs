@@ -248,7 +248,7 @@ impl AnalyticsManager {
     pub fn estimate_cardinality(&self, table: &str) -> usize {
         // Use table statistics if available
         if let Some(stats) = self.column_stats.read().get(table) {
-            stats.num_values as usize
+            stats.total_count as usize
         } else {
             100 // Default estimate
         }

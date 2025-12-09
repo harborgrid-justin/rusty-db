@@ -296,8 +296,8 @@ impl BTreeIndex {
         for key in &keys {
             self.entries
                 .entry(key.clone())
-                .or_insert_with(HashSet::new)
-   .insert(0, doc_id.clone());
+                .or_insert_with(Vec::new)
+                .push(doc_id.clone());
         }
 
         self.reverse_index.insert(doc_id, keys);
@@ -310,7 +310,7 @@ impl BTreeIndex {
         if let Some(keys) = self.reverse_index.remove(doc_id) {
             for key in keys {
                 if let Some(ids) = self.entries.get_mut(&key) {
-                    ids.remove(0);
+                    ids.retain(|id| id != doc_id);
                     if ids.is_empty() {
                         self.entries.remove(&key);
                     }
@@ -660,10 +660,7 @@ impl TTLIndex {
     /// Insert a document into the TTL index
     pub fn insert(&mut self, doc_id: DocumentId, doc: &Document) -> Result<()> {
         if let Some(expires_at) = doc.metadata.expires_at {
-            self.expiration_times
-                .entry(doc_id)
-                .or_insert_with(HashSet::new)
-                .insert();
+            self.expiration_times.insert(doc_id, expires_at);
         }
 
         Ok(())
@@ -671,18 +668,7 @@ impl TTLIndex {
 
     /// Remove a document from the index
     pub fn remove(&mut self, doc_id: &DocumentId) {
-        let mut empty_times = Vec::new();
-
-        for (time, doc_ids) in &mut self.expiration_times {
-            doc_ids.remove(doc_id);
-            if doc_ids.is_empty() {
-                empty_times.push(*time);
-            }
-        }
-
-        for time in empty_times {
-            self.expiration_times.remove(&time);
-        }
+        self.expiration_times.remove(doc_id);
     }
 
     /// Get expired document IDs
@@ -694,11 +680,9 @@ impl TTLIndex {
 
         let mut expired = Vec::new();
 
-        for (time, doc_ids) in &self.expiration_times {
-            if *time <= now {
-                expired.extend(doc_ids.iter().cloned());
-            } else {
-                break;
+        for (doc_id, expiration_time) in &self.expiration_times {
+            if *expiration_time <= now {
+                expired.push(doc_id.clone());
             }
         }
 

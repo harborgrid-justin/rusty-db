@@ -414,7 +414,7 @@ where
 
 impl<K, V> Default for SwissTable<K, V>
 where
-    K: Eq + Clone,
+    K: Eq + Clone + AsRef<[u8]>,
     V: Clone,
 {
     fn default() -> Self {

@@ -125,6 +125,9 @@ impl ResourceGroup {
             total_memory_bytes: 0,
             total_io_bytes: 0,
             created_at: SystemTime::now(),
+            max_memory_mb: 0,
+            max_cpu_percent: 100.0,
+            max_concurrent_queries: 0,
         }
     }
 

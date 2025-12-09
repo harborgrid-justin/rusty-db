@@ -36,12 +36,11 @@
 
 use crate::{DbError, Result};
 use aes_gcm::{
-    aead::{Aead, KeyInit},
+    aead::{Aead, KeyInit, generic_array::GenericArray},
     Aes256Gcm, Nonce,
 };
 use argon2::{Argon2, PasswordHasher};
 use argon2::password_hash::{SaltString, rand_core::OsRng as ArgonRng};
-use generic_array::GenericArray;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

@@ -71,6 +71,7 @@ impl ColumnStatistics {
             histogram: None,
             most_common_values: Vec::new(),
             last_updated: SystemTime::now(),
+            num_values: (),
         }
     }
 

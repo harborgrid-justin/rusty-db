@@ -246,14 +246,19 @@ impl ReplicationSlotManager {
             SlotHealthStatus::Degraded
         } else if !slot_info.active {
             let now = SystemTime::now();
+            let mut inactive_unhealthy = false;
             if let Ok(duration) = now.duration_since(slot_info.last_active) {
                 if duration > Duration::from_secs(3600) {
                     issues.push("Slot has been inactive for over 1 hour".to_string());
                     recommendations.push("Consider dropping unused slot".to_string());
-                    SlotHealthStatus::Unhealthy
+                    inactive_unhealthy = true;
                 }
             }
-            SlotHealthStatus::Degraded
+            if inactive_unhealthy {
+                SlotHealthStatus::Unhealthy
+            } else {
+                SlotHealthStatus::Degraded
+            }
         } else {
             SlotHealthStatus::Healthy
         };
