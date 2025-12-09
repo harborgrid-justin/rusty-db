@@ -9,9 +9,14 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
-use hmac::Hmac;
+use hmac::{Hmac, Mac};
+use rsa::{Pkcs1v15Sign, RsaPublicKey, pkcs1::DecodeRsaPublicKey};
+use rsa::signature::Verifier;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
+use reqwest::Client;
+use x509_parser::prelude::*;
+use sha1::Sha1;
 
 use crate::error::DbError;
 use super::types::*;
@@ -409,6 +414,8 @@ impl JwtValidator {
         let header: serde_json::Value = serde_json::from_slice(&header_data)
             .map_err(|_| DbError::InvalidOperation("Invalid JWT header JSON".to_string()))?;
 
+        let kid = header.get("kid").and_then(|v| v.as_str());
+
         // Decode payload
         let payload_data = BASE64.decode(parts[1])
             .map_err(|_| DbError::InvalidOperation("Invalid JWT payload".to_string()))?;
@@ -420,7 +427,7 @@ impl JwtValidator {
             .map_err(|_| DbError::InvalidOperation("Invalid JWT signature".to_string()))?;
 
         let message = format!("{}.{}", parts[0], parts[1]);
-        self.verify_signature(&message, &signature)?;
+        self.verify_signature(&message, &signature, kid)?;
 
         // Validate claims
         self.validate_claims(&claims)?;
@@ -429,13 +436,47 @@ impl JwtValidator {
     }
 
     // Verify signature
-    fn verify_signature(&self, message: &str, signature: &[u8]) -> Result<(), DbError> {
-        // TODO: Implement proper signature verification based on algorithm
-        // For now, just check signature is not empty
-        if signature.is_empty() {
-            return Err(DbError::InvalidOperation("Empty signature".to_string()));
+    fn verify_signature(&self, message: &str, signature: &[u8], kid: Option<&str>) -> Result<(), DbError> {
+        let keys = self.signing_keys.read();
+
+        // If kid is provided, use that key
+        if let Some(kid) = kid {
+            if let Some(key) = keys.get(kid) {
+                return self.verify_with_key(message, signature, key);
+            } else {
+                return Err(DbError::InvalidOperation(format!("Unknown key ID: {}", kid)));
+            }
         }
-        Ok(())
+
+        // If no kid, try all keys (inefficient but fallback)
+        for key in keys.values() {
+            if self.verify_with_key(message, signature, key).is_ok() {
+                return Ok(());
+            }
+        }
+
+        Err(DbError::InvalidOperation("Invalid signature".to_string()))
+    }
+
+    fn verify_with_key(&self, message: &str, signature: &[u8], key: &[u8]) -> Result<(), DbError> {
+        match self.algorithm {
+            JwtAlgorithm::HS256 => {
+                type HmacSha256 = Hmac<Sha256>;
+                let mut mac = HmacSha256::new_from_slice(key)
+                    .map_err(|_| DbError::InvalidOperation("Invalid key length".to_string()))?;
+                mac.update(message.as_bytes());
+                mac.verify_slice(signature)
+                    .map_err(|_| DbError::InvalidOperation("Invalid signature".to_string()))
+            },
+            JwtAlgorithm::RS256 => {
+                let pub_key = RsaPublicKey::from_pkcs1_der(key)
+                    .map_err(|_| DbError::InvalidOperation("Invalid RSA key".to_string()))?;
+                let verifying_key = Pkcs1v15Sign::new::<Sha256>();
+                pub_key.verify(verifying_key, message.as_bytes(), signature)
+                    .map_err(|_| DbError::InvalidOperation("Invalid signature".to_string()))
+            },
+            _ => Err(DbError::InvalidOperation("Unsupported algorithm".to_string())),
+        }
     }
 
     // Validate claims
@@ -494,14 +535,69 @@ impl OAuthProvider {
 
     // Exchange authorization code for token
     pub async fn exchange_code(&self, code: &str) -> Result<OAuthToken, DbError> {
-        // TODO: Implement actual OAuth token exchange
-        Err(DbError::InvalidOperation("Not implemented".to_string()))
+        let config = self.config.read();
+        let client = Client::new();
+
+        let params = [
+            ("grant_type", "authorization_code"),
+            ("code", code),
+            ("redirect_uri", &config.redirect_uri),
+            ("client_id", &config.client_id),
+            ("client_secret", &config.client_secret),
+        ];
+
+        let response = client.post(&config.token_endpoint)
+            .form(&params)
+            .send()
+            .await
+            .map_err(|e| DbError::Network(e.to_string()))?;
+
+        if !response.status().is_success() {
+            return Err(DbError::InvalidOperation(format!("OAuth error: {}", response.status())));
+        }
+
+        let token: OAuthToken = response.json()
+            .await
+            .map_err(|e| DbError::InvalidOperation(format!("Failed to parse token: {}", e)))?;
+
+        // Cache token
+        let mut cache = self.token_cache.write();
+        cache.insert(token.access_token.clone(), token.clone());
+
+        Ok(token)
     }
 
     // Refresh access token
-    pub async fn refresh_token(&self, refreshtoken: &str) -> Result<OAuthToken, DbError> {
-        // TODO: Implement token refresh
-        Err(DbError::InvalidOperation("Not implemented".to_string()))
+    pub async fn refresh_token(&self, refresh_token: &str) -> Result<OAuthToken, DbError> {
+        let config = self.config.read();
+        let client = Client::new();
+
+        let params = [
+            ("grant_type", "refresh_token"),
+            ("refresh_token", refresh_token),
+            ("client_id", &config.client_id),
+            ("client_secret", &config.client_secret),
+        ];
+
+        let response = client.post(&config.token_endpoint)
+            .form(&params)
+            .send()
+            .await
+            .map_err(|e| DbError::Network(e.to_string()))?;
+
+        if !response.status().is_success() {
+            return Err(DbError::InvalidOperation(format!("OAuth error: {}", response.status())));
+        }
+
+        let token: OAuthToken = response.json()
+            .await
+            .map_err(|e| DbError::InvalidOperation(format!("Failed to parse token: {}", e)))?;
+
+        // Cache token
+        let mut cache = self.token_cache.write();
+        cache.insert(token.access_token.clone(), token.clone());
+
+        Ok(token)
     }
 }
 
@@ -578,7 +674,43 @@ impl MtlsValidator {
 
     // Validate client certificate
     pub fn validate_certificate(&self, cert: &[u8]) -> Result<bool, DbError> {
-        // TODO: Implement proper certificate validation
+        // Parse certificate
+        let (_, x509) = X509Certificate::from_der(cert)
+            .map_err(|_| DbError::InvalidOperation("Invalid certificate format".to_string()))?;
+
+        // Check validity period
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+
+        if now < x509.validity().not_before.timestamp() || now > x509.validity().not_after.timestamp() {
+            return Ok(false);
+        }
+
+        // Check if signed by trusted CA
+        let cas = self.trusted_cas.read();
+        let mut trusted = false;
+        for ca_cert_der in cas.iter() {
+            if let Ok((_, ca_cert)) = X509Certificate::from_der(ca_cert_der) {
+                if x509.verify_signature(&ca_cert.subject_pki).is_ok() {
+                    trusted = true;
+                    break;
+                }
+            }
+        }
+
+        if !trusted {
+            return Ok(false);
+        }
+
+        // Check CRL
+        let serial = x509.serial.as_ref().to_vec();
+        let crl = self.crl.read();
+        if crl.contains(&serial) {
+            return Ok(false);
+        }
+
         Ok(true)
     }
 }
@@ -606,7 +738,39 @@ impl MfaManager {
 
     // Verify TOTP code
     pub fn verify_totp(&self, user_id: &str, code: &str) -> bool {
-        // TODO: Implement TOTP verification
+        let secrets = self.totp_secrets.read();
+        if let Some(secret) = secrets.get(user_id) {
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            let time_step = now / 30;
+
+            // Check current time step and adjacent ones for clock skew
+            for i in -1..=1 {
+                let t = (time_step as i64 + i) as u64;
+                if self.generate_totp(secret, t) == code {
+                    return true;
+                }
+            }
+        }
         false
+    }
+
+    fn generate_totp(&self, secret: &[u8], time_step: u64) -> String {
+        type HmacSha1 = Hmac<Sha1>;
+        let mut mac = HmacSha1::new_from_slice(secret)
+            .expect("HMAC can take any key length");
+        mac.update(&time_step.to_be_bytes());
+        let result = mac.finalize().into_bytes();
+
+        let offset = (result[19] & 0xf) as usize;
+        let binary = ((result[offset] & 0x7f) as u32) << 24
+            | (result[offset + 1] as u32) << 16
+            | (result[offset + 2] as u32) << 8
+            | (result[offset + 3] as u32);
+
+        let otp = binary % 1_000_000;
+        format!("{:06}", otp)
     }
 }

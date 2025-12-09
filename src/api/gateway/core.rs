@@ -12,6 +12,7 @@ use sha2::{Sha256, Digest};
 use hmac::Hmac;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
+use reqwest::Client;
 use crate::api::gateway::{AuthorizationEngine, SecurityEvent, SecurityEventType, SecurityFilter, AuthenticationManager, AuditLogger};
 use crate::api::RateLimiter;
 use crate::error::DbError;
@@ -299,18 +300,62 @@ impl ApiGateway {
     }
 
     // Forward request to backend service
-    async fn forward_to_backend(&self, _request: &ApiRequest, route: &Route) -> Result<ApiResponse, DbError> {
+    async fn forward_to_backend(&self, request: &ApiRequest, route: &Route) -> Result<ApiResponse, DbError> {
         // Select endpoint using load balancing
         let endpoint = self.select_endpoint(&route.backend)?;
 
-        // TODO: Implement actual HTTP/gRPC/WebSocket client
-        // For now, return a mock response
-        Ok(ApiResponse {
-            status_code: 200,
-            headers: HashMap::new(),
-            body: b"OK".to_vec(),
-            duration: Duration::from_millis(10),
-        })
+        match endpoint.protocol {
+            Protocol::Http => {
+                let client = Client::new();
+                let url = format!("http://{}:{}{}", endpoint.host, endpoint.port, request.path);
+
+                let method = match request.method {
+                    HttpMethod::Get => reqwest::Method::GET,
+                    HttpMethod::Post => reqwest::Method::POST,
+                    HttpMethod::Put => reqwest::Method::PUT,
+                    HttpMethod::Delete => reqwest::Method::DELETE,
+                    HttpMethod::Patch => reqwest::Method::PATCH,
+                    HttpMethod::Head => reqwest::Method::HEAD,
+                    HttpMethod::Options => reqwest::Method::OPTIONS,
+                };
+
+                let mut req_builder = client.request(method, &url);
+
+                for (k, v) in &request.headers {
+                    req_builder = req_builder.header(k, v);
+                }
+
+                if let Some(body) = &request.body {
+                    req_builder = req_builder.body(body.clone());
+                }
+
+                let start = Instant::now();
+                let response = req_builder.send().await
+                    .map_err(|e| DbError::Network(e.to_string()))?;
+                let duration = start.elapsed();
+
+                let status = response.status();
+                let headers = response.headers().clone();
+                let body = response.bytes().await
+                    .map_err(|e| DbError::Network(e.to_string()))?
+                    .to_vec();
+
+                let mut response_headers = HashMap::new();
+                for (k, v) in headers.iter() {
+                    if let Ok(v_str) = v.to_str() {
+                        response_headers.insert(k.to_string(), v_str.to_string());
+                    }
+                }
+
+                Ok(ApiResponse {
+                    status_code: status.as_u16(),
+                    headers: response_headers,
+                    body,
+                    duration,
+                })
+            },
+            _ => Err(DbError::InvalidOperation("Protocol not supported".to_string())),
+        }
     }
 
     // Select backend endpoint using load balancing strategy
@@ -351,7 +396,44 @@ impl ApiGateway {
 
     // Start health checking for all services
     pub async fn start_health_checks(&self) {
-        // TODO: Implement periodic health checks
+        let registry = self.service_registry.clone();
+
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(30));
+            loop {
+                interval.tick().await;
+
+                let services = {
+                    let reg = registry.read();
+                    reg.services.values().cloned().collect::<Vec<_>>()
+                };
+
+                for service in services {
+                    for endpoint in service.endpoints {
+                        // Check health
+                        let healthy = Self::check_endpoint_health(&endpoint).await;
+                        let mut h = endpoint.healthy.write();
+                        *h = healthy;
+                        let mut last = endpoint.last_health_check.write();
+                        *last = Instant::now();
+                    }
+                }
+            }
+        });
+    }
+
+    async fn check_endpoint_health(endpoint: &ServiceEndpoint) -> bool {
+        match endpoint.protocol {
+            Protocol::Http => {
+                let client = Client::new();
+                let url = format!("http://{}:{}/health", endpoint.host, endpoint.port);
+                match client.get(&url).timeout(Duration::from_secs(5)).send().await {
+                    Ok(resp) => resp.status().is_success(),
+                    Err(_) => false,
+                }
+            },
+            _ => true, // Assume healthy for other protocols for now
+        }
     }
 }
 

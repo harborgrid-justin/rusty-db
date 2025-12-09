@@ -19,12 +19,13 @@ use crate::api::rest::types::*;
 use crate::parser::{SqlParser, SqlStatement};
 use crate::catalog::{Catalog, Schema, Column, DataType};
 use crate::transaction::TransactionManager;
+use crate::execution::{Executor, QueryResult};
 use std::time::UNIX_EPOCH;
 use parking_lot::RwLock;
 
 // Lazy-initialized shared state for database operations
 lazy_static::lazy_static! {
-    static ref CATALOG: Arc<RwLock<Catalog>> = Arc::new(RwLock::new(Catalog::new()));
+    static ref CATALOG: Arc<Catalog> = Arc::new(Catalog::new());
     static ref TXN_MANAGER: Arc<TransactionManager> = Arc::new(TransactionManager::new());
     static ref SQL_PARSER: SqlParser = SqlParser::new();
 }

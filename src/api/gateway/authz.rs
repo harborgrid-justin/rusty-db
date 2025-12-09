@@ -175,7 +175,7 @@ impl AuthorizationEngine {
 
     // Evaluate policy
     pub fn evaluate_policy(&self, subject: &str, resource: &str, action: &str) -> Result<bool, DbError> {
-        self.policy_engine.evaluate(subject, resource, action)
+        self.policy_engine.evaluate(subject, resource, action, &self.abac)
     }
 }
 
@@ -306,7 +306,43 @@ impl AbacEvaluator {
         match operator {
             PolicyOperator::Equals => actual == expected,
             PolicyOperator::NotEquals => actual != expected,
-            _ => false, // TODO: Implement other operators
+            PolicyOperator::GreaterThan => match (actual, expected) {
+                (AttributeValue::Number(a), AttributeValue::Number(b)) => a > b,
+                _ => false,
+            },
+            PolicyOperator::LessThan => match (actual, expected) {
+                (AttributeValue::Number(a), AttributeValue::Number(b)) => a < b,
+                _ => false,
+            },
+            PolicyOperator::GreaterThanOrEquals => match (actual, expected) {
+                (AttributeValue::Number(a), AttributeValue::Number(b)) => a >= b,
+                _ => false,
+            },
+            PolicyOperator::LessThanOrEquals => match (actual, expected) {
+                (AttributeValue::Number(a), AttributeValue::Number(b)) => a <= b,
+                _ => false,
+            },
+            PolicyOperator::In => match (actual, expected) {
+                (val, AttributeValue::List(list)) => list.contains(val),
+                _ => false,
+            },
+            PolicyOperator::NotIn => match (actual, expected) {
+                (val, AttributeValue::List(list)) => !list.contains(val),
+                _ => false,
+            },
+            PolicyOperator::Contains => match (actual, expected) {
+                (AttributeValue::List(list), val) => list.contains(val),
+                (AttributeValue::String(s), AttributeValue::String(sub)) => s.contains(sub),
+                _ => false,
+            },
+            PolicyOperator::StartsWith => match (actual, expected) {
+                (AttributeValue::String(s), AttributeValue::String(prefix)) => s.starts_with(prefix),
+                _ => false,
+            },
+            PolicyOperator::EndsWith => match (actual, expected) {
+                (AttributeValue::String(s), AttributeValue::String(suffix)) => s.ends_with(suffix),
+                _ => false,
+            },
         }
     }
 }
@@ -331,7 +367,7 @@ impl PolicyEngine {
     }
 
     // Evaluate policies
-    pub fn evaluate(&self, subject: &str, resource: &str, action: &str) -> Result<bool, DbError> {
+    pub fn evaluate(&self, subject: &str, resource: &str, action: &str, abac: &AbacEvaluator) -> Result<bool, DbError> {
         let policies = self.policies.read();
 
         let mut allow = false;
@@ -349,7 +385,12 @@ impl PolicyEngine {
                 continue;
             }
 
-            // TODO: Evaluate conditions
+            // Evaluate conditions
+            if !policy.conditions.is_empty() {
+                if !abac.evaluate(subject, resource, &policy.conditions) {
+                    continue;
+                }
+            }
 
             match policy.effect {
                 PolicyEffect::Allow => allow = true,
