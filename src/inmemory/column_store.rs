@@ -8,7 +8,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::time::{SystemTime, UNIX_EPOCH};
-
+use fastrand::usize;
 use crate::inmemory::compression::{CompressionType, HybridCompressor, CompressionStats};
 use crate::inmemory::vectorized_ops::{VectorizedFilter, VectorizedAggregator, VectorBatch};
 
@@ -54,16 +54,17 @@ pub enum ColumnDataType {
 }
 
 impl ColumnDataType {
-    pub fn size_bytes(&self) -> usize {
-        match self {
-            Self::Int8 | Self::UInt8 | Self::Boolean => 1,
-            Self::Int16 | Self::UInt16 => 2,
-            Self::Int32 | Self::UInt32 | Self::Float32 => 4,
-            Self::Int64 | Self::UInt64 | Self::Float64 | Self::Timestamp => 8,
-            Self::Decimal => 16,
-            Self::String | Self::Binary => 8, // Pointer size
-        }
-    }
+pub fn size_bytes(&self) -> usize {
+                match self {
+                    Self::Int8 | Self::UInt8 | Self::Boolean => 1,
+                    Self::Int16 | Self::UInt16 => 2,
+                    Self::Int32 | Self::UInt32 | Self::Float32 => 4,
+                    Self::Int64 | Self::UInt64 | Self::Float64 | Self::Timestamp => 8,
+                    Self::Decimal => 16,
+                    Self::String | Self::Binary => 8, // Pointer size
+                    ColumnDataType::Integer => 0,
+                }
+            }
 
     pub fn is_fixed_width(&self) -> bool {
         !matches!(self, Self::String | Self::Binary)

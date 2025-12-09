@@ -186,7 +186,7 @@ impl PartitionState {
     }
 
     fn dequeue_batch(&self, max_size: usize) -> Vec<PublishedEvent> {
-        let mut queue = self.event_queue.lock();
+        let mut queue = self.event_queue.lock().unwrap();
         let mut batch = Vec::new();
 
         for _ in 0..max_size {

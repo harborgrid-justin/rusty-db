@@ -139,11 +139,11 @@ impl QueryCache {
         let mut size = 0;
         for row in result {
             for val in row {
-                size += val.len() + std::mem::size_of::<String>();
+                size += val.len() + size_of::<String>();
             }
-            size += std::mem::size_of::<Vec<String>>();
+            size += size_of::<Vec<String>>();
         }
-        size += std::mem::size_of::<Vec<Vec<String>>>();
+        size += size_of::<Vec<Vec<String>>>();
         size
     }
 

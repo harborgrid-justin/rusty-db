@@ -664,7 +664,7 @@ mod tests {
             Duration::from_millis(100),
         );
 
-        assert_eq!(profile.total_execution_time(), Duration::from_millis(130));
+assert_eq!(*profile.total_execution_time(), Duration::from_millis(130));
 
         profile.cache_hits = 80;
         profile.cache_misses = 20;

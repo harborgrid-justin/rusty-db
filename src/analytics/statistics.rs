@@ -53,6 +53,7 @@ pub struct ColumnStatistics {
 
     /// When statistics were last updated
     pub last_updated: SystemTime,
+    pub num_values: ()
 }
 
 impl ColumnStatistics {

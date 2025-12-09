@@ -518,7 +518,8 @@ pub enum LockMode {
 
     /// Shared intent exclusive lock
     SharedIntentExclusive,
-    Update,
+
+    /// Update lock
     Update,
 }
 

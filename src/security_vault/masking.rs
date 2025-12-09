@@ -189,20 +189,20 @@ struct MaskingStats {
 
 impl MaskingEngine {
     /// Create a new masking engine
-    pub fn new() -> Result<Self> {
-        let mut engine = Self {
-            policies: RwLock::new(HashMap::new()),
-            substitution_tables: RwLock::new(HashMap::new()),
-            custom_functions: RwLock::new(HashMap::new()),
-            consistency_cache: RwLock::new(HashMap::new()),
-            stats: RwLock::new(MaskingStats::default()),
-        };
-
-        // Initialize default substitution tables
-        engine.init_default_substitution_tables()?;
-
-        Ok(engine)
-    }
+pub fn new() -> Result<Self> {
+                let mut engine = Self {
+                    policies: RwLock::new(HashMap::new()),
+                    substitution_tables: RwLock::new(HashMap::new()),
+                    custom_functions: RwLock::new(HashMap::new()),
+                    consistency_cache: RwLock::new(HashMap::new()),
+                    stats: RwLock::new(MaskingStats::default()),
+                };
+            
+                // Initialize default substitution tables
+                engine.init_default_substitution_tables();
+            
+                Ok(engine)
+            }
 
     /// Initialize default substitution tables
     fn init_default_substitution_tables(&mut self) {

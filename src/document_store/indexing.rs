@@ -297,7 +297,7 @@ impl BTreeIndex {
             self.entries
                 .entry(key.clone())
                 .or_insert_with(HashSet::new)
-   .insert(doc_id.clone());
+   .insert(0, doc_id.clone());
         }
 
         self.reverse_index.insert(doc_id, keys);
@@ -310,7 +310,7 @@ impl BTreeIndex {
         if let Some(keys) = self.reverse_index.remove(doc_id) {
             for key in keys {
                 if let Some(ids) = self.entries.get_mut(&key) {
-                    ids.remove(doc_id);
+                    ids.remove(0);
                     if ids.is_empty() {
                         self.entries.remove(&key);
                     }
@@ -661,9 +661,9 @@ impl TTLIndex {
     pub fn insert(&mut self, doc_id: DocumentId, doc: &Document) -> Result<()> {
         if let Some(expires_at) = doc.metadata.expires_at {
             self.expiration_times
-                .entry(expires_at)
+                .entry(doc_id)
                 .or_insert_with(HashSet::new)
-                .insert(doc_id);
+                .insert();
         }
 
         Ok(())

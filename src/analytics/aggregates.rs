@@ -168,7 +168,7 @@ pub fn compute_aggregate(
                 .cloned()
                 .ok_or_else(|| DbError::Execution("No values to minimize".to_string()))
         }
-        
+
 AggregateFunction::Max => {
               data.iter()
                   .filter_map(|row| row.get(column_index))
@@ -176,22 +176,28 @@ AggregateFunction::Max => {
                   .cloned()
                   .ok_or_else(|| DbError::Execution("No values to maximize".to_string()))
           }
-          
+
           AggregateFunction::Mode => {
+              let mut counts: HashMap<&String, usize> = HashMap::new();
+              for row in data.iter() {
+                  if let Some(value) = row.get(column_index) {
+                      *counts.entry(value).or_insert(0) += 1;
+                  }
+              }
               counts
                   .into_iter()
                   .max_by_key(|(_, count)| *count)
-                  .map(|(value, _)| value)
+                  .map(|(value, _)| value.clone())
                   .ok_or_else(|| DbError::Execution("No mode found".to_string()))
           }
-          
+
           AggregateFunction::FirstValue => {
               data.first()
                   .and_then(|row| row.get(column_index))
                   .cloned()
                   .ok_or_else(|| DbError::Execution("No first value found".to_string()))
           }
-          
+
           AggregateFunction::LastValue => {
               data.last()
                   .and_then(|row| row.get(column_index))
@@ -229,19 +235,20 @@ AggregateFunction::Max => {
             Ok(format_number(median))
         }
 
-        AggregateFunction::Mode => {
-            let mut counts: HashMap<String, usize> = HashMap::new();
-            for row in data {
-                if let Some(value) = row.get(column_index) {
-                    *counts.entry(value.clone()).or_insert(0) += 1;
+AggregateFunction::Mode => {
+                let mut counts: HashMap<String, usize> = HashMap::new();
+                for row in data {
+                    if let Some(value) = row.get(column_index) {
+                        *counts.entry(value.clone()).or_insert(0) += 1;
+                    }
                 }
-            }
 
-            counts
-                .into_iter()
-                .max_by_key(|(_, count)| *count)
-                .map(|(value, _)| value)
-        }
+                counts
+                    .into_iter()
+                    .max_by_key(|(_, count)| *count)
+                    .map(|(value, _)| value)
+                    .ok_or_else(|| DbError::Execution("No mode found".to_string()))
+            }
 
         AggregateFunction::Percentile { percentile } => {
             let values = extract_numeric_values(data, column_index);
@@ -253,17 +260,19 @@ AggregateFunction::Max => {
             Ok(format_number(result))
         }
 
-        AggregateFunction::FirstValue => {
-            data.first()
-                .and_then(|row| row.get(column_index))
-                .cloned()
-        }
+AggregateFunction::FirstValue => {
+              data.first()
+                  .and_then(|row| row.get(column_index))
+                  .cloned()
+                  .ok_or_else(|| DbError::Execution("No first value found".to_string()))
+          }
 
-        AggregateFunction::LastValue => {
-            data.last()
-                .and_then(|row| row.get(column_index))
-                .cloned()
-        }
+AggregateFunction::LastValue => {
+                    data.last()
+                        .and_then(|row| row.get(column_index))
+                        .cloned()
+                        .ok_or_else(|| DbError::Execution("No last value found".to_string()))
+                }
 
         AggregateFunction::StringAgg { separator } => {
             let values: Vec<String> = data

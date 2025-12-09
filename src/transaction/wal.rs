@@ -576,11 +576,9 @@ impl WALManager {
         }
 
         // Serialize all entries
-        let serialized: Vec<Vec<u8>> = entries.iter()
-            .map(|e| bincode::serialize(e))
-            .collect::<Result<Vec<_>>>()
-            .map_err(|e| DbError::SerializationError(format!("Batch serialization failed: {}", e)))?;
-
+let serialized: Vec<Vec<u8>> = entries.iter()
+              .map(|e| bincode::serialize(e).map_err(|e| DbError::SerializationError(format!("Serialization failed: {}", e))))
+              .collect::<Result<Vec<_>>>()?;
         // Prepare IoSlice for writev
         let slices: Vec<IoSlice> = serialized.iter()
             .map(|buf| IoSlice::new(buf))

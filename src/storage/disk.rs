@@ -1059,7 +1059,7 @@ mod tests {
 
     #[test]
     fn test_disk_manager() -> Result<(), DbError> {
-        let dir = tempdir().unwrap();
+        let dir = tempdir()?;
         let dm = DiskManager::new(dir.path().to_str().unwrap(), 4096)?;
 
         let page_id = dm.allocate_page()?;
@@ -1077,7 +1077,7 @@ mod tests {
 
     #[test]
     fn test_read_ahead() -> Result<(), DbError> {
-        let dir = tempdir().unwrap();
+        let dir = tempdir()?;
         let dm = DiskManager::new(dir.path().to_str().unwrap(), 4096)?;
 
         // Allocate sequential pages
@@ -1098,7 +1098,7 @@ mod tests {
 
     #[test]
     fn test_write_behind() -> Result<(), DbError> {
-        let dir = tempdir().unwrap();
+        let dir = tempdir()?;
         let dm = DiskManager::new(dir.path().to_str().unwrap(), 4096)?;
 
         let page_id = dm.allocate_page()?;
@@ -1111,6 +1111,10 @@ mod tests {
         assert!(stats.write_behind_hits > 0);
 
         Ok(())
+    }
+
+    struct ScheduleInfo {
+    // Placeholder for future scheduling metadata
     }
 
     #[test]

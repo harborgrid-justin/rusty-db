@@ -3,7 +3,7 @@
 // Handler functions for cluster coordination and replication
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     response::{Json as AxumJson},
     http::StatusCode,
 };
@@ -11,11 +11,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use uuid::Uuid;
-
-use crate::error::DbError;
 use super::super::types::*;
-use std::time::UNIX_EPOCH;
 
 pub async fn get_cluster_nodes(
     State(_state): State<Arc<ApiState>>,

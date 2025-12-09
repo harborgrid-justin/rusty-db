@@ -54,7 +54,7 @@ impl<T> QueueNode<T> {
 /// The head and tail pointers are placed in separate cache lines to minimize
 /// false sharing between enqueueing and dequeueing threads.
 #[repr(C)]
-pub struct LockFreeQueue<T> {
+pub struct LockFreeQueue<T: 'static> {
     /// Head pointer (for dequeue)
     head: Atomic<QueueNode<T>>,
     /// Padding to separate head and tail into different cache lines
@@ -553,19 +553,16 @@ mod tests {
         }
 
         // Dequeuers
-        for _ in 0..5 {
-            let q = queue.clone();
-            handles.push(thread::spawn(move || {
-                let mut count = 0;
-                for _ in 0..1000 {
-                    while q.dequeue().is_none() {
-                        thread::yield_now();
-                    }
-                    count += 1;
+for _ in 0..5 {
+                    let q = queue.clone();
+                    handles.push(thread::spawn(move || {
+                        for _ in 0..1000 {
+                            while q.dequeue().is_none() {
+                                thread::yield_now();
+                            }
+                        }
+                    }));
                 }
-                count
-            }));
-        }
 
         for handle in handles {
             handle.join().unwrap();

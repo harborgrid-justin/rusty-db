@@ -437,19 +437,19 @@ impl IoCompletionPort {
         self.completed.fetch_add(count as u64, Ordering::Relaxed);
 
         // Process completions
-        for completion in completions {
-            // Check if someone is waiting for this specific completion
-            let mut waiters = self.waiters.write();
-            if let Some(sender) = waiters.remove(&completion.id) {
-                let _ = sender.send(completion);
-            } else {
-                // Add to completion queue
-                if self.completions.push(completion).is_err() {
-                    // Queue is full, record error
-                    self.stats.lock().unwrap().queue_overflows += 1;
-                }
-            }
-        }
+for completion in completions {
+                 // Check if someone is waiting for this specific completion
+                 let mut waiters = self.waiters.write();
+                 if let Some(sender) = waiters.remove(&completion.id) {
+                     let _ = sender.send(completion);
+                 } else {
+                     // Add to completion queue
+                     if self.completions.push(completion).is_err() {
+                         // Queue is full, record error
+                         self.stats.lock().queue_overflows += 1;
+                     }
+                 }
+             }
 
         if count > 0 {
             self.notify.notify_waiters();
@@ -501,9 +501,9 @@ impl IoCompletionPort {
     }
 
     /// Get statistics
-    pub fn stats(&self) -> CompletionPortStats {
-        self.stats.lock().unwrap().clone()
-    }
+pub fn stats(&self) -> CompletionPortStats {
+       self.stats.lock().clone()
+   }
 }
 
 // ============================================================================

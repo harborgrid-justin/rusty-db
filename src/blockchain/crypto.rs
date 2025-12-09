@@ -740,7 +740,7 @@ impl RangeProof {
 
 /// Generate secure random bytes
 pub fn secure_random(size: usize) -> Vec<u8> {
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
     let mut bytes = vec![0u8; size];
 use rand::{thread_rng, RngCore};
     

@@ -394,6 +394,7 @@ mod tests {
 use std::time::Duration;
 use std::time::UNIX_EPOCH;
 use std::collections::HashMap;
+    use crate::api::rest_api::{AuthMiddleware, DefaultAuthMiddleware, HealthCheckMiddleware, MetricsMiddleware, RateLimiter};
 
     #[test]
     fn test_rate_limiter() {

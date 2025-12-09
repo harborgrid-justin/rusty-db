@@ -437,7 +437,7 @@ use std::time::Duration;
             SchemaName::new("public").unwrap(),
         );
 
-        assert_eq!(session.id(), &SessionId::new(1));
+        assert_eq!(session.id(), SessionId::new(1));
         assert_eq!(session.username().as_str(), "alice");
         assert_eq!(session.schema().as_str(), "public");
         assert_eq!(session.status(), &SessionStatus::Active);

@@ -202,6 +202,7 @@ pub struct IoOperation {
     pub priority: usize,
     pub size: usize,
     pub submitted_at: Instant,
+    pub op_type: ()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

@@ -219,8 +219,8 @@ impl Drop for AlignedBuffer {
 unsafe impl Send for AlignedBuffer {}
 unsafe impl Sync for AlignedBuffer {}
 
-impl std::fmt::Debug for AlignedBuffer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for AlignedBuffer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AlignedBuffer")
             .field("ptr", &self.ptr)
             .field("size", &self.size)

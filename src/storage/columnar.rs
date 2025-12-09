@@ -457,7 +457,7 @@ impl ColumnChunk {
         self.stats.num_values = values.len();
         self.stats.num_nulls = values.iter().filter(|v| v.is_null()).count();
 
-        let mut distinct = std::collections::HashSet::new();
+        let mut distinct = HashSet::new();
         let mut min = None;
         let mut max = None;
 

@@ -12,7 +12,7 @@ use sha2::{Sha256, Digest};
 use crate::error::Result;
 
 /// Document ID types supported by the system
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum DocumentId {
     /// UUID-based document ID (default)
     Uuid(Uuid),

@@ -3,18 +3,15 @@
 // Real-time subscription resolvers for the GraphQL API
 
 use async_graphql::{
-    Context, Enum, Error, Object, Result as GqlResult, SimpleObject, Subscription, ID,
+    Context, Enum, Object, SimpleObject, Subscription, ID,
 };
 use futures_util::stream::Stream;
 use futures_util::StreamExt;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::pin::Pin;
 use std::time::Duration;
 use tokio::sync::{broadcast, RwLock};
 use tokio_stream::wrappers::BroadcastStream;
-
-use crate::error::DbError;
 use super::types::*;
 use super::models::*;
 use super::GraphQLEngine;

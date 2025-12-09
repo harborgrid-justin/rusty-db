@@ -973,7 +973,7 @@ pub enum FallbackResponse<T> {
 /// Fallback handler for graceful degradation
 pub struct FallbackHandler<T> {
     /// Cached responses
-    cache: Arc<RwLock<HashMap<String, (T)>>>,
+    cache: Arc<RwLock<HashMap<String, (T, SystemTime)>>>,
 
     /// Cache TTL
     cache_ttl: Duration,
@@ -1008,7 +1008,7 @@ impl<T: Clone + Send + Sync> FallbackHandler<T> {
     /// Cache response
     pub fn cache_response(&self, key: String, value: T) {
         let mut cache = self.cache.write();
-        cache.insert(key, value::now());
+        cache.insert(key, (value, SystemTime::now()));
     }
 
     /// Get cached response

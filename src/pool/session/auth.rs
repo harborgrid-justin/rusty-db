@@ -313,7 +313,7 @@ pub fn issue_token(&self, username: String, validity: std::time::Duration) -> St
     let token = Uuid::new_v4().to_string();
     let expiry = SystemTime::now() + validity;
 
-    self.tokens.write().insert(token.clone(), (username.clone()));
+    self.tokens.write().insert(token.clone(), username.clone());
     token
 }
 
@@ -324,15 +324,15 @@ pub fn issue_token(&self, username: String, validity: std::time::Duration) -> St
 
     /// Check if token is valid and not expired
 fn is_token_valid(&self, token: &str) -> Option<String> {
-    let tokens = self.tokens.read();
-    tokens.get(token).and_then(|(username, expiry)| {
-        if SystemTime::now() < *expiry {
-            Some(username.clone())
-        } else {
-            None
-        }
-    })
-}
+        let tokens = self.tokens.read();
+        tokens.get(token).and_then(|(username, expiry)| {
+            if SystemTime::now() < *expiry {
+                Some(username.clone())
+            } else {
+                None
+            }
+        })
+    }
 }
 
 impl Authenticator for TokenAuthenticator {

@@ -624,7 +624,7 @@ impl LogicalReplication {
                     continue;
                 }
 
-                let mut conflicts_lock = conflicts.lock();
+                let mut conflicts_lock = conflicts.lock().unwrap();
                 if let Some(mut conflict) = conflicts_lock.pop_front() {
                     if !conflict.resolved {
                         // Attempt auto-resolution

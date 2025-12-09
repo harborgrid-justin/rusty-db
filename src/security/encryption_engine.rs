@@ -537,7 +537,7 @@ impl KeyManager {
         let key_material = SecureKeyMaterial::generate()?;
 
         let version = {
-            let mut counter = self.version_counter.lock();
+            let mut counter = self.version_counter.lock().unwrap();
             *counter += 1;
             *counter
         };
@@ -573,7 +573,7 @@ impl KeyManager {
         algorithm: Algorithm,
     ) -> Result<()> {
         let version = {
-            let mut counter = self.version_counter.lock();
+            let mut counter = self.version_counter.lock().unwrap();
             *counter += 1;
             *counter
         };

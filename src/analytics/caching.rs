@@ -995,6 +995,7 @@ pub enum InvalidationType {
 #[cfg(test)]
 mod semantic_tests {
     use crate::analytics::caching::{MemoryPressureHandler, QueryNormalizer, SemanticQueryCache};
+    use crate::execution::QueryResult;
 
     #[test]
     fn test_query_normalization() {

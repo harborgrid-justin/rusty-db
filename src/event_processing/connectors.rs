@@ -471,7 +471,7 @@ impl FileSinkConnector {
                         serde_json::to_string(&event.payload).unwrap_or_default()
                     );
                     write!(writer, "{}", csv_line).map_err(|e| {
-                        crate::error::DbError::Io(format!("Failed to write: {}", e))
+                        crate::error::DbError::IoError(format!("Failed to write: {}", e))
                     })?;
                     self.current_size += csv_line.len() as u64;
                 }
@@ -499,7 +499,7 @@ impl FileSinkConnector {
         if let Some(writer) = &self.writer {
             let mut writer = writer.lock().unwrap();
             writer.flush().map_err(|e| {
-                crate::error::DbError::Io(format!("Failed to flush: {}", e))
+                crate::error::DbError::IoError(format!("Failed to flush: {}", e))
             })?;
         }
 
@@ -511,7 +511,7 @@ impl FileSinkConnector {
 
         let new_path = self.file_path.with_extension(format!("{}.old", timestamp));
         std::fs::rename(&self.file_path, &new_path).map_err(|e| {
-            crate::error::DbError::Io(format!("Failed to rename file: {}", e))
+            crate::error::DbError::IoError(format!("Failed to rename file: {}", e))
         })?;
 
         // Reset writer
@@ -533,7 +533,7 @@ impl SinkConnector for FileSinkConnector {
         if let Some(writer) = &self.writer {
             let mut writer = writer.lock().unwrap();
             writer.flush().map_err(|e| {
-                crate::error::DbError::Io(format!("Failed to flush: {}", e))
+                crate::error::DbError::IoError(format!("Failed to flush: {}", e))
             })?;
         }
 
@@ -571,7 +571,7 @@ impl SinkConnector for FileSinkConnector {
         if let Some(writer) = &self.writer {
             let mut writer = writer.lock().unwrap();
             writer.flush().map_err(|e| {
-                crate::error::DbError::Io(format!("Failed to flush: {}", e))
+                crate::error::DbError::IoError(format!("Failed to flush: {}", e))
             })?;
         }
 

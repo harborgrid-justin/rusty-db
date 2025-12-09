@@ -842,7 +842,7 @@ impl Default for TrainingEngine {
 
 #[cfg(test)]
 mod tests {
-    use crate::ml_engine::EvaluationMetrics;
+    use crate::ml_engine::{Dataset, EvaluationMetrics};
     use crate::ml_engine::training::{EarlyStoppingConfig, LearningRateSchedule, MiniBatchIterator, TrainingProgress};
 
     #[test]

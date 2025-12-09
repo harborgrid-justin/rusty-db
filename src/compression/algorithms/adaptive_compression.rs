@@ -208,40 +208,40 @@ impl CascadedCompressor {
         Ok(result)
     }
 
-    pub fn decompress_u32(&self, compressed: &[u8], x: &mut Vec<utoipa::openapi::RefOr<T>>) -> CompressionResult<Vec<u32>> {
-        if compressed.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let encoding = compressed[0];
-        let data = &compressed[1..];
-
-        let values = match encoding {
-            1 => self.for_encoder.decode(data)?,
-            2 => self.delta_encoder.decode(data)?,
-            3 => self.rle_encoder.decode_u32(data)?,
-            4 => {
-                let estimated_size = data.len() * 4;
-                let mut decompressed = vec![0u8; estimated_size];
-                let size = self.lz4_compressor.decompress(data, &mut decompressed)?;
-                decompressed.truncate(size);
-
-                let mut values = Vec::new();
-                for chunk in decompressed.chunks_exact(4) {
-                    values.push(u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
-                }
-                values
+pub fn decompress_u32<T>(&self, compressed: &[u8], x: &mut Vec<utoipa::openapi::RefOr<T>>) -> CompressionResult<Vec<u32>> {
+            if compressed.is_empty() {
+                return Ok(Vec::new());
             }
-            _ => return Err(CompressionError::UnsupportedAlgorithm(
-                format!("Unknown encoding: {}", encoding)
-            )),
-        };
 
-        let mut stats = self.stats.lock();
-        stats.blocks_decompressed += 1;
+            let encoding = compressed[0];
+            let data = &compressed[1..];
 
-        Ok(values)
-    }
+            let values = match encoding {
+                1 => self.for_encoder.decode(data)?,
+                2 => self.delta_encoder.decode(data)?,
+                3 => self.rle_encoder.decode_u32(data)?,
+                4 => {
+                    let estimated_size = data.len() * 4;
+                    let mut decompressed = vec![0u8; estimated_size];
+                    let size = self.lz4_compressor.decompress(data, &mut decompressed)?;
+                    decompressed.truncate(size);
+
+                    let mut values = Vec::new();
+                    for chunk in decompressed.chunks_exact(4) {
+                        values.push(u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+                    }
+                    values
+                }
+                _ => return Err(CompressionError::UnsupportedAlgorithm(
+                    format!("Unknown encoding: {}", encoding)
+                )),
+            };
+
+            let mut stats = self.stats.lock();
+            stats.blocks_decompressed += 1;
+
+            Ok(values)
+        }
 }
 
 impl Default for CascadedCompressor {

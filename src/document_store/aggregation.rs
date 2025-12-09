@@ -570,7 +570,7 @@ impl Accumulator {
                 let mut arr = Vec::new();
                 for doc in documents {
                     let val = expr.evaluate(doc)?;
-                    let val_str = serde_json::to_string(&val).unwrap();
+                    let val_str = serde_json::to_string(&val)?;
                     if set.insert(val_str) {
                         arr.push(val);
                     }

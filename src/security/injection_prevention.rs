@@ -1158,16 +1158,16 @@ mod tests {
         assert!(!result.contains('\u{200B}'));
     }
 
-    #[test]
-    fn test_parameterized_query() {
-        let mut builder = ParameterizedQueryBuilder::new();
-        builder.template("SELECT * FROM users WHERE id = ?");
-        let param_id = builder.add_parameter("id", ParameterValue::Integer(123)).unwrap();
-        assert_eq!(param_id, "$1");
-
-        let stmt = builder.build().unwrap();
-        assert_eq!(stmt.parameters.len(), 1);
-    }
+#[test]
+        fn test_parameterized_query() {
+            let mut builder = ParameterizedQueryBuilder::new();
+            builder.template("SELECT * FROM users WHERE id = ?");
+            let param_id = builder.add_parameter("id", ParameterValue::Integer(123)).unwrap();
+            assert_eq!(param_id, "$1");
+        
+            let stmt = builder.build().unwrap();
+            assert_eq!(stmt.parameters.len(), 1);
+        }
 
     #[test]
     fn test_dangerous_keyword_detection() {

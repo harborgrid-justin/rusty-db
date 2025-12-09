@@ -486,7 +486,7 @@ impl BlockchainTable {
         );
 
         // Add to hash chain
-        let row_bytes = bincode::serialize(&row).unwrap();
+        let row_bytes = bincode::serialize(&row)?;
         hash_chain.append(&row_bytes, row.timestamp);
 
         // Add to block

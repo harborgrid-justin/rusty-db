@@ -632,6 +632,7 @@ pub struct ActorSystemStats {
 
 #[cfg(test)]
 mod tests {
+    use std::thread::sleep;
     use super::*;
 
     struct TestActor {

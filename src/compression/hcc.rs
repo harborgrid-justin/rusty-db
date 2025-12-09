@@ -284,7 +284,7 @@ impl HCCEngine {
     }
 
     /// Transform row-major data to columnar format for compression
-    pub fn transform_to_columnar(&self, rows: &[Vec<u8>], column_types: &[ColumnDataType])
+    pub fn transform_to_columnar(&self, rows: &[Vec<u8>], column_types: &Vec<ColumnDataType>)
         -> CompressionResult<Vec<Vec<u8>>> {
 
         if rows.is_empty() {
@@ -316,8 +316,8 @@ impl HCCEngine {
     }
 
     /// Transform columnar data back to row-major format
-    pub fn transform_to_rows(&self, columns: &[Vec<u8>], column_types: &[ColumnDataType],
-                            numrows: usize) -> CompressionResult<Vec<Vec<u8>>> {
+    pub fn transform_to_rows(&self, columns: &[Vec<u8>], column_types: &Vec<ColumnDataType>,
+                             numrows: usize) -> CompressionResult<Vec<Vec<u8>>> {
 
         let mut rows = vec![Vec::new(); numrows];
 
@@ -796,7 +796,7 @@ impl HCCAdvisor {
     }
 
     /// Analyze data and recommend HCC strategy
-    pub fn recommend_strategy(&self, rows: &[Vec<u8>], column_types: &[ColumnDataType])
+    pub fn recommend_strategy(&self, rows: &[Vec<u8>], column_types: &Vec<ColumnDataType>)
         -> HCCStrategy {
 
         let sample = rows.iter().take(self.sample_size).cloned().collect::<Vec<_>>();

@@ -48,7 +48,7 @@ impl<T> StackNode<T> {
 /// though the state changed. We prevent this by using tagged pointers that
 /// increment a version counter on each modification.
 #[repr(C, align(64))]
-pub struct LockFreeStack<T> {
+pub struct LockFreeStack<T: 'static> {
     /// Head pointer (top of stack)
     head: Atomic<StackNode<T>>,
     /// Size estimate
@@ -574,19 +574,16 @@ mod tests {
         }
 
         // Poppers
-        for _ in 0..5 {
-            let s = stack.clone();
-            handles.push(thread::spawn(move || {
-                let mut count = 0;
-                for _ in 0..1000 {
-                    while s.pop().is_none() {
-                        thread::yield_now();
+for _ in 0..5 {
+                let s = stack.clone();
+                handles.push(thread::spawn(move || {
+                    for _ in 0..1000 {
+                        while s.pop().is_none() {
+                            thread::yield_now();
+                        }
                     }
-                    count += 1;
-                }
-                count
-            }));
-        }
+                }));
+            }
 
         for handle in handles {
             handle.join().unwrap();

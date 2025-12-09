@@ -1060,25 +1060,25 @@ mod tests {
             Ok(())
         }
 
-impl LogSequenceNumber {
-          pub fn new(value: u64) -> Self {
-              Self(value)
-          }
-      }
-
-      async fn get_latest_lsn(&self) -> Result<LogSequenceNumber, DbError> {
-          Ok(LogSequenceNumber::new(1000))
-      }
-
-        async fn get_stats(&self) -> Result<WalStats, DbError> {
-            Ok(WalStats {
-                total_entries: 0,
-                size_bytes: 0,
-                oldest_lsn: LogSequenceNumber::new(1),
-                newest_lsn: LogSequenceNumber::new(1000),
-                entries_per_second: 10.0,
-            })
+        async fn get_latest_lsn(&self) -> Result<LogSequenceNumber, DbError> {
+            Ok(LogSequenceNumber::new(1000))
         }
+
+impl LogSequenceNumber {
+                    pub fn new(value: u64) -> Self {
+                        Self(value)
+                    }
+                }
+
+                async fn get_stats(&self) -> Result<WalStats, DbError> {
+                    Ok(WalStats {
+                        total_entries: 0,
+                        size_bytes: 0,
+                        oldest_lsn: LogSequenceNumber::new(1),
+                        newest_lsn: LogSequenceNumber::new(1000),
+                        entries_per_second: 10.0,
+                    })
+                }
 
         async fn stream_to_replica(&self, _replica_id: &ReplicaId, _from_lsn: LogSequenceNumber) -> Result<(), DbError> {
             Ok(())

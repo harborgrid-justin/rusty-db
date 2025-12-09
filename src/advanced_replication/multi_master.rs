@@ -2,8 +2,6 @@
 //
 // Bidirectional replication with conflict detection and resolution,
 // quorum-based writes, and convergence guarantees.
-
-use tokio::time::sleep;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
@@ -588,7 +586,6 @@ pub struct ConvergenceReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_create_group() {

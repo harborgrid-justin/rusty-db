@@ -306,7 +306,7 @@ impl PopulationWorker {
         while self.running.load(Ordering::SeqCst) {
             // Get next task
             let task = {
-                let mut queue = self.task_queue.lock();
+                let mut queue = self.task_queue.lock().unwrap();
                 queue.pop()
             };
 
@@ -626,5 +626,3 @@ mod tests {
         manager.shutdown();
     }
 }
-
-

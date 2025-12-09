@@ -905,7 +905,6 @@ impl Default for CollectionManager {
 mod tests {
     use super::*;
     use serde_json::json;
-use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_json_schema_validation() {

@@ -33,7 +33,7 @@ use std::collections::HashMap;
 ///
 /// The profiler can detect semantic types beyond basic SQL types,
 /// enabling more intelligent query optimization and validation.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum InferredType {
     /// Integer numeric type
     Integer,

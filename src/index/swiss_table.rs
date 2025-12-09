@@ -39,7 +39,6 @@ use std::arch::x86::*;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
 use crate::simd::hash::xxhash3_avx2;
-use std::collections::HashMap;
 
 /// Control byte indicating an empty slot
 const EMPTY: u8 = 0xFF;

@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use rand::{Rng, thread_rng};
 use rand::prelude::SliceRandom;
+use crate::concurrent;
 // ============================================================================
 // Linear Regression
 // ============================================================================
@@ -224,7 +225,7 @@ impl LogisticRegression {
         self.intercept = 0.0;
 
         // Gradient descent
-        for concurrent::CACHE_LINE_SIZE in 0..max_iterations {
+        for _iter in 0..max_iterations {
             let mut weight_gradient = vec![0.0; n_features];
             let mut intercept_gradient = 0.0;
 

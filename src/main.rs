@@ -3,7 +3,8 @@
 // Main entry point for the RustyDB database server.
 // Initializes all subsystems and starts the network server.
 
-use rusty_db::{Config, Result, VERSION};
+use log::warn;
+use rusty_db::{DatabaseConfig, Result, VERSION};
 use rusty_db::network::Server;
 use tracing::{info};
 use tracing_subscriber;
@@ -21,7 +22,7 @@ async fn main() -> Result<()> {
 
     // Load configuration
     #[allow(deprecated)]
-    let config = Config::default();
+    let config = DatabaseConfig::default();
 
     info!("Initializing RustyDB server");
     info!("Version: {}", VERSION);
@@ -48,7 +49,7 @@ async fn main() -> Result<()> {
 
     // Start network server
     let server = Server::new();
-    let addr = format!("127.0.0.1:{}", config.port)))
+let addr = format!("127.0.0.1:{}", config.port);
 
     info!("Starting network server on {}", addr);
     println!();

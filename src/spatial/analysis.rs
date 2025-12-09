@@ -14,6 +14,7 @@ use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, Point, Polygon
 use crate::spatial::indexes::SpatialIndex;
 use crate::spatial::operators::{SetOps, ConvexHullOps, TransformOps};
 use std::collections::{HashMap};
+use crate::concurrent;
 
 /// Nearest neighbor search results
 #[derive(Debug, Clone)]
@@ -754,7 +755,7 @@ impl HotSpotAnalysis {
         let mut sum_values = 0.0;
         let mut sum_weights = 0.0;
 
-        for (concurrent::CACHE_LINE_SIZE, (_, other_coord, value)) in self.points.iter().enumerate() {
+        for (_idx, (_, other_coord, value)) in self.points.iter().enumerate() {
             let distance = point_coord.distance_2d(other_coord);
 
             if distance <= self.distance_threshold {

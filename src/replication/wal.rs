@@ -1003,19 +1003,23 @@ mod tests {
         assert!(wal_manager.is_ok());
     }
 
-    #[tokio::test]
-    async fn test_invalid_wal_config() {
-        let temp_dir = TempDir::new().unwrap();
-        let mut config = WalConfig::default();
-        config.max_wal_size = 0; // Invalid
-
-        let result = WalManager::new(config, temp_dir.path()).await;
-        assert!(result.is_err());
-        match result.unwrap_err() {
-            WalError::InvalidConfiguration { .. } => (),
-            _ => panic!("Expected InvalidConfiguration error"),
+#[tokio::test]
+        async fn test_invalid_wal_config() {
+            let temp_dir = TempDir::new().unwrap();
+            let config = WalConfig {
+                max_wal_size: 0, // Invalid
+                ..WalConfig::default()
+            };
+        
+let result = WalManager::new(config, temp_dir.path()).await;
+                assert!(result.is_err());
+                if let Err(err) = result {
+                    match err {
+                        WalError::InvalidConfiguration { .. } => (),
+                        _ => panic!("Expected InvalidConfiguration error"),
+                    }
+                }
         }
-    }
 
     #[tokio::test]
     async fn test_wal_entry_append() {
@@ -1089,7 +1093,7 @@ mod tests {
         let table_name = TableName::new("test").unwrap();
         let entry = WalEntry::new(
             LogSequenceNumber::new(1),
-            rusty_db::replication::types::ReplicationOperation::Insert,
+            replication::types::ReplicationOperation::Insert,
             table_name,
             b"data".to_vec(),
         ).unwrap();

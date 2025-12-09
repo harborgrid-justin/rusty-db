@@ -356,7 +356,7 @@ impl fmt::Display for AllocationSource {
 }
 
 /// Memory context types for different allocation patterns
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ContextType {
     /// Global top-level context
     TopLevel,

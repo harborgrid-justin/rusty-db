@@ -164,7 +164,7 @@ impl OutboxProcessor {
 
                 // Get batch of unprocessed entries
                 let entries: Vec<OutboxEntry> = {
-                    let mut outbox = outbox.lock();
+                    let mut outbox = outbox.lock().unwrap();
                     let mut batch = Vec::new();
 
                     for _ in 0..config.batch_size {

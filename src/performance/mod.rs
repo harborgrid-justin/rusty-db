@@ -1706,7 +1706,7 @@ struct QueryTimeout {
 mod extended_tests {
     use std::time::{Duration, SystemTime};
     use crate::monitoring::ResourceGroup;
-    use crate::performance::{AllocationStrategy, CostMeasurement, CostModelCalibrator, ExecutionPlanOptimizer, MemoryPoolManager, ParallelizationAnalyzer, QueryPlan, QueryProfiler, QueryTemplate, QueryTemplateManager, ResourceGovernor, ResourceRequirement, TimeoutManager};
+    use crate::performance::{AllocationStrategy, CostMeasurement, CostModelCalibrator, ExecutionPlanOptimizer, MemoryPoolManager, OperationType, ParallelizationAnalyzer, QueryPlan, QueryProfiler, QueryTemplate, QueryTemplateManager, ResourceGovernor, ResourceRequirement, TimeoutManager};
 
     #[test]
     fn test_query_profiler() {
