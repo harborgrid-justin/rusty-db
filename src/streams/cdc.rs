@@ -4,7 +4,6 @@
 // Captures INSERT, UPDATE, and DELETE operations with before/after images,
 // column-level tracking, and low-latency event delivery.
 
-use tokio::time::sleep;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -14,11 +13,11 @@ use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Instant, SystemTime};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc, broadcast};
+use tokio::sync::broadcast;
 use tokio::time::interval;
 use crate::error::{DbError, Result};
 use crate::common::{TransactionId, TableId, RowId, Value, LogSequenceNumber};
-use crate::transaction::wal::{LogRecord, WALEntry, LSN};
+use crate::transaction::wal::{LogRecord, WALEntry};
 
 /// Change event type
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -253,7 +252,7 @@ impl CaptureFilter {
         }
 
         // Check change type
-        if !self.change_types.contains(change_type) {
+        if !self.change_types.contains(changetype) {
             return false;
         }
 
@@ -720,7 +719,7 @@ impl CDCEngine {
         let _ = self.event_tx.send(event.clone());
 
         // Add to batch
-        let mut batch = self.current_batch.lock();
+        let mut batch = self.current_batch.lock().unwrap();
         batch.add_event(event);
 
         // Check if batch should be flushed
@@ -850,7 +849,7 @@ impl CDCEngine {
 
     fn parse_row_data(
         &self,
-        data: &[u8],
+        _data: &[u8],
         metadata: &TableMetadata,
     ) -> Result<HashMap<String, Value>> {
         // Simplified parsing (in production, use proper deserialization)
@@ -889,7 +888,7 @@ impl CDCEngine {
                 }
 
                 let completed = {
-                    let mut batch = current_batch.lock();
+                    let mut batch = current_batch.lock().unwrap();
                     if !batch.is_empty() {
                         Some(std::mem::replace(
                             &mut *batch,

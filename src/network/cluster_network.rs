@@ -6,7 +6,6 @@ use tokio::time::sleep;
 use std::fmt;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::VecDeque;
-use std::sync::Mutex;
 use std::collections::HashSet;
 use std::time::Instant;
 use crate::error::{Result, DbError};
@@ -14,7 +13,7 @@ use async_trait::async_trait;
 use bincode;
 use bytes::{Bytes, BytesMut};
 use futures::stream::{Stream, StreamExt};
-use parking_lot::{RwLock};
+use parking_lot::{RwLock, Mutex};
 use rand;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
@@ -264,9 +263,9 @@ impl ClusterTopologyManager {
 
     /// Join an existing cluster
     pub async fn join(&self, seednodes: Vec<SocketAddr>) -> Result<()> {
-        info!("Joining cluster via {} seed nodes", seed_nodes.len());
+        info!("Joining cluster via {} seed nodes", seednodes.len());
 
-        for seed in seed_nodes {
+        for seed in seednodes {
             match self.send_join_request(seed).await {
                 Ok(_) => {
                     info!("Successfully joined cluster via {}", seed);
@@ -1057,7 +1056,7 @@ impl NodeConnectionPool {
 
     /// Receive messages from any node
     pub async fn receive_message(&self) -> Option<(NodeId, ClusterMessage)> {
-        self.message_rx.lock().unwrap().recv().await
+        self.message_rx.lock().recv().await
     }
 
     /// Get connection metrics
@@ -1085,7 +1084,7 @@ impl NodeConnectionPool {
 /// Single node-to-node connection with multiplexed streams
 pub struct NodeConnection {
     node_id: NodeId,
-    stream: Arc<TokioRwLock<TcpStream>>,
+    stream: Arc<tokio::sync::RwLock<TcpStream>>,
     streams: Arc<RwLock<HashMap<u32, StreamHandle>>>,
     next_stream_id: Arc<RwLock<u32>>,
     max_streams: usize,
@@ -1100,10 +1099,10 @@ struct StreamHandle {
 }
 
 impl NodeConnection {
-    fn new(node_id: NodeId, stream: TcpStream, maxstreams: usize) -> Self {
+    fn new(node_id: NodeId, stream: TcpStream, max_streams: usize) -> Self {
         let conn = Self {
             node_id,
-            stream: Arc::new(TokioRwLock::new(stream)),
+            stream: Arc::new(tokio::sync::RwLock::new(stream)),
             streams: Arc::new(RwLock::new(HashMap::new())),
             next_stream_id: Arc::new(RwLock::new(0)),
             max_streams,
@@ -1133,7 +1132,7 @@ impl NodeConnection {
         let data = bincode::serialize(&message)
             .map_err(|e| DbError::Serialization(e.to_string()))?;
 
-        self.send_queue.lock().unwrap().push_back((priority, data));
+        self.send_queue.lock().push_back((priority, data));
         *self.last_activity.write() = Instant::now();
 
         Ok(())
@@ -1695,7 +1694,7 @@ impl LocalityMap {
 
 /// Hot-spot detection and mitigation
 pub struct HotspotDetector {
-    query_counts: Arc<RwLock<HashMap<NodeId, (Instant, usize)>>>,
+    query_counts: Arc<RwLock<HashMap<NodeId, VecDeque<(Instant, usize)>>>>,
     threshold_qps: usize,
     window_size: Duration,
 }
@@ -2125,11 +2124,11 @@ impl SessionMigrationManager {
         info!("Found {} sessions to migrate", sessions_to_migrate.len());
 
         for session in sessions_to_migrate {
-            self.migration_queue.lock().unwrap().push_back(session.session_id);
+            self.migration_queue.lock().push_back(session.session_id);
         }
 
         // Process migrations
-        while let Some(session_id) = self.migration_queue.lock().unwrap().pop_front() {
+        while let Some(session_id) = self.migration_queue.lock().pop_front() {
             if let Err(e) = self.migrate_session(session_id).await {
                 error!("Failed to migrate session {}: {}", session_id, e);
             }

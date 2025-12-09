@@ -345,7 +345,7 @@ impl FreeFrameManager {
         }
 
         // Fall back to global list
-        self.global_free_list.lock().unwrap().pop().map(|frame_id| {
+        self.global_free_list.lock().pop().map(|frame_id| {
             self.global_allocations.fetch_add(1, Ordering::Relaxed);
             frame_id
         })
@@ -363,13 +363,13 @@ impl FreeFrameManager {
         }
 
         // Add to global list
-        self.global_free_list.lock().unwrap().push(frame_id);
+        self.global_free_list.lock().push(frame_id);
     }
 
     /// Get number of free frames
     #[inline]
     fn free_count(&self) -> usize {
-        let mut count = self.global_free_list.lock().unwrap().len();
+        let mut count = self.global_free_list.lock().len();
 
         if let Some(ref pools) = self.per_core_pools {
             count += pools.iter().map(|p| p.free_count()).sum::<usize>();
@@ -1254,7 +1254,7 @@ impl BufferPoolManager {
         self.shutdown.store(true, Ordering::Relaxed);
 
         // Wait for background flusher
-        if let Some(handle) = self.background_flusher.lock().unwrap().take() {
+        if let Some(handle) = self.background_flusher.lock().take() {
             let _ = handle.join();
         }
 
@@ -1562,7 +1562,7 @@ pub mod windows {
             }
 
             // Track the pending operation
-            self.pending_ops.lock().unwrap().insert(page_id, overlapped);
+            self.pending_ops.lock().insert(page_id, overlapped);
 
             Ok(())
         }
@@ -1612,7 +1612,7 @@ pub mod windows {
             }
 
             // Track the pending operation
-            self.pending_ops.lock().unwrap().insert(page_id, overlapped);
+            self.pending_ops.lock().insert(page_id, overlapped);
 
             Ok(())
         }
@@ -1666,7 +1666,7 @@ pub mod windows {
                         });
 
                         // Remove from pending
-                        self.pending_ops.lock().unwrap().remove(&overlapped.page_id);
+                        self.pending_ops.lock().remove(&overlapped.page_id);
                     }
                 } else {
                     // Success
@@ -1680,7 +1680,7 @@ pub mod windows {
                         });
 
                         // Remove from pending
-                        self.pending_ops.lock().unwrap().remove(&overlapped.page_id);
+                        self.pending_ops.lock().remove(&overlapped.page_id);
                     }
                 }
             }
@@ -1690,12 +1690,12 @@ pub mod windows {
 
         /// Get the number of pending I/O operations.
         pub fn pending_count(&self) -> usize {
-            self.pending_ops.lock().unwrap().len()
+            self.pending_ops.lock().len()
         }
 
         /// Cancel all pending I/O operations.
         pub fn cancel_all(&self) {
-            self.pending_ops.lock().unwrap().clear();
+            self.pending_ops.lock().clear();
         }
 
         /// Post a manual completion to the IOCP (useful for signaling shutdown).

@@ -33,7 +33,7 @@ impl Executor {
                 self.catalog.drop_table(&name)?;
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::Select { table, columns, join, group_by, order_by, limit, .. } => {
+            SqlStatement::Select { table, columns, join, group_by, order_by: _, limit, .. } => {
                 let schema = self.catalog.get_table(&table)?;
                 
                 // Simple implementation - return empty result with schema
@@ -62,38 +62,38 @@ impl Executor {
             }
             SqlStatement::Insert { table, .. } => {
                 // Validate table exists
-                let schema = self.catalog.get_table(&table)?;
+                let _schema = self.catalog.get_table(&table)?;
                 Ok(QueryResult::with_affected(1))
             }
             SqlStatement::Update { table, .. } => {
                 // Validate table exists
-                let schema = self.catalog.get_table(&table)?;
+                let _schema = self.catalog.get_table(&table)?;
                 Ok(QueryResult::with_affected(0))
             }
             SqlStatement::Delete { table, .. } => {
                 // Validate table exists
-                let schema = self.catalog.get_table(&table)?;
+                let _schema = self.catalog.get_table(&table)?;
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::CreateIndex { name, table, columns, unique } => {
+            SqlStatement::CreateIndex { name: _, table, columns: _, unique: _ } => {
                 // Validate table exists
-                let schema = self.catalog.get_table(&table)?;
+                let _schema = self.catalog.get_table(&table)?;
                 // Index creation would go here
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::CreateView { name, query } => {
+            SqlStatement::CreateView { name: _, query: _ } => {
                 // View creation would go here
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::AlterTable { name, action } => {
+            SqlStatement::AlterTable { name: _, action: _ } => {
                 // Table alteration would go here
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::GrantPermission { permission, table, user } => {
+            SqlStatement::GrantPermission { permission: _, table: _, user: _ } => {
                 // Permission grant would go here
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::RevokePermission { permission, table, user } => {
+            SqlStatement::RevokePermission { permission: _, table: _, user: _ } => {
                 // Permission revoke would go here
                 Ok(QueryResult::with_affected(0))
             }
@@ -151,7 +151,7 @@ impl Executor {
         Ok(QueryResult::new(result_columns, Vec::new()))
     }
     
-    fn execute_filter(&self, input: QueryResult, predicate: &str) -> Result<QueryResult, DbError> {
+    fn execute_filter(&self, input: QueryResult, _predicate: &str) -> Result<QueryResult, DbError> {
         // TODO: Implement actual filtering based on predicate
         // For now, just pass through the input
         Ok(input)
@@ -172,7 +172,7 @@ impl Executor {
         left: QueryResult,
         right: QueryResult,
         join_type: JoinType,
-        condition: &str,
+        _condition: &str,
     ) -> Result<QueryResult, DbError> {
         // Combine column names from both sides
         let mut result_columns = left.columns.clone();
@@ -184,7 +184,7 @@ impl Executor {
         // TODO: Implement proper condition parsing and evaluation
         // For now, we perform a cross join (all combinations)
         // In production, this should parse the condition and evaluate it
-        let matches_condition = |_left_row: &[String], _right_row: &[String]| -> bool {
+        let _matches_condition = |_left_row: &[String], _right_row: &[String]| -> bool {
             // Placeholder: always return true for cross join behavior
             // Real implementation would parse condition like "t1.id = t2.id"
             // and evaluate it against the row values
@@ -336,7 +336,7 @@ impl Executor {
     fn execute_sort(
         &self,
         input: QueryResult,
-        order_by: &[crate::parser::OrderByClause],
+        _order_by: &[crate::parser::OrderByClause],
     ) -> Result<QueryResult, DbError> {
         // TODO: Implement actual sorting based on order_by clauses
         // For now, just return the input as-is

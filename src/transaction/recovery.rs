@@ -5,7 +5,7 @@
 use std::collections::BTreeMap;
 use std::collections::{HashMap};
 use std::path::{Path, PathBuf};
-use std::io::{Write as IoWrite};
+// Removed unused import: use std::io::{Write as IoWrite};
 use std::sync::Arc;
 use std::time::SystemTime;
 use parking_lot::RwLock;
@@ -494,7 +494,7 @@ impl ARIESRecoveryManager {
                 self.apply_to_page(*page_id, *offset, deleted_data).await?;
             }
 
-            LogRecord::CLR { undo_next_lsn, .. } => {
+            LogRecord::CLR { undo_next_lsn: _, .. } => {
                 // CLRs are redo-only, skip to undo_next_lsn
             }
 
@@ -505,7 +505,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Apply data to a page (simulation)
-    async fn apply_to_page(&self, page_id: PageId, offset: u32, data: &[u8]) -> Result<()> {
+    async fn apply_to_page(&self, _page_id: PageId, _offset: u32, _data: &[u8]) -> Result<()> {
         // In production, this would update the actual page in buffer pool
         // For now, just simulate
         Ok(())
@@ -588,7 +588,7 @@ impl FuzzyCheckpointManager {
         let start = std::time::Instant::now();
 
         // Write checkpoint begin
-        let begin_lsn = self.wal.append(LogRecord::CheckpointBegin {
+        let _begin_lsn = self.wal.append(LogRecord::CheckpointBegin {
             timestamp: SystemTime::now(),
         }).await?;
 
@@ -684,7 +684,7 @@ impl PointInTimeRecovery {
     }
 
     /// Run recovery up to a specific LSN
-    async fn recovery_up_to_lsn(&self, target_lsn: LSN) -> Result<()> {
+    async fn recovery_up_to_lsn(&self, _target_lsn: LSN) -> Result<()> {
         // Similar to ARIES recovery, but stop at target_lsn
         // This is a simplified version
         self.recovery.recover().await?;

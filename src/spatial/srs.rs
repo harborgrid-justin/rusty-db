@@ -7,7 +7,7 @@
 // - Geodetic calculations
 // - Great circle distance calculations
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use crate::spatial::geometry::Coordinate;
 use std::collections::HashMap;
 use std::f64::consts::PI;

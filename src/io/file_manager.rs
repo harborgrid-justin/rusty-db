@@ -470,7 +470,7 @@ impl FileManager {
         let handle = FileHandle(self.next_handle.fetch_add(1, Ordering::Relaxed));
 
         self.files.write().insert(handle, Arc::new(file));
-        self.stats.lock().unwrap().files_opened += 1;
+        self.stats.lock().files_opened += 1;
 
         Ok(handle)
     }
@@ -478,7 +478,7 @@ impl FileManager {
     /// Close a file
     pub fn close(&mut self, handle: FileHandle) -> Result<()> {
         self.files.write().remove(&handle);
-        self.stats.lock().unwrap().files_closed += 1;
+        self.stats.lock().files_closed += 1;
         Ok(())
     }
 
@@ -540,7 +540,7 @@ impl FileManager {
         let completion = self.io_engine.wait(request_id).await?;
 
         if !completion.is_success() {
-            self.stats.lock().unwrap().read_errors += 1;
+            self.stats.lock().read_errors += 1;
             return Err(DbError::Internal(format!(
                 "Read failed: error code {}",
                 completion.error_code
@@ -552,8 +552,8 @@ impl FileManager {
         let end = start + options.len;
         let data = buffer.as_slice()[start..end].to_vec();
 
-        self.stats.lock().unwrap().reads += 1;
-        self.stats.lock().unwrap().bytes_read += options.len as u64;
+        self.stats.lock().reads += 1;
+        self.stats.lock().bytes_read += options.len as u64;
 
         Ok(data)
     }
@@ -611,7 +611,7 @@ impl FileManager {
         let completion = self.io_engine.wait(request_id).await?;
 
         if !completion.is_success() {
-            self.stats.lock().unwrap().write_errors += 1;
+            self.stats.lock().write_errors += 1;
             return Err(DbError::Internal(format!(
                 "Write failed: error code {}",
                 completion.error_code
@@ -623,8 +623,8 @@ impl FileManager {
             file.sync(FlushMode::Full)?;
         }
 
-        self.stats.lock().unwrap().writes += 1;
-        self.stats.lock().unwrap().bytes_written += data.len() as u64;
+        self.stats.lock().writes += 1;
+        self.stats.lock().bytes_written += data.len() as u64;
 
         Ok(())
     }
@@ -637,7 +637,7 @@ impl FileManager {
             .ok_or_else(|| DbError::Internal("Invalid file handle".to_string()))?;
 
         file.sync(FlushMode::Full)?;
-        self.stats.lock().unwrap().flushes += 1;
+        self.stats.lock().flushes += 1;
 
         Ok(())
     }
@@ -675,14 +675,14 @@ impl FileManager {
             results.push(completion.bytes_transferred);
         }
 
-        self.stats.lock().unwrap().batch_operations += 1;
+        self.stats.lock().batch_operations += 1;
 
         Ok(results)
     }
 
     /// Get statistics
     pub fn stats(&self) -> FileManagerStats {
-        self.stats.lock().unwrap().clone()
+        self.stats.lock().clone()
     }
 
     /// Get buffer pool statistics

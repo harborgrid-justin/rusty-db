@@ -20,6 +20,7 @@ use super::Backoff;
 use std::cmp::Ordering as CmpOrdering;
 use std::marker::PhantomData;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::time::UNIX_EPOCH;
 
 /// Maximum height of the skip list
 const MAX_HEIGHT: usize = 32;
@@ -141,7 +142,7 @@ where
 {
     /// Create a new lock-free skip list
     pub fn new() -> Self where K: Default, V: Default {
-        let guard = Epoch::pin();
+        let _guard = Epoch::pin();
 
         let head = Owned::new(Node::sentinel(K::default(), MAX_HEIGHT));
         let tail = Owned::new(Node::sentinel(K::default(), MAX_HEIGHT));
@@ -151,9 +152,7 @@ where
 
         // Link head to tail at all levels
         for level in 0..MAX_HEIGHT {
-            unsafe {
-                head_shared.as_ref().unwrap().next[level].store(tail_shared, Ordering::Relaxed);
-            }
+            head_shared.as_ref().unwrap().next[level].store(tail_shared, Ordering::Relaxed);
         }
 
         Self {
@@ -182,7 +181,7 @@ where
                 return None;
             }
 
-            let node = unsafe { node_ptr.as_ref()? };
+            let node = node_ptr.as_ref()?;
 
             // Check if node is marked for deletion
             if node.marked.load(Ordering::Acquire) {
@@ -213,7 +212,7 @@ where
             // Check if key already exists
             if let Some(node_ptr) = found {
                 if !node_ptr.is_null() {
-                    let node = unsafe { node_ptr.as_ref().unwrap() };
+                    let node = node_ptr.as_ref().unwrap();
 
                     // If node is fully linked and not marked, key exists
                     if node.fully_linked.load(Ordering::Acquire)
@@ -238,14 +237,12 @@ where
                     break;
                 }
 
-                let pred_node = unsafe { pred.as_ref().unwrap() };
+                let pred_node = pred.as_ref().unwrap();
                 let succ = pred_node.next[level].load(Ordering::Acquire, &guard);
 
                 // Set next pointer for new node
-                unsafe {
-                    new_node_ptr.as_ref().unwrap()
-                        .next[level].store(succ, Ordering::Release);
-                }
+                new_node_ptr.as_ref().unwrap()
+                    .next[level].store(succ, Ordering::Release);
 
                 // Try to CAS predecessor's next pointer
                 let result = pred_node.next[level].compare_exchange(
@@ -264,10 +261,8 @@ where
 
             if success {
                 // Mark as fully linked
-                unsafe {
-                    new_node_ptr.as_ref().unwrap()
-                        .fully_linked.store(true, Ordering::Release);
-                }
+                new_node_ptr.as_ref().unwrap()
+                    .fully_linked.store(true, Ordering::Release);
 
                 self.size.fetch_add(1, Ordering::Relaxed);
                 self.insert_count.fetch_add(1, Ordering::Relaxed);
@@ -306,7 +301,7 @@ where
                 _ => return false,
             };
 
-            let node = unsafe { node_ptr.as_ref().unwrap() };
+            let node = node_ptr.as_ref().unwrap();
 
             // Check if already marked for deletion
             if node.marked.load(Ordering::Acquire) {
@@ -331,7 +326,7 @@ where
                     continue;
                 }
 
-                let pred_node = unsafe { pred.as_ref().unwrap() };
+                let pred_node = pred.as_ref().unwrap();
                 let succ = node.next[level].load(Ordering::Acquire, &guard);
 
                 // Try to unlink
@@ -367,22 +362,20 @@ where
             let mut pred = self.head.load(Ordering::Acquire, guard);
 
             for level in (0..self.height.load(Ordering::Relaxed)).rev() {
-                let mut curr = unsafe {
-                    pred.as_ref().unwrap().next[level].load(Ordering::Acquire, guard)
-                };
+                let mut curr = pred.as_ref().unwrap().next[level].load(Ordering::Acquire, guard);
 
                 loop {
                     if curr.is_null() {
                         break;
                     }
 
-                    let curr_node = unsafe { curr.as_ref().unwrap() };
+                    let curr_node = curr.as_ref().unwrap();
                     let next = curr_node.next[level].load(Ordering::Acquire, guard);
 
                     // Check if current node is marked
                     if curr_node.marked.load(Ordering::Acquire) {
                         // Try to help remove marked node
-                        let pred_node = unsafe { pred.as_ref().unwrap() };
+                        let pred_node = pred.as_ref().unwrap();
                         if pred_node.next[level].compare_exchange(
                             curr,
                             next,
@@ -420,7 +413,7 @@ where
 
             // Found node if succ at level 0 has matching key
             let found = if !succs[0].is_null() {
-                let node = unsafe { succs[0].as_ref().unwrap() };
+                let node = succs[0].as_ref().unwrap();
                 if node.key.cmp(key) == CmpOrdering::Equal {
                     Some(succs[0])
                 } else {
@@ -569,7 +562,6 @@ mod tests {
     use super::*;
     use std::sync::Arc;
     use std::thread;
-use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_insert_find() {

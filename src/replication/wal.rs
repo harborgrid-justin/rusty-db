@@ -379,7 +379,7 @@ impl WalManager {
     /// * `Err(WalError)` - Creation failed
     pub async fn new<P: AsRef<Path>>(
         config: WalConfig,
-        waldirectory: P,
+        wal_directory: P,
     ) -> Result<Self, WalError> {
         let wal_directory = wal_directory.as_ref().to_path_buf();
 
@@ -521,8 +521,11 @@ impl WalManager {
     /// Stops WAL streaming and background tasks
     pub async fn stop_streaming(&self) -> Result<(), WalError> {
         // Send shutdown signal
-        if let Some(sender) = self.shutdown_sender.lock().unwrap().take() {
-            let _ = sender.send(());
+        {
+            let mut sender_opt = self.shutdown_sender.lock();
+            if let Some(sender) = sender_opt.take() {
+                let _ = sender.send(());
+            }
         }
 
         // Wait for all tasks to complete
@@ -863,7 +866,7 @@ impl WalManager {
             }
         });
 
-        self.task_handles.lock().unwrap().push(handle);
+        self.task_handles.lock().push(handle);
     }
 
     /// Starts the cleanup task
@@ -885,7 +888,7 @@ impl WalManager {
             }
         });
 
-        self.task_handles.lock().unwrap().push(handle);
+        self.task_handles.lock().push(handle);
     }
 
     /// Starts the archive task
@@ -917,7 +920,7 @@ impl WalManager {
             }
         });
 
-        self.task_handles.lock().unwrap().push(handle);
+        self.task_handles.lock().push(handle);
     }
 
     /// Starts streaming task for a specific replica
@@ -952,7 +955,7 @@ impl WalManager {
             }
         });
 
-        self.task_handles.lock().unwrap().push(handle);
+        self.task_handles.lock().push(handle);
     }
 
     /// Gets streaming state for a replica

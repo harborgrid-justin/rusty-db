@@ -427,7 +427,7 @@ impl LsmTree {
 
         // Check immutable memtables (newest first)
         {
-            let immutables = self.immutable_memtables.lock();
+            let immutables = self.immutable_memtables.lock().unwrap();
             for memtable in immutables.iter().rev() {
                 if let Some(value) = memtable.get(key) {
                     self.stats.write().memtable_hits += 1;
@@ -492,7 +492,7 @@ impl LsmTree {
 
         // Scan immutable memtables
         {
-            let immutables = self.immutable_memtables.lock();
+            let immutables = self.immutable_memtables.lock().unwrap();
             for memtable in immutables.iter() {
                 for (k, v) in memtable.iter() {
                     if k >= start_key && k <= end_key {
@@ -532,7 +532,7 @@ impl LsmTree {
     /// Flush memtable to L0
     fn trigger_flush(&self) -> Result<()> {
         let memtable = {
-            let mut immutables = self.immutable_memtables.lock();
+            let mut immutables = self.immutable_memtables.lock().unwrap();
             immutables.pop_front()
         };
 
@@ -583,7 +583,7 @@ impl LsmTree {
 
         for _ in 0..max_tasks {
             let task = {
-                let mut queue = self.compaction_queue.lock();
+                let mut queue = self.compaction_queue.lock().unwrap();
                 queue.pop_front()
             };
 

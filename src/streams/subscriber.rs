@@ -3,7 +3,6 @@
 // Event subscription with consumer groups, offset tracking, at-least-once
 // and exactly-once delivery semantics, subscription filtering, and replay.
 
-use tokio::time::sleep;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Mutex;
@@ -14,9 +13,9 @@ use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Instant, SystemTime};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc, broadcast};
+use tokio::sync::mpsc;
 use tokio::time::interval;
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use super::publisher::PublishedEvent;
 
 /// Delivery semantics
@@ -463,7 +462,7 @@ impl EventSubscriber {
     }
 
     /// Store offset for later commit
-    pub async fn store_offset(&self, topic: &str, partition: u32, offset: u64) -> Result<()> {
+    pub async fn store_offset(&self, _topic: &str, partition: u32, offset: u64) -> Result<()> {
         if self.config.enable_auto_offset_store {
             self.pending_commits.lock().unwrap().push_back(PartitionOffset::new(partition, offset));
         }
@@ -495,7 +494,7 @@ impl EventSubscriber {
     }
 
     /// Get assigned partitions (for consumer groups)
-    pub fn get_assigned_partitions(&self, topic: &str) -> Vec<u32> {
+    pub fn get_assigned_partitions(&self, _topic: &str) -> Vec<u32> {
         if let Some(group_id) = &self.config.group_id {
             let groups = self.groups.read();
             if let Some(group) = groups.get(group_id) {
@@ -506,12 +505,12 @@ impl EventSubscriber {
     }
 
     /// Pause consumption from partitions
-    pub fn pause(&self, partitions: Vec<u32>) {
+    pub fn pause(&self, _partitions: Vec<u32>) {
         // Implementation would mark partitions as paused
     }
 
     /// Resume consumption from partitions
-    pub fn resume(&self, partitions: Vec<u32>) {
+    pub fn resume(&self, _partitions: Vec<u32>) {
         // Implementation would mark partitions as resumed
     }
 
@@ -542,7 +541,7 @@ impl EventSubscriber {
                 topic.to_string(),
             ))));
 
-        let mut group = group.lock();
+        let mut group = group.lock().unwrap();
         group.add_member(self.config.consumer_id.clone());
         group.rebalance(10); // TODO: Get actual partition count
         Ok(())
@@ -551,7 +550,7 @@ impl EventSubscriber {
     async fn leave_consumer_group(&self, group_id: &str, _topic: &str) -> Result<()> {
         let groups = self.groups.read();
         if let Some(group) = groups.get(group_id) {
-            let mut group = group.lock();
+            let mut group = group.lock().unwrap();
             group.remove_member(&self.config.consumer_id);
             group.rebalance(10);
         }
@@ -608,7 +607,7 @@ impl EventSubscriber {
                 // Send heartbeat
                 let groups = groups.read();
                 if let Some(group) = groups.get(&group_id) {
-                    let mut group = group.lock();
+                    let mut group = group.lock().unwrap();
                     if let Some(member) = group.members.get_mut(&consumer_id) {
                         member.last_heartbeat = SystemTime::now();
                     }

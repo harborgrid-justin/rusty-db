@@ -465,7 +465,7 @@ impl InstanceRecoveryManager {
 
     /// Process recovery messages
     async fn process_recovery_messages(&self) {
-        let mut rx = self.message_rx.lock().unwrap().await;
+        let mut rx = self.message_rx.lock().await;
 
         while let Some(message) = rx.recv().await {
             match message {
@@ -662,7 +662,7 @@ impl InstanceRecoveryManager {
 
         // In production, would freeze all resources owned by failed instance
         // For now, just update GRD
-        self.grd.remove_member(failed_instance)?;
+        self.grd.remove_member(&failed_instance)?;
 
         Ok(())
     }
@@ -678,7 +678,7 @@ impl InstanceRecoveryManager {
         drop(recoveries);
 
         // Get redo logs from buffer
-        let buffer = self.redo_buffer.lock();
+        let buffer = self.redo_buffer.lock().unwrap();
         let logs = buffer.get_entries_after(0);
         drop(buffer);
 
@@ -718,7 +718,7 @@ impl InstanceRecoveryManager {
         // Spawn parallel workers
         let mut handles = Vec::new();
 
-        for (partition_id, partition_logs) in partitions {
+        for (_partition_id, partition_logs) in partitions {
             let stats = self.stats.clone();
             let recoveries = self.active_recoveries.clone();
             let failed_instance = failed_instance.clone();
@@ -840,7 +840,7 @@ impl InstanceRecoveryManager {
         _failed_instance: NodeId,
         from_lsn: LogSequenceNumber,
     ) -> Result<(), DbError> {
-        let buffer = self.redo_buffer.lock();
+        let buffer = self.redo_buffer.lock().unwrap();
         let logs = buffer.get_entries_after(from_lsn);
         drop(buffer);
 
@@ -856,7 +856,7 @@ impl InstanceRecoveryManager {
         logs: Vec<RedoLogEntry>,
     ) -> Result<(), DbError> {
         // Receive redo logs from another instance
-        let mut buffer = self.redo_buffer.lock();
+        let mut buffer = self.redo_buffer.lock().unwrap();
 
         for log in logs {
             buffer.append(log);

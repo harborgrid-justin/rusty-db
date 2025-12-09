@@ -172,11 +172,11 @@ impl Default for SlotManagerConfig {
     fn default() -> Self {
         Self {
             max_slots: 100,
-            default_wal_retention: Duration::from_hours(24),
+            default_wal_retention: Duration::from_secs(86400), // 24 hours
             enable_auto_cleanup: true,
             cleanup_interval: Duration::from_secs(300), // 5 minutes
-            lag_warning_threshold: Duration::from_minutes(5),
-            lag_critical_threshold: Duration::from_minutes(15),
+            lag_warning_threshold: Duration::from_secs(300), // 5 minutes
+            lag_critical_threshold: Duration::from_secs(900), // 15 minutes
             enable_monitoring: true,
             monitoring_interval: Duration::from_secs(30),
             max_slot_name_length: 63, // PostgreSQL compatible
@@ -313,7 +313,7 @@ impl Default for SlotConfig {
     fn default() -> Self {
         Self {
             slot_type: SlotType::Physical,
-            wal_retention_policy: WalRetentionPolicy::Time(Duration::from_hours(24)),
+            wal_retention_policy: WalRetentionPolicy::Time(Duration::from_secs(86400)), // 24 hours
             auto_advance: false,
             temporary: false,
             tags: HashMap::new(),
@@ -913,7 +913,7 @@ impl ReplicationSlotManager {
             }
         });
 
-        self.background_tasks.lock().unwrap().push(handle);
+        self.background_tasks.lock().push(handle);
     }
 
     /// Starts cleanup background task
@@ -975,11 +975,11 @@ impl ReplicationSlotManager {
             }
         });
 
-        self.background_tasks.lock().unwrap().push(handle);
+        self.background_tasks.lock().push(handle);
     }
 
     /// Creates a consumption stream for a slot
-    async fn create_consumption_stream(&self, slotid: &SlotId) -> Result<SlotConsumptionStream, SlotError> {
+    async fn create_consumption_stream(&self, slot_id: &SlotId) -> Result<SlotConsumptionStream, SlotError> {
         let (change_sender, change_receiver) = mpsc::unbounded_channel();
         let (error_sender, error_receiver) = mpsc::unbounded_channel();
 

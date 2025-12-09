@@ -386,7 +386,7 @@ impl CircuitBreaker {
             CircuitState::Closed => true,
             CircuitState::Open => {
                 // Check if timeout has elapsed
-                let last_failure = self.last_failure.lock().unwrap().await;
+                let last_failure = self.last_failure.lock().unwrap();
                 if let Some(last) = *last_failure {
                     if last.elapsed().as_secs() >= self.timeout {
                         // Transition to half-open
@@ -409,12 +409,12 @@ impl CircuitBreaker {
         match state {
             CircuitState::Closed => {
                 // Reset failure count
-                let mut count = self.failure_count.lock().unwrap().await;
+                let mut count = self.failure_count.lock().unwrap();
                 *count = 0;
             }
             CircuitState::HalfOpen => {
                 // Increment success count
-                let mut success = self.success_count.lock().unwrap().await;
+                let mut success = self.success_count.lock().unwrap();
                 *success += 1;
 
                 if *success >= self.success_threshold {
@@ -423,10 +423,10 @@ impl CircuitBreaker {
                     let mut state = self.state.write().await;
                     *state = CircuitState::Closed;
 
-                    let mut failure_count = self.failure_count.lock().unwrap().await;
+                    let mut failure_count = self.failure_count.lock().unwrap();
                     *failure_count = 0;
 
-                    let mut success_count = self.success_count.lock().unwrap().await;
+                    let mut success_count = self.success_count.lock().unwrap();
                     *success_count = 0;
                 }
             }
@@ -440,7 +440,7 @@ impl CircuitBreaker {
 
         match state {
             CircuitState::Closed => {
-                let mut count = self.failure_count.lock().unwrap().await;
+                let mut count = self.failure_count.lock().unwrap();
                 *count += 1;
 
                 if *count >= self.failure_threshold {
@@ -449,7 +449,7 @@ impl CircuitBreaker {
                     let mut state = self.state.write().await;
                     *state = CircuitState::Open;
 
-                    let mut last_failure = self.last_failure.lock().unwrap().await;
+                    let mut last_failure = self.last_failure.lock().unwrap();
                     *last_failure = Some(Instant::now());
                 }
             }
@@ -458,10 +458,10 @@ impl CircuitBreaker {
                 let mut state = self.state.write().await;
                 *state = CircuitState::Open;
 
-                let mut last_failure = self.last_failure.lock().unwrap().await;
+                let mut last_failure = self.last_failure.lock().unwrap();
                 *last_failure = Some(Instant::now());
 
-                let mut success_count = self.success_count.lock().unwrap().await;
+                let mut success_count = self.success_count.lock().unwrap();
                 *success_count = 0;
             }
             CircuitState::Open => {}
@@ -478,10 +478,10 @@ impl CircuitBreaker {
         let mut state = self.state.write().await;
         *state = CircuitState::Closed;
 
-        let mut failure_count = self.failure_count.lock().unwrap().await;
+        let mut failure_count = self.failure_count.lock().unwrap();
         *failure_count = 0;
 
-        let mut success_count = self.success_count.lock().unwrap().await;
+        let mut success_count = self.success_count.lock().unwrap();
         *success_count = 0;
     }
 }
@@ -563,7 +563,7 @@ impl RateLimiter {
     /// Check if N requests are allowed
     pub async fn allow_n(&self, key: impl Into<String>, n: u32) -> bool {
         let key = key.into();
-        let mut buckets = self.buckets.lock().unwrap().await;
+        let mut buckets = self.buckets.lock().unwrap();
 
         let bucket = buckets
             .entry(key)
@@ -574,7 +574,7 @@ impl RateLimiter {
 
     /// Reset rate limit for a key
     pub async fn reset(&self, key: &str) {
-        let mut buckets = self.buckets.lock().unwrap().await;
+        let mut buckets = self.buckets.lock().unwrap();
         buckets.remove(key);
     }
 }
@@ -713,14 +713,13 @@ impl ErrorHandler {
         fallback: Option<T>,
     ) -> Result<T>
     where
-        F: FnMut() -> Fut + Clone,
+        F: FnMut() -> Fut,
         Fut: Future<Output = Result<T>>,
         T: Clone,
     {
         match strategy {
             RecoveryStrategy::Retry => {
-                let mut op = operation;
-                retry_with_backoff(&self.retry_policy, || op()).await
+                retry_with_backoff(&self.retry_policy, || operation()).await
             }
             RecoveryStrategy::FailFast => operation().await,
             RecoveryStrategy::Fallback => {

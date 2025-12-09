@@ -10,7 +10,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 use super::session_control::SessionId;
 

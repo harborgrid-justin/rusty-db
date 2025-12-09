@@ -476,7 +476,7 @@ pub struct ConnectionPool<C> {
     idle: Arc<Mutex<VecDeque<PooledConnection<C>>>>,
 
     /// Active connections (tracking only)
-    active: Arc<RwLock<HashMap<u64>>>,
+    active: Arc<RwLock<HashMap<u64, Instant>>>,
 
     /// Connection factory
     factory: Arc<dyn ConnectionFactory<C>>,
@@ -550,7 +550,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         while created < target {
             match self.create_connection().await {
                 Ok(conn) => {
-                    self.idle.lock().unwrap().push_back(conn);
+                    self.idle.lock().push_back(conn);
                     created += 1;
                 }
                 Err(e) => {
@@ -632,18 +632,18 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
             }
         });
 
-        *self.maintenance_handle.lock().unwrap() = Some(handle);
+        *self.maintenance_handle.lock() = Some(handle);
     }
 
     /// Perform maintenance tasks
     async fn perform_maintenance(
         idle: &Arc<Mutex<VecDeque<PooledConnection<C>>>>,
-        active: &Arc<RwLock<HashMap<u64>>>,
+        active: &Arc<RwLock<HashMap<u64, Instant>>>,
         config: &PoolConfig,
         total_destroyed: &AtomicU64,
         stats: &Arc<PoolStatistics>,
     ) {
-        let mut idle_conns = idle.lock().unwrap();
+        let mut idle_conns = idle.lock();
         let active_conns = active.read();
 
         // Remove expired connections
@@ -661,7 +661,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
 
         // Detect leaks
         if let Some(leak_threshold) = config.leak_detection_threshold {
-            for (conn_id, acquired_at) in active_conns.iter() {
+            for (&conn_id, &acquired_at) in active_conns.iter() {
                 if acquired_at.elapsed() > leak_threshold {
                     tracing::warn!("Potential connection leak detected: connection {} active for {:?}",
                                  conn_id, acquired_at.elapsed());
@@ -713,7 +713,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     async fn acquire_inner(&self) -> std::result::Result<PooledConnectionGuard<C>, PoolError> {
         loop {
             // Try to get idle connection
-            if let Some(mut conn) = self.idle.lock().unwrap().pop_front() {
+            if let Some(mut conn) = self.idle.lock().pop_front() {
                 // Validate if required
                 if self.config.validate_on_acquire {
                     if let Err(e) = self.validate_connection(&mut conn).await {
@@ -812,12 +812,12 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
 
     /// Get current pool size
     pub fn size(&self) -> usize {
-        self.idle.lock().unwrap().len() + self.active.read().len()
+        self.idle.lock().len() + self.active.read().len()
     }
 
     /// Get number of idle connections
     pub fn idle_count(&self) -> usize {
-        self.idle.lock().unwrap().len()
+        self.idle.lock().len()
     }
 
     /// Get number of active connections
@@ -835,12 +835,12 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         self.closed.store(true, Ordering::SeqCst);
 
         // Cancel maintenance task
-        if let Some(handle) = self.maintenance_handle.lock().unwrap().take() {
+        if let Some(handle) = self.maintenance_handle.lock().take() {
             handle.abort();
         }
 
         // Close all idle connections
-        let mut idle = self.idle.lock().unwrap();
+        let mut idle = self.idle.lock();
         idle.clear();
 
         // Wait for active connections to be returned
@@ -851,7 +851,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
 /// Handle for returning connections to pool
 struct PoolHandle<C> {
     idle: Arc<Mutex<VecDeque<PooledConnection<C>>>>,
-    active: Arc<RwLock<HashMap<u64>>>,
+    active: Arc<RwLock<HashMap<u64, Instant>>>,
     config: Arc<PoolConfig>,
     stats: Arc<PoolStatistics>,
 }
@@ -898,7 +898,7 @@ impl<C> Drop for PooledConnectionGuard<C> {
             conn.acquired_at = None;
 
             // Return to idle pool
-            self.pool.idle.lock().unwrap().push_back(conn);
+            self.pool.idle.lock().push_back(conn);
 
             self.pool.stats.record_connection_released();
         }

@@ -40,7 +40,7 @@
 use std::sync::Mutex;
 use std::collections::VecDeque;
 use std::time::Instant;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::BTreeMap;
 use std::collections::{HashMap};
 use std::sync::{Arc, atomic::{AtomicU64, AtomicBool, Ordering}};
@@ -889,7 +889,7 @@ impl PrometheusPushGateway {
         // In a real implementation, this would use an HTTP client like reqwest
         // For now, we'll just log the push
         println!("Pushing metrics to {}", url);
-        println!("Metrics data length: {} bytes", metrics_data.len());
+        println!("Metrics data length: {} bytes", metricsdata.len());
 
         Ok(())
     }
@@ -989,12 +989,12 @@ impl RemoteWriteClient {
     }
 
     pub fn add_timeseries(&self, ts: TimeSeries) {
-        let mut buffer = self.buffer.lock();
+        let mut buffer = self.buffer.lock().unwrap();
         buffer.push(ts);
     }
 
     pub async fn flush(&self) -> std::result::Result<(), DbError> {
-        let mut buffer = self.buffer.lock();
+        let mut buffer = self.buffer.lock().unwrap();
         if buffer.is_empty() {
             return Ok(());
         }
@@ -1714,7 +1714,7 @@ impl ThresholdAlertRule {
     ) -> Self {
         Self {
             name,
-            metric_name,
+            metric_name: metricname,
             threshold,
             operator,
             severity,
@@ -2339,7 +2339,7 @@ impl Default for DashboardManager {
 
 /// Time-series database for historical metrics
 pub struct TimeSeriesDatabase {
-    data: Arc<RwLock<HashMap<String<TimeSeriesPoint>>>>,
+    data: Arc<RwLock<HashMap<String, VecDeque<TimeSeriesPoint>>>>,
     max_points_per_metric: usize,
     retention_period: Duration,
 }

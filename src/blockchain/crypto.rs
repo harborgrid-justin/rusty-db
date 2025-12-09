@@ -161,8 +161,8 @@ impl ChainLink {
     fn compute_link_hash(index: u64, prevhash: &Hash256, datahash: &Hash256, timestamp: u64) -> Hash256 {
         let mut hasher = Sha256::new();
         hasher.update(&index.to_le_bytes());
-        hasher.update(prev_hash);
-        hasher.update(data_hash);
+        hasher.update(prevhash);
+        hasher.update(datahash);
         hasher.update(&timestamp.to_le_bytes());
 
         let result = hasher.finalize();
@@ -302,8 +302,8 @@ impl MerkleNode {
     /// Create an internal node
     pub fn internal(lefthash: Hash256, righthash: Hash256) -> Self {
         let mut hasher = Sha256::new();
-        hasher.update(&left_hash);
-        hasher.update(&right_hash);
+        hasher.update(&lefthash);
+        hasher.update(&righthash);
         let result = hasher.finalize();
         let mut hash = [0u8; 32];
         hash.copy_from_slice(&result);
@@ -410,12 +410,12 @@ impl MerkleTree {
 
     /// Generate a proof of inclusion for a leaf
     pub fn generate_proof(&self, leafindex: usize) -> Result<MerkleProof> {
-        if leaf_index >= self.leaves.len() {
-            return Err(DbError::InvalidInput(format!("Leaf index {} out of bounds", leaf_index)));
+        if leafindex >= self.leaves.len() {
+            return Err(DbError::InvalidInput(format!("Leaf index {} out of bounds", leafindex)));
         }
 
         let mut siblings = Vec::new();
-        let mut index = leaf_index;
+        let mut index = leafindex;
 
         // Traverse from leaf to root
         for level in &self.levels[..self.levels.len() - 1] {
@@ -438,7 +438,7 @@ impl MerkleTree {
         }
 
         Ok(MerkleProof {
-            leaf_index,
+            leaf_index: leafindex,
             siblings,
             root: self.root,
         })
@@ -614,7 +614,7 @@ impl Default for Accumulator {
 /// Derive a key from a master key and context
 pub fn derive_key(masterkey: &[u8], context: &[u8], index: u64) -> Hash256 {
     let mut hasher = Sha256::new();
-    hasher.update(master_key);
+    hasher.update(masterkey);
     hasher.update(context);
     hasher.update(&index.to_le_bytes());
     let result = hasher.finalize();
@@ -625,17 +625,17 @@ pub fn derive_key(masterkey: &[u8], context: &[u8], index: u64) -> Hash256 {
 
 /// HKDF-like key derivation
 pub fn hkdf_expand(prk: &[u8], info: &[u8], outputlen: usize) -> Vec<u8> {
-    let mut output = Vec::with_capacity(output_len);
+    let mut output = Vec::with_capacity(outputlen);
     let mut counter = 1u8;
 
-    while output.len() < output_len {
+    while output.len() < outputlen {
         let mut hasher = Sha256::new();
         hasher.update(prk);
         hasher.update(info);
         hasher.update(&[counter]);
         let result = hasher.finalize();
 
-        let bytes_needed = output_len - output.len();
+        let bytes_needed = outputlen - output.len();
         let bytes_to_copy = bytes_needed.min(32);
         output.extend_from_slice(&result[..bytes_to_copy]);
 
@@ -662,6 +662,7 @@ impl Commitment {
     /// Create a commitment to a value
     pub fn commit(value: &[u8]) -> (Self, Hash256) {
         // Generate random blinding factor
+        use rand::RngCore;
         let mut rng = rand::thread_rng();
         let mut blinding = [0u8; 32];
         rng.fill_bytes(&mut blinding);

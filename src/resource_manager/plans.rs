@@ -10,7 +10,7 @@ use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc, Timelike, Weekday, NaiveTime};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 
 /// Resource plan identifier
@@ -121,8 +121,8 @@ impl ResourcePlanDirective {
     /// Create a new directive
     pub fn new(
         id: DirectiveId,
-        planid: ResourcePlanId,
-        groupid: ConsumerGroupId,
+        plan_id: ResourcePlanId,
+        group_id: ConsumerGroupId,
     ) -> Self {
         Self {
             id,
@@ -513,8 +513,8 @@ impl ResourcePlanManager {
     /// Create a plan directive
     pub fn create_directive(
         &self,
-        planid: ResourcePlanId,
-        groupid: ConsumerGroupId,
+        plan_id: ResourcePlanId,
+        group_id: ConsumerGroupId,
     ) -> Result<DirectiveId> {
         // Verify plan exists
         self.get_plan(plan_id)?;
@@ -538,8 +538,8 @@ impl ResourcePlanManager {
     /// Update a directive
     pub fn update_directive<F>(
         &self,
-        planid: ResourcePlanId,
-        directiveid: DirectiveId,
+        plan_id: ResourcePlanId,
+        directive_id: DirectiveId,
         update_fn: F,
     ) -> Result<()>
     where
@@ -620,7 +620,7 @@ impl ResourcePlanManager {
         day_of_week: Option<u8>,
         start_time: NaiveTime,
         end_time: NaiveTime,
-        planid: ResourcePlanId,
+        plan_id: ResourcePlanId,
         priority: u32,
     ) -> Result<u64> {
         // Verify plan exists

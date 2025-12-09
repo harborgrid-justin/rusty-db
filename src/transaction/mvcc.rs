@@ -10,7 +10,7 @@ use std::time::Duration;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::SystemTime;
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};
@@ -221,8 +221,9 @@ impl<T: Clone> VersionChain<T> {
         if !self.versions.is_empty() {
             // Link to previous head
             version.prev_version = Some(self.head);
+            let next_version_index = self.versions.len();
             let old_head = &mut self.versions[self.head];
-            old_head.next_version = Some(self.versions.len());
+            old_head.next_version = Some(next_version_index);
         }
 
         self.head = self.versions.len();
@@ -390,7 +391,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
 
         let versions = self.versions.read();
         if let Some(chain) = versions.get(key) {
-            let chain = chain.lock();
+            let chain = chain.lock().unwrap();
             if let Some(version) = chain.get_version_at(read_ts) {
                 return Ok(Some(version.data.clone()));
             }
@@ -433,7 +434,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
     ) -> std::result::Result<bool, DbError> {
         let versions = self.versions.read();
         if let Some(chain) = versions.get(key) {
-            let mut chain = chain.lock();
+            let mut chain = chain.lock().unwrap();
             if let Some(latest) = chain.get_latest() {
                 if !latest.is_deleted() {
                     // Create a new version that's marked as deleted
@@ -466,7 +467,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
         let versions = self.versions.read();
 
         for (_key, chain) in versions.iter() {
-            let mut chain = chain.lock();
+            let mut chain = chain.lock().unwrap();
             let collected = chain.gc_versions_before(&min_ts);
             total_collected += collected;
         }

@@ -11,13 +11,14 @@
 
 use std::sync::Mutex;
 use std::time::Instant;
-use std::collections::{HashMap, BinaryHeap};
+use std::collections::{HashMap, BinaryHeap, VecDeque, HashSet};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
 use std::time::{Duration};
+use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 use super::consumer_groups::{ConsumerGroupId, PriorityLevel};
 use super::plans::ResourcePlanId;
 
@@ -309,7 +310,7 @@ pub struct CpuScheduler {
     /// Ready queue (priority queue for CFS)
     ready_queue: Arc<Mutex<BinaryHeap<ScheduledTask>>>,
     /// Per-group ready queues (for group-based scheduling)
-    group_queues: Arc<RwLock<HashMap<ConsumerGroupId<TaskId>>>>,
+    group_queues: Arc<RwLock<HashMap<ConsumerGroupId, VecDeque<TaskId>>>>,
     /// Group allocations
     group_allocations: Arc<RwLock<HashMap<ConsumerGroupId, GroupAllocation>>>,
     /// Running tasks
@@ -333,8 +334,6 @@ pub struct CpuScheduler {
     /// Scheduler statistics with atomic counters
     stats: Arc<SchedulerStats>,
 }
-
-use std::collections::HashSet;
 
 /// Scheduler statistics with atomic counters for lock-free updates
 #[derive(Debug, Default)]
@@ -434,7 +433,10 @@ impl CpuScheduler {
     fn current_core_id(&self) -> usize {
         // Use thread ID as approximation for core ID
         // In production, use core_affinity crate for accurate core binding
-        std::thread::current().id().as_u64().get() as usize % self.num_cores
+        let thread_id = std::thread::current().id();
+        // Simple hash of thread ID to get a core number
+        let id_hash = format!("{:?}", thread_id).bytes().fold(0usize, |acc, b| acc.wrapping_add(b as usize));
+        id_hash % self.num_cores
     }
 
     /// Get per-core tracker for current core
@@ -479,7 +481,7 @@ impl CpuScheduler {
 
         // Create group queue
         let mut queues = self.group_queues.write().unwrap();
-        queues.insert(group_id::new());
+        queues.insert(group_id, VecDeque::new());
 
         Ok(())
     }

@@ -23,15 +23,15 @@
 
 use crate::{DbError, Result};
 use aes_gcm::{
-    aead::{Aead, KeyInit},
-    Aes256Gcm, Nonce,
+    aead::{Aead, KeyInit, generic_array::GenericArray},
+    Aes256Gcm,
 };
 use chacha20poly1305::ChaCha20Poly1305;
-use generic_array::GenericArray;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use sha2::{Digest, Sha256};
+use rand::RngCore;
 
 /// Cache-aligned crypto buffer for high-performance encryption
 /// Aligned to 64 bytes (typical cache line size) to avoid false sharing
@@ -670,13 +670,11 @@ impl TdeEngine {
         plaintext: &[u8],
         aad: Option<&[u8]>,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
-        use aes_gcm::aead::generic_array::GenericArray;
-
         let cipher = Aes256Gcm::new(GenericArray::from_slice(key));
 
         // Generate random nonce
         let nonce_bytes = self.generate_nonce(12);
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        let nonce = GenericArray::from_slice(&nonce_bytes);
 
         let ciphertext = if let Some(aad_data) = aad {
             cipher.encrypt(nonce, aes_gcm::aead::Payload {
@@ -704,7 +702,7 @@ impl TdeEngine {
     ) -> Result<Vec<u8>> {
 
         let cipher = Aes256Gcm::new(GenericArray::from_slice(key));
-        let nonce = Nonce::from_slice(nonce);
+        let nonce = GenericArray::from_slice(nonce);
 
         let plaintext = if let Some(aad_data) = aad {
             cipher.decrypt(nonce, aes_gcm::aead::Payload {

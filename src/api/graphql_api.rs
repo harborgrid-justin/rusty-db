@@ -30,11 +30,11 @@ use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::collections::HashSet;
 use std::time::Instant;
+use base64::{Engine as _, engine::general_purpose};
 use async_graphql::{
-    Context, Enum, Error, ErrorExtensions, InputObject, Interface, Object,
+    Context, Enum, Error, ErrorExtensions, InputObject, Object,
     Result as GqlResult, Schema, SimpleObject, Subscription, Union, ID,
 };
-use async_graphql::parser::types::Selection;
 use async_graphql::extensions::{Extension, ExtensionContext, ExtensionFactory, NextExecute};
 use async_graphql::parser::types::ExecutableDocument;
 use chrono::{DateTime as ChronoDateTime, Utc};
@@ -48,7 +48,6 @@ use std::time::{Duration};
 use tokio::sync::{broadcast, RwLock};
 use tokio_stream::wrappers::BroadcastStream;
 
-use crate::common::{Value, TableId, ColumnId, RowId};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
@@ -127,7 +126,7 @@ pub struct Binary(Vec<u8>);
 impl async_graphql::ScalarType for Binary {
     fn parse(value: async_graphql::Value) -> async_graphql::InputValueResult<Self> {
         if let async_graphql::Value::String(s) = value {
-            base64::decode(&s)
+            general_purpose::STANDARD.decode(&s)
                 .map(Binary)
                 .map_err(|e| async_graphql::InputValueError::custom(format!("Invalid base64: {}", e)))
         } else {
@@ -136,7 +135,7 @@ impl async_graphql::ScalarType for Binary {
     }
 
     fn to_value(&self) -> async_graphql::Value {
-        async_graphql::Value::String(base64::encode(&self.0))
+        async_graphql::Value::String(general_purpose::STANDARD.encode(&self.0))
     }
 }
 
@@ -1241,7 +1240,7 @@ impl MutationRoot {
         }
 
         match engine.upsert(&table, unique_fields, data).await {
-            Ok((row, was_inserted)) => {
+            Ok((row, _was_inserted)) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(MutationResult::Success(MutationSuccess {
                     affected_rows: 1,
@@ -1410,7 +1409,7 @@ impl SubscriptionRoot {
         let (tx, rx) = broadcast::channel(1000);
 
         // Register subscription
-        let subscription_id = engine.register_table_subscription(&table, where_clause, tx).await;
+        let _subscription_id = engine.register_table_subscription(&table, where_clause, tx).await;
 
         BroadcastStream::new(rx).filter_map(|result| async move {
             result.ok()
@@ -1547,7 +1546,7 @@ impl SubscriptionRoot {
                     limit,
                     None,
                 ).await {
-                    Ok((rows, total_count, has_more)) => {
+                    Ok((rows, total_count, _has_more)) => {
                         // Compute hash to detect changes
                         let current_hash = compute_rows_hash(&rows);
 
@@ -1934,7 +1933,7 @@ pub struct ComplexityMetrics {
 /// Rate limiter for GraphQL operations
 pub struct RateLimiter {
     limits: Arc<RwLock<HashMap<String, RateLimit>>>,
-    requests: Arc<RwLock<HashMap<String<Instant>>>>,
+    requests: Arc<RwLock<HashMap<String, VecDeque<Instant>>>>,
 }
 
 impl RateLimiter {
@@ -2243,7 +2242,7 @@ impl Extension for PerformanceExtensionImpl {
         next: NextExecute<'_>,
     ) -> async_graphql::Response {
         let start = Instant::now();
-        *self.start.lock().unwrap().await = Some(start);
+        *self.start.lock().unwrap() = Some(start);
 
         let response = next.run(ctx, operation_name).await;
 
@@ -2498,7 +2497,7 @@ impl GraphQLEngine {
 
     pub async fn commit_transaction(&self, transaction_id: &str) -> GqlResult<TransactionResult> {
         Ok(TransactionResult {
-            transaction_id: _transaction_id.to_string(),
+            transaction_id: transaction_id.to_string(),
             status: "COMMITTED".to_string(),
             timestamp: DateTime::now(),
         })
@@ -2506,7 +2505,7 @@ impl GraphQLEngine {
 
     pub async fn rollback_transaction(&self, transaction_id: &str) -> GqlResult<TransactionResult> {
         Ok(TransactionResult {
-            transaction_id: _transaction_id.to_string(),
+            transaction_id: transaction_id.to_string(),
             status: "ROLLED_BACK".to_string(),
             timestamp: DateTime::now(),
         })

@@ -9,7 +9,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
+use crate::error::{Result, DbError};
 
 /// Consumer group identifier
 pub type ConsumerGroupId = u64;
@@ -538,8 +538,8 @@ impl ConsumerGroupManager {
     /// Assign session to consumer group (initial assignment)
     pub fn assign_session(
         &self,
-        sessionid: SessionId,
-        userid: UserId,
+        session_id: SessionId,
+        user_id: UserId,
         attrs: &SessionAttributes,
     ) -> Result<ConsumerGroupId> {
         // First check user mapping
@@ -588,7 +588,7 @@ impl ConsumerGroupManager {
     pub fn switch_session_group(
         &self,
         session_id: SessionId,
-        newgroup_id: ConsumerGroupId,
+        new_group_id: ConsumerGroupId,
         reason: SwitchReason,
     ) -> Result<()> {
         // Verify new group exists

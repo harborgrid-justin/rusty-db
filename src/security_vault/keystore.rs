@@ -49,6 +49,7 @@ use parking_lot::RwLock;
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::sync::Arc;
+use rand::RngCore;
 
 /// Key version number
 pub type KeyVersion = u32;
@@ -394,8 +395,6 @@ impl KeyStore {
         mek: &MasterKey,
         plaintext: &[u8],
     ) -> Result<(Vec<u8>, Vec<u8>)> {
-        use aes_gcm::aead::generic_array::GenericArray;
-
         let cipher = Aes256Gcm::new(GenericArray::from_slice(&mek.key_material));
 
         // Generate nonce

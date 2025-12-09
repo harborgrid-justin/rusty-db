@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::hash::DefaultHasher;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use tokio::time::sleep;
 use super::planner::PlanNode;
 use super::QueryResult;
@@ -1912,6 +1912,8 @@ impl CteProfiler {
 
 #[cfg(test)]
 mod extended_tests {
+    use super::*;
+    use crate::execution::planner::PlanNode;
 
     #[test]
     fn test_cte_execution_engine() {
@@ -2098,6 +2100,8 @@ mod extended_tests {
 
 /// Advanced CTE Optimization Framework
 pub mod optimization {
+    use crate::execution::planner::PlanNode;
+    use std::collections::HashMap;
 
     /// CTE Cost Model for accurate cost estimation
     pub struct CteCostModel {
@@ -2292,9 +2296,10 @@ pub mod optimization {
 
 /// CTE Execution Monitoring and Observability
 pub mod monitoring {
+    use std::collections::HashMap;
     use std::time::Duration;
-use std::time::Instant;
-use std::time::SystemTime;
+    use std::time::Instant;
+    use std::time::SystemTime;
 
     /// CTE Execution Monitor
     pub struct CteExecutionMonitor {
@@ -2455,8 +2460,8 @@ use std::time::SystemTime;
 /// CTE Advanced Features
 pub mod advanced {
     use crate::error::DbError;
-    use crate::execution::{CteContext, CteDefinition, QueryResult};
-    use crate::execution::planner::PlanNode;
+    use super::{CteContext, CteDefinition};
+    use crate::execution::{QueryResult, planner::PlanNode};
 
     /// Window Function Support in CTEs
     pub struct CteWindowFunction {
@@ -2668,6 +2673,9 @@ pub mod advanced {
 
 /// CTE Query Transformation and Rewriting
 pub mod transformation {
+    use std::collections::HashMap;
+    use crate::execution::planner::PlanNode;
+    use super::CteDefinition;
 
     /// CTE Subquery Flattening
     pub struct CteSubqueryFlattener;
@@ -2836,6 +2844,9 @@ pub mod transformation {
 
 #[cfg(test)]
 mod optimization_tests {
+    use super::optimization::*;
+    use super::monitoring::*;
+    use crate::execution::planner::PlanNode;
 
     #[test]
     fn test_cost_model() {
@@ -2939,6 +2950,9 @@ mod optimization_tests {
 
 /// CTE Integration and Utilities
 pub mod integration {
+    use super::CteDefinition;
+    use crate::error::DbError;
+    use crate::execution::planner::PlanNode;
 
     /// CTE SQL Generator - Generate SQL from CTE definitions
     pub struct CteSqlGenerator;

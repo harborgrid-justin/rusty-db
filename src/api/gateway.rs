@@ -35,12 +35,12 @@ use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::net::IpAddr;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::{Duration, UNIX_EPOCH};
 
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Sha512, Digest};
-use hmac::{Hmac, Mac};
+use sha2::{Sha256, Digest};
+use hmac::Hmac;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
 
@@ -729,7 +729,7 @@ impl ApiGateway {
     }
 
     /// Forward request to backend service
-    async fn forward_to_backend(&self, request: &ApiRequest, route: &Route) -> std::result::Result<ApiResponse, DbError> {
+    async fn forward_to_backend(&self, _request: &ApiRequest, route: &Route) -> std::result::Result<ApiResponse, DbError> {
         // Select endpoint using load balancing
         let endpoint = self.select_endpoint(&route.backend)?;
 
@@ -1078,7 +1078,7 @@ impl AuthenticationManager {
     }
 
     /// Authenticate using API key
-    async fn authenticate_api_key(&self, apikey: &str, request: &ApiRequest) -> std::result::Result<Session, DbError> {
+    async fn authenticate_api_key(&self, api_key: &str, request: &ApiRequest) -> std::result::Result<Session, DbError> {
         let key_store = self.api_key_store.read();
 
         // Hash the provided key
@@ -1542,7 +1542,7 @@ impl AuthorizationEngine {
     }
 
     /// Authorize session for permissions
-    pub fn authorize(&self, session: &Session, requiredpermissions: &[String]) -> Result<bool> {
+    pub fn authorize(&self, session: &Session, required_permissions: &[String]) -> Result<bool> {
         // Check RBAC first
         if self.rbac.has_permissions(&session.user_id, required_permissions) {
             return Ok(true);
@@ -1602,7 +1602,7 @@ impl RbacManager {
     }
 
     /// Get user roles
-    pub fn get_user_roles(&self, userid: &str) -> Vec<Role> {
+    pub fn get_user_roles(&self, user_id: &str) -> Vec<Role> {
         let user_roles = self.user_roles.read();
         let roles = self.roles.read();
 
@@ -1891,7 +1891,7 @@ impl RateLimiter {
     }
 
     /// Check rate limit
-    pub fn check_rate_limit(&self, key: &str, overrideconfig: Option<&RateLimitConfig>) -> Result<()> {
+    pub fn check_rate_limit(&self, key: &str, override_config: Option<&RateLimitConfig>) -> Result<()> {
         let configs = self.configs.read();
         let config = override_config.or_else(|| configs.get(key));
 
@@ -2011,7 +2011,7 @@ impl TokenBucket {
 
 impl SlidingWindow {
     /// Create new sliding window
-    fn new(window_size: u64, maxrequests: u64) -> Self {
+    fn new(window_size: u64, max_requests: u64) -> Self {
         Self {
             window_size,
             requests: VecDeque::new(),
@@ -2370,7 +2370,7 @@ impl IpFilter {
         match self.mode {
             IpFilterMode::None => Ok(()),
             IpFilterMode::Blacklist => {
-                let mut blacklist = self.blacklist.read();
+                let blacklist = self.blacklist.read();
                 if blacklist.contains(&ip) {
                     Err(DbError::InvalidOperation("IP address blacklisted".to_string()))
                 } else {
@@ -2378,7 +2378,7 @@ impl IpFilter {
                 }
             },
             IpFilterMode::Whitelist => {
-                let mut whitelist = self.whitelist.read();
+                let whitelist = self.whitelist.read();
                 if whitelist.contains(&ip) {
                     Ok(())
                 } else {
@@ -2641,7 +2641,7 @@ pub struct AuditEventFilter {
     /// Filter by client IP
     pub client_ip: Option<IpAddr>,
     /// Filter by time range
-    pub time_range: Option<(SystemTime)>,
+    pub time_range: Option<(SystemTime, SystemTime)>,
     /// Filter by result
     pub result: Option<AuditResult>,
 }

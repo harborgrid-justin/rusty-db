@@ -2116,8 +2116,18 @@ pub mod routing {
 
 #[cfg(test)]
 mod advanced_tests {
+    use super::*;
     use super::dynamic;
-use std::time::UNIX_EPOCH;
+    use super::pruning::*;
+    use super::auto_management::*;
+    use super::partition_wise::*;
+    use super::optimizer::*;
+    use super::monitoring::*;
+    use super::balancing::*;
+    use super::compression::*;
+    use super::routing::*;
+    use std::time::UNIX_EPOCH;
+    use std::collections::HashMap;
 
     #[test]
     fn test_partition_pruning_optimizer() {
