@@ -33,7 +33,7 @@ impl Executor {
                 self.catalog.drop_table(&name)?;
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::Select { table, columns, join, group_by, order_by: _, limit, .. } => {
+            SqlStatement::Select { table, columns, join, group_by, order_by, limit, .. } => {
                 let schema = self.catalog.get_table(&table)?;
                 
                 // Simple implementation - return empty result with schema

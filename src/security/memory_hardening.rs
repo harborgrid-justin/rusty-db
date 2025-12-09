@@ -42,6 +42,7 @@ use std::ptr::{self, NonNull};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::collections::HashMap;
+use libc::mprotect;
 use parking_lot::RwLock;
 use std::time::{Duration};
 use crate::error::{Result, DbError};
