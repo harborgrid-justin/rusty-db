@@ -10,7 +10,7 @@ use std::time::Duration;
 use std::collections::{HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::SystemTime;
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};

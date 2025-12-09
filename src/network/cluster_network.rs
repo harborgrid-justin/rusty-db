@@ -1099,13 +1099,13 @@ struct StreamHandle {
 }
 
 impl NodeConnection {
-    fn new(node_id: NodeId, stream: TcpStream, maxstreams: usize) -> Self {
+    fn new(node_id: NodeId, stream: TcpStream, max_streams: usize) -> Self {
         let conn = Self {
             node_id,
             stream: Arc::new(tokio::sync::RwLock::new(stream)),
             streams: Arc::new(RwLock::new(HashMap::new())),
             next_stream_id: Arc::new(RwLock::new(0)),
-            max_streams: maxstreams,
+            max_streams,
             send_queue: Arc::new(Mutex::new(VecDeque::new())),
             last_activity: Arc::new(RwLock::new(Instant::now())),
         };

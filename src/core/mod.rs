@@ -742,7 +742,7 @@ impl BufferPoolManager {
 /// High-performance I/O engine
 pub struct IoEngine {
     config: IoConfig,
-    thread_pool: Vec<std::thread::JoinHandle<()>>,
+    thread_pool: Mutex<Vec<std::thread::JoinHandle<()>>>,
     shutdown: Arc<AtomicBool>,
     stats: IoStats,
 }
@@ -784,7 +784,7 @@ impl IoEngine {
 
         Self {
             config,
-            thread_pool,
+            thread_pool: Mutex::new(thread_pool),
             shutdown,
             stats,
         }
@@ -804,6 +804,12 @@ impl IoEngine {
 
     pub fn shutdown(&self) {
         self.shutdown.store(true, Ordering::Relaxed);
+
+        // Join all I/O worker threads
+        let mut threads = self.thread_pool.lock();
+        while let Some(handle) = threads.pop() {
+            let _ = handle.join();
+        }
     }
 
     pub fn get_stats(&self) -> &IoStats {
@@ -818,7 +824,7 @@ impl IoEngine {
 /// Worker thread pool for query execution
 pub struct WorkerPool {
     config: WorkerConfig,
-    workers: Vec<Worker>,
+    workers: Mutex<Vec<Worker>>,
     task_queue: Arc<crossbeam::queue::SegQueue<Task>>,
     shutdown: Arc<AtomicBool>,
     stats: Arc<WorkerStats>,
@@ -878,7 +884,7 @@ impl WorkerPool {
 
         Self {
             config,
-            workers,
+            workers: Mutex::new(workers),
             task_queue,
             shutdown,
             stats,
@@ -895,6 +901,14 @@ impl WorkerPool {
 
     pub fn shutdown(&self) {
         self.shutdown.store(true, Ordering::Relaxed);
+
+        // Join all worker threads
+        let mut workers = self.workers.lock();
+        for worker in workers.iter_mut() {
+            if let Some(handle) = worker.handle.take() {
+                let _ = handle.join();
+            }
+        }
     }
 
     pub fn get_stats(&self) -> Arc<WorkerStats> {

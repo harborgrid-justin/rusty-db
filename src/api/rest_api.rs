@@ -19,16 +19,15 @@ use axum::{
     routing::{get, post, put, delete},
     extract::{Path, Query, State, WebSocketUpgrade, ws::WebSocket},
     response::{Response, IntoResponse, Json as AxumJson},
-    http::{StatusCode, HeaderMap, Method},
-    middleware::{self, Next},
+    http::{self, StatusCode, HeaderMap, Method},
+    middleware::Next,
     body::Body,
 };
-use tower::{ServiceBuilder, ServiceExt};
+use tower::ServiceBuilder;
 use tower_http::{
     cors::{CorsLayer, Any},
     trace::TraceLayer,
     timeout::TimeoutLayer,
-    limit::RequestBodyLimitLayer,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -37,7 +36,6 @@ use std::sync::Arc;
 use std::time::{Duration};
 use tokio::sync::{RwLock, Semaphore};
 use utoipa::{OpenApi, ToSchema};
-use utoipa_swagger_ui::SwaggerUi;
 use uuid::Uuid;
 
 use crate::{
@@ -2398,7 +2396,7 @@ impl RequestContext {
 /// Request logger middleware
 async fn request_logger_middleware(
     State(state): State<Arc<ApiState>>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     req: http::Request<Body>,
     next: Next,
 ) -> std::result::Result<Response, ApiError> {

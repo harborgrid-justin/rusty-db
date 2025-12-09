@@ -662,7 +662,7 @@ impl InstanceRecoveryManager {
 
         // In production, would freeze all resources owned by failed instance
         // For now, just update GRD
-        self.grd.remove_member(failed_instance)?;
+        self.grd.remove_member(&failed_instance)?;
 
         Ok(())
     }

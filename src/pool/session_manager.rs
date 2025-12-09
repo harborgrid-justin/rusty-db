@@ -59,7 +59,6 @@
 // }
 // ```
 
-use std::fmt;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -77,7 +76,7 @@ use sha2::{Sha256, Digest};
 use base64::{Engine as _, engine::general_purpose};
 
 use crate::error::DbError;
-use crate::common::{SessionId, TransactionId, Value};
+use crate::common::{TransactionId, Value};
 
 // Type alias for Result
 type Result<T> = std::result::Result<T, DbError>;
@@ -669,7 +668,7 @@ impl AuthenticationProvider {
         password: &str,
     ) -> Result<AuthenticationResult> {
         // Hash password and verify against stored hash
-        let hash = self.hash_password(password);
+        let _hash = self.hash_password(password);
 
         // In production, this would check against user database
         // For now, simulate successful authentication
@@ -728,7 +727,7 @@ impl AuthenticationProvider {
         username: &str,
         server: &str,
         bind_dn: &str,
-        password: &str,
+        _password: &str,
     ) -> Result<AuthenticationResult> {
         // In production, this would connect to LDAP server
         // For now, simulate LDAP authentication
@@ -758,7 +757,7 @@ impl AuthenticationProvider {
     async fn authenticate_kerberos(
         &self,
         username: &str,
-        ticket: &str,
+        _ticket: &str,
     ) -> Result<AuthenticationResult> {
         // In production, this would validate Kerberos ticket
         if self.kerberos_config.is_none() {
@@ -826,7 +825,7 @@ impl AuthenticationProvider {
     }
 
     /// Load user privileges
-    async fn load_privileges(&self, username: &str) -> Result<PrivilegeSet> {
+    async fn load_privileges(&self, _username: &str) -> Result<PrivilegeSet> {
         // In production, this would query the database
         Ok(PrivilegeSet {
             system_privileges: vec!["CONNECT".to_string(), "RESOURCE".to_string()],
@@ -836,13 +835,13 @@ impl AuthenticationProvider {
     }
 
     /// Load privileges from LDAP
-    async fn load_privileges_from_ldap(&self, username: &str, bind_dn: &str) -> Result<PrivilegeSet> {
+    async fn load_privileges_from_ldap(&self, username: &str, _bind_dn: &str) -> Result<PrivilegeSet> {
         // In production, this would query LDAP for group memberships
         self.load_privileges(username).await
     }
 
     /// Parse SAML assertion
-    fn parse_saml_assertion(&self, assertion: &str) -> Result<String> {
+    fn parse_saml_assertion(&self, _assertion: &str) -> Result<String> {
         // In production, this would parse XML SAML assertion
         // For now, just return a dummy username
         Ok("saml_user".to_string())
@@ -1378,7 +1377,7 @@ impl SessionPool {
         }
 
         // Try to get from available pool
-        if let Some(mut session) = self.available.lock().pop_front() {
+        if let Some(mut session) = self.available.lock().unwrap().pop_front() {
             // Apply purity level
             match request.purity {
                 PurityLevel::New => {
@@ -1436,7 +1435,7 @@ impl SessionPool {
                     .insert(session_id);
             }
 
-            self.available.lock().push_back(session);
+            self.available.lock().unwrap().push_back(session);
             self.stats.write().record_release();
         }
 
@@ -1482,7 +1481,7 @@ impl SessionPool {
         }
 
         if let Some(session_ids) = candidates {
-            let mut available = self.available.lock();
+            let mut available = self.available.lock().unwrap();
             for session in available.iter() {
                 if session_ids.contains(&session.session_id) {
                     // Remove from available and return
@@ -1562,7 +1561,7 @@ impl SessionPool {
 
     /// Cleanup idle sessions
     pub async fn cleanup_idle_sessions(&self, max_idle: Duration) -> usize {
-        let mut available = self.available.lock();
+        let mut available = self.available.lock().unwrap();
         let now = SystemTime::now();
         let mut removed = 0;
 
@@ -2128,7 +2127,7 @@ impl SessionAuditLogger {
     pub async fn log_event(&self, event: &SessionEvent) -> Result<()> {
         let entry = AuditLogEntry::from_event(event);
 
-        let mut buffer = self.buffer.lock();
+        let mut buffer = self.buffer.lock().unwrap();
         buffer.push(entry);
 
         if buffer.len() >= self.buffer_size {
@@ -2149,8 +2148,8 @@ impl SessionAuditLogger {
     /// Get audit log entries for session
     pub async fn get_session_audit(
         &self,
-        session_id: SID,
-        limit: usize,
+        _session_id: SID,
+        _limit: usize,
     ) -> Result<Vec<AuditLogEntry>> {
         // In production, this would query the log file or database
         Ok(Vec::new())
@@ -2168,46 +2167,46 @@ pub struct AuditLogEntry {
 
 impl AuditLogEntry {
     fn from_event(event: &SessionEvent) -> Self {
-        let (event_type, session_id, mut details) = match event {
-            SessionEvent::Login { session_id, username, timestamp } => {
+        let (event_type, session_id, details) = match event {
+            SessionEvent::Login { session_id, username, timestamp: _ } => {
                 let mut details = HashMap::new();
                 details.insert("username".to_string(), username.clone());
                 ("LOGIN".to_string(), Some(*session_id), details)
             }
-            SessionEvent::Logoff { session_id, username, graceful, timestamp } => {
+            SessionEvent::Logoff { session_id, username, graceful, timestamp: _ } => {
                 let mut details = HashMap::new();
                 details.insert("username".to_string(), username.clone());
                 details.insert("graceful".to_string(), graceful.to_string());
                 ("LOGOFF".to_string(), Some(*session_id), details)
             }
-            SessionEvent::StateChange { session_id, old_status, new_status, timestamp } => {
+            SessionEvent::StateChange { session_id, old_status, new_status, timestamp: _ } => {
                 let mut details = HashMap::new();
                 details.insert("old_status".to_string(), format!("{:?}", old_status));
                 details.insert("new_status".to_string(), format!("{:?}", new_status));
                 ("STATE_CHANGE".to_string(), Some(*session_id), details)
             }
-            SessionEvent::IdleTimeout { session_id, idle_time, timestamp } => {
+            SessionEvent::IdleTimeout { session_id, idle_time, timestamp: _ } => {
                 let mut details = HashMap::new();
                 details.insert("idle_time_secs".to_string(), idle_time.as_secs().to_string());
                 ("IDLE_TIMEOUT".to_string(), Some(*session_id), details)
             }
-            SessionEvent::Kill { session_id, reason, timestamp } => {
+            SessionEvent::Kill { session_id, reason, timestamp: _ } => {
                 let mut details = HashMap::new();
                 details.insert("reason".to_string(), reason.clone());
                 ("KILL".to_string(), Some(*session_id), details)
             }
-            SessionEvent::MigrationStart { session_id, from_node, to_node, timestamp } => {
+            SessionEvent::MigrationStart { session_id, from_node, to_node, timestamp: _ } => {
                 let mut details = HashMap::new();
                 details.insert("from_node".to_string(), from_node.clone());
                 details.insert("to_node".to_string(), to_node.clone());
                 ("MIGRATION_START".to_string(), Some(*session_id), details)
             }
-            SessionEvent::MigrationComplete { session_id, success, timestamp } => {
+            SessionEvent::MigrationComplete { session_id, success, timestamp: _ } => {
                 let mut details = HashMap::new();
                 details.insert("success".to_string(), success.to_string());
                 ("MIGRATION_COMPLETE".to_string(), Some(*session_id), details)
             }
-            SessionEvent::Failover { session_id, old_node, new_node, timestamp } => {
+            SessionEvent::Failover { session_id, old_node, new_node, timestamp: _ } => {
                 let mut details = HashMap::new();
                 details.insert("old_node".to_string(), old_node.clone());
                 details.insert("new_node".to_string(), new_node.clone());
@@ -2306,7 +2305,7 @@ impl SessionManager {
 
         // Generate session ID
         let session_id = {
-            let mut counter = self.session_counter.lock();
+            let mut counter = self.session_counter.lock().unwrap();
             let id = *counter;
             *counter += 1;
             id

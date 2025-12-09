@@ -713,14 +713,13 @@ impl ErrorHandler {
         fallback: Option<T>,
     ) -> Result<T>
     where
-        F: FnMut() -> Fut + Clone,
+        F: FnMut() -> Fut,
         Fut: Future<Output = Result<T>>,
         T: Clone,
     {
         match strategy {
             RecoveryStrategy::Retry => {
-                let mut op = operation;
-                retry_with_backoff(&self.retry_policy, || op()).await
+                retry_with_backoff(&self.retry_policy, || operation()).await
             }
             RecoveryStrategy::FailFast => operation().await,
             RecoveryStrategy::Fallback => {

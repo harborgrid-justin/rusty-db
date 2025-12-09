@@ -32,10 +32,9 @@ use std::collections::HashSet;
 use std::time::Instant;
 use base64::{Engine as _, engine::general_purpose};
 use async_graphql::{
-    Context, Enum, Error, ErrorExtensions, InputObject, Interface, Object,
+    Context, Enum, Error, ErrorExtensions, InputObject, Object,
     Result as GqlResult, Schema, SimpleObject, Subscription, Union, ID,
 };
-use async_graphql::parser::types::Selection;
 use async_graphql::extensions::{Extension, ExtensionContext, ExtensionFactory, NextExecute};
 use async_graphql::parser::types::ExecutableDocument;
 use chrono::{DateTime as ChronoDateTime, Utc};
@@ -49,7 +48,6 @@ use std::time::{Duration};
 use tokio::sync::{broadcast, RwLock};
 use tokio_stream::wrappers::BroadcastStream;
 
-use crate::common::{Value, TableId, ColumnId, RowId};
 use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
@@ -1242,7 +1240,7 @@ impl MutationRoot {
         }
 
         match engine.upsert(&table, unique_fields, data).await {
-            Ok((row, was_inserted)) => {
+            Ok((row, _was_inserted)) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(MutationResult::Success(MutationSuccess {
                     affected_rows: 1,
@@ -1411,7 +1409,7 @@ impl SubscriptionRoot {
         let (tx, rx) = broadcast::channel(1000);
 
         // Register subscription
-        let subscription_id = engine.register_table_subscription(&table, where_clause, tx).await;
+        let _subscription_id = engine.register_table_subscription(&table, where_clause, tx).await;
 
         BroadcastStream::new(rx).filter_map(|result| async move {
             result.ok()
@@ -1548,7 +1546,7 @@ impl SubscriptionRoot {
                     limit,
                     None,
                 ).await {
-                    Ok((rows, total_count, has_more)) => {
+                    Ok((rows, total_count, _has_more)) => {
                         // Compute hash to detect changes
                         let current_hash = compute_rows_hash(&rows);
 

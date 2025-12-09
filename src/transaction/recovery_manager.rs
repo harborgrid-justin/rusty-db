@@ -134,7 +134,7 @@ impl RecoveryManager {
         }
 
         // Redo phase: replay committed transactions
-        for (txn_id, entries) in &committed_txns {
+        for (_txn_id, entries) in &committed_txns {
             self.redo_transaction(entries)?;
             stats.txns_recovered += 1;
         }
@@ -160,15 +160,15 @@ impl RecoveryManager {
 
         for entry in entries {
             match entry {
-                WALEntry::Insert { table, key, value, .. } => {
+                WALEntry::Insert { table: _, key: _, value: _, .. } => {
                     // In production: apply insert to storage
                     stats.operations_redone += 1;
                 }
-                WALEntry::Update { table, key, new_value, .. } => {
+                WALEntry::Update { table: _, key: _, new_value: _, .. } => {
                     // In production: apply update to storage
                     stats.operations_redone += 1;
                 }
-                WALEntry::Delete { table, key, .. } => {
+                WALEntry::Delete { table: _, key: _, .. } => {
                     // In production: apply delete to storage
                     stats.operations_redone += 1;
                 }
@@ -190,15 +190,15 @@ impl RecoveryManager {
         // Undo in reverse order
         for entry in entries.iter().rev() {
             match entry {
-                WALEntry::Insert { table, key, .. } => {
+                WALEntry::Insert { table: _, key: _, .. } => {
                     // Undo insert: delete the row
                     stats.operations_undone += 1;
                 }
-                WALEntry::Update { table, key, old_value, .. } => {
+                WALEntry::Update { table: _, key: _, old_value: _, .. } => {
                     // Undo update: restore old value
                     stats.operations_undone += 1;
                 }
-                WALEntry::Delete { table, key, value, .. } => {
+                WALEntry::Delete { table: _, key: _, value: _, .. } => {
                     // Undo delete: reinsert the row
                     stats.operations_undone += 1;
                 }

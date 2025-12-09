@@ -196,7 +196,7 @@ where
         // Search for existing key
         while !current.is_null() {
             // Safety: Protected by bucket lock and epoch guard
-            let entry = unsafe { current.as_ref().unwrap() };
+            let entry = current.as_ref().unwrap();
             if entry.hash == hash && entry.key == key {
                 // Key exists, update value
                 let old_value = unsafe {
@@ -215,9 +215,7 @@ where
         // Link to front of list
         let old_head = bucket.head.load(Ordering::Acquire, &guard);
         // Safety: We own new_ptr and bucket is locked
-        unsafe {
-            new_ptr.as_ref().unwrap().next.store(old_head, Ordering::Release);
-        }
+        new_ptr.as_ref().unwrap().next.store(old_head, Ordering::Release);
         bucket.head.store(new_ptr, Ordering::Release);
 
         bucket.count.fetch_add(1, Ordering::Relaxed);
@@ -253,7 +251,7 @@ where
 
         while !current.is_null() {
             // Safety: Protected by bucket lock and epoch guard
-            let entry = unsafe { current.as_ref().unwrap() };
+            let entry = current.as_ref().unwrap();
             if entry.hash == hash && &entry.key == key {
                 return Some(entry.value.clone());
             }
@@ -287,7 +285,7 @@ where
 
         while !current.is_null() {
             // Safety: Protected by bucket lock and epoch guard
-            let entry = unsafe { current.as_ref().unwrap() };
+            let entry = current.as_ref().unwrap();
 
             if entry.hash == hash && &entry.key == key {
                 // Found the entry to remove
@@ -296,9 +294,7 @@ where
                 if let Some(prev_ptr) = prev {
                     // Remove from middle/end of list
                     // Safety: Protected by bucket lock
-                    unsafe {
-                        prev_ptr.as_ref().unwrap().next.store(next, Ordering::Release);
-                    }
+                    prev_ptr.as_ref().unwrap().next.store(next, Ordering::Release);
                 } else {
                     // Remove from head of list
                     bucket.head.store(next, Ordering::Release);
@@ -340,7 +336,7 @@ where
 
         while !current.is_null() {
             // Safety: Protected by bucket lock and epoch guard
-            let entry = unsafe { current.as_ref().unwrap() };
+            let entry = current.as_ref().unwrap();
             if entry.hash == hash && &entry.key == key {
                 bucket.unlock();
                 return true;
@@ -379,12 +375,10 @@ where
             let mut current = head;
             while !current.is_null() {
                 // Safety: We're clearing, protected by bucket lock
-                unsafe {
-                    let entry = current.as_ref().unwrap();
-                    let next = entry.next.load(Ordering::Acquire, &guard);
-                    Epoch::defer(current.as_ptr());
-                    current = next;
-                }
+                let entry = current.as_ref().unwrap();
+                let next = entry.next.load(Ordering::Acquire, &guard);
+                Epoch::defer(current.as_ptr());
+                current = next;
             }
 
             bucket.count.store(0, Ordering::Relaxed);
@@ -448,7 +442,7 @@ where
 
         while !current.is_null() {
             // Safety: Protected by bucket lock and epoch guard
-            let entry = unsafe { current.as_ref().unwrap() };
+            let entry = current.as_ref().unwrap();
             if entry.hash == hash && entry.key == key {
                 // Found existing entry
                 let new_value = f(Some(&entry.value));
@@ -466,9 +460,7 @@ where
                     // Remove entry
                     let next = entry.next.load(Ordering::Acquire, &guard);
                     if let Some(prev_ptr) = prev {
-                        unsafe {
-                            prev_ptr.as_ref().unwrap().next.store(next, Ordering::Release);
-                        }
+                        prev_ptr.as_ref().unwrap().next.store(next, Ordering::Release);
                     } else {
                         bucket.head.store(next, Ordering::Release);
                     }
@@ -512,7 +504,7 @@ where
 
             while !current.is_null() {
                 // Safety: Protected by bucket lock and epoch guard
-                let entry = unsafe { current.as_ref().unwrap() };
+                let entry = current.as_ref().unwrap();
                 entries.push((entry.key.clone(), entry.value.clone()));
                 current = entry.next.load(Ordering::Acquire, &guard);
             }
@@ -547,13 +539,13 @@ impl<K, V, S> Drop for ConcurrentHashMap<K, V, S> {
             let mut current = head;
             while !current.is_null() {
                 // Safety: We have exclusive access during drop
+                let entry = current.as_ref().unwrap();
+                let next = entry.next.load(Ordering::Acquire, &guard);
+                // Don't defer - just drop immediately since we're shutting down
                 unsafe {
-                    let entry = current.as_ref().unwrap();
-                    let next = entry.next.load(Ordering::Acquire, &guard);
-                    // Don't defer - just drop immediately since we're shutting down
                     drop(Box::from_raw(current.as_ptr()));
-                    current = next;
                 }
+                current = next;
             }
         }
     }

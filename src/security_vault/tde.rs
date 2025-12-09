@@ -24,7 +24,7 @@
 use crate::{DbError, Result};
 use aes_gcm::{
     aead::{Aead, KeyInit, generic_array::GenericArray},
-    Aes256Gcm, Nonce,
+    Aes256Gcm,
 };
 use chacha20poly1305::ChaCha20Poly1305;
 use serde::{Deserialize, Serialize};
@@ -674,7 +674,7 @@ impl TdeEngine {
 
         // Generate random nonce
         let nonce_bytes = self.generate_nonce(12);
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        let nonce = GenericArray::from_slice(&nonce_bytes);
 
         let ciphertext = if let Some(aad_data) = aad {
             cipher.encrypt(nonce, aes_gcm::aead::Payload {
@@ -702,7 +702,7 @@ impl TdeEngine {
     ) -> Result<Vec<u8>> {
 
         let cipher = Aes256Gcm::new(GenericArray::from_slice(key));
-        let nonce = Nonce::from_slice(nonce);
+        let nonce = GenericArray::from_slice(nonce);
 
         let plaintext = if let Some(aad_data) = aad {
             cipher.decrypt(nonce, aes_gcm::aead::Payload {

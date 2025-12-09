@@ -3292,6 +3292,15 @@ mod tests {
 
 // Additional helper implementations for testing
 
+// Module declarations (must come before pub use)
+pub mod types;
+pub mod manager;
+pub mod wal;
+pub mod conflicts;
+pub mod monitor;
+pub mod snapshots;
+pub mod slots;
+
 // Re-export all public APIs for convenient access
 pub use types::*;
 pub use manager::*;
@@ -3300,12 +3309,3 @@ pub use conflicts::*;
 pub use monitor::*;
 pub use snapshots::*;
 pub use slots::*;
-
-// Module declarations
-pub mod types;
-pub mod manager;
-pub mod wal;
-pub mod conflicts;
-pub mod monitor;
-pub mod snapshots;
-pub mod slots;

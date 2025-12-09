@@ -660,7 +660,6 @@ pub struct TimeSeriesDecomposition {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
 
     fn create_test_series() -> TimeSeries {
         let mut points = Vec::new();

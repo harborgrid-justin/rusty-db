@@ -39,8 +39,8 @@ use std::time::{Duration, UNIX_EPOCH};
 
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Sha512, Digest};
-use hmac::{Hmac, Mac};
+use sha2::{Sha256, Digest};
+use hmac::Hmac;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
 
@@ -729,7 +729,7 @@ impl ApiGateway {
     }
 
     /// Forward request to backend service
-    async fn forward_to_backend(&self, request: &ApiRequest, route: &Route) -> std::result::Result<ApiResponse, DbError> {
+    async fn forward_to_backend(&self, _request: &ApiRequest, route: &Route) -> std::result::Result<ApiResponse, DbError> {
         // Select endpoint using load balancing
         let endpoint = self.select_endpoint(&route.backend)?;
 
