@@ -66,6 +66,8 @@
 
 pub mod buffer_pool;
 pub mod allocator;
+pub mod debug;
+pub mod types;
 
 // Re-export commonly used types from buffer pool
 pub use buffer_pool::{
@@ -142,4 +144,18 @@ pub use allocator::{
     parse_memory_size,
     calculate_optimal_slab_size,
     classify_allocation_size,
+};
+
+// Re-export debug types
+pub use debug::{
+    DebugError,
+    AllocationMetadata,
+    CorruptionReport,
+    CorruptionDetails,
+    CorruptionType,
+    CorruptionSeverity,
+    MemoryLeakReport,
+    LeakSummary,
+    MemoryProfile,
+    DebugStats,
 };

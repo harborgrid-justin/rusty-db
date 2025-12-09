@@ -43,13 +43,19 @@
 // }
 // ```
 
-pub mod rest_api;
-pub mod graphql_api;
+// Refactored modular API structure
+pub mod rest;
+pub mod graphql;
 pub mod monitoring;
 pub mod gateway;
-pub mod enterprise_integration;
+pub mod enterprise;
 
-pub use rest_api::{
+// For backward compatibility, create module aliases
+pub use rest as rest_api;
+pub use graphql as graphql_api;
+pub use enterprise as enterprise_integration;
+
+pub use rest::{
     RestApiServer,
     ApiConfig,
     ApiError,
@@ -89,7 +95,7 @@ pub use gateway::{
     GatewayMetrics,
 };
 
-pub use graphql_api::{
+pub use graphql::{
     // Schema building
     build_schema,
     build_schema_with_config,
@@ -214,7 +220,7 @@ pub use graphql_api::{
 };
 
 // Enterprise Integration exports
-pub use enterprise_integration::{
+pub use enterprise::{
     // Main integrator
     EnterpriseIntegrator,
     IntegratorConfig,

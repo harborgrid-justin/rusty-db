@@ -56,6 +56,8 @@
 // ```
 
 pub mod session;           // New refactored session module
+pub mod sessions;          // Session management submodules
+pub mod connection;        // Connection pool submodules
 pub mod session_manager;   // Legacy - being migrated
 pub mod connection_pool;
 
