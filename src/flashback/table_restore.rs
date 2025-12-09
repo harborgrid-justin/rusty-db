@@ -103,7 +103,7 @@ impl TableRestoreManager {
             self.create_restore_point(
                 format!("pre_flashback_{}", table_id),
                 self.time_travel.get_current_scn(),
-            )?;
+            )?);
         }
 
         // 3. Reconstruct table state at target SCN
@@ -211,7 +211,7 @@ impl TableRestoreManager {
     }
 
     /// Purge recycle bin
-    pub fn purge_recycle_bin(&self, table_name: Option<String>) -> Result<usize> {
+    pub fn purge_recycle_bin(&self, tablename: Option<String>) -> Result<usize> {
         let mut recycle_bin = self.recycle_bin.write().unwrap();
 
         if let Some(name) = table_name {
@@ -256,7 +256,7 @@ impl TableRestoreManager {
     pub fn drop_restore_point(&self, name: &str) -> Result<()> {
         let mut restore_points = self.restore_points.write().unwrap();
         restore_points.remove(name)
-            .ok_or_else(|| DbError::Validation(format!("Restore point '{}' not found", name)))?;
+            .ok_or_else(|| DbError::Validation(format!("Restore point '{}' not found", name)))?);
         Ok(())
     }
 
@@ -273,7 +273,7 @@ impl TableRestoreManager {
     // ========================================================================
 
     fn validate_flashback(&self, table_id: TableId, target_scn: SCN) -> Result<()> {
-        let current_scn = self.time_travel.get_current_scn();
+        let current_scn = self.time_travel.get_current_scn());
 
         if target_scn >= current_scn {
             return Err(DbError::Validation(
@@ -288,7 +288,7 @@ impl TableRestoreManager {
     fn reconstruct_table_state(
         &self,
         table_id: TableId,
-        target_scn: SCN,
+        targetscn: SCN,
     ) -> Result<TableState> {
         let historical_rows = self.time_travel
             .query_as_of_scn(table_id, target_scn, None)?;
@@ -377,12 +377,12 @@ impl TableRestoreManager {
         })
     }
 
-    fn apply_partition_state(
+    ffn apply_partition_state(
         &self,
         _table_id: TableId,
         _partition_id: u32,
-        _state: PartitionState,
-    ) -> Result<()> {
+        state: PartitionState,
+    )-> Result<()> {
         // Apply state to partition
         Ok(())
     }
@@ -425,7 +425,7 @@ impl RecycleBin {
         schema: Schema,
     ) -> Result<String> {
         self.sequence += 1;
-        let recycle_name = format!("BIN${}$", self.sequence);
+        let recycle_name = format!("BIN${}$", self.sequence));
 
         let dropped_table = DroppedTable {
             table_id,
@@ -451,14 +451,14 @@ impl RecycleBin {
             .get(name)
             .ok_or_else(|| DbError::Validation(
                 format!("Table '{}' not found in recycle bin", name)
-            ))?;
+            ))?);
 
         // Get the most recently dropped instance
         let recycle_name = recycle_names
             .last()
             .ok_or_else(|| DbError::Validation(
                 format!("No recycle entry for '{}'", name)
-            ))?;
+            ))?);
 
         self.tables.get(recycle_name)
             .ok_or_else(|| DbError::Validation(
@@ -479,7 +479,7 @@ impl RecycleBin {
             .remove(original_name)
             .ok_or_else(|| DbError::Validation(
                 format!("Table '{}' not found in recycle bin", original_name)
-            ))?;
+            ))?);
 
         for recycle_name in recycle_names {
             self.tables.remove(&recycle_name);

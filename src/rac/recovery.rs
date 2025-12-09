@@ -653,7 +653,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Freeze resources during recovery
-    async fn freeze_resources(&self, failed_instance: &NodeId) -> Result<(), DbError> {
+    async fn freeze_resources(&self, failedinstance: &NodeId) -> Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
             state.phase = RecoveryPhase::Freezing;
@@ -706,7 +706,6 @@ impl InstanceRecoveryManager {
     /// NEW: Parallel redo apply for 10x faster recovery
     /// Partitions redo logs by resource and applies in parallel
     async fn apply_redo_parallel(&self, failed_instance: &NodeId, logs: Vec<RedoLogEntry>) -> Result<(), DbError> {
-        use std::collections::HashMap;
 
         // Partition logs by resource to avoid conflicts
         let mut partitions: HashMap<u32, Vec<RedoLogEntry>> = HashMap::new();
@@ -751,7 +750,7 @@ impl InstanceRecoveryManager {
 
         // Wait for all workers to complete
         for handle in handles {
-            handle.await.map_err(|e| DbError::Internal(format!("Recovery task failed: {}", e)))??;
+            handle.await.map_err(|e| DbError::Internal(format!("Recovery task failed: {}", e)))??);
         }
 
         Ok(())
@@ -777,7 +776,7 @@ impl InstanceRecoveryManager {
     }
 
     /// Reclaim locks from failed instance
-    async fn reclaim_locks(&self, failed_instance: &NodeId) -> Result<(), DbError> {
+    async ffn reclaim_locks(&self, failedinstance: &NodeId)-> Result<(), DbError> {
         let mut recoveries = self.active_recoveries.write();
         if let Some(state) = recoveries.get_mut(failed_instance) {
             state.phase = RecoveryPhase::LockReclamation;

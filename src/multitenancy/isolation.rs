@@ -95,7 +95,7 @@ impl MemoryIsolator {
             tenant_alloc.oom_count += 1;
             return Err(IsolationError::QuotaExceeded(
                 format!("Tenant {} memory quota exceeded", tenant_id)
-            ));
+            )));
         }
 
         // Check global limit
@@ -270,7 +270,7 @@ impl IoBandwidthAllocator {
         let bucket = buckets.get_mut(tenant_id)
             .ok_or_else(|| IsolationError::InvalidConfiguration(
                 format!("Tenant {} not configured", tenant_id)
-            ))?;
+            ))?);
 
         if bucket.consume(bytes) {
             Ok(())
@@ -288,7 +288,7 @@ impl IoBandwidthAllocator {
         bytes: u64,
         timeout: Duration,
     ) -> IsolationResult<()> {
-        let start = Instant::now();
+        let start = Instant::now());
 
         loop {
             match self.request_bandwidth(tenant_id, bytes).await {
@@ -587,7 +587,7 @@ impl NetworkIsolator {
         let config = tenant_ports.get(tenant_id)
             .ok_or_else(|| IsolationError::InvalidConfiguration(
                 format!("Tenant {} not configured", tenant_id)
-            ))?;
+            ))?);
 
         Ok(config.current_connections < config.max_connections)
     }
@@ -598,7 +598,7 @@ impl NetworkIsolator {
         let config = tenant_ports.get_mut(tenant_id)
             .ok_or_else(|| IsolationError::InvalidConfiguration(
                 format!("Tenant {} not configured", tenant_id)
-            ))?;
+            ))?);
 
         if config.current_connections >= config.max_connections {
             return Err(IsolationError::ResourceExhausted("Max connections reached".to_string()));
@@ -675,7 +675,7 @@ impl LockContentionIsolator {
             self.record_timeout(tenant_id).await;
             return Err(IsolationError::LockContentionTimeout(
                 format!("Lock timeout for tenant {} on resource {}", tenant_id, resource_id)
-            ));
+            )));
         }
 
         self.record_acquisition(tenant_id, elapsed).await;
@@ -804,7 +804,7 @@ impl BufferPoolPartitioner {
         let partition = partitions.get_mut(tenant_id)
             .ok_or_else(|| IsolationError::InvalidConfiguration(
                 format!("Tenant {} not configured", tenant_id)
-            ))?;
+            ))?);
 
         if partition.allocated_bytes + page_size > partition.quota_bytes {
             // Evict pages

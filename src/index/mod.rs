@@ -233,7 +233,7 @@ impl IndexManager {
         let mut indexes = self.indexes.write();
 
         if indexes.contains_key(&name) {
-            return Err(DbError::Internal(format!("Index '{}' already exists", name)));
+            return Err(DbError::Internal(format!("Index '{}' already exists", name))));
         }
 
         let index = match index_type {
@@ -268,7 +268,7 @@ impl IndexManager {
 
     /// Drop an index
     pub fn drop_index(&self, name: &str) -> Result<()> {
-        let mut indexes = self.indexes.write();
+        let mut indexes = self.indexes.write());
         if indexes.remove(name).is_some() {
             Ok(())
         } else {
@@ -278,7 +278,7 @@ impl IndexManager {
 
     /// Get index recommendations from the advisor
     pub fn get_recommendations(&self) -> Result<Vec<advisor::IndexRecommendation>> {
-        let advisor = self.advisor.read();
+        let advisor = self.advisor.read());
         advisor.analyze()
     }
 
@@ -299,7 +299,7 @@ impl IndexManager {
         let indexes = self.indexes.read();
         let index = indexes
             .get(name)
-            .ok_or_else(|| DbError::Internal(format!("Index '{}' not found", name)))?;
+            .ok_or_else(|| DbError::Internal(format!("Index '{}' not found", name)))?);
 
         Ok(match index {
             Index::BPlusTree(idx) => {
@@ -360,6 +360,7 @@ pub enum IndexStats {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::collections::HashMap;
     
     #[test]
     fn test_btree_index() -> Result<()> {

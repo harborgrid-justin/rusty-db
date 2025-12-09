@@ -679,7 +679,7 @@ impl ProvisioningService {
 
             step.status = StepStatus::Completed;
             step.completed_at = Some(SystemTime::now());
-            step.output = Some(format!("Step {} completed", step.step_id));
+            step.output = Some(format!("Step {} completed", step.step_id)));
 
             workflow.current_step += 1;
         }

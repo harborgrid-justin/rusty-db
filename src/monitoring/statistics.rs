@@ -414,7 +414,7 @@ impl StatisticsCollector {
     }
 
     // V$SESSTAT operations
-    pub fn set_session_stat(&self, session_id: u64, stat_name: impl Into<String>, value: u64) {
+    pub fn set_session_stat(&self, sessionid: u64, stat_name: impl Into<String>, value: u64) {
         let stat_name = stat_name.into();
         let mut stat_id = self.next_stat_id.write();
         *stat_id += 1;
@@ -552,16 +552,16 @@ impl StatisticsCollector {
 
         // Database info
         if let Some(db_info) = self.get_database_info() {
-            report.push_str(&format!("Database: {}\n", db_info.db_name));
-            report.push_str(&format!("Mode: {}\n", db_info.open_mode));
-            report.push_str(&format!("Platform: {}\n\n", db_info.platform_name));
+            report.push_str(&format!("Database: {}\n", db_info.db_name)));
+            report.push_str(&format!("Mode: {}\n", db_info.open_mode)));
+            report.push_str(&format!("Platform: {}\n\n", db_info.platform_name)));
         }
 
         // Session summary
         let sessions = self.get_all_sessions();
         let active_sessions = self.get_active_sessions();
-        report.push_str(&format!("Total Sessions: {}\n", sessions.len()));
-        report.push_str(&format!("Active Sessions: {}\n\n", active_sessions.len()));
+        report.push_str(&format!("Total Sessions: {}\n", sessions.len())));
+        report.push_str(&format!("Active Sessions: {}\n\n", active_sessions.len())));
 
         // Top SQL by executions
         report.push_str("Top SQL by Executions:\n");
@@ -573,7 +573,7 @@ impl StatisticsCollector {
                 sql.sql_id,
                 sql.executions,
                 sql.average_elapsed_time() / 1000.0
-            ));
+            )));
         }
         report.push_str("\n");
 
@@ -587,7 +587,7 @@ impl StatisticsCollector {
                 event.event,
                 event.time_waited_us as f64 / 1000.0,
                 event.total_waits
-            ));
+            )));
         }
 
         report

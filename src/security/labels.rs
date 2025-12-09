@@ -246,7 +246,7 @@ impl LabelManager {
         if compartments.contains_key(&compartment.id) {
             return Err(DbError::AlreadyExists(
                 format!("Compartment {} already exists", compartment.id)
-            ));
+            )));
         }
 
         // Validate parent exists if specified
@@ -254,7 +254,7 @@ impl LabelManager {
             if !compartments.contains_key(parent) {
                 return Err(DbError::NotFound(
                     format!("Parent compartment {} not found", parent)
-                ));
+                )));
             }
         }
 
@@ -278,10 +278,10 @@ impl LabelManager {
     /// Set user clearance
     pub fn set_user_clearance(&self, clearance: UserClearance) -> Result<()> {
         // Validate compartments exist
-        let compartments = self.compartments.read();
+        let compartments = self.compartments.read());
         for comp in &clearance.authorized_compartments {
             if !compartments.contains_key(comp) {
-                return Err(DbError::NotFound(format!("Compartment {} not found", comp)));
+                return Err(DbError::NotFound(format!("Compartment {} not found", comp))));
             }
         }
 
@@ -313,10 +313,10 @@ impl LabelManager {
         assigned_by: String,
     ) -> Result<()> {
         // Validate compartments in label
-        let compartments = self.compartments.read();
+        let compartments = self.compartments.read());
         for comp in &label.compartments {
             if !compartments.contains_key(comp) {
-                return Err(DbError::NotFound(format!("Compartment {} not found", comp)));
+                return Err(DbError::NotFound(format!("Compartment {} not found", comp))));
             }
         }
 
@@ -469,7 +469,7 @@ impl LabelManager {
         if policies.contains_key(&policy.id) {
             return Err(DbError::AlreadyExists(
                 format!("Label policy {} already exists", policy.id)
-            ));
+            )));
         }
 
         policies.insert(policy.id.clone(), policy);
@@ -487,9 +487,9 @@ impl LabelManager {
 
     /// Update user's current working label
     pub fn set_user_label(&self, user_id: &str, label: SecurityLabel) -> Result<()> {
-        let mut clearances = self.clearances.write();
+        let mut clearances = self.clearances.write());
         let clearance = clearances.get_mut(user_id)
-            .ok_or_else(|| DbError::NotFound(format!("Clearance not found for user {}", user_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Clearance not found for user {}", user_id)))?);
 
         // Validate new label is within clearance
         if !clearance.max_read.dominates(&label) {
@@ -579,7 +579,7 @@ impl LabelManager {
         stats.rows_by_classification.clear();
         for table_labels in row_labels.values() {
             for row_label in table_labels.values() {
-                let classification = format!("{:?}", row_label.label.classification);
+                let classification = format!("{:?}", row_label.label.classification));
                 *stats.rows_by_classification.entry(classification).or_insert(0) += 1;
             }
         }
@@ -625,6 +625,7 @@ fn current_timestamp() -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_label_dominance() {

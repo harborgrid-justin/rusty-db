@@ -605,7 +605,7 @@ impl ConflictResolver {
     /// * `Err(ConflictResolutionError)` - Detection failed
     pub async fn detect_conflict(
         &self,
-        conflict_data: ConflictData,
+        conflictdata: ConflictData,
     ) -> Result<Uuid, ConflictResolutionError> {
         let conflict_id = Uuid::new_v4();
         let severity = self.determine_conflict_severity(&conflict_data);
@@ -987,7 +987,6 @@ pub struct ConflictResolutionStatistics {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[tokio::test]
     async fn test_conflict_resolver_creation() {

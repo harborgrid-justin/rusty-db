@@ -521,7 +521,6 @@ impl EvictionPolicy for LirsEvictionPolicy {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::buffer::page_cache::BufferFrame;
 
     fn create_test_frames(n: usize) -> Vec<Arc<BufferFrame>> {
         (0..n)

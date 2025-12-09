@@ -156,7 +156,7 @@ impl TriggerManager {
         if triggers.contains_key(&trigger.name) {
             return Err(DbError::AlreadyExists(
                 format!("Trigger '{}' already exists", trigger.name)
-            ));
+            )));
         }
 
         // Validate ordering constraints
@@ -164,7 +164,7 @@ impl TriggerManager {
             if !triggers.contains_key(follows) {
                 return Err(DbError::NotFound(
                     format!("Trigger '{}' (specified in FOLLOWS) not found", follows)
-                ));
+                )));
             }
         }
 
@@ -172,7 +172,7 @@ impl TriggerManager {
             if !triggers.contains_key(precedes) {
                 return Err(DbError::NotFound(
                     format!("Trigger '{}' (specified in PRECEDES) not found", precedes)
-                ));
+                )));
             }
         }
 
@@ -193,7 +193,7 @@ impl TriggerManager {
 
         let trigger = triggers.remove(name).ok_or_else(||
             DbError::NotFound(format!("Trigger '{}' not found", name))
-        )?;
+        )?);
 
         // Remove from table triggers index
         if let Some(table_trigs) = table_triggers.get_mut(&trigger.table_name) {
@@ -209,7 +209,7 @@ impl TriggerManager {
 
         let trigger = triggers.get_mut(name).ok_or_else(||
             DbError::NotFound(format!("Trigger '{}' not found", name))
-        )?;
+        )?);
 
         trigger.enabled = true;
         Ok(())
@@ -221,14 +221,14 @@ impl TriggerManager {
 
         let trigger = triggers.get_mut(name).ok_or_else(||
             DbError::NotFound(format!("Trigger '{}' not found", name))
-        )?;
+        )?);
 
         trigger.enabled = false;
         Ok(())
     }
 
     /// Get all triggers for a table
-    pub fn get_table_triggers(&self, table_name: &str) -> Vec<Trigger> {
+    pub fn get_table_triggers(&self, tablename: &str) -> Vec<Trigger> {
         let triggers = self.triggers.read();
         let table_triggers = self.table_triggers.read();
 
@@ -423,7 +423,7 @@ impl TriggerManager {
 
     /// Validate trigger dependencies (check for cycles)
     pub fn validate_dependencies(&self) -> Result<()> {
-        let triggers = self.triggers.read();
+        let triggers = self.triggers.read());
 
         for trigger in triggers.values() {
             let mut visited = HashSet::new();
@@ -442,7 +442,7 @@ impl TriggerManager {
         if visited.contains(current) {
             return Err(DbError::InvalidInput(
                 format!("Circular trigger dependency detected involving '{}'", current)
-            ));
+            )));
         }
 
         visited.insert(current.to_string());

@@ -708,7 +708,7 @@ impl AlertEngine {
                     threshold,
                     timestamp: now,
                     tags: HashMap::new(),
-                };
+                });
 
                 alerts.push(alert);
                 self.last_alert_times.insert(rule.name.clone(), now);
@@ -821,6 +821,7 @@ pub struct AnalyticsResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_dashboard() {

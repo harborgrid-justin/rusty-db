@@ -234,7 +234,7 @@ impl SecurityVaultManager {
     pub fn with_config(config: VaultConfig) -> Result<Self> {
         // Create data directory if it doesn't exist
         std::fs::create_dir_all(&config.data_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create vault directory: {}", e)))?;
+            .map_err(|e| DbError::IoError(format!("Failed to create vault directory: {}", e)))?);
 
         // Initialize key store first
         let key_store = KeyStore::new(config.data_dir.join("keystore"))?;
@@ -314,7 +314,7 @@ impl SecurityVaultManager {
             "SYSTEM",
             "ENABLE_TDE",
             &format!("Tablespace: {}, Algorithm: {}", tablespace_name, algorithm),
-        )?;
+        )?);
 
         Ok(())
     }
@@ -326,7 +326,7 @@ impl SecurityVaultManager {
         column_name: &str,
         algorithm: &str,
     ) -> Result<()> {
-        let key_id = format!("{}:{}", table_name, column_name);
+        let key_id = format!("{}:{}", table_name, column_name));
 
         // Generate column encryption key
         let mut key_store = self.key_store.lock().await;
@@ -356,7 +356,7 @@ impl SecurityVaultManager {
             "SYSTEM",
             "CREATE_MASKING_POLICY",
             &format!("Policy: {}, Type: {}", policy_name, masking_type),
-        )?;
+        )?);
 
         Ok(())
     }
@@ -376,7 +376,7 @@ impl SecurityVaultManager {
             "SYSTEM",
             "CREATE_VPD_POLICY",
             &format!("Table: {}, Predicate: {}", table_name, predicate),
-        )?;
+        )?);
 
         Ok(())
     }
@@ -394,7 +394,7 @@ impl SecurityVaultManager {
             "SYSTEM",
             "KEY_ROTATION",
             &format!("Rotated {} keys", rotated),
-        )?;
+        )?);
 
         Ok(rotated)
     }
@@ -466,7 +466,7 @@ impl SecurityVaultManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*);
 
     #[test]
     fn test_security_context() {

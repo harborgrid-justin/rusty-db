@@ -12,7 +12,7 @@ use std::sync::Arc;
 use parking_lot::{Mutex, RwLock};
 use std::collections::HashMap;
 use std::time::{Duration};
-use tokio::sync::{oneshot, Notify};
+use tokio::sync::{Notify};
 
 // ============================================================================
 // I/O Operation Types
@@ -421,7 +421,7 @@ impl IoCompletionPort {
     /// Poll for completed I/O operations
     ///
     /// Returns the number of completions retrieved.
-    pub fn poll(&self, max_completions: usize) -> Result<usize> {
+    pub fn poll(&self, maxcompletions: usize) -> Result<usize> {
         #[cfg(windows)]
         let completions = self.backend.poll(max_completions)?;
 
@@ -570,9 +570,9 @@ impl AsyncIoEngine {
             let handle = std::thread::Builder::new()
                 .name(format!("io-worker-{}", i))
                 .spawn(move || {
-                    Self::worker_loop(cp, sd);
+                    Self::worker_loop(cp, sd));
                 })
-                .map_err(|e| DbError::Internal(format!("Failed to spawn I/O worker: {}", e)))?;
+                .map_err(|e| DbError::Internal(format!("Failed to spawn I/O worker: {}", e)))?);
 
             workers.push(handle);
         }

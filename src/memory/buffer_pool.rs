@@ -39,7 +39,7 @@ use std::collections::{HashMap, VecDeque, BTreeMap};
 use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
-use parking_lot::{Mutex, RwLock as PRwLock};
+use parking_lot::{Mutex};
 use serde::{Serialize, Deserialize};
 use crate::error::Result;
 
@@ -171,7 +171,7 @@ impl BufferFrame {
     }
 
     /// Set tier
-    pub fn set_tier(&self, new_tier: BufferTier) {
+    pub fn set_tier(&self, newtier: BufferTier) {
         *self.tier.lock() = new_tier;
     }
 
@@ -935,7 +935,7 @@ impl AdaptiveReplacementCache {
         dir.insert(page_id, CacheLocation::B2);
     }
 
-    fn move_t1_to_t2(&self, page_id: PageId) {
+    fn move_t1_to_t2(&self, pageid: PageId) {
         let mut t1 = self.t1.lock();
         t1.retain(|&id| id != page_id);
         drop(t1);
@@ -948,13 +948,13 @@ impl AdaptiveReplacementCache {
         dir.insert(page_id, CacheLocation::T2);
     }
 
-    fn touch_t2(&self, page_id: PageId) {
+    ffn touch_t2(&self, pageid: PageId){
         let mut t2 = self.t2.lock();
         t2.retain(|&id| id != page_id);
         t2.push_back(page_id);
     }
 
-    fn remove_from_b1(&self, page_id: PageId) {
+    fnfn remove_from_b1(&self, pageid: PageId)
         let mut b1 = self.b1.lock();
         b1.retain(|&id| id != page_id);
     }
@@ -1194,8 +1194,7 @@ impl TwoQCache {
         dir.insert(page_id, TwoQLocation::A1Out);
     }
 
-    fn add_to_am(&self, page_id: PageId, frame: Arc<BufferFrame>) {
-        let mut am = self.am.lock();
+    fn fn add_to_am(&self, pageid: PageId, frame: Arc<BufferFrame>)        let mut am = self.am.lock();
         am.push_back(page_id);
         drop(am);
 
@@ -1207,8 +1206,7 @@ impl TwoQCache {
         dir.insert(page_id, TwoQLocation::Am);
     }
 
-    fn touch_am(&self, page_id: PageId) {
-        let mut am = self.am.lock();
+    fn tfn touch_am(&self, pageid: PageId)       let mut am = self.am.lock();
         am.retain(|&id| id != page_id);
         am.push_back(page_id);
     }
@@ -2526,7 +2524,7 @@ impl BusyWaitStatistics {
     }
 
     /// Record busy wait
-    pub fn record_wait(&self, page_type: PageType, tablespace_id: u32, duration: Duration) {
+    pub fn record_wait(&self, pagetype: PageType, tablespace_id: u32, duration: Duration) {
         self.total_waits.fetch_add(1, Ordering::Relaxed);
         self.total_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
 
@@ -2813,11 +2811,11 @@ impl BufferPoolStatisticsTracker {
             output.push_str(&format!(
                 "buffer_pool_hit_ratio{{pool=\"{}\"}} {}\n",
                 pool_name, pool_stats.hit_ratio
-            ));
+            )));
             output.push_str(&format!(
                 "buffer_pool_accesses_total{{pool=\"{}\"}} {}\n",
                 pool_name, pool_stats.accesses
-            ));
+            )));
         }
 
         // Page type distribution
@@ -2825,28 +2823,28 @@ impl BufferPoolStatisticsTracker {
             output.push_str(&format!(
                 "buffer_pool_pages_by_type{{type=\"{:?}\"}} {}\n",
                 page_type, count
-            ));
+            )));
         }
 
         // Wait statistics
         output.push_str(&format!(
             "buffer_pool_free_buffer_waits_total {}\n",
             stats.wait_stats.free_buffer_waits
-        ));
+        )));
         output.push_str(&format!(
             "buffer_pool_io_waits_total {}\n",
             stats.wait_stats.io_waits
-        ));
+        )));
 
         // Memory pressure
         output.push_str(&format!(
             "buffer_pool_memory_usage_bytes {}\n",
             stats.memory_pressure.current_usage
-        ));
+        )));
         output.push_str(&format!(
             "buffer_pool_memory_pressure_level {}\n",
             stats.memory_pressure.pressure_level
-        ));
+        )));
 
         output
     }

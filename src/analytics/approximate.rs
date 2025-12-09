@@ -444,7 +444,7 @@ impl ApproximateQueryExecutor {
     /// Add value to distinct estimator
     pub fn add_to_distinct(&mut self, column: &str, value: &str) -> Result<()> {
         let estimator = self.distinct_estimators.get_mut(column)
-            .ok_or_else(|| DbError::NotFound(format!("Estimator for column: {}", column)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Estimator for column: {}", column)))?);
         estimator.add(&value);
         Ok(())
     }
@@ -452,7 +452,7 @@ impl ApproximateQueryExecutor {
     /// Estimate distinct count
     pub fn estimate_distinct(&self, column: &str) -> Result<ApproximateResult> {
         let estimator = self.distinct_estimators.get(column)
-            .ok_or_else(|| DbError::NotFound(format!("Estimator for column: {}", column)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Estimator for column: {}", column)))?);
 
         let estimate = estimator.cardinality();
         let error_bound = estimator.standard_error();
@@ -480,7 +480,7 @@ impl ApproximateQueryExecutor {
     /// Add value to frequency estimator
     pub fn add_to_frequency(&mut self, column: &str, value: &str, count: u64) -> Result<()> {
         let estimator = self.frequency_estimators.get_mut(column)
-            .ok_or_else(|| DbError::NotFound(format!("Frequency estimator for: {}", column)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Frequency estimator for: {}", column)))?);
         estimator.add(&value, count);
         Ok(())
     }
@@ -488,7 +488,7 @@ impl ApproximateQueryExecutor {
     /// Estimate frequency of value
     pub fn estimate_frequency(&self, column: &str, value: &str) -> Result<u64> {
         let estimator = self.frequency_estimators.get(column)
-            .ok_or_else(|| DbError::NotFound(format!("Frequency estimator for: {}", column)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Frequency estimator for: {}", column)))?);
         Ok(estimator.estimate(&value))
     }
 
@@ -501,7 +501,7 @@ impl ApproximateQueryExecutor {
     /// Add row to sampler
     pub fn add_to_sample(&mut self, name: &str, row: Vec<String>) -> Result<()> {
         let sampler = self.samplers.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Sampler: {}", name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Sampler: {}", name)))?);
         sampler.add(row);
         Ok(())
     }
@@ -509,7 +509,7 @@ impl ApproximateQueryExecutor {
     /// Get sample
     pub fn get_sample(&self, name: &str) -> Result<&[Vec<String>]> {
         let sampler = self.samplers.get(name)
-            .ok_or_else(|| DbError::NotFound(format!("Sampler: {}", name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Sampler: {}", name)))?);
         Ok(sampler.sample())
     }
 }

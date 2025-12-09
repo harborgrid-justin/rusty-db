@@ -63,7 +63,7 @@ impl CompressionAlgorithm {
     }
 
     /// Returns whether the algorithm is suitable for the data characteristics.
-    pub fn suitable_for(&self, cardinality: usize, total_count: usize, is_sorted: bool) -> bool {
+    pub fn suitable_for(&self, cardinality: usize, total_count: usize, issorted: bool) -> bool {
         match self {
             CompressionAlgorithm::None => true,
             CompressionAlgorithm::RunLength => {
@@ -662,6 +662,7 @@ impl QueryResultCompressor {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::Instant;
 
     #[test]
     fn test_dictionary_encoding() {

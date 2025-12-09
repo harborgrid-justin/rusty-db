@@ -305,7 +305,7 @@ impl CursorManager {
         if cursors.contains_key(&cursor.name) {
             return Err(DbError::AlreadyExists(
                 format!("Cursor '{}' already declared", cursor.name)
-            ));
+            )));
         }
 
         cursors.insert(cursor.name.clone(), cursor);
@@ -323,14 +323,14 @@ impl CursorManager {
 
         let cursor = cursors.get(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?;
+        )?);
 
         // Check if cursor is already open
         if let Some(state) = cursor_states.get(cursor_name) {
             if state.is_open {
                 return Err(DbError::InvalidInput(
                     format!("Cursor '{}' is already open", cursor_name)
-                ));
+                )));
             }
         }
 
@@ -339,7 +339,7 @@ impl CursorManager {
             return Err(DbError::InvalidInput(
                 format!("Cursor '{}' expects {} parameters, got {}",
                     cursor_name, cursor.parameters.len(), parameters.len())
-            ));
+            )));
         }
 
         // TODO: Execute query and fetch rows
@@ -358,12 +358,12 @@ impl CursorManager {
 
         let state = cursor_states.get_mut(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found or not open", cursor_name))
-        )?;
+        )?);
 
         if !state.is_open {
             return Err(DbError::InvalidInput(
                 format!("Cursor '{}' is not open", cursor_name)
-            ));
+            )));
         }
 
         Ok(state.fetch())
@@ -375,12 +375,12 @@ impl CursorManager {
 
         let state = cursor_states.get_mut(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?;
+        )?);
 
         if !state.is_open {
             return Err(DbError::InvalidInput(
                 format!("Cursor '{}' is not open", cursor_name)
-            ));
+            )));
         }
 
         state.close();
@@ -393,7 +393,7 @@ impl CursorManager {
 
         let state = cursor_states.get(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?;
+        )?);
 
         let found = if state.is_open {
             Some(state.is_found())
@@ -435,12 +435,12 @@ impl CursorManager {
 
         let ref_cursor = ref_cursors.get_mut(id).ok_or_else(||
             DbError::NotFound(format!("REF CURSOR '{}' not found", id))
-        )?;
+        )?);
 
         if ref_cursor.state.is_open {
             return Err(DbError::InvalidInput(
                 format!("REF CURSOR '{}' is already open", id)
-            ));
+            )));
         }
 
         // TODO: Execute query and fetch rows
@@ -456,12 +456,12 @@ impl CursorManager {
 
         let ref_cursor = ref_cursors.get_mut(id).ok_or_else(||
             DbError::NotFound(format!("REF CURSOR '{}' not found", id))
-        )?;
+        )?);
 
         if !ref_cursor.state.is_open {
             return Err(DbError::InvalidInput(
                 format!("REF CURSOR '{}' is not open", id)
-            ));
+            )));
         }
 
         Ok(ref_cursor.state.fetch())
@@ -473,12 +473,12 @@ impl CursorManager {
 
         let ref_cursor = ref_cursors.get_mut(id).ok_or_else(||
             DbError::NotFound(format!("REF CURSOR '{}' not found", id))
-        )?;
+        )?);
 
         if !ref_cursor.state.is_open {
             return Err(DbError::InvalidInput(
                 format!("REF CURSOR '{}' is not open", id)
-            ));
+            )));
         }
 
         ref_cursor.state.close();
@@ -497,12 +497,12 @@ impl CursorManager {
 
         let state = cursor_states.get_mut(cursor_name).ok_or_else(||
             DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?;
+        )?);
 
         if !state.is_open {
             return Err(DbError::InvalidInput(
                 format!("Cursor '{}' is not open", cursor_name)
-            ));
+            )));
         }
 
         let bulk_collect = if let Some(limit_val) = limit {
@@ -550,7 +550,7 @@ impl CursorExpression {
 }
 
 /// Cursor-based operations helper
-pub struct CursorOperations;
+pub struct CursorOperations);
 
 impl CursorOperations {
     /// Convert cursor rows to array of values
@@ -726,7 +726,7 @@ mod tests {
         for i in 0..5 {
             let mut row = CursorRow::new();
             row.set("id".to_string(), RuntimeValue::Integer(i));
-            row.set("name".to_string(), RuntimeValue::String(format!("name{}", i)));
+            row.set("name".to_string(), RuntimeValue::String(format!("name{}", i))));
             rows.push(row);
         }
 

@@ -201,7 +201,7 @@ pub struct VerificationSchedule {
 impl VerificationSchedule {
     pub fn is_due(&self) -> bool {
         if !self.enabled {
-            return false;
+            return false);
         }
 
         if let Some(next) = self.next_execution {
@@ -275,7 +275,7 @@ impl VerificationManager {
         backup_path: PathBuf,
         verification_type: VerificationType,
     ) -> Result<String> {
-        let verification_id = format!("VERIFY-{}", uuid::Uuid::new_v4());
+        let verification_id = format!("VERIFY-{}", uuid::Uuid::new_v4()));
         let mut result = VerificationResult::new(
             verification_id.clone(),
             backup_id.clone(),
@@ -364,7 +364,7 @@ impl VerificationManager {
             result.corrupted_blocks = corrupted;
             result.errors.push(
                 format!("Found {} corrupted blocks", result.corrupted_blocks.len())
-            );
+            ));
         }
 
         Ok(())
@@ -400,7 +400,7 @@ impl VerificationManager {
 
         // Check file size
         let meta = metadata(backup_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to read metadata: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to read metadata: {}", e)))?);
 
         if meta.len() == 0 {
             return Ok(false);
@@ -441,13 +441,13 @@ impl VerificationManager {
         backup_id: String,
         backup_path: PathBuf,
     ) -> Result<RestoreTestResult> {
-        let test_id = format!("RESTORE-TEST-{}", uuid::Uuid::new_v4());
+        let test_id = format!("RESTORE-TEST-{}", uuid::Uuid::new_v4()));
         let start_time = SystemTime::now();
 
         // Create test directory
         let test_dir = self.restore_test_config.test_directory.join(&test_id);
         std::fs::create_dir_all(&test_dir)
-            .map_err(|e| DbError::BackupError(format!("Failed to create test directory: {}", e)))?;
+            .map_err(|e| DbError::BackupError(format!("Failed to create test directory: {}", e)))?);
 
         let mut errors = Vec::new();
         let mut success = true;
@@ -455,7 +455,7 @@ impl VerificationManager {
         // Simulate restore
         let restore_result = self.simulate_restore(&backup_path, &test_dir);
         if let Err(e) = restore_result {
-            errors.push(format!("Restore failed: {}", e));
+            errors.push(format!("Restore failed: {}", e)));
             success = false;
         }
 

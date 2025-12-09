@@ -80,8 +80,8 @@ impl HashJoinExecutor {
     #[inline]
     pub fn execute(
         &self,
-        build_side: QueryResult,
-        probe_side: QueryResult,
+        buildside: QueryResult,
+        probeside: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
@@ -106,8 +106,8 @@ impl HashJoinExecutor {
     #[inline]
     fn simple_hash_join(
         &self,
-        build_side: QueryResult,
-        probe_side: QueryResult,
+        buildside: QueryResult,
+        probeside: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
@@ -154,8 +154,8 @@ impl HashJoinExecutor {
     /// Grace hash join - partitions both sides to disk
     fn grace_hash_join(
         &self,
-        build_side: QueryResult,
-        probe_side: QueryResult,
+        buildside: QueryResult,
+        probeside: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
@@ -229,8 +229,8 @@ impl HashJoinExecutor {
     /// Hybrid hash join - keeps hot partitions in memory, spills cold ones
     fn hybrid_hash_join(
         &self,
-        build_side: QueryResult,
-        probe_side: QueryResult,
+        buildside: QueryResult,
+        probeside: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
@@ -362,7 +362,7 @@ impl HashJoinExecutor {
 
         // Create partition files
         for i in 0..self.config.num_partitions {
-            let path = self.config.temp_dir.join(format!("{}_{}.part", prefix, i));
+            let path = self.config.temp_dir.join(format!("{}_{}.part", prefix, i)));
             let file = File::create(&path)
                 .map_err(|e| DbError::IoError(e.to_string()))?;
             partition_writers.push(BufWriter::new(file));
@@ -427,7 +427,7 @@ impl HashJoinExecutor {
 
         let path = self.config.temp_dir.join(
             format!("{}_{}_{}.spill", prefix, partition_id, spill_id)
-        );
+        ));
 
         let file = File::create(&path)
             .map_err(|e| DbError::IoError(e.to_string()))?;
@@ -515,8 +515,8 @@ impl BloomFilterHashJoin {
     /// Execute join with bloom filter optimization
     pub fn execute_with_bloom_filter(
         &mut self,
-        build_side: QueryResult,
-        probe_side: QueryResult,
+        buildside: QueryResult,
+        probeside: QueryResult,
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {

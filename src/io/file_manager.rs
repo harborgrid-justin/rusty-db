@@ -22,7 +22,6 @@ use std::os::unix::io::AsRawFd;
 use std::os::unix::fs::OpenOptionsExt;
 
 #[cfg(windows)]
-use std::os::windows::fs::OpenOptionsExt;
 
 // ============================================================================
 // File Handle
@@ -349,7 +348,7 @@ impl DirectIoFile {
     }
 
     /// Set file size
-    pub fn set_size(&self, new_size: u64) -> Result<()> {
+    pub fn set_size(&self, newsize: u64) -> Result<()> {
         self.file
             .set_len(new_size)
             .map_err(|e| DbError::Io(e))?;
@@ -503,7 +502,7 @@ impl FileManager {
                 "Invalid page size: expected {}, got {}",
                 PAGE_SIZE,
                 data.len()
-            )));
+            ))));
         }
         self.write(handleOptions::new(offset), data).await
     }
@@ -544,7 +543,7 @@ impl FileManager {
             return Err(DbError::Internal(format!(
                 "Read failed: error code {}",
                 completion.error_code
-            )));
+            ))));
         }
 
         // Extract the requested data from the aligned buffer
@@ -615,7 +614,7 @@ impl FileManager {
             return Err(DbError::Internal(format!(
                 "Write failed: error code {}",
                 completion.error_code
-            )));
+            ))));
         }
 
         // Sync if requested
@@ -736,6 +735,7 @@ pub struct FileManagerStats {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::SystemTime;
 
     #[test]
     fn test_file_handle() {

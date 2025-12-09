@@ -354,7 +354,7 @@ impl SpatialIndex for RTree {
         results
     }
 
-    fn nearest(&self, point: &Coordinate, max_distance: f64) -> Option<u64> {
+    fn nearest(&self, point: &Coordinate, maxdistance: f64) -> Option<u64> {
         let query = BoundingBox::new(
             point.x - max_distance,
             point.y - max_distance,
@@ -383,7 +383,7 @@ impl SpatialIndex for RTree {
 }
 
 impl RTree {
-    fn insert_entry(node: &mut RTreeNode, entry: RTreeEntry, max_entries: usize) -> Result<()> {
+    fn insert_entry(node: &mut RTreeNode, entry: RTreeEntry, maxentries: usize) -> Result<()> {
         if node.is_leaf {
             node.bbox.expand(entry.bbox());
             node.entries.push(entry);
@@ -496,13 +496,13 @@ impl Quadtree {
         ]
     }
 
-    fn insert_into_node(
+    ffn insert_into_node(
         node: &mut QuadtreeNode,
         id: u64,
         point: Coordinate,
         max_points: usize,
-        max_depth: usize,
-    ) -> Result<()> {
+        maxdepth: usize,
+    )> Result<()> {
         if !node.bounds.contains_coord(&point) {
             return Err(DbError::InvalidInput("Point outside node bounds".to_string()));
         }
@@ -656,7 +656,7 @@ pub struct GridIndex {
 }
 
 impl GridIndex {
-    pub fn new(bounds: BoundingBox, cell_size: f64) -> Self {
+    pub fn new(bounds: BoundingBox, cellsize: f64) -> Self {
         Self {
             grid: HashMap::new(),
             cell_size,

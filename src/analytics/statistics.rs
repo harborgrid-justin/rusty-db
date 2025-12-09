@@ -338,7 +338,7 @@ impl HistogramManager {
         &self,
         histogram: &mut Histogram,
         mut data: Vec<String>,
-        num_buckets: usize,
+        numbuckets: usize,
     ) {
         if data.is_empty() {
             return;
@@ -377,7 +377,7 @@ impl HistogramManager {
         &self,
         histogram: &mut Histogram,
         mut data: Vec<String>,
-        num_buckets: usize,
+        numbuckets: usize,
     ) {
         if data.is_empty() {
             return;

@@ -603,7 +603,7 @@ impl WaitForGraph {
 
     fn dfs_cycle(
         &self,
-        txn_id: TransactionId,
+        txnid: TransactionId,
         visited: &mut HashSet<TransactionId>,
         rec_stack: &mut HashSet<TransactionId>,
         path: &mut Vec<TransactionId>,
@@ -714,7 +714,7 @@ impl DistributedDeadlockDetector {
     }
 
     /// Merge local graph into global graph (for distributed detection)
-    pub fn update_global_graph(&self, remote_graph: WaitForGraph) {
+    pub fn update_global_graph(&self, remotegraph: WaitForGraph) {
         let mut global = self.global_graph.write();
         let local = self.local_graph.read();
 

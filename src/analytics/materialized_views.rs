@@ -204,7 +204,7 @@ impl MaterializedViewManager {
         refresh_policy: RefreshPolicy,
         maintenance_mode: MaintenanceMode,
     ) -> Result<String> {
-        let id = format!("mv_{}", uuid::Uuid::new_v4());
+        let id = format!("mv_{}", uuid::Uuid::new_v4()));
 
         let view = MaterializedView {
             id: id.clone(),
@@ -246,7 +246,7 @@ impl MaterializedViewManager {
     pub fn refresh_view(&self, name: &str) -> Result<RefreshResult> {
         let mut views = self.views.write();
         let view = views.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", name)))?);
 
         let start = SystemTime::now();
 
@@ -343,9 +343,9 @@ impl MaterializedViewManager {
         table: &str,
         operation: DeltaOperation,
         row_id: String,
-        old_values: Option<Vec<String>>,
-        new_values: Option<Vec<String>>,
-    ) -> Result<()> {
+        oldvalues: Option<Vec<String>>,
+        newvalues: Option<Vec<String>>,
+    ) Result<()> {
         // Find all views depending on this table
         let views = self.views.read();
         let affected_views: Vec<_> = views.values()
@@ -397,22 +397,22 @@ impl MaterializedViewManager {
     pub fn get_staleness(&self, name: &str) -> Result<StalenessInfo> {
         let views = self.views.read();
         let view = views.get(name)
-            .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", name)))?);
         Ok(view.staleness_info.clone())
     }
 
     /// Create index on materialized view
-    pub fn create_index(
+    pub fn crfn create_index(
         &self,
-        view_name: &str,
-        index_name: String,
+        viewname: &str,
+        indexname: String,
         columns: Vec<String>,
         index_type: IndexType,
         unique: bool,
-    ) -> Result<()> {
+    )ult<()> {
         let mut views = self.views.write();
         let view = views.get_mut(view_name)
-            .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", view_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", view_name)))?);
 
         let index = ViewIndex {
             name: index_name,
@@ -435,7 +435,7 @@ impl MaterializedViewManager {
     pub fn analyze_view(&self, name: &str) -> Result<ViewStatistics> {
         let mut views = self.views.write();
         let view = views.get_mut(name)
-            .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", name)))?);
 
         // In production, would scan view data and compute statistics
         view.statistics.row_count = 10000;
@@ -694,7 +694,7 @@ impl RefreshScheduler {
                     interval: *interval,
                     next_refresh: *next_refresh,
                 },
-            );
+            ));
         }
     }
 

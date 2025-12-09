@@ -837,7 +837,7 @@ impl ConnectionStateMachine {
         self.metadata.read().clone()
     }
 
-    pub fn transition_to(&self, new_state: ConnectionState) -> Result<(), ProtocolError> {
+    pub fn transition_to(&self, newstate: ConnectionState) -> Result<(), ProtocolError> {
         let mut state = self.state.write();
 
         if !state.can_transition_to(new_state) {
@@ -1364,7 +1364,6 @@ pub struct PriorityRequestQueue {
 
 impl PriorityRequestQueue {
     pub fn new() -> Self {
-        use RequestPriority::*;
         let mut queues = HashMap::new();
         queues.insert(Low, VecDeque::new());
         queues.insert(Normal, VecDeque::new());
@@ -1789,7 +1788,7 @@ pub struct MemoryMappedTransfer {
 }
 
 impl MemoryMappedTransfer {
-    pub fn new(file_path: String, size: u64, chunk_size: usize) -> Self {
+    pub fn new(file_path: String, size: u64, chunksize: usize) -> Self {
         Self {
             file_path,
             size,
@@ -2955,7 +2954,7 @@ pub struct ProtocolMetricsAggregator {
 }
 
 impl ProtocolMetricsAggregator {
-    pub fn new(max_snapshots: usize, snapshot_interval: Duration) -> Self {
+    pub fn new(maxsnapshots: usize, snapshot_interval: Duration) -> Self {
         Self {
             snapshots: Arc::new(RwLock::new(VecDeque::new())),
             max_snapshots,
@@ -3103,7 +3102,6 @@ pub enum ProtocolError {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_protocol_version_compatibility() {

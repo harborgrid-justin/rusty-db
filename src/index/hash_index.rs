@@ -131,7 +131,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ExtendibleHashIndex<K, V> {
     }
 
     /// Split a bucket
-    fn split_bucket(&self, index: usize, local_depth: usize) -> Result<()> {
+    fn split_bucket(&self, index: usize, localdepth: usize) -> Result<()> {
         let directory = self.directory.read();
         let old_bucket = directory[index].clone();
         let mut old_bucket_lock = old_bucket.write();
@@ -281,7 +281,7 @@ impl<K: Hash + Eq + Clone, V: Clone> Clone for LinearHashIndex<K, V> {
 
 impl<K: Hash + Eq + Clone, V: Clone> LinearHashIndex<K, V> {
     /// Create a new linear hash index
-    pub fn new(initial_buckets: usize, bucket_capacity: usize) -> Self {
+    pub fn new(initialbuckets: usize, bucket_capacity: usize) -> Self {
         let mut buckets = Vec::with_capacity(initial_buckets);
         for _ in 0..initial_buckets {
             buckets.push(Arc::new(RwLock::new(LinearBucket::new(bucket_capacity))));
@@ -549,12 +549,12 @@ mod tests {
 
         // Insert enough to cause splits
         for i in 0..20 {
-            index.insert(i, format!("value_{}", i)).unwrap();
+            index.insert(i, format!("value_{}", i)).unwrap());
         }
 
         // Verify all values
         for i in 0..20 {
-            assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i)));
+            assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i))));
         }
 
         let stats = index.stats();
@@ -580,12 +580,12 @@ mod tests {
 
         // Insert enough to trigger splits
         for i in 0..20 {
-            index.insert(i, format!("value_{}", i)).unwrap();
+            index.insert(i, format!("value_{}", i)).unwrap());
         }
 
         // Verify all values
         for i in 0..20 {
-            assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i)));
+            assert_eq!(index.get(&i).unwrap(), Some(format!("value_{}", i))));
         }
 
         let stats = index.stats();

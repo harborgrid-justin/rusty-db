@@ -328,7 +328,7 @@ impl OneHotEncoder {
     }
 
     /// Fit on categorical data (strings converted to numbers)
-    pub fn fit_categorical(&mut self, data: &[Vec<String>], feature_names: &FeatureNames) -> Result<()> {
+    pub fn fit_categorical(&mut self, data: &[Vec<String>], featurenames: &FeatureNames) -> Result<()> {
         if data.is_empty() {
             return Err(MLError::InsufficientData("Empty data".to_string()).into());
         }
@@ -349,7 +349,7 @@ impl OneHotEncoder {
 
             // Generate feature names for each category
             for category in &categories {
-                let feature_name = format!("{}_{}", feature_names[col], category);
+                let feature_name = format!("{}_{}", feature_names[col], category));
                 self.output_feature_names.push(feature_name);
             }
 
@@ -386,7 +386,7 @@ impl OneHotEncoder {
                         UnknownHandling::Error => {
                             return Err(MLError::InvalidConfiguration(
                                 format!("Unknown category '{}' in feature {}", value, col)
-                            ).into());
+                            ).into()));
                         }
                         UnknownHandling::Ignore | UnknownHandling::UseDefault => {
                             // All zeros
@@ -838,7 +838,7 @@ impl DataSplitter {
         if test_size <= 0.0 || test_size >= 1.0 {
             return Err(MLError::InvalidConfiguration(
                 format!("test_size must be between 0 and 1, got {}", test_size)
-            ).into());
+            ).into()));
         }
 
         let n_samples = dataset.num_samples();
@@ -889,14 +889,14 @@ impl DataSplitter {
         if k < 2 {
             return Err(MLError::InvalidConfiguration(
                 format!("k must be at least 2, got {}", k)
-            ).into());
+            ).into()));
         }
 
         let n_samples = dataset.num_samples();
         if k > n_samples {
             return Err(MLError::InvalidConfiguration(
                 format!("k ({}) cannot be greater than number of samples ({})", k, n_samples)
-            ).into());
+            ).into()));
         }
 
         let mut indices: Vec<usize> = (0..n_samples).collect();

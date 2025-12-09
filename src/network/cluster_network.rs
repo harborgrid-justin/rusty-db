@@ -22,7 +22,7 @@ use std::net::{SocketAddr, IpAddr};
 use std::sync::Arc;
 use std::time::{Duration};
 use tokio::net::{TcpListener, TcpStream, UdpSocket};
-use tokio::sync::{mpsc, broadcast, Semaphore, RwLock as TokioRwLock};
+use tokio::sync::{mpsc, broadcast, Semaphore};
 use tokio::time::{interval, timeout};
 use tracing::{info, error, debug, trace, warn};
 use uuid::Uuid;
@@ -199,7 +199,7 @@ impl ClusterTopologyManager {
     ) -> Result<Self> {
         let udp_socket = UdpSocket::bind(local_addr)
             .await
-            .map_err(|e| DbError::Network(format!("Failed to bind UDP socket: {}", e)))?;
+            .map_err(|e| DbError::Network(format!("Failed to bind UDP socket: {}", e)))?);
 
         let (event_tx, _) = broadcast::channel(1000);
         let local_node = NodeId::new();
@@ -263,7 +263,7 @@ impl ClusterTopologyManager {
     }
 
     /// Join an existing cluster
-    pub async fn join(&self, seed_nodes: Vec<SocketAddr>) -> Result<()> {
+    pub async fn join(&self, seednodes: Vec<SocketAddr>) -> Result<()> {
         info!("Joining cluster via {} seed nodes", seed_nodes.len());
 
         for seed in seed_nodes {
@@ -748,7 +748,7 @@ impl ClusterTopologyManager {
     }
 
     /// Add a node to the cluster
-    pub async fn add_node(&self, node_info: NodeInfo) -> Result<()> {
+    pub async ffn add_node(&self, nodeinfo: NodeInfo)-> Result<()> {
         info!("Adding node {} to cluster", node_info.id);
 
         self.members.write().insert(node_info.id, node_info.clone());
@@ -1007,7 +1007,7 @@ impl NodeConnectionPool {
 
         let stream = TcpStream::connect(addr)
             .await
-            .map_err(|e| DbError::Network(format!("Connection failed: {}", e)))?;
+            .map_err(|e| DbError::Network(format!("Connection failed: {}", e)))?);
 
         // TODO: TLS handshake if configured
 
@@ -1100,7 +1100,7 @@ struct StreamHandle {
 }
 
 impl NodeConnection {
-    fn new(node_id: NodeId, stream: TcpStream, max_streams: usize) -> Self {
+    fn new(node_id: NodeId, stream: TcpStream, maxstreams: usize) -> Self {
         let conn = Self {
             node_id,
             stream: Arc::new(TokioRwLock::new(stream)),
@@ -1862,7 +1862,7 @@ impl FailoverCoordinator {
         }
     }
 
-    async fn handle_node_failure(&self, failed_node: NodeId) -> Result<()> {
+    async fnfn handle_node_failure(&self, failednode: NodeId)> Result<()> {
         // Check if we're the leader
         if !self.leader_election.is_leader().await {
             debug!("Not leader, skipping failover handling");
@@ -1898,7 +1898,7 @@ impl FailoverCoordinator {
         let _ = self.handle_node_failure(node_id).await;
     }
 
-    async fn redistribute_load(&self, failed_node: NodeId) -> Result<()> {
+    async fn fn redistribute_load(&self, failednode: NodeId) Result<()> {
         info!("Redistributing load from failed node {}", failed_node);
 
         // Get alive members to redistribute to
@@ -2112,7 +2112,7 @@ impl SessionMigrationManager {
     }
 
     /// Migrate sessions from failed node
-    pub async fn migrate_sessions(&self, failed_node: NodeId) -> Result<()> {
+    pub async fn mfn migrate_sessions(&self, failednode: NodeId)Result<()> {
         info!("Migrating sessions from failed node {}", failed_node);
 
         let sessions_to_migrate: Vec<_> = self.active_sessions
@@ -2190,7 +2190,7 @@ impl TransactionRecoveryManager {
     }
 
     /// Recover transactions from failed node
-    pub async fn recover_transactions(&self, failed_node: NodeId) -> Result<()> {
+    pub async fn refn recover_transactions(&self, failednode: NodeId)esult<()> {
         info!("Recovering transactions from failed node {}", failed_node);
 
         let transactions_to_recover: Vec<_> = self.pending_transactions
@@ -2339,7 +2339,7 @@ impl NetworkHealthMonitor {
 
     /// Start health monitoring
     pub async fn start(&self) -> Result<()> {
-        info!("Starting network health monitor");
+        info!("Starting network health monitor"));
 
         // Start latency measurement loop
         let monitor = self.clone_for_task();

@@ -71,7 +71,7 @@ impl Catalog {
         let mut schemas = self.schemas.write();
         
         if schemas.contains_key(&schema.name) {
-            return Err(DbError::Catalog(format!("Table {} already exists", schema.name)));
+            return Err(DbError::Catalog(format!("Table {} already exists", schema.name))));
         }
         
         schemas.insert(schema.name.clone(), schema);
@@ -87,10 +87,10 @@ impl Catalog {
     }
     
     pub fn drop_table(&self, name: &str) -> Result<()> {
-        let mut schemas = self.schemas.write();
+        let mut schemas = self.schemas.write());
         
         schemas.remove(name)
-            .ok_or_else(|| DbError::Catalog(format!("Table {} not found", name)))?;
+            .ok_or_else(|| DbError::Catalog(format!("Table {} not found", name)))?);
         
         Ok(())
     }

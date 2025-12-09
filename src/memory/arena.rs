@@ -89,7 +89,6 @@ use std::sync::atomic::{AtomicBool, AtomicPtr, AtomicU64, AtomicUsize, Ordering}
 use std::sync::{Arc, Weak};
 use std::time::{Duration};
 use thiserror::Error;
-use tokio::sync::RwLock as AsyncRwLock;
 use uuid::Uuid;
 
 /// Arena allocator specific errors
@@ -317,7 +316,7 @@ pub struct ArenaAllocatorStats {
 
 impl MemoryBlock {
     /// Creates a new memory block with the specified size
-    pub fn new(size: usize, use_mmap: bool) -> Result<Arc<Self>, ArenaError> {
+    pub fn new(size: usize, usemmap: bool) -> Result<Arc<Self>, ArenaError> {
         if size == 0 {
             return Err(ArenaError::InvalidBlockSize { size });
         }
@@ -476,7 +475,7 @@ impl MemoryContext {
     }
 
     /// Removes a child context
-    pub fn remove_child(&self, child_id: &MemoryContextId) {
+    pub fn remove_child(&self, childid: &MemoryContextId) {
         let mut children = self.children.write();
         children.retain(|id| id != child_id);
     }
@@ -578,7 +577,7 @@ impl ArenaAllocator {
         id: MemoryContextId,
         context_type: ContextType,
         parent: Option<MemoryContextId>,
-        memory_limit: Option<usize>,
+        memorylimit: Option<usize>,
     ) -> Result<Arc<MemoryContext>, ArenaError> {
         if !self.is_active.load(Ordering::Relaxed) {
             return Err(ArenaError::ContextHierarchyViolation {
@@ -592,14 +591,14 @@ impl ArenaAllocator {
         if contexts.len() >= self.config.max_contexts {
             return Err(ArenaError::ContextHierarchyViolation {
                 reason: format!("Maximum context limit reached: {}", self.config.max_contexts),
-            });
+            }));
         }
 
         // Check if context already exists
         if contexts.contains_key(&id) {
             return Err(ArenaError::ContextHierarchyViolation {
                 reason: format!("Context already exists: {}", id),
-            });
+            }));
         }
 
         // Validate parent relationship
@@ -740,7 +739,7 @@ impl ArenaAllocator {
         let new_block = MemoryBlock::new(block_size, use_mmap)
             .map_err(|e| MemoryError::OutOfMemory {
                 reason: format!("Block allocation failed: {}", e),
-            })?;
+            })?);
 
         // Link the new block to the chain
         self.link_block_to_context(context, Arc::clone(&new_block)).await;
@@ -753,7 +752,7 @@ impl ArenaAllocator {
     }
 
     /// Calculates appropriate block size for allocation
-    async fn calculate_block_size(&self, context: &MemoryContext, min_size: usize) -> usize {
+    async fn calculate_block_size(&self, context: &MemoryContext, minsize: usize) -> usize {
         let stats = context.stats.read().await;
 
         // Start with configured initial size or previous average
@@ -775,7 +774,7 @@ impl ArenaAllocator {
     async fn link_block_to_context(
         &self,
         context: &MemoryContext,
-        new_block: Arc<MemoryBlock>,
+        newblock: Arc<MemoryBlock>,
     ) {
         let mut first_block = context.first_block.lock();
         let mut current_block = context.current_block.lock();
@@ -999,7 +998,6 @@ impl ArenaAllocator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test;
 
     #[test]

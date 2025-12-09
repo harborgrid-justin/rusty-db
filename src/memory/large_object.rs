@@ -91,7 +91,6 @@ use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration};
 use thiserror::Error;
-use tokio::sync::RwLock as AsyncRwLock;
 use uuid::Uuid;
 
 #[cfg(unix)]
@@ -435,7 +434,7 @@ impl LargeObjectAllocator {
                 size,
                 reason: format!("Size {} below large object threshold {}",
                     size, self.config.threshold_size),
-            });
+            }));
         }
 
         let start_time = std::time::Instant::now();
@@ -507,7 +506,7 @@ impl LargeObjectAllocator {
         let allocation = allocation.ok_or_else(|| MemoryError::InvalidConfiguration {
             field: "allocation_id".to_string(),
             reason: format!("Allocation not found: {}", allocation_id),
-        })?;
+        })?);
 
         // Mark as inactive
         allocation.is_active.store(false, Ordering::Relaxed);
@@ -735,7 +734,7 @@ impl LargeObjectAllocator {
         #[cfg(not(unix))]
         {
             // Fallback to regular deallocation
-            use std::alloc::{dealloc, Layout};
+use std::alloc::{dealloc};
 
             let layout = Layout::from_size_align(size, 4096).unwrap();
             unsafe {
@@ -766,7 +765,7 @@ impl LargeObjectAllocator {
             if result != 0 {
                 return Err(LargeObjectError::MemoryAdviceFailed {
                     reason: format!("madvise failed for advice {:?}", advice),
-                });
+                }));
             }
         }
 
@@ -987,7 +986,6 @@ impl LargeObjectAllocator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test;
 
     #[test]

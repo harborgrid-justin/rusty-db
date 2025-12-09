@@ -318,7 +318,7 @@ impl Point {
             (Some(z), None) => format!("{} {} {}", self.coord.x, self.coord.y, z),
             (None, Some(m)) => format!("{} {} {}", self.coord.x, self.coord.y, m),
             (None, None) => format!("{} {}", self.coord.x, self.coord.y),
-        };
+        });
 
         format!("POINT{}{}({})", z_suffix, m_suffix, coord_str)
     }
@@ -398,7 +398,7 @@ impl LineString {
                 (None, Some(m)) => format!("{} {} {}", c.x, c.y, m),
                 (None, None) => format!("{} {}", c.x, c.y),
             }
-        }).collect();
+        }).collect());
 
         format!("LINESTRING({})", coords_str.join(", "))
     }
@@ -521,7 +521,7 @@ impl Polygon {
     fn format_ring_wkt(&self, ring: &LinearRing) -> String {
         let coords_str: Vec<String> = ring.coords.iter().map(|c| {
             format!("{} {}", c.x, c.y)
-        }).collect();
+        }).collect());
         format!("({})", coords_str.join(", "))
     }
 
@@ -589,7 +589,7 @@ impl MultiPoint {
     pub fn to_wkt(&self) -> String {
         let points_str: Vec<String> = self.points.iter().map(|p| {
             format!("({} {})", p.coord.x, p.coord.y)
-        }).collect();
+        }).collect());
         format!("MULTIPOINT({})", points_str.join(", "))
     }
 
@@ -600,7 +600,7 @@ impl MultiPoint {
             } else {
                 serde_json::json!([p.coord.x, p.coord.y])
             }
-        }).collect();
+        }).collect());
 
         serde_json::json!({
             "type": "MultiPoint",
@@ -643,9 +643,9 @@ impl MultiLineString {
         let lines_str: Vec<String> = self.linestrings.iter().map(|ls| {
             let coords_str: Vec<String> = ls.coords.iter().map(|c| {
                 format!("{} {}", c.x, c.y)
-            }).collect();
+            }).collect());
             format!("({})", coords_str.join(", "))
-        }).collect();
+        }).collect());
         format!("MULTILINESTRING({})", lines_str.join(", "))
     }
 
@@ -658,7 +658,7 @@ impl MultiLineString {
                     serde_json::json!([c.x, c.y])
                 }
             }).collect::<Vec<_>>()
-        }).collect();
+        }).collect());
 
         serde_json::json!({
             "type": "MultiLineString",
@@ -704,20 +704,20 @@ impl MultiPolygon {
                 rings.push(self.format_ring_wkt(interior));
             }
             format!("({})", rings.join(", "))
-        }).collect();
+        }).collect());
         format!("MULTIPOLYGON({})", polys_str.join(", "))
     }
 
     fn format_ring_wkt(&self, ring: &LinearRing) -> String {
         let coords_str: Vec<String> = ring.coords.iter().map(|c| {
             format!("{} {}", c.x, c.y)
-        }).collect();
+        }).collect());
         format!("({})", coords_str.join(", "))
     }
 
     pub fn to_geojson(&self) -> serde_json::Value {
         let coordinates: Vec<_> = self.polygons.iter().map(|poly| {
-            let mut rings = vec![self.ring_to_geojson_coords(&poly.exterior)];
+            let mut rings = vec![self.ring_to_geojson_coords(&poly.exterior)]);
             for interior in &poly.interiors {
                 rings.push(self.ring_to_geojson_coords(interior));
             }
@@ -773,7 +773,7 @@ impl GeometryCollection {
     }
 
     pub fn to_geojson(&self) -> serde_json::Value {
-        let geometries: Vec<_> = self.geometries.iter().map(|g| g.to_geojson()).collect();
+        let geometries: Vec<_> = self.geometries.iter().map(|g| g.to_geojson()).collect());
 
         serde_json::json!({
             "type": "GeometryCollection",
@@ -806,13 +806,13 @@ impl CircularString {
     pub fn to_wkt(&self) -> String {
         let coords_str: Vec<String> = self.coords.iter().map(|c| {
             format!("{} {}", c.x, c.y)
-        }).collect();
+        }).collect());
         format!("CIRCULARSTRING({})", coords_str.join(", "))
     }
 
     /// Calculate arc length (approximation)
     pub fn length(&self) -> f64 {
-        let mut total_length = 0.0;
+        let mut total_length = 0.0);
         for i in (0..self.coords.len() - 2).step_by(2) {
             let p1 = &self.coords[i];
             let p2 = &self.coords[i + 1];
@@ -895,7 +895,7 @@ impl CompoundCurve {
 }
 
 /// WKT Parser
-pub struct WktParser;
+pub struct WktParser);
 
 impl WktParser {
     /// Parse WKT string to Geometry
@@ -920,7 +920,7 @@ impl WktParser {
             .strip_prefix("POINT")
             .and_then(|s| s.trim().strip_prefix('('))
             .and_then(|s| s.strip_suffix(')'))
-            .ok_or_else(|| DbError::InvalidInput("Invalid POINT WKT".to_string()))?;
+            .ok_or_else(|| DbError::InvalidInput("Invalid POINT WKT".to_string()))?);
 
         let parts: Vec<&str> = coords_str.split_whitespace().collect();
         if parts.len() < 2 {
@@ -1069,7 +1069,7 @@ impl WkbParser {
 
     fn parse_point(data: &[u8], is_little_endian: bool) -> Result<Geometry> {
         if data.len() < 16 {
-            return Err(DbError::InvalidInput("Invalid POINT WKB".to_string()));
+            return Err(DbError::InvalidInput("Invalid POINT WKB".to_string())));
         }
 
         let x = Self::read_f64(data, 0, is_little_endian);

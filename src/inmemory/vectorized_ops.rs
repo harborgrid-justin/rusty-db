@@ -397,7 +397,7 @@ impl VectorizedAggregator {
     }
 
     /// Count non-null values
-    pub fn count(&self, batch: &VectorBatch, null_mask: Option<&[bool]>) -> usize {
+    pub fn count(&self, batch: &VectorBatch, nullmask: Option<&[bool]>) -> usize {
         if let Some(mask) = null_mask {
             mask.iter().filter(|&&is_null| !is_null).count()
         } else {
@@ -671,7 +671,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_vector_mask() {

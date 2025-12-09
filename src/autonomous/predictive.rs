@@ -5,7 +5,7 @@
 
 use std::collections::VecDeque;
 use std::time::SystemTime;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
 use parking_lot::RwLock;
@@ -281,7 +281,7 @@ impl ResourceExhaustionForecaster {
         Self::add_to_history(&mut self.network_history, network_percent, self.max_history);
     }
 
-    fn add_to_history(history: &mut VecDeque<TimeSeriesDataPoint>, value: f64, max_history: usize) {
+    fn add_to_history(history: &mut VecDeque<TimeSeriesDataPoint>, value: f64, maxhistory: usize) {
         if history.len() >= max_history {
             history.pop_front();
         }
@@ -513,12 +513,12 @@ impl CapacityPlanner {
                 recommended_actions.push(format!(
                     "URGENT: Storage will be full in {} days. Expand capacity immediately.",
                     days
-                ));
+                )));
             } else if days < 90 {
                 recommended_actions.push(format!(
                     "Plan storage expansion within {} days to avoid disruption.",
                     days
-                ));
+                )));
             }
         }
 

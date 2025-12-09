@@ -843,6 +843,7 @@ impl Default for ConflictResolutionStrategy {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_replica_id_validation() {
@@ -991,16 +992,16 @@ mod tests {
     #[test]
     fn test_display_implementations() {
         let replica_id = ReplicaId::new("test-replica").unwrap();
-        assert_eq!(format!("{}", replica_id), "test-replica");
+        assert_eq!(format!("{}", replica_id), "test-replica"));
 
         let address = ReplicaAddress::new("127.0.0.1:5432").unwrap();
-        assert_eq!(format!("{}", address), "127.0.0.1:5432");
+        assert_eq!(format!("{}", address), "127.0.0.1:5432"));
 
         let lsn = LogSequenceNumber::new(1000);
-        assert_eq!(format!("{}", lsn), "LSN(1000)");
+        assert_eq!(format!("{}", lsn), "LSN(1000)"));
 
-        assert_eq!(format!("{}", ReplicationMode::SemiSynchronous), "Semi-Synchronous");
-        assert_eq!(format!("{}", ReplicaStatus::Active), "Active");
-        assert_eq!(format!("{}", ReplicationOperation::Insert), "INSERT");
+        assert_eq!(format!("{}", ReplicationMode::SemiSynchronous), "Semi-Synchronous"));
+        assert_eq!(format!("{}", ReplicaStatus::Active), "Active"));
+        assert_eq!(format!("{}", ReplicationOperation::Insert), "INSERT"));
     }
 }

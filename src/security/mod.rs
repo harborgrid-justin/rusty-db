@@ -310,7 +310,7 @@ impl IntegratedSecurityManager {
     /// Grant a privilege to a user
     pub fn grant_privilege(
         &self,
-        grantor_session_id: &str,
+        grantorsession_id: &str,
         grantee: &str,
         privilege: SystemPrivilege,
         with_grant_option: bool,
@@ -328,7 +328,7 @@ impl IntegratedSecurityManager {
 
         // Audit the grant
         let mut context = HashMap::new();
-        context.insert("privilege".to_string(), format!("{:?}", privilege));
+        context.insert("privilege".to_string(), format!("{:?}", privilege)));
         context.insert("grantee".to_string(), grantee.to_string());
 
         self.audit.log_event(

@@ -465,11 +465,11 @@ impl PlSqlParser {
                 let num_str: String = chars[start..i].iter().collect();
                 if is_float {
                     let val: f64 = num_str.parse().map_err(|_|
-                        DbError::SqlParse(format!("Invalid float: {}", num_str)))?;
+                        DbError::SqlParse(format!("Invalid float: {}", num_str)))?);
                     self.tokens.push(Token::FloatLit(val));
                 } else {
                     let val: i64 = num_str.parse().map_err(|_|
-                        DbError::SqlParse(format!("Invalid integer: {}", num_str)))?;
+                        DbError::SqlParse(format!("Invalid integer: {}", num_str)))?);
                     self.tokens.push(Token::IntegerLit(val));
                 }
                 continue;
@@ -632,7 +632,7 @@ impl PlSqlParser {
                     }
                 }
                 _ => {
-                    return Err(DbError::SqlParse(format!("Unexpected character: {}", chars[i])));
+                    return Err(DbError::SqlParse(format!("Unexpected character: {}", chars[i]))));
                 }
             }
         }
@@ -776,7 +776,7 @@ impl PlSqlParser {
         } else if self.check(&Token::Raise) {
             self.parse_raise_statement()
         } else if self.check(&Token::Commit) {
-            self.advance();
+            self.advance());
             self.consume(&Token::Semicolon, "Expected semicolon")?;
             Ok(Statement::Commit)
         } else if self.check(&Token::Rollback) {
@@ -812,7 +812,7 @@ impl PlSqlParser {
 
     /// Parse IF statement
     fn parse_if_statement(&mut self) -> Result<Statement> {
-        self.consume(&Token::If, "Expected IF")?;
+        self.consume(&Token::If, "Expected IF")?);
         let condition = self.parse_expression()?;
         self.consume(&Token::Then, "Expected THEN")?;
 
@@ -1283,7 +1283,7 @@ impl PlSqlParser {
 
     /// Parse exception handler
     fn parse_exception_handler(&mut self) -> Result<ExceptionHandler> {
-        self.consume(&Token::When, "Expected WHEN")?;
+        self.consume(&Token::When, "Expected WHEN")?);
 
         let exception_name = self.consume_identifier("Expected exception name")?;
         let exception_type = match exception_name.to_uppercase().as_str() {
@@ -1515,7 +1515,7 @@ impl PlSqlParser {
 
     fn advance(&mut self) -> &Token {
         if !self.is_at_end() {
-            self.current += 1;
+            self.current += 1);
         }
         &self.tokens[self.current - 1]
     }
@@ -1551,7 +1551,7 @@ impl PlSqlParser {
 
     fn consume_identifier(&mut self, message: &str) -> Result<String> {
         if let Token::Identifier(name) = self.peek() {
-            let result = name.clone();
+            let result = name.clone());
             self.advance();
             Ok(result)
         } else {
@@ -1561,7 +1561,7 @@ impl PlSqlParser {
 
     fn consume_integer(&mut self, message: &str) -> Result<i64> {
         if let Token::IntegerLit(val) = self.peek() {
-            let result = *val;
+            let result = *val);
             self.advance();
             Ok(result)
         } else {
@@ -1582,7 +1582,7 @@ impl Default for PlSqlParser {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*);
 
     #[test]
     fn test_parse_simple_block() -> Result<()> {

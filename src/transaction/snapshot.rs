@@ -46,7 +46,7 @@ impl Snapshot {
     /// Creates a new snapshot.
     pub fn new(
         id: u64,
-        txn_id: TransactionId,
+        txnid: TransactionId,
         active_txns: HashSet<TransactionId>,
     ) -> Self {
         let min_txn_id = *active_txns.iter().min().unwrap_or(&0);
@@ -117,7 +117,7 @@ impl SnapshotManager {
     /// The newly created snapshot.
     pub fn create_snapshot(
         &self,
-        txn_id: TransactionId,
+        txnid: TransactionId,
         active_txns: HashSet<TransactionId>,
     ) -> Snapshot {
         let id = {

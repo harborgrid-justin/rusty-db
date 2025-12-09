@@ -413,7 +413,7 @@ impl MemoryManager {
         if pools.contains_key(&pool.id) {
             return Err(DbError::AlreadyExists(
                 format!("Pool {} already exists", pool.id)
-            ));
+            )));
         }
         pools.insert(pool.id, pool);
         Ok(())
@@ -497,14 +497,14 @@ impl MemoryManager {
 
         let mut pools = self.pools.write().unwrap();
         let pool = pools.get_mut(&pool_id)
-            .ok_or_else(|| DbError::NotFound(format!("Pool {} not found", pool_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Pool {} not found", pool_id)))?);
 
         if !pool.can_allocate(size) {
             let mut stats = self.stats.write().unwrap();
             stats.failed_allocations += 1;
             return Err(DbError::ResourceExhausted(
                 format!("Pool {} cannot allocate {} bytes", pool.name, size)
-            ));
+            )));
         }
 
         pool.allocated_size += size;
@@ -537,7 +537,7 @@ impl MemoryManager {
     ) -> Result<()> {
         let mut pools = self.pools.write().unwrap();
         let pool = pools.get_mut(&pool_id)
-            .ok_or_else(|| DbError::NotFound(format!("Pool {} not found", pool_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Pool {} not found", pool_id)))?);
 
         pool.allocated_size = pool.allocated_size.saturating_sub(size);
 
@@ -568,7 +568,7 @@ impl MemoryManager {
     ) -> Result<()> {
         let mut quotas = self.session_quotas.write().unwrap();
         let quota = quotas.get_mut(&session_id)
-            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?);
 
         quota.allocate(size, is_work_area)?;
 
@@ -660,7 +660,7 @@ impl MemoryManager {
         if group_limits.contains_key(&group_id) {
             return Err(DbError::AlreadyExists(
                 format!("Group {} limits already exist", group_id)
-            ));
+            )));
         }
 
         group_limits.insert(group_id, GroupMemoryLimits {
@@ -717,7 +717,7 @@ impl MemoryManager {
                         }
                     ),
                     timestamp: SystemTime::now(),
-                });
+                }));
             }
         }
 

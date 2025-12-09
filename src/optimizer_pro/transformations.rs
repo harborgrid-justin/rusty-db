@@ -135,7 +135,7 @@ impl QueryTransformer {
                 text: format!("SELECT * FROM {}", mv.name),
                 param_types: query.param_types.clone(),
                 schema_version: query.schema_version,
-            });
+            }));
         }
 
         Ok(query.clone())
@@ -312,7 +312,7 @@ impl TransformationRule for MaterializedViewRewriteRule {
                 text: format!("SELECT * FROM {}", mv.name),
                 param_types: query.param_types.clone(),
                 schema_version: query.schema_version,
-            });
+            }));
         }
         Ok(query.clone())
     }
@@ -605,7 +605,7 @@ impl CommonSubexpressionEliminator {
         let mut expr_counts: HashMap<String, usize> = HashMap::new();
 
         for expr in expressions {
-            let key = format!("{:?}", expr);
+            let key = format!("{:?}", expr));
             *expr_counts.entry(key).or_insert(0) += 1;
         }
 
@@ -746,6 +746,7 @@ impl ExpressionUtils {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::SystemTime;
 
     #[test]
     fn test_query_transformer() {

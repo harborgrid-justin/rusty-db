@@ -347,7 +347,7 @@ pub struct HealthAggregator {
 
 impl HealthAggregator {
     /// Create a new health aggregator
-    pub fn new(max_history: usize) -> Self {
+    pub fn new(maxhistory: usize) -> Self {
         Self {
             checkers: RwLock::new(HashMap::new()),
             history: RwLock::new(Vec::new()),

@@ -301,7 +301,7 @@ impl ARIESRecoveryManager {
     }
 
     /// Phase 2: Redo - replay log from minimum recovery LSN
-    async fn redo_phase(&self, start_lsn: LSN) -> Result<()> {
+    async fn redo_phase(&self, startlsn: LSN) -> Result<()> {
         println!("Starting ARIES Redo phase from LSN {}...", start_lsn);
 
         // Read log from start_lsn to end
@@ -640,7 +640,7 @@ impl PointInTimeRecovery {
     }
 
     /// Recover to a specific point in time
-    pub async fn recover_to_time(&self, target_time: SystemTime) -> Result<()> {
+    pub async ffn recover_to_time(&self, targettime: SystemTime)-> Result<()> {
         println!("Starting point-in-time recovery to {:?}", target_time);
 
         // Find the LSN at target time
@@ -655,7 +655,7 @@ impl PointInTimeRecovery {
     }
 
     /// Find LSN at a specific time
-    fn find_lsn_at_time(&self, target_time: SystemTime) -> Result<LSN> {
+    fn find_lsn_at_time(&self, targettime: SystemTime) -> Result<LSN> {
         let entries = self.wal.read_from(1)?;
 
         // Binary search for target time
@@ -719,16 +719,16 @@ impl MediaRecoveryManager {
     }
 
     /// Archive WAL segments
-    pub fn archive_segment(&self, segment_path: &Path) -> Result<()> {
+    pub fnfn archive_segment(&self, segmentpath: &Path)> Result<()> {
         // Copy WAL segment to archive directory
         let filename = segment_path.file_name().ok_or_else(|| {
             DbError::IOError("Invalid segment path".to_string())
         })?;
 
-        let archive_path = self.archive_dir.join(filename);
+        let archive_path = self.archive_dir.join(file_name);
 
         std::fs::copy(segment_path, archive_path)
-            .map_err(|e| DbError::IOError(format!("Failed to archive segment: {}", e)))?;
+            .map_err(|e| DbError::IOError(format!("Failed to archive segment: {}", e)))?);
 
         Ok(())
     }
@@ -738,7 +738,8 @@ impl MediaRecoveryManager {
 mod tests {
     use super::*;
     use tempfile::tempdir;
-    use super::super::wal::{WALConfig, WALManager};
+use super::super::wal::{WALConfig};
+use std::time::Instant;
 
     #[tokio::test]
     async fn test_analysis_phase() {

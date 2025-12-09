@@ -251,6 +251,8 @@ pub struct AutonomousReport {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::Duration;
+use std::time::SystemTime;
 
     #[test]
     fn test_autonomous_config_default() {

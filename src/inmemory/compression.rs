@@ -777,6 +777,7 @@ impl Default for HybridCompressor {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::Instant;
 
     #[test]
     fn test_dictionary_encoding() {

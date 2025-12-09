@@ -141,7 +141,7 @@ impl Ciphertext {
 
     /// Serialize to bytes
     pub fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
+        let mut bytes = Vec::new());
         bytes.push(self.version);
         bytes.push(self.algorithm.to_u8());
 
@@ -167,7 +167,7 @@ impl Ciphertext {
 
         let version = bytes[0];
         if version != CIPHERTEXT_VERSION {
-            return Err(DbError::InvalidInput(format!("Unsupported version: {}", version)));
+            return Err(DbError::InvalidInput(format!("Unsupported version: {}", version))));
         }
 
         let algorithm = Algorithm::from_u8(bytes[1])?;
@@ -304,7 +304,7 @@ impl EncryptionEngine {
         // Encrypt
         let ciphertext_with_tag = cipher
             .encrypt(nonce, payload)
-            .map_err(|e| DbError::Internal(format!("AES-GCM encryption failed: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("AES-GCM encryption failed: {}", e)))?);
 
         // Split ciphertext and tag
         let ciphertext_len = ciphertext_with_tag.len() - TAG_SIZE;
@@ -348,7 +348,7 @@ impl EncryptionEngine {
         // Decrypt
         let plaintext = cipher
             .decrypt(nonce, payload)
-            .map_err(|e| DbError::InvalidInput(format!("AES-GCM decryption failed: {}", e)))?;
+            .map_err(|e| DbError::InvalidInput(format!("AES-GCM decryption failed: {}", e)))?);
 
         Ok(plaintext)
     }
@@ -382,7 +382,7 @@ impl EncryptionEngine {
         // Encrypt
         let ciphertext_with_tag = cipher
             .encrypt(nonce, payload)
-            .map_err(|e| DbError::Internal(format!("ChaCha20 encryption failed: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("ChaCha20 encryption failed: {}", e)))?);
 
         // Split ciphertext and tag
         let ciphertext_len = ciphertext_with_tag.len() - TAG_SIZE;
@@ -431,7 +431,7 @@ impl EncryptionEngine {
         // Decrypt
         let plaintext = cipher
             .decrypt(nonce, payload)
-            .map_err(|e| DbError::InvalidInput(format!("ChaCha20 decryption failed: {}", e)))?;
+            .map_err(|e| DbError::InvalidInput(format!("ChaCha20 decryption failed: {}", e)))?);
 
         Ok(plaintext)
     }
@@ -530,9 +530,9 @@ impl KeyManager {
     /// Generate a new encryption key
     pub fn generate_key(
         &self,
-        key_id: Option<String>,
+        keyid: Option<String>,
         algorithm: Algorithm,
-        parent_key_id: Option<String>,
+        parent_keyid: Option<String>,
     ) -> Result<String> {
         let key_material = SecureKeyMaterial::generate()?;
 
@@ -544,7 +544,7 @@ impl KeyManager {
 
         let id = key_id.unwrap_or_else(|| {
             format!("KEY_{:08X}_{}", version, uuid::Uuid::new_v4())
-        });
+        }));
 
         let key = SecureKey {
             id: id.clone(),
@@ -568,7 +568,7 @@ impl KeyManager {
     /// Import an existing key
     pub fn import_key(
         &self,
-        key_id: String,
+        keyid: String,
         key_material: KeyMaterial,
         algorithm: Algorithm,
     ) -> Result<()> {
@@ -603,7 +603,7 @@ impl KeyManager {
 
     /// Mark key as inactive
     pub fn deactivate_key(&self, key_id: &str) -> Result<()> {
-        let mut keys = self.keys.write();
+        let mut keys = self.keys.write());
         if let Some(key) = keys.get_mut(key_id) {
             key.is_active = false;
             Ok(())
@@ -614,9 +614,9 @@ impl KeyManager {
 
     /// Remove a key (use with caution!)
     pub fn remove_key(&self, key_id: &str) -> Result<()> {
-        let mut keys = self.keys.write();
+        let mut keys = self.keys.write());
         keys.remove(key_id)
-            .ok_or_else(|| DbError::NotFound(format!("Key not found: {}", key_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Key not found: {}", key_id)))?);
 
         // Remove from hierarchy
         self.hierarchy.write().remove(key_id);
@@ -661,13 +661,13 @@ pub struct KeyDerivation;
 
 impl KeyDerivation {
     /// HKDF-Expand (simplified)
-    pub fn hkdf_expand(prk: &[u8], info: &[u8], output_len: usize) -> Result<Vec<u8>> {
+    pub fn hkdf_expand(prk: &[u8], info: &[u8], outputlen: usize) -> Result<Vec<u8>> {
         let mut output = Vec::with_capacity(output_len);
         let mut counter = 1u8;
 
         while output.len() < output_len {
             let mut mac = HmacSha256::new_from_slice(prk)
-                .map_err(|e| DbError::Internal(format!("HKDF error: {}", e)))?;
+                .map_err(|e| DbError::Internal(format!("HKDF error: {}", e)))?);
 
             if counter > 1 {
                 mac.update(&output[output.len() - 32..]);
@@ -697,11 +697,11 @@ impl KeyDerivation {
 
         // Convert salt to base64 for SaltString
         let salt_string = SaltString::encode_b64(salt)
-            .map_err(|e| DbError::Internal(format!("Salt encoding error: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Salt encoding error: {}", e)))?);
 
         let password_hash = argon2
             .hash_password(password.as_bytes(), &salt_string)
-            .map_err(|e| DbError::Internal(format!("Argon2 error: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Argon2 error: {}", e)))?);
 
         // Extract hash bytes
         let hash = password_hash.hash
@@ -716,7 +716,7 @@ impl KeyDerivation {
     }
 
     /// Simple key derivation for deterministic encryption
-    pub fn derive_deterministic(base_key: &[u8], context: &[u8]) -> Result<KeyMaterial> {
+    pub fn derive_deterministic(basekey: &[u8], context: &[u8]) -> Result<KeyMaterial> {
         let mut hasher = Sha256::new();
         hasher.update(base_key);
         hasher.update(context);
@@ -832,7 +832,7 @@ impl ColumnEncryptor {
 
         let ciphertext_with_tag = cipher
             .encrypt(nonce, plaintext)
-            .map_err(|e| DbError::Internal(format!("Deterministic encryption failed: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Deterministic encryption failed: {}", e)))?);
 
         // Add deterministic marker
         let mut result = vec![0xFF]; // Marker byte
@@ -859,7 +859,7 @@ impl ColumnEncryptor {
 
         let plaintext = cipher
             .decrypt(nonce, &ciphertext[1..])
-            .map_err(|e| DbError::InvalidInput(format!("Deterministic decryption failed: {}", e)))?;
+            .map_err(|e| DbError::InvalidInput(format!("Deterministic decryption failed: {}", e)))?);
 
         Ok(plaintext)
     }
@@ -894,7 +894,7 @@ impl TransparentEncryption {
         let key = self.key_manager.get_key(key_id)?;
 
         // Use page ID as AAD
-        let aad = format!("PAGE:{}", page_id);
+        let aad = format!("PAGE:{}", page_id));
         let ciphertext = self.engine.encrypt(
             key.key_material.as_bytes(),
             page_data,
@@ -915,7 +915,7 @@ impl TransparentEncryption {
         let ciphertext = Ciphertext::from_bytes(encrypted_data)?;
 
         // Use page ID as AAD
-        let aad = format!("PAGE:{}", page_id);
+        let aad = format!("PAGE:{}", page_id));
         self.engine.decrypt(
             key.key_material.as_bytes(),
             &ciphertext,
@@ -1002,7 +1002,7 @@ impl EncryptedIndex {
     pub fn generate_search_token(
         &self,
         key_id: &str,
-        search_value: &[u8],
+        searchvalue: &[u8],
         column_id: &str,
     ) -> Result<Vec<u8>> {
         let key = self.key_manager.get_key(key_id)?;
@@ -1015,7 +1015,7 @@ impl EncryptedIndex {
 
         // Hash the value with the token key
         let mut mac = HmacSha256::new_from_slice(&token_key)
-            .map_err(|e| DbError::Internal(format!("Token generation error: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Token generation error: {}", e)))?);
         mac.update(search_value);
         let result = mac.finalize();
 
@@ -1105,6 +1105,7 @@ fn current_timestamp() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_aes256gcm_encryption() {

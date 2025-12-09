@@ -15,7 +15,6 @@ use std::collections::{HashMap, BinaryHeap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
 use std::time::Duration;
-use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
@@ -96,7 +95,7 @@ impl IoRequest {
     /// Create a new I/O request
     pub fn new(
         id: IoRequestId,
-        group_id: ConsumerGroupId,
+        groupid: ConsumerGroupId,
         request_type: IoRequestType,
         priority: IoPriority,
         size_bytes: u64,
@@ -457,7 +456,7 @@ impl IoScheduler {
         if allocations.contains_key(&group_id) {
             return Err(DbError::AlreadyExists(
                 format!("Group {} already registered", group_id)
-            ));
+            )));
         }
 
         allocations.insert(
@@ -694,10 +693,10 @@ impl IoScheduler {
     }
 
     /// Complete an I/O request
-    pub fn complete_request(&self, request_id: IoRequestId) -> Result<()> {
+    pub fn complete_request(&self, requestid: IoRequestId) -> Result<()> {
         let mut requests = self.requests.write().unwrap();
         let request = requests.get_mut(&request_id)
-            .ok_or_else(|| DbError::NotFound(format!("Request {} not found", request_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Request {} not found", request_id)))?);
 
         request.completed_at = Some(Instant::now());
         let request_type = request.request_type;
@@ -783,6 +782,7 @@ impl IoScheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::collections::VecDeque;
 
     #[test]
     fn test_io_scheduler_creation() {

@@ -102,7 +102,7 @@ impl<T: Clone> RTree<T> {
     fn search_recursive(
         &self,
         node_ref: NodeRef<T>,
-        query_bbox: &BoundingBox,
+        querybbox: &BoundingBox,
     ) -> Result<Vec<(BoundingBox, T)>> {
         let node = node_ref.read();
         let entries = node.entries.read();

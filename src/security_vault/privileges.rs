@@ -129,7 +129,7 @@ impl PrivilegeGrant {
     /// Check if privilege is unused
     pub fn is_unused(&self, threshold_days: u32) -> bool {
         if let Some(last_used) = self.last_used {
-            let threshold = chrono::Utc::now().timestamp() - (threshold_days as i64 * 86400);
+            let threshold = chrono::Utc::now().timestamp() - (threshold_days as i64 * 86400));
             last_used < threshold
         } else {
             // Never used
@@ -313,7 +313,7 @@ impl PrivilegeAnalyzer {
 
     /// Create a role
     pub fn create_role(&mut self, name: &str) -> Result<()> {
-        let role = Role::new(name.to_string());
+        let role = Role::new(name.to_string()));
         self.roles.write().insert(name.to_string(), role);
         Ok(())
     }
@@ -322,7 +322,7 @@ impl PrivilegeAnalyzer {
     pub fn grant_to_role(&mut self, role_name: &str, privilege: PrivilegeType) -> Result<()> {
         let mut roles = self.roles.write();
         let role = roles.get_mut(role_name)
-            .ok_or_else(|| DbError::NotFound(format!("Role not found: {}", role_name)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Role not found: {}", role_name)))?);
 
         role.add_privilege(privilege);
         Ok(())
@@ -332,7 +332,7 @@ impl PrivilegeAnalyzer {
     pub fn grant_role(&mut self, user_id: &str, role_name: &str) -> Result<()> {
         // Verify role exists
         if !self.roles.read().contains_key(role_name) {
-            return Err(DbError::NotFound(format!("Role not found: {}", role_name)));
+            return Err(DbError::NotFound(format!("Role not found: {}", role_name))));
         }
 
         self.user_roles.write()
@@ -358,7 +358,7 @@ impl PrivilegeAnalyzer {
     /// Record privilege usage
     pub fn record_usage(&mut self, user_id: &str, privilege: PrivilegeType) {
         // Update usage in grants
-        let mut grants = self.user_grants.write();
+        let mut grants = self.user_grants.write());
         if let Some(user_grants) = grants.get_mut(user_id) {
             for grant in user_grants.iter_mut() {
                 if grant.privilege == privilege {
@@ -497,7 +497,7 @@ impl PrivilegeAnalyzer {
                                 privilege.name(),
                             ],
                             is_direct: false,
-                        });
+                        }));
                     }
                 }
             }
@@ -539,7 +539,7 @@ impl PrivilegeAnalyzer {
     }
 
     /// Mine roles from usage patterns
-    pub fn mine_roles(&self, min_users: usize) -> Vec<PrivilegeRecommendation> {
+    pub fn mine_roles(&self, minusers: usize) -> Vec<PrivilegeRecommendation> {
         let mut recommendations = Vec::new();
 
         // Group users by their privilege sets
@@ -560,7 +560,7 @@ impl PrivilegeAnalyzer {
         // Find common patterns
         for (privileges, users) in privilege_sets {
             if users.len() >= min_users && privileges.len() >= 3 {
-                let role_name = format!("DISCOVERED_ROLE_{}", users.len());
+                let role_name = format!("DISCOVERED_ROLE_{}", users.len()));
                 recommendations.push(PrivilegeRecommendation::CreateRole {
                     role_name,
                     privileges,
@@ -761,7 +761,7 @@ mod tests {
 
         // Grant same privileges to multiple users
         for i in 1..=5 {
-            let user = format!("user{}", i);
+            let user = format!("user{}", i));
             analyzer.grant_privilege(&user, priv1.clone(), "admin").unwrap();
             analyzer.grant_privilege(&user, priv2.clone(), "admin").unwrap();
             analyzer.grant_privilege(&user, priv3.clone(), "admin").unwrap();

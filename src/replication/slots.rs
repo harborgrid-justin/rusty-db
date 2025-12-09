@@ -979,7 +979,7 @@ impl ReplicationSlotManager {
     }
 
     /// Creates a consumption stream for a slot
-    async fn create_consumption_stream(&self, slot_id: &SlotId) -> Result<SlotConsumptionStream, SlotError> {
+    async fn create_consumption_stream(&self, slotid: &SlotId) -> Result<SlotConsumptionStream, SlotError> {
         let (change_sender, change_receiver) = mpsc::unbounded_channel();
         let (error_sender, error_receiver) = mpsc::unbounded_channel();
 
@@ -1314,7 +1314,6 @@ impl Default for ReplicationSlotManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_slot_name_validation() {

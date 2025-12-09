@@ -446,7 +446,7 @@ impl PerformanceHub {
     ) {
         let mut analyzer = self.wait_analyzer.write();
 
-        let key = format!("{}:{}", wait_class, wait_event);
+        let key = format!("{}:{}", wait_class, wait_event));
         let wait_micros = wait_time.as_micros() as u64;
 
         let metrics = analyzer.wait_events.entry(key).or_insert_with(|| {

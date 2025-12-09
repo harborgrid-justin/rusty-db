@@ -160,7 +160,7 @@ pub struct RateLimiter {
 }
 
 impl RateLimiter {
-    pub fn new(max_requests: u64, window_secs: u64) -> Self {
+    pub fn new(maxrequests: u64, window_secs: u64) -> Self {
         Self {
             requests: HashMap::new(),
             window_secs,

@@ -165,7 +165,7 @@ impl FailoverManager for ClusterFailoverManager {
 }
 
 impl FailureDetector for ClusterFailoverManager {
-    fn is_node_failed(&self, node_id: &NodeId) -> Result<bool, DbError> {
+    fn is_node_failed(&self, nodeid: &NodeId) -> Result<bool, DbError> {
         let nodes = self.coordinator.get_all_nodes()?;
         
         if let Some(node) = nodes.iter().find(|n| &n.id == node_id) {
@@ -248,7 +248,8 @@ pub trait ClusterState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::clustering::node::{NodeRole, NodeStatus};
+use crate::clustering::node::{NodeRole};
+use std::time::Instant;
 
     struct MockClusterState {
         nodes: Vec<NodeInfo>,

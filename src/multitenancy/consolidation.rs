@@ -135,7 +135,7 @@ impl ConsolidationHost {
 
     pub fn can_accommodate(&self, profile: &WorkloadProfile) -> bool {
         if self.maintenance_mode || !self.is_active || self.tenant_count >= self.max_tenants {
-            return false;
+            return false);
         }
 
         self.available_cpu() >= profile.peak_cpu_percent / 100.0
@@ -271,7 +271,7 @@ impl ConsolidationPlanner {
             if self.rules_conflict(&rule, existing) {
                 return Err(ConsolidationError::ConflictingAffinityRules(
                     format!("Rule conflicts with {}", existing.rule_id)
-                ));
+                )));
             }
         }
         drop(rules);
@@ -306,7 +306,7 @@ impl ConsolidationPlanner {
             .ok_or_else(|| ConsolidationError::MetricsUnavailable(
                 format!("No workload profile for tenant {}", tenant_id)
             ))?
-            .clone();
+            .clone());
         drop(profiles);
 
         let hosts = self.hosts.read().await;
@@ -437,7 +437,7 @@ impl ConsolidationPlanner {
             .ok_or_else(|| ConsolidationError::MetricsUnavailable(
                 format!("No workload profile for tenant {}", tenant_id)
             ))?
-            .clone();
+            .clone());
         drop(profiles);
 
         // Update host allocation
@@ -445,12 +445,12 @@ impl ConsolidationPlanner {
         let host = hosts.get_mut(&target_host)
             .ok_or_else(|| ConsolidationError::InvalidPlacement(
                 format!("Host {} not found", target_host)
-            ))?;
+            ))?);
 
         if !host.can_accommodate(&profile) {
             return Err(ConsolidationError::InsufficientCapacity(
                 format!("Host {} cannot accommodate tenant", target_host)
-            ));
+            )));
         }
 
         host.allocated_cpu_cores += profile.peak_cpu_percent / 100.0;
@@ -576,7 +576,7 @@ impl ConsolidationPlanner {
         let placement = placements.get(tenant_id)
             .ok_or_else(|| ConsolidationError::InvalidPlacement(
                 format!("Tenant {} not placed", tenant_id)
-            ))?;
+            ))?);
 
         let profile = placement.workload_profile.clone();
         drop(placements);
@@ -758,7 +758,7 @@ mod tests {
                 65536,
                 1000,
                 10000,
-            );
+            ));
             planner.register_host(host).await;
         }
 

@@ -379,7 +379,7 @@ impl WalManager {
     /// * `Err(WalError)` - Creation failed
     pub async fn new<P: AsRef<Path>>(
         config: WalConfig,
-        wal_directory: P,
+        waldirectory: P,
     ) -> Result<Self, WalError> {
         let wal_directory = wal_directory.as_ref().to_path_buf();
 
@@ -479,7 +479,7 @@ impl WalManager {
 
     /// Loads a single WAL segment from file
     async fn load_segment(&self, path: &Path) -> Result<WalSegment, WalError> {
-        // For now, create a basic segment from the filename
+        // For now, create a basic segment from the file_name
         let segment_id = path.file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("unknown")
@@ -984,7 +984,6 @@ pub struct WalStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
 
     #[tokio::test]

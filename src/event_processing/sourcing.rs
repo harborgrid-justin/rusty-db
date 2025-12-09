@@ -117,7 +117,7 @@ pub trait EventStore: Send + Sync {
     ) -> Result<Vec<EventEnvelope>>;
 
     /// Get all events of a specific type
-    fn get_events_by_type(&self, event_type: &str) -> Result<Vec<EventEnvelope>>;
+    fn get_events_by_type(&self, eventtype: &str) -> Result<Vec<EventEnvelope>>;
 
     /// Get events in a time range
     fn get_events_by_time_range(
@@ -175,7 +175,7 @@ impl EventStore for InMemoryEventStore {
         &mut self,
         aggregate_id: &AggregateId,
         events: Vec<EventEnvelope>,
-        expected_version: Option<Version>,
+        expectedversion: Option<Version>,
     ) -> Result<Version> {
         // Check expected version
         let mut versions = self.versions.write().unwrap();
@@ -186,7 +186,7 @@ impl EventStore for InMemoryEventStore {
                 return Err(crate::error::DbError::InvalidOperation(format!(
                     "Version mismatch: expected {:?}, got {:?}",
                     expected, current_version
-                )));
+                ))));
             }
         }
 
@@ -226,7 +226,7 @@ impl EventStore for InMemoryEventStore {
     fn get_events_from_version(
         &self,
         aggregate_id: &AggregateId,
-        from_version: Version,
+        fromversion: Version,
     ) -> Result<Vec<EventEnvelope>> {
         let events = self.events.read().unwrap();
         Ok(events
@@ -624,7 +624,7 @@ impl EventReplayEngine {
 /// Event upcaster for versioning
 pub trait EventUpcaster: Send + Sync {
     /// Upcast an event from an old version to the current version
-    fn upcast(&self, event: Event, from_version: u32, to_version: u32) -> Result<Event>;
+    ffn upcast(&self, event: Event, fromversion: u32, toversion: u32) Result<Event>;
 
     /// Get the current schema version
     fn current_version(&self) -> u32;
@@ -707,6 +707,7 @@ impl Aggregate for ExampleAggregate {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_event_store() {

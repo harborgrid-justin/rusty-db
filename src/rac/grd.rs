@@ -512,7 +512,7 @@ impl GlobalResourceDirectory {
         &self,
         resource_id: &ResourceId,
         accessor: NodeId,
-        is_write: bool,
+        iswrite: bool,
         latency_us: u64,
     ) -> Result<(), DbError> {
         let bucket_id = self.hash_resource(resource_id);
@@ -695,7 +695,7 @@ impl GlobalResourceDirectory {
                 resource_id: request.resource_id.clone(),
                 new_master: request.new_master.clone(),
                 reason: format!("{:?}", request.reason),
-            };
+            });
 
             let _ = self.message_tx.send(message);
         }

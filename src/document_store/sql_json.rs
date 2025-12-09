@@ -132,7 +132,7 @@ impl JsonTableFunction {
     /// ```
     pub fn execute(
         json: &Value,
-        row_path: &str,
+        rowpath: &str,
         columns: Vec<JsonTableColumn>,
     ) -> Result<JsonTableResult> {
         let mut result = JsonTableResult::new(
@@ -236,7 +236,6 @@ impl JsonTableFunction {
         match &column.on_empty {
             ErrorHandling::Null => Ok(Value::Null),
             ErrorHandling::Default(v) => Ok(v.clone()),
-            ErrorHandling::Error => Err(crate::error::DbError::InvalidInput(
                 format!("Empty value for column '{}'", column.name)
             )),
         }
@@ -244,7 +243,7 @@ impl JsonTableFunction {
 }
 
 /// JSON_QUERY function - extract JSON fragments
-pub struct JsonQueryFunction;
+pub struct JsonQueryFunction);
 
 impl JsonQueryFunction {
     /// Execute JSON_QUERY
@@ -279,7 +278,6 @@ impl JsonQueryFunction {
                 if results.len() == 1 {
                     Ok(Some(results[0].clone()))
                 } else {
-                    Err(crate::error::DbError::InvalidInput(
                         "Multiple values found, use WITH WRAPPER".to_string()
                     ))
                 }
@@ -318,7 +316,7 @@ impl JsonValueFunction {
     pub fn execute(
         json: &Value,
         path: &str,
-        returning_type: JsonDataType,
+        returningtype: JsonDataType,
     ) -> Result<Option<Value>> {
         let mut parser = JsonPathParser::new(path.to_string());
         let json_path = parser.parse()?;
@@ -330,7 +328,6 @@ impl JsonValueFunction {
         }
 
         if results.len() > 1 {
-            return Err(crate::error::DbError::InvalidInput(
                 "JSON_VALUE requires a single scalar value".to_string()
             ));
         }
@@ -339,7 +336,6 @@ impl JsonValueFunction {
 
         // Ensure it's a scalar value
         if value.is_object() || value.is_array() {
-            return Err(crate::error::DbError::InvalidInput(
                 "JSON_VALUE requires a scalar value, not object or array".to_string()
             ));
         }
@@ -374,7 +370,7 @@ impl JsonExistsFunction {
         path: &str,
         filter: &str,
     ) -> Result<bool> {
-        let full_path = format!("{}[?({})]", path, filter);
+        let full_path = format!("{}[?({})]", path, filter));
         Self::execute(json, &full_path)
     }
 }
@@ -588,9 +584,8 @@ impl TransformOperation {
                     current = obj.entry(part.to_string())
                         .or_insert_with(|| Value::Object(serde_json::Map::new()));
                 } else {
-                    return Err(crate::error::DbError::InvalidInput(
                         format!("Cannot navigate path: {}", path)
-                    ));
+                    )));
                 }
             }
         }
@@ -615,13 +610,11 @@ impl TransformOperation {
             } else {
                 if let Value::Object(obj) = current {
                     current = obj.get_mut(*part)
-                        .ok_or_else(|| crate::error::DbError::InvalidInput(
                             format!("Path not found: {}", path)
-                        ))?;
+                        ))?);
                 } else {
-                    return Err(crate::error::DbError::InvalidInput(
                         format!("Cannot navigate path: {}", path)
-                    ));
+                    )));
                 }
             }
         }

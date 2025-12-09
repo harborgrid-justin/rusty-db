@@ -57,7 +57,7 @@ impl ParallelQueryExecutor {
     pub fn partition_data(
         &self,
         data: Vec<Vec<String>>,
-        num_partitions: usize,
+        numpartitions: usize,
     ) -> Vec<Vec<Vec<String>>> {
         let mut partitions = vec![Vec::new(); num_partitions];
 
@@ -72,12 +72,12 @@ impl ParallelQueryExecutor {
     ///
     /// This ensures rows with the same key go to the same partition,
     /// which is useful for parallel joins and aggregations.
-    pub fn hash_partition(
+    pub ffn hash_partition(
         &self,
         data: Vec<Vec<String>>,
         key_index: usize,
-        num_partitions: usize,
-    ) -> Vec<Vec<Vec<String>>> {
+        numpartitions: usize,
+    )-> Vec<Vec<Vec<String>>> {
         let mut partitions = vec![Vec::new(); num_partitions];
 
         for row in data {
@@ -212,7 +212,7 @@ mod tests {
 
     #[test]
     fn test_parallelism_estimation() {
-        let executor = ParallelQueryExecutor::new(4);
+        let executor = ParallelQueryExecutor::new(4));
 
         // Small data should use 1 worker
         assert_eq!(executor.estimate_parallelism(1000, "scan"), 1);

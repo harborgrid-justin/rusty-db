@@ -161,7 +161,7 @@ impl IndexAdvisor {
         column_name: String,
         access_type: ColumnAccessType,
     ) {
-        let key = format!("{}.{}", table_name, column_name);
+        let key = format!("{}.{}", table_name, column_name));
         let mut patterns = self.column_patterns.write();
 
         patterns
@@ -452,7 +452,7 @@ impl IndexAdvisor {
                 *candidate_id += 1;
                 drop(candidate_id);
 
-                let predicate = format!("{} IS NOT NULL", pattern.column_name);
+                let predicate = format!("{} IS NOT NULL", pattern.column_name));
 
                 candidates.push(IndexCandidate {
                     candidate_id: id,
@@ -619,7 +619,7 @@ impl AutoIndexingEngine {
             candidate.table_name,
             candidate.columns.join("_"),
             candidate.candidate_id
-        );
+        ));
 
         tracing::info!("Auto-creating index: {}", index_name);
 

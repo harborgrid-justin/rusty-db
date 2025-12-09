@@ -162,7 +162,7 @@ impl IndexDefinition {
 
     /// Add a field to the index
     pub fn add_field(mut self, field: IndexField) -> Self {
-        self.fields.push(field);
+        self.fields.push(field));
         self
     }
 
@@ -286,7 +286,7 @@ impl BTreeIndex {
                     if !existing_ids.is_empty() {
                         return Err(crate::error::DbError::ConstraintViolation(
                             format!("Unique constraint violation on index '{}'", self.definition.name)
-                        ));
+                        )));
                     }
                 }
             }
@@ -599,7 +599,7 @@ impl FullTextIndex {
         false
     }
 
-    fn extract_text(&self, json: &serde_json::Value) -> Result<String> {
+    fn extract_text(&self, json: &serdejson::Value) -> Result<String> {
         let mut texts = Vec::new();
 
         for field in &self.definition.fields {
@@ -732,9 +732,8 @@ impl IndexManager {
         let mut indexes = self.indexes.write().unwrap();
 
         if indexes.contains_key(&definition.name) {
-            return Err(crate::error::DbError::AlreadyExists(
                 format!("Index '{}' already exists", definition.name)
-            ));
+            )));
         }
 
         let index = match definition.index_type {
@@ -748,7 +747,6 @@ impl IndexManager {
                 Index::TTL(TTLIndex::new(definition.clone()))
             }
             IndexType::Geospatial => {
-                return Err(crate::error::DbError::NotImplemented(
                     "Geospatial indexes not yet implemented".to_string()
                 ));
             }
@@ -766,7 +764,6 @@ impl IndexManager {
         if indexes.remove(name).is_some() {
             Ok(())
         } else {
-            Err(crate::error::DbError::NotFound(
                 format!("Index '{}' not found", name)
             ))
         }
@@ -786,9 +783,9 @@ impl Default for IndexManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*);
     use serde_json::json;
-    use crate::document_store::document::Document;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_btree_index() {

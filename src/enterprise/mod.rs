@@ -183,7 +183,7 @@
 // # async fn example() -> rusty_db::Result<()> {
 // // Circuit breaker
 // let breaker = CircuitBreaker::new("external_api", 5, 60);
-// let _result = breaker.call(async {
+// let result = breaker.call(async {
 //     // External call
 //     Ok::<_, rusty_db::DbError>(42)
 // }).await?;
@@ -322,7 +322,7 @@
 //     ctx.tracing.end_span().await;
 //
 //     ctx.tracing.start_span("query.execute").await;
-//     let _result = execute_query(&ast).await?;
+//     let result = execute_query(&ast).await?;
 //     ctx.tracing.end_span().await;
 //
 //     Ok(())

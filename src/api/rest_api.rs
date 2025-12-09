@@ -803,7 +803,7 @@ struct RateLimiter {
 }
 
 impl RateLimiter {
-    fn new(max_requests: u64, window_secs: u64) -> Self {
+    fn new(maxrequests: u64, window_secs: u64) -> Self {
         Self {
             requests: HashMap::new(),
             window_secs,
@@ -1002,13 +1002,13 @@ impl RestApiServer {
 
         let listener = tokio::net::TcpListener::bind(addr)
             .await
-            .map_err(|e| DbError::Network(format!("Failed to bind to {}: {}", addr, e)))?;
+            .map_err(|e| DbError::Network(format!("Failed to bind to {}: {}", addr, e)))?);
 
         tracing::info!("REST API server listening on {}", addr);
 
         axum::serve(listener, router)
             .await
-            .map_err(|e| DbError::Network(format!("Server error: {}", e)))?;
+            .map_err(|e| DbError::Network(format!("Server error: {}", e)))?);
 
         Ok(())
     }
@@ -1710,15 +1710,15 @@ async fn get_prometheus_metrics(
     let mut output = String::new();
     output.push_str("# HELP rustydb_total_requests Total number of requests\n");
     output.push_str("# TYPE rustydb_total_requests counter\n");
-    output.push_str(&format!("rustydb_total_requests {}\n", metrics.total_requests));
+    output.push_str(&format!("rustydb_total_requests {}\n", metrics.total_requests)));
 
     output.push_str("# HELP rustydb_successful_requests Number of successful requests\n");
     output.push_str("# TYPE rustydb_successful_requests counter\n");
-    output.push_str(&format!("rustydb_successful_requests {}\n", metrics.successful_requests));
+    output.push_str(&format!("rustydb_successful_requests {}\n", metrics.successful_requests)));
 
     output.push_str("# HELP rustydb_avg_response_time_ms Average response time in milliseconds\n");
     output.push_str("# TYPE rustydb_avg_response_time_ms gauge\n");
-    output.push_str(&format!("rustydb_avg_response_time_ms {}\n", metrics.avg_response_time_ms));
+    output.push_str(&format!("rustydb_avg_response_time_ms {}\n", metrics.avg_response_time_ms)));
 
     Ok(output)
 }
@@ -2271,6 +2271,7 @@ async fn update_cluster_config(
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_api_config_default() {
@@ -2550,10 +2551,10 @@ impl QueryPlan {
 
     pub fn to_string_representation(&self) -> String {
         let mut result = String::new();
-        result.push_str(&format!("Query Plan (ID: {})\n", self.plan_id));
-        result.push_str(&format!("Hash: {}\n", self.query_hash));
-        result.push_str(&format!("Estimated Cost: {:.2}\n", self.estimated_cost));
-        result.push_str(&format!("Estimated Rows: {}\n\n", self.estimated_rows));
+        result.push_str(&format!("Query Plan (ID: {})\n", self.plan_id)));
+        result.push_str(&format!("Hash: {}\n", self.query_hash)));
+        result.push_str(&format!("Estimated Cost: {:.2}\n", self.estimated_cost)));
+        result.push_str(&format!("Estimated Rows: {}\n\n", self.estimated_rows)));
 
         for (i, op) in self.operations.iter().enumerate() {
             self.format_operation(op, 0, &mut result);
@@ -2564,20 +2565,20 @@ impl QueryPlan {
 
     fn format_operation(&self, op: &PlanOperation, depth: usize, result: &mut String) {
         let indent = "  ".repeat(depth);
-        result.push_str(&format!("{}|- {} ", indent, op.operation_type));
+        result.push_str(&format!("{}|- {} ", indent, op.operation_type)));
 
         if let Some(ref table) = op.table_name {
-            result.push_str(&format!("on {} ", table));
+            result.push_str(&format!("on {} ", table)));
         }
 
         if let Some(ref index) = op.index_name {
-            result.push_str(&format!("using {} ", index));
+            result.push_str(&format!("using {} ", index)));
         }
 
-        result.push_str(&format!("(cost: {:.2}, rows: {})\n", op.estimated_cost, op.estimated_rows));
+        result.push_str(&format!("(cost: {:.2}, rows: {})\n", op.estimated_cost, op.estimated_rows)));
 
         if let Some(ref filter) = op.filter {
-            result.push_str(&format!("{}   Filter: {}\n", indent, filter));
+            result.push_str(&format!("{}   Filter: {}\n", indent, filter)));
         }
 
         for child in &op.children {
@@ -2779,7 +2780,7 @@ pub struct QueryCache {
 }
 
 impl QueryCache {
-    pub fn new(max_entries: usize, default_ttl: Duration) -> Self {
+    pub fn new(maxentries: usize, default_ttl: Duration) -> Self {
         Self {
             entries: Arc::new(RwLock::new(HashMap::new())),
             max_entries,
@@ -2927,7 +2928,7 @@ impl PoolHealthChecker {
             warnings.push(format!(
                 "High pool utilization: {:.1}%",
                 metrics.utilization_percent
-            ));
+            )));
             status = HealthStatus::Degraded;
         }
 
@@ -2936,7 +2937,7 @@ impl PoolHealthChecker {
             warnings.push(format!(
                 "Too many waiting connections: {}",
                 metrics.waiting_count
-            ));
+            )));
             status = HealthStatus::Degraded;
         }
 
@@ -2944,7 +2945,7 @@ impl PoolHealthChecker {
         if metrics.total_acquired > 0 {
             let timeout_rate = metrics.total_timeouts as f64 / metrics.total_acquired as f64;
             if timeout_rate > self.thresholds.max_timeout_rate {
-                warnings.push(format!("High timeout rate: {:.2}%", timeout_rate * 100.0));
+                warnings.push(format!("High timeout rate: {:.2}%", timeout_rate * 100.0)));
                 status = HealthStatus::Unhealthy;
             }
         }
@@ -3211,7 +3212,7 @@ impl SqlSanitizer {
 }
 
 /// Request validator
-pub struct RequestValidator;
+pub struct RequestValidator);
 
 impl RequestValidator {
     pub fn validate_query_request(req: &QueryRequest) -> Result<()> {

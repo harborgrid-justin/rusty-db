@@ -402,7 +402,7 @@ impl DatabaseCore {
 
         // Create data directory if it doesn't exist
         std::fs::create_dir_all(&config.data_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create data directory: {}", e)))?;
+            .map_err(|e| DbError::IoError(format!("Failed to create data directory: {}", e)))?);
 
         Ok(())
     }
@@ -651,7 +651,7 @@ impl BufferPoolManager {
         Some(frame_id)
     }
 
-    pub fn unpin_page(&self, frame_id: usize, is_dirty: bool) {
+    pub fn unpin_page(&self, frame_id: usize, isdirty: bool) {
         let mut frame = self.frames[frame_id].lock();
         if frame.pin_count > 0 {
             frame.pin_count -= 1;
@@ -773,7 +773,7 @@ impl IoEngine {
                 .spawn(move || {
                     while !shutdown_clone.load(Ordering::Relaxed) {
                         // I/O work loop
-                        std::thread::sleep(Duration::from_millis(10));
+                        std::thread::sleep(Duration::from_millis(10)));
                     }
                 })
                 .expect("Failed to spawn I/O worker thread");
@@ -864,7 +864,7 @@ impl WorkerPool {
                 .spawn(move || {
                     while !shutdown_clone.load(Ordering::Relaxed) {
                         if let Some(task) = queue.pop() {
-                            task();
+                            task());
                             stats_clone.tasks_executed.fetch_add(1, Ordering::Relaxed);
                         } else {
                             std::thread::sleep(Duration::from_micros(100));
@@ -937,7 +937,7 @@ impl MemoryArena {
             return Err(DbError::OutOfMemory(format!(
                 "Memory limit exceeded: {} bytes requested, {} / {} bytes used",
                 size, current, self.config.total_limit_bytes
-            )));
+            ))));
         }
 
         // Update peak

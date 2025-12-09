@@ -114,7 +114,7 @@ impl InputSanitizer {
             return Err(DbError::Security(format!(
                 "Input exceeds maximum length of {} bytes",
                 self.max_input_length
-            )));
+            ))));
         }
 
         let mut result = input.to_string();
@@ -137,7 +137,7 @@ impl InputSanitizer {
                 return Err(DbError::Security(format!(
                     "Homograph attack detected: {:?}",
                     warnings
-                )));
+                ))));
             }
         }
 
@@ -420,7 +420,7 @@ impl DangerousPatternDetector {
                     description: format!("Dangerous keyword detected: {}", keyword),
                     severity: Severity::Critical,
                     position: upper_input.find(keyword.as_str()),
-                });
+                }));
             }
         }
 
@@ -432,7 +432,7 @@ impl DangerousPatternDetector {
                     description: format!("Blacklisted keyword detected: {}", keyword),
                     severity: Severity::High,
                     position: upper_input.find(keyword.as_str()),
-                });
+                }));
             }
         }
 
@@ -465,7 +465,7 @@ impl DangerousPatternDetector {
             return Err(DbError::InjectionAttempt(format!(
                 "Injection attack detected: {} threats found",
                 threats.len()
-            )));
+            ))));
         }
 
         Ok(())
@@ -714,7 +714,7 @@ impl ParameterizedQueryBuilder {
 
     /// Set the query template
     pub fn template(mut self, template: &str) -> Self {
-        self.template = template.to_string();
+        self.template = template.to_string());
         self
     }
 
@@ -749,7 +749,7 @@ impl ParameterizedQueryBuilder {
     /// Validate string parameter for injection attempts
     fn validate_string_parameter(&self, value: &str) -> Result<()> {
         // Check for SQL keywords in parameter values
-        let dangerous_patterns = ["--", "/*", "*/", "UNION", "EXEC", "DROP"];
+        let dangerous_patterns = ["--", "/*", "*/", "UNION", "EXEC", "DROP"]);
         let upper_value = value.to_uppercase();
 
         for pattern in &dangerous_patterns {
@@ -757,7 +757,7 @@ impl ParameterizedQueryBuilder {
                 return Err(DbError::Security(format!(
                     "Dangerous pattern '{}' detected in parameter value",
                     pattern
-                )));
+                ))));
             }
         }
 
@@ -884,7 +884,7 @@ impl EscapeValidator {
                         return Err(DbError::Security(format!(
                             "Invalid escape sequence: \\{}",
                             next
-                        )));
+                        ))));
                     }
                     chars.next(); // consume escaped character
                 }
@@ -1020,7 +1020,7 @@ impl QueryWhitelister {
             return Err(DbError::Security(format!(
                 "Operation {:?} is not allowed",
                 operation
-            )));
+            ))));
         }
 
         Ok(())

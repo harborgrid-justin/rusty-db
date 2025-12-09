@@ -8,9 +8,9 @@
 use std::fmt;
 use std::collections::VecDeque;
 use std::time::SystemTime;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::Result;
@@ -229,7 +229,7 @@ impl KMeansClassifier {
         new_centroids
     }
 
-    fn calculate_max_shift(&self, new_centroids: &[Vec<f64>]) -> f64 {
+    fn calculate_max_shift(&self, newcentroids: &[Vec<f64>]) -> f64 {
         self.centroids
             .iter()
             .zip(new_centroids)
@@ -276,7 +276,7 @@ impl PerformancePredictor {
         }
     }
 
-    pub fn train(&mut self, features: &[QueryFeatures], execution_times: &[f64]) -> Result<()> {
+    pub fn train(&mut self, features: &[QueryFeatures], executiontimes: &[f64]) -> Result<()> {
         if features.len() != execution_times.len() {
             return Err(DbError::Internal("Feature and label count mismatch".to_string()));
         }

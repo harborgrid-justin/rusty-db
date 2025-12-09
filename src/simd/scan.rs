@@ -263,12 +263,12 @@ impl ColumnScan {
         &mut self,
         table: &ColumnarTable,
         filter: &FilterOp,
-        input_selection: &SelectionVector,
+        inputselection: &SelectionVector,
     ) -> Result<SelectionVector> {
         let column = table.column(filter.column_index)
             .ok_or_else(|| DbError::InvalidArgument(
                 format!("Column index {} out of bounds", filter.column_index)
-            ))?;
+            ))?);
 
         let mut output_selection = SelectionVector::with_capacity(input_selection.len());
         let mut simd_filter = SimdFilter::with_context(self.context.clone());

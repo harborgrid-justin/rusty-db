@@ -103,14 +103,14 @@ impl Network {
             return Err(DbError::InvalidInput(format!(
                 "From node {} not found",
                 edge.from_node
-            )));
+            ))));
         }
 
         if !self.nodes.contains_key(&edge.to_node) {
             return Err(DbError::InvalidInput(format!(
                 "To node {} not found",
                 edge.to_node
-            )));
+            ))));
         }
 
         let edge_id = edge.id;
@@ -217,11 +217,11 @@ impl<'a> DijkstraRouter<'a> {
     /// Find shortest path from start to end node
     pub fn shortest_path(&self, start: u64, end: u64) -> Result<Path> {
         if !self.network.nodes.contains_key(&start) {
-            return Err(DbError::InvalidInput(format!("Start node {} not found", start)));
+            return Err(DbError::InvalidInput(format!("Start node {} not found", start))));
         }
 
         if !self.network.nodes.contains_key(&end) {
-            return Err(DbError::InvalidInput(format!("End node {} not found", end)));
+            return Err(DbError::InvalidInput(format!("End node {} not found", end))));
         }
 
         let mut distances: HashMap<u64, f64> = HashMap::new();
@@ -385,11 +385,11 @@ impl<'a> AStarRouter<'a> {
     /// Find shortest path using A* with Euclidean distance heuristic
     pub fn shortest_path(&self, start: u64, end: u64) -> Result<Path> {
         if !self.network.nodes.contains_key(&start) {
-            return Err(DbError::InvalidInput(format!("Start node {} not found", start)));
+            return Err(DbError::InvalidInput(format!("Start node {} not found", start))));
         }
 
         if !self.network.nodes.contains_key(&end) {
-            return Err(DbError::InvalidInput(format!("End node {} not found", end)));
+            return Err(DbError::InvalidInput(format!("End node {} not found", end))));
         }
 
         let end_coord = &self.network.nodes[&end].coord;
@@ -440,7 +440,7 @@ impl<'a> AStarRouter<'a> {
         Err(DbError::InvalidInput("No path found".to_string()))
     }
 
-    fn heuristic(&self, node_id: u64, target_coord: &Coordinate) -> f64 {
+    fn heuristic(&self, node_id: u64, targetcoord: &Coordinate) -> f64 {
         if let Some(node) = self.network.nodes.get(&node_id) {
             node.coord.distance_2d(target_coord)
         } else {
@@ -502,7 +502,7 @@ impl<'a> ServiceAreaAnalyzer<'a> {
     /// Calculate service area from a center point with max cost
     pub fn calculate(&self, center: u64, max_cost: f64) -> Result<ServiceArea> {
         if !self.network.nodes.contains_key(&center) {
-            return Err(DbError::InvalidInput(format!("Center node {} not found", center)));
+            return Err(DbError::InvalidInput(format!("Center node {} not found", center))));
         }
 
         let router = DijkstraRouter::new(self.network);

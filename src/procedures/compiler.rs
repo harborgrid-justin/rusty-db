@@ -177,7 +177,7 @@ impl PlSqlCompiler {
                     column: 0,
                     message: format!("Variable '{}' is already declared", decl.name),
                     error_type: ErrorType::SemanticError,
-                });
+                }));
             } else {
                 symbol_table.add_variable(decl.name.clone(), decl.data_type.clone());
             }
@@ -195,7 +195,7 @@ impl PlSqlCompiler {
     fn analyze_statement(
         &self,
         stmt: &Statement,
-        symbol_table: &mut SymbolTable,
+        symboltable: &mut SymbolTable,
         result: &mut CompilationResult,
     ) -> Result<()> {
         match stmt {
@@ -207,7 +207,7 @@ impl PlSqlCompiler {
                         column: 0,
                         message: format!("Variable '{}' is not declared", target),
                         error_type: ErrorType::UndefinedVariable,
-                    });
+                    }));
                 }
 
                 // Analyze value expression
@@ -285,7 +285,7 @@ impl PlSqlCompiler {
                             column: 0,
                             message: format!("Variable '{}' is not declared", var),
                             error_type: ErrorType::UndefinedVariable,
-                        });
+                        }));
                     }
                 }
 
@@ -337,7 +337,7 @@ impl PlSqlCompiler {
                         column: 0,
                         message: format!("Variable '{}' is not declared", name),
                         error_type: ErrorType::UndefinedVariable,
-                    });
+                    }));
                 }
             }
 
@@ -367,7 +367,7 @@ impl PlSqlCompiler {
                         column: 0,
                         message: format!("Record '{}' is not declared", record),
                         error_type: ErrorType::UndefinedVariable,
-                    });
+                    }));
                 }
             }
 
@@ -420,7 +420,7 @@ impl PlSqlCompiler {
                         column: 0,
                         message: format!("Circular dependency detected involving '{}'", dep),
                         error_type: ErrorType::CircularDependency,
-                    });
+                    }));
                 }
             }
         }

@@ -39,7 +39,7 @@ impl LZ4Compressor {
         ((v.wrapping_mul(2654435761)) >> 16) as usize & (HASH_TABLE_SIZE - 1)
     }
 
-    fn find_match(&self, data: &[u8], pos: usize, hash_pos: usize) -> (usize, usize) {
+    fn find_match(&self, data: &[u8], pos: usize, hashpos: usize) -> (usize, usize) {
         if hash_pos >= pos {
             return (0, 0);
         }
@@ -267,7 +267,7 @@ impl ZstdCompressor {
         freq
     }
 
-    fn entropy_encode(&self, data: &[u8], freq_table: &[u32; 256]) -> Vec<u8> {
+    fn entropy_encode(&self, data: &[u8], freqtable: &[u32; 256]) -> Vec<u8> {
         let mut encoded = Vec::with_capacity(data.len());
 
         // Store frequency table (simplified)
@@ -518,7 +518,7 @@ impl DictionaryCompressor {
             } else {
                 return Err(CompressionError::DecompressionFailed(
                     format!("Invalid code: {}", code)
-                ));
+                )));
             };
 
             result.extend_from_slice(&entry);
@@ -921,7 +921,7 @@ impl Compressor for AdaptiveCompressor {
         if compressor_idx >= self.compressors.len() {
             return Err(CompressionError::UnsupportedAlgorithm(
                 format!("Invalid algorithm index: {}", compressor_idx)
-            ));
+            )));
         }
 
         let decompressed_size = self.compressors[compressor_idx].decompress(&input[1..], output)?;
@@ -1648,7 +1648,7 @@ impl EnhancedDictionaryEncoder {
             if index as usize >= dict_entries.len() {
                 return Err(CompressionError::DecompressionFailed(
                     format!("Invalid dictionary index: {}", index)
-                ));
+                )));
             }
             data.push(dict_entries[index as usize].clone());
         }
@@ -1797,7 +1797,7 @@ impl CascadedCompressor {
             _ => return Err(CompressionError::UnsupportedAlgorithm(
                 format!("Unknown encoding: {}", encoding)
             )),
-        };
+        });
 
         let mut stats = self.stats.lock().unwrap();
         stats.blocks_decompressed += 1;

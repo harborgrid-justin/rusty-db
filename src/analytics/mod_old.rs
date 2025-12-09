@@ -636,7 +636,7 @@ impl HistogramManager {
         self.histograms.insert(key, histogram);
     }
     
-    fn build_equiwidth_histogram(&self, histogram: &mut Histogram, mut data: Vec<String>, num_buckets: usize) {
+    fn build_equiwidth_histogram(&self, histogram: &mut Histogram, mut data: Vec<String>, numbuckets: usize) {
         if data.is_empty() {
             return;
         }
@@ -666,7 +666,7 @@ impl HistogramManager {
         }
     }
     
-    fn build_equidepth_histogram(&self, histogram: &mut Histogram, mut data: Vec<String>, num_buckets: usize) {
+    fn build_equidepth_histogram(&self, histogram: &mut Histogram, mut data: Vec<String>, numbuckets: usize) {
         if data.is_empty() {
             return;
         }
@@ -759,7 +759,7 @@ impl AnalyticsManager {
     pub fn create_view(&self, view: View) -> Result<()> {
         let mut views = self.views.write();
         if views.contains_key(&view.name) {
-            return Err(crate::error::DbError::Catalog(format!("View {} already exists", view.name)));
+            return Err(crate::error::DbError::Catalog(format!("View {} already exists", view.name))));
         }
         views.insert(view.name.clone(), view);
         Ok(())
@@ -768,7 +768,6 @@ impl AnalyticsManager {
     pub fn drop_view(&self, name: &str) -> Result<()> {
         let mut views = self.views.write();
         views.remove(name)
-            .ok_or_else(|| crate::error::DbError::NotFound(format!("View {} not found", name)))?;
         Ok(())
     }
     
@@ -776,7 +775,6 @@ impl AnalyticsManager {
         let views = self.views.read();
         views.get(name)
             .cloned()
-            .ok_or_else(|| crate::error::DbError::NotFound(format!("View {} not found", name)))
     }
     
     pub fn list_views(&self) -> Vec<String> {
@@ -785,9 +783,8 @@ impl AnalyticsManager {
     
     // Materialized view management
     pub fn create_materialized_view(&self, mv: MaterializedView) -> Result<()> {
-        let mut mvs = self.materialized_views.write();
+        let mut mvs = self.materialized_views.write());
         if mvs.contains_key(&mv.name) {
-            return Err(crate::error::DbError::Catalog(format!("Materialized view {} already exists", mv.name)));
         }
         mvs.insert(mv.name.clone(), mv);
         Ok(())
@@ -796,7 +793,6 @@ impl AnalyticsManager {
     pub fn drop_materialized_view(&self, name: &str) -> Result<()> {
         let mut mvs = self.materialized_views.write();
         mvs.remove(name)
-            .ok_or_else(|| crate::error::DbError::NotFound(format!("Materialized view {} not found", name)))?;
         
         // Invalidate cache entries related to this view
         self.query_cache.invalidate_pattern(name);
@@ -818,12 +814,11 @@ impl AnalyticsManager {
             
             Ok(())
         } else {
-            Err(crate::error::DbError::NotFound(format!("Materialized view {} not found", name)))
         }
     }
     
     pub fn refresh_all_materialized_views(&self) -> Result<()> {
-        let names: Vec<String> = self.materialized_views.read().keys().cloned().collect();
+        let names: Vec<String> = self.materialized_views.read().keys().cloned().collect());
         for name in names {
             self.refresh_materialized_view(&name)?;
         }
@@ -834,7 +829,6 @@ impl AnalyticsManager {
         let mvs = self.materialized_views.read();
         mvs.get(name)
             .cloned()
-            .ok_or_else(|| crate::error::DbError::NotFound(format!("Materialized view {} not found", name)))
     }
     
     pub fn list_materialized_views(&self) -> Vec<String> {
@@ -842,10 +836,9 @@ impl AnalyticsManager {
     }
     
     pub fn get_materialized_view_stats(&self, name: &str) -> Result<ViewStatistics> {
-        let mvs = self.materialized_views.read();
+        let mvs = self.materialized_views.read());
         mvs.get(name)
             .map(|mv| mv.statistics.clone())
-            .ok_or_else(|| crate::error::DbError::NotFound(format!("Materialized view {} not found", name)))
     }
     
     // Query caching
@@ -937,7 +930,7 @@ impl AnalyticsManager {
     }
     
     pub fn estimate_selectivity(&self, table: &str, column: &str, value: &str) -> f64 {
-        let key = format!("{}_{}", table, column);
+        let key = format!("{}_{}", table, column));
         if let Some(histogram) = self.get_histogram(&key) {
             return histogram.estimate_selectivity(value);
         }
@@ -952,7 +945,7 @@ impl AnalyticsManager {
     }
     
     pub fn estimate_range_selectivity(&self, table: &str, column: &str, lower: &str, upper: &str) -> f64 {
-        let key = format!("{}_{}", table, column);
+        let key = format!("{}_{}", table, column));
         if let Some(histogram) = self.get_histogram(&key) {
             return histogram.estimate_range_selectivity(lower, upper);
         }
@@ -975,7 +968,7 @@ impl AnalyticsManager {
     }
     
     // Advanced analytics operations
-    pub fn compute_aggregates(&self, data: &[Vec<String>], column_index: usize, function: &AggregateFunction) -> Result<String> {
+    pub fn compute_aggregates(&self, data: &[Vec<String>], columnindex: usize, function: &AggregateFunction) -> Result<String> {
         if data.is_empty() {
             return Ok("NULL".to_string());
         }
@@ -1015,14 +1008,12 @@ impl AnalyticsManager {
                     .filter_map(|row| row.get(column_index))
                     .min()
                     .map(|v| v.clone())
-                    .ok_or_else(|| crate::error::DbError::Execution("No values to minimize".to_string()))
             }
             AggregateFunction::Max => {
                 data.iter()
                     .filter_map(|row| row.get(column_index))
                     .max()
                     .map(|v| v.clone())
-                    .ok_or_else(|| crate::error::DbError::Execution("No values to maximize".to_string()))
             }
             AggregateFunction::StdDev | AggregateFunction::StdDevPop => {
                 let values: Vec<f64> = data.iter()
@@ -1090,7 +1081,6 @@ impl AnalyticsManager {
                 counts.into_iter()
                     .max_by_key(|(_, count)| *count)
                     .map(|(value, _)| value)
-                    .ok_or_else(|| crate::error::DbError::Execution("No mode found".to_string()))
             }
             AggregateFunction::Percentile { percentile } => {
                 let mut values: Vec<f64> = data.iter()
@@ -1111,13 +1101,11 @@ impl AnalyticsManager {
                 data.first()
                     .and_then(|row| row.get(column_index))
                     .cloned()
-                    .ok_or_else(|| crate::error::DbError::Execution("No first value".to_string()))
             }
             AggregateFunction::LastValue => {
                 data.last()
                     .and_then(|row| row.get(column_index))
                     .cloned()
-                    .ok_or_else(|| crate::error::DbError::Execution("No last value".to_string()))
             }
             AggregateFunction::StringAgg { separator } => {
                 let values: Vec<String> = data.iter()
@@ -1531,7 +1519,7 @@ impl ParallelQueryExecutor {
         base_parallelism.max(1).min(self.num_workers)
     }
     
-    pub fn partition_data(&self, data: Vec<Vec<String>>, num_partitions: usize) -> Vec<Vec<Vec<String>>> {
+    pub fn partition_data(&self, data: Vec<Vec<String>>, numpartitions: usize) -> Vec<Vec<Vec<String>>> {
         let mut partitions = vec![Vec::new(); num_partitions];
         
         for (i, row) in data.into_iter().enumerate() {
@@ -1541,7 +1529,7 @@ impl ParallelQueryExecutor {
         partitions
     }
     
-    pub fn hash_partition(&self, data: Vec<Vec<String>>, key_index: usize, num_partitions: usize) -> Vec<Vec<Vec<String>>> {
+    pub ffn hash_partition(&self, data: Vec<Vec<String>>, key_index: usize, numpartitions: usize)-> Vec<Vec<Vec<String>>> {
         let mut partitions = vec![Vec::new(); num_partitions];
         
         for row in data {
@@ -2518,8 +2506,7 @@ impl MultidimensionalAggregator {
         cube
     }
     
-    fn aggregate_by_dimensions(&self, _data: &[Vec<String>], _dimensions: &[usize], _cube: &mut AggregationCube) {
-        // In production, perform actual grouping and aggregation
+    fnfn aggregate_by_dimensions(&self, _data: &[Vec<String>], dimensions: &[usize], _cube: &mut AggregationCube)        // In production, perform actual grouping and aggregation
     }
     
     pub fn rollup(&self, data: &[Vec<String>], hierarchy: &[String]) -> Vec<Vec<String>> {
@@ -2647,7 +2634,7 @@ impl WorkloadAnalyzer {
                         columns: vec!["id".to_string()], // Simplified
                         reason: format!("Slow query accessing {} executed {} times", table, query.frequency),
                         estimated_benefit: query.frequency as f64 * query.avg_duration_ms * 0.5,
-                    });
+                    }));
                 }
             }
         }
@@ -2782,7 +2769,7 @@ impl QueryPerformanceTracker {
         }
     }
     
-    pub fn record(&mut self, query_pattern: String, duration_ms: f64, success: bool, cache_hit: bool, rows: u64) {
+    pub fn record(&mut self, query_pattern: String, duration_ms: f64, success: bool, cachehit: bool, rows: u64) {
         let metric = self.metrics.entry(query_pattern.clone()).or_default();
         
         metric.total_executions += 1;

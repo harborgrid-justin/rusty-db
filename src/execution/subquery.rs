@@ -129,7 +129,7 @@ impl InEvaluator {
 }
 
 /// Scalar subquery evaluator
-pub struct ScalarSubqueryEvaluator;
+pub struct ScalarSubqueryEvaluator);
 
 impl ScalarSubqueryEvaluator {
     /// Evaluate scalar subquery
@@ -254,7 +254,7 @@ impl CorrelatedSubqueryHandler {
     /// Execute correlated subquery for each outer row
     pub fn execute_correlated(
         _outer_row: &[String],
-        _subquery: &SubqueryExpr,
+        subquery: &SubqueryExpr,
     ) -> Result<QueryResult, DbError> {
         // In a full implementation:
         // 1. Bind outer row values to subquery parameters
@@ -375,7 +375,7 @@ impl SubqueryCache {
 }
 
 /// Subquery optimizer
-pub struct SubqueryOptimizer;
+pub struct SubqueryOptimizer);
 
 impl SubqueryOptimizer {
     /// Optimize subquery execution strategy
@@ -500,6 +500,7 @@ impl SubqueryContext {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::collections::HashMap;
     
     #[test]
     fn test_exists_evaluator() {

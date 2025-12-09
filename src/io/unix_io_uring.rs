@@ -351,7 +351,7 @@ impl IoUringEngine {
                 return Err(DbError::Internal(format!(
                     "Unsupported operation: {:?}",
                     request.op_type
-                )));
+                ))));
             }
         };
 
@@ -433,7 +433,7 @@ impl IoUringEngine {
     }
 
     /// Poll for completions
-    pub fn poll(&self, max_completions: usize) -> Result<Vec<IoCompletion>> {
+    pub fn poll(&self, maxcompletions: usize) -> Result<Vec<IoCompletion>> {
         let mut cq = self.cq_entries.lock();
         let mut completions = Vec::with_capacity(max_completions.min(cq.len()));
 

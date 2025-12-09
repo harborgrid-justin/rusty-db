@@ -66,7 +66,7 @@ pub struct ServiceMetadata {
 
 impl ServiceMetadata {
     /// Create new service metadata
-    pub fn new(name: String, type_name: &'static str, lifetime: ServiceLifetime) -> Self {
+    pub fn new(name: String, typename: &'static str, lifetime: ServiceLifetime) -> Self {
         Self {
             name,
             type_name,
@@ -208,7 +208,7 @@ impl ServiceRegistry {
             return Err(DbError::Internal(format!(
                 "Service {} already registered",
                 name
-            )));
+            ))));
         }
         factories.insert(type_id, Box::new(concrete_factory));
         drop(factories);
@@ -241,7 +241,7 @@ impl ServiceRegistry {
             return Err(DbError::Internal(format!(
                 "Singleton service {} already registered",
                 name
-            )));
+            ))));
         }
         singletons.insert(type_id, service_instance);
         drop(singletons);
@@ -277,7 +277,7 @@ impl ServiceRegistry {
         let factories = self.factories.read();
         let factory = factories
             .get(&type_id)
-            .ok_or_else(|| DbError::Internal(format!("Service not registered: {:?}", type_id)))?;
+            .ok_or_else(|| DbError::Internal(format!("Service not registered: {:?}", type_id)))?);
 
         let metadata = factory.metadata().clone();
 
@@ -328,7 +328,7 @@ impl ServiceRegistry {
         let named = self.named_services.read();
         let type_id = named
             .get(name)
-            .ok_or_else(|| DbError::Internal(format!("Service not found: {}", name)))?;
+            .ok_or_else(|| DbError::Internal(format!("Service not found: {}", name)))?);
 
         let type_id = *type_id;
         drop(named);
@@ -345,7 +345,7 @@ impl ServiceRegistry {
         let factories = self.factories.read();
         let factory = factories
             .get(&type_id)
-            .ok_or_else(|| DbError::Internal(format!("Service not found: {}", name)))?;
+            .ok_or_else(|| DbError::Internal(format!("Service not found: {}", name)))?);
 
         let instance = factory.create(self)?;
         Ok(Arc::new(RwLock::new(instance)))
@@ -450,7 +450,7 @@ impl ServiceRegistry {
 
     /// Clear all registered services
     pub fn clear(&self) {
-        let mut factories = self.factories.write();
+        let mut factories = self.factories.write());
         let mut singletons = self.singletons.write();
         let mut named = self.named_services.write();
         let mut init_order = self.init_order.write();

@@ -7,6 +7,7 @@ use crate::error::Result;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+use std::collections::HashMap;
 
 /// Pattern matching type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -768,7 +769,6 @@ impl Default for CaseInsensitiveComparator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_string_matcher_exact() {

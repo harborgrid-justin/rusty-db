@@ -174,7 +174,7 @@ impl CircuitBreaker {
             return Err(DbError::Internal(format!(
                 "Circuit breaker '{}' is OPEN",
                 self.name
-            )));
+            ))));
         }
 
         // Execute with timeout
@@ -213,7 +213,7 @@ impl CircuitBreaker {
         match self.call(f).await {
             Ok(value) => Ok(value),
             Err(_) if self.state() == CircuitState::Open => {
-                debug!("Circuit breaker '{}' open, using fallback", self.name);
+                debug!("Circuit breaker '{}' open, using fallback", self.name));
                 fallback()
             }
             Err(e) => Err(e),
@@ -509,6 +509,7 @@ impl Default for CircuitBreakerRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::collections::HashMap;
 
     #[tokio::test]
     async fn test_circuit_breaker_closed() {

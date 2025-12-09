@@ -172,7 +172,7 @@ impl TimeSeriesAnalyzer {
     }
 
     /// Find the dominant period in the data.
-    pub fn find_period(&self, data: &[f64], max_period: usize) -> Option<usize> {
+    pub fn find_period(&self, data: &[f64], maxperiod: usize) -> Option<usize> {
         let max_period = max_period.min(data.len() / 2);
 
         let mut best_period = None;

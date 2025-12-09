@@ -206,7 +206,7 @@ impl BackupSystem {
         &self,
         database_name: &str,
         target: RecoveryTarget,
-        recovery_path: std::path::PathBuf,
+        recoverypath: std::path::PathBuf,
     ) -> Result<String> {
         // Find recovery path using catalog
         let target_scn = match &target {
@@ -218,7 +218,6 @@ impl BackupSystem {
         let recovery_sets = self.catalog.find_recovery_path(database_name, target_scn)?;
 
         if recovery_sets.is_empty() {
-            return Err(crate::error::DbError::BackupError(
                 "No suitable backup found for recovery".to_string()
             ));
         }
@@ -244,7 +243,7 @@ impl BackupSystem {
             format!("{}-snapshot", database_name),
             database_name.to_string(),
             SnapshotType::Manual,
-        )?;
+        )?);
 
         Ok(snapshot_id)
     }
@@ -287,6 +286,7 @@ pub struct BackupSystemStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::collections::HashMap;
 
     #[test]
     fn test_backup_system_initialization() {

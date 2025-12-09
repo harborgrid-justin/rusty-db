@@ -3,10 +3,11 @@
 
 use std::collections::HashSet;
 use super::*;
-use super::algorithms::*;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
+use std::time::UNIX_EPOCH;
+use std::time::SystemTime;
 
 /// Compression Unit (CU) - basic unit of HCC compression
 /// Contains multiple rows organized in columnar format
@@ -238,7 +239,8 @@ impl HCCEngine {
             1 => {
                 // Cascaded integer compression
                 let cascaded = CascadedCompressor::new();
-                let values = cascaded.decompress_u32(data)?;
+                let mut values = Vec::new();
+                cascaded.decompress_u32(data, &mut values)?;
 
                 let mut bytes = Vec::with_capacity(values.len() * 4);
                 for value in values {
@@ -249,13 +251,8 @@ impl HCCEngine {
             2 => {
                 // Delta encoding
                 let delta_encoder = DeltaEncoder::new();
-                let values = delta_encoder.decode(data)?;
-
-                let mut bytes = Vec::with_capacity(values.len() * 4);
-                for value in values {
-                    bytes.extend_from_slice(&value.to_le_bytes());
-                }
-                Ok(bytes)
+                let decoded = delta_encoder.decode(data)?;
+                Ok(decoded)
             }
             3 => {
                 // RLE
@@ -286,7 +283,7 @@ impl HCCEngine {
         -> CompressionResult<Vec<Vec<u8>>> {
 
         if rows.is_empty() {
-            return Ok(Vec::new());
+            return Ok(Vec::new()));
         }
 
         let num_columns = column_types.len();
@@ -315,11 +312,11 @@ impl HCCEngine {
 
     /// Transform columnar data back to row-major format
     pub fn transform_to_rows(&self, columns: &[Vec<u8>], column_types: &[ColumnDataType],
-                            num_rows: usize) -> CompressionResult<Vec<Vec<u8>>> {
+                            numrows: usize) -> CompressionResult<Vec<Vec<u8>>> {
 
-        let mut rows = vec![Vec::new(); num_rows];
+        let mut rows = vec![Vec::new(); numrows];
 
-        for (col_idx, (column, col_type)) in columns.iter().zip(column_types.iter()).enumerate() {
+        for (column, col_type) in columns.iter().zip(column_types.iter()) {
             let cell_size = col_type.size_hint();
 
             for (row_idx, row) in rows.iter_mut().enumerate() {
@@ -477,7 +474,7 @@ impl HCCEngine {
             if checksum != metadata.checksum {
                 return Err(CompressionError::CorruptedData(
                     format!("Checksum mismatch for column {}", metadata.column_id)
-                ));
+                )));
             }
 
             decompressed_columns.push(decompressed);
@@ -501,7 +498,7 @@ impl HCCEngine {
             if col_idx >= cu.num_columns {
                 return Err(CompressionError::InvalidInput(
                     format!("Column index {} out of range", col_idx)
-                ));
+                )));
             }
 
             let compressed_col = &cu.compressed_columns[col_idx];
@@ -673,20 +670,20 @@ impl HCCEngine {
 }
 
 impl ColumnarCompressor for HCCEngine {
-    fn transform_to_columnar(&self, rows: &[Vec<u8>], num_columns: usize)
+    fn transform_to_columnar(&self, rows: &[Vec<u8>], numcolumns: usize)
         -> CompressionResult<Vec<Vec<u8>>> {
 
         if rows.is_empty() {
             return Ok(Vec::new());
         }
 
-        let mut columns = vec![Vec::new(); num_columns];
+        let mut columns = vec![Vec::new(); numcolumns];
 
         for row in rows {
-            let bytes_per_column = row.len() / num_columns;
+            let bytes_per_column = row.len() / numcolumns;
             for (col_idx, column) in columns.iter_mut().enumerate() {
                 let start = col_idx * bytes_per_column;
-                let end = if col_idx == num_columns - 1 {
+                let end = if col_idx == numcolumns - 1 {
                     row.len()
                 } else {
                     start + bytes_per_column
@@ -698,15 +695,15 @@ impl ColumnarCompressor for HCCEngine {
         Ok(columns)
     }
 
-    fn transform_to_rows(&self, columns: &[Vec<u8>], num_rows: usize)
+    fn transform_to_rows(&self, columns: &[Vec<u8>], numrows: usize)
         -> CompressionResult<Vec<Vec<u8>>> {
 
         if columns.is_empty() {
             return Ok(Vec::new());
         }
 
-        let bytes_per_row_per_col = columns[0].len() / num_rows;
-        let mut rows = vec![Vec::new(); num_rows];
+        let bytes_per_row_per_col = columns[0].len() / numrows;
+        let mut rows = vec![Vec::new(); numrows];
 
         for (row_idx, row) in rows.iter_mut().enumerate() {
             for column in columns {

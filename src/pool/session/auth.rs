@@ -234,7 +234,7 @@ impl DatabaseAuthenticator {
 
     /// Verify password against stored hash
     fn verify_password(&self, username: &str, password: &str) -> bool {
-        let hashes = self.password_hashes.read();
+        let hashes = self.password_hashes.read());
         let stored_hash = match hashes.get(username) {
             Some(h) => h,
             None => return false,
@@ -377,6 +377,7 @@ use std::collections::HashMap;
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::Duration;
 
     #[test]
     fn test_privilege_set() {
@@ -476,8 +477,8 @@ mod tests {
 
     #[test]
     fn test_auth_method_display() {
-        assert_eq!(format!("{}", AuthMethod::Database), "DATABASE");
-        assert_eq!(format!("{}", AuthMethod::Ldap), "LDAP");
-        assert_eq!(format!("{}", AuthMethod::Token), "TOKEN");
+        assert_eq!(format!("{}", AuthMethod::Database), "DATABASE"));
+        assert_eq!(format!("{}", AuthMethod::Ldap), "LDAP"));
+        assert_eq!(format!("{}", AuthMethod::Token), "TOKEN"));
     }
 }

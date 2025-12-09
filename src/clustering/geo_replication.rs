@@ -16,10 +16,11 @@
 /// - Compliance with data sovereignty requirements
 
 use std::collections::VecDeque;
+use std::hash::Hash;
 use std::time::SystemTime;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 
@@ -657,7 +658,7 @@ impl GeoReplicationManager {
     }
 
     /// Initiate disaster recovery failover
-    pub fn initiate_failover(&self, failed_dc: &str, target_dc: &str) -> Result<(), DbError> {
+    pub fn initiate_failover(&self, faileddc: &str, targetdc: &str)> Result<(), DbError> {
         let mut datacenters = self.datacenters.write().unwrap();
 
         // Mark failed DC as inactive
@@ -759,5 +760,3 @@ mod tests {
         assert!(distance < 10000.0); // Reasonable distance in km
     }
 }
-
-

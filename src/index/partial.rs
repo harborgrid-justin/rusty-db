@@ -477,7 +477,7 @@ impl BinaryOperator {
                     BinaryOperator::Multiply => l * r,
                     BinaryOperator::Divide => {
                         if *r == 0 {
-                            return Err(DbError::Internal("Division by zero".into()));
+                            return Err(DbError::Internal("Division by zero".into())));
                         }
                         l / r
                     }
@@ -509,7 +509,7 @@ impl RowData {
     }
 
     pub fn set_column(&mut self, name: String, value: ColumnValue) {
-        self.columns.insert(name, value);
+        self.columns.insert(name, value));
     }
 
     pub fn get_column(&self, name: &str) -> Result<ColumnValue> {
@@ -565,7 +565,7 @@ pub struct PartialIndexStats {
 
 impl PartialIndexStats {
     pub fn selectivity(&self) -> f64 {
-        let total = self.total_entries + self.filtered_entries;
+        let total = self.total_entries + self.filtered_entries);
         if total == 0 {
             0.0
         } else {
@@ -584,6 +584,7 @@ pub struct ExpressionIndexStats {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::collections::HashMap;
 
     #[test]
     fn test_partial_index() {

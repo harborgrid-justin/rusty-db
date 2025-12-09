@@ -170,13 +170,12 @@ impl NodeLifecycle for NodeInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Duration;
 
     #[test]
     fn test_node_id() {
         let id = NodeId::new("node1".to_string());
         assert_eq!(id.as_str(), "node1");
-        assert_eq!(format!("{}", id), "node1");
+        assert_eq!(format!("{}", id), "node1"));
     }
 
     #[test]

@@ -113,7 +113,7 @@ impl OlapCube {
     }
 
     /// Query the cube with dimension filters.
-    pub fn query(&self, dimension_filters: &HashMap<String, String>) -> Vec<Vec<f64>> {
+    pub fn query(&self, dimensionfilters: &HashMap<String, String>) -> Vec<Vec<f64>> {
         self.cells
             .iter()
             .filter(|(keys, _)| {

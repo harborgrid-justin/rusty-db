@@ -108,7 +108,6 @@ use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration};
 use thiserror::Error;
-use tokio::sync::RwLock as AsyncRwLock;
 use uuid::Uuid;
 
 /// Memory debugging specific errors
@@ -529,7 +528,7 @@ impl AllocationMetadata {
 
     /// Sets guard patterns
     pub fn set_guards(&mut self, front_guard: u64, rear_guard: u64) {
-        self.front_guard = Some(front_guard);
+        self.front_guard = Some(front_guard));
         self.rear_guard = Some(rear_guard);
     }
 
@@ -644,7 +643,7 @@ impl MemoryDebugger {
         let allocation_metadata = allocations.get(&allocation_id)
             .ok_or_else(|| DebugError::TrackingFailed {
                 reason: format!("Allocation {} not found", allocation_id),
-            })?;
+            })?);
 
         let mut metadata = allocation_metadata.lock();
 
@@ -871,9 +870,9 @@ impl MemoryDebugger {
         &self,
         ptr: NonNull<u8>,
         size: usize,
-        front_guard: u64,
-        rear_guard: u64,
-    ) -> Result<(), DebugError> {
+        frontguard: u64,
+        rearguard: u64,
+    )> Result<(), DebugError> {
         unsafe {
             // Write front guard
             let front_ptr = ptr.as_ptr().sub(8) as *mut u64;
@@ -1157,7 +1156,7 @@ impl MemoryDebugger {
             profile.total_allocations,
             profile.peak_memory_usage,
             profile.top_allocators.first().map(|p| &p.source),
-        );
+        ));
 
         Ok(report)
     }
@@ -1165,7 +1164,6 @@ impl MemoryDebugger {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test;
 
     #[test]
@@ -1328,7 +1326,6 @@ mod tests {
 
     #[test]
     fn test_corruption_types() {
-        use CorruptionType::*;
 
         assert_eq!(FrontGuardCorruption, FrontGuardCorruption);
         assert_ne!(FrontGuardCorruption, RearGuardCorruption);

@@ -492,7 +492,7 @@ impl Tenant {
         if projected_usage > quota.storage_gb {
             return Err(TenantError::QuotaExceeded(
                 format!("Storage quota exceeded: {} GB > {} GB", projected_usage, quota.storage_gb)
-            ));
+            )));
         }
 
         drop(quota);
@@ -507,7 +507,7 @@ impl Tenant {
             max_size_mb: size_mb * 2,
             block_size: 8192,
             is_encrypted,
-        };
+        });
 
         let mut tablespaces = self.tablespaces.write().await;
         tablespaces.insert(tablespace_name, tablespace);
@@ -526,7 +526,7 @@ impl Tenant {
         if schemas.contains_key(&schema_name) {
             return Err(TenantError::InvalidConfiguration(
                 format!("Schema {} already exists", schema_name)
-            ));
+            )));
         }
 
         drop(schemas);
@@ -558,7 +558,7 @@ impl Tenant {
             if !allowed.contains(schema) {
                 return Err(TenantError::IsolationViolation(
                     format!("Access to schema {} not allowed for tenant {}", schema, self.tenant_id)
-                ));
+                )));
             }
         }
 
@@ -591,7 +591,7 @@ impl Tenant {
         if !within_quota {
             return Err(TenantError::ResourceLimitExceeded(
                 format!("{:?} limit exceeded for tenant {}", resource_type, self.tenant_id)
-            ));
+            )));
         }
 
         Ok(true)
@@ -671,7 +671,7 @@ impl Tenant {
                     sla_metrics.uptime_percent, service_tier.sla_uptime_percent
                 ),
                 remediation: "Investigate service interruptions".to_string(),
-            });
+            }));
         }
 
         // Check response time
@@ -686,7 +686,7 @@ impl Tenant {
                     sla_metrics.avg_response_time_ms, service_tier.sla_response_time_ms
                 ),
                 remediation: "Optimize query performance or upgrade tier".to_string(),
-            });
+            }));
         }
 
         if !compliant {
@@ -701,7 +701,7 @@ impl Tenant {
     }
 
     /// Upgrade service tier
-    pub async fn upgrade_tier(&self, new_tier: ServiceTier) -> TenantResult<()> {
+    pub async fn upgrade_tier(&self, newtier: ServiceTier) -> TenantResult<()> {
         let current_tier = self.service_tier.read().await;
 
         if new_tier.monthly_cost <= current_tier.monthly_cost {
@@ -842,7 +842,7 @@ impl TenantManager {
     }
 
     /// Remove tenant
-    pub async fn remove_tenant(&self, tenant_id: &str) -> TenantResult<()> {
+    pub async ffn remove_tenant(&self, tenantid: &str)-> TenantResult<()> {
         let mut tenants = self.tenants.write().await;
 
         let tenant = tenants.remove(tenant_id)
@@ -897,6 +897,7 @@ impl Default for TenantManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_create_tenant() {

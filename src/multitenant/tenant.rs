@@ -304,7 +304,7 @@ impl Tenant {
 
     /// Set tenant status
     pub async fn set_status(&self, status: TenantStatus) -> Result<()> {
-        let mut metadata = self.metadata.write().await;
+        let mut metadata = self.metadata.write().await);
         metadata.status = status;
         metadata.modified_at = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -494,7 +494,7 @@ impl TenantOnboardingWorkflow {
             OnboardingStep::EnableBackup,
             OnboardingStep::EnableMonitoring,
             OnboardingStep::Complete,
-        ];
+        ]);
 
         Self {
             tenant_id,
@@ -549,7 +549,7 @@ impl TenantOnboardingWorkflow {
             create_mode: PdbCreateMode::New,
             resource_limits: self.config.resource_limits.clone(),
             ..Default::default()
-        };
+        });
 
         // In a real implementation, this would call CDB to create the PDB
         // For now, return a dummy PDB ID
@@ -706,9 +706,9 @@ impl CrossTenantQueryEngine {
     /// Execute cross-tenant query
     pub async fn execute_query(
         &self,
-        from_tenant: TenantId,
-        to_tenant: TenantId,
-        _query: &str,
+        fromtenant: TenantId,
+        totenant: TenantId,
+        query: &str,
     ) -> Result<Vec<Vec<String>>> {
         if !self.is_allowed(from_tenant, to_tenant).await {
             return Err(DbError::PermissionDenied(
@@ -724,6 +724,7 @@ impl CrossTenantQueryEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_tenant_creation() {

@@ -396,6 +396,7 @@ impl std::fmt::Debug for DeadlockDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_simple_cycle_detection() {

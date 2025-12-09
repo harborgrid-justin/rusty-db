@@ -153,7 +153,7 @@ impl TwoPhaseCommitCoordinator {
     pub fn register_participants(
         &self,
         txn_id: TransactionId,
-        new_participants: Vec<ParticipantInfo>,
+        newparticipants: Vec<ParticipantInfo>,
     ) {
         let mut participants = self.participants.write();
         let entry = participants.entry(txn_id).or_default();

@@ -381,7 +381,7 @@ struct MemTable<K: Ord + Clone, V: Clone> {
 }
 
 impl<K: Ord + Clone, V: Clone> MemTable<K, V> {
-    fn new(max_size: usize) -> Self {
+    fn new(maxsize: usize) -> Self {
         Self {
             entries: BTreeMap::new(),
             size: 0,
@@ -788,6 +788,7 @@ pub struct LevelStats {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::Duration;
 
     #[test]
     fn test_lsm_insert_get() {
@@ -832,7 +833,7 @@ mod tests {
         let lsm: LSMTreeIndex<i32, String> = LSMTreeIndex::new(LSMConfig::default());
 
         for i in 1..=10 {
-            lsm.insert(i, format!("value_{}", i)).unwrap();
+            lsm.insert(i, format!("value_{}", i)).unwrap());
         }
 
         let results = lsm.range(&3, &7).unwrap();

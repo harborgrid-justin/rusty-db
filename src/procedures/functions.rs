@@ -157,7 +157,7 @@ impl FunctionManager {
         if functions.contains_key(&function.name) {
             return Err(DbError::AlreadyExists(
                 format!("Function '{}' already exists", function.name)
-            ));
+            )));
         }
 
         functions.insert(function.name.clone(), UserFunction::Scalar(function));
@@ -171,7 +171,7 @@ impl FunctionManager {
         if functions.contains_key(&function.name) {
             return Err(DbError::AlreadyExists(
                 format!("Function '{}' already exists", function.name)
-            ));
+            )));
         }
 
         functions.insert(function.name.clone(), UserFunction::Table(function));
@@ -185,7 +185,7 @@ impl FunctionManager {
         if functions.contains_key(&function.name) {
             return Err(DbError::AlreadyExists(
                 format!("Function '{}' already exists", function.name)
-            ));
+            )));
         }
 
         functions.insert(function.name.clone(), UserFunction::Aggregate(function));
@@ -199,7 +199,7 @@ impl FunctionManager {
         if functions.remove(name).is_none() {
             return Err(DbError::NotFound(
                 format!("Function '{}' not found", name)
-            ));
+            )));
         }
 
         Ok(())
@@ -218,7 +218,7 @@ impl FunctionManager {
 
     /// List all functions
     pub fn list_functions(&self) -> Vec<String> {
-        let functions = self.functions.read();
+        let functions = self.functions.read());
         functions.keys().cloned().collect()
     }
 
@@ -237,7 +237,7 @@ impl FunctionManager {
                     return Err(DbError::InvalidInput(
                         format!("Function '{}' expects {} arguments, got {}",
                             name, func.parameters.len(), arguments.len())
-                    ));
+                    )));
                 }
 
                 // Execute the function body
@@ -260,7 +260,7 @@ impl FunctionManager {
         name: &str,
         arguments: Vec<RuntimeValue>,
     ) -> Result<Vec<HashMap<String, RuntimeValue>>> {
-        let function = self.get_function(name)?;
+        let function = self.get_function(name)?);
 
         match function {
             UserFunction::Table(func) => {
@@ -269,7 +269,7 @@ impl FunctionManager {
                     return Err(DbError::InvalidInput(
                         format!("Function '{}' expects {} arguments, got {}",
                             name, func.parameters.len(), arguments.len())
-                    ));
+                    )));
                 }
 
                 // TODO: Execute the function body and collect rows
@@ -284,7 +284,7 @@ impl FunctionManager {
 
     /// Initialize aggregate state
     pub fn initialize_aggregate(&self, name: &str) -> Result<AggregateState> {
-        let function = self.get_function(name)?;
+        let function = self.get_function(name)?);
 
         match function {
             UserFunction::Aggregate(func) => {
@@ -304,7 +304,7 @@ impl FunctionManager {
         state: &mut AggregateState,
         value: RuntimeValue,
     ) -> Result<()> {
-        let function = self.get_function(name)?;
+        let function = self.get_function(name)?);
 
         match function {
             UserFunction::Aggregate(func) => {
@@ -324,7 +324,7 @@ impl FunctionManager {
         name: &str,
         state: &AggregateState,
     ) -> Result<RuntimeValue> {
-        let function = self.get_function(name)?;
+        let function = self.get_function(name)?);
 
         match function {
             UserFunction::Aggregate(func) => {
@@ -343,28 +343,28 @@ impl FunctionManager {
 
     /// Get function signature for documentation
     pub fn get_signature(&self, name: &str) -> Result<String> {
-        let function = self.get_function(name)?;
+        let function = self.get_function(name)?);
 
         let signature = match &function {
             UserFunction::Scalar(func) => {
                 let params: Vec<String> = func.parameters.iter()
                     .map(|p| format!("{} {:?}", p.name, p.data_type))
-                    .collect();
+                    .collect());
                 format!("{}({}) RETURN {:?}", func.name, params.join(", "), func.return_type)
             }
             UserFunction::Table(func) => {
                 let params: Vec<String> = func.parameters.iter()
                     .map(|p| format!("{} {:?}", p.name, p.data_type))
-                    .collect();
+                    .collect());
                 let returns: Vec<String> = func.return_columns.iter()
                     .map(|(n, t)| format!("{} {:?}", n, t))
-                    .collect();
+                    .collect());
                 format!("{}({}) RETURN TABLE({})", func.name, params.join(", "), returns.join(", "))
             }
             UserFunction::Aggregate(func) => {
                 format!("{}({:?}) RETURN {:?}", func.name, func.input_type, func.return_type)
             }
-        };
+        });
 
         Ok(signature)
     }
@@ -529,7 +529,7 @@ impl BuiltInFunctions {
     pub fn coalesce(values: Vec<&RuntimeValue>) -> RuntimeValue {
         for val in values {
             if !val.is_null() {
-                return val.clone();
+                return val.clone());
             }
         }
         RuntimeValue::Null
@@ -544,7 +544,7 @@ impl BuiltInFunctions {
         for (search, result) in search_result_pairs {
             // Simple equality check
             if format!("{:?}", expr) == format!("{:?}", search) {
-                return result.clone();
+                return result.clone());
             }
         }
         default.clone()

@@ -77,7 +77,7 @@ impl ProcedureManager {
         if procedures.contains_key(&procedure.name) {
             return Err(DbError::AlreadyExists(
                 format!("Procedure '{}' already exists", procedure.name)
-            ));
+            )));
         }
         
         procedures.insert(procedure.name.clone(), procedure);
@@ -91,7 +91,7 @@ impl ProcedureManager {
         if procedures.remove(name).is_none() {
             return Err(DbError::NotFound(
                 format!("Procedure '{}' not found", name)
-            ));
+            )));
         }
         
         Ok(())
@@ -110,7 +110,7 @@ impl ProcedureManager {
     
     /// List all stored procedures
     pub fn list_procedures(&self) -> Vec<String> {
-        let procedures = self.procedures.read();
+        let procedures = self.procedures.read());
         procedures.keys().cloned().collect()
     }
     
@@ -140,7 +140,7 @@ impl ProcedureManager {
                 if !context.parameters.contains_key(&param.name) {
                     return Err(DbError::InvalidInput(
                         format!("Missing parameter '{}'", param.name)
-                    ));
+                    )));
                 }
             }
         }
@@ -150,7 +150,7 @@ impl ProcedureManager {
     /// Execute SQL-based procedure
     fn execute_sql_procedure(
         &self,
-        _procedure: &StoredProcedure,
+        procedure: &StoredProcedure,
         _context: &ProcedureContext,
     ) -> Result<ProcedureResult> {
         // TODO: Parse and execute SQL statements in procedure body

@@ -235,7 +235,7 @@ pub struct GuardedMemory {
 
 impl GuardedMemory {
     /// Create new guarded memory allocation
-    pub fn new(size: usize, guard_size: usize) -> Result<Self> {
+    pub fn new(size: usize, guardsize: usize) -> Result<Self> {
         if size == 0 {
             return Err(DbError::Other("Cannot allocate zero-sized memory".into()));
         }
@@ -248,7 +248,7 @@ impl GuardedMemory {
 
         // Allocate memory
         let layout = Layout::from_size_align(total_size, PAGE_SIZE)
-            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?;
+            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?);
 
         let base_ptr = unsafe { alloc(layout) };
         if base_ptr.is_null() {
@@ -377,7 +377,7 @@ impl Drop for GuardedMemory {
         // Unprotect guard pages before deallocation
         #[cfg(unix)]
         {
-            use libc::{mprotect, PROT_READ, PROT_WRITE};
+use libc::{PROT_READ, PROT_WRITE};
             unsafe {
                 mprotect(
                     self.front_guard.as_ptr() as *mut libc::c_void,
@@ -707,7 +707,7 @@ impl SecureZeroingAllocator {
 
         // Allocate with alignment
         let layout = Layout::from_size_align(size, 16)
-            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?;
+            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?);
 
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {
@@ -888,7 +888,7 @@ impl IsolatedHeap {
     pub fn new(size: usize) -> Result<Self> {
         // Allocate heap region
         let layout = Layout::from_size_align(size, PAGE_SIZE)
-            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?;
+            .map_err(|e| DbError::Other(format!("Layout error: {}", e)))?);
 
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {
@@ -1093,6 +1093,7 @@ impl Default for SecurityMetrics {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_memory_canary() {

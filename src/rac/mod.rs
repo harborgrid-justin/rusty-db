@@ -629,7 +629,7 @@ impl RacCluster {
 
     /// Generate a unique query ID
     fn generate_query_id() -> u64 {
-        use std::sync::atomic::{AtomicU64, Ordering};
+        use std::sync::atomic::{AtomicU64, Ordering});
         static COUNTER: AtomicU64 = AtomicU64::new(1);
         COUNTER.fetch_add(1, Ordering::Relaxed)
     }
@@ -645,7 +645,7 @@ impl RacCluster {
     }
 
     /// Perform graceful failover from one node to another
-    pub async fn failover(&self, from_node: NodeId, to_node: NodeId) -> Result<(), DbError> {
+    pub async fn failover(&self, fromnode: NodeId, tonode: NodeId)> Result<(), DbError> {
         // Initiate recovery for the failing node
         self.recovery.initiate_recovery(
             from_node.clone(),
@@ -737,6 +737,7 @@ pub enum PlacementPolicy {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_rac_cluster_creation() {

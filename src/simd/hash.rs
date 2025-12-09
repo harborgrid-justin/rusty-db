@@ -445,7 +445,7 @@ mod tests {
         // Test that hashes are well-distributed
         let mut hashes = Vec::new();
         for i in 0..1000 {
-            let data = format!("key_{}", i);
+            let data = format!("key_{}", i));
             hashes.push(hash_str(&data));
         }
 

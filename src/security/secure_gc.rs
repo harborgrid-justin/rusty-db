@@ -897,7 +897,7 @@ mod tests {
         let password = SensitiveData::new("secret".to_string());
         assert_eq!(password.expose(), "secret");
         // Debug print should show <redacted>
-        let debug_str = format!("{:?}", password);
+        let debug_str = format!("{:?}", password));
         assert!(debug_str.contains("redacted"));
     }
 

@@ -848,7 +848,7 @@ impl ReplicationHealthMonitor {
                 created_at: SystemTime::now(),
                 acknowledged: false,
                 metric_values: {
-                    let mut values = HashMap::new();
+                    let mut values = HashMap::new());
                     values.insert("lag_bytes".to_string(), lag.lag_bytes as f64);
                     values
                 },
@@ -866,7 +866,7 @@ impl ReplicationHealthMonitor {
                 created_at: SystemTime::now(),
                 acknowledged: false,
                 metric_values: {
-                    let mut values = HashMap::new();
+                    let mut values = HashMap::new());
                     values.insert("error_rate".to_string(), errors.error_rate);
                     values
                 },
@@ -1172,7 +1172,6 @@ impl Default for ReplicationHealthMonitor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[tokio::test]
     async fn test_health_monitor_creation() {

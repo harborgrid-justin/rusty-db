@@ -235,7 +235,7 @@ impl AllocationId {
 
     /// Generates a new unique allocation ID
     pub fn generate() -> Self {
-        use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{Ordering};
         static COUNTER: AtomicU64 = AtomicU64::new(1);
         Self(COUNTER.fetch_add(1, Ordering::Relaxed))
     }

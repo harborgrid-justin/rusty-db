@@ -326,7 +326,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
     /// Collect key-value pairs in range from leaf nodes
     fn collect_range(
         &self,
-        mut current_leaf: NodeRef<K, V>,
+        mut currentleaf: NodeRef<K, V>,
         start: &K,
         end: &K,
     ) -> Result<Vec<(K, V)>> {
@@ -748,7 +748,6 @@ pub struct BTreeStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_btree_insert_search() {
@@ -771,7 +770,7 @@ mod tests {
         let tree: BPlusTree<i32, String> = BPlusTree::new();
 
         for i in 1..=10 {
-            tree.insert(i, format!("value_{}", i)).unwrap();
+            tree.insert(i, format!("value_{}", i)).unwrap());
         }
 
         let results = tree.range_scan(&3, &7).unwrap();
@@ -786,13 +785,13 @@ mod tests {
 
         let data: Vec<_> = (1..=100)
             .map(|i| (i, format!("value_{}", i)))
-            .collect();
+            .collect());
 
         tree.bulk_load(data).unwrap();
 
         // Verify all values can be found
         for i in 1..=100 {
-            assert_eq!(tree.search(&i).unwrap(), Some(format!("value_{}", i)));
+            assert_eq!(tree.search(&i).unwrap(), Some(format!("value_{}", i))));
         }
     }
 
@@ -815,7 +814,7 @@ mod tests {
         let tree: BPlusTree<i32, String> = BPlusTree::new();
 
         for i in 1..=50 {
-            tree.insert(i, format!("value_{}", i)).unwrap();
+            tree.insert(i, format!("value_{}", i)).unwrap());
         }
 
         let stats = tree.stats();

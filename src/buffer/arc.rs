@@ -131,7 +131,7 @@ impl ArcState {
     }
 
     /// Move frame from one list to another
-    fn move_frame(&mut self, frame_id: FrameId, to_list: ListType, is_ghost: bool) {
+    fn move_frame(&mut self, frame_id: FrameId, tolist: ListType, is_ghost: bool) {
         // Remove from old list if present
         if let Some(entry) = self.directory.get(&frame_id) {
             match entry.list_type {
@@ -143,7 +143,7 @@ impl ArcState {
         }
 
         // Add to new list
-        match to_list {
+        match tolist {
             ListType::T1 => self.t1.push_back(frame_id),
             ListType::T2 => self.t2.push_back(frame_id),
             ListType::B1 => self.b1.push_back(frame_id),
@@ -155,7 +155,7 @@ impl ArcState {
             frame_id,
             ArcEntry {
                 frame_id,
-                list_type: to_list,
+                list_type: tolist,
                 is_ghost,
             },
         );
@@ -201,12 +201,12 @@ impl ArcState {
     }
 
     /// Replace a page according to ARC policy
-    fn replace(&mut self, frames: &[Arc<BufferFrame>], in_b2: bool) -> Option<FrameId> {
+    fn replace(&mut self, frames: &[Arc<BufferFrame>], inb2: bool) -> Option<FrameId> {
         loop {
             // Decide which list to evict from based on target_t1
             let evict_from_t1 = if !self.t1.is_empty() &&
                 (self.t1.len() > self.target_t1 ||
-                 (self.t1.len() == self.target_t1 && in_b2))
+                 (self.t1.len() == self.target_t1 && inb2))
             {
                 true
             } else if !self.t2.is_empty() {
@@ -480,7 +480,6 @@ impl EvictionPolicy for ArcEvictionPolicy {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::buffer::page_cache::BufferFrame;
 
     fn create_test_frames(n: usize) -> Vec<Arc<BufferFrame>> {
         (0..n)
@@ -553,7 +552,6 @@ mod tests {
 
     #[test]
     fn test_arc_ghost_hits() {
-        let frames = create_test_frames(10);
         let policy = ArcEvictionPolicy::new(3);
 
         // Fill cache with 0, 1, 2

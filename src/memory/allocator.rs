@@ -210,7 +210,7 @@ impl Slab {
     unsafe fn new(size_class_info: &SizeClass, size_class: usize, color: usize) -> Result<Self> {
         // Allocate slab memory with proper alignment
         let layout = Layout::from_size_align(SLAB_SIZE, SLAB_SIZE)
-            .map_err(|e| DbError::OutOfMemory(format!("Invalid slab layout: {}", e)))?;
+            .map_err(|e| DbError::OutOfMemory(format!("Invalid slab layout: {}", e)))?);
 
         let base = System.alloc(layout);
         if base.is_null() {
@@ -539,11 +539,11 @@ impl SlabAllocator {
         if size > MAX_SLAB_SIZE {
             return Err(DbError::InvalidArgument(
                 format!("Size {} exceeds slab max {}", size, MAX_SLAB_SIZE)
-            ));
+            )));
         }
 
         let size_class = self.size_to_class(size)
-            .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?;
+            .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?);
 
         self.stats.allocations.fetch_add(1, Ordering::Relaxed);
         self.stats.bytes_allocated.fetch_add(size as u64, Ordering::Relaxed);
@@ -611,7 +611,7 @@ impl SlabAllocator {
     /// Deallocate memory back to slab allocator
     pub unsafe fn deallocate(&self, ptr: NonNull<u8>, size: usize) -> Result<()> {
         let size_class = self.size_to_class(size)
-            .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?;
+            .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?);
 
         self.stats.deallocations.fetch_add(1, Ordering::Relaxed);
 
@@ -729,7 +729,7 @@ impl ArenaChunk {
     /// Create a new arena chunk
     unsafe fn new(size: usize) -> Result<Self> {
         let layout = Layout::from_size_align(size, 16)
-            .map_err(|e| DbError::OutOfMemory(format!("Invalid arena layout: {}", e)))?;
+            .map_err(|e| DbError::OutOfMemory(format!("Invalid arena layout: {}", e)))?);
 
         let base = System.alloc(layout);
         if base.is_null() {
@@ -791,7 +791,7 @@ impl Arena {
         if self.limit > 0 && self.total_allocated + size > self.limit {
             return Err(DbError::LimitExceeded(
                 format!("Arena '{}' limit {} exceeded", self.name, self.limit)
-            ));
+            )));
         }
 
         // Try current chunk
@@ -1098,7 +1098,7 @@ struct LargeObject {
 
 impl LargeObject {
     /// Allocate a large object using mmap
-    unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
+    unsafe fn allocate(size: usize, usehugepages: bool, cow: bool) -> Result<Self> {
         #[cfg(unix)]
         {
             use std::os::unix::io::RawFd;
@@ -1182,7 +1182,7 @@ impl LargeObject {
         {
             // Fallback to regular allocation on non-Unix systems
             let layout = Layout::from_size_align(size, 4096)
-                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?;
+                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?);
 
             let ptr = System.alloc(layout);
             if ptr.is_null() {
@@ -1308,7 +1308,7 @@ impl LargeObjectAllocator {
     pub fn allocate(
         &self,
         size: usize,
-        use_huge_pages: bool,
+        usehuge_pages: bool,
         cow: bool,
     ) -> Result<NonNull<u8>> {
         let obj = unsafe { LargeObject::allocate(size, use_huge_pages, cow)? };
@@ -1563,7 +1563,7 @@ impl MemoryPressureManager {
     }
 
     /// Handle pressure level change
-    fn handle_pressure_change(&self, new_level: MemoryPressureLevel) -> Result<()> {
+    ffn handle_pressure_change(&self, newlevel: MemoryPressureLevel)-> Result<()> {
         self.stats.pressure_events.fetch_add(1, Ordering::Relaxed);
 
         // Invoke callbacks
@@ -1651,7 +1651,7 @@ impl MemoryPressureManager {
             if used + size > total {
                 return Err(DbError::OutOfMemory(
                     format!("Cannot allocate {} bytes (used: {}, total: {})", size, used, total)
-                ));
+                )));
             }
         }
 
@@ -1938,7 +1938,7 @@ impl MemoryDebugger {
                     self.stats.corruption_detected.fetch_add(1, Ordering::Relaxed);
                     return Err(DbError::Internal(
                         format!("Memory corruption detected at address 0x{:x}", address)
-                    ));
+                    )));
                 }
             }
 
@@ -1964,14 +1964,14 @@ impl MemoryDebugger {
 
     /// Capture stack trace
     fn capture_stack_trace(&self) -> String {
-        let backtrace = Backtrace::capture();
+        let backtrace = Backtrace::capture());
         format!("{:?}", backtrace)
     }
 
     /// Detect memory leaks
     pub fn detect_leaks(&self, min_age: Duration) -> Vec<LeakReport> {
         if !self.leak_detection_enabled.load(Ordering::Relaxed) {
-            return Vec::new();
+            return Vec::new());
         }
 
         let now = Instant::now();
@@ -2173,7 +2173,7 @@ impl MemoryManager {
             // Use system allocator for medium sizes
             unsafe {
                 let layout = Layout::from_size_align(size, 16)
-                    .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?;
+                    .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?);
                 let ptr = System.alloc(layout);
                 if ptr.is_null() {
                     return Err(DbError::OutOfMemory("System allocation failed".to_string()));
@@ -2284,7 +2284,7 @@ impl MemoryPool {
         // Pre-allocate all objects
         unsafe {
             let layout = Layout::from_size_align(object_size, 16)
-                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?;
+                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?);
 
             for _ in 0..capacity {
                 let ptr = System.alloc(layout);
@@ -2402,7 +2402,7 @@ impl MemoryZone {
     pub fn new(name: String, size: usize, zone_type: ZoneType) -> Result<Self> {
         unsafe {
             let layout = Layout::from_size_align(size, 4096)
-                .map_err(|e| DbError::OutOfMemory(format!("Invalid zone layout: {}", e)))?;
+                .map_err(|e| DbError::OutOfMemory(format!("Invalid zone layout: {}", e)))?);
 
             let base = System.alloc(layout);
             if base.is_null() {
@@ -2512,7 +2512,7 @@ impl BuddyAllocator {
 
         unsafe {
             let layout = Layout::from_size_align(size, size)
-                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?;
+                .map_err(|e| DbError::OutOfMemory(format!("Invalid layout: {}", e)))?);
 
             let base = System.alloc(layout);
             if base.is_null() {
@@ -2929,7 +2929,7 @@ impl MemoryApi {
     pub fn api_enable_debugging(&self, feature: &str) -> Result<()> {
         match feature {
             "tracking" => {
-                self.manager.debugger().enable_tracking();
+                self.manager.debugger().enable_tracking());
                 Ok(())
             }
             "leak_detection" => {
@@ -2956,7 +2956,7 @@ impl MemoryApi {
     pub fn api_disable_debugging(&self, feature: &str) -> Result<()> {
         match feature {
             "tracking" => {
-                self.manager.debugger().disable_tracking();
+                self.manager.debugger().disable_tracking());
                 Ok(())
             }
             _ => Err(DbError::InvalidArgument(format!("Cannot disable: {}", feature)))
@@ -2978,7 +2978,7 @@ impl MemoryApi {
     /// Set memory limit
     pub fn api_set_memory_limit(&self, limit_bytes: u64) {
         self.manager.pressure_manager()
-            .set_total_memory(limit_bytes);
+            .set_total_memory(limit_bytes));
     }
 
     /// Generate full memory report
@@ -3026,7 +3026,7 @@ pub fn format_memory_size(bytes: u64) -> String {
 
 /// Helper to parse memory size string
 pub fn parse_memory_size(s: &str) -> Result<u64> {
-    let s = s.trim().to_uppercase();
+    let s = s.trim().to_uppercase());
     let (num_str, multiplier) = if s.ends_with("TB") {
         (&s[..s.len()-2], 1024u64 * 1024 * 1024 * 1024)
     } else if s.ends_with("GB") {
@@ -3042,7 +3042,7 @@ pub fn parse_memory_size(s: &str) -> Result<u64> {
     };
 
     let num: f64 = num_str.trim().parse()
-        .map_err(|e| DbError::InvalidArgument(format!("Invalid memory size: {}", e)))?;
+        .map_err(|e| DbError::InvalidArgument(format!("Invalid memory size: {}", e)))?);
 
     Ok((num * multiplier as f64) as u64)
 }

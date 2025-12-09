@@ -164,9 +164,9 @@ impl CorruptionDetector {
         self.corrupted_pages.read().values().cloned().collect()
     }
 
-    pub async fn repair_page(&self, page_id: u64, backup_data: &[u8]) -> Result<()> {
+    pub async fn repair_page(&self, page_id: u64, backupdata: &[u8]) -> Result<()> {
         // Write backup data to page
-        tracing::info!("Repairing page {} with {} bytes from backup", page_id, backup_data.len());
+        tracing::info!("Repairing page {} with {} bytes from backup", page_id, backup_data.len()));
 
         // Remove from corrupted set
         self.corrupted_pages.write().remove(&page_id);
@@ -378,7 +378,7 @@ impl DeadlockResolver {
         graph.entry(txn_id).or_insert_with(Vec::new).push(waiting_for);
     }
 
-    pub fn remove_transaction(&self, txn_id: u64) {
+    pub fn remove_transaction(&self, txnid: u64) {
         let mut graph = self.transaction_graph.write();
         graph.remove(&txn_id);
 
@@ -572,7 +572,7 @@ impl FailoverOrchestrator {
         None
     }
 
-    pub async fn perform_failover(&self, failed_node: &str) -> Result<String> {
+    pub async fn perform_failover(&self, failednode: &str) -> Result<String> {
         let mut in_progress = self.failover_in_progress.write();
         if *in_progress {
             return Err(DbError::Internal("Failover already in progress".to_string()));
@@ -706,7 +706,7 @@ impl SelfHealingEngine {
                 Severity::High,
                 format!("Page {} is corrupted", corruption.page_id),
                 format!("page_{}", corruption.page_id),
-            );
+            ));
 
             let action = HealingAction::RepairDataBlock {
                 page_id: corruption.page_id,
@@ -724,7 +724,7 @@ impl SelfHealingEngine {
                 Severity::Medium,
                 format!("Index {} requires rebuild", index_name),
                 index_name.clone(),
-            );
+            ));
 
             let action = HealingAction::RebuildIndex { index_name };
             self.execute_healing(issue.issue_id, action).await?;
@@ -749,7 +749,7 @@ impl SelfHealingEngine {
                 Severity::High,
                 format!("Memory leak detected: {} MB/min growth", growth_rate),
                 "memory".to_string(),
-            );
+            ));
 
             self.execute_healing(issue.issue_id, HealingAction::ForceCheckpoint).await?;
         }
@@ -761,7 +761,7 @@ impl SelfHealingEngine {
                 Severity::Critical,
                 format!("Node {} has failed", failed_node),
                 failed_node.clone(),
-            );
+            ));
 
             if let Ok(new_primary) = self.failover_orchestrator.perform_failover(&failed_node).await {
                 let action = HealingAction::PromoteReplica { node_id: new_primary };

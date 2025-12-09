@@ -103,7 +103,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration};
 use thiserror::Error;
-use tokio::sync::{RwLock as AsyncRwLock, Semaphore};
+use tokio::sync::{Semaphore};
 use uuid::Uuid;
 
 /// Memory pressure management specific errors
@@ -332,7 +332,7 @@ impl CallbackRegistration {
     }
 
     /// Records callback execution
-    pub fn record_execution(&self, execution_time: Duration, bytes_freed: u64) {
+    pub fn record_execution(&self, executiontime: Duration, bytes_freed: u64) {
         self.invocation_count.fetch_add(1, Ordering::Relaxed);
         self.total_bytes_freed.fetch_add(bytes_freed, Ordering::Relaxed);
 
@@ -392,7 +392,7 @@ impl SystemMemoryInfo {
         let meminfo = fs::read_to_string("/proc/meminfo")
             .map_err(|e| PressureError::SystemInfoUnavailable {
                 reason: format!("Cannot read /proc/meminfo: {}", e),
-            })?;
+            })?);
 
         let mut total_memory = 0;
         let mut free_memory = 0;
@@ -447,7 +447,7 @@ impl SystemMemoryInfo {
         let status = fs::read_to_string("/proc/self/status")
             .map_err(|e| PressureError::SystemInfoUnavailable {
                 reason: format!("Cannot read /proc/self/status: {}", e),
-            })?;
+            })?);
 
         let mut rss = 0;
         let mut virtual_size = 0;
@@ -713,7 +713,7 @@ impl MemoryPressureManager {
         memory_info: SystemMemoryInfo,
         config: &PressureConfig,
         callbacks: &Arc<RwLock<HashMap<Uuid, Arc<CallbackRegistration>>>>,
-        event_history: &Arc<RwLock<VecDeque<PressureEventHistory>>>,
+        eventhistory: &Arc<RwLock<VecDeque<PressureEventHistory>>>,
         stats: &Arc<AsyncRwLock<MemoryPressureStats>>,
         callback_semaphore: &Arc<Semaphore>,
     ) {
@@ -819,7 +819,7 @@ impl MemoryPressureManager {
                 },
                 context: format!("Pressure level: {}, Memory usage: {:.2}%",
                     level, memory_info.usage_ratio * 100.0),
-            });
+            }));
 
             // Limit history size
             if history.len() > config.max_pressure_events {
@@ -988,9 +988,7 @@ impl MemoryPressureManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test;
-    use std::sync::atomic::AtomicU64;
 
     #[test]
     async fn test_pressure_manager_creation() {

@@ -54,7 +54,7 @@ pub struct OutboxEntry {
 
 impl OutboxEntry {
     pub fn new(
-        aggregate_id: String,
+        aggregateid: String,
         aggregate_type: String,
         event_type: String,
         payload: Vec<u8>,
@@ -313,7 +313,7 @@ impl EventStore {
             return Err(DbError::InvalidOperation(format!(
                 "Version mismatch: expected {}, got {}",
                 expected_version, event.version
-            )));
+            ))));
         }
 
         stream.push(event.clone());
@@ -329,7 +329,7 @@ impl EventStore {
     }
 
     /// Get events from version
-    pub fn get_events_from_version(&self, aggregate_id: &str, from_version: u64) -> Vec<DomainEvent> {
+    pub fn get_events_from_version(&self, aggregate_id: &str, fromversion: u64) -> Vec<DomainEvent> {
         self.get_events(aggregate_id)
             .into_iter()
             .filter(|e| e.version >= from_version)
@@ -441,7 +441,7 @@ impl CQRSCoordinator {
 
     /// Register a read model projection
     pub fn register_projection(&self, name: String, projection: ReadModelProjection) {
-        self.projections.write().insert(name, projection);
+        self.projections.write().insert(name, projection));
     }
 
     fn handle_command(&self, _command: &Command, events: &[DomainEvent]) -> Result<Vec<DomainEvent>> {
@@ -478,7 +478,7 @@ impl ReadModelProjection {
     pub fn apply_event(&self, event: &DomainEvent) -> Result<()> {
         // Update read model based on event
         // Simplified implementation
-        let key = format!("{}:{}", event.aggregate_type, event.aggregate_id);
+        let key = format!("{}:{}", event.aggregate_type, event.aggregate_id));
         self.data.write().insert(key, bincode::serialize(&event)?);
         Ok(())
     }
@@ -589,7 +589,7 @@ impl KafkaConnector {
 
 impl ExternalConnector for KafkaConnector {
     fn send_event(&self, event: &ChangeEvent) -> Result<()> {
-        let topic = format!("{}{}", self.topic_prefix, event.table_name);
+        let topic = format!("{}{}", self.topic_prefix, event.table_name));
         // Use rdkafka to send to Kafka
         // producer.send(topic, event)?;
         let _ = topic; // Suppress warning
@@ -700,14 +700,14 @@ impl SchemaRegistry {
     /// Validate event against schema
     pub fn validate_event(&self, event_type: &str, event_data: &[u8]) -> Result<bool> {
         let schema = self.get_latest_schema(event_type)
-            .ok_or_else(|| DbError::NotFound(format!("Schema for '{}' not found", event_type)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Schema for '{}' not found", event_type)))?);
 
         // In production, use jsonschema or avro validation
         let _ = (schema, event_data);
         Ok(true)
     }
 
-    fn is_compatible(&self, new_schema: &EventSchema, old_schema: &EventSchema) -> bool {
+    fn is_compatible(&self, newschema: &EventSchema, oldschema: &EventSchema) -> bool {
         match new_schema.compatibility {
             SchemaCompatibility::None => true,
             SchemaCompatibility::Backward => {

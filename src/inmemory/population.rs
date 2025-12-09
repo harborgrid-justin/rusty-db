@@ -14,7 +14,6 @@ use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::collections::{HashMap, BinaryHeap};
-use std::cmp::Ordering as CmpOrdering;
 use std::time::{Duration};
 use parking_lot::{RwLock};
 use std::thread;
@@ -397,7 +396,7 @@ pub struct PopulationManager {
 }
 
 impl PopulationManager {
-    pub fn new(num_workers: usize, max_memory: usize) -> Self {
+    pub fn new(numworkers: usize, max_memory: usize) -> Self {
         let task_queue = Arc::new(Mutex::new(BinaryHeap::new()));
         let progress_tracker = Arc::new(RwLock::new(HashMap::new()));
         let memory_handler = Arc::new(MemoryPressureHandler::new(max_memory, 0.9));
@@ -418,7 +417,7 @@ impl PopulationManager {
         manager
     }
 
-    fn start_workers(&self, num_workers: usize) {
+    fn start_workers(&self, numworkers: usize) {
         self.running.store(true, Ordering::SeqCst);
 
         let mut workers = self.workers.write();

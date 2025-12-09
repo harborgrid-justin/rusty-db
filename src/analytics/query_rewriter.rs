@@ -354,8 +354,8 @@ impl DeltaTable {
     /// Records an update operation.
     pub fn record_update(
         &mut self,
-        old_values: HashMap<String, String>,
-        new_values: HashMap<String, String>,
+        oldvalues: HashMap<String, String>,
+        newvalues: HashMap<String, String>,
     ) {
         self.deltas.push(DeltaRow {
             operation: DeltaOperation::Update,
@@ -557,6 +557,9 @@ pub struct ViewDelta {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
+use std::time::Instant;
+use std::time::SystemTime;
 
     #[test]
     fn test_rewrite_rule_creation() {

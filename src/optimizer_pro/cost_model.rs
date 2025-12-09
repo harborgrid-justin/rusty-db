@@ -177,7 +177,7 @@ impl CostModel {
     fn estimate_seq_scan_cost(
         &self,
         table_id: TableId,
-        _filter: Option<&Expression>,
+        filter: Option<&Expression>,
     ) -> Result<CostEstimate> {
         let table_stats = self.get_table_stats(table_id)?;
 
@@ -212,8 +212,8 @@ impl CostModel {
         &self,
         table_id: TableId,
         index_id: IndexId,
-        key_conditions: &[Expression],
-        _filter: Option<&Expression>,
+        keyconditions: &[Expression],
+        filter: Option<&Expression>,
     ) -> Result<CostEstimate> {
         let table_stats = self.get_table_stats(table_id)?;
         let index_stats = self.get_index_stats(index_id)?;
@@ -583,7 +583,7 @@ impl CostModel {
 
     /// Update table statistics
     pub fn update_table_stats(&self, table_id: TableId, stats: TableStatistics) {
-        self.table_stats.write().unwrap().insert(table_id, stats);
+        self.table_stats.write().unwrap().insert(table_id, stats));
     }
 
     /// Update index statistics

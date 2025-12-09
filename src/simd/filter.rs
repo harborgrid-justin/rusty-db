@@ -712,7 +712,7 @@ impl SimdFilter {
             _ => {
                 return Err(DbError::InvalidArgument(
                     format!("Unsupported predicate: {:?}", predicate)
-                ));
+                )));
             }
         }
 
@@ -721,7 +721,7 @@ impl SimdFilter {
     }
 
     /// Convert bitmask result to selection vector
-    fn bitmask_to_selection(&mut self, bitmask: &[u8], data_len: usize, selection: &mut SelectionVector) {
+    fn bitmask_to_selection(&mut self, bitmask: &[u8], datalen: usize, selection: &mut SelectionVector) {
         for (chunk_idx, &mask) in bitmask.iter().enumerate() {
             if mask == 0 {
                 continue;
@@ -756,7 +756,6 @@ impl Default for SimdFilter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_i32_eq_filter() {

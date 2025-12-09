@@ -200,9 +200,9 @@ impl AutoDopCalculator {
     /// Calculate automatic DOP for a query
     pub fn calculate_dop(
         &self,
-        estimated_cost: Option<f64>,
+        estimatedcost: Option<f64>,
         estimated_rows: Option<u64>,
-        available_servers: u32,
+        availableservers: u32,
     ) -> DegreeOfParallelism {
         // Base DOP on number of CPUs
         let mut dop = self.cpu_cores;
@@ -313,8 +313,8 @@ impl ParallelExecutionController {
     pub fn create_server_pool(
         &self,
         name: String,
-        min_servers: u32,
-        max_servers: u32,
+        minservers: u32,
+        maxservers: u32,
     ) -> Result<ServerPoolId> {
         let pool_id = {
             let pools = self.server_pools.read().unwrap();
@@ -343,7 +343,7 @@ impl ParallelExecutionController {
     }
 
     /// Create a parallel server
-    fn create_server(&self, pool_id: ServerPoolId, server_type: ServerType) -> Result<ServerId> {
+    fn create_server(&self, poolid: ServerPoolId, server_type: ServerType) -> Result<ServerId> {
         let server_id = {
             let mut next_id = self.next_server_id.write().unwrap();
             let id = *next_id;
@@ -378,8 +378,8 @@ impl ParallelExecutionController {
     /// Request parallel execution
     pub fn request_parallel_execution(
         &self,
-        session_id: SessionId,
-        group_id: ConsumerGroupId,
+        sessionid: SessionId,
+        groupid: ConsumerGroupId,
         requested_dop: DegreeOfParallelism,
         mode: ParallelMode,
         estimated_cost: Option<f64>,
@@ -563,7 +563,7 @@ impl ParallelExecutionController {
             let mut executions = self.active_executions.write().unwrap();
             executions.remove(&query_id)
                 .ok_or_else(|| DbError::NotFound(format!("Query {} not found", query_id)))?
-        };
+        });
 
         // Free servers
         {

@@ -5,6 +5,8 @@ use super::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
+use std::time::UNIX_EPOCH;
+use std::time::SystemTime;
 
 /// Chunk store entry
 #[derive(Debug, Clone)]
@@ -243,7 +245,7 @@ impl DedupEngine {
         if restored.len() != metadata.original_size {
             return Err(CompressionError::DecompressionFailed(
                 format!("Size mismatch: expected {}, got {}", metadata.original_size, restored.len())
-            ));
+            )));
         }
 
         Ok(restored)
@@ -364,7 +366,7 @@ impl DedupEngine {
 
     fn increment_reference(&self, chunk_hash: u64) {
         if let Some(entry) = self.chunk_store.write().unwrap().get_mut(&chunk_hash) {
-            entry.reference_count += 1;
+            entry.reference_count += 1);
             entry.last_accessed = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()

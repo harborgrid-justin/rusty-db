@@ -325,7 +325,7 @@ pub struct Savepoint {
 
 impl Savepoint {
     /// Creates a new savepoint.
-    pub fn new(id: u64, name: String, txn_id: TransactionId, lsn: LogSequenceNumber) -> Self {
+    pub fn new(id: u64, name: String, txnid: TransactionId, lsn: LogSequenceNumber) -> Self {
         Self {
             id,
             name,
@@ -421,7 +421,7 @@ impl Transaction {
     }
 
     /// Creates a nested transaction under a parent.
-    pub fn new_nested(id: TransactionId, parent_id: TransactionId, isolation_level: IsolationLevel) -> Self {
+    pub fn new_nested(id: TransactionId, parentid: TransactionId, isolation_level: IsolationLevel) -> Self {
         let mut txn = Self::new(id, isolation_level);
         txn.parent_txn = Some(parent_id);
         txn
@@ -496,7 +496,6 @@ impl Transaction {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_isolation_level_default() {

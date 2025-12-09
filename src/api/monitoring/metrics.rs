@@ -56,7 +56,7 @@ impl CounterMetric {
     }
 
     pub fn inc(&self) {
-        self.value.fetch_add(1, Ordering::Relaxed);
+        self.value.fetch_add(1, Ordering::Relaxed));
     }
 
     pub fn inc_by(&self, delta: u64) {
@@ -260,7 +260,7 @@ impl SummaryMetric {
         let mut result = HashMap::new();
         for &q in &self.quantiles {
             let index = ((obs.len() - 1) as f64 * q) as usize;
-            result.insert(format!("{}", q), obs[index]);
+            result.insert(format!("{}", q), obs[index]));
         }
         result
     }

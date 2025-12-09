@@ -36,6 +36,7 @@ use std::arch::x86_64::*;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
 use crate::simd::hash::xxhash3_avx2;
+use std::collections::HashMap;
 
 /// Control byte indicating an empty slot
 const EMPTY: u8 = 0xFF;
@@ -355,7 +356,7 @@ where
     }
 
     /// Resize the table to new capacity
-    fn resize(&mut self, new_capacity: usize)
+    fn resize(&mut self, newcapacity: usize)
     where
         K: AsRef<[u8]>,
     {
@@ -564,7 +565,6 @@ impl ProbeSeq {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_basic_operations() {
@@ -604,13 +604,13 @@ mod tests {
         let mut table = SwissTable::new();
 
         for i in 0..1000 {
-            table.insert(format!("key_{}", i), i);
+            table.insert(format!("key_{}", i), i));
         }
 
         assert_eq!(table.len(), 1000);
 
         for i in 0..1000 {
-            assert_eq!(table.get(&format!("key_{}", i)), Some(&i));
+            assert_eq!(table.get(&format!("key_{}", i)), Some(&i)));
         }
     }
 
@@ -619,14 +619,14 @@ mod tests {
         let mut table = SwissTable::with_capacity(16);
 
         for i in 0..100 {
-            table.insert(format!("key_{}", i), i);
+            table.insert(format!("key_{}", i), i));
         }
 
         assert!(table.capacity() > 16);
         assert_eq!(table.len(), 100);
 
         for i in 0..100 {
-            assert_eq!(table.get(&format!("key_{}", i)), Some(&i));
+            assert_eq!(table.get(&format!("key_{}", i)), Some(&i)));
         }
     }
 
@@ -660,7 +660,7 @@ mod tests {
         let mut table = SwissTable::with_capacity(16);
 
         for i in 0..10 {
-            table.insert(format!("key_{}", i), i);
+            table.insert(format!("key_{}", i), i));
         }
 
         let lf = table.load_factor();

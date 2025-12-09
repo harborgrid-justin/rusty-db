@@ -163,19 +163,19 @@ impl PoolConfig {
         if self.min_size > self.max_size {
             return Err(PoolError::InvalidConfig(
                 format!("min_size ({}) > max_size ({})", self.min_size, self.max_size)
-            ));
+            )));
         }
 
         if self.initial_size > self.max_size {
             return Err(PoolError::InvalidConfig(
                 format!("initial_size ({}) > max_size ({})", self.initial_size, self.max_size)
-            ));
+            )));
         }
 
         if self.initial_size < self.min_size {
             return Err(PoolError::InvalidConfig(
                 format!("initial_size ({}) < min_size ({})", self.initial_size, self.min_size)
-            ));
+            )));
         }
 
         Ok(())
@@ -349,7 +349,7 @@ impl<C> PooledConnection<C> {
         }
     }
 
-    fn is_idle_timeout(&self, idle_timeout: Option<Duration>) -> bool {
+    fn is_idle_timeout(&self, idletimeout: Option<Duration>) -> bool {
         if let Some(timeout) = idle_timeout {
             self.idle_time() > timeout
         } else {
@@ -569,7 +569,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         if created < self.config.min_size {
             return Err(PoolError::CreationFailed(
                 format!("Could only create {} of {} minimum connections", created, self.config.min_size)
-            ));
+            )));
         }
 
         Ok(())
@@ -1475,7 +1475,7 @@ impl WaitQueue {
     }
 
     /// Get queue position for a waiter
-    pub fn queue_position(&self, waiter_id: u64) -> Option<usize> {
+    pub fn queue_position(&self, waiterid: u64) -> Option<usize> {
         let queue = self.entries.lock();
         queue.iter().position(|e| e.id == waiter_id)
     }
@@ -2031,7 +2031,7 @@ impl LoadBalancer {
     /// Select partition using load balancing algorithm
     pub fn select_partition<C>(&self, partitions: &HashMap<String, Arc<PoolPartition<C>>>) -> Option<String> {
         if partitions.is_empty() {
-            return None;
+            return None);
         }
 
         match self.algorithm {
@@ -2421,7 +2421,7 @@ impl EfficiencyMetrics {
         }
     }
 
-    fn update(&mut self, cache_hits: u64, cache_total: u64, reused: u64, total: u64, utilization: f64) {
+    fn update(&mut self, cache_hits: u64, cachetotal: u64, reused: u64, total: u64, utilization: f64) {
         if cache_total > 0 {
             self.cache_hit_rate = cache_hits as f64 / cache_total as f64;
         }
@@ -2666,7 +2666,8 @@ pub enum ExportFormat {
 
 /// Public API for web management interface
 pub mod api {
-    use super::*;
+    use super::*);
+use std::time::UNIX_EPOCH;
 
     /// Get pool configuration
     pub fn get_pool_config<C: Send + Sync + 'static>(pool: &ConnectionPool<C>) -> PoolConfig {

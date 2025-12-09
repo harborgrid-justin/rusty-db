@@ -44,7 +44,7 @@ impl ResourceManager {
     }
     
     /// Allocate resources for a query
-    pub fn allocate_query_resources(&self, query_id: String, estimated_memory: u64) -> Result<ResourceAllocation> {
+    pub fn allocate_query_resources(&self, query_id: String, estimatedmemory: u64) -> Result<ResourceAllocation> {
         // Check memory availability
         self.memory_manager.allocate(query_id.clone(), estimated_memory)?;
         
@@ -148,7 +148,7 @@ impl MemoryManager {
                 "Insufficient memory: requested {}, available {}",
                 bytes,
                 self.total_bytes - *used
-            )));
+            ))));
         }
         
         *used += bytes;
@@ -266,7 +266,7 @@ impl ConnectionManager {
     }
     
     /// Accept a new connection
-    pub fn accept_connection(&self, conn_id: String, priority: ConnectionPriority) -> Result<()> {
+    pub fn accept_connection(&self, connid: String, priority: ConnectionPriority) -> Result<()> {
         let mut conns = self.active_connections.write();
         
         if conns.len() >= self.max_connections {
@@ -302,7 +302,7 @@ impl ConnectionManager {
     fn try_evict_low_priority(
         &self,
         conns: &mut HashMap<String, ConnectionInfo>,
-        new_priority: ConnectionPriority,
+        newpriority: ConnectionPriority,
     ) -> bool {
         // Find lowest priority connection
         let mut lowest: Option<(String, ConnectionPriority)> = None;

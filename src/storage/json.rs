@@ -21,7 +21,7 @@ impl JsonData {
     /// Create new JSON data from string
     pub fn from_str(s: &str) -> Result<Self> {
         let value = serde_json::from_str(s)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid JSON: {}", e)))?;
+            .map_err(|e| DbError::InvalidInput(format!("Invalid JSON: {}", e)))?);
         Ok(Self { value })
     }
     
@@ -71,7 +71,7 @@ pub enum JsonType {
 }
 
 /// JSON path expression parser and evaluator
-pub struct JsonPath;
+pub struct JsonPath);
 
 impl JsonPath {
     /// Extract value at JSON path
@@ -169,7 +169,7 @@ impl JsonPath {
                         let index = index_str.parse::<i32>()
                             .map_err(|_| DbError::InvalidInput(
                                 format!("Invalid array index: {}", index_str)
-                            ))?;
+                            ))?);
                         tokens.push(PathToken::Index(index));
                     }
                 }
@@ -193,7 +193,7 @@ impl JsonPath {
                         (arr.len() as i32 + idx) as usize
                     } else {
                         *idx as usize
-                    };
+                    });
                     
                     arr.get(index).ok_or_else(|| {
                         DbError::NotFound(format!("Array index {} out of bounds", idx))
@@ -216,7 +216,7 @@ enum PathToken {
 }
 
 /// JSON operators
-pub struct JsonOperators;
+pub struct JsonOperators);
 
 impl JsonOperators {
     /// Extract JSON value at path
@@ -225,7 +225,7 @@ impl JsonOperators {
     }
     
     /// Set JSON value at path
-    pub fn json_set(json: &JsonData, path: &str, new_value: JsonData) -> Result<JsonData> {
+    pub fn json_set(json: &JsonData, path: &str, newvalue: JsonData) -> Result<JsonData> {
         let mut result = json.value.clone();
         Self::set_at_path(&mut result, path, new_value.value)?;
         Ok(JsonData::from_value(result))
@@ -270,7 +270,7 @@ impl JsonOperators {
         Ok(JsonData::from_value(result))
     }
     
-    fn set_at_path(value: &mut JsonValue, path: &str, new_value: JsonValue) -> Result<()> {
+    fn set_at_path(value: &mut JsonValue, path: &str, newvalue: JsonValue) -> Result<()> {
         let tokens = JsonPath::parse_path(path)?;
         
         if tokens.is_empty() {
@@ -293,7 +293,7 @@ impl JsonOperators {
                         return Ok(());
                     } else {
                         current = current.get_mut(field)
-                            .ok_or_else(|| DbError::NotFound(format!("Field '{}' not found", field)))?;
+                            .ok_or_else(|| DbError::NotFound(format!("Field '{}' not found", field)))?);
                     }
                 }
                 PathToken::Index(idx) => {
@@ -317,7 +317,7 @@ impl JsonOperators {
                         return Ok(());
                     } else {
                         current = arr.get_mut(index)
-                            .ok_or_else(|| DbError::NotFound(format!("Index {} out of bounds", idx)))?;
+                            .ok_or_else(|| DbError::NotFound(format!("Index {} out of bounds", idx)))?);
                     }
                 }
             }
@@ -364,7 +364,7 @@ impl JsonOperators {
             match token {
                 PathToken::Field(field) => {
                     current = current.get_mut(&field)
-                        .ok_or_else(|| DbError::NotFound(format!("Field '{}' not found", field)))?;
+                        .ok_or_else(|| DbError::NotFound(format!("Field '{}' not found", field)))?);
                 }
                 PathToken::Index(idx) => {
                     let arr = current.as_array_mut()
@@ -375,7 +375,7 @@ impl JsonOperators {
                         idx as usize
                     };
                     current = arr.get_mut(index)
-                        .ok_or_else(|| DbError::NotFound(format!("Index {} out of bounds", idx)))?;
+                        .ok_or_else(|| DbError::NotFound(format!("Index {} out of bounds", idx)))?);
                 }
             }
         }
@@ -544,7 +544,7 @@ impl JsonValidator {
                 return Err(DbError::InvalidInput(format!(
                     "Type mismatch: expected {}, got {}",
                     expected_type, actual_type
-                )));
+                ))));
             }
         }
         
@@ -560,7 +560,7 @@ pub struct JsonSchema {
 impl JsonSchema {
     pub fn from_str(s: &str) -> Result<Self> {
         let schema = serde_json::from_str(s)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid JSON schema: {}", e)))?;
+            .map_err(|e| DbError::InvalidInput(format!("Invalid JSON schema: {}", e)))?);
         Ok(Self { schema })
     }
 }

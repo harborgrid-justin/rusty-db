@@ -134,7 +134,6 @@ impl ConstraintManager {
                     // Get the referenced column value
                     let referenced_value = fk.referenced_columns.get(0)
                         .and_then(|col| values.get(col))
-                        .ok_or_else(|| crate::error::DbError::InvalidInput(
                             "Missing referenced column value for cascade operation".to_string()
                         ))?;
                     
@@ -145,7 +144,7 @@ impl ConstraintManager {
                                     actions.push(CascadeAction::Delete {
                                         table: referencing_table.clone(),
                                         condition: format!("{}={}", fk.columns[0], referenced_value),
-                                    });
+                                    }));
                                 }
                                 ReferentialAction::SetNull => {
                                     actions.push(CascadeAction::Update {

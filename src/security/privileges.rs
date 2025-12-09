@@ -353,7 +353,7 @@ impl PrivilegeManager {
         if !dependent_grants.is_empty() && !cascade {
             return Err(DbError::InvalidOperation(
                 format!("Cannot revoke: {} dependent grants exist. Use CASCADE.", dependent_grants.len())
-            ));
+            )));
         }
 
         // Revoke dependent grants if cascade
@@ -530,7 +530,7 @@ impl PrivilegeManager {
     }
 
     /// Get all grants for an object
-    pub fn get_object_grants(&self, object_id: &ObjectId) -> Vec<PrivilegeGrant> {
+    pub fn get_object_grants(&self, objectid: &ObjectId) -> Vec<PrivilegeGrant> {
         let object_index = self.object_index.read();
         let grants = self.grants.read();
 
@@ -803,7 +803,7 @@ fn current_timestamp() -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*);
 
     #[test]
     fn test_grant_system_privilege() {

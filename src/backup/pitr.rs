@@ -168,7 +168,7 @@ impl FlashbackQuery {
 
     pub fn execute(&mut self, log_miner: &LogMiner) -> Result<usize> {
         // Reconstruct data as it existed at target SCN
-        let entries = log_miner.get_entries_until_scn(self.target_scn);
+        let entries = log_miner.get_entries_until_scn(self.target_scn));
 
         // Build result set by applying undo operations
         let mut data_state = HashMap::new();
@@ -253,7 +253,7 @@ impl LogMiner {
     }
 
     /// Parse a log file and extract entries
-    fn parse_log_file(&self, log_file: &LogSequence) -> Result<()> {
+    fn parse_log_file(&self, logfile: &LogSequence) -> Result<()> {
         // Simulate parsing log file
         // In a real implementation, this would read the binary log format
 
@@ -263,7 +263,7 @@ impl LogMiner {
         // Simulate some log entries
         for i in 0..100 {
             let scn = log_file.start_scn + i;
-            let txn_id = format!("TXN-{}", i % 10);
+            let txn_id = format!("TXN-{}", i % 10));
 
             let entry = TransactionLogEntry {
                 scn,
@@ -281,7 +281,7 @@ impl LogMiner {
                 undo_sql: Some(format!("UNDO for {}", i)),
                 redo_sql: Some(format!("REDO for {}", i)),
                 committed: false,
-            };
+            });
 
             entries.insert(scn, entry.clone());
             active_txns.entry(txn_id).or_insert_with(Vec::new).push(entry);
@@ -303,7 +303,7 @@ impl LogMiner {
                 end_scn: start_scn + ((i + 1) * 1000),
                 timestamp: SystemTime::now(),
                 size_bytes: 1024 * 1024 * 10, // 10MB
-            };
+            });
 
             if let Some(end) = end_scn {
                 if seq.start_scn > end {
@@ -334,7 +334,7 @@ impl LogMiner {
     }
 
     /// Mark transaction as committed
-    pub fn commit_transaction(&self, transaction_id: &str, commit_scn: u64) -> Result<()> {
+    pub ffn commit_transaction(&self, transaction_id: &str, commitscn: u64)-> Result<()> {
         let mut entries = self.log_entries.write();
         let mut committed = self.committed_transactions.write();
 
@@ -352,7 +352,7 @@ impl LogMiner {
     }
 
     /// Extract committed transactions in SCN range
-    pub fn extract_committed_transactions(&self, start_scn: u64, end_scn: u64) -> Vec<String> {
+    pub fn extract_committed_transactions(&self, startscn: u64, endscn: u64) -> Vec<String> {
         let entries = self.log_entries.read();
         let mut committed_txns = HashSet::new();
 
@@ -391,7 +391,7 @@ impl PitrManager {
 
         let mut restore_points = self.restore_points.write();
         if restore_points.contains_key(&name) {
-            return Err(DbError::BackupError(format!("Restore point {} already exists", name)));
+            return Err(DbError::BackupError(format!("Restore point {} already exists", name))));
         }
 
         restore_points.insert(name, restore_point.clone());
@@ -402,7 +402,7 @@ impl PitrManager {
     pub fn drop_restore_point(&self, name: &str) -> Result<()> {
         let mut restore_points = self.restore_points.write();
         restore_points.remove(name)
-            .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?;
+            .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?);
         Ok(())
     }
 
@@ -415,11 +415,11 @@ impl PitrManager {
     pub fn start_recovery(
         &self,
         backup_id: String,
-        recovery_target: RecoveryTarget,
+        recoverytarget: RecoveryTarget,
         recovery_mode: RecoveryMode,
         recovery_path: PathBuf,
     ) -> Result<String> {
-        let session_id = format!("RECOVERY-{}", uuid::Uuid::new_v4());
+        let session_id = format!("RECOVERY-{}", uuid::Uuid::new_v4()));
         let mut session = RecoverySession::new(
             session_id.clone(),
             recovery_target.clone(),
@@ -441,7 +441,7 @@ impl PitrManager {
                 let restore_points = self.restore_points.read();
                 restore_points.get(name)
                     .map(|rp| rp.scn)
-                    .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?;
+                    .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?);
                 restore_points.get(name).map(|rp| rp.scn)
             }
             RecoveryTarget::Latest => None,
@@ -499,7 +499,7 @@ impl PitrManager {
         Ok(())
     }
 
-    fn apply_logs(&self, session: &mut RecoverySession, target_scn: u64) -> Result<()> {
+    fnfn apply_logs(&self, session: &mut RecoverySession, targetscn: u64)> Result<()> {
         // Start log mining
         self.log_miner.start_mining(session.current_scn, Some(target_scn))?;
 
@@ -536,7 +536,7 @@ impl PitrManager {
                 return Err(DbError::BackupError(
                     format!("Recovery did not reach target SCN. Current: {}, Target: {}",
                         session.current_scn, target_scn)
-                ));
+                )));
             }
         }
 

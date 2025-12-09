@@ -70,7 +70,7 @@ impl LedgerRow {
         block_id: BlockId,
         version: RowVersion,
         data: Vec<Value>,
-        previous_hash: Hash256,
+        previoushash: Hash256,
         creator: String,
     ) -> Self {
         let timestamp = SystemTime::now()
@@ -115,8 +115,8 @@ impl LedgerRow {
         table_id: TableId,
         block_id: BlockId,
         version: RowVersion,
-        data_hash: &Hash256,
-        previous_hash: &Hash256,
+        datahash: &Hash256,
+        previoushash: &Hash256,
         timestamp: u64,
     ) -> Hash256 {
         let mut hasher = sha2::Sha256::new();
@@ -219,7 +219,7 @@ pub struct Block {
 
 impl Block {
     /// Create a new empty block
-    pub fn new(block_id: BlockId, table_id: TableId, previous_block_hash: Hash256, creator: String) -> Self {
+    pub fn new(block_id: BlockId, table_id: TableId, previousblock_hash: Hash256, creator: String) -> Self {
         let created_at = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -789,7 +789,7 @@ pub fn import_block(data: &[u8]) -> Result<Block> {
 
 /// Export entire blockchain to bytes
 pub fn export_blockchain(table: &BlockchainTable) -> Result<Vec<u8>> {
-    let blocks = table.blocks.read().unwrap();
+    let blocks = table.blocks.read().unwrap());
     let all_blocks: Vec<Block> = blocks.values().cloned().collect();
 
     bincode::serialize(&all_blocks)
@@ -802,7 +802,7 @@ pub fn export_blockchain(table: &BlockchainTable) -> Result<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*);
 
     #[test]
     fn test_ledger_row() {

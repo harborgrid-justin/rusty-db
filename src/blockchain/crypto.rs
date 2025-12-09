@@ -101,7 +101,7 @@ pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<Hash256> {
     type HmacSha256 = Hmac<Sha256>;
 
     let mut mac = HmacSha256::new_from_slice(key)
-        .map_err(|e| DbError::Internal(format!("HMAC key error: {}", e)))?;
+        .map_err(|e| DbError::Internal(format!("HMAC key error: {}", e)))?);
     mac.update(data);
     let result = mac.finalize();
     let bytes = result.into_bytes();
@@ -158,7 +158,7 @@ impl ChainLink {
     }
 
     /// Compute the hash for this link
-    fn compute_link_hash(index: u64, prev_hash: &Hash256, data_hash: &Hash256, timestamp: u64) -> Hash256 {
+    fn compute_link_hash(index: u64, prevhash: &Hash256, datahash: &Hash256, timestamp: u64) -> Hash256 {
         let mut hasher = Sha256::new();
         hasher.update(&index.to_le_bytes());
         hasher.update(prev_hash);
@@ -300,7 +300,7 @@ impl MerkleNode {
     }
 
     /// Create an internal node
-    pub fn internal(left_hash: Hash256, right_hash: Hash256) -> Self {
+    pub fn internal(lefthash: Hash256, righthash: Hash256) -> Self {
         let mut hasher = Sha256::new();
         hasher.update(&left_hash);
         hasher.update(&right_hash);
@@ -409,9 +409,9 @@ impl MerkleTree {
     }
 
     /// Generate a proof of inclusion for a leaf
-    pub fn generate_proof(&self, leaf_index: usize) -> Result<MerkleProof> {
+    pub fn generate_proof(&self, leafindex: usize) -> Result<MerkleProof> {
         if leaf_index >= self.leaves.len() {
-            return Err(DbError::InvalidInput(format!("Leaf index {} out of bounds", leaf_index)));
+            return Err(DbError::InvalidInput(format!("Leaf index {} out of bounds", leaf_index))));
         }
 
         let mut siblings = Vec::new();
@@ -612,7 +612,7 @@ impl Default for Accumulator {
 // ============================================================================
 
 /// Derive a key from a master key and context
-pub fn derive_key(master_key: &[u8], context: &[u8], index: u64) -> Hash256 {
+pub fn derive_key(masterkey: &[u8], context: &[u8], index: u64) -> Hash256 {
     let mut hasher = Sha256::new();
     hasher.update(master_key);
     hasher.update(context);
@@ -624,7 +624,7 @@ pub fn derive_key(master_key: &[u8], context: &[u8], index: u64) -> Hash256 {
 }
 
 /// HKDF-like key derivation
-pub fn hkdf_expand(prk: &[u8], info: &[u8], output_len: usize) -> Vec<u8> {
+pub fn hkdf_expand(prk: &[u8], info: &[u8], outputlen: usize) -> Vec<u8> {
     let mut output = Vec::with_capacity(output_len);
     let mut counter = 1u8;
 
@@ -773,13 +773,13 @@ pub fn hash_to_hex(hash: &[u8]) -> String {
 /// Parse hex string to hash
 pub fn hex_to_hash(hex: &str) -> Result<Vec<u8>> {
     if hex.len() % 2 != 0 {
-        return Err(DbError::InvalidInput("Hex string must have even length".to_string()));
+        return Err(DbError::InvalidInput("Hex string must have even length".to_string())));
     }
 
     let mut bytes = Vec::with_capacity(hex.len() / 2);
     for i in (0..hex.len()).step_by(2) {
         let byte = u8::from_str_radix(&hex[i..i + 2], 16)
-            .map_err(|e| DbError::InvalidInput(format!("Invalid hex string: {}", e)))?;
+            .map_err(|e| DbError::InvalidInput(format!("Invalid hex string: {}", e)))?);
         bytes.push(byte);
     }
 

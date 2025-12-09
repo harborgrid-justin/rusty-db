@@ -325,7 +325,7 @@ impl DataQualityAnalyzer {
                 affected_rows: missing,
                 examples: Vec::new(),
                 suggested_fix: Some("Consider adding NOT NULL constraint or default value".to_string()),
-            });
+            }));
         }
 
         // Uniqueness: distinct values / total values
@@ -359,7 +359,7 @@ impl DataQualityAnalyzer {
                     affected_rows: dup_count,
                     examples: duplicates.iter().take(3).map(|(v, _)| v.to_string()).collect(),
                     suggested_fix: None,
-                });
+                }));
             }
         }
 
@@ -399,7 +399,7 @@ impl DataQualityAnalyzer {
                     affected_rows: outliers.len(),
                     examples: outliers.iter().take(3).map(|v| v.to_string()).collect(),
                     suggested_fix: Some("Review outlier values for data entry errors".to_string()),
-                });
+                }));
 
                 // Adjust accuracy based on outliers
                 metrics.accuracy = 1.0 - (outliers.len() as f64 / numeric_values.len() as f64);
@@ -547,7 +547,7 @@ impl TableQualityReport {
     }
 
     /// Returns issues by severity.
-    pub fn issues_by_severity(&self, min_severity: u8) -> Vec<&QualityIssue> {
+    pub fn issues_by_severity(&self, minseverity: u8) -> Vec<&QualityIssue> {
         self.issues
             .iter()
             .filter(|i| i.severity >= min_severity)
@@ -691,6 +691,7 @@ pub struct PerformanceMetrics {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::Instant;
 
     #[test]
     fn test_quality_metrics_calculation() {

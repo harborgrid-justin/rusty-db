@@ -86,7 +86,7 @@ impl AdaptiveContext {
             return Err(DbError::Execution(
                 format!("Memory budget exceeded: {} + {} > {}",
                         *used, size, self.memory_budget)
-            ));
+            )));
         }
         *used += size;
         Ok(())
@@ -173,7 +173,7 @@ pub struct Histogram {
 }
 
 impl Histogram {
-    pub fn new(column: String, num_buckets: usize) -> Self {
+    pub fn new(column: String, numbuckets: usize) -> Self {
         Self {
             column,
             buckets: vec![HistogramBucket::default(); num_buckets],
@@ -349,7 +349,7 @@ impl AdaptiveExecutor {
                                memory_pressure, left_card),
                 old_strategy: "hash".to_string(),
                 new_strategy: format!("{:?}", join_algorithm),
-            });
+            }));
         }
 
         // Execute right side
@@ -371,7 +371,7 @@ impl AdaptiveExecutor {
         left: QueryResult,
         right: QueryResult,
         _join_type: JoinType,
-        _condition: String,
+        condition: String,
         algorithm: JoinAlgorithm,
     ) -> Result<QueryResult, DbError> {
         match algorithm {
@@ -492,7 +492,7 @@ impl AdaptiveExecutor {
                                memory_pressure, input_card),
                 old_strategy: "hash".to_string(),
                 new_strategy: format!("{:?}", agg_strategy),
-            });
+            }));
         }
 
         // Execute aggregation
@@ -544,8 +544,8 @@ impl AdaptiveExecutor {
     fn sort_based_aggregation(
         &self,
         input: QueryResult,
-        group_by: Vec<String>,
-        _aggregates: Vec<crate::execution::planner::AggregateExpr>,
+        groupby: Vec<String>,
+        aggregates: Vec<crate::execution::planner::AggregateExpr>,
     ) -> Result<QueryResult, DbError> {
         // Sort input by group keys
         let mut sorted_rows = input.rows.clone();

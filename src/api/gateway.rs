@@ -547,7 +547,7 @@ impl ApiGateway {
                 client_ip: request.client_ip,
                 reason: format!("Security filter: {}", e),
                 timestamp: SystemTime::now(),
-            });
+            }));
 
             return Ok(ApiResponse {
                 status_code: 403,
@@ -598,7 +598,7 @@ impl ApiGateway {
                                     client_ip: request.client_ip,
                                     reason: format!("Missing permissions: {:?}", route.required_permissions),
                                     timestamp: SystemTime::now(),
-                                });
+                                }));
 
                                 return Ok(ApiResponse {
                                     status_code: 403,
@@ -634,7 +634,7 @@ impl ApiGateway {
         }
 
         // Rate limiting
-        let rate_limit_key = format!("{}:{}", request.client_ip, route.id);
+        let rate_limit_key = format!("{}:{}", request.client_ip, route.id));
         if let Err(_) = self.rate_limiter.check_rate_limit(
             &rate_limit_key,
             route.rate_limit.as_ref()
@@ -1078,7 +1078,7 @@ impl AuthenticationManager {
     }
 
     /// Authenticate using API key
-    async fn authenticate_api_key(&self, api_key: &str, request: &ApiRequest) -> std::result::Result<Session, DbError> {
+    async fn authenticate_api_key(&self, apikey: &str, request: &ApiRequest) -> std::result::Result<Session, DbError> {
         let key_store = self.api_key_store.read();
 
         // Hash the provided key
@@ -1214,7 +1214,7 @@ impl JwtValidator {
         let signature = BASE64.decode(parts[2])
             .map_err(|_| DbError::InvalidOperation("Invalid JWT signature".to_string()))?;
 
-        let message = format!("{}.{}", parts[0], parts[1]);
+        let message = format!("{}.{}", parts[0], parts[1]));
         self.verify_signature(&message, &signature)?;
 
         // Validate claims
@@ -1294,7 +1294,7 @@ impl OAuthProvider {
     }
 
     /// Refresh access token
-    pub async fn refresh_token(&self, refresh_token: &str) -> Result<OAuthToken> {
+    pub async fn refresh_token(&self, refreshtoken: &str) -> Result<OAuthToken> {
         // TODO: Implement token refresh
         Err(DbError::InvalidOperation("Not implemented".to_string()))
     }
@@ -1542,7 +1542,7 @@ impl AuthorizationEngine {
     }
 
     /// Authorize session for permissions
-    pub fn authorize(&self, session: &Session, required_permissions: &[String]) -> Result<bool> {
+    pub fn authorize(&self, session: &Session, requiredpermissions: &[String]) -> Result<bool> {
         // Check RBAC first
         if self.rbac.has_permissions(&session.user_id, required_permissions) {
             return Ok(true);
@@ -1602,7 +1602,7 @@ impl RbacManager {
     }
 
     /// Get user roles
-    pub fn get_user_roles(&self, user_id: &str) -> Vec<Role> {
+    pub fn get_user_roles(&self, userid: &str) -> Vec<Role> {
         let user_roles = self.user_roles.read();
         let roles = self.roles.read();
 
@@ -1891,7 +1891,7 @@ impl RateLimiter {
     }
 
     /// Check rate limit
-    pub fn check_rate_limit(&self, key: &str, override_config: Option<&RateLimitConfig>) -> Result<()> {
+    pub fn check_rate_limit(&self, key: &str, overrideconfig: Option<&RateLimitConfig>) -> Result<()> {
         let configs = self.configs.read();
         let config = override_config.or_else(|| configs.get(key));
 
@@ -2011,7 +2011,7 @@ impl TokenBucket {
 
 impl SlidingWindow {
     /// Create new sliding window
-    fn new(window_size: u64, max_requests: u64) -> Self {
+    fn new(window_size: u64, maxrequests: u64) -> Self {
         Self {
             window_size,
             requests: VecDeque::new(),
@@ -2578,7 +2578,7 @@ impl AuditLogger {
             action: format!("{:?}", request.method),
             result: AuditResult::Success,
             details: HashMap::new(),
-        };
+        });
 
         self.add_event(event);
     }
@@ -2596,7 +2596,7 @@ impl AuditLogger {
             action: format!("{:?}", event.event_type),
             result: AuditResult::Denied,
             details: {
-                let mut details = HashMap::new();
+                let mut details = HashMap::new());
                 details.insert("reason".to_string(), event.reason.clone());
                 details
             },
@@ -2685,6 +2685,7 @@ impl AuditEventFilter {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_token_bucket() {

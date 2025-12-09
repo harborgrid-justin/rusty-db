@@ -71,7 +71,6 @@ use std::sync::atomic::{AtomicBool, AtomicPtr, AtomicU64, AtomicUsize, Ordering}
 use std::sync::Arc;
 use std::time::{Duration};
 use thiserror::Error;
-use tokio::sync::RwLock as AsyncRwLock;
 use uuid::Uuid;
 
 /// Slab allocator specific errors
@@ -396,8 +395,8 @@ impl Slab {
     /// Creates a new slab for the given size class
     pub fn new(
         size_class_id: usize,
-        object_size: usize,
-        slab_size: usize,
+        objectsize: usize,
+        slabsize: usize,
         color_offset: usize,
     ) -> Result<Arc<Self>, SlabError> {
         // Allocate slab memory
@@ -977,7 +976,7 @@ impl SlabAllocator {
         if stats.fragmentation_ratio > 0.5 {
             return Err(MemoryError::OutOfMemory {
                 reason: format!("High fragmentation ratio: {:.2}", stats.fragmentation_ratio),
-            });
+            }));
         }
 
         Ok(())
@@ -1027,7 +1026,7 @@ impl SlabAllocator {
     }
 
     /// Rounds size up to the next size class
-    pub fn round_up_to_size_class(size: usize, growth_factor: f64, min_size: usize) -> usize {
+    pub fn round_up_to_size_class(size: usize, growth_factor: f64, minsize: usize) -> usize {
         if size <= min_size {
             return min_size;
         }
@@ -1043,7 +1042,6 @@ impl SlabAllocator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test;
 
     #[test]

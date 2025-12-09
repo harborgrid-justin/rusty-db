@@ -247,7 +247,7 @@ impl Default for RetentionPolicy {
 }
 
 impl RetentionPolicy {
-    pub fn should_keep(&self, backup: &BackupMetadata, existing_backups: &[BackupMetadata]) -> bool {
+    pub fn should_keep(&self, backup: &BackupMetadata, existingbackups: &[BackupMetadata]) -> bool {
         // Check age
         if let Some(max_age_days) = self.max_age_days {
             if let Ok(age) = SystemTime::now().duration_since(backup.start_time) {
@@ -313,7 +313,7 @@ impl BackupManager {
     pub fn new(config: BackupConfig, retention_policy: RetentionPolicy) -> Result<Self> {
         create_dir_all(&config.backup_dir).map_err(|e| {
             DbError::BackupError(format!("Failed to create backup directory: {}", e))
-        })?;
+        })?);
 
         Ok(Self {
             config,
@@ -350,7 +350,7 @@ impl BackupManager {
         // Create backup directory
         create_dir_all(&metadata.backup_path).map_err(|e| {
             DbError::BackupError(format!("Failed to create backup path: {}", e))
-        })?;
+        })?);
 
         // Initialize block change tracking for future incrementals
         if self.config.enable_change_tracking {
@@ -378,7 +378,7 @@ impl BackupManager {
     }
 
     /// Create an incremental backup
-    pub fn create_incremental_backup(&self, database_name: &str, parent_backup_id: &str) -> Result<String> {
+    pub fn create_incremental_backup(&self, database_name: &str, parentbackup_id: &str) -> Result<String> {
         // Verify parent backup exists
         let parent = self.backups.read().get(parent_backup_id).cloned()
             .ok_or_else(|| DbError::BackupError("Parent backup not found".to_string()))?;
@@ -399,7 +399,7 @@ impl BackupManager {
 
         create_dir_all(&metadata.backup_path).map_err(|e| {
             DbError::BackupError(format!("Failed to create backup path: {}", e))
-        })?;
+        })?);
 
         metadata.status = BackupStatus::Running { progress_pct: 0.0 };
 
@@ -418,7 +418,7 @@ impl BackupManager {
     }
 
     /// Create a differential backup
-    pub fn create_differential_backup(&self, database_name: &str, base_backup_id: &str) -> Result<String> {
+    pub fn create_differential_backup(&self, database_name: &str, basebackup_id: &str) -> Result<String> {
         // Verify base backup exists and is a full backup
         let base = self.backups.read().get(base_backup_id).cloned()
             .ok_or_else(|| DbError::BackupError("Base backup not found".to_string()))?;
@@ -442,7 +442,7 @@ impl BackupManager {
 
         create_dir_all(&metadata.backup_path).map_err(|e| {
             DbError::BackupError(format!("Failed to create backup path: {}", e))
-        })?;
+        })?);
 
         metadata.status = BackupStatus::Running { progress_pct: 0.0 };
 
@@ -694,7 +694,8 @@ pub struct BackupStatistics {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*);
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_backup_manager_full_backup() {

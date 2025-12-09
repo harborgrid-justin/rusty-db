@@ -87,7 +87,7 @@ pub enum RetentionPolicy {
 }
 
 impl RetentionPolicy {
-    pub fn should_retain(&self, event: &Event, current_time: SystemTime) -> bool {
+    pub fn should_retain(&self, event: &Event, currenttime: SystemTime) -> bool {
         match self {
             RetentionPolicy::TimeBased { retention } => {
                 if let Ok(age) = current_time.duration_since(event.event_time) {
@@ -312,7 +312,7 @@ impl EventStream {
             return Err(crate::error::DbError::InvalidOperation(format!(
                 "Stream {} is not active (state: {:?})",
                 self.id, state
-            )));
+            ))));
         }
         drop(state);
 
@@ -563,7 +563,7 @@ impl LazyWatermarkManager {
     pub fn update_watermark(
         &mut self,
         partition: u32,
-        new_watermark: Watermark,
+        newwatermark: Watermark,
     ) -> Option<Watermark> {
         let should_propagate = if let Some(&last) = self.last_propagated.get(&partition) {
             if let Ok(elapsed) = new_watermark.timestamp.duration_since(last) {
@@ -757,10 +757,9 @@ impl StreamPartition {
         // Check message size
         let event_size = self.estimate_size(&event);
         if event_size > self.config.max_message_bytes {
-            return Err(crate::error::DbError::InvalidInput(format!(
                 "Event size {} exceeds maximum {}",
                 event_size, self.config.max_message_bytes
-            )));
+            ))));
         }
 
         self.log.insert(offset, event);
@@ -902,7 +901,7 @@ pub struct ConsumerGroup {
 impl ConsumerGroup {
     fn new(
         id: String,
-        num_partitions: u32,
+        numpartitions: u32,
         partitions: Vec<Arc<Mutex<StreamPartition>>>,
     ) -> Self {
         Self {
@@ -916,7 +915,7 @@ impl ConsumerGroup {
     }
 
     /// Register a consumer
-    pub fn register_consumer(&self, consumer_id: impl Into<String>) -> Result<Consumer> {
+    pub fn register_consumer(&self, consumerid: impl Into<String>) -> Result<Consumer> {
         let consumer_id = consumer_id.into();
 
         let session = ConsumerSession {

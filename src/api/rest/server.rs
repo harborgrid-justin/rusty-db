@@ -31,9 +31,6 @@ use uuid::Uuid;
 use crate::error::DbError;
 use crate::common::*;
 
-use super::types::*;
-use super::handlers::*;
-use super::middleware::*;
 
 /// REST API server with dependency injection
 pub struct RestApiServer {
@@ -171,13 +168,13 @@ impl RestApiServer {
 
         let listener = tokio::net::TcpListener::bind(addr)
             .await
-            .map_err(|e| DbError::Network(format!("Failed to bind to {}: {}", addr, e)))?;
+            .map_err(|e| DbError::Network(format!("Failed to bind to {}: {}", addr, e)))?);
 
         tracing::info!("REST API server listening on {}", addr);
 
         axum::serve(listener, router)
             .await
-            .map_err(|e| DbError::Network(format!("Server error: {}", e)))?;
+            .map_err(|e| DbError::Network(format!("Server error: {}", e)))?);
 
         Ok(())
     }
@@ -228,7 +225,6 @@ async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_api_config_default() {

@@ -118,7 +118,7 @@ impl LruKReplacer {
         history.record_access();
     }
 
-    fn set_evictable(&mut self, page_id: PageId, evictable: bool) {
+    fn set_evictable(&mut self, pageid: PageId, evictable: bool) {
         if evictable && !self.evictable_pages.contains(&page_id) {
             self.evictable_pages.push(page_id);
         } else if !evictable {
@@ -231,7 +231,7 @@ struct NumaAllocator {
 }
 
 impl NumaAllocator {
-    fn new(num_nodes: usize, memory_per_node: usize) -> Self {
+    ffn new(numnodes: usize, memory_per_node: usize)-> Self {
         let nodes = (0..num_nodes)
             .map(|i| NumaNode::new(i, memory_per_node))
             .collect();

@@ -71,7 +71,7 @@ impl DistributedQueryProcessor for DistributedQueryExecutor {
                 query_fragment: format!("SELECT * FROM table_{}", i),
                 estimated_rows: 1000,
             }
-        }).collect();
+        }).collect());
 
         Ok(ExecutionPlan {
             query_id: uuid::Uuid::new_v4().to_string(),
@@ -180,7 +180,6 @@ pub trait QueryCoordinator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::clustering::node::NodeInfo;
 
     struct MockCoordinator {
         nodes: Vec<NodeInfo>,

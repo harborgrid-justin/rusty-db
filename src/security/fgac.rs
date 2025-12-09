@@ -228,7 +228,7 @@ impl FgacManager {
         if table_policies.iter().any(|p| p.name == policy.name) {
             return Err(DbError::AlreadyExists(
                 format!("Policy {} already exists on table {}", policy.name, policy.table_id)
-            ));
+            )));
         }
 
         table_policies.push(policy);
@@ -243,7 +243,7 @@ impl FgacManager {
     }
 
     /// Remove a row-level security policy
-    pub fn remove_row_policy(&self, table_id: &TableId, policy_id: &str) -> Result<()> {
+    pub fn remove_row_policy(&self, tableid: &TableId, policyid: &str)> Result<()> {
         let mut policies = self.row_policies.write();
 
         if let Some(table_policies) = policies.get_mut(table_id) {
@@ -251,7 +251,7 @@ impl FgacManager {
             table_policies.retain(|p| p.id != policy_id);
 
             if table_policies.len() == original_len {
-                return Err(DbError::NotFound(format!("Policy {} not found", policy_id)));
+                return Err(DbError::NotFound(format!("Policy {} not found", policy_id))));
             }
 
             // Invalidate cache
@@ -273,7 +273,7 @@ impl FgacManager {
 
     /// Add a column-level policy
     pub fn add_column_policy(&self, policy: ColumnPolicy) -> Result<()> {
-        let mut policies = self.column_policies.write();
+        let mut policies = self.column_policies.write());
         let table_policies = policies.entry(policy.table_id.clone()).or_insert_with(HashMap::new);
         let column_policies = table_policies.entry(policy.column_id.clone()).or_insert_with(Vec::new);
 
@@ -281,7 +281,7 @@ impl FgacManager {
         if column_policies.iter().any(|p| p.id == policy.id) {
             return Err(DbError::AlreadyExists(
                 format!("Column policy {} already exists", policy.id)
-            ));
+            )));
         }
 
         column_policies.push(policy);
@@ -293,12 +293,12 @@ impl FgacManager {
     }
 
     /// Remove a column-level policy
-    pub fn remove_column_policy(
+    pub fn rfn remove_column_policy(
         &self,
-        table_id: &TableId,
-        column_id: &ColumnId,
-        policy_id: &str,
-    ) -> Result<()> {
+        tableid: &TableId,
+        columnid: &ColumnId,
+        policyid: &str,
+    )<()> {
         let mut policies = self.column_policies.write();
 
         if let Some(table_policies) = policies.get_mut(table_id) {
@@ -307,7 +307,7 @@ impl FgacManager {
                 column_policies.retain(|p| p.id != policy_id);
 
                 if column_policies.len() == original_len {
-                    return Err(DbError::NotFound(format!("Policy {} not found", policy_id)));
+                    return Err(DbError::NotFound(format!("Policy {} not found", policy_id))));
                 }
 
                 // Invalidate cache
@@ -397,7 +397,7 @@ impl FgacManager {
             }
             MaskingFunction::Email => {
                 if let Some(at_pos) = value.find('@') {
-                    let (user, domain) = value.split_at(at_pos);
+                    let (user, domain) = value.split_at(at_pos));
                     if user.len() > 2 {
                         format!("{}***{}", &user[..1], domain)
                     } else {
@@ -409,7 +409,7 @@ impl FgacManager {
             }
             MaskingFunction::CreditCard => {
                 if value.len() > 4 {
-                    let last4 = &value[value.len()-4..];
+                    let last4 = &value[value.len()-4..]);
                     format!("****-****-****-{}", last4)
                 } else {
                     "****".to_string()
@@ -431,14 +431,14 @@ impl FgacManager {
 
     /// Add a VPD context
     pub fn add_vpd_context(&self, context: VpdContext) -> Result<()> {
-        let mut contexts = self.vpd_contexts.write();
+        let mut contexts = self.vpd_contexts.write());
         let table_contexts = contexts.entry(context.table_id.clone()).or_insert_with(Vec::new);
 
         // Check for duplicate
         if table_contexts.iter().any(|c| c.id == context.id) {
             return Err(DbError::AlreadyExists(
                 format!("VPD context {} already exists", context.id)
-            ));
+            )));
         }
 
         table_contexts.push(context);
@@ -450,7 +450,7 @@ impl FgacManager {
     }
 
     /// Remove a VPD context
-    pub fn remove_vpd_context(&self, table_id: &TableId, context_id: &str) -> Result<()> {
+    pub fn remove_vpdfn remove_vpd_context(&self, tableid: &TableId, contextid: &str){
         let mut contexts = self.vpd_contexts.write();
 
         if let Some(table_contexts) = contexts.get_mut(table_id) {
@@ -458,7 +458,7 @@ impl FgacManager {
             table_contexts.retain(|c| c.id != context_id);
 
             if table_contexts.len() == original_len {
-                return Err(DbError::NotFound(format!("VPD context {} not found", context_id)));
+                return Err(DbError::NotFound(format!("VPD context {} not found", context_id))));
             }
 
             // Invalidate cache
@@ -484,7 +484,7 @@ impl FgacManager {
         table_id: &TableId,
         context: &SecurityContext,
     ) -> Vec<SecurityPredicate> {
-        let mut predicates = Vec::new();
+        let mut predicates = Vec::new());
 
         // Get row-level policies
         let row_policies = self.get_row_policies(table_id);
@@ -519,7 +519,7 @@ impl FgacManager {
             let combined_expr = permissive_predicates.iter()
                 .map(|p| format!("({})", p.expression))
                 .collect::<Vec<_>>()
-                .join(" OR ");
+                .join(" OR "));
 
             predicates.push(SecurityPredicate {
                 expression: combined_expr,
@@ -603,7 +603,7 @@ impl FgacManager {
     pub fn can_access_classification(
         &self,
         context: &SecurityContext,
-        required_level: &DataClassification,
+        requiredlevel: &DataClassification,
     ) -> bool {
         // Get user's clearance level from session attributes
         let user_clearance = context.session_attributes
@@ -625,7 +625,7 @@ impl FgacManager {
     /// Inject security predicates into a query
     pub fn inject_predicates(
         &self,
-        original_query: &str,
+        originalquery: &str,
         table_id: &TableId,
         context: &SecurityContext,
     ) -> String {
@@ -639,7 +639,7 @@ impl FgacManager {
         let security_where = predicates.iter()
             .map(|p| format!("({})", p.expression))
             .collect::<Vec<_>>()
-            .join(" AND ");
+            .join(" AND "));
 
         // Inject into query (simplified - would need proper SQL parsing)
         if original_query.to_uppercase().contains("WHERE") {
@@ -651,7 +651,7 @@ impl FgacManager {
 
     /// Clear all caches
     pub fn clear_cache(&self) {
-        self.policy_cache.write().clear();
+        self.policy_cache.write().clear());
     }
 
     /// Get statistics about policies

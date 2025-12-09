@@ -179,7 +179,7 @@ impl AlignedBuffer {
                 "Data too large for buffer: {} > {}",
                 data.len(),
                 self.size
-            )));
+            ))));
         }
 
         self.as_mut_slice()[..data.len()].copy_from_slice(data);

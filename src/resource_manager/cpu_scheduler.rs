@@ -15,7 +15,6 @@ use std::collections::{HashMap, BinaryHeap};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
 use std::time::{Duration};
-use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
@@ -503,7 +502,7 @@ impl CpuScheduler {
         priority: PriorityLevel,
     ) -> Result<TaskId> {
         // Atomic task ID allocation (lock-free)
-        let task_id = self.next_task_id.fetch_add(1, AtomicOrdering::Relaxed);
+        let task_id = self.next_task_id.fetch_add(1, AtomicOrdering::Relaxed));
 
         let mut task = ScheduledTask::new(task_id, query_id, group_id, priority);
 
@@ -767,7 +766,7 @@ impl CpuScheduler {
             5 => 1.2,
             6 => 1.0,
             _ => 0.8,
-        };
+        });
 
         // Apply throttle factor
         base_weight * task.throttle_factor
@@ -780,7 +779,7 @@ impl CpuScheduler {
 
         let mut tasks = self.tasks.write().unwrap();
         let task = tasks.get_mut(&task_id)
-            .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?);
 
         task.state = TaskState::Ready;
 

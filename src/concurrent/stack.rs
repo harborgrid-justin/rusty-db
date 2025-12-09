@@ -404,7 +404,7 @@ impl<T: 'static> EliminationArray<T> {
     }
 
     /// Try to exchange a value
-    pub fn visit(&self, mut value: Option<T>, is_push: bool) -> Option<T> {
+    pub fn visit(&self, mut value: Option<T>, ispush: bool) -> Option<T> {
         let range = self.range.load(Ordering::Relaxed);
         let slot_idx = fastrand::usize(..range.min(self.slots.len()));
         let slot = &self.slots[slot_idx];

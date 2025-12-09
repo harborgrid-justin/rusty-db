@@ -58,7 +58,7 @@ impl ClusterTransactionCoordinator {
 
     pub fn cleanup_completed_transactions(&self) -> Result<usize, DbError> {
         let mut transactions = self.active_transactions.write()
-            .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
+            .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?);
         
         let initial_count = transactions.len();
         transactions.retain(|_, txn| !matches!(txn.status, TransactionStatus::Committed | TransactionStatus::Aborted));
@@ -109,7 +109,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
             if let Some(txn) = transactions.get(txn_id) {
                 txn.participants.clone()
             } else {
-                return Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0)));
+                return Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0))));
             }
         };
 
@@ -162,7 +162,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
                 }
                 txn.participants.clone()
             } else {
-                return Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0)));
+                return Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0))));
             }
         };
 
@@ -200,7 +200,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
             if let Some(txn) = transactions.get(txn_id) {
                 txn.participants.clone()
             } else {
-                return Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0)));
+                return Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0))));
             }
         };
 

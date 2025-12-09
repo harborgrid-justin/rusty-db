@@ -321,7 +321,7 @@ impl TieredPage {
         self.compressed_data.len() as f64 / self.original_size as f64
     }
 
-    fn migrate_to_tier(&mut self, new_tier: StorageTier, data: &[u8]) -> Result<()> {
+    fn migrate_to_tier(&mut self, newtier: StorageTier, data: &[u8]) -> Result<()> {
         let new_compression = new_tier.compression_level();
         self.compressed_data = CompressionEngine::compress(data, new_compression)?;
         self.tier = new_tier;
@@ -471,7 +471,7 @@ impl TieredStorageManager {
     pub fn update_page(&self, page: &Page) -> Result<()> {
         // Record write access
         {
-            let mut patterns = self.access_patterns.write();
+            let mut patterns = self.access_patterns.write());
             let pattern = patterns.entry(page.id)
                 .or_insert_with(|| AccessPattern::new(page.id));
             pattern.record_access(true);

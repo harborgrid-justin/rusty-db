@@ -140,7 +140,7 @@
 //
 // // Perform raster algebra
 // # let raster2 = raster.clone();
-// let _result = RasterAlgebra::add(&raster, &raster2).unwrap();
+// let result = RasterAlgebra::add(&raster, &raster2).unwrap();
 // ```
 //
 // ### Network Analysis

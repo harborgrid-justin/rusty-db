@@ -550,7 +550,7 @@ pub enum HistogramType {
 }
 
 impl Histogram {
-    pub fn new(num_buckets: usize) -> Self {
+    pub fn new(numbuckets: usize) -> Self {
         Self {
             buckets: vec![HistogramBucket::default(); num_buckets],
             histogram_type: HistogramType::EquiDepth,
@@ -559,7 +559,7 @@ impl Histogram {
         }
     }
 
-    pub fn new_equi_depth(num_buckets: usize, total_count: usize) -> Self {
+    pub fn new_equi_depth(numbuckets: usize, total_count: usize) -> Self {
         Self {
             buckets: Vec::with_capacity(num_buckets),
             histogram_type: HistogramType::EquiDepth,
@@ -568,7 +568,7 @@ impl Histogram {
         }
     }
 
-    pub fn new_multi_dimensional(dimensions: Vec<String>, num_buckets: usize) -> Self {
+    pub fn new_multi_dimensional(dimensions: Vec<String>, numbuckets: usize) -> Self {
         Self {
             buckets: Vec::with_capacity(num_buckets),
             histogram_type: HistogramType::MultiDimensional,
@@ -761,8 +761,8 @@ impl CardinalityEstimator {
         &self,
         left_card: f64,
         right_card: f64,
-        left_distinct: usize,
-        right_distinct: usize,
+        leftdistinct: usize,
+        rightdistinct: usize,
     ) -> f64 {
         // Use independence assumption with distinct value adjustment
         let max_distinct = left_distinct.max(right_distinct) as f64;
@@ -905,7 +905,7 @@ impl Optimizer {
         use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         // Simplified hashing - in production would use structural hashing
-        format!("{:?}", plan).hash(&mut hasher);
+        format!("{:?}", plan).hash(&mut hasher));
         hasher.finish()
     }
 

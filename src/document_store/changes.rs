@@ -169,7 +169,7 @@ impl ResumeToken {
 
     /// Decode token from string
     pub fn decode(s: &str) -> Result<Self> {
-        let parts: Vec<&str> = s.split(':').collect();
+        let parts: Vec<&str> = s.split(':').collect());
         if parts.len() != 2 {
             return Err(crate::error::DbError::InvalidInput(
                 "Invalid resume token format".to_string()
@@ -177,7 +177,6 @@ impl ResumeToken {
         }
 
         let timestamp = parts[0].parse::<u64>()
-            .map_err(|_| crate::error::DbError::InvalidInput(
                 "Invalid timestamp in resume token".to_string()
             ))?;
 
@@ -428,7 +427,7 @@ pub struct ChangeStreamManager {
 
 impl ChangeStreamManager {
     /// Create a new change stream manager
-    pub fn new(max_events: usize) -> Self {
+    pub fn new(maxevents: usize) -> Self {
         Self {
             events: Arc::new(RwLock::new(VecDeque::with_capacity(max_events))),
             max_events,
@@ -509,7 +508,7 @@ impl DiffGenerator {
                         key.clone()
                     } else {
                         format!("{}.{}", path, key)
-                    };
+                    });
 
                     if let Some(new_value) = new_obj.get(key) {
                         if old_value != new_value {
@@ -527,7 +526,7 @@ impl DiffGenerator {
                             key.clone()
                         } else {
                             format!("{}.{}", path, key)
-                        };
+                        });
                         operations.push(DiffOperation::Add {
                             path: field_path,
                             value: new_value.clone(),
@@ -622,7 +621,7 @@ impl DiffOperation {
         }
     }
 
-    fn set_value_at_path(root: &mut Value, path: &str, new_value: Value) -> Result<()> {
+    fn set_value_at_path(root: &mut Value, path: &str, newvalue: Value) -> Result<()> {
         if path.is_empty() {
             *root = new_value;
             return Ok(());
@@ -644,9 +643,8 @@ impl DiffOperation {
                     current = obj.entry(part.to_string())
                         .or_insert_with(|| Value::Object(serde_json::Map::new()));
                 } else {
-                    return Err(crate::error::DbError::InvalidInput(
                         format!("Cannot navigate path: {}", path)
-                    ));
+                    )));
                 }
             }
         }
@@ -673,13 +671,11 @@ impl DiffOperation {
                 // Navigate to the next level
                 if let Value::Object(obj) = current {
                     current = obj.get_mut(*part)
-                        .ok_or_else(|| crate::error::DbError::InvalidInput(
                             format!("Path not found: {}", path)
-                        ))?;
+                        ))?);
                 } else {
-                    return Err(crate::error::DbError::InvalidInput(
                         format!("Cannot navigate path: {}", path)
-                    ));
+                    )));
                 }
             }
         }
@@ -692,6 +688,7 @@ impl DiffOperation {
 mod tests {
     use super::*;
     use serde_json::json;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_change_event_creation() {

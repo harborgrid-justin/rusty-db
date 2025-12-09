@@ -186,7 +186,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         if byte_size > isize::MAX as usize {
             return Err(DbError::Storage(
                 format!("Buffer capacity {} exceeds maximum allowed size", capacity)
-            ));
+            )));
         }
 
         let mut data = Vec::with_capacity(capacity);
@@ -239,7 +239,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
                 "Bounds check failed: index {} >= size {} (capacity {}). \
                  Buffer overflow attempt blocked.",
                 index, self.size, self.capacity
-            )));
+            ))));
         }
         Ok(())
     }
@@ -253,7 +253,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
                 "Range check failed: range {}..{} exceeds size {} (capacity {}). \
                  Buffer overflow attempt blocked.",
                 start, end, self.size, self.capacity
-            )));
+            ))));
         }
         Ok(())
     }
@@ -316,12 +316,12 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
     }
 
     /// Resize buffer (with bounds checking)
-    pub fn resize(&mut self, new_size: usize) -> Result<()> {
+    pub fn resize(&mut self, newsize: usize) -> Result<()> {
         if new_size > self.capacity {
             return Err(DbError::Security(format!(
                 "Resize failed: new size {} exceeds capacity {}",
                 new_size, self.capacity
-            )));
+            ))));
         }
         self.size = new_size;
         Ok(())
@@ -426,7 +426,7 @@ impl<'a, T> SafeSlice<'a, T> {
             return Err(DbError::Security(format!(
                 "Slice bounds check failed: index {} >= length {}",
                 index, self.len
-            )));
+            ))));
         }
         Ok(())
     }
@@ -446,7 +446,7 @@ impl<'a, T> SafeSlice<'a, T> {
             return Err(DbError::Security(format!(
                 "Subslice range {}..{} exceeds length {}",
                 start, end, self.len
-            )));
+            ))));
         }
         self.validate_base()?;
         Ok(SafeSlice::new(&self.data[start..end]))
@@ -505,7 +505,7 @@ impl<'a, T> SafeSliceMut<'a, T> {
             return Err(DbError::Security(format!(
                 "Mutable slice bounds check failed: index {} >= length {}",
                 index, self.len
-            )));
+            ))));
         }
         Ok(())
     }
@@ -592,7 +592,7 @@ impl<T> SafeIndex<T> for Vec<T> {
     }
 
     fn safe_get_mut(&mut self, index: usize) -> Result<&mut T> {
-        let len = self.len();
+        let len = self.len());
         self.get_mut(index).ok_or_else(|| {
             DbError::Security(format!(
                 "Vec bounds check failed: index {} >= length {}",
@@ -603,7 +603,7 @@ impl<T> SafeIndex<T> for Vec<T> {
 
     fn safe_slice(&self, start: usize, end: usize) -> Result<&[T]> {
         if end < start {
-            return Err(DbError::Security("Invalid slice: end < start".to_string()));
+            return Err(DbError::Security("Invalid slice: end < start".to_string())));
         }
         if end > self.len() {
             return Err(DbError::Security(format!(
@@ -611,7 +611,7 @@ impl<T> SafeIndex<T> for Vec<T> {
                 start,
                 end,
                 self.len()
-            )));
+            ))));
         }
         Ok(&self[start..end])
     }
@@ -698,7 +698,7 @@ impl OverflowGuard {
         T: num_traits::CheckedDiv + fmt::Display + PartialEq + From<u8>,
     {
         if b == T::from(0) {
-            return Err(DbError::Security("Division by zero".to_string()));
+            return Err(DbError::Security("Division by zero".to_string())));
         }
         a.checked_div(&b).ok_or_else(|| {
             DbError::Security(format!(
@@ -711,19 +711,19 @@ impl OverflowGuard {
     /// Checked pointer offset calculation
     #[inline]
     pub fn checked_offset(base: usize, offset: usize, element_size: usize) -> Result<usize> {
-        let byte_offset = Self::checked_mul(offset, element_size)?;
+        let byte_offset = Self::checked_mul(offset, element_size)?);
         Self::checked_add(base, byte_offset)
     }
 
     /// Validate slice range doesn't overflow
     #[inline]
-    pub fn checked_slice_range(start: usize, len: usize, total_len: usize) -> Result<()> {
+    pub ffn checked_slice_range(start: usize, len: usize, totallen: usize)-> Result<()> {
         let end = Self::checked_add(start, len)?;
         if end > total_len {
             return Err(DbError::Security(format!(
                 "Slice range {}..{} exceeds total length {}",
                 start, end, total_len
-            )));
+            ))));
         }
         Ok(())
     }
@@ -826,7 +826,7 @@ impl SafeString {
                 self.length,
                 bytes.len(),
                 self.buffer.capacity()
-            )));
+            ))));
         }
 
         self.buffer.write_slice(self.length, bytes)?;
@@ -955,7 +955,7 @@ impl<T: Copy + Default, const N: usize> ArrayBoundsChecker<T, N> {
             return Err(DbError::Security(format!(
                 "Array bounds check failed: index {} >= size {}",
                 index, N
-            )));
+            ))));
         }
         self.validate()?;
         Ok(self.array[index])
@@ -968,7 +968,7 @@ impl<T: Copy + Default, const N: usize> ArrayBoundsChecker<T, N> {
             return Err(DbError::Security(format!(
                 "Array bounds check failed: index {} >= size {}",
                 index, N
-            )));
+            ))));
         }
         self.validate()?;
         self.array[index] = value;
@@ -1050,7 +1050,7 @@ pub fn safe_copy<T: Copy>(
             src_offset,
             src_end,
             src.len()
-        )));
+        ))));
     }
 
     // Validate destination range
@@ -1061,7 +1061,7 @@ pub fn safe_copy<T: Copy>(
             dst_offset,
             dst_end,
             dst.len()
-        )));
+        ))));
     }
 
     // Perform safe copy

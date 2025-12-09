@@ -147,7 +147,7 @@ impl SimdHashJoin {
     /// Phase 1: Partition build side and create hash tables
     fn partition_and_build(
         &self,
-        build_side: &QueryResult,
+        buildside: &QueryResult,
         key_col: usize,
     ) -> Result<Vec<Partition>, DbError> {
         let num_partitions = self.config.num_partitions;
@@ -207,7 +207,7 @@ impl SimdHashJoin {
     /// Phase 2: Probe with SIMD acceleration
     fn probe_with_simd(
         &self,
-        probe_side: &QueryResult,
+        probeside: &QueryResult,
         key_col: usize,
         partitions: &[Partition],
     ) -> Result<Vec<Match>, DbError> {
@@ -369,7 +369,6 @@ pub struct SimdHashJoinStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_basic_join() {
@@ -406,7 +405,7 @@ mod tests {
         // Build side: 10K rows
         let mut build_rows = Vec::new();
         for i in 0..10_000 {
-            build_rows.push(vec![format!("{}", i), format!("name_{}", i)]);
+            build_rows.push(vec![format!("{}", i), format!("name_{}", i)]));
         }
         let build = QueryResult::new(
             vec!["id".to_string(), "name".to_string()],
@@ -417,7 +416,7 @@ mod tests {
         let mut probe_rows = Vec::new();
         for i in 0..100_000 {
             let id = i % 10_000; // Ensure matches
-            probe_rows.push(vec![format!("{}", id), format!("value_{}", i)]);
+            probe_rows.push(vec![format!("{}", id), format!("value_{}", i)]));
         }
         let probe = QueryResult::new(
             vec!["id".to_string(), "value".to_string()],

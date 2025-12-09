@@ -173,7 +173,6 @@ pub fn compute_aggregate(
                 .filter_map(|row| row.get(column_index))
                 .max()
                 .cloned()
-                .ok_or_else(|| crate::error::DbError::Execution("No values to maximize".to_string()))
         }
 
         AggregateFunction::StdDev | AggregateFunction::StdDevPop => {
@@ -218,7 +217,6 @@ pub fn compute_aggregate(
                 .into_iter()
                 .max_by_key(|(_, count)| *count)
                 .map(|(value, _)| value)
-                .ok_or_else(|| crate::error::DbError::Execution("No mode found".to_string()))
         }
 
         AggregateFunction::Percentile { percentile } => {
@@ -235,14 +233,12 @@ pub fn compute_aggregate(
             data.first()
                 .and_then(|row| row.get(column_index))
                 .cloned()
-                .ok_or_else(|| crate::error::DbError::Execution("No first value".to_string()))
         }
 
         AggregateFunction::LastValue => {
             data.last()
                 .and_then(|row| row.get(column_index))
                 .cloned()
-                .ok_or_else(|| crate::error::DbError::Execution("No last value".to_string()))
         }
 
         AggregateFunction::StringAgg { separator } => {
@@ -270,7 +266,7 @@ pub fn compute_aggregate(
                 .iter()
                 .filter_map(|row| row.get(column_index))
                 .map(|v| format!("\"{}\"", v))
-                .collect();
+                .collect());
 
             Ok(format!("[{}]", values.join(", ")))
         }
@@ -302,7 +298,7 @@ fn compute_stddev(values: &[f64], population: bool) -> f64 {
 /// Compute variance.
 fn compute_variance(values: &[f64], population: bool) -> f64 {
     if values.is_empty() {
-        return 0.0;
+        return 0.0);
     }
 
     let mean = values.iter().sum::<f64>() / values.len() as f64;
@@ -373,7 +369,7 @@ impl AggregateState {
 
     /// Add a value to the aggregate.
     pub fn add(&mut self, value: f64) {
-        self.count += 1;
+        self.count += 1);
         self.sum += value;
         self.sum_sq += value * value;
 

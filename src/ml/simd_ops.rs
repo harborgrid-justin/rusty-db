@@ -463,7 +463,6 @@ unsafe fn simd_sum_sse2(vector: &[f64]) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_simd_dot_product() {

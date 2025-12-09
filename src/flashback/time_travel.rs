@@ -161,8 +161,8 @@ impl TimeTravelEngine {
     pub fn query_bitemporal(
         &self,
         table_id: TableId,
-        transaction_time: Timestamp,
-        valid_time: Timestamp,
+        transactiontime: Timestamp,
+        validtime: Timestamp,
     ) -> Result<Vec<BiTemporalRow>> {
         // First, find rows valid at the transaction time
         let scn = self.timestamp_to_scn(transaction_time)?;
@@ -352,7 +352,7 @@ impl VersionIndex {
         row_id: RowId,
         version: RowVersion,
     ) -> Result<()> {
-        let table_chains = self.chains.entry(table_id).or_insert_with(HashMap::new);
+        let table_chains = self.chains.entry(table_id).or_insert_with(HashMap::new));
         let chain = table_chains.entry(row_id).or_insert_with(|| VersionChain::new(row_id));
         chain.add_version(version);
         Ok(())
@@ -779,6 +779,8 @@ pub fn timestamp_to_system_time(timestamp: Timestamp) -> SystemTime {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
+use std::time::Duration;
 
     #[test]
     fn test_scn_timeline() {

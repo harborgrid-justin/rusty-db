@@ -469,6 +469,8 @@ impl AnalyticsManagerBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::Instant;
+use std::time::Duration;
 
     #[test]
     fn test_manager_creation() {

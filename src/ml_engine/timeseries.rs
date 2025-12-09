@@ -712,6 +712,7 @@ impl Default for TimeSeriesEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::collections::HashMap;
 
     #[test]
     fn test_exponential_smoothing() {

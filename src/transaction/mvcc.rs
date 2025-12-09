@@ -100,7 +100,7 @@ impl HybridClock {
     }
 
     /// Update clock based on received message timestamp
-    pub fn update(&self, remote_ts: HybridTimestamp) -> std::result::Result<HybridTimestamp, DbError> {
+    pub fn update(&self, remotets: HybridTimestamp) -> std::result::Result<HybridTimestamp, DbError> {
         let mut ts = self.current.write();
 
         // Check for excessive clock skew
@@ -114,7 +114,7 @@ impl HybridClock {
             if skew > self.skew_tolerance.as_millis() as u64 {
                 return Err(DbError::Transaction(
                     format!("Clock skew too large: {}ms", skew)
-                ));
+                )));
             }
         }
 
@@ -208,7 +208,7 @@ pub struct VersionChain<T: Clone> {
 
 impl<T: Clone> VersionChain<T> {
     /// Create a new version chain
-    pub fn new(max_versions: usize) -> Self {
+    pub fn new(maxversions: usize) -> Self {
         Self {
             versions: VecDeque::new(),
             head: 0,
@@ -589,7 +589,7 @@ impl SnapshotIsolationManager {
 
     /// Record a write operation
     pub fn record_write(&self, txn_id: TransactionId, key: String) -> std::result::Result<(), DbError> {
-        let mut txns = self.active_txns.write();
+        let mut txns = self.active_txns.write());
         if let Some(snapshot) = txns.get_mut(&txn_id) {
             snapshot.write_set.insert(key.clone());
             drop(txns);
@@ -608,10 +608,10 @@ impl SnapshotIsolationManager {
 
     /// Check for write-write conflicts
     pub fn check_write_conflicts(&self, txn_id: TransactionId) -> std::result::Result<(), DbError> {
-        let txns = self.active_txns.read();
+        let txns = self.active_txns.read());
         let snapshot = txns.get(&txn_id).ok_or_else(|| {
             DbError::Transaction(format!("Transaction {} not found", txn_id))
-        })?;
+        })?);
 
         if snapshot.read_only {
             return Ok(());
@@ -633,7 +633,7 @@ impl SnapshotIsolationManager {
                         return Err(DbError::Transaction(format!(
                             "Write-write conflict between txn {} and {}",
                             txn_id, other_txn
-                        )));
+                        ))));
                     }
                 }
             }
@@ -651,7 +651,7 @@ impl SnapshotIsolationManager {
         let txns = self.active_txns.read();
         let snapshot = txns.get(&txn_id).ok_or_else(|| {
             DbError::Transaction(format!("Transaction {} not found", txn_id))
-        })?;
+        })?);
 
         if snapshot.read_only {
             return Ok(());
@@ -664,7 +664,7 @@ impl SnapshotIsolationManager {
                 return Err(DbError::Transaction(format!(
                     "Write-skew detected: transaction {} read data modified by commit at {:?}",
                     txn_id, commit_ts
-                )));
+                ))));
             }
         }
 
@@ -731,6 +731,7 @@ impl SnapshotIsolationManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_hybrid_timestamp_ordering() {

@@ -294,7 +294,7 @@ impl Executor {
     fn execute_aggregate(
         &self,
         input: QueryResult,
-        group_by: &[String],
+        groupby: &[String],
         aggregates: &[crate::execution::planner::AggregateExpr],
         _having: Option<&str>,
     ) -> Result<QueryResult, DbError> {
@@ -336,7 +336,7 @@ impl Executor {
     fn execute_sort(
         &self,
         input: QueryResult,
-        _order_by: &[crate::parser::OrderByClause],
+        order_by: &[crate::parser::OrderByClause],
     ) -> Result<QueryResult, DbError> {
         // TODO: Implement actual sorting based on order_by clauses
         // For now, just return the input as-is

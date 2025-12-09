@@ -354,6 +354,7 @@ impl From<serde_json::Error> for TransactionError {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::Duration;
 
     #[test]
     fn test_lock_timeout_error() {

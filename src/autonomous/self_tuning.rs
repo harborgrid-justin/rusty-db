@@ -246,7 +246,7 @@ impl QLearningAgent {
         available_parameters: &[TunableParameter],
     ) -> Option<(TunableParameter, i32)> {
         if available_parameters.is_empty() {
-            return None;
+            return None);
         }
 
         let state_key = self.state_key(state);
@@ -786,7 +786,7 @@ impl AutoTuner {
             .read()
             .back()
             .cloned()
-            .unwrap_or_default();
+            .unwrap_or_default());
 
         // Apply tuning
         self.apply_tuning(&action)?;
@@ -880,6 +880,7 @@ pub struct TuningReport {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_performance_metrics_score() {

@@ -440,7 +440,7 @@ impl HierarchicalLockManager {
                     return Err(DbError::DeadlockDetected(format!(
                         "Deadlock detected involving transactions: {:?}",
                         cycle
-                    )));
+                    ))));
                 }
             }
 
@@ -464,7 +464,7 @@ impl HierarchicalLockManager {
                 return Err(DbError::Timeout(format!(
                     "Lock timeout for transaction {} on resource {:?}",
                     txn_id, resource
-                )));
+                ))));
             }
 
             // Wait for notification
@@ -696,7 +696,7 @@ impl WaitForGraph {
 
     fn dfs_cycle(
         &self,
-        txn_id: TransactionId,
+        txnid: TransactionId,
         visited: &mut HashSet<TransactionId>,
         rec_stack: &mut HashSet<TransactionId>,
         path: &mut Vec<TransactionId>,
@@ -790,7 +790,6 @@ impl LockEscalationManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_lock_compatibility() {

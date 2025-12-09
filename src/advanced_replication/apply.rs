@@ -309,7 +309,7 @@ impl ApplyEngine {
 
         // Queue the change
         self.change_tx.send(change)
-            .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?;
+            .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?);
 
         let mut stats = self.stats.write();
         stats.total_changes += 1;
@@ -415,7 +415,7 @@ impl ApplyEngine {
                 changes: txn_changes,
                 state: GroupState::Pending,
                 created_at: Self::current_timestamp(),
-            };
+            });
 
             groups.push(group);
         }
@@ -441,7 +441,7 @@ impl ApplyEngine {
                     // Dependencies not satisfied, requeue for later
                     return Err(DbError::Replication(
                         format!("Dependencies not satisfied for change {}", change.id)
-                    ));
+                    )));
                 }
             }
         }
@@ -459,13 +459,13 @@ impl ApplyEngine {
                     self.handle_apply_error(&change, e).await?;
 
                     // Mark group as failed
-                    group.state = GroupState::Failed(format!("Change {} failed", change.id));
+                    group.state = GroupState::Failed(format!("Change {} failed", change.id)));
                     let mut groups = self.groups.write();
                     groups.insert(group.id.clone(), group);
 
                     return Err(DbError::Replication(
                         format!("Failed to apply change {}", change.id)
-                    ));
+                    )));
                 }
             }
         }
@@ -518,7 +518,7 @@ impl ApplyEngine {
             let mut stats = self.stats.write();
             stats.changes_applied += 1;
 
-            let op_key = format!("{:?}", change.operation);
+            let op_key = format!("{:?}", change.operation));
             *stats.changes_by_operation.entry(op_key).or_insert(0) += 1;
 
             *stats.changes_by_table.entry(change.table.clone()).or_insert(0) += 1;
@@ -555,7 +555,7 @@ impl ApplyEngine {
         } else {
             // Schedule retry
             error_entry.next_retry = Self::current_timestamp() +
-                (self.config.retry_delay_ms * error_entry.retry_count as u64);
+                (self.config.retry_delay_ms * error_entry.retry_count as u64));
 
             let mut stats = self.stats.write();
             stats.changes_retried += 1;
@@ -600,7 +600,7 @@ impl ApplyEngine {
             last_txn_id: 0,
             changes_applied: stats.changes_applied,
             timestamp: Self::current_timestamp(),
-        };
+        });
 
         let mut checkpoints = self.checkpoints.write();
         checkpoints.push_back(checkpoint);
@@ -617,7 +617,7 @@ impl ApplyEngine {
     }
 
     /// Restore from checkpoint
-    pub fn restore_from_checkpoint(&self, checkpoint_id: &str) -> Result<ApplyCheckpoint> {
+    pub fn restore_from_checkpoint(&self, checkpointid: &str) -> Result<ApplyCheckpoint> {
         let checkpoints = self.checkpoints.read();
 
         checkpoints.iter()
@@ -665,7 +665,8 @@ impl Default for ApplyEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*);
+use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_queue_change() {

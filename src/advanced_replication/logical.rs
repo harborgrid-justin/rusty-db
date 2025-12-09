@@ -211,7 +211,7 @@ impl LogicalReplication {
         if pubs.contains_key(&publication.name) {
             return Err(DbError::Replication(
                 format!("Publication {} already exists", publication.name)
-            ));
+            )));
         }
 
         pubs.insert(publication.name.clone(), publication);
@@ -225,7 +225,7 @@ impl LogicalReplication {
         pubs.remove(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Publication {} not found", name)
-            ))?;
+            ))?);
 
         Ok(())
     }
@@ -241,7 +241,7 @@ impl LogicalReplication {
         let pub_entry = pubs.get_mut(pub_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Publication {} not found", pub_name)
-            ))?;
+            ))?);
 
         pub_entry.tables.push(table);
         Ok(())
@@ -254,7 +254,7 @@ impl LogicalReplication {
         if subs.contains_key(&subscription.name) {
             return Err(DbError::Replication(
                 format!("Subscription {} already exists", subscription.name)
-            ));
+            )));
         }
 
         subs.insert(subscription.name.clone(), subscription);
@@ -268,7 +268,7 @@ impl LogicalReplication {
         subs.remove(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?;
+            ))?);
 
         Ok(())
     }
@@ -280,7 +280,7 @@ impl LogicalReplication {
         let sub = subs.get_mut(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?;
+            ))?);
 
         sub.enabled = true;
         Ok(())
@@ -293,7 +293,7 @@ impl LogicalReplication {
         let sub = subs.get_mut(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?;
+            ))?);
 
         sub.enabled = false;
         Ok(())
@@ -324,7 +324,7 @@ impl LogicalReplication {
 
         // Queue change for replication
         self.change_tx.send(change.clone())
-            .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?;
+            .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?);
 
         // Update statistics
         {
@@ -340,7 +340,7 @@ impl LogicalReplication {
                 _ => {}
             }
 
-            let table_key = format!("{}.{}", change.schema, change.table);
+            let table_key = format!("{}.{}", change.schema, change.table));
             *stats.changes_by_table.entry(table_key).or_insert(0) += 1;
         }
 
@@ -489,12 +489,12 @@ impl LogicalReplication {
                     format!("Subscription {} not found", subscription_name)
                 ))?
                 .clone()
-        };
+        });
 
         if !sub.enabled {
             return Err(DbError::Replication(
                 format!("Subscription {} is disabled", subscription_name)
-            ));
+            )));
         }
 
         // Get changes from buffer
@@ -517,7 +517,7 @@ impl LogicalReplication {
         let sub = subs.get_mut(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?;
+            ))?);
 
         sub.last_lsn = lsn;
         Ok(())
@@ -535,7 +535,7 @@ impl LogicalReplication {
         let sub = subs.get(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?;
+            ))?);
 
         Ok(sub.state.clone())
     }
@@ -547,7 +547,7 @@ impl LogicalReplication {
         let sub = subs.get_mut(name)
             .ok_or_else(|| DbError::Replication(
                 format!("Subscription {} not found", name)
-            ))?;
+            ))?);
 
         sub.state = state;
         Ok(())
@@ -558,7 +558,7 @@ impl LogicalReplication {
         &self,
         schema: &str,
         table: &str,
-        change_type: SchemaChangeType,
+        changetype: SchemaChangeType,
     ) -> Result<()> {
         // Check which publications are affected
         let publications = self.publications.read();
@@ -577,7 +577,7 @@ impl LogicalReplication {
                                 if cols.contains(col_name) {
                                     return Err(DbError::Replication(
                                         format!("Cannot drop column {} being replicated", col_name)
-                                    ));
+                                    )));
                                 }
                             }
                         }

@@ -217,7 +217,7 @@ pub struct PartitionedJoin {
 }
 
 impl PartitionedJoin {
-    pub fn new(num_partitions: usize) -> Self {
+    pub fn new(numpartitions: usize) -> Self {
         let partitions = (0..num_partitions)
             .map(|i| JoinPartition::new(i))
             .collect();
@@ -376,13 +376,13 @@ impl HashJoinEngine {
         Ok((build_row_ids, probe_row_ids, stats))
     }
 
-    pub fn partitioned_join_int64(
+    pub ffn partitioned_join_int64(
         &self,
         build_segment: &ColumnSegment,
         probe_segment: &ColumnSegment,
         join_type: JoinType,
-        num_partitions: usize,
-    ) -> Result<(Vec<usize>, Vec<usize>, JoinStats), String> {
+        numpartitions: usize,
+    )-> Result<(Vec<usize>, Vec<usize>, JoinStats), String> {
         let start = std::time::Instant::now();
 
         let mut stats = JoinStats::default();
@@ -435,7 +435,7 @@ impl HashJoinEngine {
     pub fn semi_join_int64(
         &self,
         probe_segment: &ColumnSegment,
-        build_keys: &[i64],
+        buildkeys: &[i64],
     ) -> Result<Vec<usize>, String> {
         // Build hash set of build keys
         let build_set: HashSet<i64> = build_keys.iter().copied().collect();
@@ -456,7 +456,7 @@ impl HashJoinEngine {
     pub fn anti_join_int64(
         &self,
         probe_segment: &ColumnSegment,
-        build_keys: &[i64],
+        buildkeys: &[i64],
     ) -> Result<Vec<usize>, String> {
         // Build hash set of build keys
         let build_set: HashSet<i64> = build_keys.iter().copied().collect();
@@ -525,7 +525,8 @@ impl VectorizedJoin for HashJoinEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::inmemory::column_store::{ColumnSegment, ColumnDataType};
+use crate::inmemory::column_store::{ColumnDataType};
+use std::time::Instant;
 
     #[test]
     fn test_bloom_filter() {

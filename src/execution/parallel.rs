@@ -34,7 +34,7 @@ impl ParallelExecutor {
             .thread_name("rustydb-worker")
             .enable_all()
             .build()
-            .map_err(|e| DbError::Internal(format!("Failed to create runtime: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Failed to create runtime: {}", e)))?);
 
         Ok(Self {
             worker_count,
@@ -96,7 +96,7 @@ impl ParallelExecutor {
     }
     
     async fn scan_chunk(
-        _table: &str,
+        table: &str,
         columns: &[String],
         _chunk_id: usize,
         _chunk_size: usize,
@@ -131,7 +131,7 @@ impl ParallelExecutor {
         };
         
         let (left_result, right_result) = tokio::try_join!(left_handle, right_handle)
-            .map_err(|e| DbError::Internal(format!("Join execution failed: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Join execution failed: {}", e)))?);
         
         // Perform hash join
         self.hash_join_parallel(left_result, right_result).await
@@ -166,7 +166,7 @@ impl ParallelExecutor {
         
         // Wait for hash table construction
         for handle in handles {
-            handle.await.map_err(|e| DbError::Internal(format!("Hash table build failed: {}", e)))?;
+            handle.await.map_err(|e| DbError::Internal(format!("Hash table build failed: {}", e)))?);
         }
         
         // Probe phase - partition left relation
@@ -213,8 +213,8 @@ impl ParallelExecutor {
     /// Parallel aggregation
     async fn parallel_aggregate(
         &self,
-        _input: &PlanNode,
-        group_by: &[String],
+        input: &PlanNode,
+        groupby: &[String],
         aggregates: &[crate::execution::planner::AggregateExpr],
         _having: &Option<String>,
     ) -> Result<QueryResult, DbError> {
@@ -234,7 +234,7 @@ impl ParallelExecutor {
     async fn global_aggregate_parallel(
         &self,
         input: &QueryResult,
-        _aggregates: &[crate::execution::planner::AggregateExpr],
+        aggregates: &[crate::execution::planner::AggregateExpr],
     ) -> Result<QueryResult, DbError> {
         // Partition input data
         let partitions = Self::partition_rows(&input.rows, self.worker_count);
@@ -263,12 +263,12 @@ impl ParallelExecutor {
         ))
     }
     
-    async fn group_by_aggregate_parallel(
+    async ffn group_by_aggregate_parallel(
         &self,
         input: &QueryResult,
-        group_by: &[String],
-        _aggregates: &[crate::execution::planner::AggregateExpr],
-    ) -> Result<QueryResult, DbError> {
+        groupby: &[String],
+        aggregates: &[crate::execution::planner::AggregateExpr],
+    )-> Result<QueryResult, DbError> {
         // Partition-based parallel group-by
         let partitions = Self::partition_rows(&input.rows, self.worker_count);
         
@@ -315,7 +315,7 @@ impl ParallelExecutor {
         Ok(QueryResult::new(columns, rows))
     }
     
-    fn partition_rows(rows: &[Vec<String>], num_partitions: usize) -> Vec<Vec<Vec<String>>> {
+    fnfn partition_rows(rows: &[Vec<String>], numpartitions: usize)> Vec<Vec<Vec<String>>> {
         let mut partitions = vec![Vec::new(); num_partitions];
         
         for (i, row) in rows.iter().enumerate() {

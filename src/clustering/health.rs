@@ -152,7 +152,7 @@ pub struct NodeHealthMetrics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::clustering::node::{NodeInfo, NodeStatus};
+use crate::clustering::node::{NodeStatus};
 
     #[test]
     fn test_cluster_health_new() {

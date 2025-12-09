@@ -238,7 +238,7 @@ impl GlobalDataServices {
         if services.contains_key(&service.name) {
             return Err(DbError::Replication(
                 format!("Service {} already registered", service.name)
-            ));
+            )));
         }
 
         services.insert(service.name.clone(), service);
@@ -257,7 +257,7 @@ impl GlobalDataServices {
         let service = services.get(service_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Service {} not found", service_name)
-            ))?;
+            ))?);
 
         let decision = match request.request_type {
             RequestType::Write | RequestType::Transaction => {
@@ -282,7 +282,7 @@ impl GlobalDataServices {
 
             *stats.requests_by_region.entry(decision.region_id.clone()).or_insert(0) += 1;
 
-            let strategy_key = format!("{:?}", service.load_balancing);
+            let strategy_key = format!("{:?}", service.load_balancing));
             *stats.requests_by_strategy.entry(strategy_key).or_insert(0) += 1;
 
             let elapsed = Self::current_timestamp() - start;
@@ -421,7 +421,7 @@ impl GlobalDataServices {
     ) -> Result<RoutingDecision> {
         if let Some(ref client_loc) = request.client_location {
             // Calculate distance to each region
-            let mut min_latency = u64::MAX;
+            let mut min_latency = u64::MAX);
             let mut selected_region = None;
             let mut selected_instance = None;
 
@@ -508,7 +508,7 @@ impl GlobalDataServices {
     fn weighted_routing(
         &self,
         service: &GlobalService,
-        _weights: &HashMap<String, u32>,
+        weights: &HashMap<String, u32>,
     ) -> Result<RoutingDecision> {
         // Simple implementation - would use weights in production
         self.round_robin_routing(service)
@@ -542,14 +542,14 @@ impl GlobalDataServices {
     pub async fn failover(
         &self,
         service_name: &str,
-        failed_region: &str,
+        failedregion: &str,
     ) -> Result<String> {
         let mut services = self.services.write();
 
         let service = services.get_mut(service_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Service {} not found", service_name)
-            ))?;
+            ))?);
 
         service.state = ServiceState::FailingOver;
 
@@ -606,7 +606,7 @@ impl GlobalDataServices {
         let service = services.get_mut(service_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Service {} not found", service_name)
-            ))?;
+            ))?);
 
         for region in &mut service.regions {
             if region.region_id == region_id {
@@ -622,15 +622,15 @@ impl GlobalDataServices {
     pub fn update_instance_health(
         &self,
         service_name: &str,
-        instance_id: &str,
+        instanceid: &str,
         health: HealthStatus,
     ) -> Result<()> {
-        let mut services = self.services.write();
+        let mut services = self.services.write());
 
         let service = services.get_mut(service_name)
             .ok_or_else(|| DbError::Replication(
                 format!("Service {} not found", service_name)
-            ))?;
+            ))?);
 
         for region in &mut service.regions {
             for db in &mut region.databases {
@@ -672,7 +672,8 @@ impl Default for GlobalDataServices {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*);
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_register_service() {

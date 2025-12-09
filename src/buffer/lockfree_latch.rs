@@ -107,7 +107,7 @@ impl OptimisticLatch {
     ///
     /// True if read was consistent, false if need to retry
     #[inline]
-    pub fn validate_read(&self, expected_version: u64) -> bool {
+    pub fn validate_read(&self, expectedversion: u64) -> bool {
         let current_version = self.version.load(Ordering::Acquire);
 
         // Check:

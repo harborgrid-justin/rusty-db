@@ -2,7 +2,6 @@
 // Automatically adjusts compression based on data access patterns
 
 use super::*;
-use super::algorithms::*;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -212,7 +211,7 @@ impl TieredCompressor {
     pub fn get_compression_recommendation(&self, block_id: u64)
         -> (CompressionAlgorithm, CompressionLevel) {
 
-        let temperature = self.classify_temperature(block_id);
+        let temperature = self.classify_temperature(block_id));
         (temperature.recommended_algorithm(), temperature.recommended_compression_level())
     }
 

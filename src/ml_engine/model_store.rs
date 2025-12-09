@@ -441,7 +441,7 @@ impl ModelStore {
 
     /// Get model metadata
     pub fn get_metadata(&self, id: ModelId) -> Result<ModelMetadata> {
-        let model = self.get_model(id)?;
+        let model = self.get_model(id)?);
         Ok(ModelMetadata::from(model))
     }
 
@@ -485,7 +485,7 @@ impl ModelStore {
     /// Delete a model
     pub fn delete_model(&mut self, id: ModelId) -> Result<()> {
         let model = self.models.remove(&id)
-            .ok_or_else(|| DbError::InvalidInput(format!("Model not found: {:?}", id)))?;
+            .ok_or_else(|| DbError::InvalidInput(format!("Model not found: {:?}", id)))?);
 
         // Remove from name index
         if let Some(ids) = self.name_to_id.get_mut(&model.name) {
@@ -576,7 +576,7 @@ impl ModelStore {
     /// Deserialize model from bytes
     pub fn deserialize_model(&mut self, bytes: &[u8]) -> Result<ModelId> {
         let model: Model = bincode::deserialize(bytes)
-            .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?;
+            .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?);
 
         self.register_model(model)
     }
@@ -608,7 +608,7 @@ impl ModelStore {
 
     /// Get model performance summary
     pub fn get_performance_summary(&self, id: ModelId) -> Result<PerformanceSummary> {
-        let model = self.get_model(id)?;
+        let model = self.get_model(id)?);
 
         Ok(PerformanceSummary {
             model_id: id,
@@ -643,6 +643,7 @@ pub struct PerformanceSummary {
 #[cfg(test)]
 mod tests {
     use super::*;
+use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_model_store() {

@@ -12,9 +12,9 @@
 use std::fmt;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
 use crate::common::{TableId, RowId};
 use crate::Result;
 use crate::error::DbError;
@@ -299,7 +299,7 @@ impl RetentionManager {
     pub fn set_default_policy(&self, policy_id: String) -> Result<()> {
         let policies = self.policies.read().unwrap();
         if !policies.contains_key(&policy_id) {
-            return Err(DbError::NotFound(format!("Policy {} not found", policy_id)));
+            return Err(DbError::NotFound(format!("Policy {} not found", policy_id))));
         }
 
         let mut default = self.default_policy.write().unwrap();
@@ -311,7 +311,7 @@ impl RetentionManager {
     pub fn assign_policy_to_table(&self, table_id: TableId, policy_id: String) -> Result<()> {
         let policies = self.policies.read().unwrap();
         if !policies.contains_key(&policy_id) {
-            return Err(DbError::NotFound(format!("Policy {} not found", policy_id)));
+            return Err(DbError::NotFound(format!("Policy {} not found", policy_id))));
         }
 
         let mut table_policies = self.table_policies.write().unwrap();
@@ -354,7 +354,7 @@ impl RetentionManager {
     pub fn release_legal_hold(&self, hold_id: &str) -> Result<()> {
         let mut holds = self.legal_holds.write().unwrap();
         let hold = holds.get_mut(hold_id)
-            .ok_or_else(|| DbError::NotFound(format!("Legal hold {} not found", hold_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Legal hold {} not found", hold_id)))?);
         hold.release();
         Ok(())
     }
@@ -677,7 +677,7 @@ impl ComplianceReporter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*);
 
     #[test]
     fn test_retention_period() {

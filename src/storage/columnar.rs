@@ -327,7 +327,7 @@ impl ColumnChunk {
     fn encode_plain(&mut self, values: &[ColumnValue]) -> Result<()> {
         self.encoding = EncodingType::Plain;
         self.data = bincode::serialize(values)
-            .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?);
 
         self.update_stats(values);
         Ok(())
@@ -345,7 +345,7 @@ impl ColumnChunk {
 
         self.encoding = EncodingType::Dictionary;
         self.data = bincode::serialize(&(&encoder.reverse_dict, &encoded_ids))
-            .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?);
 
         self.update_stats(values);
         Ok(())
@@ -357,7 +357,7 @@ impl ColumnChunk {
 
         self.encoding = EncodingType::RunLength;
         self.data = bincode::serialize(&encoder.runs)
-            .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?);
 
         self.update_stats(values);
         Ok(())
@@ -369,7 +369,7 @@ impl ColumnChunk {
 
         self.encoding = EncodingType::Delta;
         self.data = bincode::serialize(&(encoder.base_value, &encoder.deltas))
-            .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?);
 
         // Convert i64 to ColumnValue for stats
         let col_values: Vec<ColumnValue> = values.iter()
@@ -409,7 +409,7 @@ impl ColumnChunk {
             }
             EncodingType::Dictionary => {
                 let (dict, ids): (Vec<String>, Vec<u32>) = bincode::deserialize(&self.data)
-                    .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?;
+                    .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?);
 
                 let values = ids.iter()
                     .map(|&id| {
@@ -423,7 +423,7 @@ impl ColumnChunk {
             }
             EncodingType::RunLength => {
                 let runs: Vec<(ColumnValue, usize)> = bincode::deserialize(&self.data)
-                    .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?;
+                    .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?);
 
                 let mut result = Vec::new();
                 for (value, count) in runs {
@@ -434,7 +434,7 @@ impl ColumnChunk {
             }
             EncodingType::Delta => {
                 let (base_value, deltas): (i64, Vec<i32>) = bincode::deserialize(&self.data)
-                    .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?;
+                    .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?);
 
                 let mut result = vec![ColumnValue::Int64(base_value)];
                 let mut current = base_value;
@@ -455,7 +455,7 @@ impl ColumnChunk {
     }
 
     fn update_stats(&mut self, values: &[ColumnValue]) {
-        self.stats.num_values = values.len();
+        self.stats.num_values = values.len());
         self.stats.num_nulls = values.iter().filter(|v| v.is_null()).count();
 
         let mut distinct = std::collections::HashSet::new();
@@ -464,7 +464,7 @@ impl ColumnChunk {
 
         for value in values {
             if !value.is_null() {
-                distinct.insert(format!("{:?}", value));
+                distinct.insert(format!("{:?}", value)));
 
                 if min.is_none() || value < min.as_ref().unwrap() {
                     min = Some(value.clone());
@@ -565,7 +565,7 @@ impl ColumnarTable {
         let chunks = self.chunks.read();
 
         let column_chunks = chunks.get(column_name)
-            .ok_or_else(|| DbError::Storage(format!("Column {} not found", column_name)))?;
+            .ok_or_else(|| DbError::Storage(format!("Column {} not found", column_name)))?);
 
         let mut result = Vec::new();
 
@@ -609,7 +609,7 @@ impl ColumnarTable {
         let chunks = self.chunks.read();
 
         let column_chunks = chunks.get(column_name)
-            .ok_or_else(|| DbError::Storage(format!("Column {} not found", column_name)))?;
+            .ok_or_else(|| DbError::Storage(format!("Column {} not found", column_name)))?);
 
         if column_chunks.is_empty() {
             return Ok(ColumnStats::new());

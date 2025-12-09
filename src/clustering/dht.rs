@@ -618,7 +618,7 @@ impl DistributedHashTable {
     }
 
     /// Split a hot partition
-    pub fn split_hot_partition(&self, shard_id: ShardId) -> Result<(), DbError> {
+    pub fn split_hot_partition(&self, shardid: ShardId) -> Result<(), DbError> {
         let mut partitions = self.partitions.write().unwrap();
         let nodes = self.nodes.read().unwrap();
 

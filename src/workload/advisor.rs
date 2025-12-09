@@ -323,7 +323,7 @@ impl DiagnosticAdvisor {
             let mut runs = self.analysis_runs.write();
             let run = runs
                 .get_mut(&analysis_id)
-                .ok_or_else(|| DbError::NotFound(format!("Analysis {} not found", analysis_id)))?;
+                .ok_or_else(|| DbError::NotFound(format!("Analysis {} not found", analysis_id)))?);
 
             run.status = AnalysisStatus::Running;
             run.started_time = Some(SystemTime::now());
@@ -471,7 +471,7 @@ impl DiagnosticAdvisor {
                     related_objects: vec![format!("SQL_ID_{}", i)],
                     time_period_start: SystemTime::now(),
                     time_period_end: SystemTime::now(),
-                });
+                }));
             }
             finding_id += sql_findings.len() as u32;
         }
@@ -642,7 +642,7 @@ impl DiagnosticAdvisor {
 
         let findings_vec = findings
             .get(&analysis_id)
-            .ok_or_else(|| DbError::NotFound(format!("Analysis {} not found", analysis_id)))?;
+            .ok_or_else(|| DbError::NotFound(format!("Analysis {} not found", analysis_id)))?);
 
         let empty_recs = Vec::new();
         let recommendations_vec = recommendations.get(&analysis_id).unwrap_or(&empty_recs);

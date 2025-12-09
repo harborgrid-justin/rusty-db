@@ -377,14 +377,14 @@ impl CompressionMetadata {
         if bytes.len() < 32 {
             return Err(CompressionError::InvalidMetadata(
                 format!("Metadata too short: {} bytes", bytes.len())
-            ));
+            )));
         }
 
         let version = bytes[0];
         if version != 1 {
             return Err(CompressionError::InvalidMetadata(
                 format!("Unsupported metadata version: {}", version)
-            ));
+            )));
         }
 
         let algorithm = match bytes[1] {
@@ -399,7 +399,7 @@ impl CompressionMetadata {
             _ => return Err(CompressionError::InvalidMetadata(
                 format!("Unknown algorithm: {}", bytes[1])
             )),
-        };
+        });
 
         let level = CompressionLevel::from(bytes[2]);
 

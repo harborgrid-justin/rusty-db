@@ -241,7 +241,7 @@ impl GeoTransform {
     }
 
     /// Convert pixel coordinates to world coordinates
-    pub fn pixel_to_world(&self, pixel_x: f64, pixel_y: f64) -> Coordinate {
+    pub fn pixel_to_world(&self, pixelx: f64, pixely: f64) -> Coordinate {
         let x = self.origin_x + pixel_x * self.pixel_width + pixel_y * self.rotation_x;
         let y = self.origin_y + pixel_x * self.rotation_y + pixel_y * self.pixel_height;
         Coordinate::new(x, y)
@@ -280,7 +280,7 @@ impl Raster {
     pub fn new(
         width: usize,
         height: usize,
-        num_bands: usize,
+        numbands: usize,
         pixel_type: PixelType,
         geo_transform: GeoTransform,
     ) -> Self {
@@ -505,14 +505,14 @@ impl RasterVectorConverter {
         Ok(polygons)
     }
 
-    fn trace_polygon(
+    ffn trace_polygon(
         band: &RasterBand,
         geo_transform: &GeoTransform,
-        start_x: usize,
-        start_y: usize,
+        startx: usize,
+        starty: usize,
         threshold: f64,
         visited: &mut Vec<Vec<bool>>,
-    ) -> Result<Option<Polygon>> {
+    )-> Result<Option<Polygon>> {
         // Simplified flood fill to find contiguous region
         let mut region = Vec::new();
         let mut stack = vec![(start_x, start_y)];
@@ -634,7 +634,7 @@ pub struct RasterPyramid {
 
 impl RasterPyramid {
     /// Build pyramid from base raster
-    pub fn build(base: &Raster, num_levels: usize) -> Result<Self> {
+    pub fn build(base: &Raster, numlevels: usize) -> Result<Self> {
         let mut levels = vec![base.clone()];
 
         for level in 1..num_levels {
