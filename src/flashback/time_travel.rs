@@ -779,8 +779,6 @@ pub fn timestamp_to_system_time(timestamp: Timestamp) -> SystemTime {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
-use std::time::Duration;
 
     #[test]
     fn test_scn_timeline() {

@@ -566,7 +566,6 @@ pub enum TransactionState {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::SystemTime;
 
     #[test]
     fn test_load_balancer() {

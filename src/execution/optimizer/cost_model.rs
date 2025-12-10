@@ -117,6 +117,7 @@ pub struct Histogram {
     // Total number of values represented
     pub total_count: usize,
     // For multi-dimensional histograms
+    #[allow(dead_code)]
     pub dimensions: Vec<String>,
 }
 

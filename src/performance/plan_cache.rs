@@ -9,6 +9,7 @@ use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
 // Query plan cache with LRU eviction
+#[allow(dead_code)]
 pub struct QueryPlanCache {
     cache: Arc<RwLock<HashMap<String, CachedPlan>>>,
     access_order: Arc<RwLock<VecDeque<String>>>,
@@ -17,6 +18,7 @@ pub struct QueryPlanCache {
     miss_count: Arc<RwLock<u64>>,
 }
 
+#[allow(dead_code)]
 impl QueryPlanCache {
     pub fn new(max_size: usize) -> Self {
         Self {
@@ -126,6 +128,7 @@ impl QueryPlanCache {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct CachedPlan {
     plan: QueryPlan,
@@ -134,6 +137,7 @@ struct CachedPlan {
     _access_count: usize,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryPlan {
     pub query_hash: String,
@@ -142,6 +146,7 @@ pub struct QueryPlan {
     pub estimated_rows: usize,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheStatistics {
     pub hits: u64,

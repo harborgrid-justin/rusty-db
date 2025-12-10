@@ -282,7 +282,7 @@ impl Tuple {
     }
 
     /// Check if tuple is visible to a transaction
-    pub fn is_visible(&self, txn_id: TransactionId, snapshot: &Snapshot) -> bool {
+    pub fn is_visible(&self, _txn_id: TransactionId, snapshot: &Snapshot) -> bool {
         // Simplified visibility check (actual MVCC logic is more complex)
         match (self.xmin, self.xmax) {
             (Some(xmin), None) => snapshot.is_visible(xmin),

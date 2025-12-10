@@ -65,15 +65,7 @@ const ALLOC_MAGIC: u64 = 0xABCDEF0123456789;
 // Magic value for freed memory
 const FREE_MAGIC: u64 = 0xDEADDEADDEADDEAD;
 
-// Poison pattern for freed memory
-/// Reserved for memory protection
-#[allow(dead_code)]
-const POISON_PATTERN: u8 = 0xFE;
-
-// Red zone size (128 bytes)
-/// Reserved for memory protection
-#[allow(dead_code)]
-const RED_ZONE_SIZE: usize = 128;
+// Red zone and poison pattern reserved for future memory protection features
 
 // ============================================================================
 // Memory Hardening Configuration
@@ -1044,12 +1036,7 @@ fn align_up(size: usize, alignment: usize) -> usize {
     (size + alignment - 1) & !(alignment - 1)
 }
 
-// Align size down to alignment boundary
-#[inline]
-#[allow(dead_code)]
-fn align_down(size: usize, alignment: usize) -> usize {
-    size & !(alignment - 1)
-}
+// align_down removed - not currently used
 
 // ============================================================================
 // Security Metrics

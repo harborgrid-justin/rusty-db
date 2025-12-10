@@ -417,9 +417,6 @@ impl ThreatScorer {
         let mut factors = Vec::new();
 
         // Get current hour and day
-        let _datetime = SystemTime::UNIX_EPOCH + Duration::from_secs(timestamp as u64);
-        let now = SystemTime::now();
-        let _duration = now.duration_since(SystemTime::UNIX_EPOCH).unwrap();
 
         // Simplified: extract hour from timestamp
         let hour = (timestamp % 86400) / 3600;
@@ -594,6 +591,7 @@ pub struct BehaviorAnalyzer {
     config: Arc<RwLock<InsiderThreatConfig>>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct QueryHistoryEntry {
     query: String,
@@ -668,7 +666,6 @@ impl BehaviorAnalyzer {
 
         // Calculate statistics
         let mut row_sizes: Vec<u64> = Vec::new();
-        let _session_durations: Vec<f64> = Vec::new();
 
         for entry in user_history.iter() {
             // Pattern frequency

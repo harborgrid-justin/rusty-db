@@ -792,7 +792,6 @@ pub struct LevelStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Duration;
 
     #[test]
     fn test_lsm_insert_get() {

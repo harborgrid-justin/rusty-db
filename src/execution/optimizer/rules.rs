@@ -37,6 +37,7 @@ pub struct Optimizer {
     // Table statistics for cardinality estimation
     statistics: Arc<RwLock<TableStatistics>>,
     // Join ordering strategy
+    #[allow(dead_code)]
     join_strategy: JoinOrderingStrategy,
     // Cascades memo table for plan memoization
     memo_table: Arc<RwLock<MemoTable>>,

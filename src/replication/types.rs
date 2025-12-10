@@ -47,6 +47,7 @@ use thiserror::Error;
 use crate::error::DbError;
 
 // Replication-specific error types
+#[allow(dead_code)]
 #[derive(Error, Debug)]
 pub enum ReplicationTypeError {
     #[error("Invalid replica ID '{replica_id}': {reason}")]
@@ -78,6 +79,7 @@ pub enum ReplicationTypeError {
 //
 // Ensures replica IDs follow naming conventions and are valid for use
 // across the replication system.
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ReplicaId(String);
 

@@ -505,12 +505,17 @@ impl RecycleBin {
 /// Dropped table in recycle bin
 #[derive(Debug, Clone)]
 struct DroppedTable {
+    #[allow(dead_code)]
     _table_id: TableId,
     original_name: String,
     recycle_name: String,
+    #[allow(dead_code)]
     _schema: Schema,
+    #[allow(dead_code)]
     _drop_time: SystemTime,
+    #[allow(dead_code)]
     _drop_scn: SCN,
+    #[allow(dead_code)]
     _space_used: usize,
 }
 
@@ -521,9 +526,12 @@ struct DroppedTable {
 /// Named point in time for flashback
 #[derive(Debug, Clone)]
 struct RestorePoint {
+    #[allow(dead_code)]
     _name: String,
     scn: SCN,
+    #[allow(dead_code)]
     _timestamp: SystemTime,
+    #[allow(dead_code)]
     _guaranteed: bool,
 }
 
@@ -536,16 +544,21 @@ struct TableState {
     table_id: TableId,
     scn: SCN,
     rows: HashMap<RowId, Vec<Value>>,
+    #[allow(dead_code)]
     _indexes: HashMap<IndexId, IndexState>,
 }
 
 struct IndexState {
+    #[allow(dead_code)]
     _index_id: IndexId,
+    #[allow(dead_code)]
     _entries: Vec<IndexEntry>,
 }
 
 struct IndexEntry {
+    #[allow(dead_code)]
     _key: Vec<Value>,
+    #[allow(dead_code)]
     _row_id: RowId,
 }
 
@@ -554,7 +567,9 @@ struct IndexEntry {
 // ============================================================================
 
 struct PartitionState {
+    #[allow(dead_code)]
     _partition_id: u32,
+    #[allow(dead_code)]
     _rows: HashMap<RowId, Vec<Value>>,
 }
 

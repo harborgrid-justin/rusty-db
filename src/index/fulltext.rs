@@ -221,8 +221,7 @@ pub struct SearchResult {
 }
 
 // Inverted index structure
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct InvertedIndex {
     // Term -> set of document IDs containing the term
     index: HashMap<String, HashSet<DocumentId>>,
@@ -278,8 +277,7 @@ impl InvertedIndex {
 }
 
 // Document store
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct DocumentStore {
     // Document ID -> document content
     documents: HashMap<DocumentId, Document>,

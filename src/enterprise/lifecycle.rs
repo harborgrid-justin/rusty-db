@@ -152,6 +152,7 @@ pub trait Component: Send + Sync {
 }
 
 // Registered component wrapper
+#[allow(dead_code)]
 struct RegisteredComponent {
     // The component implementation
     component: Arc<dyn Component>,
@@ -164,6 +165,7 @@ struct RegisteredComponent {
 }
 
 // Startup phase
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum StartupPhase {
     Initialization,
@@ -174,6 +176,7 @@ enum StartupPhase {
 }
 
 // Shutdown phase
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ShutdownPhase {
     PreShutdown,
@@ -731,13 +734,13 @@ mod tests {
         }
 
         async fn start(&self) -> Result<()> {
-            let mut started = self.started.lock().unwrap().await;
+            let mut started = self.started.lock().unwrap();
             *started = true;
             Ok(())
         }
 
         async fn stop(&self) -> Result<()> {
-            let mut started = self.started.lock().unwrap().await;
+            let mut started = self.started.lock().unwrap();
             *started = false;
             Ok(())
         }
@@ -767,10 +770,10 @@ mod tests {
         manager.register_component(component).await.unwrap();
         manager.startup().await.unwrap();
 
-        assert!(*started.lock().unwrap().await);
+        assert!(*started.lock().unwrap());
 
         manager.shutdown().await.unwrap();
 
-        assert!(!*started.lock().unwrap().await);
+        assert!(!*started.lock().unwrap());
     }
 }

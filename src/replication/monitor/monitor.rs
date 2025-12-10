@@ -85,7 +85,7 @@ impl ReplicationHealthMonitor {
 
     async fn start_background_monitoring(&self) {
         let config = Arc::clone(&self.config);
-        let history: Arc<RwLock<HashMap<ReplicaId, VecDeque<HealthHistoryEntry>>>> = Arc::clone(&self.history);
+        let history = Arc::clone(&self.history);
 
         let handle = tokio::spawn(async move {
             let mut interval = tokio::time::interval(config.check_interval);

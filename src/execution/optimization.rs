@@ -103,6 +103,7 @@ struct CachedPlan {
     plan: PlanNode,
     created_at: SystemTime,
     ttl: Duration,
+    #[allow(dead_code)]
     access_count: u64,
 }
 
@@ -323,8 +324,11 @@ impl AdaptiveOptimizer {
 struct ExecutionRecord {
     query_hash: String,
     plan: PlanNode,
+    #[allow(dead_code)]
     execution_time_ms: u64,
+    #[allow(dead_code)]
     rows_returned: u64,
+    #[allow(dead_code)]
     timestamp: SystemTime,
 }
 
@@ -414,6 +418,7 @@ struct MaterializedViewDef {
     name: String,
     query: String,
     base_tables: Vec<String>,
+    #[allow(dead_code)]
     last_refresh: SystemTime,
 }
 

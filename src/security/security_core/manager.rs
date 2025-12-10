@@ -3,7 +3,7 @@
 // Unified security core orchestration and security dashboard.
 
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
+use serde::{Serialize, Deserialize};
 use crate::Result;
 
 use super::super::IntegratedSecurityManager;

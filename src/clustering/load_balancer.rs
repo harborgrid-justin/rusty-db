@@ -148,6 +148,7 @@ struct ConnectionPool {
 
 // Connection to a backend
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct Connection {
     id: ConnectionId,
     backend_id: BackendId,
@@ -362,6 +363,7 @@ impl Default for LoadBalancerConfig {
 }
 
 // Session affinity tracking
+#[allow(dead_code)]
 struct Session {
     session_id: String,
     backend_id: BackendId,

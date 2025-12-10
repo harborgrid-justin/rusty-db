@@ -39,10 +39,12 @@ pub struct HashJoinConfig {
     // Number of partitions for grace hash join
     pub num_partitions: usize,
     // Enable bloom filter optimization
+    #[allow(dead_code)]
     pub use_bloom_filter: bool,
     // Temporary directory for spilling
     pub temp_dir: PathBuf,
     // Parallel execution threads
+    #[allow(dead_code)]
     pub num_threads: usize,
 }
 

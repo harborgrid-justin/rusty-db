@@ -60,6 +60,7 @@ impl StringFunctionValidator {
 /// String function executor with optimizations
 pub struct StringFunctionExecutor {
     /// Memoization cache for expensive operations
+    #[allow(dead_code)]
     soundex_cache: HashMap<String, String>,
 }
 

@@ -49,7 +49,7 @@ async-stream = "0.3"
 axum = { version = "0.8", features = ["macros", "ws"] }
 check = "1.0.0"
 context = "3.0.0"
-counts = "1.0.6"
+# counts = "1.0.6"  # Commented out: missing a lib target
 fastrand = "2.0"
 flate2 = "1.1.5"
 futures-util = "0.3"

@@ -25,6 +25,7 @@ pub struct AdaptiveContext {
     // Statistics collected during execution
     stats: Arc<RwLock<RuntimeStatistics>>,
     // Current execution phase
+    #[allow(dead_code)]
     phase: ExecutionPhase,
     // Adaptation decisions made
     adaptations: Vec<AdaptationDecision>,

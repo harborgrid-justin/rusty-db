@@ -14,9 +14,6 @@ use serde::{Serialize, Deserialize};
 use super::firewall_rules::IPReputationChecker;
 
 // Constants
-/// Reserved for rate limiting config
-#[allow(dead_code)]
-const MAX_REQUESTS_PER_SECOND_PER_IP: u64 = 1000;
 const DDOS_DETECTION_WINDOW: u64 = 60;
 const MIN_REPUTATION_SCORE: i32 = 20;
 
@@ -279,7 +276,6 @@ impl TrafficPattern {
             return 0.0;
         }
 
-        let _total = self.requests.len() as f64;
         let mut entropy = 0.0;
 
         for _ in &self.endpoints {
@@ -412,9 +408,9 @@ impl DDoSMitigator {
         Ok(DDoSAnalysisResult::Clean)
     }
 
-    fn detect_attack(&self, ip: IpAddr, attack_type: DDoSAttackType, _reason: String) {
+    fn detect_attack(&self, ip: IpAddr, attack_type: DDoSAttackType, reason: String) {
         let mut attacks = self.active_attacks.write();
-        let attack_id = format!("{}_{}_{}", ip, format!("{:?}", attack_type), Instant::now().elapsed().as_secs());
+        let attack_id = format!("{}_{:?}_{}_{}", ip, attack_type, Instant::now().elapsed().as_secs(), reason.len());
 
         let attack = DDoSAttack {
             attack_id: attack_id.clone(),

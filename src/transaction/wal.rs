@@ -379,18 +379,18 @@ pub struct WALStats {
 
 /// Transaction table entry for recovery
 #[derive(Debug, Clone)]
-pub(crate) struct TransactionTableEntry {
+pub struct TransactionTableEntry {
     #[allow(dead_code)]
     txn_id: TransactionId,
-    state: TransactionState,
-    last_lsn: LSN,
+    pub(crate) state: TransactionState,
+    pub(crate) last_lsn: LSN,
     #[allow(dead_code)]
     undo_next_lsn: Option<LSN>,
 }
 
 /// Transaction state for recovery
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum TransactionState {
+pub enum TransactionState {
     Active,
     Committed,
     Aborted,

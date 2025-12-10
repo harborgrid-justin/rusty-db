@@ -736,6 +736,7 @@ impl LockContentionIsolator {
     }
 }
 
+#[allow(dead_code)]
 pub struct LockHandle {
     tenant_id: String,
     resource_id: String,

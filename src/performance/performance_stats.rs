@@ -9,11 +9,13 @@ use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
 // Statistics collector for query performance
+#[allow(dead_code)]
 pub struct PerformanceStatsCollector {
     query_stats: Arc<RwLock<HashMap<String, QueryPerformanceStats>>>,
     global_stats: Arc<RwLock<GlobalPerformanceStats>>,
 }
 
+#[allow(dead_code)]
 impl PerformanceStatsCollector {
     pub fn new() -> Self {
         Self {
@@ -92,6 +94,7 @@ impl Default for PerformanceStatsCollector {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryPerformanceStats {
     pub query_hash: String,
@@ -103,6 +106,7 @@ pub struct QueryPerformanceStats {
     pub last_execution: SystemTime,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalPerformanceStats {
     pub total_queries: u64,

@@ -222,6 +222,7 @@ impl Default for DhtConfig {
 }
 
 // Main DHT structure
+#[allow(dead_code)]
 pub struct DistributedHashTable {
     // Configuration
     config: DhtConfig,

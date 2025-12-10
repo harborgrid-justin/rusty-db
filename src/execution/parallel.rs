@@ -441,6 +441,7 @@ impl WorkStealingScheduler {
 // Work item for parallel execution
 #[derive(Debug, Clone)]
 pub struct WorkItem {
+    #[allow(dead_code)]
     pub task_id: usize,
     pub data_range: (usize, usize), // Start and end indices
 }
@@ -571,6 +572,7 @@ impl ParallelPipeline {
 
 // Pipeline stage
 pub struct PipelineStage {
+    #[allow(dead_code)]
     name: String,
     processor: Arc<dyn PipelineProcessor>,
 }

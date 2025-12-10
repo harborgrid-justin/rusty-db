@@ -53,6 +53,7 @@ use std::sync::Arc;
 //
 // This provides a simplified interface for common cluster operations,
 // coordinating between the specialized submodules.
+#[allow(dead_code)]
 pub struct ClusterManager {
     query_executor: Arc<DistributedQueryExecutor>,
     failover_manager: Arc<ClusterFailoverManager>,

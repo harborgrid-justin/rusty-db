@@ -9,12 +9,14 @@ use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
 // Workload analyzer
+#[allow(dead_code)]
 pub struct WorkloadAnalyzer {
     query_log: Arc<RwLock<Vec<QueryExecution>>>,
     max_log_size: usize,
     analysis_cache: Arc<RwLock<Option<WorkloadAnalysis>>>,
 }
 
+#[allow(dead_code)]
 impl WorkloadAnalyzer {
     pub fn new(max_log_size: usize) -> Self {
         Self {
@@ -106,6 +108,7 @@ impl WorkloadAnalyzer {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryExecution {
     pub query_hash: String,
@@ -114,6 +117,7 @@ pub struct QueryExecution {
     pub timestamp: SystemTime,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkloadAnalysis {
     pub total_queries: usize,
