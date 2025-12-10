@@ -3,6 +3,7 @@ pub mod protocol;
 pub mod distributed;
 pub mod advanced_protocol;
 pub mod cluster_network;
+pub mod ports;
 
 pub use server::Server;
 pub use protocol::{Request, Response};
@@ -19,6 +20,11 @@ pub use cluster_network::{
     ClusterLoadBalancer, FailoverCoordinator, NetworkHealthMonitor,
     NodeId, NodeInfo, NodeState, MembershipEvent, ClusterMessage,
     MessagePriority, RoutingStrategy, HealthCheckResult,
+};
+pub use ports::{
+    PortManager, PortConfig, ServiceType, PortAllocator, AllocationStrategy,
+    ListenerManager, ListenerConfig, NatTraversal, FirewallManager,
+    AddressResolver, PortMappingService, PortHealthChecker,
 };
 
 

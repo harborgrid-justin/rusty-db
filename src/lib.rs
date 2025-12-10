@@ -238,6 +238,23 @@ pub mod execution;
 // Implements the wire protocol, connection pooling, and TCP server.
 pub mod network;
 
+// P2P Networking layer
+//
+// Implements peer-to-peer communication for distributed RustyDB clusters.
+//
+// **Key Components:**
+// - `transport`: TCP and QUIC transport implementations
+// - `protocol`: Wire protocol, message framing, and codecs
+// - `pool`: Connection pooling and management
+//
+// **Features:**
+// - Multi-transport support (TCP, QUIC)
+// - Automatic reconnection with exponential backoff
+// - Connection pooling with health monitoring
+// - Protocol versioning and negotiation
+// - Message compression support
+pub mod networking;
+
 // ============================================================================
 // Enterprise Features
 // ============================================================================
