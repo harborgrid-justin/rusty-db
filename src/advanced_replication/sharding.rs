@@ -395,7 +395,7 @@ impl ShardingEngine {
     async fn execute_on_shard(&self, shard_id: &str, _sql: &str) -> Result<Vec<Vec<u8>>> {
         let shards = self.shards.read();
 
-        let shard = shards.get(shard_id)
+        let _shard = shards.get(shard_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Shard {} not found", shard_id)
             ))?;
@@ -453,7 +453,7 @@ impl ShardingEngine {
 
     /// Execute a rebalancing plan
     pub async fn execute_rebalance(&self, plan_id: &str) -> Result<()> {
-        let plan = {
+        let _plan = {
             let plans = self.rebalance_plans.read();
             plans.get(plan_id)
                 .ok_or_else(|| DbError::Replication(

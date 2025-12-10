@@ -221,7 +221,7 @@ impl MultiTierBufferPool {
 
     // Get frame from keep pool (for pinned pages)
     pub fn allocate_keep_frame(&self) -> Option<Arc<BufferFrame>> {
-        let mut keep_frames = self.keep_frames.lock();
+        let keep_frames = self.keep_frames.lock();
         for frame in keep_frames.iter() {
             if frame.pin_count() == 0 && frame.page_id.is_none() {
                 return Some(frame.clone());
@@ -232,7 +232,7 @@ impl MultiTierBufferPool {
 
     // Get frame from recycle pool (for sequential scans)
     pub fn allocate_recycle_frame(&self) -> Option<Arc<BufferFrame>> {
-        let mut recycle_frames = self.recycle_frames.lock();
+        let recycle_frames = self.recycle_frames.lock();
         for frame in recycle_frames.iter() {
             if frame.pin_count() == 0 && frame.page_id.is_none() {
                 return Some(frame.clone());
@@ -285,8 +285,8 @@ impl MultiTierBufferPool {
 
         let page_table = self.page_table.clone();
         let running = self.tier_manager_running.clone();
-        let config = self.config.clone();
-        let pool_ref = Arc::new(self.stats.clone());
+        let _config = self.config.clone();
+        let _pool_ref = Arc::new(self.stats.clone());
 
         std::thread::spawn(move || {
             while running.load(Ordering::Acquire) {

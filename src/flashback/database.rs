@@ -263,6 +263,12 @@ impl FlashbackLogs {
         }
     }
 
+    /// Reserved for flashback logging
+
+
+    #[allow(dead_code)]
+
+
     fn add_log(&mut self, log: FlashbackLogFile) {
         self.total_size_bytes += log.size_bytes;
         self.logs.insert(log.start_scn, log);
@@ -418,6 +424,12 @@ impl IncarnationTree {
             .iter_mut()
             .find(|inc| inc.incarnation_id == current_id)
     }
+
+    /// Reserved for flashback API
+
+
+    #[allow(dead_code)]
+
 
     fn list_all(&self) -> Vec<Incarnation> {
         self.incarnations.clone()

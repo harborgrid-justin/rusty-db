@@ -151,7 +151,7 @@ impl StringFunctionExecutor {
                     DbError::InvalidInput(format!("Column '{}' not found", col))
                 })
             }
-            StringExpr::Function(func) => {
+            StringExpr::Function(_func) => {
                 // Recursive evaluation - need mutable self
                 Err(DbError::NotImplemented("Nested functions".to_string()))
             }
@@ -368,7 +368,7 @@ impl StringFunctionExecutor {
         let s = self.eval_expr(string, context)?;
 
         // Convert SQL pattern to regex (simplified)
-        let regex_pattern = pat
+        let _regex_pattern = pat
             .replace('%', ".*")
             .replace('_', ".")
             .replace('[', "\\[")

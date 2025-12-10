@@ -388,6 +388,7 @@ impl NotificationChannel for WebhookChannel {
 // Email notification channel
 pub struct EmailChannel {
     name: String,
+    #[allow(dead_code)]
     smtp_server: String,
     from: String,
     to: Vec<String>,
@@ -418,6 +419,7 @@ impl NotificationChannel for EmailChannel {
 // Slack notification channel
 pub struct SlackChannel {
     name: String,
+    #[allow(dead_code)]
     webhook_url: String,
     channel: String,
 }
@@ -451,6 +453,7 @@ pub struct AlertManager {
     alert_history: Arc<RwLock<VecDeque<Alert>>>,
     routes: Arc<RwLock<Vec<AlertRoute>>>,
     silences: Arc<RwLock<Vec<AlertSilence>>>,
+    #[allow(dead_code)]
     inhibition_rules: Arc<RwLock<Vec<AlertInhibitionRule>>>,
     channels: Arc<RwLock<HashMap<String, Arc<dyn NotificationChannel>>>>,
     max_history: usize,

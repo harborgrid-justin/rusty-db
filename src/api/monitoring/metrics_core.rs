@@ -82,6 +82,7 @@ impl MetricId {
 #[derive(Debug)]
 pub struct CounterMetric {
     value: AtomicU64,
+    #[allow(dead_code)]
     created: SystemTime,
     pub(crate) help: String,
 }
@@ -116,6 +117,7 @@ impl CounterMetric {
 #[derive(Debug)]
 pub struct GaugeMetric {
     value: Arc<RwLock<f64>>,
+    #[allow(dead_code)]
     created: SystemTime,
     pub(crate) help: String,
 }
@@ -167,6 +169,7 @@ pub struct HistogramMetric {
     buckets: Vec<(f64, AtomicU64)>, // (upper_bound, count)
     sum: Arc<RwLock<f64>>,
     count: AtomicU64,
+    #[allow(dead_code)]
     created: SystemTime,
     pub(crate) help: String,
 }
@@ -230,8 +233,10 @@ pub struct SummaryMetric {
     sum: Arc<RwLock<f64>>,
     count: AtomicU64,
     quantiles: Vec<f64>, // e.g., [0.5, 0.9, 0.99]
+    #[allow(dead_code)]
     max_age: Duration,
     max_samples: usize,
+    #[allow(dead_code)]
     created: SystemTime,
     pub(crate) help: String,
 }

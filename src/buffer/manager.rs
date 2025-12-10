@@ -208,8 +208,9 @@ impl PageTable {
         partition.write().remove(&page_id)
     }
 
-    /// Clear all partitions
+    /// Clear all partitions (for testing and maintenance)
     #[cold]
+    #[allow(dead_code)]
     fn clear(&self) {
         for partition in &self.partitions {
             partition.write().clear();
@@ -827,8 +828,9 @@ impl BufferPoolManager {
         dirty as f64 / self.config.num_frames as f64
     }
 
-    /// Check if background flush is needed
+    /// Check if background flush is needed (for async flush operations)
     #[inline]
+    #[allow(dead_code)]
     fn should_background_flush(&self) -> bool {
         self.dirty_page_ratio() > self.config.dirty_page_threshold
     }

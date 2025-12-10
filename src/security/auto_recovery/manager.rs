@@ -18,6 +18,8 @@ use super::checkpoint_management::*;
 use super::state_restoration::*;
 
 // Constants
+/// Reserved for recovery config
+#[allow(dead_code)]
 const MAX_RECOVERY_TIME: Duration = Duration::from_secs(300);
 const CRASH_DETECTION_TIMEOUT: Duration = Duration::from_secs(5);
 const HEALTH_CHECK_INTERVAL: Duration = Duration::from_secs(1);
@@ -295,7 +297,7 @@ impl AutoRecoveryManager {
         }
     }
 
-    async fn recover_from_deadlock(&self, failure: &DetectedFailure) -> Result<bool> {
+    async fn recover_from_deadlock(&self, _failure: &DetectedFailure) -> Result<bool> {
         tracing::info!("Recovering from deadlock by rolling back transactions");
 
         let count = self.rollback_manager.rollback_all_inflight().await?;
@@ -304,7 +306,7 @@ impl AutoRecoveryManager {
         Ok(true)
     }
 
-    async fn recover_from_health_failure(&self, failure: &DetectedFailure) -> Result<bool> {
+    async fn recover_from_health_failure(&self, _failure: &DetectedFailure) -> Result<bool> {
         tracing::info!("Recovering from health failure");
 
         self.self_healer.clear_caches().await?;

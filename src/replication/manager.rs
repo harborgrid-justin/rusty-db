@@ -682,7 +682,7 @@ impl ReplicationManager {
         }
 
         // Broadcast to all replicas
-        let failed_replicas = self.replica_service.broadcast(data).await
+        let _failed_replicas = self.replica_service.broadcast(data).await
             .map_err(|_| ReplicationManagerError::ServiceUnavailable {
                 service: "replica_service".to_string(),
             })?;
@@ -713,8 +713,8 @@ impl ReplicationManager {
         sequence: u64,
         required_acks: usize,
     ) -> Result<(), ReplicationManagerError> {
-        let timeout = self.config.sync_timeout;
-        let start = SystemTime::now();
+        let _timeout = self.config.sync_timeout;
+        let _start = SystemTime::now();
 
         loop {
             // Check if we have enough acknowledgments

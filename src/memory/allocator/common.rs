@@ -51,7 +51,8 @@ pub(super) const MEMORY_PRESSURE_WARNING: f64 = 0.80;
 // Memory pressure critical threshold (90% of total)
 pub(super) const MEMORY_PRESSURE_CRITICAL: f64 = 0.90;
 
-// Maximum number of stack frames to capture for leak detection
+// Maximum number of stack frames to capture for leak detection (for debug builds)
+#[allow(dead_code)]
 pub(super) const MAX_STACK_FRAMES: usize = 32;
 
 // Memory guard pattern for corruption detection

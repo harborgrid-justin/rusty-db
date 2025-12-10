@@ -33,11 +33,9 @@
 // Re-export everything from the core module
 pub use core::*;
 
-mod core;
+// Re-export types from the old types module (temporary until full refactoring)
 mod types;
-mod snapshots;
-mod wal;
-mod manager;
-mod conflicts;
-mod slots;
+pub use types::ReplicaId;
+
+mod core;
 mod monitor;

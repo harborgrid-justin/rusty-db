@@ -88,8 +88,10 @@ pub struct CostModel {
     /// Index statistics
     index_stats: Arc<RwLock<HashMap<IndexId, IndexStatistics>>>,
     /// Cardinality estimator
+    #[allow(dead_code)]
     cardinality_estimator: Arc<CardinalityEstimator>,
     /// Selectivity estimator
+    #[allow(dead_code)]
     selectivity_estimator: Arc<SelectivityEstimator>,
 }
 

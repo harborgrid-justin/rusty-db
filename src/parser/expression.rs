@@ -509,8 +509,8 @@ impl ExpressionEvaluator {
 
     /// Match a string against a LIKE pattern
     fn match_like_pattern(&self, text: &str, pattern: &str) -> bool {
-        let mut text_chars: Vec<char> = text.chars().collect();
-        let mut pattern_chars: Vec<char> = pattern.chars().collect();
+        let text_chars: Vec<char> = text.chars().collect();
+        let pattern_chars: Vec<char> = pattern.chars().collect();
 
         self.like_match_recursive(&text_chars, &pattern_chars, 0, 0)
     }

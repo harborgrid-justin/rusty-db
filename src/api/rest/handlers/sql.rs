@@ -4,7 +4,7 @@
 // Provides 100% coverage of SQL features through HTTP API
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     response::Json as AxumJson,
     http::StatusCode,
 };
@@ -12,15 +12,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::SystemTime;
 use uuid::Uuid;
 
-use crate::error::DbError;
 use crate::api::rest::types::*;
-use crate::parser::{SqlParser, SqlStatement, AlterAction, ConstraintType};
-use crate::catalog::{Catalog, Schema, Column, DataType};
-use crate::transaction::TransactionManager;
-use crate::execution::{Executor, QueryResult};
+use crate::parser::{SqlStatement, AlterAction, ConstraintType};
+use crate::catalog::{Column, DataType};
+use crate::execution::Executor;
 use super::{CATALOG, TXN_MANAGER, SQL_PARSER};
 
 // ============================================================================
@@ -53,7 +50,7 @@ pub struct ConstraintDefinition {
 }
 
 #[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
-pub struct BackupRequest {
+pub struct DatabaseBackupRequest {
     pub database: String,
     pub path: String,
     pub compression: Option<bool>,
@@ -162,7 +159,7 @@ pub async fn drop_database(
     post,
     path = "/api/v1/sql/backup",
     tag = "sql",
-    request_body = BackupRequest,
+    request_body = DatabaseBackupRequest,
     responses(
         (status = 200, description = "Backup completed"),
         (status = 400, description = "Invalid request", body = ApiError),
@@ -170,7 +167,7 @@ pub async fn drop_database(
 )]
 pub async fn backup_database(
     State(_state): State<Arc<ApiState>>,
-    AxumJson(request): AxumJson<BackupRequest>,
+    AxumJson(request): AxumJson<DatabaseBackupRequest>,
 ) -> ApiResult<AxumJson<serde_json::Value>> {
     let stmt = SqlStatement::BackupDatabase {
         database: request.database,

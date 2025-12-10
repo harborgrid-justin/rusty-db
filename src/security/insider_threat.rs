@@ -417,9 +417,9 @@ impl ThreatScorer {
         let mut factors = Vec::new();
 
         // Get current hour and day
-        let datetime = SystemTime::UNIX_EPOCH + Duration::from_secs(timestamp as u64);
+        let _datetime = SystemTime::UNIX_EPOCH + Duration::from_secs(timestamp as u64);
         let now = SystemTime::now();
-        let duration = now.duration_since(SystemTime::UNIX_EPOCH).unwrap();
+        let _duration = now.duration_since(SystemTime::UNIX_EPOCH).unwrap();
 
         // Simplified: extract hour from timestamp
         let hour = (timestamp % 86400) / 3600;
@@ -1149,7 +1149,7 @@ impl InsiderThreatManager {
         // Check for privilege escalation
         if let Some(escalation) = self.escalation_detector.check_escalation(user_id, query) {
             // Log forensic record
-            let mut assessment = QueryRiskAssessment {
+            let assessment = QueryRiskAssessment {
                 assessment_id: uuid::Uuid::new_v4().to_string(),
                 user_id: user_id.clone(),
                 query_text: query.to_string(),

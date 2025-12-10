@@ -272,7 +272,7 @@ impl MaterializedViewManager {
     }
 
     // Complete refresh - rebuild entire view
-    fn complete_refresh(&self, view: &MaterializedView) -> Result<RefreshResult> {
+    fn complete_refresh(&self, _view: &MaterializedView) -> Result<RefreshResult> {
         // In production, would execute view query and replace data
         Ok(RefreshResult {
             rows_inserted: 1000,
@@ -641,7 +641,7 @@ impl QueryRewriter {
             .ok_or_else(|| DbError::Internal("No candidates".to_string()))
     }
 
-    fn apply_rewrite(&self, query: &str, view_name: &str) -> Result<String> {
+    fn apply_rewrite(&self, _query: &str, view_name: &str) -> Result<String> {
         // Rewrite query to use materialized view
         Ok(format!("SELECT * FROM {}", view_name))
     }

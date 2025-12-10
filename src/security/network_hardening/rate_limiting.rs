@@ -14,6 +14,8 @@ use serde::{Serialize, Deserialize};
 use super::firewall_rules::IPReputationChecker;
 
 // Constants
+/// Reserved for rate limiting config
+#[allow(dead_code)]
 const MAX_REQUESTS_PER_SECOND_PER_IP: u64 = 1000;
 const DDOS_DETECTION_WINDOW: u64 = 60;
 const MIN_REPUTATION_SCORE: i32 = 20;

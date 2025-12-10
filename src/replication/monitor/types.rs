@@ -1,6 +1,6 @@
 // Health monitoring core types
 
-use crate::replication::types::ReplicaId;
+use crate::replication::ReplicaId;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};

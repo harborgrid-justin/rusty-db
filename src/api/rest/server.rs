@@ -6,13 +6,11 @@
 use axum::{
     Router,
     routing::{get, post, put, delete},
-    extract::{Path, Query, State, WebSocketUpgrade, ws::WebSocket},
-    response::{Response, IntoResponse, Json as AxumJson},
-    http::{StatusCode, HeaderMap, Method},
-    middleware::{self, Next},
-    body::Body,
+    extract::{State, WebSocketUpgrade, ws::WebSocket},
+    response::Response,
+    http::Method,
+    middleware,
 };
-use tower::ServiceBuilder;
 use tower_http::{
     cors::{CorsLayer, Any},
     trace::TraceLayer,
@@ -24,9 +22,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
 use tokio::sync::{RwLock, Semaphore};
-use utoipa::{OpenApi, ToSchema};
-use utoipa_swagger_ui::SwaggerUi;
-use uuid::Uuid;
 use crate::api::ApiConfig;
 use crate::error::DbError;
 use crate::common::*;

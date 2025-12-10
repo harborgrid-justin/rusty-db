@@ -274,7 +274,7 @@ pub struct ResourceManager {
 
 impl ResourceManager {
     pub fn new() -> Self {
-        let mut manager = Self {
+        let manager = Self {
             groups: Arc::new(RwLock::new(HashMap::new())),
             session_groups: Arc::new(RwLock::new(HashMap::new())),
             active_queries: Arc::new(RwLock::new(HashMap::new())),

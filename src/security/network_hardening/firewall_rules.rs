@@ -277,7 +277,7 @@ impl ConnectionGuard {
     }
 
     pub fn check_connection(&self, ip: IpAddr) -> Result<bool> {
-        let mut connections = self.connections.write();
+        let connections = self.connections.write();
         let mut stats = self.stats.write();
 
         let total_connections: usize = connections.values().map(|c| c.count).sum();

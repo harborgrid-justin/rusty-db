@@ -550,7 +550,7 @@ impl DataWarehouseManager {
                 }
                 Err(DbError::NotFound("No matching partition".to_string()))
             }
-            PartitioningStrategy::Composite { primary, secondary } => {
+            PartitioningStrategy::Composite { primary, secondary: _ } => {
                 // Use primary partitioning
                 self.get_partition(primary, value)
             }

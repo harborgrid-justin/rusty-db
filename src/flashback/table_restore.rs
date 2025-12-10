@@ -495,6 +495,12 @@ impl RecycleBin {
         count
     }
 
+    /// Reserved for flashback API
+
+
+    #[allow(dead_code)]
+
+
     fn list_tables(&self) -> Vec<&DroppedTable> {
         self.tables.values().collect()
     }

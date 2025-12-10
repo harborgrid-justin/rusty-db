@@ -566,9 +566,11 @@ impl RingBufferStats {
 // ============================================================================
 
 /// Submission queue ring buffer
+#[allow(dead_code)]
 pub type SubmissionQueue = IoRingBuffer<SubmissionEntry>;
 
 /// Completion queue ring buffer
+#[allow(dead_code)]
 pub type CompletionQueue = IoRingBuffer<CompletionEntry>;
 
 // ============================================================================

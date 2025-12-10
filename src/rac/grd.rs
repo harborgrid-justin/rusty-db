@@ -41,12 +41,18 @@ const HASH_BUCKETS: usize = 65536;
 const REMASTER_THRESHOLD: u64 = 100;
 
 // Affinity tracking window (seconds)
+/// Reserved for cache fusion config
+#[allow(dead_code)]
 const AFFINITY_WINDOW: u64 = 60;
 
 // Maximum resources per master before rebalancing
+/// Reserved for GRD config
+#[allow(dead_code)]
 const MAX_RESOURCES_PER_MASTER: usize = 100000;
 
 // GRD freeze timeout during remastering
+/// Reserved for GRD config
+#[allow(dead_code)]
 const GRD_FREEZE_TIMEOUT: Duration = Duration::from_secs(30);
 
 // NEW: Virtual nodes per physical node for consistent hashing (better load distribution)

@@ -23,6 +23,7 @@ pub struct RateLimiter {
     // Sliding windows
     windows: Arc<RwLock<HashMap<String, SlidingWindow>>>,
     // Quota manager
+    #[allow(dead_code)]
     quota_manager: Arc<QuotaManager>,
 }
 

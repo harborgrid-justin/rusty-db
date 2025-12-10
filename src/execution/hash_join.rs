@@ -234,7 +234,7 @@ impl HashJoinExecutor {
         build_key_col: usize,
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
-        let partition_budget = self.config.memory_budget / self.config.num_partitions;
+        let _partition_budget = self.config.memory_budget / self.config.num_partitions;
 
         // Phase 1: Partition build side with hot partition detection
         let mut in_memory_partition: Option<HashMap<String, Vec<Vec<String>>>> = None;
@@ -397,8 +397,6 @@ impl HashJoinExecutor {
         let reader = BufReader::new(file);
 
         let mut rows = Vec::new();
-        let buf = String::new();
-        let mut reader = reader;
 
         use std::io::BufRead;
         for line in reader.lines() {
@@ -416,7 +414,7 @@ impl HashJoinExecutor {
     fn spill_partition(
         &self,
         partition: &[Vec<String>],
-        columns: &[String],
+        _columns: &[String],
         prefix: &str,
         partition_id: usize,
     ) -> Result<PathBuf, DbError> {

@@ -184,7 +184,7 @@ impl IncrementalCheckpointer {
         let batch_size = self.batch_size;
         let queue = self.checkpoint_queue.clone();
         let running = self.running.clone();
-        let stats = Arc::new(Mutex::new(AtomicU64::new(self.stats.incremental_checkpoints.load(Ordering::Relaxed))));
+        let _stats = Arc::new(Mutex::new(AtomicU64::new(self.stats.incremental_checkpoints.load(Ordering::Relaxed))));
 
         std::thread::spawn(move || {
             while running.load(Ordering::Acquire) {

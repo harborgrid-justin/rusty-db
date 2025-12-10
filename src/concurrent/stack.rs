@@ -93,9 +93,7 @@ impl<T: 'static> LockFreeStack<T> {
 
             // Set new node's next to current head
             // Safety: We own node_ptr until we successfully push it
-            unsafe {
-                node_ptr.as_ref().unwrap().next.store(head, Ordering::Relaxed);
-            }
+            node_ptr.as_ref().unwrap().next.store(head, Ordering::Relaxed);
 
             // Try to swing head to new node
             match self.head.compare_exchange_weak(
@@ -139,7 +137,7 @@ impl<T: 'static> LockFreeStack<T> {
 
             // Read next pointer from head
             // Safety: Protected by epoch guard
-            let next = unsafe { head.as_ref().unwrap().next.load(Ordering::Acquire, &guard) };
+            let next = head.as_ref().unwrap().next.load(Ordering::Acquire, &guard);
 
             // Try to swing head to next
             match self.head.compare_exchange_weak(
@@ -181,7 +179,7 @@ impl<T: 'static> LockFreeStack<T> {
             None
         } else {
             // Safety: Protected by epoch guard
-            Some(unsafe { &head.as_ref().unwrap().data })
+            Some(&head.as_ref().unwrap().data)
         }
     }
 
@@ -224,9 +222,7 @@ impl<T: 'static> LockFreeStack<T> {
 
             if let Some(prev_head) = chain_head {
                 // Safety: We own these nodes until we link them to the stack
-                unsafe {
-                    node_ptr.as_ref().unwrap().next.store(prev_head, Ordering::Relaxed);
-                }
+                node_ptr.as_ref().unwrap().next.store(prev_head, Ordering::Relaxed);
             }
 
             chain_head = Some(node_ptr);
@@ -239,7 +235,7 @@ impl<T: 'static> LockFreeStack<T> {
         let mut chain_tail = chain_head;
         loop {
             // Safety: We own the chain
-            let next = unsafe { chain_tail.as_ref().unwrap().next.load(Ordering::Relaxed, &guard) };
+            let next = chain_tail.as_ref().unwrap().next.load(Ordering::Relaxed, &guard);
             if next.is_null() {
                 break;
             }
@@ -251,9 +247,7 @@ impl<T: 'static> LockFreeStack<T> {
             let head = self.head.load(Ordering::Acquire, &guard);
 
             // Set chain tail's next to current head
-            unsafe {
-                chain_tail.as_ref().unwrap().next.store(head, Ordering::Relaxed);
-            }
+            chain_tail.as_ref().unwrap().next.store(head, Ordering::Relaxed);
 
             // Try to swing head to chain head
             match self.head.compare_exchange_weak(

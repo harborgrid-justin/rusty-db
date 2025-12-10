@@ -371,7 +371,7 @@ impl AdaptiveExecutor {
         left: QueryResult,
         right: QueryResult,
         _join_type: JoinType,
-        condition: String,
+        _condition: String,
         algorithm: JoinAlgorithm,
     ) -> Result<QueryResult, DbError> {
         match algorithm {
@@ -545,7 +545,7 @@ impl AdaptiveExecutor {
         &self,
         input: QueryResult,
         group_by: Vec<String>,
-        aggregates: Vec<crate::execution::planner::AggregateExpr>,
+        _aggregates: Vec<crate::execution::planner::AggregateExpr>,
     ) -> Result<QueryResult, DbError> {
         // Sort input by group keys
         let mut sorted_rows = input.rows.clone();
@@ -604,7 +604,7 @@ impl AdaptiveExecutor {
     // Adaptive table scan with index selection
     fn execute_adaptive_scan(
         &self,
-        table: String,
+        _table: String,
         columns: Vec<String>,
     ) -> Result<QueryResult, DbError> {
         // In a real implementation, would:

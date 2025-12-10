@@ -1,13 +1,10 @@
 // Advanced Plan Transformation Techniques
 // Includes memoization, CSE, view matching, decorrelation, and DPccp join enumeration
 
-use crate::error::DbError;
 use crate::execution::planner::PlanNode;
 use crate::execution::optimizer::cost_model::SingleTableStatistics;
-use crate::parser::JoinType;
-use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 
 // ============================================================================
 // Revolutionary Optimization Structures

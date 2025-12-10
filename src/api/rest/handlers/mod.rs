@@ -23,9 +23,37 @@ lazy_static::lazy_static! {
 }
 
 // Re-export all handler functions for convenience
+// Using explicit imports to avoid ambiguous glob re-exports
 pub use db::*;
-pub use admin::*;
-pub use monitoring::*;
-pub use pool::*;
-pub use cluster::*;
+
+// Admin handlers
+pub use admin::{
+    get_config, update_config, create_backup, get_health, run_maintenance,
+    get_users, create_user, get_user, update_user, delete_user,
+    get_roles, create_role, get_role, update_role, delete_role,
+    get_metrics as get_admin_metrics
+};
+
+// Monitoring handlers
+pub use monitoring::{
+    get_metrics as get_monitoring_metrics, get_prometheus_metrics,
+    get_session_stats, get_query_stats, get_performance_data,
+    get_logs, get_alerts, acknowledge_alert, get_all_pools
+};
+
+// Pool handlers
+pub use pool::{
+    get_pools, get_pool, update_pool, get_pool_stats, drain_pool,
+    get_connections, get_connection, kill_connection,
+    get_sessions, get_session, terminate_session
+};
+
+// Cluster handlers
+pub use cluster::{
+    get_cluster_nodes, add_cluster_node, get_cluster_node, remove_cluster_node,
+    get_cluster_topology, trigger_failover, get_replication_status,
+    get_cluster_config, update_cluster_config
+};
+
+// SQL handlers
 pub use sql::*;

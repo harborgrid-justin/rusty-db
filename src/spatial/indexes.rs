@@ -46,6 +46,7 @@ struct RTreeNode {
     bbox: BoundingBox,
     entries: Vec<RTreeEntry>,
     is_leaf: bool,
+    #[allow(dead_code)]
     level: usize,
 }
 
@@ -68,6 +69,7 @@ impl RTreeEntry {
 pub struct RTree {
     root: Option<RTreeNode>,
     max_entries: usize,
+    #[allow(dead_code)]
     min_entries: usize,
     height: usize,
     size: usize,
@@ -194,6 +196,7 @@ impl RTree {
         best_idx
     }
 
+    #[allow(dead_code)]
     fn split_node(&self, entries: Vec<RTreeEntry>, is_leaf: bool, level: usize) -> (RTreeNode, RTreeNode) {
         // R*-tree split using R*-tree algorithm
         let (seeds, remaining) = self.pick_seeds(&entries);
@@ -238,6 +241,12 @@ impl RTree {
         (node1, node2)
     }
 
+    /// Reserved for R-tree operations
+
+
+    #[allow(dead_code)]
+
+
     fn pick_seeds(&self, entries: &[RTreeEntry]) -> ((RTreeEntry, RTreeEntry), Vec<RTreeEntry>) {
         let mut max_waste = f64::NEG_INFINITY;
         let mut seed1_idx = 0;
@@ -279,6 +288,7 @@ impl RTree {
         ((seed1.unwrap(), seed2.unwrap()), remaining)
     }
 
+    #[allow(dead_code)]
     fn compute_bbox(&self, entries: &[RTreeEntry]) -> BoundingBox {
         let mut bbox = *entries[0].bbox();
         for entry in entries.iter().skip(1) {

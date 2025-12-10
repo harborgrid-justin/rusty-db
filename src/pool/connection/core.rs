@@ -236,6 +236,7 @@ pub enum RecyclingStrategy {
     Replace,
 
     // Age-based strategy
+    #[allow(dead_code)]
     Adaptive,
 }
 
@@ -321,6 +322,8 @@ impl<C> PooledConnection<C> {
         self.last_used_at.elapsed()
     }
 
+    /// Get time the connection has been active (for leak detection)
+    #[allow(dead_code)]
     pub(crate) fn active_time(&self) -> Option<Duration> {
         self.acquired_at.map(|t| t.elapsed())
     }
@@ -361,6 +364,8 @@ impl StatementCache {
         }
     }
 
+    /// Get a cached statement (part of cache API)
+    #[allow(dead_code)]
     pub(crate) fn get(&mut self, sql: &str) -> Option<&CachedStatement> {
         if let Some(stmt) = self.cache.get(sql) {
             self.hits += 1;
@@ -371,6 +376,8 @@ impl StatementCache {
         }
     }
 
+    /// Insert a statement into cache (part of cache API)
+    #[allow(dead_code)]
     pub(crate) fn insert(&mut self, sql: String, statement: CachedStatement) {
         if self.cache.len() >= self.max_size {
             // Simple LRU: remove oldest
@@ -385,6 +392,8 @@ impl StatementCache {
         self.cache.clear();
     }
 
+    /// Get cache hit rate (for monitoring)
+    #[allow(dead_code)]
     pub(crate) fn hit_rate(&self) -> f64 {
         let total = self.hits + self.misses;
         if total == 0 {
@@ -421,6 +430,8 @@ impl CursorCache {
         }
     }
 
+    /// Insert a cursor into cache (part of cache API)
+    #[allow(dead_code)]
     pub(crate) fn insert(&mut self, name: String, cursor: CachedCursor) {
         if self.cache.len() >= self.max_size {
             if let Some(key) = self.cache.keys().next().cloned() {
@@ -483,6 +494,7 @@ pub struct ConnectionPool<C> {
     wait_queue: Arc<WaitQueue>,
 
     // Pool partitions (if enabled)
+    #[allow(dead_code)]
     partitions: Arc<RwLock<HashMap<String, PoolPartition<C>>>>,
 
     // Pool statistics

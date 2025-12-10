@@ -627,7 +627,7 @@ impl SQLValidator {
     fn validate_identifiers(&self, sql: &str) -> Result<()> {
         // Identifiers must start with letter or underscore
         // Can contain letters, numbers, underscores
-        let identifier_regex = Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").unwrap();
+        let _identifier_regex = Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").unwrap();
 
         // This is a basic check - in production, you'd validate against schema
         Ok(())

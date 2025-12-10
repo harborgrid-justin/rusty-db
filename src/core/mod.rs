@@ -296,6 +296,8 @@ impl Default for FeatureFlags {
 
 // Main database core coordinator
 pub struct DatabaseCore {
+    /// Configuration (stored for reference but not actively used)
+    #[allow(dead_code)]
     config: CoreConfig,
     state: Arc<RwLock<CoreState>>,
     buffer_pool: Arc<BufferPoolManager>,
@@ -558,6 +560,8 @@ impl DatabaseCore {
 
 // Buffer pool manager coordinating page cache
 pub struct BufferPoolManager {
+    /// Configuration (stored for reference but not actively used)
+    #[allow(dead_code)]
     config: BufferPoolConfig,
     num_pages: usize,
     frames: Vec<Mutex<FrameState>>,
@@ -739,6 +743,8 @@ impl BufferPoolManager {
 
 // High-performance I/O engine
 pub struct IoEngine {
+    /// Configuration (stored for reference but not actively used)
+    #[allow(dead_code)]
     config: IoConfig,
     thread_pool: Mutex<Vec<std::thread::JoinHandle<()>>>,
     shutdown: Arc<AtomicBool>,
@@ -821,6 +827,8 @@ impl IoEngine {
 
 // Worker thread pool for query execution
 pub struct WorkerPool {
+    /// Configuration (stored for reference but not actively used)
+    #[allow(dead_code)]
     config: WorkerConfig,
     workers: Mutex<Vec<Worker>>,
     task_queue: Arc<crossbeam::queue::SegQueue<Task>>,
@@ -829,6 +837,8 @@ pub struct WorkerPool {
 }
 
 struct Worker {
+    /// Worker identifier (stored for debugging but not actively used)
+    #[allow(dead_code)]
     id: usize,
     handle: Option<std::thread::JoinHandle<()>>,
 }
@@ -920,6 +930,7 @@ impl WorkerPool {
 
 // Memory arena for efficient allocation
 pub struct MemoryArena {
+    /// Configuration (used for limits and thresholds)
     config: MemoryConfig,
     allocated_bytes: AtomicUsize,
     peak_bytes: AtomicUsize,
@@ -1008,6 +1019,8 @@ pub struct MemoryUsage {
 
 // Core metrics collection
 pub struct CoreMetrics {
+    /// Configuration (stored for reference but not actively used)
+    #[allow(dead_code)]
     config: MonitoringConfig,
     uptime_start: Instant,
     samples: Mutex<Vec<MetricsSample>>,

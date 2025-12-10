@@ -26,6 +26,7 @@ use std::time::{Duration};
 /// Adaptive query executor with runtime plan correction
 pub struct AdaptiveExecutor {
     /// Runtime statistics collector
+    #[allow(dead_code)]
     stats_collector: Arc<RuntimeStatsCollector>,
     /// Plan corrector
     plan_corrector: Arc<PlanCorrector>,

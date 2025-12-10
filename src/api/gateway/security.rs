@@ -47,6 +47,7 @@ pub struct ThreatDetector {
     // Path traversal patterns
     path_traversal_patterns: Vec<regex::Regex>,
     // Suspicious patterns
+    #[allow(dead_code)]
     suspicious_patterns: Vec<regex::Regex>,
 }
 

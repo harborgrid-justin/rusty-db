@@ -17,7 +17,6 @@ use axum::{
     Json,
 };
 
-use crate::common::*;
 use crate::error::DbError;
 
 // Newtype for API configuration to ensure domain-specific handling

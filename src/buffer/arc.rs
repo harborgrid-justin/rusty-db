@@ -126,6 +126,10 @@ impl ArcState {
     }
 
     /// Total size including ghost entries
+    /// Reserved for monitoring API
+
+    #[allow(dead_code)]
+
     fn total_size(&self) -> usize {
         self.t1.len() + self.t2.len() + self.b1.len() + self.b2.len()
     }

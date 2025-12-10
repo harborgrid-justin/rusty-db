@@ -472,7 +472,7 @@ impl WindowExecutor {
 
     fn first_value(
         &self,
-        spec: &WindowSpec,
+        _spec: &WindowSpec,
         sorted_indices: &[usize],
         column: &str,
     ) -> Result<Vec<(usize, String)>> {

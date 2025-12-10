@@ -117,10 +117,10 @@ pub struct AutonomousDatabase {
 impl AutonomousDatabase {
     // Create a new autonomous database manager
     pub fn new(config: AutonomousConfig) -> Self {
-        let mut auto_tuner = AutoTuner::new(config.tuning_aggressiveness);
-        let mut healing_engine = SelfHealingEngine::new();
+        let auto_tuner = AutoTuner::new(config.tuning_aggressiveness);
+        let healing_engine = SelfHealingEngine::new();
         let ml_analyzer = WorkloadMLAnalyzer::new();
-        let mut auto_indexing = AutoIndexingEngine::new();
+        let auto_indexing = AutoIndexingEngine::new();
         let capacity_planner = CapacityPlanner::new();
 
         // Configure components based on config

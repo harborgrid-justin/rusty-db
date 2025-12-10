@@ -77,6 +77,8 @@ impl<K, V> Bucket<K, V> {
     }
 
     /// Try to acquire the lock without blocking
+    /// Part of the bucket lock API for non-blocking operations
+    #[allow(dead_code)]
     fn try_lock(&self) -> bool {
         self.lock
             .compare_exchange(0, 1, Ordering::Acquire, Ordering::Relaxed)
@@ -98,6 +100,8 @@ pub struct ConcurrentHashMap<K, V, S = RandomState> {
     buckets: Box<[Bucket<K, V>]>,
     size: AtomicU64,
     hasher: S,
+    /// Threshold for triggering resize (reserved for future dynamic resizing)
+    #[allow(dead_code)]
     resize_threshold: usize,
     /// Statistics
     get_count: AtomicU64,

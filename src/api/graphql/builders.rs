@@ -179,12 +179,12 @@ pub struct BuiltMutation {
 
 // Schema introspection utilities
 pub struct SchemaIntrospector {
-    engine: Arc<GraphQLEngine>,
+    _engine: Arc<GraphQLEngine>,
 }
 
 impl SchemaIntrospector {
     pub fn new(engine: Arc<GraphQLEngine>) -> Self {
-        Self { engine }
+        Self { _engine: engine }
     }
 
     // Get all available types in the schema

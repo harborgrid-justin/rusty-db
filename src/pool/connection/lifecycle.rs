@@ -377,6 +377,7 @@ pub struct ConnectionValidator {
     validation_query: Option<String>,
 
     // Validation timeout
+    #[allow(dead_code)]
     timeout: Duration,
 
     // Fast validation (ping-like)

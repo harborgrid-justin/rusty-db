@@ -193,6 +193,7 @@ impl DependencyContainer {
 // Feature flag manager
 pub struct FeatureFlagManager {
     flags: Arc<RwLock<HashMap<String, FeatureFlag>>>,
+    #[allow(dead_code)]
     evaluators: Arc<RwLock<HashMap<String, Box<dyn FeatureFlagEvaluator>>>>,
 }
 
@@ -343,6 +344,7 @@ impl VersionCompatibilityChecker {
 
 // Configuration aggregator
 pub struct ConfigurationAggregator {
+    #[allow(dead_code)]
     configs: Arc<RwLock<HashMap<String, HashMap<String, String>>>>,
     watchers: Arc<RwLock<Vec<Box<dyn ConfigWatcher>>>>,
 }

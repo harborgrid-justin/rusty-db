@@ -529,7 +529,7 @@ impl Bulkhead {
         let _guard = QueueGuard::new(&self.queue_size);
 
         // Acquire permit with timeout
-        let permit = match timeout(
+        let _permit = match timeout(
             self.config.acquire_timeout,
             self.semaphore.clone().acquire_owned()
         ).await {

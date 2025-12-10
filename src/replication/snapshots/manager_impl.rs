@@ -190,7 +190,7 @@ impl SnapshotManager for FileSnapshotManager {
 
         if verified {
             let mut cache = self.metadata_cache.write();
-            if let Some(mut metadata) = cache.get_mut(snapshot_id) {
+            if let Some(metadata) = cache.get_mut(snapshot_id) {
                 metadata.verified = true;
                 metadata.last_verified = Some(SystemTime::now());
             }

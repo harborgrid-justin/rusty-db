@@ -274,7 +274,9 @@ pub struct RemoteWriteClient {
     basic_auth: Option<(String, String)>,
     bearer_token: Option<String>,
     headers: HashMap<String, String>,
+    #[allow(dead_code)]
     batch_size: usize,
+    #[allow(dead_code)]
     batch_timeout: Duration,
     buffer: Arc<Mutex<Vec<TimeSeries>>>,
 }

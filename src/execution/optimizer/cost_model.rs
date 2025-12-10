@@ -83,7 +83,7 @@ impl ColumnStatistics {
     }
 
     // Estimate selectivity for equality predicate
-    pub fn estimate_equality_selectivity(&self, total_rows: usize) -> f64 {
+    pub fn estimate_equality_selectivity(&self, _total_rows: usize) -> f64 {
         if self.num_distinct == 0 {
             return 0.0;
         }
@@ -91,8 +91,8 @@ impl ColumnStatistics {
     }
 
     // Estimate selectivity for range predicate
-    pub fn estimate_range_selectivity(&self, _min: &str, _max: &str, total_rows: usize) -> f64 {
-        if let Some(hist) = &self.histogram {
+    pub fn estimate_range_selectivity(&self, _min: &str, _max: &str, _total_rows: usize) -> f64 {
+        if let Some(_hist) = &self.histogram {
             // Use histogram to estimate
             // Simplified - would do proper range estimation
             return 0.1;
@@ -256,8 +256,8 @@ impl Histogram {
     // For correlated columns, uses joint distribution
     pub fn estimate_join_selectivity_multi_dim(
         &self,
-        left_col: &str,
-        right_col: &str,
+        _left_col: &str,
+        _right_col: &str,
     ) -> f64 {
         if self.histogram_type != HistogramType::MultiDimensional {
             // Fallback to independence assumption

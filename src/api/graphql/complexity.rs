@@ -21,6 +21,7 @@ use crate::error::DbError;
 // Query complexity analyzer
 pub struct ComplexityAnalyzer {
     max_complexity: usize,
+    #[allow(dead_code)]
     max_depth: usize,
 }
 
@@ -158,7 +159,7 @@ pub struct RateLimit {
 
 // Authorization context for field-level security
 pub struct AuthorizationContext {
-    user_id: String,
+    _user_id: String,
     roles: HashSet<String>,
     permissions: HashSet<String>,
 }
@@ -166,7 +167,7 @@ pub struct AuthorizationContext {
 impl AuthorizationContext {
     pub fn new(user_id: String, roles: Vec<String>, permissions: Vec<String>) -> Self {
         Self {
-            user_id,
+            _user_id: user_id,
             roles: roles.into_iter().collect(),
             permissions: permissions.into_iter().collect(),
         }
@@ -268,6 +269,7 @@ struct CacheEntry {
 pub struct DataLoader<K, V> {
     loader_fn: Arc<dyn Fn(Vec<K>) -> Pin<Box<dyn Future<Output = HashMap<K, V>> + Send>> + Send + Sync>,
     cache: Arc<RwLock<HashMap<K, V>>>,
+    #[allow(dead_code)]
     batch_size: usize,
 }
 

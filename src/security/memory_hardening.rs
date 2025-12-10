@@ -66,9 +66,13 @@ const ALLOC_MAGIC: u64 = 0xABCDEF0123456789;
 const FREE_MAGIC: u64 = 0xDEADDEADDEADDEAD;
 
 // Poison pattern for freed memory
+/// Reserved for memory protection
+#[allow(dead_code)]
 const POISON_PATTERN: u8 = 0xFE;
 
 // Red zone size (128 bytes)
+/// Reserved for memory protection
+#[allow(dead_code)]
 const RED_ZONE_SIZE: usize = 128;
 
 // ============================================================================
@@ -745,7 +749,7 @@ impl SecureZeroingAllocator {
 
         // Check for double-free
         if self.config.enable_double_free_detection {
-            let mut allocations = self.allocations.write();
+            let allocations = self.allocations.write();
             if let Some(metadata) = allocations.get(&address) {
                 if !metadata.is_valid() {
                     self.stats.double_free_detected.fetch_add(1, Ordering::Relaxed);

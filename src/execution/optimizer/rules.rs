@@ -205,8 +205,8 @@ impl Optimizer {
                 let right = self.reorder_joins(*right)?;
 
                 // Estimate cardinalities
-                let left_card = self.estimate_cardinality(&left);
-                let right_card = self.estimate_cardinality(&right);
+                let _left_card = self.estimate_cardinality(&left);
+                let _right_card = self.estimate_cardinality(&right);
 
                 // Calculate join costs for both orders
                 let left_right_cost = self.estimate_join_cost(&left, &right, &join_type);
@@ -250,7 +250,7 @@ impl Optimizer {
             PlanNode::TableScan { table, columns } => {
                 // Check if an index would be beneficial
                 let stats = self.statistics.read();
-                if let Some(table_stats) = stats.tables.get(&table) {
+                if let Some(_table_stats) = stats.tables.get(&table) {
                     // Would evaluate index selectivity here
                     // For now, keep as table scan
                 }
@@ -371,7 +371,7 @@ impl Optimizer {
     }
 
     // Estimate filter selectivity
-    fn estimate_filter_selectivity(&self, predicate: &str) -> f64 {
+    fn estimate_filter_selectivity(&self, _predicate: &str) -> f64 {
         // Simplified - in production would parse predicate and use histograms
         0.1 // Default 10% selectivity
     }

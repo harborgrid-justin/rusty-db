@@ -3,7 +3,6 @@
 // Constructs the complete GraphQL schema
 
 use async_graphql::Schema;
-use std::sync::Arc;
 
 use super::queries::QueryRoot;
 use super::mutations::MutationRoot;

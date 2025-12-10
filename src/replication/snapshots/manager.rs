@@ -220,12 +220,12 @@ impl FileSnapshotManager {
         *self.cleanup_handle.lock() = Some(handle);
     }
 
-    pub(super) async fn compress_data(&self, data: &[u8], algorithm: &CompressionType) -> Result<Vec<u8>, SnapshotError> {
+    pub(super) async fn compress_data(&self, data: &[u8], _algorithm: &CompressionType) -> Result<Vec<u8>, SnapshotError> {
         // Simplified implementation - would use actual compression
         Ok(data.to_vec())
     }
 
-    pub(super) async fn decompress_data(&self, data: &[u8], algorithm: &CompressionType) -> Result<Vec<u8>, SnapshotError> {
+    pub(super) async fn decompress_data(&self, data: &[u8], _algorithm: &CompressionType) -> Result<Vec<u8>, SnapshotError> {
         // Simplified implementation - would use actual decompression
         Ok(data.to_vec())
     }

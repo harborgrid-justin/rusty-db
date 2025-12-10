@@ -196,7 +196,7 @@ impl StatisticsCollector {
     // Estimate selectivity of a predicate
     pub fn estimate_selectivity(&self, table: &str, column: &str, predicate: &str) -> f64 {
         if let Some(col_stats) = self.get_column_stats(table, column) {
-            if let Some(table_stats) = self.get_table_stats(table) {
+            if let Some(_table_stats) = self.get_table_stats(table) {
                 // Simple selectivity estimation
                 if predicate.contains('=') {
                     // Equality: 1 / distinct_count
@@ -468,7 +468,7 @@ impl EnhancedCostModel {
         }
     }
 
-    fn estimate_filter_selectivity(&self, predicate: &str) -> f64 {
+    fn estimate_filter_selectivity(&self, _predicate: &str) -> f64 {
         // Simplified: return default selectivity
         // In a full implementation, would parse predicate and use column statistics
         0.3

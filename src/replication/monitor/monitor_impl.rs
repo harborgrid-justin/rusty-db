@@ -3,7 +3,7 @@
 use async_trait::async_trait;
 use std::time::{Duration, SystemTime};
 
-use crate::replication::types::ReplicaId;
+use crate::replication::ReplicaId;
 use super::errors::HealthMonitorError;
 use super::monitor::{HealthMonitor, ReplicationHealthMonitor};
 use super::types::*;
