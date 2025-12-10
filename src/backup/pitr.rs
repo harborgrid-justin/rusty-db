@@ -1,13 +1,11 @@
 // Point-in-Time Recovery (PITR) - Oracle-style recovery capabilities
 // Supports recovery to specific timestamp, transaction, or SCN with log mining
 
-use tokio::time::sleep;
 use std::collections::HashSet;
 use std::collections::BTreeMap;
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::io::{Read};
 use std::time::{SystemTime};
 use std::collections::{HashMap};
 use parking_lot::{Mutex, RwLock};
@@ -334,7 +332,7 @@ impl LogMiner {
     }
 
     // Mark transaction as committed
-    pub fn commit_transaction(&self, transaction_id: &str, commit_scn: u64) -> Result<()> {
+    pub fn commit_transaction(&self, transaction_id: &str, _commit_scn: u64) -> Result<()> {
         let mut entries = self.log_entries.write();
         let mut committed = self.committed_transactions.write();
 
@@ -356,7 +354,7 @@ impl LogMiner {
         let entries = self.log_entries.read();
         let mut committed_txns = HashSet::new();
 
-        for (scn, entry) in entries.range(start_scn..=end_scn) {
+        for (_scn, entry) in entries.range(start_scn..=end_scn) {
             if entry.committed {
                 committed_txns.insert(entry.transaction_id.clone());
             }
@@ -506,7 +504,7 @@ impl PitrManager {
         // Get log entries to apply
         let entries = self.log_miner.get_entries_until_scn(target_scn);
 
-        let total_entries = entries.len();
+        let _total_entries = entries.len();
         for (idx, entry) in entries.iter().enumerate() {
             // Apply redo operation
             if entry.committed {

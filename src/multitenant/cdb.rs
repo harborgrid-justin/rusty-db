@@ -21,7 +21,6 @@
 // - **Health Monitoring**: CDB and PDB health checks
 // - **Kubernetes Integration**: Native K8s operator support
 
-use tokio::time::sleep;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::Mutex;
 use std::collections::HashMap;
@@ -30,7 +29,7 @@ use std::time::{Duration};
 use tokio::sync::{RwLock};
 use serde::{Serialize, Deserialize};
 use crate::error::{Result, DbError};
-use super::pdb::{PluggableDatabase, PdbId, PdbConfig, PdbLifecycleState, PdbCreateMode};
+use super::pdb::{PluggableDatabase, PdbId, PdbConfig, PdbCreateMode};
 use super::isolation::ResourceLimits;
 
 // Container Database (CDB) configuration
@@ -632,9 +631,11 @@ pub struct ContainerDatabase {
     state: Arc<RwLock<CdbState>>,
 
     // Kubernetes operator handle (if enabled)
+    #[allow(dead_code)]
     k8s_operator: Option<Arc<KubernetesOperator>>,
 
     // AI optimizer (if enabled)
+    #[allow(dead_code)]
     ai_optimizer: Option<Arc<AiOptimizer>>,
 }
 
@@ -864,7 +865,9 @@ impl ContainerDatabase {
 // Kubernetes operator for CDB management
 #[derive(Debug, Clone)]
 pub struct KubernetesOperator {
+    #[allow(dead_code)]
     cdb_name: String,
+    #[allow(dead_code)]
     namespace: String,
 }
 
@@ -892,6 +895,7 @@ impl KubernetesOperator {
 // AI-driven resource optimizer
 #[derive(Debug, Clone)]
 pub struct AiOptimizer {
+    #[allow(dead_code)]
     optimization_enabled: bool,
 }
 

@@ -27,27 +27,18 @@
 // └─────────────────────────────────────────────────────────────┘
 // ```
 
-use std::collections::VecDeque;
-use std::collections::HashSet;
 use std::sync::Mutex;
 use std::time::Instant;
 use std::time::SystemTime;
 use std::collections::{HashMap};
 use std::net::IpAddr;
 use std::sync::Arc;
-use std::time::{Duration, UNIX_EPOCH};
+use std::time::{Duration};
 
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
-use hmac::Hmac;
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-use uuid::Uuid;
 use crate::api::gateway::{AuthorizationEngine, SecurityFilter, AuthenticationManager, AuditLogger};
 use crate::api::{RateLimitConfig, RateLimiter};
-use crate::error::DbError;
-
-type Result<T> = std::result::Result<T, DbError>;
 
 // ============================================================================
 // API Gateway Core - Request Routing and Protocol Translation

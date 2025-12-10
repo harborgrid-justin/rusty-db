@@ -4,14 +4,14 @@
 
 use std::time::Instant;
 use std::collections::{HashSet, VecDeque, HashMap};
-use crate::{Result, DbError};
+use crate::Result;
 use parking_lot::RwLock;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use serde::{Serialize, Deserialize};
 
-use super::firewall_rules::{IPReputationChecker, ViolationType};
+use super::firewall_rules::IPReputationChecker;
 
 // Constants
 const MAX_REQUESTS_PER_SECOND_PER_IP: u64 = 1000;

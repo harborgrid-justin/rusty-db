@@ -1,7 +1,6 @@
 // Cloud Backup Integration - Multi-cloud backup with S3/Azure/GCS support
 // Provides multipart upload, bandwidth throttling, and resumable transfers
 
-use tokio::time::sleep;
 use std::time::Instant;
 use std::collections::VecDeque;
 use std::time::Duration;
@@ -456,17 +455,17 @@ impl CloudBackupManager {
         Err(last_error.unwrap_or_else(|| DbError::BackupError("Upload failed".to_string())))
     }
 
-    fn upload_part_with_retry(&self, data: &[u8], multipart_id: &str, part_num: u32) -> Result<String> {
+    fn upload_part_with_retry(&self, _data: &[u8], multipart_id: &str, part_num: u32) -> Result<String> {
         // Simulate part upload
         Ok(format!("ETAG-{}-{}", multipart_id, part_num))
     }
 
-    fn initiate_multipart_upload(&self, cloud_key: &str) -> Result<String> {
+    fn initiate_multipart_upload(&self, _cloud_key: &str) -> Result<String> {
         // Simulate initiating multipart upload
         Ok(format!("MULTIPART-{}", uuid::Uuid::new_v4()))
     }
 
-    fn complete_multipart_upload(&self, multipart_id: &str, parts: &[UploadPart]) -> Result<()> {
+    fn complete_multipart_upload(&self, _multipart_id: &str, _parts: &[UploadPart]) -> Result<()> {
         // Simulate completing multipart upload
         Ok(())
     }
@@ -538,7 +537,7 @@ impl CloudBackupManager {
 
     // Delete a backup from cloud storage
     pub fn delete_cloud_backup(&self, backup_id: &str) -> Result<()> {
-        let backup = self.backups.write().remove(backup_id)
+        let _backup = self.backups.write().remove(backup_id)
             .ok_or_else(|| DbError::BackupError("Backup not found".to_string()))?;
 
         // Simulate deletion from cloud
@@ -565,7 +564,7 @@ impl CloudBackupManager {
         self.throttler.get_current_rate_mbps()
     }
 
-    fn calculate_checksum(&self, path: &Path) -> Result<String> {
+    fn calculate_checksum(&self, _path: &Path) -> Result<String> {
         // Simulate checksum calculation
         Ok(format!("SHA256-{}", uuid::Uuid::new_v4()))
     }

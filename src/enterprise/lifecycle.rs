@@ -37,7 +37,6 @@
 // }
 // ```
 
-use tokio::time::sleep;
 use std::collections::HashSet;
 use std::sync::Mutex;
 use std::time::SystemTime;

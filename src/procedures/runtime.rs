@@ -347,13 +347,13 @@ impl ExecutionContext {
     // Cursor management
     pub fn open_cursor(&mut self, name: &str, rows: Vec<HashMap<String, RuntimeValue>>) -> Result<()> {
         let cursor = CursorState {
-            rows,
-            position: 0,
+            name: name.to_string(),
+            query: String::new(),
             is_open: true,
+            current_row: 0,
+            rows,
             bulk_exceptions: Vec::new(),
-            name: todo!(),
-            query: todo!(),
-            current_row: todo!(),
+            position: 0,
         };
         self.cursors.insert(name.to_string(), cursor);
         Ok(())
@@ -644,7 +644,7 @@ impl RuntimeExecutor {
             Statement::Commit => {
                 // Integrate with transaction manager
                 // Mark the current transaction as committed
-                ctx.commit_transaction();
+                let _ = ctx.commit_transaction();
 
                 if ctx.is_debug() {
                     ctx.add_output("COMMIT executed".to_string());
@@ -661,7 +661,7 @@ impl RuntimeExecutor {
                     }
                 } else {
                     // Full rollback
-                    ctx.rollback_transaction();
+                    let _ = ctx.rollback_transaction();
                     if ctx.is_debug() {
                         ctx.add_output("ROLLBACK executed".to_string());
                     }
@@ -670,7 +670,7 @@ impl RuntimeExecutor {
 
             Statement::Savepoint { name } => {
                 // Integrate with transaction manager
-                ctx.create_savepoint(&name);
+                let _ = ctx.create_savepoint(&name);
 
                 if ctx.is_debug() {
                     ctx.add_output(format!("SAVEPOINT {} created", name));

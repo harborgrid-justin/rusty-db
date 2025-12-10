@@ -16,10 +16,13 @@ use std::collections::HashMap;
 // Main scoring engine for model inference
 pub struct ScoringEngine {
     // Batch size for vectorized operations
+    #[allow(dead_code)]
     batch_size: usize,
     // Enable GPU acceleration
+    #[allow(dead_code)]
     use_gpu: bool,
     // Cache for frequently used models
+    #[allow(dead_code)]
     model_cache: HashMap<String, CachedModel>,
 }
 
@@ -485,6 +488,7 @@ impl Default for ScoringEngine {
 // ============================================================================
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct CachedModel {
     model_id: super::ModelId,
     last_access: u64,

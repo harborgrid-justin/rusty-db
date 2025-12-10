@@ -19,7 +19,7 @@ use std::collections::{HashMap};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use std::cmp::Ordering;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::UNIX_EPOCH;
 use crate::Result;
 use crate::error::DbError;
 
@@ -616,8 +616,7 @@ impl Default for LabelStatistics {
 }
 
 fn current_timestamp() -> i64 {
-    use std::time::{SystemTime};
-    SystemTime::now()
+    std::time::SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs() as i64
@@ -626,7 +625,6 @@ fn current_timestamp() -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_label_dominance() {

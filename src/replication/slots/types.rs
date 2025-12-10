@@ -220,6 +220,7 @@ impl Default for SlotStatistics {
 }
 
 // Slot advance request
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlotAdvance {
     // Slot to advance
@@ -240,6 +241,7 @@ pub enum SlotHealthStatus {
 }
 
 // Slot health check result
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlotHealth {
     pub slot_name: SlotName,
@@ -252,6 +254,7 @@ pub struct SlotHealth {
 }
 
 // Slot consumption record
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsumptionRecord {
     // LSN of this record

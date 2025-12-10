@@ -648,6 +648,7 @@ pub enum AnomalyType {
 // Main time series analysis engine
 pub struct TimeSeriesEngine {
     // Cached models
+    #[allow(dead_code)]
     models: std::collections::HashMap<String, TimeSeriesModel>,
 }
 

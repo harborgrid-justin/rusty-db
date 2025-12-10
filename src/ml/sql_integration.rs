@@ -451,7 +451,7 @@ impl MLSqlParser {
     fn execute_create_model(&self, sql: &str) -> Result<MLExecutionResult> {
         let stmt = CreateModelStatement::parse(sql)?;
         let model_type = stmt.get_model_type()?;
-        let hyperparameters = stmt.get_hyperparameters();
+        let _hyperparameters = stmt.get_hyperparameters();
 
         // In production, this would execute the training query to get data
         // For now, return a placeholder result

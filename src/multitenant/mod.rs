@@ -192,7 +192,6 @@ pub use metering::{
 // ============================================================================
 
 use std::sync::Arc;
-use std::collections::HashMap;
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use crate::error::Result;

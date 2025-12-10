@@ -8,8 +8,8 @@ use std::fmt;
 use std::sync::Mutex;
 use std::time::SystemTime;
 use super::{
-    Event, EventBatch, EventId, EventProcessingConfig, ProcessingGuarantee, StreamMetrics,
-    StreamPosition, StreamState, Watermark,
+    Event, EventBatch, EventProcessingConfig, StreamMetrics,
+    StreamPosition, Watermark,
 };
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
@@ -487,7 +487,7 @@ impl LateEventBuffer {
         while self.count > self.max_size {
             if let Some((oldest_time, _)) = self.events.iter().next() {
                 let oldest_time = *oldest_time;
-                if let Some(mut events) = self.events.remove(&oldest_time) {
+                if let Some(events) = self.events.remove(&oldest_time) {
                     self.count -= events.len();
                 }
             } else {
@@ -637,7 +637,7 @@ impl LazyWatermarkManager {
     /// Generate watermark based on strategy
     pub fn generate_watermark(&mut self, partition: u32, latest_event_time: SystemTime) -> Option<Watermark> {
         match self.strategy {
-            WatermarkStrategy::Periodic(interval) => {
+            WatermarkStrategy::Periodic(_interval) => {
                 // Generate watermark = latest_event_time - max_lateness
                 let watermark_time = latest_event_time - Duration::from_secs(5);
                 let watermark = Watermark::new(watermark_time, Duration::from_secs(10));
@@ -1030,7 +1030,7 @@ pub struct Consumer {
 
 impl Consumer {
     /// Poll for events
-    pub fn poll(&self, timeout: Duration) -> Result<Vec<EventBatch>> {
+    pub fn poll(&self, _timeout: Duration) -> Result<Vec<EventBatch>> {
         let assignments = self.assignments.read().unwrap();
         let my_partitions = assignments.get(&self.id).cloned().unwrap_or_default();
         drop(assignments);

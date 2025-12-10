@@ -45,7 +45,6 @@ use std::ops::{Deref, DerefMut};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Weak};
 use std::ptr;
-use std::mem;
 use std::alloc::{alloc, dealloc, Layout};
 use parking_lot::RwLock;
 use std::collections::{HashMap};

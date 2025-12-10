@@ -40,6 +40,7 @@ pub struct RecoveryManager {
     /// WAL manager for log operations.
     wal_manager: Arc<WALManager>,
     /// Version store for data access.
+    #[allow(dead_code)]
     version_store: Arc<VersionStore>,
     /// Interval between automatic checkpoints.
     checkpoint_interval: Duration,
@@ -182,7 +183,7 @@ impl RecoveryManager {
     /// Undoes operations from an incomplete transaction.
     fn undo_transaction(
         &self,
-        txn_id: TransactionId,
+        _txn_id: TransactionId,
         entries: &[WALEntry],
     ) -> TransactionResult<()> {
         let mut stats = self.stats.lock();

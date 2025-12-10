@@ -30,7 +30,7 @@ use chacha20poly1305::ChaCha20Poly1305;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
-use sha2::{Digest, Sha256};
+use sha2::Digest;
 use rand::RngCore;
 
 // Cache-aligned crypto buffer for high-performance encryption

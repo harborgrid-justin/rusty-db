@@ -6,7 +6,6 @@
 // - Node addition/removal
 // - Partition reorganization
 
-use tokio::time::sleep;
 use std::fmt;
 use std::collections::VecDeque;
 use crate::error::DbError;

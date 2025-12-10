@@ -34,7 +34,6 @@
 /// - Time: O(n/32) for n-byte input with AVX2
 /// - Space: O(1)
 /// - Expected collisions: ~2^-64 for uniform distribution
-use std::collections::HashSet;
 pub fn xxhash3_avx2(data: &[u8], seed: u64) -> u64 {
     if is_x86_feature_detected!("avx2") {
         unsafe { xxhash3_avx2_impl(data, seed) }
@@ -49,7 +48,7 @@ unsafe fn xxhash3_avx2_impl(data: &[u8], seed: u64) -> u64 {
     const PRIME64_1: u64 = 0x9E3779B185EBCA87;
     const PRIME64_2: u64 = 0xC2B2AE3D27D4EB4F;
     const PRIME64_3: u64 = 0x165667B19E3779F9;
-    const PRIME64_4: u64 = 0x85EBCA77C2B2AE63;
+    const _PRIME64_4: u64 = 0x85EBCA77C2B2AE63;
     const PRIME64_5: u64 = 0x27D4EB2F165667C5;
 
     let len = data.len();
@@ -165,8 +164,8 @@ fn round(acc: u64, input: u64) -> u64 {
 
 #[inline(always)]
 fn merge_accumulator(acc: u64, val: u64) -> u64 {
-    const PRIME64_1: u64 = 0x9E3779B185EBCA87;
-    const PRIME64_2: u64 = 0xC2B2AE3D27D4EB4F;
+    const _PRIME64_1: u64 = 0x9E3779B185EBCA87;
+    const _PRIME64_2: u64 = 0xC2B2AE3D27D4EB4F;
 
     let val = round(0, val);
     acc ^ val

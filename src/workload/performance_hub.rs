@@ -632,13 +632,13 @@ impl PerformanceHub {
     }
 
     /// Get wait event analysis for a time period
-    pub fn get_wait_event_analysis(&self, start_time: SystemTime, end_time: SystemTime) -> Vec<WaitEventMetrics> {
+    pub fn get_wait_event_analysis(&self, _start_time: SystemTime, _end_time: SystemTime) -> Vec<WaitEventMetrics> {
         let analyzer = self.wait_analyzer.read();
         analyzer.wait_events.values().cloned().collect()
     }
 
     /// Get I/O analysis for a time period
-    pub fn get_io_analysis(&self, start_time: SystemTime, end_time: SystemTime) -> Vec<FileIoStats> {
+    pub fn get_io_analysis(&self, _start_time: SystemTime, _end_time: SystemTime) -> Vec<FileIoStats> {
         let analyzer = self.io_analyzer.read();
         analyzer.file_stats.values().cloned().collect()
     }

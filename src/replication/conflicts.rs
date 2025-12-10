@@ -431,6 +431,7 @@ impl CustomConflictResolver for FirstWriteWinsResolver {
 //
 // Analyzes conflict patterns to identify trends and potential
 // optimizations to prevent future conflicts.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictPatternAnalysis {
     // Analysis timestamp
@@ -450,6 +451,7 @@ pub struct ConflictPatternAnalysis {
 }
 
 // Conflict pattern
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictPattern {
     // Pattern description
@@ -603,6 +605,7 @@ impl ConflictResolver {
     //
     // * `Ok(Uuid)` - ID of the registered conflict
     // * `Err(ConflictResolutionError)` - Detection failed
+    #[allow(dead_code)]
     pub async fn detect_conflict(
         &self,
         conflictdata: ConflictData,
@@ -835,6 +838,7 @@ impl ConflictResolver {
     }
 
     // Internal conflict resolution method
+    #[allow(dead_code)]
     async fn resolve_conflict_internal(&self, conflict_id: Uuid) -> Result<(), ConflictResolutionError> {
         self.resolve_conflict_by_id(conflict_id).await.map(|_| ())
     }
@@ -853,6 +857,7 @@ impl ConflictResolver {
     }
 
     // Creates an Arc clone for async tasks
+    #[allow(dead_code)]
     fn clone_arc(&self) -> Arc<Self> {
         // This would need proper Arc wrapping in real implementation
         // For now, return a placeholder
@@ -860,6 +865,7 @@ impl ConflictResolver {
     }
 
     // Cleans up old resolved conflicts to free memory
+    #[allow(dead_code)]
     fn cleanup_old_conflicts(&self, conflicts: &mut HashMap<Uuid, ConflictInfo>) {
         let cutoff = SystemTime::now() - Duration::from_secs(3600); // 1 hour
 
@@ -870,6 +876,7 @@ impl ConflictResolver {
     }
 
     // Gets all active conflicts
+    #[allow(dead_code)]
     pub fn get_active_conflicts(&self) -> Vec<ConflictInfo> {
         let conflicts = self.conflicts.read();
         conflicts.values()
@@ -879,6 +886,7 @@ impl ConflictResolver {
     }
 
     // Gets conflict resolution statistics
+    #[allow(dead_code)]
     pub fn get_resolution_statistics(&self) -> ConflictResolutionStatistics {
         let conflicts = self.conflicts.read();
         let history = self.resolution_history.read();
@@ -912,6 +920,7 @@ impl ConflictResolver {
     }
 
     // Performs conflict pattern analysis
+    #[allow(dead_code)]
     pub async fn analyze_conflict_patterns(&self) -> Result<ConflictPatternAnalysis, ConflictResolutionError> {
         let conflicts = self.conflicts.read();
         let history = self.resolution_history.read();

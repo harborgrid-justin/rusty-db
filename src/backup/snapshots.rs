@@ -361,7 +361,7 @@ impl SnapshotManager {
         purpose: ClonePurpose,
     ) -> Result<String> {
         // Verify parent snapshot exists
-        let parent = self.snapshots.read().get(parent_snapshot_id).cloned()
+        let _parent = self.snapshots.read().get(parent_snapshot_id).cloned()
             .ok_or_else(|| DbError::BackupError("Parent snapshot not found".to_string()))?;
 
         let clone_id = self.generate_clone_id();

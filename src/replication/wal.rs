@@ -71,14 +71,10 @@
 
 use std::collections::VecDeque;
 use std::time::SystemTime;
-use crate::error::DbError;
 use crate::replication::types::*;
-use async_trait::async_trait;
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
-use std::fs::{File, OpenOptions};
-use std::io::{BufReader, BufWriter, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration};
@@ -185,14 +181,18 @@ pub struct WalSegment {
     // Size of the segment in bytes
     pub size_bytes: u64,
     // Creation timestamp
+    #[allow(dead_code)]
     pub created_at: SystemTime,
     // Last access timestamp
+    #[allow(dead_code)]
     pub last_accessed: SystemTime,
     // Whether segment is compressed
+    #[allow(dead_code)]
     pub compressed: bool,
     // Whether segment is archived
     pub archived: bool,
     // CRC checksum for the segment
+    #[allow(dead_code)]
     pub checksum: u32,
     // Number of entries in the segment
     pub entry_count: usize,
@@ -244,6 +244,7 @@ impl WalSegment {
 //
 // In-memory buffer that collects WAL entries before
 // writing to disk for improved performance.
+#[allow(dead_code)]
 #[derive(Debug)]
 struct WalBuffer {
     // Buffered entries
@@ -303,19 +304,24 @@ impl WalBuffer {
 }
 
 // WAL streaming state for replica
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct StreamingState {
     // Last LSN sent to this replica
     pub last_sent_lsn: LogSequenceNumber,
     // Last confirmed LSN from replica
+    #[allow(dead_code)]
     pub last_confirmed_lsn: LogSequenceNumber,
     // Whether streaming is active
     pub active: bool,
     // Number of entries pending confirmation
+    #[allow(dead_code)]
     pub pending_count: usize,
     // Last streaming error
+    #[allow(dead_code)]
     pub last_error: Option<String>,
     // Streaming start time
+    #[allow(dead_code)]
     pub started_at: SystemTime,
 }
 
@@ -643,11 +649,12 @@ impl WalManager {
     }
 
     // Reads entries from a specific segment file
+    #[allow(dead_code)]
     async fn read_entries_from_segment(
         &self,
-        segment: &WalSegment,
-        from_lsn: LogSequenceNumber,
-        limit: usize,
+        _segment: &WalSegment,
+        _from_lsn: LogSequenceNumber,
+        _limit: usize,
     ) -> Result<Vec<WalEntry>, WalError> {
         // For now, return empty vector
         // In a full implementation, this would:
@@ -833,7 +840,8 @@ impl WalManager {
     }
 
     // Writes entries to disk
-    async fn write_entries_to_disk(&self, entries: &[WalEntry]) -> Result<(), WalError> {
+    #[allow(dead_code)]
+    async fn write_entries_to_disk(&self, _entries: &[WalEntry]) -> Result<(), WalError> {
         // For now, just simulate writing
         // In a full implementation, this would:
         // 1. Get or create current segment
@@ -844,10 +852,11 @@ impl WalManager {
     }
 
     // Starts the buffer flush task
+    #[allow(dead_code)]
     async fn start_buffer_flush_task(&self) {
         let buffer = Arc::clone(&self.buffer);
         let sync_frequency = self.config.sync_frequency;
-        let event_sender = self.event_sender.clone();
+        let _event_sender = self.event_sender.clone();
 
         let handle = tokio::spawn(async move {
             let mut interval = interval(sync_frequency);
@@ -870,6 +879,7 @@ impl WalManager {
     }
 
     // Starts the cleanup task
+    #[allow(dead_code)]
     async fn start_cleanup_task(&self) {
         let segments = Arc::clone(&self.segments);
         let config = Arc::clone(&self.config);
@@ -892,6 +902,7 @@ impl WalManager {
     }
 
     // Starts the archive task
+    #[allow(dead_code)]
     async fn start_archive_task(&self) {
         if self.config.archive_directory.is_none() {
             return;
@@ -924,14 +935,15 @@ impl WalManager {
     }
 
     // Starts streaming task for a specific replica
+    #[allow(dead_code)]
     async fn start_replica_streaming_task(
         &self,
         replica_id: ReplicaId,
-        from_lsn: LogSequenceNumber,
+        _from_lsn: LogSequenceNumber,
     ) {
         let streaming_states = Arc::clone(&self.streaming_states);
         let stream_interval = self.config.stream_interval;
-        let batch_size = self.config.stream_batch_size;
+        let _batch_size = self.config.stream_batch_size;
 
         let handle = tokio::spawn(async move {
             let mut interval = interval(stream_interval);

@@ -29,7 +29,7 @@ use std::time::Duration;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 use crate::error::{Result, DbError};
 
@@ -354,7 +354,7 @@ impl RetryExecutor {
         Fut: Future<Output = Result<T>>,
     {
         let mut attempt = 0;
-        let mut last_error = None;
+        let mut _last_error = None;
 
         loop {
             match f().await {
@@ -392,7 +392,7 @@ impl RetryExecutor {
 
                     sleep(delay).await;
                     attempt += 1;
-                    last_error = Some(e);
+                    _last_error = Some(e);
                 }
             }
         }

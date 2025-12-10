@@ -276,7 +276,6 @@
 // - **Compensation**: Undo operations on failure
 
 // Module declarations
-use std::sync::Mutex;
 pub mod actor;
 pub mod registry;
 pub mod dependency_graph;
@@ -365,6 +364,7 @@ impl Default for OrchestratorConfig {
 // Main orchestrator coordinating all subsystems
 pub struct Orchestrator {
     // Configuration
+    #[allow(dead_code)]
     config: OrchestratorConfig,
     // Actor system
     actor_system: Arc<ActorSystem>,
@@ -544,6 +544,7 @@ impl Orchestrator {
     }
 
     // Get current state
+    #[allow(private_interfaces)]
     pub fn state(&self) -> OrchestratorState {
         *self.state.read()
     }
@@ -558,6 +559,7 @@ impl Orchestrator {
 #[derive(Debug, Clone)]
 pub struct OrchestratorStatistics {
     // Current state
+    #[allow(private_interfaces)]
     pub state: OrchestratorState,
     // Actor system statistics
     pub actor_stats: ActorSystemStats,

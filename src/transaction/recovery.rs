@@ -47,6 +47,7 @@ struct TransactionTableEntry {
 /// Dirty page table entry for ARIES recovery
 #[derive(Debug, Clone)]
 struct DirtyPageEntry {
+    #[allow(dead_code)]
     page_id: PageId,
     rec_lsn: LSN, // Recovery LSN - first log record that dirtied this page
 }
@@ -64,6 +65,7 @@ pub struct ARIESRecoveryManager {
     /// Checkpoint LSN
     checkpoint_lsn: Arc<RwLock<Option<LSN>>>,
     /// Configuration
+    #[allow(dead_code)]
     config: RecoveryConfig,
     /// Statistics
     stats: Arc<RwLock<RecoveryStats>>,
@@ -408,7 +410,7 @@ impl ARIESRecoveryManager {
                     self.apply_to_page(*page_id, *offset, data).await?;
                 }
 
-                LogRecord::Delete { page_id, offset, deleted_data, .. } => {
+                LogRecord::Delete { page_id: _page_id, offset: _offset, deleted_data: _deleted_data, .. } => {
                     // Mark as deleted (in production, this would update page)
                     // For now, simulate
                 }
@@ -542,6 +544,7 @@ impl ARIESRecoveryManager {
 pub struct FuzzyCheckpointManager {
     recovery: Arc<ARIESRecoveryManager>,
     wal: Arc<WALManager>,
+    #[allow(dead_code)]
     config: CheckpointConfig,
     stats: Arc<RwLock<CheckpointStats>>,
 }
@@ -694,6 +697,7 @@ impl PointInTimeRecovery {
 
 /// Media Recovery Manager (for disk failures)
 pub struct MediaRecoveryManager {
+    #[allow(dead_code)]
     wal: Arc<WALManager>,
     archive_dir: PathBuf,
 }

@@ -54,17 +54,17 @@ impl Executor {
                 self.catalog.drop_table(&name)?;
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::CreateDatabase { name } => {
+            SqlStatement::CreateDatabase { name: _ } => {
                 // Database creation would interact with a higher-level catalog
                 // For now, just return success
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::DropDatabase { name } => {
+            SqlStatement::DropDatabase { name: _ } => {
                 // Database deletion would interact with a higher-level catalog
                 // For now, just return success
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::BackupDatabase { database, path } => {
+            SqlStatement::BackupDatabase { database: _, path: _ } => {
                 // Backup operation would use the backup module
                 // For now, just return success
                 Ok(QueryResult::with_affected(0))
@@ -110,7 +110,7 @@ impl Executor {
 
                 Ok(result)
             }
-            SqlStatement::SelectInto { target_table, source_table, columns, filter } => {
+            SqlStatement::SelectInto { target_table, source_table, columns: _, filter: _ } => {
                 // SELECT INTO: Copy data from source to new target table
                 let source_schema = self.catalog.get_table(&source_table)?;
 
@@ -146,13 +146,13 @@ impl Executor {
 
                 Ok(QueryResult::with_affected(values.len()))
             }
-            SqlStatement::InsertIntoSelect { table, columns, source_query } => {
+            SqlStatement::InsertIntoSelect { table: _, columns: _, source_query: _ } => {
                 // INSERT INTO ... SELECT: Insert results from a query
                 // Parse and execute the source query
                 // In production, would execute source_query and insert results
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::Update { table, assignments, filter } => {
+            SqlStatement::Update { table, assignments, filter: _ } => {
                 // Validate table exists
                 let schema = self.catalog.get_table(&table)?;
 
@@ -170,7 +170,7 @@ impl Executor {
                 // In production: apply filter, update rows, return actual count
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::Delete { table, filter } => {
+            SqlStatement::Delete { table, filter: _ } => {
                 // Validate table exists
                 let schema = self.catalog.get_table(&table)?;
 
@@ -187,10 +187,10 @@ impl Executor {
                 for action in cascade_actions {
                     // In production: execute cascading deletes/updates
                     match action {
-                        crate::constraints::CascadeAction::Delete { table: ref_table, condition } => {
+                        crate::constraints::CascadeAction::Delete { table: _, condition: _ } => {
                             // Execute delete on referencing table
                         }
-                        crate::constraints::CascadeAction::Update { table: ref_table, column, value } => {
+                        crate::constraints::CascadeAction::Update { table: _, column: _, value: _ } => {
                             // Execute update on referencing table
                         }
                     }
@@ -253,12 +253,12 @@ impl Executor {
                 self.execute_alter_table(&name, action)?;
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::CreateProcedure { name, parameters, body } => {
+            SqlStatement::CreateProcedure { name: _, parameters: _, body: _ } => {
                 // Store procedure definition
                 // In production, would compile and store the procedure
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::ExecProcedure { name, arguments } => {
+            SqlStatement::ExecProcedure { name: _, arguments: _ } => {
                 // Execute stored procedure
                 // In production, would look up and execute the procedure
                 Ok(QueryResult::with_affected(0))
@@ -1158,13 +1158,13 @@ impl Executor {
                 Ok(())
             }
 
-            AlterAction::AddConstraint(constraint_type) => {
+            AlterAction::AddConstraint(_constraint_type) => {
                 // Add a constraint to the table
                 // In production, this would integrate with the constraint manager
                 Ok(())
             }
 
-            AlterAction::DropConstraint(constraint_name) => {
+            AlterAction::DropConstraint(_constraint_name) => {
                 // Drop a constraint from the table
                 // In production, this would integrate with the constraint manager
                 Ok(())

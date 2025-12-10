@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::SystemTime;
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::{Result, DbError};
+use crate::error::DbError;
 use super::{TransactionId, LogSequenceNumber};
 
 /// Hybrid Logical Clock for distributed timestamp ordering
@@ -622,7 +622,7 @@ impl SnapshotIsolationManager {
         let my_writes = write_sets.get(&txn_id);
 
         // Check for conflicts with other active transactions
-        for (other_txn, other_snapshot) in txns.iter() {
+        for (other_txn, _other_snapshot) in txns.iter() {
             if *other_txn == txn_id {
                 continue;
             }

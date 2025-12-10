@@ -46,7 +46,7 @@ use std::time::SystemTime;
 use tokio::sync::{RwLock, mpsc};
 use serde::{Serialize, Deserialize};
 use aes_gcm::{
-    aead::{Aead, KeyInit, OsRng},
+    aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
 };
 use base64::{Engine as _, engine::general_purpose};

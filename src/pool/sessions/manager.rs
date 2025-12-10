@@ -22,18 +22,18 @@ impl Default for SessionConfig {
 }
 
 pub struct SessionManager {
-    config: SessionConfig,
+    _config: SessionConfig,
     sessions: Arc<RwLock<HashMap<SID, SessionState>>>,
-    auth_provider: Arc<AuthenticationProvider>,
+    _auth_provider: Arc<AuthenticationProvider>,
     next_id: std::sync::atomic::AtomicU64,
 }
 
 impl SessionManager {
     pub fn new(config: SessionConfig) -> Self {
         Self {
-            config,
+            _config: config,
             sessions: Arc::new(RwLock::new(HashMap::new())),
-            auth_provider: Arc::new(AuthenticationProvider::new()),
+            _auth_provider: Arc::new(AuthenticationProvider::new()),
             next_id: std::sync::atomic::AtomicU64::new(1),
         }
     }

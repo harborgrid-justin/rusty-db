@@ -17,8 +17,6 @@
 // access to that resource. The directory automatically rebalances resources to optimize
 // for access patterns and load distribution.
 
-use std::collections::BTreeMap;
-use std::sync::Mutex;
 use std::collections::VecDeque;
 use std::collections::HashSet;
 use std::time::Instant;

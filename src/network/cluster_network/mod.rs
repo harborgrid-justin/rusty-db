@@ -15,7 +15,6 @@
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::time::{Duration, SystemTime};
-use crate::error::Result;
 
 // ============================================================================
 // Core Data Structures
@@ -93,6 +92,7 @@ pub struct NodeUpdate {
 }
 
 pub struct ClusterTopologyManager {
+    #[allow(dead_code)]
     nodes: HashMap<NodeId, NodeInfo>,
 }
 
@@ -110,6 +110,7 @@ pub struct TopologyMetrics {
 }
 
 pub struct PartitionDetector {
+    #[allow(dead_code)]
     config: QuorumConfig,
 }
 
@@ -147,7 +148,9 @@ pub struct TlsConfig {
 }
 
 pub struct NodeConnectionPool {
+    #[allow(dead_code)]
     max_connections: usize,
+    #[allow(dead_code)]
     connections: HashMap<NodeId, Vec<NodeConnection>>,
 }
 
@@ -176,6 +179,7 @@ pub struct NodeConnection {
 }
 
 pub struct GossipProtocol {
+    #[allow(dead_code)]
     fanout: usize,
 }
 
@@ -186,7 +190,9 @@ impl GossipProtocol {
 }
 
 pub struct ReliableMessaging {
+    #[allow(dead_code)]
     retry_count: usize,
+    #[allow(dead_code)]
     timeout: Duration,
 }
 
@@ -209,7 +215,9 @@ pub enum RoutingStrategy {
 }
 
 pub struct ClusterLoadBalancer {
+    #[allow(dead_code)]
     strategy: RoutingStrategy,
+    #[allow(dead_code)]
     nodes: Vec<NodeId>,
 }
 
@@ -229,6 +237,7 @@ pub struct LoadBalancerMetrics {
 }
 
 pub struct LocalityMap {
+    #[allow(dead_code)]
     zones: HashMap<String, Vec<NodeId>>,
 }
 
@@ -239,6 +248,7 @@ impl LocalityMap {
 }
 
 pub struct HotspotDetector {
+    #[allow(dead_code)]
     threshold: f64,
 }
 
@@ -259,7 +269,9 @@ pub struct ConnectionAffinity {
 // ============================================================================
 
 pub struct FailoverCoordinator {
+    #[allow(dead_code)]
     primary: Option<NodeId>,
+    #[allow(dead_code)]
     replicas: Vec<NodeId>,
 }
 
@@ -279,7 +291,9 @@ pub struct FailoverMetrics {
 }
 
 pub struct RaftLeaderElection {
+    #[allow(dead_code)]
     term: u64,
+    #[allow(dead_code)]
     voted_for: Option<NodeId>,
 }
 
@@ -309,6 +323,7 @@ impl TransactionRecoveryManager {
 }
 
 pub struct RollingRestartCoordinator {
+    #[allow(dead_code)]
     restart_delay: Duration,
 }
 
@@ -323,6 +338,7 @@ impl RollingRestartCoordinator {
 // ============================================================================
 
 pub struct NetworkHealthMonitor {
+    #[allow(dead_code)]
     check_interval: Duration,
 }
 
@@ -348,6 +364,7 @@ pub struct HealthCheckResult {
 }
 
 pub struct LatencyTracker {
+    #[allow(dead_code)]
     samples: Vec<Duration>,
 }
 
@@ -358,6 +375,7 @@ impl LatencyTracker {
 }
 
 pub struct BandwidthMonitor {
+    #[allow(dead_code)]
     window_size: Duration,
 }
 
@@ -368,6 +386,7 @@ impl BandwidthMonitor {
 }
 
 pub struct PacketLossDetector {
+    #[allow(dead_code)]
     threshold: f64,
 }
 
@@ -413,7 +432,9 @@ pub struct NodeNetworkMetrics {
 // ============================================================================
 
 pub struct ClusterNetworkManager {
+    #[allow(dead_code)]
     topology: ClusterTopologyManager,
+    #[allow(dead_code)]
     load_balancer: ClusterLoadBalancer,
 }
 

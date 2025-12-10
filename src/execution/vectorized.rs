@@ -172,7 +172,7 @@ impl Column {
         self.data.clear();
     }
 
-    pub fn iter(&self) -> std::slice::Iter<ColumnValue> {
+    pub fn iter(&self) -> std::slice::Iter<'_, ColumnValue> {
         self.data.iter()
     }
 }

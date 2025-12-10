@@ -446,20 +446,28 @@ impl Prediction {
 // Main ML Engine coordinator
 pub struct MLEngine {
     // Model registry
+    #[allow(dead_code)]
     model_store: Arc<RwLock<model_store::ModelStore>>,
     // Feature engineering pipeline
+    #[allow(dead_code)]
     feature_engine: Arc<RwLock<features::FeatureEngine>>,
     // Training coordinator
+    #[allow(dead_code)]
     training_engine: Arc<RwLock<training::TrainingEngine>>,
     // Scoring engine
+    #[allow(dead_code)]
     scoring_engine: Arc<RwLock<scoring::ScoringEngine>>,
     // AutoML coordinator
+    #[allow(dead_code)]
     automl_engine: Arc<RwLock<automl::AutoMLEngine>>,
     // Time series analyzer
+    #[allow(dead_code)]
     timeseries_engine: Arc<RwLock<timeseries::TimeSeriesEngine>>,
     // GPU configuration
+    #[allow(dead_code)]
     gpu_config: GpuConfig,
     // Federated learning configuration
+    #[allow(dead_code)]
     federated_config: FederatedConfig,
 }
 

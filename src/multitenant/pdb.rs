@@ -335,9 +335,11 @@ pub struct SeedPdb {
     config: PdbConfig,
 
     // Template metadata
+    #[allow(dead_code)]
     metadata: PdbMetadata,
 
     // Pre-created objects
+    #[allow(dead_code)]
     objects: Vec<String>,
 }
 
@@ -367,6 +369,7 @@ impl SeedPdb {
 #[derive(Debug, Clone)]
 pub struct ApplicationContainer {
     // Base PDB
+    #[allow(dead_code)]
     pdb: PluggableDatabase,
 
     // Child PDBs

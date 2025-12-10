@@ -19,7 +19,6 @@
 use std::time::SystemTime;
 use crate::error::DbError;
 use rand::seq::SliceRandom;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::net::SocketAddr;

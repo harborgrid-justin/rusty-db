@@ -208,6 +208,7 @@ pub enum ArchiveLogStatus {
 
 // Backup catalog - main catalog manager
 pub struct BackupCatalog {
+    #[allow(dead_code)]
     config: CatalogConfig,
     databases: Arc<RwLock<HashMap<String, DatabaseRegistration>>>,
     backup_sets: Arc<RwLock<BTreeMap<String, BackupSet>>>,

@@ -500,7 +500,7 @@ impl InstanceRecoveryManager {
     pub async fn initiate_recovery(
         &self,
         failed_instance: NodeId,
-        reason: FailureReason,
+        _reason: FailureReason,
     ) -> Result<(), DbError> {
         // Check if recovery already in progress
         {
@@ -560,7 +560,7 @@ impl InstanceRecoveryManager {
             .clone();
 
         // Broadcast coordinator
-        let message = RecoveryMessage::CoordinatorElected {
+        let _message = RecoveryMessage::CoordinatorElected {
             failed_instance: failed_instance.clone(),
             coordinator: coordinator.clone(),
         };
@@ -726,7 +726,7 @@ impl InstanceRecoveryManager {
             let handle = tokio::spawn(async move {
                 let mut processed = 0;
 
-                for log_entry in partition_logs {
+                for _log_entry in partition_logs {
                     // Apply log (simplified)
                     // In production, would actually apply to storage
 
@@ -841,7 +841,7 @@ impl InstanceRecoveryManager {
         from_lsn: LogSequenceNumber,
     ) -> Result<(), DbError> {
         let buffer = self.redo_buffer.lock().unwrap();
-        let logs = buffer.get_entries_after(from_lsn);
+        let _logs = buffer.get_entries_after(from_lsn);
         drop(buffer);
 
         // Send logs back

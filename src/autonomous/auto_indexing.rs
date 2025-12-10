@@ -3,7 +3,6 @@
 // Intelligent index recommendation, creation, consolidation, and maintenance
 // based on workload analysis and query patterns.
 
-use tokio::time::sleep;
 use std::fmt;
 use std::time::SystemTime;
 use std::collections::HashMap;
@@ -12,7 +11,6 @@ use std::time::{Duration};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::Result;
-use crate::error::DbError;
 
 // Index type recommendation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

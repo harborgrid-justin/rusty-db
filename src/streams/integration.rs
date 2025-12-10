@@ -12,11 +12,10 @@ use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{SystemTime};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
 use tokio::time::interval;
 use crate::error::{DbError, Result};
 use crate::common::{TransactionId, Value};
-use super::cdc::{ChangeEvent, ChangeType};
+use super::cdc::{ChangeEvent};
 use super::publisher::{PublishedEvent, EventPublisher};
 
 // ============================================================================
@@ -444,7 +443,7 @@ impl CQRSCoordinator {
         self.projections.write().insert(name, projection);
     }
 
-    fn handle_command(&self, _command: &Command, events: &[DomainEvent]) -> Result<Vec<DomainEvent>> {
+    fn handle_command(&self, _command: &Command, _events: &[DomainEvent]) -> Result<Vec<DomainEvent>> {
         // Simplified - in production, load aggregate, validate, and generate events
         Ok(Vec::new())
     }
@@ -521,9 +520,12 @@ pub trait ExternalConnector: Send + Sync {
 // HTTP webhook connector
 pub struct WebhookConnector {
     name: String,
+    #[allow(dead_code)]
     url: String,
     headers: HashMap<String, String>,
+    #[allow(dead_code)]
     timeout: Duration,
+    #[allow(dead_code)]
     retry_count: u32,
 }
 
@@ -547,7 +549,7 @@ impl WebhookConnector {
 impl ExternalConnector for WebhookConnector {
     fn send_event(&self, event: &ChangeEvent) -> Result<()> {
         // In production, use reqwest or similar to send HTTP POST
-        let payload = serde_json::to_string(event)
+        let _payload = serde_json::to_string(event)
             .map_err(|e| DbError::SerializationError(e.to_string()))?;
 
         // Simulate HTTP request
@@ -573,6 +575,7 @@ impl ExternalConnector for WebhookConnector {
 // Kafka connector
 pub struct KafkaConnector {
     name: String,
+    #[allow(dead_code)]
     bootstrap_servers: Vec<String>,
     topic_prefix: String,
 }
@@ -707,7 +710,7 @@ impl SchemaRegistry {
         Ok(true)
     }
 
-    fn is_compatible(&self, new_schema: &EventSchema, old_schema: &EventSchema) -> bool {
+    fn is_compatible(&self, new_schema: &EventSchema, _old_schema: &EventSchema) -> bool {
         match new_schema.compatibility {
             SchemaCompatibility::None => true,
             SchemaCompatibility::Backward => {

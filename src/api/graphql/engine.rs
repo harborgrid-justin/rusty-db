@@ -2,10 +2,10 @@
 //
 // Core GraphQL engine that interfaces with the database
 
-use async_graphql::{Context, Error, Result as GqlResult, ID};
+use async_graphql::{Result as GqlResult, ID};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::broadcast;
 use crate::api::{JoinInput, PersistedQueries, RowChange, RowDeleted, RowInserted, RowUpdated, SubscriptionManager, TableChange, TransactionResult, TransactionOperation};
 use crate::error::DbError;
 use super::types::{DateTime, BigInt, Json, IsolationLevel};

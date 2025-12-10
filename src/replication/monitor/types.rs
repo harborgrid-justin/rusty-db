@@ -16,6 +16,7 @@ pub enum ReplicaHealthStatus {
 }
 
 // Health check result
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckResult {
     pub replica_id: ReplicaId,
@@ -28,6 +29,7 @@ pub struct HealthCheckResult {
 }
 
 // Individual health components
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthComponents {
     pub replication_lag: ComponentHealth,
@@ -38,6 +40,7 @@ pub struct HealthComponents {
 }
 
 // Component health status
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentHealth {
     pub status: ReplicaHealthStatus,
@@ -48,6 +51,7 @@ pub struct ComponentHealth {
 }
 
 // Health issue
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthIssue {
     pub severity: IssueSeverity,
@@ -97,6 +101,7 @@ impl Default for HealthMetrics {
 }
 
 // Health alert
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthAlert {
     pub alert_id: String,
@@ -119,6 +124,7 @@ pub enum AlertStatus {
 }
 
 // Health history entry
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthHistoryEntry {
     pub timestamp: SystemTime,
@@ -159,6 +165,7 @@ impl Default for HealthStatistics {
 }
 
 // Health trend analysis
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthTrend {
     pub replica_id: ReplicaId,
@@ -180,6 +187,7 @@ pub enum TrendDirection {
 }
 
 // Health prediction
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthPrediction {
     pub metric: String,

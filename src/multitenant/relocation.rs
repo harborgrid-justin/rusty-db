@@ -22,7 +22,6 @@
 // 5. **Switchover**: Redirect to new location
 // 6. **Cleanup**: Remove source PDB
 
-use tokio::time::sleep;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::Mutex;
 use std::collections::HashMap;
@@ -31,7 +30,7 @@ use std::time::{Duration};
 use tokio::sync::{RwLock};
 use serde::{Serialize, Deserialize};
 use crate::error::{Result, DbError};
-use super::pdb::{PdbId, PdbConfig};
+use super::pdb::PdbId;
 
 // Relocation configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -198,9 +197,11 @@ pub struct RelocationEngine {
 #[derive(Debug, Clone)]
 struct RelocationJob {
     // Job ID
+    #[allow(dead_code)]
     id: u64,
 
     // Configuration
+    #[allow(dead_code)]
     config: RelocationConfig,
 
     // Progress
@@ -210,6 +211,7 @@ struct RelocationJob {
     target_pdb_id: Option<PdbId>,
 
     // Start time
+    #[allow(dead_code)]
     started_at: u64,
 
     // End time
@@ -398,11 +400,15 @@ pub struct StateTransferProtocol {
 
 #[derive(Debug, Clone)]
 struct DataTransfer {
+    #[allow(dead_code)]
     transfer_id: u64,
+    #[allow(dead_code)]
     source_pdb_id: PdbId,
+    #[allow(dead_code)]
     target_pdb_id: PdbId,
     bytes_transferred: u64,
     total_bytes: u64,
+    #[allow(dead_code)]
     start_time: Instant,
 }
 
@@ -464,7 +470,7 @@ impl StateTransferProtocol {
     }
 
     // Apply incremental changes
-    pub async fn apply_incremental(&self, source_pdb_id: PdbId, target_pdb_id: PdbId) -> Result<()> {
+    pub async fn apply_incremental(&self, _source_pdb_id: PdbId, _target_pdb_id: PdbId) -> Result<()> {
         // Apply redo logs from source to target
         tokio::time::sleep(Duration::from_millis(50)).await;
         Ok(())
@@ -487,10 +493,13 @@ pub struct ConnectionDrainer {
 
 #[derive(Debug, Clone)]
 struct DrainingStatus {
+    #[allow(dead_code)]
     pdb_id: PdbId,
     initial_connections: u32,
     remaining_connections: u32,
+    #[allow(dead_code)]
     started_at: Instant,
+    #[allow(dead_code)]
     timeout_secs: u64,
 }
 

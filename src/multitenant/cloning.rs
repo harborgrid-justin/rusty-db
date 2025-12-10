@@ -19,7 +19,6 @@
 // - CoW layer: Modified blocks for the clone
 // - Metadata layer: Tracks block ownership and deltas
 
-use tokio::time::sleep;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -400,9 +399,11 @@ pub struct CopyOnWriteEngine {
 #[derive(Debug, Clone)]
 struct CowLayer {
     /// Source PDB ID
+    #[allow(dead_code)]
     source_pdb_id: PdbId,
 
     /// Clone PDB ID
+    #[allow(dead_code)]
     clone_pdb_id: PdbId,
 
     /// Modified blocks (block ID -> block data)
@@ -543,9 +544,13 @@ impl ThinClone {
 
 /// Snapshot clone
 pub struct SnapshotClone {
+    #[allow(dead_code)]
     clone_id: u64,
+    #[allow(dead_code)]
     snapshot_id: u64,
+    #[allow(dead_code)]
     source_pdb_id: PdbId,
+    #[allow(dead_code)]
     cloned_pdb_id: PdbId,
 }
 
@@ -568,8 +573,11 @@ impl SnapshotClone {
 
 /// Refreshable clone
 pub struct RefreshableClone {
+    #[allow(dead_code)]
     clone_id: u64,
+    #[allow(dead_code)]
     source_pdb_id: PdbId,
+    #[allow(dead_code)]
     cloned_pdb_id: PdbId,
     last_refresh_scn: u64,
 }
@@ -593,8 +601,10 @@ impl RefreshableClone {
 
 /// Clone from backup
 pub struct CloneFromBackup {
+    #[allow(dead_code)]
     clone_id: u64,
     backup_id: u64,
+    #[allow(dead_code)]
     cloned_pdb_id: PdbId,
 }
 

@@ -39,14 +39,12 @@
 // }
 // ```
 
-use tokio::time::sleep;
 use std::time::Instant;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::time::{Duration};
+use std::time::Duration;
 use parking_lot::{RwLock, Mutex};
 use std::collections::HashMap;
-use rand::RngCore;
 
 use crate::error::{Result, DbError};
 

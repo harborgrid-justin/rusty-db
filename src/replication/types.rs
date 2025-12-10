@@ -42,7 +42,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use std::path::PathBuf;
 use std::time::{Duration};
 use thiserror::Error;
 use crate::error::DbError;
@@ -844,7 +843,6 @@ impl Default for ConflictResolutionStrategy {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_replica_id_validation() {

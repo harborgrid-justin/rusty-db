@@ -17,7 +17,6 @@
 
 use std::sync::Arc;
 use std::collections::HashMap;
-use bytes::Bytes;
 use crate::error::Result;
 
 pub mod errors;
@@ -65,7 +64,8 @@ pub struct Packet {
 }
 
 impl<'a> Packet {
-        pub(crate) fn new(p0: &&MessageType, p1: Bytes) -> &'a &'a Packet {
+        #[allow(dead_code)]
+        pub(crate) fn new(_p0: &&MessageType, _p1: Vec<u8>) -> &'a &'a Packet {
             todo!()
         }
     }
@@ -81,6 +81,7 @@ pub struct ProtocolCapabilities {
 // ============================================================================
 
 pub struct WireCodec {
+    #[allow(dead_code)]
     compression: CompressionType,
 }
 
@@ -102,6 +103,7 @@ pub struct WireCodecStats {
 }
 
 pub struct ProtocolNegotiator {
+    #[allow(dead_code)]
     capabilities: ProtocolCapabilities,
 }
 
@@ -122,6 +124,7 @@ pub struct NegotiatedProtocol {
 // ============================================================================
 
 pub struct StreamingResultSet {
+    #[allow(dead_code)]
     chunks: Vec<StreamChunk>,
 }
 
@@ -160,6 +163,7 @@ pub enum ConnectionState {
 
 impl ConnectionState {
 
+    #[allow(dead_code)]
     pub(crate) fn can_transition_to(&self, target: ConnectionState) -> bool {
         match (self, target) {
             // From Connecting
@@ -194,6 +198,7 @@ pub struct ConnectionMetadata {
 }
 
 pub struct ConnectionStateMachine {
+    #[allow(dead_code)]
     state: ConnectionState,
 }
 
@@ -257,6 +262,7 @@ pub struct ProtocolResponse {
 }
 
 pub struct RequestResponsePipeline {
+    #[allow(dead_code)]
     pending: HashMap<RequestId, ProtocolRequest>,
 }
 
@@ -278,6 +284,7 @@ pub struct PipelineStats {
 }
 
 pub struct PriorityRequestQueue {
+    #[allow(dead_code)]
     queue: Vec<ProtocolRequest>,
 }
 
@@ -298,6 +305,7 @@ pub struct QueueStats {
 // ============================================================================
 
 pub struct BufferPool {
+    #[allow(dead_code)]
     config: BufferPoolConfig,
 }
 
@@ -326,6 +334,7 @@ pub struct BufferPoolStats {
 }
 
 pub struct ScatterGatherBuffer {
+    #[allow(dead_code)]
     segments: Vec<Vec<u8>>,
 }
 
@@ -336,6 +345,7 @@ impl ScatterGatherBuffer {
 }
 
 pub struct CoalescingBuffer {
+    #[allow(dead_code)]
     buffer: Vec<u8>,
 }
 
@@ -346,6 +356,7 @@ impl CoalescingBuffer {
 }
 
 pub struct LargeObjectStream {
+    #[allow(dead_code)]
     chunks: Vec<Vec<u8>>,
 }
 
@@ -375,6 +386,7 @@ pub trait ProtocolExtension: Send + Sync {
 }
 
 pub struct ExtensionRegistry {
+    #[allow(dead_code)]
     extensions: HashMap<ExtensionId, Arc<dyn ProtocolExtension>>,
 }
 
@@ -390,6 +402,7 @@ pub struct FeatureFlags {
 }
 
 pub struct CustomMessageRegistry {
+    #[allow(dead_code)]
     handlers: HashMap<MessageType, String>,
 }
 
@@ -408,6 +421,7 @@ impl ExtensionNegotiator {
 }
 
 pub struct ProtocolManager {
+    #[allow(dead_code)]
     registry: ExtensionRegistry,
 }
 
@@ -428,6 +442,7 @@ pub struct ProtocolHealthStatus {
 // ============================================================================
 
 pub struct FlowControlManager {
+    #[allow(dead_code)]
     window_size: usize,
 }
 
@@ -446,6 +461,7 @@ pub struct FlowControlStats {
 }
 
 pub struct CircuitBreaker {
+    #[allow(dead_code)]
     state: CircuitState,
 }
 
@@ -469,6 +485,7 @@ pub struct CircuitBreakerStats {
 }
 
 pub struct RateLimiter {
+    #[allow(dead_code)]
     rate: u64,
 }
 
@@ -485,6 +502,7 @@ pub struct RateLimiterStats {
 }
 
 pub struct ConnectionPool {
+    #[allow(dead_code)]
     max_connections: usize,
 }
 
@@ -509,6 +527,7 @@ pub struct PoolMetrics {
 pub struct PooledConnection;
 
 pub struct ProtocolLoadBalancer {
+    #[allow(dead_code)]
     strategy: LoadBalancingStrategy,
 }
 

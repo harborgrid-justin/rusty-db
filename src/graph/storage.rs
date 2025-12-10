@@ -569,7 +569,7 @@ impl GraphStorageManager {
         // Add vertices
         for (vertex_id, vertex_data) in &adj_list.vertices {
             // Note: This is a simplified conversion; in practice, we'd need to handle ID generation
-            let vertex = Vertex::with_properties(
+            let _vertex = Vertex::with_properties(
                 *vertex_id,
                 vertex_data.labels.clone(),
                 vertex_data.properties.clone(),
@@ -598,7 +598,7 @@ impl GraphStorageManager {
 
         // Add vertices
         for (idx, &_vertex_id) in csr.vertex_map.iter().enumerate() {
-            let properties = csr.vertex_properties.get(idx)
+            let _properties = csr.vertex_properties.get(idx)
                 .cloned()
                 .unwrap_or_else(Properties::new);
             // Simplified conversion

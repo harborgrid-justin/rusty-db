@@ -6,7 +6,7 @@
 use std::fmt;
 use std::collections::VecDeque;
 use std::time::SystemTime;
-use super::{Event, EventValue, StreamState, Watermark};
+use super::{Event, Watermark};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};

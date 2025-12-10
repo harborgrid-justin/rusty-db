@@ -135,20 +135,30 @@ impl ConsumerPosition {
 // Consumer group member
 #[derive(Debug, Clone)]
 struct ConsumerMember {
+    #[allow(dead_code)]
     consumer_id: String,
+    #[allow(dead_code)]
     assigned_partitions: Vec<u32>,
+    #[allow(dead_code)]
     last_heartbeat: SystemTime,
+    #[allow(dead_code)]
     generation_id: u64,
 }
 
 // Consumer group
 #[derive(Debug)]
 struct ConsumerGroup {
+    #[allow(dead_code)]
     group_id: String,
+    #[allow(dead_code)]
     topic: String,
+    #[allow(dead_code)]
     members: HashMap<String, ConsumerMember>,
+    #[allow(dead_code)]
     partition_assignment: HashMap<u32, String>, // partition -> consumer_id
+    #[allow(dead_code)]
     generation_id: AtomicU64,
+    #[allow(dead_code)]
     coordinator_epoch: AtomicU64,
 }
 
@@ -293,22 +303,29 @@ pub struct SubscriptionStats {
 // Event Subscriber
 pub struct EventSubscriber {
     // Configuration
+    #[allow(dead_code)]
     config: SubscriptionConfig,
     // Consumer positions per topic
     positions: Arc<RwLock<HashMap<String, ConsumerPosition>>>,
     // Pending commits
+    #[allow(dead_code)]
     pending_commits: Arc<Mutex<VecDeque<PartitionOffset>>>,
     // Consumer groups
+    #[allow(dead_code)]
     groups: Arc<RwLock<HashMap<String, Arc<Mutex<ConsumerGroup>>>>>,
     // Event buffer
+    #[allow(dead_code)]
     event_buffer: Arc<Mutex<VecDeque<ConsumedEvent>>>,
     // Deduplication cache (for exactly-once)
+    #[allow(dead_code)]
     dedup_cache: Arc<RwLock<HashSet<u64>>>,
     // Dead letter queue
+    #[allow(dead_code)]
     dlq: Arc<Mutex<VecDeque<ConsumedEvent>>>,
     // Statistics
     stats: Arc<RwLock<SubscriptionStats>>,
     // Event receiver
+    #[allow(dead_code)]
     event_rx: Arc<Mutex<Option<mpsc::Receiver<PublishedEvent>>>>,
     // Shutdown flag
     shutdown: Arc<AtomicBool>,

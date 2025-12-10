@@ -287,7 +287,6 @@ impl<'a> MiniBatchIterator<'a> {
 
         if shuffle {
             use rand::seq::SliceRandom;
-use std::collections::HashMap;
             indices.shuffle(&mut rand::thread_rng());
         }
 

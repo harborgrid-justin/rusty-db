@@ -194,17 +194,26 @@ impl CqeEntry {
 // ============================================================================
 
 // Operation codes
+#[allow(dead_code)]
 const IORING_OP_NOP: u8 = 0;
 const IORING_OP_READV: u8 = 1;
 const IORING_OP_WRITEV: u8 = 2;
 const IORING_OP_FSYNC: u8 = 3;
+#[allow(dead_code)]
 const IORING_OP_READ_FIXED: u8 = 4;
+#[allow(dead_code)]
 const IORING_OP_WRITE_FIXED: u8 = 5;
+#[allow(dead_code)]
 const IORING_OP_POLL_ADD: u8 = 6;
+#[allow(dead_code)]
 const IORING_OP_POLL_REMOVE: u8 = 7;
+#[allow(dead_code)]
 const IORING_OP_SYNC_FILE_RANGE: u8 = 8;
+#[allow(dead_code)]
 const IORING_OP_SENDMSG: u8 = 9;
+#[allow(dead_code)]
 const IORING_OP_RECVMSG: u8 = 10;
+#[allow(dead_code)]
 const IORING_OP_TIMEOUT: u8 = 11;
 const IORING_OP_READ: u8 = 22;
 const IORING_OP_WRITE: u8 = 23;
@@ -213,9 +222,13 @@ const IORING_OP_WRITE: u8 = 23;
 const IORING_FSYNC_DATASYNC: u32 = 1 << 0;
 
 // Setup flags
+#[allow(dead_code)]
 const IORING_SETUP_IOPOLL: u32 = 1 << 0;
+#[allow(dead_code)]
 const IORING_SETUP_SQPOLL: u32 = 1 << 1;
+#[allow(dead_code)]
 const IORING_SETUP_SQ_AFF: u32 = 1 << 2;
+#[allow(dead_code)]
 const IORING_SETUP_CQSIZE: u32 = 1 << 3;
 
 // ============================================================================

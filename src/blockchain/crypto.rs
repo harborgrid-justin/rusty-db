@@ -14,7 +14,6 @@ use std::fmt;
 use sha2::{Sha256, Sha512, Digest};
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::Result;
 use crate::error::DbError;
@@ -471,7 +470,6 @@ pub struct KeyPair {
 impl KeyPair {
     // Generate a new key pair (simplified - not production-ready)
     pub fn generate() -> Self {
-        let mut public_key = [0u8; 32];
         let mut private_key = [0u8; 32];
 
         // Use secure random generation
@@ -480,7 +478,7 @@ impl KeyPair {
         rng.fill_bytes(&mut private_key);
 
         // Derive public key from private (simplified)
-        public_key = sha256(&private_key);
+        let public_key = sha256(&private_key);
 
         Self {
             public_key,
@@ -509,7 +507,7 @@ impl KeyPair {
 }
 
 // Verify a signature (simplified - not production-ready)
-pub fn verify_signature(public_key: &PublicKey, message: &[u8], signature: &Signature) -> bool {
+pub fn verify_signature(_public_key: &PublicKey, message: &[u8], signature: &Signature) -> bool {
     // Extract message hash from signature
     let mut claimed_message_hash = [0u8; 32];
     claimed_message_hash.copy_from_slice(&signature[..32]);
@@ -740,10 +738,9 @@ impl RangeProof {
 
 // Generate secure random bytes
 pub fn secure_random(size: usize) -> Vec<u8> {
-    let mut rng = thread_rng();
-    let mut bytes = vec![0u8; size];
-use rand::{thread_rng, RngCore};
+    use rand::{thread_rng, RngCore};
 
+    let mut bytes = vec![0u8; size];
     let mut rng = thread_rng();
     rng.fill_bytes(&mut bytes);
     bytes

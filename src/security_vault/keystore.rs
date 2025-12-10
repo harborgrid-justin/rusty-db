@@ -45,7 +45,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use parking_lot::RwLock;
-use sha2::{Digest, Sha256};
+use sha2::Digest;
 use std::fs;
 use std::sync::Arc;
 use rand::RngCore;

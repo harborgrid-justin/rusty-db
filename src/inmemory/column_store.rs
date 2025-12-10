@@ -4,11 +4,9 @@
 // with automatic synchronization, SIMD-accelerated operations, and advanced compression.
 
 use std::sync::Arc;
-use std::cmp::Ordering;
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::time::{SystemTime, UNIX_EPOCH};
-use fastrand::usize;
 use crate::inmemory::compression::{CompressionType, HybridCompressor, CompressionStats};
 use crate::inmemory::vectorized_ops::{VectorizedFilter, VectorizedAggregator, VectorBatch};
 

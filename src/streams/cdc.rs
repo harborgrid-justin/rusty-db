@@ -401,19 +401,28 @@ pub struct CDCEngine {
 // Table metadata for CDC
 #[derive(Debug, Clone)]
 struct TableMetadata {
+    #[allow(dead_code)]
     table_id: TableId,
+    #[allow(dead_code)]
     table_name: String,
+    #[allow(dead_code)]
     column_names: Vec<String>,
+    #[allow(dead_code)]
     column_types: Vec<String>,
+    #[allow(dead_code)]
     primary_key_columns: Vec<usize>,
 }
 
 // Transaction context for CDC
 #[derive(Debug, Clone)]
 struct TransactionContext {
+    #[allow(dead_code)]
     txn_id: TransactionId,
+    #[allow(dead_code)]
     start_lsn: LogSequenceNumber,
+    #[allow(dead_code)]
     start_time: SystemTime,
+    #[allow(dead_code)]
     events: Vec<ChangeEvent>,
 }
 

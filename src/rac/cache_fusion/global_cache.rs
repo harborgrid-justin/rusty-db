@@ -11,7 +11,6 @@
 // - **Local Cache Management**: Tracks local cache states and pending requests
 
 use tokio::sync::oneshot;
-use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Instant;
 use std::collections::HashSet;
@@ -555,7 +554,7 @@ impl GlobalCacheService {
         &self,
         resource_id: ResourceId,
         mode: BlockMode,
-        transaction_id: TransactionId,
+        _transaction_id: TransactionId,
     ) -> Result<BlockGrant, DbError> {
         let mut cache = self.local_cache.write();
 
@@ -669,7 +668,7 @@ impl GlobalCacheService {
 
     // Invalidate block across all instances
     pub async fn invalidate_block(&self, resource_id: ResourceId, new_scn: u64) -> Result<(), DbError> {
-        let message = CacheFusionMessage::BlockInvalidate {
+        let _message = CacheFusionMessage::BlockInvalidate {
             resource_id: resource_id.clone(),
             new_scn,
             invalidator: self.node_id.clone(),
@@ -739,7 +738,7 @@ impl GlobalCacheService {
     // Process incoming cache fusion message
     pub async fn process_message(
         &self,
-        source: NodeId,
+        _source: NodeId,
         message: CacheFusionMessage,
     ) -> Result<(), DbError> {
         match message {
@@ -820,7 +819,7 @@ impl GlobalCacheService {
     async fn handle_block_transfer(
         &self,
         resource_id: ResourceId,
-        block_data: Vec<u8>,
+        _block_data: Vec<u8>,
         _source_mode: BlockMode,
         target_mode: BlockMode,
         scn: u64,

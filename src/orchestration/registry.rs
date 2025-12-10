@@ -425,7 +425,7 @@ impl ServiceRegistry {
         info!("Shutting down all services...");
 
         let init_order = self.init_order.read();
-        let mut errors: Vec<String> = Vec::new();
+        let errors: Vec<String> = Vec::new();
 
         // Shutdown in reverse order
         for type_id in init_order.iter().rev() {

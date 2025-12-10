@@ -1,7 +1,6 @@
 // Disaster Recovery - Standby database, failover, and RTO/RPO management
 // Provides comprehensive disaster recovery capabilities
 
-use tokio::time::sleep;
 use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use std::time::{Instant, Duration, SystemTime};
@@ -323,7 +322,7 @@ impl DisasterRecoveryManager {
         let standby = standbys.get_mut(standby_name)
             .ok_or_else(|| DbError::BackupError("Standby not found".to_string()))?;
 
-        let old_lsn = standby.last_applied_lsn;
+        let _old_lsn = standby.last_applied_lsn;
         standby.last_applied_lsn = last_applied_lsn;
         standby.primary_lsn = primary_lsn;
 
@@ -469,7 +468,7 @@ impl DisasterRecoveryManager {
         Ok(())
     }
 
-    fn stop_replication(&self, standby_name: &str) -> Result<()> {
+    fn stop_replication(&self, _standby_name: &str) -> Result<()> {
         // Stop replication to prepare for promotion
         std::thread::sleep(Duration::from_millis(100));
         Ok(())
@@ -486,7 +485,7 @@ impl DisasterRecoveryManager {
         Ok(())
     }
 
-    fn reconfigure_clients(&self, new_primary: &str) -> Result<()> {
+    fn reconfigure_clients(&self, _new_primary: &str) -> Result<()> {
         // Update client connections to point to new primary
         std::thread::sleep(Duration::from_millis(200));
         Ok(())

@@ -10,6 +10,7 @@ use crate::storage::disk::DiskManager;
 
 // Copy-on-Write page frame for zero-copy reads
 #[derive(Clone)]
+#[allow(dead_code)]
 struct CowFrame {
     page: Arc<RwLock<Page>>,
     reference_count: Arc<AtomicUsize>,
@@ -17,6 +18,7 @@ struct CowFrame {
     is_cow: bool,
 }
 
+#[allow(dead_code)]
 impl CowFrame {
     fn new(page: Page, version: u64) -> Self {
         Self {
@@ -92,6 +94,7 @@ impl AccessHistory {
 }
 
 // LRU-K replacement policy with adaptive K selection
+#[allow(dead_code)]
 struct LruKReplacer {
     k: usize,
     adaptive_k: bool,
@@ -100,6 +103,7 @@ struct LruKReplacer {
     capacity: usize,
 }
 
+#[allow(dead_code)]
 impl LruKReplacer {
     fn new(capacity: usize, k: usize, adaptive: bool) -> Self {
         Self {
@@ -182,12 +186,14 @@ impl LruKReplacer {
 
 // NUMA node affinity for pages
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 struct NumaNode {
     node_id: usize,
     memory_size: usize,
     allocated: usize,
 }
 
+#[allow(dead_code)]
 impl NumaNode {
     fn new(node_id: usize, memory_size: usize) -> Self {
         Self {
@@ -224,12 +230,14 @@ impl NumaNode {
 }
 
 // NUMA-aware page allocator
+#[allow(dead_code)]
 struct NumaAllocator {
     nodes: Vec<NumaNode>,
     page_to_node: HashMap<PageId, usize>,
     round_robin_idx: usize,
 }
 
+#[allow(dead_code)]
 impl NumaAllocator {
     fn new(num_nodes: usize, memory_per_node: usize) -> Self {
         let nodes = (0..num_nodes)
@@ -315,6 +323,7 @@ impl NumaAllocator {
 }
 
 // Background flusher for write coalescing
+#[allow(dead_code)]
 struct BackgroundFlusher {
     dirty_pages: Arc<Mutex<Vec<PageId>>>,
     flush_interval: Duration,
@@ -322,6 +331,7 @@ struct BackgroundFlusher {
     running: Arc<AtomicUsize>,
 }
 
+#[allow(dead_code)]
 impl BackgroundFlusher {
     fn new(flush_interval: Duration, batch_size: usize) -> Self {
         Self {

@@ -2,9 +2,9 @@
 //
 // Part of the comprehensive monitoring system for RustyDB
 
-use std::sync::{Arc, Mutex, atomic::{AtomicU64, AtomicBool, Ordering}};
-use std::collections::{HashMap, BTreeMap, VecDeque};
-use std::time::{Duration, SystemTime, Instant, UNIX_EPOCH};
+use std::sync::{Arc, Mutex};
+use std::collections::{HashMap, BTreeMap};
+use std::time::{Duration, SystemTime};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::api::MetricsRegistry;

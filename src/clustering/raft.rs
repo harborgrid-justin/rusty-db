@@ -18,8 +18,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
-use tokio::sync::mpsc;
-use tokio::time::{interval};
 
 // Raft node identifier
 pub type RaftNodeId = u64;

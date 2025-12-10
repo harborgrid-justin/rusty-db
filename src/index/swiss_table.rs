@@ -404,7 +404,7 @@ where
     }
 
     // Iterate over all key-value pairs
-    pub fn iter(&self) -> SwissTableIter<K, V> {
+    pub fn iter(&self) -> SwissTableIter<'_, K, V> {
         SwissTableIter {
             table: self,
             index: 0,

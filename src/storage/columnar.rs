@@ -93,6 +93,7 @@ pub enum ColumnValue {
 }
 
 impl ColumnValue {
+    #[allow(dead_code)]
     fn column_type(&self) -> ColumnType {
         match self {
             ColumnValue::Int32(_) => ColumnType::Int32,
@@ -112,12 +113,14 @@ impl ColumnValue {
 }
 
 // Dictionary encoder for low-cardinality columns
+#[allow(dead_code)]
 struct DictionaryEncoder {
     dictionary: HashMap<String, u32>,
     reverse_dict: Vec<String>,
     next_id: u32,
 }
 
+#[allow(dead_code)]
 impl DictionaryEncoder {
     fn new() -> Self {
         Self {
@@ -154,10 +157,12 @@ impl DictionaryEncoder {
 }
 
 // Run-length encoder for repeated values
+#[allow(dead_code)]
 struct RunLengthEncoder {
     runs: Vec<(ColumnValue, usize)>,
 }
 
+#[allow(dead_code)]
 impl RunLengthEncoder {
     fn new() -> Self {
         Self {
@@ -207,11 +212,13 @@ impl RunLengthEncoder {
 }
 
 // Delta encoder for sequential/sorted data
+#[allow(dead_code)]
 struct DeltaEncoder {
     base_value: i64,
     deltas: Vec<i32>,
 }
 
+#[allow(dead_code)]
 impl DeltaEncoder {
     fn new() -> Self {
         Self {
@@ -269,11 +276,13 @@ impl DeltaEncoder {
 }
 
 // Bit-packing encoder for small integers
+#[allow(dead_code)]
 struct BitPackedEncoder {
     bit_width: u8,
     values: Vec<u64>,
 }
 
+#[allow(dead_code)]
 impl BitPackedEncoder {
     fn new(bit_width: u8) -> Self {
         Self {
@@ -304,6 +313,7 @@ impl BitPackedEncoder {
 }
 
 // Column chunk with encoding
+#[allow(dead_code)]
 struct ColumnChunk {
     column_type: ColumnType,
     encoding: EncodingType,
@@ -312,6 +322,7 @@ struct ColumnChunk {
     stats: ColumnStats,
 }
 
+#[allow(dead_code)]
 impl ColumnChunk {
     fn new(column_type: ColumnType) -> Self {
         Self {

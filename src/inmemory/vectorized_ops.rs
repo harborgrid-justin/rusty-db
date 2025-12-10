@@ -174,7 +174,7 @@ impl VectorizedFilter {
 
         // Process in SIMD-friendly chunks
         let chunks = values.len() / VECTOR_WIDTH_I64;
-        let remainder = values.len() % VECTOR_WIDTH_I64;
+        let _remainder = values.len() % VECTOR_WIDTH_I64;
 
         // Vectorized path (simulated - in production would use actual SIMD intrinsics)
         for i in 0..chunks {

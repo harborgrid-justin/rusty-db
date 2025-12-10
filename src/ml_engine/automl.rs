@@ -390,8 +390,10 @@ pub struct LeaderboardEntry {
 // Main AutoML coordinator
 pub struct AutoMLEngine {
     // Training engine
+    #[allow(dead_code)]
     training_engine: TrainingEngine,
     // Current configuration
+    #[allow(dead_code)]
     config: Option<AutoMLConfig>,
 }
 

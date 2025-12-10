@@ -124,6 +124,7 @@ impl BloomFilter {
 }
 
 // Hash table entry for joins
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct HashTableEntry {
     key: i64,

@@ -18,7 +18,7 @@ use sha2::Digest;
 use crate::common::{Value, RowId, TableId};
 use crate::Result;
 use crate::error::DbError;
-use super::crypto::{Hash256, sha256, MerkleTree, HashChain, ChainLink, hash_to_hex};
+use super::crypto::{Hash256, sha256, MerkleTree, HashChain, hash_to_hex};
 
 // ============================================================================
 // Type Aliases
