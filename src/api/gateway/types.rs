@@ -351,6 +351,7 @@ pub enum BodyTransform {
 // API Gateway core engine
 pub struct ApiGateway {
     // Configuration
+    #[allow(dead_code)]
     pub(crate) config: Arc<RwLock<GatewayConfig>>,
     // Route registry
     pub(crate) routes: Arc<RwLock<HashMap<String, Route>>>,
@@ -375,6 +376,7 @@ pub struct ServiceRegistry {
     // Registered services
     pub(crate) services: HashMap<String, BackendService>,
     // Service health status
+    #[allow(dead_code)]
     pub(crate) health_status: HashMap<String, bool>,
 }
 

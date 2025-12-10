@@ -21,6 +21,7 @@ pub struct HintParser {
     // Supported hints registry
     supported_hints: HashMap<String, HintDefinition>,
     // Hint validation rules
+    #[allow(dead_code)]
     validation_rules: Vec<Box<dyn HintValidationRule>>,
 }
 
@@ -641,6 +642,7 @@ pub enum HintCategory {
 
 // Hint validation rule
 trait HintValidationRule: Send + Sync {
+    #[allow(dead_code)]
     fn validate(&self, hint: &OptimizerHint) -> Result<()>;
 }
 
@@ -658,6 +660,7 @@ struct ConflictRule {
 enum ConflictSeverity {
     Error,
     Warning,
+    #[allow(dead_code)]
     Info,
 }
 

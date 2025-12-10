@@ -289,8 +289,9 @@ pub struct IoUringEngine {
     /// Configuration
     config: IoUringConfig,
 
-    /// Ring file descriptor (if available)
+    /// Ring file descriptor (if available, currently unused in simulated implementation)
     #[cfg(target_os = "linux")]
+    #[allow(dead_code)]
     ring_fd: i32,
 
     /// Submission queue head

@@ -179,8 +179,10 @@ impl Default for RetentionPolicy {
 // Core metrics registry
 pub struct MetricsRegistry {
     metrics: Arc<RwLock<HashMap<MetricId, MetricType>>>,
+    #[allow(dead_code)]
     aggregators: Arc<RwLock<HashMap<String, MetricAggregator>>>,
     cardinality_manager: Arc<Mutex<CardinalityManager>>,
+    #[allow(dead_code)]
     retention_policy: RetentionPolicy,
     namespaces: Arc<RwLock<HashMap<String, MetricNamespace>>>,
 }

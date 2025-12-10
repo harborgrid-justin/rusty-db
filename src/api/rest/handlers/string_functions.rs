@@ -3,14 +3,12 @@
 // HTTP endpoints for executing SQL Server string functions
 
 use axum::{
-    extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::Arc;
 use utoipa::ToSchema;
 
 use crate::error::DbError;

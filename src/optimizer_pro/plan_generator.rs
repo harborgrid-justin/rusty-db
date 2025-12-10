@@ -26,12 +26,15 @@ use std::cmp::Ordering;
 /// Plan generator using dynamic programming
 pub struct PlanGenerator {
     /// Maximum join combinations to consider
+    #[allow(dead_code)]
     max_combinations: usize,
     /// Cost model
     cost_model: Arc<CostModel>,
     /// Plan ID counter
+    #[allow(dead_code)]
     next_plan_id: std::sync::atomic::AtomicU64,
     /// Memoization table for subplans
+    #[allow(dead_code)]
     memo_table: std::sync::RwLock<HashMap<JoinSet, Vec<PhysicalPlan>>>,
 }
 

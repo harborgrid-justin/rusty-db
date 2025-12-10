@@ -737,6 +737,12 @@ impl BlockedBloomFilter {
         hashes
     }
 
+    /// Reserved for bloom filter stats
+
+
+    #[allow(dead_code)]
+
+
     fn estimated_fpr(&self) -> f64 {
         // FPR ≈ (1 - e^(-k*n/m))^k where k=hashes, n=items, m=bits
         // Assuming ~1000 items per block

@@ -21,8 +21,11 @@ use super::queries::{QueryPlan, SearchResult};
 pub struct GraphQLEngine {
     // Would connect to actual database components
     subscription_manager: Arc<SubscriptionManager>,
+    #[allow(dead_code)]
     query_cache: Arc<QueryCache>,
+    #[allow(dead_code)]
     rate_limiter: Arc<RateLimiter>,
+    #[allow(dead_code)]
     persisted_queries: Arc<PersistedQueries>,
 }
 

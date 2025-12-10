@@ -410,7 +410,7 @@ impl CpuScheduler {
         Some(allocation)
     }
 
-    // Check if tenant should be throttled
+    // Check if tenant should be throttle
     pub async fn should_throttle(&self, tenant_id: &str, requested_ns: u64) -> bool {
         let allocation = match self.calculate_allocation(tenant_id).await {
             Some(a) => a,
@@ -538,6 +538,12 @@ impl PortAllocator {
         }
         None
     }
+
+    /// Reserved for resource management
+
+
+    #[allow(dead_code)]
+
 
     fn deallocate(&mut self, port: u16) {
         self.allocated_ports.remove(&port);
@@ -909,7 +915,7 @@ mod tests {
 
         assert!(result.is_ok());
 
-        let allocation = scheduler.calculate_allocation("tenant1").await;
+        let _allocation = scheduler.calculate_allocation("tenant1").await;
         assert!(allocation.is_some());
     }
 

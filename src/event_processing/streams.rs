@@ -515,6 +515,12 @@ impl LateEventBuffer {
         drained
     }
 
+    /// Reserved for stream API
+
+
+    #[allow(dead_code)]
+
+
     fn is_empty(&self) -> bool {
         self.count == 0
     }

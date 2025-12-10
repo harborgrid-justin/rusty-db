@@ -668,7 +668,7 @@ impl ContainerDatabase {
         let xml_path = PathBuf::from(format!("/exports/{}.xml", pdb_name));
 
         // Serialize PDB configuration
-        let xml_content = self.generate_pdb_xml_metadata(&pdb_config);
+        let _xml_content = self.generate_pdb_xml_metadata(&pdb_config);
 
         // Mark as unplugged
         pdb_config.state = PdbState::Unplugged;

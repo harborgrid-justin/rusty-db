@@ -854,11 +854,15 @@ impl AuthenticationManager {
     }
 
     // Get access to users (for internal security module use)
+    /// Reserved for auth API
+    #[allow(dead_code)]
     pub(crate) fn users(&self) -> &Arc<RwLock<HashMap<UserId, UserAccount>>> {
         &self.users
     }
 
     // Get access to sessions (for internal security module use)
+    /// Reserved for auth API
+    #[allow(dead_code)]
     pub(crate) fn sessions(&self) -> &Arc<RwLock<HashMap<SessionId, AuthSession>>> {
         &self.sessions
     }

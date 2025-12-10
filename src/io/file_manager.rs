@@ -243,7 +243,8 @@ pub struct DirectIoFile {
     /// I/O handle for async operations
     io_handle: IoHandle,
 
-    /// File path
+    /// File path (stored for reference but not actively used)
+    #[allow(dead_code)]
     path: PathBuf,
 
     /// File metadata

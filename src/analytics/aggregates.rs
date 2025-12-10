@@ -235,21 +235,6 @@ AggregateFunction::Max => {
             Ok(format_number(median))
         }
 
-AggregateFunction::Mode => {
-                let mut counts: HashMap<String, usize> = HashMap::new();
-                for row in data {
-                    if let Some(value) = row.get(column_index) {
-                        *counts.entry(value.clone()).or_insert(0) += 1;
-                    }
-                }
-
-                counts
-                    .into_iter()
-                    .max_by_key(|(_, count)| *count)
-                    .map(|(value, _)| value)
-                    .ok_or_else(|| DbError::Execution("No mode found".to_string()))
-            }
-
         AggregateFunction::Percentile { percentile } => {
             let values = extract_numeric_values(data, column_index);
             if values.is_empty() {
@@ -259,20 +244,6 @@ AggregateFunction::Mode => {
             let result = compute_percentile(&values, *percentile);
             Ok(format_number(result))
         }
-
-AggregateFunction::FirstValue => {
-              data.first()
-                  .and_then(|row| row.get(column_index))
-                  .cloned()
-                  .ok_or_else(|| DbError::Execution("No first value found".to_string()))
-          }
-
-AggregateFunction::LastValue => {
-                    data.last()
-                        .and_then(|row| row.get(column_index))
-                        .cloned()
-                        .ok_or_else(|| DbError::Execution("No last value found".to_string()))
-                }
 
         AggregateFunction::StringAgg { separator } => {
             let values: Vec<String> = data

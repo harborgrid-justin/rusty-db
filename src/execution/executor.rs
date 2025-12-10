@@ -69,7 +69,7 @@ impl Executor {
                 // For now, just return success
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::Select { table, columns, join, group_by, order_by, limit, offset, distinct, .. } => {
+            SqlStatement::Select { table, columns, join: _, group_by: _, order_by: _, limit, offset, distinct, .. } => {
                 let schema = self.catalog.get_table(&table)?;
 
                 // Determine result columns
@@ -123,7 +123,7 @@ impl Executor {
             }
             SqlStatement::Insert { table, columns, values } => {
                 // Validate table exists
-                let schema = self.catalog.get_table(&table)?;
+                let _schema = self.catalog.get_table(&table)?;
 
                 // Enterprise validation: check constraints for each row
                 for row in &values {
@@ -154,7 +154,7 @@ impl Executor {
             }
             SqlStatement::Update { table, assignments, filter: _ } => {
                 // Validate table exists
-                let schema = self.catalog.get_table(&table)?;
+                let _schema = self.catalog.get_table(&table)?;
 
                 // Build update map
                 let mut update_map = HashMap::new();
@@ -172,7 +172,7 @@ impl Executor {
             }
             SqlStatement::Delete { table, filter: _ } => {
                 // Validate table exists
-                let schema = self.catalog.get_table(&table)?;
+                let _schema = self.catalog.get_table(&table)?;
 
                 // Enterprise feature: handle cascading deletes
                 // Build row map for cascade validation (placeholder - would use actual row data)

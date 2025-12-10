@@ -264,9 +264,11 @@ pub struct MemoryManager {
     session_quotas: Arc<RwLock<HashMap<SessionId, SessionMemoryQuota>>>,
     // Group limits
     group_limits: Arc<RwLock<HashMap<ConsumerGroupId, GroupMemoryLimits>>>,
-    // Allocation strategy
+    // Allocation strategy (stored for reference)
+    #[allow(dead_code)]
     strategy: AllocationStrategy,
-    // Total system memory
+    // Total system memory (stored for reference)
+    #[allow(dead_code)]
     total_system_memory: MemorySize,
     // Maximum database memory
     max_db_memory: MemorySize,
@@ -276,7 +278,8 @@ pub struct MemoryManager {
     pressure_level: Arc<RwLock<MemoryPressure>>,
     // Pressure thresholds
     pressure_thresholds: PressureThresholds,
-    // Next pool ID
+    // Next pool ID (reserved for future use)
+    #[allow(dead_code)]
     next_pool_id: Arc<RwLock<MemoryPoolId>>,
     // Auto-tuning enabled
     auto_tuning_enabled: bool,

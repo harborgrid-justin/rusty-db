@@ -141,6 +141,12 @@ impl KafkaConnector {
         }
     }
 
+    /// Reserved for event serialization
+
+
+    #[allow(dead_code)]
+
+
     fn serialize_event(&self, event: &Event) -> Result<Vec<u8>> {
         serde_json::to_vec(event).map_err(|e| {
             crate::error::DbError::Serialization(format!(

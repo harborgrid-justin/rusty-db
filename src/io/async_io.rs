@@ -550,7 +550,8 @@ pub struct AsyncIoEngine {
     /// Shutdown flag
     shutdown: Arc<AtomicU8>,
 
-    /// Configuration
+    /// Configuration (stored for reference)
+    #[allow(dead_code)]
     config: crate::io::IoEngineConfig,
 }
 

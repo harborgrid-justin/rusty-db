@@ -891,7 +891,7 @@ impl WalManager {
                 interval.tick().await;
 
                 // Cleanup old segments based on max_segments and max_wal_size
-                let mut segments = segments.write();
+                let segments = segments.write();
                 if segments.len() > config.max_segments {
                     // Remove oldest segments
                 }

@@ -42,6 +42,8 @@ const MAX_DOP: usize = 128;
 const DATA_CHUNK_SIZE: usize = 65536; // 64KB
 
 // Worker idle timeout
+/// Reserved for parallel execution config
+#[allow(dead_code)]
 const WORKER_TIMEOUT: Duration = Duration::from_secs(300);
 
 // Maximum result buffer size
@@ -802,7 +804,7 @@ impl ParallelQueryCoordinator {
     // NEW: Work stealing implementation
     // Idle workers can steal work from busy workers' queues
     async fn try_steal_work(&self, _thief_worker_id: WorkerId) -> Option<QueryFragment> {
-        let active_workers = self.worker_pool.active_workers.read();
+        let _active_workers = self.worker_pool.active_workers.read();
 
         // Find busiest worker (most work remaining)
         // In production, would maintain per-worker work queues

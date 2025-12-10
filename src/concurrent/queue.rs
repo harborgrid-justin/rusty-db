@@ -113,7 +113,7 @@ impl<T: 'static> LockFreeQueue<T> {
         loop {
             // Read tail and its next pointer
             let tail = self.tail.load(Ordering::Acquire, &guard);
-            let next = unsafe { tail.as_ref().unwrap().next.load(Ordering::Acquire, &guard) };
+            let next = tail.as_ref().unwrap().next.load(Ordering::Acquire, &guard);
 
             // Check if tail is still consistent
             let tail_check = self.tail.load(Ordering::Acquire, &guard);
@@ -124,15 +124,13 @@ impl<T: 'static> LockFreeQueue<T> {
 
             if next.is_null() {
                 // Tail is pointing to the last node, try to link new node
-                match unsafe {
-                    tail.as_ref().unwrap().next.compare_exchange_weak(
-                        next,
-                        node_ptr,
-                        Ordering::Release,
-                        Ordering::Acquire,
-                        &guard,
-                    )
-                } {
+                match tail.as_ref().unwrap().next.compare_exchange_weak(
+                    next,
+                    node_ptr,
+                    Ordering::Release,
+                    Ordering::Acquire,
+                    &guard,
+                ) {
                     Ok(_) => {
                         // Successfully enqueued, try to swing tail to the new node
                         let _ = self.tail.compare_exchange(
@@ -186,7 +184,7 @@ impl<T: 'static> LockFreeQueue<T> {
             // Read head, tail, and head's next pointer
             let head = self.head.load(Ordering::Acquire, &guard);
             let tail = self.tail.load(Ordering::Acquire, &guard);
-            let next = unsafe { head.as_ref().unwrap().next.load(Ordering::Acquire, &guard) };
+            let next = head.as_ref().unwrap().next.load(Ordering::Acquire, &guard);
 
             // Check if head is still consistent
             let head_check = self.head.load(Ordering::Acquire, &guard);
@@ -262,7 +260,7 @@ impl<T: 'static> LockFreeQueue<T> {
 
         loop {
             let head = self.head.load(Ordering::Acquire, &guard);
-            let next = unsafe { head.as_ref().unwrap().next.load(Ordering::Acquire, &guard) };
+            let next = head.as_ref().unwrap().next.load(Ordering::Acquire, &guard);
 
             let head_check = self.head.load(Ordering::Acquire, &guard);
             if head != head_check {
@@ -274,7 +272,7 @@ impl<T: 'static> LockFreeQueue<T> {
             }
 
             // Safety: Protected by epoch guard
-            let next_ref = unsafe { next.as_ref().unwrap() };
+            let next_ref = next.as_ref().unwrap();
             return next_ref.data.clone();
         }
     }
@@ -283,7 +281,7 @@ impl<T: 'static> LockFreeQueue<T> {
     pub fn is_empty(&self) -> bool {
         let guard = Epoch::pin();
         let head = self.head.load(Ordering::Acquire, &guard);
-        let next = unsafe { head.as_ref().unwrap().next.load(Ordering::Acquire, &guard) };
+        let next = head.as_ref().unwrap().next.load(Ordering::Acquire, &guard);
         next.is_null()
     }
 
@@ -322,9 +320,7 @@ impl<T: 'static> LockFreeQueue<T> {
 
             if let Some(last_ptr) = last {
                 // Safety: We own these nodes until we link them to the queue
-                unsafe {
-                    last_ptr.as_ref().unwrap().next.store(node_ptr, Ordering::Relaxed);
-                }
+                last_ptr.as_ref().unwrap().next.store(node_ptr, Ordering::Relaxed);
             } else {
                 first = Some(node_ptr);
             }
@@ -338,7 +334,7 @@ impl<T: 'static> LockFreeQueue<T> {
         // Link the chain to the queue
         loop {
             let tail = self.tail.load(Ordering::Acquire, &guard);
-            let next = unsafe { tail.as_ref().unwrap().next.load(Ordering::Acquire, &guard) };
+            let next = tail.as_ref().unwrap().next.load(Ordering::Acquire, &guard);
 
             let tail_check = self.tail.load(Ordering::Acquire, &guard);
             if tail != tail_check {
@@ -347,15 +343,13 @@ impl<T: 'static> LockFreeQueue<T> {
             }
 
             if next.is_null() {
-                match unsafe {
-                    tail.as_ref().unwrap().next.compare_exchange(
-                        next,
-                        first,
-                        Ordering::Release,
-                        Ordering::Acquire,
-                        &guard,
-                    )
-                } {
+                match tail.as_ref().unwrap().next.compare_exchange(
+                    next,
+                    first,
+                    Ordering::Release,
+                    Ordering::Acquire,
+                    &guard,
+                ) {
                     Ok(_) => {
                         let _ = self.tail.compare_exchange(
                             tail,

@@ -115,7 +115,7 @@ impl ParallelExecutor {
     ) -> Result<QueryResult, DbError> {
         // Execute left and right in parallel
         let left_handle = {
-            let left = left.clone();
+            let _left = left.clone();
             tokio::spawn(async move {
                 // Placeholder: execute left plan
                 QueryResult::empty()
@@ -123,7 +123,7 @@ impl ParallelExecutor {
         };
 
         let right_handle = {
-            let right = right.clone();
+            let _right = right.clone();
             tokio::spawn(async move {
                 // Placeholder: execute right plan
                 QueryResult::empty()
@@ -214,7 +214,7 @@ impl ParallelExecutor {
     // Parallel aggregation
     async fn parallel_aggregate(
         &self,
-        input: &PlanNode,
+        _input: &PlanNode,
         group_by: &[String],
         aggregates: &[crate::execution::planner::AggregateExpr],
         _having: &Option<String>,
@@ -235,7 +235,7 @@ impl ParallelExecutor {
     async fn global_aggregate_parallel(
         &self,
         input: &QueryResult,
-        aggregates: &[crate::execution::planner::AggregateExpr],
+        _aggregates: &[crate::execution::planner::AggregateExpr],
     ) -> Result<QueryResult, DbError> {
         // Partition input data
         let partitions = Self::partition_rows(&input.rows, self.worker_count);
@@ -268,7 +268,7 @@ impl ParallelExecutor {
         &self,
         input: &QueryResult,
         group_by: &[String],
-        aggregates: &[crate::execution::planner::AggregateExpr],
+        _aggregates: &[crate::execution::planner::AggregateExpr],
     ) -> Result<QueryResult, DbError> {
         // Partition-based parallel group-by
         let partitions = Self::partition_rows(&input.rows, self.worker_count);

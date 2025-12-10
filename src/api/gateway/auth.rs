@@ -30,14 +30,17 @@ pub struct AuthenticationManager {
     // JWT validator
     jwt_validator: Arc<JwtValidator>,
     // OAuth provider
+    #[allow(dead_code)]
     oauth_provider: Arc<OAuthProvider>,
     // API key store
     api_key_store: Arc<RwLock<ApiKeyStore>>,
     // Session manager
     session_manager: Arc<SessionManager>,
     // mTLS validator
+    #[allow(dead_code)]
     mtls_validator: Arc<MtlsValidator>,
     // MFA manager
+    #[allow(dead_code)]
     mfa_manager: Arc<MfaManager>,
 }
 
@@ -170,6 +173,7 @@ pub struct SessionManager {
     // Active sessions
     sessions: Arc<RwLock<HashMap<String, Session>>>,
     // Session timeout (seconds)
+    #[allow(dead_code)]
     session_timeout: u64,
 }
 
@@ -213,6 +217,7 @@ pub struct MfaManager {
     // TOTP secrets
     totp_secrets: Arc<RwLock<HashMap<String, Vec<u8>>>>,
     // Backup codes
+    #[allow(dead_code)]
     backup_codes: Arc<RwLock<HashMap<String, Vec<String>>>>,
 }
 

@@ -47,6 +47,8 @@ pub fn simd_dot_product(a: &[f64], b: &[f64]) -> f64 {
 }
 
 // Scalar dot product (fallback)
+/// Reserved for fallback SIMD
+#[allow(dead_code)]
 #[inline]
 fn scalar_dot_product(a: &[f64], b: &[f64]) -> f64 {
     a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()

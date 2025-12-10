@@ -108,7 +108,8 @@ impl Slab {
         }
     }
 
-    // Free an object back to this slab
+    // Free an object back to this slab (part of slab allocator API)
+    #[allow(dead_code)]
     unsafe fn deallocate(&mut self, ptr: NonNull<u8>) {
         // Push to freelist
         *(ptr.as_ptr() as *mut *mut u8) = self.freelist.map_or(ptr::null_mut(), |p| p.as_ptr());
@@ -116,12 +117,14 @@ impl Slab {
         self.free_count += 1;
     }
 
-    // Check if slab is full
+    // Check if slab is full (for allocation decisions)
+    #[allow(dead_code)]
     fn is_full(&self) -> bool {
         self.free_count == 0
     }
 
-    // Check if slab is empty
+    // Check if slab is empty (for deallocation decisions)
+    #[allow(dead_code)]
     fn is_empty(&self, size_class_info: &SizeClass) -> bool {
         self.free_count == size_class_info.objects_per_slab
     }
@@ -170,10 +173,14 @@ impl Magazine {
         }
     }
 
+    /// Check if magazine is full (for magazine layer)
+    #[allow(dead_code)]
     fn is_full(&self) -> bool {
         self.objects.len() >= self.capacity
     }
 
+    /// Check if magazine is empty (for magazine layer)
+    #[allow(dead_code)]
     fn is_empty(&self) -> bool {
         self.objects.is_empty()
     }
@@ -202,6 +209,8 @@ impl ThreadLocalCache {
         }
     }
 
+    /// Ensure thread-local cache is initialized (for thread-local allocation)
+    #[allow(dead_code)]
     fn ensure_initialized() {
         THREAD_CACHE.with(|cache| {
             let mut cache_mut = cache.borrow_mut();
@@ -213,6 +222,8 @@ impl ThreadLocalCache {
         })
     }
 
+    /// Execute function with thread-local cache (for magazine layer)
+    #[allow(dead_code)]
     fn with_cache<F, R>(f: F) -> R
     where
         F: FnOnce(&mut Option<ThreadLocalCache>) -> R,
@@ -266,6 +277,8 @@ impl SlabDepot {
             .unwrap_or_else(|| Magazine::new(size_class))
     }
 
+    /// Return empty magazine to depot (for magazine recycling)
+    #[allow(dead_code)]
     fn put_empty_magazine(&mut self, size_class: usize, magazine: Magazine) {
         self.empty_magazines[size_class].push_back(magazine);
     }

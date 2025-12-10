@@ -663,7 +663,7 @@ impl VersionGarbageCollector {
             return 0;
         }
 
-        let now = current_timestamp();
+        let _now = current_timestamp();
         let mut to_remove = Vec::new();
 
         for (i, version) in versions.iter().enumerate() {

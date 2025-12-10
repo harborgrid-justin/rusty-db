@@ -60,10 +60,14 @@ impl ArenaChunk {
         }
     }
 
+    /// Get number of bytes used in arena (for monitoring)
+    #[allow(dead_code)]
     fn bytes_used(&self) -> usize {
         self.offset
     }
 
+    /// Get number of bytes free in arena (for monitoring)
+    #[allow(dead_code)]
     fn bytes_free(&self) -> usize {
         self.size - self.offset
     }

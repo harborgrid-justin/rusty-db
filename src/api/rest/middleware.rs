@@ -11,7 +11,6 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use std::cmp::Ordering;
 use std::sync::Arc;
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -167,6 +166,7 @@ pub struct UserInfo {
 
 // CORS middleware for cross-origin requests
 pub struct CorsMiddleware {
+    #[allow(dead_code)]
     allowed_origins: Vec<String>,
     allowed_methods: Vec<String>,
     allowed_headers: Vec<String>,

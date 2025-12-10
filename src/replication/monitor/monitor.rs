@@ -6,7 +6,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
-use crate::replication::types::ReplicaId;
+use crate::replication::ReplicaId;
 use super::config::HealthMonitorConfig;
 use super::errors::HealthMonitorError;
 use super::types::*;
@@ -83,7 +83,7 @@ impl ReplicationHealthMonitor {
 
     async fn start_background_monitoring(&self) {
         let config = Arc::clone(&self.config);
-        let history = Arc::clone(&self.history);
+        let history: Arc<RwLock<HashMap<ReplicaId, VecDeque<HealthHistoryEntry>>>> = Arc::clone(&self.history);
 
         let handle = tokio::spawn(async move {
             let mut interval = tokio::time::interval(config.check_interval);

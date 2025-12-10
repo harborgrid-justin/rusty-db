@@ -175,7 +175,7 @@ impl SecurityEventCorrelator {
 
     fn analyze_patterns(&self, trigger_event: &CorrelatedEvent) -> Result<()> {
         let windows = self.event_windows.read();
-        let patterns = self.attack_patterns.read();
+        let _patterns = self.attack_patterns.read();
 
         if let Some(user_events) = windows.get(&trigger_event.user_id) {
             let failed_logins = user_events.iter()

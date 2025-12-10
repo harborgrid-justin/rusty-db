@@ -72,8 +72,7 @@
 use std::fmt;
 use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize};
+use std::sync::atomic::{AtomicU64};
 use std::time::{Duration};
 use thiserror::Error;
 use uuid::Uuid;

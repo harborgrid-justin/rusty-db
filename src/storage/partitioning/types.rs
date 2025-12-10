@@ -1,8 +1,6 @@
 // Core types for table partitioning
 
-use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::time::SystemTime;
 
 // Partitioning strategy

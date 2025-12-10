@@ -38,6 +38,8 @@ use tokio::sync::{mpsc};
 // ============================================================================
 
 // Recovery coordinator election timeout
+/// Reserved for recovery config
+#[allow(dead_code)]
 const ELECTION_TIMEOUT: Duration = Duration::from_secs(5);
 
 // Maximum recovery time before escalation
@@ -47,6 +49,8 @@ const MAX_RECOVERY_TIME: Duration = Duration::from_secs(300);
 const REDO_BATCH_SIZE: usize = 1000;
 
 // Lock reclamation timeout
+/// Reserved for recovery config
+#[allow(dead_code)]
 const LOCK_RECLAIM_TIMEOUT: Duration = Duration::from_secs(10);
 
 // ============================================================================

@@ -621,7 +621,7 @@ impl CachePreloader {
     pub async fn preload(&self) -> Result<usize> {
         let mut preloaded = 0;
 
-        for rule in &self.preload_rules {
+        for _rule in &self.preload_rules {
             // Execute preload query and cache results
             // In real implementation, would execute actual query
             preloaded += 1;
@@ -769,7 +769,7 @@ impl SemanticQueryCache {
         result.columns.len() * 100 + result.rows.len() * 100
     }
 
-    fn cache_partial_results(&self, query: &str, result: &QueryResult) -> Result<()> {
+    fn cache_partial_results(&self, _query: &str, _result: &QueryResult) -> Result<()> {
         // Extract subqueries and cache them separately
         // In production, would parse query and cache intermediate results
         Ok(())

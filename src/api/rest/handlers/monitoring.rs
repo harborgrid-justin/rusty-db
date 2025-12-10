@@ -7,13 +7,10 @@ use axum::{
     response::{Json as AxumJson},
     http::StatusCode,
 };
-use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use uuid::Uuid;
 
-use crate::error::DbError;
 use super::super::types::*;
 use std::time::UNIX_EPOCH;
 

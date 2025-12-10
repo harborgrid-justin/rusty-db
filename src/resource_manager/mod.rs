@@ -189,6 +189,7 @@ pub struct ResourceManager {
     // Whether monitoring is active
     monitoring_active: Arc<RwLock<bool>>,
     // ML prediction engine
+    #[allow(dead_code)]
     ml_predictor: Option<Arc<RwLock<WorkloadPredictor>>>,
 }
 

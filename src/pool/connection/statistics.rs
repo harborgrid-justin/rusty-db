@@ -235,6 +235,7 @@ struct UsagePatterns {
     acquisitions_by_hour: [u64; 24],
     releases_by_hour: [u64; 24],
     peak_hour: usize,
+    #[allow(dead_code)]
     last_update: Instant,
 }
 
@@ -297,6 +298,7 @@ struct EfficiencyMetrics {
     cache_hit_rate: f64,
     connection_reuse_rate: f64,
     pool_utilization: f64,
+    #[allow(dead_code)]
     _last_calculated: Instant,
 }
 
@@ -355,6 +357,7 @@ pub struct LeakInfo {
 // Leak detector
 pub struct LeakDetector {
     threshold: Duration,
+    #[allow(dead_code)]
     _check_interval: Duration,
     detected_leaks: Arc<RwLock<Vec<LeakInfo>>>,
 }

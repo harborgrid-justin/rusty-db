@@ -183,17 +183,6 @@ pub struct IoScheduler {
     current_bandwidth: Arc<RwLock<usize>>,
 }
 
-impl IoScheduler {
-        pub(crate) fn next_operation(&self) -> Option<&IoOperation> {
-            todo!()
-        }
-    }
-
-impl IoScheduler {
-    pub(crate) fn pending_count(&self) -> &usize {
-        todo!()
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct IoOperation {

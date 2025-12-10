@@ -241,6 +241,10 @@ impl TopologicalOps {
     }
 
     // LineString intersects LineString
+    /// Reserved for spatial ops
+
+    #[allow(dead_code)]
+
     fn linestring_intersects_linestring(ls_a: &LineString, ls_b: &LineString) -> bool {
         for i in 0..ls_a.coords.len() - 1 {
             for j in 0..ls_b.coords.len() - 1 {
@@ -314,6 +318,10 @@ impl DistanceOps {
     }
 
     // Point to linestring distance
+    /// Reserved for spatial ops
+
+    #[allow(dead_code)]
+
     fn point_to_linestring_distance(point: &Coordinate, linestring: &LineString) -> f64 {
         let mut min_dist = f64::INFINITY;
 
@@ -330,6 +338,10 @@ impl DistanceOps {
     }
 
     // Point to polygon distance
+    /// Reserved for spatial ops
+
+    #[allow(dead_code)]
+
     fn point_to_polygon_distance(point: &Coordinate, polygon: &Polygon) -> f64 {
         if TopologicalOps::polygon_contains_point(polygon, point) {
             return 0.0;

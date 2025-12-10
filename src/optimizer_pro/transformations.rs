@@ -26,6 +26,7 @@ pub struct QueryTransformer {
     // Transformation statistics
     stats: std::sync::RwLock<TransformationStatistics>,
     // Materialized view registry
+    #[allow(dead_code)]
     mv_registry: Arc<MaterializedViewRegistry>,
 }
 
@@ -330,6 +331,7 @@ impl TransformationRule for MaterializedViewRewriteRule {
 // Predicate analyzer
 pub struct PredicateAnalyzer {
     // Selectivity cache
+    #[allow(dead_code)]
     selectivity_cache: std::sync::RwLock<HashMap<String, f64>>,
 }
 
@@ -436,6 +438,7 @@ impl PredicateAnalyzer {
 // Join analyzer
 pub struct JoinAnalyzer {
     // Join graph
+    #[allow(dead_code)]
     join_graph: std::sync::RwLock<JoinGraph>,
 }
 
@@ -471,6 +474,7 @@ struct JoinGraph {
     // Tables in the query
     tables: BTreeSet<TableId>,
     // Join edges (table pairs with join conditions)
+    #[allow(dead_code)]
     edges: HashMap<(TableId, TableId), Vec<Expression>>,
 }
 
@@ -481,6 +485,12 @@ impl JoinGraph {
             edges: HashMap::new(),
         }
     }
+
+    /// Reserved for query graph
+
+
+    #[allow(dead_code)]
+
 
     fn add_table(&mut self, table: TableId) {
         self.tables.insert(table);
@@ -589,6 +599,7 @@ pub enum RefreshMode {
 // Common subexpression eliminator
 pub struct CommonSubexpressionEliminator {
     // Expression cache
+    #[allow(dead_code)]
     expression_cache: std::sync::RwLock<HashMap<String, Expression>>,
 }
 

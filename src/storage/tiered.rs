@@ -105,6 +105,8 @@ impl AccessPattern {
         self.access_history.push_back(now);
     }
 
+    /// Predict optimal tier based on access patterns (for ML-based tiering)
+    #[allow(dead_code)]
     fn predict_tier(&self) -> StorageTier {
         let now = SystemTime::now();
         let time_since_last_access = now.duration_since(self.last_access)
@@ -142,6 +144,8 @@ impl AccessPattern {
         recent_accesses as f64 / 60.0 // Accesses per minute
     }
 
+    /// Check if workload is read-heavy (for optimization decisions)
+    #[allow(dead_code)]
     fn is_read_heavy(&self) -> bool {
         if self.access_count == 0 {
             return true;

@@ -43,9 +43,13 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_millis(100);
 const HEARTBEAT_TIMEOUT: Duration = Duration::from_secs(3);
 
 // Maximum message size
+/// Reserved for interconnect config
+#[allow(dead_code)]
 const MAX_MESSAGE_SIZE: usize = 1024 * 1024; // 1MB
 
 // Message queue size per connection
+/// Reserved for interconnect config
+#[allow(dead_code)]
 const MESSAGE_QUEUE_SIZE: usize = 10000;
 
 // Network latency sample window
@@ -55,9 +59,13 @@ const LATENCY_WINDOW_SIZE: usize = 100;
 const QUORUM_PERCENTAGE: f64 = 0.5;
 
 // Reconnection backoff base
+/// Reserved for interconnect config
+#[allow(dead_code)]
 const RECONNECT_BACKOFF_MS: u64 = 100;
 
 // Maximum reconnection attempts
+/// Reserved for interconnect config
+#[allow(dead_code)]
 const MAX_RECONNECT_ATTEMPTS: u32 = 10;
 
 // ============================================================================
@@ -233,6 +241,12 @@ impl NodeHealth {
         }
     }
 
+    /// Reserved for health monitoring
+
+
+    #[allow(dead_code)]
+
+
     fn update_heartbeat(&mut self) {
         let now = Instant::now();
         let interval = now.duration_since(self.last_heartbeat);
@@ -252,6 +266,10 @@ impl NodeHealth {
     // NEW: Phi accrual failure detector
     // Calculates suspicion level based on heartbeat timing variance
     // Higher phi = more suspicious, threshold typically 8.0-10.0
+    /// Reserved for failure detection
+
+    #[allow(dead_code)]
+
     fn update_phi_accrual(&mut self, interval: Duration) {
         let _interval_ms = interval.as_millis() as f64;
 
@@ -430,6 +448,8 @@ impl Connection {
         Ok(())
     }
 
+    /// Reserved for message handling
+    #[allow(dead_code)]
     async fn receive_message(&self) -> Result<Message, DbError> {
         // Use tokio::sync::Mutex which can be held across await
         let mut stream_guard = self.stream.lock().await;
@@ -471,6 +491,12 @@ impl Connection {
             samples.pop_front();
         }
     }
+
+    /// Reserved for performance monitoring
+
+
+    #[allow(dead_code)]
+
 
     fn average_latency(&self) -> u64 {
         let samples = self.latency_samples.lock().unwrap();

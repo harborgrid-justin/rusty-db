@@ -188,6 +188,8 @@ pub struct Window {
 }
 
 impl Window {
+    /// Reserved for window API
+    #[allow(dead_code)]
     pub fn contains(&self, event_time: SystemTime) -> bool {
         event_time >= self.start && event_time < self.end
     }
@@ -826,6 +828,10 @@ impl Pane {
     }
 
     /// Remove event and update aggregates - O(1) for additive, O(n) for MIN/MAX
+    /// Reserved for window management
+
+    #[allow(dead_code)]
+
     fn remove_event(&mut self, value: f64) {
         if self.count > 0 {
             self.count -= 1;

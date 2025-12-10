@@ -289,6 +289,7 @@ impl BackwardCompatibilityLayer {
 // API gateway coordinator
 pub struct ApiGatewayCoordinator {
     router: Arc<RequestRouter>,
+    #[allow(dead_code)]
     aggregator: Arc<ResponseAggregator>,
     batch_handler: Arc<BatchRequestHandler>,
     version_manager: Arc<ApiVersionManager>,

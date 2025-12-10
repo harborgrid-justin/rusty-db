@@ -97,7 +97,7 @@ pub enum Token {
 // Tokenize PL/SQL source code
 pub fn tokenize(source: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
-    let mut chars: Vec<char> = source.chars().collect();
+    let chars: Vec<char> = source.chars().collect();
     let mut i = 0;
 
     while i < chars.len() {

@@ -23,7 +23,7 @@ pub use monitor::{HealthMonitor, ReplicationHealthMonitor};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::replication::types::ReplicaId;
+    use crate::replication::ReplicaId;
 
     #[tokio::test]
     async fn test_health_monitor_creation() {

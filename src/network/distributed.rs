@@ -527,12 +527,12 @@ impl DistributedTransactionCoordinator {
         Ok(())
     }
 
-    async fn send_prepare(&self, participant: &str) -> Result<bool, DbError> {
+    async fn send_prepare(&self, _participant: &str) -> Result<bool, DbError> {
         // Would send prepare message to participant node
         Ok(true)
     }
 
-    async fn send_commit(&self, participant: &str) -> Result<(), DbError> {
+    async fn send_commit(&self, _participant: &str) -> Result<(), DbError> {
         // Would send commit message to participant node
         Ok(())
     }
@@ -547,7 +547,7 @@ impl DistributedTransactionCoordinator {
         Ok(())
     }
 
-    async fn send_abort(&self, participant: &str) -> Result<(), DbError> {
+    async fn send_abort(&self, _participant: &str) -> Result<(), DbError> {
         // Would send abort message to participant node
         Ok(())
     }

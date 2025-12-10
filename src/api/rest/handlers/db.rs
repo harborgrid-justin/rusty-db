@@ -4,24 +4,20 @@
 // Each handler implements proper error handling and uses dependency injection.
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     Json as AxumJson,
     http::StatusCode,
 };
-use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
 use uuid::Uuid;
 
-use crate::error::DbError;
 use crate::api::rest::types::*;
-use crate::parser::{SqlParser, SqlStatement};
-use crate::catalog::{Catalog, Schema, Column, DataType};
-use crate::transaction::TransactionManager;
-use crate::execution::{Executor, QueryResult};
+use crate::catalog::{Schema, Column, DataType};
+use crate::error::DbError;
+use crate::execution::Executor;
 use std::time::UNIX_EPOCH;
-use parking_lot::RwLock;
 use super::{CATALOG, TXN_MANAGER, SQL_PARSER};
 
 /// Helper function to format DataType enum as a string for display

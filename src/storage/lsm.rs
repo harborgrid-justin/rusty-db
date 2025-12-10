@@ -108,6 +108,8 @@ impl BloomFilter {
         true
     }
 
+    /// Reset bloom filter (for maintenance operations)
+    #[allow(dead_code)]
     fn reset(&mut self) {
         self.bits.fill(false);
     }
@@ -152,10 +154,14 @@ impl MemTable {
         self.put(key, tombstone)
     }
 
+    /// Check if memtable is full (for flush decisions)
+    #[allow(dead_code)]
     fn is_full(&self) -> bool {
         self.size_bytes >= self.max_size
     }
 
+    /// Get number of entries in memtable
+    #[allow(dead_code)]
     fn len(&self) -> usize {
         self.data.len()
     }
@@ -224,6 +230,8 @@ impl SSTable {
         bloom.contains(key)
     }
 
+    /// Check if this SSTable overlaps with another (for compaction)
+    #[allow(dead_code)]
     fn overlaps(&self, other: &SSTable) -> bool {
         !(self.max_key < other.min_key || self.min_key > other.max_key)
     }

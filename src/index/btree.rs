@@ -31,13 +31,16 @@ const MIN_ORDER: usize = 32;
 const DEFAULT_ORDER: usize = 64;
 const MAX_ORDER: usize = 256;
 
-// Cache line size for alignment
+// Cache line size for alignment (reserved for alignment optimizations)
+#[allow(dead_code)]
 const CACHE_LINE_SIZE: usize = 64;
 
-// Minimum number of keys in a node (except root)
+// Minimum number of keys in a node (except root) - for future validation
+#[allow(dead_code)]
 const MIN_KEYS: usize = DEFAULT_ORDER / 2 - 1;
 
-// SIMD width for vectorized operations
+// SIMD width for vectorized operations (for SIMD-optimized search)
+#[allow(dead_code)]
 const SIMD_WIDTH: usize = 8; // AVX2 can compare 8 i32s or 4 i64s at once
 
 // B+ Tree Index with Adaptive Optimization
@@ -616,7 +619,9 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
 
     // SIMD-accelerated search for integer keys (when available)
     #[cfg(target_arch = "x86_64")]
+    /// SIMD-accelerated child index search for i64 keys (for SIMD feature)
     #[inline]
+    #[allow(dead_code)]
     fn simd_find_child_index_i64(&self, target: i64, keys_i64: &[i64]) -> usize {
         if keys_i64.len() < 8 || !is_x86_feature_detected!("avx2") {
             return self.find_child_index_fallback(keys_i64, target);
@@ -645,7 +650,9 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
         }
     }
 
+    /// Fallback linear search for child index (used when SIMD unavailable)
     #[inline]
+    #[allow(dead_code)]
     fn find_child_index_fallback<T: Ord>(&self, keys: &[T], target: T) -> usize {
         for (i, k) in keys.iter().enumerate() {
             if target < *k {

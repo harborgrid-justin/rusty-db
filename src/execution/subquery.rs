@@ -254,7 +254,7 @@ impl CorrelatedSubqueryHandler {
     // Execute correlated subquery for each outer row
     pub fn execute_correlated(
         _outer_row: &[String],
-        subquery: &SubqueryExpr,
+        _subquery: &SubqueryExpr,
     ) -> Result<QueryResult, DbError> {
         // In a full implementation:
         // 1. Bind outer row values to subquery parameters
@@ -293,7 +293,7 @@ impl SubqueryDecorrelator {
         }
     }
 
-    fn decorrelate_exists(subquery: &SubqueryExpr) -> Option<PlanNode> {
+    fn decorrelate_exists(_subquery: &SubqueryExpr) -> Option<PlanNode> {
         // Convert EXISTS correlated subquery to semi-join
         // Example:
         // SELECT * FROM orders o
@@ -307,13 +307,13 @@ impl SubqueryDecorrelator {
         None
     }
 
-    fn decorrelate_in(subquery: &SubqueryExpr) -> Option<PlanNode> {
+    fn decorrelate_in(_subquery: &SubqueryExpr) -> Option<PlanNode> {
         // Convert IN correlated subquery to join
         // Similar to EXISTS but returns matching values
         None
     }
 
-    fn decorrelate_scalar(subquery: &SubqueryExpr) -> Option<PlanNode> {
+    fn decorrelate_scalar(_subquery: &SubqueryExpr) -> Option<PlanNode> {
         // Convert scalar correlated subquery to LEFT JOIN with aggregation
         None
     }
@@ -331,7 +331,7 @@ impl SubqueryDecorrelator {
         }
     }
 
-    fn has_simple_aggregation(plan: &PlanNode) -> bool {
+    fn has_simple_aggregation(_plan: &PlanNode) -> bool {
         // Check if plan has a simple aggregation (MAX, MIN, etc.)
         // that can be converted to a join
         false // Placeholder

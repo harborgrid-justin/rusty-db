@@ -7,16 +7,12 @@ use axum::{
     response::{Json as AxumJson},
     http::StatusCode,
 };
-use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use uuid::Uuid;
 use parking_lot::RwLock;
 
-use crate::error::DbError;
 use super::super::types::*;
-use std::time::UNIX_EPOCH;
 
 // Lazy-initialized shared state for pool management
 lazy_static::lazy_static! {
@@ -55,10 +51,14 @@ lazy_static::lazy_static! {
 struct PoolStatsInternal {
     active_connections: usize,
     idle_connections: usize,
+    #[allow(dead_code)]
     waiting_requests: usize,
+    #[allow(dead_code)]
     total_acquired: u64,
+    #[allow(dead_code)]
     total_created: u64,
     total_destroyed: u64,
+    #[allow(dead_code)]
     last_activity: SystemTime,
 }
 

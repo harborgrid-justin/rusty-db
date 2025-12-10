@@ -343,7 +343,7 @@ impl XaTransactionManager {
     async fn send_prepare(&self, rm_id: &str, _xid: &Xid) -> Result<Vote> {
         let rms = self.resource_managers.read();
 
-        let rm = rms.get(rm_id)
+        let _rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
             ))?;
@@ -483,7 +483,7 @@ impl XaTransactionManager {
     async fn send_commit(&self, rm_id: &str, _xid: &Xid) -> Result<()> {
         let rms = self.resource_managers.read();
 
-        let rm = rms.get(rm_id)
+        let _rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
             ))?;
@@ -553,7 +553,7 @@ impl XaTransactionManager {
     async fn send_rollback(&self, rm_id: &str, _xid: &Xid) -> Result<()> {
         let rms = self.resource_managers.read();
 
-        let rm = rms.get(rm_id)
+        let _rm = rms.get(rm_id)
             .ok_or_else(|| DbError::Replication(
                 format!("Resource manager {} not found", rm_id)
             ))?;

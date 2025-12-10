@@ -524,7 +524,8 @@ pub enum LockMode {
 }
 
 impl LockMode {
-
+    /// Get lock strength for ordering (part of lock manager API)
+    #[allow(dead_code)]
     pub(crate) fn strength(&self) -> u8 {
         match self {
             LockMode::Shared => 1,
@@ -536,6 +537,8 @@ impl LockMode {
         }
     }
 
+    /// Check if two lock modes are compatible (part of lock manager API)
+    #[allow(dead_code)]
     pub(crate) fn is_compatible(&self, other: &LockMode) -> bool {
         // Basic compatibility: shared locks are compatible with each other
         match (self, other) {

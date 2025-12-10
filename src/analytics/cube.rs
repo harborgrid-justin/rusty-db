@@ -438,7 +438,7 @@ impl CubeQuery {
         &self,
         hierarchy: &str,
         current_level: &str,
-        value: &str,
+        _value: &str,
     ) -> Result<Vec<AggregationResult>> {
         let cube = self.cube.read();
 

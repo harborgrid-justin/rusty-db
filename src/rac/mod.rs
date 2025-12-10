@@ -645,7 +645,7 @@ impl RacCluster {
     }
 
     // Perform graceful failover from one node to another
-    pub async fn failover(&self, from_node: NodeId, to_node: NodeId) -> Result<(), DbError> {
+    pub async fn failover(&self, from_node: NodeId, _to_node: NodeId) -> Result<(), DbError> {
         // Initiate recovery for the failing node
         self.recovery.initiate_recovery(
             from_node.clone(),

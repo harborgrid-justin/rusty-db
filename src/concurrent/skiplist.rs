@@ -28,24 +28,28 @@ const MAX_HEIGHT: usize = 32;
 /// Probability for level generation (1/4 for each level)
 const P_FACTOR: u32 = 4;
 
-/// Marked bit in pointer (LSB)
+/// Marked bit in pointer (LSB) - for future pointer tagging optimizations
+#[allow(dead_code)]
 const MARKED_BIT: usize = 0x1;
 
-/// Helper to mark a pointer
+/// Helper to mark a pointer - for future pointer tagging optimizations
 #[inline(always)]
+#[allow(dead_code)]
 fn mark_ptr<T>(ptr: Shared<T>) -> Shared<T> {
     let raw = ptr.as_ptr() as usize | MARKED_BIT;
     Shared::from_raw(raw as *mut _)
 }
 
-/// Helper to check if pointer is marked
+/// Helper to check if pointer is marked - for future pointer tagging optimizations
 #[inline(always)]
+#[allow(dead_code)]
 fn is_marked<T>(ptr: Shared<T>) -> bool {
     (ptr.as_ptr() as usize) & MARKED_BIT != 0
 }
 
-/// Helper to unmark a pointer
+/// Helper to unmark a pointer - for future pointer tagging optimizations
 #[inline(always)]
+#[allow(dead_code)]
 fn unmark_ptr<T>(ptr: Shared<T>) -> Shared<T> {
     let raw = (ptr.as_ptr() as usize) & !MARKED_BIT;
     Shared::from_raw(raw as *mut _)
@@ -112,7 +116,8 @@ pub struct LockFreeSkipList<K, V> {
     /// Head sentinel node
     head: Atomic<Node<K, V>>,
 
-    /// Tail sentinel node (optional, for optimization)
+    /// Tail sentinel node (reserved for future optimizations)
+    #[allow(dead_code)]
     tail: Atomic<Node<K, V>>,
 
     /// Current size (approximate)

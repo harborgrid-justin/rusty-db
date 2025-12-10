@@ -215,6 +215,12 @@ impl ResultSet {
         }
     }
 
+    /// Reserved for table functions
+
+
+    #[allow(dead_code)]
+
+
     fn add_row(&mut self, row: Vec<RuntimeValue>) {
         self.rows.push(row);
     }
