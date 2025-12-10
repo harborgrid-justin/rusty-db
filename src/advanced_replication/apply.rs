@@ -4,6 +4,8 @@
 // and automatic error handling and retry logic.
 // Optimized with lock-free ring buffers for maximum throughput.
 
+#![allow(dead_code)]
+
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};

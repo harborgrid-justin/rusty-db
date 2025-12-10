@@ -23,6 +23,7 @@ pub struct DistributedCoordinator {
     // Load balancer
     load_balancer: Arc<LoadBalancer>,
     // Query scheduler
+    #[allow(dead_code)]
     scheduler: Arc<QueryScheduler>,
 }
 
@@ -221,6 +222,7 @@ pub enum LoadBalancingStrategy {
 // Query scheduler for distributed execution
 pub struct QueryScheduler {
     queue: Arc<RwLock<Vec<ScheduledQuery>>>,
+    #[allow(dead_code)]
     max_concurrent: usize,
     semaphore: Arc<Semaphore>,
 }

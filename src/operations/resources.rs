@@ -326,8 +326,10 @@ impl ConnectionManager {
 // Connection information
 #[derive(Debug, Clone)]
 struct ConnectionInfo {
+    #[allow(dead_code)]
     id: String,
     priority: ConnectionPriority,
+    #[allow(dead_code)]
     connected_at: SystemTime,
 }
 

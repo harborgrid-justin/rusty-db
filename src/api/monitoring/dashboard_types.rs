@@ -9,7 +9,6 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 
 use crate::error::DbError;
-use super::metrics_core::*;
 
 // SECTION 5: DASHBOARD DATA API (600+ lines)
 // ============================================================================

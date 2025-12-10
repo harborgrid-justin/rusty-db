@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::Result;
 use crate::error::DbError;
 use sha2::{Sha256, Digest};
@@ -324,6 +324,7 @@ impl Default for InsiderThreatConfig {
 
 // ML-Based Query Threat Scorer
 pub struct ThreatScorer {
+    #[allow(dead_code)]
     config: Arc<RwLock<InsiderThreatConfig>>,
     // Malicious patterns for SQL injection detection
     malicious_patterns: Vec<regex::Regex>,
@@ -731,6 +732,7 @@ impl BehaviorAnalyzer {
 
 // Statistical Anomaly Detector
 pub struct AnomalyDetector {
+    #[allow(dead_code)]
     config: Arc<RwLock<InsiderThreatConfig>>,
 }
 

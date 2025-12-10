@@ -239,10 +239,8 @@ impl HashJoinExecutor {
         let _partition_budget = self.config.memory_budget / self.config.num_partitions;
 
         // Phase 1: Partition build side with hot partition detection
-        let mut in_memory_partition: Option<HashMap<String, Vec<Vec<String>>>> = None;
         let mut spilled_partitions: Vec<(usize, PathBuf)> = Vec::new();
         let mut partition_sizes: Vec<usize> = vec![0; self.config.num_partitions];
-        let mut hot_partition_id = 0;
 
         // First pass: determine partition sizes
         for row in &build_side.rows {
@@ -253,7 +251,7 @@ impl HashJoinExecutor {
         }
 
         // Find largest partition to keep in memory
-        hot_partition_id = partition_sizes.iter()
+        let hot_partition_id = partition_sizes.iter()
             .enumerate()
             .max_by_key(|(_, &size)| size)
             .map(|(idx, _)| idx)
@@ -270,15 +268,17 @@ impl HashJoinExecutor {
         }
 
         // Build hash table for hot partition
-        let mut hot_table: HashMap<String, Vec<Vec<String>>> = HashMap::new();
-        for row in &partitions[hot_partition_id] {
-            if let Some(key) = row.get(build_key_col) {
-                hot_table.entry(key.clone())
-                    .or_insert_with(Vec::new)
-                    .push(row.clone());
+        let hot_table: HashMap<String, Vec<Vec<String>>> = {
+            let mut table = HashMap::new();
+            for row in &partitions[hot_partition_id] {
+                if let Some(key) = row.get(build_key_col) {
+                    table.entry(key.clone())
+                        .or_insert_with(Vec::new)
+                        .push(row.clone());
+                }
             }
-        }
-        in_memory_partition = Some(hot_table);
+            table
+        };
 
         // Spill other partitions to disk
         for (partition_id, partition_data) in partitions.iter().enumerate() {
@@ -301,15 +301,13 @@ impl HashJoinExecutor {
         }
 
         // Probe hot partition immediately
-        if let Some(hot_table) = &in_memory_partition {
-            for probe_row in &probe_partitions[hot_partition_id] {
-                if let Some(key) = probe_row.get(probe_key_col) {
-                    if let Some(build_rows) = hot_table.get(key) {
-                        for build_row in build_rows {
-                            let mut joined_row = probe_row.clone();
-                            joined_row.extend(build_row.clone());
-                            result_rows.push(joined_row);
-                        }
+        for probe_row in &probe_partitions[hot_partition_id] {
+            if let Some(key) = probe_row.get(probe_key_col) {
+                if let Some(build_rows) = hot_table.get(key) {
+                    for build_row in build_rows {
+                        let mut joined_row = probe_row.clone();
+                        joined_row.extend(build_row.clone());
+                        result_rows.push(joined_row);
                     }
                 }
             }

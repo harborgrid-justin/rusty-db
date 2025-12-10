@@ -251,6 +251,7 @@ pub enum AdaptationType {
 // Adaptive query executor
 pub struct AdaptiveExecutor {
     context: Arc<RwLock<AdaptiveContext>>,
+    #[allow(dead_code)]
     reoptimization_threshold: f64,
 }
 

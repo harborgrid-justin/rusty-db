@@ -658,6 +658,7 @@ impl AllocationMetadata {
         self.is_freed.store(true, Ordering::Release);
     }
 
+    #[allow(dead_code)]
     fn record_access(&self) {
         self.access_count.fetch_add(1, Ordering::Relaxed);
         let now = SystemTime::now()
@@ -988,8 +989,11 @@ impl Drop for IsolatedHeap {
 // Block within isolated heap
 #[derive(Debug, Clone)]
 struct IsolatedBlock {
+    #[allow(dead_code)]
     offset: usize,
+    #[allow(dead_code)]
     size: usize,
+    #[allow(dead_code)]
     allocated_at: Instant,
 }
 

@@ -336,7 +336,7 @@ impl RateLimiter {
         });
     }
 
-    pub fn check_rate_limit(&self, key: &str, option: Option<&RateLimitConfig>) -> Result<(), DbError> {
+    pub fn check_rate_limit(&self, key: &str, _option: Option<&RateLimitConfig>) -> Result<(), DbError> {
         let limits = self.limits.read().unwrap();
         let limit = limits.get(key)
             .ok_or_else(|| DbError::NotFound(format!("Rate limit not found for: {}", key)))?;

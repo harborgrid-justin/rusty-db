@@ -90,8 +90,10 @@ pub struct AdaptiveStats {
     point_queries: AtomicU64,
     range_queries: AtomicU64,
     inserts: AtomicU64,
+    #[allow(dead_code)]
     cache_misses: AtomicU64,
     node_splits: AtomicU64,
+    #[allow(dead_code)]
     last_rebalance: AtomicU64,
 }
 

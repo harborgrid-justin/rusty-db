@@ -108,6 +108,7 @@ pub struct VersionManager {
     gc: Arc<RwLock<VersionGarbageCollector>>,
 
     /// Configuration
+    #[allow(dead_code)]
     config: VersionConfig,
 
     /// Statistics
@@ -772,6 +773,7 @@ pub struct ColumnChange {
 
 /// Support for joining versions across time
 pub struct VersionJoinExecutor {
+    #[allow(dead_code)]
     version_manager: Arc<VersionManager>,
 }
 

@@ -16,6 +16,7 @@ use super::security_policies::*;
 // ============================================================================
 
 pub struct UnifiedSecurityCore {
+    #[allow(dead_code)]
     security_manager: Arc<IntegratedSecurityManager>,
     event_correlator: Arc<SecurityEventCorrelator>,
     threat_intelligence: Arc<ThreatIntelligence>,

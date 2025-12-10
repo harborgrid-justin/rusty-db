@@ -66,6 +66,7 @@ impl Default for Server {
 }
 
 struct ConnectionHandler {
+    #[allow(dead_code)]
     catalog: Arc<Catalog>,
     txn_manager: Arc<TransactionManager>,
     executor: Arc<Executor>,

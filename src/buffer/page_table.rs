@@ -46,6 +46,7 @@ impl PageTable {
 
     /// Get partition index for a page ID
     #[inline(always)]
+    #[allow(dead_code)]
     fn partition_index(&self, page_id: PageId) -> usize {
         // Fast hash: multiply by large prime and mask
         (page_id.wrapping_mul(0x9e3779b97f4a7c15) as usize) % self.num_partitions
@@ -53,6 +54,7 @@ impl PageTable {
 
     /// Look up a page in the table
     #[inline]
+    #[allow(dead_code)]
     pub fn lookup(&self, page_id: PageId) -> Option<FrameId> {
         self.lookups.fetch_add(1, Ordering::Relaxed);
 
@@ -73,6 +75,7 @@ impl PageTable {
 
     /// Insert a page into the table
     #[inline]
+    #[allow(dead_code)]
     pub fn insert(&self, page_id: PageId, frame_id: FrameId) {
         let partition_idx = self.partition_index(page_id);
         // SAFETY: partition_idx is guaranteed to be < num_partitions
@@ -83,6 +86,7 @@ impl PageTable {
 
     /// Remove a page from the table
     #[inline]
+    #[allow(dead_code)]
     pub fn remove(&self, page_id: PageId) -> Option<FrameId> {
         let partition_idx = self.partition_index(page_id);
         // SAFETY: partition_idx is guaranteed to be < num_partitions
@@ -93,6 +97,7 @@ impl PageTable {
 
     /// Clear all partitions
     #[cold]
+    #[allow(dead_code)]
     pub fn clear(&self) {
         for partition in &self.partitions {
             partition.write().clear();
@@ -104,6 +109,7 @@ impl PageTable {
 
     /// Get hit rate
     #[inline]
+    #[allow(dead_code)]
     pub fn hit_rate(&self) -> f64 {
         let lookups = self.lookups.load(Ordering::Relaxed);
         let hits = self.hits.load(Ordering::Relaxed);
@@ -117,6 +123,7 @@ impl PageTable {
 
     /// Get statistics
     #[cold]
+    #[allow(dead_code)]
     pub fn stats(&self) -> (u64, u64, u64, f64) {
         let lookups = self.lookups.load(Ordering::Relaxed);
         let hits = self.hits.load(Ordering::Relaxed);
@@ -128,6 +135,7 @@ impl PageTable {
 
     /// Get total number of entries
     #[cold]
+    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         self.partitions
             .iter()
@@ -136,6 +144,7 @@ impl PageTable {
     }
 
     /// Check if the page table is empty
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }

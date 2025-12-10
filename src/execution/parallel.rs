@@ -20,8 +20,10 @@ pub struct ParallelExecutor {
     // Number of worker threads
     worker_count: usize,
     // Fixed-size thread pool for query execution (no dynamic spawning)
+    #[allow(dead_code)]
     runtime: Arc<tokio::runtime::Runtime>,
     // Work-stealing scheduler for load balancing
+    #[allow(dead_code)]
     work_scheduler: Arc<WorkStealingScheduler>,
 }
 

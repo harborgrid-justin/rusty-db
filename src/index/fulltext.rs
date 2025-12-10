@@ -351,6 +351,7 @@ impl DocumentStore {
 // Document structure
 #[derive(Debug, Clone)]
 struct Document {
+    #[allow(dead_code)]
     text: String,
     tokens: Vec<String>,
     term_frequencies: HashMap<String, u32>,

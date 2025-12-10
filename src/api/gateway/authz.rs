@@ -259,7 +259,7 @@ impl AbacEvaluator {
     }
 
     // Evaluate ABAC policy
-    pub fn evaluate(&self, subject: &str, resource: &str, action: &str, conditions: &[PolicyCondition]) -> bool {
+    pub fn evaluate(&self, subject: &str, resource: &str, _action: &str, conditions: &[PolicyCondition]) -> bool {
         // Collect attributes
         let mut subject_attrs = HashMap::new();
         let mut resource_attrs = HashMap::new();

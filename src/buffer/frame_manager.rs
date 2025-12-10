@@ -24,6 +24,7 @@ pub struct FreeFrameManager {
 
 impl FreeFrameManager {
     /// Create a new free frame manager
+    #[allow(dead_code)]
     pub fn new(
         num_frames: usize,
         enable_per_core_pools: bool,
@@ -73,6 +74,7 @@ impl FreeFrameManager {
 
     /// Allocate a free frame
     #[inline]
+    #[allow(dead_code)]
     pub fn allocate(&self) -> Option<FrameId> {
         // Try per-core pool first
         if let Some(ref pools) = self.per_core_pools {
@@ -101,6 +103,7 @@ impl FreeFrameManager {
 
     /// Deallocate a frame
     #[inline]
+    #[allow(dead_code)]
     pub fn deallocate(&self, frame_id: FrameId) {
         // Try to add to per-core pool first
         if let Some(ref pools) = self.per_core_pools {
@@ -116,6 +119,7 @@ impl FreeFrameManager {
 
     /// Get number of free frames
     #[inline]
+    #[allow(dead_code)]
     pub fn free_count(&self) -> usize {
         let mut count = self.global_free_list.lock().len();
 
@@ -128,6 +132,7 @@ impl FreeFrameManager {
 
     /// Get statistics
     #[cold]
+    #[allow(dead_code)]
     pub fn stats(&self) -> (u64, u64, usize) {
         (
             self.global_allocations.load(Ordering::Relaxed),

@@ -26,6 +26,7 @@ impl Default for ConnectionPoolConfig {
 
 // Connection pool for managing database connections
 pub struct ConnectionPool {
+    #[allow(dead_code)]
     config: ConnectionPoolConfig,
     semaphore: Arc<Semaphore>,
     active_connections: Arc<RwLock<usize>>,

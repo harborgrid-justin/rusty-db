@@ -454,6 +454,7 @@ pub struct RangeEncodedBitmap {
     range_bitmaps: HashMap<RangeBucket, CompressedBitmap>,
     // Min and max values
     min_value: i64,
+    #[allow(dead_code)]
     max_value: i64,
     // Bucket size
     bucket_size: i64,

@@ -5,9 +5,8 @@
 use std::sync::Arc;
 use std::collections::{BTreeMap, HashMap};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use crate::api::{DashboardManager, HealthCheckCoordinator, MetricsRegistry, PrometheusExporter, TimeSeriesDatabase, TimeSeriesQuery, TimeSeriesResult, HealthCheckResult, HealthStatus, Alert, AlertSeverity, Dashboard};
+use crate::api::{DashboardManager, HealthCheckCoordinator, MetricsRegistry, PrometheusExporter, TimeSeriesDatabase, TimeSeriesQuery, TimeSeriesResult, HealthCheckResult, HealthStatus, Alert, Dashboard};
 use crate::api::monitoring::{MetricStream, AlertManager, RetentionPolicy, TimeSeriesPoint};
 use crate::error::DbError;
 use super::metrics_core::*;

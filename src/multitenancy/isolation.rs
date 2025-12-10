@@ -182,6 +182,7 @@ impl MemoryIsolator {
 pub struct MemoryAllocation {
     tenant_id: String,
     size_bytes: u64,
+    #[allow(dead_code)]
     allocation_time: Instant,
 }
 

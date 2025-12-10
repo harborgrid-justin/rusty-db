@@ -16,8 +16,10 @@ use super::common::*;
 
 pub struct SecurityEventCorrelator {
     event_windows: Arc<RwLock<HashMap<String, VecDeque<CorrelatedEvent>>>>,
+    #[allow(dead_code)]
     attack_patterns: Arc<RwLock<Vec<AttackPattern>>>,
     incidents: Arc<RwLock<Vec<SecurityIncident>>>,
+    #[allow(dead_code)]
     correlation_rules: Arc<RwLock<Vec<CorrelationRule>>>,
     stats: Arc<RwLock<CorrelatorStatistics>>,
 }
@@ -259,6 +261,7 @@ impl SecurityEventCorrelator {
 
 pub struct ThreatIntelligence {
     iocs: Arc<RwLock<HashMap<String, IndicatorOfCompromise>>>,
+    #[allow(dead_code)]
     threat_actors: Arc<RwLock<HashMap<String, ThreatActor>>>,
     vulnerabilities: Arc<RwLock<HashMap<String, Vulnerability>>>,
     ip_reputation: Arc<RwLock<HashMap<String, ReputationScore>>>,

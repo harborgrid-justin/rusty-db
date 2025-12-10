@@ -1249,8 +1249,10 @@ impl MemoryPoolManager {
 
 #[derive(Debug, Clone)]
 struct MemoryAllocation {
+    #[allow(dead_code)]
     query_id: String,
     size: usize,
+    #[allow(dead_code)]
     allocated_at: SystemTime,
 }
 
@@ -1650,6 +1652,7 @@ pub struct ResourceRequirement {
 // Query timeout manager
 pub struct TimeoutManager {
     timeouts: Arc<RwLock<HashMap<String, QueryTimeout>>>,
+    #[allow(dead_code)]
     default_timeout: Duration,
 }
 
@@ -1698,6 +1701,7 @@ impl TimeoutManager {
 #[derive(Debug, Clone)]
 struct QueryTimeout {
     deadline: SystemTime,
+    #[allow(dead_code)]
     timeout_duration: Duration,
 }
 
@@ -2168,6 +2172,7 @@ pub enum CachingStrategy {
 struct StrategyPerformance {
     strategy: CachingStrategy,
     hit_rate: f64,
+    #[allow(dead_code)]
     timestamp: SystemTime,
 }
 
@@ -2249,6 +2254,7 @@ pub enum HintType {
 #[derive(Debug, Clone)]
 struct HintEffectiveness {
     improvement_factor: f64,
+    #[allow(dead_code)]
     sample_count: usize,
 }
 

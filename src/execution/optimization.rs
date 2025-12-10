@@ -322,6 +322,7 @@ impl AdaptiveOptimizer {
 // Execution record for adaptive optimization
 #[derive(Debug, Clone)]
 struct ExecutionRecord {
+    #[allow(dead_code)]
     query_hash: String,
     plan: PlanNode,
     #[allow(dead_code)]
@@ -416,6 +417,7 @@ impl MaterializedViewRewriter {
 #[derive(Debug, Clone)]
 struct MaterializedViewDef {
     name: String,
+    #[allow(dead_code)]
     query: String,
     base_tables: Vec<String>,
     #[allow(dead_code)]

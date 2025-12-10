@@ -122,6 +122,7 @@ impl SlidingWindow {
         }
     }
 
+    #[allow(dead_code)]
     fn current_rate(&mut self) -> f64 {
         self.clean_old();
         self.requests.len() as f64 / self.window_duration.as_secs_f64()
@@ -219,6 +220,7 @@ impl AdaptiveRateLimiter {
 struct TrafficPattern {
     requests: VecDeque<Instant>,
     request_sizes: VecDeque<usize>,
+    #[allow(dead_code)]
     response_codes: VecDeque<u16>,
     endpoints: HashSet<String>,
     user_agents: HashSet<String>,

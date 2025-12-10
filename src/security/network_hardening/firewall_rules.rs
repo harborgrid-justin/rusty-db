@@ -222,7 +222,9 @@ impl IPReputationChecker {
 struct ConnectionInfo {
     count: usize,
     timestamps: VecDeque<Instant>,
+    #[allow(dead_code)]
     bytes_sent: u64,
+    #[allow(dead_code)]
     bytes_received: u64,
     last_activity: Instant,
     suspicious_count: u32,

@@ -42,6 +42,7 @@ pub struct TableRestoreManager {
     time_travel: Arc<TimeTravelEngine>,
 
     /// Version manager for row versions
+    #[allow(dead_code)]
     version_manager: Arc<VersionManager>,
 
     /// Recycle bin for dropped tables
@@ -51,6 +52,7 @@ pub struct TableRestoreManager {
     restore_points: Arc<RwLock<HashMap<String, RestorePoint>>>,
 
     /// Configuration
+    #[allow(dead_code)]
     config: TableRestoreConfig,
 
     /// Statistics
@@ -541,7 +543,9 @@ struct RestorePoint {
 
 /// Complete state of a table at a point in time
 struct TableState {
+    #[allow(dead_code)]
     table_id: TableId,
+    #[allow(dead_code)]
     scn: SCN,
     rows: HashMap<RowId, Vec<Value>>,
     #[allow(dead_code)]

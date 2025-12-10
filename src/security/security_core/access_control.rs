@@ -20,6 +20,7 @@ pub struct SecurityPolicyEngine {
     policies: Arc<RwLock<HashMap<PolicyId, SecurityPolicy>>>,
     decision_cache: Arc<RwLock<HashMap<String, PolicyDecision>>>,
     stats: Arc<RwLock<PolicyEngineStatistics>>,
+    #[allow(dead_code)]
     attribute_providers: Arc<RwLock<Vec<Box<dyn AttributeProvider + Send + Sync>>>>,
 }
 
@@ -285,6 +286,7 @@ impl SecurityPolicyEngine {
 // ============================================================================
 
 pub struct DefenseOrchestrator {
+    #[allow(dead_code)]
     security_manager: Arc<IntegratedSecurityManager>,
     defense_status: Arc<RwLock<HashMap<DefenseLayer, LayerStatus>>>,
     threat_level: Arc<RwLock<ThreatLevel>>,

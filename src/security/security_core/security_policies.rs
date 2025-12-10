@@ -20,6 +20,7 @@ use super::common::*;
 pub struct ComplianceValidator {
     frameworks: Arc<RwLock<HashMap<String, ComplianceFramework>>>,
     assessments: Arc<RwLock<HashMap<String, ControlAssessment>>>,
+    #[allow(dead_code)]
     evidence: Arc<RwLock<Vec<ComplianceEvidence>>>,
     scores: Arc<RwLock<HashMap<String, f64>>>,
 }
@@ -191,6 +192,7 @@ impl ComplianceValidator {
 // ============================================================================
 
 pub struct SecurityMetrics {
+    #[allow(dead_code)]
     metrics: Arc<RwLock<HashMap<String, MetricValue>>>,
 }
 

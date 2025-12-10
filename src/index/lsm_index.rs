@@ -436,6 +436,7 @@ impl<K: Ord + Clone, V: Clone> MemTable<K, V> {
 struct MemTableEntry<V> {
     value: Option<V>,
     is_tombstone: bool,
+    #[allow(dead_code)]
     sequence: usize,
 }
 

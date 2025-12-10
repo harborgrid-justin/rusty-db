@@ -59,6 +59,7 @@ pub struct TimeTravelEngine {
     query_cache: Arc<RwLock<TemporalQueryCache>>,
 
     /// Configuration
+    #[allow(dead_code)]
     config: TimeTravelConfig,
 
     /// Statistics

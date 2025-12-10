@@ -245,6 +245,7 @@ pub struct TransactionOperation {
 
 pub struct TransactionRollbackManager {
     transactions: Arc<RwLock<HashMap<u64, TransactionState>>>,
+    #[allow(dead_code)]
     rollback_queue: Arc<StdMutex<VecDeque<u64>>>,
     stats: Arc<RwLock<RollbackStats>>,
 }

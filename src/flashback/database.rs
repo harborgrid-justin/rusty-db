@@ -55,6 +55,7 @@ pub struct DatabaseFlashbackManager {
     recovery: Arc<RwLock<RecoveryOrchestrator>>,
 
     /// Configuration
+    #[allow(dead_code)]
     config: DatabaseFlashbackConfig,
 
     /// Statistics
@@ -498,6 +499,7 @@ impl GuaranteedRestorePoints {
         Ok(())
     }
 
+    #[allow(dead_code)]
     fn list_all(&self) -> Vec<&GuaranteedRestorePoint> {
         self.points.values().collect()
     }

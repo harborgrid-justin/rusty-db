@@ -325,6 +325,7 @@ impl IndexStatistics {
 
 // Cardinality estimator using advanced techniques
 pub struct CardinalityEstimator {
+    #[allow(dead_code)]
     statistics: Arc<RwLock<TableStatistics>>,
 }
 

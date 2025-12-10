@@ -1,5 +1,7 @@
 // Health monitoring implementation
 
+#![allow(dead_code)]
+
 use async_trait::async_trait;
 use parking_lot::RwLock;
 use std::collections::{HashMap, VecDeque};
