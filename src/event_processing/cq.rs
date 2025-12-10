@@ -455,18 +455,18 @@ impl ExecutionState {
 
 /// Materialized view
 struct MaterializedView {
-    query_id: CQId,
+    _query_id: CQId,
     data: BTreeMap<u64, Event>,
-    index: HashMap<String, Vec<u64>>, // field -> event IDs
+    _index: HashMap<String, Vec<u64>>, // field -> event IDs
     next_id: u64,
 }
 
 impl MaterializedView {
     fn new(query_id: CQId) -> Self {
         Self {
-            query_id,
+            _query_id: query_id,
             data: BTreeMap::new(),
-            index: HashMap::new(),
+            _index: HashMap::new(),
             next_id: 0,
         }
     }
@@ -478,7 +478,7 @@ impl MaterializedView {
         // Index by payload fields
         for (field, value) in &event.payload {
             if let Some(s) = value.as_str() {
-                self.index
+                self._index
                     .entry(format!("{}:{}", field, s))
                     .or_insert_with(Vec::new)
                     .push(id);
@@ -513,11 +513,11 @@ impl MaterializedView {
         self.next_id = snapshot.next_id;
 
         // Rebuild index
-        self.index.clear();
+        self._index.clear();
         for (&id, event) in &self.data {
             for (field, value) in &event.payload {
                 if let Some(s) = value.as_str() {
-                    self.index
+                    self._index
                         .entry(format!("{}:{}", field, s))
                         .or_insert_with(Vec::new)
                         .push(id);
@@ -585,7 +585,7 @@ impl CheckpointManager {
 
 /// Query optimizer
 struct QueryOptimizer {
-    config: CQConfig,
+    _config: CQConfig,
     optimizations: Vec<OptimizationRule>,
 }
 
@@ -600,18 +600,19 @@ impl QueryOptimizer {
         }
 
         Self {
-            config,
+            _config: config,
             optimizations,
         }
     }
 
+    #[allow(dead_code)]
     fn optimize(&self, query: &str) -> Result<OptimizedQuery> {
         // Simplified optimization
         // In a real implementation, this would parse and optimize the query plan
         Ok(OptimizedQuery {
-            original: query.to_string(),
-            optimized: query.to_string(),
-            rules_applied: self.optimizations.clone(),
+            _original: query.to_string(),
+            _optimized: query.to_string(),
+            _rules_applied: self.optimizations.clone(),
         })
     }
 }
@@ -629,9 +630,9 @@ enum OptimizationRule {
 /// Optimized query
 #[derive(Debug, Clone)]
 struct OptimizedQuery {
-    original: String,
-    optimized: String,
-    rules_applied: Vec<OptimizationRule>,
+    _original: String,
+    _optimized: String,
+    _rules_applied: Vec<OptimizationRule>,
 }
 
 /// Continuous Query metrics

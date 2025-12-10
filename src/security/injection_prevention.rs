@@ -44,7 +44,7 @@ use std::collections::HashSet;
 use crate::{Result, DbError};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use unicode_normalization::{UnicodeNormalization, is_nfc, is_nfd, is_nfkc, is_nfkd};

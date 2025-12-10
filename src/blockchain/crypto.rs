@@ -188,7 +188,7 @@ pub struct HashChain {
     // Chain links
     links: Vec<ChainLink>,
     // Algorithm used
-    algorithm: HashAlgorithm,
+    _algorithm: HashAlgorithm,
 }
 
 impl HashChain {
@@ -196,7 +196,7 @@ impl HashChain {
     pub fn new(algorithm: HashAlgorithm) -> Self {
         Self {
             links: Vec::new(),
-            algorithm,
+            _algorithm: algorithm,
         }
     }
 

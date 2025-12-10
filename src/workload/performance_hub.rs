@@ -28,10 +28,10 @@ pub struct PerformanceHub {
     memory_analyzer: Arc<RwLock<MemoryAnalyzer>>,
 
     /// Performance trends
-    trend_tracker: Arc<RwLock<TrendTracker>>,
+    _trend_tracker: Arc<RwLock<TrendTracker>>,
 
     /// Configuration
-    config: Arc<RwLock<PerformanceHubConfig>>,
+    _config: Arc<RwLock<PerformanceHubConfig>>,
 }
 
 /// Performance Hub configuration
@@ -120,7 +120,7 @@ pub struct SqlStats {
 #[derive(Debug, Default)]
 struct SessionTracker {
     active_sessions: HashMap<u64, SessionActivity>,
-    session_history: VecDeque<SessionActivity>,
+    _session_history: VecDeque<SessionActivity>,
 }
 
 /// Session activity
@@ -238,7 +238,7 @@ pub enum IoOperation {
 struct MemoryAnalyzer {
     current_usage: MemoryUsage,
     usage_history: VecDeque<MemoryUsage>,
-    component_breakdown: HashMap<String, u64>,
+    _component_breakdown: HashMap<String, u64>,
 }
 
 /// Memory usage
@@ -329,8 +329,8 @@ impl PerformanceHub {
             wait_analyzer: Arc::new(RwLock::new(WaitEventAnalyzer::default())),
             io_analyzer: Arc::new(RwLock::new(IoAnalyzer::default())),
             memory_analyzer: Arc::new(RwLock::new(MemoryAnalyzer::default())),
-            trend_tracker: Arc::new(RwLock::new(TrendTracker::default())),
-            config: Arc::new(RwLock::new(config)),
+            _trend_tracker: Arc::new(RwLock::new(TrendTracker::default())),
+            _config: Arc::new(RwLock::new(config)),
         }
     }
 

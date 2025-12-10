@@ -363,7 +363,7 @@ impl RuntimeStatsCollector {
 
         let stats = ExecutionStats {
             execution_id,
-            plan_id,
+            _plan_id: plan_id,
             start_time: Instant::now(),
             operator_stats: HashMap::new(),
             cardinality_mismatches: vec![],
@@ -381,7 +381,7 @@ impl RuntimeStatsCollector {
         if let Some(stats) = executions.remove(&execution_id) {
             let runtime_stats = RuntimeStatistics {
                 execution_id: stats.execution_id,
-                plan_id: stats.plan_id,
+                plan_id: stats._plan_id,
                 execution_time: stats.start_time.elapsed(),
                 actual_rows: stats.operator_stats.values().map(|s| s.rows_produced).sum::<usize>().into(),
                 operator_stats: stats.operator_stats,
@@ -464,7 +464,7 @@ pub struct ExecutionId(u64);
 #[derive(Debug, Clone)]
 struct ExecutionStats {
     execution_id: ExecutionId,
-    plan_id: PlanId,
+    _plan_id: PlanId,
     start_time: Instant,
     operator_stats: HashMap<String, OperatorStats>,
     cardinality_mismatches: Vec<CardinalityMismatch>,

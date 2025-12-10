@@ -120,7 +120,7 @@ struct MemTable {
     data: BTreeMap<LsmKey, LsmValue>,
     size_bytes: usize,
     max_size: usize,
-    id: u64,
+    _id: u64,
 }
 
 impl MemTable {
@@ -129,7 +129,7 @@ impl MemTable {
             data: BTreeMap::new(),
             size_bytes: 0,
             max_size,
-            id,
+            _id: id,
         }
     }
 
@@ -239,7 +239,7 @@ impl SSTable {
 
 // Level in the LSM tree
 struct Level {
-    id: usize,
+    _id: usize,
     sstables: Vec<Arc<SSTable>>,
     max_size: usize,
     max_sstables: usize,
@@ -248,7 +248,7 @@ struct Level {
 impl Level {
     fn new(id: usize, max_size: usize) -> Self {
         Self {
-            id,
+            _id: id,
             sstables: Vec::new(),
             max_size,
             max_sstables: 10 * (id + 1), // More files allowed at higher levels
@@ -289,7 +289,7 @@ pub enum CompactionStrategy {
 struct CompactionTask {
     level: usize,
     sstables: Vec<Arc<SSTable>>,
-    strategy: CompactionStrategy,
+    _strategy: CompactionStrategy,
 }
 
 impl CompactionTask {
@@ -297,7 +297,7 @@ impl CompactionTask {
         Self {
             level,
             sstables,
-            strategy,
+            _strategy: strategy,
         }
     }
 
@@ -348,7 +348,7 @@ pub struct LsmTree {
 
     // Configuration
     memtable_size: usize,
-    num_levels: usize,
+    _num_levels: usize,
     compaction_strategy: CompactionStrategy,
 
     // Memtable ID counter
@@ -390,7 +390,7 @@ impl LsmTree {
             levels: Arc::new(RwLock::new(levels)),
             compaction_queue: Arc::new(Mutex::new(VecDeque::new())),
             memtable_size,
-            num_levels,
+            _num_levels: num_levels,
             compaction_strategy: CompactionStrategy::Leveled,
             next_memtable_id: Arc::new(AtomicU64::new(1)),
             next_sstable_id: Arc::new(AtomicU64::new(1)),

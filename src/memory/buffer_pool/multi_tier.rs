@@ -15,11 +15,11 @@ use parking_lot::{Mutex, RwLock as PRwLock};
 pub struct MultiTierBufferPool {
     config: BufferPoolConfig,
     // Hot tier frames
-    hot_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
+    _hot_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
     // Warm tier frames
-    warm_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
+    _warm_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
     // Cold tier frames
-    cold_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
+    _cold_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
     // Keep pool frames (pinned pages)
     keep_frames: Arc<Mutex<Vec<Arc<BufferFrame>>>>,
     // Recycle pool frames (sequential access)
@@ -98,9 +98,9 @@ impl MultiTierBufferPool {
 
         Self {
             config,
-            hot_frames: Arc::new(Mutex::new(hot_frames)),
-            warm_frames: Arc::new(Mutex::new(warm_frames)),
-            cold_frames: Arc::new(Mutex::new(cold_frames)),
+            _hot_frames: Arc::new(Mutex::new(hot_frames)),
+            _warm_frames: Arc::new(Mutex::new(warm_frames)),
+            _cold_frames: Arc::new(Mutex::new(cold_frames)),
             keep_frames: Arc::new(Mutex::new(keep_frames)),
             recycle_frames: Arc::new(Mutex::new(recycle_frames)),
             tablespace_pools: Arc::new(Mutex::new(HashMap::new())),
@@ -112,7 +112,7 @@ impl MultiTierBufferPool {
     }
 
     // Allocate a frame from the appropriate pool
-    pub fn allocate_frame(&self, pool_type: PoolType) -> Option<Arc<BufferFrame>> {
+    pub fn allocate_frame(&self, _pool_type: PoolType) -> Option<Arc<BufferFrame>> {
         let mut free_frames = self.free_frames.lock();
         if let Some(frame) = free_frames.pop_front() {
             self.stats.frames_allocated.fetch_add(1, Ordering::Relaxed);
@@ -267,7 +267,7 @@ impl MultiTierBufferPool {
     }
 
     // NUMA-aware frame allocation
-    pub fn allocate_numa_frame(&self, numa_node: u32) -> Option<Arc<BufferFrame>> {
+    pub fn allocate_numa_frame(&self, _numa_node: u32) -> Option<Arc<BufferFrame>> {
         if !self.config.numa_aware {
             return self.allocate_frame(PoolType::Default);
         }
@@ -294,7 +294,7 @@ impl MultiTierBufferPool {
 
                 // Scan all pages and adjust tiers
                 let table = page_table.read();
-                for (page_id, _frame) in table.iter() {
+                for (_page_id, _frame) in table.iter() {
                     // Would call promote/demote logic here
                     // Simplified for this implementation
                 }

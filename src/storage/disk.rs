@@ -36,7 +36,7 @@ struct IoOperation {
     page_id: PageId,
     priority: IoPriority,
     deadline: Option<Instant>,
-    submitted_at: Instant,
+    _submitted_at: Instant,
 }
 
 impl IoOperation {
@@ -46,7 +46,7 @@ impl IoOperation {
             page_id,
             priority,
             deadline: None,
-            submitted_at: Instant::now(),
+            _submitted_at: Instant::now(),
         }
     }
 
@@ -499,7 +499,7 @@ pub struct IoUring {
     submission_queue: VecDeque<IoUringOp>,
     completion_queue: VecDeque<(u64, Result<usize>)>,
     max_queue_depth: usize,
-    polling_mode: bool,
+    _polling_mode: bool,
 }
 
 impl IoUring {
@@ -508,7 +508,7 @@ impl IoUring {
             submission_queue: VecDeque::with_capacity(queue_depth),
             completion_queue: VecDeque::with_capacity(queue_depth),
             max_queue_depth: queue_depth,
-            polling_mode,
+            _polling_mode: polling_mode,
         }
     }
 
@@ -574,7 +574,7 @@ pub struct DiskManager {
 
 #[repr(C)]
 #[derive(Debug, Clone, Default)]
-struct DiskStats {
+pub struct DiskStats {
     reads: u64,
     writes: u64,
     read_bytes: u64,
@@ -789,10 +789,10 @@ impl DiskManager {
         *num_pages += 1;
 
         // Write empty page
-        let page = Page::new(page_id as PageId as PageId, self.page_size);
+        let page = Page::new(page_id, self.page_size);
         self.write_page(&page)?;
 
-        Ok(page_id as PageId as PageId)
+        Ok(page_id)
     }
 
     pub fn get_num_pages(&self) -> u32 {

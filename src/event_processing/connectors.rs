@@ -3,7 +3,7 @@
 // Implements various connectors for streaming data including Kafka-compatible protocol,
 // JDBC/Database sink, file sink (JSON, Parquet), HTTP webhook, and custom connectors.
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::SystemTime;
 use std::sync::Mutex;
 use super::{Event, EventBatch, EventValue, StreamPosition};
 use crate::error::Result;
@@ -272,10 +272,10 @@ impl SinkConnector for KafkaSinkConnector {
 /// JDBC/Database sink connector
 pub struct JdbcSinkConnector {
     config: ConnectorConfig,
-    connection_url: String,
+    _connection_url: String,
     table_name: String,
     buffer: Vec<Event>,
-    batch_insert: bool,
+    _batch_insert: bool,
 }
 
 impl JdbcSinkConnector {
@@ -292,10 +292,10 @@ impl JdbcSinkConnector {
 
         Self {
             config,
-            connection_url: connection_url.into(),
+            _connection_url: connection_url.into(),
             table_name: table_name.into(),
             buffer: Vec::new(),
-            batch_insert,
+            _batch_insert: batch_insert,
         }
     }
 
@@ -593,9 +593,9 @@ impl SinkConnector for FileSinkConnector {
 pub struct HttpWebhookConnector {
     config: ConnectorConfig,
     endpoint_url: String,
-    headers: HashMap<String, String>,
+    _headers: HashMap<String, String>,
     buffer: Vec<Event>,
-    timeout: Duration,
+    _timeout: Duration,
 }
 
 impl HttpWebhookConnector {
@@ -621,9 +621,9 @@ impl HttpWebhookConnector {
         Self {
             config,
             endpoint_url: endpoint_url.into(),
-            headers,
+            _headers: headers,
             buffer: Vec::new(),
-            timeout,
+            _timeout: timeout,
         }
     }
 

@@ -68,7 +68,7 @@ impl DebugStats {
 
 // Per-component memory statistics
 #[derive(Debug, Clone)]
-struct ComponentMemoryStats {
+pub struct ComponentMemoryStats {
     allocations: u64,
     deallocations: u64,
     bytes_allocated: u64,

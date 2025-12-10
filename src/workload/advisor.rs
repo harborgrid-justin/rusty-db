@@ -24,7 +24,7 @@ pub struct DiagnosticAdvisor {
     baselines: Arc<RwLock<HashMap<String, PerformanceBaseline>>>,
 
     // Configuration
-    config: Arc<RwLock<AdvisorConfig>>,
+    _config: Arc<RwLock<AdvisorConfig>>,
 
     // Next analysis ID
     next_analysis_id: Arc<RwLock<AnalysisId>>,
@@ -280,7 +280,7 @@ impl DiagnosticAdvisor {
             findings: Arc::new(RwLock::new(HashMap::new())),
             recommendations: Arc::new(RwLock::new(HashMap::new())),
             baselines: Arc::new(RwLock::new(HashMap::new())),
-            config: Arc::new(RwLock::new(config)),
+            _config: Arc::new(RwLock::new(config)),
             next_analysis_id: Arc::new(RwLock::new(1)),
         }
     }

@@ -25,7 +25,7 @@ pub struct SqlTuningAdvisor {
     config: Arc<RwLock<TuningConfig>>,
 
     // Statistics for plan costing
-    statistics: Arc<RwLock<OptimizerStatistics>>,
+    _statistics: Arc<RwLock<OptimizerStatistics>>,
 
     // Next task ID
     next_task_id: Arc<RwLock<TaskId>>,
@@ -246,9 +246,9 @@ pub enum ProfileStatus {
 // Optimizer statistics for cost estimation
 #[derive(Debug, Default)]
 pub struct OptimizerStatistics {
-    table_stats: HashMap<String, TableStatistics>,
-    index_stats: HashMap<String, IndexStatistics>,
-    column_stats: HashMap<String, ColumnStatistics>,
+    _table_stats: HashMap<String, TableStatistics>,
+    _index_stats: HashMap<String, IndexStatistics>,
+    _column_stats: HashMap<String, ColumnStatistics>,
 }
 
 // Table statistics
@@ -394,7 +394,7 @@ impl SqlTuningAdvisor {
             profiles: Arc::new(RwLock::new(HashMap::new())),
             recommendations: Arc::new(RwLock::new(HashMap::new())),
             config: Arc::new(RwLock::new(config)),
-            statistics: Arc::new(RwLock::new(OptimizerStatistics::default())),
+            _statistics: Arc::new(RwLock::new(OptimizerStatistics::default())),
             next_task_id: Arc::new(RwLock::new(1)),
         }
     }

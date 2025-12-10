@@ -17,7 +17,7 @@
 use std::collections::VecDeque;
 use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -389,16 +389,16 @@ impl ThreatScorer {
     }
 
     // Calculate data volume risk (0-25 points)
-    pub fn calculate_volume_risk(&self, estimatedrows: u64) -> (u8, Vec<String>) {
+    pub fn calculate_volume_risk(&self, estimated_rows: u64) -> (u8, Vec<String>) {
         let mut score = 0u8;
         let mut factors = Vec::new();
 
-        if estimatedrows > 10000 {
+        if estimated_rows > 10000 {
             score += 15;
-            factors.push(format!("Large result set (>{} rows)", estimatedrows));
-        } else if estimatedrows > 1000 {
+            factors.push(format!("Large result set (>{} rows)", estimated_rows));
+        } else if estimated_rows > 1000 {
             score += 10;
-            factors.push(format!("Medium result set ({} rows)", estimatedrows));
+            factors.push(format!("Medium result set ({} rows)", estimated_rows));
         }
 
         // Check for LIMIT clause absence
@@ -668,7 +668,7 @@ impl BehaviorAnalyzer {
 
         // Calculate statistics
         let mut row_sizes: Vec<u64> = Vec::new();
-        let session_durations: Vec<f64> = Vec::new();
+        let _session_durations: Vec<f64> = Vec::new();
 
         for entry in user_history.iter() {
             // Pattern frequency
@@ -988,12 +988,12 @@ pub struct ForensicLogger {
 }
 
 impl ForensicLogger {
-    pub fn new(maxrecords: usize) -> Self {
+    pub fn new(max_records: usize) -> Self {
         Self {
             records: Arc::new(RwLock::new(VecDeque::new())),
             id_counter: Arc::new(RwLock::new(0)),
             previous_hash: Arc::new(RwLock::new(String::from("0"))),
-            max_records: maxrecords,
+            max_records,
         }
     }
 

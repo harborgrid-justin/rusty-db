@@ -94,18 +94,21 @@ impl WaitStatistics {
     }
 
     // Record free buffer wait
+    #[allow(dead_code)]
     pub fn record_free_buffer_wait(&self, duration: Duration) {
         self.free_buffer_waits.fetch_add(1, Ordering::Relaxed);
         self.free_buffer_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
     }
 
     // Record buffer lock wait
+    #[allow(dead_code)]
     pub fn record_buffer_lock_wait(&self, duration: Duration) {
         self.buffer_lock_waits.fetch_add(1, Ordering::Relaxed);
         self.buffer_lock_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
     }
 
     // Record I/O wait
+    #[allow(dead_code)]
     pub fn record_io_wait(&self, duration: Duration) {
         self.io_waits.fetch_add(1, Ordering::Relaxed);
         self.io_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
@@ -158,6 +161,7 @@ impl BusyWaitStatistics {
     }
 
     // Record busy wait
+    #[allow(dead_code)]
     pub fn record_wait(&self, page_type: PageType, tablespace_id: u32, duration: Duration) {
         self.total_waits.fetch_add(1, Ordering::Relaxed);
         self.total_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
@@ -226,7 +230,7 @@ pub struct MemoryPressureMonitor {
     // Pressure events
     pressure_events: AtomicU64,
     // Last pressure check
-    last_check: Mutex<Instant>,
+    _last_check: Mutex<Instant>,
 }
 
 impl MemoryPressureMonitor {
@@ -236,11 +240,12 @@ impl MemoryPressureMonitor {
             peak_usage: AtomicU64::new(0),
             limit: AtomicU64::new(limit),
             pressure_events: AtomicU64::new(0),
-            last_check: Mutex::new(Instant::now()),
+            _last_check: Mutex::new(Instant::now()),
         }
     }
 
     // Update memory usage
+    #[allow(dead_code)]
     pub fn update_usage(&self, usage: u64) {
         self.current_usage.store(usage, Ordering::Relaxed);
 
@@ -263,7 +268,7 @@ impl MemoryPressureMonitor {
             self.pressure_events.fetch_add(1, Ordering::Relaxed);
         }
 
-        *self.last_check.lock() = Instant::now();
+        *self._last_check.lock() = Instant::now();
     }
 
     // Check if under memory pressure
@@ -307,26 +312,27 @@ pub struct MemoryPressureSnapshot {
 #[derive(Debug)]
 pub struct RealtimeMetrics {
     // Metrics update interval
-    interval: Duration,
+    _interval: Duration,
     // Current metrics
     current: Mutex<MetricsSnapshot>,
     // Last update time
-    last_update: Mutex<Instant>,
+    _last_update: Mutex<Instant>,
 }
 
 impl RealtimeMetrics {
     pub fn new(interval_secs: u64) -> Self {
         Self {
-            interval: Duration::from_secs(interval_secs),
+            _interval: Duration::from_secs(interval_secs),
             current: Mutex::new(MetricsSnapshot::default()),
-            last_update: Mutex::new(Instant::now()),
+            _last_update: Mutex::new(Instant::now()),
         }
     }
 
     // Update metrics
+    #[allow(dead_code)]
     pub fn update(&self, snapshot: MetricsSnapshot) {
         *self.current.lock() = snapshot;
-        *self.last_update.lock() = Instant::now();
+        *self._last_update.lock() = Instant::now();
     }
 
     // Get current metrics
@@ -335,8 +341,9 @@ impl RealtimeMetrics {
     }
 
     // Check if metrics are stale
+    #[allow(dead_code)]
     pub fn is_stale(&self) -> bool {
-        self.last_update.lock().elapsed() > self.interval * 2
+        self._last_update.lock().elapsed() > self._interval * 2
     }
 }
 

@@ -1,7 +1,6 @@
 // Resource isolation mechanisms for multi-tenant environments
 // Implements memory, I/O, CPU, and network isolation using Rust ownership and resource governors
 
-use tokio::time::sleep;
 use std::fmt;
 use std::collections::VecDeque;
 use std::time::Duration;
@@ -916,7 +915,7 @@ mod tests {
         assert!(result.is_ok());
 
         let _allocation = scheduler.calculate_allocation("tenant1").await;
-        assert!(allocation.is_some());
+        assert!(_allocation.is_some());
     }
 
     #[tokio::test]

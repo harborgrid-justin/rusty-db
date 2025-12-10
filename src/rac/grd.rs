@@ -225,10 +225,10 @@ struct HashBucket {
     resources: HashMap<ResourceId, ResourceEntry>,
 
     // Total access count for bucket
-    total_accesses: u64,
+    _total_accesses: u64,
 
     // Last rebalance timestamp
-    last_rebalance: Instant,
+    _last_rebalance: Instant,
 }
 
 impl HashBucket {
@@ -237,8 +237,8 @@ impl HashBucket {
             bucket_id,
             master_instance,
             resources: HashMap::new(),
-            total_accesses: 0,
-            last_rebalance: Instant::now(),
+            _total_accesses: 0,
+            _last_rebalance: Instant::now(),
         }
     }
 }
@@ -269,17 +269,17 @@ pub struct GlobalResourceDirectory {
 
     // Message channel for remastering coordination
     message_tx: mpsc::UnboundedSender<GrdMessage>,
-    message_rx: Arc<tokio::sync::Mutex<mpsc::UnboundedReceiver<GrdMessage>>>,
+    _message_rx: Arc<tokio::sync::Mutex<mpsc::UnboundedReceiver<GrdMessage>>>,
 }
 
 // Remaster request
 #[derive(Debug, Clone)]
 struct RemasterRequest {
     resource_id: ResourceId,
-    old_master: NodeId,
+    _old_master: NodeId,
     new_master: NodeId,
     reason: RemasterReason,
-    initiated_at: Instant,
+    _initiated_at: Instant,
 }
 
 // Reason for remastering
@@ -460,7 +460,7 @@ impl GlobalResourceDirectory {
                 ..Default::default()
             })),
             message_tx,
-            message_rx: Arc::new(tokio::sync::Mutex::new(message_rx)),
+            _message_rx: Arc::new(tokio::sync::Mutex::new(message_rx)),
         }
     }
 
@@ -555,7 +555,7 @@ impl GlobalResourceDirectory {
             // Update access pattern
             entry.access_stats.pattern = self.classify_access_pattern(&entry.access_stats);
 
-            bucket.total_accesses += 1;
+            bucket._total_accesses += 1;
 
             // Check if remastering is needed
             if self.config.auto_remaster && self.should_remaster(entry) {
@@ -628,10 +628,10 @@ impl GlobalResourceDirectory {
 
             let request = RemasterRequest {
                 resource_id: resource_id.clone(),
-                old_master: entry.master_instance.clone(),
+                _old_master: entry.master_instance.clone(),
                 new_master,
                 reason,
-                initiated_at: Instant::now(),
+                _initiated_at: Instant::now(),
             };
 
             self.remaster_queue.write().push_back(request);
@@ -789,7 +789,7 @@ impl GlobalResourceDirectory {
                     let old_master = bucket.master_instance.clone();
                     // Migrate bucket
                     bucket.master_instance = target.clone();
-                    bucket.last_rebalance = Instant::now();
+                    bucket._last_rebalance = Instant::now();
 
                     // Update counts for next iteration
                     if let Some(count) = resource_counts.get_mut(&old_master) {

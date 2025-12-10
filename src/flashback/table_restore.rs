@@ -225,10 +225,10 @@ impl TableRestoreManager {
     /// Create a restore point
     pub fn create_restore_point(&self, name: String, scn: SCN) -> Result<()> {
         let restore_point = RestorePoint {
-            name: name.clone(),
+            _name: name.clone(),
             scn,
-            timestamp: SystemTime::now(),
-            guaranteed: false,
+            _timestamp: SystemTime::now(),
+            _guaranteed: false,
         };
 
         let mut restore_points = self.restore_points.write().unwrap();
@@ -240,10 +240,10 @@ impl TableRestoreManager {
     /// Create a guaranteed restore point (never purged)
     pub fn create_guaranteed_restore_point(&self, name: String, scn: SCN) -> Result<()> {
         let restore_point = RestorePoint {
-            name: name.clone(),
+            _name: name.clone(),
             scn,
-            timestamp: SystemTime::now(),
-            guaranteed: true,
+            _timestamp: SystemTime::now(),
+            _guaranteed: true,
         };
 
         let mut restore_points = self.restore_points.write().unwrap();
@@ -302,7 +302,7 @@ impl TableRestoreManager {
             table_id,
             scn: target_scn,
             rows,
-            indexes: HashMap::new(),
+            _indexes: HashMap::new(),
         })
     }
 
@@ -372,8 +372,8 @@ impl TableRestoreManager {
     ) -> Result<PartitionState> {
         // Reconstruct state for a specific partition
         Ok(PartitionState {
-            partition_id,
-            rows: HashMap::new(),
+            _partition_id: partition_id,
+            _rows: HashMap::new(),
         })
     }
 
@@ -428,13 +428,13 @@ impl RecycleBin {
         let recycle_name = format!("BIN${}$", self.sequence);
 
         let dropped_table = DroppedTable {
-            table_id,
+            _table_id: table_id,
             original_name: original_name.clone(),
             recycle_name: recycle_name.clone(),
-            schema,
-            drop_time: SystemTime::now(),
-            drop_scn: 0, // Would be set from current SCN
-            space_used: 0, // Would be calculated
+            _schema: schema,
+            _drop_time: SystemTime::now(),
+            _drop_scn: 0, // Would be set from current SCN
+            _space_used: 0, // Would be calculated
         };
 
         self.tables.insert(recycle_name.clone(), dropped_table);
@@ -496,11 +496,7 @@ impl RecycleBin {
     }
 
     /// Reserved for flashback API
-
-
     #[allow(dead_code)]
-
-
     fn list_tables(&self) -> Vec<&DroppedTable> {
         self.tables.values().collect()
     }
@@ -509,13 +505,13 @@ impl RecycleBin {
 /// Dropped table in recycle bin
 #[derive(Debug, Clone)]
 struct DroppedTable {
-    table_id: TableId,
+    _table_id: TableId,
     original_name: String,
     recycle_name: String,
-    schema: Schema,
-    drop_time: SystemTime,
-    drop_scn: SCN,
-    space_used: usize,
+    _schema: Schema,
+    _drop_time: SystemTime,
+    _drop_scn: SCN,
+    _space_used: usize,
 }
 
 // ============================================================================
@@ -525,10 +521,10 @@ struct DroppedTable {
 /// Named point in time for flashback
 #[derive(Debug, Clone)]
 struct RestorePoint {
-    name: String,
+    _name: String,
     scn: SCN,
-    timestamp: SystemTime,
-    guaranteed: bool,
+    _timestamp: SystemTime,
+    _guaranteed: bool,
 }
 
 // ============================================================================
@@ -540,17 +536,17 @@ struct TableState {
     table_id: TableId,
     scn: SCN,
     rows: HashMap<RowId, Vec<Value>>,
-    indexes: HashMap<IndexId, IndexState>,
+    _indexes: HashMap<IndexId, IndexState>,
 }
 
 struct IndexState {
-    index_id: IndexId,
-    entries: Vec<IndexEntry>,
+    _index_id: IndexId,
+    _entries: Vec<IndexEntry>,
 }
 
 struct IndexEntry {
-    key: Vec<Value>,
-    row_id: RowId,
+    _key: Vec<Value>,
+    _row_id: RowId,
 }
 
 // ============================================================================
@@ -558,8 +554,8 @@ struct IndexEntry {
 // ============================================================================
 
 struct PartitionState {
-    partition_id: u32,
-    rows: HashMap<RowId, Vec<Value>>,
+    _partition_id: u32,
+    _rows: HashMap<RowId, Vec<Value>>,
 }
 
 // ============================================================================
