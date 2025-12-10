@@ -42,7 +42,6 @@
 // }
 // ```
 
-use tokio::time::sleep;
 use std::fmt;
 use std::time::Instant;
 use std::sync::Mutex;

@@ -6,19 +6,16 @@
 // - Statement and cursor caching
 // - Connection guard implementation
 
-use tokio::time::sleep;
-use std::time::SystemTime;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Instant;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::Duration;
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use tokio::sync::Semaphore;
 use tokio::time::timeout;
-use async_trait::async_trait;
 use serde::{Serialize, Deserialize};
 use thiserror::Error;
 use crate::error::{Result, DbError};
@@ -262,6 +259,7 @@ pub(crate) enum ConnectionState {
 }
 
 // Internal connection wrapper with metadata
+#[allow(dead_code)]
 pub(crate) struct PooledConnection<C> {
     // The actual connection
     pub(crate) connection: C,
@@ -345,6 +343,7 @@ impl<C> PooledConnection<C> {
 }
 
 // Statement cache for prepared statements
+#[allow(dead_code)]
 pub(crate) struct StatementCache {
     pub(crate) cache: HashMap<String, CachedStatement>,
     pub(crate) max_size: usize,
@@ -398,6 +397,7 @@ impl StatementCache {
 
 // Cached prepared statement
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub(crate) struct CachedStatement {
     pub(crate) id: u64,
     pub(crate) sql: String,
@@ -407,6 +407,7 @@ pub(crate) struct CachedStatement {
 }
 
 // Cursor cache for open cursors
+#[allow(dead_code)]
 pub(crate) struct CursorCache {
     pub(crate) cache: HashMap<String, CachedCursor>,
     pub(crate) max_size: usize,
@@ -436,6 +437,7 @@ impl CursorCache {
 
 // Cached cursor
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub(crate) struct CachedCursor {
     pub(crate) id: u64,
     pub(crate) query: String,
@@ -444,6 +446,7 @@ pub(crate) struct CachedCursor {
 
 // Connection-specific metrics
 #[derive(Debug, Default, Clone)]
+#[allow(dead_code)]
 pub(crate) struct ConnectionMetrics {
     pub(crate) queries_executed: u64,
     pub(crate) transactions_committed: u64,
@@ -835,6 +838,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
 }
 
 // Handle for returning connections to pool
+#[allow(dead_code)]
 pub(crate) struct PoolHandle<C> {
     pub(crate) idle: Arc<Mutex<VecDeque<PooledConnection<C>>>>,
     pub(crate) active: Arc<RwLock<HashMap<u64, Instant>>>,

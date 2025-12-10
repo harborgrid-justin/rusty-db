@@ -21,7 +21,6 @@
 // - Exporters: Send data to billing systems
 // - Enforcers: Apply quota limits
 
-use tokio::time::sleep;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -168,9 +167,13 @@ impl MeteringEngine {
 
 #[derive(Debug, Clone)]
 struct MeteringJob {
+    #[allow(dead_code)]
     tenant_id: TenantId,
+    #[allow(dead_code)]
     started_at: u64,
+    #[allow(dead_code)]
     collection_interval_secs: u64,
+    #[allow(dead_code)]
     last_collection_at: u64,
 }
 
@@ -244,6 +247,7 @@ impl ResourceUsageTracker {
     }
 
     // Get usage history
+    #[allow(private_interfaces)]
     pub async fn get_history(
         &self,
         tenant_id: TenantId,
@@ -613,6 +617,7 @@ impl BillingIntegration {
     }
 
     // Update pricing configuration
+    #[allow(private_interfaces)]
     pub async fn update_pricing(&self, pricing: PricingConfig) {
         *self.pricing.write().await = pricing;
     }

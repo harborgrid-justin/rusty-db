@@ -1,7 +1,6 @@
 // Snapshot configuration types
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 

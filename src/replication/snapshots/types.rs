@@ -141,6 +141,7 @@ pub enum ChecksumAlgorithm {
 }
 
 // Snapshot creation progress information
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapshotProgress {
     // Snapshot being created
@@ -211,6 +212,7 @@ impl Default for RestoreOptions {
 }
 
 // Snapshot statistics
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapshotStatistics {
     // Total number of snapshots
@@ -236,6 +238,7 @@ pub struct SnapshotStatistics {
 }
 
 // Storage efficiency metrics
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StorageEfficiency {
     // Deduplication ratio

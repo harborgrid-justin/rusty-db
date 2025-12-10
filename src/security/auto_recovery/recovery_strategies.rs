@@ -2,17 +2,14 @@
 //
 // Core failure detection and recovery strategy components for the auto-recovery system.
 
-use tokio::time::sleep;
-use std::collections::HashSet;
-use std::time::SystemTime;
 use crate::{Result, DbError};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex as StdMutex;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 use parking_lot::RwLock;
+use tokio::time::sleep;
 
 // ============================================================================
 // Recovery Types and Enums

@@ -144,7 +144,7 @@ impl SharedServices {
 
     /// Apply lockdown profile to PDB
     pub async fn apply_lockdown(&self, pdb_id: PdbId, profile_name: &str) -> Result<()> {
-        let profile = self
+        let _profile = self
             .get_lockdown_profile(profile_name)
             .await
             .ok_or_else(|| DbError::NotFound(format!("Lockdown profile {} not found", profile_name)))?;
@@ -175,7 +175,9 @@ pub struct UndoTablespace {
 struct UndoUsage {
     used_bytes: u64,
     free_bytes: u64,
+    #[allow(dead_code)]
     active_transactions: u32,
+    #[allow(dead_code)]
     retention_secs: u64,
 }
 

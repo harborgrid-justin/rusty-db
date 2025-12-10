@@ -5,7 +5,7 @@
 use async_graphql::{Enum, Result as GqlResult, SimpleObject, ID};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tokio::sync::RwLock;
 use crate::api::GraphQLEngine;
 use crate::error::DbError;

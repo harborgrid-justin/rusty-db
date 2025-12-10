@@ -180,7 +180,6 @@ impl Default for ViewManager {
 
 #[cfg(test)]
 mod tests {
-    use crate::api::ColumnType;
     use super::*;
     use crate::catalog::{Schema, Column, ColumnType};
 

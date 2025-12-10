@@ -23,7 +23,7 @@ use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::error::Result;
 use super::document::{Document, DocumentId};
-use super::jsonpath::{JsonPath, JsonPathEvaluator};
+use super::jsonpath::JsonPathEvaluator;
 
 // Index type enumeration
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -643,6 +643,7 @@ impl FullTextIndex {
 // TTL index for automatic document expiration
 pub struct TTLIndex {
     // Index definition
+    #[allow(dead_code)]
     definition: IndexDefinition,
     // Expiration times (document ID -> expiration timestamp)
     expiration_times: BTreeMap<DocumentId, u64>,
@@ -732,7 +733,7 @@ impl IndexManager {
                 Index::TTL(TTLIndex::new(definition.clone()))
             }
             IndexType::Geospatial => {
-                return Err(crate::error::DbError::NotSupported(
+                return Err(crate::error::DbError::not_supported(
                     "Geospatial indexes not yet implemented".to_string()
                 ));
             }

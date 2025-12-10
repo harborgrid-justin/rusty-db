@@ -3,7 +3,6 @@
 // Logical replication using CDC for table-level replication with transformations,
 // conflict detection and resolution, bidirectional replication, and monitoring.
 
-use tokio::time::sleep;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -13,10 +12,10 @@ use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Instant, SystemTime};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc};
+use crate::common::Value;
 use tokio::time::interval;
 use crate::error::{DbError, Result};
-use crate::common::{TransactionId, TableId, Value};
+use crate::common::{TableId};
 use super::cdc::{ChangeEvent, ChangeType, CDCEngine};
 use super::publisher::EventPublisher;
 use super::subscriber::EventSubscriber;
@@ -292,12 +291,15 @@ pub struct LogicalReplication {
     // CDC engine
     cdc_engine: Arc<CDCEngine>,
     // Event publisher (for sending changes)
+    #[allow(dead_code)]
     publisher: Option<Arc<EventPublisher>>,
     // Event subscriber (for receiving changes)
+    #[allow(dead_code)]
     subscriber: Option<Arc<EventSubscriber>>,
     // Detected conflicts
     conflicts: Arc<Mutex<VecDeque<ReplicationConflict>>>,
     // Next conflict ID
+    #[allow(dead_code)]
     next_conflict_id: Arc<AtomicU64>,
     // Statistics
     stats: Arc<RwLock<ReplicationStats>>,
@@ -625,8 +627,8 @@ impl LogicalReplication {
                 }
 
                 let mut conflicts_lock = conflicts.lock().unwrap();
-                if let Some(mut conflict) = conflicts_lock.pop_front() {
-                    if !conflict.resolved {
+                if let Some(_conflict) = conflicts_lock.pop_front() {
+                    if !_conflict.resolved {
                         // Attempt auto-resolution
                         stats.write().conflicts_detected += 1;
                         // Resolution logic would go here

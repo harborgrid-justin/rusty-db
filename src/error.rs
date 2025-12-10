@@ -178,8 +178,8 @@ pub enum DbError {
 }
 
 impl DbError {
-    pub(crate) fn NotSupported(p0: String) -> DbError {
-        todo!()
+    pub(crate) fn not_supported(p0: String) -> DbError {
+        DbError::NotImplemented(p0)
     }
 }
 

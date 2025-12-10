@@ -197,11 +197,11 @@ impl ConstraintManager {
         Ok(actions)
     }
 
-    pub fn validate_unique(&self, table: &str, values: &HashMap<String, String>) -> Result<()> {
+    pub fn validate_unique(&self, table: &str, _values: &HashMap<String, String>) -> Result<()> {
         let constraints = self.unique_constraints.read();
 
         if let Some(unique_constraints) = constraints.get(table) {
-            for constraint in unique_constraints {
+            for _constraint in unique_constraints {
                 // Validate uniqueness
                 // In production, this would check existing data
             }
@@ -210,11 +210,11 @@ impl ConstraintManager {
         Ok(())
     }
 
-    pub fn validate_check(&self, table: &str, values: &HashMap<String, String>) -> Result<()> {
+    pub fn validate_check(&self, table: &str, _values: &HashMap<String, String>) -> Result<()> {
         let constraints = self.check_constraints.read();
 
         if let Some(check_constraints) = constraints.get(table) {
-            for constraint in check_constraints {
+            for _constraint in check_constraints {
                 // Evaluate check expression
                 // In production, this would parse and evaluate the expression
             }

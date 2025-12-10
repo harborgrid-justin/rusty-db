@@ -395,6 +395,7 @@ pub struct BatchPredictor {
     // Batch size for prediction
     batch_size: usize,
     // Enable parallel processing
+    #[allow(dead_code)]
     parallel: bool,
 }
 
@@ -506,6 +507,7 @@ pub struct InferenceEngine {
 
 // Prediction log entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 struct PredictionLog {
     model_name: String,
     model_version: ModelVersion,
@@ -685,6 +687,7 @@ impl InferenceEngine {
     }
 
     // Get prediction logs
+    #[allow(dead_code)]
     pub fn get_logs(&self) -> Vec<PredictionLog> {
         self.prediction_logs.lock().clone()
     }

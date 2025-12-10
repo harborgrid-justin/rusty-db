@@ -106,8 +106,8 @@ impl L1Cache {
     fn get(&mut self, key: &str) -> Option<QueryResult> {
         if let Some(entry) = self.cache.get_mut(key) {
             if !entry.is_expired() {
-                entry.access_count += 1;
-                entry.last_accessed = Instant::now();
+                entry._access_count += 1;
+                entry._last_accessed = Instant::now();
 
                 // Move to front of LRU queue
                 self.lru_queue.retain(|k| k != key);
@@ -134,8 +134,8 @@ impl L1Cache {
         let entry = CacheEntry {
             value,
             inserted_at: Instant::now(),
-            last_accessed: Instant::now(),
-            access_count: 0,
+            _last_accessed: Instant::now(),
+            _access_count: 0,
             ttl: Duration::from_secs(300), // 5 minutes
         };
 
@@ -166,8 +166,8 @@ impl L2Cache {
     fn get(&mut self, key: &str) -> Option<QueryResult> {
         if let Some(entry) = self.cache.get_mut(key) {
             if !entry.is_expired() {
-                entry.access_count += 1;
-                entry.last_accessed = Instant::now();
+                entry._access_count += 1;
+                entry._last_accessed = Instant::now();
                 return Some(entry.value.clone());
             } else {
                 self.cache.remove(key);
@@ -187,8 +187,8 @@ impl L2Cache {
         let entry = CacheEntry {
             value,
             inserted_at: Instant::now(),
-            last_accessed: Instant::now(),
-            access_count: 0,
+            _last_accessed: Instant::now(),
+            _access_count: 0,
             ttl: Duration::from_secs(600), // 10 minutes
         };
 
@@ -198,7 +198,7 @@ impl L2Cache {
     fn find_lfu_key(&self) -> Option<String> {
         self.cache
             .iter()
-            .min_by_key(|(_, entry)| entry.access_count)
+            .min_by_key(|(_, entry)| entry._access_count)
             .map(|(key, _)| key.clone())
     }
 
@@ -226,8 +226,8 @@ impl L3Cache {
     fn get(&mut self, key: &str) -> Option<QueryResult> {
         if let Some(entry) = self.cache.get_mut(key) {
             if !entry.is_expired() {
-                entry.access_count += 1;
-                entry.last_accessed = Instant::now();
+                entry._access_count += 1;
+                entry._last_accessed = Instant::now();
                 return Some(entry.value.clone());
             } else {
                 self.cache.remove(key);
@@ -248,8 +248,8 @@ impl L3Cache {
         let entry = CacheEntry {
             value,
             inserted_at: Instant::now(),
-            last_accessed: Instant::now(),
-            access_count: 0,
+            _last_accessed: Instant::now(),
+            _access_count: 0,
             ttl: Duration::from_secs(1800), // 30 minutes
         };
 
@@ -268,8 +268,8 @@ impl L3Cache {
 struct CacheEntry {
     value: QueryResult,
     inserted_at: Instant,
-    last_accessed: Instant,
-    access_count: u64,
+    _last_accessed: Instant,
+    _access_count: u64,
     ttl: Duration,
 }
 
@@ -359,10 +359,10 @@ impl DependencyAwareCache {
         self.cache.write().insert(
             query_hash.clone(),
             CachedQuery {
-                query: query.clone(),
+                _query: query.clone(),
                 result,
-                tables: tables.clone(),
-                cached_at: SystemTime::now(),
+                _tables: tables.clone(),
+                _cached_at: SystemTime::now(),
             },
         );
 
@@ -400,10 +400,10 @@ impl DependencyAwareCache {
 
 // Cached query with metadata
 struct CachedQuery {
-    query: String,
+    _query: String,
     result: QueryResult,
-    tables: Vec<String>,
-    cached_at: SystemTime,
+    _tables: Vec<String>,
+    _cached_at: SystemTime,
 }
 
 // Cache warming strategy
@@ -422,15 +422,15 @@ impl CacheWarmer {
 
     // Register query for cache warming
     pub fn register_warming_query(&mut self, query: String, schedule: WarmingSchedule) {
-        self.warming_queries.push(WarmingQuery { query, schedule });
+        self.warming_queries.push(WarmingQuery { _query: query, _schedule: schedule });
     }
 
     // Execute cache warming
     pub async fn warm_cache(&self) -> Result<()> {
-        for warming_query in &self.warming_queries {
+        for _warming_query in &self.warming_queries {
             // In real implementation, would execute query
             // and cache the result
-            let query = &warming_query.query;
+            // let query = &warming_query._query;
             // let result = executor.execute(query).await?;
             // self.cache.put(query.clone(), result);
         }
@@ -440,8 +440,8 @@ impl CacheWarmer {
 
 // Warming query configuration
 struct WarmingQuery {
-    query: String,
-    schedule: WarmingSchedule,
+    _query: String,
+    _schedule: WarmingSchedule,
 }
 
 // Cache warming schedule
@@ -475,7 +475,7 @@ impl AdaptiveCachePolicy {
 
         self.access_history.push_back(AccessRecord {
             key,
-            hit,
+            _hit: hit,
             timestamp: Instant::now(),
         });
     }
@@ -523,7 +523,7 @@ impl AdaptiveCachePolicy {
 // Access record for adaptive policy
 struct AccessRecord {
     key: String,
-    hit: bool,
+    _hit: bool,
     timestamp: Instant,
 }
 
@@ -728,11 +728,11 @@ impl SemanticQueryCache {
 
         let cached_result = CachedQueryResult {
             result: result.clone(),
-            query: query.to_string(),
-            normalized_query: normalized.clone(),
-            cached_at: SystemTime::now(),
-            access_count: 0,
-            size_bytes: self.estimate_size(&result),
+            _query: query.to_string(),
+            _normalized_query: normalized.clone(),
+            _cached_at: SystemTime::now(),
+            _access_count: 0,
+            _size_bytes: self.estimate_size(&result),
         };
 
         self.cache.write().insert(normalized, cached_result);
@@ -779,11 +779,11 @@ impl SemanticQueryCache {
 // Cached query result with metadata
 struct CachedQueryResult {
     result: QueryResult,
-    query: String,
-    normalized_query: String,
-    cached_at: SystemTime,
-    access_count: u64,
-    size_bytes: usize,
+    _query: String,
+    _normalized_query: String,
+    _cached_at: SystemTime,
+    _access_count: u64,
+    _size_bytes: usize,
 }
 
 // Query normalizer for semantic equivalence

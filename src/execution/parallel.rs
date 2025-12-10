@@ -96,7 +96,7 @@ impl ParallelExecutor {
     }
 
     async fn scan_chunk(
-        table: &str,
+        _table: &str,
         columns: &[String],
         _chunk_id: usize,
         _chunk_size: usize,

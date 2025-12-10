@@ -3,7 +3,6 @@
 // Kafka-like event publishing with topics, partitions, ordering guarantees,
 // acknowledgments, and backpressure management.
 
-use tokio::time::sleep;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -14,8 +13,7 @@ use std::time::{Instant, SystemTime};
 use std::hash::{Hash, Hasher};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc, Semaphore};
-use tokio::time::interval;
+use tokio::sync::{Semaphore};
 use crate::error::{DbError, Result};
 
 // Event serialization format
@@ -161,9 +159,11 @@ pub struct PublishAck {
 // Partition state
 #[derive(Debug)]
 struct PartitionState {
+    #[allow(dead_code)]
     partition_id: u32,
     next_offset: AtomicU64,
     event_queue: Mutex<VecDeque<PublishedEvent>>,
+    #[allow(dead_code)]
     high_watermark: AtomicU64,
 }
 
@@ -205,6 +205,7 @@ impl PartitionState {
 struct Topic {
     config: TopicConfig,
     partitions: Vec<Arc<PartitionState>>,
+    #[allow(dead_code)]
     created_at: SystemTime,
     total_events: AtomicU64,
     total_bytes: AtomicU64,

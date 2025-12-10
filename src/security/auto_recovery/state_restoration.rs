@@ -2,17 +2,15 @@
 //
 // Health monitoring, self-healing, and state restoration components.
 
-use tokio::time::sleep;
 use std::collections::VecDeque;
-use std::time::SystemTime;
-use crate::{Result, DbError};
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex as StdMutex;
-use std::time::{Duration, Instant};
+use std::time::{Duration, SystemTime};
 use parking_lot::RwLock;
-use tokio::time::interval;
+use tokio::time::{interval, sleep};
 
 use super::recovery_strategies::{DetectedFailure, FailureType};
 

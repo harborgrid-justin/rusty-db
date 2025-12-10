@@ -29,8 +29,8 @@ pub struct PoolStatistics {
     total_acquire_time: AtomicU64, // in microseconds
 
     // Wait queue metrics
-    queue_additions: AtomicU64,
-    queue_removals: AtomicU64,
+    _queue_additions: AtomicU64,
+    _queue_removals: AtomicU64,
 
     // Error metrics
     validation_failures: AtomicU64,
@@ -61,8 +61,8 @@ impl PoolStatistics {
             acquire_failures: AtomicU64::new(0),
             acquire_timeouts: AtomicU64::new(0),
             total_acquire_time: AtomicU64::new(0),
-            queue_additions: AtomicU64::new(0),
-            queue_removals: AtomicU64::new(0),
+            _queue_additions: AtomicU64::new(0),
+            _queue_removals: AtomicU64::new(0),
             validation_failures: AtomicU64::new(0),
             creation_failures: AtomicU64::new(0),
             leaks_detected: AtomicU64::new(0),
@@ -297,7 +297,7 @@ struct EfficiencyMetrics {
     cache_hit_rate: f64,
     connection_reuse_rate: f64,
     pool_utilization: f64,
-    last_calculated: Instant,
+    _last_calculated: Instant,
 }
 
 impl EfficiencyMetrics {
@@ -306,7 +306,7 @@ impl EfficiencyMetrics {
             cache_hit_rate: 0.0,
             connection_reuse_rate: 0.0,
             pool_utilization: 0.0,
-            last_calculated: Instant::now(),
+            _last_calculated: Instant::now(),
         }
     }
 
@@ -355,7 +355,7 @@ pub struct LeakInfo {
 // Leak detector
 pub struct LeakDetector {
     threshold: Duration,
-    check_interval: Duration,
+    _check_interval: Duration,
     detected_leaks: Arc<RwLock<Vec<LeakInfo>>>,
 }
 
@@ -363,7 +363,7 @@ impl LeakDetector {
     pub fn new(threshold: Duration, check_interval: Duration) -> Self {
         Self {
             threshold,
-            check_interval,
+            _check_interval: check_interval,
             detected_leaks: Arc::new(RwLock::new(Vec::new())),
         }
     }

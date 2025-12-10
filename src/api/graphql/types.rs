@@ -26,31 +26,12 @@
 // └─────────────────────────────────────────────────────────┘
 // ```
 
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::collections::HashSet;
-use std::time::Instant;
 use base64::{Engine as _, engine::general_purpose};
 use async_graphql::{
-    Context, Enum, Error, ErrorExtensions, InputObject, Object,
-    Result as GqlResult, Schema, SimpleObject, Subscription, Union, ID,
+    Enum, SimpleObject,
 };
-use async_graphql::extensions::{Extension, ExtensionContext, ExtensionFactory, NextExecute};
-use async_graphql::parser::types::ExecutableDocument;
 use chrono::{DateTime as ChronoDateTime, Utc};
-use futures_util::stream::{Stream, StreamExt};
-use futures_util::Future;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::pin::Pin;
-use std::sync::Arc;
-use std::time::{Duration};
-use tokio::sync::{broadcast, RwLock};
-use tokio_stream::wrappers::BroadcastStream;
-
-use crate::error::DbError;
-
-type Result<T> = std::result::Result<T, DbError>;
 
 // Note: This module requires the following dependencies in Cargo.toml:
 // - async-graphql = "7.0"

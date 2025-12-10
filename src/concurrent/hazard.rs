@@ -447,7 +447,7 @@ impl HazardScope {
     }
 
     /// Protect a pointer
-    pub fn protect<T>(&mut self, ptr: *mut T) -> Protected<T> {
+    pub fn protect<T>(&mut self, ptr: *mut T) -> Protected<'_, T> {
         let guard = HazardGuard::new(ptr);
         self.guards.push(guard);
 

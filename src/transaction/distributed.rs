@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::{Result, DbError};
+use crate::error::DbError;
 use super::TransactionId;
 
 /// Distributed transaction identifier
@@ -214,7 +214,7 @@ impl TwoPhaseCommitCoordinator {
         txn.prepare_time = Some(Instant::now());
 
         // Send prepare messages to all participants
-        let prepare_msg = TwoPhaseMessage::Prepare {
+        let _prepare_msg = TwoPhaseMessage::Prepare {
             global_txn_id,
             operations: txn.operations.clone(),
         };
@@ -257,7 +257,7 @@ impl TwoPhaseCommitCoordinator {
             txn.commit_time = Some(Instant::now());
 
             // Send commit messages to all participants
-            let commit_msg = TwoPhaseMessage::Commit { global_txn_id };
+            let _commit_msg = TwoPhaseMessage::Commit { global_txn_id };
 
             // Simulate sending commit messages
             for participant in &txn.participants {
@@ -272,7 +272,7 @@ impl TwoPhaseCommitCoordinator {
             txn.state = TwoPhaseCommitState::Aborting;
 
             // Send abort messages to all participants
-            let abort_msg = TwoPhaseMessage::Abort { global_txn_id };
+            let _abort_msg = TwoPhaseMessage::Abort { global_txn_id };
 
             // Simulate sending abort messages
             for participant in &txn.participants {
@@ -360,6 +360,7 @@ pub struct Saga {
 }
 
 pub struct SagaCoordinator {
+    #[allow(dead_code)]
     node_id: u32,
     next_saga_id: Arc<AtomicU64>,
     active_sagas: Arc<RwLock<HashMap<u64, Saga>>>,
@@ -488,7 +489,7 @@ impl SagaCoordinator {
         Ok(false)
     }
 
-    async fn execute_saga_step(&self, step: &SagaStep) -> std::result::Result<bool, DbError> {
+    async fn execute_saga_step(&self, _step: &SagaStep) -> std::result::Result<bool, DbError> {
         // Simulate step execution
         Ok(true)
     }
@@ -505,6 +506,7 @@ impl SagaCoordinator {
 
 /// Distributed Deadlock Detector using Wait-For Graph
 pub struct DistributedDeadlockDetector {
+    #[allow(dead_code)]
     node_id: u32,
     /// Local wait-for graph
     local_graph: Arc<RwLock<WaitForGraph>>,
@@ -740,6 +742,7 @@ impl DistributedDeadlockDetector {
 
 /// Cross-Shard Transaction Router
 pub struct CrossShardRouter {
+    #[allow(dead_code)]
     node_id: u32,
     /// Shard mapping: key range -> shard
     shard_map: Arc<RwLock<BTreeMap<Vec<u8>, u32>>>,

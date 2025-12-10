@@ -227,7 +227,7 @@ pub struct DeadlockDetector {
     enabled: bool,
 
     // Detection interval
-    check_interval: Duration,
+    _check_interval: Duration,
 
     // Deadlock threshold (how long to wait before considering deadlock)
     deadlock_threshold: Duration,
@@ -241,7 +241,7 @@ impl DeadlockDetector {
     pub fn new(enabled: bool) -> Self {
         Self {
             enabled,
-            check_interval: Duration::from_secs(10),
+            _check_interval: Duration::from_secs(10),
             deadlock_threshold: Duration::from_secs(60),
             deadlocks_detected: AtomicU64::new(0),
         }
@@ -288,7 +288,7 @@ pub struct StarvationPrevention {
     max_wait_time: Duration,
 
     // Priority boost increment
-    priority_boost: u32,
+    _priority_boost: u32,
 
     // Boosted waiters
     boosted_count: AtomicU64,
@@ -299,7 +299,7 @@ impl StarvationPrevention {
     pub fn new(max_wait_time: Duration) -> Self {
         Self {
             max_wait_time,
-            priority_boost: 1,
+            _priority_boost: 1,
             boosted_count: AtomicU64::new(0),
         }
     }

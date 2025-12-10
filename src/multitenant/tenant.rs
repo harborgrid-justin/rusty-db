@@ -466,7 +466,9 @@ impl TenantProvisioningService {
 pub struct TenantOnboardingWorkflow {
     tenant_id: TenantId,
     config: TenantConfig,
+    #[allow(dead_code)]
     steps: Vec<OnboardingStep>,
+    #[allow(dead_code)]
     current_step: usize,
 }
 
@@ -544,7 +546,7 @@ impl TenantOnboardingWorkflow {
 
     async fn create_pdb(&self) -> Result<PdbId> {
         // Create PDB configuration
-        let pdb_config = PdbConfig {
+        let _pdb_config = PdbConfig {
             name: format!("PDB_{}", self.config.name.to_uppercase()),
             create_mode: PdbCreateMode::New,
             resource_limits: self.config.resource_limits.clone(),
@@ -708,7 +710,7 @@ impl CrossTenantQueryEngine {
         &self,
         from_tenant: TenantId,
         to_tenant: TenantId,
-        query: &str,
+        _query: &str,
     ) -> Result<Vec<Vec<String>>> {
         if !self.is_allowed(from_tenant, to_tenant).await {
             return Err(DbError::PermissionDenied(

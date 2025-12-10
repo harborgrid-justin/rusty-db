@@ -131,7 +131,7 @@ impl DedupEngine {
 
     // Deduplicate data using content-defined chunking
     pub fn deduplicate(&mut self, data: &[u8]) -> CompressionResult<DedupMetadata> {
-        let start = Instant::now();
+        let _start = Instant::now();
 
         if data.is_empty() {
             return Ok(DedupMetadata {
@@ -160,7 +160,7 @@ impl DedupEngine {
             let chunk_hash = self.compute_chunk_hash(chunk);
 
             // Check if chunk already exists
-            let (chunk_id, is_new) = if self.is_duplicate(chunk_hash) {
+            let (chunk_id, _is_new) = if self.is_duplicate(chunk_hash) {
                 duplicate_chunks += 1;
                 let chunk_id = self.chunk_index.read().unwrap()
                     .get(&chunk_hash)
@@ -295,7 +295,6 @@ impl DedupEngine {
         const PRIME1: u64 = 11400714785074694791;
         const PRIME2: u64 = 14029467366897019727;
         const PRIME3: u64 = 1609587929392839161;
-        const PRIME4: u64 = 9650029242287828579;
         const PRIME5: u64 = 2870177450012600261;
 
         let mut hash = PRIME5;

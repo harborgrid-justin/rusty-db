@@ -220,7 +220,7 @@ impl HCCEngine {
     }
 
     // Decompress column using type-specific encoding (NEW!)
-    pub fn decompress_column_typed(&self, compressed: &[u8], col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
+    pub fn decompress_column_typed(&self, compressed: &[u8], _col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
 
         if compressed.is_empty() {
             return Ok(Vec::new());

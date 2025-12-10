@@ -21,7 +21,6 @@
 // - I/O: Token bucket algorithm for bandwidth limiting
 // - Storage: Quota enforcement at tablespace level
 
-use tokio::time::sleep;
 use std::time::Instant;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -110,9 +109,11 @@ pub struct MemoryIsolator {
     allocations: Arc<RwLock<HashMap<PdbId, MemoryAllocation>>>,
 
     // Total system memory
+    #[allow(dead_code)]
     total_memory: u64,
 
     // Reserved system memory
+    #[allow(dead_code)]
     reserved_memory: u64,
 }
 
@@ -281,7 +282,9 @@ struct CpuAllocation {
 #[derive(Debug, Clone)]
 struct ScheduledTask {
     pdb_id: PdbId,
+    #[allow(dead_code)]
     priority: u8,
+    #[allow(dead_code)]
     submitted_at: Instant,
 }
 
@@ -651,6 +654,7 @@ impl ConnectionLimiter {
 
 /// Connection guard that releases connection on drop
 pub struct ConnectionGuard {
+    #[allow(dead_code)]
     pdb_id: PdbId,
     _permit: tokio::sync::OwnedSemaphorePermit,
 }
@@ -767,6 +771,7 @@ struct StorageQuota {
     current_bytes: u64,
 
     /// Soft limit (warning threshold)
+    #[allow(dead_code)]
     soft_limit_bytes: u64,
 
     /// Number of quota violations

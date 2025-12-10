@@ -13,7 +13,6 @@
 // }
 // ```
 
-use tokio::time::sleep;
 use std::fmt;
 use std::time::SystemTime;
 use std::collections::HashMap;
@@ -39,6 +38,7 @@ pub struct TimeoutManager {
 #[derive(Debug, Clone)]
 struct TimeoutEntry {
     /// When the timeout was set.
+    #[allow(dead_code)]
     start_time: SystemTime,
     /// Deadline for the transaction.
     deadline: SystemTime,

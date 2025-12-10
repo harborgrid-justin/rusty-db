@@ -14,11 +14,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::Duration;
 use crate::common::{TableId, RowId};
 use crate::Result;
 use crate::error::DbError;
-use super::ledger::{BlockId, LedgerRow, Block};
+use super::ledger::{BlockId, LedgerRow};
 
 // ============================================================================
 // Retention Period

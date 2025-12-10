@@ -50,11 +50,13 @@ impl IoOperation {
         }
     }
 
+    #[allow(dead_code)]
     fn with_deadline(mut self, deadline: Instant) -> Self {
         self.deadline = Some(deadline);
         self
     }
 
+    #[allow(dead_code)]
     fn is_overdue(&self) -> bool {
         if let Some(deadline) = self.deadline {
             Instant::now() > deadline
@@ -133,6 +135,7 @@ impl IoScheduler {
         None
     }
 
+    #[allow(dead_code)]
     fn pending_count(&self) -> usize {
         self.read_queue.len() + self.write_queue.len() + self.sync_queue.len()
     }
@@ -200,6 +203,7 @@ impl ReadAheadBuffer {
         }
     }
 
+    #[allow(dead_code)]
     fn clear(&mut self) {
         self.buffer.clear();
     }
@@ -270,6 +274,7 @@ impl WriteBehindBuffer {
             .collect()
     }
 
+    #[allow(dead_code)]
     fn contains(&self, page_id: PageId) -> bool {
         self.buffer.contains_key(&page_id)
     }
@@ -451,6 +456,7 @@ impl WriteCoalescer {
         batch
     }
 
+    #[allow(dead_code)]
     fn pending_count(&self) -> usize {
         self.pending_writes.len()
     }
@@ -673,7 +679,7 @@ impl DiskManager {
         Ok(Page::from_bytes(page_id, data))
     }
 
-    fn trigger_read_ahead(&self, page_id: PageId) -> Result<()> {
+    fn trigger_read_ahead(&self, _page_id: PageId) -> Result<()> {
         let mut read_ahead = self.read_ahead.lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let next_pages = read_ahead.predict_next_pages();
@@ -844,10 +850,12 @@ impl DiskManager {
         Ok(processed)
     }
 
+    #[allow(dead_code)]
     pub fn get_stats(&self) -> DiskStats {
         self.stats.read().clone()
     }
 
+    #[allow(dead_code)]
     pub fn reset_stats(&self) {
         *self.stats.write() = DiskStats::default();
     }
@@ -1038,6 +1046,7 @@ impl DiskManager {
     }
 
     // Get enhanced statistics
+    #[allow(dead_code)]
     pub fn get_enhanced_stats(&self) -> DiskStats {
         self.stats.read().clone()
     }

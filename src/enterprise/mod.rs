@@ -362,8 +362,6 @@
 // - **In-Memory Config**: No file I/O required for tests
 
 // Module declarations
-use crate::error::DbError;
-use std::sync::Mutex;
 pub mod service_bus;
 pub mod config;
 pub mod feature_flags;

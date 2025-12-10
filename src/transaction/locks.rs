@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::{Duration};
 use parking_lot::{Mutex, RwLock, Condvar};
 use serde::{Deserialize, Serialize};
-use crate::error::{Result, DbError};
+use crate::error::DbError;
 use super::TransactionId;
 
 /// Lock granularity levels in hierarchical locking
@@ -79,9 +79,6 @@ impl LockMode {
             // S is compatible with IS, S, U
             (S, S) | (S, U) |
             (U, S) |
-
-            // SIX is compatible with IS
-            (SIX, IS) |
 
             // U is compatible with IS, S
             (U, U)
@@ -207,13 +204,17 @@ impl LockResource {
 struct LockRequest {
     txn_id: TransactionId,
     mode: LockMode,
+    #[allow(dead_code)]
     resource: LockResource,
+    #[allow(dead_code)]
     granted: bool,
+    #[allow(dead_code)]
     request_time: Instant,
 }
 
 /// Lock table entry for a resource
 struct LockTableEntry {
+    #[allow(dead_code)]
     resource: LockResource,
     /// Granted locks
     granted: HashMap<TransactionId, LockMode>,

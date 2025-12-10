@@ -78,7 +78,7 @@
 // # }
 // ```
 
-use std::time::{SystemTime, UNIX_EPOCH, Instant};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::memory::types::*;
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
@@ -86,10 +86,13 @@ use std::alloc::{alloc, alloc_zeroed, dealloc, Layout};
 use std::collections::HashMap;
 use std::ptr::NonNull;
 use std::sync::atomic::{AtomicBool, AtomicPtr, AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, Weak};
-use std::time::{Duration};
+use std::sync::Arc;
+use std::time::Duration;
 use thiserror::Error;
 use uuid::Uuid;
+
+// Type alias for async RwLock
+type AsyncRwLock<T> = tokio::sync::RwLock<T>;
 
 // Arena allocator specific errors
 #[derive(Error, Debug)]
@@ -998,9 +1001,10 @@ impl ArenaAllocator {
 
 #[cfg(test)]
 mod tests {
-    use tokio::test;
+    use super::*;
+    use std::sync::atomic::Ordering;
 
-    #[test]
+    #[tokio::test]
     async fn test_arena_allocator_creation() {
         let config = ArenaAllocatorConfig::default();
         let allocator = ArenaAllocator::new(config).await;
@@ -1010,7 +1014,7 @@ mod tests {
         assert!(allocator.is_active.load(Ordering::Relaxed));
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_memory_context_creation() {
         let config = ArenaAllocatorConfig::default();
         let allocator = ArenaAllocator::new(config).await.unwrap();
@@ -1029,7 +1033,7 @@ mod tests {
         assert!(context.is_active.load(Ordering::Relaxed));
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_memory_block_creation() {
         let block = MemoryBlock::new(4096, false);
         assert!(block.is_ok());
@@ -1041,7 +1045,7 @@ mod tests {
         assert_eq!(block.available_space(), 4096);
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_block_allocation() {
         let block = MemoryBlock::new(4096, false).unwrap();
 
@@ -1056,7 +1060,7 @@ mod tests {
         assert_eq!(ptr2.unwrap().as_ptr() as usize % 16, 0);
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_context_hierarchy() {
         let config = ArenaAllocatorConfig::default();
         let allocator = ArenaAllocator::new(config).await.unwrap();
@@ -1084,7 +1088,7 @@ mod tests {
         assert!(parent.children.read().contains(&child_id));
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_context_memory_limit() {
         let config = ArenaAllocatorConfig::default();
         let allocator = ArenaAllocator::new(config).await.unwrap();
@@ -1102,13 +1106,13 @@ mod tests {
         assert!(context.would_exceed_limit(2000)); // Exceeds limit
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_context_reset() {
         let config = ArenaAllocatorConfig::default();
         let allocator = ArenaAllocator::new(config).await.unwrap();
 
         let context_id = MemoryContextId::new("reset_test").unwrap();
-        let context = allocator.create_context(
+        let _context = allocator.create_context(
             context_id.clone(),
             ContextType::Query,
             None,
@@ -1116,8 +1120,8 @@ mod tests {
         ).await.unwrap();
 
         // Allocate some memory
-        let ptr1 = allocator.allocate_in_context(&context_id, 256, 8).await.unwrap();
-        let ptr2 = allocator.allocate_in_context(&context_id, 512, 8).await.unwrap();
+        let _ptr1 = allocator.allocate_in_context(&context_id, 256, 8).await.unwrap();
+        let _ptr2 = allocator.allocate_in_context(&context_id, 512, 8).await.unwrap();
 
         // Check usage before reset
         let stats_before = allocator.get_context_statistics(&context_id).await.unwrap();
@@ -1132,13 +1136,13 @@ mod tests {
         assert_eq!(context.current_usage(), 0);
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_allocator_statistics() {
         let config = ArenaAllocatorConfig::default();
         let allocator = ArenaAllocator::new(config).await.unwrap();
 
         let context_id = MemoryContextId::new("stats_test").unwrap();
-        let context = allocator.create_context(
+        let _context = allocator.create_context(
             context_id.clone(),
             ContextType::Query,
             None,
@@ -1146,8 +1150,8 @@ mod tests {
         ).await.unwrap();
 
         // Make some allocations
-        let ptr1 = allocator.allocate_in_context(&context_id, 100, 8).await.unwrap();
-        let ptr2 = allocator.allocate_in_context(&context_id, 200, 8).await.unwrap();
+        let _ptr1 = allocator.allocate_in_context(&context_id, 100, 8).await.unwrap();
+        let _ptr2 = allocator.allocate_in_context(&context_id, 200, 8).await.unwrap();
 
         let stats = allocator.get_statistics().await;
         assert_eq!(stats.total_allocations, 2);

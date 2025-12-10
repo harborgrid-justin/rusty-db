@@ -7,7 +7,6 @@
 // - Memory pressure handling
 // - Repopulation after modifications
 
-use tokio::time::sleep;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::VecDeque;
 use std::sync::Mutex;

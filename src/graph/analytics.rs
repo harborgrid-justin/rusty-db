@@ -150,6 +150,7 @@ impl Default for GraphRelationalBridge {
 
 // Advanced MATCH clause executor with optimizations
 pub struct MatchExecutor<'a> {
+    #[allow(dead_code)]
     graph: &'a PropertyGraph,
     pattern_matcher: PatternMatcher<'a>,
 }

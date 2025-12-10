@@ -2,9 +2,6 @@
 //
 // Query complexity analyzer for performance and security
 
-use async_graphql::{
-    Error, ErrorExtensions,
-};
 use async_graphql::extensions::{Extension, ExtensionContext, ExtensionFactory, NextExecute};
 use async_graphql::parser::types::ExecutableDocument;
 use futures_util::Future;
@@ -63,6 +60,7 @@ impl ComplexityAnalyzer {
         Ok(metrics)
     }
 
+    #[allow(dead_code)]
     fn analyze_selection_set(
         &self,
         _selection_set: &async_graphql::parser::types::SelectionSet,
@@ -76,7 +74,8 @@ impl ComplexityAnalyzer {
         Ok(())
     }
 
-    fn calculate_field_complexity(&self, field: &async_graphql::parser::types::Field) -> usize {
+    #[allow(dead_code)]
+    fn calculate_field_complexity(&self, _field: &async_graphql::parser::types::Field) -> usize {
         // Base complexity of 1 for each field
         // Could be enhanced to use field-specific weights
         1

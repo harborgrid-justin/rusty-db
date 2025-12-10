@@ -719,7 +719,6 @@ fn current_timestamp() -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_key_generation() {

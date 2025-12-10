@@ -81,7 +81,7 @@
 // # }
 // ```
 
-use std::time::{SystemTime, UNIX_EPOCH, Instant};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::memory::types::*;
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
@@ -89,9 +89,12 @@ use std::collections::HashMap;
 use std::ptr::NonNull;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
 use thiserror::Error;
 use uuid::Uuid;
+
+// Type alias for async RwLock
+type AsyncRwLock<T> = tokio::sync::RwLock<T>;
 
 #[cfg(unix)]
 use libc::{mmap, munmap, madvise, MAP_ANONYMOUS, MAP_PRIVATE, PROT_READ, PROT_WRITE, MAP_FAILED};
@@ -734,7 +737,7 @@ impl LargeObjectAllocator {
         #[cfg(not(unix))]
         {
             // Fallback to regular deallocation
-use std::alloc::{dealloc};
+            use std::alloc::{dealloc, Layout};
 
             let layout = Layout::from_size_align(size, 4096).unwrap();
             unsafe {
@@ -986,9 +989,10 @@ impl LargeObjectAllocator {
 
 #[cfg(test)]
 mod tests {
-    use tokio::test;
+    use super::*;
+    use std::sync::atomic::Ordering;
 
-    #[test]
+    #[tokio::test]
     async fn test_large_object_allocator_creation() {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await;
@@ -998,7 +1002,7 @@ mod tests {
         assert!(allocator.is_active.load(Ordering::Relaxed));
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_large_allocation() {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
@@ -1021,7 +1025,7 @@ mod tests {
         assert!(!allocation.uses_huge_pages);
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_allocation_below_threshold() {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
@@ -1033,7 +1037,7 @@ mod tests {
         assert!(result.is_err());
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_allocation_and_deallocation() {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
@@ -1061,7 +1065,7 @@ mod tests {
         assert!(info_after.is_err());
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_memory_advice() {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
@@ -1082,7 +1086,7 @@ mod tests {
         assert!(advice_result.is_ok());
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_allocator_statistics() {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
@@ -1109,7 +1113,7 @@ mod tests {
         assert_eq!(stats.largest_allocation, 2 * 1024 * 1024);
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_huge_page_strategy() {
         let config = LargeObjectConfig {
             enable_huge_pages: true,
@@ -1132,8 +1136,8 @@ mod tests {
         assert_eq!(page_type, HugePageType::Page2MB);
     }
 
-    #[test]
-    fn test_memory_advice_parsing() {
+    #[tokio::test]
+    async fn test_memory_advice_parsing() {
         let config = LargeObjectConfig::default();
         let allocator = LargeObjectAllocator::new(config).await.unwrap();
 

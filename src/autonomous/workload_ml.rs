@@ -10,7 +10,6 @@ use std::collections::VecDeque;
 use std::time::SystemTime;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::Duration;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::Result;

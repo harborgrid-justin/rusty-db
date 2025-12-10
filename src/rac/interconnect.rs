@@ -28,10 +28,9 @@ use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
 use parking_lot::{RwLock};
-use tokio::sync::{mpsc, broadcast};
+use tokio::sync::broadcast;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use bytes::{Bytes, BytesMut, Buf, BufMut};
 
 // ============================================================================
 // Constants
@@ -662,8 +661,8 @@ impl ClusterInterconnect {
         // Accept connections
         let connections = self.connections.clone();
         let node_health = self.node_health.clone();
-        let handlers = self.message_handlers.clone();
-        let stats = self.stats.clone();
+        let _handlers = self.message_handlers.clone();
+        let _stats = self.stats.clone();
         let mut shutdown_rx = self.shutdown_tx.subscribe();
 
         tokio::spawn(async move {

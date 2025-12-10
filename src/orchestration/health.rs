@@ -33,8 +33,6 @@ use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tracing::{debug, error, info, warn};
 
-use crate::error::Result;
-
 // Health status of a component
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HealthStatus {

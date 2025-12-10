@@ -91,12 +91,11 @@
 
 use std::collections::VecDeque;
 use std::fmt;
-use std::time::{SystemTime, UNIX_EPOCH, Instant};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::memory::types::*;
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
@@ -105,6 +104,9 @@ use std::time::Duration;
 use thiserror::Error;
 use tokio::sync::Semaphore;
 use uuid::Uuid;
+
+// Type alias for async RwLock
+type AsyncRwLock<T> = tokio::sync::RwLock<T>;
 
 // Memory pressure management specific errors
 #[derive(Error, Debug)]
@@ -884,7 +886,7 @@ impl MemoryPressureManager {
     }
 
     // Gets callback statistics
-    pub async fn get_callback_statistics(&self) -> HashMap<Uuid, (u64, u64)> {
+    pub async fn get_callback_statistics(&self) -> HashMap<Uuid, (u64, u64, Duration)> {
         let callbacks = self.callbacks.read();
         callbacks
             .iter()
@@ -989,9 +991,10 @@ impl MemoryPressureManager {
 
 #[cfg(test)]
 mod tests {
-    use tokio::test;
+    use super::*;
+    use std::sync::atomic::Ordering;
 
-    #[test]
+    #[tokio::test]
     async fn test_pressure_manager_creation() {
         let config = PressureConfig::default();
         let manager = MemoryPressureManager::new(config).await;
@@ -1001,7 +1004,7 @@ mod tests {
         assert!(!manager.is_monitoring.load(Ordering::Relaxed));
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_invalid_threshold_configuration() {
         let invalid_config = PressureConfig {
             warning_threshold: 0.90,

@@ -69,7 +69,6 @@
 // # }
 // ```
 
-use tokio::time::sleep;
 use std::time::SystemTime;
 use crate::error::DbError;
 use crate::replication::types::*;
@@ -361,6 +360,7 @@ struct ReplicationState {
 }
 
 // Pending replication operation
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct PendingOperation {
     sequence: u64,
@@ -707,6 +707,7 @@ impl ReplicationManager {
     }
 
     // Waits for replication acknowledgments
+    #[allow(dead_code)]
     async fn wait_for_acknowledgments(
         &self,
         sequence: u64,
@@ -747,6 +748,7 @@ impl ReplicationManager {
     }
 
     // Handles replication acknowledgment from a replica
+    #[allow(dead_code)]
     pub async fn handle_acknowledgment(
         &self,
         replica_id: &ReplicaId,
@@ -764,6 +766,7 @@ impl ReplicationManager {
     }
 
     // Starts background health check task
+    #[allow(dead_code)]
     async fn start_health_check_task(&self) -> Result<(), ReplicationManagerError> {
         // Implementation would spawn a background task
         // For now, just return Ok
@@ -771,6 +774,7 @@ impl ReplicationManager {
     }
 
     // Starts background operation timeout task
+    #[allow(dead_code)]
     async fn start_operation_timeout_task(&self) -> Result<(), ReplicationManagerError> {
         // Implementation would spawn a background task
         // For now, just return Ok
@@ -778,12 +782,14 @@ impl ReplicationManager {
     }
 
     // Cleans up a pending operation
+    #[allow(dead_code)]
     fn cleanup_pending_operation(&self, sequence: u64) {
         let mut state = self.state.lock();
         state.pending_operations.remove(&sequence);
     }
 
     // Updates operation counters
+    #[allow(dead_code)]
     fn update_operation_count(&self, successful: u64, failed: u64) {
         let mut state = self.state.lock();
         state.total_operations += successful;
@@ -791,6 +797,7 @@ impl ReplicationManager {
     }
 
     // Gets current replication statistics
+    #[allow(dead_code)]
     pub fn get_stats(&self) -> ReplicationStats {
         let state = self.state.lock();
 
@@ -823,16 +830,19 @@ impl ReplicationManager {
     }
 
     // Gets the manager's unique ID
+    #[allow(dead_code)]
     pub fn id(&self) -> &Uuid {
         &self.id
     }
 
     // Gets the current configuration
+    #[allow(dead_code)]
     pub fn config(&self) -> &ReplicationConfig {
         &self.config
     }
 
     // Checks if this manager is for a primary node
+    #[allow(dead_code)]
     pub fn is_primary(&self) -> bool {
         self.is_primary
     }
@@ -965,14 +975,14 @@ impl Default for ReplicationManagerBuilder {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{mpsc, Arc};
+    use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::time::Duration;
     use async_trait::async_trait;
     use crate::api::rest::ReplicaStatus;
     use crate::common::LogSequenceNumber;
     use crate::DbError;
-    use crate::replication::manager::{EventPublisher, HealthMonitor, HealthStats, ReplicaService, ReplicationConfig, ReplicationManager, ReplicationManagerBuilder, ReplicationManagerError, WalService, WalStats};
+    use crate::replication::manager::{EventPublisher, HealthMonitor, HealthStats, ReplicaService, ReplicationConfig, ReplicationManager, ReplicationManagerBuilder, WalService, WalStats};
     use crate::replication::{ReplicaNode, ReplicationEvent};
     use crate::replication::monitor::ReplicaHealthStatus;
     use crate::replication::types::{ReplicaId, WalEntry};
@@ -997,8 +1007,8 @@ mod tests {
             Ok(())
         }
 
-        async fn subscribe(&self) -> Result<mpsc::Receiver<ReplicationEvent>, DbError> {
-            let (_, rx) = mpsc::channel();
+        async fn subscribe(&self) -> Result<tokio::sync::mpsc::Receiver<ReplicationEvent>, DbError> {
+            let (_tx, rx) = tokio::sync::mpsc::unbounded_channel();
             Ok(rx)
         }
 

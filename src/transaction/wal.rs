@@ -227,6 +227,7 @@ impl WALEntry {
         hardware_crc32c(data)
     }
 
+    #[allow(dead_code)]
     fn calculate_checksum_batch(entries: &[&[u8]]) -> Vec<u32> {
         // Batch checksum computation for better cache utilization
         entries.iter().map(|data| hardware_crc32c(data)).collect()
@@ -378,10 +379,12 @@ pub struct WALStats {
 
 /// Transaction table entry for recovery
 #[derive(Debug, Clone)]
-struct TransactionTableEntry {
+pub(crate) struct TransactionTableEntry {
+    #[allow(dead_code)]
     txn_id: TransactionId,
     state: TransactionState,
     last_lsn: LSN,
+    #[allow(dead_code)]
     undo_next_lsn: Option<LSN>,
 }
 
@@ -656,7 +659,7 @@ let serialized: Vec<Vec<u8>> = entries.iter()
     }
 
     /// Truncate WAL up to a given LSN (after checkpoint)
-    pub fn truncate(&self, up_to_lsn: LSN) -> Result<()> {
+    pub fn truncate(&self, _up_to_lsn: LSN) -> Result<()> {
         // In production, this would archive old log segments
         // and create a new active segment
         Ok(())
@@ -731,6 +734,7 @@ pub struct LogShippingManager {
     /// Standby servers
     standbys: Arc<RwLock<Vec<StandbyServer>>>,
     /// Configuration
+    #[allow(dead_code)]
     config: LogShippingConfig,
     /// Statistics
     stats: Arc<RwLock<LogShippingStats>>,

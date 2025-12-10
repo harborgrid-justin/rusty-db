@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::fs::{File, create_dir_all};
 use std::io::{Read, Write};
-use std::time::{Duration, SystemTime};
+use std::time::{SystemTime};
 use std::collections::HashMap;
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
@@ -114,7 +114,7 @@ impl EncryptionKey {
                 }
                 derived
             }
-            KeyDerivationFunction::Argon2 { memory_kb, iterations, parallelism } => {
+            KeyDerivationFunction::Argon2 { memory_kb, iterations: _iterations, parallelism: _parallelism } => {
                 // Simulate Argon2 key derivation
                 let mut derived = vec![0u8; 32];
                 for i in 0..32 {
@@ -122,7 +122,7 @@ impl EncryptionKey {
                 }
                 derived
             }
-            KeyDerivationFunction::Scrypt { n, r, p } => {
+            KeyDerivationFunction::Scrypt { n, r: _r, p: _p } => {
                 // Simulate Scrypt key derivation
                 let mut derived = vec![0u8; 32];
                 for i in 0..32 {
@@ -524,7 +524,7 @@ impl BackupEncryptionManager {
         &self,
         data: &[u8],
         key: &[u8],
-        iv: &[u8],
+        _iv: &[u8],
         algorithm: &EncryptionAlgorithm,
     ) -> Result<(Vec<u8>, Option<Vec<u8>>)> {
         // Simulate encryption
@@ -551,8 +551,8 @@ impl BackupEncryptionManager {
         &self,
         data: &[u8],
         key: &[u8],
-        iv: &[u8],
-        algorithm: &EncryptionAlgorithm,
+        _iv: &[u8],
+        _algorithm: &EncryptionAlgorithm,
         auth_tag: Option<&[u8]>,
     ) -> Result<Vec<u8>> {
         // Verify auth tag if present

@@ -11,6 +11,7 @@ use std::time::Instant;
 // ============================================================================
 
 pub struct BitPacker {
+    #[allow(dead_code)]
     stats: Arc<Mutex<CompressionStats>>,
 }
 

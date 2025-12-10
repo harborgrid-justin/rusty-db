@@ -12,6 +12,7 @@ const HASH_TABLE_SIZE: usize = 1 << 16;
 pub struct LZ4Compressor {
     level: CompressionLevel,
     stats: Arc<Mutex<CompressionStats>>,
+    #[allow(dead_code)]
     hash_table: Vec<usize>,
 }
 

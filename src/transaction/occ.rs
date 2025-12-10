@@ -58,8 +58,11 @@ pub enum TxnState {
 #[derive(Debug, Clone)]
 struct ReadRecord {
     key: Key,
+    #[allow(dead_code)]
     value: Value,
+    #[allow(dead_code)]
     version: Version,
+    #[allow(dead_code)]
     read_at: Instant,
 }
 
@@ -122,6 +125,7 @@ pub struct OccTransaction {
     commit_time: Option<Instant>,
 
     /// Retry count (for adaptive strategies)
+    #[allow(dead_code)]
     retry_count: u32,
 }
 

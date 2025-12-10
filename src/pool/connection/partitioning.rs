@@ -90,6 +90,7 @@ pub struct PartitionStats {
 
 // Affinity rules for routing connections
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct AffinityRules {
     preferred_partitions: Vec<String>,
     fallback_partition: Option<String>,
@@ -109,6 +110,7 @@ impl Default for AffinityRules {
 }
 
 // Partition manager
+#[allow(dead_code)]
 pub struct PartitionManager<C> {
     partitions: Arc<RwLock<HashMap<String, Arc<PoolPartition<C>>>>>,
     default_partition: Arc<RwLock<Option<String>>>,

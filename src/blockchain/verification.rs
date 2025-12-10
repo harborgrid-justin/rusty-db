@@ -18,10 +18,9 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration, UNIX_EPOCH};
 use tokio::task;
 use crate::Result;
-use crate::error::DbError;
-use super::ledger::{Block, BlockId, LedgerRow, BlockchainTable};
+use super::ledger::{Block, BlockId, BlockchainTable};
 use crate::common::RowId;
-use super::crypto::{Hash256, MerkleProof, hash_to_hex};
+use super::crypto::Hash256;
 
 // ============================================================================
 // Verification Result Types

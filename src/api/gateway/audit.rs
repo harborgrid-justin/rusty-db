@@ -2,18 +2,11 @@
 //
 // Part of the API Gateway and Security system for RustyDB
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::net::IpAddr;
-use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use parking_lot::RwLock;
-use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
-use hmac::Hmac;
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+use std::time::{SystemTime};
 use uuid::Uuid;
 
-use crate::error::DbError;
 use super::types::*;
 
 // ============================================================================

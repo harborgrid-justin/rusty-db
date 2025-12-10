@@ -272,7 +272,7 @@ impl TableRestoreManager {
     // Private Helper Methods
     // ========================================================================
 
-    fn validate_flashback(&self, table_id: TableId, target_scn: SCN) -> Result<()> {
+    fn validate_flashback(&self, _table_id: TableId, target_scn: SCN) -> Result<()> {
         let current_scn = self.time_travel.get_current_scn();
 
         if target_scn >= current_scn {

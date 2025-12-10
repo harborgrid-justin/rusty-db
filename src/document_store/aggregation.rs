@@ -238,7 +238,7 @@ impl PipelineStage {
         let field = path.trim_start_matches('$');
 
         for doc in documents {
-            if let Value::Object(mut obj) = doc.clone() {
+            if let Value::Object(obj) = doc.clone() {
                 if let Some(array_value) = obj.get(field) {
                     if let Value::Array(arr) = array_value {
                         if arr.is_empty() && preserve {

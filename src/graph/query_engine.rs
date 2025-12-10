@@ -922,6 +922,7 @@ impl<'a> GraphTraversal<'a> {
 pub struct QueryExecutor<'a> {
     graph: &'a PropertyGraph,
     pattern_matcher: PatternMatcher<'a>,
+    #[allow(dead_code)]
     path_finder: PathFinder<'a>,
 }
 

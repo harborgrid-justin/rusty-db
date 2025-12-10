@@ -88,7 +88,7 @@ impl<T: 'static> LockFreeQueue<T> {
         };
 
         // Initialize with sentinel node
-        let guard = Epoch::pin();
+        let _guard = Epoch::pin();
         queue.head.store(sentinel_ptr, Ordering::Relaxed);
         queue.tail.store(sentinel_ptr, Ordering::Relaxed);
 

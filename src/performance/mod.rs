@@ -16,7 +16,6 @@ mod workload_analysis;
 // - Automatic index recommendation system
 // - Query performance regression detection
 
-use tokio::time::sleep;
 use std::time::Duration;
 use std::collections::VecDeque;
 use crate::Result;
@@ -91,9 +90,9 @@ impl QueryPlanCache {
 
         let cached = CachedPlan {
             plan: plan.clone(),
-            cost,
-            cached_at: SystemTime::now(),
-            access_count: 0,
+            _cost: cost,
+            _cached_at: SystemTime::now(),
+            _access_count: 0,
         };
 
         cache.insert(query_hash.clone(), cached);
@@ -147,9 +146,9 @@ impl QueryPlanCache {
 #[derive(Debug, Clone)]
 struct CachedPlan {
     plan: QueryPlan,
-    cost: f64,
-    cached_at: SystemTime,
-    access_count: usize,
+    _cost: f64,
+    _cached_at: SystemTime,
+    _access_count: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

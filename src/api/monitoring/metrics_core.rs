@@ -37,19 +37,14 @@
 // let health = monitoring.check_health();
 // ```
 
-use std::sync::Mutex;
-use std::collections::VecDeque;
 use std::time::Instant;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::BTreeMap;
 use std::collections::{HashMap};
-use std::sync::{Arc, atomic::{AtomicU64, AtomicBool, Ordering}};
+use std::sync::{Arc, atomic::{AtomicU64, Ordering}};
 use std::time::{Duration};
 use parking_lot::{RwLock};
 use serde::{Deserialize, Serialize};
-use crate::error::DbError;
-
-type Result<T> = std::result::Result<T, DbError>;
 
 // ============================================================================
 // SECTION 1: METRICS COLLECTION ENGINE (700+ lines)

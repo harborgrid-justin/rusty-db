@@ -21,7 +21,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
-use tokio::sync::mpsc;
 
 // Query identifier
 pub type QueryId = u64;

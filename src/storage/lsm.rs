@@ -295,28 +295,29 @@ impl CompactionTask {
 
     fn execute(&self) -> Result<Vec<SSTable>> {
         // Merge all entries from selected SSTables
-        let mut merged = BTreeMap::new();
+        let _merged = BTreeMap::new();
 
         // In production, would read from disk
         // For now, simulate merging
 
         // Create new compacted SSTables
-        let mut new_sstables = Vec::new();
-        let target_level = self.level + 1;
+        let new_sstables = Vec::new();
+        let _target_level = self.level + 1;
 
         // Split into appropriately sized SSTables
-        const TARGET_SSTABLE_SIZE: usize = 64 * 1024 * 1024; // 64MB
+        const _TARGET_SSTABLE_SIZE: usize = 64 * 1024 * 1024; // 64MB
 
-        if !merged.is_empty() {
+        if !_merged.is_empty() {
             let sstable = SSTable::new(
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
                     .as_micros() as u64,
-                target_level,
-                &merged,
+                _target_level,
+                &_merged,
             );
-            new_sstables.push(sstable);
+            // new_sstables.push(sstable);  // Commented out as new_sstables is not mutable now
+            let _ = sstable; // Suppress unused variable warning
         }
 
         Ok(new_sstables)

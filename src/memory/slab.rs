@@ -73,6 +73,9 @@ use std::time::Duration;
 use thiserror::Error;
 use uuid::Uuid;
 
+// Type alias for async RwLock
+type AsyncRwLock<T> = tokio::sync::RwLock<T>;
+
 // Slab allocator specific errors
 #[derive(Error, Debug)]
 pub enum SlabError {
@@ -1042,9 +1045,10 @@ impl SlabAllocator {
 
 #[cfg(test)]
 mod tests {
-    use tokio::test;
+    use super::*;
+    use std::sync::atomic::Ordering;
 
-    #[test]
+    #[tokio::test]
     async fn test_slab_allocator_creation() {
         let config = SlabConfig::default();
         let allocator = SlabAllocator::new(config).await;
@@ -1054,7 +1058,7 @@ mod tests {
         assert!(allocator.is_initialized.load(Ordering::Relaxed));
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_size_class_creation() {
         let size_class = SizeClass::new(0, 64, 4096);
         assert_eq!(size_class.class_id, 0);
@@ -1062,7 +1066,7 @@ mod tests {
         assert_eq!(size_class.objects_per_slab, 64); // 4096 / 64
     }
 
-    #[test]
+    #[tokio::test]
     async fn test_size_class_utilization() {
         let size_class = SizeClass::new(0, 64, 4096);
         assert_eq!(size_class.utilization(), 0.0); // Empty initially

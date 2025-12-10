@@ -60,6 +60,7 @@ pub enum AgingPolicy {
 
 impl AgingPolicy {
     // Check if connection should be aged out
+    #[allow(private_interfaces)]
     pub fn should_recycle<C>(&self, conn: &PooledConnection<C>) -> bool {
         match self {
             AgingPolicy::TimeBased { max_lifetime } => {
@@ -189,6 +190,7 @@ impl RecyclingManager {
     }
 
     // Determine recycling strategy for a connection
+    #[allow(private_interfaces)]
     pub fn determine_strategy<C>(&self, conn: &PooledConnection<C>) -> RecyclingStrategy {
         match self.default_strategy {
             RecyclingStrategy::Adaptive => {
@@ -205,6 +207,7 @@ impl RecyclingManager {
     }
 
     // Recycle a connection
+    #[allow(private_interfaces)]
     pub async fn recycle<C>(&self, conn: &mut PooledConnection<C>) -> Result<()>
     where
         C: Send + Sync,
@@ -288,6 +291,7 @@ impl LifetimeEnforcer {
     }
 
     // Check if connection exceeds lifetime
+    #[allow(private_interfaces)]
     pub fn check_lifetime<C>(&self, conn: &PooledConnection<C>) -> LifetimeStatus {
         // Check absolute lifetime
         if let Some(max) = self.max_lifetime {
