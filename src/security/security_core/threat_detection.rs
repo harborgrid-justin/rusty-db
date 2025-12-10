@@ -387,7 +387,7 @@ impl ThreatIntelligence {
         })
     }
 
-    pub fn calculate_threat_score(&self, ip: Option<&str>, user_id: &str) -> f64 {
+    pub fn calculate_threat_score(&self, ip: Option<&str>, _user_id: &str) -> f64 {
         let mut score = 0.0;
 
         if let Some(ip_addr) = ip {

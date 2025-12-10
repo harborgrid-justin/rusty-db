@@ -156,6 +156,7 @@ impl Default for CursorRow {
 
 // Cursor FOR loop iterator
 pub struct CursorForLoop {
+    #[allow(dead_code)]
     cursor_name: String,
     record_name: String,
     state: CursorState,

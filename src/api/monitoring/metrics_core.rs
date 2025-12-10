@@ -37,13 +37,10 @@
 // let health = monitoring.check_health();
 // ```
 
-use std::time::Instant;
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::collections::BTreeMap;
-use std::collections::{HashMap};
+use std::time::{Duration, Instant, SystemTime};
+use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, atomic::{AtomicU64, Ordering}};
-use std::time::{Duration};
-use parking_lot::{RwLock};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 
 // ============================================================================

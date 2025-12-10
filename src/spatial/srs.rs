@@ -435,10 +435,15 @@ impl GeodeticCalculator {
         let mut lambda_prev;
         let mut iter_limit = 100;
 
+        #[allow(unused_assignments)]
         let mut cos_sq_alpha = 0.0;
+        #[allow(unused_assignments)]
         let mut sin_sigma = 0.0;
+        #[allow(unused_assignments)]
         let mut cos_sigma = 1.0;
+        #[allow(unused_assignments)]
         let mut sigma = 0.0;
+        #[allow(unused_assignments)]
         let mut cos_2_sigma_m = 0.0;
 
         loop {

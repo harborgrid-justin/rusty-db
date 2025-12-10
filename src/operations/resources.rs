@@ -8,7 +8,6 @@
 // - Query timeout management
 // - Resource pools and allocation
 
-use tokio::time::sleep;
 use std::time::SystemTime;
 use std::time::Instant;
 use crate::Result;

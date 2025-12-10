@@ -53,30 +53,14 @@
 // =============================================================================
 
 use serde::{Deserialize, Serialize};
-use crate::error::{Result, DbError};
 use std::time::SystemTime;
-
-// Re-export new modules
-pub use super::view_management::{
-    CheckOption,
-    MaterializedView,
-    MaterializedViewIndex,
-    RefreshSchedule,
-    View,
-    ViewManager,
-    ViewStatistics,
-};
-
-pub use super::query_cache_impl::{
-    CacheStats,
-    QueryCache,
-};
 
 // =============================================================================
 // Core analytics types (from mod_old.rs)
 // =============================================================================
 
 // Window function specification
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WindowFunction {
     RowNumber,
@@ -93,6 +77,7 @@ pub enum WindowFunction {
 }
 
 // Window frame specification
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WindowFrame {
     pub frame_type: FrameType,
@@ -100,6 +85,7 @@ pub struct WindowFrame {
     pub end_bound: FrameBound,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FrameType {
     Rows,
@@ -107,6 +93,7 @@ pub enum FrameType {
     Groups,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FrameBound {
     UnboundedPreceding,
@@ -117,6 +104,7 @@ pub enum FrameBound {
 }
 
 // Aggregate function
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AggregateFunction {
     Count,
@@ -153,6 +141,7 @@ pub enum AggregateFunction {
 }
 
 // Query execution statistics
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryExecution {
     pub query: String,
@@ -166,6 +155,7 @@ pub struct QueryExecution {
 }
 
 // Column statistics for query optimization
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnStatistics {
     pub table_name: String,
@@ -180,6 +170,7 @@ pub struct ColumnStatistics {
     pub last_updated: SystemTime,
 }
 
+#[allow(dead_code)]
 impl ColumnStatistics {
     pub fn new(table: String, column: String) -> Self {
         Self {

@@ -95,7 +95,6 @@
 // # }
 // ```
 
-use tokio::time::sleep;
 pub mod cache_fusion;
 pub mod grd;
 pub mod interconnect;
@@ -288,10 +287,10 @@ impl Default for NodeCapacity {
 // RAC cluster manager - main entry point for RAC functionality
 pub struct RacCluster {
     // Cluster name
-    cluster_name: String,
+    _cluster_name: String,
 
     // Local node identifier
-    node_id: NodeId,
+    _node_id: NodeId,
 
     // Cluster nodes
     nodes: Arc<RwLock<HashMap<NodeId, ClusterNode>>>,
@@ -436,8 +435,8 @@ impl RacCluster {
         });
 
         Ok(Self {
-            cluster_name: cluster_name.to_string(),
-            node_id,
+            _cluster_name: cluster_name.to_string(),
+            _node_id: node_id,
             nodes: Arc::new(RwLock::new(nodes)),
             cache_fusion,
             grd,

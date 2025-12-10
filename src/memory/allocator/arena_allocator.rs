@@ -148,7 +148,7 @@ pub struct MemoryContext {
     // Arena for this context
     arena: Arena,
     // Parent context
-    parent: Option<Weak<Mutex<MemoryContext>>>,
+    _parent: Option<Weak<Mutex<MemoryContext>>>,
     // Child contexts
     children: Vec<Arc<Mutex<MemoryContext>>>,
     // Creation time
@@ -160,7 +160,7 @@ pub struct MemoryContext {
 // Memory context statistics
 struct ContextStats {
     allocations: AtomicU64,
-    deallocations: AtomicU64,
+    _deallocations: AtomicU64,
     resets: AtomicU64,
     peak_usage: AtomicUsize,
 }
@@ -169,7 +169,7 @@ impl ContextStats {
     fn new() -> Self {
         Self {
             allocations: AtomicU64::new(0),
-            deallocations: AtomicU64::new(0),
+            _deallocations: AtomicU64::new(0),
             resets: AtomicU64::new(0),
             peak_usage: AtomicUsize::new(0),
         }
@@ -186,7 +186,7 @@ impl MemoryContext {
             id,
             context_type: ContextType::TopLevel,
             arena: Arena::new(name, 64 * 1024, limit)?,
-            parent: None,
+            _parent: None,
             children: Vec::new(),
             created_at: Instant::now(),
             stats: ContextStats::new(),
@@ -207,7 +207,7 @@ impl MemoryContext {
             id,
             context_type,
             arena: Arena::new(name, 32 * 1024, limit)?,
-            parent: Some(Arc::downgrade(parent)),
+            _parent: Some(Arc::downgrade(parent)),
             children: Vec::new(),
             created_at: Instant::now(),
             stats: ContextStats::new(),

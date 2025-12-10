@@ -332,7 +332,7 @@ impl IndexAdvisor {
     }
 
     // Estimate cost of creating an index
-    fn estimate_index_cost(&self, column: &str) -> f64 {
+    fn estimate_index_cost(&self, _column: &str) -> f64 {
         // Simplified cost model
         100.0 // Base cost for single-column index
     }

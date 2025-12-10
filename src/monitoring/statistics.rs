@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration};
 
 // V$SESSION - Session information
 #[derive(Debug, Clone, Serialize, Deserialize)]

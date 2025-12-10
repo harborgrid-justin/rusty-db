@@ -606,8 +606,8 @@ pub struct DelayedSanitizer {
 struct SanitizationTask {
     ptr: *mut u8,
     size: usize,
-    pattern: Pattern,
-    enqueued_at: Instant,
+    _pattern: Pattern,
+    _enqueued_at: Instant,
 }
 
 unsafe impl Send for SanitizationTask {}
@@ -642,8 +642,8 @@ impl DelayedSanitizer {
             queue.push_back(SanitizationTask {
                 ptr,
                 size,
-                pattern,
-                enqueued_at: Instant::now(),
+                _pattern: pattern,
+                _enqueued_at: Instant::now(),
             });
         }
     }
@@ -720,7 +720,7 @@ struct HeapRegion {
     ptr: *mut u8,
     size: usize,
     canary_value: u64,
-    allocated_at: Instant,
+    _allocated_at: Instant,
 }
 
 unsafe impl Send for HeapRegion {}
@@ -769,7 +769,7 @@ impl HeapGuard {
             ptr,
             size: total_size,
             canary_value,
-            allocated_at: Instant::now(),
+            _allocated_at: Instant::now(),
         };
         self.regions.lock().unwrap().insert(data_ptr as usize, region);
 

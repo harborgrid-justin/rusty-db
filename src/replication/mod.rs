@@ -1,3 +1,5 @@
+#![allow(hidden_glob_reexports)]
+
 // # Replication System
 //
 // This module provides a comprehensive enterprise-grade replication system
@@ -31,6 +33,7 @@
 // - `core::slots` - Replication slot management
 
 // Re-export everything from the core module
+#[allow(hidden_glob_reexports)]
 pub use core::*;
 
 // Re-export types from the old types module (temporary until full refactoring)

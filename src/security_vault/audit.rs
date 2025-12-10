@@ -384,6 +384,7 @@ struct AuditStats {
     total_records: u64,
     by_action: HashMap<String, u64>,
     failed_operations: u64,
+    #[allow(dead_code)]
     tamper_attempts: u64,
 }
 

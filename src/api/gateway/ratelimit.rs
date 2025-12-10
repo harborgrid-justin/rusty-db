@@ -8,7 +8,6 @@ use std::time::{Duration, Instant, SystemTime};
 use parking_lot::RwLock;
 
 use crate::error::DbError;
-use super::types::*;
 
 // ============================================================================
 // Rate Limiting & Throttling - Token Bucket, Sliding Window

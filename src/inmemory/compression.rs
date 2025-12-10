@@ -675,6 +675,7 @@ pub struct HybridCompressor {
     bitpacker: Arc<BitPacker>,
     delta: Arc<DeltaEncoder>,
     for_encoder: Arc<FrameOfReferenceEncoder>,
+    #[allow(dead_code)]
     cache: RwLock<HashMap<u64, CompressionType>>,
 }
 
@@ -762,7 +763,7 @@ impl HybridCompressor {
             CompressionType::None | CompressionType::Hybrid => data.to_vec(),
         };
 
-        let elapsed = start.elapsed();
+        let _elapsed = start.elapsed();
 
         Ok(decompressed)
     }

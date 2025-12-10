@@ -411,7 +411,7 @@ impl CpuScheduler {
 
     // Check if tenant should be throttle
     pub async fn should_throttle(&self, tenant_id: &str, requested_ns: u64) -> bool {
-        let allocation = match self.calculate_allocation(tenant_id).await {
+        let _allocation = match self.calculate_allocation(tenant_id).await {
             Some(a) => a,
             None => return true,
         };
@@ -467,7 +467,7 @@ impl CpuScheduler {
         let tenant_shares = self.tenant_shares.read().await;
         let shares = tenant_shares.get(tenant_id)?;
 
-        let elapsed = SystemTime::now()
+        let _elapsed = SystemTime::now()
             .duration_since(shares.last_scheduled)
             .unwrap_or(Duration::from_secs(1));
 

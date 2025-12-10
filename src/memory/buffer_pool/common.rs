@@ -104,7 +104,7 @@ pub struct BufferFrame {
     // LSN (Log Sequence Number) of last modification
     lsn: AtomicU64,
     // Lock for page content modifications
-    page_lock: PRwLock<()>,
+    _page_lock: PRwLock<()>,
 }
 
 impl BufferFrame {
@@ -118,7 +118,7 @@ impl BufferFrame {
             last_access: Mutex::new(Instant::now()),
             tier: Mutex::new(BufferTier::Cold),
             lsn: AtomicU64::new(0),
-            page_lock: PRwLock::new(()),
+            _page_lock: PRwLock::new(()),
         }
     }
 

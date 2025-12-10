@@ -552,13 +552,13 @@ impl DependencyGraph {
 
 // Query rewriter to leverage materialized views
 pub struct QueryRewriter {
-    rewrite_rules: Vec<RewriteRule>,
+    _rewrite_rules: Vec<RewriteRule>,
 }
 
 impl QueryRewriter {
     pub fn new() -> Self {
         Self {
-            rewrite_rules: vec![
+            _rewrite_rules: vec![
                 RewriteRule::AggregateRewrite,
                 RewriteRule::JoinElimination,
                 RewriteRule::ProjectionPushdown,
@@ -691,7 +691,7 @@ impl RefreshScheduler {
                 view_id.to_string(),
                 ScheduledRefresh {
                     view_id: view_id.to_string(),
-                    interval: *interval,
+                    _interval: *interval,
                     next_refresh: *next_refresh,
                 },
             );
@@ -709,7 +709,7 @@ impl RefreshScheduler {
 
 struct ScheduledRefresh {
     view_id: String,
-    interval: Duration,
+    _interval: Duration,
     next_refresh: SystemTime,
 }
 

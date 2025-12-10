@@ -7,7 +7,6 @@
 use crate::{Result, DbError};
 use crate::procedures::parser::{PlSqlBlock, PlSqlType, Expression, LiteralValue, UnaryOperator};
 use crate::procedures::runtime::{RuntimeExecutor, RuntimeValue};
-use crate::procedures::functions::{ScalarFunction, TableFunction};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -368,6 +367,7 @@ impl PackageManager {
     }
 
     /// Evaluate an initial value expression and return a RuntimeValue
+    #[allow(dead_code)]
     fn evaluate_initial_value(&self, expr: &Expression) -> Result<RuntimeValue> {
         match expr {
             Expression::Literal(lit) => match lit {

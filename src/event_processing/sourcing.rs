@@ -5,7 +5,6 @@
 
 use std::collections::VecDeque;
 use std::fmt;
-use std::time::UNIX_EPOCH;
 use super::{Event, EventId, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

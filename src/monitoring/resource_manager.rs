@@ -1,7 +1,6 @@
 // Resource Manager
 // CPU resource groups, memory allocation limits, I/O bandwidth quotas, query timeout enforcement
 
-use tokio::time::sleep;
 use std::fmt;
 use std::time::Instant;
 use std::time::SystemTime;

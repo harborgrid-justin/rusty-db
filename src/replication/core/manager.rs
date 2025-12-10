@@ -3,12 +3,12 @@ use crate::error::Result;
 use super::types::*;
 
 pub struct ReplicationManager {
-    mode: ReplicationMode,
+    _mode: ReplicationMode,
 }
 
 impl ReplicationManager {
     pub fn new(mode: ReplicationMode) -> Self {
-        Self { mode }
+        Self { _mode: mode }
     }
 
     pub async fn start(&self) -> Result<()> {

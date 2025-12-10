@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 // Health monitor configuration
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthMonitorConfig {
     // Health check interval
@@ -43,6 +44,7 @@ impl Default for HealthMonitorConfig {
 }
 
 // Health scoring thresholds
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthThresholds {
     // Lag thresholds

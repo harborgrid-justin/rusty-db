@@ -5,7 +5,7 @@
 
 use std::time::SystemTime;
 use std::sync::Mutex;
-use super::{Event, EventBatch, EventValue, StreamPosition};
+use super::{Event, EventValue, StreamPosition};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -156,6 +156,7 @@ impl KafkaConnector {
         })
     }
 
+    #[allow(dead_code)]
     fn deserialize_event(&self, data: &[u8]) -> Result<Event> {
         serde_json::from_slice(data).map_err(|e| {
             crate::error::DbError::Serialization(format!(

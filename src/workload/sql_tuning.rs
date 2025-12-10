@@ -5,7 +5,6 @@ use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
 use parking_lot::RwLock;
 use crate::Result;
 use crate::error::DbError;
@@ -607,7 +606,7 @@ impl SqlTuningAdvisor {
     }
 
     // Recommend index creation
-    fn recommend_index(&self, sql_text: &str, rec_id: u32) -> Result<TuningRecommendation> {
+    fn recommend_index(&self, _sql_text: &str, rec_id: u32) -> Result<TuningRecommendation> {
         Ok(TuningRecommendation {
             recommendation_id: rec_id,
             recommendation_type: RecommendationType::Index,

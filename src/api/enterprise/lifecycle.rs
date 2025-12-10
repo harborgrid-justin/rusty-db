@@ -9,7 +9,6 @@ use tokio::time::sleep;
 use serde::{Serialize, Deserialize};
 
 use crate::error::DbError;
-use super::registry::*;
 
 // ============================================================================
 // SECTION 5: SYSTEM LIFECYCLE MANAGEMENT (600+ lines)

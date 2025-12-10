@@ -284,17 +284,20 @@ struct RemasterRequest {
 
 // Reason for remastering
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum RemasterReason {
+pub enum RemasterReason {
     // High remote access count
     Affinity,
 
     // Load balancing
+    #[allow(dead_code)]
     LoadBalance,
 
     // Node failure
+    #[allow(dead_code)]
     Failover,
 
     // Manual administrative action
+    #[allow(dead_code)]
     Manual,
 }
 

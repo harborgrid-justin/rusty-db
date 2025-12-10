@@ -14,7 +14,7 @@ pub trait StreamOperator: Send + Sync {
 
 /// Operator pipeline
 pub struct OperatorPipeline {
-    name: String,
+    _name: String,
     operators: Vec<Box<dyn StreamOperator>>,
     metrics: PipelineMetrics,
 }
@@ -22,7 +22,7 @@ pub struct OperatorPipeline {
 impl OperatorPipeline {
     pub fn new(name: impl Into<String>) -> Self {
         Self {
-            name: name.into(),
+            _name: name.into(),
             operators: Vec::new(),
             metrics: PipelineMetrics::default(),
         }

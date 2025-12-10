@@ -45,7 +45,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use parking_lot::RwLock;
-use sha2::Digest;
 use std::fs;
 use std::sync::Arc;
 use rand::RngCore;
@@ -410,6 +409,7 @@ impl KeyStore {
 
     // Decrypt data with MEK
     #[inline]
+    #[allow(dead_code)]
     fn decrypt_with_mek(
         &self,
         mek: &MasterKey,
@@ -577,6 +577,7 @@ pub struct DekMetadata {
 // Structure-of-Arrays layout for DEK metadata (cache-friendly)
 // Improves iteration performance by keeping similar data together
 #[derive(Debug)]
+#[allow(dead_code)]
 struct DekMetadataSoA {
     // Parallel arrays for better cache locality
     ids: Vec<String>,
@@ -590,6 +591,7 @@ struct DekMetadataSoA {
 }
 
 impl DekMetadataSoA {
+    #[allow(dead_code)]
     fn new() -> Self {
         Self {
             ids: Vec::new(),
@@ -604,6 +606,7 @@ impl DekMetadataSoA {
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn push(&mut self, metadata: DekMetadata) {
         self.ids.push(metadata.id);
         self.versions.push(metadata.version);
@@ -616,6 +619,7 @@ impl DekMetadataSoA {
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn get(&self, index: usize) -> Option<DekMetadata> {
         if index >= self.ids.len() {
             return None;
@@ -633,12 +637,14 @@ impl DekMetadataSoA {
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn len(&self) -> usize {
         self.ids.len()
     }
 
     // Batch update usage counts - cache-friendly operation
     #[inline]
+    #[allow(dead_code)]
     fn batch_increment_usage(&mut self, indices: &[usize]) {
         for &idx in indices {
             if idx < self.usage_counts.len() {
@@ -649,6 +655,7 @@ impl DekMetadataSoA {
 
     // Find expired DEKs - cache-friendly scan
     #[inline]
+    #[allow(dead_code)]
     fn find_expired(&self, now: i64) -> Vec<usize> {
         self.expires_ats
             .iter()

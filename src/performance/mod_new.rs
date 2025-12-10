@@ -56,6 +56,9 @@
 // =============================================================================
 
 // Plan caching
+// These re-exports are available but currently unused in the module
+// They can be used by external consumers
+#[allow(unused_imports)]
 pub use super::plan_cache::{
     CacheStatistics,
     QueryPlan,
@@ -63,6 +66,7 @@ pub use super::plan_cache::{
 };
 
 // Workload analysis
+#[allow(unused_imports)]
 pub use super::workload_analysis::{
     QueryExecution,
     WorkloadAnalysis,
@@ -70,6 +74,7 @@ pub use super::workload_analysis::{
 };
 
 // Adaptive optimization
+#[allow(unused_imports)]
 pub use super::adaptive_optimizer::{
     AdaptiveQueryOptimizer,
     OptimizationSuggestions,
@@ -77,6 +82,7 @@ pub use super::adaptive_optimizer::{
 };
 
 // Performance statistics
+#[allow(unused_imports)]
 pub use super::performance_stats::{
     GlobalPerformanceStats,
     PerformanceStatsCollector,

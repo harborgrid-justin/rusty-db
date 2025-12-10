@@ -193,7 +193,7 @@ impl IncrementalCheckpointer {
                 // Perform incremental checkpoint
                 let dirty_count = queue.dirty_count();
                 if dirty_count > 0 {
-                    let pages_to_flush = std::cmp::min(dirty_count, batch_size);
+                    let _pages_to_flush = std::cmp::min(dirty_count, batch_size);
                     // Would flush pages here
                 }
             }

@@ -7,9 +7,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
-use crate::error::DbError;
-use super::types::{DateTime, BigInt, Json, JoinType};
-use super::models::{DatabaseSchema, TableType, ColumnType, IndexInfo, ConstraintInfo, QueryResult, QuerySuccess, QueryError, RowType, AggregateInput, AggregateResult, OrderBy, FilterCondition, RowConnection, WhereClause};
+use super::types::{BigInt, Json, JoinType};
+use super::models::{DatabaseSchema, TableType, QueryResult, QuerySuccess, QueryError, RowType, AggregateInput, AggregateResult, OrderBy, RowConnection, WhereClause};
 use super::GraphQLEngine;
 use crate::api::AuthorizationContext;
 

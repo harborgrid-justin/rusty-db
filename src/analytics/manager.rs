@@ -104,7 +104,7 @@ pub struct AnalyticsManager {
     // Cost model for optimization
     cost_model: Arc<CostModel>,
     // Cardinality estimator
-    cardinality_estimator: Arc<CardinalityEstimator>,
+    _cardinality_estimator: Arc<CardinalityEstimator>,
     // Histogram manager
     histogram_manager: Arc<RwLock<HistogramManager>>,
     // Parallel executor
@@ -151,7 +151,7 @@ impl AnalyticsManager {
             statistics_tracker: Arc::new(QueryStatisticsTracker::new()),
             rewriter,
             cost_model: Arc::new(CostModel::new()),
-            cardinality_estimator: Arc::new(CardinalityEstimator::new()),
+            _cardinality_estimator: Arc::new(CardinalityEstimator::new()),
             histogram_manager: Arc::new(RwLock::new(HistogramManager::new())),
             parallel_executor: Arc::new(ParallelQueryExecutor::new(config.parallel_workers)),
             compressor: Arc::new(QueryResultCompressor::new(config.compression_algorithm)),

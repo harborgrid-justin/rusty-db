@@ -627,7 +627,7 @@ impl PlanGenerator {
     }
 
     /// Parse query into logical plan
-    fn parse_query(&self, query: &Query) -> Result<LogicalPlan> {
+    fn parse_query(&self, _query: &Query) -> Result<LogicalPlan> {
         // Simplified query parsing - in production this would be more sophisticated
         Ok(LogicalPlan::Scan {
             table: 1,

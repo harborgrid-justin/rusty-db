@@ -9,7 +9,7 @@ use tokio::sync::broadcast;
 use crate::api::{JoinInput, PersistedQueries, RowChange, RowDeleted, RowInserted, RowUpdated, SubscriptionManager, TableChange, TransactionResult, TransactionOperation};
 use crate::error::DbError;
 use super::types::{DateTime, BigInt, Json, IsolationLevel};
-use super::models::{DatabaseSchema, TableType, ColumnType, IndexInfo, ConstraintInfo, QueryResult, QuerySuccess, RowType, TableStatistics, ColumnStatistics, AggregateInput, AggregateResult, OrderBy, FilterCondition, RowConnection, WhereClause, PageInfo, RowEdge, FieldValue};
+use super::models::{DatabaseSchema, TableType, RowType, TableStatistics, ColumnStatistics, AggregateInput, AggregateResult, OrderBy, RowConnection, WhereClause, PageInfo};
 use super::complexity::{QueryCache, RateLimiter};
 use super::queries::{QueryPlan, SearchResult};
 

@@ -129,7 +129,6 @@
 // Module Declarations
 // ============================================================================
 
-use crate::error::DbError;
 pub mod time_travel;
 pub mod versions;
 pub mod table_restore;

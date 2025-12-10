@@ -11,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
 use hmac::{Hmac, Mac};
 use rsa::{Pkcs1v15Sign, RsaPublicKey, pkcs1::DecodeRsaPublicKey};
-use rsa::signature::Verifier;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
 use reqwest::Client;

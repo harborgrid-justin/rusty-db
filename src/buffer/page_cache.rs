@@ -16,7 +16,6 @@ use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
-use async_graphql::ResultExt;
 
 /// Standard page size (4KB) - Windows default page size
 pub const PAGE_SIZE: usize = 4096;
@@ -624,7 +623,7 @@ impl FrameBatch {
 /// without contention. This is inspired by Linux's per-CPU page allocator.
 pub struct PerCoreFramePool {
 // Core ID this pool belongs to
-    core_id: usize,
+    _core_id: usize,
 
 // Free frames in this pool
     free_frames: Mutex<Vec<FrameId>>,
@@ -642,7 +641,7 @@ impl PerCoreFramePool {
     #[inline]
     pub fn new(core_id: usize, max_frames: usize) -> Self {
         Self {
-            core_id,
+            _core_id: core_id,
             free_frames: Mutex::new(Vec::with_capacity(max_frames)),
             max_frames,
             allocations: AtomicU64::new(0),

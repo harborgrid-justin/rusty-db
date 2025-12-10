@@ -438,7 +438,7 @@ impl MaintenanceWindowOptimizer {
 
         // Try each possible start hour
         for start_hour in 0..24 {
-            let end_hour = (start_hour + duration_hours as u8) % 24;
+            let _end_hour = (start_hour + duration_hours as u8) % 24;
 
             let mut total_impact = 0.0;
             let mut hours_checked = 0;

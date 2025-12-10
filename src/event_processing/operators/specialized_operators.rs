@@ -196,14 +196,14 @@ impl StreamOperator for TopNOperator {
 /// Union operator
 pub struct UnionOperator {
     name: String,
-    stream_count: usize,
+    _stream_count: usize,
 }
 
 impl UnionOperator {
     pub fn new(name: impl Into<String>, stream_count: usize) -> Self {
         Self {
             name: name.into(),
-            stream_count,
+            _stream_count: stream_count,
         }
     }
 }

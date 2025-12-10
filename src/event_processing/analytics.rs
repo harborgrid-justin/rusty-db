@@ -48,7 +48,7 @@ pub struct DashboardDataPoint {
 
 /// Real-time dashboard
 pub struct Dashboard {
-    name: String,
+    _name: String,
     metrics: RwLock<HashMap<String, VecDeque<DashboardDataPoint>>>,
     retention_duration: Duration,
     max_points: usize,
@@ -57,7 +57,7 @@ pub struct Dashboard {
 impl Dashboard {
     pub fn new(name: impl Into<String>) -> Self {
         Self {
-            name: name.into(),
+            _name: name.into(),
             metrics: RwLock::new(HashMap::new()),
             retention_duration: Duration::from_secs(3600), // 1 hour
             max_points: 10000,
@@ -374,7 +374,7 @@ impl TrendAnalyzer {
 
         let start_time = self.history.front().unwrap().0;
 
-        for (i, (timestamp, value)) in self.history.iter().enumerate() {
+        for (i, (_timestamp, value)) in self.history.iter().enumerate() {
             let x = i as f64;
             sum_x += x;
             sum_y += value;
@@ -730,7 +730,7 @@ pub struct StreamAnalyticsEngine {
     dashboard: Arc<Dashboard>,
     anomaly_detectors: RwLock<HashMap<String, AnomalyDetector>>,
     trend_analyzers: RwLock<HashMap<String, TrendAnalyzer>>,
-    predictive_analyzers: RwLock<HashMap<String, PredictiveAnalyzer>>,
+    _predictive_analyzers: RwLock<HashMap<String, PredictiveAnalyzer>>,
     alert_engine: RwLock<AlertEngine>,
 }
 
@@ -740,7 +740,7 @@ impl StreamAnalyticsEngine {
             dashboard: Arc::new(Dashboard::new(dashboard_name)),
             anomaly_detectors: RwLock::new(HashMap::new()),
             trend_analyzers: RwLock::new(HashMap::new()),
-            predictive_analyzers: RwLock::new(HashMap::new()),
+            _predictive_analyzers: RwLock::new(HashMap::new()),
             alert_engine: RwLock::new(AlertEngine::new()),
         }
     }

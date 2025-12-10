@@ -238,9 +238,9 @@ pub struct TouchCountOptimizer {
 #[derive(Debug)]
 struct TouchCountStats {
     total_touches: AtomicU64,
-    hot_pages: AtomicU64,
-    warm_pages: AtomicU64,
-    cold_pages: AtomicU64,
+    _hot_pages: AtomicU64,
+    _warm_pages: AtomicU64,
+    _cold_pages: AtomicU64,
 }
 
 impl TouchCountOptimizer {
@@ -250,9 +250,9 @@ impl TouchCountOptimizer {
             hot_threshold,
             stats: TouchCountStats {
                 total_touches: AtomicU64::new(0),
-                hot_pages: AtomicU64::new(0),
-                warm_pages: AtomicU64::new(0),
-                cold_pages: AtomicU64::new(0),
+                _hot_pages: AtomicU64::new(0),
+                _warm_pages: AtomicU64::new(0),
+                _cold_pages: AtomicU64::new(0),
             },
         }
     }

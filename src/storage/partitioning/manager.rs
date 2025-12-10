@@ -9,6 +9,7 @@ pub struct PartitionManager {
     // Table partitions metadata
     partitions: HashMap<String, PartitionMetadata>,
     // Partition data storage paths
+    #[allow(dead_code)]
     partition_paths: HashMap<String, Vec<String>>,
 }
 

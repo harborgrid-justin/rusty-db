@@ -300,7 +300,7 @@ impl CostModel {
         // Combine selectivities from multiple bitmap index scans
         let mut combined_selectivity = 1.0;
         for index_id in bitmap_index_scans {
-            let index_stats = self.get_index_stats(*index_id)?;
+            let _index_stats = self.get_index_stats(*index_id)?;
             let selectivity = 0.1; // Simplified
             combined_selectivity *= 1.0 - selectivity;
         }
@@ -904,7 +904,7 @@ impl SelectivityEstimator {
 
         // For each key condition, estimate selectivity
         let mut selectivity = 1.0;
-        for condition in key_conditions {
+        for _condition in key_conditions {
             // Simplified: assume each condition divides search space
             selectivity *= 1.0 / index_stats.distinct_values.max(1) as f64;
         }

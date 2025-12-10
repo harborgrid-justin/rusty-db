@@ -675,7 +675,7 @@ impl RbacManager {
 
     fn check_dynamic_sod(
         &self,
-        user_id: &UserId,
+        _user_id: &UserId,
         new_role_id: &RoleId,
         activated_roles: &HashSet<RoleId>,
     ) -> Result<()> {
@@ -734,12 +734,12 @@ impl RbacManager {
                         return Err(DbError::InvalidOperation("Location required".to_string()));
                     }
                 }
-                ActivationCondition::TimeWindow { start_hour, end_hour } => {
+                ActivationCondition::TimeWindow { start_hour: _, end_hour: _ } => {
                     // This is simplified - would need actual time checking
                     let _current_hour = 12; // Placeholder
                     // Check if current hour is within window
                 }
-                ActivationCondition::DayOfWeek { allowed_days } => {
+                ActivationCondition::DayOfWeek { allowed_days: _ } => {
                     // This is simplified - would need actual day checking
                     let _current_day = 3; // Placeholder
                     // Check if current day is allowed

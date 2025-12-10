@@ -248,7 +248,7 @@ impl AdaptiveExecutor {
     ) -> Result<Vec<Vec<Value>>> {
         self.stats_collector.record_operator_start(execution_id, "HashJoin");
 
-        let left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
+        let _left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
         let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
 
         // Simulate join execution
@@ -271,7 +271,7 @@ impl AdaptiveExecutor {
     ) -> Result<Vec<Vec<Value>>> {
         self.stats_collector.record_operator_start(execution_id, "MergeJoin");
 
-        let left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
+        let _left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
         let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
 
         // Simulate join execution
@@ -517,6 +517,7 @@ impl Default for PlanId {
 
 /// Plan corrector for runtime plan adaptation
 pub struct PlanCorrector {
+    #[allow(dead_code)]
     stats_collector: Arc<RuntimeStatsCollector>,
 }
 
@@ -814,6 +815,7 @@ impl CardinalityFeedbackLoop {
 /// Cardinality prediction
 #[derive(Debug, Clone)]
 struct CardinalityPrediction {
+    #[allow(dead_code)]
     plan_id: PlanId,
     total_estimated: usize,
     total_actual: usize,

@@ -18,6 +18,7 @@ use crate::error::DbError;
 type Result<T> = std::result::Result<T, DbError>;
 
 /// Lock-free ring buffer for apply queue
+#[allow(dead_code)]
 #[repr(C, align(64))]
 struct RingBuffer<T> {
     buffer: Vec<Option<T>>,
@@ -245,6 +246,7 @@ pub struct ApplyStats {
 }
 
 /// Atomic apply statistics for lock-free updates
+#[allow(dead_code)]
 #[repr(C, align(64))]
 struct AtomicApplyStats {
     total_changes: AtomicU64,

@@ -196,7 +196,7 @@ pub struct GlobalDataServices {
     /// Active connections
     connections: Arc<RwLock<HashMap<String, Vec<ActiveConnection>>>>,
     /// Region latency matrix
-    latency_matrix: Arc<RwLock<BTreeMap<(String, String), u64>>>,
+    _latency_matrix: Arc<RwLock<BTreeMap<(String, String), u64>>>,
 }
 
 /// Active connection tracking
@@ -227,7 +227,7 @@ impl GlobalDataServices {
             services: Arc::new(RwLock::new(HashMap::new())),
             stats: Arc::new(RwLock::new(GdsStats::default())),
             connections: Arc::new(RwLock::new(HashMap::new())),
-            latency_matrix: Arc::new(RwLock::new(BTreeMap::new())),
+            _latency_matrix: Arc::new(RwLock::new(BTreeMap::new())),
         }
     }
 
@@ -508,7 +508,7 @@ impl GlobalDataServices {
     fn weighted_routing(
         &self,
         service: &GlobalService,
-        weights: &HashMap<String, u32>,
+        _weights: &HashMap<String, u32>,
     ) -> Result<RoutingDecision> {
         // Simple implementation - would use weights in production
         self.round_robin_routing(service)

@@ -422,7 +422,7 @@ pub struct WorkloadAnalyzer {
     // Minimum frequency for pattern consideration
     min_frequency: u64,
     // Time window for analysis (seconds)
-    time_window_secs: u64,
+    _time_window_secs: u64,
 }
 
 impl Default for WorkloadAnalyzer {
@@ -436,7 +436,7 @@ impl WorkloadAnalyzer {
     pub fn new() -> Self {
         Self {
             min_frequency: 10,
-            time_window_secs: 3600,
+            _time_window_secs: 3600,
         }
     }
 

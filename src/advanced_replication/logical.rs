@@ -169,7 +169,7 @@ pub struct LogicalReplication {
     stats: Arc<RwLock<LogicalReplicationStats>>,
     /// Change channel
     change_tx: mpsc::UnboundedSender<LogicalChange>,
-    change_rx: Arc<RwLock<mpsc::UnboundedReceiver<LogicalChange>>>,
+    _change_rx: Arc<RwLock<mpsc::UnboundedReceiver<LogicalChange>>>,
 }
 
 /// Logical replication statistics
@@ -199,7 +199,7 @@ impl LogicalReplication {
             current_lsn: Arc::new(RwLock::new(0)),
             stats: Arc::new(RwLock::new(LogicalReplicationStats::default())),
             change_tx,
-            change_rx: Arc::new(RwLock::new(change_rx)),
+            _change_rx: Arc::new(RwLock::new(change_rx)),
         }
     }
 

@@ -96,11 +96,11 @@ pub struct GlobalEnqueueService {
 // Lock state in the global registry
 #[derive(Debug, Clone)]
 struct LockState {
-    resource_id: ResourceId,
+    _resource_id: ResourceId,
     lock_type: LockType,
     holders: HashSet<NodeId>,
     granted_time: Instant,
-    conversion_queue: Vec<NodeId>,
+    _conversion_queue: Vec<NodeId>,
 }
 
 // Lock waiter information
@@ -197,11 +197,11 @@ impl GlobalEnqueueService {
 
         let state = registry.entry(resource_id.clone()).or_insert_with(|| {
             LockState {
-                resource_id: resource_id.clone(),
+                _resource_id: resource_id.clone(),
                 lock_type: LockType::Null,
                 holders: HashSet::new(),
                 granted_time: Instant::now(),
-                conversion_queue: Vec::new(),
+                _conversion_queue: Vec::new(),
             }
         });
 

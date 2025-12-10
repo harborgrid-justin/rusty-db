@@ -356,7 +356,7 @@ impl ConsolidationPlanner {
     fn calculate_placement_score(
         &self,
         host: &ConsolidationHost,
-        profile: &WorkloadProfile,
+        _profile: &WorkloadProfile,
         _affinity_rules: &[AffinityRule],
         _placements: &HashMap<String, TenantPlacement>,
     ) -> f64 {

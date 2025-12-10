@@ -14,13 +14,11 @@ use std::time::Instant;
 use std::collections::{HashMap, BinaryHeap, VecDeque, HashSet};
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
-use std::time::{Duration};
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Result, DbError};
 use super::consumer_groups::{ConsumerGroupId, PriorityLevel};
-use super::plans::ResourcePlanId;
 
 // Per-core resource tracker - avoids global lock contention
 // Cache line aligned to prevent false sharing (64 bytes on most platforms)

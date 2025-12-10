@@ -33,7 +33,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::{TransactionId, TableId, RowId, Value};
 use crate::error::{Result, DbError};
-use super::time_travel::{SCN, Timestamp, current_timestamp};
+use super::time_travel::{SCN, Timestamp};
 
 
 // ============================================================================

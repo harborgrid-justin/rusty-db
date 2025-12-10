@@ -9,10 +9,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
-use crate::error::DbError;
 use super::types::*;
 use super::models::*;
-use super::{GraphQLEngine, AuthorizationContext};
+use super::GraphQLEngine;
+use crate::api::AuthorizationContext;
 
 // ============================================================================
 // PART 3: MUTATION OPERATIONS (500+ lines)

@@ -1,7 +1,6 @@
 // Container Database (CDB) implementation with Pluggable Database (PDB) management
 // Oracle-like architecture for multi-tenant databases
 
-use tokio::time::sleep;
 use std::fmt;
 use std::collections::{HashMap};
 use std::sync::Arc;
@@ -363,7 +362,7 @@ impl ContainerDatabase {
         &self,
         pdb_name: String,
         admin_user: String,
-        admin_password: String,
+        _admin_password: String,
     ) -> ContainerResult<Arc<RwLock<PdbConfig>>> {
         let pdbs = self.pdbs.read().await;
 
@@ -508,7 +507,7 @@ impl ContainerDatabase {
         &self,
         source_name: &str,
         target_name: &str,
-        operation_id: u64,
+        _operation_id: u64,
     ) -> ContainerResult<()> {
         let pdbs = self.pdbs.read().await;
         let source_pdb = pdbs.get(source_name)

@@ -349,7 +349,7 @@ impl DiagnosticAdvisor {
     }
 
     // Analyze performance and identify issues
-    fn analyze_performance(&self, analysis_id: AnalysisId) -> Result<Vec<Finding>> {
+    fn analyze_performance(&self, _analysis_id: AnalysisId) -> Result<Vec<Finding>> {
         let mut findings = Vec::new();
         let mut finding_id = 1;
 
@@ -472,7 +472,7 @@ impl DiagnosticAdvisor {
                     time_period_end: SystemTime::now(),
                 });
             }
-            finding_id += sql_findings.len() as u32;
+            let _ = finding_id + sql_findings.len() as u32;
         }
 
         Ok(findings)

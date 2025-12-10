@@ -164,6 +164,7 @@ impl fmt::Display for ReplicaId {
 // Strongly-typed replica network address
 //
 // Validates and normalizes network addresses for replica connections.
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ReplicaAddress(String);
 
@@ -255,6 +256,7 @@ impl fmt::Display for ReplicaAddress {
 }
 
 // Strongly-typed table name for replication operations
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TableName(String);
 
@@ -304,6 +306,7 @@ impl fmt::Display for TableName {
 // Log Sequence Number for WAL ordering
 //
 // Provides strong typing for LSN values with ordering guarantees.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct LogSequenceNumber(u64);
 
@@ -340,6 +343,7 @@ impl fmt::Display for LogSequenceNumber {
 }
 
 // Transaction ID for grouping WAL entries
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TransactionId(u64);
 
@@ -362,6 +366,7 @@ impl fmt::Display for TransactionId {
 }
 
 // Replication mode configuration
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicationMode {
     // Wait for all replicas to acknowledge before committing
@@ -383,6 +388,7 @@ impl fmt::Display for ReplicationMode {
 }
 
 // Replica status enumeration
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicaStatus {
     // Replica is active and up-to-date
@@ -413,6 +419,7 @@ impl fmt::Display for ReplicaStatus {
 }
 
 // Replica role in the replication topology
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicaRole {
     // Primary replica that accepts writes
@@ -437,6 +444,7 @@ impl fmt::Display for ReplicaRole {
 }
 
 // Type of replication operation
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ReplicationOperation {
     // Insert new row(s)
@@ -491,6 +499,7 @@ impl fmt::Display for ReplicationOperation {
 }
 
 // Replication topology configuration
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReplicationTopology {
     // One primary with multiple read replicas
@@ -515,6 +524,7 @@ impl fmt::Display for ReplicationTopology {
 }
 
 // Conflict resolution strategy
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ConflictResolutionStrategy {
     // Most recent timestamp wins
@@ -539,6 +549,7 @@ impl fmt::Display for ConflictResolutionStrategy {
 }
 
 // Lag monitoring trend
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LagTrend {
     // Lag is decreasing
@@ -566,6 +577,7 @@ impl fmt::Display for LagTrend {
 //
 // Contains all information needed to manage a replica connection,
 // monitor its health, and track its replication status.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicaNode {
     // Unique identifier for the replica
@@ -675,6 +687,7 @@ impl ReplicaNode {
 //
 // Represents a single operation in the write-ahead log with all
 // necessary information for replication and recovery.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalEntry {
     // Log sequence number for ordering
@@ -783,6 +796,7 @@ impl WalEntry {
 //
 // Simplified version of WalEntry for efficient network transmission
 // between replicas.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationLogEntry {
     // Sequential entry number

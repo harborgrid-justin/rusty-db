@@ -28,7 +28,7 @@ lazy_static! {
 // Request logger middleware that tracks and updates metrics
 pub async fn request_logger_middleware(
     State(state): State<Arc<ApiState>>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     req: Request<Body>,
     next: Next,
 ) -> Result<Response, ApiError> {

@@ -408,14 +408,14 @@ struct CachedQuery {
 
 // Cache warming strategy
 pub struct CacheWarmer {
-    cache: Arc<MultiLevelCache>,
+    _cache: Arc<MultiLevelCache>,
     warming_queries: Vec<WarmingQuery>,
 }
 
 impl CacheWarmer {
     pub fn new(cache: Arc<MultiLevelCache>) -> Self {
         Self {
-            cache,
+            _cache: cache,
             warming_queries: Vec::new(),
         }
     }
@@ -579,12 +579,12 @@ impl DistributedCacheCoordinator {
 
 // Remote cache node
 pub struct RemoteNode {
-    address: String,
+    _address: String,
 }
 
 impl RemoteNode {
     pub fn new(address: String) -> Self {
-        Self { address }
+        Self { _address: address }
     }
 
     pub async fn get(&self, _key: &str) -> Result<Option<QueryResult>> {
@@ -600,14 +600,14 @@ impl RemoteNode {
 
 // Cache preloader for frequently accessed data
 pub struct CachePreloader {
-    cache: Arc<MultiLevelCache>,
+    _cache: Arc<MultiLevelCache>,
     preload_rules: Vec<PreloadRule>,
 }
 
 impl CachePreloader {
     pub fn new(cache: Arc<MultiLevelCache>) -> Self {
         Self {
-            cache,
+            _cache: cache,
             preload_rules: Vec::new(),
         }
     }

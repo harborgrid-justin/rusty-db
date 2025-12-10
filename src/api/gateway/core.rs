@@ -2,8 +2,7 @@
 //
 // Part of the API Gateway and Security system for RustyDB
 
-use std::collections::{HashMap};
-use std::net::IpAddr;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 use parking_lot::RwLock;

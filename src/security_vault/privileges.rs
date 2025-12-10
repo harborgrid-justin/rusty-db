@@ -246,8 +246,11 @@ pub struct PrivilegeAnalyzer {
 // Privilege usage record
 #[derive(Debug, Clone)]
 struct PrivilegeUsage {
+    #[allow(dead_code)]
     user_id: String,
+    #[allow(dead_code)]
     privilege: PrivilegeType,
+    #[allow(dead_code)]
     timestamp: i64,
 }
 

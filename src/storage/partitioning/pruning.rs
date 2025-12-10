@@ -160,6 +160,7 @@ pub mod advanced {
     // Partition pruning optimizer
     pub struct PartitionPruningOptimizer {
         statistics: HashMap<String, PartitionStatistics>,
+        #[allow(dead_code)]
         pruning_rules: Vec<PruningRule>,
     }
 

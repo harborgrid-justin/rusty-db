@@ -156,7 +156,7 @@ impl WindowType {
         }
     }
 
-    fn window_start_time(&self, window_id: WindowId, event_time: SystemTime) -> SystemTime {
+    fn window_start_time(&self, _window_id: WindowId, event_time: SystemTime) -> SystemTime {
         match self {
             WindowType::Tumbling { size } => {
                 let duration_since_epoch = event_time
@@ -913,7 +913,7 @@ impl PaneBasedWindow {
         let mut max: Option<f64> = None;
 
         // Combine panes in the window range
-        for (&pane_id, pane) in self.panes.range(start_pane_id..=end_pane_id) {
+        for (&_pane_id, pane) in self.panes.range(start_pane_id..=end_pane_id) {
             count += pane.count;
             sum += pane.sum;
 

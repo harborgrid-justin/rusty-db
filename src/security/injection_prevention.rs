@@ -77,7 +77,7 @@ pub enum NormalizationForm {
 }
 
 #[derive(Debug, Clone, Default)]
-struct SanitizerStats {
+pub struct SanitizerStats {
     total_sanitized: u64,
     homographs_detected: u64,
     zero_width_removed: u64,
@@ -347,10 +347,10 @@ pub struct DangerousPatternDetector {
 }
 
 #[derive(Debug, Clone, Default)]
-struct DetectorStats {
+pub struct DetectorStats {
     total_scanned: u64,
     threats_detected: u64,
-    keywords_blocked: u64,
+    _keywords_blocked: u64,
     patterns_blocked: u64,
 }
 
@@ -516,9 +516,9 @@ impl Default for DangerousPatternDetector {
 // Validates SQL syntax and structure
 pub struct SQLValidator {
     // Maximum allowed subquery depth
-    max_subquery_depth: usize,
+    _max_subquery_depth: usize,
     // Maximum allowed joins
-    max_joins: usize,
+    _max_joins: usize,
     // Allowed SQL functions
     allowed_functions: HashSet<String>,
     // Statistics
@@ -526,10 +526,10 @@ pub struct SQLValidator {
 }
 
 #[derive(Debug, Clone, Default)]
-struct ValidatorStats {
+pub struct ValidatorStats {
     total_validated: u64,
-    validation_failures: u64,
-    complexity_exceeded: u64,
+    _validation_failures: u64,
+    _complexity_exceeded: u64,
 }
 
 impl SQLValidator {
@@ -554,8 +554,8 @@ impl SQLValidator {
         }
 
         Self {
-            max_subquery_depth: 3,
-            max_joins: 5,
+            _max_subquery_depth: 3,
+            _max_joins: 5,
             allowed_functions,
             stats: Arc::new(RwLock::new(ValidatorStats::default())),
         }
@@ -624,7 +624,7 @@ impl SQLValidator {
     }
 
     // Validate SQL identifiers (table/column names)
-    fn validate_identifiers(&self, sql: &str) -> Result<()> {
+    fn validate_identifiers(&self, _sql: &str) -> Result<()> {
         // Identifiers must start with letter or underscore
         // Can contain letters, numbers, underscores
         let _identifier_regex = Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").unwrap();
@@ -797,14 +797,14 @@ impl Default for ParameterizedQueryBuilder {
 // Unicode normalization and confusable detection
 pub struct UnicodeNormalizer {
     // Default normalization form
-    default_form: NormalizationForm,
+    _default_form: NormalizationForm,
 }
 
 impl UnicodeNormalizer {
     // Create a new Unicode normalizer
     pub fn new() -> Self {
         Self {
-            default_form: NormalizationForm::NFC,
+            _default_form: NormalizationForm::NFC,
         }
     }
 

@@ -10,8 +10,6 @@ use std::time::SystemTime;
 use std::time::Instant;
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
-use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Result, DbError};
@@ -202,7 +200,7 @@ impl AutoDopCalculator {
     pub fn calculate_dop(
         &self,
         estimated_cost: Option<f64>,
-        estimated_rows: Option<u64>,
+        _estimated_rows: Option<u64>,
         available_servers: u32,
     ) -> DegreeOfParallelism {
         // Base DOP on number of CPUs

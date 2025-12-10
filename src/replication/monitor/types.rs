@@ -2,7 +2,6 @@
 
 use crate::replication::ReplicaId;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 
 // Replica health status
@@ -135,6 +134,7 @@ pub struct HealthHistoryEntry {
 }
 
 // Aggregated health statistics
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthStatistics {
     pub total_checks: u64,

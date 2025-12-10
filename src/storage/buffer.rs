@@ -388,6 +388,7 @@ pub struct BufferPoolManager {
     replacer: Arc<Mutex<LruKReplacer>>,
 
     // NUMA awareness
+    #[allow(dead_code)]
     numa_allocator: Arc<Mutex<NumaAllocator>>,
 
     // Background flushing

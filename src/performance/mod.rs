@@ -171,7 +171,7 @@ pub struct CacheStatistics {
 // Adaptive query optimizer using statistics
 pub struct AdaptiveQueryOptimizer {
     statistics: Arc<RwLock<HashMap<String, QueryStatistics>>>,
-    learning_rate: f64,
+    _learning_rate: f64,
     min_samples: usize,
 }
 
@@ -179,7 +179,7 @@ impl AdaptiveQueryOptimizer {
     pub fn new(learning_rate: f64, min_samples: usize) -> Self {
         Self {
             statistics: Arc::new(RwLock::new(HashMap::new())),
-            learning_rate,
+            _learning_rate: learning_rate,
             min_samples,
         }
     }
@@ -376,7 +376,7 @@ pub enum PrefetchPriority {
 
 // Distributed cache coordinator
 pub struct DistributedCacheCoordinator {
-    local_cache: Arc<QueryPlanCache>,
+    _local_cache: Arc<QueryPlanCache>,
     peers: Arc<RwLock<Vec<CachePeer>>>,
     invalidation_log: Arc<RwLock<Vec<InvalidationEvent>>>,
 }
@@ -384,7 +384,7 @@ pub struct DistributedCacheCoordinator {
 impl DistributedCacheCoordinator {
     pub fn new(local_cache: Arc<QueryPlanCache>) -> Self {
         Self {
-            local_cache,
+            _local_cache: local_cache,
             peers: Arc::new(RwLock::new(Vec::new())),
             invalidation_log: Arc::new(RwLock::new(Vec::new())),
         }
@@ -1093,14 +1093,14 @@ mod tests {
 // Query execution profiler
 pub struct QueryProfiler {
     profiles: Arc<RwLock<HashMap<String, QueryProfile>>>,
-    sampling_rate: f64,
+    _sampling_rate: f64,
 }
 
 impl QueryProfiler {
     pub fn new(sampling_rate: f64) -> Self {
         Self {
             profiles: Arc::new(RwLock::new(HashMap::new())),
-            sampling_rate,
+            _sampling_rate: sampling_rate,
         }
     }
 
@@ -1183,7 +1183,7 @@ pub struct ProfileCheckpoint {
 pub struct MemoryPoolManager {
     total_capacity: usize,
     allocated: Arc<RwLock<HashMap<String, MemoryAllocation>>>,
-    allocation_strategy: AllocationStrategy,
+    _allocation_strategy: AllocationStrategy,
 }
 
 #[derive(Debug, Clone)]
@@ -1198,7 +1198,7 @@ impl MemoryPoolManager {
         Self {
             total_capacity,
             allocated: Arc::new(RwLock::new(HashMap::new())),
-            allocation_strategy: strategy,
+            _allocation_strategy: strategy,
         }
     }
 
@@ -1856,7 +1856,7 @@ impl BenchmarkRunner {
         let benchmarks = self.benchmarks.read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
 
-        let benchmark = benchmarks.get(benchmark_id)
+        let _benchmark = benchmarks.get(benchmark_id)
             .ok_or_else(|| DbError::NotFound(format!("Benchmark {} not found", benchmark_id)))?;
 
         let mut execution_times = Vec::new();

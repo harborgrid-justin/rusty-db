@@ -440,7 +440,9 @@ impl JsonOperators {
 
 // JSON index for fast queries
 pub struct JsonIndex {
+    #[allow(dead_code)]
     table_name: String,
+    #[allow(dead_code)]
     column_name: String,
     // Path -> (value -> document IDs)
     path_indexes: HashMap<String, HashMap<String, Vec<u64>>>,

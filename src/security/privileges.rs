@@ -338,7 +338,7 @@ impl PrivilegeManager {
         grant_id: &str,
         cascade: bool,
     ) -> Result<Vec<String>> {
-        let grant = {
+        let _grant = {
             let grants = self.grants.read();
             grants.get(grant_id)
                 .ok_or_else(|| DbError::NotFound("Grant not found".to_string()))?
@@ -469,7 +469,7 @@ impl PrivilegeManager {
                     if let PrivilegeType::Object {
                         privilege: ref p,
                         object_type: ref ot,
-                        ref object_id,
+                        object_id: _,
                         columns: ref grant_columns,
                     } = grant.privilege_type {
                         if ot != object_type {

@@ -414,7 +414,7 @@ impl BufferPool {
     }
 
     /// Return a buffer to the pool
-    fn return_buffer(&self, ptr: *mut u8, size: usize, _layout: Layout) {
+    fn return_buffer(&self, ptr: *mut u8, _size: usize, _layout: Layout) {
         let mut buffers = self.buffers.lock();
 
         for buffer in buffers.iter_mut() {

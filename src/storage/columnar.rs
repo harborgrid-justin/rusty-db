@@ -525,6 +525,7 @@ impl ColumnDef {
 
 // Columnar table for analytics
 pub struct ColumnarTable {
+    #[allow(dead_code)]
     name: String,
     columns: Vec<ColumnDef>,
     chunks: Arc<RwLock<HashMap<String, Vec<ColumnChunk>>>>,

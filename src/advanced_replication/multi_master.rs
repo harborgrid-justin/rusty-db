@@ -112,7 +112,7 @@ pub struct MultiMasterReplication {
     /// Replication groups this site belongs to
     groups: Arc<RwLock<HashMap<String, ReplicationGroup>>>,
     /// Pending operations to be replicated
-    pending_ops: Arc<RwLock<VecDeque<ReplicationOp>>>,
+    _pending_ops: Arc<RwLock<VecDeque<ReplicationOp>>>,
     /// Applied operations (for deduplication)
     applied_ops: Arc<RwLock<HashSet<String>>>,
     /// Vector clock for this site
@@ -149,7 +149,7 @@ impl MultiMasterReplication {
         Self {
             local_site_id: site_id,
             groups: Arc::new(RwLock::new(HashMap::new())),
-            pending_ops: Arc::new(RwLock::new(VecDeque::new())),
+            _pending_ops: Arc::new(RwLock::new(VecDeque::new())),
             applied_ops: Arc::new(RwLock::new(HashSet::new())),
             vector_clock: Arc::new(RwLock::new(HashMap::new())),
             conflict_resolver: Arc::new(ConflictResolver::new()),
@@ -368,7 +368,7 @@ impl MultiMasterReplication {
     }
 
     /// Find a conflicting operation
-    fn find_conflicting_operation(&self, op: &ReplicationOp) -> Option<ReplicationOp> {
+    fn find_conflicting_operation(&self, _op: &ReplicationOp) -> Option<ReplicationOp> {
         // In a real implementation, this would check pending operations
         // For now, return None
         None

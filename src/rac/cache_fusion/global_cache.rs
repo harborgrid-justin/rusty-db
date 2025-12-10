@@ -297,24 +297,24 @@ pub struct GlobalCacheService {
     message_tx: mpsc::UnboundedSender<(NodeId, CacheFusionMessage)>,
 
     // Message receiver
-    message_rx: Arc<Mutex<mpsc::UnboundedReceiver<(NodeId, CacheFusionMessage)>>>,
+    _message_rx: Arc<Mutex<mpsc::UnboundedReceiver<(NodeId, CacheFusionMessage)>>>,
 
     // Block transfer statistics
     stats: Arc<RwLock<GcsStatistics>>,
 
     // Configuration
-    config: GcsConfig,
+    _config: GcsConfig,
 }
 
 // Block request tracking
 #[derive(Debug)]
 struct BlockRequest {
-    resource_id: ResourceId,
-    requested_mode: BlockMode,
-    requestor: NodeId,
-    transaction_id: TransactionId,
-    timestamp: Instant,
-    response_tx: oneshot::Sender<Result<BlockGrant, DbError>>,
+    _resource_id: ResourceId,
+    _requested_mode: BlockMode,
+    _requestor: NodeId,
+    _transaction_id: TransactionId,
+    _timestamp: Instant,
+    _response_tx: oneshot::Sender<Result<BlockGrant, DbError>>,
 }
 
 // Block grant response
@@ -437,9 +437,9 @@ impl GlobalCacheService {
             local_cache: Arc::new(RwLock::new(HashMap::new())),
             pending_requests: Arc::new(Mutex::new(HashMap::new())),
             message_tx,
-            message_rx: Arc::new(Mutex::new(message_rx)),
+            _message_rx: Arc::new(Mutex::new(message_rx)),
             stats: Arc::new(RwLock::new(GcsStatistics::default())),
-            config,
+            _config: config,
         }
     }
 
@@ -474,12 +474,12 @@ impl GlobalCacheService {
         let (response_tx, response_rx) = oneshot::channel();
 
         let request = BlockRequest {
-            resource_id: resource_id.clone(),
-            requested_mode: mode,
-            requestor: self.node_id.clone(),
-            transaction_id,
-            timestamp: Instant::now(),
-            response_tx,
+            _resource_id: resource_id.clone(),
+            _requested_mode: mode,
+            _requestor: self.node_id.clone(),
+            _transaction_id: transaction_id,
+            _timestamp: Instant::now(),
+            _response_tx: response_tx,
         };
 
         // Track pending request

@@ -22,6 +22,7 @@ use crate::error::Result;
 
 // Storage engine that manages data persistence
 pub struct StorageEngine {
+    #[allow(dead_code)]
     disk_manager: DiskManager,
     buffer_pool: BufferPoolManager,
 }

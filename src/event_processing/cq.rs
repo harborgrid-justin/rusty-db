@@ -225,7 +225,7 @@ pub struct CQExecutor {
     checkpoint_manager: RwLock<CheckpointManager>,
 
     /// Query optimizer
-    optimizer: QueryOptimizer,
+    _optimizer: QueryOptimizer,
 
     /// Metrics
     metrics: Arc<RwLock<CQMetrics>>,
@@ -241,7 +241,7 @@ impl CQExecutor {
             execution_state: Arc::new(RwLock::new(ExecutionState::new())),
             materialized_view: Arc::new(RwLock::new(MaterializedView::new(query.id.clone()))),
             checkpoint_manager: RwLock::new(checkpoint_manager),
-            optimizer: QueryOptimizer::new(query.config.clone()),
+            _optimizer: QueryOptimizer::new(query.config.clone()),
             metrics: Arc::new(RwLock::new(CQMetrics::default())),
         })
     }
@@ -578,6 +578,7 @@ impl CheckpointManager {
         Ok(self.checkpoints.values().last().cloned())
     }
 
+    #[allow(dead_code)]
     fn get_checkpoint(&self, version: u64) -> Option<&Checkpoint> {
         self.checkpoints.get(&version)
     }

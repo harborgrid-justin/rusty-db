@@ -289,11 +289,13 @@ impl CompressionEngine {
 
 // Tiered page storage
 struct TieredPage {
+    #[allow(dead_code)]
     page_id: PageId,
     tier: StorageTier,
     compressed_data: Vec<u8>,
     compression_level: CompressionLevel,
     original_size: usize,
+    #[allow(dead_code)]
     created_at: SystemTime,
     last_migrated: SystemTime,
 }
@@ -341,7 +343,9 @@ struct MigrationTask {
     page_id: PageId,
     from_tier: StorageTier,
     to_tier: StorageTier,
+    #[allow(dead_code)]
     priority: u8,
+    #[allow(dead_code)]
     created_at: Instant,
 }
 

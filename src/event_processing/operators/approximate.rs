@@ -152,7 +152,7 @@ pub struct CountMinSketch {
     width: usize,
 
     /// Depth of the sketch (controls probability: δ = 1 / e^depth)
-    depth: usize,
+    _depth: usize,
 
     /// 2D array of counters
     counts: Vec<Vec<u64>>,
@@ -191,7 +191,7 @@ impl CountMinSketch {
 
         Self {
             width,
-            depth,
+            _depth: depth,
             counts: vec![vec![0; width]; depth],
             seeds,
         }
