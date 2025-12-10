@@ -206,6 +206,12 @@ async fn websocket_stream(
     ws.on_upgrade(|socket| handle_websocket(socket, state))
 }
 
+fn get_executor() -> Executor {
+    let catalog_guard = CATALOG.read();
+    let catalog_snapshot = (*catalog_guard).clone();
+    Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone())
+}
+
 async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
     use axum::extract::ws::Message;
 
@@ -214,10 +220,7 @@ async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
             match msg {
                 Message::Text(text) => {
                     if let Ok(request) = serde_json::from_str::<QueryRequest>(&text) {
-                        let catalog_guard = CATALOG.read();
-                        let catalog_snapshot = (*catalog_guard).clone();
-                        drop(catalog_guard);
-                        let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
+                        let executor = get_executor();
 
                         let response = match SQL_PARSER.parse(&request.sql) {
                             Ok(stmts) => {

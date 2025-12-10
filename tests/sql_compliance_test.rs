@@ -186,7 +186,7 @@ fn test_create_view_parsing() -> Result<()> {
 
     assert_eq!(stmts.len(), 1);
     match &stmts[0] {
-        SqlStatement::CreateView { name, query } => {
+        SqlStatement::CreateView { name, query, .. } => {
             assert_eq!(name, "active_users");
             assert!(query.contains("SELECT"), "Query should contain SELECT");
         }
@@ -210,6 +210,7 @@ fn test_executor_create_view() -> Result<()> {
     let stmt = SqlStatement::CreateView {
         name: "test_view".to_string(),
         query: "SELECT * FROM users".to_string(),
+        or_replace: false,
     };
 
     let result = executor.execute(stmt)?;

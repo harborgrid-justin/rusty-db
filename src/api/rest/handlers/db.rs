@@ -40,6 +40,7 @@ fn format_data_type(data_type: &DataType) -> String {
 }
 
 // Execute a SQL query
+#[axum::debug_handler]
 #[utoipa::path(
     post,
     path = "/api/v1/query",
@@ -84,10 +85,11 @@ pub async fn execute_query(
         .ok_or_else(|| ApiError::new("SQL_PARSE_ERROR", "No valid SQL statement found"))?;
 
     // Execute query
-    let catalog_guard = CATALOG.read();
-    let catalog_snapshot = (*catalog_guard).clone();
-    drop(catalog_guard);
-    let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
+    let executor = {
+        let catalog_guard = CATALOG.read();
+        let catalog_snapshot = (*catalog_guard).clone();
+        Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone())
+    };
     let result = executor.execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
