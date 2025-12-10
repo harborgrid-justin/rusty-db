@@ -1,0 +1,53 @@
+╔════════════════════════════════════════════════════════════╗
+║         RustyDB - Enterprise Database System              ║
+║         Rust-based Oracle Competitor v0.1.0             ║
+╚════════════════════════════════════════════════════════════╝
+
+Features:
+  ✓ ACID Transactions with MVCC
+  ✓ Multiple Isolation Levels
+  ✓ B-Tree, LSM, Hash, Spatial & Full-Text Indexes
+  ✓ Stored Procedures & Triggers
+  ✓ Role-Based Access Control (RBAC)
+  ✓ Encryption at Rest & In Transit
+  ✓ Point-in-Time Recovery
+  ✓ Distributed Clustering & Replication
+  ✓ Real-time Monitoring & Metrics
+  ✓ OLAP & Columnar Storage
+
+[2m2025-12-10T23:11:02.035398Z[0m [32m INFO[0m ThreadId(01) Initializing RustyDB server
+[2m2025-12-10T23:11:02.035425Z[0m [32m INFO[0m ThreadId(01) Version: 0.1.0
+[2m2025-12-10T23:11:02.035432Z[0m [32m INFO[0m ThreadId(01) Configuration:
+[2m2025-12-10T23:11:02.035439Z[0m [32m INFO[0m ThreadId(01)   Data directory: ./data
+[2m2025-12-10T23:11:02.035449Z[0m [32m INFO[0m ThreadId(01)   Port: 5432
+[2m2025-12-10T23:11:02.035457Z[0m [32m INFO[0m ThreadId(01)   REST API port: 8080
+[2m2025-12-10T23:11:02.035463Z[0m [32m INFO[0m ThreadId(01)   REST API enabled: true
+[2m2025-12-10T23:11:02.035470Z[0m [32m INFO[0m ThreadId(01)   Page size: 8192 bytes
+[2m2025-12-10T23:11:02.035477Z[0m [32m INFO[0m ThreadId(01)   Buffer pool size: 1000 pages
+[2m2025-12-10T23:11:02.035484Z[0m [32m INFO[0m ThreadId(01) Initializing core subsystems...
+[2m2025-12-10T23:11:02.035491Z[0m [32m INFO[0m ThreadId(01) Core subsystems initialized successfully
+[2m2025-12-10T23:11:02.035542Z[0m [32m INFO[0m ThreadId(01) Starting network server on 127.0.0.1:5432
+
+╭─────────────────────────────────────────────────────────╮
+│  RustyDB is ready to accept connections                │
+│  Connect using: rusty-db-cli                            │
+│  Native protocol port: 5432                              │
+│  REST API: http://0.0.0.0:8080                          │
+│  GraphQL: http://0.0.0.0:8080/graphql                   │
+╰─────────────────────────────────────────────────────────╯
+
+[port_override] Redirecting port 5432 -> 5442
+[2m2025-12-10T23:11:02.035811Z[0m [32m INFO[0m ThreadId(01) RustyDB server listening on 127.0.0.1:5432
+[2m2025-12-10T23:11:02.038370Z[0m [32m INFO[0m ThreadId(17) Starting REST API server on 0.0.0.0:8080
+[port_override] Redirecting port 8080 -> 8090
+[2m2025-12-10T23:11:02.039655Z[0m [32m INFO[0m ThreadId(17) REST API server listening on 0.0.0.0:8080
+[2m2025-12-10T23:11:10.520279Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m07cdc36b-8590-4f33-886f-549278ca971b [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T23:11:10.520435Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m07cdc36b-8590-4f33-886f-549278ca971b [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T23:11:11.210116Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m24d8c3f2-cd3f-4ae4-a478-179676bc53c0 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology
+[2m2025-12-10T23:11:11.210184Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m24d8c3f2-cd3f-4ae4-a478-179676bc53c0 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T23:11:11.645889Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mf16b2726-b400-4374-ba7d-417d7d88a7af [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T23:11:11.645953Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mf16b2726-b400-4374-ba7d-417d7d88a7af [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T23:11:11.814400Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m81668628-feec-4274-95b4-4463919c82e5 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/config
+[2m2025-12-10T23:11:11.814461Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m81668628-feec-4274-95b4-4463919c82e5 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/config [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T23:11:12.026399Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m217f8e8d-313c-476f-afda-ff190594a5c7 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/replication
+[2m2025-12-10T23:11:12.026525Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m217f8e8d-313c-476f-afda-ff190594a5c7 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/replication [3mduration_ms[0m[2m=[0m0

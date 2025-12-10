@@ -1,0 +1,49 @@
+╔════════════════════════════════════════════════════════════╗
+║         RustyDB - Enterprise Database System              ║
+║         Rust-based Oracle Competitor v0.1.0             ║
+╚════════════════════════════════════════════════════════════╝
+
+Features:
+  ✓ ACID Transactions with MVCC
+  ✓ Multiple Isolation Levels
+  ✓ B-Tree, LSM, Hash, Spatial & Full-Text Indexes
+  ✓ Stored Procedures & Triggers
+  ✓ Role-Based Access Control (RBAC)
+  ✓ Encryption at Rest & In Transit
+  ✓ Point-in-Time Recovery
+  ✓ Distributed Clustering & Replication
+  ✓ Real-time Monitoring & Metrics
+  ✓ OLAP & Columnar Storage
+
+[2m2025-12-10T23:11:04.907379Z[0m [32m INFO[0m ThreadId(01) Initializing RustyDB server
+[2m2025-12-10T23:11:04.907418Z[0m [32m INFO[0m ThreadId(01) Version: 0.1.0
+[2m2025-12-10T23:11:04.907428Z[0m [32m INFO[0m ThreadId(01) Configuration:
+[2m2025-12-10T23:11:04.907436Z[0m [32m INFO[0m ThreadId(01)   Data directory: ./data
+[2m2025-12-10T23:11:04.907450Z[0m [32m INFO[0m ThreadId(01)   Port: 5432
+[2m2025-12-10T23:11:04.907458Z[0m [32m INFO[0m ThreadId(01)   REST API port: 8080
+[2m2025-12-10T23:11:04.907466Z[0m [32m INFO[0m ThreadId(01)   REST API enabled: true
+[2m2025-12-10T23:11:04.907476Z[0m [32m INFO[0m ThreadId(01)   Page size: 8192 bytes
+[2m2025-12-10T23:11:04.907484Z[0m [32m INFO[0m ThreadId(01)   Buffer pool size: 1000 pages
+[2m2025-12-10T23:11:04.907492Z[0m [32m INFO[0m ThreadId(01) Initializing core subsystems...
+[2m2025-12-10T23:11:04.907500Z[0m [32m INFO[0m ThreadId(01) Core subsystems initialized successfully
+[2m2025-12-10T23:11:04.907555Z[0m [32m INFO[0m ThreadId(01) Starting network server on 127.0.0.1:5432
+
+╭─────────────────────────────────────────────────────────╮
+│  RustyDB is ready to accept connections                │
+│  Connect using: rusty-db-cli                            │
+│  Native protocol port: 5432                              │
+│  REST API: http://0.0.0.0:8080                          │
+│  GraphQL: http://0.0.0.0:8080/graphql                   │
+╰─────────────────────────────────────────────────────────╯
+
+[port_override] Redirecting port 5432 -> 5451
+[2m2025-12-10T23:11:04.907866Z[0m [32m INFO[0m ThreadId(01) RustyDB server listening on 127.0.0.1:5432
+[2m2025-12-10T23:11:04.910638Z[0m [32m INFO[0m ThreadId(17) Starting REST API server on 0.0.0.0:8080
+[port_override] Redirecting port 8080 -> 8099
+[2m2025-12-10T23:11:04.912046Z[0m [32m INFO[0m ThreadId(17) REST API server listening on 0.0.0.0:8080
+[2m2025-12-10T23:11:10.783983Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mbc9d73f9-cedc-4fa7-a780-490b7a4ac879 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T23:11:10.784131Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mbc9d73f9-cedc-4fa7-a780-490b7a4ac879 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T23:11:11.547682Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m85f5f059-f6e3-49cd-8589-3c5545abfded [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology
+[2m2025-12-10T23:11:11.547760Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m85f5f059-f6e3-49cd-8589-3c5545abfded [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T23:11:12.294971Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m712bf880-171f-44a8-961e-b348c5a559ba [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/graphql
+[2m2025-12-10T23:11:12.295404Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m712bf880-171f-44a8-961e-b348c5a559ba [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/graphql [3mduration_ms[0m[2m=[0m0

@@ -9,6 +9,34 @@
 
 ---
 
+## REAL 20-Node Process Test
+
+The `real_20_node_cluster_test.sh` script runs **20 actual RustyDB server processes**, each on different ports:
+
+### Results
+- **Nodes Started:** 20/20
+- **Nodes Ready:** 20/20
+- **Connectivity Tests:** 20/20
+- **GraphQL Tests:** 5/5
+- **Processes Running:** 20/20
+- **Memory per Node:** ~47 MB
+- **Total Memory:** ~940 MB
+
+### How It Works
+Uses an LD_PRELOAD shim (`port_override.c`) to intercept `bind()` system calls and redirect ports:
+- Native DB Ports: 5432-5451 (20 nodes)
+- REST API Ports: 8080-8099 (20 nodes)
+
+### Node Distribution
+| Datacenter | Nodes | DB Ports | API Ports |
+|------------|-------|----------|-----------|
+| dc-us-east | 00-04 | 5432-5436 | 8080-8084 |
+| dc-us-west | 05-09 | 5437-5441 | 8085-8089 |
+| dc-eu-west | 10-14 | 5442-5446 | 8090-8094 |
+| dc-ap-south | 15-19 | 5447-5451 | 8095-8099 |
+
+---
+
 ## Steps Performed
 
 ### Step 1: Build the Linux Release Binary
