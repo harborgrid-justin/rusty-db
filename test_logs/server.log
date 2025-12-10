@@ -1,0 +1,132 @@
+╔════════════════════════════════════════════════════════════╗
+║         RustyDB - Enterprise Database System              ║
+║         Rust-based Oracle Competitor v0.1.0             ║
+╚════════════════════════════════════════════════════════════╝
+
+Features:
+  ✓ ACID Transactions with MVCC
+  ✓ Multiple Isolation Levels
+  ✓ B-Tree, LSM, Hash, Spatial & Full-Text Indexes
+  ✓ Stored Procedures & Triggers
+  ✓ Role-Based Access Control (RBAC)
+  ✓ Encryption at Rest & In Transit
+  ✓ Point-in-Time Recovery
+  ✓ Distributed Clustering & Replication
+  ✓ Real-time Monitoring & Metrics
+  ✓ OLAP & Columnar Storage
+
+[2m2025-12-10T22:54:37.897626Z[0m [32m INFO[0m ThreadId(01) Initializing RustyDB server
+[2m2025-12-10T22:54:37.897663Z[0m [32m INFO[0m ThreadId(01) Version: 0.1.0
+[2m2025-12-10T22:54:37.897678Z[0m [32m INFO[0m ThreadId(01) Configuration:
+[2m2025-12-10T22:54:37.897686Z[0m [32m INFO[0m ThreadId(01)   Data directory: ./data
+[2m2025-12-10T22:54:37.897710Z[0m [32m INFO[0m ThreadId(01)   Port: 5432
+[2m2025-12-10T22:54:37.897719Z[0m [32m INFO[0m ThreadId(01)   REST API port: 8080
+[2m2025-12-10T22:54:37.897728Z[0m [32m INFO[0m ThreadId(01)   REST API enabled: true
+[2m2025-12-10T22:54:37.897737Z[0m [32m INFO[0m ThreadId(01)   Page size: 8192 bytes
+[2m2025-12-10T22:54:37.897746Z[0m [32m INFO[0m ThreadId(01)   Buffer pool size: 1000 pages
+[2m2025-12-10T22:54:37.897755Z[0m [32m INFO[0m ThreadId(01) Initializing core subsystems...
+[2m2025-12-10T22:54:37.897764Z[0m [32m INFO[0m ThreadId(01) Core subsystems initialized successfully
+[2m2025-12-10T22:54:37.946306Z[0m [32m INFO[0m ThreadId(01) Starting network server on 127.0.0.1:5432
+
+╭─────────────────────────────────────────────────────────╮
+│  RustyDB is ready to accept connections                │
+│  Connect using: rusty-db-cli                            │
+│  Native protocol port: 5432                              │
+│  REST API: http://0.0.0.0:8080                          │
+│  GraphQL: http://0.0.0.0:8080/graphql                   │
+╰─────────────────────────────────────────────────────────╯
+
+[2m2025-12-10T22:54:37.946706Z[0m [32m INFO[0m ThreadId(01) RustyDB server listening on 127.0.0.1:5432
+[2m2025-12-10T22:54:37.952734Z[0m [32m INFO[0m ThreadId(17) Starting REST API server on 0.0.0.0:8080
+[2m2025-12-10T22:54:37.957545Z[0m [32m INFO[0m ThreadId(17) REST API server listening on 0.0.0.0:8080
+[2m2025-12-10T22:56:56.773640Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m5b165a30-f885-455d-b50d-a9372d675514 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/health
+[2m2025-12-10T22:56:56.773754Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m5b165a30-f885-455d-b50d-a9372d675514 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/health [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:56:56.797448Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m294e2bec-43a1-43e6-a57b-bdc5607c8606 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/health
+[2m2025-12-10T22:56:56.797492Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m294e2bec-43a1-43e6-a57b-bdc5607c8606 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/health [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:02.178670Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m45e6e331-6f4a-4bbd-be77-00e4e88ca9ff [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:02.179183Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m45e6e331-6f4a-4bbd-be77-00e4e88ca9ff [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:06.983480Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mfcf2d43d-df6d-42af-97b3-f881f21f380c [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology
+[2m2025-12-10T22:57:06.983544Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mfcf2d43d-df6d-42af-97b3-f881f21f380c [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:22.777656Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0md45ae59b-0f47-4746-b2cd-3c6a8134a7c4 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:22.777835Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0md45ae59b-0f47-4746-b2cd-3c6a8134a7c4 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:22.810211Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m88e6c67e-1228-4a98-9bf6-6f3f87522793 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:22.810357Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m88e6c67e-1228-4a98-9bf6-6f3f87522793 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:22.841888Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mf7a74d02-e0e1-42b3-971d-fffd4ada2b98 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:22.841957Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mf7a74d02-e0e1-42b3-971d-fffd4ada2b98 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:22.873312Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m30c8c937-fffb-4457-993c-a71fb7fa9ca6 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:22.873377Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m30c8c937-fffb-4457-993c-a71fb7fa9ca6 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:22.903729Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0ma4c217a8-286a-4e4c-8231-1de9950d27b1 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:22.903794Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0ma4c217a8-286a-4e4c-8231-1de9950d27b1 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:22.935537Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m0ea1a5b3-dedf-4140-a7b2-5be3d2408e26 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:22.935601Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m0ea1a5b3-dedf-4140-a7b2-5be3d2408e26 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:22.969989Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mdd540a2d-4911-44f1-8850-1e06bb33bd06 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:22.970054Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mdd540a2d-4911-44f1-8850-1e06bb33bd06 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.003127Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m23fa3e5d-fe06-42ae-996e-5d8a02b965ad [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.003239Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m23fa3e5d-fe06-42ae-996e-5d8a02b965ad [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.038659Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m690247f9-bcd1-45cf-b212-b9e3255fccf7 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.038785Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m690247f9-bcd1-45cf-b212-b9e3255fccf7 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.071348Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m8117b24a-29d2-4a29-84a4-90ed9bbde9a3 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.071410Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m8117b24a-29d2-4a29-84a4-90ed9bbde9a3 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.104200Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mda0fe7bd-3053-487a-8392-2890a7790b88 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.104264Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mda0fe7bd-3053-487a-8392-2890a7790b88 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.138581Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m336eea62-b82f-48e7-91c3-bc179abb3b8d [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.138645Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m336eea62-b82f-48e7-91c3-bc179abb3b8d [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.174401Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m850dd878-562b-4319-99f7-27233eb48e6f [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.174477Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m850dd878-562b-4319-99f7-27233eb48e6f [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.209441Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m31f75868-e957-40d8-9d25-e57a8322da28 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.209526Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m31f75868-e957-40d8-9d25-e57a8322da28 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.246972Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m8ba3191c-efb1-4e4c-badb-1385330cf40a [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.247046Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m8ba3191c-efb1-4e4c-badb-1385330cf40a [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.282655Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mbed8589a-b6f4-4984-bc1f-45b9cba948b6 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.282747Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mbed8589a-b6f4-4984-bc1f-45b9cba948b6 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.326052Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mc3b505a0-a8a2-4a75-a04b-ec3ca6b259be [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.326126Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mc3b505a0-a8a2-4a75-a04b-ec3ca6b259be [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.369348Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m9f048d69-7cc7-402a-96e4-5cd40ffb4620 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.369412Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m9f048d69-7cc7-402a-96e4-5cd40ffb4620 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.406855Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mc8d24b77-76cd-4e7a-946b-5ee27bff6ba6 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.406935Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mc8d24b77-76cd-4e7a-946b-5ee27bff6ba6 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.447754Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mcc1586b7-e036-4198-8876-cc6a5158981d [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.447823Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mcc1586b7-e036-4198-8876-cc6a5158981d [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:23.482439Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m0090e5fa-8c15-49ee-a910-1e442501c819 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:57:23.482498Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m0090e5fa-8c15-49ee-a910-1e442501c819 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:48.487944Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m6daf2a9c-58d0-4c84-8701-21604c06c615 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology
+[2m2025-12-10T22:57:48.488101Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m6daf2a9c-58d0-4c84-8701-21604c06c615 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:52.718076Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0me95e6be1-a774-4644-9381-2065e2ea461e [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/replication
+[2m2025-12-10T22:57:52.718139Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0me95e6be1-a774-4644-9381-2065e2ea461e [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/replication [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:57:56.599533Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m451a2b1c-f7bc-4452-8010-9cd9e6ea7452 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/config
+[2m2025-12-10T22:57:56.599659Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m451a2b1c-f7bc-4452-8010-9cd9e6ea7452 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/config [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:10.471470Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m44b248d7-1e43-4843-82a1-eec9202fd6f5 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/query
+[2m2025-12-10T22:58:10.476068Z[0m [31mERROR[0m ThreadId(02) response failed [3mclassification[0m[2m=[0mStatus code: 500 Internal Server Error [3mlatency[0m[2m=[0m4 ms
+[2m2025-12-10T22:58:10.476125Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m44b248d7-1e43-4843-82a1-eec9202fd6f5 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/query [3mduration_ms[0m[2m=[0m4
+[2m2025-12-10T22:58:10.500664Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m8e3f42f5-f36f-43fa-871b-2fd5f777f120 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/query
+[2m2025-12-10T22:58:10.500777Z[0m [31mERROR[0m ThreadId(02) response failed [3mclassification[0m[2m=[0mStatus code: 500 Internal Server Error [3mlatency[0m[2m=[0m0 ms
+[2m2025-12-10T22:58:10.500800Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m8e3f42f5-f36f-43fa-871b-2fd5f777f120 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/query [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:10.526457Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0me2a3850a-5dd9-4c04-8325-97d02bb2517e [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/query
+[2m2025-12-10T22:58:10.526662Z[0m [31mERROR[0m ThreadId(02) response failed [3mclassification[0m[2m=[0mStatus code: 500 Internal Server Error [3mlatency[0m[2m=[0m0 ms
+[2m2025-12-10T22:58:10.526691Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0me2a3850a-5dd9-4c04-8325-97d02bb2517e [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/api/v1/query [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:28.664335Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m6b8929f4-0bda-460d-b338-874f2e5a4cd2 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/health
+[2m2025-12-10T22:58:28.664453Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m6b8929f4-0bda-460d-b338-874f2e5a4cd2 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/health [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:32.294611Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m3b0115c0-d71a-4b2c-8391-7580694f939d [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/databases
+[2m2025-12-10T22:58:32.294665Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m3b0115c0-d71a-4b2c-8391-7580694f939d [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/databases [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:35.698153Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m87a11ac7-2de5-46da-bf43-202c67ba6b3d [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/tables
+[2m2025-12-10T22:58:35.698217Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m87a11ac7-2de5-46da-bf43-202c67ba6b3d [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/tables [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:47.818441Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m157fc4ff-57b4-4799-9afc-1eb66bd5ea21 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/swagger-ui/
+[2m2025-12-10T22:58:47.818546Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m157fc4ff-57b4-4799-9afc-1eb66bd5ea21 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/swagger-ui/ [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:47.845959Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0mc967aed4-7f1d-4331-9606-dcbdc521439f [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:58:47.846019Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0mc967aed4-7f1d-4331-9606-dcbdc521439f [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:47.872176Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m80669d0a-0ee5-483f-b4df-1e684ea05d9b [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology
+[2m2025-12-10T22:58:47.872243Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m80669d0a-0ee5-483f-b4df-1e684ea05d9b [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/topology [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:47.897560Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m854693ee-080d-4ba1-a420-9e5c60f05dff [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/replication
+[2m2025-12-10T22:58:47.897615Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m854693ee-080d-4ba1-a420-9e5c60f05dff [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/replication [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:47.923282Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m4e3ff6fd-a71b-4c47-8910-d5b85a9eba58 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/config
+[2m2025-12-10T22:58:47.923341Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m4e3ff6fd-a71b-4c47-8910-d5b85a9eba58 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/config [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:58:47.954683Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0me4768fb7-fe11-47cd-9ab0-cc309dfe263a [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/graphql
+[2m2025-12-10T22:58:47.956851Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0me4768fb7-fe11-47cd-9ab0-cc309dfe263a [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/graphql [3mduration_ms[0m[2m=[0m2
+[2m2025-12-10T22:59:48.491593Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m640cb5d6-336e-4d7e-a896-2cfd1e582e5d [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes
+[2m2025-12-10T22:59:48.491651Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m640cb5d6-336e-4d7e-a896-2cfd1e582e5d [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/nodes [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:59:48.525145Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m490a4f93-b93b-4cab-a2f1-2b841e164723 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/config
+[2m2025-12-10T22:59:48.525201Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m490a4f93-b93b-4cab-a2f1-2b841e164723 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/config [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:59:48.618682Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m9eaaf464-1ccb-401b-8241-1f459b055972 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/replication
+[2m2025-12-10T22:59:48.618798Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m9eaaf464-1ccb-401b-8241-1f459b055972 [3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/api/v1/cluster/replication [3mduration_ms[0m[2m=[0m0
+[2m2025-12-10T22:59:48.682675Z[0m [32m INFO[0m ThreadId(02) Incoming request [3mrequest_id[0m[2m=[0m16751358-5924-44be-8cd1-4d0ecb993a42 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/graphql
+[2m2025-12-10T22:59:48.682902Z[0m [32m INFO[0m ThreadId(02) Request completed [3mrequest_id[0m[2m=[0m16751358-5924-44be-8cd1-4d0ecb993a42 [3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/graphql [3mduration_ms[0m[2m=[0m0
