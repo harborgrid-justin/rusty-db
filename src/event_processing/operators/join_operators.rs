@@ -20,7 +20,7 @@ pub enum JoinType {
 /// Stream-stream join operator
 pub struct StreamJoinOperator {
     name: String,
-    join_type: JoinType,
+    _join_type: JoinType,
     left_key: String,
     right_key: String,
     left_buffer: VecDeque<Event>,
@@ -39,7 +39,7 @@ impl StreamJoinOperator {
     ) -> Self {
         Self {
             name: name.into(),
-            join_type,
+            _join_type: join_type,
             left_key: left_key.into(),
             right_key: right_key.into(),
             left_buffer: VecDeque::new(),

@@ -327,6 +327,7 @@ impl Default for AtomicConflictStats {
 }
 
 impl AtomicConflictStats {
+    #[allow(dead_code)]
     #[inline]
     fn snapshot(&self) -> ConflictStats {
         ConflictStats {

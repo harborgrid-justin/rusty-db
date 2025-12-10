@@ -534,6 +534,7 @@ impl SimdOperator for VectorizedAggregator {
 
 // Vectorized gather/scatter operations
 pub struct VectorGatherScatter {
+    #[allow(dead_code)]
     vector_width: usize,
 }
 
@@ -596,6 +597,7 @@ impl VectorGatherScatter {
 // Cache-conscious batch processor
 pub struct BatchProcessor {
     batch_size: usize,
+    #[allow(dead_code)]
     cache_line_size: usize,
 }
 

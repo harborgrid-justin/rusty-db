@@ -8,7 +8,6 @@ use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use std::time::{Duration};
 use parking_lot::RwLock;
-use crate::Result;
 
 /// Performance Hub - unified performance monitoring and analysis
 pub struct PerformanceHub {
@@ -276,9 +275,13 @@ impl Default for MemoryUsage {
 /// Trend tracker
 #[derive(Debug, Default)]
 struct TrendTracker {
+    #[allow(dead_code)]
     cpu_trend: VecDeque<TrendDataPoint>,
+    #[allow(dead_code)]
     io_trend: VecDeque<TrendDataPoint>,
+    #[allow(dead_code)]
     memory_trend: VecDeque<TrendDataPoint>,
+    #[allow(dead_code)]
     throughput_trend: VecDeque<TrendDataPoint>,
 }
 

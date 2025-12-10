@@ -12,6 +12,7 @@ use super::errors::HealthMonitorError;
 use super::types::*;
 
 // Health monitor trait
+#[allow(dead_code)]
 #[async_trait]
 pub trait HealthMonitor: Send + Sync {
     // Check health of a specific replica
@@ -41,6 +42,7 @@ pub trait HealthMonitor: Send + Sync {
 }
 
 // Replication health monitor implementation
+#[allow(dead_code)]
 pub struct ReplicationHealthMonitor {
     // Configuration
     pub(crate) config: Arc<HealthMonitorConfig>,
@@ -109,7 +111,7 @@ impl ReplicationHealthMonitor {
         *self.monitor_handle.write() = Some(handle);
     }
 
-    pub(crate) fn collect_metrics(&self, replica_id: &ReplicaId) -> Result<HealthMetrics, HealthMonitorError> {
+    pub(crate) fn collect_metrics(&self, _replica_id: &ReplicaId) -> Result<HealthMetrics, HealthMonitorError> {
         // Simplified metric collection - in production this would query actual systems
         Ok(HealthMetrics {
             replication_lag_bytes: 50 * 1024 * 1024, // 50MB

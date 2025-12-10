@@ -312,7 +312,7 @@ pub struct DeltaTable {
     // Maximum deltas before compaction
     max_deltas: usize,
     // Column names
-    columns: Vec<String>,
+    _columns: Vec<String>,
     // Last compaction time
     last_compaction: std::time::Instant,
 }
@@ -324,7 +324,7 @@ impl DeltaTable {
             table_name: table_name.into(),
             deltas: Vec::new(),
             max_deltas: 10000,
-            columns,
+            _columns: columns,
             last_compaction: std::time::Instant::now(),
         }
     }

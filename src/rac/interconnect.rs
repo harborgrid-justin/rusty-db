@@ -336,7 +336,7 @@ impl NodeHealth {
 // Connection to a remote node
 struct Connection {
     // Remote node identifier
-    remote_node: NodeId,
+    _remote_node: NodeId,
 
     // TCP stream (in production, could be RDMA)
     // Use tokio::sync::Mutex to allow holding across await points
@@ -361,6 +361,7 @@ enum ConnectionState {
     Disconnected,
     Connecting,
     Connected,
+    #[allow(dead_code)]
     Reconnecting,
     Failed,
 }
@@ -372,15 +373,15 @@ struct ConnectionStats {
     messages_received: u64,
     bytes_sent: u64,
     bytes_received: u64,
-    send_errors: u64,
-    receive_errors: u64,
-    reconnections: u64,
+    _send_errors: u64,
+    _receive_errors: u64,
+    _reconnections: u64,
 }
 
 impl Connection {
     fn new(remote_node: NodeId) -> Self {
         Self {
-            remote_node,
+            _remote_node: remote_node,
             stream: Arc::new(tokio::sync::Mutex::new(None)),
             send_queue: Arc::new(Mutex::new(VecDeque::new())),
             state: Arc::new(RwLock::new(ConnectionState::Disconnected)),

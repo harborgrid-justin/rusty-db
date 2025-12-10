@@ -346,7 +346,7 @@ pub struct ApproximateQueryProcessor {
     // Sample cache by table/query
     sample_cache: Arc<RwLock<HashMap<String, SampledData>>>,
     // Default sample rate
-    default_sample_rate: f64,
+    _default_sample_rate: f64,
     // Maximum cache size
     max_cache_entries: usize,
 }
@@ -371,7 +371,7 @@ impl ApproximateQueryProcessor {
     pub fn new(default_sample_rate: f64) -> Self {
         Self {
             sample_cache: Arc::new(RwLock::new(HashMap::new())),
-            default_sample_rate,
+            _default_sample_rate: default_sample_rate,
             max_cache_entries: 100,
         }
     }

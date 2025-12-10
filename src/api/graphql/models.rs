@@ -3,16 +3,12 @@
 // Data structure definitions for the GraphQL API
 
 use async_graphql::{
-    Context, Enum, Error, ErrorExtensions, InputObject, Object,
-    Result as GqlResult, Schema, SimpleObject, Subscription, Union, ID,
+    Context, InputObject, Object,
+    Result as GqlResult, SimpleObject, Union, ID,
 };
-use chrono::{DateTime as ChronoDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
-
-use crate::error::DbError;
 use super::types::*;
 use super::GraphQLEngine;
 

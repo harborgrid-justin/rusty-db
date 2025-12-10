@@ -505,6 +505,7 @@ pub struct ColumnStore {
     schema: Vec<ColumnMetadata>,
     dual_format: Arc<DualFormat>,
     inmemory_area: Arc<InMemoryArea>,
+    #[allow(dead_code)]
     compressor: Arc<HybridCompressor>,
     filter: Arc<VectorizedFilter>,
     aggregator: Arc<VectorizedAggregator>,

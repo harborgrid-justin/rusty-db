@@ -5,7 +5,6 @@
 use async_graphql::extensions::{Extension, ExtensionContext, ExtensionFactory, NextExecute};
 use async_graphql::parser::types::ExecutableDocument;
 use futures_util::Future;
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
@@ -410,7 +409,7 @@ impl Extension for PerformanceExtensionImpl {
 
         let response = next.run(ctx, operation_name).await;
 
-        let elapsed = start.elapsed();
+        let _elapsed = start.elapsed();
         // Note: extensions require specific async_graphql types
         // Performance data is logged instead
 
@@ -420,6 +419,7 @@ impl Extension for PerformanceExtensionImpl {
 
 // Depth limiting extension
 pub struct DepthLimitExtension {
+    #[allow(dead_code)]
     max_depth: usize,
 }
 

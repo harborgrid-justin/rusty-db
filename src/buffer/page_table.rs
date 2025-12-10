@@ -10,6 +10,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 ///
 /// Uses multiple hash maps (partitions) to reduce lock contention.
 /// Page IDs are hashed to determine which partition to use.
+#[allow(dead_code)]
 pub struct PageTable {
     /// Partitions (each is a separate hash map)
     partitions: Vec<RwLock<HashMap<PageId, FrameId>>>,
@@ -25,6 +26,7 @@ pub struct PageTable {
 
 impl PageTable {
     /// Create a new partitioned page table
+    #[allow(dead_code)]
     pub fn new(num_partitions: usize, initial_capacity_per_partition: usize) -> Self {
         let mut partitions = Vec::with_capacity(num_partitions);
         for _ in 0..num_partitions {

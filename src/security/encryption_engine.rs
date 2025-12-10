@@ -25,7 +25,6 @@ use aes_gcm::{
     Aes256Gcm, Nonce as AesNonce,
 };
 use chacha20poly1305::{
-    aead::{Aead as ChaChaAead, KeyInit as ChaChaKeyInit},
     ChaCha20Poly1305, Nonce as ChaChaNonce,
 };
 use sha2::{Digest, Sha256};

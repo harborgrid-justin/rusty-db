@@ -9,6 +9,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 // Query result cache with LRU eviction policy
+#[allow(dead_code)]
 pub struct QueryCache {
     cache: Arc<RwLock<HashMap<String, CachedResult>>>,
     lru_queue: Arc<RwLock<VecDeque<String>>>,
@@ -19,6 +20,7 @@ pub struct QueryCache {
     miss_count: Arc<RwLock<u64>>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct CachedResult {
     query: String,
@@ -30,6 +32,7 @@ struct CachedResult {
     last_access: SystemTime,
 }
 
+#[allow(dead_code)]
 impl QueryCache {
     pub fn new(max_size: usize) -> Self {
         Self::with_memory_limit(max_size, 100 * 1024 * 1024) // 100MB default
@@ -197,6 +200,7 @@ impl QueryCache {
 }
 
 // Cache statistics
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheStats {
     pub size: usize,

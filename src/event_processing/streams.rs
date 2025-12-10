@@ -792,6 +792,7 @@ impl StreamPartition {
             .insert(consumer_group.to_string(), offset);
     }
 
+    #[allow(dead_code)]
     fn get_committed(&self, consumer_group: &str) -> Option<u64> {
         self.committed_offsets.get(consumer_group).copied()
     }

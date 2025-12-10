@@ -15,9 +15,9 @@ struct LargeObject {
     // Huge page size used (if any)
     huge_page_size: usize,
     // Whether copy-on-write is enabled
-    cow: bool,
+    _cow: bool,
     // Allocation timestamp
-    allocated_at: Instant,
+    _allocated_at: Instant,
 }
 
 impl LargeObject {
@@ -80,8 +80,8 @@ impl LargeObject {
                         size,
                         huge_pages: false,
                         huge_page_size: 0,
-                        cow,
-                        allocated_at: Instant::now(),
+                        _cow: cow,
+                        _allocated_at: Instant::now(),
                     });
                 }
 
@@ -96,8 +96,8 @@ impl LargeObject {
                 size,
                 huge_pages: use_huge_pages && huge_page_size > 0,
                 huge_page_size,
-                cow,
-                allocated_at: Instant::now(),
+                _cow: cow,
+                _allocated_at: Instant::now(),
             })
         }
 
@@ -117,8 +117,8 @@ impl LargeObject {
                 size,
                 huge_pages: false,
                 huge_page_size: 0,
-                cow,
-                allocated_at: Instant::now(),
+                _cow: cow,
+                _allocated_at: Instant::now(),
             })
         }
     }

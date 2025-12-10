@@ -274,11 +274,13 @@ impl MemoryPressureHandler {
 
 // Population worker thread
 struct PopulationWorker {
+    #[allow(dead_code)]
     worker_id: usize,
     running: Arc<AtomicBool>,
     task_queue: Arc<Mutex<BinaryHeap<PopulationTask>>>,
     progress_tracker: Arc<RwLock<HashMap<u64, PopulationProgress>>>,
     memory_handler: Arc<MemoryPressureHandler>,
+    #[allow(dead_code)]
     compressor: Arc<HybridCompressor>,
 }
 

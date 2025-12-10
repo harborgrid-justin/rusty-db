@@ -8,7 +8,7 @@ use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc, Timelike, Weekday, NaiveTime, Datelike};
+use chrono::{DateTime, Utc, Timelike, NaiveTime, Datelike};
 
 use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;

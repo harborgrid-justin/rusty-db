@@ -503,7 +503,7 @@ impl AuditManager {
         }
 
         let records = self.records.read();
-        let mut previous_hash: Option<String> = None;
+        let mut _previous_hash: Option<String> = None;
 
         for record in records.iter() {
             // Verify this record's hash
@@ -516,7 +516,7 @@ impl AuditManager {
             }
 
             // Update chain
-            previous_hash = record.integrity_hash.clone();
+            _previous_hash = record.integrity_hash.clone();
         }
 
         Ok(true)

@@ -3,7 +3,6 @@
 // High-performance, lock-free ring buffer for I/O request submission
 // and completion queues.
 
-use std::sync::Mutex;
 use crate::error::{Result, DbError};
 use crate::io::{IoOpType, IoRequest, IoCompletion, IoHandle};
 use std::sync::atomic::{AtomicU64, Ordering};

@@ -192,6 +192,7 @@ impl Default for PartitionMaintenanceScheduler {
 // ============================================================================
 
 pub struct PartitionWiseJoinExecutor {
+    #[allow(dead_code)]
     parallelism: usize,
 }
 
@@ -234,6 +235,7 @@ pub struct PartitionJoinResult {
 }
 
 pub struct PartitionWiseAggregator {
+    #[allow(dead_code)]
     buffer_size: usize,
 }
 

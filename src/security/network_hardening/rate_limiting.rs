@@ -279,7 +279,7 @@ impl TrafficPattern {
             return 0.0;
         }
 
-        let total = self.requests.len() as f64;
+        let _total = self.requests.len() as f64;
         let mut entropy = 0.0;
 
         for _ in &self.endpoints {

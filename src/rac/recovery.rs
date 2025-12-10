@@ -224,7 +224,7 @@ struct RedoLogBuffer {
     current_lsn: LogSequenceNumber,
 
     // Flushed LSN (written to disk)
-    flushed_lsn: LogSequenceNumber,
+    _flushed_lsn: LogSequenceNumber,
 }
 
 impl RedoLogBuffer {
@@ -232,7 +232,7 @@ impl RedoLogBuffer {
         Self {
             entries: VecDeque::new(),
             current_lsn: 0,
-            flushed_lsn: 0,
+            _flushed_lsn: 0,
         }
     }
 
@@ -249,8 +249,9 @@ impl RedoLogBuffer {
             .collect()
     }
 
+    #[allow(dead_code)]
     fn flush(&mut self, lsn: LogSequenceNumber) {
-        self.flushed_lsn = lsn;
+        self._flushed_lsn = lsn;
 
         // Remove entries before flushed LSN
         while let Some(entry) = self.entries.front() {

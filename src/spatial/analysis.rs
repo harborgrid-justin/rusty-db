@@ -14,7 +14,6 @@ use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, Point, Polygon
 use crate::spatial::indexes::SpatialIndex;
 use crate::spatial::operators::{SetOps, ConvexHullOps, TransformOps};
 use std::collections::HashMap;
-use crate::concurrent;
 
 // Nearest neighbor search results
 #[derive(Debug, Clone)]
@@ -172,7 +171,7 @@ impl DbscanClusterer {
         &self,
         points: &[(u64, Coordinate)],
         seed_id: u64,
-        seed_coord: Coordinate,
+        _seed_coord: Coordinate,
         mut neighbors: Vec<usize>,
         visited: &mut HashSet<u64>,
         cluster_id: usize,
@@ -729,7 +728,7 @@ impl HotSpotAnalysis {
         let variance = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64;
         let std_dev = variance.sqrt();
 
-        for (i, (id, coord, _)) in self.points.iter().enumerate() {
+        for (i, (id, _coord, _)) in self.points.iter().enumerate() {
             let gi_star = self.calculate_gi_star(i, mean, std_dev);
             let z_score = gi_star;
 

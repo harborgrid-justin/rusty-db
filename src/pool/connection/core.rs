@@ -18,7 +18,6 @@ use tokio::sync::Semaphore;
 use tokio::time::timeout;
 use serde::{Serialize, Deserialize};
 use thiserror::Error;
-use crate::error::{Result, DbError};
 
 use super::wait_queue::WaitQueue;
 use super::partitioning::PoolPartition;

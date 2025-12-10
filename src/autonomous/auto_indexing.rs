@@ -195,7 +195,7 @@ impl IndexAdvisor {
         let patterns = self.column_patterns.read();
 
         // Identify single-column index candidates
-        for (key, pattern) in patterns.iter() {
+        for (_key, pattern) in patterns.iter() {
             if pattern.total_accesses() < 10 {
                 continue;  // Skip columns with low access
             }
@@ -525,7 +525,7 @@ impl IndexMaintenanceScheduler {
             .collect()
     }
 
-    pub fn optimize_schedule(&self, maintenance_window_start: u8, maintenance_window_end: u8) {
+    pub fn optimize_schedule(&self, _maintenance_window_start: u8, _maintenance_window_end: u8) {
         // Schedule tasks during maintenance window
         let mut schedule = self.maintenance_schedule.write();
 

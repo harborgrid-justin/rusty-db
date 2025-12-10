@@ -163,6 +163,7 @@ pub struct DbmsSql {
 // Dynamic cursor for DBMS_SQL
 #[derive(Debug, Clone)]
 struct DynamicCursor {
+    #[allow(dead_code)]
     id: i32,
     sql: Option<String>,
     parsed: bool,
@@ -184,6 +185,7 @@ struct DynamicCursor {
 struct ColumnDefinition {
     name: String,
     data_type: ColumnType,
+    #[allow(dead_code)]
     max_length: Option<usize>,
 }
 
@@ -203,6 +205,7 @@ enum ColumnType {
 /// Result set from query execution
 #[derive(Debug, Clone)]
 struct ResultSet {
+    #[allow(dead_code)]
     columns: Vec<String>,
     rows: Vec<Vec<RuntimeValue>>,
 }
@@ -813,8 +816,11 @@ pub struct UtlFile {
 
 // File handle
 struct FileHandle {
+    #[allow(dead_code)]
     id: i32,
+    #[allow(dead_code)]
     directory: String,
+    #[allow(dead_code)]
     filename: String,
     mode: FileMode,
     file: Option<File>,
@@ -1053,6 +1059,7 @@ enum Schedule {
     // Recurring with interval
     Recurring { interval: String },
     // Calendar expression
+    #[allow(dead_code)]
     Calendar { expression: String },
 }
 
@@ -1687,8 +1694,11 @@ pub struct DbmsLock {
 // Lock handle
 #[derive(Debug, Clone)]
 struct LockHandle {
+    #[allow(dead_code)]
     id: String,
+    #[allow(dead_code)]
     mode: LockMode,
+    #[allow(dead_code)]
     timeout: Option<i32>,
 }
 

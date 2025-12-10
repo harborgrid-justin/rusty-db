@@ -805,7 +805,7 @@ impl RaftNode {
         &self,
         last_included_index: LogIndex,
         last_included_term: Term,
-        snapshot_data: Vec<u8>,
+        _snapshot_data: Vec<u8>,
     ) -> Result<(), DbError> {
         let mut persistent = self.persistent.write().unwrap();
         let config = self.configuration.read().unwrap();

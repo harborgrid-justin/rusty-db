@@ -25,7 +25,7 @@ const GC_BATCH_SIZE: usize = 64;
 /// Global epoch counter
 static GLOBAL_EPOCH: AtomicU64 = AtomicU64::new(0);
 
-/// Thread-local participant in epoch-based reclamation
+// Thread-local participant in epoch-based reclamation
 thread_local! {
     static LOCAL_EPOCH: Cell<u64> = const { Cell::new(0) };
     static GARBAGE_BAGS: RefCell<[Vec<Garbage>; EPOCH_COUNT]> = RefCell::new([

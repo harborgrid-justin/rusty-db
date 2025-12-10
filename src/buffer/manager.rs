@@ -523,7 +523,7 @@ pub struct BufferPoolManager {
     shutdown: Arc<AtomicBool>,
 
     /// Start time
-    start_time: Instant,
+    _start_time: Instant,
 }
 
 impl BufferPoolManager {
@@ -578,7 +578,7 @@ impl BufferPoolManager {
             prefetch_misses: AtomicU64::new(0),
             background_flusher: Mutex::new(None),
             shutdown,
-            start_time: Instant::now(),
+            _start_time: Instant::now(),
         };
 
         // Start background flusher if enabled

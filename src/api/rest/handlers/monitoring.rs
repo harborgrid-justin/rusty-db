@@ -12,7 +12,6 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use super::super::types::*;
-use std::time::UNIX_EPOCH;
 
 pub async fn get_metrics(
     State(state): State<Arc<ApiState>>,

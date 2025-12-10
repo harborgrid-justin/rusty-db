@@ -174,6 +174,7 @@ impl JoinHashTable {
 
 // Partition for partitioned joins
 pub struct JoinPartition {
+    #[allow(dead_code)]
     partition_id: usize,
     build_data: Vec<i64>,
     build_row_ids: Vec<usize>,
@@ -283,6 +284,7 @@ impl PartitionedJoin {
 
 // Vectorized hash join engine
 pub struct HashJoinEngine {
+    #[allow(dead_code)]
     filter: Arc<VectorizedFilter>,
     bloom_filter_threshold: usize,
 }

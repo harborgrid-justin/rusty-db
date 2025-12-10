@@ -11,7 +11,9 @@ use std::time::{Duration, SystemTime};
 // ============================================================================
 
 pub struct ParallelPartitionScanner {
+    #[allow(dead_code)]
     thread_pool_size: usize,
+    #[allow(dead_code)]
     chunk_size: usize,
 }
 
@@ -59,6 +61,7 @@ pub struct PartitionScanResult {
 }
 
 pub struct ParallelPartitionLoader {
+    #[allow(dead_code)]
     max_concurrent_loads: usize,
 }
 
@@ -106,6 +109,7 @@ pub struct PartitionLoadResult {
 
 pub struct PartitionHealthMonitor {
     health_checks: HashMap<String, PartitionHealth>,
+    #[allow(dead_code)]
     check_interval: Duration,
 }
 

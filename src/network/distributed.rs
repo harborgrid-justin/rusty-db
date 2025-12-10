@@ -8,7 +8,6 @@
 // - Load balancing across nodes
 // - Result aggregation from multiple nodes
 
-use tokio::time::sleep;
 use std::time::Duration;
 use crate::error::DbError;
 use crate::execution::{QueryResult, planner::PlanNode};

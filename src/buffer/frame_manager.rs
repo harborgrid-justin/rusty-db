@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Manages free frames using a lock-free stack or per-core pools
+#[allow(dead_code)]
 pub struct FreeFrameManager {
     /// Global free list (fallback)
     global_free_list: Mutex<Vec<FrameId>>,
@@ -137,6 +138,7 @@ impl FreeFrameManager {
 }
 
 /// Get current CPU core ID (best effort)
+#[allow(dead_code)]
 #[inline]
 pub fn get_current_core_id() -> usize {
     // On Linux, we can use sched_getcpu

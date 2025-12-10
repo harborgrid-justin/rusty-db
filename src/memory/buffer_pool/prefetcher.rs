@@ -11,7 +11,7 @@ pub struct PagePrefetcher {
     // Recent access pattern
     access_history: Mutex<VecDeque<PageId>>,
     // Prefetch queue
-    prefetch_queue: Mutex<VecDeque<PageId>>,
+    _prefetch_queue: Mutex<VecDeque<PageId>>,
     // Statistics
     stats: PrefetchStats,
 }
@@ -29,7 +29,7 @@ impl PagePrefetcher {
         Self {
             scan_window,
             access_history: Mutex::new(VecDeque::new()),
-            prefetch_queue: Mutex::new(VecDeque::new()),
+            _prefetch_queue: Mutex::new(VecDeque::new()),
             stats: PrefetchStats {
                 prefetch_requests: AtomicU64::new(0),
                 prefetch_hits: AtomicU64::new(0),

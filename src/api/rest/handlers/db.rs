@@ -17,7 +17,6 @@ use crate::api::rest::types::*;
 use crate::catalog::{Schema, Column, DataType};
 use crate::error::DbError;
 use crate::execution::Executor;
-use std::time::UNIX_EPOCH;
 use super::{CATALOG, TXN_MANAGER, SQL_PARSER};
 
 /// Helper function to format DataType enum as a string for display

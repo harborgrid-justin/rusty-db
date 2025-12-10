@@ -166,7 +166,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
         };
 
         // Phase 2: Send commit to all participants
-        for node_id in &participants {
+        for _node_id in &participants {
             // In real implementation, would send network request
             // Simplified: assume commit succeeds
         }
@@ -204,7 +204,7 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
         };
 
         // Send abort to all participants
-        for node_id in &participants {
+        for _node_id in &participants {
             // In real implementation, would send network request
         }
 

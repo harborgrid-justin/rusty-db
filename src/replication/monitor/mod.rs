@@ -10,14 +10,16 @@ mod monitor;
 mod monitor_impl;
 
 // Re-export public types
-pub use errors::HealthMonitorError;
+#[allow(unused_imports)]
 pub use types::{
     ReplicaHealthStatus, HealthCheckResult, HealthComponents, ComponentHealth,
     HealthIssue, IssueSeverity, HealthMetrics, HealthAlert, AlertStatus,
     HealthHistoryEntry, HealthStatistics, HealthTrend, TrendDirection,
     HealthPrediction,
 };
+#[allow(unused_imports)]
 pub use config::{HealthMonitorConfig, HealthThresholds};
+#[allow(unused_imports)]
 pub use monitor::{HealthMonitor, ReplicationHealthMonitor};
 
 #[cfg(test)]

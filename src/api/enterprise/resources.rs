@@ -4,11 +4,10 @@
 
 use std::collections::{HashMap, BTreeMap, VecDeque};
 use std::sync::{Arc, RwLock, Mutex};
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Instant, SystemTime};
 use serde::{Serialize, Deserialize};
 
 use crate::error::DbError;
-use super::registry::*;
 
 // ============================================================================
 // SECTION 3: RESOURCE ORCHESTRATION (500+ lines)

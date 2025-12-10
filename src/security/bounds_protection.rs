@@ -1014,7 +1014,7 @@ impl<T: Copy + Default, const N: usize> Drop for ArrayBoundsChecker<T, N> {
 
 // Validate that a pointer offset is safe
 pub fn validate_pointer_offset<T>(
-    base: *const T,
+    _base: *const T,
     offset: isize,
     buffer_len: usize,
 ) -> Result<()> {

@@ -54,7 +54,7 @@ enum ListType {
 /// Entry in ARC lists
 #[derive(Debug, Clone)]
 struct ArcEntry {
-    frame_id: FrameId,
+    _frame_id: FrameId,
     list_type: ListType,
     /// Whether this is a ghost entry (not actually in cache)
     is_ghost: bool,
@@ -158,7 +158,7 @@ impl ArcState {
         self.directory.insert(
             frame_id,
             ArcEntry {
-                frame_id,
+                _frame_id: frame_id,
                 list_type: tolist,
                 is_ghost,
             },

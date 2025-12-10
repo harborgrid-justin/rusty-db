@@ -307,7 +307,7 @@ impl FunctionManager {
 
         match function {
             UserFunction::Aggregate(func) => {
-                let result = self.runtime.execute(&func.initialize_body)?;
+                let _result = self.runtime.execute(&func.initialize_body)?;
                 Ok(AggregateState::new())
             }
             _ => Err(DbError::InvalidInput(

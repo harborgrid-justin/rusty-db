@@ -17,7 +17,6 @@
 
 use std::sync::Arc;
 use std::collections::HashMap;
-use crate::error::Result;
 
 pub mod errors;
 pub use errors::ProtocolError;

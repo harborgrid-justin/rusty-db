@@ -551,7 +551,7 @@ impl Tenant {
     }
 
     // Validate query doesn't access other tenants' data
-    pub async fn validate_query(&self, query: &str, schemas_accessed: &[String]) -> TenantResult<()> {
+    pub async fn validate_query(&self, _query: &str, schemas_accessed: &[String]) -> TenantResult<()> {
         let allowed = self.allowed_schemas.read().await;
 
         for schema in schemas_accessed {

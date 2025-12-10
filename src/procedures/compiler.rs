@@ -296,7 +296,7 @@ impl PlSqlCompiler {
                 }
             }
 
-            Statement::SelectInto { columns, into_vars, from, where_clause } => {
+            Statement::SelectInto { columns: _columns, into_vars, from, where_clause } => {
                 // Add table dependency
                 result.add_dependency(from.clone());
 
@@ -502,7 +502,7 @@ impl PlSqlCompiler {
     }
 
     // Analyze dependencies
-    fn analyze_dependencies(&self, block: &PlSqlBlock, result: &mut CompilationResult) -> Result<()> {
+    fn analyze_dependencies(&self, _block: &PlSqlBlock, result: &mut CompilationResult) -> Result<()> {
         // Dependencies were collected during semantic analysis
         // Here we could perform additional dependency-related checks
 

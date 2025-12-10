@@ -186,7 +186,7 @@ impl HazardList {
 /// Global hazard list (singleton)
 static HAZARD_LIST: HazardList = HazardList::new();
 
-/// Thread-local hazard record and retire list
+// Thread-local hazard record and retire list
 thread_local! {
     static THREAD_LOCAL: RefCell<ThreadLocal> = RefCell::new(ThreadLocal::new());
 }

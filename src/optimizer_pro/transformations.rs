@@ -450,7 +450,7 @@ impl JoinAnalyzer {
     }
 
     // Build join graph from query
-    pub fn build_join_graph(&self, query: &Query) -> Result<()> {
+    pub fn build_join_graph(&self, _query: &Query) -> Result<()> {
         // Parse query and build graph of join relationships
         Ok(())
     }

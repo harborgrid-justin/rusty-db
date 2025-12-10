@@ -7,10 +7,11 @@ use axum::{
     Router,
     routing::{get, post, put, delete},
     extract::{State, WebSocketUpgrade, ws::WebSocket},
-    response::Response,
+    response::{Response, IntoResponse, Html},
     http::Method,
     middleware,
 };
+use futures::SinkExt;
 use tower_http::{
     cors::{CorsLayer, Any},
     trace::TraceLayer,
@@ -22,9 +23,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration};
 use tokio::sync::{RwLock, Semaphore};
+use async_graphql::{Schema, http::GraphQLPlaygroundConfig};
+use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use crate::api::ApiConfig;
+use crate::api::graphql::{QueryRoot, MutationRoot, SubscriptionRoot, GraphQLEngine, AuthorizationContext};
 use crate::error::DbError;
-use crate::common::*;
 use super::types::{ApiState, ApiMetrics, RateLimiter, QueryRequest};
 use super::handlers::db::{execute_query, execute_batch, get_table, create_table, update_table, delete_table, get_schema, begin_transaction, commit_transaction, rollback_transaction};
 use super::handlers::admin::{get_config, update_config, create_backup, get_health, run_maintenance, get_users, create_user, get_user, update_user, delete_user, get_roles, create_role, get_role, update_role, delete_role};
@@ -36,10 +39,14 @@ use super::handlers::{CATALOG, TXN_MANAGER, SQL_PARSER};
 use crate::execution::Executor;
 
 
+// Type alias for the GraphQL schema
+type GraphQLSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
+
 // REST API server with dependency injection
 pub struct RestApiServer {
     config: ApiConfig,
     state: Arc<ApiState>,
+    graphql_schema: GraphQLSchema,
 }
 
 impl RestApiServer {
@@ -57,12 +64,37 @@ impl RestApiServer {
             ))),
         });
 
-        Ok(Self { config, state })
+        // Build GraphQL schema with engine and authorization context
+        let graphql_engine = Arc::new(GraphQLEngine::new());
+
+        // Create admin authorization context
+        let auth_context = Arc::new(AuthorizationContext::new(
+            "admin".to_string(),
+            vec!["admin".to_string()],
+            vec!["admin.*".to_string()],
+        ));
+
+        let graphql_schema = Schema::build(QueryRoot, MutationRoot, SubscriptionRoot)
+            .data(graphql_engine)
+            .data(auth_context)
+            .finish();
+
+        Ok(Self { config, state, graphql_schema })
     }
 
     // Build the router with all endpoints and middleware
     fn build_router(&self) -> Router {
+        // Create GraphQL router with its own state
+        let graphql_schema = self.graphql_schema.clone();
+        let graphql_router = Router::new()
+            .route("/graphql", post(graphql_handler).get(graphql_playground))
+            .route("/graphql/ws", get(graphql_subscription))
+            .with_state(graphql_schema);
+
         let mut router = Router::new()
+            // Merge GraphQL router
+            .merge(graphql_router)
+
             // Core Database Operations API
             .route("/api/v1/query", post(execute_query))
             .route("/api/v1/batch", post(execute_batch))
@@ -261,6 +293,53 @@ async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
             }
         }
     }
+}
+
+// ============================================================================
+// GRAPHQL HANDLERS
+// ============================================================================
+
+// GraphQL query/mutation handler
+async fn graphql_handler(
+    State(schema): State<GraphQLSchema>,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
+    schema.execute(req.into_inner()).await.into()
+}
+
+// GraphQL Playground UI
+async fn graphql_playground() -> impl IntoResponse {
+    Html(async_graphql::http::playground_source(
+        GraphQLPlaygroundConfig::new("/graphql").subscription_endpoint("/graphql/ws")
+    ))
+}
+
+// GraphQL WebSocket subscriptions
+async fn graphql_subscription(
+    ws: WebSocketUpgrade,
+    State(schema): State<GraphQLSchema>,
+) -> impl IntoResponse {
+    use futures_util::StreamExt;
+    use axum::extract::ws::{Message, Utf8Bytes};
+
+    ws.on_upgrade(move |socket| async move {
+        let (mut sink, mut stream) = socket.split();
+
+        while let Some(msg) = stream.next().await {
+            if let Ok(msg) = msg {
+                if let Message::Text(text) = msg {
+                    if let Ok(request) = serde_json::from_str::<async_graphql::Request>(&text) {
+                        let response = schema.execute(request).await;
+                        let response_text = serde_json::to_string(&response).unwrap_or_default();
+                        // Convert String to Utf8Bytes for axum 0.8
+                        if let Ok(utf8_bytes) = Utf8Bytes::try_from(response_text.into_bytes()) {
+                            let _ = sink.send(Message::Text(utf8_bytes)).await;
+                        }
+                    }
+                }
+            }
+        }
+    })
 }
 
 #[cfg(test)]

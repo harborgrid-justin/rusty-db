@@ -789,10 +789,10 @@ impl DiskManager {
         *num_pages += 1;
 
         // Write empty page
-        let page = Page::new(page_id, self.page_size);
+        let page = Page::new(page_id as PageId, self.page_size);
         self.write_page(&page)?;
 
-        Ok(page_id)
+        Ok(page_id as PageId)
     }
 
     pub fn get_num_pages(&self) -> u32 {

@@ -3,12 +3,10 @@
 // Utility functions for GraphQL operations
 
 use async_graphql::{Error, Result as GqlResult};
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
 use crate::api::{BuiltQuery, GraphQLEngine};
-use crate::error::DbError;
 use super::types::*;
 use super::models::*;
 

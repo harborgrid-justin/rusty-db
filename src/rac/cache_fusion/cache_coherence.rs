@@ -26,7 +26,7 @@ pub struct CacheFusionCoordinator {
     ges: Arc<GlobalEnqueueService>,
 
     // Node identifier
-    node_id: NodeId,
+    _node_id: NodeId,
 }
 
 impl CacheFusionCoordinator {
@@ -35,7 +35,7 @@ impl CacheFusionCoordinator {
         Self {
             gcs: Arc::new(GlobalCacheService::new(node_id.clone(), gcs_config)),
             ges: Arc::new(GlobalEnqueueService::new(node_id.clone())),
-            node_id,
+            _node_id: node_id,
         }
     }
 

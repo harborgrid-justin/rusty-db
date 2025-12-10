@@ -3,7 +3,6 @@
 // High-performance file manager with batched operations, Direct I/O,
 // and buffer pooling.
 
-use std::sync::Mutex;
 use crate::error::{Result, DbError};
 use crate::io::{
     AsyncIoEngine, IoRequest, IoOpType, IoHandle, AlignedBuffer, BufferPool,

@@ -136,6 +136,7 @@ impl MaskingPolicy {
 #[derive(Debug, Clone)]
 struct SubstitutionTable {
     // Table name
+    #[allow(dead_code)]
     name: String,
     // Values to substitute
     values: Vec<String>,

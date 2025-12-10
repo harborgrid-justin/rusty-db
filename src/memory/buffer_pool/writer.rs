@@ -8,11 +8,11 @@ use serde::{Serialize, Deserialize};
 
 pub struct BackgroundWriter {
     // Write batch size
-    batch_size: usize,
+    _batch_size: usize,
     // Write interval
     interval: Duration,
     // Maximum dirty page percentage before aggressive flushing
-    dirty_threshold: f64,
+    _dirty_threshold: f64,
     // Running flag
     running: Arc<AtomicBool>,
     // Statistics
@@ -29,9 +29,9 @@ struct BackgroundWriterStats {
 impl BackgroundWriter {
     pub fn new(batch_size: usize, interval_secs: u64, dirty_threshold: f64) -> Self {
         Self {
-            batch_size,
+            _batch_size: batch_size,
             interval: Duration::from_secs(interval_secs),
-            dirty_threshold,
+            _dirty_threshold: dirty_threshold,
             running: Arc::new(AtomicBool::new(false)),
             stats: BackgroundWriterStats {
                 write_cycles: AtomicU64::new(0),

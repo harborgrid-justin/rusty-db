@@ -58,7 +58,7 @@ enum BlockStatus {
 /// Entry in LIRS stack
 #[derive(Debug, Clone)]
 struct LirsEntry {
-    frame_id: FrameId,
+    _frame_id: FrameId,
     status: BlockStatus,
     /// Whether this entry is in the stack S
     in_stack: bool,
@@ -147,7 +147,7 @@ impl LirsState {
             self.directory.insert(
                 frame_id,
                 LirsEntry {
-                    frame_id,
+                    _frame_id: frame_id,
                     status,
                     in_stack: true,
                     in_queue: false,

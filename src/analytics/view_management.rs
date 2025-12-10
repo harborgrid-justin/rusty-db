@@ -10,6 +10,7 @@ use parking_lot::RwLock;
 use std::time::{Duration, SystemTime};
 
 // View definition
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct View {
     pub name: String,
@@ -20,6 +21,7 @@ pub struct View {
 }
 
 // Check option for updatable views
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CheckOption {
     Local,
@@ -27,6 +29,7 @@ pub enum CheckOption {
 }
 
 // Materialized view definition
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaterializedView {
     pub name: String,
@@ -40,6 +43,7 @@ pub struct MaterializedView {
 }
 
 // Refresh schedule for materialized views
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefreshSchedule {
     pub interval: Duration,
@@ -48,6 +52,7 @@ pub struct RefreshSchedule {
 }
 
 // Index on a materialized view
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaterializedViewIndex {
     pub name: String,
@@ -56,6 +61,7 @@ pub struct MaterializedViewIndex {
 }
 
 // Statistics for a view or materialized view
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ViewStatistics {
     pub row_count: u64,
@@ -78,11 +84,13 @@ impl Default for ViewStatistics {
 }
 
 // View manager for handling view operations
+#[allow(dead_code)]
 pub struct ViewManager {
     views: Arc<RwLock<HashMap<String, View>>>,
     materialized_views: Arc<RwLock<HashMap<String, MaterializedView>>>,
 }
 
+#[allow(dead_code)]
 impl ViewManager {
     pub fn new() -> Self {
         Self {

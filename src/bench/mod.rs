@@ -46,7 +46,6 @@
 // - **Aggregations**: SUM, AVG, MIN, MAX operations
 // - **String Operations**: Pattern matching and comparisons
 
-use tokio::time::sleep;
 use std::sync::Arc;
 use std::time::{Instant, Duration};
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
@@ -575,7 +574,7 @@ pub fn bench_range_scan(config: &BenchConfig) -> BenchMetrics {
         let scan_start = Instant::now();
 
         let mut count = 0;
-        for (_key, value) in btree.range(start_key..end_key) {
+        for (_key, _value) in btree.range(start_key..end_key) {
             count += 1;
         }
         black_box(count);

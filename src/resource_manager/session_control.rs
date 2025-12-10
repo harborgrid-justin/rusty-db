@@ -511,7 +511,7 @@ impl SessionController {
     }
 
     // Terminate a session
-    pub fn terminate_session(&self, session_id: SessionId, reason: &str) -> Result<()> {
+    pub fn terminate_session(&self, session_id: SessionId, _reason: &str) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
         let session = sessions.get_mut(&session_id)
             .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;

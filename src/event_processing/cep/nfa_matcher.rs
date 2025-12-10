@@ -30,7 +30,7 @@ pub struct NFA {
 #[derive(Debug, Clone)]
 struct NFAState {
     /// State ID
-    id: usize,
+    _id: usize,
 
     /// Transitions from this state
     transitions: Vec<NFATransition>,
@@ -39,7 +39,7 @@ struct NFAState {
     is_accept: bool,
 
     /// Pattern variable binding for this state (if any)
-    variable: Option<String>,
+    _variable: Option<String>,
 }
 
 /// NFA Transition
@@ -83,10 +83,10 @@ impl NFA {
     fn add_state(&mut self, is_accept: bool, variable: Option<String>) -> usize {
         let id = self.states.len();
         self.states.push(NFAState {
-            id,
+            _id: id,
             transitions: Vec::new(),
             is_accept,
-            variable,
+            _variable: variable,
         });
         id
     }

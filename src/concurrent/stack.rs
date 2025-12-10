@@ -412,7 +412,7 @@ impl<T: 'static> EliminationArray<T> {
                 Ordering::Relaxed,
             ).is_ok() {
                 if let Some(v) = value.take() {
-                    let guard = Epoch::pin();
+                    let _guard = Epoch::pin();
                     let owned = Owned::new(v);
                     slot.value.store(owned.into_shared(), Ordering::Release);
 

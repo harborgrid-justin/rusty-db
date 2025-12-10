@@ -137,6 +137,7 @@ pub struct CompressedColumnInfo {
 }
 
 // Run-length encoded segment.
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct RleSegment {
     value: Vec<u8>,

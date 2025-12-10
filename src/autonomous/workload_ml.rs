@@ -150,7 +150,7 @@ impl KMeansClassifier {
         Ok(())
     }
 
-    fn initialize_centroids(&self, data: &[Vec<f64>], dim: usize) -> Vec<Vec<f64>> {
+    fn initialize_centroids(&self, data: &[Vec<f64>], _dim: usize) -> Vec<Vec<f64>> {
         // K-Means++ initialization for better starting points
         let mut centroids = Vec::with_capacity(self.k);
         let mut selected_indices = Vec::new();
@@ -592,7 +592,7 @@ impl TimeSeriesAnalyzer {
         let sum_y: f64 = points.iter().map(|(_, y)| y).sum();
         let sum_xy: f64 = points.iter().map(|(x, y)| x * y).sum();
         let sum_x2: f64 = points.iter().map(|(x, _)| x * x).sum();
-        let sum_y2: f64 = points.iter().map(|(_, y)| y * y).sum();
+        let _sum_y2: f64 = points.iter().map(|(_, y)| y * y).sum();
 
         let slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
 

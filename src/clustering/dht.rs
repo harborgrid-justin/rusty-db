@@ -309,7 +309,7 @@ impl DistributedHashTable {
 
     // Add a node to the DHT
     pub fn add_node(&self, metadata: NodeMetadata) -> Result<(), DbError> {
-        let node_id = metadata.id.clone();
+        let _node_id = metadata.id.clone();
 
         match self.config.strategy {
             HashStrategy::ConsistentHash => {

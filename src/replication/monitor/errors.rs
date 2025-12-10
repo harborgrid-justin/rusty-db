@@ -3,6 +3,7 @@
 use thiserror::Error;
 
 // Health monitoring specific errors
+#[allow(dead_code)]
 #[derive(Error, Debug)]
 pub enum HealthMonitorError {
     #[error("Replica not found: {replica_id}")]

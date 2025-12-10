@@ -20,7 +20,6 @@ use tokio::task;
 use crate::Result;
 use super::ledger::{Block, BlockId, BlockchainTable};
 use crate::common::RowId;
-use super::crypto::Hash256;
 
 // ============================================================================
 // Verification Result Types

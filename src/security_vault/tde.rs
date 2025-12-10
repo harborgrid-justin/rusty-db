@@ -30,8 +30,6 @@ use chacha20poly1305::ChaCha20Poly1305;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
-use sha2::Digest;
-use rand::RngCore;
 
 // Cache-aligned crypto buffer for high-performance encryption
 // Aligned to 64 bytes (typical cache line size) to avoid false sharing
@@ -174,6 +172,7 @@ pub struct EncryptedData {
 #[derive(Debug, Clone)]
 struct TablespaceEncryption {
     // Tablespace name
+    #[allow(dead_code)]
     name: String,
     // TDE configuration
     config: TdeConfig,
@@ -239,6 +238,7 @@ pub struct TdeEngine {
     // Column encryption configurations
     column_configs: RwLock<HashMap<String, ColumnEncryption>>,
     // HSM provider (optional)
+    #[allow(dead_code)]
     hsm_provider: Option<Box<dyn HsmProvider>>,
     // Performance metrics
     metrics: RwLock<TdeMetrics>,
@@ -256,6 +256,7 @@ struct TdeMetrics {
     // Total bytes decrypted
     bytes_decrypted: u64,
     // Failed operations
+    #[allow(dead_code)]
     failed_operations: u64,
 }
 

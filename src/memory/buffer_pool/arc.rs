@@ -89,7 +89,7 @@ impl AdaptiveReplacementCache {
     }
 
     // Access a page in the cache
-    pub fn get(&self, page_id: PageId, page_size: usize) -> Option<Arc<BufferFrame>> {
+    pub fn get(&self, page_id: PageId, _page_size: usize) -> Option<Arc<BufferFrame>> {
         let dir = self.directory.read();
 
         if let Some(&location) = dir.get(&page_id) {
@@ -171,7 +171,7 @@ impl AdaptiveReplacementCache {
     }
 
     // ARC replacement algorithm
-    fn replace(&self, page_id: PageId, hit_location: CacheLocation) {
+    fn replace(&self, _page_id: PageId, hit_location: CacheLocation) {
         let p = self.p.load(Ordering::Relaxed);
         let t1_len = self.t1.lock().len();
 

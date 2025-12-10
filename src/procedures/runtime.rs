@@ -112,6 +112,7 @@ pub struct ExecutionContext {
     // Output parameters
     output_params: HashMap<String, RuntimeValue>,
     // Parent context (for nested blocks)
+    #[allow(dead_code)]
     parent: Option<Arc<RwLock<ExecutionContext>>>,
     // Return value
     return_value: Option<RuntimeValue>,

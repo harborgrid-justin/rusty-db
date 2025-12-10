@@ -389,7 +389,7 @@ struct WorkerPool {
     active_workers: Arc<RwLock<HashMap<WorkerId, WorkerInfo>>>,
 
     // Maximum workers
-    max_workers: usize,
+    _max_workers: usize,
 
     // Semaphore for worker allocation
     semaphore: Arc<Semaphore>,
@@ -398,10 +398,10 @@ struct WorkerPool {
 type WorkerId = usize;
 
 struct WorkerInfo {
-    worker_id: WorkerId,
-    query_id: u64,
-    fragment_id: usize,
-    started_at: Instant,
+    _worker_id: WorkerId,
+    _query_id: u64,
+    _fragment_id: usize,
+    _started_at: Instant,
 }
 
 impl WorkerPool {
@@ -414,7 +414,7 @@ impl WorkerPool {
         Self {
             available_workers: Arc::new(Mutex::new(available)),
             active_workers: Arc::new(RwLock::new(HashMap::new())),
-            max_workers,
+            _max_workers: max_workers,
             semaphore: Arc::new(Semaphore::new(max_workers)),
         }
     }
@@ -432,10 +432,10 @@ impl WorkerPool {
 
     fn assign_worker(&self, worker_id: WorkerId, query_id: u64, fragment_id: usize) {
         let info = WorkerInfo {
-            worker_id,
-            query_id,
-            fragment_id,
-            started_at: Instant::now(),
+            _worker_id: worker_id,
+            _query_id: query_id,
+            _fragment_id: fragment_id,
+            _started_at: Instant::now(),
         };
         self.active_workers.write().insert(worker_id, info);
     }
@@ -803,6 +803,7 @@ impl ParallelQueryCoordinator {
 
     // NEW: Work stealing implementation
     // Idle workers can steal work from busy workers' queues
+    #[allow(dead_code)]
     async fn try_steal_work(&self, _thief_worker_id: WorkerId) -> Option<QueryFragment> {
         let _active_workers = self.worker_pool.active_workers.read();
 

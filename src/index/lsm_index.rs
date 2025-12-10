@@ -16,7 +16,6 @@
 // - Space: 10-15 bits per key for bloom filters
 // - Write amplification: 5-10x (vs 20-50x for naive LSM)
 
-use tokio::time::sleep;
 use crate::error::{DbError, Result};
 use parking_lot::RwLock;
 use std::collections::BTreeMap;
