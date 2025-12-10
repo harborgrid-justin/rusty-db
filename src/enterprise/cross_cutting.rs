@@ -642,6 +642,7 @@ where
 // ============================================================================
 
 // Bulkhead for resource isolation
+#[allow(dead_code)]
 pub struct Bulkhead {
     // Semaphore for limiting concurrent operations
     semaphore: Arc<Semaphore>,

@@ -8,12 +8,14 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 // Adaptive query optimizer using statistics
+#[allow(dead_code)]
 pub struct AdaptiveQueryOptimizer {
     statistics: Arc<RwLock<HashMap<String, QueryStatistics>>>,
     learning_rate: f64,
     min_samples: usize,
 }
 
+#[allow(dead_code)]
 impl AdaptiveQueryOptimizer {
     pub fn new(learning_rate: f64, min_samples: usize) -> Self {
         Self {
@@ -113,6 +115,7 @@ impl AdaptiveQueryOptimizer {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryStatistics {
     pub query_hash: String,
@@ -125,6 +128,7 @@ pub struct QueryStatistics {
     pub avg_time_ms: f64,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptimizationSuggestions {
     pub query_hash: String,

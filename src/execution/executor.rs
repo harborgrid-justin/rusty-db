@@ -12,6 +12,7 @@ use std::cmp::Ordering;
 // Query executor with enterprise-grade features
 pub struct Executor {
     catalog: Arc<Catalog>,
+    #[allow(dead_code)]
     txn_manager: Arc<TransactionManager>,
     index_manager: Arc<IndexManager>,
     constraint_manager: Arc<ConstraintManager>,

@@ -348,6 +348,7 @@ impl FlashbackLogs {
 /// Flashback log file
 #[derive(Debug, Clone)]
 struct FlashbackLogFile {
+    #[allow(dead_code)]
     file_path: PathBuf,
     start_scn: SCN,
     end_scn: SCN,
@@ -560,9 +561,13 @@ impl RecoveryOrchestrator {
 
 /// Plan for executing database flashback
 struct FlashbackPlan {
+    #[allow(dead_code)]
     from_scn: SCN,
+    #[allow(dead_code)]
     to_scn: SCN,
+    #[allow(dead_code)]
     log_files: Vec<FlashbackLogFile>,
+    #[allow(dead_code)]
     tables_to_recover: Vec<TableId>,
 }
 

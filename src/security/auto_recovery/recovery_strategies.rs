@@ -582,8 +582,8 @@ impl DataRepairer {
         data.iter().fold(0u64, |acc, &b| acc.wrapping_add(b as u64))
     }
 
-    async fn write_page(&self, _file_path: &str, page_id: u64, data: &[u8]) -> Result<()> {
-        tracing::debug!("Writing repaired page {} ({} bytes)", page_id, data.len());
+    async fn write_page(&self, file_path: &str, page_id: u64, data: &[u8]) -> Result<()> {
+        tracing::debug!("Writing repaired page {} to {} ({} bytes)", page_id, file_path, data.len());
         sleep(Duration::from_millis(5)).await;
         Ok(())
     }

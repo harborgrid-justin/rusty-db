@@ -2,7 +2,7 @@
 //
 // Part of the Enterprise Integration Layer for RustyDB
 
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
 use serde::{Serialize, Deserialize};

@@ -2,7 +2,7 @@
 //
 // Security policy engine and defense orchestration for access control and threat management.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashSet, HashMap};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
@@ -381,11 +381,11 @@ impl DefenseOrchestrator {
         }
     }
 
-    pub fn adapt_defenses(&self, newthreatlevel: ThreatLevel) -> Result<()> {
+    pub fn adapt_defenses(&self, new_threat_level: ThreatLevel) -> Result<()> {
         let mut threat_level = self.threat_level.write();
-        *threat_level = newthreatlevel;
+        *threat_level = new_threat_level;
 
-        match newthreatlevel {
+        match new_threat_level {
             ThreatLevel::Critical => {
                 self.enable_all_defenses()?;
                 self.tighten_authentication()?;

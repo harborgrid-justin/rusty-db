@@ -663,7 +663,6 @@ impl VersionGarbageCollector {
             return 0;
         }
 
-        let _now = current_timestamp();
         let mut to_remove = Vec::new();
 
         for (i, version) in versions.iter().enumerate() {
@@ -681,9 +680,8 @@ impl VersionGarbageCollector {
             }
 
             // Check max age
-            if let Some(max_age_secs) = policy.max_age_seconds {
-                let _age_micros = max_age_secs * 1_000_000;
-                if let Some(_end_scn) = version.scn_deleted {
+            if let Some(_max_age_secs) = policy.max_age_seconds {
+                if version.scn_deleted.is_some() {
                     // Version is deleted, check if old enough
                     // Note: Would need proper timestamp mapping
                     to_remove.push(i);

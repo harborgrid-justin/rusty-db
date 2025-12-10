@@ -221,6 +221,7 @@ impl Default for SwimConfig {
 
 // Pending ping request tracking
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct PendingPing {
     target: MemberId,
     sequence: u64,

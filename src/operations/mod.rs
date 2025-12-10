@@ -1,7 +1,7 @@
 pub mod resources;
 
-use std::collections::HashMap;
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 use crate::Result;

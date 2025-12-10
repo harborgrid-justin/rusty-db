@@ -212,7 +212,7 @@ impl FeatureImportance {
 
 // Cached model entry
 #[derive(Clone)]
-struct CachedModel {
+pub(crate) struct CachedModel {
     // Model type
     model_type: ModelType,
     // Serialized model data
@@ -507,8 +507,7 @@ pub struct InferenceEngine {
 
 // Prediction log entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[allow(dead_code)]
-struct PredictionLog {
+pub struct PredictionLog {
     model_name: String,
     model_version: ModelVersion,
     timestamp: u64,

@@ -388,6 +388,7 @@ pub struct Orchestrator {
 
 // Orchestrator state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
 enum OrchestratorState {
     // Not yet initialized
     Uninitialized,

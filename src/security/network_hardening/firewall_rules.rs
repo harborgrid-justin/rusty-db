@@ -3,10 +3,9 @@
 // IP reputation checking and connection guard for network security.
 
 use std::time::Instant;
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashSet, VecDeque, HashMap};
 use crate::Result;
 use parking_lot::RwLock;
-use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;

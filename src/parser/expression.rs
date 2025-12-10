@@ -237,7 +237,7 @@ impl ExpressionEvaluator {
                 Ok(LiteralValue::Boolean(if *negated { !is_null } else { is_null }))
             }
 
-            Expression::Like { expr, pattern, escape, negated } => {
+            Expression::Like { expr, pattern, escape: _, negated } => {
                 let val = self.evaluate(expr)?;
                 let pattern_val = self.evaluate(pattern)?;
 

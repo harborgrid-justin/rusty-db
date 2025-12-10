@@ -3,8 +3,8 @@
 // Part of the API Gateway and Security system for RustyDB
 
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc};
-use std::time::{SystemTime};
+use std::sync::Arc;
+use std::time::SystemTime;
 use parking_lot::RwLock;
 
 use crate::api::Session;

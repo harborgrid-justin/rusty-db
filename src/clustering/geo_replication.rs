@@ -286,6 +286,7 @@ impl Default for GeoReplicationConfig {
 }
 
 // Replication stream for batching
+#[allow(dead_code)]
 struct ReplicationStream {
     id: StreamId,
     target_dc: DatacenterId,

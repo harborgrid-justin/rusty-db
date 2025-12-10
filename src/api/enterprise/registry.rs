@@ -26,17 +26,10 @@
 // }
 // ```
 
-use std::fmt;
-use std::collections::BTreeMap;
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::time::Instant;
-use std::time::SystemTime;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::{Duration, Instant, SystemTime};
 
-use tokio::time::sleep;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
@@ -96,6 +89,7 @@ pub struct ServiceEndpoint {
 }
 
 // Service registration request
+#[allow(dead_code)]
 pub struct ServiceRegistration {
     pub metadata: ServiceMetadata,
     pub lifecycle_handler: Arc<dyn ServiceLifecycleHandler>,
@@ -391,6 +385,7 @@ impl ConfigurationAggregator {
 }
 
 // Unified service registry
+#[allow(dead_code)]
 pub struct ServiceRegistry {
     services: Arc<RwLock<HashMap<String, ServiceRegistration>>>,
     metadata_index: Arc<RwLock<HashMap<String, ServiceMetadata>>>,

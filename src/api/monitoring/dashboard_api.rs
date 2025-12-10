@@ -2,9 +2,9 @@
 //
 // Part of the comprehensive monitoring system for RustyDB
 
-use std::sync::{Arc, Mutex};
-use std::collections::{HashMap, BTreeMap};
-use std::time::{Duration, SystemTime, Instant, UNIX_EPOCH};
+use std::sync::Arc;
+use std::collections::{BTreeMap, HashMap};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::api::{DashboardManager, HealthCheckCoordinator, MetricsRegistry, PrometheusExporter, TimeSeriesDatabase, TimeSeriesQuery, TimeSeriesResult, HealthCheckResult, HealthStatus, Alert, AlertSeverity, Dashboard};
@@ -275,7 +275,6 @@ impl MonitoringApi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::HealthCheckCoordinator;
     use crate::api::monitoring::{ComparisonOperator, LivenessProbe, ThresholdAlertRule};
 
     #[test]

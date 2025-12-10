@@ -31,6 +31,7 @@ pub trait MigrationStrategy {
 }
 
 // Data migration manager
+#[allow(dead_code)]
 pub struct DataMigrationManager {
     coordinator: Arc<dyn ClusterCoordinator>,
     migration_queue: Arc<RwLock<VecDeque<MigrationTask>>>,
