@@ -665,7 +665,7 @@ pub struct ResourceUsageSnapshot {
 
 // Enterprise integrator - main coordinator for all enterprise modules
 pub struct EnterpriseIntegrator {
-    config: IntegratorConfig,
+    _config: IntegratorConfig,
     service_registry: Arc<ServiceRegistry>,
     start_time: Instant,
 }
@@ -675,7 +675,7 @@ impl EnterpriseIntegrator {
         let service_registry = Arc::new(ServiceRegistry::new());
 
         Ok(Self {
-            config,
+            _config: config,
             service_registry,
             start_time: Instant::now(),
         })

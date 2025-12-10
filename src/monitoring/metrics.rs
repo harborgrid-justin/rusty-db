@@ -26,7 +26,7 @@ pub struct Counter {
     help: String,
     value: Arc<RwLock<f64>>,
     labels: HashMap<String, String>,
-    created_at: Instant,
+    _created_at: Instant,
 }
 
 impl Counter {
@@ -36,7 +36,7 @@ impl Counter {
             help: help.into(),
             value: Arc::new(RwLock::new(0.0)),
             labels: HashMap::new(),
-            created_at: Instant::now(),
+            _created_at: Instant::now(),
         }
     }
 
@@ -83,7 +83,7 @@ pub struct Gauge {
     help: String,
     value: Arc<RwLock<f64>>,
     labels: HashMap<String, String>,
-    created_at: Instant,
+    _created_at: Instant,
 }
 
 impl Gauge {
@@ -93,7 +93,7 @@ impl Gauge {
             help: help.into(),
             value: Arc::new(RwLock::new(0.0)),
             labels: HashMap::new(),
-            created_at: Instant::now(),
+            _created_at: Instant::now(),
         }
     }
 
@@ -155,7 +155,7 @@ pub struct Histogram {
     sum: Arc<RwLock<f64>>,
     count: Arc<RwLock<u64>>,
     labels: HashMap<String, String>,
-    created_at: Instant,
+    _created_at: Instant,
 }
 
 impl Histogram {
@@ -181,7 +181,7 @@ impl Histogram {
             sum: Arc::new(RwLock::new(0.0)),
             count: Arc::new(RwLock::new(0)),
             labels: HashMap::new(),
-            created_at: Instant::now(),
+            _created_at: Instant::now(),
         }
     }
 
@@ -243,8 +243,8 @@ pub struct Summary {
     sum: Arc<RwLock<f64>>,
     count: Arc<RwLock<u64>>,
     labels: HashMap<String, String>,
-    max_age: Duration,
-    created_at: Instant,
+    _max_age: Duration,
+    _created_at: Instant,
 }
 
 impl Summary {
@@ -256,8 +256,8 @@ impl Summary {
             sum: Arc::new(RwLock::new(0.0)),
             count: Arc::new(RwLock::new(0)),
             labels: HashMap::new(),
-            max_age: Duration::from_secs(600), // 10 minutes
-            created_at: Instant::now(),
+            _max_age: Duration::from_secs(600), // 10 minutes
+            _created_at: Instant::now(),
         }
     }
 

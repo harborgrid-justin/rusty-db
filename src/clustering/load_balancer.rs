@@ -142,8 +142,8 @@ struct ConnectionPool {
     available: Arc<RwLock<VecDeque<Connection>>>,
     active: Arc<RwLock<HashMap<ConnectionId, Connection>>>,
     semaphore: Arc<Semaphore>,
-    min_size: usize,
-    max_size: usize,
+    _min_size: usize,
+    _max_size: usize,
 }
 
 // Connection to a backend
@@ -153,7 +153,7 @@ struct Connection {
     backend_id: BackendId,
     created_at: SystemTime,
     last_used: SystemTime,
-    request_count: usize,
+    _request_count: usize,
 }
 
 impl Connection {
@@ -163,10 +163,11 @@ impl Connection {
             backend_id,
             created_at: SystemTime::now(),
             last_used: SystemTime::now(),
-            request_count: 0,
+            _request_count: 0,
         }
     }
 
+    #[allow(dead_code)]
     fn is_expired(&self, max_lifetime: Duration) -> bool {
         self.created_at.elapsed().unwrap_or(Duration::ZERO) > max_lifetime
     }
@@ -179,8 +180,8 @@ impl ConnectionPool {
             available: Arc::new(RwLock::new(VecDeque::new())),
             active: Arc::new(RwLock::new(HashMap::new())),
             semaphore: Arc::new(Semaphore::new(max_size)),
-            min_size,
-            max_size,
+            _min_size: min_size,
+            _max_size: max_size,
         }
     }
 
@@ -216,6 +217,7 @@ impl ConnectionPool {
         }
     }
 
+    #[allow(dead_code)]
     fn remove(&self, conn_id: ConnectionId) {
         self.active.write().unwrap().remove(&conn_id);
     }

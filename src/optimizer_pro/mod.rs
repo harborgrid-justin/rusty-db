@@ -415,7 +415,7 @@ pub struct QueryOptimizer {
     // Optimizer configuration
     config: OptimizerConfig,
     // Cost model
-    cost_model: Arc<CostModel>,
+    _cost_model: Arc<CostModel>,
     // Plan generator
     plan_generator: Arc<PlanGenerator>,
     // Query transformer
@@ -447,7 +447,7 @@ impl QueryOptimizer {
 
         Self {
             config,
-            cost_model,
+            _cost_model: cost_model,
             plan_generator,
             transformer,
             adaptive_executor,

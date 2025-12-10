@@ -792,8 +792,8 @@ pub struct PaneBasedWindow {
 /// A pane is a sub-window that maintains its own aggregate
 #[derive(Debug, Clone)]
 struct Pane {
-    start_time: SystemTime,
-    end_time: SystemTime,
+    _start_time: SystemTime,
+    _end_time: SystemTime,
 
     // Pre-computed aggregates for O(1) retrieval
     count: u64,
@@ -808,8 +808,8 @@ struct Pane {
 impl Pane {
     fn new(start_time: SystemTime, pane_size: Duration) -> Self {
         Self {
-            start_time,
-            end_time: start_time + pane_size,
+            _start_time: start_time,
+            _end_time: start_time + pane_size,
             count: 0,
             sum: 0.0,
             min: None,
@@ -829,9 +829,7 @@ impl Pane {
 
     /// Remove event and update aggregates - O(1) for additive, O(n) for MIN/MAX
     /// Reserved for window management
-
     #[allow(dead_code)]
-
     fn remove_event(&mut self, value: f64) {
         if self.count > 0 {
             self.count -= 1;
@@ -847,8 +845,9 @@ impl Pane {
     }
 
     /// Check if event belongs to this pane
+    #[allow(dead_code)]
     fn contains(&self, event_time: SystemTime) -> bool {
-        event_time >= self.start_time && event_time < self.end_time
+        event_time >= self._start_time && event_time < self._end_time
     }
 }
 

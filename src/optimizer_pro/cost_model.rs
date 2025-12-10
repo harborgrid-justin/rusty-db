@@ -757,9 +757,9 @@ impl CardinalityEstimator {
     pub fn train_ml_model(&self, query_signature: String, _actual_cardinality: usize) {
         // Simplified ML training
         let model = MLCardinalityModel {
-            query_signature: query_signature.clone(),
-            weights: vec![1.0; 10],
-            bias: 0.0,
+            _query_signature: query_signature.clone(),
+            _weights: vec![1.0; 10],
+            _bias: 0.0,
         };
 
         self.ml_models.write().unwrap().insert(query_signature, model);
@@ -778,9 +778,9 @@ impl CardinalityEstimator {
 /// ML model for cardinality estimation
 #[derive(Debug, Clone)]
 struct MLCardinalityModel {
-    query_signature: String,
-    weights: Vec<f64>,
-    bias: f64,
+    _query_signature: String,
+    _weights: Vec<f64>,
+    _bias: f64,
 }
 
 impl MLCardinalityModel {

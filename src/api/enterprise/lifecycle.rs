@@ -2,13 +2,11 @@
 //
 // Part of the Enterprise Integration Layer for RustyDB
 
-use std::collections::{HashMap, BTreeMap, VecDeque};
-use std::sync::{Arc, RwLock, Mutex};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
-use std::fmt;
 use tokio::time::sleep;
 use serde::{Serialize, Deserialize};
-use uuid::Uuid;
 
 use crate::error::DbError;
 use super::registry::*;

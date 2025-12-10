@@ -232,12 +232,12 @@ impl RuleCondition {
             RuleCondition::ModuleName(name) => {
                 attrs.module_name.as_ref().map_or(false, |m| m == name)
             }
-            RuleCondition::TimeOfDay { start_hour, end_hour } => {
-                let now = SystemTime::now();
+            RuleCondition::TimeOfDay { start_hour: _, end_hour: _ } => {
+                let _now = SystemTime::now();
                 // Simplified time check (would need proper time handling)
                 true // Placeholder
             }
-            RuleCondition::DayOfWeek(days) => {
+            RuleCondition::DayOfWeek(_days) => {
                 // Simplified day of week check
                 true // Placeholder
             }

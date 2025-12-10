@@ -32,7 +32,7 @@ pub struct WorkloadRepository {
     snapshot_index: Arc<RwLock<SnapshotIndex>>,
 
     // Aggregated metrics cache
-    metric_cache: Arc<RwLock<MetricCache>>,
+    _metric_cache: Arc<RwLock<MetricCache>>,
 
     // Next snapshot ID
     next_snapshot_id: Arc<RwLock<SnapshotId>>,
@@ -357,10 +357,10 @@ struct SnapshotIndex {
 #[derive(Debug, Default)]
 struct MetricCache {
     // Aggregated metrics by time window
-    hourly_metrics: VecDeque<AggregatedMetrics>,
-    daily_metrics: VecDeque<AggregatedMetrics>,
+    _hourly_metrics: VecDeque<AggregatedMetrics>,
+    _daily_metrics: VecDeque<AggregatedMetrics>,
     // Last cache update time
-    last_update: Option<SystemTime>,
+    _last_update: Option<SystemTime>,
 }
 
 // Aggregated metrics for a time period
@@ -403,7 +403,7 @@ impl WorkloadRepository {
             baselines: Arc::new(RwLock::new(HashMap::new())),
             config: Arc::new(RwLock::new(config)),
             snapshot_index: Arc::new(RwLock::new(SnapshotIndex::default())),
-            metric_cache: Arc::new(RwLock::new(MetricCache::default())),
+            _metric_cache: Arc::new(RwLock::new(MetricCache::default())),
             next_snapshot_id: Arc::new(RwLock::new(1)),
             next_baseline_id: Arc::new(RwLock::new(1)),
             collection_status: Arc::new(RwLock::new(CollectionStatus {

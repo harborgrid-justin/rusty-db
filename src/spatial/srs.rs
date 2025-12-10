@@ -81,6 +81,7 @@ impl Ellipsoid {
     }
 
     // GRS 1980 ellipsoid
+    #[allow(dead_code)]
     pub fn grs80() -> Self {
         Self {
             name: "GRS 1980".to_string(),
@@ -97,6 +98,7 @@ impl Ellipsoid {
     }
 
     // Calculate second eccentricity squared
+    #[allow(dead_code)]
     pub fn second_eccentricity_squared(&self) -> f64 {
         let e2 = self.eccentricity_squared();
         e2 / (1.0 - e2)
@@ -399,6 +401,7 @@ pub struct GeodeticCalculator {
 }
 
 impl GeodeticCalculator {
+    #[allow(dead_code)]
     pub fn new(ellipsoid: Ellipsoid) -> Self {
         Self { ellipsoid }
     }
@@ -408,6 +411,7 @@ impl GeodeticCalculator {
     }
 
     // Calculate great circle distance using Vincenty formula
+    #[allow(dead_code)]
     pub fn vincenty_distance(&self, coord1: &Coordinate, coord2: &Coordinate) -> f64 {
         let lat1 = coord1.y * PI / 180.0;
         let lon1 = coord1.x * PI / 180.0;
@@ -525,6 +529,7 @@ impl GeodeticCalculator {
     }
 
     // Calculate destination point given start, bearing, and distance
+    #[allow(dead_code)]
     pub fn destination(&self, start: &Coordinate, bearing_deg: f64, distance: f64) -> Coordinate {
         let lat1 = start.y * PI / 180.0;
         let lon1 = start.x * PI / 180.0;

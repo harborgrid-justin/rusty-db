@@ -20,7 +20,7 @@ pub struct SqlMonitor {
     execution_history: Arc<RwLock<VecDeque<SqlExecution>>>,
 
     /// Execution plans cache
-    plan_cache: Arc<RwLock<HashMap<u64, ExecutionPlan>>>,
+    _plan_cache: Arc<RwLock<HashMap<u64, ExecutionPlan>>>,
 
     /// Performance alerts
     alerts: Arc<RwLock<Vec<PerformanceAlert>>>,
@@ -299,7 +299,7 @@ impl SqlMonitor {
         Self {
             active_executions: Arc::new(RwLock::new(HashMap::new())),
             execution_history: Arc::new(RwLock::new(VecDeque::new())),
-            plan_cache: Arc::new(RwLock::new(HashMap::new())),
+            _plan_cache: Arc::new(RwLock::new(HashMap::new())),
             alerts: Arc::new(RwLock::new(Vec::new())),
             config: Arc::new(RwLock::new(config)),
             next_execution_id: Arc::new(RwLock::new(1)),

@@ -197,9 +197,9 @@ pub struct WorkloadCharacteristics {
 // Reinforcement learning state
 #[derive(Debug, Clone)]
 struct RLState {
-    workload: WorkloadCharacteristics,
-    parameters: HashMap<TunableParameter, ParameterValue>,
-    performance_score: f64,
+    _workload: WorkloadCharacteristics,
+    _parameters: HashMap<TunableParameter, ParameterValue>,
+    _performance_score: f64,
 }
 
 // Q-Learning agent for parameter optimization
@@ -226,12 +226,12 @@ impl QLearningAgent {
         // Discretize state for Q-table
         format!(
             "rw:{:.1}_qc:{:.1}_cc:{}_cpu:{}_mem:{}_io:{}",
-            state.workload.read_write_ratio,
-            state.workload.avg_query_complexity,
-            state.workload.concurrent_connections / 10,
-            state.workload.cpu_intensive,
-            state.workload.memory_intensive,
-            state.workload.io_intensive
+            state._workload.read_write_ratio,
+            state._workload.avg_query_complexity,
+            state._workload.concurrent_connections / 10,
+            state._workload.cpu_intensive,
+            state._workload.memory_intensive,
+            state._workload.io_intensive
         )
     }
 
@@ -436,7 +436,7 @@ pub struct AutoTuner {
     tuning_history: Arc<RwLock<Vec<TuningResult>>>,
     rl_agent: Arc<RwLock<QLearningAgent>>,
     regression_detector: Arc<RwLock<RegressionDetector>>,
-    statistics_gatherer: Arc<RwLock<StatisticsGatherer>>,
+    _statistics_gatherer: Arc<RwLock<StatisticsGatherer>>,
     enabled: Arc<RwLock<bool>>,
     optimization_interval: Duration,
 }
@@ -456,7 +456,7 @@ impl AutoTuner {
             tuning_history: Arc::new(RwLock::new(Vec::new())),
             rl_agent: Arc::new(RwLock::new(QLearningAgent::new())),
             regression_detector: Arc::new(RwLock::new(RegressionDetector::new(30, 0.1))),
-            statistics_gatherer: Arc::new(RwLock::new(StatisticsGatherer::new(0.1))),
+            _statistics_gatherer: Arc::new(RwLock::new(StatisticsGatherer::new(0.1))),
             enabled: Arc::new(RwLock::new(true)),
             optimization_interval,
         }
@@ -745,9 +745,9 @@ impl AutoTuner {
             .unwrap_or(0.0);
 
         RLState {
-            workload: workload.clone(),
-            parameters: params_map,
-            performance_score,
+            _workload: workload.clone(),
+            _parameters: params_map,
+            _performance_score: performance_score,
         }
     }
 

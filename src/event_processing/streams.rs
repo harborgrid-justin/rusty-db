@@ -516,15 +516,12 @@ impl LateEventBuffer {
     }
 
     /// Reserved for stream API
-
-
     #[allow(dead_code)]
-
-
     fn is_empty(&self) -> bool {
         self.count == 0
     }
 
+    #[allow(dead_code)]
     fn len(&self) -> usize {
         self.count
     }
@@ -926,10 +923,10 @@ impl ConsumerGroup {
         let consumer_id = consumer_id.into();
 
         let session = ConsumerSession {
-            consumer_id: consumer_id.clone(),
-            group_id: self.id.clone(),
-            last_heartbeat: SystemTime::now(),
-            assigned_partitions: Vec::new(),
+            _consumer_id: consumer_id.clone(),
+            _group_id: self.id.clone(),
+            _last_heartbeat: SystemTime::now(),
+            _assigned_partitions: Vec::new(),
         };
 
         let mut consumers = self.consumers.write().unwrap();
@@ -941,7 +938,7 @@ impl ConsumerGroup {
 
         Ok(Consumer {
             id: consumer_id,
-            group: self.id.clone(),
+            _group: self.id.clone(),
             positions: self.positions.clone(),
             partitions: self.partitions.clone(),
             assignments: self.assignments.clone(),
@@ -1010,10 +1007,10 @@ impl ConsumerGroup {
 /// Consumer session
 #[derive(Debug, Clone)]
 struct ConsumerSession {
-    consumer_id: String,
-    group_id: String,
-    last_heartbeat: SystemTime,
-    assigned_partitions: Vec<u32>,
+    _consumer_id: String,
+    _group_id: String,
+    _last_heartbeat: SystemTime,
+    _assigned_partitions: Vec<u32>,
 }
 
 /// Consumer for reading from a stream
@@ -1022,7 +1019,7 @@ pub struct Consumer {
     id: String,
 
     /// Consumer group
-    group: String,
+    _group: String,
 
     /// Shared positions
     positions: Arc<RwLock<HashMap<u32, u64>>>,
@@ -1078,14 +1075,14 @@ impl Consumer {
 /// Stream manager for managing multiple streams
 pub struct StreamManager {
     streams: Arc<RwLock<HashMap<StreamId, Arc<EventStream>>>>,
-    config: Arc<EventProcessingConfig>,
+    _config: Arc<EventProcessingConfig>,
 }
 
 impl StreamManager {
     pub fn new(config: EventProcessingConfig) -> Self {
         Self {
             streams: Arc::new(RwLock::new(HashMap::new())),
-            config: Arc::new(config),
+            _config: Arc::new(config),
         }
     }
 

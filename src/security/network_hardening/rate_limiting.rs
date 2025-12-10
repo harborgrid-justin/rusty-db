@@ -96,11 +96,11 @@ pub struct SlidingWindow {
 }
 
 impl SlidingWindow {
-    fn new(window_duration: Duration, maxrequests: usize) -> Self {
+    fn new(window_duration: Duration, max_requests: usize) -> Self {
         Self {
             window_duration,
             requests: VecDeque::new(),
-            max_requests: maxrequests,
+            max_requests,
         }
     }
 
@@ -412,7 +412,7 @@ impl DDoSMitigator {
         Ok(DDoSAnalysisResult::Clean)
     }
 
-    fn detect_attack(&self, ip: IpAddr, attack_type: DDoSAttackType, reason: String) {
+    fn detect_attack(&self, ip: IpAddr, attack_type: DDoSAttackType, _reason: String) {
         let mut attacks = self.active_attacks.write();
         let attack_id = format!("{}_{}_{}", ip, format!("{:?}", attack_type), Instant::now().elapsed().as_secs());
 

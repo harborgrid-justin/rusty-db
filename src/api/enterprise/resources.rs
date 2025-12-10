@@ -5,10 +5,7 @@
 use std::collections::{HashMap, BTreeMap, VecDeque};
 use std::sync::{Arc, RwLock, Mutex};
 use std::time::{Duration, Instant, SystemTime};
-use std::fmt;
-use tokio::time::sleep;
 use serde::{Serialize, Deserialize};
-use uuid::Uuid;
 
 use crate::error::DbError;
 use super::registry::*;
@@ -191,7 +188,6 @@ pub struct IoOperation {
     pub priority: usize,
     pub size: usize,
     pub submitted_at: Instant,
-    pub op_type: ()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

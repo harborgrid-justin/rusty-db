@@ -544,7 +544,7 @@ impl IndexMaintenanceScheduler {
 // Auto-indexing orchestrator
 pub struct AutoIndexingEngine {
     advisor: Arc<IndexAdvisor>,
-    maintenance_scheduler: Arc<IndexMaintenanceScheduler>,
+    _maintenance_scheduler: Arc<IndexMaintenanceScheduler>,
     auto_create_enabled: Arc<RwLock<bool>>,
     auto_drop_enabled: Arc<RwLock<bool>>,
 }
@@ -553,7 +553,7 @@ impl AutoIndexingEngine {
     pub fn new() -> Self {
         Self {
             advisor: Arc::new(IndexAdvisor::new(10.0)),  // Minimum benefit score of 10
-            maintenance_scheduler: Arc::new(IndexMaintenanceScheduler::new()),
+            _maintenance_scheduler: Arc::new(IndexMaintenanceScheduler::new()),
             auto_create_enabled: Arc::new(RwLock::new(false)),
             auto_drop_enabled: Arc::new(RwLock::new(false)),
         }

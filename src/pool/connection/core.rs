@@ -253,6 +253,7 @@ pub(crate) enum ConnectionState {
     Validating,
 
     // Connection is being recycled
+    #[allow(dead_code)]
     Recycling,
 
     // Connection is closed

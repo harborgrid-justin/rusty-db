@@ -13,7 +13,7 @@ struct SizeClass {
     // Number of objects per slab
     objects_per_slab: usize,
     // Color offset for cache optimization
-    color_offset: usize,
+    _color_offset: usize,
 }
 
 impl SizeClass {
@@ -22,7 +22,7 @@ impl SizeClass {
         Self {
             object_size,
             objects_per_slab,
-            color_offset: 0,
+            _color_offset: 0,
         }
     }
 }
@@ -38,9 +38,9 @@ struct Slab {
     // Freelist head
     freelist: Option<NonNull<u8>>,
     // Slab color for cache optimization
-    color: usize,
+    _color: usize,
     // Allocation timestamp
-    allocated_at: Instant,
+    _allocated_at: Instant,
 }
 
 impl Slab {
@@ -86,8 +86,8 @@ impl Slab {
             size_class,
             free_count: objects_per_slab,
             freelist: freelist_head,
-            color,
-            allocated_at: Instant::now(),
+            _color: color,
+            _allocated_at: Instant::now(),
         })
     }
 
@@ -146,7 +146,7 @@ struct Magazine {
     // Capacity of magazine
     capacity: usize,
     // Size class this magazine belongs to
-    size_class: usize,
+    _size_class: usize,
 }
 
 impl Magazine {
@@ -154,7 +154,7 @@ impl Magazine {
         Self {
             objects: Vec::with_capacity(MAGAZINE_CAPACITY),
             capacity: MAGAZINE_CAPACITY,
-            size_class,
+            _size_class: size_class,
         }
     }
 
@@ -193,7 +193,7 @@ struct ThreadLocalCache {
     // Previous magazine per size class
     previous_magazines: Vec<Option<Magazine>>,
     // Thread ID
-    thread_id: usize,
+    _thread_id: usize,
 }
 
 thread_local! {
@@ -205,7 +205,7 @@ impl ThreadLocalCache {
         Self {
             loaded_magazines: (0..NUM_SIZE_CLASSES).map(|_| None).collect(),
             previous_magazines: (0..NUM_SIZE_CLASSES).map(|_| None).collect(),
-            thread_id,
+            _thread_id: thread_id,
         }
     }
 

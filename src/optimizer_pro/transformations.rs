@@ -488,14 +488,12 @@ impl JoinGraph {
 
     /// Reserved for query graph
 
-
     #[allow(dead_code)]
-
-
     fn add_table(&mut self, table: TableId) {
         self.tables.insert(table);
     }
 
+    #[allow(dead_code)]
     fn add_join(
         &mut self,
         left: TableId,
@@ -508,6 +506,7 @@ impl JoinGraph {
             .push(condition);
     }
 
+    #[allow(dead_code)]
     fn get_connected_tables(&self, table: TableId) -> Vec<TableId> {
         let mut connected = Vec::new();
 

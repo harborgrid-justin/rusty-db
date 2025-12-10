@@ -83,7 +83,7 @@ pub struct WorkloadIntelligence {
     pub advisor: Arc<DiagnosticAdvisor>,
 
     // Configuration
-    config: Arc<RwLock<WorkloadIntelligenceConfig>>,
+    _config: Arc<RwLock<WorkloadIntelligenceConfig>>,
 }
 
 // Workload Intelligence configuration
@@ -159,7 +159,7 @@ impl WorkloadIntelligence {
             sql_monitor: Arc::new(SqlMonitor::with_config(monitor_config)),
             performance_hub: Arc::new(PerformanceHub::with_config(hub_config)),
             advisor: Arc::new(DiagnosticAdvisor::with_config(advisor_config)),
-            config: Arc::new(RwLock::new(config)),
+            _config: Arc::new(RwLock::new(config)),
         }
     }
 
