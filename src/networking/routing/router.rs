@@ -38,8 +38,10 @@ pub struct PendingRequest {
     /// Channel to send response
     response_tx: oneshot::Sender<Result<ClusterMessage>>,
     /// Number of retry attempts
+    #[allow(dead_code)] // Reserved for retry logic implementation
     attempts: u32,
     /// Maximum retries allowed
+    #[allow(dead_code)] // Reserved for retry logic implementation
     max_retries: u32,
 }
 

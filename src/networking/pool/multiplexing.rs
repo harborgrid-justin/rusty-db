@@ -9,9 +9,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, AtomicU64, AtomicBool, Ordering};
 use tokio::sync::{Mutex, mpsc, RwLock};
-use tokio::io::{AsyncRead, AsyncWrite};
+// AsyncRead and AsyncWrite removed - unused in current implementation
 use std::time::Instant;
-use bytes::{Bytes, BytesMut};
+use bytes::Bytes;
 
 /// Stream identifier (unique within a connection)
 pub type StreamId = u32;
@@ -309,6 +309,7 @@ impl Stream {
 
 /// Stream state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // Variants reserved for future connection states
 enum StreamState {
     /// Stream is open and can send/receive data
     Open,
@@ -332,6 +333,7 @@ pub struct FlowControlManager {
     available: Arc<Mutex<usize>>,
 
     /// Per-priority quotas
+    #[allow(dead_code)] // Reserved for future priority-based flow control
     priority_quotas: [usize; 4],
 
     /// Waiters for window space
@@ -358,7 +360,7 @@ impl FlowControlManager {
     }
 
     /// Acquire flow control window for sending data
-    async fn acquire(&self, size: usize, priority: StreamPriority) -> Result<()> {
+    async fn acquire(&self, size: usize, _priority: StreamPriority) -> Result<()> {
         if size > self.total_window {
             return Err(DbError::InvalidInput(format!(
                 "Data size {} exceeds total window {}",
@@ -388,6 +390,7 @@ impl FlowControlManager {
     }
 
     /// Release flow control window after data is acknowledged
+    #[allow(dead_code)] // Reserved for flow control protocol
     async fn release(&self, size: usize) {
         let mut available = self.available.lock().await;
         *available = (*available + size).min(self.total_window);
@@ -400,6 +403,7 @@ impl FlowControlManager {
     }
 
     /// Get current window availability
+    #[allow(dead_code)] // Reserved for flow control protocol
     async fn available(&self) -> usize {
         let available = self.available.lock().await;
         *available

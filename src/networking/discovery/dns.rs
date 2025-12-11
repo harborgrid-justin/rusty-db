@@ -7,7 +7,7 @@ use super::{HealthStatus, Node, ServiceDiscovery, DnsConfig};
 use crate::error::{DbError, Result};
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
@@ -295,9 +295,11 @@ impl ServiceDiscovery for DnsDiscovery {
 #[derive(Debug, Clone)]
 struct SrvRecord {
     /// Priority (lower is preferred)
+    #[allow(dead_code)] // Reserved for SRV priority
     pub priority: u16,
 
     /// Weight for load balancing
+    #[allow(dead_code)] // Reserved for SRV weight
     pub weight: u16,
 
     /// Port number

@@ -5,7 +5,7 @@
 
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
-use super::{Connection, PoolConfig};
+use super::PoolConfig;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};

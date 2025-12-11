@@ -74,6 +74,7 @@ impl HashFunction {
 
 /// Virtual node on the hash ring
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // Reserved for consistent hash ring implementation
 struct VirtualNode {
     /// Backend ID this virtual node represents
     backend_id: String,

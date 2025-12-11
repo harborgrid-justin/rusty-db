@@ -146,8 +146,8 @@ impl WarmupManager {
         config: PoolConfig,
         interval: Duration,
     ) {
-        let node_overrides = Arc::clone(&self.node_overrides);
-        let stats = Arc::clone(&self.stats);
+        let _node_overrides = Arc::clone(&self.node_overrides);
+        let _stats = Arc::clone(&self.stats);
 
         let handle = tokio::spawn(async move {
             let mut ticker = tokio::time::interval(interval);

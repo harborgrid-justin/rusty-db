@@ -41,8 +41,8 @@ pub mod mapping;
 pub mod health;
 
 use crate::error::{DbError, Result};
-use std::collections::{HashMap, HashSet};
-use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
+use std::collections::HashMap;
+use std::net::{SocketAddr, IpAddr};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};

@@ -136,7 +136,7 @@ impl BroadcastDiscovery {
     }
 
     /// Handle received broadcast message
-    async fn handle_message(&self, msg: BroadcastMessage, from: SocketAddr) -> Result<()> {
+    async fn handle_message(&self, msg: BroadcastMessage, _from: SocketAddr) -> Result<()> {
         match msg {
             BroadcastMessage::Announce { node, timestamp: _ } => {
                 // Ignore our own announcements
@@ -309,7 +309,7 @@ impl DiscoveryProtocol for BroadcastDiscovery {
     }
 
     fn subscribe(&self) -> mpsc::Receiver<DiscoveryEvent> {
-        let (tx, rx) = mpsc::channel(1000);
+        let (_tx, rx) = mpsc::channel(1000);
         rx
     }
 }

@@ -16,7 +16,7 @@ use crate::common::NodeId;
 use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 /// Version vector for tracking causality
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

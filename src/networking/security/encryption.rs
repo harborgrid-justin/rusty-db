@@ -201,7 +201,7 @@ impl<'de> serde::Deserialize<'de> for EncryptedEnvelope {
     where
         D: serde::Deserializer<'de>,
     {
-        use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
+        use serde::de::{self, MapAccess, Visitor};
 
         struct EnvelopeVisitor;
 
@@ -306,6 +306,7 @@ pub struct MessageEncryption {
     master_key: Arc<EncryptionKey>,
 
     /// Data encryption keys (DEK) cache
+    #[allow(dead_code)] // Reserved for DEK caching
     dek_cache: Arc<RwLock<HashMap<String, EncryptionKey>>>,
 
     /// Current DEK
@@ -353,7 +354,7 @@ impl MessageEncryption {
     /// Encrypt with envelope encryption
     fn encrypt_with_envelope(&self, plaintext: &[u8]) -> Result<Vec<u8>> {
         use aes_gcm::{
-            aead::{Aead, KeyInit, OsRng},
+            aead::{Aead, KeyInit},
             Aes256Gcm, Nonce,
         };
 
@@ -408,8 +409,8 @@ impl MessageEncryption {
         // Deserialize envelope
         let envelope = EncryptedEnvelope::from_bytes(data)?;
 
-        // Decrypt DEK with master key
-        let master_cipher = Aes256Gcm::new_from_slice(self.master_key.key_material())
+        // Decrypt DEK with master key (reserved for future DEK decryption)
+        let _master_cipher = Aes256Gcm::new_from_slice(self.master_key.key_material())
             .map_err(|e| DbError::Encryption(format!("Failed to create master cipher: {}", e)))?;
 
         // Extract nonce from encrypted DEK (first 12 bytes)

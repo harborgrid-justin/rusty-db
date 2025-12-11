@@ -7,13 +7,11 @@ use async_graphql::{
     Context, EmptySubscription, Object, Result as GqlResult, Schema, SimpleObject, Subscription,
 };
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use futures::StreamExt;
 use tokio_stream::Stream;
 
-use crate::error::DbError;
 use super::manager::NetworkManager;
-use super::types::{NodeAddress, NodeId, NodeInfo, NodeState};
+use super::types::{NodeAddress, NodeId};
 
 // ============================================================================
 // GraphQL Types
@@ -356,7 +354,7 @@ impl SubscriptionRoot {
     /// Subscribe to peer events (join, leave, health changes)
     async fn peer_events(
         &self,
-        ctx: &Context<'_>,
+        _ctx: &Context<'_>,
     ) -> impl Stream<Item = GqlMembershipEvent> {
         // TODO: Implement real subscription using membership change channel
         // For now, return an empty stream
@@ -367,7 +365,7 @@ impl SubscriptionRoot {
     /// Subscribe to topology changes
     async fn topology_changes(
         &self,
-        ctx: &Context<'_>,
+        _ctx: &Context<'_>,
     ) -> impl Stream<Item = GqlTopology> {
         // TODO: Implement real subscription
         // For now, return an empty stream

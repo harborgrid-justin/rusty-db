@@ -341,7 +341,7 @@ impl CertificateManager {
     pub async fn generate_self_signed(
         &self,
         subject: &str,
-        san_dns: Vec<String>,
+        _san_dns: Vec<String>,
     ) -> Result<CertificateMetadata> {
         if !self.config.allow_self_signed {
             return Err(DbError::Configuration(
@@ -377,8 +377,8 @@ impl CertificateManager {
     /// Request certificate from ACME server
     pub async fn request_acme_certificate(
         &self,
-        subject: &str,
-        san_dns: Vec<String>,
+        _subject: &str,
+        _san_dns: Vec<String>,
     ) -> Result<CertificateMetadata> {
         if !self.config.auto_renewal {
             return Err(DbError::Configuration(
@@ -403,7 +403,7 @@ impl CertificateManager {
     /// Rotate certificate
     pub async fn rotate_certificate(&self, subject: &str) -> Result<CertificateMetadata> {
         let store = self.store.read().await;
-        let existing = store.get(subject).ok_or_else(|| {
+        let _existing = store.get(subject).ok_or_else(|| {
             DbError::NotFound(format!("Certificate not found: {}", subject))
         })?;
 

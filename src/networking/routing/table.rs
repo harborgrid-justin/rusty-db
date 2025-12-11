@@ -3,7 +3,7 @@
 //! This module implements the routing table that maps nodes to addresses,
 //! shards to nodes, and provides datacenter-aware routing.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::networking::types::{NodeAddress, NodeId};
 use parking_lot::RwLock;
 use std::collections::HashMap;

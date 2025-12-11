@@ -13,6 +13,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use tokio::sync::RwLock;
 use tokio::time;
+use base64::{Engine as _, engine::general_purpose};
 
 /// etcd-based service discovery
 pub struct EtcdDiscovery {
@@ -89,7 +90,7 @@ impl EtcdDiscovery {
             .await
             .map_err(|e| DbError::Serialization(format!("Failed to parse lease response: {}", e)))?;
 
-        let lease_id = lease_response.ID.parse::<i64>().map_err(|e| {
+        let lease_id = lease_response.id.parse::<i64>().map_err(|e| {
             DbError::Serialization(format!("Invalid lease ID: {}", e))
         })?;
 
@@ -98,6 +99,7 @@ impl EtcdDiscovery {
     }
 
     /// Keeps a lease alive
+    #[allow(dead_code)]
     async fn keep_alive(&self, lease_id: i64) -> Result<()> {
         let endpoint = self.get_endpoint()?;
         let url = format!("{}/v3/lease/keepalive", endpoint.trim_end_matches('/'));
@@ -159,8 +161,8 @@ impl EtcdDiscovery {
         let url = format!("{}/v3/kv/put", endpoint.trim_end_matches('/'));
 
         // Base64 encode key and value (etcd v3 API requirement)
-        let key_b64 = base64::encode(key);
-        let value_b64 = base64::encode(value);
+        let key_b64 = general_purpose::STANDARD.encode(key);
+        let value_b64 = general_purpose::STANDARD.encode(value);
 
         let request = serde_json::json!({
             "key": key_b64,
@@ -196,8 +198,8 @@ impl EtcdDiscovery {
         // Calculate the prefix end for range query
         let range_end = self.get_prefix_range_end(prefix);
 
-        let key_b64 = base64::encode(prefix);
-        let range_end_b64 = base64::encode(&range_end);
+        let key_b64 = general_purpose::STANDARD.encode(prefix);
+        let range_end_b64 = general_purpose::STANDARD.encode(&range_end);
 
         let request = serde_json::json!({
             "key": key_b64,
@@ -229,12 +231,12 @@ impl EtcdDiscovery {
         let mut results = Vec::new();
 
         for kv in range_response.kvs.unwrap_or_default() {
-            let key = base64::decode(&kv.key)
+            let key = general_purpose::STANDARD.decode(&kv.key)
                 .ok()
                 .and_then(|b| String::from_utf8(b).ok())
                 .unwrap_or_default();
 
-            let value = base64::decode(&kv.value)
+            let value = general_purpose::STANDARD.decode(&kv.value)
                 .ok()
                 .and_then(|b| String::from_utf8(b).ok())
                 .unwrap_or_default();
@@ -265,7 +267,7 @@ impl EtcdDiscovery {
         let endpoint = self.get_endpoint()?;
         let url = format!("{}/v3/kv/deleterange", endpoint.trim_end_matches('/'));
 
-        let key_b64 = base64::encode(key);
+        let key_b64 = general_purpose::STANDARD.encode(key);
 
         let request = serde_json::json!({
             "key": key_b64,
@@ -523,8 +525,11 @@ struct NodeInfo {
 /// etcd lease grant response
 #[derive(Debug, Deserialize)]
 struct EtcdLeaseGrantResponse {
-    ID: String,
-    TTL: String,
+    #[serde(rename = "ID")]
+    id: String,
+    #[serde(rename = "TTL")]
+    #[allow(dead_code)]
+    ttl: String,
 }
 
 /// etcd range response

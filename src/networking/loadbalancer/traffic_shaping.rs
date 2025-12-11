@@ -135,6 +135,7 @@ pub struct RateLimiter {
     /// Last refill time
     last_refill: Arc<RwLock<Instant>>,
     /// Semaphore for flow control
+    #[allow(dead_code)] // Reserved for concurrent rate limiting
     semaphore: Arc<Semaphore>,
 }
 

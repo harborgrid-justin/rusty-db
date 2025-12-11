@@ -99,13 +99,13 @@ impl WellKnownPorts {
     /// Get service name for a well-known port
     pub fn get_service_name(port: u16) -> Option<&'static str> {
         match port {
-            Self::POSTGRESQL => Some("PostgreSQL"),
+            Self::POSTGRESQL => Some("PostgreSQL/RustyDB"), // Both use 5432
             Self::MYSQL => Some("MySQL"),
             Self::HTTP => Some("HTTP"),
             Self::HTTPS => Some("HTTPS"),
             Self::REDIS => Some("Redis"),
             Self::MONGODB => Some("MongoDB"),
-            Self::RUSTYDB_DATABASE => Some("RustyDB Database"),
+            // RUSTYDB_DATABASE omitted - same as POSTGRESQL (5432)
             Self::RUSTYDB_CLUSTER => Some("RustyDB Cluster"),
             Self::RUSTYDB_REPLICATION => Some("RustyDB Replication"),
             Self::RUSTYDB_ADMIN => Some("RustyDB Admin"),
@@ -292,7 +292,7 @@ impl PortMappingService {
     }
 
     /// Get port mapping
-    pub fn get_mapping(&self, port: u16) -> Option<PortMapping> {
+    pub fn get_mapping(&self, _port: u16) -> Option<PortMapping> {
         // Since this is synchronous, we need to block or return None
         // For now, return None and use async methods instead
         None

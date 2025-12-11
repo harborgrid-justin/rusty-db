@@ -6,7 +6,7 @@
 //! - Consistent hashing: Key-based routing for cache affinity
 //! - Adaptive: ML-based selection using latency and error rates
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use async_trait::async_trait;
 
 pub mod adaptive;

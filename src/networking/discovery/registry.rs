@@ -11,7 +11,7 @@ use crate::error::{DbError, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tokio::time::{self, Duration};
+use tokio::time;
 
 /// Central discovery registry that aggregates multiple backends
 pub struct Registry {
@@ -361,7 +361,7 @@ impl Registry {
         let node_ttl = self.config.node_ttl;
 
         // Create a minimal context for the refresh task
-        let backend_names: Vec<String> = self.backends.iter().map(|b| b.name().to_string()).collect();
+        let _backend_names: Vec<String> = self.backends.iter().map(|b| b.name().to_string()).collect();
 
         let handle = tokio::spawn(async move {
             let mut ticker = time::interval(refresh_interval);

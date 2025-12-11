@@ -281,11 +281,11 @@ impl LoadBalancer {
         drop(backends);
 
         // Update circuit breaker
-        let mut circuit_breaker = self.circuit_breaker.write().await;
+        let circuit_breaker = self.circuit_breaker.write().await;
         if success {
-            circuit_breaker.record_success();
+            circuit_breaker.record_success().await;
         } else {
-            circuit_breaker.record_failure();
+            circuit_breaker.record_failure().await;
         }
 
         Ok(())

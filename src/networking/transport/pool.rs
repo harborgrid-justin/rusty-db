@@ -61,6 +61,7 @@ pub enum SelectionStrategy {
 
 /// Pool of connections to a single peer
 struct PeerPool {
+    #[allow(dead_code)]
     /// Peer node ID
     peer_id: NodeId,
 

@@ -71,7 +71,6 @@
 
 use crate::common::NodeId;
 use crate::error::Result;
-use std::sync::Arc;
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
 

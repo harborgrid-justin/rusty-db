@@ -7,7 +7,7 @@ use super::{HealthStatus, Node, ServiceDiscovery, StaticConfig};
 use crate::error::{DbError, Result};
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::SystemTime;

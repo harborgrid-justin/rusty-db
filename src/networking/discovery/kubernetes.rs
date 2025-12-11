@@ -6,9 +6,9 @@
 use super::{HealthStatus, Node, ServiceDiscovery, KubernetesConfig};
 use crate::error::{DbError, Result};
 use async_trait::async_trait;
-use std::collections::HashMap;
-use std::net::IpAddr;
-use std::time::SystemTime;
+// HashMap removed - unused
+// IpAddr removed - unused
+// SystemTime removed - unused
 
 /// Kubernetes-native service discovery
 pub struct KubernetesDiscovery {
@@ -47,7 +47,7 @@ impl KubernetesDiscovery {
 
         // Placeholder implementation
         // In production, parse endpoint_list.subsets and extract addresses/ports
-        let mut nodes = Vec::new();
+        let nodes = Vec::new();
 
         // Example of what the real implementation would look like:
         // for subset in endpoint_list.subsets.unwrap_or_default() {
@@ -106,7 +106,7 @@ impl KubernetesDiscovery {
             self.config.label_selector
         );
 
-        let mut nodes = Vec::new();
+        let nodes = Vec::new();
 
         // Placeholder for actual implementation
         // for pod in pod_list.items {

@@ -21,14 +21,14 @@
 //!
 //! - [SWIM Paper](https://www.cs.cornell.edu/projects/Quicksilver/public_pdfs/SWIM.pdf)
 
-use super::{DiscoveryConfig, DiscoveryEvent, DiscoveryProtocol, NodeInfo, NodeStatus};
+use super::{DiscoveryConfig, DiscoveryEvent, DiscoveryProtocol, NodeInfo};
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tokio::net::UdpSocket;
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::interval;
@@ -123,6 +123,7 @@ struct GossipState {
     members: HashMap<NodeId, (NodeInfo, MemberState)>,
 
     /// Incarnation number for this node
+    #[allow(dead_code)] // Reserved for incarnation number tracking
     local_incarnation: u64,
 
     /// Pending acks for pings
@@ -222,6 +223,7 @@ impl GossipDiscovery {
     }
 
     /// Send a ping-req (indirect probe)
+    #[allow(dead_code)] // Reserved for indirect ping-req protocol
     async fn send_ping_req(&self, target: SocketAddr) -> Result<()> {
         // Get member addresses under read lock
         let member_addrs: Vec<SocketAddr> = {
@@ -502,7 +504,7 @@ impl DiscoveryProtocol for GossipDiscovery {
     }
 
     fn subscribe(&self) -> mpsc::Receiver<DiscoveryEvent> {
-        let (tx, rx) = mpsc::channel(1000);
+        let (_tx, rx) = mpsc::channel(1000);
         // In a real implementation, we'd store this and forward events
         rx
     }
