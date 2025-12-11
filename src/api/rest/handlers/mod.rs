@@ -9,6 +9,9 @@ pub mod pool;
 pub mod cluster;
 pub mod sql;
 pub mod string_functions;
+pub mod storage_handlers;
+pub mod transaction_handlers;
+pub mod network_handlers;
 
 use std::sync::Arc;
 use crate::catalog::Catalog;
@@ -57,3 +60,27 @@ pub use cluster::{
 
 // SQL handlers
 pub use sql::*;
+
+// Storage handlers
+pub use storage_handlers::{
+    get_storage_status, get_disks, get_partitions, create_partition, delete_partition,
+    get_buffer_pool_stats, flush_buffer_pool, get_tablespaces, create_tablespace,
+    update_tablespace, delete_tablespace, get_io_stats
+};
+
+// Transaction handlers
+pub use transaction_handlers::{
+    get_active_transactions, get_transaction, rollback_transaction,
+    get_locks, get_lock_waiters, get_deadlocks, detect_deadlocks,
+    get_mvcc_status, trigger_vacuum, get_wal_status, force_checkpoint
+};
+
+// Network handlers
+pub use network_handlers::{
+    get_network_status, get_connections as get_network_connections,
+    get_connection as get_network_connection, kill_connection as kill_network_connection,
+    get_protocols, update_protocols, get_cluster_status as get_network_cluster_status,
+    get_cluster_nodes as get_network_cluster_nodes, add_cluster_node as add_network_cluster_node,
+    remove_cluster_node as remove_network_cluster_node, get_loadbalancer_stats,
+    configure_loadbalancer, get_circuit_breakers
+};

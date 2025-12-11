@@ -3,7 +3,7 @@
 // Policies and strategies for evicting idle, expired, or unhealthy connections
 // from the pool. Implements LRU, TTL-based, and health-based eviction.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};

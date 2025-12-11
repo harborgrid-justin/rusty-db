@@ -4,11 +4,11 @@
 //! Supports instance metadata, tags, and auto-scaling groups.
 
 use super::{CloudConfig, CloudProvider, HealthStatus, Node, ServiceDiscovery};
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use async_trait::async_trait;
-use std::collections::HashMap;
-use std::net::IpAddr;
-use std::time::SystemTime;
+// HashMap removed - unused
+// IpAddr removed - unused
+// SystemTime removed - unused
 
 /// Cloud provider-based service discovery
 pub struct CloudDiscovery {
@@ -93,6 +93,7 @@ trait CloudDiscoveryBackend: Send + Sync {
 /// AWS EC2-based discovery
 struct AwsDiscovery {
     config: CloudConfig,
+    #[allow(dead_code)] // Reserved for AWS API calls in production
     http_client: reqwest::Client,
 }
 
@@ -136,7 +137,7 @@ impl AwsDiscovery {
         //     .await
         //     .map_err(|e| DbError::Network(format!("EC2 API error: {}", e)))?;
 
-        let mut nodes = Vec::new();
+        let nodes = Vec::new();
 
         // Parse instances from response
         // for reservation in response.reservations.unwrap_or_default() {
@@ -262,7 +263,9 @@ impl CloudDiscoveryBackend for AwsDiscovery {
 
 /// Azure VMSS-based discovery
 struct AzureDiscovery {
+    #[allow(dead_code)] // Reserved for Azure API configuration
     config: CloudConfig,
+    #[allow(dead_code)] // Reserved for Azure API calls in production
     http_client: reqwest::Client,
 }
 
@@ -331,7 +334,9 @@ impl CloudDiscoveryBackend for AzureDiscovery {
 
 /// GCP Compute Engine-based discovery
 struct GcpDiscovery {
+    #[allow(dead_code)] // Reserved for GCP API configuration
     config: CloudConfig,
+    #[allow(dead_code)] // Reserved for GCP API calls in production
     http_client: reqwest::Client,
 }
 

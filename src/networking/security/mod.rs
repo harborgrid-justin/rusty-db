@@ -238,6 +238,7 @@ impl AuthContext {
 /// Security manager that coordinates all security components
 pub struct SecurityManager {
     /// Configuration
+    #[allow(dead_code)] // Reserved for security configuration
     config: SecurityConfig,
 
     /// Certificate manager

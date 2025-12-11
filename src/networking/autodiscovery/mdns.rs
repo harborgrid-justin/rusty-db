@@ -37,6 +37,7 @@ const SERVICE_TYPE: &str = "_rustydb._tcp.local";
 
 /// mDNS message types
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // Reserved for future MDNS message types
 enum MdnsMessageType {
     /// Query for services
     Query,
@@ -55,6 +56,7 @@ struct ServiceInstance {
     name: String,
 
     /// Service type
+    #[allow(dead_code)] // Reserved for service type tracking
     service_type: String,
 
     /// Host address
@@ -64,6 +66,7 @@ struct ServiceInstance {
     txt_records: HashMap<String, String>,
 
     /// Time-to-live
+    #[allow(dead_code)] // Reserved for TTL tracking
     ttl: u32,
 }
 
@@ -318,7 +321,7 @@ impl MdnsDiscovery {
     }
 
     /// Handle received mDNS message
-    async fn handle_message(&self, data: &[u8], from: SocketAddr) -> Result<()> {
+    async fn handle_message(&self, data: &[u8], _from: SocketAddr) -> Result<()> {
         // Parse the message
         if let Some(instance) = self.parse_mdns_message(data)? {
             if let Some(node_info) = instance.to_node_info() {
@@ -442,7 +445,7 @@ impl DiscoveryProtocol for MdnsDiscovery {
     }
 
     fn subscribe(&self) -> mpsc::Receiver<DiscoveryEvent> {
-        let (tx, rx) = mpsc::channel(1000);
+        let (_tx, rx) = mpsc::channel(1000);
         rx
     }
 }

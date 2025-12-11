@@ -55,6 +55,7 @@ impl MerkleNode {
     }
 
     /// Check if this node is empty
+    #[allow(dead_code)] // Reserved for anti-entropy protocol
     fn is_empty(&self) -> bool {
         matches!(self, MerkleNode::Empty)
     }
@@ -64,6 +65,7 @@ impl MerkleNode {
 #[derive(Debug, Clone)]
 pub struct MerkleTree {
     root: MerkleNode,
+    #[allow(dead_code)] // Reserved for tree depth tracking
     depth: usize,
 }
 

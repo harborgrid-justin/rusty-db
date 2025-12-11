@@ -12,12 +12,13 @@ use tokio::sync::{mpsc, RwLock};
 use tokio::time::{interval, Duration};
 
 use super::traits::{
-    CircuitBreaker, ClusterMembership, ConnectionPool, HealthMonitor, LoadBalancer,
+    ClusterMembership, HealthMonitor, LoadBalancer,
     MessageHandler, NetworkTransport, ServiceDiscovery,
 };
 use super::types::{
-    ClusterMessage, MembershipEvent, MessagePriority, NetworkConfig, NetworkStats, NodeAddress,
-    NodeId, NodeInfo, SelectionCriteria,
+    SelectionCriteria,
+    ClusterMessage, NetworkConfig, NetworkStats, NodeAddress,
+    NodeId, NodeInfo,
 };
 
 /// Central coordinator for all networking operations
@@ -36,6 +37,7 @@ pub struct NetworkManager {
     transport: Arc<dyn NetworkTransport>,
 
     /// Service discovery
+    #[allow(dead_code)] // Reserved for dynamic node discovery in cluster expansion
     service_discovery: Arc<dyn ServiceDiscovery>,
 
     /// Health monitor
@@ -52,12 +54,14 @@ pub struct NetworkManager {
 
     /// Event bus for internal component communication
     event_tx: mpsc::Sender<NetworkEvent>,
+    #[allow(dead_code)] // Reserved for event processing loop implementation
     event_rx: Arc<RwLock<mpsc::Receiver<NetworkEvent>>>,
 
     /// Network statistics
     stats: Arc<RwLock<NetworkStats>>,
 
     /// Running state
+    #[allow(dead_code)] // Reserved for graceful shutdown coordination
     running: Arc<RwLock<bool>>,
 }
 
@@ -65,15 +69,19 @@ pub struct NetworkManager {
 #[derive(Debug, Clone)]
 enum NetworkEvent {
     /// Message received from a node
+    #[allow(dead_code)] // Planned for message routing event loop
     MessageReceived {
         from: NodeId,
         message: ClusterMessage,
     },
     /// Node joined the cluster
+    #[allow(dead_code)] // Planned for cluster membership events
     NodeJoined(NodeInfo),
     /// Node left the cluster
+    #[allow(dead_code)] // Planned for cluster membership events
     NodeLeft(NodeId),
     /// Node health changed
+    #[allow(dead_code)] // Planned for health monitoring events
     NodeHealthChanged {
         node_id: NodeId,
         status: HealthStatus,
@@ -260,6 +268,7 @@ impl NetworkManager {
     }
 
     /// Start the message receive loop
+    #[allow(dead_code)] // Reserved for background message processing
     async fn start_receive_loop(self: Arc<Self>) -> Result<()> {
         let transport = self.transport.clone();
         let event_tx = self.event_tx.clone();
@@ -300,6 +309,7 @@ impl NetworkManager {
     }
 
     /// Start the event processing loop
+    #[allow(dead_code)] // Reserved for internal event handling
     async fn start_event_loop(self: Arc<Self>) -> Result<()> {
         let event_rx = self.event_rx.clone();
         let handlers = self.message_handlers.clone();
@@ -346,9 +356,10 @@ impl NetworkManager {
     }
 
     /// Start the health monitoring loop
+    #[allow(dead_code)] // Reserved for continuous health checking
     async fn start_health_loop(self: Arc<Self>) -> Result<()> {
         let health_monitor = self.health_monitor.clone();
-        let event_tx = self.event_tx.clone();
+        let _event_tx = self.event_tx.clone(); // Reserved for health event broadcasting
         let running = self.running.clone();
         let interval_ms = self.config.health_check_config.interval_ms;
 
@@ -368,6 +379,7 @@ impl NetworkManager {
     }
 
     /// Start the gossip loop for membership dissemination
+    #[allow(dead_code)] // Reserved for cluster gossip protocol
     async fn start_gossip_loop(self: Arc<Self>) -> Result<()> {
         let membership = self.membership.clone();
         let running = self.running.clone();

@@ -160,7 +160,7 @@ impl BeaconProtocol {
     }
 
     /// Handle received beacon
-    async fn handle_beacon(&self, beacon: Beacon, from: SocketAddr) -> Result<()> {
+    async fn handle_beacon(&self, beacon: Beacon, _from: SocketAddr) -> Result<()> {
         // Ignore our own beacons
         if beacon.node.id == self.config.local_node.id {
             return Ok(());
@@ -214,7 +214,7 @@ impl BeaconProtocol {
         let mut states = self.states.write().await;
         let mut failed = Vec::new();
 
-        for (id, state) in states.iter_mut() {
+        for (_id, state) in states.iter_mut() {
             let elapsed = now.duration_since(state.last_beacon);
             let expected_beacons = (elapsed.as_secs() / beacon_interval.as_secs()) as u32;
 
@@ -368,7 +368,7 @@ impl DiscoveryProtocol for BeaconProtocol {
     }
 
     fn subscribe(&self) -> mpsc::Receiver<DiscoveryEvent> {
-        let (tx, rx) = mpsc::channel(1000);
+        let (_tx, rx) = mpsc::channel(1000);
         rx
     }
 }

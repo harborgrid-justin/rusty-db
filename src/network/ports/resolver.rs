@@ -11,7 +11,7 @@
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;
-use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
@@ -188,7 +188,7 @@ impl AddressResolver {
         let endpoints = addrs
             .into_iter()
             .enumerate()
-            .map(|(i, addr)| {
+            .map(|(_i, addr)| {
                 ResolvedEndpoint::new(
                     addr,
                     0,                                          // All have same priority

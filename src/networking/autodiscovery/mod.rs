@@ -271,8 +271,10 @@ pub trait DiscoveryProtocol: Send + Sync {
 pub struct AutoDiscovery {
     config: DiscoveryConfig,
     backend: Box<dyn DiscoveryProtocol>,
+    #[allow(dead_code)] // Reserved for event broadcasting
     event_tx: mpsc::Sender<DiscoveryEvent>,
     event_rx: Arc<RwLock<Option<mpsc::Receiver<DiscoveryEvent>>>>,
+    #[allow(dead_code)] // Reserved for membership tracking
     membership: Arc<RwLock<MembershipList>>,
 }
 

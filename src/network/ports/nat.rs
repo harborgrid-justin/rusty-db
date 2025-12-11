@@ -32,7 +32,7 @@ pub struct NatMapping {
     pub protocol: String,
 
     /// Mapping lifetime in seconds
-    pub lifetime: u32,
+    pub _lifetime: u32,
 
     /// When the mapping was created
     pub created_at: SystemTime,
@@ -300,10 +300,10 @@ impl UpnpClient {
     /// Add a port mapping
     pub async fn add_port_mapping(
         &self,
-        internal_port: u16,
-        external_port: u16,
-        protocol: &str,
-        lifetime: u32,
+        _internal_port: u16,
+        _external_port: u16,
+        _protocol: &str,
+        _lifetime: u32,
     ) -> Result<NatMapping> {
         // Check if gateway is discovered
         let gateway = self.gateway.read().await;

@@ -3,11 +3,11 @@
 //! This module provides rate limiting, DDoS protection, connection limits,
 //! and suspicious activity detection.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 
 /// Rate limit configuration
@@ -467,7 +467,7 @@ impl ApplicationFirewall {
     }
 
     /// Record connection close
-    pub async fn record_close(&self, ip: IpAddr) -> Result<()> {
+    pub async fn record_close(&self, _ip: IpAddr) -> Result<()> {
         let mut total = self.total_connections.write().await;
         *total = total.saturating_sub(1);
         Ok(())

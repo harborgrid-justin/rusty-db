@@ -15,11 +15,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::error::{DbError, Result};
+// DbError and Result removed - unused in current implementation
 use super::manager::NetworkManager;
 use super::types::{
-    ClusterMessage, LoadBalancingStrategy, NetworkStats, NodeAddress, NodeId, NodeInfo,
-    SelectionCriteria,
+    NodeAddress, NodeId,
 };
 
 // ============================================================================

@@ -352,7 +352,7 @@ impl FirewallManager {
 
     /// Generate fallback port candidates
     pub fn get_fallback_candidates(&self, base_port: u16) -> Vec<u16> {
-        let mut selector = FallbackPortSelector::new(vec![base_port]);
+        let selector = FallbackPortSelector::new(vec![base_port]);
         selector.get_candidates()
     }
 }

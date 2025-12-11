@@ -155,7 +155,8 @@ impl AdaptiveBalancer {
         &self,
         node_id: &str,
         latency_ms: f64,
-        error: bool,
+        #[allow(dead_code)] // Reserved for error rate tracking
+    error: bool,
     ) {
         let mut history = self.history.write().await;
         history.record(node_id, latency_ms, error);
@@ -262,8 +263,10 @@ impl PerformanceHistory {
 /// A single performance measurement
 #[derive(Debug, Clone)]
 struct PerformanceSample {
+    #[allow(dead_code)] // Reserved for performance tracking
     timestamp: Instant,
     latency_ms: f64,
+    #[allow(dead_code)] // Reserved for error rate tracking
     error: bool,
 }
 
@@ -272,6 +275,7 @@ struct PerformanceSample {
 /// Simplified adaptive balancer that focuses primarily on latency.
 pub struct LatencyAwareBalancer {
     /// Recent latency window
+    #[allow(dead_code)] // Reserved for latency window configuration
     window: Duration,
 }
 

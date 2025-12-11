@@ -96,22 +96,22 @@ impl ConsulDiscovery {
         for entry in services {
             // Parse IP address
             let ip_addr: IpAddr = entry
-                .Service
-                .Address
+                .service
+                .address
                 .parse()
                 .map_err(|e| {
                     DbError::Network(format!("Invalid IP address from Consul: {}", e))
                 })?;
 
             let mut metadata = HashMap::new();
-            if let Some(meta) = entry.Service.Meta {
+            if let Some(meta) = entry.service.meta {
                 metadata = meta;
             }
 
             // Add tags to metadata
             metadata.insert(
                 "tags".to_string(),
-                entry.Service.Tags.join(","),
+                entry.service.tags.join(","),
             );
 
             if let Some(ref dc) = self.config.datacenter {
@@ -119,12 +119,12 @@ impl ConsulDiscovery {
             }
 
             let node = Node {
-                id: entry.Service.ID,
+                id: entry.service.id,
                 address: ip_addr,
-                port: entry.Service.Port as u16,
+                port: entry.service.port as u16,
                 datacenter: self.config.datacenter.clone(),
                 rack: None,
-                health: self.parse_health_status(&entry.Checks),
+                health: self.parse_health_status(&entry.checks),
                 metadata,
                 last_seen: SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)
@@ -146,17 +146,17 @@ impl ConsulDiscovery {
         }
 
         // Check if any critical checks
-        if checks.iter().any(|c| c.Status == "critical") {
+        if checks.iter().any(|c| c.status == "critical") {
             return HealthStatus::Unhealthy;
         }
 
         // Check if any warning checks
-        if checks.iter().any(|c| c.Status == "warning") {
+        if checks.iter().any(|c| c.status == "warning") {
             return HealthStatus::Degraded;
         }
 
         // All checks passing
-        if checks.iter().all(|c| c.Status == "passing") {
+        if checks.iter().all(|c| c.status == "passing") {
             return HealthStatus::Healthy;
         }
 
@@ -168,21 +168,21 @@ impl ConsulDiscovery {
         let service_id = format!("{}-{}", self.config.service_name, node.id);
 
         let mut registration = ConsulServiceRegistration {
-            ID: service_id.clone(),
-            Name: self.config.service_name.clone(),
-            Tags: self.config.tags.clone(),
-            Address: node.address.to_string(),
-            Port: node.port as u32,
-            Meta: Some(node.metadata.clone()),
-            Check: None,
+            id: service_id.clone(),
+            name: self.config.service_name.clone(),
+            tags: self.config.tags.clone(),
+            address: node.address.to_string(),
+            port: node.port as u32,
+            meta: Some(node.metadata.clone()),
+            check: None,
         };
 
         // Add health check if enabled
         if self.config.enable_health_check {
-            registration.Check = Some(ConsulHealthCheckDef {
-                TCP: format!("{}:{}", node.address, node.port),
-                Interval: format!("{}s", self.config.health_check_interval.as_secs()),
-                Timeout: "5s".to_string(),
+            registration.check = Some(ConsulHealthCheckDef {
+                tcp: format!("{}:{}", node.address, node.port),
+                interval: format!("{}s", self.config.health_check_interval.as_secs()),
+                timeout: "5s".to_string(),
             });
         }
 
@@ -236,6 +236,7 @@ impl ConsulDiscovery {
     }
 
     /// Starts background health check renewal
+    #[allow(dead_code)]
     fn start_health_check_task(&mut self, service_id: String) {
         if !self.config.enable_health_check {
             return;
@@ -361,8 +362,8 @@ impl ServiceDiscovery for ConsulDiscovery {
 
         // Find the specific service
         for entry in services {
-            if entry.Service.ID == node_id {
-                return Ok(self.parse_health_status(&entry.Checks));
+            if entry.service.id == node_id {
+                return Ok(self.parse_health_status(&entry.checks));
             }
         }
 
@@ -392,47 +393,58 @@ impl ServiceDiscovery for ConsulDiscovery {
 
 /// Consul service entry from catalog
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct ConsulServiceEntry {
-    Service: ConsulService,
-    Checks: Vec<ConsulHealthCheck>,
+    service: ConsulService,
+    checks: Vec<ConsulHealthCheck>,
 }
 
 /// Consul service definition
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct ConsulService {
-    ID: String,
-    Service: String,
-    Tags: Vec<String>,
-    Address: String,
-    Port: u32,
-    Meta: Option<HashMap<String, String>>,
+    #[serde(rename = "ID")]
+    id: String,
+    #[allow(dead_code)]
+    service: String,
+    tags: Vec<String>,
+    address: String,
+    port: u32,
+    meta: Option<HashMap<String, String>>,
 }
 
 /// Consul health check
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct ConsulHealthCheck {
-    Status: String,
-    ServiceID: String,
+    status: String,
+    #[serde(rename = "ServiceID")]
+    #[allow(dead_code)]
+    service_id: String,
 }
 
 /// Consul service registration
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "PascalCase")]
 struct ConsulServiceRegistration {
-    ID: String,
-    Name: String,
-    Tags: Vec<String>,
-    Address: String,
-    Port: u32,
-    Meta: Option<HashMap<String, String>>,
-    Check: Option<ConsulHealthCheckDef>,
+    #[serde(rename = "ID")]
+    id: String,
+    name: String,
+    tags: Vec<String>,
+    address: String,
+    port: u32,
+    meta: Option<HashMap<String, String>>,
+    check: Option<ConsulHealthCheckDef>,
 }
 
 /// Consul health check definition
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "PascalCase")]
 struct ConsulHealthCheckDef {
-    TCP: String,
-    Interval: String,
-    Timeout: String,
+    #[serde(rename = "TCP")]
+    tcp: String,
+    interval: String,
+    timeout: String,
 }
 
 #[cfg(test)]

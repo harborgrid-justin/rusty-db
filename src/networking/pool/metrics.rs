@@ -3,9 +3,9 @@
 // Comprehensive metrics collection and monitoring for connection pools.
 // Tracks pool health, performance, and resource utilization.
 
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Instant, SystemTime};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;

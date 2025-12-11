@@ -187,6 +187,7 @@ impl RetryPolicy {
     {
         let start_time = std::time::Instant::now();
         let mut attempt = 0u32;
+        #[allow(unused_assignments)]
         let mut last_error = None;
 
         loop {
@@ -245,8 +246,10 @@ impl Default for RetryPolicy {
 #[derive(Debug, Clone)]
 pub struct RetryBudget {
     /// Target ratio of retries to requests (e.g., 0.2 = 20% retries)
+    #[allow(dead_code)] // Reserved for dynamic budget calculation
     target_ratio: f64,
     /// Minimum number of requests in window
+    #[allow(dead_code)] // Reserved for minimum request threshold
     min_requests: u32,
 }
 
@@ -256,7 +259,8 @@ impl RetryBudget {
     /// # Arguments
     /// * `target_ratio` - Target ratio of retries to requests (0.0 to 1.0)
     /// * `min_requests` - Minimum requests before enforcing budget
-    pub fn new(target_ratio: f64, min_requests: u32) -> Self {
+    pub fn new(#[allow(dead_code)] // Reserved for dynamic budget calculation
+    target_ratio: f64, min_requests: u32) -> Self {
         Self {
             target_ratio: target_ratio.clamp(0.0, 1.0),
             min_requests,

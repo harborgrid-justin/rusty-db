@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tokio::net::UdpSocket;
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::interval;
@@ -34,7 +34,8 @@ pub enum SerfMessage {
     /// Join request
     Join {
         node: NodeInfo,
-        tags: HashMap<String, String>,
+        #[allow(dead_code)] // Reserved for node tags
+    tags: HashMap<String, String>,
     },
 
     /// Leave notification
@@ -89,6 +90,7 @@ struct SerfMember {
     info: NodeInfo,
     status: NodeStatus,
     incarnation: u64,
+    #[allow(dead_code)] // Reserved for node tags
     tags: HashMap<String, String>,
     last_seen: Instant,
 }
@@ -234,7 +236,7 @@ impl SerfProtocol {
                 self.handle_member_update(node, status, incarnation).await?;
             }
 
-            SerfMessage::Ping { from: sender, sequence } => {
+            SerfMessage::Ping { from: _sender, sequence } => {
                 // Send ack
                 let ack = SerfMessage::Ack {
                     from: self.config.local_node.clone(),
@@ -537,7 +539,7 @@ impl DiscoveryProtocol for SerfProtocol {
     }
 
     fn subscribe(&self) -> mpsc::Receiver<DiscoveryEvent> {
-        let (tx, rx) = mpsc::channel(1000);
+        let (_tx, rx) = mpsc::channel(1000);
         rx
     }
 }

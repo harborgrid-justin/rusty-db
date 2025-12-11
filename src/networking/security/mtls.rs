@@ -373,7 +373,7 @@ impl MtlsAuthenticator {
     }
 
     /// Extract subject from certificate
-    fn extract_subject(&self, cert: &rustls::Certificate) -> Result<String> {
+    fn extract_subject(&self, _cert: &rustls::Certificate) -> Result<String> {
         // In a real implementation, parse the X.509 certificate
         // For now, return a placeholder
         Ok("CN=node-1,O=RustyDB,C=US".to_string())
