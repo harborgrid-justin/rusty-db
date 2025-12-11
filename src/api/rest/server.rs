@@ -30,6 +30,7 @@ use crate::networking::{create_default_manager, create_api_router, NetworkConfig
 use super::cors::build_cors_layer;
 use super::types::{ApiState, ApiMetrics, RateLimiter, QueryRequest};
 use super::handlers::db::{execute_query, execute_batch, get_table, create_table, update_table, delete_table, get_schema, begin_transaction, commit_transaction, rollback_transaction};
+use super::handlers::auth::{login, logout, refresh, validate};
 use super::handlers::admin::{get_config, update_config, create_backup, get_health, run_maintenance, get_users, create_user, get_user, update_user, delete_user, get_roles, create_role, get_role, update_role, delete_role};
 use super::handlers::monitoring::{get_metrics, get_prometheus_metrics, get_session_stats, get_query_stats, get_performance_data, get_logs, get_alerts, acknowledge_alert};
 use super::handlers::pool::{get_pools, get_pool, update_pool, get_pool_stats, drain_pool, get_connections, get_connection, kill_connection, get_sessions, get_session, terminate_session};
@@ -94,6 +95,14 @@ impl RestApiServer {
 
     // Build the router with all endpoints and middleware
     fn build_router(&self) -> Router {
+        // Public auth routes (no authentication required)
+        let auth_routes = Router::new()
+            .route("/api/v1/auth/login", post(login))
+            .route("/api/v1/auth/logout", post(logout))
+            .route("/api/v1/auth/refresh", post(refresh))
+            .route("/api/v1/auth/validate", get(validate))
+            .with_state(self.state.clone());
+
         // Protected admin routes (require authentication)
         let protected_admin_routes = Router::new()
             .route("/api/v1/admin/config", get(get_config))
@@ -148,6 +157,9 @@ impl RestApiServer {
         let mut router = Router::new()
             // Merge GraphQL router
             .merge(graphql_router)
+
+            // Merge auth routes
+            .merge(auth_routes)
 
             // Merge protected routes
             .merge(protected_admin_routes)

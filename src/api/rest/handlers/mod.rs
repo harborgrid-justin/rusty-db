@@ -2,6 +2,7 @@
 //
 // Organizes handler functions into logical groups
 
+pub mod auth;
 pub mod db;
 pub mod admin;
 pub mod monitoring;
@@ -29,6 +30,9 @@ lazy_static::lazy_static! {
 // Re-export all handler functions for convenience
 // Using explicit imports to avoid ambiguous glob re-exports
 pub use db::*;
+
+// Auth handlers
+pub use auth::{login, logout, refresh, validate};
 
 // Admin handlers
 pub use admin::{

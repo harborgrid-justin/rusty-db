@@ -198,7 +198,7 @@ pub fn create_router(network_manager: Arc<NetworkManager>) -> Router {
     Router::new()
         // Peer management
         .route("/api/v1/network/peers", get(list_peers))
-        .route("/api/v1/network/peers/:node_id", get(get_peer))
+        .route("/api/v1/network/peers/{node_id}", get(get_peer))
 
         // Topology
         .route("/api/v1/network/topology", get(get_topology))
@@ -212,7 +212,7 @@ pub fn create_router(network_manager: Arc<NetworkManager>) -> Router {
         .route("/api/v1/network/health", get(get_health))
 
         // Node information
-        .route("/api/v1/network/node/:node_id/health", get(get_node_health))
+        .route("/api/v1/network/node/{node_id}/health", get(get_node_health))
 
         .with_state(state)
 }

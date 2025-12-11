@@ -237,3 +237,6 @@ export function createCancelToken(): {
 
 export const API_BASE_URL = API_URL;
 export const WS_URL = `${API_URL.replace('http', 'ws')}/ws`;
+
+// Export apiClient as default for backward compatibility
+export default apiClient;
