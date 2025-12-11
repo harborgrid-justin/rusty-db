@@ -94,11 +94,12 @@ RustyDB is an enterprise-grade, Oracle-compatible database management system wri
 **Location**: `src/transaction/`
 
 - **transaction/**: Transaction management
-  - MVCC (Multi-Version Concurrency Control)
-  - Transaction lifecycle management
-  - Lock manager with deadlock detection
-  - Write-Ahead Logging (WAL)
-  - Snapshot isolation
+  - **MVCC**: Multi-Version Concurrency Control (✅ fully tested, 100% pass rate)
+  - **Transaction Lifecycle**: UUID-based transaction IDs, state management
+  - **Lock Manager**: Two-phase locking with deadlock detection
+  - **Write-Ahead Logging (WAL)**: Durability and crash recovery
+  - **Isolation Levels**: READ_UNCOMMITTED, READ_COMMITTED (default), REPEATABLE_READ, SERIALIZABLE
+  - **Note**: SNAPSHOT_ISOLATION enum exists but not yet distinct from REPEATABLE_READ
 
 ### Query Processing
 

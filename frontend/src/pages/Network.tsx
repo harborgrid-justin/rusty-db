@@ -19,6 +19,7 @@ import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
 import { Tabs } from '../components/common/Tabs';
+import { networkingService } from '../services/networkingService';
 import type { UUID } from '../types';
 
 // ============================================================================
@@ -144,8 +145,20 @@ export default function Network() {
   const loadData = async () => {
     try {
       setLoading(true);
-      // Simulated API call - replace with actual service call
-      // const data = await networkService.getNetworkStatus();
+
+      // NOTE: Integrating with actual networkingService APIs
+      // TODO: Full migration from simulated data to real API responses needed
+      // The component types need to be aligned with networkingService types
+
+      // Example: Fetch real network status
+      try {
+        const realNetworkStatus = await networkingService.getNetworkStatus();
+        console.log('Real network status:', realNetworkStatus);
+      } catch (apiError) {
+        console.warn('Using simulated data, API call failed:', apiError);
+      }
+
+      // Using simulated data for now (TODO: Replace with real API data)
       const data: NetworkStatus = {
         connectionPools: [
           {

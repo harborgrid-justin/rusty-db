@@ -8,10 +8,12 @@ use axum::{
     routing::{get, post, put, delete},
     extract::{State, WebSocketUpgrade, ws::WebSocket},
     response::{Response, IntoResponse, Html},
+    http::Method,
     middleware,
 };
 use futures::SinkExt;
 use tower_http::{
+    cors::{CorsLayer, Any},
     trace::TraceLayer,
     timeout::TimeoutLayer,
     limit::RequestBodyLimitLayer,
@@ -26,8 +28,6 @@ use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use crate::api::ApiConfig;
 use crate::api::graphql::{QueryRoot, MutationRoot, SubscriptionRoot, GraphQLEngine, AuthorizationContext};
 use crate::error::DbError;
-use crate::networking::{create_default_manager, create_api_router, NetworkConfig, NodeInfo, NodeId, NodeAddress};
-use super::cors::build_cors_layer;
 use super::types::{ApiState, ApiMetrics, RateLimiter, QueryRequest};
 use super::handlers::db::{execute_query, execute_batch, get_table, create_table, update_table, delete_table, get_schema, begin_transaction, commit_transaction, rollback_transaction};
 use super::handlers::admin::{get_config, update_config, create_backup, get_health, run_maintenance, get_users, create_user, get_user, update_user, delete_user, get_roles, create_role, get_role, update_role, delete_role};
@@ -35,7 +35,7 @@ use super::handlers::monitoring::{get_metrics, get_prometheus_metrics, get_sessi
 use super::handlers::pool::{get_pools, get_pool, update_pool, get_pool_stats, drain_pool, get_connections, get_connection, kill_connection, get_sessions, get_session, terminate_session};
 use super::handlers::cluster::{get_cluster_nodes, add_cluster_node, get_cluster_node, remove_cluster_node, get_cluster_topology, trigger_failover, get_replication_status, get_cluster_config, update_cluster_config};
 use super::handlers::system::{get_server_config, get_clustering_status, get_replication_status_info, get_security_features, get_server_info};
-use super::middleware::{request_logger_middleware, rate_limit_middleware, auth_middleware};
+use super::middleware::{request_logger_middleware, rate_limit_middleware};
 use super::handlers::{CATALOG, TXN_MANAGER, SQL_PARSER};
 use crate::execution::Executor;
 
@@ -53,14 +53,6 @@ pub struct RestApiServer {
 impl RestApiServer {
     // Create a new REST API server with injected dependencies
     pub async fn new(config: ApiConfig) -> Result<Self, DbError> {
-        // Create NetworkManager for networking API
-        let network_config = NetworkConfig::default();
-        let local_node = NodeInfo::new(
-            NodeId::new("rest-api-server"),
-            NodeAddress::new("localhost", config.port),
-        );
-        let network_manager = Arc::new(create_default_manager(network_config, local_node));
-
         let state = Arc::new(ApiState {
             config: config.clone(),
             connection_semaphore: Arc::new(Semaphore::new(config.max_connections)),
@@ -71,7 +63,6 @@ impl RestApiServer {
                 config.rate_limit_rps,
                 1,
             ))),
-            network_manager: Some(network_manager),
         });
 
         // Build GraphQL schema with engine and authorization context
@@ -94,45 +85,6 @@ impl RestApiServer {
 
     // Build the router with all endpoints and middleware
     fn build_router(&self) -> Router {
-        // Protected admin routes (require authentication)
-        let protected_admin_routes = Router::new()
-            .route("/api/v1/admin/config", get(get_config))
-            .route("/api/v1/admin/config", put(update_config))
-            .route("/api/v1/admin/backup", post(create_backup))
-            .route("/api/v1/admin/maintenance", post(run_maintenance))
-            .route("/api/v1/admin/users", get(get_users))
-            .route("/api/v1/admin/users", post(create_user))
-            .route("/api/v1/admin/users/{id}", get(get_user))
-            .route("/api/v1/admin/users/{id}", put(update_user))
-            .route("/api/v1/admin/users/{id}", delete(delete_user))
-            .route("/api/v1/admin/roles", get(get_roles))
-            .route("/api/v1/admin/roles", post(create_role))
-            .route("/api/v1/admin/roles/{id}", get(get_role))
-            .route("/api/v1/admin/roles/{id}", put(update_role))
-            .route("/api/v1/admin/roles/{id}", delete(delete_role))
-            .route_layer(middleware::from_fn_with_state(
-                self.state.clone(),
-                auth_middleware,
-            ))
-            .with_state(self.state.clone());
-
-        // Protected cluster routes (require authentication)
-        let protected_cluster_routes = Router::new()
-            .route("/api/v1/cluster/nodes", get(get_cluster_nodes))
-            .route("/api/v1/cluster/nodes", post(add_cluster_node))
-            .route("/api/v1/cluster/nodes/{id}", get(get_cluster_node))
-            .route("/api/v1/cluster/nodes/{id}", delete(remove_cluster_node))
-            .route("/api/v1/cluster/topology", get(get_cluster_topology))
-            .route("/api/v1/cluster/failover", post(trigger_failover))
-            .route("/api/v1/cluster/replication", get(get_replication_status))
-            .route("/api/v1/cluster/config", get(get_cluster_config))
-            .route("/api/v1/cluster/config", put(update_cluster_config))
-            .route_layer(middleware::from_fn_with_state(
-                self.state.clone(),
-                auth_middleware,
-            ))
-            .with_state(self.state.clone());
-
         // Create GraphQL router with its own state
         let graphql_schema = self.graphql_schema.clone();
         let graphql_router = Router::new()
@@ -140,18 +92,9 @@ impl RestApiServer {
             .route("/graphql/ws", get(graphql_subscription))
             .with_state(graphql_schema);
 
-        // Create networking router if NetworkManager is available
-        let networking_router = self.state.network_manager.as_ref().map(|nm| {
-            create_api_router(nm.clone())
-        });
-
         let mut router = Router::new()
             // Merge GraphQL router
             .merge(graphql_router)
-
-            // Merge protected routes
-            .merge(protected_admin_routes)
-            .merge(protected_cluster_routes)
 
             // Core Database Operations API
             .route("/api/v1/query", post(execute_query))
@@ -166,8 +109,23 @@ impl RestApiServer {
             .route("/api/v1/transactions/{id}/rollback", post(rollback_transaction))
             .route("/api/v1/stream", get(websocket_stream))
 
-            // Health endpoint (public, no auth required)
+            // Administration API
+            .route("/api/v1/admin/config", get(get_config))
+            .route("/api/v1/admin/config", put(update_config))
+            .route("/api/v1/admin/backup", post(create_backup))
             .route("/api/v1/admin/health", get(get_health))
+            .route("/api/v1/admin/maintenance", post(run_maintenance))
+            .route("/api/v1/admin/users", get(get_users))
+            .route("/api/v1/admin/users", post(create_user))
+            .route("/api/v1/admin/users/{id}", get(get_user))
+            .route("/api/v1/admin/users/{id}", put(update_user))
+            .route("/api/v1/admin/users/{id}", delete(delete_user))
+            .route("/api/v1/admin/roles", get(get_roles))
+            .route("/api/v1/admin/roles", post(create_role))
+            .route("/api/v1/admin/roles/{id}", get(get_role))
+            .route("/api/v1/admin/roles/{id}", put(update_role))
+            .route("/api/v1/admin/roles/{id}", delete(delete_role))
+
             // Monitoring & Metrics API
             .route("/api/v1/metrics", get(get_metrics))
             .route("/api/v1/metrics/prometheus", get(get_prometheus_metrics))
@@ -190,6 +148,18 @@ impl RestApiServer {
             .route("/api/v1/sessions", get(get_sessions))
             .route("/api/v1/sessions/{id}", get(get_session))
             .route("/api/v1/sessions/{id}", delete(terminate_session))
+
+            // Cluster Management API
+            .route("/api/v1/cluster/nodes", get(get_cluster_nodes))
+            .route("/api/v1/cluster/nodes", post(add_cluster_node))
+            .route("/api/v1/cluster/nodes/{id}", get(get_cluster_node))
+            .route("/api/v1/cluster/nodes/{id}", delete(remove_cluster_node))
+            .route("/api/v1/cluster/topology", get(get_cluster_topology))
+            .route("/api/v1/cluster/failover", post(trigger_failover))
+            .route("/api/v1/cluster/replication", get(get_replication_status))
+            .route("/api/v1/cluster/config", get(get_cluster_config))
+            .route("/api/v1/cluster/config", put(update_cluster_config))
+
             // System Information API
             .route("/api/v1/config", get(get_server_config))
             .route("/api/v1/clustering/status", get(get_clustering_status))
@@ -198,11 +168,6 @@ impl RestApiServer {
             .route("/api/v1/server/info", get(get_server_info))
 
             .with_state(self.state.clone());
-
-        // Merge networking router if available
-        if let Some(net_router) = networking_router {
-            router = router.merge(net_router);
-        }
 
         // Add middleware layers
         router = router
@@ -218,11 +183,14 @@ impl RestApiServer {
                 rate_limit_middleware,
             ));
 
-        // Add CORS if enabled - uses secure origin validation
-        // SECURITY: NEVER use allow_origin(Any) in production!
-        // This configuration uses a trie-based origin matcher for efficient validation
+        // Add CORS if enabled
         if self.config.enable_cors {
-            router = router.layer(build_cors_layer(&self.config.cors_origins));
+            router = router.layer(
+                CorsLayer::new()
+                    .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+                    .allow_headers(Any)
+                    .allow_origin(Any)
+            );
         }
 
         // Add Swagger UI if enabled

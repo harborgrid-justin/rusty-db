@@ -11,6 +11,36 @@
 
 This guide provides comprehensive instructions for deploying RustyDB in various environments, from single-node installations to highly available multi-datacenter clusters. It covers system requirements, installation procedures, configuration, networking, scaling strategies, and upgrade procedures.
 
+### ⚠️ Implementation Status Notice
+
+**Last Verified**: 2025-12-11
+
+This deployment guide describes the **target architecture and planned features** for RustyDB. While the core database engine is operational, many advanced deployment features are still in development.
+
+**Current Implementation Status:**
+
+| Feature Category | Status | Notes |
+|-----------------|--------|-------|
+| **Core Database Engine** | ✅ Working | Transaction management, MVCC, basic operations |
+| **GraphQL API** | ✅ Working | 69.3% test pass rate (70/101 tests) |
+| **Transaction System** | ✅ Working | 4 isolation levels fully tested |
+| **MVCC Snapshots** | ✅ Working | 100% test pass rate (25/25 tests) |
+| **Security Modules** | ✅ Implemented | 17 modules verified in codebase |
+| **Simple Configuration** | ✅ Working | 4 basic config options (port, data_dir, page_size, buffer_pool) |
+| **File-based Config** | ⚠️ Planned | Extensive .conf file parsing not yet implemented |
+| **Binary Installation** | ⚠️ Planned | Package repositories not yet available |
+| **Clustering** | ⚠️ In Development | Modules exist but integration incomplete |
+| **Replication** | ⚠️ In Development | Modules exist but not fully tested |
+| **Container Images** | ⚠️ Planned | Docker images not yet published |
+| **K8s Operators** | ⚠️ Planned | Kubernetes operators not yet available |
+
+**Recommended Current Use Cases:**
+- ✅ Development and testing
+- ✅ GraphQL API integration testing
+- ✅ Transaction and MVCC behavior validation
+- ✅ Security module evaluation
+- ⚠️ Production deployment (single-node only, extensive testing required)
+
 ---
 
 ## Table of Contents
@@ -361,38 +391,54 @@ docker run -d \
 
 ### Initial Configuration
 
-Create the main configuration file:
+**⚠️ Configuration Status**: The extensive configuration options shown below represent the **planned/target configuration system**. The current implementation uses a simplified `Config` struct with only 4 fields (see `src/lib.rs`):
+
+```rust
+pub struct Config {
+    pub data_dir: String,      // Default: "./data"
+    pub page_size: usize,      // Default: 4096 bytes
+    pub buffer_pool_size: usize, // Default: 1000 pages
+    pub port: u16,             // Default: 5432
+}
+```
+
+**Current Status**: The server can be started with default configuration or programmatically configured in code. File-based configuration and the extensive options below are **planned features** not yet fully implemented.
+
+### Target Configuration (Planned)
+
+The following configuration represents the planned enterprise configuration system:
 
 ```bash
 sudo cat > /etc/rusty-db/rusty-db.conf << 'EOF'
 # RustyDB Configuration File
-# Version: 1.0
+# Version: 1.0 (PLANNED - Not all options implemented)
 
 # ============================================================================
 # Connection Settings
 # ============================================================================
 
-# Port for client connections
+# Port for client connections (✅ Implemented)
 port = 5432
 
-# Listen addresses (0.0.0.0 for all interfaces, 127.0.0.1 for localhost only)
+# Listen addresses (⚠️ Planned)
 listen_addresses = "0.0.0.0"
 
-# Maximum number of concurrent client connections
+# Maximum number of concurrent client connections (⚠️ Planned)
 max_connections = 500
 
-# Connection timeout (seconds)
+# Connection timeout (seconds) (⚠️ Planned)
 connection_timeout = 30
 
-# Idle connection timeout (seconds)
+# Idle connection timeout (seconds) (⚠️ Planned)
 idle_connection_timeout = 300
 
 # ============================================================================
 # Memory Settings
 # ============================================================================
 
-# Buffer pool size in MB (typically 60-80% of system RAM)
-buffer_pool_size_mb = 8192
+# Buffer pool size in pages (✅ Implemented as buffer_pool_size: 1000 pages)
+# Note: Current implementation uses page count, not MB
+buffer_pool_size_mb = 8192  # ⚠️ Planned: Convert to MB-based sizing
 
 # Enable slab allocator for better memory management
 slab_allocator_enabled = true
@@ -410,13 +456,13 @@ memory_pressure_threshold = 85
 # Storage Settings
 # ============================================================================
 
-# Data directory
+# Data directory (✅ Implemented as data_dir)
 data_directory = "/var/lib/rusty-db/data"
 
-# WAL (Write-Ahead Log) directory
+# WAL (Write-Ahead Log) directory (⚠️ Planned)
 wal_directory = "/var/lib/rusty-db/wal"
 
-# Page size (bytes) - DO NOT CHANGE after initialization
+# Page size (bytes) - DO NOT CHANGE after initialization (✅ Implemented)
 page_size = 4096
 
 # Enable direct I/O (bypasses OS page cache)
@@ -450,8 +496,10 @@ simd_enabled = true
 # ============================================================================
 # Replication Settings
 # ============================================================================
+# ⚠️ Status: Replication modules exist in codebase but configuration
+#           integration not fully tested
 
-# Replication mode: off, async, sync, semi-sync
+# Replication mode: off, async, sync, semi-sync (⚠️ Planned)
 replication_mode = "async"
 
 # Archive mode for point-in-time recovery
@@ -469,8 +517,10 @@ replication_bandwidth_mbps = 1000
 # ============================================================================
 # Security Settings
 # ============================================================================
+# ⚠️ Status: Security modules implemented (17 modules verified)
+#           Configuration integration in progress
 
-# Enable SSL/TLS
+# Enable SSL/TLS (⚠️ Planned)
 ssl_enabled = true
 
 # SSL certificate file

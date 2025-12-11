@@ -36,6 +36,7 @@ const ConnectionPools = lazy(() => import('./pages/ConnectionPools'));
 const Indexes = lazy(() => import('./pages/Indexes'));
 const MaterializedViews = lazy(() => import('./pages/MaterializedViews'));
 const StoredProcedures = lazy(() => import('./pages/StoredProcedures'));
+const Network = lazy(() => import('./pages/Network'));
 const Login = lazy(() => import('./pages/Login'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -106,6 +107,9 @@ export default function App() {
             <Route path="cluster" element={<Cluster />} />
             <Route path="cluster/replication" element={<Replication />} />
             <Route path="cluster/failover" element={<Failover />} />
+
+            {/* Network Management */}
+            <Route path="network" element={<Network />} />
 
             {/* Configuration */}
             <Route path="config" element={<Configuration />} />

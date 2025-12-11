@@ -412,6 +412,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.create_database")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.create_database permission".to_string()),
@@ -422,12 +423,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Database '{}' created successfully", name),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "CREATE_DATABASE_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -449,6 +452,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.drop_database")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.drop_database permission".to_string()),
@@ -459,12 +463,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Database '{}' dropped successfully", name),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "DROP_DATABASE_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -487,6 +493,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.backup_database")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.backup_database permission".to_string()),
@@ -497,12 +504,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Database '{}' backed up to '{}'", name, location),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "BACKUP_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -528,6 +537,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.alter_table")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.alter_table permission".to_string()),
@@ -538,12 +548,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Column added to table '{}'", table),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "ALTER_TABLE_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -566,6 +578,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.alter_table")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.alter_table permission".to_string()),
@@ -576,12 +589,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Column '{}' dropped from table '{}'", column_name, table),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "ALTER_TABLE_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -603,6 +618,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.alter_table")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.alter_table permission".to_string()),
@@ -613,12 +629,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Column modified in table '{}'", table),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "ALTER_TABLE_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -640,6 +658,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.alter_table")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.alter_table permission".to_string()),
@@ -650,12 +669,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Constraint added to table '{}'", table),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "ALTER_TABLE_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -678,6 +699,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.alter_table")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.alter_table permission".to_string()),
@@ -688,12 +710,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Constraint '{}' dropped from table '{}'", constraint_name, table),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "ALTER_TABLE_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -714,6 +738,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.truncate_table")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.truncate_table permission".to_string()),
@@ -724,12 +749,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Table '{}' truncated successfully", table),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "TRUNCATE_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -756,6 +783,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.create_view")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.create_view permission".to_string()),
@@ -766,12 +794,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("View '{}' created successfully", name),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "CREATE_VIEW_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -793,6 +823,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.drop_view")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.drop_view permission".to_string()),
@@ -803,12 +834,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("View '{}' dropped successfully", name),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "DROP_VIEW_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -837,6 +870,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.create_index")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.create_index permission".to_string()),
@@ -853,12 +887,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Index '{}' created on table '{}'", index_name, table),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "CREATE_INDEX_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -881,6 +917,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.drop_index")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.drop_index permission".to_string()),
@@ -891,12 +928,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Index '{}' dropped successfully", index_name),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "DROP_INDEX_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -924,6 +963,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.create_procedure")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.create_procedure permission".to_string()),
@@ -934,12 +974,14 @@ impl MutationRoot {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Procedure '{}' created successfully", name),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "CREATE_PROCEDURE_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -1039,6 +1081,7 @@ impl MutationRoot {
         let auth = ctx.data::<Arc<AuthorizationContext>>()?;
         if !auth.has_permission("admin.create_table")? {
             return Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: "Permission denied".to_string(),
                 code: "PERMISSION_DENIED".to_string(),
                 details: Some("Requires admin.create_table permission".to_string()),
@@ -1049,12 +1092,14 @@ impl MutationRoot {
             Ok(row_count) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
+                    success: true,
                     message: format!("Table '{}' created with {} rows", new_table, row_count),
-                    affected_objects: 1,
+                    affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
             }
             Err(e) => Ok(DdlResult::Error(DdlError {
+                success: false,
                 message: e.to_string(),
                 code: "SELECT_INTO_ERROR".to_string(),
                 details: Some(format!("{:?}", e)),
@@ -1152,26 +1197,98 @@ pub struct TransactionExecutionResult {
 // DDL RESULT TYPES
 // ============================================================================
 
-// DDL operation result (union type)
+/// DDL operation result (union type)
+///
+/// This is a GraphQL Union type, which means queries must use inline fragments
+/// to access the specific fields of Success or Error variants.
+///
+/// # Correct Usage Examples
+///
+/// ## Query Success Fields
+/// ```graphql
+/// mutation {
+///   createDatabase(name: "mydb") {
+///     ... on DdlSuccess {
+///       success
+///       message
+///       affected_rows
+///       execution_time_ms
+///     }
+///     ... on DdlError {
+///       success
+///       message
+///       code
+///       details
+///     }
+///   }
+/// }
+/// ```
+///
+/// ## Use __typename to determine result type
+/// ```graphql
+/// mutation {
+///   createDatabase(name: "mydb") {
+///     __typename
+///     ... on DdlSuccess { message affected_rows }
+///     ... on DdlError { message code }
+///   }
+/// }
+/// ```
+///
+/// # IMPORTANT: Invalid Queries
+///
+/// ❌ This will NOT work (cannot query union fields directly):
+/// ```graphql
+/// mutation {
+///   createDatabase(name: "mydb") {
+///     success message  # ERROR: Union has no direct fields
+///   }
+/// }
+/// ```
+///
+/// ✅ Must use fragments:
+/// ```graphql
+/// mutation {
+///   createDatabase(name: "mydb") {
+///     ... on DdlSuccess { success message }
+///     ... on DdlError { success message }
+///   }
+/// }
+/// ```
 #[derive(async_graphql::Union)]
 pub enum DdlResult {
     Success(DdlSuccess),
     Error(DdlError),
 }
 
-// DDL success result
+/// DDL success result
+///
+/// Returned when a DDL operation (CREATE, DROP, ALTER, etc.) succeeds.
+/// Contains information about what was changed and execution metrics.
 #[derive(SimpleObject, Clone, Debug)]
 pub struct DdlSuccess {
+    /// Success indicator - always true for this variant
+    pub success: bool,
+    /// Human-readable success message describing what was done
     pub message: String,
-    pub affected_objects: i32,
+    /// Number of database objects affected (tables, databases, indexes, etc.)
+    pub affected_rows: i32,
+    /// Execution time in milliseconds
     pub execution_time_ms: f64,
 }
 
-// DDL error result
+/// DDL error result
+///
+/// Returned when a DDL operation fails. Contains error details for debugging.
 #[derive(SimpleObject, Clone, Debug)]
 pub struct DdlError {
+    /// Success indicator - always false for this variant
+    pub success: bool,
+    /// Human-readable error message
     pub message: String,
+    /// Machine-readable error code (e.g., "PERMISSION_DENIED", "TABLE_NOT_FOUND")
     pub code: String,
+    /// Optional detailed error information for debugging
     pub details: Option<String>,
 }
 

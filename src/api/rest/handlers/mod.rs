@@ -12,6 +12,7 @@ pub mod string_functions;
 pub mod storage_handlers;
 pub mod transaction_handlers;
 pub mod network_handlers;
+pub mod system;
 
 use std::sync::Arc;
 use crate::catalog::Catalog;
@@ -83,4 +84,10 @@ pub use network_handlers::{
     get_cluster_nodes as get_network_cluster_nodes, add_cluster_node as add_network_cluster_node,
     remove_cluster_node as remove_network_cluster_node, get_loadbalancer_stats,
     configure_loadbalancer, get_circuit_breakers
+};
+
+// System handlers
+pub use system::{
+    get_server_config, get_clustering_status, get_replication_status_info,
+    get_security_features, get_server_info
 };

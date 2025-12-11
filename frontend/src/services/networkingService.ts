@@ -533,4 +533,39 @@ export const networkingService = {
 
     return response.data;
   },
+
+  /**
+   * Get all circuit breaker statuses
+   */
+  async getCircuitBreakers(): Promise<
+    Array<{
+      name: string;
+      state: 'closed' | 'open' | 'half_open';
+      failure_count: number;
+      success_count: number;
+      last_failure: number | null;
+      last_state_change: number;
+      failure_threshold: number;
+      timeout_secs: number;
+    }>
+  > {
+    const response = await get<
+      Array<{
+        name: string;
+        state: 'closed' | 'open' | 'half_open';
+        failure_count: number;
+        success_count: number;
+        last_failure: number | null;
+        last_state_change: number;
+        failure_threshold: number;
+        timeout_secs: number;
+      }>
+    >('/network/circuit-breakers');
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || 'Failed to fetch circuit breakers');
+    }
+
+    return response.data;
+  },
 };

@@ -37,7 +37,7 @@ interface Transaction {
   state: 'active' | 'idle_in_transaction' | 'committing' | 'aborting';
   startTime: string;
   duration: number;
-  isolationLevel: 'read_uncommitted' | 'read_committed' | 'repeatable_read' | 'serializable';
+  isolationLevel: 'read_uncommitted' | 'read_committed' | 'repeatable_read' | 'serializable' | 'snapshot';
   database: string;
   user: string;
   query?: string;
@@ -495,6 +495,7 @@ export default function Transactions() {
                   { value: 'read_committed', label: 'Read Committed' },
                   { value: 'repeatable_read', label: 'Repeatable Read' },
                   { value: 'serializable', label: 'Serializable' },
+                  { value: 'snapshot', label: 'Snapshot Isolation' },
                 ]}
               />
             </div>

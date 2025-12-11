@@ -211,7 +211,7 @@ pub use traits::{
 };
 
 // Re-export manager
-pub use manager::{NetworkManager, NetworkManagerBuilder};
+pub use manager::{NetworkManager, NetworkManagerBuilder, create_default_manager};
 
 // Re-export API components
 pub use api::{

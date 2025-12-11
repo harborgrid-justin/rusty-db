@@ -18,12 +18,15 @@ pub mod types;
 pub mod handlers;
 pub mod middleware;
 pub mod server;
+pub mod cors;
+pub mod system_metrics;
 
 // Re-export main types and functions for convenience
 pub use types::*;
 pub use server::RestApiServer;
 pub use handlers::*;
 pub use middleware::*;
+pub use cors::{OriginMatcher, build_cors_layer, development_origins, production_origins};
 
 // Re-export the server as the main entry point
 pub use server::RestApiServer as Server;

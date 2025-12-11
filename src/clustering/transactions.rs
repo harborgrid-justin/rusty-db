@@ -260,6 +260,7 @@ pub enum IsolationLevel {
     ReadCommitted,
     RepeatableRead,
     Serializable,
+    SnapshotIsolation,
 }
 
 // Transaction log entry
