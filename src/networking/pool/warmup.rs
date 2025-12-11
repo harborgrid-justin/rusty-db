@@ -77,7 +77,7 @@ impl WarmupManager {
 
     /// Warm up a pool according to its strategy
     pub async fn warmup_pool(&self, pool: &NodePool, config: &PoolConfig) -> Result<()> {
-        let node_id = pool.node_id.clone();
+        let node_id = pool.node_id().clone();
         let strategy = self.get_node_strategy(&node_id).await;
 
         let warmup_count = match strategy {

@@ -104,6 +104,11 @@ pub struct NodePool {
 }
 
 impl NodePool {
+    /// Get the node ID for this pool
+    pub fn node_id(&self) -> &NodeId {
+        &self.node_id
+    }
+
     /// Create a new node pool
     pub fn new(node_id: NodeId, config: PoolConfig) -> Self {
         let pool = Self {
@@ -184,7 +189,7 @@ impl NodePool {
     }
 
     /// Release a connection back to the pool
-    pub async fn release(&self, connection: Box<dyn Connection>, usage_duration_ms: u64) {
+    pub async fn release(&self, mut connection: Box<dyn Connection>, usage_duration_ms: u64) {
         // Update statistics
         self.stats.active_connections.fetch_sub(1, Ordering::Relaxed);
         self.stats.record_release(usage_duration_ms);

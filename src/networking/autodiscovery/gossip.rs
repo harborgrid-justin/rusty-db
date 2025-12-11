@@ -185,54 +185,65 @@ impl GossipDiscovery {
 
     /// Send a ping to a random member
     async fn send_ping(&self) -> Result<()> {
-        let state = self.state.read().await;
+        // Get target node address under read lock
+        let target_addr = {
+            let state = self.state.read().await;
 
-        // Select random alive member
-        let alive_members: Vec<_> = state.members.iter()
-            .filter(|(_, (_, s))| s.is_alive())
-            .collect();
+            // Select random alive member
+            let alive_members: Vec<_> = state.members.iter()
+                .filter(|(_, (_, s))| s.is_alive())
+                .collect();
 
-        if alive_members.is_empty() {
-            return Ok(());
-        }
+            if alive_members.is_empty() {
+                return Ok(());
+            }
 
-        let idx = rand::random::<usize>() % alive_members.len();
-        let (_, (node, _)) = alive_members[idx];
+            let idx = rand::random::<usize>() % alive_members.len();
+            let (_, (node, _)) = alive_members[idx];
+            node.addr
+        };
 
-        drop(state);
-        let mut state = self.state.write().await;
-        let sequence = state.next_sequence();
-        state.pending_acks.insert(sequence, Instant::now());
-        drop(state);
+        // Get sequence number under write lock
+        let sequence = {
+            let mut state = self.state.write().await;
+            let seq = state.next_sequence();
+            state.pending_acks.insert(seq, Instant::now());
+            seq
+        };
 
         let msg = GossipMessage::Ping {
             from: self.config.local_node.clone(),
             sequence,
         };
 
-        self.send_message(&msg, node.addr).await?;
+        self.send_message(&msg, target_addr).await?;
 
         Ok(())
     }
 
     /// Send a ping-req (indirect probe)
     async fn send_ping_req(&self, target: SocketAddr) -> Result<()> {
-        let state = self.state.read().await;
+        // Get member addresses under read lock
+        let member_addrs: Vec<SocketAddr> = {
+            let state = self.state.read().await;
 
-        // Select random alive members for indirect probe
-        let alive_members: Vec<_> = state.members.iter()
-            .filter(|(_, (n, s))| s.is_alive() && n.addr != target)
-            .take(3)
-            .collect();
+            // Select random alive members for indirect probe
+            state.members.iter()
+                .filter(|(_, (n, s))| s.is_alive() && n.addr != target)
+                .take(3)
+                .map(|(_, (node, _))| node.addr)
+                .collect()
+        };
 
-        if alive_members.is_empty() {
+        if member_addrs.is_empty() {
             return Ok(());
         }
 
-        drop(state);
-        let mut state = self.state.write().await;
-        let sequence = state.next_sequence();
-        drop(state);
+        // Get sequence number under write lock
+        let sequence = {
+            let mut state = self.state.write().await;
+            state.next_sequence()
+        };
 
         let msg = GossipMessage::PingReq {
             from: self.config.local_node.clone(),
@@ -240,8 +251,8 @@ impl GossipDiscovery {
             sequence,
         };
 
-        for (_, (node, _)) in alive_members {
-            self.send_message(&msg, node.addr).await?;
+        for addr in member_addrs {
+            self.send_message(&msg, addr).await?;
         }
 
         Ok(())

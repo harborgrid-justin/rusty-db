@@ -218,16 +218,16 @@ impl PoolManager {
 
     /// Warm up connections to multiple nodes
     pub async fn warmup_nodes(&self, node_ids: &[String]) -> Result<()> {
-        let mut tasks = Vec::new();
-
+        // Collect all pools first to ensure they stay alive
+        let mut pools = Vec::new();
         for node_id in node_ids {
             let pool = self.get_or_create_pool(node_id).await?;
-            tasks.push(pool.warmup());
+            pools.push(pool);
         }
 
-        // Wait for all warmup tasks
-        for task in tasks {
-            task.await?;
+        // Now warmup each pool sequentially (can't easily run in parallel with &self reference)
+        for pool in &pools {
+            pool.warmup().await?;
         }
 
         Ok(())

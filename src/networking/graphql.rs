@@ -8,7 +8,8 @@ use async_graphql::{
 };
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tokio_stream::{Stream, StreamExt};
+use futures::StreamExt;
+use tokio_stream::Stream;
 
 use crate::error::DbError;
 use super::manager::NetworkManager;
@@ -190,23 +191,26 @@ impl QueryRoot {
 
         let member = context.network_manager.get_member(&node_id).await;
 
-        Ok(member.map(|m| {
-            let health = context
-                .network_manager
-                .get_node_health(&m.id)
-                .await
-                .map(|h| format!("{:?}", h))
-                .unwrap_or_else(|| "Unknown".to_string());
+        match member {
+            Some(m) => {
+                let health = context
+                    .network_manager
+                    .get_node_health(&m.id)
+                    .await
+                    .map(|h| format!("{:?}", h))
+                    .unwrap_or_else(|| "Unknown".to_string());
 
-            GqlNodeInfo {
-                id: m.id.to_string(),
-                address: m.address.to_string(),
-                state: m.state.to_string(),
-                health,
-                joined_at: format!("{:?}", m.joined_at),
-                last_heartbeat: format!("{:?}", m.last_heartbeat),
+                Ok(Some(GqlNodeInfo {
+                    id: m.id.to_string(),
+                    address: m.address.to_string(),
+                    state: m.state.to_string(),
+                    health,
+                    joined_at: format!("{:?}", m.joined_at),
+                    last_heartbeat: format!("{:?}", m.last_heartbeat),
+                }))
             }
-        }))
+            None => Ok(None),
+        }
     }
 
     /// Get list of unhealthy nodes
@@ -399,6 +403,7 @@ impl SubscriptionRoot {
                     }
                 }
             })
+            .boxed()
         } else {
             tokio_stream::pending().boxed()
         }
