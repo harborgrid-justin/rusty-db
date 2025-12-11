@@ -52,8 +52,11 @@ impl BinaryCodec {
     /// Serialize a message to bytes
     pub fn encode<T: Serialize>(&self, message: &T) -> Result<Vec<u8>> {
         // Serialize using bincode
-        let mut serialized = bincode::serialize(message)
+        let serialized = bincode::serialize(message)
             .map_err(|e| DbError::Serialization(format!("Bincode serialization failed: {}", e)))?;
+
+        // Save original length before serialized is moved
+        let original_len = serialized.len();
 
         // Apply compression if enabled and message is large enough
         let compressed = if let Some(compression_type) = self.compression {
@@ -70,12 +73,12 @@ impl BinaryCodec {
         let mut result = Vec::new();
 
         // Write flags (1 byte)
-        let flags = self.build_flags(&serialized, &compressed);
+        let flags = self.build_flags(original_len, &compressed);
         result.push(flags);
 
         // Write original size if compressed (4 bytes)
         if flags & FLAG_COMPRESSED != 0 {
-            result.extend_from_slice(&(serialized.len() as u32).to_le_bytes());
+            result.extend_from_slice(&(original_len as u32).to_le_bytes());
         }
 
         // Write checksum if enabled (4 bytes)
@@ -160,11 +163,11 @@ impl BinaryCodec {
     }
 
     /// Build flags byte from message state
-    fn build_flags(&self, original: &[u8], compressed: &[u8]) -> u8 {
+    fn build_flags(&self, original_len: usize, compressed: &[u8]) -> u8 {
         let mut flags = 0u8;
 
         // Check if actually compressed
-        if compressed.len() < original.len() {
+        if compressed.len() < original_len {
             flags |= FLAG_COMPRESSED;
 
             // Set compression type

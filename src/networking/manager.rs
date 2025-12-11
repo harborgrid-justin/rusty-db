@@ -419,13 +419,14 @@ impl Component for NetworkManager {
 }
 
 // ============================================================================
-// Helper Functions
+// Helper Functions (Test Only)
 // ============================================================================
 
 /// Create a default NetworkManager with mock implementations
 ///
-/// This is useful for testing and development. In production, you should
-/// provide real implementations of all components.
+/// This function is only available for testing and development.
+/// In production, use NetworkManagerBuilder to configure real implementations.
+#[cfg(test)]
 pub fn create_default_manager(
     config: NetworkConfig,
     local_node: NodeInfo,
@@ -433,11 +434,11 @@ pub fn create_default_manager(
     NetworkManager::new(
         config,
         local_node,
-        Arc::new(MockTransport::new()),
-        Arc::new(MockServiceDiscovery::new()),
-        Arc::new(MockHealthMonitor::new()),
-        Arc::new(RwLock::new(MockLoadBalancer::new())),
-        Arc::new(RwLock::new(MockClusterMembership::new())),
+        Arc::new(mock::MockTransport::new()),
+        Arc::new(mock::MockServiceDiscovery::new()),
+        Arc::new(mock::MockHealthMonitor::new()),
+        Arc::new(RwLock::new(mock::MockLoadBalancer::new())),
+        Arc::new(RwLock::new(mock::MockClusterMembership::new())),
     )
 }
 
@@ -548,17 +549,24 @@ impl Default for NetworkManagerBuilder {
 }
 
 // ============================================================================
-// Mock Implementations Module
+// Mock Implementations Module (Test Only)
 // ============================================================================
 
-/// Mock implementations for testing and development
+/// Mock implementations for testing only
+#[cfg(test)]
 pub(crate) mod mock {
     use super::*;
     use async_trait::async_trait;
 
-    pub(crate) struct MockTransport;
+    pub(crate) struct MockTransport {
+        local_address: NodeAddress,
+    }
     impl MockTransport {
-        pub(crate) fn new() -> Self { Self }
+        pub(crate) fn new() -> Self {
+            Self {
+                local_address: NodeAddress::new("localhost", 7000),
+            }
+        }
     }
 
     #[async_trait]
@@ -578,12 +586,12 @@ pub(crate) mod mock {
         }
         fn active_connections(&self) -> usize { 0 }
         fn local_address(&self) -> &NodeAddress {
-            &NodeAddress::new("localhost", 7000)
+            &self.local_address
         }
         async fn close_connection(&self, _node_id: &NodeId) -> Result<()> {
             Ok(())
         }
-        fn connection_stats(&self) -> HashMap<NodeId, super::traits::ConnectionStats> {
+        fn connection_stats(&self) -> HashMap<NodeId, crate::networking::traits::ConnectionStats> {
             HashMap::new()
         }
     }
@@ -627,10 +635,10 @@ pub(crate) mod mock {
 
     #[async_trait]
     impl HealthMonitor for MockHealthMonitor {
-        async fn check_health(&self, _node_id: &NodeId) -> Result<super::types::HealthCheckResult> {
+        async fn check_health(&self, _node_id: &NodeId) -> Result<crate::networking::types::HealthCheckResult> {
             Err(DbError::NotImplemented("Mock".to_string()))
         }
-        async fn check_all_nodes(&self) -> Result<HashMap<NodeId, super::types::HealthCheckResult>> {
+        async fn check_all_nodes(&self) -> Result<HashMap<NodeId, crate::networking::types::HealthCheckResult>> {
             Ok(HashMap::new())
         }
         fn get_node_health(&self, _node_id: &NodeId) -> Option<HealthStatus> { None }
@@ -638,7 +646,7 @@ pub(crate) mod mock {
         fn get_healthy_nodes(&self) -> Vec<NodeId> { Vec::new() }
         async fn start_monitoring(&self) -> Result<()> { Ok(()) }
         async fn stop_monitoring(&self) -> Result<()> { Ok(()) }
-        async fn subscribe_health_changes(&self) -> Result<mpsc::Receiver<super::traits::HealthChangeEvent>> {
+        async fn subscribe_health_changes(&self) -> Result<mpsc::Receiver<crate::networking::traits::HealthChangeEvent>> {
             let (_tx, rx) = mpsc::channel(1);
             Ok(rx)
         }
@@ -674,16 +682,22 @@ pub(crate) mod mock {
         fn health_check(&self) -> HealthStatus { HealthStatus::Healthy }
     }
 
-    pub(crate) struct MockClusterMembership;
+    pub(crate) struct MockClusterMembership {
+        local_node_id: NodeId,
+    }
     impl MockClusterMembership {
-        pub(crate) fn new() -> Self { Self }
+        pub(crate) fn new() -> Self {
+            Self {
+                local_node_id: NodeId::new("mock"),
+            }
+        }
     }
 
     #[async_trait]
     impl ClusterMembership for MockClusterMembership {
         fn get_members(&self) -> Vec<NodeInfo> { Vec::new() }
         fn get_member(&self, _node_id: &NodeId) -> Option<NodeInfo> { None }
-        fn update_member_state(&mut self, _node_id: &NodeId, _state: super::types::NodeState) {}
+        fn update_member_state(&mut self, _node_id: &NodeId, _state: crate::networking::types::NodeState) {}
         async fn join_cluster(&self, _local_node: NodeInfo, _seed_nodes: Vec<NodeAddress>) -> Result<()> {
             Ok(())
         }
@@ -691,7 +705,7 @@ pub(crate) mod mock {
         fn add_member(&mut self, _node: NodeInfo) {}
         fn remove_member(&mut self, _node_id: &NodeId) {}
         fn local_node_id(&self) -> &NodeId {
-            &NodeId::new("mock")
+            &self.local_node_id
         }
         fn member_count(&self) -> usize { 0 }
         fn is_member(&self, _node_id: &NodeId) -> bool { false }

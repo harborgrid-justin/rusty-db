@@ -61,12 +61,12 @@ pub mod membership;
 pub mod serf;
 
 // Re-exports
-pub use anti_entropy::AntiEntropyEngine;
+pub use anti_entropy::{AntiEntropyEngine, MerkleTree, CrdtCounter};
 pub use beacon::BeaconProtocol;
 pub use broadcast::BroadcastDiscovery;
-pub use gossip::GossipDiscovery;
+pub use gossip::{GossipDiscovery, MemberState};
 pub use mdns::MdnsDiscovery;
-pub use membership::MembershipList;
+pub use membership::{MembershipList, VersionVector, Member, MembershipDelta, MembershipSnapshot};
 pub use serf::SerfProtocol;
 
 /// Node information exchanged during discovery

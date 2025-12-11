@@ -57,7 +57,7 @@ pub mod registry;
 pub use registry::Registry;
 
 /// Represents a discovered node in the cluster
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Node {
     /// Unique node identifier
     pub id: String,

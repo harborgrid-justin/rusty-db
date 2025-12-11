@@ -5,7 +5,7 @@
 
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
@@ -240,7 +240,7 @@ pub struct PoolMetricsSnapshot {
     pub utilization: f64,
 
     /// Timestamp of snapshot
-    pub timestamp: Instant,
+    pub timestamp: SystemTime,
 }
 
 /// Connection-level metrics

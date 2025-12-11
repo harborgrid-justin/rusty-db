@@ -217,7 +217,8 @@ pub struct WarmupStats {
     /// Average time to warm up one connection (milliseconds)
     pub avg_warmup_time_per_connection: f64,
 
-    /// Last warmup timestamp
+    /// Last warmup timestamp (skipped for serde - Instant cannot be serialized)
+    #[serde(skip)]
     pub last_warmup_time: Option<Instant>,
 
     /// Number of failed warmup attempts

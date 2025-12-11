@@ -242,7 +242,7 @@ impl LoadBalancer {
     pub async fn select_backend(&self, context: &LoadBalancerContext) -> Result<Backend> {
         // Check circuit breaker
         let circuit_breaker = self.circuit_breaker.read().await;
-        if !circuit_breaker.can_attempt() {
+        if !circuit_breaker.can_attempt().await {
             return Err(DbError::Unavailable(
                 "Circuit breaker is open".to_string(),
             ));

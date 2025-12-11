@@ -22,6 +22,7 @@
 
 use super::{DiscoveryConfig, DiscoveryEvent, DiscoveryProtocol, NodeInfo, NodeStatus};
 use crate::error::{DbError, Result};
+use socket2::{Domain, Protocol, Socket, Type};
 use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
@@ -93,38 +94,34 @@ impl MdnsDiscovery {
         config: DiscoveryConfig,
         event_tx: mpsc::Sender<DiscoveryEvent>,
     ) -> Result<Self> {
-        // Create UDP socket for multicast
-        let socket = std::net::UdpSocket::bind((Ipv4Addr::UNSPECIFIED, MDNS_PORT))
-            .map_err(|e| DbError::Network(format!("Failed to bind mDNS socket: {}", e)))?;
+        // Create UDP socket for multicast using socket2
+        let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))
+            .map_err(|e| DbError::Network(format!("Failed to create socket: {}", e)))?;
 
         // Set socket options for multicast
-        socket.set_nonblocking(true)
-            .map_err(|e| DbError::Network(format!("Failed to set nonblocking: {}", e)))?;
-
         socket.set_reuse_address(true)
             .map_err(|e| DbError::Network(format!("Failed to set reuse address: {}", e)))?;
 
+        // On Unix systems, also set SO_REUSEPORT for better multicast support
         #[cfg(unix)]
-        {
-            use std::os::unix::io::AsRawFd;
-            let fd = socket.as_raw_fd();
-            unsafe {
-                let optval: libc::c_int = 1;
-                libc::setsockopt(
-                    fd,
-                    libc::SOL_SOCKET,
-                    libc::SO_REUSEPORT,
-                    &optval as *const _ as *const libc::c_void,
-                    std::mem::size_of_val(&optval) as libc::socklen_t,
-                );
-            }
-        }
+        socket.set_reuse_port(true)
+            .map_err(|e| DbError::Network(format!("Failed to set reuse port: {}", e)))?;
+
+        socket.set_nonblocking(true)
+            .map_err(|e| DbError::Network(format!("Failed to set nonblocking: {}", e)))?;
+
+        // Bind to mDNS port
+        let bind_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), MDNS_PORT);
+        socket.bind(&bind_addr.into())
+            .map_err(|e| DbError::Network(format!("Failed to bind mDNS socket: {}", e)))?;
 
         // Join multicast group
         socket.join_multicast_v4(&MDNS_ADDR, &Ipv4Addr::UNSPECIFIED)
             .map_err(|e| DbError::Network(format!("Failed to join multicast group: {}", e)))?;
 
-        let socket = Arc::new(UdpSocket::from_std(socket)
+        // Convert socket2::Socket to std::net::UdpSocket, then to tokio::net::UdpSocket
+        let std_socket: std::net::UdpSocket = socket.into();
+        let socket = Arc::new(UdpSocket::from_std(std_socket)
             .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?);
 
         Ok(Self {
