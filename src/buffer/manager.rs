@@ -1285,6 +1285,7 @@ impl Drop for BufferPoolManager {
 #[cfg(target_os = "windows")]
 pub mod windows {
     use super::*;
+    use crate::buffer::PageBuffer;
     use std::fs::File;
     use std::os::windows::io::{AsRawHandle, RawHandle};
     use std::ptr;
@@ -1293,6 +1294,7 @@ pub mod windows {
     const INVALID_HANDLE_VALUE: RawHandle = -1isize as RawHandle;
 
     /// Operation type for IOCP completion tracking
+    #[repr(C)]
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum IocpOpType {
         Read,
@@ -1388,9 +1390,9 @@ pub mod windows {
         /// Pending operations tracking
         pending_ops: Mutex<HashMap<PageId, Box<IocpOverlapped>>>,
         /// Next operation ID for tracking
-        next_op_id: AtomicU64,
+        _next_op_id: AtomicU64,
         /// Number of concurrent threads (for IOCP thread pool)
-        num_threads: u32,
+        _num_threads: u32,
     }
 
     // Windows API function declarations (using raw FFI for maximum control)
@@ -1485,8 +1487,8 @@ pub mod windows {
                 data_file: None,
                 page_size: PAGE_SIZE,
                 pending_ops: Mutex::new(HashMap::new()),
-                next_op_id: AtomicU64::new(1),
-                num_threads,
+                _next_op_id: AtomicU64::new(1),
+                _num_threads: num_threads,
             })
         }
 

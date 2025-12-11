@@ -21,8 +21,6 @@ use std::os::unix::io::AsRawFd;
 use std::os::unix::fs::OpenOptionsExt;
 #[cfg(windows)]
 use std::os::windows::fs::OpenOptionsExt;
-#[cfg(windows)]
-use std::os::windows::io::AsRawHandle;
 
 // ============================================================================
 // File Handle

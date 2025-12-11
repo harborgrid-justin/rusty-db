@@ -487,7 +487,7 @@ unsafe impl Sync for HugePageAllocation {}
 
 /// Query system huge page information
 pub fn query_huge_page_info() -> HugePageSystemInfo {
-    let mut info = HugePageSystemInfo::default();
+    let info = HugePageSystemInfo::default();
 
     // Try to read from /proc/meminfo (Linux)
     #[cfg(target_os = "linux")]

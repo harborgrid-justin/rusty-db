@@ -224,9 +224,9 @@ pub struct GuardedMemory {
     // Front guard page pointer
     front_guard: NonNull<u8>,
     // Back guard page pointer
-    back_guard: NonNull<u8>,
+    _back_guard: NonNull<u8>,
     // Guard page size
-    guard_size: usize,
+    _guard_size: usize,
     // Allocation metadata
     metadata: AllocationMetadata,
 }
@@ -300,8 +300,8 @@ impl GuardedMemory {
             data_size: size,
             total_size,
             front_guard,
-            back_guard,
-            guard_size,
+            _back_guard: back_guard,
+            _guard_size: guard_size,
             metadata,
         })
     }

@@ -427,7 +427,7 @@ impl WindowsIocp {
 
             // Get the overlapped structure
             let overlapped = unsafe {
-                let offset = overlapped_ptr as usize - overlapped_ptr as usize;
+                let _offset = overlapped_ptr as usize - overlapped_ptr as usize;
                 &*(overlapped_ptr as *const OverlappedIo)
             };
 

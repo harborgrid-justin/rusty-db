@@ -1043,7 +1043,7 @@ impl EncryptedIndex {
 // Protected key storage with memory locking
 pub struct SecureKeyStore {
     key_manager: Arc<KeyManager>,
-    locked_memory: Arc<RwLock<bool>>,
+    _locked_memory: Arc<RwLock<bool>>,
 }
 
 impl SecureKeyStore {
@@ -1051,7 +1051,7 @@ impl SecureKeyStore {
     pub fn new(key_manager: Arc<KeyManager>) -> Self {
         Self {
             key_manager,
-            locked_memory: Arc::new(RwLock::new(false)),
+            _locked_memory: Arc::new(RwLock::new(false)),
         }
     }
 
