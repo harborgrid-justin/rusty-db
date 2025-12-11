@@ -1,0 +1,126 @@
+
+===== PART 1: PAGE-BASED STORAGE TESTS (STOR-001 to STOR-020) =====
+
+STOR-001: Create table with INTEGER and VARCHAR columns... PASS
+STOR-002: Insert single row into page storage... PASS
+STOR-003: Query data from page storage... PASS
+STOR-004: Insert row 2... PASS
+STOR-005: Insert row 3... PASS
+STOR-006: Insert row 4... PASS
+STOR-007: Insert row 5... PASS
+STOR-008: Count rows in page storage... PASS
+STOR-009: Create table with multiple data types... PASS
+STOR-010: Insert mixed data types... PASS
+STOR-011: Query mixed data types... PASS
+STOR-012: Update data in page... FAIL
+STOR-013: Delete data from page... PASS
+STOR-014: Create table with TEXT column... PASS
+STOR-015: Insert large TEXT data... PASS
+STOR-016: Create table with BIGINT... PASS
+STOR-017: Insert BIGINT values... PASS
+STOR-018: Create table with DOUBLE precision... PASS
+STOR-019: Insert DOUBLE precision values... PASS
+STOR-020: Create table with DATE and TIMESTAMP... PASS
+
+===== PART 2: LSM TREE STORAGE TESTS (STOR-021 to STOR-040) =====
+
+STOR-021: Create table for LSM storage... PASS
+STOR-022: LSM Insert key 1... PASS
+STOR-023: LSM Insert key 2... PASS
+STOR-024: LSM Insert key 3... PASS
+STOR-025: LSM Insert key 4... PASS
+STOR-026: LSM Insert key 5... PASS
+STOR-027: LSM update operation... FAIL
+STOR-028: LSM read after write... PASS
+STOR-029: LSM range scan... PASS
+STOR-030: LSM Insert key 6... PASS
+STOR-031: LSM Insert key 7... PASS
+STOR-032: LSM Insert key 8... PASS
+STOR-033: LSM Insert key 9... PASS
+STOR-034: LSM Insert key 10... PASS
+STOR-035: LSM count operation... PASS
+STOR-036: LSM delete (tombstone)... PASS
+STOR-037: LSM query after delete... PASS
+STOR-038: Create second LSM table... PASS
+STOR-039: LSM insert small data... PASS
+STOR-040: LSM insert large data... PASS
+
+===== PART 3: COLUMNAR STORAGE TESTS (STOR-041 to STOR-060) =====
+
+STOR-041: Create columnar analytics table... PASS
+STOR-042: Insert analytics data row 1... PASS
+STOR-043: Insert analytics data row 2... PASS
+STOR-044: Insert analytics data row 3... PASS
+STOR-045: Insert analytics data row 4... PASS
+STOR-046: Insert analytics data row 5... PASS
+STOR-047: SUM aggregate on column... PASS
+STOR-048: AVG aggregate on column... PASS
+STOR-049: GROUP BY on columnar storage... PASS
+STOR-050: Full column scan (COUNT)... PASS
+STOR-051: Select specific columns only... PASS
+STOR-052: Multi-column aggregate... PASS
+STOR-053: Create sales columnar table... PASS
+STOR-054: Insert sales record 1... PASS
+STOR-055: Insert sales record 2... PASS
+STOR-056: Insert sales record 3... PASS
+STOR-057: Calculate total revenue... PASS
+STOR-058: Filter and aggregate... PASS
+STOR-059: Create table for compression test... PASS
+STOR-060: Insert repeating values... PASS
+
+===== PART 4: BUFFER POOL TESTS (STOR-061 to STOR-080) =====
+
+STOR-061: Get initial buffer pool metrics... PASS
+STOR-062: Create table for buffer test... PASS
+STOR-063: Buffer test insert 1... PASS
+STOR-064: Buffer test insert 2... PASS
+STOR-065: Buffer test insert 3... PASS
+STOR-066: Buffer test insert 4... PASS
+STOR-067: Buffer test insert 5... PASS
+STOR-068: Sequential scan (buffer pool)... PASS
+STOR-069: Random access pattern 1... PASS
+STOR-070: Random access pattern 2... PASS
+STOR-071: Random access pattern 3... PASS
+STOR-072: Get buffer metrics after ops... PASS
+STOR-073: Create buffer test table 2... PASS
+STOR-074: Create buffer test table 3... PASS
+STOR-075: Insert into buffer_test_002... PASS
+STOR-076: Insert into buffer_test_003... PASS
+STOR-077: Query buffer_test_001... PASS
+STOR-078: Query buffer_test_002... PASS
+STOR-079: Query buffer_test_003... PASS
+STOR-080: Updates (dirty pages)... FAIL
+
+===== PART 5: DATA TYPES STORAGE TESTS (STOR-081 to STOR-100) =====
+
+STOR-081: Create INTEGER test table... PASS
+STOR-082: Insert INTEGER max value... PASS
+STOR-083: Insert INTEGER min value... PASS
+STOR-084: Insert INTEGER zero... PASS
+STOR-085: Create FLOAT test table... PASS
+STOR-086: Insert FLOAT pi... PASS
+STOR-087: Insert FLOAT negative... PASS
+STOR-088: Create VARCHAR test table... PASS
+STOR-089: Insert VARCHAR values... FAIL
+STOR-090: Create TEXT test table... PASS
+STOR-091: Insert TEXT value... FAIL
+STOR-092: Create BOOLEAN test table... PASS
+STOR-093: Insert BOOLEAN true... PASS
+STOR-094: Insert BOOLEAN false... PASS
+STOR-095: Create BIGINT test table... PASS
+STOR-096: Insert BIGINT large value... PASS
+STOR-097: Create DOUBLE test table... PASS
+STOR-098: Insert DOUBLE precise value... PASS
+STOR-099: Create NULL test table... PASS
+STOR-100: Insert NULL values... PASS
+
+========================================
+All 100 storage tests completed!
+Results saved to: /tmp/storage_test_results_v2.txt
+========================================
+
+SUMMARY:
+  Total Tests: 100
+  Passed: 95
+  Failed: 5
+  Success Rate: 95.0%

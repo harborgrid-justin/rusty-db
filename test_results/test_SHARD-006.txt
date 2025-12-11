@@ -1,0 +1,9 @@
+Test ID: SHARD-006
+Category: table_partitioning
+Description: Check mutation capabilities
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"fields":[{"name":"insertOne"},{"name":"insertMany"},{"name":"updateOne"},{"name":"updateMany"},{"name":"deleteOne"},{"name":"deleteMany"},{"name":"upsert"},{"name":"beginTransaction"},{"name":"commitTransaction"},{"name":"rollbackTransaction"},{"name":"executeTransaction"},{"name":"bulkInsert"},{"name":"createDatabase"},{"name":"dropDatabase"},{"name":"backupDatabase"},{"name":"alterTableAddColumn"},{"name":"alterTableDropColumn"},{"name":"alterTableModifyColumn"},{"name":"alterTableAddConstraint"},{"name":"alterTableDropConstraint"},{"name":"truncateTable"},{"name":"createView"},{"name":"dropView"},{"name":"createIndex"},{"name":"dropIndex"},{"name":"createProcedure"},{"name":"executeProcedure"},{"name":"insertIntoSelect"},{"name":"selectInto"},{"name":"executeStringFunction"},{"name":"batchStringFunctions"}]}}}
+Notes: Mutations available
+---

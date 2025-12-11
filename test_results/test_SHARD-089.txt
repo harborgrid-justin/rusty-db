@@ -1,0 +1,9 @@
+Test ID: SHARD-089
+Category: query_routing
+Description: queryTables (joins) available
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: queryTables found
+Notes: Join support available
+---

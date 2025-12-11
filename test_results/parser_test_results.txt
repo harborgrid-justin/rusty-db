@@ -1,0 +1,828 @@
+========================================
+RUSTYDB PARSER COMPREHENSIVE TEST SUITE
+========================================
+
+=========================================
+TEST: PARSER-001
+DESC: Parse CREATE TABLE with INTEGER and VARCHAR columns
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "CREATE TABLE users (id INT, name VARCHAR(255))"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Injection attempt detected: Injection attack detected: 1 threats found",
+  "details": null,
+  "timestamp": 1765469917,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-002
+DESC: Parse CREATE TABLE with all data types
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "CREATE TABLE test_types (id BIGINT, price FLOAT, total DOUBLE, name TEXT, active BOOLEAN, created DATE, updated TIMESTAMP)"}'
+
+RESPONSE:
+{
+  "query_id": "2b154f46-20b1-4c78-a1ea-ced652a3e439",
+  "rows": [],
+  "columns": [],
+  "row_count": 0,
+  "affected_rows": 0,
+  "execution_time_ms": 0,
+  "plan": null,
+  "warnings": [],
+  "has_more": false
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-003
+DESC: Parse CREATE TABLE with nullable column
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "CREATE TABLE products (id INT, description TEXT NULL)"}'
+
+RESPONSE:
+{
+  "query_id": "bdd77247-1fe6-45a2-96b7-36eca7271355",
+  "rows": [],
+  "columns": [],
+  "row_count": 0,
+  "affected_rows": 0,
+  "execution_time_ms": 0,
+  "plan": null,
+  "warnings": [],
+  "has_more": false
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-004
+DESC: Parse DROP TABLE statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "DROP TABLE users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469917,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-005
+DESC: Parse CREATE INDEX statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "CREATE INDEX idx_users_email ON users (email)"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469917,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-006
+DESC: Parse CREATE UNIQUE INDEX statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "CREATE UNIQUE INDEX idx_users_email_unique ON users (email)"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Security error: Unknown or disallowed SQL operation",
+  "details": null,
+  "timestamp": 1765469917,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-007
+DESC: Parse CREATE INDEX with multiple columns
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "CREATE INDEX idx_users_name_email ON users (name, email)"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469917,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-008
+DESC: Parse DROP INDEX statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "DROP INDEX idx_users_email"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Security error: Unknown or disallowed SQL operation",
+  "details": null,
+  "timestamp": 1765469917,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-009
+DESC: Parse CREATE VIEW statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "CREATE VIEW active_users AS SELECT * FROM users WHERE active = true"}'
+
+RESPONSE:
+{
+  "query_id": "7a0586be-ccdc-4085-8633-24f1ea18edfc",
+  "rows": [],
+  "columns": [],
+  "row_count": 0,
+  "affected_rows": 0,
+  "execution_time_ms": 0,
+  "plan": null,
+  "warnings": [],
+  "has_more": false
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-010
+DESC: Parse DROP VIEW statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "DROP VIEW active_users"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Security error: Unknown or disallowed SQL operation",
+  "details": null,
+  "timestamp": 1765469917,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-011
+DESC: Parse TRUNCATE TABLE statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "TRUNCATE TABLE users"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Security error: Unknown or disallowed SQL operation",
+  "details": null,
+  "timestamp": 1765469918,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-012
+DESC: Parse simple SELECT statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469918,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-013
+DESC: Parse SELECT with specific columns
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT id, name, email FROM users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469918,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-014
+DESC: Parse SELECT with DISTINCT
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT DISTINCT name FROM users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469918,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-015
+DESC: Parse SELECT with WHERE clause
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE age > 18"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469918,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-016
+DESC: Parse SELECT with ORDER BY
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users ORDER BY name ASC"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469918,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-017
+DESC: Parse SELECT with LIMIT
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users LIMIT 10"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469918,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-018
+DESC: Parse SELECT with multiple WHERE conditions
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE age > 18 AND active = true"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469918,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-019
+DESC: Parse INSERT statement with values
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "INSERT INTO users (name, email) VALUES (\"Alice\", \"alice@example.com\")"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469918,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-020
+DESC: Parse INSERT statement with multiple rows
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "INSERT INTO users (name, email) VALUES (\"Alice\", \"alice@example.com\"), (\"Bob\", \"bob@example.com\")"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469919,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-021
+DESC: Parse INSERT with integer values
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "INSERT INTO products (id, price) VALUES (1, 99.99)"}'
+
+RESPONSE:
+{
+  "query_id": "1f8fcbb1-f371-4731-828d-56998ecb0cb7",
+  "rows": [],
+  "columns": [],
+  "row_count": 0,
+  "affected_rows": 1,
+  "execution_time_ms": 0,
+  "plan": null,
+  "warnings": [],
+  "has_more": false
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-022
+DESC: Parse INSERT with NULL value
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "INSERT INTO users (name, email, age) VALUES (\"Charlie\", \"charlie@example.com\", NULL)"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Injection attempt detected: Injection attack detected: 1 threats found",
+  "details": null,
+  "timestamp": 1765469919,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-023
+DESC: Parse DELETE statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "DELETE FROM users WHERE id = 1"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469919,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-024
+DESC: Parse DELETE without WHERE clause
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "DELETE FROM users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469919,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-025
+DESC: Parse SELECT with complex WHERE (BETWEEN)
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE age BETWEEN 18 AND 65"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469919,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-026
+DESC: Parse SELECT with IN clause
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE status IN (\"active\", \"pending\")"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469919,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-027
+DESC: Parse SELECT with LIKE pattern
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE name LIKE \"John%\""}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469919,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-028
+DESC: Parse SELECT with IS NULL
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE email IS NULL"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469919,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-029
+DESC: Parse SELECT with IS NOT NULL
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE email IS NOT NULL"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469920,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-030
+DESC: Parse SELECT with aggregate function
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT COUNT(*) FROM users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469920,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-031
+DESC: Parse SELECT with GROUP BY
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT status, COUNT(*) FROM users GROUP BY status"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469920,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-032
+DESC: Parse SELECT with HAVING clause
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT status, COUNT(*) FROM users GROUP BY status HAVING COUNT(*) > 10"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469920,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-033
+DESC: Test SQL injection prevention - UNION attack
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE id = 1 UNION SELECT * FROM passwords"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Injection attempt detected: Injection attack detected: 1 threats found",
+  "details": null,
+  "timestamp": 1765469920,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-034
+DESC: Test SQL injection prevention - Comment injection
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE id = 1 -- AND active = true"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Injection attempt detected: Injection attack detected: 1 threats found",
+  "details": null,
+  "timestamp": 1765469920,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-035
+DESC: Test SQL injection prevention - Tautology
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users WHERE id = 1 OR 1=1"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Injection attempt detected: Injection attack detected: 1 threats found",
+  "details": null,
+  "timestamp": 1765469920,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-036
+DESC: Test SQL injection prevention - Stacked queries
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * FROM users; DROP TABLE users;"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Injection attempt detected: Injection attack detected: 1 threats found",
+  "details": null,
+  "timestamp": 1765469920,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-037
+DESC: Test malformed SQL - Missing FROM
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT * WHERE id = 1"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "SQL parsing error: No table specified",
+  "details": null,
+  "timestamp": 1765469920,
+  "request_id": null
+}
+
+STATUS: PASS ✓
+
+=========================================
+TEST: PARSER-038
+DESC: Test malformed SQL - Missing table name
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "CREATE TABLE (id INT)"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "SQL parsing error: sql parser error: Expected identifier, found: ( at Line: 1, Column 14",
+  "details": null,
+  "timestamp": 1765469921,
+  "request_id": null
+}
+
+STATUS: PASS ✓
+
+=========================================
+TEST: PARSER-039
+DESC: Test malformed SQL - Invalid syntax
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELCT * FROM users"}'
+
+RESPONSE:
+{
+  "code": "SQL_PARSE_ERROR",
+  "message": "Security error: Unknown or disallowed SQL operation",
+  "details": null,
+  "timestamp": 1765469921,
+  "request_id": null
+}
+
+STATUS: PASS ✓
+
+=========================================
+TEST: PARSER-040
+DESC: Test empty SQL statement
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": ""}'
+
+RESPONSE:
+{
+  "code": "INVALID_INPUT",
+  "message": "SQL query cannot be empty",
+  "details": null,
+  "timestamp": 1765469921,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-041
+DESC: Test SQL with only whitespace
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "   "}'
+
+RESPONSE:
+{
+  "code": "INVALID_INPUT",
+  "message": "SQL query cannot be empty",
+  "details": null,
+  "timestamp": 1765469921,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-042
+DESC: Parse SELECT with UPPER function
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT UPPER(name) FROM users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469921,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-043
+DESC: Parse SELECT with LOWER function
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT LOWER(email) FROM users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469921,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-044
+DESC: Parse SELECT with LENGTH function
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT LENGTH(name) FROM users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469921,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-045
+DESC: Parse SELECT with CONCAT function
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT CONCAT(first_name, last_name) FROM users"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table users not found",
+  "details": null,
+  "timestamp": 1765469921,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-046
+DESC: Parse SELECT with arithmetic addition
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT price + tax FROM products"}'
+
+RESPONSE:
+{
+  "query_id": "b7d9ba1d-dc3c-4406-9591-aa4882515230",
+  "rows": [],
+  "columns": [],
+  "row_count": 0,
+  "affected_rows": 0,
+  "execution_time_ms": 0,
+  "plan": null,
+  "warnings": [],
+  "has_more": false
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-047
+DESC: Parse SELECT with arithmetic multiplication
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT price * quantity FROM orders"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table orders not found",
+  "details": null,
+  "timestamp": 1765469921,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-048
+DESC: Parse SELECT with complex arithmetic
+CMD:  curl -s -X POST http://localhost:8080/api/v1/query -H 'Content-Type: application/json' -d '{"sql": "SELECT (price * quantity) + tax FROM orders"}'
+
+RESPONSE:
+{
+  "code": "EXECUTION_ERROR",
+  "message": "Catalog error: Table orders not found",
+  "details": null,
+  "timestamp": 1765469922,
+  "request_id": null
+}
+
+STATUS: FAIL ✗
+
+=========================================
+TEST: PARSER-049
+DESC: GraphQL: Parse simple table query
+QUERY: { tables { name } }
+
+RESPONSE:
+{
+  "data": {
+    "tables": []
+  }
+}
+
+STATUS: PASS ✓
+
+=========================================
+TEST: PARSER-050
+DESC: GraphQL: Parse table with columns
+QUERY: { table(name: \"users\") { name columns { name dataType } } }
+
+RESPONSE:
+{
+  "data": {
+    "table": null
+  }
+}
+
+STATUS: PASS ✓
+
+=========================================
+TEST SUMMARY
+=========================================
+Total Tests: 50
+Passed:      5
+Failed:      45
+Success Rate: 10.00%
+=========================================

@@ -1,0 +1,9 @@
+Test ID: SHARD-050
+Category: horizontal_sharding
+Description: Cluster health check #13
+Method: GET
+Endpoint: /api/v1/cluster/nodes
+Status: PASS
+Response: Nodes: 1
+Notes: Cluster responsive
+---

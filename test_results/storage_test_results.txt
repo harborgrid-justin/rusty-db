@@ -1,0 +1,271 @@
+RustyDB Storage Engine Test Results - Thu Dec 11 15:45:50 UTC 2025
+========================================
+STOR-001: FAIL - Create table with INTEGER and VARCHAR columns (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 125
+STOR-002: FAIL - Insert single row into page storage
+  SQL: INSERT INTO page_test_001 (id, data) VALUES (1, 'Test Data')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_001 not found","details":null,"timestamp":1765467950,"request_id":null}
+STOR-003: FAIL - Query data from page storage
+  SQL: SELECT * FROM page_test_001
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_001 not found","details":null,"timestamp":1765467950,"request_id":null}
+STOR-004: FAIL - Insert 100 rows to fill pages
+  SQL: INSERT INTO page_test_001 (id, data) SELECT generate_series(2, 101), 'Data ' || generate_series(2, 101)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_001 not found","details":null,"timestamp":1765467950,"request_id":null}
+STOR-005: FAIL - Count rows in page storage
+  SQL: SELECT COUNT(*) FROM page_test_001
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_001 not found","details":null,"timestamp":1765467950,"request_id":null}
+STOR-006: FAIL - Create table with multiple data types (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 235
+STOR-007: FAIL - Insert mixed data types
+  SQL: INSERT INTO page_test_types (id, name, price, active) VALUES (1, 'Product A', 19.99, true)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_types not found","details":null,"timestamp":1765467950,"request_id":null}
+STOR-008: FAIL - Query mixed data types
+  SQL: SELECT * FROM page_test_types WHERE active = true
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_types not found","details":null,"timestamp":1765467950,"request_id":null}
+STOR-009: FAIL - Update data in page
+  SQL: UPDATE page_test_001 SET data = 'Updated Data' WHERE id = 1
+  Error: {"code":"SQL_PARSE_ERROR","message":"SQL parsing error: Unsupported statement type","details":null,"timestamp":1765467950,"request_id":null}
+STOR-010: FAIL - Delete data from page
+  SQL: DELETE FROM page_test_001 WHERE id = 50
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_001 not found","details":null,"timestamp":1765467950,"request_id":null}
+STOR-011: FAIL - Create table with TEXT column (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 120
+STOR-012: FAIL - Insert large TEXT data
+  SQL: INSERT INTO page_test_large (id, content) VALUES (1, 'Large content that spans multiple pages')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_large not found","details":null,"timestamp":1765467951,"request_id":null}
+STOR-013: FAIL - Create table with BIGINT (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 119
+STOR-014: FAIL - Insert BIGINT values
+  SQL: INSERT INTO page_test_bigint (id, value) VALUES (9223372036854775807, 1234567890123)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_bigint not found","details":null,"timestamp":1765467951,"request_id":null}
+STOR-015: FAIL - Create table with DOUBLE precision (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 120
+STOR-016: FAIL - Insert DOUBLE precision values
+  SQL: INSERT INTO page_test_double (id, value) VALUES (1, 3.141592653589793)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_double not found","details":null,"timestamp":1765467951,"request_id":null}
+STOR-017: FAIL - Create table with DATE column (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 123
+STOR-018: FAIL - Insert DATE values
+  SQL: INSERT INTO page_test_date (id, birth_date) VALUES (1, '2024-01-15')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_date not found","details":null,"timestamp":1765467951,"request_id":null}
+STOR-019: FAIL - Create table with TIMESTAMP (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 128
+STOR-020: FAIL - Insert TIMESTAMP values
+  SQL: INSERT INTO page_test_timestamp (id, created_at) VALUES (1, '2024-01-15 14:30:00')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table page_test_timestamp not found","details":null,"timestamp":1765467951,"request_id":null}
+STOR-021: FAIL - Create table for LSM storage (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 127
+STOR-022: FAIL - Bulk insert 500 rows (LSM write test)
+  SQL: INSERT INTO lsm_test_001 (key, value) SELECT generate_series(1, 500), 'Value ' || generate_series(1, 500)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467951,"request_id":null}
+STOR-023: FAIL - Random updates on LSM storage
+  SQL: UPDATE lsm_test_001 SET value = 'Updated ' || key WHERE key % 10 = 0
+  Error: {"code":"SQL_PARSE_ERROR","message":"SQL parsing error: Unsupported statement type","details":null,"timestamp":1765467951,"request_id":null}
+STOR-024: FAIL - Read performance after writes
+  SQL: SELECT * FROM lsm_test_001 WHERE key = 250
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467951,"request_id":null}
+STOR-025: FAIL - Range scan on LSM storage
+  SQL: SELECT * FROM lsm_test_001 WHERE key BETWEEN 100 AND 200
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-026: FAIL - Insert row 501 (memtable)
+  SQL: INSERT INTO lsm_test_001 VALUES (501, 'Test 501')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-027: FAIL - Insert row 502 (memtable)
+  SQL: INSERT INTO lsm_test_001 VALUES (502, 'Test 502')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-028: FAIL - Insert row 503 (memtable)
+  SQL: INSERT INTO lsm_test_001 VALUES (503, 'Test 503')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-029: FAIL - Read from memtable
+  SQL: SELECT * FROM lsm_test_001 WHERE key IN (501, 502, 503)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-030: FAIL - Large batch insert (1000 rows)
+  SQL: INSERT INTO lsm_test_001 SELECT generate_series(600, 1599), 'Batch ' || generate_series(600, 1599)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-031: FAIL - Count rows after bulk operations
+  SQL: SELECT COUNT(*) FROM lsm_test_001
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-032: FAIL - Delete operations (tombstones)
+  SQL: DELETE FROM lsm_test_001 WHERE key > 1500
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-033: FAIL - Query after deletes
+  SQL: SELECT * FROM lsm_test_001 WHERE key > 1490
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_001 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-034: FAIL - Create second LSM table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 117
+STOR-035: FAIL - Insert varying size data
+  SQL: INSERT INTO lsm_test_002 VALUES (1, 'Small'), (2, 'Medium sized data here'), (3, 'Large data with lots of content to test LSM storage efficiency')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_002 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-036: FAIL - Update changing data size
+  SQL: UPDATE lsm_test_002 SET data = 'Very large updated content' WHERE id = 1
+  Error: {"code":"SQL_PARSE_ERROR","message":"SQL parsing error: Unsupported statement type","details":null,"timestamp":1765467952,"request_id":null}
+STOR-037: FAIL - Batch insert set 1
+  SQL: INSERT INTO lsm_test_002 SELECT generate_series(10, 109), 'Data ' || generate_series(10, 109)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_002 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-038: FAIL - Batch insert set 2
+  SQL: INSERT INTO lsm_test_002 SELECT generate_series(110, 209), 'Data ' || generate_series(110, 209)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_002 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-039: FAIL - Read mixed data sizes
+  SQL: SELECT * FROM lsm_test_002 WHERE id < 10
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_002 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-040: FAIL - Aggregate query on LSM
+  SQL: SELECT COUNT(*), MIN(id), MAX(id) FROM lsm_test_002
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table lsm_test_002 not found","details":null,"timestamp":1765467952,"request_id":null}
+STOR-041: FAIL - Create columnar analytics table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 240
+STOR-042: FAIL - Insert analytics data
+  SQL: INSERT INTO columnar_test_001 (id, category, amount, quantity) VALUES (1, 'A', 100.50, 10), (2, 'B', 200.75, 20), (3, 'A', 150.25, 15)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_test_001 not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-043: FAIL - SUM aggregate on column
+  SQL: SELECT SUM(amount) FROM columnar_test_001
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_test_001 not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-044: FAIL - AVG aggregate on column
+  SQL: SELECT AVG(quantity) FROM columnar_test_001
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_test_001 not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-045: FAIL - GROUP BY on columnar storage
+  SQL: SELECT category, SUM(amount) FROM columnar_test_001 GROUP BY category
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_test_001 not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-046: FAIL - Bulk insert for analytics (500 rows)
+  SQL: INSERT INTO columnar_test_001 SELECT generate_series(4, 503), 'Cat_' || (generate_series(4, 503) % 10), (generate_series(4, 503) * 1.5), generate_series(4, 503)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_test_001 not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-047: FAIL - Full column scan (COUNT)
+  SQL: SELECT COUNT(*) FROM columnar_test_001
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_test_001 not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-048: FAIL - Select specific columns only
+  SQL: SELECT category, amount FROM columnar_test_001 WHERE id < 10
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_test_001 not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-050: FAIL - Multi-column aggregate
+  SQL: SELECT category, COUNT(*), SUM(amount), AVG(quantity) FROM columnar_test_001 GROUP BY category
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_test_001 not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-051: FAIL - Create sales columnar table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 297
+STOR-052: FAIL - Insert sales records
+  SQL: INSERT INTO columnar_sales VALUES (1, 'Widget', 19.99, 100, 1999.00), (2, 'Gadget', 29.99, 50, 1499.50), (3, 'Doohickey', 9.99, 200, 1998.00)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_sales not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-053: FAIL - Calculate total revenue
+  SQL: SELECT SUM(revenue) FROM columnar_sales
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_sales not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-054: FAIL - Top products by revenue
+  SQL: SELECT product, revenue FROM columnar_sales ORDER BY revenue DESC
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_sales not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-055: FAIL - Bulk insert sales data
+  SQL: INSERT INTO columnar_sales SELECT generate_series(10, 509), 'Product_' || generate_series(10, 509), (generate_series(10, 509) * 0.99), generate_series(10, 509), (generate_series(10, 509) * 0.99 * generate_series(10, 509))
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_sales not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-056: FAIL - OLAP query with filter
+  SQL: SELECT product, SUM(sold), SUM(revenue) FROM columnar_sales WHERE price > 10 GROUP BY product
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_sales not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-057: FAIL - Create table for compression test (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 181
+STOR-058: FAIL - Insert repeating values
+  SQL: INSERT INTO columnar_compress SELECT generate_series(1, 1000), 'ACTIVE', generate_series(1, 1000) % 100
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_compress not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-059: FAIL - Query on compressed column
+  SQL: SELECT status, COUNT(*) FROM columnar_compress GROUP BY status
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_compress not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-060: FAIL - Range query on columnar storage
+  SQL: SELECT * FROM columnar_compress WHERE value BETWEEN 50 AND 60
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table columnar_compress not found","details":null,"timestamp":1765467953,"request_id":null}
+STOR-061: PASS - Get initial buffer pool metrics
+  Response: {"timestamp":1765467953,"metrics":{"total_requests":{"value":717.0,"unit":"count","labels":{}},"successful_requests":{"value":717.0,"unit":"count","labels":{}},"avg_response_time":{"value":0.0,"unit":"milliseconds","labels":{}}},"prometheus_format":null}
+STOR-062: FAIL - Create table for buffer test (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 126
+STOR-063: FAIL - Insert 200 rows (buffer fill)
+  SQL: INSERT INTO buffer_test_001 SELECT generate_series(1, 200), 'Data ' || REPEAT('X', 900)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_001 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-064: FAIL - Sequential scan (buffer pool)
+  SQL: SELECT COUNT(*) FROM buffer_test_001
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_001 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-065: FAIL - Random access pattern
+  SQL: SELECT * FROM buffer_test_001 WHERE id = 100
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_001 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-066: FAIL - Random access 2
+  SQL: SELECT * FROM buffer_test_001 WHERE id = 50
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_001 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-067: FAIL - Random access 3
+  SQL: SELECT * FROM buffer_test_001 WHERE id = 150
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_001 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-068: PASS - Get buffer metrics after ops
+  Response: {"timestamp":1765467954,"metrics":{"avg_response_time":{"value":0.0,"unit":"milliseconds","labels":{}},"total_requests":{"value":724.0,"unit":"count","labels":{}},"successful_requests":{"value":724.0,"unit":"count","labels":{}}},"prometheus_format":null}
+STOR-069: FAIL - Create buffer test table 2 (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 118
+STOR-070: FAIL - Create buffer test table 3 (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 118
+STOR-071: FAIL - Insert into buffer_test_002
+  SQL: INSERT INTO buffer_test_002 SELECT generate_series(1, 100), 'Value ' || generate_series(1, 100)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_002 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-072: FAIL - Insert into buffer_test_003
+  SQL: INSERT INTO buffer_test_003 SELECT generate_series(1, 100), 'Value ' || generate_series(1, 100)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_003 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-073: FAIL - Query buffer_test_001
+  SQL: SELECT COUNT(*) FROM buffer_test_001
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_001 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-074: FAIL - Query buffer_test_002
+  SQL: SELECT COUNT(*) FROM buffer_test_002
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_002 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-075: FAIL - Query buffer_test_003
+  SQL: SELECT COUNT(*) FROM buffer_test_003
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_003 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-076: FAIL - Large data insertion
+  SQL: INSERT INTO buffer_test_001 SELECT generate_series(201, 400), REPEAT('Y', 990)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_001 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-077: FAIL - Access potentially evicted data
+  SQL: SELECT * FROM buffer_test_001 WHERE id = 1
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_001 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-078: FAIL - Full scan after eviction
+  SQL: SELECT COUNT(*) FROM buffer_test_001
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table buffer_test_001 not found","details":null,"timestamp":1765467954,"request_id":null}
+STOR-079: PASS - Get final buffer pool metrics
+  Response: {"timestamp":1765467955,"metrics":{"successful_requests":{"value":735.0,"unit":"count","labels":{}},"avg_response_time":{"value":0.0,"unit":"milliseconds","labels":{}},"total_requests":{"value":735.0,"unit":"count","labels":{}}},"prometheus_format":null}
+STOR-080: FAIL - Updates (dirty pages)
+  SQL: UPDATE buffer_test_001 SET data = 'Updated' WHERE id % 10 = 0
+  Error: {"code":"SQL_PARSE_ERROR","message":"SQL parsing error: Unsupported statement type","details":null,"timestamp":1765467955,"request_id":null}
+STOR-081: FAIL - Create INTEGER test table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 121
+STOR-082: FAIL - Insert INTEGER values
+  SQL: INSERT INTO type_test_integer VALUES (1, 2147483647), (2, -2147483648), (3, 0), (4, 42)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table type_test_integer not found","details":null,"timestamp":1765467955,"request_id":null}
+STOR-083: FAIL - Create FLOAT test table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 119
+STOR-084: FAIL - Insert FLOAT values
+  SQL: INSERT INTO type_test_float VALUES (1, 3.14159), (2, -2.71828), (3, 0.0), (4, 1.23456e10)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table type_test_float not found","details":null,"timestamp":1765467955,"request_id":null}
+STOR-085: FAIL - Create VARCHAR test table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 260
+STOR-086: FAIL - Insert VARCHAR values
+  SQL: INSERT INTO type_test_varchar VALUES (1, 'Short', 'Medium length text here', 'Long text with lots of characters to test VARCHAR storage')
+  Error: {"code":"SQL_PARSE_ERROR","message":"Injection attempt detected: Injection attack detected: 1 threats found","details":null,"timestamp":1765467955,"request_id":null}
+STOR-087: FAIL - Create TEXT test table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 120
+STOR-088: FAIL - Insert TEXT values
+  SQL: INSERT INTO type_test_text VALUES (1, 'This is a very long text field that can store large amounts of data without a predefined limit like VARCHAR')
+  Error: {"code":"SQL_PARSE_ERROR","message":"Injection attempt detected: Injection attack detected: 1 threats found","details":null,"timestamp":1765467955,"request_id":null}
+STOR-089: FAIL - Create BOOLEAN test table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 120
+STOR-090: FAIL - Insert BOOLEAN values
+  SQL: INSERT INTO type_test_boolean VALUES (1, true), (2, false), (3, true)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table type_test_boolean not found","details":null,"timestamp":1765467955,"request_id":null}
+STOR-091: FAIL - Create DATE comprehensive table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 123
+STOR-092: FAIL - Insert DATE values
+  SQL: INSERT INTO type_test_date_full VALUES (1, '2024-01-01'), (2, '1999-12-31'), (3, '2025-06-15')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table type_test_date_full not found","details":null,"timestamp":1765467956,"request_id":null}
+STOR-093: FAIL - Create TIMESTAMP comprehensive table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 190
+STOR-094: FAIL - Insert TIMESTAMP values
+  SQL: INSERT INTO type_test_timestamp_full VALUES (1, '2024-01-15 10:30:00', '2024-01-15 14:45:30')
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table type_test_timestamp_full not found","details":null,"timestamp":1765467956,"request_id":null}
+STOR-095: FAIL - Create BIGINT comprehensive table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 125
+STOR-096: FAIL - Insert BIGINT values
+  SQL: INSERT INTO type_test_bigint_full VALUES (9223372036854775807, 1234567890123456789)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table type_test_bigint_full not found","details":null,"timestamp":1765467956,"request_id":null}
+STOR-097: FAIL - Create DOUBLE comprehensive table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 128
+STOR-098: FAIL - Insert DOUBLE values
+  SQL: INSERT INTO type_test_double_full VALUES (1, 3.141592653589793238), (2, 2.718281828459045235)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table type_test_double_full not found","details":null,"timestamp":1765467956,"request_id":null}
+STOR-099: FAIL - Create NULL test table (HTTP 422)
+  Response: Failed to deserialize the JSON body into the target type: missing field `table_name` at line 1 column 251
+STOR-100: FAIL - Insert NULL values
+  SQL: INSERT INTO type_test_null VALUES (1, NULL, 'Text', true), (2, 42, NULL, false), (3, 100, 'Data', NULL)
+  Error: {"code":"EXECUTION_ERROR","message":"Catalog error: Table type_test_null not found","details":null,"timestamp":1765467956,"request_id":null}

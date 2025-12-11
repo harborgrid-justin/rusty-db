@@ -1,0 +1,9 @@
+Test ID: SHARD-004
+Category: table_partitioning
+Description: Check QueryResult types
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"possibleTypes":[{"name":"QuerySuccess"},{"name":"QueryError"}]}}}
+Notes: QueryResult union discovered
+---

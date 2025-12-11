@@ -1,0 +1,9 @@
+Test ID: SHARD-090
+Category: query_routing
+Description: Search functionality
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"fields":[{"name":"results"},{"name":"totalCount"},{"name":"executionTimeMs"}]}}}
+Notes: Search supported
+---

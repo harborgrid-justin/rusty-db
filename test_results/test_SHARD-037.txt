@@ -1,0 +1,9 @@
+Test ID: SHARD-037
+Category: horizontal_sharding
+Description: Get shard distribution
+Method: GET
+Endpoint: /api/v1/cluster/shards/distribution
+Status: INFO
+Response: 
+Notes: Distribution endpoint tested
+---

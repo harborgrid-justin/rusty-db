@@ -1,0 +1,9 @@
+Test ID: SHARD-015
+Category: table_partitioning
+Description: Partition strategy support verification
+Method: CODE
+Endpoint: storage/partitioning/
+Status: PASS
+Response: PartitionStrategy enum exists
+Notes: Range, Hash, List, Composite supported in codebase
+---

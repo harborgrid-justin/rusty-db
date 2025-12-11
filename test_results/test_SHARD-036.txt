@@ -1,0 +1,9 @@
+Test ID: SHARD-036
+Category: horizontal_sharding
+Description: Get cluster shards
+Method: GET
+Endpoint: /api/v1/cluster/shards
+Status: INFO
+Response: 
+Notes: Shards endpoint tested
+---

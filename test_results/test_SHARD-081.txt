@@ -1,0 +1,9 @@
+Test ID: SHARD-081
+Category: query_routing
+Description: GraphQL query fields available
+Method: POST
+Endpoint: /graphql
+Status: FAIL
+Response: {"data":{"__type":null}}
+Notes: Query capabilities missing
+---

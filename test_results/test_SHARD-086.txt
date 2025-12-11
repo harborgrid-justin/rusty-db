@@ -1,0 +1,9 @@
+Test ID: SHARD-086
+Category: query_routing
+Description: Filter condition support
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"inputFields":[{"name":"field"},{"name":"op"},{"name":"value"},{"name":"values"}]}}}
+Notes: Filtering supported
+---

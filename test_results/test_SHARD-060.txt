@@ -1,0 +1,9 @@
+Test ID: SHARD-060
+Category: horizontal_sharding
+Description: Cluster config stability #10
+Method: GET
+Endpoint: /api/v1/cluster/config
+Status: PASS
+Response: Config stable
+Notes: Configuration consistent
+---

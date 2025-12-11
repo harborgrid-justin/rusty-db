@@ -1,0 +1,1 @@
+   Compiling rusty-db v0.1.0 (/home/user/rusty-db)

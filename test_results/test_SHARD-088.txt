@@ -1,0 +1,9 @@
+Test ID: SHARD-088
+Category: query_routing
+Description: queryTable interface exists
+Method: POST
+Endpoint: /graphql
+Status: FAIL
+Response: queryTable not found
+Notes: Interface missing
+---
