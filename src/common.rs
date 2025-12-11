@@ -467,6 +467,9 @@ pub enum IsolationLevel {
 
     /// Full isolation (no anomalies)
     Serializable,
+
+    /// MVCC-based snapshot isolation
+    SnapshotIsolation,
 }
 
 impl Default for IsolationLevel {

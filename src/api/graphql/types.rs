@@ -219,6 +219,7 @@ pub enum IsolationLevel {
     ReadCommitted,
     RepeatableRead,
     Serializable,
+    SnapshotIsolation,
 }
 
 // Node interface - all objects with an ID implement this

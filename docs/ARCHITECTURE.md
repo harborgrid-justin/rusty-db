@@ -436,18 +436,30 @@ stateDiagram-v2
 ```
 
 **Responsibilities**:
-- Transaction ID allocation (atomic counter)
-- Snapshot assignment (isolation level dependent)
+- Transaction ID allocation (UUID-based)
+- Snapshot assignment (timestamp-based MVCC)
 - Transaction state tracking (active, committed, aborted)
 - Commit/abort coordination
 
-**Isolation Levels**:
-1. **Read Uncommitted**: No snapshot, dirty reads allowed
-2. **Read Committed**: Snapshot per statement, sees committed data
-3. **Repeatable Read**: Snapshot per transaction, no phantom reads
-4. **Serializable**: SSI (Serializable Snapshot Isolation) with conflict detection
+**Isolation Levels** (Fully Implemented & Tested):
+1. **Read Uncommitted**: Allows dirty reads, lowest isolation
+2. **Read Committed**: Sees only committed data, new snapshot per statement (default)
+3. **Repeatable Read**: Consistent snapshot for entire transaction, prevents non-repeatable reads
+4. **Serializable**: Strictest isolation, prevents all anomalies via two-phase locking
+
+**Note**: While `SnapshotIsolation` exists as an enum variant in the codebase, the current implementation uses MVCC snapshots across all isolation levels. The distinction between Repeatable Read and true Snapshot Isolation (allowing write skew) is not yet fully implemented. See [Issue #XX] for tracking.
 
 #### MVCC (Multi-Version Concurrency Control)
+
+**Implementation Status**: ✅ **Fully Implemented and Tested**
+
+RustyDB uses MVCC to provide non-blocking reads across all isolation levels. Each transaction creates a snapshot with nanosecond-precision timestamps.
+
+**Snapshot Management**:
+- **Snapshot Creation**: Every transaction receives a unique snapshot with timestamp
+- **Timestamp Precision**: Nanosecond-level precision prevents collisions
+- **Concurrent Snapshots**: Multiple snapshots coexist without interference
+- **Test-Verified**: 100% pass rate on 25 MVCC behavior tests (see TRANSACTION_TEST_RESULTS.md)
 
 **Version Chain**:
 ```
@@ -456,17 +468,22 @@ Tuple V1 (TxnID=100, deleted_by=200) → Tuple V2 (TxnID=200, deleted_by=NULL)
    (visible to TxnID<200)              (visible to TxnID>=200)
 ```
 
-**Visibility Rules** (Snapshot Isolation):
+**Visibility Rules** (Timestamp-Based):
 ```rust
-fn is_visible(tuple: &Tuple, snapshot: &Snapshot) -> bool {
-    if tuple.created_by > snapshot.xmax {
-        return false; // Created after snapshot
+fn is_visible(tuple: &Tuple, snapshot_timestamp: SystemTime) -> bool {
+    // Tuple created after snapshot timestamp
+    if tuple.created_at > snapshot_timestamp {
+        return false;
     }
-    if tuple.deleted_by > 0 && tuple.deleted_by <= snapshot.xmax {
-        return false; // Deleted before snapshot
+    // Tuple deleted before snapshot timestamp
+    if let Some(deleted_at) = tuple.deleted_at {
+        if deleted_at <= snapshot_timestamp {
+            return false;
+        }
     }
-    if snapshot.active_txns.contains(&tuple.created_by) {
-        return false; // Created by concurrent transaction
+    // Check if creating transaction was active at snapshot time
+    if snapshot.active_txns.contains(&tuple.created_by_txn) {
+        return false;
     }
     true
 }

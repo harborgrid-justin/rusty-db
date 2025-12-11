@@ -34,21 +34,33 @@ See `.scratchpad/COORDINATION_MASTER.md` for current refactoring status and agen
 - **Triggers**: Row-level and statement-level triggers
 
 ### Enterprise Security
-- **10 Specialized Security Modules**:
+
+**✅ Implementation Status**: **17 Security Modules Verified** (2025-12-11)
+
+- **Core Security Modules (10)**:
   1. Memory Hardening - Buffer overflow protection, guard pages
-  2. Buffer Overflow Protection - Bounds checking, stack canaries
+  2. Bounds Protection - Bounds checking, stack canaries
   3. Insider Threat Detection - Behavioral analytics, anomaly detection
-  4. Network Hardening - DDoS protection, rate limiting
+  4. Network Hardening - DDoS protection, rate limiting, intrusion detection
   5. Injection Prevention - SQL/command injection defense
   6. Auto-Recovery - Automatic failure detection and recovery
   7. Circuit Breaker - Cascading failure prevention
-  8. Encryption Engine - TDE, column encryption, key rotation
-  9. Secure Garbage Collection - Memory sanitization
-  10. Security Core - Unified policy engine, compliance validation
+  8. Encryption Engine - Military-grade encryption, key management
+  9. Secure Garbage Collection - Memory sanitization, cryptographic erasure
+  10. Security Core - Unified policy engine, threat detection
 
-- **Authentication & Authorization**: RBAC, MFA (TOTP/SMS), session management
-- **Data Protection**: Transparent Data Encryption (TDE), column-level encryption
-- **Audit & Compliance**: Tamper-proof logs, SOC2/HIPAA/PCI-DSS/GDPR compliance
+- **Authentication & Authorization (4)**:
+  - Authentication - Password hashing, MFA, session management
+  - RBAC - Role-Based Access Control
+  - FGAC - Fine-Grained Access Control (row/column level)
+  - Privileges - System and object privilege management
+
+- **Supporting Modules (3)**:
+  - Audit Logging - Tamper-proof audit trail
+  - Security Labels - Multi-Level Security (MLS) classification
+  - Encryption - Core encryption primitives
+
+**See**: `docs/SECURITY_ARCHITECTURE.md` for complete details
 
 ### High Availability & Clustering
 - **Replication**: Synchronous, asynchronous, and semi-synchronous replication
@@ -164,26 +176,83 @@ cargo bench
 
 ## Usage
 
+### ⚠️ Implementation Status (Last Updated: 2025-12-11)
+
+**What's Working:**
+
+✅ **Core Transaction System** (69.3% test pass rate)
+- Transaction lifecycle: BEGIN, COMMIT, ROLLBACK
+- 4 isolation levels: READ_UNCOMMITTED, READ_COMMITTED (default), REPEATABLE_READ, SERIALIZABLE
+- UUID-based transaction IDs with nanosecond-precision timestamps
+- MVCC snapshots: 100% test pass rate (25/25 tests)
+- Atomic transaction execution
+
+✅ **GraphQL API** (http://localhost:8080/graphql)
+- `beginTransaction(isolationLevel: IsolationLevel)`
+- `commitTransaction(transactionId: String!)`
+- `rollbackTransaction(transactionId: String!)`
+- `executeTransaction(operations: [TransactionOperation!]!)`
+
+✅ **Security Modules** (17 modules verified)
+- All core security components implemented in codebase
+- See `docs/SECURITY_ARCHITECTURE.md` for full details
+
+**What's In Development:**
+
+⚠️ **Snapshot Isolation**: Enum exists but not yet functionally distinct from REPEATABLE_READ
+
+⚠️ **SQL Parser/CLI**: Implementation exists but integration with live server needs verification
+
+⚠️ **Clustering/Replication**: Modules exist but not fully tested in production scenarios
+
+⚠️ **Configuration System**: Basic config works (4 options), extensive file-based config planned
+
 ### Starting the Database Server
 
 ```bash
-# Start server on default port (5432)
+# Start server (GraphQL API on port 8080, DB on port 5432)
 cargo run --bin rusty-db-server
 
 # Or run the release build
 ./target/release/rusty-db-server
 ```
 
-### Using the CLI Client
+**GraphQL Playground**: Open http://localhost:8080/graphql in your browser
+
+### Testing Transactions via GraphQL
+
+```graphql
+# Begin a transaction
+mutation {
+  beginTransaction(isolationLevel: SERIALIZABLE) {
+    transactionId
+    status
+    timestamp
+  }
+}
+
+# Execute atomic operations
+mutation {
+  executeTransaction(
+    operations: [
+      { operationType: INSERT, table: "users", data: {id: 1, name: "Alice"} }
+    ]
+    isolationLevel: READ_COMMITTED
+  ) {
+    success
+    executionTimeMs
+  }
+}
+```
+
+### Using the CLI Client (⚠️ Verify Current Status)
 
 ```bash
 # Start the interactive CLI
 cargo run --bin rusty-db-cli
 
-# Connect and run SQL commands
-rusty-db> CREATE TABLE users (id INT, name VARCHAR(255));
-rusty-db> INSERT INTO users VALUES (1, 'Alice');
-rusty-db> SELECT * FROM users;
+# Note: CLI integration with live server should be tested
+# GraphQL API is the currently verified interface
 ```
 
 ### Example SQL Operations

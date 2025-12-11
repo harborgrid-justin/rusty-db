@@ -18,6 +18,7 @@ use axum::{
 };
 
 use crate::error::DbError;
+use crate::networking::NetworkManager;
 
 // Newtype for API configuration to ensure domain-specific handling
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,6 +51,14 @@ pub struct ApiConfig {
     pub default_page_size: usize,
     // Pagination max page size
     pub max_page_size: usize,
+    // GraphQL introspection enabled (should be false in production)
+    pub graphql_introspection: bool,
+    // GraphQL playground enabled (should be false in production)
+    pub graphql_playground: bool,
+    // GraphQL max query depth
+    pub graphql_max_depth: usize,
+    // GraphQL max query complexity
+    pub graphql_max_complexity: usize,
 }
 
 impl Default for ApiConfig {
@@ -58,7 +67,15 @@ impl Default for ApiConfig {
             listen_addr: "0.0.0.0".to_string(),
             port: 8080,
             enable_cors: true,
-            cors_origins: vec!["*".to_string()],
+            // SECURITY: Default to localhost origins for development.
+            // In production, ALWAYS configure specific trusted origins.
+            // NEVER use "*" as it allows any origin (CSRF vulnerability).
+            cors_origins: vec![
+                "http://localhost:3000".to_string(),
+                "http://localhost:8080".to_string(),
+                "http://127.0.0.1:3000".to_string(),
+                "http://127.0.0.1:8080".to_string(),
+            ],
             rate_limit_rps: 100,
             request_timeout_secs: 30,
             max_body_size: 10 * 1024 * 1024, // 10MB
@@ -69,6 +86,11 @@ impl Default for ApiConfig {
             enable_logging: true,
             default_page_size: 50,
             max_page_size: 1000,
+            // Secure defaults: introspection and playground disabled in production
+            graphql_introspection: false,
+            graphql_playground: false,
+            graphql_max_depth: 10,
+            graphql_max_complexity: 1000,
         }
     }
 }
@@ -90,6 +112,7 @@ pub struct ApiState {
     pub active_sessions: Arc<RwLock<HashMap<SessionId, SessionInfo>>>,
     pub metrics: Arc<RwLock<ApiMetrics>>,
     pub rate_limiter: Arc<RwLock<RateLimiter>>,
+    pub network_manager: Option<Arc<NetworkManager>>,
 }
 
 // API error with structured information
@@ -759,4 +782,119 @@ impl<T> PaginatedResponse<T> {
             has_prev: page > 1,
         }
     }
+}
+
+// ============================================================================
+// Request/Response Types - System Information
+// ============================================================================
+
+// Server configuration response
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ServerConfigResponse {
+    pub settings: HashMap<String, serde_json::Value>,
+    pub version: String,
+    pub build_date: String,
+    pub rust_version: String,
+    pub features: Vec<String>,
+}
+
+// Cluster status response
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ClusterStatusResponse {
+    pub cluster_id: String,
+    pub cluster_name: String,
+    pub enabled: bool,
+    pub nodes: Vec<ClusterNodeStatus>,
+    pub total_nodes: usize,
+    pub healthy_nodes: usize,
+    pub quorum_size: usize,
+    pub has_quorum: bool,
+    pub leader_node: Option<String>,
+    pub consensus_protocol: String,
+    pub replication_factor: usize,
+}
+
+// Cluster node status
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ClusterNodeStatus {
+    pub node_id: String,
+    pub address: String,
+    pub role: String,
+    pub status: String,
+    pub version: String,
+    pub uptime_seconds: u64,
+    pub last_heartbeat: i64,
+    pub cpu_usage_percent: f64,
+    pub memory_usage_percent: f64,
+    pub disk_usage_percent: f64,
+    pub queries_per_second: f64,
+}
+
+// Replication status information response
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ReplicationStatusInfoResponse {
+    pub enabled: bool,
+    pub primary_node: String,
+    pub replicas: Vec<ReplicaInfo>,
+    pub replication_mode: String,
+    pub max_replication_lag_ms: u64,
+    pub sync_replicas_count: usize,
+    pub async_replicas_count: usize,
+    pub all_synced: bool,
+    pub wal_archiving_enabled: bool,
+    pub slots_active: usize,
+    pub current_wal_lsn: String,
+}
+
+// Replica information
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ReplicaInfo {
+    pub replica_id: String,
+    pub node_id: String,
+    pub address: String,
+    pub state: String,
+    pub sync_state: String,
+    pub lag_bytes: u64,
+    pub lag_ms: u64,
+    pub last_sync: i64,
+    pub wal_position: String,
+    pub priority: u32,
+}
+
+// Security features response
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct SecurityFeaturesResponse {
+    pub overall_status: String,
+    pub features: HashMap<String, SecurityFeatureStatus>,
+    pub enabled_count: usize,
+    pub active_count: usize,
+    pub total_count: usize,
+    pub compliance_standards: Vec<String>,
+    pub last_security_audit: i64,
+}
+
+// Security feature status
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct SecurityFeatureStatus {
+    pub enabled: bool,
+    pub status: String,
+    pub description: String,
+    pub last_check: i64,
+}
+
+// Server information response
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ServerInfoResponse {
+    pub server_name: String,
+    pub version: String,
+    pub build_date: String,
+    pub build_target: String,
+    pub rust_version: String,
+    pub git_commit: String,
+    pub uptime_seconds: u64,
+    pub started_at: i64,
+    pub pid: u64,
+    pub system_info: HashMap<String, serde_json::Value>,
+    pub features: Vec<String>,
+    pub license: String,
 }

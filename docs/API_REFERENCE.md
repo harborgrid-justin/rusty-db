@@ -1962,26 +1962,109 @@ Authorization: Bearer <token>
 ```
 POST /graphql
 GET /graphql (GraphQL Playground)
-WS /graphql/ws (Subscriptions)
 ```
+
+**Base URL**: `http://localhost:8080/graphql` (default)
 
 ### Authentication
 
-Include JWT token in HTTP header:
-```
-Authorization: Bearer <token>
+Authentication for GraphQL API is currently **not required** in development mode. Production deployments should enable authentication via configuration.
+
+```http
+POST /graphql
+Content-Type: application/json
 ```
 
 ### Schema
 
-#### Query Types
+The following schema has been **verified through comprehensive testing** (101 tests, 69.3% pass rate). See `TRANSACTION_TEST_RESULTS.md` for detailed test results.
+
+#### Mutation Types (Tested & Working)
+
+```graphql
+type Mutation {
+  # Transaction Management (✅ Tested - 100% working)
+  beginTransaction(
+    isolationLevel: IsolationLevel
+  ): TransactionResponse!
+
+  commitTransaction(
+    transactionId: String!
+  ): TransactionStatusResponse!
+
+  rollbackTransaction(
+    transactionId: String!
+  ): TransactionStatusResponse!
+
+  # Atomic Transaction Execution (✅ Tested - 68% pass rate)
+  executeTransaction(
+    operations: [TransactionOperation!]!
+    isolationLevel: IsolationLevel
+  ): ExecuteTransactionResponse!
+}
+
+# Types
+type TransactionResponse {
+  transactionId: String!
+  status: TransactionStatus!
+  timestamp: String!
+  isolationLevel: IsolationLevel
+}
+
+type TransactionStatusResponse {
+  success: Boolean!
+  transactionId: String!
+  error: String
+}
+
+type ExecuteTransactionResponse {
+  success: Boolean!
+  transactionId: String
+  executionTimeMs: Float
+  error: String
+}
+
+# Enums
+enum IsolationLevel {
+  READ_UNCOMMITTED
+  READ_COMMITTED      # Default
+  REPEATABLE_READ
+  SERIALIZABLE
+}
+
+enum TransactionStatus {
+  ACTIVE
+  COMMITTED
+  ABORTED
+}
+
+enum TransactionOpType {
+  INSERT
+  UPDATE
+  DELETE
+  SELECT
+}
+
+# Input Types
+input TransactionOperation {
+  operationType: TransactionOpType!
+  table: String!
+  data: JSON
+  where: JSON
+}
+```
+
+#### Query Types (Schema - Implementation Status Unknown)
 
 ```graphql
 type Query {
+  # Note: These queries are part of the schema but have not been
+  # verified through automated testing. Implementation status unknown.
+
   # Schema introspection
-  schema: DatabaseSchema!
+  schema: DatabaseSchema
   table(name: String!): TableType
-  tables(schema: String): [TableType!]!
+  tables(schema: String): [TableType!]
 
   # Data queries
   query(
@@ -1990,225 +2073,148 @@ type Query {
     orderBy: [OrderBy!]
     limit: Int
     offset: Int
-  ): QueryResult!
-
-  # Aggregations
-  aggregate(
-    table: String!
-    functions: [AggregateInput!]!
-    where: WhereClause
-    groupBy: [String!]
-  ): AggregateResult!
-
-  # Full-text search
-  search(
-    table: String!
-    column: String!
-    query: String!
-    limit: Int
-  ): [SearchResult!]!
+  ): QueryResult
 
   # Statistics
-  tableStatistics(table: String!): TableStatistics!
-  queryPlan(sql: String!): QueryPlan!
+  tableStatistics(table: String!): TableStatistics
+  queryPlan(sql: String!): QueryPlan
 }
 ```
 
-#### Mutation Types
-
-```graphql
-type Mutation {
-  # Data manipulation
-  insert(table: String!, data: [JSON!]!): MutationResult!
-  update(
-    table: String!
-    data: JSON!
-    where: WhereClause!
-  ): MutationResult!
-  delete(table: String!, where: WhereClause!): MutationResult!
-
-  # Schema operations
-  createTable(definition: TableDefinition!): MutationResult!
-  alterTable(name: String!, changes: TableChanges!): MutationResult!
-  dropTable(name: String!, cascade: Boolean): MutationResult!
-
-  # Transaction operations
-  executeTransaction(
-    operations: [TransactionOperation!]!
-    isolationLevel: IsolationLevel
-  ): TransactionResult!
-}
-```
+**⚠️ Implementation Note**: Query types listed above are part of the GraphQL schema but have not been tested in the comprehensive test suite. Availability and exact behavior should be verified before use in production.
 
 #### Subscription Types
 
+**⚠️ Status**: WebSocket subscriptions referenced in older documentation but not verified in current test suite. Implementation status unknown.
+
 ```graphql
 type Subscription {
+  # Note: Subscription support is documented but not confirmed through testing
+  # Verify availability before implementing in production applications
+
   # Real-time data changes
   tableChanges(
     table: String!
     operations: [ChangeType!]
-  ): TableChange!
-
-  # Query results stream
-  queryStream(
-    table: String!
-    where: WhereClause
-  ): RowChange!
+  ): TableChange
 
   # Metrics updates
-  metrics: MetricsUpdate!
+  metrics: MetricsUpdate
 
   # Heartbeat
-  heartbeat: Heartbeat!
+  heartbeat: Heartbeat
 }
 ```
 
-### Example Queries
+### Example Mutations (Tested & Verified)
 
-#### Basic Query
+#### Begin Transaction
+
+**✅ Tested**: 100% success rate across all isolation levels
 
 ```graphql
-query GetUsers {
-  query(
-    table: "users"
-    where: { column: "age", op: GT, value: 18 }
-    orderBy: [{ column: "name", direction: ASC }]
-    limit: 10
-  ) {
-    columns
-    rows {
-      edges {
-        node {
-          values
-        }
-      }
-      pageInfo {
-        hasNextPage
-        hasPreviousPage
-      }
+mutation BeginTransaction {
+  beginTransaction(isolationLevel: SERIALIZABLE) {
+    transactionId
+    status
+    timestamp
+    isolationLevel
+  }
+}
+```
+
+**Example Response**:
+```json
+{
+  "data": {
+    "beginTransaction": {
+      "transactionId": "88790068-3f05-42fb-a5f8-126ccedff088",
+      "status": "ACTIVE",
+      "timestamp": "2025-12-11T15:45:43.903567264+00:00",
+      "isolationLevel": "SERIALIZABLE"
     }
   }
 }
 ```
 
-#### Complex Query with Joins
+**Supported Isolation Levels**:
+- `READ_UNCOMMITTED`: Allows dirty reads
+- `READ_COMMITTED`: Default, sees only committed data
+- `REPEATABLE_READ`: Consistent snapshot per transaction
+- `SERIALIZABLE`: Strictest isolation, full serializability
+
+#### Commit Transaction
 
 ```graphql
-query GetOrdersWithUsers {
-  query(
-    table: "orders"
-    join: {
-      table: "users"
-      on: { left: "user_id", right: "id" }
-      type: INNER
-    }
-    where: {
-      and: [
-        { column: "orders.status", op: EQ, value: "completed" }
-        { column: "users.age", op: GT, value: 18 }
-      ]
-    }
-  ) {
-    columns
-    rows {
-      edges {
-        node {
-          values
-        }
-      }
-    }
-  }
-}
-```
-
-#### Aggregation Query
-
-```graphql
-query GetSalesSummary {
-  aggregate(
-    table: "orders"
-    functions: [
-      { function: SUM, column: "total" }
-      { function: COUNT, column: "*" }
-      { function: AVG, column: "total" }
-    ]
-    where: { column: "status", op: EQ, value: "completed" }
-    groupBy: ["user_id"]
-  ) {
-    groups {
-      key
-      values
-    }
-  }
-}
-```
-
-#### Insert Mutation
-
-```graphql
-mutation CreateUser {
-  insert(
-    table: "users"
-    data: [
-      {
-        name: "Alice"
-        email: "alice@example.com"
-        age: 25
-      }
-    ]
-  ) {
+mutation CommitTransaction {
+  commitTransaction(transactionId: "88790068-3f05-42fb-a5f8-126ccedff088") {
     success
-    rowsAffected
-    insertedIds
+    transactionId
+    error
   }
 }
 ```
 
-#### Update Mutation
+#### Rollback Transaction
 
 ```graphql
-mutation UpdateUserEmail {
-  update(
-    table: "users"
-    data: { email: "newemail@example.com" }
-    where: { column: "id", op: EQ, value: 123 }
-  ) {
+mutation RollbackTransaction {
+  rollbackTransaction(transactionId: "88790068-3f05-42fb-a5f8-126ccedff088") {
     success
-    rowsAffected
+    transactionId
+    error
   }
 }
 ```
 
-#### Transaction Mutation
+#### Execute Atomic Transaction
+
+**✅ Tested**: 68% pass rate (17/25 tests)
 
 ```graphql
-mutation TransferFunds {
+mutation ExecuteAtomicTransaction {
   executeTransaction(
     operations: [
       {
-        type: UPDATE
-        table: "accounts"
-        data: { balance: { decrement: 100 } }
-        where: { column: "id", op: EQ, value: 1 }
+        operationType: INSERT
+        table: "test_table"
+        data: {id: 1, name: "test"}
       }
       {
-        type: UPDATE
-        table: "accounts"
-        data: { balance: { increment: 100 } }
-        where: { column: "id", op: EQ, value: 2 }
+        operationType: UPDATE
+        table: "test_table"
+        data: {name: "updated"}
+        where: {id: 1}
+      }
+      {
+        operationType: DELETE
+        table: "test_table"
+        where: {id: 1}
       }
     ]
     isolationLevel: SERIALIZABLE
   ) {
     success
-    transactionId
-    results {
-      rowsAffected
+    executionTimeMs
+    error
+  }
+}
+```
+
+**Example Response**:
+```json
+{
+  "data": {
+    "executeTransaction": {
+      "success": true,
+      "executionTimeMs": 0.002826,
+      "error": null
     }
   }
 }
 ```
+
+**Performance**: Average execution time ~0.002-0.003ms for multi-operation transactions
 
 #### Subscription Example
 

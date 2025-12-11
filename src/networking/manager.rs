@@ -436,9 +436,12 @@ impl Component for NetworkManager {
 
 /// Create a default NetworkManager with mock implementations
 ///
-/// This function is only available for testing and development.
+/// This function creates a NetworkManager with mock implementations for all components.
 /// In production, use NetworkManagerBuilder to configure real implementations.
-#[cfg(test)]
+///
+/// # Note
+/// This is intended for testing, development, and API server integration where
+/// full networking functionality may not be required.
 pub fn create_default_manager(
     config: NetworkConfig,
     local_node: NodeInfo,
@@ -564,11 +567,14 @@ impl Default for NetworkManagerBuilder {
 // Mock Implementations Module (Test Only)
 // ============================================================================
 
-/// Mock implementations for testing only
-#[cfg(test)]
+/// Mock implementations for testing and development
+///
+/// These mock implementations are used for testing and for API integration
+/// where full networking functionality is not required.
 pub(crate) mod mock {
     use super::*;
     use async_trait::async_trait;
+    use crate::networking::MembershipEvent;
 
     pub(crate) struct MockTransport {
         local_address: NodeAddress,

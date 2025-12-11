@@ -79,8 +79,16 @@ pub async fn add_cluster_node(
     State(_state): State<Arc<ApiState>>,
     AxumJson(request): AxumJson<AddNodeRequest>,
 ) -> ApiResult<AxumJson<ClusterNodeInfo>> {
+    // Check if node already exists
+    {
+        let nodes = CLUSTER_NODES.read();
+        if nodes.contains_key(&request.node_id) {
+            return Err(ApiError::new("CONFLICT", format!("Node '{}' already exists", request.node_id)));
+        }
+    }
+
     let node = ClusterNodeInfo {
-        node_id: request.node_id,
+        node_id: request.node_id.clone(),
         address: request.address,
         role: request.role.unwrap_or_else(|| "follower".to_string()),
         status: "initializing".to_string(),
@@ -88,6 +96,13 @@ pub async fn add_cluster_node(
         uptime_seconds: 0,
         last_heartbeat: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
     };
+
+    // Persist the node to the CLUSTER_NODES state
+    {
+        let mut nodes = CLUSTER_NODES.write();
+        nodes.insert(node.node_id.clone(), node.clone());
+        log::info!("Added cluster node: {} at {}", node.node_id, node.address);
+    }
 
     Ok(AxumJson(node))
 }

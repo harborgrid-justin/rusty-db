@@ -88,20 +88,39 @@ RustyDB employs a comprehensive defense-in-depth strategy with multiple independ
 
 ### Module Overview
 
-RustyDB security is implemented through 10 specialized modules:
+RustyDB security is implemented through **17 specialized modules** organized into core modules, submodule directories, and supporting components:
+
+#### Core Security Modules (10)
 
 | Module | Purpose | File Location | Status |
 |--------|---------|---------------|--------|
-| **Memory Hardening** | Buffer overflow protection, guard pages, secure allocation | `src/security/memory_hardening.rs` | ✅ Active |
-| **Buffer Overflow Protection** | Bounds checking, stack canaries, integer overflow guards | `src/security/bounds_protection.rs` | ✅ Active |
-| **Insider Threat Detection** | Behavioral analytics, anomaly detection, risk scoring | `src/security/insider_threat.rs` | ✅ Active |
-| **Network Hardening** | DDoS protection, rate limiting, TLS enforcement | `src/security/network_hardening/` | ✅ Active |
-| **Injection Prevention** | SQL injection, command injection, XSS prevention | `src/security/injection_prevention.rs` | ✅ Active |
-| **Auto-Recovery** | Automatic failure detection and recovery | `src/security/auto_recovery/` | ✅ Active |
-| **Circuit Breaker** | Cascading failure prevention | `src/security/circuit_breaker.rs` | ✅ Active |
-| **Encryption Engine** | Military-grade encryption, key management | `src/security/encryption_engine.rs` | ✅ Active |
-| **Secure Garbage Collection** | Memory sanitization, cryptographic erasure | `src/security/secure_gc.rs` | ✅ Active |
-| **Security Core** | Unified security orchestration and policy engine | `src/security/security_core/` | ✅ Active |
+| **Memory Hardening** | Buffer overflow protection, guard pages, secure allocation | `src/security/memory_hardening.rs` | ✅ Implemented |
+| **Bounds Protection** | Bounds checking, stack canaries, integer overflow guards | `src/security/bounds_protection.rs` | ✅ Implemented |
+| **Insider Threat Detection** | Behavioral analytics, anomaly detection, risk scoring | `src/security/insider_threat.rs` | ✅ Implemented |
+| **Network Hardening** | DDoS protection, rate limiting, intrusion detection | `src/security/network_hardening/` | ✅ Implemented |
+| **Injection Prevention** | SQL injection, command injection, XSS prevention | `src/security/injection_prevention.rs` | ✅ Implemented |
+| **Auto-Recovery** | Automatic failure detection and recovery | `src/security/auto_recovery/` | ✅ Implemented |
+| **Circuit Breaker** | Cascading failure prevention | `src/security/circuit_breaker.rs` | ✅ Implemented |
+| **Encryption Engine** | Military-grade encryption, key management | `src/security/encryption_engine.rs` | ✅ Implemented |
+| **Secure Garbage Collection** | Memory sanitization, cryptographic erasure | `src/security/secure_gc.rs` | ✅ Implemented |
+| **Security Core** | Unified security orchestration and policy engine | `src/security/security_core/` | ✅ Implemented |
+
+#### Authentication & Authorization Modules (4)
+
+| Module | Purpose | File Location | Status |
+|--------|---------|---------------|--------|
+| **Authentication** | Password hashing, MFA, session management | `src/security/authentication.rs` | ✅ Implemented |
+| **RBAC** | Role-Based Access Control | `src/security/rbac.rs` | ✅ Implemented |
+| **FGAC** | Fine-Grained Access Control (row/column level) | `src/security/fgac.rs` | ✅ Implemented |
+| **Privileges** | System and object privilege management | `src/security/privileges.rs` | ✅ Implemented |
+
+#### Supporting Modules (3)
+
+| Module | Purpose | File Location | Status |
+|--------|---------|---------------|--------|
+| **Audit Logging** | Tamper-proof audit trail | `src/security/audit.rs` | ✅ Implemented |
+| **Security Labels** | Multi-Level Security (MLS) classification | `src/security/labels.rs` | ✅ Implemented |
+| **Encryption** | Core encryption primitives | `src/security/encryption.rs` | ✅ Implemented |
 
 ### Detailed Module Descriptions
 

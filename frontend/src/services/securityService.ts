@@ -383,6 +383,32 @@ class SecurityService {
   }
 
   // ==========================================================================
+  // Security Features Status
+  // ==========================================================================
+
+  async getSecurityFeatures(): Promise<
+    ApiResponse<{
+      overall_status: string;
+      features: Record<
+        string,
+        {
+          enabled: boolean;
+          status: string;
+          description: string;
+          last_check: number;
+        }
+      >;
+      enabled_count: number;
+      active_count: number;
+      total_count: number;
+      compliance_standards: string[];
+      last_security_audit: number;
+    }>
+  > {
+    return get(`${this.basePath}/features`);
+  }
+
+  // ==========================================================================
   // Compliance & Security Scanning
   // ==========================================================================
 

@@ -138,6 +138,7 @@ pub enum IsolationLevel {
     ReadCommitted,
     RepeatableRead,
     Serializable,
+    SnapshotIsolation,
 }
 
 // Optimizer mode
