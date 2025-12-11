@@ -12,7 +12,7 @@ use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 
 /// Connection eviction policy
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EvictionPolicy {
     /// Least Recently Used - evict connections that haven't been used recently
     LRU,

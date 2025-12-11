@@ -29,8 +29,8 @@ pub struct CircuitBreaker {
     failure_count: Arc<RwLock<u32>>,
     /// Success count in half-open state
     success_count: Arc<RwLock<u32>>,
-    /// Threshold for opening circuit
-    failure_threshold: u32,
+    /// Threshold for opening circuit (uses interior mutability for adaptive adjustment)
+    pub(crate) failure_threshold: Arc<RwLock<u32>>,
     /// Time to wait before trying half-open
     timeout: Duration,
     /// When the circuit was opened
@@ -54,7 +54,7 @@ impl CircuitBreaker {
             state: Arc::new(RwLock::new(CircuitState::Closed)),
             failure_count: Arc::new(RwLock::new(0)),
             success_count: Arc::new(RwLock::new(0)),
-            failure_threshold,
+            failure_threshold: Arc::new(RwLock::new(failure_threshold)),
             timeout,
             opened_at: Arc::new(RwLock::new(None)),
             success_threshold: 3, // Default: need 3 successes to close
@@ -156,7 +156,8 @@ impl CircuitBreaker {
                 *failure_count += 1;
 
                 // Open circuit if threshold exceeded
-                if *failure_count >= self.failure_threshold {
+                let threshold = *self.failure_threshold.read().await;
+                if *failure_count >= threshold {
                     *state = CircuitState::Open;
                     let mut opened_at = self.opened_at.write().await;
                     *opened_at = Some(Instant::now());
@@ -283,19 +284,27 @@ impl AdaptiveCircuitBreaker {
         results.retain(|(timestamp, _)| *timestamp > cutoff);
 
         // Calculate current error rate
-        if !results.is_empty() {
+        let error_rate = if !results.is_empty() {
             let failures = results.iter().filter(|(_, success)| !success).count();
-            let error_rate = failures as f64 / results.len() as f64;
+            Some(failures as f64 / results.len() as f64)
+        } else {
+            None
+        };
 
-            // Adjust threshold based on error rate
+        // Drop results lock before accessing failure_threshold
+        drop(results);
+
+        // Adjust threshold based on error rate
+        if let Some(error_rate) = error_rate {
+            let mut threshold = self.base.failure_threshold.write().await;
             // If error rate is above target, be more sensitive (lower threshold)
             // If error rate is below target, be less sensitive (higher threshold)
             if error_rate > self.target_error_rate * 1.5 {
                 // High error rate - make more sensitive
-                self.base.failure_threshold = (self.base.failure_threshold * 8 / 10).max(3);
+                *threshold = (*threshold * 8 / 10).max(3);
             } else if error_rate < self.target_error_rate * 0.5 {
                 // Low error rate - make less sensitive
-                self.base.failure_threshold = (self.base.failure_threshold * 12 / 10).min(20);
+                *threshold = (*threshold * 12 / 10).min(20);
             }
         }
     }

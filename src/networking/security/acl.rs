@@ -395,7 +395,7 @@ impl NetworkAcl {
     }
 
     /// Check if connection is allowed
-    pub fn is_allowed(&self, source: IpAddr) -> Result<bool> {
+    pub fn is_allowed(&mut self, source: IpAddr) -> Result<bool> {
         // For simple IP check, use 0.0.0.0 as destination and port 0
         let destination = "0.0.0.0".parse::<IpAddr>().map_err(|e| {
             DbError::Internal(format!("Failed to parse default IP: {}", e))
@@ -406,18 +406,26 @@ impl NetworkAcl {
 
     /// Check connection against ACL rules
     pub fn check(&mut self, source: IpAddr, destination: IpAddr, port: u16) -> Result<bool> {
+        // Find matching rule and record hit
+        let mut matched_rule: Option<(String, Action)> = None;
+
         for rule in &mut self.rules {
             if rule.matches(source, destination, port) {
                 rule.record_hit();
-                self.log_decision(&rule.id, source, destination, port, rule.action)?;
-
-                return Ok(rule.action == Action::Allow);
+                matched_rule = Some((rule.id.clone(), rule.action));
+                break;
             }
         }
 
-        // No matching rule, use default action
-        self.log_decision("default", source, destination, port, self.default_action)?;
-        Ok(self.default_action == Action::Allow)
+        // Log decision after releasing borrow on self.rules
+        if let Some((rule_id, action)) = matched_rule {
+            self.log_decision(&rule_id, source, destination, port, action)?;
+            Ok(action == Action::Allow)
+        } else {
+            // No matching rule, use default action
+            self.log_decision("default", source, destination, port, self.default_action)?;
+            Ok(self.default_action == Action::Allow)
+        }
     }
 
     /// Log ACL decision

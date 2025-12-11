@@ -168,6 +168,15 @@ pub struct PeersQuery {
     pub health: Option<String>,
 }
 
+/// Detailed health information for a specific node
+#[derive(Debug, Serialize)]
+pub struct NodeHealthDetail {
+    /// Node ID
+    pub node_id: String,
+    /// Health status
+    pub status: String,
+}
+
 // ============================================================================
 // API State
 // ============================================================================
@@ -263,7 +272,7 @@ async fn list_peers(
 async fn get_peer(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
-) -> Result<impl IntoResponse, AppError> {
+) -> std::result::Result<Json<PeerInfoResponse>, AppError> {
     let node_id = NodeId::new(node_id);
 
     let member = state.network_manager
@@ -324,9 +333,9 @@ async fn get_topology(
 async fn join_cluster(
     State(state): State<ApiState>,
     Json(request): Json<JoinClusterRequest>,
-) -> Result<impl IntoResponse, AppError> {
+) -> std::result::Result<Json<JoinClusterResponse>, AppError> {
     // Parse seed nodes
-    let seed_nodes: Result<Vec<NodeAddress>, _> = request
+    let seed_nodes: Vec<NodeAddress> = request
         .seed_nodes
         .iter()
         .map(|s| {
@@ -338,9 +347,7 @@ async fn join_cluster(
                 .map_err(|_| AppError::BadRequest("Invalid port".to_string()))?;
             Ok(NodeAddress::new(parts[0], port))
         })
-        .collect();
-
-    let seed_nodes = seed_nodes?;
+        .collect::<std::result::Result<Vec<_>, _>>()?;
 
     state.network_manager
         .join_cluster(seed_nodes)
@@ -361,7 +368,7 @@ async fn join_cluster(
 /// POST /api/v1/network/leave - Leave the cluster
 async fn leave_cluster(
     State(state): State<ApiState>,
-) -> Result<impl IntoResponse, AppError> {
+) -> std::result::Result<Json<LeaveClusterResponse>, AppError> {
     state.network_manager
         .leave_cluster()
         .await
@@ -440,19 +447,13 @@ async fn get_health(
 async fn get_node_health(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
-) -> Result<impl IntoResponse, AppError> {
+) -> std::result::Result<Json<NodeHealthDetail>, AppError> {
     let node_id = NodeId::new(node_id);
 
     let health = state.network_manager
         .get_node_health(&node_id)
         .await
         .ok_or_else(|| AppError::NotFound(format!("Health info not available for node {}", node_id)))?;
-
-    #[derive(Serialize)]
-    struct NodeHealthDetail {
-        node_id: String,
-        status: String,
-    }
 
     let response = NodeHealthDetail {
         node_id: node_id.to_string(),

@@ -9,7 +9,7 @@ use super::{Connection, PoolConfig};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
-use tokio::sync::{mpsc, oneshot, Semaphore};
+use tokio::sync::{mpsc, oneshot, Semaphore, Mutex};
 use serde::{Serialize, Deserialize};
 
 /// Channel-based connection pool
@@ -121,14 +121,18 @@ impl ChannelPool {
     /// Start worker tasks to process requests
     fn start_workers(
         &mut self,
-        mut request_rx: mpsc::UnboundedReceiver<ChannelRequest>,
+        request_rx: mpsc::UnboundedReceiver<ChannelRequest>,
     ) {
         let worker_count = self.config.max_connections;
         let semaphore = Arc::new(Semaphore::new(worker_count));
 
+        // Wrap receiver in Arc<Mutex<...>> to share among workers
+        let shared_rx = Arc::new(Mutex::new(request_rx));
+
         for worker_id in 0..worker_count {
             let semaphore = Arc::clone(&semaphore);
             let node_id = self.node_id.clone();
+            let request_rx = Arc::clone(&shared_rx);
 
             let handle = tokio::spawn(async move {
                 loop {
@@ -138,11 +142,14 @@ impl ChannelPool {
                         Err(_) => break, // Semaphore closed
                     };
 
-                    // Wait for next request
-                    let request = match request_rx.recv().await {
-                        Some(r) => r,
-                        None => break, // Channel closed
-                    };
+                    // Wait for next request (lock the receiver to receive)
+                    let request = {
+                        let mut rx = request_rx.lock().await;
+                        match rx.recv().await {
+                            Some(r) => r,
+                            None => break, // Channel closed
+                        }
+                    }; // Lock is released here
 
                     // Process request
                     let response = Self::process_request(

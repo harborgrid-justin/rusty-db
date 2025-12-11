@@ -79,10 +79,10 @@ impl PortAllocator {
     ///
     /// Returns `None` if no ports are available in the range
     pub fn allocate(&mut self) -> Option<u16> {
-        match &self.strategy {
+        match self.strategy.clone() {
             AllocationStrategy::Sequential => self.allocate_sequential(),
             AllocationStrategy::Random => self.allocate_random(),
-            AllocationStrategy::HashBased(node_id) => self.allocate_hash_based(node_id),
+            AllocationStrategy::HashBased(node_id) => self.allocate_hash_based(&node_id),
         }
     }
 

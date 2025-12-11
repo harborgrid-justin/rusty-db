@@ -26,7 +26,7 @@ pub struct EtcdDiscovery {
     lease_id: Arc<RwLock<Option<i64>>>,
 
     /// Background lease renewal task handle
-    lease_renewal_handle: Option<tokio::task::JoinHandle<()>>,
+    lease_renewal_handle: Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
 
     /// Node registration key
     node_key: Arc<RwLock<Option<String>>>,
@@ -44,7 +44,7 @@ impl EtcdDiscovery {
             config,
             http_client,
             lease_id: Arc::new(RwLock::new(None)),
-            lease_renewal_handle: None,
+            lease_renewal_handle: Arc::new(RwLock::new(None)),
             node_key: Arc::new(RwLock::new(None)),
         }
     }
@@ -292,7 +292,7 @@ impl EtcdDiscovery {
     }
 
     /// Starts background lease renewal task
-    fn start_lease_renewal(&mut self, lease_id: i64) {
+    fn start_lease_renewal(&self, lease_id: i64) {
         let http_client = self.http_client.clone();
         let endpoint = self.get_endpoint().unwrap_or_default();
         let ttl = self.config.lease_ttl;
@@ -328,7 +328,10 @@ impl EtcdDiscovery {
             }
         });
 
-        self.lease_renewal_handle = Some(handle);
+        // Store the handle using interior mutability
+        if let Ok(mut guard) = self.lease_renewal_handle.try_write() {
+            *guard = Some(handle);
+        }
     }
 }
 
@@ -485,7 +488,7 @@ impl ServiceDiscovery for EtcdDiscovery {
         tracing::info!("Shutting down etcd discovery");
 
         // Cancel lease renewal task
-        if let Some(handle) = self.lease_renewal_handle.take() {
+        if let Some(handle) = self.lease_renewal_handle.write().await.take() {
             handle.abort();
         }
 

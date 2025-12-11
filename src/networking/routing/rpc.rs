@@ -115,7 +115,7 @@ impl RpcClient {
     }
 
     /// Make an RPC call with automatic retry
-    pub async fn call_with_retry<R: Request>(
+    pub async fn call_with_retry<R: Request + Clone>(
         &self,
         node: NodeId,
         request: R,
@@ -125,8 +125,8 @@ impl RpcClient {
         let mut last_error = None;
 
         while attempts <= max_retries {
-            // Clone the request for retry (assuming Clone or using serialization)
-            let message = request.to_cluster_message();
+            // Clone the request for retry
+            let message = request.clone().to_cluster_message();
 
             match self
                 .router

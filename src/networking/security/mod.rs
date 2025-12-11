@@ -365,7 +365,7 @@ impl SecurityManager {
     pub async fn check_connection(&self, source_ip: std::net::IpAddr) -> Result<bool> {
         // Check ACL
         if let Some(acl) = &self.network_acl {
-            let acl_guard = acl.read().await;
+            let mut acl_guard = acl.write().await;
             if !acl_guard.is_allowed(source_ip)? {
                 return Ok(false);
             }

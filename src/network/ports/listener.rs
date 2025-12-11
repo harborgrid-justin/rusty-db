@@ -69,13 +69,21 @@ impl Listener {
     /// Create a new TCP listener
     pub async fn new_tcp(addr: SocketAddr, config: &ListenerConfig) -> Result<Self> {
         let socket = Self::create_tcp_socket(&addr, config)?;
-        socket.bind(addr).map_err(|e| {
+
+        // Bind using socket2's SockAddr
+        socket.bind(&socket2::SockAddr::from(addr)).map_err(|e| {
             DbError::Network(format!("Failed to bind TCP to {}: {}", addr, e))
         })?;
 
-        let tcp_listener = socket.listen(1024).map_err(|e| {
+        // Listen on the socket
+        socket.listen(1024).map_err(|e| {
             DbError::Network(format!("Failed to listen on {}: {}", addr, e))
         })?;
+
+        // Convert socket2 -> std -> tokio TcpListener
+        let std_listener: std::net::TcpListener = socket.into();
+        let tcp_listener = TcpListener::from_std(std_listener)
+            .map_err(|e| DbError::Network(format!("Failed to create tokio TcpListener: {}", e)))?;
 
         Ok(Self {
             addr,
@@ -87,10 +95,8 @@ impl Listener {
 
     /// Create a new UDP listener
     pub async fn new_udp(addr: SocketAddr, config: &ListenerConfig) -> Result<Self> {
+        // create_udp_socket already binds and returns a tokio UdpSocket
         let socket = Self::create_udp_socket(&addr, config)?;
-        socket.bind(addr).await.map_err(|e| {
-            DbError::Network(format!("Failed to bind UDP to {}: {}", addr, e))
-        })?;
 
         Ok(Self {
             addr,
@@ -163,6 +169,10 @@ impl Listener {
 
         socket.set_nonblocking(true)
             .map_err(|e| DbError::Network(format!("Failed to set non-blocking: {}", e)))?;
+
+        // Bind the socket before converting
+        socket.bind(&socket2::SockAddr::from(*addr))
+            .map_err(|e| DbError::Network(format!("Failed to bind UDP to {}: {}", addr, e)))?;
 
         let std_socket: std::net::UdpSocket = socket.into();
         UdpSocket::from_std(std_socket)

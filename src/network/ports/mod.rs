@@ -206,7 +206,7 @@ impl PortManager {
 
         // Register with mapping service
         self.mapping_service.write().await.register_port(
-            service_type,
+            format!("{:?}", service_type),
             port,
             format!("{:?}", service_type),
         );

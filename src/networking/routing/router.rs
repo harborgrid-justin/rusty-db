@@ -102,7 +102,7 @@ impl MessageRouter {
     /// Register a message handler
     pub fn register_handler<H: MessageHandler + 'static>(&self, handler: H) {
         let mut handlers = self.handlers.write();
-        let handler_arc = Arc::new(handler);
+        let handler_arc: Arc<dyn MessageHandler> = Arc::new(handler);
 
         for msg_type in handler_arc.message_types() {
             handlers.insert(msg_type, Arc::clone(&handler_arc));

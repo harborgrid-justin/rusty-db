@@ -77,7 +77,7 @@ impl WarmupManager {
 
     /// Warm up a pool according to its strategy
     pub async fn warmup_pool(&self, pool: &NodePool, config: &PoolConfig) -> Result<()> {
-        let node_id = pool.node_id.clone();
+        let node_id = pool.node_id().clone();
         let strategy = self.get_node_strategy(&node_id).await;
 
         let warmup_count = match strategy {
@@ -217,7 +217,8 @@ pub struct WarmupStats {
     /// Average time to warm up one connection (milliseconds)
     pub avg_warmup_time_per_connection: f64,
 
-    /// Last warmup timestamp
+    /// Last warmup timestamp (skipped for serde - Instant cannot be serialized)
+    #[serde(skip)]
     pub last_warmup_time: Option<Instant>,
 
     /// Number of failed warmup attempts
