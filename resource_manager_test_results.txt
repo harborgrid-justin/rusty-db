@@ -1,0 +1,810 @@
+=====================================================================
+RESOURCE MANAGER COMPREHENSIVE TEST REPORT
+Test Date: Thu Dec 11 16:27:16 UTC 2025
+Server: http://localhost:8080
+=====================================================================
+
+=====================================================================
+SECTION 1: CONSUMER GROUPS TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-001 - List all consumer groups
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ listConsumerGroups { id name priority category currentSessions } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"listConsumerGroups\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-002 - Get consumer group by ID
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getConsumerGroup(groupId: 1) { id name priority category maxSessions cpuAllocationPct } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getConsumerGroup\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-003 - Get consumer group by name
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getConsumerGroupByName(name: \"INTERACTIVE_GROUP\") { id name priority category } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getConsumerGroupByName\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-004 - Create custom consumer group
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { createConsumerGroup(name: \"TEST_ANALYTICS_GROUP\", priority: 3, category: \"ANALYTICS\") { groupId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"createConsumerGroup\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-005 - Update consumer group CPU allocation
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { updateConsumerGroup(groupId: 2, cpuAllocationPct: 70) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"updateConsumerGroup\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-006 - Get consumer group statistics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getConsumerGroupStats(groupId: 2) { groupId groupName currentSessions cpuAllocationPct } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getConsumerGroupStats\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+=====================================================================
+SECTION 2: RESOURCE PLANS TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-007 - List all resource plans
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ listResourcePlans { id name description status isEnabled cpuMethod } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"listResourcePlans\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-008 - Get resource plan by ID
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getResourcePlan(planId: 1) { id name description status cpuMethod parallelExecutionManaged } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getResourcePlan\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-009 - Get resource plan by name
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getResourcePlanByName(name: \"DEFAULT_PLAN\") { id name status isEnabled } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getResourcePlanByName\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-010 - Create custom resource plan
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { createResourcePlan(name: \"PEAK_HOURS_PLAN\", cpuMethod: \"SHARES\") { planId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"createResourcePlan\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-011 - Get currently active resource plan
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getActiveResourcePlan { id name status } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getActiveResourcePlan\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-012 - Activate resource plan
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { activateResourcePlan(planId: 1) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"activateResourcePlan\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-013 - Get resource plan directives
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getResourcePlanDirectives(planId: 1) { id groupId cpuPct parallelDegreeLimit } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getResourcePlanDirectives\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-014 - Create resource plan directive
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { createPlanDirective(planId: 1, groupId: 2, cpuPct: 60) { directiveId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"createPlanDirective\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-015 - Validate resource plan configuration
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ validateResourcePlan(planId: 1) { isValid warnings } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"validateResourcePlan\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+=====================================================================
+SECTION 3: CPU SCHEDULING TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-016 - Get CPU scheduler statistics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getCpuSchedulerStats { totalScheduled contextSwitches totalCpuTime runawayQueriesDetected } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getCpuSchedulerStats\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-017 - Register consumer group with CPU scheduler
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { registerCpuGroup(groupId: 2, shares: 2000) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"registerCpuGroup\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-018 - Add task to CPU scheduler
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { addCpuTask(queryId: 1001, groupId: 2, priority: 3) { taskId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"addCpuTask\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-019 - Get CPU group statistics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getCpuGroupStats(groupId: 2) { groupId shares cpuTimeUsed activeTasks } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getCpuGroupStats\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-020 - Detect runaway queries
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ detectRunawayQueries { taskIds count } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"detectRunawayQueries\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-021 - Rebalance CPU groups
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { rebalanceCpuGroups { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"rebalanceCpuGroups\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+=====================================================================
+SECTION 4: I/O SCHEDULING TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-022 - Get I/O scheduler statistics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getIoSchedulerStats { totalRequests completedRequests totalBytesRead totalBytesWritten avgLatencyUs deadlineMisses throttledRequests } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getIoSchedulerStats\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-023 - Register consumer group with I/O scheduler
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { registerIoGroup(groupId: 2, bandwidthLimit: 104857600, iopsLimit: 1000, weight: 100) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"registerIoGroup\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-024 - Submit read I/O request
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { submitIoRequest(groupId: 2, requestType: \"READ\", priority: \"NORMAL\", sizeBytes: 4096, offset: 0) { requestId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"submitIoRequest\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-025 - Submit write I/O request
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { submitIoRequest(groupId: 2, requestType: \"WRITE\", priority: \"HIGH\", sizeBytes: 8192, offset: 4096) { requestId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"submitIoRequest\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-026 - Schedule next I/O request
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ scheduleNextIoRequest { requestId scheduled } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"scheduleNextIoRequest\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-027 - Get I/O group statistics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getIoGroupStats(groupId: 2) { groupId totalBytes totalOps pendingRequests } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getIoGroupStats\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-028 - Update I/O bandwidth metrics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { updateIoBandwidthMetrics { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"updateIoBandwidthMetrics\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+=====================================================================
+SECTION 5: MEMORY MANAGEMENT TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-029 - Get memory manager statistics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getMemoryStats { totalAllocations totalDeallocations failedAllocations peakUsage pressureEvents autoAdjustments } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getMemoryStats\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-030 - List all memory pools
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ listMemoryPools { id name poolType maxSize allocatedSize usagePercent } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"listMemoryPools\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-031 - Get memory pool by ID
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getMemoryPool(poolId: 1) { id name poolType maxSize allocatedSize minSize autoTune } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getMemoryPool\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-032 - Get current memory pressure level
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getMemoryPressure { level usagePercent } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getMemoryPressure\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-033 - Register group memory limits
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { registerGroupMemoryLimits(groupId: 2, maxGroupMemory: 2147483648, maxSessionPga: 104857600) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"registerGroupMemoryLimits\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-034 - Create session memory quota
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { createSessionMemoryQuota(sessionId: 1001, groupId: 2, maxPgaMemory: 104857600) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"createSessionMemoryQuota\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-035 - Allocate memory from pool
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { allocateFromMemoryPool(poolId: 2, size: 1048576) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"allocateFromMemoryPool\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-036 - Get session memory quota information
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getSessionMemoryQuota(sessionId: 1001) { sessionId groupId maxPgaMemory currentPgaUsage peakUsage } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getSessionMemoryQuota\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-037 - Get memory auto-tune recommendations
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ autoTuneMemoryPools { poolId currentSize recommendedSize reason estimatedBenefit } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"autoTuneMemoryPools\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-038 - Get total database memory usage
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getDatabaseMemoryUsage { totalMemory usedMemory availableMemory usagePercent } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getDatabaseMemoryUsage\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+=====================================================================
+SECTION 6: PARALLEL EXECUTION CONTROL TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-039 - Get parallel execution statistics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getParallelExecutionStats { totalParallelQueries totalSerialQueries downgradedQueries queuedQueries avgDopGranted peakTotalDop } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getParallelExecutionStats\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-040 - Create parallel server pool
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { createServerPool(name: \"TEST_POOL\", minServers: 4, maxServers: 16) { poolId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"createServerPool\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-041 - Request parallel execution (automatic mode)
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { requestParallelExecution(sessionId: 1001, groupId: 2, requestedDop: 8, mode: \"AUTOMATIC\", estimatedCost: 100000) { queryId grantedDop } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"requestParallelExecution\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-042 - Request parallel execution (manual mode)
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { requestParallelExecution(sessionId: 1002, groupId: 2, requestedDop: 4, mode: \"MANUAL\") { queryId grantedDop } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"requestParallelExecution\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-043 - Set consumer group DOP limit
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { setGroupDopLimit(groupId: 2, limit: 16) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"setGroupDopLimit\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-044 - Get parallel execution information
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getParallelExecution(queryId: 1) { queryId sessionId grantedDop requestedDop state rowsProcessed } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getParallelExecution\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-045 - Update system load for auto DOP calculation
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { updateSystemLoad(load: 0.65) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"updateSystemLoad\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-046 - Complete parallel execution
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { completeParallelExecution(queryId: 1) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"completeParallelExecution\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+=====================================================================
+SECTION 7: SESSION CONTROL TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-047 - Get session controller statistics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getSessionStats { totalSessionsCreated totalSessionsTerminated idleTimeoutTerminations executionTimeoutTerminations currentActiveSessions peakConcurrentSessions } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getSessionStats\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-048 - Create new session
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { createSession(userId: 1001, username: \"testuser\", groupId: 2) { sessionId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"createSession\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-049 - Get session information
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getSession(sessionId: 1) { sessionId username groupId state priority totalQueries } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getSession\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-050 - List all sessions
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ listSessions { sessionId username groupId state priority } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"listSessions\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-051 - List active sessions
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ listActiveSessions { sessionId username state currentQueryDuration } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"listActiveSessions\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-052 - Configure active session pool for group
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { configureGroupSessionPool(groupId: 2, maxActiveSessions: 50, queueTimeout: 60) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"configureGroupSessionPool\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-053 - Start query (request active session slot)
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { startQuery(sessionId: 1) { canStart queued } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"startQuery\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-054 - Complete query (release active session slot)
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { completeQuery(sessionId: 1) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"completeQuery\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-055 - Set session timeout limits
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { setSessionLimits(sessionId: 1, idleTimeout: 3600, maxExecutionTime: 1800) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"setSessionLimits\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-056 - Boost session priority
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { boostSessionPriority(sessionId: 1) { success message newPriority } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"boostSessionPriority\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-057 - Check and terminate idle sessions
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ checkIdleTimeouts { terminatedSessions count } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"checkIdleTimeouts\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-058 - Check and terminate long-running queries
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ checkExecutionTimeouts { terminatedSessions count } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"checkExecutionTimeouts\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-059 - Manually kill session
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { killSession(sessionId: 999) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"killSession\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+=====================================================================
+SECTION 8: RESOURCE MANAGER INTEGRATION TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-060 - Get comprehensive resource statistics
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getResourceStats { cpuStats { totalScheduled contextSwitches } ioStats { totalRequests completedRequests } memoryUsagePercent memoryPressure } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getResourceStats\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-061 - Start resource monitoring
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { startResourceMonitoring { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"startResourceMonitoring\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-062 - Trigger resource rebalancing
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { rebalanceResources { cpuRebalanced memoryAdjustmentsMade ioMetricsUpdated memoryRecommendations actions } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"rebalanceResources\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-063 - Check and switch resource plan based on schedule
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { checkAndSwitchResourcePlan { switched newPlanId newPlanName } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"checkAndSwitchResourcePlan\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-064 - Check and enforce session timeouts
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ checkTimeouts { idleTimeoutCount executionTimeoutCount terminatedSessions } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"checkTimeouts\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-065 - Stop resource monitoring
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { stopResourceMonitoring { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"stopResourceMonitoring\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+=====================================================================
+SECTION 9: ADVANCED FEATURES TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-066 - Map user to consumer group
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { mapUserToGroup(userId: 1001, username: \"testuser\", groupId: 2, isPermanent: true) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"mapUserToGroup\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-067 - Switch session to different consumer group
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { switchSessionGroup(sessionId: 1, newGroupId: 3, reason: \"WORKLOAD_BASED\") { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"switchSessionGroup\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-068 - Add consumer group assignment rule
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { addAssignmentRule(name: \"BATCH_USERS\", priority: 10, condition: \"USERNAME\", conditionValue: \"batch_\", targetGroupId: 3) { ruleId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"addAssignmentRule\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-069 - Add time-based plan schedule
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { addPlanSchedule(name: \"BUSINESS_HOURS\", startHour: 9, endHour: 17, planId: 2, priority: 1) { scheduleId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"addPlanSchedule\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-070 - Add maintenance window
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { addMaintenanceWindow(name: \"SUNDAY_MAINTENANCE\", dayOfWeek: 0, startHour: 2, durationMinutes: 240, maintenancePlanId: 4) { windowId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"addMaintenanceWindow\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+=====================================================================
+SECTION 10: ERROR HANDLING & EDGE CASES TESTING
+=====================================================================
+
+---------------------------------------------------------------------
+TEST: RESOURCE-071 - Get non-existent consumer group (error test)
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getConsumerGroup(groupId: 99999) { id name } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getConsumerGroup\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-072 - Get non-existent resource plan (error test)
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getResourcePlan(planId: 99999) { id name } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getResourcePlan\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-073 - Get non-existent session (error test)
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"{ getSession(sessionId: 99999) { sessionId username } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"getSession\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-074 - Create consumer group with duplicate name (error test)
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { createConsumerGroup(name: \"INTERACTIVE_GROUP\", priority: 3, category: \"INTERACTIVE\") { groupId } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"createConsumerGroup\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+---------------------------------------------------------------------
+TEST: RESOURCE-075 - Allocate memory exceeding pool limit (error test)
+---------------------------------------------------------------------
+COMMAND: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query":"mutation { allocateFromMemoryPool(poolId: 2, size: 999999999999) { success message } }"}'
+
+RESPONSE:
+{"data":null,"errors":[{"message":"Unknown field \"allocateFromMemoryPool\" on type \"MutationRoot\".","locations":[{"line":1,"column":12}]}]}
+
+STATUS: ✗ FAIL
+
+
+=====================================================================
+TEST SUMMARY
+=====================================================================
+Total Tests: 75
+Passed: 0
+Failed: 75
+Success Rate: 0%
+=====================================================================
+
+Note: Many tests may fail if GraphQL schema does not expose these
+specific endpoints. This is expected as the API surface area may
+differ from the internal module capabilities.
+=====================================================================
