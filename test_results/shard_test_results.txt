@@ -1,0 +1,102 @@
+RustyDB Sharding & Partitioning Test Results - Thu Dec 11 15:45:00 UTC 2025
+================================================================
+[SHARD-001] FAIL: Create table with RANGE partitioning by date
+[SHARD-002] FAIL: Create table with RANGE partitioning by ID
+[SHARD-003] FAIL: Create table with LIST partitioning by category
+[SHARD-004] FAIL: Create table with LIST partitioning by region
+[SHARD-005] FAIL: Create table with HASH partitioning
+[SHARD-006] FAIL: Create table with HASH partitioning by key
+[SHARD-007] FAIL: Create table with composite partitioning (RANGE + HASH)
+[SHARD-008] FAIL: Create table with composite partitioning (LIST + RANGE)
+[SHARD-009] FAIL: Insert data into range-partitioned table
+[SHARD-010] FAIL: Insert data into list-partitioned table
+[SHARD-011] FAIL: Insert data into hash-partitioned table
+[SHARD-012] FAIL: Query specific partition (range - Q1 2024)
+[SHARD-013] FAIL: Query specific partition (list - Electronics)
+[SHARD-014] FAIL: Query all partitions for aggregate
+[SHARD-015] FAIL: Test partition pruning with EXPLAIN
+[SHARD-016] PASS: Verify table metadata and statistics
+[SHARD-017] PASS: Verify table metadata and statistics
+[SHARD-018] PASS: Verify table metadata and statistics
+[SHARD-019] PASS: Verify table metadata and statistics
+[SHARD-020] PASS: Verify table metadata and statistics
+[SHARD-021] PASS: Verify table metadata and statistics
+[SHARD-022] PASS: Verify table metadata and statistics
+[SHARD-023] PASS: Verify table metadata and statistics
+[SHARD-024] PASS: Verify table metadata and statistics
+[SHARD-025] PASS: Verify table metadata and statistics
+[SHARD-026] PASS: Verify table metadata and statistics
+[SHARD-027] PASS: Verify table metadata and statistics
+[SHARD-028] PASS: Verify table metadata and statistics
+[SHARD-029] PASS: Verify table metadata and statistics
+[SHARD-030] PASS: Verify table metadata and statistics
+[SHARD-031] PASS: Get cluster nodes information
+[SHARD-032] PASS: Get cluster shards configuration
+[SHARD-033] PASS: Get cluster configuration
+[SHARD-034] PASS: Get cluster status
+[SHARD-035] PASS: Create shard key configuration for users table
+[SHARD-036] PASS: Get shard distribution across nodes
+[SHARD-037] PASS: Test shard routing for specific key value
+[SHARD-038] PASS: Cluster node health check iteration 1
+[SHARD-039] PASS: Cluster node health check iteration 2
+[SHARD-040] PASS: Cluster node health check iteration 3
+[SHARD-041] PASS: Cluster node health check iteration 4
+[SHARD-042] PASS: Cluster node health check iteration 5
+[SHARD-043] PASS: Cluster node health check iteration 6
+[SHARD-044] PASS: Cluster node health check iteration 7
+[SHARD-045] PASS: Cluster node health check iteration 8
+[SHARD-046] PASS: Cluster node health check iteration 9
+[SHARD-047] PASS: Cluster node health check iteration 10
+[SHARD-048] PASS: Cluster node health check iteration 11
+[SHARD-049] PASS: Cluster node health check iteration 12
+[SHARD-050] PASS: Cluster node health check iteration 13
+[SHARD-051] PASS: Cluster node health check iteration 14
+[SHARD-052] PASS: Cluster node health check iteration 15
+[SHARD-053] PASS: Cluster node health check iteration 16
+[SHARD-054] PASS: Cluster node health check iteration 17
+[SHARD-055] PASS: Cluster node health check iteration 18
+[SHARD-056] PASS: Cluster node health check iteration 19
+[SHARD-057] PASS: Cluster node health check iteration 20
+[SHARD-058] PASS: Cluster node health check iteration 21
+[SHARD-059] PASS: Cluster node health check iteration 22
+[SHARD-060] PASS: Cluster node health check iteration 23
+[SHARD-061] FAIL: Add new partition to range-partitioned table
+[SHARD-062] FAIL: Drop partition from table
+[SHARD-063] FAIL: Truncate specific partition
+[SHARD-064] FAIL: Reorganize/merge partitions
+[SHARD-065] FAIL: Split partition into multiple partitions
+[SHARD-066] PASS: Get partition statistics for table
+[SHARD-067] FAIL: Analyze specific partitions
+[SHARD-068] FAIL: Optimize specific partition
+[SHARD-069] FAIL: Check partition integrity
+[SHARD-070] FAIL: Repair partition
+[SHARD-071] PASS: List all table partitions iteration 1 (Expected NOT_FOUND)
+[SHARD-072] PASS: List all table partitions iteration 2 (Expected NOT_FOUND)
+[SHARD-073] PASS: List all table partitions iteration 3 (Expected NOT_FOUND)
+[SHARD-074] PASS: List all table partitions iteration 4 (Expected NOT_FOUND)
+[SHARD-075] PASS: List all table partitions iteration 5 (Expected NOT_FOUND)
+[SHARD-076] PASS: List all table partitions iteration 6 (Expected NOT_FOUND)
+[SHARD-077] PASS: List all table partitions iteration 7 (Expected NOT_FOUND)
+[SHARD-078] PASS: List all table partitions iteration 8 (Expected NOT_FOUND)
+[SHARD-079] PASS: List all table partitions iteration 9 (Expected NOT_FOUND)
+[SHARD-080] PASS: List all table partitions iteration 10 (Expected NOT_FOUND)
+[SHARD-081] FAIL: Single partition query with date range
+[SHARD-082] FAIL: Multi-partition query with aggregation
+[SHARD-083] FAIL: Cross-partition join query
+[SHARD-084] FAIL: Partition-wise join query
+[SHARD-085] FAIL: Query using global index on non-partition key
+[SHARD-086] FAIL: Query using local index within partition
+[SHARD-087] FAIL: Parallel query execution across partitions
+[SHARD-088] FAIL: Verify partition pruning with EXPLAIN
+[SHARD-089] FAIL: Cross-shard transaction test
+[SHARD-090] FAIL: Hash-based shard routing for specific user
+[SHARD-091] FAIL: Query routing performance test iteration 1
+[SHARD-092] FAIL: Query routing performance test iteration 2
+[SHARD-093] FAIL: Query routing performance test iteration 3
+[SHARD-094] FAIL: Query routing performance test iteration 4
+[SHARD-095] FAIL: Query routing performance test iteration 5
+[SHARD-096] FAIL: Query routing performance test iteration 6
+[SHARD-097] FAIL: Query routing performance test iteration 7
+[SHARD-098] FAIL: Query routing performance test iteration 8
+[SHARD-099] FAIL: Query routing performance test iteration 9
+[SHARD-100] FAIL: Query routing performance test iteration 10

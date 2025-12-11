@@ -1,0 +1,278 @@
+RustyDB Storage Engine Test Results - Thu Dec 11 15:47:53 UTC 2025
+========================================
+STOR-001: PASS - Create table with INTEGER and VARCHAR columns
+  Response: 
+STOR-002: PASS - Insert single row into page storage
+  SQL: INSERT INTO page_test_001 (id, data) VALUES (1, 'Test Data')
+  Rows: 0, Time: 0ms
+STOR-003: PASS - Query data from page storage
+  SQL: SELECT * FROM page_test_001
+  Rows: 0, Time: 0ms
+STOR-004: PASS - Insert row 2
+  SQL: INSERT INTO page_test_001 (id, data) VALUES (2, 'Data 2')
+  Rows: 0, Time: 0ms
+STOR-005: PASS - Insert row 3
+  SQL: INSERT INTO page_test_001 (id, data) VALUES (3, 'Data 3')
+  Rows: 0, Time: 0ms
+STOR-006: PASS - Insert row 4
+  SQL: INSERT INTO page_test_001 (id, data) VALUES (4, 'Data 4')
+  Rows: 0, Time: 0ms
+STOR-007: PASS - Insert row 5
+  SQL: INSERT INTO page_test_001 (id, data) VALUES (5, 'Data 5')
+  Rows: 0, Time: 0ms
+STOR-008: PASS - Count rows in page storage
+  SQL: SELECT COUNT(*) FROM page_test_001
+  Rows: 0, Time: 0ms
+STOR-009: PASS - Create table with multiple data types
+  Response: 
+STOR-010: PASS - Insert mixed data types
+  SQL: INSERT INTO page_test_types (id, name, price, active) VALUES (1, 'Product A', 19.99, true)
+  Rows: 0, Time: 0ms
+STOR-011: PASS - Query mixed data types
+  SQL: SELECT * FROM page_test_types WHERE active = true
+  Rows: 0, Time: 0ms
+STOR-012: FAIL - Update data in page
+  SQL: UPDATE page_test_001 SET data = 'Updated Data' WHERE id = 1
+  Error: {"code":"SQL_PARSE_ERROR","message":"SQL parsing error: Unsupported statement type","details":null,"timestamp":1765468074,"request_id":null}
+STOR-013: PASS - Delete data from page
+  SQL: DELETE FROM page_test_001 WHERE id = 3
+  Rows: 0, Time: 0ms
+STOR-014: PASS - Create table with TEXT column
+  Response: 
+STOR-015: PASS - Insert large TEXT data
+  SQL: INSERT INTO page_test_large (id, content) VALUES (1, 'Large content that spans multiple pages with lots of text to test storage efficiency and page management in the database system')
+  Rows: 0, Time: 0ms
+STOR-016: PASS - Create table with BIGINT
+  Response: 
+STOR-017: PASS - Insert BIGINT values
+  SQL: INSERT INTO page_test_bigint (id, value) VALUES (9223372036854775, 1234567890123)
+  Rows: 0, Time: 0ms
+STOR-018: PASS - Create table with DOUBLE precision
+  Response: 
+STOR-019: PASS - Insert DOUBLE precision values
+  SQL: INSERT INTO page_test_double (id, value) VALUES (1, 3.141592653589793)
+  Rows: 0, Time: 0ms
+STOR-020: PASS - Create table with DATE and TIMESTAMP
+  Response: 
+STOR-021: PASS - Create table for LSM storage
+  Response: 
+STOR-022: PASS - LSM Insert key 1
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (1, 'Value 1')
+  Rows: 0, Time: 0ms
+STOR-023: PASS - LSM Insert key 2
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (2, 'Value 2')
+  Rows: 0, Time: 0ms
+STOR-024: PASS - LSM Insert key 3
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (3, 'Value 3')
+  Rows: 0, Time: 0ms
+STOR-025: PASS - LSM Insert key 4
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (4, 'Value 4')
+  Rows: 0, Time: 0ms
+STOR-026: PASS - LSM Insert key 5
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (5, 'Value 5')
+  Rows: 0, Time: 0ms
+STOR-027: FAIL - LSM update operation
+  SQL: UPDATE lsm_test_001 SET value = 'Updated 1' WHERE key = 1
+  Error: {"code":"SQL_PARSE_ERROR","message":"SQL parsing error: Unsupported statement type","details":null,"timestamp":1765468075,"request_id":null}
+STOR-028: PASS - LSM read after write
+  SQL: SELECT * FROM lsm_test_001 WHERE key = 1
+  Rows: 0, Time: 0ms
+STOR-029: PASS - LSM range scan
+  SQL: SELECT * FROM lsm_test_001 WHERE key >= 1 AND key <= 3
+  Rows: 0, Time: 0ms
+STOR-030: PASS - LSM Insert key 6
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (6, 'Value 6')
+  Rows: 0, Time: 0ms
+STOR-031: PASS - LSM Insert key 7
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (7, 'Value 7')
+  Rows: 0, Time: 0ms
+STOR-032: PASS - LSM Insert key 8
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (8, 'Value 8')
+  Rows: 0, Time: 0ms
+STOR-033: PASS - LSM Insert key 9
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (9, 'Value 9')
+  Rows: 0, Time: 0ms
+STOR-034: PASS - LSM Insert key 10
+  SQL: INSERT INTO lsm_test_001 (key, value) VALUES (10, 'Value 10')
+  Rows: 0, Time: 0ms
+STOR-035: PASS - LSM count operation
+  SQL: SELECT COUNT(*) FROM lsm_test_001
+  Rows: 0, Time: 0ms
+STOR-036: PASS - LSM delete (tombstone)
+  SQL: DELETE FROM lsm_test_001 WHERE key = 5
+  Rows: 0, Time: 0ms
+STOR-037: PASS - LSM query after delete
+  SQL: SELECT * FROM lsm_test_001 WHERE key = 5
+  Rows: 0, Time: 0ms
+STOR-038: PASS - Create second LSM table
+  Response: 
+STOR-039: PASS - LSM insert small data
+  SQL: INSERT INTO lsm_test_002 VALUES (1, 'Small')
+  Rows: 0, Time: 0ms
+STOR-040: PASS - LSM insert large data
+  SQL: INSERT INTO lsm_test_002 VALUES (2, 'Large data with lots of content to test LSM storage efficiency and compaction behavior')
+  Rows: 0, Time: 0ms
+STOR-041: PASS - Create columnar analytics table
+  Response: 
+STOR-042: PASS - Insert analytics data row 1
+  SQL: INSERT INTO columnar_test_001 (id, category, amount, quantity) VALUES (1, 'A', 100.50, 10)
+  Rows: 0, Time: 0ms
+STOR-043: PASS - Insert analytics data row 2
+  SQL: INSERT INTO columnar_test_001 (id, category, amount, quantity) VALUES (2, 'B', 200.75, 20)
+  Rows: 0, Time: 0ms
+STOR-044: PASS - Insert analytics data row 3
+  SQL: INSERT INTO columnar_test_001 (id, category, amount, quantity) VALUES (3, 'A', 150.25, 15)
+  Rows: 0, Time: 0ms
+STOR-045: PASS - Insert analytics data row 4
+  SQL: INSERT INTO columnar_test_001 (id, category, amount, quantity) VALUES (4, 'C', 300.00, 30)
+  Rows: 0, Time: 0ms
+STOR-046: PASS - Insert analytics data row 5
+  SQL: INSERT INTO columnar_test_001 (id, category, amount, quantity) VALUES (5, 'B', 175.50, 17)
+  Rows: 0, Time: 0ms
+STOR-047: PASS - SUM aggregate on column
+  SQL: SELECT SUM(amount) FROM columnar_test_001
+  Rows: 0, Time: 0ms
+STOR-048: PASS - AVG aggregate on column
+  SQL: SELECT AVG(quantity) FROM columnar_test_001
+  Rows: 0, Time: 0ms
+STOR-049: PASS - GROUP BY on columnar storage
+  SQL: SELECT category, SUM(amount) FROM columnar_test_001 GROUP BY category
+  Rows: 0, Time: 0ms
+STOR-050: PASS - Full column scan (COUNT)
+  SQL: SELECT COUNT(*) FROM columnar_test_001
+  Rows: 0, Time: 0ms
+STOR-051: PASS - Select specific columns only
+  SQL: SELECT category, amount FROM columnar_test_001 WHERE id < 4
+  Rows: 0, Time: 0ms
+STOR-052: PASS - Multi-column aggregate
+  SQL: SELECT category, COUNT(*), SUM(amount) FROM columnar_test_001 GROUP BY category
+  Rows: 0, Time: 0ms
+STOR-053: PASS - Create sales columnar table
+  Response: 
+STOR-054: PASS - Insert sales record 1
+  SQL: INSERT INTO columnar_sales VALUES (1, 'Widget', 19.99, 100, 1999.00)
+  Rows: 0, Time: 0ms
+STOR-055: PASS - Insert sales record 2
+  SQL: INSERT INTO columnar_sales VALUES (2, 'Gadget', 29.99, 50, 1499.50)
+  Rows: 0, Time: 0ms
+STOR-056: PASS - Insert sales record 3
+  SQL: INSERT INTO columnar_sales VALUES (3, 'Doohickey', 9.99, 200, 1998.00)
+  Rows: 0, Time: 0ms
+STOR-057: PASS - Calculate total revenue
+  SQL: SELECT SUM(revenue) FROM columnar_sales
+  Rows: 0, Time: 0ms
+STOR-058: PASS - Filter and aggregate
+  SQL: SELECT product, revenue FROM columnar_sales WHERE price > 10.0
+  Rows: 0, Time: 0ms
+STOR-059: PASS - Create table for compression test
+  Response: 
+STOR-060: PASS - Insert repeating values
+  SQL: INSERT INTO columnar_compress VALUES (1, 'ACTIVE', 10), (2, 'ACTIVE', 20), (3, 'ACTIVE', 30), (4, 'INACTIVE', 40)
+  Rows: 0, Time: 0ms
+STOR-061: PASS - Get initial buffer pool metrics
+  Response: {"timestamp":1765468077,"metrics":{"successful_requests":{"value":856.0,"unit":"count","labels":{}},"total_requests":{"value":856.0,"unit":"count","labels":{}},"avg_response_time":{"value":0.0,"unit":"milliseconds","labels":{}}},"prometheus_format":null}
+STOR-062: PASS - Create table for buffer test
+  Response: 
+STOR-063: PASS - Buffer test insert 1
+  SQL: INSERT INTO buffer_test_001 VALUES (1, 'Data XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+  Rows: 0, Time: 0ms
+STOR-064: PASS - Buffer test insert 2
+  SQL: INSERT INTO buffer_test_001 VALUES (2, 'Data XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+  Rows: 0, Time: 0ms
+STOR-065: PASS - Buffer test insert 3
+  SQL: INSERT INTO buffer_test_001 VALUES (3, 'Data XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+  Rows: 0, Time: 0ms
+STOR-066: PASS - Buffer test insert 4
+  SQL: INSERT INTO buffer_test_001 VALUES (4, 'Data XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+  Rows: 0, Time: 0ms
+STOR-067: PASS - Buffer test insert 5
+  SQL: INSERT INTO buffer_test_001 VALUES (5, 'Data XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+  Rows: 0, Time: 0ms
+STOR-068: PASS - Sequential scan (buffer pool)
+  SQL: SELECT COUNT(*) FROM buffer_test_001
+  Rows: 0, Time: 0ms
+STOR-069: PASS - Random access pattern 1
+  SQL: SELECT * FROM buffer_test_001 WHERE id = 3
+  Rows: 0, Time: 0ms
+STOR-070: PASS - Random access pattern 2
+  SQL: SELECT * FROM buffer_test_001 WHERE id = 1
+  Rows: 0, Time: 0ms
+STOR-071: PASS - Random access pattern 3
+  SQL: SELECT * FROM buffer_test_001 WHERE id = 5
+  Rows: 0, Time: 0ms
+STOR-072: PASS - Get buffer metrics after ops
+  Response: {"timestamp":1765468078,"metrics":{"total_requests":{"value":867.0,"unit":"count","labels":{}},"successful_requests":{"value":867.0,"unit":"count","labels":{}},"avg_response_time":{"value":0.0,"unit":"milliseconds","labels":{}}},"prometheus_format":null}
+STOR-073: PASS - Create buffer test table 2
+  Response: 
+STOR-074: PASS - Create buffer test table 3
+  Response: 
+STOR-075: PASS - Insert into buffer_test_002
+  SQL: INSERT INTO buffer_test_002 VALUES (1, 'Value 1'), (2, 'Value 2')
+  Rows: 0, Time: 0ms
+STOR-076: PASS - Insert into buffer_test_003
+  SQL: INSERT INTO buffer_test_003 VALUES (1, 'Value 1'), (2, 'Value 2')
+  Rows: 0, Time: 0ms
+STOR-077: PASS - Query buffer_test_001
+  SQL: SELECT COUNT(*) FROM buffer_test_001
+  Rows: 0, Time: 0ms
+STOR-078: PASS - Query buffer_test_002
+  SQL: SELECT COUNT(*) FROM buffer_test_002
+  Rows: 0, Time: 0ms
+STOR-079: PASS - Query buffer_test_003
+  SQL: SELECT COUNT(*) FROM buffer_test_003
+  Rows: 0, Time: 0ms
+STOR-080: FAIL - Updates (dirty pages)
+  SQL: UPDATE buffer_test_001 SET data = 'Updated' WHERE id = 1
+  Error: {"code":"SQL_PARSE_ERROR","message":"SQL parsing error: Unsupported statement type","details":null,"timestamp":1765468079,"request_id":null}
+STOR-081: PASS - Create INTEGER test table
+  Response: 
+STOR-082: PASS - Insert INTEGER max value
+  SQL: INSERT INTO type_test_integer VALUES (1, 2147483647)
+  Rows: 0, Time: 0ms
+STOR-083: PASS - Insert INTEGER min value
+  SQL: INSERT INTO type_test_integer VALUES (2, -2147483648)
+  Rows: 0, Time: 0ms
+STOR-084: PASS - Insert INTEGER zero
+  SQL: INSERT INTO type_test_integer VALUES (3, 0)
+  Rows: 0, Time: 0ms
+STOR-085: PASS - Create FLOAT test table
+  Response: 
+STOR-086: PASS - Insert FLOAT pi
+  SQL: INSERT INTO type_test_float VALUES (1, 3.14159)
+  Rows: 0, Time: 0ms
+STOR-087: PASS - Insert FLOAT negative
+  SQL: INSERT INTO type_test_float VALUES (2, -2.71828)
+  Rows: 0, Time: 0ms
+STOR-088: PASS - Create VARCHAR test table
+  Response: 
+STOR-089: FAIL - Insert VARCHAR values
+  SQL: INSERT INTO type_test_varchar VALUES (1, 'Short', 'Medium length text here')
+  Error: {"code":"SQL_PARSE_ERROR","message":"Injection attempt detected: Injection attack detected: 1 threats found","details":null,"timestamp":1765468080,"request_id":null}
+STOR-090: PASS - Create TEXT test table
+  Response: 
+STOR-091: FAIL - Insert TEXT value
+  SQL: INSERT INTO type_test_text VALUES (1, 'This is a very long text field that can store large amounts of data without a predefined limit like VARCHAR')
+  Error: {"code":"SQL_PARSE_ERROR","message":"Injection attempt detected: Injection attack detected: 1 threats found","details":null,"timestamp":1765468080,"request_id":null}
+STOR-092: PASS - Create BOOLEAN test table
+  Response: 
+STOR-093: PASS - Insert BOOLEAN true
+  SQL: INSERT INTO type_test_boolean VALUES (1, true)
+  Rows: 0, Time: 0ms
+STOR-094: PASS - Insert BOOLEAN false
+  SQL: INSERT INTO type_test_boolean VALUES (2, false)
+  Rows: 0, Time: 0ms
+STOR-095: PASS - Create BIGINT test table
+  Response: 
+STOR-096: PASS - Insert BIGINT large value
+  SQL: INSERT INTO type_test_bigint VALUES (123456789012345, 987654321098765)
+  Rows: 0, Time: 0ms
+STOR-097: PASS - Create DOUBLE test table
+  Response: 
+STOR-098: PASS - Insert DOUBLE precise value
+  SQL: INSERT INTO type_test_double VALUES (1, 3.141592653589793238)
+  Rows: 0, Time: 0ms
+STOR-099: PASS - Create NULL test table
+  Response: 
+STOR-100: PASS - Insert NULL values
+  SQL: INSERT INTO type_test_null VALUES (1, NULL, 'Text'), (2, 42, NULL)
+  Rows: 0, Time: 0ms

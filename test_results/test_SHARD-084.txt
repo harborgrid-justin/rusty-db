@@ -1,0 +1,9 @@
+Test ID: SHARD-084
+Category: query_routing
+Description: Transaction execution type
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"fields":[{"name":"success"},{"name":"results"},{"name":"executionTimeMs"},{"name":"error"}]}}}
+Notes: Transaction execution supported
+---

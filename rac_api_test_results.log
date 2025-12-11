@@ -1,0 +1,197 @@
+=== RAC MODULE API TEST SUITE ===
+Date: Thu Dec 11 16:22:00 UTC 2025
+Server: http://localhost:8080
+
+
+[1;33m--- RAC-API-001: Server Health Check ---[0m
+Command: curl -s http://localhost:8080/health | head -5
+Response: 
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-002: Create RAC Test Table ---[0m
+GraphQL Query: mutation { createTable(name: \"rac_test_data\", schema: { name: \"rac_test_data\", columns: [{name: \"id\", dataType: \"INTEGER\", nullable: false}] }) { name } }
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m--- RAC-API-003: Insert data for Cache Fusion test ---[0m
+GraphQL Query: mutation { insertRow(table: \"rac_test_data\", row: {id: 1}) { success } }
+Response: {"data":null,"errors":[{"message":"Unknown field \"insertRow\" on type \"MutationRoot\". Did you mean \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m--- RAC-API-004: Query data (Cache Fusion block request) ---[0m
+GraphQL Query: { queryTable(table: \"rac_test_data\", filters: []) { rows { data } } }
+Response: {"data":null,"errors":[{"message":"Unknown argument \"filters\" on field \"queryTable\" of type \"QueryRoot\".","locations":[{"line":1,"column":38}]},{"message":"Unknown field \"rows\" on type \"QueryResult\".","locations":[{"line":1,"column":53}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-005: Parallel table scan ---[0m
+GraphQL Query: { queryTable(table: \"rac_test_data\", filters: []) { rows { data } totalCount } }
+Response: {"data":null,"errors":[{"message":"Unknown argument \"filters\" on field \"queryTable\" of type \"QueryRoot\".","locations":[{"line":1,"column":38}]},{"message":"Unknown field \"rows\" on type \"QueryResult\".","locations":[{"line":1,"column":53}]},{"message":"Unknown field \"totalCount\" on type \"QueryResult\".","locations":[{"line":1,"column":67}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-006: Aggregate query (parallel) ---[0m
+GraphQL Query: { aggregate(table: \"rac_test_data\", aggregates: [{function: COUNT, column: \"id\"}]) { results { value } } }
+Response: {"data":null,"errors":[{"message":"Invalid value for argument \"aggregates.0\", field \"field\" of type \"String!\" is required but not provided","locations":[{"line":1,"column":37}]},{"message":"Unknown field \"results\" on type \"AggregateResult\".","locations":[{"line":1,"column":86}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-007: Execute SQL with parallel hint ---[0m
+GraphQL Query: { executeSql(query: \"SELECT * FROM rac_test_data\") { columns rows } }
+Response: {"data":null,"errors":[{"message":"Field \"executeSql\" argument \"sql\" of type \"QueryRoot\" is required but not provided","locations":[{"line":1,"column":3}]},{"message":"Unknown argument \"query\" on field \"executeSql\" of type \"QueryRoot\".","locations":[{"line":1,"column":14}]},{"message":"Unknown field \"columns\" on type \"QueryResult\".","locations":[{"line":1,"column":54}]},{"message":"Unknown field \"rows\" on type \"QueryResult\".","locations":[{"line":1,"column":62}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-008: Create second table (GRD resource distribution) ---[0m
+GraphQL Query: mutation { createTable(name: \"rac_test_join\", schema: { name: \"rac_test_join\", columns: [{name: \"id\", dataType: \"INTEGER\", nullable: false}] }) { name } }
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m--- RAC-API-009: Union query (parallel coordination) ---[0m
+GraphQL Query: { executeUnion(queries: [\"SELECT * FROM rac_test_data\", \"SELECT * FROM rac_test_join\"]) { rows columns } }
+Response: {"data":null,"errors":[{"message":"Unknown field \"rows\" on type \"QueryResult\".","locations":[{"line":1,"column":91}]},{"message":"Unknown field \"columns\" on type \"QueryResult\".","locations":[{"line":1,"column":96}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-010: Explain plan (parallel execution) ---[0m
+GraphQL Query: { explain(query: \"SELECT * FROM rac_test_data\") { plan estimatedCost } }
+Response: {"data":null,"errors":[{"message":"Field \"explain\" argument \"table\" of type \"QueryRoot\" is required but not provided","locations":[{"line":1,"column":3}]},{"message":"Unknown argument \"query\" on field \"explain\" of type \"QueryRoot\".","locations":[{"line":1,"column":11}]},{"message":"Unknown field \"plan\" on type \"QueryPlan\".","locations":[{"line":1,"column":51}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-011: Count query (GCS block mode: Shared) ---[0m
+GraphQL Query: { count(table: \"rac_test_data\") }
+Response: {"data":{"count":"0"}}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-012: Update row (GCS block mode: Exclusive) ---[0m
+GraphQL Query: mutation { updateRow(table: \"rac_test_data\", id: 1, updates: {id: 1}) { success } }
+Response: {"data":null,"errors":[{"message":"Unknown field \"updateRow\" on type \"MutationRoot\". Did you mean \"updateOne\", \"updateMany\"?","locations":[{"line":1,"column":12}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m--- RAC-API-013: Query after update (Cache invalidation) ---[0m
+GraphQL Query: { queryTable(table: \"rac_test_data\", filters: []) { rows { data } } }
+Response: {"data":null,"errors":[{"message":"Unknown argument \"filters\" on field \"queryTable\" of type \"QueryRoot\".","locations":[{"line":1,"column":38}]},{"message":"Unknown field \"rows\" on type \"QueryResult\".","locations":[{"line":1,"column":53}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-014: Delete row (Lock acquisition test) ---[0m
+GraphQL Query: mutation { deleteRow(table: \"rac_test_data\", id: 1) { success } }
+Response: {"data":null,"errors":[{"message":"Unknown field \"deleteRow\" on type \"MutationRoot\". Did you mean \"deleteOne\", \"deleteMany\"?","locations":[{"line":1,"column":12}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m--- RAC-API-015: Search query (Parallel scan) ---[0m
+GraphQL Query: { search(table: \"rac_test_data\", term: \"test\") { results { data } } }
+Response: {"data":null,"errors":[{"message":"Field \"search\" argument \"query\" of type \"QueryRoot\" is required but not provided","locations":[{"line":1,"column":3}]},{"message":"Unknown argument \"table\" on field \"search\" of type \"QueryRoot\". Did you mean \"tables\"?","locations":[{"line":1,"column":10}]},{"message":"Unknown argument \"term\" on field \"search\" of type \"QueryRoot\".","locations":[{"line":1,"column":34}]},{"message":"Unknown field \"data\" on type \"SearchMatch\".","locations":[{"line":1,"column":60}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m--- RAC-API-016: List all tables (GRD resource listing) ---[0m
+Command: curl -s -X POST http://localhost:8080/graphql -H 'Content-Type: application/json' -d '{"query": "{ tables { name } }"}' | jq .
+Response: {
+  "data": {
+    "tables": []
+  }
+}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-017: Get table schema (Resource metadata) ---[0m
+Command: curl -s -X POST http://localhost:8080/graphql -H 'Content-Type: application/json' -d '{"query": "{ table(name: \"rac_test_data\") { name columns { name } } }"}' | jq .
+Response: {
+  "data": {
+    "table": null
+  }
+}
+[0;31m✗ FAIL[0m
+
+[1;33m--- RAC-API-018: Batch insert (Parallel DML) ---[0m
+Command: curl -s -X POST http://localhost:8080/graphql -H 'Content-Type: application/json' -d '{"query": "mutation { insertRow(table: \"rac_test_data\", row: {id: 2}) { success } }"}' | jq .
+Response: {
+  "data": null,
+  "errors": [
+    {
+      "message": "Unknown field \"insertRow\" on type \"MutationRoot\". Did you mean \"insertOne\", \"insertMany\"?",
+      "locations": [
+        {
+          "line": 1,
+          "column": 12
+        }
+      ]
+    }
+  ]
+}
+[0;31m✗ FAIL[0m
+
+[1;33m--- RAC-API-019: Complex query (Multi-fragment parallel) ---[0m
+Command: curl -s -X POST http://localhost:8080/graphql -H 'Content-Type: application/json' -d '{"query": "{ queryTable(table: \"rac_test_data\", filters: []) { totalCount } }"}' | jq .
+Response: {
+  "data": null,
+  "errors": [
+    {
+      "message": "Unknown argument \"filters\" on field \"queryTable\" of type \"QueryRoot\".",
+      "locations": [
+        {
+          "line": 1,
+          "column": 38
+        }
+      ]
+    },
+    {
+      "message": "Unknown field \"totalCount\" on type \"QueryResult\".",
+      "locations": [
+        {
+          "line": 1,
+          "column": 53
+        }
+      ]
+    }
+  ]
+}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-020: Concurrent query simulation ---[0m
+Command: for i in {1..5}; do curl -s -X POST http://localhost:8080/graphql -H 'Content-Type: application/json' -d '{"query": "{ count(table: \"rac_test_data\") }"}' & done; wait
+Response: {"data":{"count":"0"}}{"data":{"count":"0"}}{"data":{"count":"0"}}{"data":{"count":"0"}}{"data":{"count":"0"}}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-021: Large dataset query (Triggers work distribution) ---[0m
+GraphQL Query: { queryTable(table: \"rac_test_data\", filters: []) { rows { data } totalCount } }
+Response: {"data":null,"errors":[{"message":"Unknown argument \"filters\" on field \"queryTable\" of type \"QueryRoot\".","locations":[{"line":1,"column":38}]},{"message":"Unknown field \"rows\" on type \"QueryResult\".","locations":[{"line":1,"column":53}]},{"message":"Unknown field \"totalCount\" on type \"QueryResult\".","locations":[{"line":1,"column":67}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-022: Sorted query (Parallel sort) ---[0m
+GraphQL Query: { queryTable(table: \"rac_test_data\", filters: []) { rows { data } } }
+Response: {"data":null,"errors":[{"message":"Unknown argument \"filters\" on field \"queryTable\" of type \"QueryRoot\".","locations":[{"line":1,"column":38}]},{"message":"Unknown field \"rows\" on type \"QueryResult\".","locations":[{"line":1,"column":53}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-023: Grouped aggregation (Parallel group by) ---[0m
+GraphQL Query: { aggregate(table: \"rac_test_data\", aggregates: [{function: COUNT, column: \"id\"}]) { results { value } } }
+Response: {"data":null,"errors":[{"message":"Invalid value for argument \"aggregates.0\", field \"field\" of type \"String!\" is required but not provided","locations":[{"line":1,"column":37}]},{"message":"Unknown field \"results\" on type \"AggregateResult\".","locations":[{"line":1,"column":86}]}]}
+[0;32m✓ PASS[0m
+
+[1;33m--- RAC-API-024: Concurrent read stress test ---[0m
+Running 10 concurrent queries...
+[0;32m✓ PASS - All concurrent queries completed[0m
+
+[1;33m--- RAC-API-025: Concurrent write stress test ---[0m
+Running 5 concurrent inserts...
+[0;32m✓ PASS - All concurrent writes completed[0m
+
+[1;33m--- RAC-API-026: Mixed workload test ---[0m
+Running mixed read/write workload...
+[0;32m✓ PASS - Mixed workload completed[0m
+
+[1;33m--- RAC-API-027: Long-running query test ---[0m
+Testing query timeout handling...
+[0;32m✓ PASS - Query completed successfully[0m
+
+[1;33m--- RAC-API-028: Transaction isolation test ---[0m
+Testing MVCC/snapshot isolation...
+[0;32m✓ PASS - Concurrent transactions completed[0m
+
+[1;33m--- RAC-API-029: Cache coherence test ---[0m
+Testing cache invalidation across instances...
+[0;32m✓ PASS - Cache coherence maintained[0m
+
+[1;33m--- RAC-API-030: Resource cleanup test ---[0m
+Cleaning up test tables...
+[0;32m✓ PASS - Cleanup completed[0m
+
+=== TEST SUMMARY ===
+Total Tests: 30
+[0;32mPassed: 22[0m
+[0;31mFailed: 8[0m
+
+[0;31mSOME TESTS FAILED ✗[0m

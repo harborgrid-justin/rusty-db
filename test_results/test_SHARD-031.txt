@@ -1,0 +1,9 @@
+Test ID: SHARD-031
+Category: horizontal_sharding
+Description: Get cluster nodes
+Method: GET
+Endpoint: /api/v1/cluster/nodes
+Status: PASS
+Response: [{"node_id":"node-local","address":"127.0.0.1:5432","role":"leader","status":"healthy","version":"0.1.0","uptime_seconds":1362,"last_heartbeat":1765468211}]
+Notes: Cluster nodes retrieved
+---

@@ -1,0 +1,9 @@
+Test ID: SHARD-032
+Category: horizontal_sharding
+Description: Get cluster configuration
+Method: GET
+Endpoint: /api/v1/cluster/config
+Status: PASS
+Response: {"cluster_name":"rustydb-cluster","heartbeat_interval_ms":1000,"replication_factor":3,"sync_replication":true,"election_timeout_ms":5000}
+Notes: Cluster config available
+---

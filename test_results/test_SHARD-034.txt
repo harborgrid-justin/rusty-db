@@ -1,0 +1,9 @@
+Test ID: SHARD-034
+Category: horizontal_sharding
+Description: Get replication status
+Method: GET
+Endpoint: /api/v1/cluster/replication
+Status: PASS
+Response: {"primary_node":"node-local","replicas":[],"replication_lag_ms":0,"sync_state":"single_node"}
+Notes: Replication status available
+---

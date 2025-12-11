@@ -1,0 +1,9 @@
+Test ID: SHARD-0010
+Category: table_partitioning
+Description: Check partitions endpoint
+Method: GET
+Endpoint: /api/v1/tables/partitions
+Status: PASS
+Response: {"code":"NOT_FOUND","message":"Table partitions not found","details":null,"timestamp":1765468211,"request_id":null}
+Notes: Endpoint exists
+---

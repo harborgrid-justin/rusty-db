@@ -1,0 +1,9 @@
+Test ID: SHARD-076
+Category: partition_operations
+Description: Partition operations test #11
+Method: GET
+Endpoint: /api/v1/tables/test_table/partitions
+Status: INFO
+Response: 
+Notes: Endpoint response: 
+---

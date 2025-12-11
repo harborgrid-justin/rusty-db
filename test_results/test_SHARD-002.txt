@@ -1,0 +1,9 @@
+Test ID: SHARD-002
+Category: table_partitioning
+Description: Check TableType definition
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"fields":[{"name":"id"},{"name":"name"},{"name":"schema"},{"name":"columns"},{"name":"rowCount"},{"name":"sizeBytes"},{"name":"createdAt"},{"name":"updatedAt"},{"name":"createdBy"},{"name":"updatedBy"},{"name":"description"},{"name":"indexes"},{"name":"constraints"},{"name":"statistics"},{"name":"sampleRows"}]}}}
+Notes: TableType exists
+---

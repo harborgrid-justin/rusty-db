@@ -1,0 +1,9 @@
+Test ID: SHARD-003
+Category: table_partitioning
+Description: List existing tables
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"tables":[]}}
+Notes: Tables query successful
+---

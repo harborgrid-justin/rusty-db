@@ -1,0 +1,9 @@
+Test ID: SHARD-091
+Category: query_routing
+Description: Query performance test #1
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: Response time: 36ms
+Notes: Query responded in 36ms
+---

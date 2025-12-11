@@ -1,0 +1,9 @@
+Test ID: SHARD-085
+Category: query_routing
+Description: WHERE clause support
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"inputFields":[{"name":"and"},{"name":"or"},{"name":"not"},{"name":"condition"}]}}}
+Notes: Complex WHERE supported
+---

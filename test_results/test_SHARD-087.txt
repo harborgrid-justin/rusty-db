@@ -1,0 +1,9 @@
+Test ID: SHARD-087
+Category: query_routing
+Description: Filter operators available
+Method: POST
+Endpoint: /graphql
+Status: FAIL
+Response: {"data":{"__type":{"enumValues":[{"name":"EQ"},{"name":"NE"},{"name":"LT"},{"name":"LE"},{"name":"GT"},{"name":"GE"},{"name":"LIKE"},{"name":"NOT_LIKE"},{"name":"IN"},{"name":"NOT_IN"},{"name":"IS_NULL"},{"name":"IS_NOT_NULL"},{"name":"BETWEEN"},{"name":"CONTAINS"},{"name":"STARTS_WITH"},{"name":"ENDS_WITH"}]}}}
+Notes: Operators not found
+---

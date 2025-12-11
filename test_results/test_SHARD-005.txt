@@ -1,0 +1,9 @@
+Test ID: SHARD-005
+Category: table_partitioning
+Description: Check MutationResult types
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"possibleTypes":[{"name":"MutationSuccess"},{"name":"MutationError"}]}}}
+Notes: MutationResult union discovered
+---

@@ -1,0 +1,9 @@
+Test ID: SHARD-083
+Category: query_routing
+Description: Aggregate query support
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"fields":[{"name":"field"},{"name":"function"},{"name":"value"}]}}}
+Notes: Aggregation supported
+---

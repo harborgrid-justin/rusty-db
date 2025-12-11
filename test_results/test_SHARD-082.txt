@@ -1,0 +1,9 @@
+Test ID: SHARD-082
+Category: query_routing
+Description: Query plan type available
+Method: POST
+Endpoint: /graphql
+Status: PASS
+Response: {"data":{"__type":{"fields":[{"name":"planText"},{"name":"estimatedCost"},{"name":"estimatedRows"},{"name":"operations"}]}}}
+Notes: EXPLAIN functionality exists
+---

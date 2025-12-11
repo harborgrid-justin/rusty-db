@@ -1,0 +1,9 @@
+Test ID: SHARD-062
+Category: partition_operations
+Description: Partition operations module
+Method: CODE
+Endpoint: storage/partitioning/operations.rs
+Status: PASS
+Response: Operations module exists
+Notes: Add/remove/split/merge operations
+---

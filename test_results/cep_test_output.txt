@@ -1,0 +1,294 @@
+=======================================================
+  RUSTYDB EVENT PROCESSING - COMPREHENSIVE TEST SUITE
+=======================================================
+
+[1;33m━━━ SECTION 1: BASIC EVENT PROCESSING ━━━[0m
+
+[0;34m=== CEP-001: GraphQL Schema Available ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ __schema { types { name } } }"}'
+Response: {"data":{"__schema":{"types":[{"name":"AggregateChange"},{"name":"AggregateFunc"},{"name":"AggregateInput"},{"name":"AggregateResult"},{"name":"BatchStringFunctionResult"},{"name":"BigInt"},{"name":"Boolean"},{"name":"ChangeType"},{"name":"ColumnDefinitionInput"},{"name":"ColumnStatistics"},{"name":"ColumnType"},{"name":"ConstraintInfo"},{"name":"ConstraintInput"},{"name":"ConstraintTypeEnum"},{"name":"DataType"},{"name":"DatabaseSchema"},{"name":"DateTime"},{"name":"DdlError"},{"name":"DdlResult"},{"name":"DdlSuccess"},{"name":"FieldValue"},{"name":"FilterCondition"},{"name":"FilterOp"},{"name":"Float"},{"name":"Heartbeat"},{"name":"HistogramBucket"},{"name":"ID"},{"name":"IndexInfo"},{"name":"Int"},{"name":"IsolationLevel"},{"name":"JSONObject"},{"name":"JoinInput"},{"name":"JoinType"},{"name":"Json"},{"name":"MutationError"},{"name":"MutationResult"},{"name":"MutationRoot"},{"name":"MutationSuccess"},{"name":"OrderBy"},{"name":"PageInfo"},{"name":"ParameterMode"},{"name":"PlanOperation"},{"name":"ProcedureError"},{"name":"ProcedureParameter"},{"name":"ProcedureResult"},{"name":"ProcedureSuccess"},{"name":"QueryChange"},{"name":"QueryError"},{"name":"QueryPlan"},{"name":"QueryResult"},{"name":"QueryRoot"},{"name":"QuerySuccess"},{"name":"RowChange"},{"name":"RowConnection"},{"name":"RowDeleted"},{"name":"RowEdge"},{"name":"RowInserted"},{"name":"RowType"},{"name":"RowUpdated"},{"name":"SearchMatch"},{"name":"SearchResult"},{"name":"SortOrder"},{"name":"String"},{"name":"StringFunctionInput"},{"name":"StringFunctionResult"},{"name":"StringFunctionTypeEnum"},{"name":"SubscriptionRoot"},{"name":"TableChange"},{"name":"TableStatistics"},{"name":"TableType"},{"name":"TransactionExecutionResult"},{"name":"TransactionOpType"},{"name":"TransactionOperation"},{"name":"TransactionResult"},{"name":"WhereClause"},{"name":"__Directive"},{"name":"__DirectiveLocation"},{"name":"__EnumValue"},{"name":"__Field"},{"name":"__InputValue"},{"name":"__Schema"},{"name":"__Type"},{"name":"__TypeKind"}]}}}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-002: Create Event Stream Table ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"events\", columns: [{ name: \"id\", dataType: \"INT\", notNull: true }, { name: \"type\", dataType: \"VARCHAR\", maxLength: 100 }, { name: \"data\", dataType: \"TEXT\" }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":256}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-003: Insert Event - User Login ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"events\", data: { id: 1, type: \"user.login\", data: \"user_123\" }) { ... on MutationSuccess { rowsAffected } ... on MutationError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":118}]},{"message":"Unknown field \"error\" on type \"MutationError\".","locations":[{"line":1,"column":156}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-004: Insert Event - User Action ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"events\", data: { id: 2, type: \"user.action\", data: \"clicked_button\" }) { ... on MutationSuccess { rowsAffected } ... on MutationError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":125}]},{"message":"Unknown field \"error\" on type \"MutationError\".","locations":[{"line":1,"column":163}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-005: Insert Event - User Logout ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"events\", data: { id: 3, type: \"user.logout\", data: \"user_123\" }) { ... on MutationSuccess { rowsAffected } ... on MutationError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":119}]},{"message":"Unknown field \"error\" on type \"MutationError\".","locations":[{"line":1,"column":157}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-006: Query All Events ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"events\") { ... on QuerySuccess { data { rows { values } } } ... on QueryError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":50}]},{"message":"Unknown field \"error\" on type \"QueryError\".","locations":[{"line":1,"column":97}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m━━━ SECTION 2: PATTERN MATCHING ━━━[0m
+
+[0;34m=== CEP-007: Filter Events by Type ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"events\", where: { field: \"type\", op: EQUALS, value: \"user.login\" }) { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":109}]}]}
+[0;31m✗ FAIL[0m
+
+[0;34m=== CEP-008: Create Pattern Table for Sequences ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"event_patterns\", columns: [{ name: \"pattern_id\", dataType: \"INT\" }, { name: \"pattern_name\", dataType: \"VARCHAR\", maxLength: 100 }, { name: \"pattern_spec\", dataType: \"TEXT\" }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":273}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-009: Insert Pattern - Login->Action->Logout Sequence ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"event_patterns\", data: { pattern_id: 1, pattern_name: \"user_session_pattern\", pattern_spec: \"LOGIN->ACTION->LOGOUT\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":173}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-010: Query Pattern Definitions ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"event_patterns\") { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":58}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m━━━ SECTION 3: TEMPORAL CONSTRAINTS ━━━[0m
+
+[0;34m=== CEP-011: Create Temporal Events Table ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"temporal_events\", columns: [{ name: \"id\", dataType: \"INT\" }, { name: \"event_time\", dataType: \"TIMESTAMP\" }, { name: \"event_type\", dataType: \"VARCHAR\", maxLength: 50 }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":266}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-012: Insert Time-Series Event 1 ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"temporal_events\", data: { id: 1, event_time: \"2024-01-01T10:00:00Z\", event_type: \"start\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":146}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-013: Insert Time-Series Event 2 ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"temporal_events\", data: { id: 2, event_time: \"2024-01-01T10:05:00Z\", event_type: \"middle\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":147}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-014: Insert Time-Series Event 3 ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"temporal_events\", data: { id: 3, event_time: \"2024-01-01T10:10:00Z\", event_type: \"end\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":144}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-015: Query Temporal Events with Ordering ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"temporal_events\", orderBy: [{ field: \"event_time\", direction: ASC }]) { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":111}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m━━━ SECTION 4: EVENT CORRELATION ━━━[0m
+
+[0;34m=== CEP-016: Create Correlated Events Table ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"correlated_events\", columns: [{ name: \"id\", dataType: \"INT\" }, { name: \"correlation_id\", dataType: \"VARCHAR\", maxLength: 100 }, { name: \"event_type\", dataType: \"VARCHAR\", maxLength: 50 }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":286}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-017: Insert Correlated Event - Cart Add ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"correlated_events\", data: { id: 1, correlation_id: \"session_123\", event_type: \"cart.add\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":146}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-018: Insert Correlated Event - Checkout Start ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"correlated_events\", data: { id: 2, correlation_id: \"session_123\", event_type: \"checkout.start\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":152}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-019: Insert Correlated Event - Payment Complete ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"correlated_events\", data: { id: 3, correlation_id: \"session_123\", event_type: \"payment.complete\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":154}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-020: Query Correlated Events by Session ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"correlated_events\", where: { field: \"correlation_id\", op: EQUALS, value: \"session_123\" }) { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":131}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m━━━ SECTION 5: WINDOWING FUNCTIONS ━━━[0m
+
+[0;34m=== CEP-021: Create Window Aggregates Table ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"window_aggregates\", columns: [{ name: \"window_id\", dataType: \"INT\" }, { name: \"window_type\", dataType: \"VARCHAR\", maxLength: 50 }, { name: \"event_count\", dataType: \"INT\" }, { name: \"window_start\", dataType: \"TIMESTAMP\" }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":320}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-022: Insert Tumbling Window Result ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"window_aggregates\", data: { window_id: 1, window_type: \"tumbling\", event_count: 100, window_start: \"2024-01-01T10:00:00Z\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":179}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-023: Insert Sliding Window Result ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"window_aggregates\", data: { window_id: 2, window_type: \"sliding\", event_count: 75, window_start: \"2024-01-01T10:00:30Z\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":177}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-024: Insert Session Window Result ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"window_aggregates\", data: { window_id: 3, window_type: \"session\", event_count: 42, window_start: \"2024-01-01T10:05:00Z\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":177}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-025: Query Window Aggregates ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"window_aggregates\") { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":61}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m━━━ SECTION 6: STREAM OPERATORS ━━━[0m
+
+[0;34m=== CEP-026: Create Operator Results Table ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"operator_results\", columns: [{ name: \"id\", dataType: \"INT\" }, { name: \"operator_type\", dataType: \"VARCHAR\", maxLength: 50 }, { name: \"input_count\", dataType: \"INT\" }, { name: \"output_count\", dataType: \"INT\" }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":308}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-027: Insert Filter Operator Result ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"operator_results\", data: { id: 1, operator_type: \"filter\", input_count: 1000, output_count: 450 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":153}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-028: Insert Map Operator Result ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"operator_results\", data: { id: 2, operator_type: \"map\", input_count: 450, output_count: 450 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":149}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-029: Insert Aggregate Operator Result ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"operator_results\", data: { id: 3, operator_type: \"aggregate\", input_count: 450, output_count: 1 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":153}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-030: Insert Deduplication Operator Result ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"operator_results\", data: { id: 4, operator_type: \"deduplication\", input_count: 500, output_count: 425 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":159}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-031: Query Operator Results ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"operator_results\") { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":60}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m━━━ SECTION 7: STREAM LIFECYCLE MANAGEMENT ━━━[0m
+
+[0;34m=== CEP-032: Create Stream Lifecycle Table ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"stream_lifecycle\", columns: [{ name: \"stream_id\", dataType: \"INT\" }, { name: \"stream_name\", dataType: \"VARCHAR\", maxLength: 100 }, { name: \"state\", dataType: \"VARCHAR\", maxLength: 50 }, { name: \"partition_count\", dataType: \"INT\" }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":330}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-033: Insert Stream - Active State ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"stream_lifecycle\", data: { stream_id: 1, stream_name: \"user_events\", state: \"active\", partition_count: 4 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":162}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-034: Insert Stream - Paused State ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"stream_lifecycle\", data: { stream_id: 2, stream_name: \"admin_events\", state: \"paused\", partition_count: 2 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":163}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-035: Query Stream States ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"stream_lifecycle\") { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":60}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m━━━ SECTION 8: WATERMARK MANAGEMENT ━━━[0m
+
+[0;34m=== CEP-036: Create Watermark Table ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"watermarks\", columns: [{ name: \"partition_id\", dataType: \"INT\" }, { name: \"watermark_time\", dataType: \"TIMESTAMP\" }, { name: \"max_lateness_sec\", dataType: \"INT\" }, { name: \"late_events_count\", dataType: \"INT\" }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":310}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-037: Insert Watermark for Partition 0 ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"watermarks\", data: { partition_id: 0, watermark_time: \"2024-01-01T10:00:00Z\", max_lateness_sec: 10, late_events_count: 5 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":178}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-038: Insert Watermark for Partition 1 ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"watermarks\", data: { partition_id: 1, watermark_time: \"2024-01-01T10:00:05Z\", max_lateness_sec: 10, late_events_count: 3 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":178}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-039: Query Watermarks ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"watermarks\") { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":54}]}]}
+[0;31m✗ FAIL[0m
+
+[0;34m=== CEP-040: Query Late Events Count ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ aggregate(input: { table: \"watermarks\", func: SUM, field: \"late_events_count\" }) { ... on AggregateResult { value } } }"}'
+Response: {"data":null,"errors":[{"message":"Field \"aggregate\" argument \"table\" of type \"QueryRoot\" is required but not provided","locations":[{"line":1,"column":3}]},{"message":"Field \"aggregate\" argument \"aggregates\" of type \"QueryRoot\" is required but not provided","locations":[{"line":1,"column":3}]},{"message":"Unknown argument \"input\" on field \"aggregate\" of type \"QueryRoot\".","locations":[{"line":1,"column":13}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m━━━ SECTION 9: PERFORMANCE AND METRICS ━━━[0m
+
+[0;34m=== CEP-041: Create Metrics Table ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"cep_metrics\", columns: [{ name: \"metric_name\", dataType: \"VARCHAR\", maxLength: 100 }, { name: \"metric_value\", dataType: \"BIGINT\" }, { name: \"metric_type\", dataType: \"VARCHAR\", maxLength: 50 }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":291}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-042: Insert Events Processed Metric ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"cep_metrics\", data: { metric_name: \"events_processed\", metric_value: 1000000, metric_type: \"counter\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":158}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-043: Insert Throughput Metric ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"cep_metrics\", data: { metric_name: \"throughput_eps\", metric_value: 50000, metric_type: \"gauge\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":152}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-044: Insert Latency Metric ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"cep_metrics\", data: { metric_name: \"latency_p99_ms\", metric_value: 15, metric_type: \"histogram\" }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":153}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-045: Query All Metrics ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"cep_metrics\") { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":55}]}]}
+[0;31m✗ FAIL[0m
+
+[1;33m━━━ SECTION 10: ADVANCED FEATURES ━━━[0m
+
+[0;34m=== CEP-046: Create Consumer Groups Table ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { createTable(input: { tableName: \"consumer_groups\", columns: [{ name: \"group_id\", dataType: \"VARCHAR\", maxLength: 100 }, { name: \"consumer_id\", dataType: \"VARCHAR\", maxLength: 100 }, { name: \"partition_id\", dataType: \"INT\" }, { name: \"offset\", dataType: \"BIGINT\" }] }) { ... on DdlSuccess { message } ... on DdlError { error } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"createTable\" on type \"MutationRoot\". Did you mean \"truncateTable\", \"createDatabase\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"error\" on type \"DdlError\".","locations":[{"line":1,"column":330}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-047: Insert Consumer Group Assignment ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"consumer_groups\", data: { group_id: \"group_1\", consumer_id: \"consumer_a\", partition_id: 0, offset: 1000 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":161}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-048: Insert Consumer Group Assignment 2 ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "mutation { insert(table: \"consumer_groups\", data: { group_id: \"group_1\", consumer_id: \"consumer_b\", partition_id: 1, offset: 1500 }) { ... on MutationSuccess { rowsAffected } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"insert\" on type \"MutationRoot\". Did you mean \"upsert\", \"insertOne\", \"insertMany\"?","locations":[{"line":1,"column":12}]},{"message":"Unknown field \"rowsAffected\" on type \"MutationSuccess\".","locations":[{"line":1,"column":161}]}]}
+[0;32m✓ PASS[0m
+
+[0;34m=== CEP-049: Query Consumer Group Offsets ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ query(table: \"consumer_groups\", where: { field: \"group_id\", op: EQUALS, value: \"group_1\" }) { ... on QuerySuccess { data { rows { values } } } } }"}'
+Response: {"data":null,"errors":[{"message":"Unknown field \"query\" on type \"QueryRoot\".","locations":[{"line":1,"column":3}]},{"message":"Unknown field \"data\" on type \"QuerySuccess\".","locations":[{"line":1,"column":119}]}]}
+[0;31m✗ FAIL[0m
+
+[0;34m=== CEP-050: Count Total Consumer Assignments ===[0m
+Command: curl -s -X POST 'http://localhost:8080/graphql' -H 'Content-Type: application/json' -d '{"query": "{ aggregate(input: { table: \"consumer_groups\", func: COUNT, field: \"consumer_id\" }) { ... on AggregateResult { value } } }"}'
+Response: {"data":null,"errors":[{"message":"Field \"aggregate\" argument \"table\" of type \"QueryRoot\" is required but not provided","locations":[{"line":1,"column":3}]},{"message":"Field \"aggregate\" argument \"aggregates\" of type \"QueryRoot\" is required but not provided","locations":[{"line":1,"column":3}]},{"message":"Unknown argument \"input\" on field \"aggregate\" of type \"QueryRoot\".","locations":[{"line":1,"column":13}]}]}
+[0;31m✗ FAIL[0m
+
+=======================================================
+                  TEST SUMMARY
+=======================================================
+Total Tests: 50
+[0;32mPassed: 37[0m
+[0;31mFailed: 13[0m
+Success Rate: 74.0%
+
+Coverage Areas:
+  ✓ Basic Event Processing
+  ✓ Pattern Matching
+  ✓ Temporal Constraints
+  ✓ Event Correlation
+  ✓ Windowing Functions
+  ✓ Stream Operators
+  ✓ Stream Lifecycle
+  ✓ Watermark Management
+  ✓ Performance Metrics
+  ✓ Consumer Groups
+=======================================================
