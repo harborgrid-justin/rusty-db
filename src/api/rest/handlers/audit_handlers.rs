@@ -115,24 +115,26 @@ pub struct ComplianceViolation {
 
 // Global vault instance reference
 lazy_static::lazy_static! {
-    static ref VAULT_MANAGER: Arc<RwLock<Option<SecurityVaultManager>>> = Arc::new(RwLock::new(None));
+    static ref VAULT_MANAGER: Arc<RwLock<Option<Arc<SecurityVaultManager>>>> = Arc::new(RwLock::new(None));
 }
 
 // Initialize vault if not already initialized
-fn get_or_init_vault() -> Result<Arc<RwLock<Option<SecurityVaultManager>>>, ApiError> {
+fn get_or_init_vault() -> Result<Arc<SecurityVaultManager>, ApiError> {
     let vault = VAULT_MANAGER.read();
-    if vault.is_none() {
-        drop(vault);
-        let mut vault_write = VAULT_MANAGER.write();
-        if vault_write.is_none() {
-            let temp_dir = std::env::temp_dir().join("rustydb_vault");
-            match SecurityVaultManager::new(temp_dir.to_string_lossy().to_string()) {
-                Ok(vm) => *vault_write = Some(vm),
-                Err(e) => return Err(ApiError::new("VAULT_INIT_ERROR", e.to_string())),
-            }
+    if let Some(ref v) = *vault {
+        return Ok(Arc::clone(v));
+    }
+    drop(vault);
+
+    let mut vault_write = VAULT_MANAGER.write();
+    if vault_write.is_none() {
+        let temp_dir = std::env::temp_dir().join("rustydb_vault");
+        match SecurityVaultManager::new(temp_dir.to_string_lossy().to_string()) {
+            Ok(vm) => *vault_write = Some(Arc::new(vm)),
+            Err(e) => return Err(ApiError::new("VAULT_INIT_ERROR", e.to_string())),
         }
     }
-    Ok(Arc::clone(&VAULT_MANAGER))
+    Ok(Arc::clone(vault_write.as_ref().unwrap()))
 }
 
 // API Handlers
@@ -144,74 +146,68 @@ pub async fn query_audit_logs(
     State(_state): State<Arc<ApiState>>,
     Query(params): Query<AuditQueryParams>,
 ) -> ApiResult<Json<Vec<AuditEntry>>> {
-    let vault_ref = get_or_init_vault()?;
-    let vault_guard = vault_ref.read();
+    let vault = get_or_init_vault()?;
+    let audit_vault = vault.audit_vault();
+    let audit_guard = audit_vault.lock().await;
 
-    if let Some(vault) = vault_guard.as_ref() {
-        let audit_vault = vault.audit_vault();
-        let audit_guard = audit_vault.lock().await;
+    let start = params.start_time.unwrap_or(0);
+    let end = params.end_time.unwrap_or(i64::MAX);
 
-        let start = params.start_time.unwrap_or(0);
-        let end = params.end_time.unwrap_or(i64::MAX);
-
-        match audit_guard.query(start, end, None, None) {
-            Ok(records) => {
-                // Filter records based on query parameters
-                let mut filtered: Vec<AuditEntry> = records
-                    .into_iter()
-                    .filter(|r| {
-                        if let Some(ref user) = params.user_id {
-                            if &r.user_id != user {
+    match audit_guard.query(start, end, None, None) {
+        Ok(records) => {
+            // Filter records based on query parameters
+            let mut filtered: Vec<AuditEntry> = records
+                .into_iter()
+                .filter(|r| {
+                    if let Some(ref user) = params.user_id {
+                        if &r.user_id != user {
+                            return false;
+                        }
+                    }
+                    if let Some(ref session) = params.session_id {
+                        if &r.session_id != session {
+                            return false;
+                        }
+                    }
+                    if let Some(ref obj) = params.object_name {
+                        if let Some(ref record_obj) = r.object_name {
+                            if record_obj != obj {
                                 return false;
                             }
+                        } else {
+                            return false;
                         }
-                        if let Some(ref session) = params.session_id {
-                            if &r.session_id != session {
-                                return false;
-                            }
-                        }
-                        if let Some(ref obj) = params.object_name {
-                            if let Some(ref record_obj) = r.object_name {
-                                if record_obj != obj {
-                                    return false;
-                                }
-                            } else {
-                                return false;
-                            }
-                        }
-                        true
-                    })
-                    .map(|r| AuditEntry {
-                        id: r.id,
-                        timestamp: r.timestamp,
-                        user_id: r.user_id,
-                        session_id: r.session_id,
-                        client_ip: r.client_ip,
-                        action: format!("{:?}", r.action),
-                        object_name: r.object_name,
-                        statement: r.statement,
-                        success: r.success,
-                        error_message: r.error_message,
-                        execution_time_ms: None, // Not tracked in current AuditRecord
-                    })
-                    .collect();
+                    }
+                    true
+                })
+                .map(|r| AuditEntry {
+                    id: r.id,
+                    timestamp: r.timestamp,
+                    user_id: r.user_id,
+                    session_id: r.session_id,
+                    client_ip: r.client_ip,
+                    action: format!("{:?}", r.action),
+                    object_name: r.object_name,
+                    statement: r.statement,
+                    success: r.success,
+                    error_message: r.error_message,
+                    execution_time_ms: None, // Not tracked in current AuditRecord
+                })
+                .collect();
 
-                // Apply pagination
-                let offset = params.offset.unwrap_or(0);
-                let limit = params.limit.unwrap_or(100).min(1000);
+            // Apply pagination
+            let offset = params.offset.unwrap_or(0);
+            let limit = params.limit.unwrap_or(100).min(1000);
 
-                if offset < filtered.len() {
-                    filtered = filtered.into_iter().skip(offset).take(limit).collect();
-                } else {
-                    filtered.clear();
-                }
-
-                Ok(Json(filtered))
+            if offset < filtered.len() {
+                filtered = filtered.into_iter().skip(offset).take(limit).collect();
+            } else {
+                filtered.clear();
             }
-            Err(e) => Err(ApiError::new("AUDIT_QUERY_ERROR", e.to_string())),
+
+            Ok(Json(filtered))
         }
-    } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(e) => Err(ApiError::new("AUDIT_QUERY_ERROR", e.to_string())),
     }
 }
 
@@ -222,38 +218,32 @@ pub async fn export_audit_logs(
     State(_state): State<Arc<ApiState>>,
     Json(config): Json<AuditExportConfig>,
 ) -> ApiResult<Json<ExportResult>> {
-    let vault_ref = get_or_init_vault()?;
-    let vault_guard = vault_ref.read();
+    let vault = get_or_init_vault()?;
+    let audit_vault = vault.audit_vault();
+    let audit_guard = audit_vault.lock().await;
 
-    if let Some(vault) = vault_guard.as_ref() {
-        let audit_vault = vault.audit_vault();
-        let audit_guard = audit_vault.lock().await;
+    match audit_guard.query(config.start_time, config.end_time, None, None) {
+        Ok(records) => {
+            // In a real implementation, we'd actually write to the file
+            let file_path = format!("{}/audit_export_{}.{}",
+                config.destination,
+                chrono::Utc::now().timestamp(),
+                config.format
+            );
 
-        match audit_guard.query(config.start_time, config.end_time, None, None) {
-            Ok(records) => {
-                // In a real implementation, we'd actually write to the file
-                let file_path = format!("{}/audit_export_{}.{}",
-                    config.destination,
-                    chrono::Utc::now().timestamp(),
-                    config.format
-                );
+            // Simulate export
+            let records_count = records.len();
+            let file_size = records_count * 256; // Approximate size
 
-                // Simulate export
-                let records_count = records.len();
-                let file_size = records_count * 256; // Approximate size
-
-                Ok(Json(ExportResult {
-                    success: true,
-                    records_exported: records_count,
-                    file_path,
-                    file_size_bytes: file_size as u64,
-                    checksum: format!("sha256:{}", records_count),
-                }))
-            }
-            Err(e) => Err(ApiError::new("EXPORT_ERROR", e.to_string())),
+            Ok(Json(ExportResult {
+                success: true,
+                records_exported: records_count,
+                file_path,
+                file_size_bytes: file_size as u64,
+                checksum: format!("sha256:{}", records_count),
+            }))
         }
-    } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(e) => Err(ApiError::new("EXPORT_ERROR", e.to_string())),
     }
 }
 
@@ -264,56 +254,51 @@ pub async fn compliance_report(
     State(_state): State<Arc<ApiState>>,
     Query(params): Query<ComplianceParams>,
 ) -> ApiResult<Json<ComplianceReportResponse>> {
-    let vault_ref = get_or_init_vault()?;
-    let vault_guard = vault_ref.read();
+    let vault = get_or_init_vault()?;
 
-    if let Some(vault) = vault_guard.as_ref() {
-        match vault.generate_compliance_report(
-            &params.regulation,
-            params.start_date,
-            params.end_date,
-        ).await {
-            Ok(report) => {
-                // Convert internal report to API response
-                // Determine compliance based on failed operations and security events
-                let compliant = report.failed_operations == 0 && report.security_events == 0;
+    match vault.generate_compliance_report(
+        &params.regulation,
+        params.start_date,
+        params.end_date,
+    ).await {
+        Ok(report) => {
+            // Convert internal report to API response
+            // Determine compliance based on failed operations and security events
+            let compliant = report.failed_operations == 0 && report.security_events == 0;
 
-                // Convert findings to violations
-                let violations: Vec<ComplianceViolation> = report.findings.iter().enumerate().map(|(i, finding)| {
-                    ComplianceViolation {
-                        violation_type: "compliance_violation".to_string(),
-                        severity: if report.security_events > 0 { "HIGH" } else { "MEDIUM" }.to_string(),
-                        description: finding.clone(),
-                        affected_records: vec![i as u64],
-                        remediation: "Review audit logs and security policies".to_string(),
-                    }
-                }).collect();
+            // Convert findings to violations
+            let violations: Vec<ComplianceViolation> = report.findings.iter().enumerate().map(|(i, finding)| {
+                ComplianceViolation {
+                    violation_type: "compliance_violation".to_string(),
+                    severity: if report.security_events > 0 { "HIGH" } else { "MEDIUM" }.to_string(),
+                    description: finding.clone(),
+                    affected_records: vec![i as u64],
+                    remediation: "Review audit logs and security policies".to_string(),
+                }
+            }).collect();
 
-                let response = ComplianceReportResponse {
-                    regulation: params.regulation.clone(),
-                    period_start: params.start_date,
-                    period_end: params.end_date,
-                    compliant,
-                    total_audit_records: report.total_records as u64,
-                    violations,
-                    recommendations: if params.include_recommendations.unwrap_or(true) {
-                        vec![
-                            "Enable audit logging for all privileged operations".to_string(),
-                            "Review failed authentication attempts regularly".to_string(),
-                            "Implement automatic alerting for security events".to_string(),
-                        ]
-                    } else {
-                        vec![]
-                    },
-                    generated_at: chrono::Utc::now().timestamp(),
-                };
+            let response = ComplianceReportResponse {
+                regulation: params.regulation.clone(),
+                period_start: params.start_date,
+                period_end: params.end_date,
+                compliant,
+                total_audit_records: report.total_records as u64,
+                violations,
+                recommendations: if params.include_recommendations.unwrap_or(true) {
+                    vec![
+                        "Enable audit logging for all privileged operations".to_string(),
+                        "Review failed authentication attempts regularly".to_string(),
+                        "Implement automatic alerting for security events".to_string(),
+                    ]
+                } else {
+                    vec![]
+                },
+                generated_at: chrono::Utc::now().timestamp(),
+            };
 
-                Ok(Json(response))
-            }
-            Err(e) => Err(ApiError::new("COMPLIANCE_REPORT_ERROR", e.to_string())),
+            Ok(Json(response))
         }
-    } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(e) => Err(ApiError::new("COMPLIANCE_REPORT_ERROR", e.to_string())),
     }
 }
 
@@ -323,21 +308,15 @@ pub async fn compliance_report(
 pub async fn get_audit_stats(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let vault_ref = get_or_init_vault()?;
-    let vault_guard = vault_ref.read();
+    let vault = get_or_init_vault()?;
+    let stats = vault.get_audit_stats();
 
-    if let Some(vault) = vault_guard.as_ref() {
-        let stats = vault.get_audit_stats();
-
-        Ok(Json(serde_json::json!({
-            "total_records": stats.total_records,
-            "records_by_policy": stats.records_by_policy,
-            "failed_writes": stats.failed_writes,
-            "tamper_alerts": stats.tamper_alerts,
-        })))
-    } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
-    }
+    Ok(Json(serde_json::json!({
+        "total_records": stats.total_records,
+        "records_by_policy": stats.records_by_policy,
+        "failed_writes": stats.failed_writes,
+        "tamper_alerts": stats.tamper_alerts,
+    })))
 }
 
 /// POST /api/v1/security/audit/verify
@@ -346,25 +325,20 @@ pub async fn get_audit_stats(
 pub async fn verify_audit_integrity(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let vault_ref = get_or_init_vault()?;
-    let vault_guard = vault_ref.read();
+    let vault = get_or_init_vault()?;
 
-    if let Some(vault) = vault_guard.as_ref() {
-        match vault.verify_audit_integrity().await {
-            Ok(valid) => {
-                Ok(Json(serde_json::json!({
-                    "valid": valid,
-                    "verified_at": chrono::Utc::now().timestamp(),
-                    "message": if valid {
-                        "Audit trail integrity verified successfully"
-                    } else {
-                        "WARNING: Audit trail integrity check failed - possible tampering detected"
-                    }
-                })))
-            }
-            Err(e) => Err(ApiError::new("INTEGRITY_CHECK_ERROR", e.to_string())),
+    match vault.verify_audit_integrity().await {
+        Ok(valid) => {
+            Ok(Json(serde_json::json!({
+                "valid": valid,
+                "verified_at": chrono::Utc::now().timestamp(),
+                "message": if valid {
+                    "Audit trail integrity verified successfully"
+                } else {
+                    "WARNING: Audit trail integrity check failed - possible tampering detected"
+                }
+            })))
         }
-    } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(e) => Err(ApiError::new("INTEGRITY_CHECK_ERROR", e.to_string())),
     }
 }
