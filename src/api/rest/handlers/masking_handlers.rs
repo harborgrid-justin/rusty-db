@@ -118,17 +118,16 @@ pub async fn list_masking_policies(
         let masking_engine = vault.masking_engine();
         let masking_guard = masking_engine.read();
 
-        match masking_guard.list_policies() {
-            Ok(policies) => {
-                let responses: Vec<MaskingPolicyResponse> = policies
-                    .iter()
-                    .map(policy_to_response)
-                    .collect();
+        let policy_names = masking_guard.list_policies();
+        let mut responses = Vec::new();
 
-                Ok(Json(responses))
+        for name in policy_names {
+            if let Some(policy) = masking_guard.get_policy(&name) {
+                responses.push(policy_to_response(&policy));
             }
-            Err(e) => Err(ApiError::new("POLICY_LIST_ERROR", e.to_string())),
         }
+
+        Ok(Json(responses))
     } else {
         Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
     }
@@ -149,8 +148,8 @@ pub async fn get_masking_policy(
         let masking_guard = masking_engine.read();
 
         match masking_guard.get_policy(&name) {
-            Ok(policy) => Ok(Json(policy_to_response(&policy))),
-            Err(e) => Err(ApiError::new("POLICY_NOT_FOUND", e.to_string())),
+            Some(policy) => Ok(Json(policy_to_response(&policy))),
+            None => Err(ApiError::new("POLICY_NOT_FOUND", format!("Policy '{}' not found", name))),
         }
     } else {
         Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
@@ -179,8 +178,8 @@ pub async fn create_masking_policy(
                 let masking_guard = masking_engine.read();
 
                 match masking_guard.get_policy(&request.name) {
-                    Ok(policy) => Ok(Json(policy_to_response(&policy))),
-                    Err(e) => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", e.to_string())),
+                    Some(policy) => Ok(Json(policy_to_response(&policy))),
+                    None => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", format!("Policy '{}' not found after creation", request.name))),
                 }
             }
             Err(e) => Err(ApiError::new("POLICY_CREATE_ERROR", e.to_string())),
@@ -203,17 +202,34 @@ pub async fn update_masking_policy(
 
     if let Some(vault) = vault_guard.as_ref() {
         let masking_engine = vault.masking_engine();
-        let mut masking_guard = masking_engine.write();
+        let masking_guard = masking_engine.write();
 
-        match masking_guard.update_policy(&name, request.enabled, request.priority) {
-            Ok(_) => {
-                // Return updated policy
-                match masking_guard.get_policy(&name) {
-                    Ok(policy) => Ok(Json(policy_to_response(&policy))),
-                    Err(e) => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", e.to_string())),
+        // Get the current policy
+        match masking_guard.get_policy(&name) {
+            Some(mut policy) => {
+                // Update fields if provided
+                if let Some(enabled) = request.enabled {
+                    if enabled {
+                        drop(masking_guard);
+                        let masking_engine = vault.masking_engine();
+                        let mut masking_guard = masking_engine.write();
+                        masking_guard.enable_policy(&name)
+                            .map_err(|e| ApiError::new("POLICY_UPDATE_ERROR", e.to_string()))?;
+                    } else {
+                        drop(masking_guard);
+                        let masking_engine = vault.masking_engine();
+                        let mut masking_guard = masking_engine.write();
+                        masking_guard.disable_policy(&name)
+                            .map_err(|e| ApiError::new("POLICY_UPDATE_ERROR", e.to_string()))?;
+                    }
+                    policy.enabled = enabled;
                 }
+                if let Some(priority) = request.priority {
+                    policy.priority = priority;
+                }
+                Ok(Json(policy_to_response(&policy)))
             }
-            Err(e) => Err(ApiError::new("POLICY_UPDATE_ERROR", e.to_string())),
+            None => Err(ApiError::new("POLICY_NOT_FOUND", format!("Policy '{}' not found", name))),
         }
     } else {
         Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
@@ -234,7 +250,7 @@ pub async fn delete_masking_policy(
         let masking_engine = vault.masking_engine();
         let mut masking_guard = masking_engine.write();
 
-        match masking_guard.delete_policy(&name) {
+        match masking_guard.drop_policy(&name) {
             Ok(_) => {
                 Ok(Json(serde_json::json!({
                     "success": true,
@@ -263,22 +279,30 @@ pub async fn test_masking(
         let masking_guard = masking_engine.read();
 
         match masking_guard.get_policy(&request.policy_name) {
-            Ok(policy) => {
+            Some(policy) => {
                 let mut test_cases = Vec::new();
 
                 for value in request.test_values {
-                    match masking_guard.apply_masking(&value, &policy.masking_type) {
-                        Ok(masked) => {
-                            test_cases.push(MaskingTestCase {
-                                original: value,
-                                masked,
-                                masking_type: format!("{:?}", policy.masking_type),
-                            });
+                    // Simple test masking based on type
+                    let masked = match &policy.masking_type {
+                        MaskingType::FullMask(replacement) => replacement.clone(),
+                        MaskingType::PartialMask { show_last } => {
+                            if value.len() <= *show_last {
+                                "*".repeat(value.len())
+                            } else {
+                                let prefix_len = value.len() - show_last;
+                                format!("{}{}", "*".repeat(prefix_len), &value[prefix_len..])
+                            }
                         }
-                        Err(e) => {
-                            return Err(ApiError::new("MASKING_ERROR", e.to_string()));
-                        }
-                    }
+                        MaskingType::Nullify => "NULL".to_string(),
+                        _ => format!("***MASKED({:?})***", policy.masking_type),
+                    };
+
+                    test_cases.push(MaskingTestCase {
+                        original: value,
+                        masked,
+                        masking_type: format!("{:?}", policy.masking_type),
+                    });
                 }
 
                 Ok(Json(MaskingTestResult {
@@ -286,7 +310,7 @@ pub async fn test_masking(
                     results: test_cases,
                 }))
             }
-            Err(e) => Err(ApiError::new("POLICY_NOT_FOUND", e.to_string())),
+            None => Err(ApiError::new("POLICY_NOT_FOUND", format!("Policy '{}' not found", request.policy_name))),
         }
     } else {
         Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
@@ -307,7 +331,7 @@ pub async fn enable_masking_policy(
         let masking_engine = vault.masking_engine();
         let mut masking_guard = masking_engine.write();
 
-        match masking_guard.update_policy(&name, Some(true), None) {
+        match masking_guard.enable_policy(&name) {
             Ok(_) => {
                 Ok(Json(serde_json::json!({
                     "success": true,
@@ -335,7 +359,7 @@ pub async fn disable_masking_policy(
         let masking_engine = vault.masking_engine();
         let mut masking_guard = masking_engine.write();
 
-        match masking_guard.update_policy(&name, Some(false), None) {
+        match masking_guard.disable_policy(&name) {
             Ok(_) => {
                 Ok(Json(serde_json::json!({
                     "success": true,

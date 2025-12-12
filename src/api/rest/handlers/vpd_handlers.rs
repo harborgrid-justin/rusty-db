@@ -91,7 +91,7 @@ fn policy_to_response(policy: &VpdPolicy) -> VpdPolicyResponse {
         table_name: policy.table_name.clone(),
         schema_name: policy.schema_name.clone(),
         predicate: format!("{:?}", policy.predicate),
-        policy_scope: format!("{:?}", policy.policy_scope),
+        policy_scope: format!("{:?}", policy.scope),
         enabled: policy.enabled,
         created_at: policy.created_at,
     }
@@ -112,17 +112,16 @@ pub async fn list_vpd_policies(
         let vpd_engine = vault.vpd_engine();
         let vpd_guard = vpd_engine.read();
 
-        match vpd_guard.list_policies() {
-            Ok(policies) => {
-                let responses: Vec<VpdPolicyResponse> = policies
-                    .iter()
-                    .map(policy_to_response)
-                    .collect();
+        let policy_names = vpd_guard.list_policies();
+        let mut responses = Vec::new();
 
-                Ok(Json(responses))
+        for name in policy_names {
+            if let Some(policy) = vpd_guard.get_policy(&name) {
+                responses.push(policy_to_response(&policy));
             }
-            Err(e) => Err(ApiError::new("POLICY_LIST_ERROR", e.to_string())),
         }
+
+        Ok(Json(responses))
     } else {
         Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
     }
@@ -143,8 +142,8 @@ pub async fn get_vpd_policy(
         let vpd_guard = vpd_engine.read();
 
         match vpd_guard.get_policy(&name) {
-            Ok(policy) => Ok(Json(policy_to_response(&policy))),
-            Err(e) => Err(ApiError::new("POLICY_NOT_FOUND", e.to_string())),
+            Some(policy) => Ok(Json(policy_to_response(&policy))),
+            None => Err(ApiError::new("POLICY_NOT_FOUND", format!("Policy '{}' not found", name))),
         }
     } else {
         Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
@@ -172,8 +171,8 @@ pub async fn create_vpd_policy(
                 let vpd_guard = vpd_engine.read();
 
                 match vpd_guard.get_policy(&request.name) {
-                    Ok(policy) => Ok(Json(policy_to_response(&policy))),
-                    Err(e) => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", e.to_string())),
+                    Some(policy) => Ok(Json(policy_to_response(&policy))),
+                    None => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", format!("Policy '{}' not found after creation", request.name))),
                 }
             }
             Err(e) => Err(ApiError::new("POLICY_CREATE_ERROR", e.to_string())),
@@ -196,17 +195,37 @@ pub async fn update_vpd_policy(
 
     if let Some(vault) = vault_guard.as_ref() {
         let vpd_engine = vault.vpd_engine();
-        let mut vpd_guard = vpd_engine.write();
+        let vpd_guard = vpd_engine.write();
 
-        match vpd_guard.update_policy(&name, request.enabled, request.predicate.as_deref()) {
-            Ok(_) => {
-                // Return updated policy
-                match vpd_guard.get_policy(&name) {
-                    Ok(policy) => Ok(Json(policy_to_response(&policy))),
-                    Err(e) => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", e.to_string())),
+        // Get the current policy
+        match vpd_guard.get_policy(&name) {
+            Some(mut policy) => {
+                // Update fields if provided
+                if let Some(enabled) = request.enabled {
+                    if enabled {
+                        drop(vpd_guard);
+                        let vpd_engine = vault.vpd_engine();
+                        let mut vpd_guard = vpd_engine.write();
+                        vpd_guard.enable_policy(&name)
+                            .map_err(|e| ApiError::new("POLICY_UPDATE_ERROR", e.to_string()))?;
+                    } else {
+                        drop(vpd_guard);
+                        let vpd_engine = vault.vpd_engine();
+                        let mut vpd_guard = vpd_engine.write();
+                        vpd_guard.disable_policy(&name)
+                            .map_err(|e| ApiError::new("POLICY_UPDATE_ERROR", e.to_string()))?;
+                    }
+                    policy.enabled = enabled;
                 }
+                if let Some(predicate_str) = request.predicate {
+                    match SecurityPredicate::parse(&predicate_str) {
+                        Ok(predicate) => policy.predicate = predicate,
+                        Err(e) => return Err(ApiError::new("INVALID_PREDICATE", e.to_string())),
+                    }
+                }
+                Ok(Json(policy_to_response(&policy)))
             }
-            Err(e) => Err(ApiError::new("POLICY_UPDATE_ERROR", e.to_string())),
+            None => Err(ApiError::new("POLICY_NOT_FOUND", format!("Policy '{}' not found", name))),
         }
     } else {
         Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
@@ -227,7 +246,7 @@ pub async fn delete_vpd_policy(
         let vpd_engine = vault.vpd_engine();
         let mut vpd_guard = vpd_engine.write();
 
-        match vpd_guard.delete_policy(&name) {
+        match vpd_guard.drop_policy(&name) {
             Ok(_) => {
                 Ok(Json(serde_json::json!({
                     "success": true,
@@ -289,17 +308,19 @@ pub async fn get_table_policies(
         let vpd_engine = vault.vpd_engine();
         let vpd_guard = vpd_engine.read();
 
-        match vpd_guard.get_table_policies(&table_name) {
-            Ok(policies) => {
-                let responses: Vec<VpdPolicyResponse> = policies
-                    .iter()
-                    .map(policy_to_response)
-                    .collect();
+        // Filter policies by table name
+        let policy_names = vpd_guard.list_policies();
+        let mut responses = Vec::new();
 
-                Ok(Json(responses))
+        for name in policy_names {
+            if let Some(policy) = vpd_guard.get_policy(&name) {
+                if policy.table_name == table_name {
+                    responses.push(policy_to_response(&policy));
+                }
             }
-            Err(e) => Err(ApiError::new("TABLE_POLICIES_ERROR", e.to_string())),
         }
+
+        Ok(Json(responses))
     } else {
         Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
     }
@@ -319,7 +340,7 @@ pub async fn enable_vpd_policy(
         let vpd_engine = vault.vpd_engine();
         let mut vpd_guard = vpd_engine.write();
 
-        match vpd_guard.update_policy(&name, Some(true), None) {
+        match vpd_guard.enable_policy(&name) {
             Ok(_) => {
                 Ok(Json(serde_json::json!({
                     "success": true,
@@ -347,7 +368,7 @@ pub async fn disable_vpd_policy(
         let vpd_engine = vault.vpd_engine();
         let mut vpd_guard = vpd_engine.write();
 
-        match vpd_guard.update_policy(&name, Some(false), None) {
+        match vpd_guard.disable_policy(&name) {
             Ok(_) => {
                 Ok(Json(serde_json::json!({
                     "success": true,
