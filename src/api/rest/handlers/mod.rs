@@ -15,6 +15,19 @@ pub mod transaction_handlers;
 pub mod network_handlers;
 pub mod system;
 
+// Enterprise Integration Handlers
+pub mod enterprise_auth_handlers;
+pub mod backup_handlers;
+pub mod replication_handlers;
+pub mod audit_handlers;
+
+// Security Handlers
+pub mod encryption_handlers;
+pub mod masking_handlers;
+pub mod vpd_handlers;
+pub mod privileges_handlers;
+pub mod labels_handlers;
+
 use std::sync::Arc;
 use crate::catalog::Catalog;
 use crate::transaction::TransactionManager;
@@ -94,4 +107,38 @@ pub use network_handlers::{
 pub use system::{
     get_server_config, get_clustering_status, get_replication_status_info,
     get_security_features, get_server_info
+};
+
+// Encryption handlers
+pub use encryption_handlers::{
+    get_encryption_status, enable_encryption, enable_column_encryption,
+    generate_key, rotate_key, list_keys
+};
+
+// Masking handlers
+pub use masking_handlers::{
+    list_masking_policies, get_masking_policy, create_masking_policy,
+    update_masking_policy, delete_masking_policy, test_masking,
+    enable_masking_policy, disable_masking_policy
+};
+
+// VPD handlers
+pub use vpd_handlers::{
+    list_vpd_policies, get_vpd_policy, create_vpd_policy,
+    update_vpd_policy, delete_vpd_policy, test_vpd_predicate,
+    get_table_policies, enable_vpd_policy, disable_vpd_policy
+};
+
+// Privilege handlers
+pub use privileges_handlers::{
+    grant_privilege, revoke_privilege, get_user_privileges,
+    analyze_user_privileges, get_role_privileges, get_object_privileges,
+    validate_privilege
+};
+
+// Security labels handlers
+pub use labels_handlers::{
+    list_compartments, create_compartment, get_compartment, delete_compartment,
+    get_user_clearance, set_user_clearance, check_label_dominance,
+    validate_label_access, list_classifications
 };

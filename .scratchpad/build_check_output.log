@@ -1,0 +1,148 @@
+    Checking rusty-db v0.1.0 (/home/user/rusty-db)
+error[E0425]: cannot find value `use_huge_pages` in this scope
+  --> src/memory/allocator/large_object_allocator.rs:37:16
+   |
+25 |     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |                                     --------------- `_use_huge_pages` defined here
+...
+37 |             if use_huge_pages {
+   |                ^^^^^^^^^^^^^^
+   |
+help: the leading underscore in `_use_huge_pages` marks it as unused, consider renaming it to `use_huge_pages`
+   |
+25 -     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+25 +     unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |
+
+error[E0425]: cannot find value `use_huge_pages` in this scope
+  --> src/memory/allocator/large_object_allocator.rs:64:20
+   |
+25 |     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |                                     --------------- `_use_huge_pages` defined here
+...
+64 |                 if use_huge_pages {
+   |                    ^^^^^^^^^^^^^^
+   |
+help: the leading underscore in `_use_huge_pages` marks it as unused, consider renaming it to `use_huge_pages`
+   |
+25 -     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+25 +     unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |
+
+error[E0425]: cannot find value `use_huge_pages` in this scope
+  --> src/memory/allocator/large_object_allocator.rs:97:29
+   |
+25 |     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |                                     --------------- `_use_huge_pages` defined here
+...
+97 |                 huge_pages: use_huge_pages && huge_page_size > 0,
+   |                             ^^^^^^^^^^^^^^
+   |
+help: the leading underscore in `_use_huge_pages` marks it as unused, consider renaming it to `use_huge_pages`
+   |
+25 -     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+25 +     unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |
+
+error[E0609]: no field `locked_memory` on type `&SecureKeyStore`
+    --> src/security/encryption_engine.rs:1063:15
+     |
+1063 |         *self.locked_memory.write() = true;
+     |               ^^^^^^^^^^^^^ unknown field
+     |
+help: a field with a similar name exists
+     |
+1063 |         *self._locked_memory.write() = true;
+     |               +
+
+error[E0609]: no field `guard_size` on type `&mut GuardedMemory`
+   --> src/security/memory_hardening.rs:382:26
+    |
+382 |                     self.guard_size,
+    |                          ^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+382 |                     self._guard_size,
+    |                          +
+
+error[E0609]: no field `back_guard` on type `&mut GuardedMemory`
+   --> src/security/memory_hardening.rs:386:26
+    |
+386 |                     self.back_guard.as_ptr() as *mut libc::c_void,
+    |                          ^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+386 |                     self._back_guard.as_ptr() as *mut libc::c_void,
+    |                          +
+
+error[E0609]: no field `guard_size` on type `&mut GuardedMemory`
+   --> src/security/memory_hardening.rs:387:26
+    |
+387 |                     self.guard_size,
+    |                          ^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+387 |                     self._guard_size,
+    |                          +
+
+error[E0594]: cannot assign to `info.total_huge_pages`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:499:25
+    |
+499 |                         info.total_huge_pages = value.parse().unwrap_or(0);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+error[E0594]: cannot assign to `info.free_huge_pages`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:503:25
+    |
+503 |                         info.free_huge_pages = value.parse().unwrap_or(0);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+error[E0594]: cannot assign to `info.huge_page_size_kb`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:507:25
+    |
+507 |                         info.huge_page_size_kb = value.parse().unwrap_or(0);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+error[E0594]: cannot assign to `info.supported`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:512:13
+    |
+512 |             info.supported = info.total_huge_pages > 0;
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+error[E0594]: cannot assign to `info.thp_enabled`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:517:13
+    |
+517 |             info.thp_enabled = contents.contains("[always]") || contents.contains("[madvise]");
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+Some errors have detailed explanations: E0425, E0594, E0609.
+For more information about an error, try `rustc --explain E0425`.
+error: could not compile `rusty-db` (lib) due to 12 previous errors

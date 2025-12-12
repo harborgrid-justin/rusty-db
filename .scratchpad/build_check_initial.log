@@ -1,0 +1,3735 @@
+    Blocking waiting for file lock on build directory
+    Checking rusty-db v0.1.0 (/home/user/rusty-db)
+error: expected one of `(`, `,`, `=`, `{`, or `}`, found `up`
+   --> src/api/graphql/models.rs:649:14
+    |
+649 |     Catching up,
+    |             -^^ expected one of `(`, `,`, `=`, `{`, or `}`
+    |             |
+    |             help: missing `,`
+
+error: expected `,`
+   --> src/api/graphql/models.rs:649:14
+    |
+649 |     Catching up,
+    |              ^^
+
+error[E0432]: unresolved import `crate::security_vault::PrivilegeType`
+  --> src/api/rest/handlers/privileges_handlers.rs:13:51
+   |
+13 | use crate::security_vault::{SecurityVaultManager, PrivilegeType};
+   |                                                   ^^^^^^^^^^^^^
+   |                                                   |
+   |                                                   no `PrivilegeType` in `security_vault`
+   |                                                   help: a similar name exists in the module: `PrivilegePath`
+   |
+   = help: consider importing one of these enums instead:
+           crate::security::privileges::PrivilegeType
+           crate::security_vault::privileges::PrivilegeType
+
+error: cannot find derive macro `Serialize` in this scope
+   --> src/api/rest/handlers/cluster.rs:364:17
+    |
+364 | #[derive(Debug, Serialize, Deserialize, ToSchema)]
+    |                 ^^^^^^^^^
+    |
+help: consider importing this derive macro
+    |
+  5 + use serde::Serialize;
+    |
+
+error: cannot find derive macro `Deserialize` in this scope
+   --> src/api/rest/handlers/cluster.rs:364:28
+    |
+364 | #[derive(Debug, Serialize, Deserialize, ToSchema)]
+    |                            ^^^^^^^^^^^
+    |
+help: consider importing this derive macro
+    |
+  5 + use serde::Deserialize;
+    |
+
+error: cannot find derive macro `ToSchema` in this scope
+   --> src/api/rest/handlers/cluster.rs:364:41
+    |
+364 | #[derive(Debug, Serialize, Deserialize, ToSchema)]
+    |                                         ^^^^^^^^
+    |
+help: consider importing this derive macro
+    |
+  5 + use utoipa::ToSchema;
+    |
+
+error: cannot find derive macro `Deserialize` in this scope
+   --> src/api/rest/handlers/cluster.rs:376:17
+    |
+376 | #[derive(Debug, Deserialize, ToSchema)]
+    |                 ^^^^^^^^^^^
+    |
+help: consider importing this derive macro
+    |
+  5 + use serde::Deserialize;
+    |
+
+error: cannot find derive macro `ToSchema` in this scope
+   --> src/api/rest/handlers/cluster.rs:376:30
+    |
+376 | #[derive(Debug, Deserialize, ToSchema)]
+    |                              ^^^^^^^^
+    |
+help: consider importing this derive macro
+    |
+  5 + use utoipa::ToSchema;
+    |
+
+error: cannot find derive macro `Serialize` in this scope
+   --> src/api/rest/handlers/cluster.rs:383:17
+    |
+383 | #[derive(Debug, Serialize, ToSchema)]
+    |                 ^^^^^^^^^
+    |
+help: consider importing this derive macro
+    |
+  5 + use serde::Serialize;
+    |
+
+error: cannot find derive macro `ToSchema` in this scope
+   --> src/api/rest/handlers/cluster.rs:383:28
+    |
+383 | #[derive(Debug, Serialize, ToSchema)]
+    |                            ^^^^^^^^
+    |
+help: consider importing this derive macro
+    |
+  5 + use utoipa::ToSchema;
+    |
+
+error: cannot find derive macro `Serialize` in this scope
+   --> src/api/rest/handlers/cluster.rs:393:17
+    |
+393 | #[derive(Debug, Serialize, ToSchema)]
+    |                 ^^^^^^^^^
+    |
+help: consider importing this derive macro
+    |
+  5 + use serde::Serialize;
+    |
+
+error: cannot find derive macro `ToSchema` in this scope
+   --> src/api/rest/handlers/cluster.rs:393:28
+    |
+393 | #[derive(Debug, Serialize, ToSchema)]
+    |                            ^^^^^^^^
+    |
+help: consider importing this derive macro
+    |
+  5 + use utoipa::ToSchema;
+    |
+
+error[E0425]: cannot find value `use_huge_pages` in this scope
+  --> src/memory/allocator/large_object_allocator.rs:37:16
+   |
+25 |     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |                                     --------------- `_use_huge_pages` defined here
+...
+37 |             if use_huge_pages {
+   |                ^^^^^^^^^^^^^^
+   |
+help: the leading underscore in `_use_huge_pages` marks it as unused, consider renaming it to `use_huge_pages`
+   |
+25 -     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+25 +     unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |
+
+error[E0425]: cannot find value `use_huge_pages` in this scope
+  --> src/memory/allocator/large_object_allocator.rs:64:20
+   |
+25 |     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |                                     --------------- `_use_huge_pages` defined here
+...
+64 |                 if use_huge_pages {
+   |                    ^^^^^^^^^^^^^^
+   |
+help: the leading underscore in `_use_huge_pages` marks it as unused, consider renaming it to `use_huge_pages`
+   |
+25 -     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+25 +     unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |
+
+error[E0425]: cannot find value `use_huge_pages` in this scope
+  --> src/memory/allocator/large_object_allocator.rs:97:29
+   |
+25 |     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |                                     --------------- `_use_huge_pages` defined here
+...
+97 |                 huge_pages: use_huge_pages && huge_page_size > 0,
+   |                             ^^^^^^^^^^^^^^
+   |
+help: the leading underscore in `_use_huge_pages` marks it as unused, consider renaming it to `use_huge_pages`
+   |
+25 -     unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+25 +     unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
+   |
+
+error[E0425]: cannot find value `get_encryption_status` in this scope
+   --> src/api/rest/server.rs:282:62
+    |
+282 |               .route("/api/v1/security/encryption/status", get(get_encryption_status))
+    |                                                                ^^^^^^^^^^^^^^^^^^^^^
+    |
+   ::: src/api/rest/handlers/cluster.rs:247:1
+    |
+247 | / pub async fn get_replication_status(
+248 | |     State(_state): State<Arc<ApiState>>,
+249 | | ) -> ApiResult<AxumJson<ReplicationStatusResponse>> {
+250 | |     let nodes = CLUSTER_NODES.read();
+...   |
+295 | |     Ok(AxumJson(response))
+296 | | }
+    | |_- similarly named function `get_replication_status` defined here
+    |
+help: a function with a similar name exists
+    |
+282 -             .route("/api/v1/security/encryption/status", get(get_encryption_status))
+282 +             .route("/api/v1/security/encryption/status", get(get_replication_status))
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::get_encryption_status;
+    |
+
+error[E0425]: cannot find value `enable_encryption` in this scope
+   --> src/api/rest/server.rs:283:63
+    |
+283 |             .route("/api/v1/security/encryption/enable", post(enable_encryption))
+    |                                                               ^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::enable_encryption;
+    |
+
+error[E0425]: cannot find value `enable_column_encryption` in this scope
+   --> src/api/rest/server.rs:284:63
+    |
+284 |             .route("/api/v1/security/encryption/column", post(enable_column_encryption))
+    |                                                               ^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::enable_column_encryption;
+    |
+
+error[E0425]: cannot find value `list_keys` in this scope
+   --> src/api/rest/server.rs:285:49
+    |
+285 |             .route("/api/v1/security/keys", get(list_keys))
+    |                                                 ^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::list_keys;
+    |
+
+error[E0425]: cannot find value `generate_key` in this scope
+   --> src/api/rest/server.rs:286:59
+    |
+286 |             .route("/api/v1/security/keys/generate", post(generate_key))
+    |                                                           ^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::generate_key;
+    |
+
+error[E0425]: cannot find value `rotate_key` in this scope
+   --> src/api/rest/server.rs:287:62
+    |
+287 |             .route("/api/v1/security/keys/{id}/rotate", post(rotate_key))
+    |                                                              ^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::rotate_key;
+    |
+
+error[E0425]: cannot find value `list_masking_policies` in this scope
+   --> src/api/rest/server.rs:290:61
+    |
+290 |             .route("/api/v1/security/masking/policies", get(list_masking_policies))
+    |                                                             ^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::list_masking_policies;
+    |
+
+error[E0425]: cannot find value `create_masking_policy` in this scope
+   --> src/api/rest/server.rs:291:62
+    |
+291 |             .route("/api/v1/security/masking/policies", post(create_masking_policy))
+    |                                                              ^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::create_masking_policy;
+    |
+
+error[E0425]: cannot find value `get_masking_policy` in this scope
+   --> src/api/rest/server.rs:292:68
+    |
+292 |             .route("/api/v1/security/masking/policies/{name}", get(get_masking_policy))
+    |                                                                    ^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::get_masking_policy;
+    |
+
+error[E0425]: cannot find value `update_masking_policy` in this scope
+   --> src/api/rest/server.rs:293:68
+    |
+293 |             .route("/api/v1/security/masking/policies/{name}", put(update_masking_policy))
+    |                                                                    ^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::update_masking_policy;
+    |
+
+error[E0425]: cannot find value `delete_masking_policy` in this scope
+   --> src/api/rest/server.rs:294:71
+    |
+294 |             .route("/api/v1/security/masking/policies/{name}", delete(delete_masking_policy))
+    |                                                                       ^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::delete_masking_policy;
+    |
+
+error[E0425]: cannot find value `enable_masking_policy` in this scope
+   --> src/api/rest/server.rs:295:76
+    |
+295 |             .route("/api/v1/security/masking/policies/{name}/enable", post(enable_masking_policy))
+    |                                                                            ^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::enable_masking_policy;
+    |
+
+error[E0425]: cannot find value `disable_masking_policy` in this scope
+   --> src/api/rest/server.rs:296:77
+    |
+296 |             .route("/api/v1/security/masking/policies/{name}/disable", post(disable_masking_policy))
+    |                                                                             ^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::disable_masking_policy;
+    |
+
+error[E0425]: cannot find value `test_masking` in this scope
+   --> src/api/rest/server.rs:297:58
+    |
+297 |             .route("/api/v1/security/masking/test", post(test_masking))
+    |                                                          ^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::test_masking;
+    |
+
+error[E0425]: cannot find value `list_vpd_policies` in this scope
+   --> src/api/rest/server.rs:300:57
+    |
+300 |             .route("/api/v1/security/vpd/policies", get(list_vpd_policies))
+    |                                                         ^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::list_vpd_policies;
+    |
+
+error[E0425]: cannot find value `create_vpd_policy` in this scope
+   --> src/api/rest/server.rs:301:58
+    |
+301 |             .route("/api/v1/security/vpd/policies", post(create_vpd_policy))
+    |                                                          ^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::create_vpd_policy;
+    |
+
+error[E0425]: cannot find value `get_vpd_policy` in this scope
+   --> src/api/rest/server.rs:302:64
+    |
+302 |             .route("/api/v1/security/vpd/policies/{name}", get(get_vpd_policy))
+    |                                                                ^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::get_vpd_policy;
+    |
+
+error[E0425]: cannot find value `update_vpd_policy` in this scope
+   --> src/api/rest/server.rs:303:64
+    |
+303 |             .route("/api/v1/security/vpd/policies/{name}", put(update_vpd_policy))
+    |                                                                ^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::update_vpd_policy;
+    |
+
+error[E0425]: cannot find value `delete_vpd_policy` in this scope
+   --> src/api/rest/server.rs:304:67
+    |
+304 |             .route("/api/v1/security/vpd/policies/{name}", delete(delete_vpd_policy))
+    |                                                                   ^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::delete_vpd_policy;
+    |
+
+error[E0425]: cannot find value `enable_vpd_policy` in this scope
+   --> src/api/rest/server.rs:305:72
+    |
+305 |             .route("/api/v1/security/vpd/policies/{name}/enable", post(enable_vpd_policy))
+    |                                                                        ^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::enable_vpd_policy;
+    |
+
+error[E0425]: cannot find value `disable_vpd_policy` in this scope
+   --> src/api/rest/server.rs:306:73
+    |
+306 |             .route("/api/v1/security/vpd/policies/{name}/disable", post(disable_vpd_policy))
+    |                                                                         ^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::disable_vpd_policy;
+    |
+
+error[E0425]: cannot find value `get_table_policies` in this scope
+   --> src/api/rest/server.rs:307:76
+    |
+307 |             .route("/api/v1/security/vpd/policies/table/{table_name}", get(get_table_policies))
+    |                                                                            ^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::get_table_policies;
+    |
+
+error[E0425]: cannot find value `test_vpd_predicate` in this scope
+   --> src/api/rest/server.rs:308:64
+    |
+308 |             .route("/api/v1/security/vpd/test-predicate", post(test_vpd_predicate))
+    |                                                                ^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::test_vpd_predicate;
+    |
+
+error[E0425]: cannot find value `grant_privilege` in this scope
+   --> src/api/rest/server.rs:311:62
+    |
+311 |             .route("/api/v1/security/privileges/grant", post(grant_privilege))
+    |                                                              ^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::grant_privilege;
+    |
+
+error[E0425]: cannot find value `revoke_privilege` in this scope
+   --> src/api/rest/server.rs:312:63
+    |
+312 |             .route("/api/v1/security/privileges/revoke", post(revoke_privilege))
+    |                                                               ^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::revoke_privilege;
+    |
+
+error[E0425]: cannot find value `get_user_privileges` in this scope
+   --> src/api/rest/server.rs:313:70
+    |
+313 |             .route("/api/v1/security/privileges/user/{user_id}", get(get_user_privileges))
+    |                                                                      ^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::get_user_privileges;
+    |
+
+error[E0425]: cannot find value `analyze_user_privileges` in this scope
+   --> src/api/rest/server.rs:314:73
+    |
+314 |             .route("/api/v1/security/privileges/analyze/{user_id}", get(analyze_user_privileges))
+    |                                                                         ^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::analyze_user_privileges;
+    |
+
+error[E0425]: cannot find value `get_role_privileges` in this scope
+   --> src/api/rest/server.rs:315:72
+    |
+315 |             .route("/api/v1/security/privileges/role/{role_name}", get(get_role_privileges))
+    |                                                                        ^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::get_role_privileges;
+    |
+
+error[E0425]: cannot find value `get_object_privileges` in this scope
+   --> src/api/rest/server.rs:316:76
+    |
+316 |             .route("/api/v1/security/privileges/object/{object_name}", get(get_object_privileges))
+    |                                                                            ^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::get_object_privileges;
+    |
+
+error[E0425]: cannot find value `validate_privilege` in this scope
+   --> src/api/rest/server.rs:317:65
+    |
+317 |             .route("/api/v1/security/privileges/validate", post(validate_privilege))
+    |                                                                 ^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::validate_privilege;
+    |
+
+error[E0425]: cannot find value `list_compartments` in this scope
+   --> src/api/rest/server.rs:320:64
+    |
+320 |             .route("/api/v1/security/labels/compartments", get(list_compartments))
+    |                                                                ^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::list_compartments;
+    |
+
+error[E0425]: cannot find value `create_compartment` in this scope
+   --> src/api/rest/server.rs:321:65
+    |
+321 |             .route("/api/v1/security/labels/compartments", post(create_compartment))
+    |                                                                 ^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::create_compartment;
+    |
+
+error[E0425]: cannot find value `get_compartment` in this scope
+   --> src/api/rest/server.rs:322:69
+    |
+322 |             .route("/api/v1/security/labels/compartments/{id}", get(get_compartment))
+    |                                                                     ^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::get_compartment;
+    |
+
+error[E0425]: cannot find value `delete_compartment` in this scope
+   --> src/api/rest/server.rs:323:72
+    |
+323 |             .route("/api/v1/security/labels/compartments/{id}", delete(delete_compartment))
+    |                                                                        ^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::delete_compartment;
+    |
+
+error[E0425]: cannot find value `get_user_clearance` in this scope
+   --> src/api/rest/server.rs:324:72
+    |
+324 |             .route("/api/v1/security/labels/clearances/{user_id}", get(get_user_clearance))
+    |                                                                        ^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::get_user_clearance;
+    |
+
+error[E0425]: cannot find value `set_user_clearance` in this scope
+   --> src/api/rest/server.rs:325:63
+    |
+325 |             .route("/api/v1/security/labels/clearances", post(set_user_clearance))
+    |                                                               ^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::set_user_clearance;
+    |
+
+error[E0425]: cannot find value `check_label_dominance` in this scope
+   --> src/api/rest/server.rs:326:68
+    |
+326 |             .route("/api/v1/security/labels/check-dominance", post(check_label_dominance))
+    |                                                                    ^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::check_label_dominance;
+    |
+
+error[E0425]: cannot find value `validate_label_access` in this scope
+   --> src/api/rest/server.rs:327:68
+    |
+327 |             .route("/api/v1/security/labels/validate-access", post(validate_label_access))
+    |                                                                    ^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::validate_label_access;
+    |
+
+error[E0425]: cannot find value `list_classifications` in this scope
+   --> src/api/rest/server.rs:328:67
+    |
+328 |             .route("/api/v1/security/labels/classifications", get(list_classifications))
+    |                                                                   ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function through its public re-export
+    |
+  6 + use crate::api::rest::list_classifications;
+    |
+
+warning: unused import: `serde_json::json`
+   --> src/api/rest/handlers/monitoring.rs:386:5
+    |
+386 | use serde_json::json;
+    |     ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `HealthCheckCoordinator`
+  --> src/api/rest/handlers/health_handlers.rs:16:30
+   |
+16 | use crate::api::monitoring::{HealthCheckCoordinator, HealthCheckResult, HealthStatus};
+   |                              ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Duration`
+  --> src/api/rest/handlers/dashboard_handlers.rs:12:17
+   |
+12 | use std::time::{Duration, SystemTime};
+   |                 ^^^^^^^^
+
+warning: unused imports: `Path` and `http::StatusCode`
+ --> src/api/rest/handlers/enterprise_auth_handlers.rs:7:15
+  |
+7 |     extract::{Path, State},
+  |               ^^^^
+8 |     response::Json as AxumJson,
+9 |     http::StatusCode,
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `UNIX_EPOCH`
+  --> src/api/rest/handlers/enterprise_auth_handlers.rs:14:29
+   |
+14 | use std::time::{SystemTime, UNIX_EPOCH};
+   |                             ^^^^^^^^^^
+
+warning: unused imports: `BackupStatus` and `BackupType`
+  --> src/api/rest/handlers/backup_handlers.rs:20:21
+   |
+20 | use crate::backup::{BackupType, BackupStatus};
+   |                     ^^^^^^^^^^  ^^^^^^^^^^^^
+
+warning: unused imports: `AuditRecord` and `ComplianceReport`
+  --> src/api/rest/handlers/audit_handlers.rs:14:51
+   |
+14 | use crate::security_vault::{SecurityVaultManager, AuditRecord, ComplianceReport};
+   |                                                   ^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+
+warning: unused import: `Query`
+ --> src/api/rest/handlers/encryption_handlers.rs:7:28
+  |
+7 |     extract::{State, Path, Query},
+  |                            ^^^^^
+
+warning: unused imports: `EncryptionAlgorithm` and `TdeConfig`
+  --> src/api/rest/handlers/encryption_handlers.rs:14:51
+   |
+14 | use crate::security_vault::{SecurityVaultManager, EncryptionAlgorithm, TdeConfig};
+   |                                                   ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^
+
+warning: unused import: `MaskingType`
+  --> src/api/rest/handlers/masking_handlers.rs:14:66
+   |
+14 | use crate::security_vault::{SecurityVaultManager, MaskingPolicy, MaskingType};
+   |                                                                  ^^^^^^^^^^^
+
+warning: unused imports: `create_alert_rule`, `create_alert_silence`, `delete_alert_rule`, `delete_alert_silence`, `get_alert_history`, `list_alert_rules`, and `update_alert_rule`
+  --> src/api/rest/server.rs:35:171
+   |
+35 | ...t, create_alert_rule, list_alert_rules, update_alert_rule, delete_alert_rule, get_alert_history, create_alert_silence, delete_alert_silence};
+   |       ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `full_health_check`, `liveness_probe`, `readiness_probe`, and `startup_probe`
+  --> src/api/rest/server.rs:46:40
+   |
+46 | use super::handlers::health_handlers::{liveness_probe, readiness_probe, startup_probe, full_health_check};
+   |                                        ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `create_dashboard`, `delete_dashboard`, `get_dashboard`, `list_dashboards`, and `update_dashboard`
+  --> src/api/rest/server.rs:47:43
+   |
+47 | use super::handlers::dashboard_handlers::{create_dashboard, list_dashboards, get_dashboard, update_dashboard, delete_dashboard};
+   |                                           ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+
+warning: unused imports: `create_dump`, `download_dump`, `get_active_session_history`, `get_dump_status`, `get_incidents`, and `get_query_profiling`
+  --> src/api/rest/server.rs:48:45
+   |
+48 | ...s_handlers::{get_incidents, create_dump, get_query_profiling, get_active_session_history, get_dump_status, download_dump};
+   |                 ^^^^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^
+
+warning: variant `up` should have an upper camel case name
+   --> src/api/graphql/models.rs:649:14
+    |
+649 |     Catching up,
+    |              ^^ help: convert the identifier to upper camel case (notice the capitalization): `Up`
+    |
+    = note: `#[warn(non_camel_case_types)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: unused imports: `Alert as MonitoringAlert`, `AlertCategory`, `AlertSeverity`, and `AlertState`
+  --> src/api/graphql/subscriptions.rs:18:33
+   |
+18 | use crate::monitoring::alerts::{Alert as MonitoringAlert, AlertSeverity, AlertCategory, AlertState};
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^
+
+warning: unused imports: `ConnectionPoolStats`, `DashboardDataAggregator`, `PerformanceSummary`, `ReplicationLag as DashboardReplicationLag`, `ResourceSnapshot`, and `TopQuery`
+  --> src/api/graphql/subscriptions.rs:20:5
+   |
+20 |     DashboardDataAggregator, PerformanceSummary, ResourceSnapshot, ReplicationLag as DashboardReplicationLag,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |     TopQuery, ConnectionPoolStats,
+   |     ^^^^^^^^  ^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `CDCEngine` and `ChangeEvent as CDCChangeEvent`
+  --> src/api/graphql/subscriptions.rs:23:27
+   |
+23 | use crate::streams::cdc::{CDCEngine, ChangeEvent as CDCChangeEvent};
+   |                           ^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::time::SystemTime`
+  --> src/api/graphql/subscriptions.rs:24:5
+   |
+24 | use std::time::SystemTime;
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+error[E0004]: non-exhaustive patterns: `network::protocol::Request::ParameterizedQuery { .. }` not covered
+   --> src/network/server.rs:110:15
+    |
+110 |         match request {
+    |               ^^^^^^^ pattern `network::protocol::Request::ParameterizedQuery { .. }` not covered
+    |
+note: `network::protocol::Request` defined here
+   --> src/network/protocol.rs:6:10
+    |
+  6 | pub enum Request {
+    |          ^^^^^^^
+  7 |     Query { sql: String },
+  8 |     ParameterizedQuery {
+    |     ------------------ not covered
+    = note: the matched value is of type `network::protocol::Request`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+    |
+134 ~             Request::Ping => Response::Pong,
+135 ~             network::protocol::Request::ParameterizedQuery { .. } => todo!(),
+    |
+
+error[E0277]: the trait bound `cluster::ReplicationSlot: Clone` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:447:58
+    |
+447 |     let slot_list: Vec<ReplicationSlot> = slots.values().cloned().collect();
+    |                                                          ^^^^^^ the trait `Clone` is not implemented for `cluster::ReplicationSlot`
+    |
+note: required by a bound in `std::iter::Iterator::cloned`
+   --> /rustc/ed61e7d7e242494fb7057f2657300d9e77bb4fcb/library/core/src/iter/traits/iterator.rs:3465:5
+help: consider annotating `cluster::ReplicationSlot` with `#[derive(Clone)]`
+    |
+365 + #[derive(Clone)]
+366 | pub struct ReplicationSlot {
+    |
+
+error[E0599]: `Cloned<Values<'_, String, ReplicationSlot>>` is not an iterator
+   --> src/api/rest/handlers/cluster.rs:447:67
+    |
+447 |     let slot_list: Vec<ReplicationSlot> = slots.values().cloned().collect();
+    |                                                                   ^^^^^^^ `Cloned<Values<'_, String, ReplicationSlot>>` is not an iterator
+    |
+    = note: the following trait bounds were not satisfied:
+            `std::iter::Cloned<std::collections::hash_map::Values<'_, std::string::String, cluster::ReplicationSlot>>: Iterator`
+            which is required by `&mut std::iter::Cloned<std::collections::hash_map::Values<'_, std::string::String, cluster::ReplicationSlot>>: Iterator`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-12834952320719865165.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error[E0599]: no method named `clone` found for struct `cluster::ReplicationSlot` in the current scope
+   --> src/api/rest/handlers/cluster.rs:508:44
+    |
+365 | pub struct ReplicationSlot {
+    | -------------------------- method `clone` not found for this struct
+...
+508 |         slots.insert(slot_id.clone(), slot.clone());
+    |                                            ^^^^^ method not found in `cluster::ReplicationSlot`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following trait defines an item `clone`, perhaps you need to implement it:
+            candidate #1: `Clone`
+
+error[E0277]: the trait bound `cluster::ReplicationSlot: Clone` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:529:58
+    |
+529 |     let slot_list: Vec<ReplicationSlot> = slots.values().cloned().collect();
+    |                                                          ^^^^^^ the trait `Clone` is not implemented for `cluster::ReplicationSlot`
+    |
+note: required by a bound in `std::iter::Iterator::cloned`
+   --> /rustc/ed61e7d7e242494fb7057f2657300d9e77bb4fcb/library/core/src/iter/traits/iterator.rs:3465:5
+help: consider annotating `cluster::ReplicationSlot` with `#[derive(Clone)]`
+    |
+365 + #[derive(Clone)]
+366 | pub struct ReplicationSlot {
+    |
+
+error[E0599]: `Cloned<Values<'_, String, ReplicationSlot>>` is not an iterator
+   --> src/api/rest/handlers/cluster.rs:529:67
+    |
+529 |     let slot_list: Vec<ReplicationSlot> = slots.values().cloned().collect();
+    |                                                                   ^^^^^^^ `Cloned<Values<'_, String, ReplicationSlot>>` is not an iterator
+    |
+    = note: the following trait bounds were not satisfied:
+            `std::iter::Cloned<std::collections::hash_map::Values<'_, std::string::String, cluster::ReplicationSlot>>: Iterator`
+            which is required by `&mut std::iter::Cloned<std::collections::hash_map::Values<'_, std::string::String, cluster::ReplicationSlot>>: Iterator`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-5604705104156217538.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error[E0382]: borrow of moved value: `backup_id`
+   --> src/api/rest/handlers/backup_handlers.rs:220:49
+    |
+165 |     let backup_id = format!("backup_{}", Uuid::new_v4());
+    |         --------- move occurs because `backup_id` has type `std::string::String`, which does not implement the `Copy` trait
+...
+203 |     tokio::spawn(async move {
+    |                  ---------- value moved here
+...
+207 |         if let Some(backup) = backups.get_mut(&backup_id) {
+    |                                                --------- variable moved due to use in coroutine
+...
+220 |     log::info!("Backup started: {} (type: {})", backup_id, backup_type);
+    |                                                 ^^^^^^^^^ value borrowed here after move
+    |
+    = note: this error originates in the macro `$crate::__private_api::format_args` which comes from the expansion of the macro `log::info` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider cloning the value before moving it into the closure
+    |
+203 ~     let value = backup_id.clone();
+204 ~     tokio::spawn(async move {
+205 |         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+206 |
+207 |         let mut backups = BACKUPS.write();
+208 ~         if let Some(backup) = backups.get_mut(&value) {
+    |
+
+error[E0599]: no method named `clone` found for struct `parking_lot::lock_api::RwLockReadGuard<'_, parking_lot::RawRwLock, BackupSchedule>` in the current scope
+   --> src/api/rest/handlers/backup_handlers.rs:376:43
+    |
+376 |     let schedule = BACKUP_SCHEDULE.read().clone();
+    |                                           ^^^^^ method not found in `parking_lot::lock_api::RwLockReadGuard<'_, parking_lot::RawRwLock, BackupSchedule>`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following trait defines an item `clone`, perhaps you need to implement it:
+            candidate #1: `Clone`
+
+error[E0599]: no method named `clone` found for struct `BackupSchedule` in the current scope
+   --> src/api/rest/handlers/backup_handlers.rs:403:27
+    |
+ 87 | pub struct BackupSchedule {
+    | ------------------------- method `clone` not found for this struct
+...
+403 |         *sched = schedule.clone();
+    |                           ^^^^^ method not found in `BackupSchedule`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following trait defines an item `clone`, perhaps you need to implement it:
+            candidate #1: `Clone`
+
+error[E0599]: no method named `query_records` found for struct `tokio::sync::MutexGuard<'_, AuditVault>` in the current scope
+   --> src/api/rest/handlers/audit_handlers.rs:157:27
+    |
+157 |         match audit_guard.query_records(start, end) {
+    |                           ^^^^^^^^^^^^^ method not found in `tokio::sync::MutexGuard<'_, AuditVault>`
+
+error[E0599]: no method named `query_records` found for struct `tokio::sync::MutexGuard<'_, AuditVault>` in the current scope
+   --> src/api/rest/handlers/audit_handlers.rs:232:27
+    |
+232 |         match audit_guard.query_records(config.start_time, config.end_time) {
+    |                           ^^^^^^^^^^^^^ method not found in `tokio::sync::MutexGuard<'_, AuditVault>`
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `md5`
+   --> src/api/rest/handlers/audit_handlers.rs:250:54
+    |
+250 |                     checksum: format!("sha256:{:x}", md5::compute(format!("{}", records_count))),
+    |                                                      ^^^ use of unresolved module or unlinked crate `md5`
+    |
+    = help: if you wanted to use a crate named `md5`, use `cargo add md5` to add it to your `Cargo.toml`
+
+error[E0609]: no field `compliant` on type `security_vault::audit::ComplianceReport`
+   --> src/api/rest/handlers/audit_handlers.rs:282:39
+    |
+282 |                     compliant: report.compliant,
+    |                                       ^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `regulation`, `start_date`, `end_date`, `total_records`, `by_action` ... and 5 others
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/audit_handlers.rs:283:42
+    |
+283 |                     total_audit_records: report.total_records,
+    |                                          ^^^^^^^^^^^^^^^^^^^^ expected `u64`, found `usize`
+
+error[E0609]: no field `violations` on type `security_vault::audit::ComplianceReport`
+   --> src/api/rest/handlers/audit_handlers.rs:284:40
+    |
+284 |                     violations: report.violations.into_iter().map(|v| ComplianceViolation {
+    |                                        ^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `regulation`, `start_date`, `end_date`, `total_records`, `by_action` ... and 5 others
+
+error[E0609]: no field `recommendations` on type `security_vault::audit::ComplianceReport`
+   --> src/api/rest/handlers/audit_handlers.rs:292:32
+    |
+292 |                         report.recommendations
+    |                                ^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `regulation`, `start_date`, `end_date`, `total_records`, `by_action` ... and 5 others
+
+error[E0609]: no field `key_id` on type `Vec<u8>`
+   --> src/api/rest/handlers/encryption_handlers.rs:236:33
+    |
+236 |                     key_id: dek.key_id,
+    |                                 ^^^^^^ unknown field
+
+error[E0609]: no field `version` on type `Vec<u8>`
+   --> src/api/rest/handlers/encryption_handlers.rs:237:38
+    |
+237 |                     key_version: dek.version,
+    |                                      ^^^^^^^ unknown field
+
+error[E0609]: no field `algorithm` on type `Vec<u8>`
+   --> src/api/rest/handlers/encryption_handlers.rs:238:52
+    |
+238 |                     algorithm: format!("{:?}", dek.algorithm),
+    |                                                    ^^^^^^^^^ unknown field
+
+error[E0609]: no field `created_at` on type `Vec<u8>`
+   --> src/api/rest/handlers/encryption_handlers.rs:239:37
+    |
+239 |                     created_at: dek.created_at,
+    |                                     ^^^^^^^^^^ unknown field
+
+error[E0609]: no field `key_id` on type `Vec<u8>`
+   --> src/api/rest/handlers/encryption_handlers.rs:267:37
+    |
+267 |                     key_id: new_dek.key_id,
+    |                                     ^^^^^^ unknown field
+
+error[E0609]: no field `version` on type `Vec<u8>`
+   --> src/api/rest/handlers/encryption_handlers.rs:268:42
+    |
+268 |                     key_version: new_dek.version,
+    |                                          ^^^^^^^ unknown field
+
+error[E0609]: no field `algorithm` on type `Vec<u8>`
+   --> src/api/rest/handlers/encryption_handlers.rs:269:56
+    |
+269 |                     algorithm: format!("{:?}", new_dek.algorithm),
+    |                                                        ^^^^^^^^^ unknown field
+
+error[E0609]: no field `created_at` on type `Vec<u8>`
+   --> src/api/rest/handlers/encryption_handlers.rs:270:41
+    |
+270 |                     created_at: new_dek.created_at,
+    |                                         ^^^^^^^^^^ unknown field
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/encryption_handlers.rs:294:13
+    |
+293 |         match key_store_guard.list_deks() {
+    |               --------------------------- this expression has type `Vec<std::string::String>`
+294 |             Ok(keys) => {
+    |             ^^^^^^^^ expected `Vec<String>`, found `Result<_, _>`
+    |
+    = note: expected struct `Vec<std::string::String>`
+                 found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/encryption_handlers.rs:305:13
+    |
+293 |         match key_store_guard.list_deks() {
+    |               --------------------------- this expression has type `Vec<std::string::String>`
+...
+305 |             Err(e) => Err(ApiError::new("KEY_LIST_ERROR", e.to_string())),
+    |             ^^^^^^ expected `Vec<String>`, found `Result<_, _>`
+    |
+    = note: expected struct `Vec<std::string::String>`
+                 found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:122:13
+    |
+121 |         match masking_guard.list_policies() {
+    |               ----------------------------- this expression has type `Vec<std::string::String>`
+122 |             Ok(policies) => {
+    |             ^^^^^^^^^^^^ expected `Vec<String>`, found `Result<_, _>`
+    |
+    = note: expected struct `Vec<std::string::String>`
+                 found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:130:13
+    |
+121 |         match masking_guard.list_policies() {
+    |               ----------------------------- this expression has type `Vec<std::string::String>`
+...
+130 |             Err(e) => Err(ApiError::new("POLICY_LIST_ERROR", e.to_string())),
+    |             ^^^^^^ expected `Vec<String>`, found `Result<_, _>`
+    |
+    = note: expected struct `Vec<std::string::String>`
+                 found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:152:13
+    |
+151 |         match masking_guard.get_policy(&name) {
+    |               ------------------------------- this expression has type `std::option::Option<MaskingPolicy>`
+152 |             Ok(policy) => Ok(Json(policy_to_response(&policy))),
+    |             ^^^^^^^^^^ expected `Option<MaskingPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<MaskingPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:153:13
+    |
+151 |         match masking_guard.get_policy(&name) {
+    |               ------------------------------- this expression has type `std::option::Option<MaskingPolicy>`
+152 |             Ok(policy) => Ok(Json(policy_to_response(&policy))),
+153 |             Err(e) => Err(ApiError::new("POLICY_NOT_FOUND", e.to_string())),
+    |             ^^^^^^ expected `Option<MaskingPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<MaskingPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:182:21
+    |
+181 |                 match masking_guard.get_policy(&request.name) {
+    |                       --------------------------------------- this expression has type `std::option::Option<MaskingPolicy>`
+182 |                     Ok(policy) => Ok(Json(policy_to_response(&policy))),
+    |                     ^^^^^^^^^^ expected `Option<MaskingPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<MaskingPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:183:21
+    |
+181 |                 match masking_guard.get_policy(&request.name) {
+    |                       --------------------------------------- this expression has type `std::option::Option<MaskingPolicy>`
+182 |                     Ok(policy) => Ok(Json(policy_to_response(&policy))),
+183 |                     Err(e) => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", e.to_string())),
+    |                     ^^^^^^ expected `Option<MaskingPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<MaskingPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0599]: no method named `update_policy` found for struct `parking_lot::lock_api::RwLockWriteGuard<'_, parking_lot::RawRwLock, MaskingEngine>` in the current scope
+   --> src/api/rest/handlers/masking_handlers.rs:208:29
+    |
+208 |         match masking_guard.update_policy(&name, request.enabled, request.priority) {
+    |                             ^^^^^^^^^^^^^
+    |
+help: there is a method `create_policy` with a similar name
+    |
+208 -         match masking_guard.update_policy(&name, request.enabled, request.priority) {
+208 +         match masking_guard.create_policy(&name, request.enabled, request.priority) {
+    |
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:212:21
+    |
+211 |                 match masking_guard.get_policy(&name) {
+    |                       ------------------------------- this expression has type `std::option::Option<MaskingPolicy>`
+212 |                     Ok(policy) => Ok(Json(policy_to_response(&policy))),
+    |                     ^^^^^^^^^^ expected `Option<MaskingPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<MaskingPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:213:21
+    |
+211 |                 match masking_guard.get_policy(&name) {
+    |                       ------------------------------- this expression has type `std::option::Option<MaskingPolicy>`
+212 |                     Ok(policy) => Ok(Json(policy_to_response(&policy))),
+213 |                     Err(e) => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", e.to_string())),
+    |                     ^^^^^^ expected `Option<MaskingPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<MaskingPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0599]: no method named `delete_policy` found for struct `parking_lot::lock_api::RwLockWriteGuard<'_, parking_lot::RawRwLock, MaskingEngine>` in the current scope
+   --> src/api/rest/handlers/masking_handlers.rs:237:29
+    |
+237 |         match masking_guard.delete_policy(&name) {
+    |                             ^^^^^^^^^^^^^
+    |
+help: there is a method `get_policy` with a similar name
+    |
+237 -         match masking_guard.delete_policy(&name) {
+237 +         match masking_guard.get_policy(&name) {
+    |
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:266:13
+    |
+265 |         match masking_guard.get_policy(&request.policy_name) {
+    |               ---------------------------------------------- this expression has type `std::option::Option<MaskingPolicy>`
+266 |             Ok(policy) => {
+    |             ^^^^^^^^^^ expected `Option<MaskingPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<MaskingPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/masking_handlers.rs:289:13
+    |
+265 |         match masking_guard.get_policy(&request.policy_name) {
+    |               ---------------------------------------------- this expression has type `std::option::Option<MaskingPolicy>`
+...
+289 |             Err(e) => Err(ApiError::new("POLICY_NOT_FOUND", e.to_string())),
+    |             ^^^^^^ expected `Option<MaskingPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<MaskingPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0624]: method `apply_masking` is private
+   --> src/api/rest/handlers/masking_handlers.rs:270:41
+    |
+270 |                       match masking_guard.apply_masking(&value, &policy.masking_type) {
+    |                                           ^^^^^^^^^^^^^ private method
+    |
+   ::: src/security_vault/masking.rs:335:5
+    |
+335 | /     fn apply_masking(
+336 | |         &self,
+337 | |         masking_type: &MaskingType,
+338 | |         value: &str,
+339 | |         consistency_key: Option<&str>,
+340 | |     ) -> Result<String> {
+    | |_______________________- private method defined here
+
+error[E0599]: no method named `update_policy` found for struct `parking_lot::lock_api::RwLockWriteGuard<'_, parking_lot::RawRwLock, MaskingEngine>` in the current scope
+   --> src/api/rest/handlers/masking_handlers.rs:310:29
+    |
+310 |         match masking_guard.update_policy(&name, Some(true), None) {
+    |                             ^^^^^^^^^^^^^
+    |
+help: there is a method `create_policy` with a similar name
+    |
+310 -         match masking_guard.update_policy(&name, Some(true), None) {
+310 +         match masking_guard.create_policy(&name, Some(true), None) {
+    |
+
+error[E0599]: no method named `update_policy` found for struct `parking_lot::lock_api::RwLockWriteGuard<'_, parking_lot::RawRwLock, MaskingEngine>` in the current scope
+   --> src/api/rest/handlers/masking_handlers.rs:338:29
+    |
+338 |         match masking_guard.update_policy(&name, Some(false), None) {
+    |                             ^^^^^^^^^^^^^
+    |
+help: there is a method `create_policy` with a similar name
+    |
+338 -         match masking_guard.update_policy(&name, Some(false), None) {
+338 +         match masking_guard.create_policy(&name, Some(false), None) {
+    |
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/vpd_handlers.rs:116:13
+    |
+115 |         match vpd_guard.list_policies() {
+    |               ------------------------- this expression has type `Vec<std::string::String>`
+116 |             Ok(policies) => {
+    |             ^^^^^^^^^^^^ expected `Vec<String>`, found `Result<_, _>`
+    |
+    = note: expected struct `Vec<std::string::String>`
+                 found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/vpd_handlers.rs:124:13
+    |
+115 |         match vpd_guard.list_policies() {
+    |               ------------------------- this expression has type `Vec<std::string::String>`
+...
+124 |             Err(e) => Err(ApiError::new("POLICY_LIST_ERROR", e.to_string())),
+    |             ^^^^^^ expected `Vec<String>`, found `Result<_, _>`
+    |
+    = note: expected struct `Vec<std::string::String>`
+                 found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/vpd_handlers.rs:146:13
+    |
+145 |         match vpd_guard.get_policy(&name) {
+    |               --------------------------- this expression has type `std::option::Option<VpdPolicy>`
+146 |             Ok(policy) => Ok(Json(policy_to_response(&policy))),
+    |             ^^^^^^^^^^ expected `Option<VpdPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<VpdPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/vpd_handlers.rs:147:13
+    |
+145 |         match vpd_guard.get_policy(&name) {
+    |               --------------------------- this expression has type `std::option::Option<VpdPolicy>`
+146 |             Ok(policy) => Ok(Json(policy_to_response(&policy))),
+147 |             Err(e) => Err(ApiError::new("POLICY_NOT_FOUND", e.to_string())),
+    |             ^^^^^^ expected `Option<VpdPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<VpdPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/vpd_handlers.rs:175:21
+    |
+174 |                 match vpd_guard.get_policy(&request.name) {
+    |                       ----------------------------------- this expression has type `std::option::Option<VpdPolicy>`
+175 |                     Ok(policy) => Ok(Json(policy_to_response(&policy))),
+    |                     ^^^^^^^^^^ expected `Option<VpdPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<VpdPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/vpd_handlers.rs:176:21
+    |
+174 |                 match vpd_guard.get_policy(&request.name) {
+    |                       ----------------------------------- this expression has type `std::option::Option<VpdPolicy>`
+175 |                     Ok(policy) => Ok(Json(policy_to_response(&policy))),
+176 |                     Err(e) => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", e.to_string())),
+    |                     ^^^^^^ expected `Option<VpdPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<VpdPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0599]: no method named `update_policy` found for struct `parking_lot::lock_api::RwLockWriteGuard<'_, parking_lot::RawRwLock, VpdEngine>` in the current scope
+   --> src/api/rest/handlers/vpd_handlers.rs:201:25
+    |
+201 |         match vpd_guard.update_policy(&name, request.enabled, request.predicate.as_deref()) {
+    |                         ^^^^^^^^^^^^^
+    |
+help: there is a method `create_policy` with a similar name, but with different arguments
+   --> src/security_vault/vpd.rs:302:5
+    |
+302 |     pub fn create_policy(&mut self, table_name: &str, predicate: &str) -> Result<()> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/vpd_handlers.rs:205:21
+    |
+204 |                 match vpd_guard.get_policy(&name) {
+    |                       --------------------------- this expression has type `std::option::Option<VpdPolicy>`
+205 |                     Ok(policy) => Ok(Json(policy_to_response(&policy))),
+    |                     ^^^^^^^^^^ expected `Option<VpdPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<VpdPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0308]: mismatched types
+   --> src/api/rest/handlers/vpd_handlers.rs:206:21
+    |
+204 |                 match vpd_guard.get_policy(&name) {
+    |                       --------------------------- this expression has type `std::option::Option<VpdPolicy>`
+205 |                     Ok(policy) => Ok(Json(policy_to_response(&policy))),
+206 |                     Err(e) => Err(ApiError::new("POLICY_RETRIEVAL_ERROR", e.to_string())),
+    |                     ^^^^^^ expected `Option<VpdPolicy>`, found `Result<_, _>`
+    |
+    = note: expected enum `std::option::Option<VpdPolicy>`
+               found enum `std::result::Result<_, _>`
+
+error[E0599]: no method named `delete_policy` found for struct `parking_lot::lock_api::RwLockWriteGuard<'_, parking_lot::RawRwLock, VpdEngine>` in the current scope
+   --> src/api/rest/handlers/vpd_handlers.rs:230:25
+    |
+230 |         match vpd_guard.delete_policy(&name) {
+    |                         ^^^^^^^^^^^^^
+    |
+help: there is a method `get_policy` with a similar name
+    |
+230 -         match vpd_guard.delete_policy(&name) {
+230 +         match vpd_guard.get_policy(&name) {
+    |
+
+error[E0599]: no method named `get_table_policies` found for struct `parking_lot::lock_api::RwLockReadGuard<'_, parking_lot::RawRwLock, VpdEngine>` in the current scope
+   --> src/api/rest/handlers/vpd_handlers.rs:292:25
+    |
+292 |         match vpd_guard.get_table_policies(&table_name) {
+    |                         ^^^^^^^^^^^^^^^^^^
+    |
+help: there is a method `enable_policy` with a similar name
+    |
+292 -         match vpd_guard.get_table_policies(&table_name) {
+292 +         match vpd_guard.enable_policy(&table_name) {
+    |
+
+error[E0599]: no method named `update_policy` found for struct `parking_lot::lock_api::RwLockWriteGuard<'_, parking_lot::RawRwLock, VpdEngine>` in the current scope
+   --> src/api/rest/handlers/vpd_handlers.rs:322:25
+    |
+322 |         match vpd_guard.update_policy(&name, Some(true), None) {
+    |                         ^^^^^^^^^^^^^
+    |
+help: there is a method `create_policy` with a similar name, but with different arguments
+   --> src/security_vault/vpd.rs:302:5
+    |
+302 |     pub fn create_policy(&mut self, table_name: &str, predicate: &str) -> Result<()> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `update_policy` found for struct `parking_lot::lock_api::RwLockWriteGuard<'_, parking_lot::RawRwLock, VpdEngine>` in the current scope
+   --> src/api/rest/handlers/vpd_handlers.rs:350:25
+    |
+350 |         match vpd_guard.update_policy(&name, Some(false), None) {
+    |                         ^^^^^^^^^^^^^
+    |
+help: there is a method `create_policy` with a similar name, but with different arguments
+   --> src/security_vault/vpd.rs:302:5
+    |
+302 |     pub fn create_policy(&mut self, table_name: &str, predicate: &str) -> Result<()> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0609]: no field `recommendation` on type `PrivilegeRecommendation`
+   --> src/api/rest/handlers/privileges_handlers.rs:237:50
+    |
+237 |                     recommendation_msgs.push(rec.recommendation);
+    |                                                  ^^^^^^^^^^^^^^ unknown field
+
+error[E0609]: no field `severity` on type `PrivilegeRecommendation`
+   --> src/api/rest/handlers/privileges_handlers.rs:238:28
+    |
+238 |                     if rec.severity > 7 {
+    |                            ^^^^^^^^ unknown field
+
+error[E0609]: no field `privilege` on type `PrivilegeRecommendation`
+   --> src/api/rest/handlers/privileges_handlers.rs:239:50
+    |
+239 |                         high_risk_privs.push(rec.privilege);
+    |                                                  ^^^^^^^^^ unknown field
+
+error[E0609]: no field `usage_count` on type `PrivilegeRecommendation`
+   --> src/api/rest/handlers/privileges_handlers.rs:241:29
+    |
+241 |                     if !rec.usage_count > 0 {
+    |                             ^^^^^^^^^^^ unknown field
+
+error[E0609]: no field `privilege` on type `PrivilegeRecommendation`
+   --> src/api/rest/handlers/privileges_handlers.rs:242:47
+    |
+242 |                         unused_privs.push(rec.privilege);
+    |                                               ^^^^^^^^^ unknown field
+
+error[E0382]: use of moved value: `request.max_write_classification`
+   --> src/api/rest/handlers/labels_handlers.rs:299:33
+    |
+298 |         max_write_classification: request.max_write_classification,
+    |                                   -------------------------------- value moved here
+299 |         current_classification: request.max_write_classification,
+    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ value used here after move
+    |
+    = note: move occurs because `request.max_write_classification` has type `std::string::String`, which does not implement the `Copy` trait
+
+error[E0277]: the trait bound `SyncState: OutputType` is not satisfied
+   --> src/api/graphql/models.rs:627:10
+    |
+627 | #[derive(SimpleObject, Clone, Debug)]
+    |          ^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `OutputType` is not implemented for `SyncState`
+   --> src/api/graphql/models.rs:647:1
+    |
+647 | pub enum SyncState {
+    | ^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `OutputType`:
+              &'a [T]
+              &T
+              AggregateChange
+              AlertResolved
+              BTreeSet<T>
+              BatchStringFunctionResult
+              Box<T>
+              Box<[T]>
+            and 223 others
+    = note: required for `&SyncState` to implement `OutputType`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-13882386242731579157.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the derive macro `SimpleObject` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `SyncState: OutputType` is not satisfied
+   --> src/api/graphql/models.rs:627:10
+    |
+627 | #[derive(SimpleObject, Clone, Debug)]
+    |          ^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `OutputType` is not implemented for `SyncState`
+   --> src/api/graphql/models.rs:647:1
+    |
+647 | pub enum SyncState {
+    | ^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `OutputType`:
+              &'a [T]
+              &T
+              AggregateChange
+              AlertResolved
+              BTreeSet<T>
+              BatchStringFunctionResult
+              Box<T>
+              Box<[T]>
+            and 223 others
+note: required by a bound in `<&T as OutputType>`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/async-graphql-7.0.17/src/base.rs:107:9
+    |
+107 | impl<T: OutputType + ?Sized> OutputType for &T {
+    |         ^^^^^^^^^^ required by this bound in `<&T as OutputType>`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-13882386242731579157.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:233:9
+    |
+233 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:270:9
+    |
+270 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:300:9
+    |
+300 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:333:9
+    |
+333 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:366:9
+    |
+366 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:399:9
+    |
+399 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:429:9
+    |
+429 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:463:9
+    |
+463 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:491:9
+    |
+491 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:517:9
+    |
+517 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:553:9
+    |
+553 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:591:9
+    |
+591 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:624:9
+    |
+624 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:668:9
+    |
+668 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:708:9
+    |
+708 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+warning: unused variable: `ctx`
+   --> src/api/graphql/subscriptions.rs:744:9
+    |
+744 |         ctx: &Context<'ctx>,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+
+error[E0609]: no field `locked_memory` on type `&SecureKeyStore`
+    --> src/security/encryption_engine.rs:1063:15
+     |
+1063 |         *self.locked_memory.write() = true;
+     |               ^^^^^^^^^^^^^ unknown field
+     |
+help: a field with a similar name exists
+     |
+1063 |         *self._locked_memory.write() = true;
+     |               +
+
+error[E0609]: no field `guard_size` on type `&mut GuardedMemory`
+   --> src/security/memory_hardening.rs:382:26
+    |
+382 |                     self.guard_size,
+    |                          ^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+382 |                     self._guard_size,
+    |                          +
+
+error[E0609]: no field `back_guard` on type `&mut GuardedMemory`
+   --> src/security/memory_hardening.rs:386:26
+    |
+386 |                     self.back_guard.as_ptr() as *mut libc::c_void,
+    |                          ^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+386 |                     self._back_guard.as_ptr() as *mut libc::c_void,
+    |                          +
+
+error[E0609]: no field `guard_size` on type `&mut GuardedMemory`
+   --> src/security/memory_hardening.rs:387:26
+    |
+387 |                     self.guard_size,
+    |                          ^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+387 |                     self._guard_size,
+    |                          +
+
+error[E0277]: the trait bound `AlertRuleRequest: ToSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:472:20
+    |
+472 |     request_body = AlertRuleRequest,
+    |                    ^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `AlertRuleRequest`
+   --> src/api/rest/handlers/monitoring.rs:390:1
+    |
+390 | pub struct AlertRuleRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `AlertRuleRequest: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:472:20
+    |
+472 |     request_body = AlertRuleRequest,
+    |                    ^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `AlertRuleRequest`
+   --> src/api/rest/handlers/monitoring.rs:390:1
+    |
+390 | pub struct AlertRuleRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `AlertRuleRequest` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `AlertRuleResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:474:67
+    |
+474 |         (status = 201, description = "Alert rule created", body = AlertRuleResponse),
+    |                                                                   ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `AlertRuleResponse`
+   --> src/api/rest/handlers/monitoring.rs:403:1
+    |
+403 | pub struct AlertRuleResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `AlertRuleResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:474:67
+    |
+474 |         (status = 201, description = "Alert rule created", body = AlertRuleResponse),
+    |                                                                   ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `AlertRuleResponse`
+   --> src/api/rest/handlers/monitoring.rs:403:1
+    |
+403 | pub struct AlertRuleResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `AlertRuleResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `AlertRuleResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:509:72
+    |
+509 |         (status = 200, description = "List of alert rules", body = Vec<AlertRuleResponse>),
+    |                                                                        ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `AlertRuleResponse`
+   --> src/api/rest/handlers/monitoring.rs:403:1
+    |
+403 | pub struct AlertRuleResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `AlertRuleResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:509:72
+    |
+509 |         (status = 200, description = "List of alert rules", body = Vec<AlertRuleResponse>),
+    |                                                                        ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `AlertRuleResponse`
+   --> src/api/rest/handlers/monitoring.rs:403:1
+    |
+403 | pub struct AlertRuleResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `AlertRuleResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `AlertRuleRequest: ToSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:527:20
+    |
+527 |     request_body = AlertRuleRequest,
+    |                    ^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `AlertRuleRequest`
+   --> src/api/rest/handlers/monitoring.rs:390:1
+    |
+390 | pub struct AlertRuleRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `AlertRuleRequest: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:527:20
+    |
+527 |     request_body = AlertRuleRequest,
+    |                    ^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `AlertRuleRequest`
+   --> src/api/rest/handlers/monitoring.rs:390:1
+    |
+390 | pub struct AlertRuleRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `AlertRuleRequest` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `AlertRuleResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:529:67
+    |
+529 |         (status = 200, description = "Alert rule updated", body = AlertRuleResponse),
+    |                                                                   ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `AlertRuleResponse`
+   --> src/api/rest/handlers/monitoring.rs:403:1
+    |
+403 | pub struct AlertRuleResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `AlertRuleResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:529:67
+    |
+529 |         (status = 200, description = "Alert rule updated", body = AlertRuleResponse),
+    |                                                                   ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `AlertRuleResponse`
+   --> src/api/rest/handlers/monitoring.rs:403:1
+    |
+403 | pub struct AlertRuleResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `AlertRuleResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `AlertHistoryResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:588:62
+    |
+588 |         (status = 200, description = "Alert history", body = AlertHistoryResponse),
+    |                                                              ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `AlertHistoryResponse`
+   --> src/api/rest/handlers/monitoring.rs:418:1
+    |
+418 | pub struct AlertHistoryResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `AlertHistoryResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:588:62
+    |
+588 |         (status = 200, description = "Alert history", body = AlertHistoryResponse),
+    |                                                              ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `AlertHistoryResponse`
+   --> src/api/rest/handlers/monitoring.rs:418:1
+    |
+418 | pub struct AlertHistoryResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `AlertHistoryResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `AlertSilenceRequest: ToSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:613:20
+    |
+613 |     request_body = AlertSilenceRequest,
+    |                    ^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `AlertSilenceRequest`
+   --> src/api/rest/handlers/monitoring.rs:439:1
+    |
+439 | pub struct AlertSilenceRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `AlertSilenceRequest: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:613:20
+    |
+613 |     request_body = AlertSilenceRequest,
+    |                    ^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `AlertSilenceRequest`
+   --> src/api/rest/handlers/monitoring.rs:439:1
+    |
+439 | pub struct AlertSilenceRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `AlertSilenceRequest` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `AlertSilenceResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:615:70
+    |
+615 |         (status = 201, description = "Alert silence created", body = AlertSilenceResponse),
+    |                                                                      ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `AlertSilenceResponse`
+   --> src/api/rest/handlers/monitoring.rs:455:1
+    |
+455 | pub struct AlertSilenceResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `AlertSilenceResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/monitoring.rs:615:70
+    |
+615 |         (status = 201, description = "Alert silence created", body = AlertSilenceResponse),
+    |                                                                      ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `AlertSilenceResponse`
+   --> src/api/rest/handlers/monitoring.rs:455:1
+    |
+455 | pub struct AlertSilenceResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `AlertSilenceResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `ReplicationStatusDetailed: ToSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:416:76
+    |
+416 |         (status = 200, description = "Detailed replication status", body = ReplicationStatusDetailed),
+    |                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `ReplicationStatusDetailed`
+   --> src/api/rest/handlers/cluster.rs:394:1
+    |
+394 | pub struct ReplicationStatusDetailed {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `ReplicationStatusDetailed: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:416:76
+    |
+416 |         (status = 200, description = "Detailed replication status", body = ReplicationStatusDetailed),
+    |                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `ReplicationStatusDetailed`
+   --> src/api/rest/handlers/cluster.rs:394:1
+    |
+394 | pub struct ReplicationStatusDetailed {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `ReplicationStatusDetailed` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `CreateSlotRequest: ToSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:468:20
+    |
+468 |     request_body = CreateSlotRequest,
+    |                    ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `CreateSlotRequest`
+   --> src/api/rest/handlers/cluster.rs:377:1
+    |
+377 | pub struct CreateSlotRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `CreateSlotRequest: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:468:20
+    |
+468 |     request_body = CreateSlotRequest,
+    |                    ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `CreateSlotRequest`
+   --> src/api/rest/handlers/cluster.rs:377:1
+    |
+377 | pub struct CreateSlotRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `CreateSlotRequest` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `cluster::ReplicationSlot: ToSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:470:73
+    |
+470 |         (status = 201, description = "Replication slot created", body = ReplicationSlot),
+    |                                                                         ^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `cluster::ReplicationSlot`
+   --> src/api/rest/handlers/cluster.rs:365:1
+    |
+365 | pub struct ReplicationSlot {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `cluster::ReplicationSlot: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:470:73
+    |
+470 |         (status = 201, description = "Replication slot created", body = ReplicationSlot),
+    |                                                                         ^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `cluster::ReplicationSlot`
+   --> src/api/rest/handlers/cluster.rs:365:1
+    |
+365 | pub struct ReplicationSlot {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `cluster::ReplicationSlot` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `cluster::ReplicationSlot: ToSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:522:78
+    |
+522 |         (status = 200, description = "List of replication slots", body = Vec<ReplicationSlot>),
+    |                                                                              ^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `cluster::ReplicationSlot`
+   --> src/api/rest/handlers/cluster.rs:365:1
+    |
+365 | pub struct ReplicationSlot {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `cluster::ReplicationSlot: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:522:78
+    |
+522 |         (status = 200, description = "List of replication slots", body = Vec<ReplicationSlot>),
+    |                                                                              ^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `cluster::ReplicationSlot`
+   --> src/api/rest/handlers/cluster.rs:365:1
+    |
+365 | pub struct ReplicationSlot {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `cluster::ReplicationSlot` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `cluster::ReplicationLag: ToSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:566:80
+    |
+566 |         (status = 200, description = "Replication lag information", body = Vec<ReplicationLag>),
+    |                                                                                ^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `cluster::ReplicationLag`
+   --> src/api/rest/handlers/cluster.rs:384:1
+    |
+384 | pub struct ReplicationLag {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `cluster::ReplicationLag: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/cluster.rs:566:80
+    |
+566 |         (status = 200, description = "Replication lag information", body = Vec<ReplicationLag>),
+    |                                                                                ^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `cluster::ReplicationLag`
+   --> src/api/rest/handlers/cluster.rs:384:1
+    |
+384 | pub struct ReplicationLag {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `cluster::ReplicationLag` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `ratelimit::RateLimitConfig: serde::Serialize` is not satisfied
+    --> src/api/rest/handlers/gateway_handlers.rs:93:24
+     |
+  93 | #[derive(Debug, Clone, Serialize, Deserialize)]
+     |                        ^^^^^^^^^ unsatisfied trait bound
+...
+  97 |     pub config: RateLimitConfig,
+     |     --- required by a bound introduced by this call
+     |
+help: the trait `common::_::_serde::Serialize` is not implemented for `ratelimit::RateLimitConfig`
+    --> src/api/gateway/ratelimit.rs:31:1
+     |
+  31 | pub struct RateLimitConfig {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = note: for local types consider adding `#[derive(serde::Serialize)]` to your `ratelimit::RateLimitConfig` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `common::_::_serde::Serialize`:
+               &'a T
+               &'a mut T
+               &RawArray
+               &RawDocument
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+             and 2436 others
+note: required by a bound in `common::_::_serde::ser::SerializeStruct::serialize_field`
+    --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/ser/mod.rs:1917:21
+     |
+1915 |     fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Self::Error>
+     |        --------------- required by a bound in this associated function
+1916 |     where
+1917 |         T: ?Sized + Serialize;
+     |                     ^^^^^^^^^ required by this bound in `SerializeStruct::serialize_field`
+     = note: this error originates in the derive macro `Serialize` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `ratelimit::RateLimitConfig: serde::Deserialize<'de>` is not satisfied
+    --> src/api/rest/handlers/gateway_handlers.rs:97:17
+     |
+  97 |     pub config: RateLimitConfig,
+     |                 ^^^^^^^^^^^^^^^ unsatisfied trait bound
+     |
+help: the trait `Deserialize<'_>` is not implemented for `ratelimit::RateLimitConfig`
+    --> src/api/gateway/ratelimit.rs:31:1
+     |
+  31 | pub struct RateLimitConfig {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `ratelimit::RateLimitConfig` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Deserialize<'de>`:
+               `&'a RawArray` implements `Deserialize<'de>`
+               `&'a RawDocument` implements `Deserialize<'de>`
+               `&'a [u8]` implements `Deserialize<'de>`
+               `&'a serde_bytes::bytearray::ByteArray<N>` implements `Deserialize<'de>`
+               `&'a serde_bytes::bytes::Bytes` implements `Deserialize<'de>`
+               `&'a serde_json::value::RawValue` implements `Deserialize<'de>`
+               `&'a std::path::Path` implements `Deserialize<'de>`
+               `&'a str` implements `Deserialize<'de>`
+             and 2424 others
+note: required by a bound in `next_element`
+    --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/de/mod.rs:1771:12
+     |
+1769 |     fn next_element<T>(&mut self) -> Result<Option<T>, Self::Error>
+     |        ------------ required by a bound in this associated function
+1770 |     where
+1771 |         T: Deserialize<'de>,
+     |            ^^^^^^^^^^^^^^^^ required by this bound in `SeqAccess::next_element`
+
+error[E0277]: the trait bound `ratelimit::RateLimitConfig: serde::Deserialize<'de>` is not satisfied
+    --> src/api/rest/handlers/gateway_handlers.rs:97:17
+     |
+  97 |     pub config: RateLimitConfig,
+     |                 ^^^^^^^^^^^^^^^ unsatisfied trait bound
+     |
+help: the trait `Deserialize<'_>` is not implemented for `ratelimit::RateLimitConfig`
+    --> src/api/gateway/ratelimit.rs:31:1
+     |
+  31 | pub struct RateLimitConfig {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `ratelimit::RateLimitConfig` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Deserialize<'de>`:
+               `&'a RawArray` implements `Deserialize<'de>`
+               `&'a RawDocument` implements `Deserialize<'de>`
+               `&'a [u8]` implements `Deserialize<'de>`
+               `&'a serde_bytes::bytearray::ByteArray<N>` implements `Deserialize<'de>`
+               `&'a serde_bytes::bytes::Bytes` implements `Deserialize<'de>`
+               `&'a serde_json::value::RawValue` implements `Deserialize<'de>`
+               `&'a std::path::Path` implements `Deserialize<'de>`
+               `&'a str` implements `Deserialize<'de>`
+             and 2424 others
+note: required by a bound in `next_value`
+    --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/de/mod.rs:1916:12
+     |
+1914 |     fn next_value<V>(&mut self) -> Result<V, Self::Error>
+     |        ---------- required by a bound in this associated function
+1915 |     where
+1916 |         V: Deserialize<'de>,
+     |            ^^^^^^^^^^^^^^^^ required by this bound in `MapAccess::next_value`
+
+error[E0277]: the trait bound `ratelimit::RateLimitConfig: serde::Deserialize<'de>` is not satisfied
+  --> src/api/rest/handlers/gateway_handlers.rs:93:35
+   |
+93 | #[derive(Debug, Clone, Serialize, Deserialize)]
+   |                                   ^^^^^^^^^^^ unsatisfied trait bound
+   |
+help: the trait `Deserialize<'_>` is not implemented for `ratelimit::RateLimitConfig`
+  --> src/api/gateway/ratelimit.rs:31:1
+   |
+31 | pub struct RateLimitConfig {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `ratelimit::RateLimitConfig` type
+   = note: for types from other crates check whether the crate offers a `serde` feature flag
+   = help: the following other types implement trait `Deserialize<'de>`:
+             `&'a RawArray` implements `Deserialize<'de>`
+             `&'a RawDocument` implements `Deserialize<'de>`
+             `&'a [u8]` implements `Deserialize<'de>`
+             `&'a serde_bytes::bytearray::ByteArray<N>` implements `Deserialize<'de>`
+             `&'a serde_bytes::bytes::Bytes` implements `Deserialize<'de>`
+             `&'a serde_json::value::RawValue` implements `Deserialize<'de>`
+             `&'a std::path::Path` implements `Deserialize<'de>`
+             `&'a str` implements `Deserialize<'de>`
+           and 2424 others
+note: required by a bound in `common::_::_serde::__private228::de::missing_field`
+  --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:26:8
+   |
+24 | pub fn missing_field<'de, V, E>(field: &'static str) -> Result<V, E>
+   |        ------------- required by a bound in this function
+25 | where
+26 |     V: Deserialize<'de>,
+   |        ^^^^^^^^^^^^^^^^ required by this bound in `missing_field`
+   = note: this error originates in the derive macro `Deserialize` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `LivenessProbeResponse: ToSchema` is not satisfied
+  --> src/api/rest/handlers/health_handlers.rs:95:65
+   |
+95 |         (status = 200, description = "Service is alive", body = LivenessProbeResponse),
+   |                                                                 ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+   |
+help: the trait `ToSchema` is not implemented for `LivenessProbeResponse`
+  --> src/api/rest/handlers/health_handlers.rs:20:1
+   |
+20 | pub struct LivenessProbeResponse {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = help: the following other types implement trait `ToSchema`:
+             &'t [T]
+             &'t mut [T]
+             &str
+             ()
+             ActiveTransactionInfo
+             AddClusterNodeRequest
+             AlterTableRequest
+             AuditLogEntry
+           and 166 others
+
+error[E0277]: the trait bound `LivenessProbeResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:95:65
+    |
+ 95 |         (status = 200, description = "Service is alive", body = LivenessProbeResponse),
+    |                                                                 ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `LivenessProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:20:1
+    |
+ 20 | pub struct LivenessProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `LivenessProbeResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `LivenessProbeResponse: ToSchema` is not satisfied
+  --> src/api/rest/handlers/health_handlers.rs:96:69
+   |
+96 |         (status = 503, description = "Service is not alive", body = LivenessProbeResponse),
+   |                                                                     ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+   |
+help: the trait `ToSchema` is not implemented for `LivenessProbeResponse`
+  --> src/api/rest/handlers/health_handlers.rs:20:1
+   |
+20 | pub struct LivenessProbeResponse {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = help: the following other types implement trait `ToSchema`:
+             &'t [T]
+             &'t mut [T]
+             &str
+             ()
+             ActiveTransactionInfo
+             AddClusterNodeRequest
+             AlterTableRequest
+             AuditLogEntry
+           and 166 others
+
+error[E0277]: the trait bound `LivenessProbeResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:96:69
+    |
+ 96 |         (status = 503, description = "Service is not alive", body = LivenessProbeResponse),
+    |                                                                     ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `LivenessProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:20:1
+    |
+ 20 | pub struct LivenessProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `LivenessProbeResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `ReadinessProbeResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:127:65
+    |
+127 |         (status = 200, description = "Service is ready", body = ReadinessProbeResponse),
+    |                                                                 ^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `ReadinessProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:28:1
+    |
+ 28 | pub struct ReadinessProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `ReadinessProbeResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:127:65
+    |
+127 |         (status = 200, description = "Service is ready", body = ReadinessProbeResponse),
+    |                                                                 ^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `ReadinessProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:28:1
+    |
+ 28 | pub struct ReadinessProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `ReadinessProbeResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `ReadinessProbeResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:128:69
+    |
+128 |         (status = 503, description = "Service is not ready", body = ReadinessProbeResponse),
+    |                                                                     ^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `ReadinessProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:28:1
+    |
+ 28 | pub struct ReadinessProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `ReadinessProbeResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:128:69
+    |
+128 |         (status = 503, description = "Service is not ready", body = ReadinessProbeResponse),
+    |                                                                     ^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `ReadinessProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:28:1
+    |
+ 28 | pub struct ReadinessProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `ReadinessProbeResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `StartupProbeResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:163:71
+    |
+163 |         (status = 200, description = "Service is initialized", body = StartupProbeResponse),
+    |                                                                       ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `StartupProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:37:1
+    |
+ 37 | pub struct StartupProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `StartupProbeResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:163:71
+    |
+163 |         (status = 200, description = "Service is initialized", body = StartupProbeResponse),
+    |                                                                       ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `StartupProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:37:1
+    |
+ 37 | pub struct StartupProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `StartupProbeResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `StartupProbeResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:164:75
+    |
+164 |         (status = 503, description = "Service is not initialized", body = StartupProbeResponse),
+    |                                                                           ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `StartupProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:37:1
+    |
+ 37 | pub struct StartupProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `StartupProbeResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:164:75
+    |
+164 |         (status = 503, description = "Service is not initialized", body = StartupProbeResponse),
+    |                                                                           ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `StartupProbeResponse`
+   --> src/api/rest/handlers/health_handlers.rs:37:1
+    |
+ 37 | pub struct StartupProbeResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `StartupProbeResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `FullHealthResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:200:71
+    |
+200 |         (status = 200, description = "All components healthy", body = FullHealthResponse),
+    |                                                                       ^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `FullHealthResponse`
+   --> src/api/rest/handlers/health_handlers.rs:46:1
+    |
+ 46 | pub struct FullHealthResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `FullHealthResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:200:71
+    |
+200 |         (status = 200, description = "All components healthy", body = FullHealthResponse),
+    |                                                                       ^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `FullHealthResponse`
+   --> src/api/rest/handlers/health_handlers.rs:46:1
+    |
+ 46 | pub struct FullHealthResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `FullHealthResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `FullHealthResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:201:73
+    |
+201 |         (status = 429, description = "Some components degraded", body = FullHealthResponse),
+    |                                                                         ^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `FullHealthResponse`
+   --> src/api/rest/handlers/health_handlers.rs:46:1
+    |
+ 46 | pub struct FullHealthResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `FullHealthResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:201:73
+    |
+201 |         (status = 429, description = "Some components degraded", body = FullHealthResponse),
+    |                                                                         ^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `FullHealthResponse`
+   --> src/api/rest/handlers/health_handlers.rs:46:1
+    |
+ 46 | pub struct FullHealthResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `FullHealthResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `FullHealthResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:202:74
+    |
+202 |         (status = 503, description = "Some components unhealthy", body = FullHealthResponse),
+    |                                                                          ^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `FullHealthResponse`
+   --> src/api/rest/handlers/health_handlers.rs:46:1
+    |
+ 46 | pub struct FullHealthResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `FullHealthResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/health_handlers.rs:202:74
+    |
+202 |         (status = 503, description = "Some components unhealthy", body = FullHealthResponse),
+    |                                                                          ^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `FullHealthResponse`
+   --> src/api/rest/handlers/health_handlers.rs:46:1
+    |
+ 46 | pub struct FullHealthResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `FullHealthResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `DashboardRequest: ToSchema` is not satisfied
+  --> src/api/rest/handlers/dashboard_handlers.rs:98:20
+   |
+98 |     request_body = DashboardRequest,
+   |                    ^^^^^^^^^^^^^^^^ unsatisfied trait bound
+   |
+help: the trait `ToSchema` is not implemented for `DashboardRequest`
+  --> src/api/rest/handlers/dashboard_handlers.rs:19:1
+   |
+19 | pub struct DashboardRequest {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = help: the following other types implement trait `ToSchema`:
+             &'t [T]
+             &'t mut [T]
+             &str
+             ()
+             ActiveTransactionInfo
+             AddClusterNodeRequest
+             AlterTableRequest
+             AuditLogEntry
+           and 166 others
+
+error[E0277]: the trait bound `DashboardRequest: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:98:20
+    |
+ 98 |     request_body = DashboardRequest,
+    |                    ^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `DashboardRequest`
+   --> src/api/rest/handlers/dashboard_handlers.rs:19:1
+    |
+ 19 | pub struct DashboardRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `DashboardRequest` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `DashboardResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:100:66
+    |
+100 |         (status = 201, description = "Dashboard created", body = DashboardResponse),
+    |                                                                  ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `DashboardResponse`
+   --> src/api/rest/handlers/dashboard_handlers.rs:52:1
+    |
+ 52 | pub struct DashboardResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `DashboardResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:100:66
+    |
+100 |         (status = 201, description = "Dashboard created", body = DashboardResponse),
+    |                                                                  ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `DashboardResponse`
+   --> src/api/rest/handlers/dashboard_handlers.rs:52:1
+    |
+ 52 | pub struct DashboardResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `DashboardResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `DashboardListResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:147:67
+    |
+147 |         (status = 200, description = "List of dashboards", body = DashboardListResponse),
+    |                                                                   ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `DashboardListResponse`
+   --> src/api/rest/handlers/dashboard_handlers.rs:74:1
+    |
+ 74 | pub struct DashboardListResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `DashboardListResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:147:67
+    |
+147 |         (status = 200, description = "List of dashboards", body = DashboardListResponse),
+    |                                                                   ^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `DashboardListResponse`
+   --> src/api/rest/handlers/dashboard_handlers.rs:74:1
+    |
+ 74 | pub struct DashboardListResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `DashboardListResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `DashboardResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:170:66
+    |
+170 |         (status = 200, description = "Dashboard details", body = DashboardResponse),
+    |                                                                  ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `DashboardResponse`
+   --> src/api/rest/handlers/dashboard_handlers.rs:52:1
+    |
+ 52 | pub struct DashboardResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `DashboardResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:170:66
+    |
+170 |         (status = 200, description = "Dashboard details", body = DashboardResponse),
+    |                                                                  ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `DashboardResponse`
+   --> src/api/rest/handlers/dashboard_handlers.rs:52:1
+    |
+ 52 | pub struct DashboardResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `DashboardResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `DashboardRequest: ToSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:206:20
+    |
+206 |     request_body = DashboardRequest,
+    |                    ^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `DashboardRequest`
+   --> src/api/rest/handlers/dashboard_handlers.rs:19:1
+    |
+ 19 | pub struct DashboardRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `DashboardRequest: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:206:20
+    |
+206 |     request_body = DashboardRequest,
+    |                    ^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `DashboardRequest`
+   --> src/api/rest/handlers/dashboard_handlers.rs:19:1
+    |
+ 19 | pub struct DashboardRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `DashboardRequest` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `DashboardResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:208:66
+    |
+208 |         (status = 200, description = "Dashboard updated", body = DashboardResponse),
+    |                                                                  ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `DashboardResponse`
+   --> src/api/rest/handlers/dashboard_handlers.rs:52:1
+    |
+ 52 | pub struct DashboardResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `DashboardResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/dashboard_handlers.rs:208:66
+    |
+208 |         (status = 200, description = "Dashboard updated", body = DashboardResponse),
+    |                                                                  ^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `DashboardResponse`
+   --> src/api/rest/handlers/dashboard_handlers.rs:52:1
+    |
+ 52 | pub struct DashboardResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `DashboardResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `IncidentListResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:131:66
+    |
+131 |         (status = 200, description = "List of incidents", body = IncidentListResponse),
+    |                                                                  ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `IncidentListResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:19:1
+    |
+ 19 | pub struct IncidentListResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `IncidentListResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:131:66
+    |
+131 |         (status = 200, description = "List of incidents", body = IncidentListResponse),
+    |                                                                  ^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `IncidentListResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:19:1
+    |
+ 19 | pub struct IncidentListResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `IncidentListResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `DumpRequest: ToSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:156:20
+    |
+156 |     request_body = DumpRequest,
+    |                    ^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `DumpRequest`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:42:1
+    |
+ 42 | pub struct DumpRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `DumpRequest: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:156:20
+    |
+156 |     request_body = DumpRequest,
+    |                    ^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `DumpRequest`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:42:1
+    |
+ 42 | pub struct DumpRequest {
+    | ^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `DumpRequest` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `DumpResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:158:70
+    |
+158 |         (status = 202, description = "Dump creation started", body = DumpResponse),
+    |                                                                      ^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `DumpResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:50:1
+    |
+ 50 | pub struct DumpResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `DumpResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:158:70
+    |
+158 |         (status = 202, description = "Dump creation started", body = DumpResponse),
+    |                                                                      ^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `DumpResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:50:1
+    |
+ 50 | pub struct DumpResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `DumpResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `QueryProfilingResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:200:69
+    |
+200 |         (status = 200, description = "Query profiling data", body = QueryProfilingResponse),
+    |                                                                     ^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `QueryProfilingResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:63:1
+    |
+ 63 | pub struct QueryProfilingResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `QueryProfilingResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:200:69
+    |
+200 |         (status = 200, description = "Query profiling data", body = QueryProfilingResponse),
+    |                                                                     ^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `QueryProfilingResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:63:1
+    |
+ 63 | pub struct QueryProfilingResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `QueryProfilingResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `ActiveSessionHistoryResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:232:76
+    |
+232 |         (status = 200, description = "Active Session History data", body = ActiveSessionHistoryResponse),
+    |                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `ActiveSessionHistoryResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:88:1
+    |
+ 88 | pub struct ActiveSessionHistoryResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `ActiveSessionHistoryResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:232:76
+    |
+232 |         (status = 200, description = "Active Session History data", body = ActiveSessionHistoryResponse),
+    |                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `ActiveSessionHistoryResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:88:1
+    |
+ 88 | pub struct ActiveSessionHistoryResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `ActiveSessionHistoryResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0277]: the trait bound `DumpResponse: ToSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:266:60
+    |
+266 |         (status = 200, description = "Dump status", body = DumpResponse),
+    |                                                            ^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ToSchema` is not implemented for `DumpResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:50:1
+    |
+ 50 | pub struct DumpResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ToSchema`:
+              &'t [T]
+              &'t mut [T]
+              &str
+              ()
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+            and 166 others
+
+error[E0277]: the trait bound `DumpResponse: PartialSchema` is not satisfied
+   --> src/api/rest/handlers/diagnostics_handlers.rs:266:60
+    |
+266 |         (status = 200, description = "Dump status", body = DumpResponse),
+    |                                                            ^^^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `ComposeSchema` is not implemented for `DumpResponse`
+   --> src/api/rest/handlers/diagnostics_handlers.rs:50:1
+    |
+ 50 | pub struct DumpResponse {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `ComposeSchema`:
+              &[T]
+              &mut [T]
+              &str
+              ActiveTransactionInfo
+              AddClusterNodeRequest
+              AlterTableRequest
+              AuditLogEntry
+              AuditLogResponse
+            and 164 others
+    = note: required for `DumpResponse` to implement `PartialSchema`
+note: required by a bound in `utoipa::ToSchema::name`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-5.4.0/src/lib.rs:374:21
+    |
+374 | pub trait ToSchema: PartialSchema {
+    |                     ^^^^^^^^^^^^^ required by this bound in `ToSchema::name`
+...
+405 |     fn name() -> Cow<'static, str> {
+    |        ---- required by a bound in this associated function
+
+error[E0609]: no field `policy_scope` on type `&VpdPolicy`
+  --> src/api/rest/handlers/vpd_handlers.rs:94:46
+   |
+94 |         policy_scope: format!("{:?}", policy.policy_scope),
+   |                                              ^^^^^^^^^^^^ unknown field
+   |
+   = note: available fields are: `name`, `table_name`, `schema_name`, `predicate`, `scope` ... and 6 others
+
+error[E0277]: the trait bound `fn(State<...>, ...) -> ... {update_backup_schedule}: Handler<_, _>` is not satisfied
+   --> src/api/rest/server.rs:264:51
+    |
+264 |             .route("/api/v1/backup/schedule", put(update_backup_schedule))
+    |                                               --- ^^^^^^^^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiState>>, Json<...>) -> ... {update_backup_schedule}`
+    |                                               |
+    |                                               required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `Layered<L, H, T, S>` implements `Handler<T, S>`
+              `MethodRouter<S>` implements `Handler<(), S>`
+note: required by a bound in `axum::routing::put`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.7/src/routing/method_routing.rs:446:1
+    |
+446 | top_level_handler_fn!(put, PUT);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `put`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-14051112616204428885.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `fn(State<...>) -> ... {get_replication_status_detailed}: Handler<_, _>` is not satisfied
+   --> src/api/rest/server.rs:267:54
+    |
+267 |             .route("/api/v1/replication/status", get(get_replication_status_detailed))
+    |                                                  --- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiState>>) -> ... {get_replication_status_detailed}`
+    |                                                  |
+    |                                                  required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `Layered<L, H, T, S>` implements `Handler<T, S>`
+              `MethodRouter<S>` implements `Handler<(), S>`
+note: required by a bound in `axum::routing::get`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.7/src/routing/method_routing.rs:441:1
+    |
+441 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-2840394066399775440.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `fn(State<...>, ...) -> ... {create_replication_slot}: Handler<_, _>` is not satisfied
+   --> src/api/rest/server.rs:268:54
+    |
+268 |             .route("/api/v1/replication/slots", post(create_replication_slot))
+    |                                                 ---- ^^^^^^^^^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiState>>, Json<...>) -> ... {create_replication_slot}`
+    |                                                 |
+    |                                                 required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `Layered<L, H, T, S>` implements `Handler<T, S>`
+              `MethodRouter<S>` implements `Handler<(), S>`
+note: required by a bound in `post`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.7/src/routing/method_routing.rs:445:1
+    |
+445 | top_level_handler_fn!(post, POST);
+    | ^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `post`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-15704916169487515497.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `fn(State<Arc<...>>) -> ... {list_replication_slots}: Handler<_, _>` is not satisfied
+   --> src/api/rest/server.rs:269:53
+    |
+269 |             .route("/api/v1/replication/slots", get(list_replication_slots))
+    |                                                 --- ^^^^^^^^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiState>>) -> ... {list_replication_slots}`
+    |                                                 |
+    |                                                 required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `Layered<L, H, T, S>` implements `Handler<T, S>`
+              `MethodRouter<S>` implements `Handler<(), S>`
+note: required by a bound in `axum::routing::get`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.7/src/routing/method_routing.rs:441:1
+    |
+441 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-15132360031006511776.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `fn(State<Arc<ApiState>>) -> ... {get_replication_lag}: Handler<_, _>` is not satisfied
+   --> src/api/rest/server.rs:271:51
+    |
+271 |             .route("/api/v1/replication/lag", get(get_replication_lag))
+    |                                               --- ^^^^^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiState>>) -> ... {get_replication_lag}`
+    |                                               |
+    |                                               required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `Layered<L, H, T, S>` implements `Handler<T, S>`
+              `MethodRouter<S>` implements `Handler<(), S>`
+note: required by a bound in `axum::routing::get`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.7/src/routing/method_routing.rs:441:1
+    |
+441 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-8005007887141259323.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `fn(State<Arc<...>>) -> ... {verify_audit_integrity}: Handler<_, _>` is not satisfied
+   --> src/api/rest/server.rs:279:49
+    |
+279 |             .route("/api/v1/audit/verify", post(verify_audit_integrity))
+    |                                            ---- ^^^^^^^^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiState>>) -> ... {verify_audit_integrity}`
+    |                                            |
+    |                                            required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `Layered<L, H, T, S>` implements `Handler<T, S>`
+              `MethodRouter<S>` implements `Handler<(), S>`
+note: required by a bound in `post`
+   --> /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.7/src/routing/method_routing.rs:445:1
+    |
+445 | top_level_handler_fn!(post, POST);
+    | ^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `post`
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-2302574895733565578.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `SyncState: OutputType` is not satisfied
+   --> src/api/graphql/models.rs:634:21
+    |
+634 |     pub sync_state: SyncState,
+    |                     ^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `OutputType` is not implemented for `SyncState`
+   --> src/api/graphql/models.rs:647:1
+    |
+647 | pub enum SyncState {
+    | ^^^^^^^^^^^^^^^^^^
+    = help: the following other types implement trait `OutputType`:
+              &'a [T]
+              &T
+              AggregateChange
+              AlertResolved
+              BTreeSet<T>
+              BatchStringFunctionResult
+              Box<T>
+              Box<[T]>
+            and 223 others
+    = note: the full name for the type has been written to '/home/user/rusty-db/target/debug/deps/rusty_db-c01e3b6096da87fe.long-type-13882386242731579157.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error[E0594]: cannot assign to `info.total_huge_pages`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:499:25
+    |
+499 |                         info.total_huge_pages = value.parse().unwrap_or(0);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+error[E0594]: cannot assign to `info.free_huge_pages`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:503:25
+    |
+503 |                         info.free_huge_pages = value.parse().unwrap_or(0);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+error[E0594]: cannot assign to `info.huge_page_size_kb`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:507:25
+    |
+507 |                         info.huge_page_size_kb = value.parse().unwrap_or(0);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+error[E0594]: cannot assign to `info.supported`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:512:13
+    |
+512 |             info.supported = info.total_huge_pages > 0;
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+error[E0594]: cannot assign to `info.thp_enabled`, as `info` is not declared as mutable
+   --> src/buffer/hugepages.rs:517:13
+    |
+517 |             info.thp_enabled = contents.contains("[always]") || contents.contains("[madvise]");
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+help: consider changing this to be mutable
+    |
+490 |     let mut info = HugePageSystemInfo::default();
+    |         +++
+
+Some errors have detailed explanations: E0004, E0277, E0308, E0382, E0425, E0432, E0433, E0594, E0599...
+For more information about an error, try `rustc --explain E0004`.
+warning: `rusty-db` (lib) generated 35 warnings
+error: could not compile `rusty-db` (lib) due to 273 previous errors; 35 warnings emitted

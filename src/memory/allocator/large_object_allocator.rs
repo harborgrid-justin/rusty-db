@@ -22,7 +22,7 @@ struct LargeObject {
 
 impl LargeObject {
     // Allocate a large object using mmap
-    unsafe fn allocate(size: usize, _use_huge_pages: bool, cow: bool) -> Result<Self> {
+    unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
         #[cfg(unix)]
         {
 

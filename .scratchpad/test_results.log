@@ -1,0 +1,100 @@
+    Blocking waiting for file lock on build directory
+   Compiling rusty-db v0.1.0 (/home/user/rusty-db)
+error: expected one of `(`, `,`, `=`, `{`, or `}`, found `up`
+   --> src/api/graphql/models.rs:649:14
+    |
+649 |     Catching up,
+    |             -^^ expected one of `(`, `,`, `=`, `{`, or `}`
+    |             |
+    |             help: missing `,`
+
+error: the `#[test]` attribute may only be used on a non-associated function
+   --> src/transaction/types.rs:531:5
+    |
+531 |     #[test]
+    |     ^^^^^^^ the `#[test]` macro causes a function to be run as a test and has no effect on non-functions
+532 | use crate::transaction::types::{IsolationLevel, TransactionState};
+    | ------------------------------------------------------------------ expected a non-associated function, found a `use` import
+    |
+help: replace with conditional compilation to make the item only exist when tests are being run
+    |
+531 -     #[test]
+531 +     #[cfg(test)]
+    |
+
+error: expected `,`
+   --> src/api/rest/handlers/spatial_handlers.rs:393:33
+    |
+393 |         ("geom1" = String, Query(description = "First geometry (WKT)")),
+    |                                 ^
+
+error: expected `,`
+   --> src/api/rest/handlers/streams_handlers.rs:306:42
+    |
+306 |         ("cdc_id" = Option<String>, Query(description = "CDC instance ID")),
+    |                                          ^
+
+error: expected `,`
+   --> src/api/rest/handlers/inmemory_handlers.rs:165:33
+    |
+165 |         ("table" = String, Query(description = "Table name"))
+    |                                 ^
+
+error: expected `,`
+   --> src/api/graphql/models.rs:649:14
+    |
+649 |     Catching up,
+    |              ^^
+
+error[E0252]: the name `TransactionState` is defined multiple times
+   --> src/transaction/types.rs:532:49
+    |
+502 |     use crate::network::distributed::TransactionState;
+    |         --------------------------------------------- previous import of the type `TransactionState` here
+...
+532 | use crate::transaction::types::{IsolationLevel, TransactionState};
+    |                                                 ^^^^^^^^^^^^^^^^ `TransactionState` reimported here
+    |
+    = note: `TransactionState` must be defined only once in the type namespace of this module
+help: you can use `as` to change the binding name of the import
+    |
+532 | use crate::transaction::types::{IsolationLevel, TransactionState as OtherTransactionState};
+    |                                                                  ++++++++++++++++++++++++
+
+error[E0252]: the name `IsolationLevel` is defined multiple times
+   --> src/transaction/types.rs:532:33
+    |
+501 |     use crate::IsolationLevel;
+    |         --------------------- previous import of the type `IsolationLevel` here
+...
+532 | use crate::transaction::types::{IsolationLevel, TransactionState};
+    |                                 ^^^^^^^^^^^^^^ `IsolationLevel` reimported here
+    |
+    = note: `IsolationLevel` must be defined only once in the type namespace of this module
+help: you can use `as` to change the binding name of the import
+    |
+532 | use crate::transaction::types::{IsolationLevel as OtherIsolationLevel, TransactionState};
+    |                                                ++++++++++++++++++++++
+
+error[E0252]: the name `Transaction` is defined multiple times
+   --> src/transaction/types.rs:533:13
+    |
+503 |     use crate::transaction::{Transaction, Version};
+    |                              ----------- previous import of the type `Transaction` here
+...
+533 |         use crate::transaction::Transaction;
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Transaction` reimported here
+    |
+    = note: `Transaction` must be defined only once in the type namespace of this module
+
+error[E0432]: unresolved import `spatial_handlers::calculate_distance`
+   --> src/api/rest/handlers/mod.rs:227:58
+    |
+227 |     check_intersects, create_buffer, transform_geometry, calculate_distance,
+    |                                                          ^^^^^^^^^^^^^^^^^^
+    |                                                          |
+    |                                                          no `calculate_distance` in `api::rest::handlers::spatial_handlers`
+    |                                                          help: a similar name exists in the module: `calculate_route`
+
+error[E0432]: unresolved import `streams_handlers::get_changes`
+   --> src/api/rest/handlers/mod.rs:240:16

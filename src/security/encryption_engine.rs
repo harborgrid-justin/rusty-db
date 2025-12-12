@@ -1060,7 +1060,7 @@ impl SecureKeyStore {
     pub fn lock_memory(&self) -> Result<()> {
         // Note: This is a simplified version. Production would use mlock()
         // via libc or a dedicated crate for actual memory locking
-        *self.locked_memory.write() = true;
+        *self._locked_memory.write() = true;
         Ok(())
     }
 

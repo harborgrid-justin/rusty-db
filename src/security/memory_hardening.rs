@@ -379,12 +379,12 @@ use libc::{PROT_READ, PROT_WRITE};
             unsafe {
                 mprotect(
                     self.front_guard.as_ptr() as *mut libc::c_void,
-                    self.guard_size,
+                    self._guard_size,
                     PROT_READ | PROT_WRITE,
                 );
                 mprotect(
-                    self.back_guard.as_ptr() as *mut libc::c_void,
-                    self.guard_size,
+                    self._back_guard.as_ptr() as *mut libc::c_void,
+                    self._guard_size,
                     PROT_READ | PROT_WRITE,
                 );
             }

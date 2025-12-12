@@ -40,6 +40,19 @@ use super::middleware::{request_logger_middleware, rate_limit_middleware, auth_m
 use super::handlers::{CATALOG, TXN_MANAGER, SQL_PARSER};
 use crate::execution::Executor;
 
+// Enterprise Integration Handlers
+use super::handlers::enterprise_auth_handlers;
+use super::handlers::backup_handlers;
+use super::handlers::replication_handlers;
+use super::handlers::audit_handlers;
+
+// Security Handlers
+use super::handlers::encryption_handlers;
+use super::handlers::masking_handlers;
+use super::handlers::vpd_handlers;
+use super::handlers::privileges_handlers;
+use super::handlers::labels_handlers;
+
 
 // Type alias for the GraphQL schema
 type GraphQLSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
@@ -208,6 +221,92 @@ impl RestApiServer {
             .route("/api/v1/replication/status", get(get_replication_status_info))
             .route("/api/v1/security/features", get(get_security_features))
             .route("/api/v1/server/info", get(get_server_info))
+
+            // Enterprise Authentication API
+            .route("/api/v1/auth/ldap/configure", post(enterprise_auth_handlers::configure_ldap))
+            .route("/api/v1/auth/ldap/config", get(enterprise_auth_handlers::get_ldap_config))
+            .route("/api/v1/auth/ldap/test", post(enterprise_auth_handlers::test_ldap_connection))
+            .route("/api/v1/auth/oauth/configure", post(enterprise_auth_handlers::configure_oauth))
+            .route("/api/v1/auth/oauth/providers", get(enterprise_auth_handlers::get_oauth_providers))
+            .route("/api/v1/auth/sso/configure", post(enterprise_auth_handlers::configure_sso))
+            .route("/api/v1/auth/sso/metadata", get(enterprise_auth_handlers::get_saml_metadata))
+
+            // Backup & Disaster Recovery API
+            .route("/api/v1/backup/full", post(backup_handlers::create_full_backup))
+            .route("/api/v1/backup/incremental", post(backup_handlers::create_incremental_backup))
+            .route("/api/v1/backup/list", get(backup_handlers::list_backups))
+            .route("/api/v1/backup/:id", get(backup_handlers::get_backup))
+            .route("/api/v1/backup/:id", delete(backup_handlers::delete_backup))
+            .route("/api/v1/backup/:id/restore", post(backup_handlers::restore_backup))
+            .route("/api/v1/backup/schedule", get(backup_handlers::get_backup_schedule))
+            .route("/api/v1/backup/schedule", put(backup_handlers::update_backup_schedule))
+
+            // Replication Management API
+            .route("/api/v1/replication/configure", post(replication_handlers::configure_replication))
+            .route("/api/v1/replication/config", get(replication_handlers::get_replication_config))
+            .route("/api/v1/replication/slots", get(replication_handlers::list_replication_slots))
+            .route("/api/v1/replication/slots", post(replication_handlers::create_replication_slot))
+            .route("/api/v1/replication/slots/:name", get(replication_handlers::get_replication_slot))
+            .route("/api/v1/replication/slots/:name", delete(replication_handlers::delete_replication_slot))
+            .route("/api/v1/replication/conflicts", get(replication_handlers::get_replication_conflicts))
+            .route("/api/v1/replication/resolve-conflict", post(replication_handlers::resolve_replication_conflict))
+            .route("/api/v1/replication/conflicts/simulate", post(replication_handlers::simulate_replication_conflict))
+
+            // Audit Logging API
+            .route("/api/v1/security/audit/logs", get(audit_handlers::query_audit_logs))
+            .route("/api/v1/security/audit/export", post(audit_handlers::export_audit_logs))
+            .route("/api/v1/security/audit/compliance", get(audit_handlers::compliance_report))
+            .route("/api/v1/security/audit/stats", get(audit_handlers::get_audit_stats))
+            .route("/api/v1/security/audit/verify", post(audit_handlers::verify_audit_integrity))
+
+            // Encryption Management API
+            .route("/api/v1/security/encryption/status", get(encryption_handlers::get_encryption_status))
+            .route("/api/v1/security/encryption/enable", post(encryption_handlers::enable_encryption))
+            .route("/api/v1/security/encryption/column", post(encryption_handlers::enable_column_encryption))
+            .route("/api/v1/security/keys", get(encryption_handlers::list_keys))
+            .route("/api/v1/security/keys/generate", post(encryption_handlers::generate_key))
+            .route("/api/v1/security/keys/:id/rotate", post(encryption_handlers::rotate_key))
+
+            // Data Masking API
+            .route("/api/v1/security/masking/policies", get(masking_handlers::list_masking_policies))
+            .route("/api/v1/security/masking/policies", post(masking_handlers::create_masking_policy))
+            .route("/api/v1/security/masking/policies/:name", get(masking_handlers::get_masking_policy))
+            .route("/api/v1/security/masking/policies/:name", put(masking_handlers::update_masking_policy))
+            .route("/api/v1/security/masking/policies/:name", delete(masking_handlers::delete_masking_policy))
+            .route("/api/v1/security/masking/policies/:name/enable", post(masking_handlers::enable_masking_policy))
+            .route("/api/v1/security/masking/policies/:name/disable", post(masking_handlers::disable_masking_policy))
+            .route("/api/v1/security/masking/test", post(masking_handlers::test_masking))
+
+            // Virtual Private Database (VPD) API
+            .route("/api/v1/security/vpd/policies", get(vpd_handlers::list_vpd_policies))
+            .route("/api/v1/security/vpd/policies", post(vpd_handlers::create_vpd_policy))
+            .route("/api/v1/security/vpd/policies/:name", get(vpd_handlers::get_vpd_policy))
+            .route("/api/v1/security/vpd/policies/:name", put(vpd_handlers::update_vpd_policy))
+            .route("/api/v1/security/vpd/policies/:name", delete(vpd_handlers::delete_vpd_policy))
+            .route("/api/v1/security/vpd/policies/:name/enable", post(vpd_handlers::enable_vpd_policy))
+            .route("/api/v1/security/vpd/policies/:name/disable", post(vpd_handlers::disable_vpd_policy))
+            .route("/api/v1/security/vpd/test-predicate", post(vpd_handlers::test_vpd_predicate))
+            .route("/api/v1/security/vpd/policies/table/:table_name", get(vpd_handlers::get_table_policies))
+
+            // Privilege Management API
+            .route("/api/v1/security/privileges/grant", post(privileges_handlers::grant_privilege))
+            .route("/api/v1/security/privileges/revoke", post(privileges_handlers::revoke_privilege))
+            .route("/api/v1/security/privileges/user/:user_id", get(privileges_handlers::get_user_privileges))
+            .route("/api/v1/security/privileges/analyze/:user_id", get(privileges_handlers::analyze_user_privileges))
+            .route("/api/v1/security/privileges/role/:role_name", get(privileges_handlers::get_role_privileges))
+            .route("/api/v1/security/privileges/object/:object_name", get(privileges_handlers::get_object_privileges))
+            .route("/api/v1/security/privileges/validate", post(privileges_handlers::validate_privilege))
+
+            // Security Labels & MAC API
+            .route("/api/v1/security/labels/compartments", get(labels_handlers::list_compartments))
+            .route("/api/v1/security/labels/compartments", post(labels_handlers::create_compartment))
+            .route("/api/v1/security/labels/compartments/:id", get(labels_handlers::get_compartment))
+            .route("/api/v1/security/labels/compartments/:id", delete(labels_handlers::delete_compartment))
+            .route("/api/v1/security/labels/clearances/:user_id", get(labels_handlers::get_user_clearance))
+            .route("/api/v1/security/labels/clearances", post(labels_handlers::set_user_clearance))
+            .route("/api/v1/security/labels/check-dominance", post(labels_handlers::check_label_dominance))
+            .route("/api/v1/security/labels/validate-access", post(labels_handlers::validate_label_access))
+            .route("/api/v1/security/labels/classifications", get(labels_handlers::list_classifications))
 
             .with_state(self.state.clone());
 
