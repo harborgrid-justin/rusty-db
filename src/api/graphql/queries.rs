@@ -9,6 +9,12 @@ use std::time::Instant;
 
 use super::types::{BigInt, Json, JoinType};
 use super::models::{DatabaseSchema, TableType, QueryResult, QuerySuccess, QueryError, RowType, AggregateInput, AggregateResult, OrderBy, RowConnection, WhereClause};
+use super::monitoring_types::{
+    MetricsResponse, SessionStats, QueryStats, PerformanceData, Alert, AlertSeverity,
+    ClusterNode, ClusterTopology, ReplicationStatus, StorageStatus, BufferPoolStats,
+    Tablespace, Partition, ActiveTransaction, Lock, Deadlock, MvccStatus,
+    User, Role, ServerConfig, ServerInfo, ConnectionPool, Connection, Session,
+};
 use super::GraphQLEngine;
 use crate::api::AuthorizationContext;
 

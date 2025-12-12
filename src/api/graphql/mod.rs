@@ -12,6 +12,7 @@ pub mod engine;
 pub mod schema;
 pub mod builders;
 pub mod helpers;
+pub mod monitoring_types;
 
 // Re-export main types and functions
 // Note: types::DatabaseSchema is shadowed by models::DatabaseSchema
@@ -59,3 +60,36 @@ pub use engine::*;
 pub use schema::*;
 pub use builders::*;
 pub use helpers::*;
+pub use monitoring_types::{
+    MetricsResponse,
+    SessionStats,
+    QueryStats,
+    PerformanceData,
+    ActiveQuery,
+    SlowQuery,
+    ClusterNode,
+    ClusterTopology,
+    ReplicationStatus,
+    ClusterConfig,
+    StorageStatus,
+    BufferPoolStats,
+    Tablespace,
+    IoStats,
+    ActiveTransaction,
+    Lock,
+    Deadlock,
+    MvccStatus,
+    ServerConfig,
+    User,
+    Role,
+    HealthStatus,
+    ComponentHealth,
+    ConnectionPool,
+    PoolStats,
+    Connection,
+    Session,
+    Partition,
+    AlertSeverity,
+    Alert,
+    ServerInfo,
+};
