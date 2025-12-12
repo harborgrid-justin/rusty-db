@@ -430,7 +430,7 @@ pub fn bench_random_page_scan(config: &BenchConfig) -> BenchMetrics {
     let start = Instant::now();
 
     for _ in 0..config.iterations {
-        let idx = rng.gen_range(0..config.num_pages);
+        let idx = rng.random_range(0..config.num_pages);
         let page = &pages[idx];
 
         let page_start = Instant::now();

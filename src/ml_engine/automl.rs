@@ -177,20 +177,20 @@ impl HyperparameterSpace {
         for (name, range) in &self.ranges {
             let value = match range {
                 ParameterRange::Integer { min, max } => {
-                    HyperparamValue::Int(rng.gen_range(*min..=*max))
+                    HyperparamValue::Int(rng.random_range(*min..=*max))
                 }
                 ParameterRange::Float { min, max, log_scale } => {
                     let value = if *log_scale {
                         let log_min = min.ln();
                         let log_max = max.ln();
-                        rng.gen_range(log_min..=log_max).exp()
+                        rng.random_range(log_min..=log_max).exp()
                     } else {
-                        rng.gen_range(*min..=*max)
+                        rng.random_range(*min..=*max)
                     };
                     HyperparamValue::Float(value)
                 }
                 ParameterRange::Categorical { values } => {
-                    values[rng.gen_range(0..values.len())].clone()
+                    values[rng.random_range(0..values.len())].clone()
                 }
             };
 

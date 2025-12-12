@@ -711,7 +711,10 @@ impl MLEngine {
 
                 Ok((model_data, metrics))
             }
-            ModelType::KMeansClustering => {}
+            ModelType::KMeansClustering => {
+                // Placeholder for K-means clustering training
+                Err(MLError::InvalidOperation("K-means clustering not yet implemented".to_string()))
+            }
         }
     }
 

@@ -465,7 +465,9 @@ impl BatchPredictor {
                     .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
                 model.predict(features)
             }
-            ModelType::KMeansClustering => {}
+            ModelType::KMeansClustering => {
+                Err(MLError::PredictionFailed("KMeans clustering prediction not yet implemented".to_string()).into())
+            }
         }
     }
 

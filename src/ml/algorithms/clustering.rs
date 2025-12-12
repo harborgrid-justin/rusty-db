@@ -12,7 +12,7 @@ use super::{Algorithm, ModelType};
 // ============================================================================
 
 // K-Means clustering algorithm
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct KMeansClustering {
     // Cluster centroids
     pub centroids: Matrix,

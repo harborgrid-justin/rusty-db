@@ -77,6 +77,10 @@ use std::ffi::c_void;
 #[derive(Debug, Clone, Copy)]
 pub struct IocpHandle(pub *mut c_void);
 
+// Safety: IOCP handles are thread-safe by design in Windows
+unsafe impl Send for IocpHandle {}
+unsafe impl Sync for IocpHandle {}
+
 impl IocpHandle {
     /// Create invalid handle
     pub const fn invalid() -> Self {
@@ -270,7 +274,7 @@ impl WindowsIocp {
 
         let result = unsafe {
             CreateIoCompletionPort(
-                file_handle.0,
+                file_handle.0 as *mut c_void,
                 self.iocp_handle.0,
                 completion_key,
                 0,
@@ -322,7 +326,7 @@ impl WindowsIocp {
 
         let result = unsafe {
             ReadFile(
-                request.file_handle.0,
+                request.file_handle.0 as *mut c_void,
                 buffer_ptr.as_ptr() as *mut u8,
                 request.len as u32,
                 &mut bytes_read,
@@ -349,7 +353,7 @@ impl WindowsIocp {
 
         let result = unsafe {
             WriteFile(
-                request.file_handle.0,
+                request.file_handle.0 as *mut c_void,
                 buffer_ptr.as_ptr() as *const u8,
                 request.len as u32,
                 &mut bytes_written,
@@ -371,7 +375,7 @@ impl WindowsIocp {
     fn submit_sync(&self, request: &IoRequest) -> Result<()> {
         use windows_sys::Win32::Storage::FileSystem::FlushFileBuffers;
 
-        let result = unsafe { FlushFileBuffers(request.file_handle.0) };
+        let result = unsafe { FlushFileBuffers(request.file_handle.0 as *mut c_void) };
 
         if result == 0 {
             let error = unsafe { windows_sys::Win32::Foundation::GetLastError() };

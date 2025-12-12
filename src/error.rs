@@ -80,6 +80,9 @@ pub enum DbError {
     #[error("Serialization error: {0}")]
     SerializationError(String),
 
+    #[error("BSON error: {0}")]
+    BsonError(String),
+
     #[error("Encryption error: {0}")]
     Encryption(String),
 

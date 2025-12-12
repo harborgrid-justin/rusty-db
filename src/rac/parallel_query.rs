@@ -79,7 +79,7 @@ pub struct ParallelQueryPlan {
 }
 
 // Query fragment (unit of parallel work)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct QueryFragment {
     // Fragment identifier
     pub fragment_id: usize,
@@ -584,7 +584,7 @@ enum QueryMessage {
 }
 
 // Data chunk for parallel transfer
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct DataChunk {
     pub chunk_id: u64,
     pub tuples: Vec<Tuple>,

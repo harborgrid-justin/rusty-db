@@ -293,7 +293,7 @@ pub struct DecisionTree {
     is_classification: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct TreeNode {
     // Feature index for split
     pub feature_idx: Option<usize>,

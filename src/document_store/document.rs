@@ -10,6 +10,43 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 use sha2::{Sha256, Digest};
 use crate::error::Result;
+use base64::{Engine as _, engine::general_purpose};
+
+// Helper function to convert BSON to JSON
+fn bson_to_json(bson_val: &bson::Bson) -> serde_json::Value {
+    match bson_val {
+        bson::Bson::Double(v) => serde_json::json!(*v),
+        bson::Bson::String(v) => serde_json::json!(v),
+        bson::Bson::Array(arr) => {
+            let json_arr: Vec<serde_json::Value> = arr.iter().map(bson_to_json).collect();
+            serde_json::Value::Array(json_arr)
+        }
+        bson::Bson::Document(doc) => {
+            let mut map = serde_json::Map::new();
+            for (k, v) in doc {
+                map.insert(k.clone(), bson_to_json(v));
+            }
+            serde_json::Value::Object(map)
+        }
+        bson::Bson::Boolean(v) => serde_json::json!(*v),
+        bson::Bson::Null => serde_json::Value::Null,
+        bson::Bson::Int32(v) => serde_json::json!(*v),
+        bson::Bson::Int64(v) => serde_json::json!(*v),
+        bson::Bson::Timestamp(ts) => serde_json::json!(ts.to_string()),
+        bson::Bson::Binary(bin) => serde_json::json!(general_purpose::STANDARD.encode(&bin.bytes)),
+        bson::Bson::ObjectId(oid) => serde_json::json!(oid.to_hex()),
+        bson::Bson::DateTime(dt) => serde_json::json!(dt.to_string()),
+        bson::Bson::RegularExpression(regex) => serde_json::json!(format!("/{}/{}", regex.pattern, regex.options)),
+        bson::Bson::JavaScriptCode(code) => serde_json::json!(code),
+        bson::Bson::JavaScriptCodeWithScope(code_ws) => serde_json::json!({"code": code_ws.code, "scope": bson_to_json(&bson::Bson::Document(code_ws.scope.clone()))}),
+        bson::Bson::Symbol(sym) => serde_json::json!(sym),
+        bson::Bson::Decimal128(dec) => serde_json::json!(dec.to_string()),
+        bson::Bson::Undefined => serde_json::Value::Null,
+        bson::Bson::MaxKey => serde_json::json!("MaxKey"),
+        bson::Bson::MinKey => serde_json::json!("MinKey"),
+        bson::Bson::DbPointer(ptr) => serde_json::json!({"namespace": ptr.namespace, "id": ptr.id.to_hex()}),
+    }
+}
 
 // Document ID types supported by the system
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -243,8 +280,8 @@ impl DocumentContent {
         match self {
             DocumentContent::Json(v) => Ok(v.clone()),
             DocumentContent::Bson(doc) => {
-                // Convert BSON to JSON via serialization
-                let json = serde_json::to_value(doc)?;
+                // Convert BSON to JSON using manual conversion helper
+                let json = bson_to_json(&bson::Bson::Document(doc.clone()));
                 Ok(json)
             }
             DocumentContent::Bytes(bytes) => {
@@ -494,7 +531,8 @@ impl LargeDocumentHandler {
             DocumentContent::Json(v) => serde_json::to_vec(v)?,
             DocumentContent::Bson(doc) => {
                 let mut buf = Vec::new();
-                doc.to_writer(&mut buf)?;
+                doc.to_writer(&mut buf)
+                    .map_err(|e| crate::error::DbError::Serialization(format!("BSON write failed: {}", e)))?;
                 buf
             }
             DocumentContent::Bytes(bytes) => bytes.clone(),

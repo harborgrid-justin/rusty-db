@@ -63,7 +63,7 @@ pub mod training;
 // ============================================================================
 
 // Unique identifier for a machine learning model
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct ModelId(pub u64);
 
 impl ModelId {
@@ -92,7 +92,7 @@ pub enum MLTask {
 }
 
 // Supported ML algorithms
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum Algorithm {
     LinearRegression,
     LogisticRegression,
@@ -124,7 +124,7 @@ impl Algorithm {
 }
 
 // Model hyperparameters
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct Hyperparameters {
     params: HashMap<String, HyperparamValue>,
 }
@@ -245,7 +245,7 @@ impl Dataset {
 }
 
 // Model training statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct TrainingStats {
     // Number of training samples
     pub num_samples: usize,
@@ -264,7 +264,7 @@ pub struct TrainingStats {
 }
 
 // Model evaluation metrics
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct EvaluationMetrics {
     // Mean Squared Error (regression)
     pub mse: Option<f64>,

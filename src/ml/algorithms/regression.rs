@@ -87,8 +87,9 @@ impl LinearRegression {
     // Helper: Finalize model after training (eliminates duplication)
     fn finalize_training(&mut self, dataset: &Dataset, target: &[f64]) {
         let final_predictions = self.predict_internal(&dataset.features);
-        let mse = self.mse(&final_predictions, target);
-        let r2 = self.r2_score(&final_predictions, target);
+        let target_vec = target.to_vec();
+        let mse = self.mse(&final_predictions, &target_vec);
+        let r2 = self.r2_score(&final_predictions, &target_vec);
 
         self.metrics.insert("mse".to_string(), mse);
         self.metrics.insert("r2".to_string(), r2);

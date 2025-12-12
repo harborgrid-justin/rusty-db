@@ -589,7 +589,7 @@ pub trait EventSerializer {
 pub struct DefaultSerializer;
 
 impl EventSerializer for DefaultSerializer {
-    fn serialize<T: Serialize>(&self, value: &T, format: SerializationFormat) -> Result<Vec<u8>> {
+    fn serialize<T: Serialize + bincode::Encode>(&self, value: &T, format: SerializationFormat) -> Result<Vec<u8>> {
         match format {
             SerializationFormat::Json => {
                 serde_json::to_vec(value)
@@ -607,7 +607,7 @@ impl EventSerializer for DefaultSerializer {
         }
     }
 
-    fn deserialize<T: for<'de> Deserialize<'de>>(&self, data: &[u8], format: SerializationFormat) -> Result<T> {
+    fn deserialize<T: for<'de> Deserialize<'de> + bincode::Decode<()>>(&self, data: &[u8], format: SerializationFormat) -> Result<T> {
         match format {
             SerializationFormat::Json => {
                 serde_json::from_slice(data)

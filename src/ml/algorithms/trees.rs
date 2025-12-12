@@ -29,7 +29,7 @@ enum TreeNode {
 }
 
 // Decision tree classifier/regressor using CART algorithm
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct DecisionTree {
     root: Option<TreeNode>,
     n_features: usize,
@@ -291,7 +291,7 @@ impl Algorithm for DecisionTree {
 // ============================================================================
 
 // Random forest ensemble of decision trees
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct RandomForest {
     trees: Vec<DecisionTree>,
     n_estimators: usize,

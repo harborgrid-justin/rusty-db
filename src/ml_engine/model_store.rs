@@ -116,7 +116,7 @@ impl Model {
 }
 
 // Model parameters (weights, tree structures, etc.)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum ModelParameters {
     LinearModel {
         weights: Vec<f64>,
@@ -162,7 +162,7 @@ pub enum ActivationType {
 }
 
 // Model status in lifecycle
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum ModelStatus {
     // Model is being trained
     Training,

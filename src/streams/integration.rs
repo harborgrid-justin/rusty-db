@@ -229,7 +229,7 @@ impl OutboxProcessor {
 // ============================================================================
 
 // Domain event for event sourcing
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct DomainEvent {
     // Event ID
     pub event_id: u64,

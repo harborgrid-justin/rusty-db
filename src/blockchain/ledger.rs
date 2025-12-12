@@ -181,7 +181,7 @@ impl LedgerRow {
 // ============================================================================
 
 // Block status
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum BlockStatus {
     // Block is being built (rows can be added)
     Open,
