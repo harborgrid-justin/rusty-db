@@ -1,9 +1,9 @@
-//! # Liveness and Readiness Probes
-//!
-//! Implements liveness probes (is the node alive?), readiness probes (can it serve traffic?),
-//! and startup probes with configurable thresholds and graceful degradation.
+// # Liveness and Readiness Probes
+//
+// Implements liveness probes (is the node alive?), readiness probes (can it serve traffic?),
+// and startup probes with configurable thresholds and graceful degradation.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
@@ -310,7 +310,7 @@ impl ProbeExecutor {
     }
 
     /// Execute a liveness probe
-    pub async fn execute_liveness<P: LivenessProbe>(
+    pub async fn execute_liveness<P: LivenessProbe + ?Sized>(
         &mut self,
         probe: &P
     ) -> Result<bool> {
@@ -339,7 +339,7 @@ impl ProbeExecutor {
     }
 
     /// Execute a readiness probe
-    pub async fn execute_readiness<P: ReadinessProbe>(
+    pub async fn execute_readiness<P: ReadinessProbe + ?Sized>(
         &mut self,
         probe: &P
     ) -> Result<bool> {
@@ -368,7 +368,7 @@ impl ProbeExecutor {
     }
 
     /// Execute a startup probe
-    pub async fn execute_startup<P: StartupProbe>(
+    pub async fn execute_startup<P: StartupProbe + ?Sized>(
         &mut self,
         probe: &P
     ) -> Result<bool> {

@@ -1,15 +1,15 @@
-//! UDP Broadcast Discovery for RustyDB
-//!
-//! Simple UDP broadcast-based discovery for LAN environments.
-//! Nodes periodically broadcast their presence to the subnet broadcast address
-//! and listen for broadcasts from other nodes.
-//!
-//! # Protocol
-//!
-//! - Uses UDP broadcast to 255.255.255.255 or subnet-specific broadcast address
-//! - Periodic announcements every N seconds
-//! - Rate limiting to prevent broadcast storms
-//! - Simple JSON-based message format
+// UDP Broadcast Discovery for RustyDB
+//
+// Simple UDP broadcast-based discovery for LAN environments.
+// Nodes periodically broadcast their presence to the subnet broadcast address
+// and listen for broadcasts from other nodes.
+//
+// # Protocol
+//
+// - Uses UDP broadcast to 255.255.255.255 or subnet-specific broadcast address
+// - Periodic announcements every N seconds
+// - Rate limiting to prevent broadcast storms
+// - Simple JSON-based message format
 
 use super::{DiscoveryConfig, DiscoveryEvent, DiscoveryProtocol, NodeInfo};
 use crate::error::{DbError, Result};

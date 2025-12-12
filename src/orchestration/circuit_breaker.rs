@@ -509,6 +509,7 @@ impl Default for CircuitBreakerRegistry {
 mod tests {
     use super::*;
 use std::collections::HashMap;
+    use std::thread::sleep;
 
     #[tokio::test]
     async fn test_circuit_breaker_closed() {
@@ -579,7 +580,7 @@ use std::collections::HashMap;
         assert_eq!(breaker.state(), CircuitState::Open);
 
         // Wait for reset timeout
-        sleep(Duration::from_millis(150)).await;
+        tokio::time::sleep(Duration::from_millis(150)).await.await;
 
         // Next call should transition to half-open
         let _ = breaker.call(async { Ok::<_, DbError>(1) }).await;

@@ -1,7 +1,7 @@
-//! Service Discovery Registry
-//!
-//! Central registry that aggregates multiple discovery backends and provides
-//! unified node discovery with change notifications.
+// Service Discovery Registry
+//
+// Central registry that aggregates multiple discovery backends and provides
+// unified node discovery with change notifications.
 
 use super::{
     DiscoveryConfig, DiscoveryEvent, DiscoveryState, HealthStatus, Node, ServiceDiscovery,

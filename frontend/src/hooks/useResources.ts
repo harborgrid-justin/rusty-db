@@ -17,7 +17,7 @@ import {
   UpdatePoolRequest,
 } from '../services/resourceService';
 import { getErrorMessage } from '../services/api';
-import type { ResourceGroup, ResourceUsage, ConnectionPoolStats } from '../types';
+import type { ResourceGroup, ResourceUsage, ConnectionPoolStats } from '@/types';
 
 // ============================================================================
 // Resource Management Hook

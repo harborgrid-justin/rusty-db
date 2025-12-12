@@ -393,6 +393,7 @@ struct WorkerPool {
 
     // Semaphore for worker allocation
     semaphore: Arc<Semaphore>,
+    max_workers: ()
 }
 
 type WorkerId = usize;
@@ -416,6 +417,7 @@ impl WorkerPool {
             active_workers: Arc::new(RwLock::new(HashMap::new())),
             _max_workers: max_workers,
             semaphore: Arc::new(Semaphore::new(max_workers)),
+            max_workers: (),
         }
     }
 
@@ -545,7 +547,7 @@ pub struct ParallelQueryStatistics {
 }
 
 // Query messages
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 enum QueryMessage {
     // Execute query fragment
     ExecuteFragment {
@@ -829,7 +831,7 @@ impl ParallelQueryCoordinator {
             fragment,
         };
 
-        let payload = bincode::serialize(&message)
+        let payload = bincode::encode_to_vec(&message, bincode::config::standard())
             .map_err(|e| DbError::Serialization(e.to_string()))?;
 
         self.interconnect.send_message(

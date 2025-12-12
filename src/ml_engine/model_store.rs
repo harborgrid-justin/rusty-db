@@ -14,7 +14,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 // ============================================================================
 
 // A trained machine learning model
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct Model {
     // Unique model identifier
     pub id: ModelId,
@@ -569,13 +569,13 @@ impl ModelStore {
     // Serialize model to bytes
     pub fn serialize_model(&self, id: ModelId) -> Result<Vec<u8>> {
         let model = self.get_model(id)?;
-        bincode::serialize(model)
+        bincode::encode_to_vec(model, bincode::config::standard())
             .map_err(|e| crate::DbError::Internal(format!("Serialization error: {}", e)))
     }
 
     // Deserialize model from bytes
     pub fn deserialize_model(&mut self, bytes: &[u8]) -> Result<ModelId> {
-        let model: Model = bincode::deserialize(bytes)
+        let (model, _): (Model, _) = bincode::decode_from_slice(bytes, bincode::config::standard())
             .map_err(|e| crate::DbError::Internal(format!("Deserialization error: {}", e)))?;
 
         self.register_model(model)

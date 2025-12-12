@@ -437,6 +437,7 @@ pub struct SecurityStatistics {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
     use super::*;
 
     #[test]

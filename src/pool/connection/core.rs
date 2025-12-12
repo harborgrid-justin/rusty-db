@@ -141,7 +141,7 @@ impl Default for PoolConfig {
 
 impl PoolConfig {
     // Validate pool configuration
-    pub fn validate(&self) -> std::result::Result<(), PoolError> {
+    pub fn validate(&self) -> Result<(), PoolError> {
         if self.min_size > self.max_size {
             return Err(PoolError::InvalidConfig(
                 format!("min_size ({}) > max_size ({})", self.min_size, self.max_size)
@@ -216,7 +216,7 @@ impl PoolConfigBuilder {
         self
     }
 
-    pub fn build(self) -> std::result::Result<PoolConfig, PoolError> {
+    pub fn build(self) -> Result<PoolConfig, PoolError> {
         self.config.validate()?;
         Ok(self.config)
     }
@@ -515,7 +515,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     pub async fn new(
         config: PoolConfig,
         factory: Arc<dyn ConnectionFactory<C>>,
-    ) -> std::result::Result<Self, PoolError> {
+    ) -> Result<Self, PoolError> {
         config.validate()?;
 
         let pool = Self {
@@ -544,7 +544,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     }
 
     // Initialize pool with initial connections
-    async fn initialize(&self) -> std::result::Result<(), PoolError> {
+    async fn initialize(&self) -> Result<(), PoolError> {
         let mut created = 0;
         let target = self.config.initial_size;
 
@@ -577,7 +577,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     }
 
     // Create a new connection
-    async fn create_connection(&self) -> std::result::Result<PooledConnection<C>, PoolError> {
+    async fn create_connection(&self) -> Result<PooledConnection<C>, PoolError> {
         // Apply throttling if configured
         if let Some(throttle) = self.config.creation_throttle {
             // Simple token bucket implementation
@@ -680,7 +680,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     }
 
     // Acquire a connection from the pool
-    pub async fn acquire(&self) -> std::result::Result<PooledConnectionGuard<C>, PoolError> {
+    pub async fn acquire(&self) -> Result<PooledConnectionGuard<C>, PoolError> {
         if self.closed.load(Ordering::SeqCst) {
             return Err(PoolError::PoolClosed);
         }
@@ -711,7 +711,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     }
 
     // Internal acquire implementation
-    async fn acquire_inner(&self) -> std::result::Result<PooledConnectionGuard<C>, PoolError> {
+    async fn acquire_inner(&self) -> Result<PooledConnectionGuard<C>, PoolError> {
         loop {
             // Try to get idle connection
             if let Some(mut conn) = self.idle.lock().unwrap().pop_front() {
@@ -783,7 +783,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
     }
 
     // Validate a connection
-    async fn validate_connection(&self, conn: &mut PooledConnection<C>) -> std::result::Result<(), PoolError> {
+    async fn validate_connection(&self, conn: &mut PooledConnection<C>) -> Result<(), PoolError> {
         conn.state = ConnectionState::Validating;
 
         let result = timeout(

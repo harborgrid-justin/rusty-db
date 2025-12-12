@@ -187,6 +187,10 @@ impl Drop for LargeObject {
 }
 
 // Large object allocator
+// Safety: LargeObject is only accessed through RwLock which provides thread safety
+unsafe impl Send for LargeObject {}
+unsafe impl Sync for LargeObject {}
+
 pub struct LargeObjectAllocator {
     // Active large objects
     objects: RwLock<HashMap<usize, LargeObject>>,
@@ -309,17 +313,26 @@ impl LargeObjectAllocator {
         let objects = self.objects.read().unwrap();
         let active_objects = objects.len();
         let active_bytes: usize = objects.values().map(|o| o.size).sum();
+        let allocations = self.stats.allocations.load(Ordering::Relaxed);
+        let deallocations = self.stats.deallocations.load(Ordering::Relaxed);
+        let bytes_allocated = self.stats.bytes_allocated.load(Ordering::Relaxed);
+        let bytes_deallocated = self.stats.bytes_deallocated.load(Ordering::Relaxed);
+        let peak_usage = bytes_allocated; // Peak is max allocated
 
         LargeObjectAllocatorStats {
-            allocations: self.stats.allocations.load(Ordering::Relaxed),
-            deallocations: self.stats.deallocations.load(Ordering::Relaxed),
+            allocations,
+            deallocations,
             active_objects: active_objects as u64,
             active_bytes: active_bytes as u64,
             huge_page_allocations: self.stats.huge_page_allocations.load(Ordering::Relaxed),
             huge_page_2mb: self.stats.huge_page_2mb.load(Ordering::Relaxed),
             huge_page_1gb: self.stats.huge_page_1gb.load(Ordering::Relaxed),
-            bytes_allocated: self.stats.bytes_allocated.load(Ordering::Relaxed),
-            bytes_deallocated: self.stats.bytes_deallocated.load(Ordering::Relaxed),
+            bytes_allocated,
+            bytes_deallocated,
+            total_allocated: bytes_allocated,
+            allocation_count: allocations,
+            deallocation_count: deallocations,
+            peak_usage,
         }
     }
 }
@@ -336,6 +349,10 @@ pub struct LargeObjectAllocatorStats {
     pub huge_page_1gb: u64,
     pub bytes_allocated: u64,
     pub bytes_deallocated: u64,
+    pub total_allocated: u64,
+    pub allocation_count: u64,
+    pub deallocation_count: u64,
+    pub peak_usage: u64
 }
 
 // ============================================================================

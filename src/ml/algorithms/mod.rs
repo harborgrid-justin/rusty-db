@@ -40,6 +40,7 @@ pub enum ModelType {
     RandomForest,
     KMeans,
     NaiveBayes,
+    KMeansClustering,
 }
 
 impl ModelType {
@@ -83,6 +84,7 @@ impl ModelType {
                 params.set_float("alpha", 1.0); // Laplace smoothing
                 params.set_bool("fit_prior", true);
             }
+            ModelType::KMeansClustering => {}
         }
         params
     }

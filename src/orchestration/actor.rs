@@ -687,7 +687,7 @@ mod tests {
         actor_ref.send(5usize).await.unwrap();
         actor_ref.send(3usize).await.unwrap();
 
-        sleep(Duration::from_millis(50)).await;
+        tokio::time::sleep(Duration::from_millis(50)).await.await;
 
         let result: usize = actor_ref
             .ask("get".to_string(), Duration::from_secs(1))
@@ -729,7 +729,7 @@ mod tests {
 
         system.broadcast(10usize).await.unwrap();
 
-        sleep(Duration::from_millis(50)).await;
+        tokio::time::sleep(Duration::from_millis(50)).await.await;
 
         for i in 0..5 {
             let actor_ref = system.find_actor(&format!("actor-{}", i)).await.unwrap();

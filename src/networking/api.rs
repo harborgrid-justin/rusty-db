@@ -1,8 +1,8 @@
-//! REST API routes for the networking layer
-//!
-//! This module provides HTTP REST endpoints for managing and monitoring
-//! the networking layer. It exposes cluster operations, topology queries,
-//! health checks, and statistics.
+// REST API routes for the networking layer
+//
+// This module provides HTTP REST endpoints for managing and monitoring
+// the networking layer. It exposes cluster operations, topology queries,
+// health checks, and statistics.
 
 use axum::{
     extract::{Path, Query, State},
@@ -271,7 +271,7 @@ async fn list_peers(
 async fn get_peer(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
-) -> std::result::Result<Json<PeerInfoResponse>, AppError> {
+) -> Result<Json<PeerInfoResponse>, AppError> {
     let node_id = NodeId::new(node_id);
 
     let member = state.network_manager
@@ -332,7 +332,7 @@ async fn get_topology(
 async fn join_cluster(
     State(state): State<ApiState>,
     Json(request): Json<JoinClusterRequest>,
-) -> std::result::Result<Json<JoinClusterResponse>, AppError> {
+) -> Result<Json<JoinClusterResponse>, AppError> {
     // Parse seed nodes
     let seed_nodes: Vec<NodeAddress> = request
         .seed_nodes
@@ -346,7 +346,7 @@ async fn join_cluster(
                 .map_err(|_| AppError::BadRequest("Invalid port".to_string()))?;
             Ok(NodeAddress::new(parts[0], port))
         })
-        .collect::<std::result::Result<Vec<_>, _>>()?;
+        .collect::<Result<Vec<_>, _>>()?;
 
     state.network_manager
         .join_cluster(seed_nodes)
@@ -367,7 +367,7 @@ async fn join_cluster(
 /// POST /api/v1/network/leave - Leave the cluster
 async fn leave_cluster(
     State(state): State<ApiState>,
-) -> std::result::Result<Json<LeaveClusterResponse>, AppError> {
+) -> Result<Json<LeaveClusterResponse>, AppError> {
     state.network_manager
         .leave_cluster()
         .await
@@ -446,7 +446,7 @@ async fn get_health(
 async fn get_node_health(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
-) -> std::result::Result<Json<NodeHealthDetail>, AppError> {
+) -> Result<Json<NodeHealthDetail>, AppError> {
     let node_id = NodeId::new(node_id);
 
     let health = state.network_manager
@@ -504,6 +504,7 @@ impl IntoResponse for AppError {
 
 #[cfg(test)]
 mod tests {
+    use crate::networking::NodeInfo;
     use super::*;
 
     #[tokio::test]

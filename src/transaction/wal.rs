@@ -19,6 +19,16 @@ use super::TransactionId;
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
+/// Helper function to update running average (eliminates code duplication)
+#[inline]
+fn update_running_average(current_avg: f64, new_value: f64, count: f64) -> f64 {
+    if count == 0.0 {
+        new_value
+    } else {
+        (current_avg * count + new_value) / (count + 1.0)
+    }
+}
+
 /// Log Sequence Number type
 pub type LSN = u64;
 
@@ -209,7 +219,7 @@ pub struct WALEntry {
 
 impl WALEntry {
     fn new(lsn: LSN, prev_lsn: Option<LSN>, record: LogRecord) -> Self {
-        let serialized = bincode::serialize(&record).unwrap_or_default();
+        let serialized = serde_json::to_vec(&record).unwrap_or_default();
         let size = serialized.len() as u32;
         let checksum = Self::calculate_checksum(&serialized);
 
@@ -234,7 +244,7 @@ impl WALEntry {
     }
 
     fn verify_checksum(&self) -> bool {
-        let serialized = bincode::serialize(&self.record).unwrap_or_default();
+        let serialized = serde_json::to_vec(&self.record).unwrap_or_default();
         self.checksum == Self::calculate_checksum(&serialized)
     }
 }
@@ -539,12 +549,16 @@ impl WALManager {
         // Update statistics
         let mut stats = self.stats.write();
         stats.group_commits += 1;
-        stats.avg_group_size =
-            (stats.avg_group_size * (stats.group_commits - 1) as f64 + entries.len() as f64)
-                / stats.group_commits as f64;
-        stats.avg_flush_time_ms =
-            (stats.avg_flush_time_ms * (stats.group_commits - 1) as f64 + flush_time)
-                / stats.group_commits as f64;
+        stats.avg_group_size = update_running_average(
+            stats.avg_group_size,
+            entries.len() as f64,
+            (stats.group_commits - 1) as f64
+        );
+        stats.avg_flush_time_ms = update_running_average(
+            stats.avg_flush_time_ms,
+            flush_time,
+            (stats.group_commits - 1) as f64
+        );
 
         // Notify waiters
         for waiter in waiters {
@@ -556,7 +570,7 @@ impl WALManager {
 
     /// Write a single entry to WAL
     fn write_entry(&self, entry: &WALEntry) -> Result<()> {
-        let serialized = bincode::serialize(entry)
+        let serialized = serde_json::to_vec(entry)
             .map_err(|e| DbError::SerializationError(format!("Failed to serialize WAL entry: {}", e)))?;
 
         let mut file = self.wal_file.lock();
@@ -580,7 +594,7 @@ impl WALManager {
 
         // Serialize all entries
 let serialized: Vec<Vec<u8>> = entries.iter()
-              .map(|e| bincode::serialize(e).map_err(|e| DbError::SerializationError(format!("Serialization failed: {}", e))))
+              .map(|e| serde_json::to_vec(e).map_err(|e| DbError::SerializationError(format!("Serialization failed: {}", e))))
               .collect::<Result<Vec<_>>>()?;
         // Prepare IoSlice for writev
         let slices: Vec<IoSlice> = serialized.iter()
@@ -684,7 +698,7 @@ let serialized: Vec<Vec<u8>> = entries.iter()
         let mut entries = Vec::new();
 
         loop {
-            let entry: WALEntry = match bincode::deserialize_from(&mut reader) {
+            let entry: WALEntry = match serde_json::from_reader(&mut reader) {
                 Ok(entry) => entry,
                 Err(_) => break, // End of file or corrupted entry
             };
@@ -826,19 +840,21 @@ impl LogShippingManager {
         stats.total_shipped += entries.len() as u64;
 
         let serialized_size: usize = entries.iter()
-            .map(|e| bincode::serialize(e).unwrap_or_default().len())
+            .map(|e| serde_json::to_vec(e).unwrap_or_default().len())
             .sum();
         stats.total_bytes_shipped += serialized_size as u64;
 
-        stats.avg_batch_size =
-            (stats.avg_batch_size * (stats.total_shipped - entries.len() as u64) as f64
-                + entries.len() as f64)
-                / stats.total_shipped as f64;
+        stats.avg_batch_size = update_running_average(
+            stats.avg_batch_size,
+            entries.len() as f64,
+            (stats.total_shipped - entries.len() as u64) as f64
+        );
 
-        stats.avg_shipping_latency_ms =
-            (stats.avg_shipping_latency_ms * (stats.total_shipped - entries.len() as u64) as f64
-                + shipping_time)
-                / stats.total_shipped as f64;
+        stats.avg_shipping_latency_ms = update_running_average(
+            stats.avg_shipping_latency_ms,
+            shipping_time,
+            (stats.total_shipped - entries.len() as u64) as f64
+        );
 
         Ok(())
     }
@@ -940,9 +956,11 @@ impl CheckpointCoordinator {
         let mut stats = self.stats.write();
         stats.total_checkpoints += 1;
         stats.last_checkpoint_lsn = end_lsn;
-        stats.avg_checkpoint_time_ms =
-            (stats.avg_checkpoint_time_ms * (stats.total_checkpoints - 1) as f64 + checkpoint_time)
-                / stats.total_checkpoints as f64;
+        stats.avg_checkpoint_time_ms = update_running_average(
+            stats.avg_checkpoint_time_ms,
+            checkpoint_time,
+            (stats.total_checkpoints - 1) as f64
+        );
 
         Ok(end_lsn)
     }

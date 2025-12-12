@@ -393,6 +393,8 @@ pub struct GrdStatistics {
 
     // P99 lookup latency (microseconds)
     pub p99_lookup_latency_us: u64,
+    pub load_balances: (),
+    pub affinity_updates: (),
 }
 
 // GRD message types
@@ -987,6 +989,7 @@ impl GlobalResourceDirectory {
             resources_per_master,
             total_resources: self.stats.read().total_resources,
             total_buckets: HASH_BUCKETS,
+            hash_ring_buckets: (),
         }
     }
 }
@@ -998,6 +1001,7 @@ pub struct ClusterTopology {
     pub resources_per_master: HashMap<NodeId, u64>,
     pub total_resources: u64,
     pub total_buckets: usize,
+    pub hash_ring_buckets: ()
 }
 
 #[cfg(test)]

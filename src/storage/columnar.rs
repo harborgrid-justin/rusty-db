@@ -336,7 +336,7 @@ impl ColumnChunk {
 
     fn encode_plain(&mut self, values: &[ColumnValue]) -> Result<()> {
         self.encoding = EncodingType::Plain;
-        self.data = bincode::serialize(values)
+        self.data = serde_json::to_vec(values)
             .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?;
 
         self.update_stats(values);
@@ -354,7 +354,7 @@ impl ColumnChunk {
         }
 
         self.encoding = EncodingType::Dictionary;
-        self.data = bincode::serialize(&(&encoder.reverse_dict, &encoded_ids))
+        self.data = serde_json::to_vec(&(&encoder.reverse_dict, &encoded_ids))
             .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?;
 
         self.update_stats(values);
@@ -366,7 +366,7 @@ impl ColumnChunk {
         encoder.encode(values);
 
         self.encoding = EncodingType::RunLength;
-        self.data = bincode::serialize(&encoder.runs)
+        self.data = serde_json::to_vec(&encoder.runs)
             .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?;
 
         self.update_stats(values);
@@ -378,7 +378,7 @@ impl ColumnChunk {
         encoder.encode(values);
 
         self.encoding = EncodingType::Delta;
-        self.data = bincode::serialize(&(encoder.base_value, &encoder.deltas))
+        self.data = serde_json::to_vec(&(encoder.base_value, &encoder.deltas))
             .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?;
 
         // Convert i64 to ColumnValue for stats
@@ -414,11 +414,11 @@ impl ColumnChunk {
     fn decode(&self) -> Result<Vec<ColumnValue>> {
         match self.encoding {
             EncodingType::Plain => {
-                bincode::deserialize(&self.data)
+                serde_json::from_slice(&self.data)
                     .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))
             }
             EncodingType::Dictionary => {
-                let (dict, ids): (Vec<String>, Vec<u32>) = bincode::deserialize(&self.data)
+                let (dict, ids): (Vec<String>, Vec<u32>) = serde_json::from_slice(&self.data)
                     .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?;
 
                 let values = ids.iter()
@@ -432,7 +432,7 @@ impl ColumnChunk {
                 Ok(values)
             }
             EncodingType::RunLength => {
-                let runs: Vec<(ColumnValue, usize)> = bincode::deserialize(&self.data)
+                let runs: Vec<(ColumnValue, usize)> = serde_json::from_slice(&self.data)
                     .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?;
 
                 let mut result = Vec::new();
@@ -443,7 +443,7 @@ impl ColumnChunk {
                 Ok(result)
             }
             EncodingType::Delta => {
-                let (base_value, deltas): (i64, Vec<i32>) = bincode::deserialize(&self.data)
+                let (base_value, deltas): (i64, Vec<i32>) = serde_json::from_slice(&self.data)
                     .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?;
 
                 let mut result = vec![ColumnValue::Int64(base_value)];
@@ -458,7 +458,7 @@ impl ColumnChunk {
             }
             EncodingType::BitPacked => {
                 // Simplified bit-packed decoding
-                bincode::deserialize(&self.data)
+                serde_json::from_slice(&self.data)
                     .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))
             }
         }

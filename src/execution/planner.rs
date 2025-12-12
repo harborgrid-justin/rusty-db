@@ -228,6 +228,8 @@ mod tests {
             having: None,
             order_by: Vec::new(),
             limit: None,
+            offset: None,
+            distinct: false,
         };
 
         let plan = planner.plan(&stmt).unwrap();

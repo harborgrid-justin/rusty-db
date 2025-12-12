@@ -273,6 +273,7 @@ impl MonitoringApi {
 
 #[cfg(test)]
 mod tests {
+    use crate::api::AlertSeverity;
     use super::*;
     use crate::api::monitoring::{ComparisonOperator, LivenessProbe, ThresholdAlertRule};
 

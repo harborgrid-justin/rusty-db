@@ -1,13 +1,13 @@
-//! # Health Reporter
-//!
-//! Generates health reports, exports metrics, and provides status endpoints
-//! for monitoring and observability.
+// # Health Reporter
+//
+// Generates health reports, exports metrics, and provides status endpoints
+// for monitoring and observability.
 
 use crate::error::{DbError, Result};
 use crate::common::{NodeId, HealthStatus, MetricValue};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, SystemTime};
 use super::aggregator::HealthScore;
 
 /// Health report for a single node

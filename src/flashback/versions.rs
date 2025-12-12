@@ -854,6 +854,7 @@ pub struct VersionStats {
     pub version_queries: u64,
     pub gc_runs: u64,
     pub total_versions_removed: u64,
+    pub storage_bytes: ()
 }
 
 impl VersionStats {

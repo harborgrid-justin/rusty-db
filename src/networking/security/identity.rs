@@ -1,7 +1,7 @@
-//! Node identity and verification
-//!
-//! This module provides node identity verification, SPIFFE/SPIRE integration,
-//! and JWT tokens for service mesh integration.
+// Node identity and verification
+//
+// This module provides node identity verification, SPIFFE/SPIRE integration,
+// and JWT tokens for service mesh integration.
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;

@@ -100,7 +100,7 @@ impl HybridClock {
     }
 
     /// Update clock based on received message timestamp
-    pub fn update(&self, remote_ts: HybridTimestamp) -> std::result::Result<HybridTimestamp, DbError> {
+    pub fn update(&self, remote_ts: HybridTimestamp) -> Result<HybridTimestamp, DbError> {
         let mut ts = self.current.write();
 
         // Check for excessive clock skew
@@ -386,7 +386,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
     }
 
     /// Read a value at a specific timestamp
-    pub fn read(&self, key: &K, read_ts: &HybridTimestamp) -> std::result::Result<Option<V>, DbError> {
+    pub fn read(&self, key: &K, read_ts: &HybridTimestamp) -> Result<Option<V>, DbError> {
         self.stats.write().read_requests += 1;
 
         let versions = self.versions.read();
@@ -406,7 +406,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
         value: V,
         txn_id: TransactionId,
         timestamp: HybridTimestamp,
-    ) -> std::result::Result<(), DbError> {
+    ) -> Result<(), DbError> {
         self.stats.write().write_requests += 1;
 
         let lsn = self.next_lsn.fetch_add(1, Ordering::SeqCst);
@@ -431,7 +431,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
         key: &K,
         txn_id: TransactionId,
         timestamp: HybridTimestamp,
-    ) -> std::result::Result<bool, DbError> {
+    ) -> Result<bool, DbError> {
         let versions = self.versions.read();
         if let Some(chain) = versions.get(key) {
             let mut chain = chain.lock().unwrap();
@@ -457,7 +457,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
     }
 
     /// Run garbage collection
-    pub fn garbage_collect(&self) -> std::result::Result<usize, DbError> {
+    pub fn garbage_collect(&self) -> Result<usize, DbError> {
         let min_ts = match *self.min_snapshot_ts.read() {
             Some(ts) => ts,
             None => return Ok(0), // No active snapshots, can't GC
@@ -575,7 +575,7 @@ impl SnapshotIsolationManager {
     }
 
     /// Record a read operation
-    pub fn record_read(&self, txn_id: TransactionId, key: String) -> std::result::Result<(), DbError> {
+    pub fn record_read(&self, txn_id: TransactionId, key: String) -> Result<(), DbError> {
         let mut txns = self.active_txns.write();
         if let Some(snapshot) = txns.get_mut(&txn_id) {
             snapshot.read_set.insert(key);
@@ -589,7 +589,7 @@ impl SnapshotIsolationManager {
     }
 
     /// Record a write operation
-    pub fn record_write(&self, txn_id: TransactionId, key: String) -> std::result::Result<(), DbError> {
+    pub fn record_write(&self, txn_id: TransactionId, key: String) -> Result<(), DbError> {
         let mut txns = self.active_txns.write();
         if let Some(snapshot) = txns.get_mut(&txn_id) {
             snapshot.write_set.insert(key.clone());
@@ -608,7 +608,7 @@ impl SnapshotIsolationManager {
     }
 
     /// Check for write-write conflicts
-    pub fn check_write_conflicts(&self, txn_id: TransactionId) -> std::result::Result<(), DbError> {
+    pub fn check_write_conflicts(&self, txn_id: TransactionId) -> Result<(), DbError> {
         let txns = self.active_txns.read();
         let snapshot = txns.get(&txn_id).ok_or_else(|| {
             DbError::Transaction(format!("Transaction {} not found", txn_id))
@@ -644,7 +644,7 @@ impl SnapshotIsolationManager {
     }
 
     /// Check for write-skew anomalies (requires serializable mode)
-    pub fn check_write_skew(&self, txn_id: TransactionId) -> std::result::Result<(), DbError> {
+    pub fn check_write_skew(&self, txn_id: TransactionId) -> Result<(), DbError> {
         if !self.config.detect_write_skew {
             return Ok(());
         }
@@ -673,7 +673,7 @@ impl SnapshotIsolationManager {
     }
 
     /// Commit a transaction
-    pub fn commit_transaction(&self, txn_id: TransactionId) -> std::result::Result<HybridTimestamp, DbError> {
+    pub fn commit_transaction(&self, txn_id: TransactionId) -> Result<HybridTimestamp, DbError> {
         // Check for conflicts
         self.check_write_conflicts(txn_id)?;
 

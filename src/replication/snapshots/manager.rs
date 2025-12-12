@@ -6,7 +6,6 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
-use tokio::fs::File;
 
 use crate::replication::types::{LogSequenceNumber, ReplicaId};
 use super::config::{CompressionType, SnapshotConfig};

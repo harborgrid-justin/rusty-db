@@ -1,32 +1,32 @@
-//! Wire protocol for P2P communication
-//!
-//! This module defines the binary protocol used for communication between
-//! RustyDB nodes in a distributed cluster. It includes message framing,
-//! versioning, compression, and type definitions.
-//!
-//! # Protocol Design
-//!
-//! The protocol uses length-prefixed framing with the following structure:
-//!
-//! ```text
-//! +--------+--------+------------+---------+
-//! | Length | Flags  | Message ID | Payload |
-//! | 4 bytes| 2 bytes| 8 bytes    | N bytes |
-//! +--------+--------+------------+---------+
-//! ```
-//!
-//! - **Length**: Total message length (excluding length field itself)
-//! - **Flags**: Protocol version, compression type, etc.
-//! - **Message ID**: Unique message identifier for request/response matching
-//! - **Payload**: Serialized message data
-//!
-//! # Features
-//!
-//! - Protocol versioning for backward compatibility
-//! - Optional compression (LZ4, Zstd)
-//! - Message type safety through enums
-//! - Checksum validation
-//! - Request/response correlation
+// Wire protocol for P2P communication
+//
+// This module defines the binary protocol used for communication between
+// RustyDB nodes in a distributed cluster. It includes message framing,
+// versioning, compression, and type definitions.
+//
+// # Protocol Design
+//
+// The protocol uses length-prefixed framing with the following structure:
+//
+// ```text
+// +--------+--------+------------+---------+
+// | Length | Flags  | Message ID | Payload |
+// | 4 bytes| 2 bytes| 8 bytes    | N bytes |
+// +--------+--------+------------+---------+
+// ```
+//
+// - **Length**: Total message length (excluding length field itself)
+// - **Flags**: Protocol version, compression type, etc.
+// - **Message ID**: Unique message identifier for request/response matching
+// - **Payload**: Serialized message data
+//
+// # Features
+//
+// - Protocol versioning for backward compatibility
+// - Optional compression (LZ4, Zstd)
+// - Message type safety through enums
+// - Checksum validation
+// - Request/response correlation
 
 pub mod codec;
 pub mod handshake;
@@ -199,7 +199,7 @@ impl MessageHeader {
 }
 
 /// Message types for P2P communication
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum Message {
     /// Handshake request
     HandshakeRequest(HandshakeRequest),
@@ -290,7 +290,7 @@ impl Message {
 }
 
 /// Consensus message types (for Raft)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum ConsensusMessageType {
     RequestVote,
     RequestVoteResponse,

@@ -171,7 +171,7 @@ impl HyperparameterSpace {
 
     pub fn sample(&self) -> Hyperparameters {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut params = Hyperparameters::new();
 
         for (name, range) in &self.ranges {

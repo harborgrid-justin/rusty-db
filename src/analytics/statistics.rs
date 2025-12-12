@@ -494,6 +494,7 @@ mod tests {
             histogram: None,
             most_common_values: vec![],
             last_updated: SystemTime::now(),
+            num_values: (),
         };
 
         assert!((stats.selectivity() - 0.5).abs() < 0.001);

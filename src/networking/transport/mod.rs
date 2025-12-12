@@ -1,43 +1,43 @@
-//! Transport layer for P2P communication
-//!
-//! This module provides the transport abstraction for peer-to-peer communication
-//! in RustyDB's distributed architecture. It supports multiple transport protocols
-//! with enterprise-grade reliability features.
-//!
-//! # Features
-//!
-//! - **Multiple Transports**: TCP and QUIC support
-//! - **Connection Pooling**: Efficient connection reuse with configurable limits
-//! - **Auto-Reconnection**: Exponential backoff retry logic
-//! - **Health Monitoring**: Automatic detection and cleanup of failed connections
-//! - **Load Balancing**: Multiple connection selection strategies
-//! - **Metrics**: Comprehensive connection and throughput tracking
-//!
-//! # Example
-//!
-//! ```rust,no_run
-//! use rusty_db::networking::transport::{TcpTransport, TcpConfig, ConnectionPool, PoolConfig};
-//! use std::sync::Arc;
-//!
-//! # async fn example() -> rusty_db::Result<()> {
-//! // Create TCP transport
-//! let config = TcpConfig::default();
-//! let mut transport = TcpTransport::new(config);
-//! transport.bind().await?;
-//!
-//! // Create connection pool
-//! let pool_config = PoolConfig::default();
-//! let pool = Arc::new(ConnectionPool::new(pool_config));
-//!
-//! // Start health check background task
-//! let _health_task = pool.clone().start_health_check_task();
-//!
-//! // Accept connections
-//! // let tcp_conn = transport.accept().await?;
-//!
-//! # Ok(())
-//! # }
-//! ```
+// Transport layer for P2P communication
+//
+// This module provides the transport abstraction for peer-to-peer communication
+// in RustyDB's distributed architecture. It supports multiple transport protocols
+// with enterprise-grade reliability features.
+//
+// # Features
+//
+// - **Multiple Transports**: TCP and QUIC support
+// - **Connection Pooling**: Efficient connection reuse with configurable limits
+// - **Auto-Reconnection**: Exponential backoff retry logic
+// - **Health Monitoring**: Automatic detection and cleanup of failed connections
+// - **Load Balancing**: Multiple connection selection strategies
+// - **Metrics**: Comprehensive connection and throughput tracking
+//
+// # Example
+//
+// ```rust,no_run
+// use rusty_db::networking::transport::{TcpTransport, TcpConfig, ConnectionPool, PoolConfig};
+// use std::sync::Arc;
+//
+// # async fn example() -> rusty_db::Result<()> {
+// // Create TCP transport
+// let config = TcpConfig::default();
+// let mut transport = TcpTransport::new(config);
+// transport.bind().await?;
+//
+// // Create connection pool
+// let pool_config = PoolConfig::default();
+// let pool = Arc::new(ConnectionPool::new(pool_config));
+//
+// // Start health check background task
+// let _health_task = pool.clone().start_health_check_task();
+//
+// // Accept connections
+// // let tcp_conn = transport.accept().await?;
+//
+// # Ok(())
+// # }
+// ```
 
 pub mod connection;
 pub mod pool;

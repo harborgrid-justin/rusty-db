@@ -1,10 +1,10 @@
-//! Connection pool manager for P2P communication
-//!
-//! Manages a pool of connections to each peer with:
-//! - Min/max connections per peer
-//! - Idle connection cleanup
-//! - Connection health checking
-//! - Load-balanced connection selection
+// Connection pool manager for P2P communication
+//
+// Manages a pool of connections to each peer with:
+// - Min/max connections per peer
+// - Idle connection cleanup
+// - Connection health checking
+// - Load-balanced connection selection
 
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
@@ -312,6 +312,7 @@ pub struct PoolStatistics {
 
 #[cfg(test)]
 mod tests {
+    use crate::networking::ConnectionState;
     use super::*;
 
     #[tokio::test]

@@ -1,20 +1,20 @@
-//! Serf-Compatible Protocol for RustyDB
-//!
-//! Implements a protocol compatible with HashiCorp Serf for cluster membership and event propagation.
-//! Serf uses a gossip protocol based on SWIM for membership, with additional features for
-//! custom events and queries.
-//!
-//! # Features
-//!
-//! - SWIM-based membership gossip
-//! - Custom event propagation
-//! - Query/response mechanism
-//! - Tag-based node filtering
-//! - User events (fire custom events to cluster)
-//!
-//! # References
-//!
-//! - [Serf Documentation](https://www.serf.io/)
+// Serf-Compatible Protocol for RustyDB
+//
+// Implements a protocol compatible with HashiCorp Serf for cluster membership and event propagation.
+// Serf uses a gossip protocol based on SWIM for membership, with additional features for
+// custom events and queries.
+//
+// # Features
+//
+// - SWIM-based membership gossip
+// - Custom event propagation
+// - Query/response mechanism
+// - Tag-based node filtering
+// - User events (fire custom events to cluster)
+//
+// # References
+//
+// - [Serf Documentation](https://www.serf.io/)
 
 use super::{DiscoveryConfig, DiscoveryEvent, DiscoveryProtocol, NodeInfo, NodeStatus};
 use crate::error::{DbError, Result};
@@ -199,7 +199,7 @@ impl SerfProtocol {
 
     /// Send message to a specific node
     async fn send_message(&self, msg: &SerfMessage, addr: SocketAddr) -> Result<()> {
-        let data = bincode::serialize(msg)
+        let data = serde_json::to_vec(msg)
             .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
         self.socket.send_to(&data, addr).await
@@ -271,29 +271,36 @@ impl SerfProtocol {
         Ok(())
     }
 
+    /// Helper to send discovery event (eliminates duplication)
+    async fn send_event(&self, event: DiscoveryEvent) {
+        let _ = self.event_tx.send(event).await;
+    }
+
     /// Handle join message
     async fn handle_join(&self, node: NodeInfo, tags: HashMap<String, String>) -> Result<()> {
         if node.id == self.config.local_node.id {
             return Ok(());
         }
 
-        let mut members = self.members.write().await;
-        let is_new = !members.contains_key(&node.id);
+        let is_new = {
+            let mut members = self.members.write().await;
+            let is_new = !members.contains_key(&node.id);
 
-        members.insert(
-            node.id.clone(),
-            SerfMember {
-                info: node.clone(),
-                status: NodeStatus::Alive,
-                incarnation: 0,
-                tags,
-                last_seen: Instant::now(),
-            },
-        );
-        drop(members);
+            members.insert(
+                node.id.clone(),
+                SerfMember {
+                    info: node.clone(),
+                    status: NodeStatus::Alive,
+                    incarnation: 0,
+                    tags,
+                    last_seen: Instant::now(),
+                },
+            );
+            is_new
+        };
 
         if is_new {
-            let _ = self.event_tx.send(DiscoveryEvent::NodeJoined(node)).await;
+            self.send_event(DiscoveryEvent::NodeJoined(node)).await;
         }
 
         Ok(())
@@ -301,11 +308,12 @@ impl SerfProtocol {
 
     /// Handle leave message
     async fn handle_leave(&self, node: NodeInfo) -> Result<()> {
-        let mut members = self.members.write().await;
-        members.remove(&node.id);
-        drop(members);
+        {
+            let mut members = self.members.write().await;
+            members.remove(&node.id);
+        }
 
-        let _ = self.event_tx.send(DiscoveryEvent::NodeLeft(node)).await;
+        self.send_event(DiscoveryEvent::NodeLeft(node)).await;
 
         Ok(())
     }
@@ -328,19 +336,14 @@ impl SerfProtocol {
 
                 // Send appropriate event
                 if old_status != status {
+                    let event = match status {
+                        NodeStatus::Alive => Some(DiscoveryEvent::NodeRecovered(node.clone())),
+                        NodeStatus::Dead => Some(DiscoveryEvent::NodeFailed(node.clone())),
+                        _ => None,
+                    };
                     drop(members);
-                    match status {
-                        NodeStatus::Alive => {
-                            let _ = self.event_tx.send(
-                                DiscoveryEvent::NodeRecovered(node)
-                            ).await;
-                        }
-                        NodeStatus::Dead => {
-                            let _ = self.event_tx.send(
-                                DiscoveryEvent::NodeFailed(node)
-                            ).await;
-                        }
-                        _ => {}
+                    if let Some(evt) = event {
+                        self.send_event(evt).await;
                     }
                 }
             }
@@ -406,10 +409,17 @@ impl SerfProtocol {
         }
 
         // Select random member to ping
-        let member = members.values()
+        let alive_members: Vec<_> = members.values()
             .filter(|m| m.status == NodeStatus::Alive)
-            .nth(rand::random::<usize>() % members.len().max(1))
-            .cloned();
+            .cloned()
+            .collect();
+
+        let member = if !alive_members.is_empty() {
+            let idx = (rand::random::<u32>() as usize) % alive_members.len();
+            Some(alive_members[idx].clone())
+        } else {
+            None
+        };
 
         drop(members);
 
@@ -446,7 +456,7 @@ impl SerfProtocol {
                 result = self.socket.recv_from(&mut buffer) => {
                     match result {
                         Ok((len, addr)) => {
-                            if let Ok(msg) = bincode::deserialize::<SerfMessage>(&buffer[..len]) {
+                            if let Ok(msg) = serde_json::from_slice::<SerfMessage>(&buffer[..len]) {
                                 if let Err(e) = self.handle_message(msg, addr).await {
                                     eprintln!("Error handling message: {}", e);
                                 }
@@ -560,8 +570,8 @@ mod tests {
             tags: HashMap::new(),
         };
 
-        let bytes = bincode::serialize(&msg).unwrap();
-        let deserialized: SerfMessage = bincode::deserialize(&bytes).unwrap();
+        let bytes = serde_json::to_vec(&msg).unwrap();
+        let deserialized: SerfMessage = serde_json::from_slice(&bytes).unwrap();
 
         match deserialized {
             SerfMessage::Join { node, .. } => {

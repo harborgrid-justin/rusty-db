@@ -1,7 +1,7 @@
-//! Message dispatcher for cluster-wide operations
-//!
-//! This module implements message dispatching patterns including fan-out,
-//! scatter-gather, broadcast, and multicast for coordinated cluster operations.
+// Message dispatcher for cluster-wide operations
+//
+// This module implements message dispatching patterns including fan-out,
+// scatter-gather, broadcast, and multicast for coordinated cluster operations.
 
 use crate::error::{DbError, Result};
 use crate::networking::routing::router::MessageRouter;

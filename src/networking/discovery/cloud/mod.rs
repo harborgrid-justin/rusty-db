@@ -1,7 +1,7 @@
-//! Cloud Provider Service Discovery
-//!
-//! Implements service discovery for major cloud providers (AWS, Azure, GCP).
-//! Supports instance metadata, tags, and auto-scaling groups.
+// Cloud Provider Service Discovery
+//
+// Implements service discovery for major cloud providers (AWS, Azure, GCP).
+// Supports instance metadata, tags, and auto-scaling groups.
 
 use super::{CloudConfig, CloudProvider, HealthStatus, Node, ServiceDiscovery};
 use crate::error::Result;
@@ -401,6 +401,7 @@ impl CloudDiscoveryBackend for GcpDiscovery {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use super::*;
 
     #[tokio::test]

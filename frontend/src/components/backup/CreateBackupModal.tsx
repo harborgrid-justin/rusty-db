@@ -8,8 +8,8 @@ import {
   CalendarIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import type { BackupType } from '../../types';
-import type { CreateBackupConfig } from '../../services/backupService';
+import type { BackupType } from '@/types';
+import type { CreateBackupConfig } from '@/services/backupService.ts';
 
 // ============================================================================
 // Types

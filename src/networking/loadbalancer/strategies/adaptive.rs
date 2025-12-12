@@ -1,8 +1,8 @@
-//! Adaptive load balancing strategy.
-//!
-//! Uses latency, error rates, throughput, and other metrics to intelligently
-//! select the best backend. Can incorporate machine learning hints for
-//! predictive load balancing.
+// Adaptive load balancing strategy.
+//
+// Uses latency, error rates, throughput, and other metrics to intelligently
+// select the best backend. Can incorporate machine learning hints for
+// predictive load balancing.
 
 use super::{Backend, LoadBalancerContext, LoadBalancingStrategy};
 use crate::error::{DbError, Result};

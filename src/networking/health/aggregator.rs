@@ -1,7 +1,7 @@
-//! # Health Aggregator
-//!
-//! Aggregates multiple health check results into overall health scores
-//! with weighted scoring, dependency health tracking, and cascading failure detection.
+// # Health Aggregator
+//
+// Aggregates multiple health check results into overall health scores
+// with weighted scoring, dependency health tracking, and cascading failure detection.
 
 use crate::error::{DbError, Result};
 use crate::common::{NodeId, HealthStatus};

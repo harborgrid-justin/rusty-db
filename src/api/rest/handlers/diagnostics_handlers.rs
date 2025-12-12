@@ -11,11 +11,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use super::super::types::*;
 
 // Incident response types
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct IncidentListResponse {
     pub incidents: Vec<IncidentSummary>,
     pub total_count: usize,
@@ -23,7 +24,7 @@ pub struct IncidentListResponse {
     pub page_size: usize,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct IncidentSummary {
     pub id: String,
     pub severity: String, // critical, high, medium, low
@@ -38,7 +39,7 @@ pub struct IncidentSummary {
 }
 
 // Dump request/response types
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DumpRequest {
     pub dump_type: String, // memory, thread, heap, query_plan, execution_stats
     pub target: Option<String>, // specific query ID, session ID, or component
@@ -46,7 +47,7 @@ pub struct DumpRequest {
     pub format: Option<String>, // json, text, binary
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DumpResponse {
     pub dump_id: String,
     pub dump_type: String,
@@ -59,7 +60,7 @@ pub struct DumpResponse {
 }
 
 // Query profiling response types
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct QueryProfilingResponse {
     pub profiles: Vec<QueryProfile>,
     pub total_count: usize,
@@ -67,7 +68,7 @@ pub struct QueryProfilingResponse {
     pub page_size: usize,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct QueryProfile {
     pub query_id: String,
     pub query_text: String,
@@ -84,7 +85,7 @@ pub struct QueryProfile {
 }
 
 // Active Session History (ASH) response types
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ActiveSessionHistoryResponse {
     pub samples: Vec<ASHSample>,
     pub total_count: usize,
@@ -92,7 +93,7 @@ pub struct ActiveSessionHistoryResponse {
     pub time_range: TimeRange,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ASHSample {
     pub sample_time: i64,
     pub session_id: u64,
@@ -108,7 +109,7 @@ pub struct ASHSample {
     pub action: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TimeRange {
     pub start: i64,
     pub end: i64,

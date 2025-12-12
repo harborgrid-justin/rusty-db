@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
 
         // Send query
         let request = Request::Query { sql: cmd.to_string() };
-        let request_bytes = bincode::serialize(&request)
+        let request_bytes = bincode::encode_to_vec(&request, bincode::config::standard())
             .map_err(|e| DbError::Serialization(e.to_string()))?;
 
         stream.write_all(&request_bytes).await

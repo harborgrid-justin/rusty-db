@@ -96,7 +96,7 @@ impl ShardKey {
             HashFunction::Fnv => {
                 // FNV-1a hash
                 let mut hash = 0xcbf29ce484222325u64;
-                let bytes = bincode::serialize(self).unwrap_or_default();
+                let bytes = bincode::encode_to_vec(self, bincode::config::standard()).unwrap_or_default();
                 for byte in bytes {
                     hash ^= byte as u64;
                     hash = hash.wrapping_mul(0x100000001b3);

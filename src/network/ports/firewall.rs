@@ -1,13 +1,13 @@
-//! # Firewall-Friendly Configuration
-//!
-//! Provides firewall traversal capabilities for database communication.
-//!
-//! ## Features
-//!
-//! - **Port Probing**: Test port accessibility through firewalls
-//! - **Fallback Selection**: Automatically select accessible ports
-//! - **HTTP/HTTPS Tunneling**: Tunnel database traffic over HTTP(S)
-//! - **WebSocket Upgrade**: Use WebSocket for bi-directional communication
+// # Firewall-Friendly Configuration
+//
+// Provides firewall traversal capabilities for database communication.
+//
+// ## Features
+//
+// - **Port Probing**: Test port accessibility through firewalls
+// - **Fallback Selection**: Automatically select accessible ports
+// - **HTTP/HTTPS Tunneling**: Tunnel database traffic over HTTP(S)
+// - **WebSocket Upgrade**: Use WebSocket for bi-directional communication
 
 use crate::error::{DbError, Result};
 use std::net::SocketAddr;

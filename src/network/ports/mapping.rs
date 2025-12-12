@@ -1,13 +1,13 @@
-//! # Port Mapping Service
-//!
-//! Service registry and port mapping for distributed database services.
-//!
-//! ## Features
-//!
-//! - **Service Registry**: Map services to ports
-//! - **Port Discovery**: Find ports by service name
-//! - **Well-Known Ports**: Standard port definitions
-//! - **Dynamic Advertisement**: Announce service ports to cluster
+// # Port Mapping Service
+//
+// Service registry and port mapping for distributed database services.
+//
+// ## Features
+//
+// - **Service Registry**: Map services to ports
+// - **Port Discovery**: Find ports by service name
+// - **Well-Known Ports**: Standard port definitions
+// - **Dynamic Advertisement**: Announce service ports to cluster
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;

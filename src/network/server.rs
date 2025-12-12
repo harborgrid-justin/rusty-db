@@ -91,12 +91,13 @@ impl ConnectionHandler {
                 return Err(DbError::Network("Request too large".to_string()));
             }
 
-            let request: Request = bincode::deserialize(&buffer[..n])
+            let request: Request = bincode::decode_from_slice(&buffer[..n], bincode::config::standard())
+                .map(|(req, _)| req)
                 .map_err(|e| DbError::Serialization(e.to_string()))?;
 
             let response = self.process_request(request).await;
 
-            let response_bytes = bincode::serialize(&response)
+            let response_bytes = bincode::encode_to_vec(&response, bincode::config::standard())
                 .map_err(|e| DbError::Serialization(e.to_string()))?;
 
             socket.write_all(&response_bytes).await

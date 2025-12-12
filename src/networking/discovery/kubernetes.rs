@@ -1,7 +1,7 @@
-//! Kubernetes Service Discovery
-//!
-//! Implements native Kubernetes service discovery using the Kubernetes API.
-//! Supports headless services, endpoint slices, and pod label selectors.
+// Kubernetes Service Discovery
+//
+// Implements native Kubernetes service discovery using the Kubernetes API.
+// Supports headless services, endpoint slices, and pod label selectors.
 
 use super::{HealthStatus, Node, ServiceDiscovery, KubernetesConfig};
 use crate::error::{DbError, Result};
@@ -324,7 +324,7 @@ mod tests {
             ..Default::default()
         };
 
-        let mut discovery = KubernetesDiscovery::new(config);
+        let discovery = KubernetesDiscovery::new(config);
 
         // This should be validated during initialization
         // but we can't test it here without async

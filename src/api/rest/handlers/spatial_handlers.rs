@@ -5,9 +5,11 @@
 // - Route calculation and network analysis
 // - Geometry operations
 // - Coordinate transformations
+//
+// cSpell:ignore srid SRID
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Query, State},
     http::StatusCode,
     Json,
 };
@@ -17,10 +19,9 @@ use utoipa::ToSchema;
 
 use crate::api::rest::types::{ApiState, ApiError, ApiResult};
 use crate::spatial::{
-    SpatialEngine, Geometry, Point, Coordinate, BoundingBox,
-    WktParser, TopologicalOps, DistanceOps, BufferOps,
+    SpatialEngine, Geometry, Point, Coordinate,
+    TopologicalOps, DistanceOps, BufferOps,
     Network, Node, Edge, DijkstraRouter,
-    CoordinateTransformer, well_known_srid,
 };
 
 // ============================================================================
@@ -169,7 +170,7 @@ pub async fn spatial_query(
     Json(request): Json<SpatialQueryRequest>,
 ) -> ApiResult<Json<SpatialQueryResponse>> {
     // Parse query geometry
-    let query_geom = SPATIAL_ENGINE.parse_wkt(&request.geometry)
+    let _query_geom = SPATIAL_ENGINE.parse_wkt(&request.geometry)
         .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid WKT geometry: {}", e)))?;
 
     // In a real implementation, this would query a spatial index
@@ -195,7 +196,7 @@ pub async fn spatial_query(
 )]
 pub async fn calculate_route(
     State(_state): State<Arc<ApiState>>,
-    Json(request): Json<RouteRequest>,
+    Json(_request): Json<RouteRequest>,
 ) -> ApiResult<Json<RouteResponse>> {
     let network = SPATIAL_NETWORK.read();
 
@@ -206,16 +207,11 @@ pub async fn calculate_route(
 
     // Calculate route using Dijkstra
     let router = DijkstraRouter::new(&*network);
-    let path_result = router.shortest_path(start_node, end_node)
+    let path = router.shortest_path(start_node, end_node)
         .map_err(|e| ApiError::new("ROUTE_FAILED", format!("Route calculation failed: {}", e)))?;
 
-    let path = match path_result {
-        Some(p) => p,
-        None => return Err(ApiError::new("NOT_FOUND", "No route found")),
-    };
-
     // Convert path to coordinates
-    let coordinates: Vec<CoordinateInput> = path.vertices.iter().map(|node_id| {
+    let coordinates: Vec<CoordinateInput> = path.nodes.iter().map(|node_id| {
         // Get node coordinates (mock data)
         CoordinateInput { x: *node_id as f64, y: *node_id as f64 }
     }).collect();
@@ -275,7 +271,7 @@ pub async fn find_within(
 )]
 pub async fn find_nearest(
     State(_state): State<Arc<ApiState>>,
-    Json(request): Json<NearestRequest>,
+    Json(_request): Json<NearestRequest>,
 ) -> ApiResult<Json<NearestResponse>> {
     // In a real implementation, this would use a spatial index (R-tree)
     // to find nearest features efficiently
@@ -390,8 +386,8 @@ pub async fn transform_geometry(
     get,
     path = "/api/v1/spatial/distance",
     params(
-        ("geom1" = String, Query(description = "First geometry (WKT)")),
-        ("geom2" = String, Query(description = "Second geometry (WKT)"))
+        ("geom1" = String, Query, description = "First geometry (WKT)"),
+        ("geom2" = String, Query, description = "Second geometry (WKT)")
     ),
     responses(
         (status = 200, description = "Distance calculated", body = f64),
@@ -435,7 +431,7 @@ pub async fn add_network_node(
 ) -> ApiResult<StatusCode> {
     let mut network = SPATIAL_NETWORK.write();
 
-    let node_id = network.node_count() as u64 + 1;
+    let node_id = network.nodes.len() as u64 + 1;
     let node = Node::new(node_id, Coordinate::new(coord.x, coord.y));
 
     network.add_node(node);
@@ -462,7 +458,7 @@ pub async fn add_network_edge(
     let target = edge_data["target"].as_u64().unwrap_or(0);
     let cost = edge_data["cost"].as_f64().unwrap_or(1.0);
 
-    let edge_id = network.edge_count() as u64 + 1;
+    let edge_id = network.edges.len() as u64 + 1;
     let edge = Edge::new(edge_id, source, target, cost);
 
     network.add_edge(edge)

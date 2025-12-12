@@ -1,13 +1,13 @@
-//! # Address Resolution
-//!
-//! Advanced address resolution with caching and load balancing.
-//!
-//! ## Features
-//!
-//! - **DNS Resolution**: Hostname to IP address resolution
-//! - **SRV Records**: Service discovery via DNS SRV records
-//! - **Load Balancing**: Distribute across multiple endpoints
-//! - **Caching**: TTL-based caching for performance
+// # Address Resolution
+//
+// Advanced address resolution with caching and load balancing.
+//
+// ## Features
+//
+// - **DNS Resolution**: Hostname to IP address resolution
+// - **SRV Records**: Service discovery via DNS SRV records
+// - **Load Balancing**: Distribute across multiple endpoints
+// - **Caching**: TTL-based caching for performance
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;
@@ -243,14 +243,14 @@ impl AddressResolver {
         if total_weight == 0 {
             // If all weights are 0, use uniform random
             use rand::Rng;
-            let index = rand::thread_rng().gen_range(0..endpoints.len());
+            let index = rand::rng().random_range(0..endpoints.len());
             return Some(endpoints[index].addr);
         }
 
         // Weighted random selection
         use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let mut random_weight = rng.gen_range(0..total_weight);
+        let mut rng = rand::rng();
+        let mut random_weight = rng.random_range(0..total_weight);
 
         for endpoint in endpoints {
             if random_weight < endpoint.weight as u32 {

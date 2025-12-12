@@ -8,7 +8,7 @@
 // - Change streams
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
     Json,
 };
@@ -20,7 +20,7 @@ use utoipa::ToSchema;
 use crate::api::rest::types::{ApiState, ApiError, ApiResult};
 use crate::document_store::{
     DocumentStore, Document, DocumentId, CollectionSettings,
-    Pipeline, PipelineBuilder, ChangeStreamFilter, ChangeEventType,
+    PipelineBuilder, ChangeStreamFilter, ChangeEventType,
 };
 
 // ============================================================================
@@ -230,8 +230,8 @@ pub async fn get_collection(
     Ok(Json(CollectionResponse {
         name,
         document_count: count,
-        size_bytes: stats.total_size,
-        created_at: stats.created_at,
+        size_bytes: stats.total_size as usize,
+        created_at: stats.created_at as i64,
     }))
 }
 
@@ -534,7 +534,7 @@ pub async fn count_documents(
 )]
 pub async fn watch_collection(
     State(_state): State<Arc<ApiState>>,
-    Path(collection): Path<String>,
+    Path(_collection): Path<String>,
     Json(request): Json<ChangeStreamRequest>,
 ) -> ApiResult<Json<ChangeStreamResponse>> {
     let store = DOCUMENT_STORE.read();
@@ -560,9 +560,9 @@ pub async fn watch_collection(
         ChangeEvent {
             operation_type: format!("{:?}", c.operation_type),
             collection: c.collection.clone(),
-            document_id: format!("{:?}", c.document_id),
-            timestamp: c.timestamp,
-            document: c.document.as_ref().and_then(|d| d.as_json().ok()),
+            document_id: c.document_key.as_ref().map(|k| format!("{:?}", k)).unwrap_or_default(),
+            timestamp: c.cluster_time as i64,
+            document: c.full_document.clone(),
         }
     }).collect();
 

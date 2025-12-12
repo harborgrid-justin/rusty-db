@@ -1,7 +1,7 @@
-//! DNS-based Service Discovery
-//!
-//! Implements service discovery using DNS SRV, A, and AAAA records.
-//! Supports custom DNS resolvers, TTL-based caching, and split-horizon DNS.
+// DNS-based Service Discovery
+//
+// Implements service discovery using DNS SRV, A, and AAAA records.
+// Supports custom DNS resolvers, TTL-based caching, and split-horizon DNS.
 
 use super::{HealthStatus, Node, ServiceDiscovery, DnsConfig};
 use crate::error::{DbError, Result};

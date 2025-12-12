@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use std::time::SystemTime;
 
 use crate::replication::types::{LogSequenceNumber, ReplicaId};
-use super::config::SnapshotConfig;
 use super::errors::SnapshotError;
 use super::manager::{FileSnapshotManager, SnapshotManager};
 use super::types::*;

@@ -600,7 +600,7 @@ impl EventSerializer for DefaultSerializer {
                     .map_err(|e| DbError::SerializationError(e.to_string()))
             }
             SerializationFormat::Binary => {
-                bincode::serialize(value)
+                bincode::encode_to_vec(value, bincode::config::standard())
                     .map_err(|e| DbError::SerializationError(e.to_string()))
             }
             _ => Err(DbError::NotImplemented("Serialization format not supported".to_string())),
@@ -618,7 +618,8 @@ impl EventSerializer for DefaultSerializer {
                     .map_err(|e| DbError::SerializationError(e.to_string()))
             }
             SerializationFormat::Binary => {
-                bincode::deserialize(data)
+                bincode::decode_from_slice(data, bincode::config::standard())
+                    .map(|(val, _)| val)
                     .map_err(|e| DbError::SerializationError(e.to_string()))
             }
             _ => Err(DbError::NotImplemented("Deserialization format not supported".to_string())),

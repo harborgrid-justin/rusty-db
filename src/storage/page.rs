@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use bincode::{Encode, Decode};
 use std::mem::size_of;
 use crc32fast::Hasher;
 
@@ -97,12 +98,14 @@ impl Page {
     }
 
     fn write_header(&mut self, header: &PageHeader) {
-        let bytes = bincode::serialize(header).unwrap();
+        let bytes = bincode::encode_to_vec(header, bincode::config::standard()).unwrap();
         self.data[..PAGE_HEADER_SIZE].copy_from_slice(&bytes[..PAGE_HEADER_SIZE]);
     }
 
     fn read_header(&self) -> PageHeader {
-        bincode::deserialize(&self.data[..PAGE_HEADER_SIZE]).unwrap()
+        bincode::decode_from_slice(&self.data[..PAGE_HEADER_SIZE], bincode::config::standard())
+            .map(|(header, _)| header)
+            .unwrap()
     }
 
     // Verify page checksum
@@ -127,7 +130,7 @@ impl Page {
 }
 
 // Page header containing metadata
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 struct PageHeader {
     checksum: u32,
     page_type: PageType,
@@ -148,7 +151,7 @@ impl PageHeader {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Encode, Decode)]
 enum PageType {
     Slotted,
     Overflow,
@@ -156,7 +159,7 @@ enum PageType {
 }
 
 // Slot directory entry
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Encode, Decode)]
 struct Slot {
     offset: u16,
     length: u16,
@@ -303,17 +306,24 @@ impl SlottedPage {
         }
     }
 
-    // Compact the page to reclaim fragmented space
-    pub fn compact(&mut self) {
+    // Helper to collect all valid records
+    fn collect_valid_records(&self) -> Vec<Vec<u8>> {
         let header = self.page.read_header();
         let mut records = Vec::new();
-
-        // Collect all valid records
         for slot_id in 0..header.num_slots {
             if let Some(data) = self.get_record(slot_id) {
-                records.push((slot_id, data));
+                records.push(data);
             }
         }
+        records
+    }
+
+    // Compact the page to reclaim fragmented space
+    pub fn compact(&mut self) {
+        let records: Vec<_> = self.collect_valid_records()
+            .into_iter()
+            .enumerate()
+            .collect();
 
         // Reset page
         let page_size = self.page.data.len();
@@ -322,7 +332,7 @@ impl SlottedPage {
         // Reinsert records
         for (original_slot_id, data) in records {
             let new_slot_id = self.insert_record(&data);
-            assert_eq!(Some(original_slot_id), new_slot_id);
+            assert_eq!(Some(original_slot_id as usize), new_slot_id.map(|id| id as usize));
         }
 
         self.page.mark_dirty();
@@ -364,14 +374,16 @@ impl SlottedPage {
     }
 
     fn read_slot(&self, slot_id: SlotId) -> Slot {
-        let offset = PAGE_HEADER_SIZE + (slot_id as usize * SLOT_SIZE);
+        let offset = PAGE_HEADER_SIZE + slot_id as usize * SLOT_SIZE;
         let bytes = &self.page.data[offset..offset + SLOT_SIZE];
-        bincode::deserialize(bytes).unwrap()
+        bincode::decode_from_slice(bytes, bincode::config::standard())
+            .map(|(slot, _)| slot)
+            .unwrap()
     }
 
     fn write_slot(&mut self, slot_id: SlotId, slot: &Slot) {
         let offset = PAGE_HEADER_SIZE + (slot_id as usize * SLOT_SIZE);
-        let bytes = bincode::serialize(slot).unwrap();
+        let bytes = bincode::encode_to_vec(slot, bincode::config::standard()).unwrap();
         self.page.data[offset..offset + SLOT_SIZE]
             .copy_from_slice(&bytes[..SLOT_SIZE]);
     }
@@ -414,15 +426,8 @@ impl PageSplitter {
 
     // Split a page into two pages
     pub fn split(&self, page: &mut SlottedPage, new_page_id: PageId) -> SlottedPage {
-        let header = page.page.read_header();
-        let mut records = Vec::new();
-
-        // Collect all valid records
-        for slot_id in 0..header.num_slots {
-            if let Some(data) = page.get_record(slot_id) {
-                records.push(data);
-            }
-        }
+        // Collect all valid records using helper
+        let mut records = page.collect_valid_records();
 
         // Sort by size for better distribution
         records.sort_by_key(|r| r.len());
@@ -486,6 +491,7 @@ impl PageMerger {
 }
 
 // Variable-length record with overflow support
+#[derive(Encode, Decode)]
 pub struct VariableLengthRecord {
     inline_data: Vec<u8>,
     overflow_pages: Vec<PageId>,
@@ -524,11 +530,13 @@ impl VariableLengthRecord {
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        bincode::serialize(self).unwrap()
+        bincode::encode_to_vec(self, bincode::config::standard()).unwrap()
     }
 
     pub fn deserialize(data: &[u8]) -> Self {
-        bincode::deserialize(data).unwrap()
+        bincode::decode_from_slice(data, bincode::config::standard())
+            .map(|(record, _)| record)
+            .unwrap()
     }
 }
 

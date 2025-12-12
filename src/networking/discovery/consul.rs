@@ -1,7 +1,7 @@
-//! HashiCorp Consul Service Discovery
-//!
-//! Implements service discovery and registration using HashiCorp Consul.
-//! Supports health checks, KV store metadata, and prepared queries.
+// HashiCorp Consul Service Discovery
+//
+// Implements service discovery and registration using HashiCorp Consul.
+// Supports health checks, KV store metadata, and prepared queries.
 
 use super::{HealthStatus, Node, ServiceDiscovery, ConsulConfig};
 use crate::error::{DbError, Result};
@@ -43,7 +43,7 @@ impl ConsulDiscovery {
 
         let http_client = reqwest::Client::builder()
             .default_headers(headers)
-            .timeout(std::time::Duration::from_secs(10))
+            .timeout(time::Duration::from_secs(10))
             .build()
             .unwrap_or_default();
 

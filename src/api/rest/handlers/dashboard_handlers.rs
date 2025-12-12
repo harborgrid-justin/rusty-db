@@ -9,13 +9,14 @@ use axum::{
 };
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use super::super::types::*;
 
 // Dashboard request/response types
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DashboardRequest {
     pub name: String,
     pub description: Option<String>,
@@ -23,7 +24,7 @@ pub struct DashboardRequest {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct WidgetRequest {
     pub title: String,
     pub widget_type: String, // line_chart, area_chart, bar_chart, gauge, counter, table, heatmap, alert
@@ -32,7 +33,7 @@ pub struct WidgetRequest {
     pub position: WidgetPositionRequest,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct QueryConfig {
     pub metric_name: String,
     pub aggregation: String, // avg, sum, min, max, count, rate, p50, p95, p99
@@ -40,7 +41,7 @@ pub struct QueryConfig {
     pub labels: Option<HashMap<String, String>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct WidgetPositionRequest {
     pub x: u32,
     pub y: u32,
@@ -48,7 +49,7 @@ pub struct WidgetPositionRequest {
     pub height: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DashboardResponse {
     pub id: String,
     pub name: String,
@@ -60,7 +61,7 @@ pub struct DashboardResponse {
     pub created_by: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct WidgetResponse {
     pub id: String,
     pub title: String,
@@ -70,13 +71,13 @@ pub struct WidgetResponse {
     pub position: WidgetPositionRequest,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DashboardListResponse {
     pub dashboards: Vec<DashboardSummary>,
     pub total_count: usize,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DashboardSummary {
     pub id: String,
     pub name: String,

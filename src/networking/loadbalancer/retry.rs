@@ -1,7 +1,7 @@
-//! Retry policies for handling transient failures.
-//!
-//! Implements various retry strategies with exponential backoff, jitter,
-//! maximum retry limits, and retry budgets to prevent retry storms.
+// Retry policies for handling transient failures.
+//
+// Implements various retry strategies with exponential backoff, jitter,
+// maximum retry limits, and retry budgets to prevent retry storms.
 
 use crate::error::{DbError, Result};
 use std::time::Duration;

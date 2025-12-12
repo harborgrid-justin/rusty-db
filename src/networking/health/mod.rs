@@ -1,27 +1,27 @@
-//! # Health Monitoring System
-//!
-//! Enterprise-grade health monitoring with heartbeats, failure detection,
-//! and comprehensive node health tracking for RustyDB distributed database.
-//!
-//! ## Features
-//!
-//! - Heartbeat management with adaptive intervals
-//! - Phi Accrual failure detection
-//! - Multiple health check types (TCP, HTTP, gRPC, custom)
-//! - Health aggregation and scoring
-//! - Liveness and readiness probes
-//! - Automatic recovery management
-//! - Metrics and reporting
-//!
-//! ## Usage
-//!
-//! ```rust
-//! use rusty_db::networking::health::{HealthMonitor, HealthConfig};
-//!
-//! let config = HealthConfig::default();
-//! let mut monitor = HealthMonitor::new(config);
-//! monitor.start().await?;
-//! ```
+// # Health Monitoring System
+//
+// Enterprise-grade health monitoring with heartbeats, failure detection,
+// and comprehensive node health tracking for RustyDB distributed database.
+//
+// ## Features
+//
+// - Heartbeat management with adaptive intervals
+// - Phi Accrual failure detection
+// - Multiple health check types (TCP, HTTP, gRPC, custom)
+// - Health aggregation and scoring
+// - Liveness and readiness probes
+// - Automatic recovery management
+// - Metrics and reporting
+//
+// ## Usage
+//
+// ```rust
+// use rusty_db::networking::health::{HealthMonitor, HealthConfig};
+//
+// let config = HealthConfig::default();
+// let mut monitor = HealthMonitor::new(config);
+// monitor.start().await?;
+// ```
 
 use crate::error::{DbError, Result};
 use crate::common::{NodeId, Component, HealthStatus};
@@ -39,13 +39,13 @@ pub mod reporter;
 pub mod recovery;
 pub mod liveness;
 
-pub use heartbeat::{HeartbeatManager, HeartbeatState, PeerStatus};
+pub use heartbeat::HeartbeatManager;
 pub use detector::{PhiAccrualDetector, FailureDetector};
-pub use checker::{HealthCheck, HealthChecker, HealthCheckResult};
-pub use aggregator::{HealthAggregator, HealthScore};
+pub use checker::HealthChecker;
+pub use aggregator::HealthAggregator;
 pub use reporter::{HealthReporter, HealthReport};
-pub use recovery::{RecoveryManager, RecoveryStrategy};
-pub use liveness::{LivenessProbe, ReadinessProbe, StartupProbe, ProbeResult};
+pub use recovery::RecoveryManager;
+pub use liveness::{LivenessProbe, ReadinessProbe, StartupProbe};
 
 /// Health monitoring configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,25 +98,25 @@ impl Default for HealthConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum HealthEvent {
     /// Node became healthy
-    NodeHealthy { node_id: NodeId, timestamp: Instant },
+    NodeHealthy { node_id: NodeId, timestamp: u64 },
 
     /// Node became unhealthy
-    NodeUnhealthy { node_id: NodeId, reason: String, timestamp: Instant },
+    NodeUnhealthy { node_id: NodeId, reason: String, timestamp: u64 },
 
     /// Node suspected of failure
-    NodeSuspected { node_id: NodeId, phi_value: f64, timestamp: Instant },
+    NodeSuspected { node_id: NodeId, phi_value: f64, timestamp: u64 },
 
     /// Node recovered
-    NodeRecovered { node_id: NodeId, attempts: u32, timestamp: Instant },
+    NodeRecovered { node_id: NodeId, attempts: u32, timestamp: u64 },
 
     /// Recovery failed
-    RecoveryFailed { node_id: NodeId, reason: String, timestamp: Instant },
+    RecoveryFailed { node_id: NodeId, reason: String, timestamp: u64 },
 
     /// Heartbeat missed
-    HeartbeatMissed { node_id: NodeId, consecutive_misses: u32, timestamp: Instant },
+    HeartbeatMissed { node_id: NodeId, consecutive_misses: u32, timestamp: u64 },
 
     /// Health check failed
-    HealthCheckFailed { node_id: NodeId, check_type: String, reason: String, timestamp: Instant },
+    HealthCheckFailed { node_id: NodeId, check_type: String, reason: String, timestamp: u64 },
 }
 
 /// Health event listener trait
@@ -258,7 +258,7 @@ impl HealthMonitor {
     /// Start heartbeat monitoring loop
     async fn start_heartbeat_loop(&self) {
         let heartbeat_manager = Arc::clone(&self.heartbeat_manager);
-        let failure_detector = Arc::clone(&self.failure_detector);
+        let _failure_detector = Arc::clone(&self.failure_detector);
         let running = Arc::clone(&self.running);
         let interval = self.config.heartbeat_interval;
 
@@ -269,7 +269,7 @@ impl HealthMonitor {
                 let failed_nodes = manager.get_failed_nodes();
                 drop(manager);
 
-                for node_id in failed_nodes {
+                for _node_id in failed_nodes {
                     // Emit event
                     // (event emission would happen here)
                 }

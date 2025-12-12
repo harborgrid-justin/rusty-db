@@ -6,6 +6,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc};
 use std::time::{Duration, Instant, SystemTime};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
 
 use crate::error::DbError;
 
@@ -27,7 +28,7 @@ pub struct RateLimiter {
 }
 
 // Rate limit configuration
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RateLimitConfig {
     // Limit type
     pub limit_type: RateLimitType,
@@ -201,7 +202,7 @@ pub struct RateLimitStatus {
 
 impl TokenBucket {
     // Create new token bucket
-    fn new(capacity: u64, refill_rate: f64) -> Self {
+    pub(crate) fn new(capacity: u64, refill_rate: f64) -> Self {
         Self {
             capacity,
             tokens: capacity as f64,
@@ -235,7 +236,7 @@ impl TokenBucket {
 
 impl SlidingWindow {
     // Create new sliding window
-    fn new(window_size: u64, max_requests: u64) -> Self {
+    pub(crate) fn new(window_size: u64, max_requests: u64) -> Self {
         Self {
             window_size,
             requests: VecDeque::new(),

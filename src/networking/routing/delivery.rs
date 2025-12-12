@@ -1,7 +1,7 @@
-//! Message delivery guarantees
-//!
-//! This module implements different delivery semantics including at-most-once,
-//! at-least-once, and exactly-once delivery with idempotency support.
+// Message delivery guarantees
+//
+// This module implements different delivery semantics including at-most-once,
+// at-least-once, and exactly-once delivery with idempotency support.
 
 use crate::error::Result;
 use crate::networking::routing::serialization::RequestId;

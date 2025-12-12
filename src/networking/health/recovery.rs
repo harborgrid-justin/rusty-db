@@ -1,7 +1,7 @@
-//! # Recovery Manager
-//!
-//! Handles automatic recovery attempts, gradual traffic restoration,
-//! quarantine periods, and manual override for failed nodes.
+// # Recovery Manager
+//
+// Handles automatic recovery attempts, gradual traffic restoration,
+// quarantine periods, and manual override for failed nodes.
 
 use crate::error::{DbError, Result};
 use crate::common::NodeId;
@@ -233,7 +233,7 @@ impl RecoveryManager {
 
         // Trigger recovery callback
         let callbacks = self.recovery_callbacks.read().await;
-        for callback in callbacks.iter() {
+        for _callback in callbacks.iter() {
             // Note: we can't call mutable methods on the callback here
             // In a real implementation, you'd need to handle this differently
         }

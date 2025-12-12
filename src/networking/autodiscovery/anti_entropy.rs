@@ -1,19 +1,20 @@
-//! Anti-Entropy Engine for RustyDB Discovery
-//!
-//! Implements anti-entropy mechanisms to ensure eventual consistency across the cluster.
-//! Uses Merkle trees for efficient state comparison and reconciliation.
-//!
-//! # Features
-//!
-//! - Merkle tree-based state comparison
-//! - Pull-based state synchronization
-//! - Delta-based updates for efficiency
-//! - CRDT-based counters for conflict-free updates
-//! - Periodic reconciliation
+// Anti-Entropy Engine for RustyDB Discovery
+//
+// Implements anti-entropy mechanisms to ensure eventual consistency across the cluster.
+// Uses Merkle trees for efficient state comparison and reconciliation.
+//
+// # Features
+//
+// - Merkle tree-based state comparison
+// - Pull-based state synchronization
+// - Delta-based updates for efficiency
+// - CRDT-based counters for conflict-free updates
+// - Periodic reconciliation
 
 use super::{MembershipList, MembershipSnapshot};
 use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
+use bincode::{Decode, Encode};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -25,7 +26,7 @@ use tokio::time::{interval, Duration};
 type Hash = [u8; 32];
 
 /// Merkle tree node
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 enum MerkleNode {
     /// Leaf node containing actual data hash
     Leaf {
@@ -194,7 +195,7 @@ impl MerkleTree {
 }
 
 /// CRDT-based counter for conflict-free updates
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 pub struct CrdtCounter {
     /// Increment counts per node
     increments: HashMap<String, u64>,
@@ -250,7 +251,7 @@ impl Default for CrdtCounter {
 }
 
 /// Anti-entropy message types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 enum AntiEntropyMessage {
     /// Request for remote state hash
     HashRequest,
@@ -325,7 +326,8 @@ impl AntiEntropyEngine {
             .members
             .iter()
             .map(|member| {
-                let data = bincode::serialize(member)
+                let config = bincode::config::standard();
+                let data = bincode::encode_to_vec(member, config)
                     .unwrap_or_default();
                 (member.info.id.clone(), data)
             })
@@ -337,7 +339,8 @@ impl AntiEntropyEngine {
     /// Request state hash from peer
     async fn request_hash(&self, peer: SocketAddr) -> Result<Hash> {
         let msg = AntiEntropyMessage::HashRequest;
-        let data = bincode::serialize(&msg)
+        let config = bincode::config::standard();
+        let data = bincode::encode_to_vec(&msg, config)
             .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
         self.socket.send_to(&data, peer).await
@@ -363,7 +366,8 @@ impl AntiEntropyEngine {
 
         // Request full state for reconciliation
         let msg = AntiEntropyMessage::StateRequest;
-        let data = bincode::serialize(&msg)
+        let config = bincode::config::standard();
+        let data = bincode::encode_to_vec(&msg, config)
             .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
         self.socket.send_to(&data, peer).await
@@ -383,7 +387,8 @@ impl AntiEntropyEngine {
                     root_hash: tree.root_hash(),
                 };
 
-                let data = bincode::serialize(&response)
+                let config = bincode::config::standard();
+                let data = bincode::encode_to_vec(&response, config)
                     .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
                 self.socket.send_to(&data, from).await
@@ -402,7 +407,8 @@ impl AntiEntropyEngine {
 
                 let response = AntiEntropyMessage::StateResponse { snapshot };
 
-                let data = bincode::serialize(&response)
+                let config = bincode::config::standard();
+                let data = bincode::encode_to_vec(&response, config)
                     .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
                 self.socket.send_to(&data, from).await
@@ -437,7 +443,8 @@ impl AntiEntropyEngine {
                     // Reconcile with a random peer
                     let peers = self.peers.read().await;
                     if !peers.is_empty() {
-                        let idx = rand::random::<usize>() % peers.len();
+                        use rand::Rng;
+                        let idx = rand::rng().random_range(0..peers.len());
                         let peer = peers[idx];
                         drop(peers);
 
@@ -450,7 +457,8 @@ impl AntiEntropyEngine {
                 result = self.socket.recv_from(&mut buffer) => {
                     match result {
                         Ok((len, addr)) => {
-                            if let Ok(msg) = bincode::deserialize::<AntiEntropyMessage>(&buffer[..len]) {
+                            let config = bincode::config::standard();
+                            if let Ok((msg, _)) = bincode::decode_from_slice::<AntiEntropyMessage, _>(&buffer[..len], config) {
                                 if let Err(e) = self.handle_message(msg, addr).await {
                                     eprintln!("Error handling anti-entropy message: {}", e);
                                 }

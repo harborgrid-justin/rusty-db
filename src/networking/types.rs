@@ -1,7 +1,7 @@
-//! Common types for the RustyDB networking layer
-//!
-//! This module defines all shared types used across networking components including
-//! node identification, cluster messages, network configuration, and connection info.
+// Common types for the RustyDB networking layer
+//
+// This module defines all shared types used across networking components including
+// node identification, cluster messages, network configuration, and connection info.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

@@ -11,14 +11,7 @@ mod manager;
 mod manager_impl;
 
 // Re-export public types
-pub use errors::SlotError;
-pub use types::{
-    SlotId, SlotName, SlotInfo, SlotType, SlotStatus, SlotConfig,
-    SnapshotAction, SlotStatistics, SlotAdvance, SlotHealthStatus,
-    SlotHealth, ConsumptionRecord, AtomicSlotMetrics,
-};
-pub use config::SlotManagerConfig;
-pub use manager::{SlotManager, ReplicationSlotManager};
+// pub use config::SlotManagerConfig;
 
 #[cfg(test)]
 mod tests {

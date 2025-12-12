@@ -16,11 +16,7 @@ use utoipa::ToSchema;
 
 use super::super::types::*;
 use crate::analytics::{
-    OlapCube, OlapCubeBuilder, AggregateFunction,
-    QueryStatisticsTracker, WorkloadAnalyzer, IndexRecommendation,
-    DataProfiler, ColumnProfile,
-    DataQualityAnalyzer, QualityMetrics, QualityIssue,
-    MaterializedView, RefreshSchedule,
+    OlapCubeBuilder, AggregateFunction,
 };
 
 // ============================================================================
@@ -286,7 +282,7 @@ pub async fn create_olap_cube(
     State(_state): State<Arc<ApiState>>,
     AxumJson(request): AxumJson<CreateCubeRequest>,
 ) -> ApiResult<(StatusCode, AxumJson<CubeResponse>)> {
-    let start_time = SystemTime::now();
+    let _start_time = SystemTime::now();
 
     // Create OLAP cube builder
     let mut builder = OlapCubeBuilder::new();
@@ -359,8 +355,8 @@ pub async fn list_olap_cubes(
 )]
 pub async fn query_olap_cube(
     State(_state): State<Arc<ApiState>>,
-    Path(cube_id): Path<String>,
-    AxumJson(request): AxumJson<CubeQueryRequest>,
+    Path(_cube_id): Path<String>,
+    AxumJson(_request): AxumJson<CubeQueryRequest>,
 ) -> ApiResult<AxumJson<CubeQueryResponse>> {
     let start_time = SystemTime::now();
 
@@ -396,7 +392,7 @@ pub async fn query_olap_cube(
 )]
 pub async fn delete_olap_cube(
     State(_state): State<Arc<ApiState>>,
-    Path(cube_id): Path<String>,
+    Path(_cube_id): Path<String>,
 ) -> ApiResult<StatusCode> {
     // In production, this would delete the cube from storage
     Ok(StatusCode::NO_CONTENT)
@@ -423,7 +419,7 @@ pub async fn delete_olap_cube(
 )]
 pub async fn get_query_statistics(
     State(_state): State<Arc<ApiState>>,
-    Query(filter): Query<QueryStatsFilter>,
+    Query(_filter): Query<QueryStatsFilter>,
 ) -> ApiResult<AxumJson<QueryStatisticsResponse>> {
     // In production, this would:
     // 1. Query the QueryStatisticsTracker
@@ -520,7 +516,7 @@ pub async fn get_recommendations(
 pub async fn profile_table(
     State(_state): State<Arc<ApiState>>,
     Path(table_name): Path<String>,
-    AxumJson(request): AxumJson<ProfileTableRequest>,
+    AxumJson(_request): AxumJson<ProfileTableRequest>,
 ) -> ApiResult<AxumJson<ProfileTableResponse>> {
     // In production, this would:
     // 1. Create a DataProfiler

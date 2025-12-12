@@ -1,7 +1,7 @@
-//! Message definitions for cluster communication
-//!
-//! This module defines all message types that can be sent between nodes in the cluster,
-//! including membership, data operations, replication, and coordination messages.
+// Message definitions for cluster communication
+//
+// This module defines all message types that can be sent between nodes in the cluster,
+// including membership, data operations, replication, and coordination messages.
 
 use crate::networking::types::{NodeAddress, NodeId};
 use serde::{Deserialize, Serialize};

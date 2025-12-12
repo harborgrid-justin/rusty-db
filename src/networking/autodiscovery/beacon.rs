@@ -1,15 +1,15 @@
-//! Beacon Protocol for RustyDB Discovery
-//!
-//! Implements a heartbeat-based presence announcement protocol.
-//! Nodes periodically send beacons containing their information and metadata.
-//!
-//! # Features
-//!
-//! - Periodic heartbeat beacons
-//! - Metadata propagation
-//! - Leader hints (for leader election integration)
-//! - Failure detection via missed beacons
-//! - Configurable beacon intervals
+// Beacon Protocol for RustyDB Discovery
+//
+// Implements a heartbeat-based presence announcement protocol.
+// Nodes periodically send beacons containing their information and metadata.
+//
+// # Features
+//
+// - Periodic heartbeat beacons
+// - Metadata propagation
+// - Leader hints (for leader election integration)
+// - Failure detection via missed beacons
+// - Configurable beacon intervals
 
 use super::{DiscoveryConfig, DiscoveryEvent, DiscoveryProtocol, NodeInfo, NodeStatus};
 use crate::error::{DbError, Result};
@@ -23,7 +23,7 @@ use tokio::sync::{mpsc, RwLock};
 use tokio::time::interval;
 
 /// Beacon message containing node information
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct Beacon {
     /// Node information
     pub node: NodeInfo,
@@ -137,23 +137,26 @@ impl BeaconProtocol {
             uptime,
         };
 
-        let data = bincode::serialize(&beacon)
+        let data = bincode::encode_to_vec(&beacon, bincode::config::standard())
             .map_err(|e| DbError::Serialization(format!("Failed to serialize beacon: {}", e)))?;
+
+        // Helper to send beacon to an address
+        let send_beacon_to = |addr: SocketAddr| async move {
+            if let Err(e) = self.socket.send_to(&data, addr).await {
+                eprintln!("Error sending beacon to {}: {}", addr, e);
+            }
+        };
 
         // Send to all known nodes
         let states = self.states.read().await;
         for state in states.values() {
-            if let Err(e) = self.socket.send_to(&data, state.info.addr).await {
-                eprintln!("Error sending beacon to {}: {}", state.info.addr, e);
-            }
+            send_beacon_to(state.info.addr).await;
         }
         drop(states);
 
         // Also send to seed nodes
         for seed in &self.config.seed_nodes {
-            if let Err(e) = self.socket.send_to(&data, seed).await {
-                eprintln!("Error sending beacon to seed {}: {}", seed, e);
-            }
+            send_beacon_to(*seed).await;
         }
 
         Ok(())
@@ -290,7 +293,7 @@ impl BeaconProtocol {
                 result = self.socket.recv_from(&mut buffer) => {
                     match result {
                         Ok((len, addr)) => {
-                            if let Ok(beacon) = bincode::deserialize::<Beacon>(&buffer[..len]) {
+                            if let Ok((beacon, _)) = bincode::decode_from_slice(&buffer[..len], bincode::config::standard()) {
                                 if let Err(e) = self.handle_beacon(beacon, addr).await {
                                     eprintln!("Error handling beacon: {}", e);
                                 }
@@ -393,8 +396,8 @@ mod tests {
             uptime: 3600,
         };
 
-        let bytes = bincode::serialize(&beacon).unwrap();
-        let deserialized: Beacon = bincode::deserialize(&bytes).unwrap();
+        let bytes = bincode::encode_to_vec(&beacon, bincode::config::standard()).unwrap();
+        let (deserialized, _): (Beacon, _) = bincode::decode_from_slice(&bytes, bincode::config::standard()).unwrap();
 
         assert_eq!(deserialized.sequence, 42);
         assert_eq!(deserialized.cluster_size, 5);

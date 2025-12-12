@@ -344,7 +344,7 @@ All agent implementations MUST:
    - Mock implementations for testing
 
 6. **Documentation**
-   - Module-level docs (`//!`)
+   - Module-level docs (`//`)
    - Public API docs (`///`)
    - Examples in doc comments
    - Safety comments for `unsafe` code

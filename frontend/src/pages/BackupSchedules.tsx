@@ -240,7 +240,7 @@ export default function BackupSchedulesPage() {
         }
         setShowForm(false);
         setEditingSchedule(undefined);
-        refetch();
+        await refetch();
       } catch (error) {
         console.error('Failed to save schedule:', error);
         throw error;

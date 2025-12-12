@@ -1,7 +1,7 @@
-//! Round-robin load balancing strategies.
-//!
-//! Provides simple round-robin, weighted round-robin, and smooth weighted round-robin
-//! algorithms for distributing load across backends.
+// Round-robin load balancing strategies.
+//
+// Provides simple round-robin, weighted round-robin, and smooth weighted round-robin
+// algorithms for distributing load across backends.
 
 use super::{Backend, LoadBalancerContext, LoadBalancingStrategy};
 use crate::error::{DbError, Result};

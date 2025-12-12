@@ -203,8 +203,8 @@ impl LoadBalancer {
             LoadBalancingStrategy::Random => {
                 // Random selection
                 use rand::Rng;
-                let mut rng = rand::thread_rng();
-                let idx = rng.gen_range(0..available.len());
+                let mut rng = rand::rng();
+                let idx = rng.random_range(0..available.len());
                 available.get(idx).copied()
             }
         }

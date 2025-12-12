@@ -160,8 +160,8 @@ impl MemoryCanary {
     // Create a new random canary
     #[inline]
     pub fn new(address: usize) -> Self {
-        let mut rng = rand::thread_rng();
-        let value: u64 = rng.gen();
+        let mut rng = rand::rng();
+        let value: u64 = rng.random();
         let xor_mask = Self::derive_xor_mask(address);
 
         Self {
@@ -233,13 +233,13 @@ pub struct GuardedMemory {
 
 impl GuardedMemory {
     // Create new guarded memory allocation
-    pub fn new(size: usize, guardsize: usize) -> Result<Self> {
+    pub fn new(size: usize, guard_size: usize) -> Result<Self> {
         if size == 0 {
             return Err(DbError::Other("Cannot allocate zero-sized memory".into()));
         }
 
         // Align guard size to page boundary
-        let guard_size = align_up(guardsize, PAGE_SIZE);
+        let guard_size = align_up(guard_size, PAGE_SIZE);
 
         // Total size: front_guard + data + back_guard
         let total_size = guard_size + size + guard_size;
@@ -263,8 +263,8 @@ impl GuardedMemory {
             .ok_or_else(|| DbError::Other("Invalid back guard pointer".into()))?;
 
         // Fill guard pages with random pattern
-        let mut rng = rand::thread_rng();
-        let guard_pattern: u8 = rng.gen();
+        let mut rng = rand::rng();
+        let guard_pattern: u8 = rng.random();
 
         unsafe {
             // Fill front guard
@@ -716,8 +716,8 @@ impl SecureZeroingAllocator {
 
         // Fill with random noise (prevent information leakage)
         if self.config.enable_zeroing {
-            let mut rng = rand::thread_rng();
-            let noise: u8 = rng.gen();
+            let mut rng = rand::rng();
+            let noise: u8 = rng.random();
             unsafe {
                 ptr::write_bytes(ptr, noise, size);
             }
@@ -895,8 +895,8 @@ impl IsolatedHeap {
         }
 
         // Generate encryption key
-        let mut rng = rand::thread_rng();
-        let encryption_key: u64 = rng.gen();
+        let mut rng = rand::rng();
+        let encryption_key: u64 = rng.random();
 
         Ok(Self {
             base_ptr: NonNull::new(ptr)
@@ -1090,7 +1090,6 @@ impl Default for SecurityMetrics {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_memory_canary() {

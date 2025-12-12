@@ -887,7 +887,7 @@ impl RaftNode {
         config.new_members = Some(new_members);
 
         // Log the C_old,new configuration
-        let config_entry = bincode::serialize(&*config)
+        let config_entry = bincode::encode_to_vec(&*config, bincode::config::standard())
             .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))?;
 
         drop(config);
@@ -909,7 +909,7 @@ impl RaftNode {
             config.members = new_members;
 
             // Log the C_new configuration
-            let config_entry = bincode::serialize(&*config)
+            let config_entry = bincode::encode_to_vec(&*config, bincode::config::standard())
                 .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))?;
 
             drop(config);

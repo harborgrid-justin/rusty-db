@@ -14,7 +14,7 @@ import {
   ServerIcon,
   SignalIcon,
 } from '@heroicons/react/24/outline';
-import type { AddNodeRequest, NodeSyncProgress } from '../../services/clusterService';
+import type { AddNodeRequest, NodeSyncProgress } from '@/services/clusterService.ts';
 import clsx from 'clsx';
 
 interface AddNodeWizardProps {

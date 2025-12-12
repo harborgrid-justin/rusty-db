@@ -299,6 +299,7 @@ pub struct CaptureStatistics {
     pub filtered_events: u64,
     // Number of errors
     pub error_count: u64,
+    pub lag_ms: ()
 }
 
 impl CaptureStatistics {

@@ -70,34 +70,37 @@ impl Default for IocpConfig {
 // IOCP Handle
 // ============================================================================
 
+#[cfg(windows)]
+use std::ffi::c_void;
+
 /// Windows IOCP handle wrapper
 #[derive(Debug, Clone, Copy)]
-pub struct IocpHandle(pub usize);
+pub struct IocpHandle(pub *mut c_void);
 
 impl IocpHandle {
     /// Create invalid handle
     pub const fn invalid() -> Self {
-        Self(0)
+        Self(std::ptr::null_mut())
     }
 
     /// Check if valid
     #[inline]
     pub fn is_valid(&self) -> bool {
-        self.0 != 0
+        !self.0.is_null()
     }
 }
 
 #[cfg(windows)]
 impl From<windows_sys::Win32::Foundation::HANDLE> for IocpHandle {
     fn from(handle: windows_sys::Win32::Foundation::HANDLE) -> Self {
-        Self(handle as usize)
+        Self(handle)
     }
 }
 
 #[cfg(windows)]
 impl From<IocpHandle> for windows_sys::Win32::Foundation::HANDLE {
     fn from(handle: IocpHandle) -> Self {
-        handle.0 as windows_sys::Win32::Foundation::HANDLE
+        handle.0
     }
 }
 
@@ -242,13 +245,13 @@ impl WindowsIocp {
         let iocp_handle = unsafe {
             CreateIoCompletionPort(
                 INVALID_HANDLE_VALUE,
-                0,
+                std::ptr::null_mut(),
                 0,
                 config.concurrent_threads as u32,
             )
         };
 
-        if iocp_handle == 0 {
+        if iocp_handle.is_null() {
             return Err(DbError::Internal("Failed to create IOCP".to_string()));
         }
 
@@ -267,14 +270,14 @@ impl WindowsIocp {
 
         let result = unsafe {
             CreateIoCompletionPort(
-                file_handle.0 as isize,
-                self.iocp_handle.into(),
+                file_handle.0,
+                self.iocp_handle.0,
                 completion_key,
                 0,
             )
         };
 
-        if result == 0 {
+        if result.is_null() {
             return Err(DbError::Internal("Failed to associate file with IOCP".to_string()));
         }
 
@@ -319,9 +322,9 @@ impl WindowsIocp {
 
         let result = unsafe {
             ReadFile(
-                request.file_handle.0 as isize,
+                request.file_handle.0,
                 buffer_ptr.as_ptr() as *mut u8,
-                request.len,
+                request.len as u32,
                 &mut bytes_read,
                 overlapped.as_ptr(),
             )
@@ -346,9 +349,9 @@ impl WindowsIocp {
 
         let result = unsafe {
             WriteFile(
-                request.file_handle.0 as isize,
+                request.file_handle.0,
                 buffer_ptr.as_ptr() as *const u8,
-                request.len,
+                request.len as u32,
                 &mut bytes_written,
                 overlapped.as_ptr(),
             )
@@ -368,7 +371,7 @@ impl WindowsIocp {
     fn submit_sync(&self, request: &IoRequest) -> Result<()> {
         use windows_sys::Win32::Storage::FileSystem::FlushFileBuffers;
 
-        let result = unsafe { FlushFileBuffers(request.file_handle.0 as isize) };
+        let result = unsafe { FlushFileBuffers(request.file_handle.0) };
 
         if result == 0 {
             let error = unsafe { windows_sys::Win32::Foundation::GetLastError() };
@@ -409,7 +412,7 @@ impl WindowsIocp {
 
             let result = unsafe {
                 GetQueuedCompletionStatus(
-                    self.iocp_handle.into(),
+                    self.iocp_handle.0,
                     &mut bytes_transferred,
                     &mut completion_key,
                     &mut overlapped_ptr,
@@ -492,7 +495,7 @@ impl Drop for WindowsIocp {
 
         if self.iocp_handle.is_valid() {
             unsafe {
-                CloseHandle(self.iocp_handle.into());
+                CloseHandle(self.iocp_handle.0);
             }
         }
     }
@@ -545,7 +548,6 @@ impl WindowsIocp {
 #[cfg(windows)]
 mod tests {
     use super::*;
-use std::collections::HashMap;
 
     #[test]
     fn test_iocp_handle() {

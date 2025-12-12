@@ -26,7 +26,7 @@ import type {
   PaginatedResponse,
   KeyType,
   MaskingType,
-} from '../types';
+} from '@/types';
 import { getErrorMessage } from '../services/api';
 
 // ============================================================================

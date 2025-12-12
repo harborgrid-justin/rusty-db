@@ -26,7 +26,7 @@ import {
 } from '../hooks/useSecurity';
 import { MaskingPolicyForm } from '../components/security/MaskingPolicyForm';
 import { LoadingScreen } from '../components/common/LoadingScreen';
-import type { DataMaskingPolicy, MaskingType } from '../types';
+import type { DataMaskingPolicy, MaskingType } from '@/types';
 import clsx from 'clsx';
 
 // ============================================================================

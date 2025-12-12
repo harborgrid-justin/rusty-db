@@ -783,6 +783,7 @@ impl Default for ProvisioningService {
 
 #[cfg(test)]
 mod tests {
+    use std::thread::sleep;
     use super::*;
 
     #[tokio::test]
@@ -826,7 +827,7 @@ mod tests {
         ).await.unwrap();
 
         // Wait for workflow to complete
-        sleep(Duration::from_secs(2)).await;
+        tokio::time::sleep(Duration::from_secs(2)).await.await;
 
         // Verify request is completed
         let requests = service.requests.read().await;

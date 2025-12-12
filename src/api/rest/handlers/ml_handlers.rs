@@ -7,20 +7,21 @@
 // - Feature engineering
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
     Json,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+use futures_util::StreamExt;
 use utoipa::ToSchema;
 
 use crate::api::rest::types::{ApiState, ApiError, ApiResult};
 use crate::ml::{
-    MLEngine, ModelType, Dataset, Hyperparameters, Metrics,
-    Algorithm, LinearRegression, LogisticRegression, KMeansClustering,
-    InferenceEngine, PredictionResult,
+    MLEngine, ModelType, Dataset, Hyperparameters,
+    Algorithm,
+    InferenceEngine,
 };
 
 // ============================================================================
@@ -147,7 +148,7 @@ pub async fn create_model(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<CreateModelRequest>,
 ) -> ApiResult<(StatusCode, Json<ModelResponse>)> {
-    let mut engine = ML_ENGINE.write();
+    let engine = ML_ENGINE.write();
 
     // Parse model type
     let model_type = match request.model_type.as_str() {
@@ -185,15 +186,15 @@ pub async fn create_model(
         }
     }
 
-    // Create model
-    let model_id = engine.create_model(
+    // Create a training job (model will be registered upon training)
+    let job = engine.create_training_job(
         request.name.clone(),
         model_type,
-        hyperparams,
+        Some(hyperparams),
     ).map_err(|e| ApiError::new("MODEL_CREATION_FAILED", format!("Failed to create model: {}", e)))?;
 
     Ok((StatusCode::CREATED, Json(ModelResponse {
-        model_id: model_id.clone(),
+        model_id: job.id.clone(),
         name: request.name,
         model_type: request.model_type,
         status: "created".to_string(),
@@ -222,7 +223,7 @@ pub async fn train_model(
     Json(request): Json<TrainModelRequest>,
 ) -> ApiResult<Json<TrainModelResponse>> {
     let start = std::time::Instant::now();
-    let mut engine = ML_ENGINE.write();
+    let engine = ML_ENGINE.write();
 
     // Prepare training dataset
     let features = request.features.ok_or_else(|| {
@@ -237,22 +238,31 @@ pub async fn train_model(
             .collect()
     });
 
-    let dataset = Dataset::new(features, target, feature_names);
+    let dataset = Dataset::new(features.clone(), target.clone(), feature_names.clone());
 
     // Validate dataset
     dataset.validate()
         .map_err(|e| ApiError::new("INVALID_DATASET", format!("Dataset validation failed: {}", e)))?;
 
-    // Train model
-    let metrics = engine.train_model(&id, dataset)
-        .map_err(|e| ApiError::new("TRAINING_FAILED", format!("Model training failed: {}", e)))?;
+    // Train model - use model name (id) as the model name
+    let metadata = engine.train_model(
+        id.clone(),
+        ModelType::DecisionTree,
+        Dataset {
+            features,
+            target,
+            feature_names,
+            weights: None,
+        },
+        None,
+    ).map_err(|e| ApiError::new("TRAINING_FAILED", format!("Model training failed: {}", e)))?;
 
     let training_time_ms = start.elapsed().as_millis() as u64;
 
     Ok(Json(TrainModelResponse {
         model_id: id,
         status: "trained".to_string(),
-        metrics: metrics.all().clone(),
+        metrics: metadata.metrics.clone(),
         training_time_ms,
         epochs_completed: request.epochs.unwrap_or(100),
     }))
@@ -279,17 +289,17 @@ pub async fn predict(
 ) -> ApiResult<Json<PredictResponse>> {
     let engine = ML_ENGINE.read();
 
-    // Get inference engine
-    let inference_engine = InferenceEngine::new();
+    // Get inference engine using the registry
+    let inference_engine = InferenceEngine::new(Arc::new(engine.registry().clone()));
 
-    // Make predictions
-    let predictions = engine.predict(&id, request.features)
+    // Make predictions using the inference engine
+    let result = inference_engine.predict(&id, None, &request.features)
         .map_err(|e| ApiError::new("PREDICTION_FAILED", format!("Prediction failed: {}", e)))?;
 
     Ok(Json(PredictResponse {
-        prediction_count: predictions.len(),
-        predictions,
-        confidence_scores: None, // Would include confidence for classification models
+        prediction_count: result.predictions.len(),
+        predictions: result.predictions,
+        confidence_scores: result.confidence.map(|c| c.scores),
     }))
 }
 
@@ -307,17 +317,21 @@ pub async fn list_models(
 ) -> ApiResult<Json<ModelListResponse>> {
     let engine = ML_ENGINE.read();
 
-    let models = engine.list_models();
+    // list_models returns Vec<String> of model names
+    let model_names = engine.registry().list_models();
 
-    let summaries: Vec<ModelSummary> = models.iter().map(|m| {
-        ModelSummary {
-            model_id: m.id.clone(),
-            name: m.name.clone(),
-            model_type: format!("{:?}", m.model_type),
-            status: format!("{:?}", m.status),
-            accuracy: m.metrics.get("accuracy"),
-            created_at: m.created_at,
-        }
+    let summaries: Vec<ModelSummary> = model_names.iter().filter_map(|name| {
+        // Try to get the model from registry
+        engine.registry().get(name, None).ok().map(|stored| {
+            ModelSummary {
+                model_id: stored.metadata.name.clone(),
+                name: stored.metadata.name.clone(),
+                model_type: format!("{:?}", stored.metadata.model_type),
+                status: format!("{:?}", stored.metadata.status),
+                accuracy: stored.metadata.metrics.get("accuracy").copied(),
+                created_at: stored.metadata.created_at as i64,
+            }
+        })
     }).collect();
 
     Ok(Json(ModelListResponse {
@@ -345,16 +359,16 @@ pub async fn get_model(
 ) -> ApiResult<Json<ModelResponse>> {
     let engine = ML_ENGINE.read();
 
-    let model = engine.get_model(&id)
+    let stored = engine.registry().get(&id, None)
         .map_err(|_| ApiError::new("NOT_FOUND", format!("Model '{}' not found", id)))?;
 
     Ok(Json(ModelResponse {
-        model_id: model.id.clone(),
-        name: model.name.clone(),
-        model_type: format!("{:?}", model.model_type),
-        status: format!("{:?}", model.status),
-        created_at: model.created_at,
-        version: model.version,
+        model_id: stored.metadata.name.clone(),
+        name: stored.metadata.name.clone(),
+        model_type: format!("{:?}", stored.metadata.model_type),
+        status: format!("{:?}", stored.metadata.status),
+        created_at: stored.metadata.created_at as i64,
+        version: stored.metadata.version.major as i32,
     }))
 }
 
@@ -375,9 +389,9 @@ pub async fn delete_model(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<String>,
 ) -> ApiResult<StatusCode> {
-    let mut engine = ML_ENGINE.write();
+    let engine = ML_ENGINE.read();
 
-    engine.delete_model(&id)
+    engine.registry().delete(&id, None)
         .map_err(|_| ApiError::new("NOT_FOUND", format!("Model '{}' not found", id)))?;
 
     Ok(StatusCode::NO_CONTENT)
@@ -402,12 +416,12 @@ pub async fn get_model_metrics(
 ) -> ApiResult<Json<ModelMetricsResponse>> {
     let engine = ML_ENGINE.read();
 
-    let model = engine.get_model(&id)
+    let stored = engine.registry().get(&id, None)
         .map_err(|_| ApiError::new("NOT_FOUND", format!("Model '{}' not found", id)))?;
 
     Ok(Json(ModelMetricsResponse {
         model_id: id,
-        metrics: model.metrics.all().clone(),
+        metrics: stored.metadata.metrics.clone(),
         feature_importance: None, // Would compute for tree-based models
     }))
 }
@@ -433,9 +447,13 @@ pub async fn evaluate_model(
 ) -> ApiResult<Json<ModelEvaluationResponse>> {
     let engine = ML_ENGINE.read();
 
+    // Get inference engine using the registry
+    let inference_engine = InferenceEngine::new(Arc::new(engine.registry().clone()));
+
     // Make predictions on test data
-    let predictions = engine.predict(&id, request.test_features)
+    let result = inference_engine.predict(&id, None, &request.test_features)
         .map_err(|e| ApiError::new("EVALUATION_FAILED", format!("Evaluation failed: {}", e)))?;
+    let predictions = result.predictions;
 
     // Calculate metrics (simplified)
     let mut metrics_map = HashMap::new();
@@ -490,16 +508,16 @@ pub async fn export_model(
 ) -> ApiResult<Json<serde_json::Value>> {
     let engine = ML_ENGINE.read();
 
-    let model = engine.get_model(&id)
+    let stored = engine.registry().get(&id, None)
         .map_err(|_| ApiError::new("NOT_FOUND", format!("Model '{}' not found", id)))?;
 
     // Serialize model (simplified)
     let export_data = serde_json::json!({
-        "model_id": model.id,
-        "name": model.name,
-        "model_type": format!("{:?}", model.model_type),
-        "version": model.version,
-        "created_at": model.created_at,
+        "model_id": stored.metadata.name,
+        "name": stored.metadata.name,
+        "model_type": format!("{:?}", stored.metadata.model_type),
+        "version": format!("{}.{}.{}", stored.metadata.version.major, stored.metadata.version.minor, stored.metadata.version.patch),
+        "created_at": stored.metadata.created_at,
     });
 
     Ok(Json(export_data))

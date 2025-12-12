@@ -1,7 +1,7 @@
-//! Message queuing for cluster communication
-//!
-//! This module implements priority-based message queuing with backpressure
-//! and dead letter queue support for failed messages.
+// Message queuing for cluster communication
+//
+// This module implements priority-based message queuing with backpressure
+// and dead letter queue support for failed messages.
 
 use crate::error::{DbError, Result};
 use crate::networking::routing::serialization::{ClusterMessage, RequestId};

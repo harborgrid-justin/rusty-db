@@ -10,12 +10,12 @@ use crate::error::{DbError, Result};
 use crate::common::NodeId;
 use crate::networking::membership::{
     NodeInfo, NodeStatus, MembershipEvent, MembershipConfig,
-    RaftMembership, SwimMembership, ViewManager,
+    RaftMembership, SwimMembership,
 };
+use crate::networking::membership::view::ViewManager;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{RwLock, mpsc};
-use tokio::time;
 
 /// Membership coordinator - orchestrates join/leave operations
 pub struct MembershipCoordinator {

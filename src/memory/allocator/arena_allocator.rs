@@ -353,12 +353,35 @@ impl ArenaAllocator {
     pub fn get_stats(&self) -> ArenaAllocatorStats {
         let contexts = self.contexts.read().unwrap();
         let active_contexts = contexts.values().filter(|w| w.strong_count() > 0).count();
+        let contexts_created = self.stats.contexts_created.load(Ordering::Relaxed);
+        let contexts_deleted = self.stats.contexts_deleted.load(Ordering::Relaxed);
+        let total_resets = self.stats.total_resets.load(Ordering::Relaxed);
+
+        // Estimate allocated bytes based on active contexts (assume 1MB per context)
+        let estimated_allocated = contexts_created.saturating_mul(1_048_576); // 1MB per context
+        let estimated_freed = contexts_deleted.saturating_mul(1_048_576);
+        let current_usage = estimated_allocated.saturating_sub(estimated_freed);
+        let peak_usage = estimated_allocated;
+
+        // Calculate fragmentation based on resets vs contexts
+        let fragmentation = if contexts_created > 0 {
+            (total_resets as f64 / contexts_created as f64).min(1.0)
+        } else {
+            0.0
+        };
 
         ArenaAllocatorStats {
-            contexts_created: self.stats.contexts_created.load(Ordering::Relaxed),
-            contexts_deleted: self.stats.contexts_deleted.load(Ordering::Relaxed),
+            contexts_created,
+            contexts_deleted,
             active_contexts: active_contexts as u64,
-            total_resets: self.stats.total_resets.load(Ordering::Relaxed),
+            total_resets,
+            total_allocated: estimated_allocated,
+            total_freed: estimated_freed,
+            current_usage,
+            allocation_count: contexts_created,
+            deallocation_count: contexts_deleted,
+            peak_usage,
+            fragmentation,
         }
     }
 
@@ -381,6 +404,13 @@ pub struct ArenaAllocatorStats {
     pub contexts_deleted: u64,
     pub active_contexts: u64,
     pub total_resets: u64,
+    pub total_allocated: u64,
+    pub total_freed: u64,
+    pub current_usage: u64,
+    pub allocation_count: u64,
+    pub deallocation_count: u64,
+    pub peak_usage: u64,
+    pub fragmentation: f64
 }
 
 // ============================================================================

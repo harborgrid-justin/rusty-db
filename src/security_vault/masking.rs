@@ -145,7 +145,7 @@ struct SubstitutionTable {
 impl SubstitutionTable {
     // Get random value from table
     fn get_random(&self) -> &str {
-        let idx = rand::thread_rng().gen_range(0..self.values.len());
+        let idx = rand::rng().random_range(0..self.values.len());
         &self.values[idx]
     }
 
@@ -371,7 +371,7 @@ pub fn new() -> Result<Self> {
             MaskingType::Shuffle => {
                 let mut chars: Vec<char> = value.chars().collect();
                 use rand::seq::SliceRandom;
-                chars.shuffle(&mut rand::thread_rng());
+                chars.shuffle(&mut rand::rng());
                 chars.iter().collect()
             }
 
@@ -438,12 +438,12 @@ pub fn new() -> Result<Self> {
         let mut masked = String::new();
         for ch in value.chars() {
             if ch.is_ascii_digit() {
-                masked.push(char::from_digit(rand::thread_rng().gen_range(0..10), 10).unwrap());
+                masked.push(char::from_digit(rand::rng().random_range(0..10), 10).unwrap());
             } else if ch.is_ascii_alphabetic() {
                 if ch.is_uppercase() {
-                    masked.push(char::from(rand::thread_rng().gen_range(b'A'..=b'Z')));
+                    masked.push(char::from(rand::rng().random_range(b'A'..=b'Z')));
                 } else {
-                    masked.push(char::from(rand::thread_rng().gen_range(b'a'..=b'z')));
+                    masked.push(char::from(rand::rng().random_range(b'a'..=b'z')));
                 }
             } else {
                 masked.push(ch);

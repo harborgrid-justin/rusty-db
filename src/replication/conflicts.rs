@@ -65,7 +65,6 @@
 // ```
 
 use std::time::SystemTime;
-use crate::error::DbError;
 use crate::replication::types::*;
 use async_trait::async_trait;
 use parking_lot::RwLock;

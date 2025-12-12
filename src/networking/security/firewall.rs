@@ -1,7 +1,7 @@
-//! Application firewall with rate limiting and DDoS protection
-//!
-//! This module provides rate limiting, DDoS protection, connection limits,
-//! and suspicious activity detection.
+// Application firewall with rate limiting and DDoS protection
+//
+// This module provides rate limiting, DDoS protection, connection limits,
+// and suspicious activity detection.
 
 use crate::error::Result;
 use std::collections::HashMap;

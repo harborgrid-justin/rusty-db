@@ -1,40 +1,40 @@
-//! Service Discovery Module
-//!
-//! Provides comprehensive service discovery capabilities for RustyDB distributed database.
-//! Supports multiple discovery backends including DNS, Kubernetes, Consul, etcd, and cloud providers.
-//!
-//! # Overview
-//!
-//! Service discovery enables nodes in a distributed database cluster to find and communicate
-//! with each other. This module provides a pluggable architecture supporting multiple discovery
-//! mechanisms that can be used independently or in combination.
-//!
-//! # Supported Backends
-//!
-//! - **DNS**: SRV/A/AAAA record-based discovery with TTL caching
-//! - **Static**: File-based seed lists with hot reload
-//! - **Kubernetes**: Native K8s service discovery via API
-//! - **Consul**: HashiCorp Consul integration
-//! - **etcd**: Distributed KV-based discovery
-//! - **Cloud**: AWS, Azure, GCP instance discovery
-//!
-//! # Example
-//!
-//! ```rust,no_run
-//! use rusty_db::networking::discovery::{DiscoveryConfig, Registry};
-//!
-//! # async fn example() -> rusty_db::error::Result<()> {
-//! let config = DiscoveryConfig::default();
-//! let mut registry = Registry::new(config);
-//! registry.start().await?;
-//!
-//! let nodes = registry.discover_nodes().await?;
-//! for node in nodes {
-//!     println!("Discovered node: {}:{}", node.address, node.port);
-//! }
-//! # Ok(())
-//! # }
-//! ```
+// Service Discovery Module
+//
+// Provides comprehensive service discovery capabilities for RustyDB distributed database.
+// Supports multiple discovery backends including DNS, Kubernetes, Consul, etcd, and cloud providers.
+//
+// # Overview
+//
+// Service discovery enables nodes in a distributed database cluster to find and communicate
+// with each other. This module provides a pluggable architecture supporting multiple discovery
+// mechanisms that can be used independently or in combination.
+//
+// # Supported Backends
+//
+// - **DNS**: SRV/A/AAAA record-based discovery with TTL caching
+// - **Static**: File-based seed lists with hot reload
+// - **Kubernetes**: Native K8s service discovery via API
+// - **Consul**: HashiCorp Consul integration
+// - **etcd**: Distributed KV-based discovery
+// - **Cloud**: AWS, Azure, GCP instance discovery
+//
+// # Example
+//
+// ```rust,no_run
+// use rusty_db::networking::discovery::{DiscoveryConfig, Registry};
+//
+// # async fn example() -> rusty_db::error::Result<()> {
+// let config = DiscoveryConfig::default();
+// let mut registry = Registry::new(config);
+// registry.start().await?;
+//
+// let nodes = registry.discover_nodes().await?;
+// for node in nodes {
+//     println!("Discovered node: {}:{}", node.address, node.port);
+// }
+// # Ok(())
+// # }
+// ```
 
 use crate::error::Result;
 use async_trait::async_trait;

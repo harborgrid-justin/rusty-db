@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import type { Alert } from '../../types';
+import type { Alert } from '@/types';
 
 interface AlertCardProps {
   alert: Alert;

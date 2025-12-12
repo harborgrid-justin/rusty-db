@@ -28,6 +28,7 @@ pub enum NodeState {
     Suspect,
     Dead,
     Left,
+    Joining,
 }
 
 #[derive(Debug, Clone)]
@@ -36,6 +37,11 @@ pub struct NodeInfo {
     pub address: SocketAddr,
     pub state: NodeState,
     pub metadata: HashMap<String, String>,
+    pub incarnation: i32,
+    pub last_seen: std::time::Instant,
+    pub datacenter: String,
+    pub rack: String,
+    pub capacity: NodeCapacity,
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +49,12 @@ pub struct NodeCapacity {
     pub cpu: f64,
     pub memory: u64,
     pub connections: usize,
+    pub cpu_cores: i32,
+    pub memory_gb: i32,
+    pub max_connections: i32,
+    pub current_connections: i32,
+    pub query_latency_ms: f64,
+    pub disk_io_utilization: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -51,6 +63,7 @@ pub enum MembershipEvent {
     NodeLeft(NodeId),
     NodeFailed(NodeId),
     NodeUpdated(NodeId),
+    TopologyChanged,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -212,6 +225,7 @@ pub enum RoutingStrategy {
     LeastConnections,
     WeightedRandom,
     ConsistentHash,
+    Adaptive,
 }
 
 pub struct ClusterLoadBalancer {

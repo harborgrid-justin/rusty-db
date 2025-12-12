@@ -1,10 +1,10 @@
-//! Load balancing strategies for backend selection.
-//!
-//! This module provides multiple strategies for selecting backends:
-//! - Round-robin: Simple rotation through backends
-//! - Least connections: Select backend with fewest active connections
-//! - Consistent hashing: Key-based routing for cache affinity
-//! - Adaptive: ML-based selection using latency and error rates
+// Load balancing strategies for backend selection.
+//
+// This module provides multiple strategies for selecting backends:
+// - Round-robin: Simple rotation through backends
+// - Least connections: Select backend with fewest active connections
+// - Consistent hashing: Key-based routing for cache affinity
+// - Adaptive: ML-based selection using latency and error rates
 
 use crate::error::Result;
 use async_trait::async_trait;

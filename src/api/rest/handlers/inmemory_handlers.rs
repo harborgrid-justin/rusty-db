@@ -19,8 +19,8 @@ use utoipa::ToSchema;
 use crate::api::rest::types::{ApiState, ApiError, ApiResult};
 use crate::inmemory::{
     InMemoryStore, InMemoryConfig, ColumnMetadata,
-    PopulationStrategy, PopulationPriority,
 };
+use crate::inmemory::column_store::ColumnDataType;
 
 // ============================================================================
 // Request/Response Types
@@ -137,9 +137,11 @@ pub async fn enable_inmemory(
         cols.iter().enumerate().map(|(i, name)| {
             ColumnMetadata {
                 name: name.clone(),
-                data_type: "VARCHAR".to_string(),
+                column_id: i as u32,
+                data_type: ColumnDataType::String,
                 nullable: true,
-                index: i,
+                compression_type: None,
+                cardinality: None,
             }
         }).collect()
     } else {
@@ -147,7 +149,7 @@ pub async fn enable_inmemory(
     };
 
     // Create column store
-    let column_store = store.create_column_store(request.table.clone(), columns);
+    let _column_store = store.create_column_store(request.table.clone(), columns);
 
     Ok(Json(EnableInMemoryResponse {
         table: request.table,
@@ -162,7 +164,7 @@ pub async fn enable_inmemory(
     post,
     path = "/api/v1/inmemory/disable",
     params(
-        ("table" = String, Query(description = "Table name"))
+        ("table" = String, Query, description = "Table name")
     ),
     responses(
         (status = 200, description = "In-memory disabled"),
@@ -174,7 +176,7 @@ pub async fn disable_inmemory(
     State(_state): State<Arc<ApiState>>,
     Query(params): Query<HashMap<String, String>>,
 ) -> ApiResult<StatusCode> {
-    let table = params.get("table")
+    let _table = params.get("table")
         .ok_or_else(|| ApiError::new("MISSING_PARAMETER", "Missing table parameter"))?;
 
     // In a real implementation, would disable and evict the table from memory
@@ -291,8 +293,8 @@ pub async fn evict_tables(
 
     if let Some(table) = request.table {
         // Evict specific table
-        if let Some(column_store) = store.get_column_store(&table) {
-            // column_store.evict();
+        if let Some(_column_store) = store.get_column_store(&table) {
+            // _column_store.evict();
         }
     } else {
         // Evict tables based on LRU and memory pressure
@@ -368,7 +370,7 @@ pub async fn compact_memory(
 )]
 pub async fn update_inmemory_config(
     State(_state): State<Arc<ApiState>>,
-    Json(config): Json<serde_json::Value>,
+    Json(_config): Json<serde_json::Value>,
 ) -> ApiResult<StatusCode> {
     // Update in-memory configuration parameters
     // e.g., max_memory, auto_populate, compression settings

@@ -142,7 +142,7 @@ impl MemorySanitizer {
     // Random data pass using cryptographically secure RNG
     #[inline]
     fn random_pass(data: &mut [u8]) {
-        rand::thread_rng().fill_bytes(data);
+        rand::rng().fill_bytes(data);
     }
 
     // Sanitize a raw pointer (unsafe, caller must ensure validity)
@@ -321,11 +321,11 @@ impl CryptoErase {
     pub fn erase(data: &mut [u8]) {
         // Generate key from timestamp + random
         let mut key = [0u8; 32];
-        rand::thread_rng().fill_bytes(&mut key);
+        rand::rng().fill_bytes(&mut key);
 
         // Simple XOR stream (in production, use proper AES-CTR)
         let mut nonce = [0u8; 16];
-        rand::thread_rng().fill_bytes(&mut nonce);
+        rand::rng().fill_bytes(&mut nonce);
 
         // XOR data with crypto stream
         for (i, byte) in data.iter_mut().enumerate() {
@@ -729,7 +729,7 @@ impl HeapGuard {
     // Create a new heap guard
     pub fn new() -> Self {
         let mut canary_bytes = [0u8; 8];
-        rand::thread_rng().fill_bytes(&mut canary_bytes);
+        rand::rng().fill_bytes(&mut canary_bytes);
         let canary = u64::from_le_bytes(canary_bytes);
 
         Self {
@@ -874,6 +874,7 @@ pub struct HeapGuardStats {
 
 #[cfg(test)]
 mod tests {
+    use std::mem;
     use super::*;
 
     #[test]

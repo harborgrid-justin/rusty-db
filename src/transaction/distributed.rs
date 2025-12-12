@@ -173,7 +173,7 @@ impl TwoPhaseCommitCoordinator {
         &self,
         participants: Vec<ParticipantNode>,
         operations: Vec<u8>,
-    ) -> std::result::Result<GlobalTxnId, DbError> {
+    ) -> Result<GlobalTxnId, DbError> {
         // Check concurrent transaction limit
         if self.active_txns.read().len() >= self.config.max_concurrent_txns {
             return Err(DbError::Transaction(
@@ -202,7 +202,7 @@ impl TwoPhaseCommitCoordinator {
     }
 
     /// Execute prepare phase
-    pub async fn prepare_phase(&self, global_txn_id: GlobalTxnId) -> std::result::Result<bool, DbError> {
+    pub async fn prepare_phase(&self, global_txn_id: GlobalTxnId) -> Result<bool, DbError> {
         let mut txn = {
             let txns = self.active_txns.read();
             txns.get(&global_txn_id)
@@ -244,7 +244,7 @@ impl TwoPhaseCommitCoordinator {
     }
 
     /// Execute commit phase
-    pub async fn commit_phase(&self, global_txn_id: GlobalTxnId, commit: bool) -> std::result::Result<(), DbError> {
+    pub async fn commit_phase(&self, global_txn_id: GlobalTxnId, commit: bool) -> Result<(), DbError> {
         let mut txn = {
             let txns = self.active_txns.read();
             txns.get(&global_txn_id)
@@ -309,7 +309,7 @@ impl TwoPhaseCommitCoordinator {
     }
 
     /// Execute full 2PC protocol
-    pub async fn execute_2pc(&self, global_txn_id: GlobalTxnId) -> std::result::Result<bool, DbError> {
+    pub async fn execute_2pc(&self, global_txn_id: GlobalTxnId) -> Result<bool, DbError> {
         let can_commit = self.prepare_phase(global_txn_id).await?;
         self.commit_phase(global_txn_id, can_commit).await?;
         Ok(can_commit)
@@ -406,7 +406,7 @@ impl SagaCoordinator {
     }
 
     /// Begin a new saga
-    pub fn begin_saga(&self, steps: Vec<SagaStep>) -> std::result::Result<u64, DbError> {
+    pub fn begin_saga(&self, steps: Vec<SagaStep>) -> Result<u64, DbError> {
         if self.active_sagas.read().len() >= self.config.max_concurrent_sagas {
             return Err(DbError::Transaction(
                 "Maximum concurrent sagas reached".to_string()
@@ -429,7 +429,7 @@ impl SagaCoordinator {
     }
 
     /// Execute saga steps
-    pub async fn execute_saga(&self, saga_id: u64) -> std::result::Result<bool, DbError> {
+    pub async fn execute_saga(&self, saga_id: u64) -> Result<bool, DbError> {
         let mut saga = {
             let sagas = self.active_sagas.read();
             sagas.get(&saga_id)
@@ -466,7 +466,7 @@ impl SagaCoordinator {
     }
 
     /// Compensate saga (execute compensation actions in reverse order)
-    async fn compensate_saga(&self, saga_id: u64) -> std::result::Result<bool, DbError> {
+    async fn compensate_saga(&self, saga_id: u64) -> Result<bool, DbError> {
         let mut saga = {
             let sagas = self.active_sagas.read();
             sagas.get(&saga_id)
@@ -489,12 +489,12 @@ impl SagaCoordinator {
         Ok(false)
     }
 
-    async fn execute_saga_step(&self, _step: &SagaStep) -> std::result::Result<bool, DbError> {
+    async fn execute_saga_step(&self, _step: &SagaStep) -> Result<bool, DbError> {
         // Simulate step execution
         Ok(true)
     }
 
-    async fn execute_compensation(&self, _step: &SagaStep) -> std::result::Result<(), DbError> {
+    async fn execute_compensation(&self, _step: &SagaStep) -> Result<(), DbError> {
         // Simulate compensation execution
         Ok(())
     }

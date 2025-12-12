@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use crate::api::rest::types::{ApiState, ApiResult, ApiError};
-use crate::security::rbac::{RbacManager, Role, RoleAssignment, PermissionId};
+use crate::security::rbac::{RbacManager, Role};
 use crate::security::insider_threat::{InsiderThreatManager, ThreatStatistics};
 use utoipa::ToSchema;
 

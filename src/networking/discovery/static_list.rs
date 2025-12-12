@@ -1,7 +1,7 @@
-//! Static Seed List Discovery
-//!
-//! Provides discovery based on a pre-configured list of seed nodes.
-//! Supports file-based configuration with hot reload capabilities.
+// Static Seed List Discovery
+//
+// Provides discovery based on a pre-configured list of seed nodes.
+// Supports file-based configuration with hot reload capabilities.
 
 use super::{HealthStatus, Node, ServiceDiscovery, StaticConfig};
 use crate::error::{DbError, Result};
@@ -308,6 +308,7 @@ impl ServiceDiscovery for StaticListDiscovery {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
     use super::*;
 
     #[tokio::test]

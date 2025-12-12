@@ -141,10 +141,10 @@ impl Trigger {
                             }
                             // Simple IS NULL check
                             if upper.contains("IS NULL") && !upper.contains("IS NOT NULL") {
-                                if let RuntimeValue::Null = val {
-                                    return Ok(true);
+                                return if let RuntimeValue::Null = val {
+                                    Ok(true)
                                 } else {
-                                    return Ok(false);
+                                    Ok(false)
                                 }
                             }
                         }

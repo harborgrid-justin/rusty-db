@@ -345,6 +345,7 @@ impl Default for HashBuilder {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
     use super::*;
 
     #[test]

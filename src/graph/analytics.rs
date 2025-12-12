@@ -10,7 +10,7 @@
 
 use std::collections::BTreeMap;
 use std::collections::HashSet;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, DbError};
 use crate::common::{Value, Tuple};

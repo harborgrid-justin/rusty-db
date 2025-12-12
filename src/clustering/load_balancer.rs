@@ -532,8 +532,8 @@ impl LoadBalancer {
         let total_weight: u32 = available.iter().map(|b| b.weight).sum();
 
         // Generate weighted random selection
-        let mut rng = rand::thread_rng();
-        let mut random = rand::Rng::gen_range(&mut rng, 0..total_weight);
+        let mut rng = rand::rng();
+        let mut random = rng.random_range(0..total_weight);
 
         for backend in &available {
             if random < backend.weight {
@@ -590,8 +590,6 @@ impl LoadBalancer {
 
     // Random selection
     fn select_random(&self) -> Result<BackendId, DbError> {
-        use rand::seq::SliceRandom;
-
         let backends = self.backends.read().unwrap();
         let available: Vec<_> = backends
             .values()
@@ -602,7 +600,7 @@ impl LoadBalancer {
             return Err(DbError::Internal("No available backends".into()));
         }
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let selected = available.choose(&mut rng).unwrap();
 
         Ok(selected.id.clone())

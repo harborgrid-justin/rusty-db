@@ -1,13 +1,17 @@
-//! Mutual TLS (mTLS) authentication and verification
-//!
-//! This module provides client certificate verification, certificate chain validation,
-//! OCSP stapling, and CRL checking.
+// Mutual TLS (mTLS) authentication and verification
+//
+// This module provides client certificate verification, certificate chain validation,
+// OCSP stapling, and CRL checking.
 
 use crate::error::{DbError, Result};
 use crate::networking::security::AuthContext;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use rustls::pki_types::CertificateDer;
+
+// Type alias for convenience
+type Certificate = CertificateDer<'static>;
 
 /// Object Identifier (OID) for certificate extensions
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -77,7 +81,7 @@ impl SubjectMatcher {
 #[derive(Debug, Clone)]
 pub struct TrustStore {
     /// CA certificates
-    ca_certs: Vec<rustls::Certificate>,
+    ca_certs: Vec<Certificate>,
 
     /// Trusted subjects
     trusted_subjects: Vec<String>,
@@ -93,7 +97,7 @@ impl TrustStore {
     }
 
     /// Add CA certificate
-    pub fn add_ca_cert(&mut self, cert: rustls::Certificate) {
+    pub fn add_ca_cert(&mut self, cert: Certificate) {
         self.ca_certs.push(cert);
     }
 
@@ -108,7 +112,7 @@ impl TrustStore {
     }
 
     /// Get CA certificates
-    pub fn ca_certs(&self) -> &[rustls::Certificate] {
+    pub fn ca_certs(&self) -> &[Certificate] {
         &self.ca_certs
     }
 }
@@ -295,7 +299,7 @@ impl MtlsAuthenticator {
     /// Verify client certificate
     pub async fn verify_certificate(
         &self,
-        cert_chain: &[rustls::Certificate],
+        cert_chain: &[Certificate],
     ) -> Result<ValidationResult> {
         if cert_chain.is_empty() {
             return Ok(ValidationResult::new(
@@ -355,7 +359,7 @@ impl MtlsAuthenticator {
     }
 
     /// Authenticate from certificate
-    pub async fn authenticate(&self, cert_chain: &[rustls::Certificate]) -> Result<AuthContext> {
+    pub async fn authenticate(&self, cert_chain: &[Certificate]) -> Result<AuthContext> {
         let validation = self.verify_certificate(cert_chain).await?;
 
         if !validation.valid {
@@ -373,14 +377,14 @@ impl MtlsAuthenticator {
     }
 
     /// Extract subject from certificate
-    fn extract_subject(&self, _cert: &rustls::Certificate) -> Result<String> {
+    fn extract_subject(&self, _cert: &Certificate) -> Result<String> {
         // In a real implementation, parse the X.509 certificate
         // For now, return a placeholder
         Ok("CN=node-1,O=RustyDB,C=US".to_string())
     }
 
     /// Verify certificate chain
-    async fn verify_chain(&self, _cert_chain: &[rustls::Certificate]) -> Result<()> {
+    async fn verify_chain(&self, _cert_chain: &[Certificate]) -> Result<()> {
         // In a real implementation, verify the certificate chain
         // using the trust store and standard X.509 validation
         Ok(())
@@ -413,7 +417,7 @@ impl MtlsAuthenticator {
     }
 
     /// Check if certificate has extension
-    fn has_extension(&self, _cert: &rustls::Certificate, _oid: &Oid) -> Result<bool> {
+    fn has_extension(&self, _cert: &Certificate, _oid: &Oid) -> Result<bool> {
         // In a real implementation, parse certificate extensions
         Ok(true)
     }

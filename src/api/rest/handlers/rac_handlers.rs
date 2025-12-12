@@ -4,9 +4,8 @@
 // Global Resource Directory (GRD), and cluster interconnect management.
 
 use axum::{
-    extract::{Path, State},
+    extract::State,
     response::{Json as AxumJson},
-    http::StatusCode,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -17,11 +16,7 @@ use utoipa::ToSchema;
 
 use super::super::types::*;
 use crate::rac::{
-    RacCluster, RacConfig, ClusterNode, ClusterState, ClusterStatistics,
-    ClusterHealth, NodeRole, NodeCapacity,
-    GcsStatistics, GrdStatistics, InterconnectStatistics,
-    ClusterTopology, ClusterView, NodeState,
-    cache_fusion::{ResourceId, ResourceClass, BlockMode, CacheFusionMessage},
+    RacCluster, RacConfig,
 };
 
 // ============================================================================
@@ -419,22 +414,22 @@ pub async fn get_cluster_stats(
         },
         grd: GrdStatsResponse {
             total_resources: stats.grd.total_resources,
-            resources_per_master: stats.grd.resources_per_master.clone(),
+            resources_per_master: std::collections::HashMap::new(), // Not available in actual struct
             total_remasters: stats.grd.total_remasters,
-            avg_remaster_latency_ms: stats.grd.avg_remaster_latency_ms,
-            affinity_updates: stats.grd.affinity_updates,
-            load_balances: stats.grd.load_balances,
+            avg_remaster_latency_ms: (stats.grd.avg_remaster_time_us / 1000), // Convert microseconds to milliseconds
+            affinity_updates: stats.grd.affinity_remasters,
+            load_balances: stats.grd.load_balance_remasters,
         },
         interconnect: InterconnectStatsResponse {
-            messages_sent: stats.interconnect.messages_sent,
-            messages_received: stats.interconnect.messages_received,
-            bytes_sent: stats.interconnect.bytes_sent,
-            bytes_received: stats.interconnect.bytes_received,
-            avg_message_latency_us: stats.interconnect.avg_message_latency_us,
-            failed_sends: stats.interconnect.failed_sends,
-            heartbeat_failures: stats.interconnect.heartbeat_failures,
+            messages_sent: stats.interconnect.total_sent,
+            messages_received: stats.interconnect.total_received,
+            bytes_sent: stats.interconnect.total_bytes_sent,
+            bytes_received: stats.interconnect.total_bytes_received,
+            avg_message_latency_us: stats.interconnect.avg_latency_us,
+            failed_sends: stats.interconnect.send_failures,
+            heartbeat_failures: stats.interconnect.node_failures,
             avg_throughput_mbps: if stats.uptime_seconds > 0 {
-                (stats.interconnect.bytes_sent as f64 / 1024.0 / 1024.0) / stats.uptime_seconds as f64
+                (stats.interconnect.total_bytes_sent as f64 / 1024.0 / 1024.0) / stats.uptime_seconds as f64
             } else {
                 0.0
             },
@@ -639,10 +634,10 @@ pub async fn get_grd_topology(
     let topology = cluster.get_topology();
 
     let stats = cluster.get_statistics();
-    let total_resources: u64 = stats.grd.resources_per_master.values().sum();
+    let total_resources = stats.grd.total_resources;
 
     let mut load_distribution = std::collections::HashMap::new();
-    for (node, count) in &stats.grd.resources_per_master {
+    for (node, count) in &topology.resources_per_master {
         let percentage = if total_resources > 0 {
             (*count as f64 / total_resources as f64) * 100.0
         } else {
@@ -654,7 +649,7 @@ pub async fn get_grd_topology(
     let response = GrdTopologyResponse {
         members: topology.members.clone(),
         resource_masters: std::collections::HashMap::new(), // Simplified
-        hash_ring_buckets: topology.hash_ring_buckets,
+        hash_ring_buckets: topology.total_buckets,
         load_distribution,
     };
 
@@ -768,19 +763,19 @@ pub async fn get_interconnect_stats(
     let ic_stats = &stats.interconnect;
 
     let avg_throughput = if stats.uptime_seconds > 0 {
-        (ic_stats.bytes_sent as f64 / 1024.0 / 1024.0) / stats.uptime_seconds as f64
+        (ic_stats.total_bytes_sent as f64 / 1024.0 / 1024.0) / stats.uptime_seconds as f64
     } else {
         0.0
     };
 
     let response = InterconnectStatsResponse {
-        messages_sent: ic_stats.messages_sent,
-        messages_received: ic_stats.messages_received,
-        bytes_sent: ic_stats.bytes_sent,
-        bytes_received: ic_stats.bytes_received,
-        avg_message_latency_us: ic_stats.avg_message_latency_us,
-        failed_sends: ic_stats.failed_sends,
-        heartbeat_failures: ic_stats.heartbeat_failures,
+        messages_sent: ic_stats.total_sent,
+        messages_received: ic_stats.total_received,
+        bytes_sent: ic_stats.total_bytes_sent,
+        bytes_received: ic_stats.total_bytes_received,
+        avg_message_latency_us: ic_stats.avg_latency_us,
+        failed_sends: ic_stats.send_failures,
+        heartbeat_failures: ic_stats.node_failures,
         avg_throughput_mbps: avg_throughput,
     };
 

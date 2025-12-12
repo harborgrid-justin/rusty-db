@@ -1,7 +1,7 @@
-//! # Failure Detector
-//!
-//! Implements Phi Accrual failure detection algorithm with adaptive thresholds
-//! and historical analysis for accurate distributed failure detection.
+// # Failure Detector
+//
+// Implements Phi Accrual failure detection algorithm with adaptive thresholds
+// and historical analysis for accurate distributed failure detection.
 
 use crate::error::{DbError, Result};
 use crate::common::NodeId;
@@ -297,7 +297,7 @@ impl PhiAccrualDetector {
             mean_interval: Duration::from_secs_f64(state.mean),
             variance: state.variance,
             sample_count: state.sample_count,
-            last_heartbeat: state.last_heartbeat,
+            last_heartbeat: state.last_heartbeat.map(|instant| instant.elapsed().as_millis() as u64),
             current_phi: self.get_phi(node_id).unwrap_or(0.0),
             suspicion_level: SuspicionLevel::from_phi(self.get_phi(node_id).unwrap_or(0.0)),
         })
@@ -346,8 +346,8 @@ pub struct DetectorStatistics {
     /// Number of samples collected
     pub sample_count: u64,
 
-    /// Timestamp of last heartbeat
-    pub last_heartbeat: Option<Instant>,
+    /// Timestamp of last heartbeat (milliseconds since UNIX_EPOCH)
+    pub last_heartbeat: Option<u64>,
 
     /// Current phi value
     pub current_phi: f64,

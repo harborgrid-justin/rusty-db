@@ -31,6 +31,18 @@ pub struct ProtocolVersion {
     pub minor: u16,
 }
 
+impl ProtocolVersion {
+    pub const V1_0_0: Self = Self { major: 1, minor: 0 };
+    pub const V1_1_0: Self = Self { major: 1, minor: 1 };
+    pub const V2_0_0: Self = Self { major: 2, minor: 0 };
+
+    /// Check if this version is compatible with another version
+    /// A version is compatible if it has the same major version and a minor version >= the other
+    pub fn is_compatible_with(&self, other: &Self) -> bool {
+        self.major == other.major && self.minor >= other.minor
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompressionType {
     None,

@@ -81,7 +81,7 @@ pub struct MasterKey {
 
 // Data Encryption Key (DEK)
 #[repr(C)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct DataEncryptionKey {
     // Key identifier (e.g., tablespace name, column name)
     pub id: String,
@@ -109,7 +109,7 @@ pub struct DataEncryptionKey {
 }
 
 // Key status enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, bincode::Encode, bincode::Decode)]
 pub enum KeyStatus {
     // Key is active and can be used
     Active,
@@ -235,7 +235,7 @@ impl KeyStore {
         // Generate random 256-bit key
         let mut key_material = vec![0u8; 32];
         use rand::RngCore;
-        rand::thread_rng().fill_bytes(&mut key_material);
+        rand::rng().fill_bytes(&mut key_material);
 
         let current_version = self.metadata.read().mek_version;
         let new_version = current_version + 1;
@@ -280,7 +280,7 @@ impl KeyStore {
 
         // Generate random DEK
         let mut key_material = vec![0u8; 32];
-        rand::thread_rng().fill_bytes(&mut key_material);
+        rand::rng().fill_bytes(&mut key_material);
 
         // Encrypt DEK with MEK (envelope encryption)
         let (nonce, encrypted_material) = self.encrypt_with_mek(&mek, &key_material)?;
@@ -332,7 +332,7 @@ impl KeyStore {
 
         // Generate new key material
         let mut key_material = vec![0u8; 32];
-        rand::thread_rng().fill_bytes(&mut key_material);
+        rand::rng().fill_bytes(&mut key_material);
 
         // Encrypt with current MEK
         let (nonce, encrypted_material) = self.encrypt_with_mek(&mek, &key_material)?;
@@ -397,7 +397,7 @@ impl KeyStore {
 
         // Generate nonce
         let mut nonce_bytes = vec![0u8; 12];
-        rand::thread_rng().fill_bytes(&mut nonce_bytes);
+        rand::rng().fill_bytes(&mut nonce_bytes);
 
         let nonce = Nonce::from_slice(&nonce_bytes);
 
@@ -522,7 +522,7 @@ impl KeyStore {
         // Persist DEKs (encrypted)
         let deks_path = self.data_dir.join("deks.bin");
         let deks = self.deks.read();
-        let serialized = bincode::serialize(&*deks)
+        let serialized = bincode::encode_to_vec(&*deks, bincode::config::standard())
             .map_err(|e| DbError::Serialization(format!("Failed to serialize DEKs: {}", e)))?;
 
         fs::write(&deks_path, serialized)
@@ -551,7 +551,8 @@ impl KeyStore {
         if deks_path.exists() {
             let data = fs::read(&deks_path)
                 .map_err(|e| DbError::IoError(format!("Failed to read DEKs: {}", e)))?;
-            let loaded_deks: HashMap<String, DataEncryptionKey> = bincode::deserialize(&data)
+            let loaded_deks: HashMap<String, DataEncryptionKey> = bincode::decode_from_slice(&data, bincode::config::standard())
+                .map(|(deks, _)| deks)
                 .map_err(|e| DbError::Serialization(format!("Failed to parse DEKs: {}", e)))?;
             *self.deks.write() = loaded_deks;
         }

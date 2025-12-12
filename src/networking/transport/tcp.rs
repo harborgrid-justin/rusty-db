@@ -1,10 +1,10 @@
-//! TCP transport implementation for P2P communication
-//!
-//! Provides enterprise-grade TCP transport with:
-//! - Connection pooling
-//! - Automatic reconnection with exponential backoff
-//! - Keep-alive and timeout management
-//! - Low-latency optimizations (TCP_NODELAY)
+// TCP transport implementation for P2P communication
+//
+// Provides enterprise-grade TCP transport with:
+// - Connection pooling
+// - Automatic reconnection with exponential backoff
+// - Keep-alive and timeout management
+// - Low-latency optimizations (TCP_NODELAY)
 
 use crate::common::NodeId;
 use crate::error::{DbError, Result};

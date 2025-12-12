@@ -602,6 +602,7 @@ pub struct FlashbackOptions {
 
     /// Enable row movement (for partitioned tables)
     pub enable_row_movement: bool,
+    pub enable_triggers: ()
 }
 
 impl Default for FlashbackOptions {
@@ -613,6 +614,7 @@ impl Default for FlashbackOptions {
             validate_constraints: true,
             create_restore_point: false,
             enable_row_movement: false,
+            enable_triggers: (),
         }
     }
 }

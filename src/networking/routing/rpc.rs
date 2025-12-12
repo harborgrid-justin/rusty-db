@@ -1,7 +1,7 @@
-//! RPC framework for cluster communication
-//!
-//! This module provides a high-level RPC abstraction for making remote procedure calls
-//! between cluster nodes with type-safe request/response patterns.
+// RPC framework for cluster communication
+//
+// This module provides a high-level RPC abstraction for making remote procedure calls
+// between cluster nodes with type-safe request/response patterns.
 
 use crate::error::{DbError, Result};
 use crate::networking::routing::router::MessageRouter;

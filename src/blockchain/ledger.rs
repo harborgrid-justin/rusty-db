@@ -35,7 +35,7 @@ pub type RowVersion = u64;
 // ============================================================================
 
 // A row in a blockchain table (immutable once written)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct LedgerRow {
     // Row ID
     pub row_id: RowId,
@@ -80,7 +80,7 @@ impl LedgerRow {
             .as_secs();
 
         // Compute data hash
-        let data_bytes = bincode::serialize(&data).unwrap();
+        let data_bytes = bincode::encode_to_vec(&data, bincode::config::standard()).unwrap();
         let data_hash = sha256(&data_bytes);
 
         // Compute row hash (combines all fields)
@@ -140,7 +140,7 @@ impl LedgerRow {
     // Verify this row's integrity
     pub fn verify(&self) -> bool {
         // Verify data hash
-        let data_bytes = bincode::serialize(&self.data).unwrap();
+        let data_bytes = bincode::encode_to_vec(&self.data, bincode::config::standard()).unwrap();
         let computed_data_hash = sha256(&data_bytes);
         if computed_data_hash != self.data_hash {
             return false;
@@ -192,7 +192,7 @@ pub enum BlockStatus {
 }
 
 // A block containing multiple ledger rows
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct Block {
     // Block ID
     pub block_id: BlockId,
@@ -486,7 +486,8 @@ impl BlockchainTable {
         );
 
         // Add to hash chain
-        let row_bytes = bincode::serialize(&row)?;
+        let row_bytes = bincode::encode_to_vec(&row, bincode::config::standard())
+            .map_err(|e| DbError::Serialization(format!("Row serialization failed: {}", e)))?;
         hash_chain.append(&row_bytes, row.timestamp);
 
         // Add to block
@@ -778,13 +779,14 @@ impl RowHistory {
 
 // Export a block to bytes
 pub fn export_block(block: &Block) -> Result<Vec<u8>> {
-    bincode::serialize(block)
+    bincode::encode_to_vec(block, bincode::config::standard())
         .map_err(|e| DbError::Serialization(format!("Block serialization failed: {}", e)))
 }
 
 // Import a block from bytes
 pub fn import_block(data: &[u8]) -> Result<Block> {
-    bincode::deserialize(data)
+    bincode::decode_from_slice(data, bincode::config::standard())
+        .map(|(block, _)| block)
         .map_err(|e| DbError::Serialization(format!("Block deserialization failed: {}", e)))
 }
 
@@ -793,7 +795,7 @@ pub fn export_blockchain(table: &BlockchainTable) -> Result<Vec<u8>> {
     let blocks = table.blocks.read().unwrap();
     let all_blocks: Vec<Block> = blocks.values().cloned().collect();
 
-    bincode::serialize(&all_blocks)
+    bincode::encode_to_vec(&all_blocks, bincode::config::standard())
         .map_err(|e| DbError::Serialization(format!("Blockchain serialization failed: {}", e)))
 }
 

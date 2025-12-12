@@ -1,24 +1,24 @@
-//! Network security module for RustyDB distributed database
-//!
-//! This module provides enterprise-grade network security features including:
-//! - Mutual TLS (mTLS) for authentication
-//! - Certificate management and rotation
-//! - Node identity verification
-//! - Message encryption
-//! - Access control lists (ACLs)
-//! - Application-level firewall
-//!
-//! # Example
-//!
-//! ```no_run
-//! use rusty_db::networking::security::{SecurityConfig, SecurityManager};
-//!
-//! let config = SecurityConfig::default()
-//!     .with_mtls_enabled(true)
-//!     .with_firewall_enabled(true);
-//!
-//! let manager = SecurityManager::new(config)?;
-//! ```
+// Network security module for RustyDB distributed database
+//
+// This module provides enterprise-grade network security features including:
+// - Mutual TLS (mTLS) for authentication
+// - Certificate management and rotation
+// - Node identity verification
+// - Message encryption
+// - Access control lists (ACLs)
+// - Application-level firewall
+//
+// # Example
+//
+// ```no_run
+// use rusty_db::networking::security::{SecurityConfig, SecurityManager};
+//
+// let config = SecurityConfig::default()
+//     .with_mtls_enabled(true)
+//     .with_firewall_enabled(true);
+//
+// let manager = SecurityManager::new(config)?;
+// ```
 
 use crate::error::{DbError, Result};
 use std::path::PathBuf;

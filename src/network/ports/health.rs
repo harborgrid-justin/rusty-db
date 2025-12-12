@@ -1,13 +1,13 @@
-//! # Port Health Checking
-//!
-//! Health monitoring for network ports and services.
-//!
-//! ## Features
-//!
-//! - **Port Availability**: Check if ports are available for binding
-//! - **Conflict Detection**: Detect bind conflicts
-//! - **Exhaustion Monitoring**: Monitor port pool exhaustion
-//! - **Periodic Health Checks**: Automated health monitoring
+// # Port Health Checking
+//
+// Health monitoring for network ports and services.
+//
+// ## Features
+//
+// - **Port Availability**: Check if ports are available for binding
+// - **Conflict Detection**: Detect bind conflicts
+// - **Exhaustion Monitoring**: Monitor port pool exhaustion
+// - **Periodic Health Checks**: Automated health monitoring
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;

@@ -1,7 +1,7 @@
-//! Certificate management, rotation, and auto-renewal
-//!
-//! This module provides certificate rotation, auto-renewal (ACME/Let's Encrypt),
-//! self-signed certificate generation, and certificate store management.
+// Certificate management, rotation, and auto-renewal
+//
+// This module provides certificate rotation, auto-renewal (ACME/Let's Encrypt),
+// self-signed certificate generation, and certificate store management.
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;

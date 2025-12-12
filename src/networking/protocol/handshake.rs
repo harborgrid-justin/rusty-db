@@ -1,16 +1,17 @@
-//! Connection handshake protocol
-//!
-//! This module handles the initial handshake between peers when establishing
-//! a new P2P connection. The handshake includes:
-//! - Protocol version negotiation
-//! - Node identification
-//! - Capability advertisement
-//! - Authentication preparation
+// Connection handshake protocol
+//
+// This module handles the initial handshake between peers when establishing
+// a new P2P connection. The handshake includes:
+// - Protocol version negotiation
+// - Node identification
+// - Capability advertisement
+// - Authentication preparation
 
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use rand::random;
 
 /// Protocol version supported by this node
 pub const SUPPORTED_PROTOCOL_VERSION: u16 = 1;
@@ -19,7 +20,7 @@ pub const SUPPORTED_PROTOCOL_VERSION: u16 = 1;
 pub const MIN_PROTOCOL_VERSION: u16 = 1;
 
 /// Handshake request sent by the initiating peer
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct HandshakeRequest {
     /// Protocol version this node supports
     pub protocol_version: u16,
@@ -118,7 +119,7 @@ impl HandshakeRequest {
 }
 
 /// Handshake response sent by the accepting peer
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct HandshakeResponse {
     /// Whether handshake was accepted
     pub accepted: bool,
@@ -373,8 +374,7 @@ fn current_timestamp() -> u64 {
 
 /// Generate a random session ID
 fn generate_session_id() -> String {
-    use rand::Rng;
-    let random_bytes: [u8; 16] = rand::thread_rng().gen();
+    let random_bytes: [u8; 16] = random();
     hex::encode(random_bytes)
 }
 

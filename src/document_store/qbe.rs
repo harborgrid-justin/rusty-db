@@ -136,7 +136,7 @@ impl QueryDocument {
     fn op_gte(&self, field_value: &Value, query_value: &Value) -> bool {
         matches!(
             compare_values(field_value, query_value),
-            Some(std::cmp::Ordering::Greater) | Some(std::cmp::Ordering::Equal)
+            Some(Ordering::Greater) | Some(Ordering::Equal)
         )
     }
 
@@ -147,7 +147,7 @@ impl QueryDocument {
     fn op_lte(&self, field_value: &Value, query_value: &Value) -> bool {
         matches!(
             compare_values(field_value, query_value),
-            Some(std::cmp::Ordering::Less) | Some(std::cmp::Ordering::Equal)
+            Some(Ordering::Less) | Some(Ordering::Equal)
         )
     }
 

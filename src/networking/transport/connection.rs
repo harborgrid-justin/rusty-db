@@ -1,7 +1,7 @@
-//! Connection abstraction for P2P communication
-//!
-//! This module provides a unified connection abstraction that works with
-//! different transport types (TCP, QUIC) and tracks connection state and metrics.
+// Connection abstraction for P2P communication
+//
+// This module provides a unified connection abstraction that works with
+// different transport types (TCP, QUIC) and tracks connection state and metrics.
 
 use crate::common::NodeId;
 use crate::error::Result;

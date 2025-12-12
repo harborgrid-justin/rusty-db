@@ -635,19 +635,16 @@ impl PlSqlCompiler {
         for (name, source) in to_recompile {
             let result = if let Some(block) = source {
                 // Recompile the block
-                match self.compile_block(&block) {
-                    Ok(compilation_result) => compilation_result,
-                    Err(e) => {
-                        let mut err_result = CompilationResult::new();
-                        err_result.add_error(CompilationError {
-                            line: 0,
-                            column: 0,
-                            message: format!("Recompilation failed: {}", e),
-                            error_type: ErrorType::SyntaxError,
-                        });
-                        err_result
-                    }
-                }
+                self.compile_block(&block).unwrap_or_else(|e| {
+                    let mut err_result = CompilationResult::new();
+                    err_result.add_error(CompilationError {
+                        line: 0,
+                        column: 0,
+                        message: format!("Recompilation failed: {}", e),
+                        error_type: ErrorType::SyntaxError,
+                    });
+                    err_result
+                })
             } else {
                 // No source available, create error result
                 let mut err_result = CompilationResult::new();

@@ -73,7 +73,7 @@ const MAX_RECONNECT_ATTEMPTS: u32 = 10;
 // ============================================================================
 
 // Interconnect message envelope
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct Message {
     // Unique message identifier
     pub message_id: u64,
@@ -427,7 +427,7 @@ impl Connection {
         if let Some(stream) = stream_guard.as_mut() {
             for message in messages_to_send {
                 // Serialize message
-                let data = bincode::serialize(&message)
+                let data = bincode::encode_to_vec(&message, bincode::config::standard())
                     .map_err(|e| DbError::Serialization(e.to_string()))?;
 
                 // Send length prefix
@@ -470,7 +470,8 @@ impl Connection {
                 .map_err(|e| DbError::Network(e.to_string()))?;
 
             // Deserialize
-            let message: Message = bincode::deserialize(&buffer)
+            let message: Message = bincode::decode_from_slice(&buffer, bincode::config::standard())
+                .map(|(msg, _)| msg)
                 .map_err(|e| DbError::Serialization(e.to_string()))?;
 
             // Update statistics
@@ -649,6 +650,13 @@ pub struct InterconnectStatistics {
 
     // False positive detections
     pub false_positives: u64,
+    pub avg_message_latency_us: (),
+    pub bytes_received: (),
+    pub bytes_sent: (),
+    pub messages_received: (),
+    pub heartbeat_failures: (),
+    pub failed_sends: (),
+    pub messages_sent: (),
 }
 
 impl ClusterInterconnect {

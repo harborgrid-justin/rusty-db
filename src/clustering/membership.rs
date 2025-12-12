@@ -18,12 +18,12 @@
 
 use std::time::SystemTime;
 use crate::error::DbError;
-use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap};
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration};
+use rand::prelude::IndexedRandom;
 
 // Member identifier
 pub type MemberId = String;
@@ -313,7 +313,7 @@ impl SwimMembership {
             .filter(|m| m.is_active() && m.id != self.local_id)
             .collect();
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         active.choose(&mut rng).map(|m| m.id.clone())
     }
 
@@ -348,7 +348,7 @@ impl SwimMembership {
             .filter(|m| m.is_active() && m.id != self.local_id && m.id != target)
             .collect();
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let selected: Vec<&Member> = candidates
             .choose_multiple(&mut rng, self.config.indirect_ping_nodes)
             .copied()
@@ -492,7 +492,7 @@ impl SwimMembership {
             .filter(|m| m.is_active() && m.id != self.local_id)
             .collect();
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let targets: Vec<&Member> = active
             .choose_multiple(&mut rng, self.config.gossip_fanout)
             .copied()

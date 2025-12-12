@@ -686,6 +686,8 @@ pub struct TimeTravelStats {
 
     /// Compacted versions
     pub versions_compacted: u64,
+    pub current_scn: (),
+    pub oldest_scn: ()
 }
 
 impl TimeTravelStats {

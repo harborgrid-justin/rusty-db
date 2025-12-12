@@ -93,7 +93,7 @@ impl ElectionManager {
     fn random_election_timeout(config: &RaftConfig) -> Duration {
         let min = config.election_timeout_min.as_millis() as u64;
         let max = config.election_timeout_max.as_millis() as u64;
-        let timeout_ms = rand::thread_rng().gen_range(min..=max);
+        let timeout_ms = rand::rng().random_range(min..=max);
         Duration::from_millis(timeout_ms)
     }
 
@@ -149,7 +149,7 @@ impl ElectionManager {
         self.reset_election_timeout().await;
 
         // Vote for self
-        let mut votes_received = 1;
+        let votes_received = 1;
         let votes_needed = (members.len() / 2) + 1;
 
         tracing::info!(
@@ -181,7 +181,8 @@ impl ElectionManager {
         let next_index = log.last_index() + 1;
         drop(log);
 
-        for member_id in &state.members {
+        let members = state.members.clone();
+        for member_id in &members {
             if member_id != &self.node_id {
                 state.next_index.insert(member_id.clone(), next_index);
                 state.match_index.insert(member_id.clone(), 0);

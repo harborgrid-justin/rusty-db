@@ -97,7 +97,7 @@ impl Algorithm for KMeansClustering {
 
         // Initialize centroids randomly (k-means++)
         use rand::seq::SliceRandom;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut selected_indices: Vec<usize> = (0..dataset.num_samples()).collect();
         selected_indices.shuffle(&mut rng);
 
@@ -145,12 +145,13 @@ impl Algorithm for KMeansClustering {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::serialize(self)
+        bincode::encode_to_vec(self, bincode::config::standard())
             .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
-        bincode::deserialize(bytes)
+        bincode::decode_from_slice(bytes, bincode::config::standard())
+            .map(|(model, _)| model)
             .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
     }
 }

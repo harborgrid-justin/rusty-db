@@ -1,7 +1,7 @@
-//! Message router for cluster communication
-//!
-//! This module implements the message router that handles request/response correlation,
-//! async request handling, timeout management, and priority routing.
+// Message router for cluster communication
+//
+// This module implements the message router that handles request/response correlation,
+// async request handling, timeout management, and priority routing.
 
 use crate::error::{DbError, Result};
 use crate::networking::routing::delivery::{DeliveryGuarantee, DeliveryTracker};

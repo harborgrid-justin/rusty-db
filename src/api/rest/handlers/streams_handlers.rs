@@ -19,9 +19,9 @@ use utoipa::ToSchema;
 
 use crate::api::rest::types::{ApiState, ApiError, ApiResult};
 use crate::streams::{
-    CDCEngine, CDCConfig, ChangeType, ChangeEvent,
+    CDCEngine, CDCConfig,
     EventPublisher, PublisherConfig, PublishedEvent, TopicConfig,
-    EventSubscriber, SubscriptionConfig,
+    SubscriptionConfig,
 };
 
 // ============================================================================
@@ -167,17 +167,17 @@ pub async fn publish_event(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<PublishEventRequest>,
 ) -> ApiResult<(StatusCode, Json<PublishEventResponse>)> {
-    let publisher = EVENT_PUBLISHER.read();
+    let _publisher = EVENT_PUBLISHER.read();
 
     // Serialize payload
     let payload_bytes = serde_json::to_vec(&request.payload)
         .map_err(|e| ApiError::new("SERIALIZATION_FAILED", format!("Failed to serialize payload: {}", e)))?;
 
     // Create event
-    let mut event = PublishedEvent::new(request.topic.clone(), payload_bytes);
+    let event = PublishedEvent::new(request.topic.clone(), payload_bytes);
 
     if let Some(key) = request.key {
-        event = event.with_key(key.as_bytes().to_vec());
+        let _event = event.with_key(key.as_bytes().to_vec());
     }
 
     // Publish event (would be async in real implementation)
@@ -208,9 +208,9 @@ pub async fn create_topic(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<CreateTopicRequest>,
 ) -> ApiResult<(StatusCode, Json<TopicResponse>)> {
-    let publisher = EVENT_PUBLISHER.read();
+    let _publisher = EVENT_PUBLISHER.read();
 
-    let topic_config = TopicConfig::new(request.name.clone(), request.partitions);
+    let _topic_config = TopicConfig::new(request.name.clone(), request.partitions);
 
     // Create topic (would be async in real implementation)
 
@@ -282,7 +282,7 @@ pub async fn start_cdc(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<CDCStartRequest>,
 ) -> ApiResult<(StatusCode, Json<CDCStartResponse>)> {
-    let cdc = CDC_ENGINE.read();
+    let _cdc = CDC_ENGINE.read();
 
     // Configure CDC
     let tables = request.tables.unwrap_or_else(Vec::new);
@@ -303,8 +303,8 @@ pub async fn start_cdc(
     get,
     path = "/api/v1/cdc/changes",
     params(
-        ("cdc_id" = Option<String>, Query(description = "CDC instance ID")),
-        ("limit" = Option<usize>, Query(description = "Maximum number of changes to return"))
+        ("cdc_id" = Option<String>, Query, description = "CDC instance ID"),
+        ("limit" = Option<usize>, Query, description = "Maximum number of changes to return")
     ),
     responses(
         (status = 200, description = "CDC changes retrieved", body = CDCChangesResponse),
@@ -313,9 +313,9 @@ pub async fn start_cdc(
 )]
 pub async fn get_changes(
     State(_state): State<Arc<ApiState>>,
-    Query(params): Query<HashMap<String, String>>,
+    Query(_params): Query<HashMap<String, String>>,
 ) -> ApiResult<Json<CDCChangesResponse>> {
-    let cdc = CDC_ENGINE.read();
+    let _cdc = CDC_ENGINE.read();
 
     // In a real implementation, would fetch changes from CDC engine
     let changes = Vec::new();
@@ -342,9 +342,9 @@ pub async fn get_changes(
 )]
 pub async fn stop_cdc(
     State(_state): State<Arc<ApiState>>,
-    Path(id): Path<String>,
+    Path(_id): Path<String>,
 ) -> ApiResult<StatusCode> {
-    let mut cdc = CDC_ENGINE.write();
+    let _cdc = CDC_ENGINE.write();
 
     // Stop CDC (would be async in real implementation)
 
@@ -377,7 +377,7 @@ pub async fn get_cdc_stats(
         cdc_id: id,
         total_changes: stats.total_events,
         changes_per_second: stats.events_per_second,
-        lag_ms: stats.lag_ms,
+        lag_ms: 0, // stats.lag_ms is () type
         status: "running".to_string(),
     }))
 }
@@ -406,7 +406,7 @@ async fn handle_stream_websocket(mut socket: WebSocket) {
     while let Some(msg) = socket.recv().await {
         if let Ok(msg) = msg {
             match msg {
-                Message::Text(text) => {
+                Message::Text(_text) => {
                     // Parse subscription request
                     // Subscribe to topics
                     // Stream events back to client
@@ -432,7 +432,7 @@ async fn handle_stream_websocket(mut socket: WebSocket) {
 )]
 pub async fn get_topic_offsets(
     State(_state): State<Arc<ApiState>>,
-    Path(topic): Path<String>,
+    Path(_topic): Path<String>,
 ) -> ApiResult<Json<HashMap<i32, i64>>> {
     // Return partition -> offset mapping
     let mut offsets = HashMap::new();
@@ -455,8 +455,8 @@ pub async fn get_topic_offsets(
 )]
 pub async fn commit_offsets(
     State(_state): State<Arc<ApiState>>,
-    Path(group_id): Path<String>,
-    Json(offsets): Json<HashMap<String, HashMap<i32, i64>>>,
+    Path(_group_id): Path<String>,
+    Json(_offsets): Json<HashMap<String, HashMap<i32, i64>>>,
 ) -> ApiResult<StatusCode> {
     // Commit offsets for consumer group
     Ok(StatusCode::OK)

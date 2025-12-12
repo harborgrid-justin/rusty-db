@@ -792,6 +792,8 @@ use std::time::UNIX_EPOCH;
                 nullable: false,
                 compression_type: None,
                 cardinality: None,
+                index: 0,
+                index: 0,
             },
             ColumnMetadata {
                 name: "value".to_string(),
@@ -800,6 +802,8 @@ use std::time::UNIX_EPOCH;
                 nullable: true,
                 compression_type: None,
                 cardinality: None,
+                index: 0,
+                index: 0,
             },
         ];
 

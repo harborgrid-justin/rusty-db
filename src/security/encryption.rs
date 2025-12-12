@@ -642,8 +642,8 @@ impl EncryptionManager {
 
     fn generate_random_bytes(&self, size: usize) -> Result<Vec<u8>> {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..size).map(|_| rng.gen()).collect();
+        let mut rng = rand::rng();
+        let bytes: Vec<u8> = (0..size).map(|_| rng.random()).collect();
         Ok(bytes)
     }
 

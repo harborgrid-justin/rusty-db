@@ -737,29 +737,37 @@ pub struct CryptoRandom;
 impl CryptoRandom {
     // Generate secure random bytes
     pub fn random_bytes(size: usize) -> Result<Vec<u8>> {
+        use rsa::rand_core::RngCore;
         let mut bytes = vec![0u8; size];
-        OsRng.fill_bytes(&mut bytes);
+        let mut rng = OsRng;
+        rng.fill_bytes(&mut bytes);
         Ok(bytes)
     }
 
     // Generate encryption key
     pub fn generate_key() -> Result<KeyMaterial> {
+        use rsa::rand_core::RngCore;
         let mut key = [0u8; KEY_SIZE];
-        OsRng.fill_bytes(&mut key);
+        let mut rng = OsRng;
+        rng.fill_bytes(&mut key);
         Ok(key)
     }
 
     // Generate IV for encryption
     pub fn generate_iv() -> Result<Iv> {
+        use rsa::rand_core::RngCore;
         let mut iv = [0u8; IV_SIZE];
-        OsRng.fill_bytes(&mut iv);
+        let mut rng = OsRng;
+        rng.fill_bytes(&mut iv);
         Ok(iv)
     }
 
     // Generate nonce for encryption
     pub fn generate_nonce() -> Result<Nonce> {
+        use rsa::rand_core::RngCore;
         let mut nonce = [0u8; IV_SIZE];
-        OsRng.fill_bytes(&mut nonce);
+        let mut rng = OsRng;
+        rng.fill_bytes(&mut nonce);
         Ok(nonce)
     }
 

@@ -1,8 +1,8 @@
-//! Standard traits for the RustyDB networking layer
-//!
-//! This module defines the core traits that all networking components must implement.
-//! These traits provide standard interfaces for transport, service discovery, health
-//! monitoring, load balancing, and cluster membership management.
+// Standard traits for the RustyDB networking layer
+//
+// This module defines the core traits that all networking components must implement.
+// These traits provide standard interfaces for transport, service discovery, health
+// monitoring, load balancing, and cluster membership management.
 
 use crate::error::Result;
 use crate::common::{Component, HealthStatus};

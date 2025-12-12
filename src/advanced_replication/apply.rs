@@ -9,7 +9,7 @@
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use parking_lot::RwLock;

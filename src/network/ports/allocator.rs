@@ -1,12 +1,12 @@
-//! # Port Allocator
-//!
-//! Dynamic port allocation with multiple strategies for distributed database services.
-//!
-//! ## Allocation Strategies
-//!
-//! - **Sequential**: Allocate ports in sequential order
-//! - **Random**: Allocate random ports from the available range
-//! - **HashBased**: Use consistent hashing based on node ID for predictable allocation
+// # Port Allocator
+//
+// Dynamic port allocation with multiple strategies for distributed database services.
+//
+// ## Allocation Strategies
+//
+// - **Sequential**: Allocate ports in sequential order
+// - **Random**: Allocate random ports from the available range
+// - **HashBased**: Use consistent hashing based on node ID for predictable allocation
 
 use crate::error::{DbError, Result};
 use crate::common::NodeId;
@@ -189,12 +189,12 @@ impl PortAllocator {
             return None;
         }
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let range_size = (self.range_end - self.range_start + 1) as usize;
 
         // Try random selection up to range_size times
         for _ in 0..range_size {
-            let offset = rng.gen_range(0..=self.range_end - self.range_start);
+            let offset = rng.random_range(0..=self.range_end - self.range_start);
             let port = self.range_start + offset;
 
             if !self.allocated.contains(&port) {

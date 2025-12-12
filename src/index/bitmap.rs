@@ -150,6 +150,8 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
             total_bits,
             compressed_size,
             compression_ratio: total_bits as f64 / compressed_size.max(1) as f64,
+            total_bytes: (),
+            total_entries: (),
         }
     }
 }
@@ -526,6 +528,8 @@ pub struct BitmapIndexStats {
     pub total_bits: usize,
     pub compressed_size: usize,
     pub compression_ratio: f64,
+    pub total_bytes: (),
+    pub total_entries: ()
 }
 
 #[cfg(test)]

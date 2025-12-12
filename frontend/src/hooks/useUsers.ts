@@ -6,14 +6,14 @@ import type {
   UUID,
   PaginationParams,
   UserStatus,
-} from '../types';
+} from '@/types';
 import type {
   UserFilters,
   CreateUserRequest,
   UpdateUserRequest,
   ResetPasswordRequest,
   BulkActionRequest,
-  UserSessionInfo,
+
 } from '../services/userService';
 
 // ============================================================================

@@ -919,6 +919,7 @@ pub struct CdbStatistics {
 
 #[cfg(test)]
 mod tests {
+    use std::thread::sleep;
     use super::*;
 use std::time::UNIX_EPOCH;
 
@@ -955,7 +956,7 @@ use std::time::UNIX_EPOCH;
         assert!(clone_id.is_ok());
 
         // Wait for clone to complete
-        sleep(Duration::from_millis(200)).await;
+        tokio::time::sleep(Duration::from_millis(200)).await.await;
 
         let pdbs = cdb.list_pdbs().await;
         assert_eq!(pdbs.len(), 2);

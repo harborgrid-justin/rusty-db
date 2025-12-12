@@ -1,7 +1,7 @@
-//! Binary serialization codec for cluster messages
-//!
-//! This module provides efficient binary serialization using bincode with optional
-//! compression and checksum verification for data integrity.
+// Binary serialization codec for cluster messages
+//
+// This module provides efficient binary serialization using bincode with optional
+// compression and checksum verification for data integrity.
 
 use crate::error::{DbError, Result};
 use crate::networking::types::CompressionType;
@@ -50,9 +50,9 @@ impl BinaryCodec {
     }
 
     /// Serialize a message to bytes
-    pub fn encode<T: Serialize>(&self, message: &T) -> Result<Vec<u8>> {
+    pub fn encode<T: Serialize + bincode::Encode>(&self, message: &T) -> Result<Vec<u8>> {
         // Serialize using bincode
-        let serialized = bincode::serialize(message)
+        let serialized = bincode::encode_to_vec(message, bincode::config::standard())
             .map_err(|e| DbError::Serialization(format!("Bincode serialization failed: {}", e)))?;
 
         // Save original length before serialized is moved
@@ -94,7 +94,7 @@ impl BinaryCodec {
     }
 
     /// Deserialize a message from bytes
-    pub fn decode<T: for<'de> Deserialize<'de>>(&self, data: &[u8]) -> Result<T> {
+    pub fn decode<T: for<'de> Deserialize<'de> + bincode::Decode<()>>(&self, data: &[u8]) -> Result<T> {
         if data.is_empty() {
             return Err(DbError::Serialization("Empty data".to_string()));
         }
@@ -158,7 +158,8 @@ impl BinaryCodec {
         };
 
         // Deserialize using bincode
-        bincode::deserialize(&decompressed)
+        bincode::decode_from_slice(&decompressed, bincode::config::standard())
+            .map(|(msg, _)| msg)
             .map_err(|e| DbError::Serialization(format!("Bincode deserialization failed: {}", e)))
     }
 

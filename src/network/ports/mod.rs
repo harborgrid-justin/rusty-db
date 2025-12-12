@@ -1,36 +1,36 @@
-//! # Port Management Module
-//!
-//! Enterprise-grade port management for RustyDB distributed database.
-//!
-//! ## Features
-//!
-//! - **Dynamic Port Allocation**: Multiple allocation strategies (sequential, random, hash-based)
-//! - **Multi-Protocol Support**: TCP, UDP, Unix domain sockets, IPv4/IPv6 dual-stack
-//! - **NAT Traversal**: STUN, UPnP, NAT-PMP, ICE-lite
-//! - **Firewall-Friendly**: Port probing, fallback selection, HTTP/WebSocket tunneling
-//! - **Service Discovery**: Hostname resolution, SRV records, load-balanced endpoints
-//! - **Health Monitoring**: Port availability checks, conflict detection, exhaustion monitoring
-//!
-//! ## Example
-//!
-//! ```rust,no_run
-//! use rusty_db::network::ports::{PortManager, PortConfig};
-//!
-//! #[tokio::main]
-//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     let config = PortConfig::default();
-//!     let mut manager = PortManager::new(config);
-//!
-//!     // Allocate a port
-//!     let port = manager.allocate_port().await?;
-//!     println!("Allocated port: {}", port);
-//!
-//!     // Start listener
-//!     manager.start_listener(port).await?;
-//!
-//!     Ok(())
-//! }
-//! ```
+// # Port Management Module
+//
+// Enterprise-grade port management for RustyDB distributed database.
+//
+// ## Features
+//
+// - **Dynamic Port Allocation**: Multiple allocation strategies (sequential, random, hash-based)
+// - **Multi-Protocol Support**: TCP, UDP, Unix domain sockets, IPv4/IPv6 dual-stack
+// - **NAT Traversal**: STUN, UPnP, NAT-PMP, ICE-lite
+// - **Firewall-Friendly**: Port probing, fallback selection, HTTP/WebSocket tunneling
+// - **Service Discovery**: Hostname resolution, SRV records, load-balanced endpoints
+// - **Health Monitoring**: Port availability checks, conflict detection, exhaustion monitoring
+//
+// ## Example
+//
+// ```rust,no_run
+// use rusty_db::network::ports::{PortManager, PortConfig};
+//
+// #[tokio::main]
+// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//     let config = PortConfig::default();
+//     let mut manager = PortManager::new(config);
+//
+//     // Allocate a port
+//     let port = manager.allocate_port().await?;
+//     println!("Allocated port: {}", port);
+//
+//     // Start listener
+//     manager.start_listener(port).await?;
+//
+//     Ok(())
+// }
+// ```
 
 pub mod allocator;
 pub mod listener;

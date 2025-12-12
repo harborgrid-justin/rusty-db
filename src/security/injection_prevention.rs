@@ -403,38 +403,44 @@ impl DangerousPatternDetector {
         self.custom_blacklist.insert(keyword.to_uppercase());
     }
 
+    // Helper function to check keywords and add threats
+    fn check_keywords<'a, I>(&self, upper_input: &str, keywords: I,
+                             threat_type: ThreatType, severity: Severity,
+                             description_prefix: &str, threats: &mut Vec<ThreatDetection>)
+    where
+        I: Iterator<Item = &'a String>,
+    {
+        for keyword in keywords {
+            if upper_input.contains(keyword.as_str()) {
+                threats.push(ThreatDetection {
+                    threat_type: threat_type.clone(),
+                    description: format!("{}: {}", description_prefix, keyword),
+                    severity: severity.clone(),
+                    position: upper_input.find(keyword.as_str()),
+                });
+            }
+        }
+    }
+
     // Scan input for dangerous patterns
     pub fn scan(&self, input: &str) -> Result<()> {
-        let mut stats = self.stats.write();
-        stats.total_scanned += 1;
-        drop(stats);
+        {
+            let mut stats = self.stats.write();
+            stats.total_scanned += 1;
+        }
 
         let upper_input = input.to_uppercase();
         let mut threats = Vec::new();
 
         // Check for dangerous SQL keywords
-        for keyword in DANGEROUS_SQL_KEYWORDS.iter() {
-            if upper_input.contains(keyword.as_str()) {
-                threats.push(ThreatDetection {
-                    threat_type: ThreatType::DangerousKeyword,
-                    description: format!("Dangerous keyword detected: {}", keyword),
-                    severity: Severity::Critical,
-                    position: upper_input.find(keyword.as_str()),
-                });
-            }
-        }
+        self.check_keywords(&upper_input, DANGEROUS_SQL_KEYWORDS.iter(),
+                           ThreatType::DangerousKeyword, Severity::Critical,
+                           "Dangerous keyword detected", &mut threats);
 
         // Check custom blacklist
-        for keyword in &self.custom_blacklist {
-            if upper_input.contains(keyword.as_str()) {
-                threats.push(ThreatDetection {
-                    threat_type: ThreatType::DangerousKeyword,
-                    description: format!("Blacklisted keyword detected: {}", keyword),
-                    severity: Severity::High,
-                    position: upper_input.find(keyword.as_str()),
-                });
-            }
-        }
+        self.check_keywords(&upper_input, self.custom_blacklist.iter(),
+                           ThreatType::DangerousKeyword, Severity::High,
+                           "Blacklisted keyword detected", &mut threats);
 
         // Check regex patterns
         for (idx, pattern) in INJECTION_PATTERNS.iter().enumerate() {
@@ -563,9 +569,10 @@ impl SQLValidator {
 
     // Validate SQL string for safety
     pub fn validate_sql(&self, sql: &str) -> Result<()> {
-        let mut stats = self.stats.write();
-        stats.total_validated += 1;
-        drop(stats);
+        {
+            let mut stats = self.stats.write();
+            stats.total_validated += 1;
+        }
 
         // Basic structure checks
         if sql.trim().is_empty() {

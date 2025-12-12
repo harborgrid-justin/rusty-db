@@ -1,7 +1,7 @@
-//! Least connections load balancing strategy.
-//!
-//! Selects the backend with the fewest active connections, with support for
-//! weighted selection and slow start.
+// Least connections load balancing strategy.
+//
+// Selects the backend with the fewest active connections, with support for
+// weighted selection and slow start.
 
 use super::{Backend, LoadBalancerContext, LoadBalancingStrategy};
 use crate::error::{DbError, Result};
@@ -214,7 +214,6 @@ impl PowerOfTwoBalancer {
     /// Select two random backends and return the one with fewer connections
     fn select_power_of_two(&self, backends: &[Backend]) -> Result<Backend> {
         use rand::seq::SliceRandom;
-        use rand::thread_rng;
 
         if backends.is_empty() {
             return Err(DbError::Unavailable("No backends available".to_string()));
@@ -224,7 +223,7 @@ impl PowerOfTwoBalancer {
             return Ok(backends[0].clone());
         }
 
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let mut samples: Vec<_> = backends.iter().collect();
         samples.partial_shuffle(&mut rng, 2);
 
@@ -342,7 +341,7 @@ mod tests {
         let ctx = LoadBalancerContext::default();
 
         // node1 should be selected most of the time due to low connections
-        let mut selections = std::collections::HashMap::new();
+        let mut selections = HashMap::new();
         for _ in 0..100 {
             let backend = balancer.select(&backends, &ctx).await.unwrap();
             *selections.entry(backend.id).or_insert(0) += 1;

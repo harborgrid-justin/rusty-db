@@ -1,7 +1,7 @@
-//! Network Access Control Lists (ACLs)
-//!
-//! This module provides IP-based ACLs, node-based ACLs, action-based permissions,
-//! and audit logging.
+// Network Access Control Lists (ACLs)
+//
+// This module provides IP-based ACLs, node-based ACLs, action-based permissions,
+// and audit logging.
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;

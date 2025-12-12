@@ -252,8 +252,14 @@ pub type Result<T> = std::result::Result<T, DbError>;
 
 // Error conversions for common error types
 
-impl From<Box<bincode::ErrorKind>> for DbError {
-    fn from(e: Box<bincode::ErrorKind>) -> Self {
+impl From<bincode::error::EncodeError> for DbError {
+    fn from(e: bincode::error::EncodeError) -> Self {
+        DbError::Serialization(e.to_string())
+    }
+}
+
+impl From<bincode::error::DecodeError> for DbError {
+    fn from(e: bincode::error::DecodeError) -> Self {
         DbError::Serialization(e.to_string())
     }
 }
@@ -264,14 +270,15 @@ impl From<serde_json::Error> for DbError {
     }
 }
 
-impl From<bson::ser::Error> for DbError {
-    fn from(e: bson::ser::Error) -> Self {
-        DbError::Serialization(e.to_string())
-    }
-}
+// Note: bson serde features not enabled, removed conversions
+// impl From<bson::ser::Error> for DbError {
+//     fn from(e: bson::ser::Error) -> Self {
+//         DbError::Serialization(e.to_string())
+//     }
+// }
 
-impl From<bson::de::Error> for DbError {
-    fn from(e: bson::de::Error) -> Self {
-        DbError::Serialization(e.to_string())
-    }
-}
+// impl From<bson::de::Error> for DbError {
+//     fn from(e: bson::de::Error) -> Self {
+//         DbError::Serialization(e.to_string())
+//     }
+// }

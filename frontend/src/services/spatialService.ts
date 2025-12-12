@@ -8,7 +8,7 @@ import type {
   Timestamp,
   PaginatedResponse,
   PaginationParams,
-} from '../types';
+} from '@/types';
 
 // ============================================================================
 // Request/Response Types

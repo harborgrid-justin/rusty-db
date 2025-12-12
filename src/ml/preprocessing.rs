@@ -850,7 +850,7 @@ impl DataSplitter {
 
         if shuffle {
             use rand::seq::SliceRandom;
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             indices.shuffle(&mut rng);
         }
 
@@ -903,7 +903,7 @@ impl DataSplitter {
         let mut indices: Vec<usize> = (0..n_samples).collect();
 
         if shuffle {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             indices.shuffle(&mut rng);
         }
 

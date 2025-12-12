@@ -478,7 +478,9 @@ impl ReadModelProjection {
         // Update read model based on event
         // Simplified implementation
         let key = format!("{}:{}", event.aggregate_type, event.aggregate_id);
-        self.data.write().insert(key, bincode::serialize(&event)?);
+        let serialized = bincode::encode_to_vec(&event, bincode::config::standard())
+            .map_err(|e| crate::error::DbError::Serialization(format!("Serialization failed: {}", e)))?;
+        self.data.write().insert(key, serialized);
         Ok(())
     }
 

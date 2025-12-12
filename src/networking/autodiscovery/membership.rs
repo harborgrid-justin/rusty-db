@@ -1,15 +1,15 @@
-//! Membership List Management for RustyDB
-//!
-//! Maintains a consistent view of cluster membership across all nodes.
-//! Provides efficient membership tracking, delta updates, and snapshots.
-//!
-//! # Features
-//!
-//! - Consistent member ordering
-//! - Membership snapshots
-//! - Delta updates for efficiency
-//! - Member health tracking
-//! - Version vectors for causality tracking
+// Membership List Management for RustyDB
+//
+// Maintains a consistent view of cluster membership across all nodes.
+// Provides efficient membership tracking, delta updates, and snapshots.
+//
+// # Features
+//
+// - Consistent member ordering
+// - Membership snapshots
+// - Delta updates for efficiency
+// - Member health tracking
+// - Version vectors for causality tracking
 
 use super::{NodeInfo, NodeStatus};
 use crate::common::NodeId;
@@ -19,7 +19,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::time::Duration;
 
 /// Version vector for tracking causality
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct VersionVector {
     /// Map of node ID to version number
     versions: HashMap<NodeId, u64>,
@@ -61,7 +61,7 @@ impl VersionVector {
 }
 
 /// Member entry in the membership list
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct Member {
     /// Node information
     pub info: NodeInfo,
@@ -113,7 +113,7 @@ impl Member {
 }
 
 /// Delta update for membership changes
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum MembershipDelta {
     /// Member added
     Added(Member),
@@ -126,7 +126,7 @@ pub enum MembershipDelta {
 }
 
 /// Snapshot of membership list at a point in time
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct MembershipSnapshot {
     /// All members in the snapshot
     pub members: Vec<Member>,

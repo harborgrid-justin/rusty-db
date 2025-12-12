@@ -772,6 +772,7 @@ pub enum RecoveryPriority {
 
 #[cfg(test)]
 mod tests {
+    use crate::blockchain::LedgerRow;
     use super::*;
     use crate::common::Value;
 

@@ -22,7 +22,7 @@ import {
 import { EncryptionKeyCard } from '../components/security/EncryptionKeyCard';
 import { KeyRotationWizard } from '../components/security/KeyRotationWizard';
 import { LoadingScreen } from '../components/common/LoadingScreen';
-import type { EncryptionAlgorithm, KeyType } from '../types';
+import type { EncryptionAlgorithm, KeyType } from '@/types';
 import clsx from 'clsx';
 
 // ============================================================================

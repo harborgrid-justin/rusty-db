@@ -79,7 +79,7 @@ pub type SessionId = u64;
 // ============================================================================
 
 /// Represents all possible data values in the database
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum Value {
     /// NULL value
     Null,

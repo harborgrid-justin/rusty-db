@@ -73,7 +73,7 @@ use std::time::SystemTime;
 use crate::error::DbError;
 use crate::replication::types::*;
 use async_trait::async_trait;
-use parking_lot::{Mutex, RwLock};
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -985,7 +985,7 @@ mod tests {
     use crate::replication::manager::{EventPublisher, HealthMonitor, HealthStats, ReplicaService, ReplicationConfig, ReplicationManager, ReplicationManagerBuilder, WalService, WalStats};
     use crate::replication::{ReplicaNode, ReplicationEvent};
     use crate::replication::monitor::ReplicaHealthStatus;
-    use crate::replication::types::{ReplicaId, WalEntry};
+    use crate::replication::types::{LogSequenceNumber, ReplicaId, WalEntry};
     // Mock implementations for testing
 
     struct MockEventPublisher {
@@ -1009,7 +1009,7 @@ mod tests {
 
         async fn subscribe(&self) -> Result<tokio::sync::mpsc::Receiver<ReplicationEvent>, DbError> {
             let (_tx, rx) = tokio::sync::mpsc::unbounded_channel();
-            Ok(rx)
+            Ok(())
         }
 
         fn name(&self) -> &str {

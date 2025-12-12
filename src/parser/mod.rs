@@ -214,8 +214,9 @@ impl SqlParser {
 
     fn convert_statement(&self, stmt: Statement) -> Result<SqlStatement> {
         match stmt {
-            Statement::CreateTable { name, columns, .. } => {
-                let table_name = name.to_string();
+            Statement::CreateTable(create_table) => {
+                let table_name = create_table.name.to_string();
+                let columns = &create_table.columns;
                 let mut cols = Vec::new();
 
                 for col in columns {
@@ -223,7 +224,7 @@ impl SqlParser {
                         sqlparser::ast::DataType::Int(_) => DataType::Integer,
                         sqlparser::ast::DataType::BigInt(_) => DataType::BigInt,
                         sqlparser::ast::DataType::Float(_) => DataType::Float,
-                        sqlparser::ast::DataType::Double => DataType::Double,
+                        sqlparser::ast::DataType::Double(_) => DataType::Double,
                         sqlparser::ast::DataType::Varchar(len) => {
                             let size = len.map(|l| match l {
                                 sqlparser::ast::CharacterLength::IntegerLength { length, .. } => length as usize,
@@ -296,14 +297,14 @@ impl SqlParser {
                     Err(DbError::SqlParse("Unsupported query type".to_string()))
                 }
             }
-            Statement::Insert { table_name, columns, source, .. } => {
-                let table = table_name.to_string();
-                let cols: Vec<String> = columns.iter().map(|c| c.to_string()).collect();
+            Statement::Insert(insert) => {
+                let table = insert.table.to_string();
+                let cols: Vec<String> = insert.columns.iter().map(|c| c.to_string()).collect();
 
                 // Parse source values from the INSERT statement
                 let mut values: Vec<Vec<String>> = Vec::new();
 
-                if let Some(src) = source {
+                if let Some(src) = insert.source {
                     if let SetExpr::Values(vals) = *src.body {
                         for row in vals.rows {
                             let mut row_values = Vec::new();
@@ -322,25 +323,36 @@ impl SqlParser {
                     values,
                 })
             }
-            Statement::Delete { from, .. } => {
+            Statement::Delete(delete) => {
+                let table = if let Some(first_table) = delete.tables.first() {
+                    first_table.0.to_string()
+                } else {
+                    return Err(DbError::SqlParse("Delete statement requires a table".to_string()));
+                };
                 Ok(SqlStatement::Delete {
-                    table: from[0].relation.to_string(),
+                    table,
                     filter: None,
                 })
             }
-            Statement::Truncate { table_name, .. } => {
+            Statement::Truncate(truncate) => {
+                let name = if let Some(first_name) = truncate.table_names.first() {
+                    first_name.to_string()
+                } else {
+                    return Err(DbError::SqlParse("Truncate statement requires a table".to_string()));
+                };
                 Ok(SqlStatement::TruncateTable {
-                    name: table_name.to_string(),
+                    name,
                 })
             }
-            Statement::CreateIndex { name, table_name, columns, unique, .. } => {
-                let index_name = name.as_ref()
+            Statement::CreateIndex(create_index) => {
+                let index_name = create_index.name.as_ref()
                     .map(|n| n.to_string())
-                    .unwrap_or_else(|| format!("idx_{}", table_name.to_string()));
-                let table = table_name.to_string();
-                let cols: Vec<String> = columns.iter()
-                    .map(|col| col.expr.to_string())
+                    .unwrap_or_else(|| format!("idx_{}", create_index.table_name.to_string()));
+                let table = create_index.table_name.to_string();
+                let cols: Vec<String> = create_index.columns.iter()
+                    .map(|col| col.column.to_string())
                     .collect();
+                let unique = create_index.unique;
 
                 Ok(SqlStatement::CreateIndex {
                     name: index_name,
@@ -349,11 +361,11 @@ impl SqlParser {
                     unique,
                 })
             }
-            Statement::CreateView { name, query, .. } => {
+            Statement::CreateView(create_view) => {
                 Ok(SqlStatement::CreateView {
-                    name: name.to_string(),
-                    query: query.to_string(),
-                    or_replace: false,
+                    name: create_view.name.to_string(),
+                    query: create_view.query.to_string(),
+                    or_replace: create_view.or_replace,
                 })
             }
             _ => Err(DbError::SqlParse("Unsupported statement type".to_string())),
@@ -392,7 +404,7 @@ impl SqlParser {
     /// Extract a literal value from an expression
     fn extract_literal_value(&self, expr: &Expr) -> String {
         match expr {
-            Expr::Value(val) => match val {
+            Expr::Value(val) => match &val.value {
                 sqlparser::ast::Value::Number(n, _) => n.clone(),
                 sqlparser::ast::Value::SingleQuotedString(s) => s.clone(),
                 sqlparser::ast::Value::DoubleQuotedString(s) => s.clone(),
@@ -554,7 +566,7 @@ mod tests {
 
         assert_eq!(stmts.len(), 1);
         match &stmts[0] {
-            SqlStatement::CreateView { name, query } => {
+            SqlStatement::CreateView { name, query, or_replace } => {
                 assert_eq!(name, "active_users");
                 assert!(query.contains("SELECT"));
             }

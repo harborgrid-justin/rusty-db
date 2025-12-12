@@ -31,7 +31,7 @@ pub use string_functions::{StringFunctionExecutor, StringFunctionValidator};
 use serde::{Deserialize, Serialize};
 
 // Query execution result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct QueryResult {
     pub columns: Vec<String>,
     pub rows: Vec<Vec<String>>,

@@ -1,25 +1,25 @@
-//! Gossip-based Discovery using SWIM Protocol
-//!
-//! Implements the Scalable Weakly-consistent Infection-style Process Group Membership
-//! (SWIM) protocol for failure detection and membership management.
-//!
-//! # Protocol Overview
-//!
-//! SWIM uses three main mechanisms:
-//! - **Ping**: Direct health check to a random member
-//! - **Ping-Req**: Indirect probe via other members if direct ping fails
-//! - **Gossip**: Piggyback membership updates on ping messages
-//!
-//! # Failure Detection
-//!
-//! Nodes can be in three states:
-//! - Alive: Node is healthy
-//! - Suspect: Node may have failed (grace period)
-//! - Dead: Node confirmed failed
-//!
-//! # References
-//!
-//! - [SWIM Paper](https://www.cs.cornell.edu/projects/Quicksilver/public_pdfs/SWIM.pdf)
+// Gossip-based Discovery using SWIM Protocol
+//
+// Implements the Scalable Weakly-consistent Infection-style Process Group Membership
+// (SWIM) protocol for failure detection and membership management.
+//
+// # Protocol Overview
+//
+// SWIM uses three main mechanisms:
+// - **Ping**: Direct health check to a random member
+// - **Ping-Req**: Indirect probe via other members if direct ping fails
+// - **Gossip**: Piggyback membership updates on ping messages
+//
+// # Failure Detection
+//
+// Nodes can be in three states:
+// - Alive: Node is healthy
+// - Suspect: Node may have failed (grace period)
+// - Dead: Node confirmed failed
+//
+// # References
+//
+// - [SWIM Paper](https://www.cs.cornell.edu/projects/Quicksilver/public_pdfs/SWIM.pdf)
 
 use super::{DiscoveryConfig, DiscoveryEvent, DiscoveryProtocol, NodeInfo};
 use crate::common::NodeId;
@@ -34,7 +34,7 @@ use tokio::sync::{mpsc, RwLock};
 use tokio::time::interval;
 
 /// Member state in the gossip protocol
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum MemberState {
     /// Node is alive and responding
     Alive {
@@ -79,7 +79,7 @@ impl MemberState {
 }
 
 /// Gossip message types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum GossipMessage {
     /// Direct ping to check if node is alive
     Ping {
@@ -199,7 +199,8 @@ impl GossipDiscovery {
                 return Ok(());
             }
 
-            let idx = rand::random::<usize>() % alive_members.len();
+            use rand::Rng;
+            let idx = rand::rng().random_range(0..alive_members.len());
             let (_, (node, _)) = alive_members[idx];
             node.addr
         };
@@ -343,7 +344,7 @@ impl GossipDiscovery {
 
     /// Send a gossip message
     async fn send_message(&self, msg: &GossipMessage, addr: SocketAddr) -> Result<()> {
-        let bytes = bincode::serialize(msg)
+        let bytes = bincode::encode_to_vec(msg, bincode::config::standard())
             .map_err(|e| DbError::Serialization(format!("Failed to serialize message: {}", e)))?;
 
         self.socket.send_to(&bytes, addr).await
@@ -422,7 +423,7 @@ impl GossipDiscovery {
                 result = self.socket.recv_from(&mut buffer) => {
                     match result {
                         Ok((len, addr)) => {
-                            if let Ok(msg) = bincode::deserialize::<GossipMessage>(&buffer[..len]) {
+                            if let Ok((msg, _)) = bincode::decode_from_slice(&buffer[..len], bincode::config::standard()) {
                                 if let Err(e) = self.handle_message(msg, addr).await {
                                     eprintln!("Error handling message: {}", e);
                                 }

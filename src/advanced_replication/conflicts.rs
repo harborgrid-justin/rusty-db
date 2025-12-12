@@ -6,7 +6,7 @@
 
 use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use parking_lot::RwLock;
@@ -249,7 +249,7 @@ impl CrdtType {
                 Ok(result.to_le_bytes().to_vec())
             }
             CrdtType::GSet(set) => {
-                let encoded = bincode::serialize(set)
+                let encoded = bincode::encode_to_vec(set, bincode::config::standard())
                     .map_err(|e| DbError::Serialization(e.to_string()))?;
                 Ok(encoded)
             }
@@ -258,13 +258,13 @@ impl CrdtType {
                     .filter(|e| !removed.contains(e))
                     .cloned()
                     .collect();
-                let encoded = bincode::serialize(&current)
+                let encoded = bincode::encode_to_vec(&current, bincode::config::standard())
                     .map_err(|e| DbError::Serialization(e.to_string()))?;
                 Ok(encoded)
             }
             CrdtType::OrSet { elements } => {
                 let current: Vec<_> = elements.keys().cloned().collect();
-                let encoded = bincode::serialize(&current)
+                let encoded = bincode::encode_to_vec(&current, bincode::config::standard())
                     .map_err(|e| DbError::Serialization(e.to_string()))?;
                 Ok(encoded)
             }

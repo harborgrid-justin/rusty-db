@@ -1,7 +1,7 @@
-//! Routing table for cluster communication
-//!
-//! This module implements the routing table that maps nodes to addresses,
-//! shards to nodes, and provides datacenter-aware routing.
+// Routing table for cluster communication
+//
+// This module implements the routing table that maps nodes to addresses,
+// shards to nodes, and provides datacenter-aware routing.
 
 use crate::error::Result;
 use crate::networking::types::{NodeAddress, NodeId};

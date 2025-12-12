@@ -20,7 +20,7 @@ use std::time::SystemTime;
 use crate::api::rest::types::ApiState;
 use crate::error::{DbError, Result};
 use crate::optimizer_pro::{
-    HintParser, OptimizerHint, PlanBaselineManager, SqlPlanBaseline,
+    HintParser, PlanBaselineManager, SqlPlanBaseline,
     QueryFingerprint, PhysicalPlan, QueryOptimizer, OptimizerConfig,
 };
 
@@ -446,7 +446,7 @@ pub async fn explain_query(
 /// POST /api/v1/query/explain/analyze
 /// Get query execution plan with actual execution statistics (EXPLAIN ANALYZE)
 pub async fn explain_analyze_query(
-    State(state): State<Arc<ApiState>>,
+    State(_state): State<Arc<ApiState>>,
     Json(request): Json<ExplainRequest>,
 ) -> Result<Response> {
     let start = std::time::Instant::now();

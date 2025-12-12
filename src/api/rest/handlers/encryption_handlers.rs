@@ -4,14 +4,14 @@
 // and encryption status monitoring.
 
 use axum::{
-    extract::{State, Path, Query},
+    extract::{State, Path},
     response::Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use parking_lot::RwLock;
 use crate::api::rest::types::{ApiState, ApiResult, ApiError};
-use crate::security_vault::{SecurityVaultManager, EncryptionAlgorithm, TdeConfig};
+use crate::security_vault::SecurityVaultManager;
 
 // Request/Response Types
 

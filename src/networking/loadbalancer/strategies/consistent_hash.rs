@@ -1,7 +1,7 @@
-//! Consistent hashing load balancing strategy.
-//!
-//! Provides key-based routing with virtual nodes for even distribution.
-//! Useful for cache affinity and session persistence.
+// Consistent hashing load balancing strategy.
+//
+// Provides key-based routing with virtual nodes for even distribution.
+// Useful for cache affinity and session persistence.
 
 use super::{Backend, LoadBalancerContext, LoadBalancingStrategy};
 use crate::error::{DbError, Result};

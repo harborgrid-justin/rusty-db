@@ -1,14 +1,14 @@
-//! # NAT Traversal
-//!
-//! NAT traversal support for distributed database communication.
-//!
-//! ## Features
-//!
-//! - **STUN**: Session Traversal Utilities for NAT - discover external IP
-//! - **UPnP**: Universal Plug and Play - automatic port forwarding
-//! - **NAT-PMP**: NAT Port Mapping Protocol - lightweight port mapping
-//! - **ICE-lite**: Interactive Connectivity Establishment (simplified)
-//! - **Hole Punching**: UDP/TCP hole punching techniques
+// # NAT Traversal
+//
+// NAT traversal support for distributed database communication.
+//
+// ## Features
+//
+// - **STUN**: Session Traversal Utilities for NAT - discover external IP
+// - **UPnP**: Universal Plug and Play - automatic port forwarding
+// - **NAT-PMP**: NAT Port Mapping Protocol - lightweight port mapping
+// - **ICE-lite**: Interactive Connectivity Establishment (simplified)
+// - **Hole Punching**: UDP/TCP hole punching techniques
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;
@@ -165,9 +165,9 @@ impl StunClient {
 
         // Transaction ID (96 bits / 12 bytes)
         use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         for _ in 0..12 {
-            request.push(rng.gen());
+            request.push(rng.random());
         }
 
         request

@@ -32,7 +32,7 @@ fn main() {
     println!("   - Page size: {} bytes", config.page_size);
     println!("   - Hot tier: {}%", (config.hot_tier_ratio * 100.0) as u32);
     println!("   - Warm tier: {}%", (config.warm_tier_ratio * 100.0) as u32);
-    println!("");
+    println!();
 
     let manager = BufferPoolManager::new(config);
 
@@ -42,7 +42,7 @@ fn main() {
     println!("   - Tier manager started");
     println!("   - Incremental checkpointer started");
     println!("   - Background writer started");
-    println!("");
+    println!();
 
     // Pin some pages
     println!("3. Pinning Pages");
@@ -51,19 +51,19 @@ fn main() {
             println!("   - Pinned page {} (tablespace 0)", i);
         }
     }
-    println!("");
+    println!();
 
     // Get statistics
     println!("4. Buffer Pool Statistics");
     let stats = manager.api_get_stats();
     println!("   {}", serde_json::to_string_pretty(&stats).unwrap());
-    println!("");
+    println!();
 
     // Get capacity and usage
     println!("5. Capacity and Usage");
     println!("   - Total capacity: {} bytes", manager.api_get_capacity());
     println!("   - Frames in use: {}", manager.api_get_frames_in_use());
-    println!("");
+    println!();
 
     // Check memory pressure
     println!("6. Memory Pressure");
@@ -71,21 +71,21 @@ fn main() {
     println!("   - Current usage: {} bytes", pressure.current_usage);
     println!("   - Pressure level: {:.2}%", pressure.pressure_level * 100.0);
     println!("   - Under pressure: {}", pressure.under_pressure);
-    println!("");
+    println!();
 
     // Export Prometheus metrics
     println!("7. Prometheus Metrics Export");
     let prometheus = manager.api_export_prometheus();
     println!("{}", prometheus.lines().take(10).collect::<Vec<_>>().join("\n"));
     println!("   ... (truncated)");
-    println!("");
+    println!();
 
     // Perform checkpoint
     println!("8. Performing Checkpoint");
     let checkpoint_result = manager.api_checkpoint();
     println!("   - Pages flushed: {}", checkpoint_result.pages_flushed);
     println!("   - Checkpoint LSN: {}", checkpoint_result.checkpoint_lsn);
-    println!("");
+    println!();
 
     // Unpin pages
     println!("9. Unpinning Pages");
@@ -93,13 +93,13 @@ fn main() {
         manager.api_unpin_page(0, i, false);
         println!("   - Unpinned page {} (not dirty)", i);
     }
-    println!("");
+    println!();
 
     // Stop background operations
     println!("10. Stopping Background Operations");
     manager.api_stop_background_operations();
     println!("   - All background threads stopped");
-    println!("");
+    println!();
 
     println!("=== Demo Complete ===");
 }

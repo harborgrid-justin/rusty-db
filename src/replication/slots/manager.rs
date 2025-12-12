@@ -5,7 +5,6 @@ use parking_lot::RwLock;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
-use tokio::sync::mpsc;
 
 use crate::replication::types::{LogSequenceNumber, ReplicaId};
 use super::config::SlotManagerConfig;

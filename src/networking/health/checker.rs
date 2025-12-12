@@ -1,9 +1,9 @@
-//! # Health Checkers
-//!
-//! Implements various health check types including TCP, HTTP, gRPC,
-//! and custom health check plugins.
+// # Health Checkers
+//
+// Implements various health check types including TCP, HTTP, gRPC,
+// and custom health check plugins.
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
@@ -19,8 +19,8 @@ pub struct HealthCheckResult {
     /// Response time
     pub response_time: Duration,
 
-    /// Timestamp of the check
-    pub timestamp: Instant,
+    /// Timestamp of the check (milliseconds since UNIX_EPOCH)
+    pub timestamp: u64,
 
     /// Optional status code (for HTTP checks)
     pub status_code: Option<u16>,
@@ -35,10 +35,12 @@ pub struct HealthCheckResult {
 impl HealthCheckResult {
     /// Create a successful result
     pub fn success(check_type: String, response_time: Duration) -> Self {
+        use std::time::SystemTime;
+        let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
         Self {
             success: true,
             response_time,
-            timestamp: Instant::now(),
+            timestamp,
             status_code: None,
             message: None,
             check_type,
@@ -47,10 +49,12 @@ impl HealthCheckResult {
 
     /// Create a failed result
     pub fn failure(check_type: String, message: String) -> Self {
+        use std::time::SystemTime;
+        let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
         Self {
             success: false,
             response_time: Duration::from_secs(0),
-            timestamp: Instant::now(),
+            timestamp,
             status_code: None,
             message: Some(message),
             check_type,

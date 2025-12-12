@@ -174,7 +174,7 @@ impl AuthorizationEngine {
 }
 
 impl RbacManager {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             roles: Arc::new(RwLock::new(HashMap::new())),
             user_roles: Arc::new(RwLock::new(HashMap::new())),

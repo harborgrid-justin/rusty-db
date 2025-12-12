@@ -55,6 +55,9 @@ pub struct ChangeEvent {
     pub namespace: Namespace,
     // Resume token for resuming the stream
     pub resume_token: ResumeToken,
+    pub document_id: (),
+    pub timestamp: (),
+    pub document: ()
 }
 
 impl ChangeEvent {
@@ -84,6 +87,9 @@ impl ChangeEvent {
                 collection,
             },
             resume_token,
+            document_id: (),
+            timestamp: (),
+            document: (),
         }
     }
 

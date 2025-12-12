@@ -1,7 +1,7 @@
-//! Message encryption for network communication
-//!
-//! This module provides envelope encryption, key derivation,
-//! perfect forward secrecy, and at-rest encryption keys.
+// Message encryption for network communication
+//
+// This module provides envelope encryption, key derivation,
+// perfect forward secrecy, and at-rest encryption keys.
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;
@@ -10,7 +10,7 @@ use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 
 /// Encryption algorithm
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, bincode::Encode, bincode::Decode)]
 pub enum EncryptionAlgorithm {
     /// AES-256-GCM
     Aes256Gcm,
@@ -95,7 +95,7 @@ impl EncryptionKey {
     pub fn generate(key_id: String, algorithm: EncryptionAlgorithm) -> Result<Self> {
         use rand::RngCore;
         let mut key_material = vec![0u8; algorithm.key_size()];
-        rand::thread_rng().fill_bytes(&mut key_material);
+        rand::rng().fill_bytes(&mut key_material);
 
         Ok(Self::new(key_id, key_material, algorithm))
     }
@@ -139,7 +139,7 @@ impl EncryptionKey {
 }
 
 /// Encrypted message envelope
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, bincode::Encode, bincode::Decode)]
 pub struct EncryptedEnvelope {
     /// Encrypted data encryption key (DEK)
     pub encrypted_dek: Vec<u8>,
@@ -166,13 +166,14 @@ pub struct EncryptedEnvelope {
 impl EncryptedEnvelope {
     /// Serialize to bytes
     pub fn to_bytes(&self) -> Result<Vec<u8>> {
-        bincode::serialize(self)
+        bincode::encode_to_vec(self, bincode::config::standard())
             .map_err(|e| DbError::Serialization(format!("Failed to serialize envelope: {}", e)))
     }
 
     /// Deserialize from bytes
     pub fn from_bytes(data: &[u8]) -> Result<Self> {
-        bincode::deserialize(data)
+        bincode::decode_from_slice(data, bincode::config::standard())
+            .map(|(envelope, _)| envelope)
             .map_err(|e| DbError::Serialization(format!("Failed to deserialize envelope: {}", e)))
     }
 }
@@ -366,7 +367,7 @@ impl MessageEncryption {
             .map_err(|e| DbError::Encryption(format!("Failed to create cipher: {}", e)))?;
 
         let mut nonce_bytes = [0u8; 12];
-        rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut nonce_bytes);
+        rand::RngCore::fill_bytes(&mut rand::rng(), &mut nonce_bytes);
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         let ciphertext = cipher
@@ -378,7 +379,7 @@ impl MessageEncryption {
             .map_err(|e| DbError::Encryption(format!("Failed to create master cipher: {}", e)))?;
 
         let mut dek_nonce_bytes = [0u8; 12];
-        rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut dek_nonce_bytes);
+        rand::RngCore::fill_bytes(&mut rand::rng(), &mut dek_nonce_bytes);
         let dek_nonce = Nonce::from_slice(&dek_nonce_bytes);
 
         let encrypted_dek = master_cipher
@@ -417,7 +418,7 @@ impl MessageEncryption {
         // In reality, we need to store the DEK nonce separately
         // For now, use a simple approach
         let mut dek_nonce_bytes = [0u8; 12];
-        rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut dek_nonce_bytes);
+        rand::RngCore::fill_bytes(&mut rand::rng(), &mut dek_nonce_bytes);
 
         // For decryption, we need to reconstruct the full ciphertext
         let mut full_ciphertext = envelope.ciphertext.clone();
@@ -445,7 +446,7 @@ impl MessageEncryption {
             .map_err(|e| DbError::Encryption(format!("Failed to create cipher: {}", e)))?;
 
         let mut nonce_bytes = [0u8; 12];
-        rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut nonce_bytes);
+        rand::RngCore::fill_bytes(&mut rand::rng(), &mut nonce_bytes);
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         let mut ciphertext = cipher

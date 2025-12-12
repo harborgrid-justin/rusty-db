@@ -1,10 +1,10 @@
-//! # Multi-Port Listener Management
-//!
-//! Manages multiple network listeners with support for:
-//! - IPv4 and IPv6 dual-stack
-//! - Unix domain sockets
-//! - TCP and UDP protocols
-//! - Port reuse configuration
+// # Multi-Port Listener Management
+//
+// Manages multiple network listeners with support for:
+// - IPv4 and IPv6 dual-stack
+// - Unix domain sockets
+// - TCP and UDP protocols
+// - Port reuse configuration
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;

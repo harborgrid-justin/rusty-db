@@ -530,6 +530,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
                 total_keys: 0,
                 leaf_nodes: 0,
                 internal_nodes: 0,
+                average_fill_factor: (),
             },
             Some(root) => {
                 let mut stats = BTreeStats {
@@ -538,6 +539,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
                     total_keys: 0,
                     leaf_nodes: 0,
                     internal_nodes: 0,
+                    average_fill_factor: (),
                 };
 
                 self.collect_stats(root.clone(), &mut stats);
@@ -750,6 +752,7 @@ pub struct BTreeStats {
     pub total_keys: usize,
     pub leaf_nodes: usize,
     pub internal_nodes: usize,
+    pub average_fill_factor: ()
 }
 
 #[cfg(test)]

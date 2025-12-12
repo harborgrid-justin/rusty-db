@@ -1,8 +1,8 @@
-//! Network Manager - Central coordinator for networking components
-//!
-//! The NetworkManager is the main entry point for the networking layer. It coordinates
-//! all networking components (transport, discovery, health monitoring, load balancing,
-//! and cluster membership) and provides a unified API for the rest of RustyDB.
+// Network Manager - Central coordinator for networking components
+//
+// The NetworkManager is the main entry point for the networking layer. It coordinates
+// all networking components (transport, discovery, health monitoring, load balancing,
+// and cluster membership) and provides a unified API for the rest of RustyDB.
 
 use crate::common::{Component, HealthStatus};
 use crate::error::{DbError, Result};

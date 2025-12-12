@@ -11,12 +11,13 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use super::super::types::*;
-use crate::api::monitoring::{HealthCheckCoordinator, HealthCheckResult, HealthStatus};
+use crate::api::monitoring::{HealthCheckResult, HealthStatus};
 
 // Liveness probe response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct LivenessProbeResponse {
     pub status: String,
     pub timestamp: i64,
@@ -24,7 +25,7 @@ pub struct LivenessProbeResponse {
 }
 
 // Readiness probe response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ReadinessProbeResponse {
     pub status: String,
     pub timestamp: i64,
@@ -33,7 +34,7 @@ pub struct ReadinessProbeResponse {
 }
 
 // Startup probe response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct StartupProbeResponse {
     pub status: String,
     pub timestamp: i64,
@@ -42,7 +43,7 @@ pub struct StartupProbeResponse {
 }
 
 // Full health check response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct FullHealthResponse {
     pub status: String,
     pub timestamp: i64,
@@ -53,7 +54,7 @@ pub struct FullHealthResponse {
 }
 
 // Component health detail
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ComponentHealthDetail {
     pub component: String,
     pub status: String,

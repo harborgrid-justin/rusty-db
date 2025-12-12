@@ -1,24 +1,24 @@
-//! mDNS/DNS-SD Discovery for RustyDB
-//!
-//! Implements multicast DNS (mDNS) and DNS Service Discovery (DNS-SD) for zero-configuration
-//! networking in LAN environments. This allows RustyDB nodes to automatically discover
-//! each other without any configuration.
-//!
-//! # Protocol Overview
-//!
-//! - Service Type: `_rustydb._tcp.local`
-//! - Uses multicast address: 224.0.0.251:5353
-//! - Announces node presence via mDNS
-//! - Browses for other RustyDB nodes
-//! - Resolves service instances to IP addresses
-//!
-//! # TXT Records
-//!
-//! Metadata is shared via TXT records:
-//! - `version`: Protocol version
-//! - `node_id`: Unique node identifier
-//! - `datacenter`: Datacenter location (optional)
-//! - `rack`: Rack identifier (optional)
+// mDNS/DNS-SD Discovery for RustyDB
+//
+// Implements multicast DNS (mDNS) and DNS Service Discovery (DNS-SD) for zero-configuration
+// networking in LAN environments. This allows RustyDB nodes to automatically discover
+// each other without any configuration.
+//
+// # Protocol Overview
+//
+// - Service Type: `_rustydb._tcp.local`
+// - Uses multicast address: 224.0.0.251:5353
+// - Announces node presence via mDNS
+// - Browses for other RustyDB nodes
+// - Resolves service instances to IP addresses
+//
+// # TXT Records
+//
+// Metadata is shared via TXT records:
+// - `version`: Protocol version
+// - `node_id`: Unique node identifier
+// - `datacenter`: Datacenter location (optional)
+// - `rack`: Rack identifier (optional)
 
 use super::{DiscoveryConfig, DiscoveryEvent, DiscoveryProtocol, NodeInfo, NodeStatus};
 use crate::error::{DbError, Result};

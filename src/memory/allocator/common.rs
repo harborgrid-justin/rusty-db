@@ -94,6 +94,10 @@ pub enum MemoryPressureLevel {
     Critical,
     // Emergency level (>95% usage)
     Emergency,
+    None,
+    Medium,
+    High,
+    Low,
 }
 
 // Memory allocation source/component
@@ -130,6 +134,7 @@ pub enum ContextType {
     Session,
     // Temporary context
     Temporary,
+    Cache,
 }
 
 // Memory leak report entry

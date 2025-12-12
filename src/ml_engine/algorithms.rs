@@ -7,7 +7,7 @@ use crate::error::Result;
 use super::{Dataset};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use rand::{Rng, thread_rng};
+use rand::Rng;
 use rand::prelude::SliceRandom;
 // ============================================================================
 // Linear Regression
@@ -279,7 +279,7 @@ impl LogisticRegression {
 // ============================================================================
 
 // Decision Tree for classification and regression (CART algorithm)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct DecisionTree {
     // Root node of the tree
     pub root: Option<TreeNode>,
@@ -552,9 +552,8 @@ impl RandomForest {
 
     pub fn fit(&mut self, dataset: &Dataset, is_classification: bool) -> Result<()> {
         use rand::seq::SliceRandom;
-        use rand::thread_rng;
 
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let n_samples = dataset.num_samples();
         let n_features = dataset.num_features();
         let features_per_tree = ((n_features as f64 * self.max_features).ceil() as usize).max(1);
@@ -562,7 +561,7 @@ impl RandomForest {
         for _ in 0..self.n_estimators {
             // Bootstrap sampling
             let bootstrap_indices: Vec<usize> = (0..n_samples)
-                .map(|_| rng.gen_range(0..n_samples))
+                .map(|_| rng.random_range(0..n_samples))
                 .collect();
 
             // Feature sampling
@@ -656,7 +655,7 @@ impl KMeans {
 
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
 
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let n_features = dataset.num_features();
 
         // Initialize centroids using k-means++
@@ -762,7 +761,7 @@ impl KMeans {
 // ============================================================================
 
 // Gaussian Naive Bayes classifier
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct NaiveBayes {
     // Class priors
     pub class_priors: HashMap<i64, f64>,

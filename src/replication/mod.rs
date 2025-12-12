@@ -42,3 +42,9 @@ pub use types::ReplicaId;
 
 mod core;
 mod monitor;
+mod legacy_types;
+mod wal;
+mod snapshots;
+mod slots;
+mod manager;
+mod conflicts;

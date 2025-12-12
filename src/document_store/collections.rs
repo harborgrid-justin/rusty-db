@@ -401,6 +401,8 @@ pub struct CollectionStats {
     pub last_updated: u64,
     // Document count by version
     pub version_distribution: HashMap<u64, u64>,
+    // Collection creation timestamp
+    pub created_at: u64
 }
 
 impl CollectionStats {
@@ -417,6 +419,10 @@ impl CollectionStats {
                 .unwrap()
                 .as_secs(),
             version_distribution: HashMap::new(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
         }
     }
 
@@ -503,6 +509,10 @@ pub struct CollectionSettings {
     pub case_sensitive: bool,
     // Enable audit logging
     pub audit_enabled: bool,
+    // Maximum number of documents (for capped collections)
+    pub max_documents: Option<usize>,
+    // Whether this is a capped collection
+    pub capped: bool
 }
 
 impl CollectionSettings {
@@ -518,6 +528,8 @@ impl CollectionSettings {
             validation_action: ValidationAction::Error,
             case_sensitive: false,
             audit_enabled: false,
+            max_documents: None,
+            capped: false,
         }
     }
 }

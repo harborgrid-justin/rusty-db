@@ -287,7 +287,7 @@ impl<'a> MiniBatchIterator<'a> {
 
         if shuffle {
             use rand::seq::SliceRandom;
-            indices.shuffle(&mut rand::thread_rng());
+            indices.shuffle(&mut rand::rng());
         }
 
         Self {
@@ -302,7 +302,7 @@ impl<'a> MiniBatchIterator<'a> {
     pub fn reset(&mut self) {
         self.current_idx = 0;
         if self.shuffle {
-            self.indices.shuffle(&mut rand::thread_rng());
+            self.indices.shuffle(&mut rand::rng());
         }
     }
 }
@@ -581,7 +581,7 @@ impl TrainingEngine {
         model.fit(train)?;
 
         // Serialize tree
-        let tree_data = bincode::serialize(&model)
+        let tree_data = bincode::encode_to_vec(&model, bincode::config::standard())
             .map_err(|e| crate::DbError::Internal(format!("Tree serialization failed: {}", e)))?;
 
         let parameters = ModelParameters::TreeModel { tree_data };
@@ -626,7 +626,7 @@ impl TrainingEngine {
 
         // Serialize ensemble
         let models: Vec<Vec<u8>> = model.trees.iter()
-            .map(|tree| bincode::serialize(tree).unwrap_or_default())
+            .map(|tree| bincode::encode_to_vec(tree, bincode::config::standard()).unwrap_or_default())
             .collect();
 
         let parameters = ModelParameters::EnsembleModel { models };
@@ -730,7 +730,7 @@ impl TrainingEngine {
         let mut model = NaiveBayes::new();
         model.fit(train)?;
 
-        let distributions = bincode::serialize(&model)
+        let distributions = bincode::encode_to_vec(&model, bincode::config::standard())
             .map_err(|e| crate::DbError::Internal(format!("Serialization failed: {}", e)))?;
 
         let parameters = ModelParameters::BayesModel {

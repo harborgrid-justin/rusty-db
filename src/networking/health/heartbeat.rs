@@ -1,7 +1,7 @@
-//! # Heartbeat Management
-//!
-//! Implements heartbeat tracking with RTT measurement, failure counting,
-//! and adaptive intervals for distributed node health monitoring.
+// # Heartbeat Management
+//
+// Implements heartbeat tracking with RTT measurement, failure counting,
+// and adaptive intervals for distributed node health monitoring.
 
 use crate::error::{DbError, Result};
 use crate::common::NodeId;

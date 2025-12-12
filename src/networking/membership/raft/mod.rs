@@ -162,8 +162,8 @@ impl RaftMembership {
 
         // Start election timeout task
         let election = self.election.clone();
-        let state = self.state.clone();
-        let event_tx = self.event_tx.clone();
+        let _state = self.state.clone();
+        let _event_tx = self.event_tx.clone();
         tokio::spawn(async move {
             let mut interval = time::interval(Duration::from_millis(100));
             loop {
@@ -249,11 +249,12 @@ impl RaftMembership {
             node_id: node_info.id.clone(),
             node_info,
         };
-        let command_bytes = bincode::serialize(&command)?;
+        let command_bytes = bincode::encode_to_vec(&command, bincode::config::standard())
+            .map_err(|e| DbError::Serialization(e.to_string()))?;
 
         // Append to log
         let mut log = self.log.write().await;
-        let mut state = self.state.write().await;
+        let state = self.state.write().await;
 
         let entry = LogEntry::new(
             state.current_term,
@@ -280,10 +281,11 @@ impl RaftMembership {
         }
 
         let command = MembershipCommand::RemoveNode { node_id };
-        let command_bytes = bincode::serialize(&command)?;
+        let command_bytes = bincode::encode_to_vec(&command, bincode::config::standard())
+            .map_err(|e| DbError::Serialization(e.to_string()))?;
 
         let mut log = self.log.write().await;
-        let mut state = self.state.write().await;
+        let state = self.state.write().await;
 
         let entry = LogEntry::new(
             state.current_term,
@@ -309,7 +311,7 @@ impl RaftMembership {
             state.last_applied += 1;
             if let Some(entry) = log.get(state.last_applied) {
                 // Deserialize and apply command
-                if let Ok(command) = bincode::deserialize::<MembershipCommand>(&entry.data) {
+                if let Ok((command, _)) = bincode::decode_from_slice(&entry.data, bincode::config::standard()) {
                     match command {
                         MembershipCommand::AddNode { node_id, node_info } => {
                             state.members.insert(node_id.clone());
@@ -351,7 +353,7 @@ impl RaftMembership {
 }
 
 /// Membership commands in the Raft log
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum MembershipCommand {
     /// Add a node to the cluster
     AddNode {

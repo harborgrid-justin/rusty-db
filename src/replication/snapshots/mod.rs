@@ -11,17 +11,8 @@ mod manager;
 mod manager_impl;
 
 // Re-export public types
-pub use errors::SnapshotError;
-pub use config::{
-    SnapshotConfig, CompressionType, EncryptionConfig, EncryptionAlgorithm,
-    KeySource, RetentionPolicy,
-};
-pub use types::{
-    SnapshotId, SnapshotMetadata, SnapshotType, SnapshotStatus,
-    ChecksumAlgorithm, SnapshotProgress, SnapshotPhase,
-    RestoreOptions, SnapshotStatistics, StorageEfficiency,
-};
-pub use manager::{SnapshotManager, FileSnapshotManager};
+// pub use config::CompressionType;
+// pub use manager::FileSnapshotManager;
 
 #[cfg(test)]
 mod tests {

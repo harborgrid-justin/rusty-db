@@ -8,6 +8,7 @@ use super::super::simd_ops::{simd_dot_product};
 use super::super::optimizers::{Optimizer, AdamOptimizer, LRScheduler, LRSchedule};
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
+use bincode::{Encode, Decode};
 use super::{Algorithm, ModelType};
 
 // ============================================================================
@@ -15,7 +16,7 @@ use super::{Algorithm, ModelType};
 // ============================================================================
 
 // Linear regression using gradient descent
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 pub struct LinearRegression {
     // Model coefficients (weights)
     pub weights: Vector,
@@ -69,6 +70,31 @@ impl LinearRegression {
             .map(|(pred, target)| (target - pred).powi(2))
             .sum();
         1.0 - (ss_res / ss_tot)
+    }
+
+    // Helper: Accumulate weight gradients for a sample (eliminates duplication)
+    #[inline]
+    fn accumulate_weight_gradients(
+        weight_gradients: &mut [f64],
+        error: f64,
+        features: &[f64],
+    ) {
+        for (j, &feature) in features.iter().enumerate() {
+            weight_gradients[j] += error * feature;
+        }
+    }
+
+    // Helper: Finalize model after training (eliminates duplication)
+    fn finalize_training(&mut self, dataset: &Dataset, target: &[f64]) {
+        let final_predictions = self.predict_internal(&dataset.features);
+        let mse = self.mse(&final_predictions, target);
+        let r2 = self.r2_score(&final_predictions, target);
+
+        self.metrics.insert("mse".to_string(), mse);
+        self.metrics.insert("r2".to_string(), r2);
+        self.metrics.insert("rmse".to_string(), mse.sqrt());
+
+        self.trained = true;
     }
 
     // Train with advanced optimizer (Adam/SGD+Momentum) and learning rate scheduling
@@ -125,9 +151,7 @@ impl LinearRegression {
                     let error = prediction - target[i];
                     epoch_loss += error * error;
 
-                    for j in 0..n_features {
-                        weight_gradients[j] += error * dataset.features[i][j];
-                    }
+                    Self::accumulate_weight_gradients(&mut weight_gradients, error, &dataset.features[i]);
                     if fit_intercept {
                         intercept_gradient += error;
                     }
@@ -171,16 +195,8 @@ impl LinearRegression {
             }
         }
 
-        // Calculate final metrics
-        let final_predictions = self.predict_internal(&dataset.features);
-        let mse = self.mse(&final_predictions, target);
-        let r2 = self.r2_score(&final_predictions, target);
-
-        self.metrics.insert("mse".to_string(), mse);
-        self.metrics.insert("r2".to_string(), r2);
-        self.metrics.insert("rmse".to_string(), mse.sqrt());
-
-        self.trained = true;
+        // Finalize training
+        self.finalize_training(dataset, target);
         Ok(())
     }
 }
@@ -222,9 +238,7 @@ impl Algorithm for LinearRegression {
 
             for i in 0..n_samples {
                 let error = predictions[i] - target[i];
-                for j in 0..n_features {
-                    weight_gradients[j] += error * dataset.features[i][j];
-                }
+                Self::accumulate_weight_gradients(&mut weight_gradients, error, &dataset.features[i]);
                 if fit_intercept {
                     intercept_gradient += error;
                 }
@@ -250,16 +264,8 @@ impl Algorithm for LinearRegression {
             }
         }
 
-        // Calculate final metrics
-        let final_predictions = self.predict_internal(&dataset.features);
-        let mse = self.mse(&final_predictions, target);
-        let r2 = self.r2_score(&final_predictions, target);
-
-        self.metrics.insert("mse".to_string(), mse);
-        self.metrics.insert("r2".to_string(), r2);
-        self.metrics.insert("rmse".to_string(), mse.sqrt());
-
-        self.trained = true;
+        // Finalize training
+        self.finalize_training(dataset, target);
         Ok(())
     }
 
@@ -275,12 +281,13 @@ impl Algorithm for LinearRegression {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::serialize(self)
+        bincode::encode_to_vec(self, bincode::config::standard())
             .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
-        bincode::deserialize(bytes)
+        bincode::decode_from_slice(bytes, bincode::config::standard())
+            .map(|(model, _)| model)
             .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
     }
 

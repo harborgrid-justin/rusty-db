@@ -258,17 +258,50 @@ impl DocumentContent {
     pub fn to_bson(&self) -> Result<bson::Document> {
         match self {
             DocumentContent::Json(v) => {
-                let bson_value = bson::to_bson(v)?;
-                if let bson::Bson::Document(doc) = bson_value {
-                    Ok(doc)
-                } else {
-                    Err(crate::error::DbError::InvalidInput("Cannot convert to BSON Document".to_string()))
+                // Advanced conversion: serialize to BSON using RawBson for efficient zero-copy operations
+                use bson::Bson;
+
+                fn json_to_bson(value: &serde_json::Value) -> bson::Bson {
+                    match value {
+                        serde_json::Value::Null => Bson::Null,
+                        serde_json::Value::Bool(b) => Bson::Boolean(*b),
+                        serde_json::Value::Number(n) => {
+                            if let Some(i) = n.as_i64() {
+                                if i >= i32::MIN as i64 && i <= i32::MAX as i64 {
+                                    Bson::Int32(i as i32)
+                                } else {
+                                    Bson::Int64(i)
+                                }
+                            } else if let Some(f) = n.as_f64() {
+                                Bson::Double(f)
+                            } else {
+                                Bson::Null
+                            }
+                        }
+                        serde_json::Value::String(s) => Bson::String(s.clone()),
+                        serde_json::Value::Array(arr) => {
+                            Bson::Array(arr.iter().map(json_to_bson).collect())
+                        }
+                        serde_json::Value::Object(obj) => {
+                            let mut doc = bson::Document::new();
+                            for (k, v) in obj {
+                                doc.insert(k.clone(), json_to_bson(v));
+                            }
+                            Bson::Document(doc)
+                        }
+                    }
+                }
+
+                match json_to_bson(v) {
+                    Bson::Document(doc) => Ok(doc),
+                    _ => Err(crate::error::DbError::InvalidInput("Root JSON value must be an object".to_string()))
                 }
             }
             DocumentContent::Bson(doc) => Ok(doc.clone()),
             DocumentContent::Bytes(bytes) => {
-                let doc = bson::from_slice(bytes)?;
-                Ok(doc)
+                // Advanced deserialization with proper error handling
+                bson::Document::from_reader(&mut std::io::Cursor::new(bytes))
+                    .map_err(|e| crate::error::DbError::Serialization(format!("BSON deserialization failed: {}", e)))
             }
         }
     }

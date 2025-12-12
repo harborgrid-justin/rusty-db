@@ -189,25 +189,24 @@ impl Default for ViewManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::catalog::{Schema, Column, ColumnType};
+    use crate::catalog::{Schema, Column, DataType};
 
     #[test]
     fn test_view_management() {
         let manager = ViewManager::new();
 
-let schema = Schema {
-                  name: "test_view".to_string(),
-                  columns: vec![
-                      Column {
-                          name: "id".to_string(),
-                          data_type: ColumnType::Integer,
-                          nullable: false,
-                          default_value: None,
-                          default: None,
-                      },
-                  ],
-                  primary_key: None,
-              };
+        let schema = Schema {
+            name: "test_view".to_string(),
+            columns: vec![
+                Column {
+                    name: "id".to_string(),
+                    data_type: DataType::Integer,
+                    nullable: false,
+                    default: None,
+                },
+            ],
+            primary_key: None,
+        };
 
         let view = View {
             name: "test_view".to_string(),

@@ -337,6 +337,10 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
             memtable_size: memtable.size(),
             num_levels: levels.len(),
             level_stats,
+            total_sstable_size: (),
+            total_entries: (),
+            level_count: (),
+            bloom_filter_hit_rate: (),
         }
     }
 }
@@ -780,6 +784,10 @@ pub struct LSMStats {
     pub memtable_size: usize,
     pub num_levels: usize,
     pub level_stats: Vec<LevelStats>,
+    pub total_sstable_size: (),
+    pub total_entries: (),
+    pub level_count: (),
+    pub bloom_filter_hit_rate: ()
 }
 
 // Level statistics

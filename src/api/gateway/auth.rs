@@ -445,10 +445,10 @@ impl JwtValidator {
 
         // If kid is provided, use that key
         if let Some(kid) = kid {
-            if let Some(key) = keys.get(kid) {
-                return self.verify_with_key(message, signature, key);
+            return if let Some(key) = keys.get(kid) {
+                self.verify_with_key(message, signature, key)
             } else {
-                return Err(DbError::InvalidOperation(format!("Unknown key ID: {}", kid)));
+                Err(DbError::InvalidOperation(format!("Unknown key ID: {}", kid)))
             }
         }
 

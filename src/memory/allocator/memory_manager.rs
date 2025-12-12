@@ -18,6 +18,8 @@ pub struct MemoryManager {
     large_object_allocator: Arc<LargeObjectAllocator>,
     // Memory pressure manager
     pressure_manager: Arc<MemoryPressureManager>,
+    // Total memory capacity
+    total_capacity: u64,
     // Memory debugger
     debugger: Arc<MemoryDebugger>,
 }
@@ -31,6 +33,7 @@ impl MemoryManager {
             large_object_allocator: Arc::new(LargeObjectAllocator::new()),
             pressure_manager: Arc::new(MemoryPressureManager::new(total_memory)),
             debugger: Arc::new(MemoryDebugger::new()),
+            total_capacity: total_memory,
         };
 
         // Register pressure callbacks
@@ -45,17 +48,20 @@ impl MemoryManager {
 
         self.pressure_manager.register_callback(Arc::new(move |level| {
             match level {
-                MemoryPressureLevel::Warning => {
+                MemoryPressureLevel::None | MemoryPressureLevel::Normal => {
+                    // No cleanup needed
+                    Ok(0)
+                }
+                MemoryPressureLevel::Low | MemoryPressureLevel::Warning => {
                     // Cleanup dead contexts
                     let freed = arena.cleanup_dead_contexts();
                     Ok(freed * 1024) // Estimate
                 }
-                MemoryPressureLevel::Critical | MemoryPressureLevel::Emergency => {
+                MemoryPressureLevel::Medium | MemoryPressureLevel::High | MemoryPressureLevel::Critical | MemoryPressureLevel::Emergency => {
                     // Aggressive cleanup
                     let freed = arena.cleanup_dead_contexts();
                     Ok(freed * 1024)
                 }
-                _ => Ok(0),
             }
         }));
     }
@@ -122,13 +128,23 @@ impl MemoryManager {
 
     // Get comprehensive statistics
     pub fn get_comprehensive_stats(&self) -> ComprehensiveMemoryStats {
+        let slab_stats = self.slab_allocator.get_stats();
+        let arena_stats = self.arena_allocator.get_stats();
+        let large_object_stats = self.large_object_allocator.get_stats();
+
+        let total_allocated = slab_stats.total_allocated + arena_stats.total_allocated + large_object_stats.bytes_allocated;
+        let total_capacity = self.total_capacity;
+
         ComprehensiveMemoryStats {
-            slab_stats: self.slab_allocator.get_stats(),
-            arena_stats: self.arena_allocator.get_stats(),
-            large_object_stats: self.large_object_allocator.get_stats(),
+            slab_stats,
+            arena_stats: arena_stats.clone(),
+            large_object_stats,
             pressure_stats: self.pressure_manager.get_stats(),
             debugger_stats: self.debugger.get_stats(),
             total_usage: self.pressure_manager.get_usage(),
+            total_capacity,
+            total_allocated,
+            context_stats: arena_stats.active_contexts,
         }
     }
 
@@ -152,6 +168,9 @@ pub struct ComprehensiveMemoryStats {
     pub pressure_stats: MemoryPressureStats,
     pub debugger_stats: MemoryDebuggerStats,
     pub total_usage: MemoryUsage,
+    pub total_capacity: u64,
+    pub total_allocated: u64,
+    pub context_stats: u64
 }
 
 // ============================================================================

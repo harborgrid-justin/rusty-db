@@ -224,7 +224,7 @@ use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_token_bucket() {
-        let mut bucket = TokenBucket::new();
+        let mut bucket = TokenBucket::new(0, 0.0);
 
         // Should allow 10 requests initially
         for _ in 0..10 {
@@ -237,7 +237,7 @@ use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_sliding_window() {
-        let mut window = SlidingWindow::new();
+        let mut window = SlidingWindow::new(0, 0);
 
         // Should allow 10 requests
         for _ in 0..10 {
@@ -267,7 +267,7 @@ use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_ip_filter() {
-        let filter = IpFilter::new();
+        let filter = IpFilter::new(IpFilterMode::Blacklist);
         let test_ip = "192.168.1.1".parse().unwrap();
 
         // Should allow initially

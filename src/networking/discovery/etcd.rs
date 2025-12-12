@@ -1,7 +1,7 @@
-//! etcd Service Discovery
-//!
-//! Implements service discovery using etcd distributed key-value store.
-//! Supports lease-based registration, prefix watching, and distributed locking.
+// etcd Service Discovery
+//
+// Implements service discovery using etcd distributed key-value store.
+// Supports lease-based registration, prefix watching, and distributed locking.
 
 use super::{HealthStatus, Node, ServiceDiscovery, EtcdConfig};
 use crate::error::{DbError, Result};
@@ -37,7 +37,7 @@ impl EtcdDiscovery {
     /// Creates a new etcd discovery instance
     pub fn new(config: EtcdConfig) -> Self {
         let http_client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(10))
+            .timeout(time::Duration::from_secs(10))
             .build()
             .unwrap_or_default();
 
@@ -300,7 +300,7 @@ impl EtcdDiscovery {
         let ttl = self.config.lease_ttl;
 
         // Renew at half the TTL interval
-        let renewal_interval = std::time::Duration::from_secs(ttl / 2);
+        let renewal_interval = time::Duration::from_secs(ttl / 2);
 
         let handle = tokio::spawn(async move {
             let mut ticker = time::interval(renewal_interval);

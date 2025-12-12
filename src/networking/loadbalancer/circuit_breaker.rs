@@ -1,10 +1,10 @@
-//! Circuit breaker pattern for fault tolerance.
-//!
-//! Prevents cascading failures by temporarily blocking requests to failing backends.
-//! Implements the classic three-state circuit breaker pattern:
-//! - Closed: Normal operation, requests pass through
-//! - Open: Too many failures, requests are blocked
-//! - Half-Open: Testing if backend has recovered
+// Circuit breaker pattern for fault tolerance.
+//
+// Prevents cascading failures by temporarily blocking requests to failing backends.
+// Implements the classic three-state circuit breaker pattern:
+// - Closed: Normal operation, requests pass through
+// - Open: Too many failures, requests are blocked
+// - Half-Open: Testing if backend has recovered
 
 use std::sync::Arc;
 use std::time::{Duration, Instant};

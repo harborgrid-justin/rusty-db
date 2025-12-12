@@ -1,7 +1,7 @@
-//! Message encoding and decoding for the wire protocol
-//!
-//! This module provides codecs for serializing and deserializing messages
-//! using the RustyDB P2P protocol format.
+// Message encoding and decoding for the wire protocol
+//
+// This module provides codecs for serializing and deserializing messages
+// using the RustyDB P2P protocol format.
 
 use crate::error::{DbError, Result};
 use crate::networking::protocol::{
@@ -48,7 +48,7 @@ impl MessageCodec {
     /// Encode a message to bytes
     pub fn encode(&self, message_id: u64, message: &Message) -> Result<BytesMut> {
         // Serialize message using bincode
-        let payload = bincode::serialize(message)
+        let payload = bincode::encode_to_vec(message, bincode::config::standard())
             .map_err(|e| DbError::Serialization(format!("Failed to serialize message: {}", e)))?;
 
         // Apply compression if enabled
@@ -156,7 +156,8 @@ impl MessageCodec {
         };
 
         // Deserialize message
-        let message: Message = bincode::deserialize(&final_payload)
+        let message: Message = bincode::decode_from_slice(&final_payload, bincode::config::standard())
+            .map(|(msg, _)| msg)
             .map_err(|e| DbError::Serialization(format!("Failed to deserialize message: {}", e)))?;
 
         Ok((header.message_id, message))

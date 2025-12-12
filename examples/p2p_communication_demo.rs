@@ -1,10 +1,10 @@
-//! P2P Communication Protocol Demo
-//!
-//! This example demonstrates the core P2P communication features:
-//! - TCP transport with connection pooling
-//! - Message encoding/decoding
-//! - Protocol handshake
-//! - Connection health monitoring
+// P2P Communication Protocol Demo
+//
+// This example demonstrates the core P2P communication features:
+// - TCP transport with connection pooling
+// - Message encoding/decoding
+// - Protocol handshake
+// - Connection health monitoring
 
 use rusty_db::error::Result;
 use rusty_db::networking::protocol::{HandshakeRequest, Message, MessageCodec};

@@ -1,7 +1,7 @@
-//! Load balancing and traffic management for RustyDB distributed clusters.
-//!
-//! This module provides enterprise-grade load balancing with multiple strategies,
-//! traffic shaping, circuit breakers, and retry policies for optimal cluster performance.
+// Load balancing and traffic management for RustyDB distributed clusters.
+//
+// This module provides enterprise-grade load balancing with multiple strategies,
+// traffic shaping, circuit breakers, and retry policies for optimal cluster performance.
 
 use crate::error::{DbError, Result};
 use std::fmt;

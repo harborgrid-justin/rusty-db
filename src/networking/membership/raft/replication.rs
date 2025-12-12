@@ -117,9 +117,9 @@ impl ReplicationManager {
         }
 
         let term = state.current_term;
-        let leader_id = self.node_id.clone();
+        let _leader_id = self.node_id.clone();
         let commit_index = state.commit_index;
-        let members = state.members.clone();
+        let _members = state.members.clone();
         drop(state);
 
         let log = self.log.read().await;
@@ -141,7 +141,7 @@ impl ReplicationManager {
 
     /// Replicate logs to followers (as leader)
     pub async fn replicate_logs(&self) -> Result<()> {
-        let mut state = self.state.write().await;
+        let state = self.state.write().await;
 
         if state.role != RaftRole::Leader {
             return Err(DbError::InvalidOperation(

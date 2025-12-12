@@ -898,7 +898,7 @@ impl RetryPolicy {
 
         let backoff = if self.config.jitter {
             // Add jitter: random value between 0.5 and 1.5 times the backoff
-            let jitter = rand::thread_rng().gen_range(0.5..=1.5);
+            let jitter = rand::rng().random_range(0.5..=1.5);
             Duration::from_millis((clamped * jitter) as u64)
         } else {
             Duration::from_millis(clamped as u64)

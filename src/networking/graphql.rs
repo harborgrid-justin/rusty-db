@@ -1,7 +1,7 @@
-//! GraphQL schema and resolvers for the networking layer
-//!
-//! This module provides GraphQL queries, mutations, and subscriptions for
-//! managing and monitoring the networking layer.
+// GraphQL schema and resolvers for the networking layer
+//
+// This module provides GraphQL queries, mutations, and subscriptions for
+// managing and monitoring the networking layer.
 
 use async_graphql::{
     Context, EmptySubscription, Object, Result as GqlResult, Schema, SimpleObject, Subscription,
@@ -527,6 +527,7 @@ pub mod examples {
 
 #[cfg(test)]
 mod tests {
+    use crate::networking::NodeInfo;
     use super::*;
 
     #[tokio::test]

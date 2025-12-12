@@ -5,7 +5,7 @@ import type {
   Timestamp,
   PaginationParams,
   PaginatedResponse,
-} from '../types';
+} from '@/types';
 
 // ============================================================================
 // Storage Service Types

@@ -169,7 +169,7 @@ impl RequestValidator {
 }
 
 impl ThreatDetector {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let sql_injection_patterns = vec![
             regex::Regex::new(r"(?i)(union|select|insert|update|delete|drop|create|alter)\s").unwrap(),
             regex::Regex::new(r"(?i)(--|\|{2}|/\*|\*/)").unwrap(),
@@ -257,7 +257,7 @@ impl ThreatDetector {
 }
 
 impl IpFilter {
-    fn new(mode: IpFilterMode) -> Self {
+    pub(crate) fn new(mode: IpFilterMode) -> Self {
         Self {
             whitelist: Arc::new(RwLock::new(HashSet::new())),
             blacklist: Arc::new(RwLock::new(HashSet::new())),

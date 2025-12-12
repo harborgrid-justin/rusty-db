@@ -12,16 +12,16 @@
 // Reference: "SWIM: Scalable Weakly-consistent Infection-style Process Group
 // Membership Protocol" (Das et al., 2002)
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::common::NodeId;
 use crate::networking::membership::{NodeInfo, NodeStatus, SwimConfig, MembershipEvent};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
+use rand::prelude::IndexedRandom;
 use tokio::sync::{RwLock, mpsc};
 use tokio::time;
-use rand::seq::SliceRandom;
 
 /// SWIM message types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -78,7 +78,7 @@ pub struct SwimMembership {
     protocol_period: Duration,
 
     /// Suspicion timeout multiplier
-    suspicion_mult: u32,
+    suspicion_multiplier: u32,
 
     /// Number of nodes to probe indirectly
     indirect_probe_size: usize,
@@ -161,7 +161,7 @@ impl SwimMembership {
             local_node,
             members: Arc::new(RwLock::new(HashMap::new())),
             protocol_period: config.protocol_period,
-            suspicion_mult: config.suspicion_mult,
+            suspicion_multiplier: config.suspicion_multiplier,
             indirect_probe_size: config.indirect_probe_size,
             gossip_fanout: config.gossip_fanout,
             config,
@@ -193,7 +193,7 @@ impl SwimMembership {
             loop {
                 tokio::select! {
                     _ = interval.tick() => {
-                        if let Err(e) = Self::protocol_period_task(
+                        if let Err(e) = Self::protocol_tick(
                             &node_id,
                             &members,
                             indirect_probe_size,
@@ -213,7 +213,7 @@ impl SwimMembership {
 
         // Failure detection task
         let members = self.members.clone();
-        let suspicion_mult = self.suspicion_mult;
+        let suspicion_multiplier = self.suspicion_multiplier;
         let protocol_period = self.protocol_period;
         let event_tx = self.event_tx.clone();
 
@@ -223,7 +223,7 @@ impl SwimMembership {
                 interval.tick().await;
                 if let Err(e) = Self::check_failures(
                     &members,
-                    suspicion_mult,
+                    suspicion_multiplier,
                     protocol_period,
                     &event_tx,
                 ).await {
@@ -244,10 +244,10 @@ impl SwimMembership {
     }
 
     /// Main protocol period task
-    async fn protocol_period_task(
+    async fn protocol_tick(
         node_id: &NodeId,
         members: &Arc<RwLock<HashMap<NodeId, MemberInfo>>>,
-        indirect_probe_size: usize,
+        _indirect_probe_size: usize,
         gossip_fanout: usize,
         pending_acks: &Arc<RwLock<HashMap<u64, PendingAck>>>,
         sequence: &Arc<RwLock<u64>>,
@@ -258,7 +258,7 @@ impl SwimMembership {
             let active_members: Vec<NodeId> = members_guard
                 .iter()
                 .filter(|(id, info)| {
-                    **id != node_id && info.node.status != NodeStatus::Failed
+                    id.as_str() != node_id.as_str() && info.node.status != NodeStatus::Failed
                 })
                 .map(|(id, _)| id.clone())
                 .collect();
@@ -268,7 +268,7 @@ impl SwimMembership {
             }
 
             active_members
-                .choose(&mut rand::thread_rng())
+                .choose(&mut rand::rng())
                 .cloned()
         };
 
@@ -314,7 +314,7 @@ impl SwimMembership {
         // Select random gossip targets
         let targets: Vec<NodeId> = members_guard
             .keys()
-            .filter(|id| **id != node_id)
+            .filter(|id| id.as_str() != node_id.as_str())
             .take(fanout)
             .cloned()
             .collect();
@@ -349,13 +349,13 @@ impl SwimMembership {
     /// Check for node failures
     async fn check_failures(
         members: &Arc<RwLock<HashMap<NodeId, MemberInfo>>>,
-        suspicion_mult: u32,
+        suspicion_multiplier: u32,
         protocol_period: Duration,
         event_tx: &mpsc::Sender<MembershipEvent>,
     ) -> Result<()> {
         let mut members_guard = members.write().await;
         let now = SystemTime::now();
-        let suspicion_timeout = protocol_period * suspicion_mult;
+        let suspicion_timeout = protocol_period * suspicion_multiplier;
 
         let mut to_suspect = Vec::new();
         let mut to_fail = Vec::new();
@@ -407,11 +407,11 @@ impl SwimMembership {
     /// Handle incoming SWIM message
     pub async fn handle_message(&self, message: SwimMessage) -> Result<Option<SwimMessage>> {
         match message {
-            SwimMessage::Ping { from, sequence } => {
+            SwimMessage::Ping { from: _from, sequence: _sequence } => {
                 // Respond with ack
                 Ok(Some(SwimMessage::Ack {
                     from: self.node_id.clone(),
-                    sequence,
+                    sequence: _sequence,
                 }))
             }
 
@@ -435,7 +435,7 @@ impl SwimMembership {
                 Ok(None)
             }
 
-            SwimMessage::PingReq { from, target, sequence } => {
+            SwimMessage::PingReq { from, target, sequence: _ } => {
                 // Forward ping to target
                 tracing::trace!(
                     relay = %self.node_id,

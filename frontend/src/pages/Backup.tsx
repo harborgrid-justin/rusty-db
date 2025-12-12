@@ -85,7 +85,7 @@ export default function BackupPage() {
           title: 'Backup Started',
           message: `Backup "${config.name}" has been started`,
         });
-        refetch();
+        await refetch();
       } catch (error) {
         console.error('Failed to create backup:', error);
         throw error;
@@ -131,7 +131,7 @@ export default function BackupPage() {
               title: 'Backup Deleted',
               message: `Backup "${backup.name}" has been deleted`,
             });
-            refetch();
+            await refetch();
           } catch (error) {
             addNotification({
               type: 'error',
@@ -391,7 +391,7 @@ export default function BackupPage() {
             if (runningBackupId) {
               await backupService.cancelBackup(runningBackupId);
               setRunningBackupId(null);
-              refetch();
+              await refetch();
             }
           }}
         />

@@ -232,6 +232,9 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
             directory_size: directory.len(),
             num_buckets: unique_buckets.len(),
             total_entries,
+            bucket_count: (),
+            entry_count: (),
+            load_factor: (),
         }
     }
 }
@@ -475,6 +478,8 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
             total_entries,
             total_overflow,
             load_factor: self.current_load_factor(),
+            bucket_count: (),
+            entry_count: (),
         }
     }
 }
@@ -501,6 +506,9 @@ pub struct ExtendibleHashStats {
     pub directory_size: usize,
     pub num_buckets: usize,
     pub total_entries: usize,
+    pub bucket_count: (),
+    pub entry_count: (),
+    pub load_factor: ()
 }
 
 // Linear hash statistics
@@ -512,6 +520,8 @@ pub struct LinearHashStats {
     pub total_entries: usize,
     pub total_overflow: usize,
     pub load_factor: f64,
+    pub bucket_count: (),
+    pub entry_count: ()
 }
 
 #[cfg(test)]

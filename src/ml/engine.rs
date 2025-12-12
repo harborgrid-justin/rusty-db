@@ -711,6 +711,7 @@ impl MLEngine {
 
                 Ok((model_data, metrics))
             }
+            ModelType::KMeansClustering => {}
         }
     }
 

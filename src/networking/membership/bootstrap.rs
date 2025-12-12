@@ -9,9 +9,10 @@
 use crate::error::{DbError, Result};
 use crate::common::NodeId;
 use crate::networking::membership::{
-    NodeInfo, NodeMetadata, MembershipConfig, MembershipCoordinator,
-    RaftMembership, SwimMembership, ViewManager,
+    NodeInfo, MembershipConfig, MembershipCoordinator,
+    RaftMembership, SwimMembership,
 };
+use crate::networking::membership::view::ViewManager;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;

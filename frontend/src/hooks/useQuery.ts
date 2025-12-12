@@ -107,7 +107,7 @@ export function useQueryHistory() {
 
   const searchHistory = useCallback(async (term: string) => {
     if (!term.trim()) {
-      fetchHistory();
+      await fetchHistory();
       return;
     }
 

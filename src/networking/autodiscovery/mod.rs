@@ -1,47 +1,47 @@
-//! Auto-Discovery Module for RustyDB
-//!
-//! Provides zero-configuration node discovery for distributed RustyDB clusters.
-//! Supports multiple discovery backends including gossip protocols, mDNS, UDP broadcast,
-//! and Serf-compatible protocols.
-//!
-//! # Features
-//!
-//! - **Gossip Protocol**: SWIM-based epidemic-style membership and failure detection
-//! - **mDNS Discovery**: Multicast DNS for LAN environments
-//! - **UDP Broadcast**: Simple broadcast-based discovery
-//! - **Beacon Protocol**: Periodic heartbeat-based presence announcement
-//! - **Serf Protocol**: HashiCorp Serf-compatible discovery
-//! - **Anti-Entropy**: Merkle tree-based state reconciliation
-//!
-//! # Examples
-//!
-//! ```rust,no_run
-//! use rusty_db::networking::autodiscovery::{AutoDiscovery, DiscoveryConfig};
-//!
-//! async fn start_discovery() -> Result<()> {
-//!     let config = DiscoveryConfig::default()
-//!         .with_port(7946)
-//!         .with_backend(DiscoveryBackend::Gossip);
-//!
-//!     let mut discovery = AutoDiscovery::new(config)?;
-//!     discovery.start().await?;
-//!
-//!     // Receive discovery events
-//!     while let Some(event) = discovery.next_event().await {
-//!         match event {
-//!             DiscoveryEvent::NodeJoined(node) => {
-//!                 println!("Node joined: {:?}", node);
-//!             }
-//!             DiscoveryEvent::NodeLeft(node) => {
-//!                 println!("Node left: {:?}", node);
-//!             }
-//!             _ => {}
-//!         }
-//!     }
-//!
-//!     Ok(())
-//! }
-//! ```
+// Auto-Discovery Module for RustyDB
+//
+// Provides zero-configuration node discovery for distributed RustyDB clusters.
+// Supports multiple discovery backends including gossip protocols, mDNS, UDP broadcast,
+// and Serf-compatible protocols.
+//
+// # Features
+//
+// - **Gossip Protocol**: SWIM-based epidemic-style membership and failure detection
+// - **mDNS Discovery**: Multicast DNS for LAN environments
+// - **UDP Broadcast**: Simple broadcast-based discovery
+// - **Beacon Protocol**: Periodic heartbeat-based presence announcement
+// - **Serf Protocol**: HashiCorp Serf-compatible discovery
+// - **Anti-Entropy**: Merkle tree-based state reconciliation
+//
+// # Examples
+//
+// ```rust,no_run
+// use rusty_db::networking::autodiscovery::{AutoDiscovery, DiscoveryConfig};
+//
+// async fn start_discovery() -> Result<()> {
+//     let config = DiscoveryConfig::default()
+//         .with_port(7946)
+//         .with_backend(DiscoveryBackend::Gossip);
+//
+//     let mut discovery = AutoDiscovery::new(config)?;
+//     discovery.start().await?;
+//
+//     // Receive discovery events
+//     while let Some(event) = discovery.next_event().await {
+//         match event {
+//             DiscoveryEvent::NodeJoined(node) => {
+//                 println!("Node joined: {:?}", node);
+//             }
+//             DiscoveryEvent::NodeLeft(node) => {
+//                 println!("Node left: {:?}", node);
+//             }
+//             _ => {}
+//         }
+//     }
+//
+//     Ok(())
+// }
+// ```
 
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
@@ -70,7 +70,7 @@ pub use membership::{MembershipList, VersionVector, Member, MembershipDelta, Mem
 pub use serf::SerfProtocol;
 
 /// Node information exchanged during discovery
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, bincode::Encode, bincode::Decode)]
 pub struct NodeInfo {
     /// Unique node identifier
     pub id: NodeId,
@@ -108,7 +108,7 @@ impl NodeInfo {
 }
 
 /// Node health status
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, bincode::Encode, bincode::Decode)]
 pub enum NodeStatus {
     /// Node is alive and healthy
     Alive,

@@ -251,10 +251,12 @@ impl QLearningAgent {
         let state_key = self.state_key(state);
 
         // Epsilon-greedy exploration
-        if rand::random::<f64>() < self.epsilon {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        if rng.gen::<f64>() < self.epsilon {
             // Explore: random action
-            let param = available_parameters[rand::random::<usize>() % available_parameters.len()].clone();
-            let direction = if rand::random::<bool>() { 1 } else { -1 };
+            let param = available_parameters[rng.gen_range(0..available_parameters.len())].clone();
+            let direction = if rng.gen::<bool>() { 1 } else { -1 };
             return Some((param, direction));
         }
 

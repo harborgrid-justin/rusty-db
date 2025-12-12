@@ -6,6 +6,7 @@ use crate::error::Result;
 use super::super::{Dataset, Vector, Matrix, Hyperparameters, MLError};
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
+use bincode::{Encode, Decode};
 use super::{Algorithm, ModelType};
 
 // ============================================================================
@@ -13,7 +14,7 @@ use super::{Algorithm, ModelType};
 // ============================================================================
 
 // Logistic regression for binary classification
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 pub struct LogisticRegression {
     // Model coefficients
     pub weights: Vector,
@@ -172,12 +173,15 @@ impl Algorithm for LogisticRegression {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::serialize(self)
+        let config = bincode::config::standard();
+        bincode::encode_to_vec(self, config)
             .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
-        bincode::deserialize(bytes)
+        let config = bincode::config::standard();
+        bincode::decode_from_slice(bytes, config)
+            .map(|(model, _)| model)
             .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
     }
 
@@ -191,7 +195,7 @@ impl Algorithm for LogisticRegression {
 // ============================================================================
 
 // Naive Bayes classifier (Gaussian)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 pub struct NaiveBayes {
     // Class priors
     class_priors: HashMap<i64, f64>,
@@ -223,6 +227,34 @@ impl NaiveBayes {
         let var = variance.max(epsilon);
         let exponent = -(x - mean).powi(2) / (2.0 * var);
         (1.0 / (2.0 * std::f64::consts::PI * var).sqrt()) * exponent.exp()
+    }
+
+    // Helper method to calculate mean and variance for features
+    fn calculate_statistics(samples: &[&Vec<f64>], n_features: usize) -> (Vector, Vector) {
+        let mut means = vec![0.0; n_features];
+        let mut variances = vec![0.0; n_features];
+
+        // Calculate means
+        for sample in samples {
+            for (i, &value) in sample.iter().enumerate() {
+                means[i] += value;
+            }
+        }
+        for mean in &mut means {
+            *mean /= samples.len() as f64;
+        }
+
+        // Calculate variances
+        for sample in samples {
+            for (i, &value) in sample.iter().enumerate() {
+                variances[i] += (value - means[i]).powi(2);
+            }
+        }
+        for variance in &mut variances {
+            *variance /= samples.len() as f64;
+        }
+
+        (means, variances)
     }
 }
 
@@ -266,28 +298,7 @@ impl Algorithm for NaiveBayes {
                 .map(|(features, _)| features)
                 .collect();
 
-            let mut means = vec![0.0; n_features];
-            let mut variances = vec![0.0; n_features];
-
-            // Calculate means
-            for sample in &class_samples {
-                for (i, &value) in sample.iter().enumerate() {
-                    means[i] += value;
-                }
-            }
-            for mean in &mut means {
-                *mean /= class_samples.len() as f64;
-            }
-
-            // Calculate variances
-            for sample in &class_samples {
-                for (i, &value) in sample.iter().enumerate() {
-                    variances[i] += (value - means[i]).powi(2);
-                }
-            }
-            for variance in &mut variances {
-                *variance /= class_samples.len() as f64;
-            }
+            let (means, variances) = Self::calculate_statistics(&class_samples, n_features);
 
             self.feature_means.insert(class, means);
             self.feature_variances.insert(class, variances);
@@ -333,12 +344,15 @@ impl Algorithm for NaiveBayes {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::serialize(self)
+        let config = bincode::config::standard();
+        bincode::encode_to_vec(self, config)
             .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
-        bincode::deserialize(bytes)
+        let config = bincode::config::standard();
+        bincode::decode_from_slice(bytes, config)
+            .map(|(model, _)| model)
             .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
     }
 }

@@ -9,9 +9,9 @@ import {
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import type { BackupType, BackupSchedule } from '../../types';
-import type { CreateScheduleConfig } from '../../services/backupService';
-import { formatCronExpression } from '../../utils/format';
+import type { BackupType, BackupSchedule } from '@/types';
+import type { CreateScheduleConfig } from '@/services/backupService.ts';
+import { formatCronExpression } from '@/utils/format.ts';
 
 // ============================================================================
 // Types

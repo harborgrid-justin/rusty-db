@@ -790,17 +790,17 @@ impl AuthenticationManager {
     fn generate_totp_secret(&self) -> String {
         // Generate a base32 secret (simplified)
         use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let bytes: Vec<u8> = (0..20).map(|_| rng.gen()).collect();
+        let mut rng = rand::rng();
+        let bytes: Vec<u8> = (0..20).map(|_| rng.random()).collect();
         general_purpose::STANDARD.encode(&bytes)
     }
 
     fn generate_backup_codes(&self, count: usize) -> Vec<String> {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         (0..count)
             .map(|_| {
-                format!("{:04}-{:04}", rng.gen_range(0..10000), rng.gen_range(0..10000))
+                format!("{:04}-{:04}", rng.random_range(0..10000), rng.random_range(0..10000))
             })
             .collect()
     }

@@ -43,6 +43,14 @@ pub struct GraphQuery {
     pub skip: Option<usize>,
 }
 
+impl GraphQuery {
+    /// Parse a query string into a GraphQuery AST
+    pub(crate) fn parse(_query: &str) -> Result<Self> {
+        // TODO: Implement query parsing
+        Err(DbError::NotImplemented("Query parsing not yet implemented".to_string()))
+    }
+}
+
 // MATCH clause for pattern matching
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MatchClause {
@@ -256,6 +264,20 @@ pub struct QueryResult {
 
     // Number of rows
     pub row_count: usize,
+}
+
+impl QueryResult {
+    pub(crate) fn len(&self) -> usize {
+        self.row_count
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.row_count == 0
+    }
+
+    pub(crate) fn iter(&self) -> std::slice::Iter<'_, HashMap<String, crate::common::Value>> {
+        self.rows.iter()
+    }
 }
 
 // Single result row
@@ -601,20 +623,14 @@ impl<'a> PathFinder<'a> {
             }
 
             // Get outgoing edges
-            if let Some(v) = self.graph.get_vertex(vertex) {
-                for &edge_id in &v.outgoing_edges {
-                    if let Some(edge) = self.graph.get_edge(edge_id) {
-                        let next = edge.target;
-                        let edge_weight = edge.weight.unwrap_or(1.0);
-                        let next_cost = cost + edge_weight;
+            for (next, edge_weight) in self.get_weighted_neighbors(vertex) {
+                let next_cost = cost + edge_weight;
 
-                        let current_dist = *distances.get(&next).unwrap_or(&f64::INFINITY);
-                        if next_cost < current_dist {
-                            distances.insert(next, next_cost);
-                            parent.insert(next, vertex);
-                            heap.push(DijkstraState { vertex: next, cost: next_cost });
-                        }
-                    }
+                let current_dist = *distances.get(&next).unwrap_or(&f64::INFINITY);
+                if next_cost < current_dist {
+                    distances.insert(next, next_cost);
+                    parent.insert(next, vertex);
+                    heap.push(DijkstraState { vertex: next, cost: next_cost });
                 }
             }
         }
@@ -651,22 +667,16 @@ impl<'a> PathFinder<'a> {
 
             let current_g = *g_score.get(&vertex).unwrap_or(&f64::INFINITY);
 
-            if let Some(v) = self.graph.get_vertex(vertex) {
-                for &edge_id in &v.outgoing_edges {
-                    if let Some(edge) = self.graph.get_edge(edge_id) {
-                        let neighbor = edge.target;
-                        let edge_weight = edge.weight.unwrap_or(1.0);
-                        let tentative_g = current_g + edge_weight;
+            for (neighbor, edge_weight) in self.get_weighted_neighbors(vertex) {
+                let tentative_g = current_g + edge_weight;
 
-                        let neighbor_g = *g_score.get(&neighbor).unwrap_or(&f64::INFINITY);
-                        if tentative_g < neighbor_g {
-                            parent.insert(neighbor, vertex);
-                            g_score.insert(neighbor, tentative_g);
-                            let f = tentative_g + heuristic(neighbor, end);
-                            f_score.insert(neighbor, f);
-                            heap.push(AStarState { vertex: neighbor, f_score: f });
-                        }
-                    }
+                let neighbor_g = *g_score.get(&neighbor).unwrap_or(&f64::INFINITY);
+                if tentative_g < neighbor_g {
+                    parent.insert(neighbor, vertex);
+                    g_score.insert(neighbor, tentative_g);
+                    let f = tentative_g + heuristic(neighbor, end);
+                    f_score.insert(neighbor, f);
+                    heap.push(AStarState { vertex: neighbor, f_score: f });
                 }
             }
         }
@@ -742,6 +752,20 @@ impl<'a> PathFinder<'a> {
         }
 
         Ok(())
+    }
+
+    // Helper to iterate over weighted edges from a vertex
+    fn get_weighted_neighbors(&self, vertex: VertexId) -> Vec<(VertexId, f64)> {
+        let mut neighbors = Vec::new();
+        if let Some(v) = self.graph.get_vertex(vertex) {
+            for &edge_id in &v.outgoing_edges {
+                if let Some(edge) = self.graph.get_edge(edge_id) {
+                    let weight = edge.weight.unwrap_or(1.0);
+                    neighbors.push((edge.target, weight));
+                }
+            }
+        }
+        neighbors
     }
 
     // Reconstruct path from parent map
@@ -1134,7 +1158,6 @@ impl<'a> QueryExecutor<'a> {
 mod tests {
     use super::*;
     use crate::graph::property_graph::EdgeDirection;
-use std::time::Instant;
 
     #[test]
     fn test_pattern_matching() {

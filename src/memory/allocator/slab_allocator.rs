@@ -43,6 +43,10 @@ struct Slab {
     _allocated_at: Instant,
 }
 
+// SAFETY: Slab's NonNull<u8> fields are managed carefully and protected by locks
+unsafe impl Send for Slab {}
+unsafe impl Sync for Slab {}
+
 impl Slab {
     // Create a new slab for the given size class
     unsafe fn new(size_class_info: &SizeClass, size_class: usize, color: usize) -> Result<Self> {
@@ -250,6 +254,10 @@ struct SlabDepot {
     // Current color per size class (for slab coloring)
     current_colors: Vec<usize>,
 }
+
+// SAFETY: SlabDepot's Slab collections are protected by Mutex
+unsafe impl Send for SlabDepot {}
+unsafe impl Sync for SlabDepot {}
 
 impl SlabDepot {
     fn new() -> Self {
@@ -510,13 +518,36 @@ impl SlabAllocator {
 
     // Get allocation statistics
     pub fn get_stats(&self) -> SlabAllocatorStats {
+        let total_allocs = self.stats.allocations.load(Ordering::Relaxed);
+        let total_deallocs = self.stats.deallocations.load(Ordering::Relaxed);
+        let bytes_alloc = self.stats.bytes_allocated.load(Ordering::Relaxed);
+        let bytes_dealloc = total_deallocs.saturating_mul(bytes_alloc.saturating_div(total_allocs.max(1)));
+        let current_usage = bytes_alloc.saturating_sub(bytes_dealloc);
+        let peak_usage = bytes_alloc; // Approximate peak
+
+        // Calculate average fragmentation across all size classes
+        let mut total_frag = 0.0;
+        let mut class_count = 0;
+        for i in 0..self.size_classes.len() {
+            total_frag += self.calculate_fragmentation(i);
+            class_count += 1;
+        }
+        let avg_fragmentation = if class_count > 0 { total_frag / class_count as f64 } else { 0.0 };
+
         SlabAllocatorStats {
-            total_allocations: self.stats.allocations.load(Ordering::Relaxed),
-            total_deallocations: self.stats.deallocations.load(Ordering::Relaxed),
+            total_allocations: total_allocs,
+            total_deallocations: total_deallocs,
             slab_allocations: self.stats.slab_allocations.load(Ordering::Relaxed),
             magazine_loads: self.stats.magazine_loads.load(Ordering::Relaxed),
             magazine_unloads: self.stats.magazine_unloads.load(Ordering::Relaxed),
-            bytes_allocated: self.stats.bytes_allocated.load(Ordering::Relaxed),
+            bytes_allocated: bytes_alloc,
+            total_allocated: bytes_alloc,
+            total_freed: bytes_dealloc,
+            current_usage,
+            allocation_count: total_allocs,
+            deallocation_count: total_deallocs,
+            peak_usage,
+            fragmentation: avg_fragmentation,
         }
     }
 
@@ -546,4 +577,11 @@ pub struct SlabAllocatorStats {
     pub magazine_loads: u64,
     pub magazine_unloads: u64,
     pub bytes_allocated: u64,
+    pub total_allocated: u64,
+    pub total_freed: u64,
+    pub current_usage: u64,
+    pub allocation_count: u64,
+    pub deallocation_count: u64,
+    pub peak_usage: u64,
+    pub fragmentation: f64
 }

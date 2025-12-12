@@ -275,12 +275,13 @@ impl Algorithm for DecisionTree {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::serialize(self)
+        bincode::encode_to_vec(self, bincode::config::standard())
             .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
-        bincode::deserialize(bytes)
+        bincode::decode_from_slice(bytes, bincode::config::standard())
+            .map(|(result, _)| result)
             .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
     }
 }
@@ -312,9 +313,9 @@ impl RandomForest {
     // Bootstrap sampling
     fn bootstrap_sample(&self, n_samples: usize) -> Vec<usize> {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         (0..n_samples)
-            .map(|_| rng.gen_range(0..n_samples))
+            .map(|_| rng.random_range(0..n_samples))
             .collect()
     }
 }
@@ -412,12 +413,13 @@ impl Algorithm for RandomForest {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::serialize(self)
+        bincode::encode_to_vec(self, bincode::config::standard())
             .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
-        bincode::deserialize(bytes)
+        bincode::decode_from_slice(bytes, bincode::config::standard())
+            .map(|(result, _)| result)
             .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
     }
 }

@@ -1,8 +1,9 @@
-//! TLS configuration and management
-//!
-//! This module provides TLS 1.2/1.3 support using rustls for secure communication.
+// TLS configuration and management
+//
+// This module provides TLS 1.2/1.3 support using rustls for secure communication.
 
 use crate::error::{DbError, Result};
+use rustls_pki_types::{CertificateDer, PrivateKeyDer};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -44,16 +45,16 @@ impl CipherSuite {
     /// Convert to rustls cipher suite
     pub fn to_rustls_suite(&self) -> rustls::SupportedCipherSuite {
         match self {
-            CipherSuite::Tls13Aes256GcmSha384 => rustls::cipher_suite::TLS13_AES_256_GCM_SHA384,
-            CipherSuite::Tls13Aes128GcmSha256 => rustls::cipher_suite::TLS13_AES_128_GCM_SHA256,
+            CipherSuite::Tls13Aes256GcmSha384 => rustls::crypto::ring::cipher_suite::TLS13_AES_256_GCM_SHA384,
+            CipherSuite::Tls13Aes128GcmSha256 => rustls::crypto::ring::cipher_suite::TLS13_AES_128_GCM_SHA256,
             CipherSuite::Tls13Chacha20Poly1305Sha256 => {
-                rustls::cipher_suite::TLS13_CHACHA20_POLY1305_SHA256
+                rustls::crypto::ring::cipher_suite::TLS13_CHACHA20_POLY1305_SHA256
             }
             CipherSuite::Tls12EcdheRsaAes256GcmSha384 => {
-                rustls::cipher_suite::TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+                rustls::crypto::ring::cipher_suite::TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
             }
             CipherSuite::Tls12EcdheRsaAes128GcmSha256 => {
-                rustls::cipher_suite::TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                rustls::crypto::ring::cipher_suite::TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
             }
         }
     }
@@ -159,20 +160,21 @@ impl TlsConfig {
     }
 
     /// Load certificate chain from file
-    pub fn load_certs(&self) -> Result<Vec<rustls::Certificate>> {
+    pub fn load_certs(&self) -> Result<Vec<CertificateDer<'static>>> {
         let cert_file = std::fs::File::open(&self.cert_path).map_err(|e| {
             DbError::Configuration(format!("Failed to open cert file: {}", e))
         })?;
 
         let mut reader = std::io::BufReader::new(cert_file);
         let certs = rustls_pemfile::certs(&mut reader)
+            .collect::<std::result::Result<Vec<_>, _>>()
             .map_err(|e| DbError::Configuration(format!("Failed to parse certs: {}", e)))?;
 
-        Ok(certs.into_iter().map(rustls::Certificate).collect())
+        Ok(certs)
     }
 
     /// Load private key from file
-    pub fn load_private_key(&self) -> Result<rustls::PrivateKey> {
+    pub fn load_private_key(&self) -> Result<PrivateKeyDer<'static>> {
         let key_file = std::fs::File::open(&self.key_path).map_err(|e| {
             DbError::Configuration(format!("Failed to open key file: {}", e))
         })?;
@@ -180,10 +182,12 @@ impl TlsConfig {
         let mut reader = std::io::BufReader::new(key_file);
 
         // Try to parse as PKCS8 first
-        if let Ok(mut keys) = rustls_pemfile::pkcs8_private_keys(&mut reader) {
-            if !keys.is_empty() {
-                return Ok(rustls::PrivateKey(keys.remove(0)));
-            }
+        let mut keys = rustls_pemfile::pkcs8_private_keys(&mut reader)
+            .collect::<std::result::Result<Vec<_>, _>>()
+            .map_err(|e| DbError::Configuration(format!("Failed to parse PKCS8 key: {}", e)))?;
+
+        if !keys.is_empty() {
+            return Ok(PrivateKeyDer::Pkcs8(keys.remove(0)));
         }
 
         // Reset reader
@@ -193,10 +197,12 @@ impl TlsConfig {
         let mut reader = std::io::BufReader::new(key_file);
 
         // Try RSA private key
-        if let Ok(mut keys) = rustls_pemfile::rsa_private_keys(&mut reader) {
-            if !keys.is_empty() {
-                return Ok(rustls::PrivateKey(keys.remove(0)));
-            }
+        let mut keys = rustls_pemfile::rsa_private_keys(&mut reader)
+            .collect::<std::result::Result<Vec<_>, _>>()
+            .map_err(|e| DbError::Configuration(format!("Failed to parse RSA key: {}", e)))?;
+
+        if !keys.is_empty() {
+            return Ok(PrivateKeyDer::Pkcs1(keys.remove(0)));
         }
 
         Err(DbError::Configuration(
@@ -205,7 +211,7 @@ impl TlsConfig {
     }
 
     /// Load CA certificates from file
-    pub fn load_ca_certs(&self) -> Result<Vec<rustls::Certificate>> {
+    pub fn load_ca_certs(&self) -> Result<Vec<CertificateDer<'static>>> {
         if let Some(ca_path) = &self.ca_path {
             let ca_file = std::fs::File::open(ca_path).map_err(|e| {
                 DbError::Configuration(format!("Failed to open CA file: {}", e))
@@ -213,9 +219,10 @@ impl TlsConfig {
 
             let mut reader = std::io::BufReader::new(ca_file);
             let certs = rustls_pemfile::certs(&mut reader)
+                .collect::<std::result::Result<Vec<_>, _>>()
                 .map_err(|e| DbError::Configuration(format!("Failed to parse CA certs: {}", e)))?;
 
-            Ok(certs.into_iter().map(rustls::Certificate).collect())
+            Ok(certs)
         } else {
             Ok(Vec::new())
         }
@@ -227,29 +234,12 @@ impl TlsConfig {
         let key = self.load_private_key()?;
 
         let mut config = rustls::ServerConfig::builder()
-            .with_safe_default_cipher_suites()
-            .with_safe_default_kx_groups()
-            .with_protocol_versions(&[
-                self.min_version.to_rustls_version(),
-                if let Some(max) = self.max_version {
-                    max.to_rustls_version()
-                } else {
-                    &rustls::version::TLS13
-                },
-            ])
-            .map_err(|e| DbError::Configuration(format!("Failed to build TLS config: {}", e)))?
             .with_no_client_auth()
             .with_single_cert(certs, key)
             .map_err(|e| DbError::Configuration(format!("Failed to set certificate: {}", e)))?;
 
-        // Set ALPN protocols
-        if !self.alpn_protocols.is_empty() {
-            config.alpn_protocols = self
-                .alpn_protocols
-                .iter()
-                .map(|p| p.as_bytes().to_vec())
-                .collect();
-        }
+        // Set ALPN protocols using helper
+        self.configure_alpn(&mut config.alpn_protocols);
 
         Ok(Arc::new(config))
     }
@@ -262,35 +252,29 @@ impl TlsConfig {
         let ca_certs = self.load_ca_certs()?;
         for cert in ca_certs {
             root_store
-                .add(&cert)
+                .add(cert)
                 .map_err(|e| DbError::Configuration(format!("Failed to add CA cert: {}", e)))?;
         }
 
         let mut config = rustls::ClientConfig::builder()
-            .with_safe_default_cipher_suites()
-            .with_safe_default_kx_groups()
-            .with_protocol_versions(&[
-                self.min_version.to_rustls_version(),
-                if let Some(max) = self.max_version {
-                    max.to_rustls_version()
-                } else {
-                    &rustls::version::TLS13
-                },
-            ])
-            .map_err(|e| DbError::Configuration(format!("Failed to build TLS config: {}", e)))?
             .with_root_certificates(root_store)
             .with_no_client_auth();
 
-        // Set ALPN protocols
+        // Set ALPN protocols using helper
+        self.configure_alpn(&mut config.alpn_protocols);
+
+        Ok(Arc::new(config))
+    }
+
+    /// Helper to configure ALPN protocols (eliminates duplication)
+    fn configure_alpn(&self, alpn_protocols: &mut Vec<Vec<u8>>) {
         if !self.alpn_protocols.is_empty() {
-            config.alpn_protocols = self
+            *alpn_protocols = self
                 .alpn_protocols
                 .iter()
                 .map(|p| p.as_bytes().to_vec())
                 .collect();
         }
-
-        Ok(Arc::new(config))
     }
 
     /// Validate configuration

@@ -314,7 +314,7 @@ impl RetryConfig {
         // Add jitter
         if self.jitter {
             use rand::Rng;
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             let jitter = rng.gen_range(0.0..=0.3);
             delay *= 1.0 + jitter;
         }

@@ -156,7 +156,9 @@ impl KMeansClassifier {
         let mut selected_indices = Vec::new();
 
         // Pick first centroid randomly
-        let first_idx = rand::random::<usize>() % data.len();
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let first_idx = rng.gen_range(0..data.len());
         centroids.push(data[first_idx].clone());
         selected_indices.push(first_idx);
 
@@ -228,10 +230,10 @@ impl KMeansClassifier {
         new_centroids
     }
 
-    fn calculate_max_shift(&self, newcentroids: &[Vec<f64>]) -> f64 {
+    fn calculate_max_shift(&self, new_centroids: &[Vec<f64>]) -> f64 {
         self.centroids
             .iter()
-            .zip(newcentroids)
+            .zip(new_centroids)
             .map(|(old, new)| self.euclidean_distance(old, new))
             .fold(0.0, f64::max)
     }
@@ -275,8 +277,8 @@ impl PerformancePredictor {
         }
     }
 
-    pub fn train(&mut self, features: &[QueryFeatures], executiontimes: &[f64]) -> Result<()> {
-        if features.len() != executiontimes.len() {
+    pub fn train(&mut self, features: &[QueryFeatures], execution_times: &[f64]) -> Result<()> {
+        if features.len() != execution_times.len() {
             return Err(DbError::Internal("Feature and label count mismatch".to_string()));
         }
 
@@ -288,7 +290,7 @@ impl PerformancePredictor {
         let x_data: Vec<Vec<f64>> = features.iter().map(|f| f.to_vector()).collect();
 
         // Normalize execution times (log scale)
-        let y_data: Vec<f64> = executiontimes.iter().map(|&t| (t + 1.0).ln()).collect();
+        let y_data: Vec<f64> = execution_times.iter().map(|&t| (t + 1.0).ln()).collect();
 
         // Gradient descent
         let epochs = 1000;

@@ -7,9 +7,9 @@
 // - Quorum calculations
 // - Split-brain detection
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::common::NodeId;
-use crate::networking::membership::{NodeInfo, NodeStatus, MembershipEvent};
+use crate::networking::membership::{NodeInfo, NodeStatus};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -247,7 +247,7 @@ impl ViewManager {
         let mut view = self.view.write().await;
 
         if let Some(node) = view.nodes.get_mut(node_id) {
-            let old_status = node.status;
+            let _old_status = node.status;
             node.status = new_status;
 
             // Update status sets

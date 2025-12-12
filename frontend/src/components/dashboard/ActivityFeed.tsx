@@ -26,7 +26,7 @@ import {
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { format, parseISO, formatDistance } from 'date-fns';
-import { ActivityEvent, ActivityEventType } from '../../services/metricsService';
+import { ActivityEvent, ActivityEventType } from '@/services/metricsService.ts';
 
 // ============================================================================
 // Types

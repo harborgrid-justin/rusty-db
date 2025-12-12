@@ -1,11 +1,11 @@
-//! QUIC transport implementation for P2P communication
-//!
-//! Provides modern QUIC transport with:
-//! - 0-RTT connection establishment
-//! - Stream multiplexing
-//! - Built-in TLS 1.3 encryption
-//! - Connection migration support
-//! - Better performance over lossy networks
+// QUIC transport implementation for P2P communication
+//
+// Provides modern QUIC transport with:
+// - 0-RTT connection establishment
+// - Stream multiplexing
+// - Built-in TLS 1.3 encryption
+// - Connection migration support
+// - Better performance over lossy networks
 
 use crate::common::NodeId;
 use crate::error::{DbError, Result};

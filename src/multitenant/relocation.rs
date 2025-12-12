@@ -609,6 +609,7 @@ impl CrossCdbMigrator {
 
 #[cfg(test)]
 mod tests {
+    use std::thread::sleep;
     use super::*;
 
     #[tokio::test]
@@ -622,7 +623,7 @@ mod tests {
         };
 
         let job_id = engine.start_relocation(config).await.unwrap();
-        sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_secs(1)).await.await;
 
         let progress = engine.get_progress(job_id).await.unwrap();
         assert_ne!(progress.state, RelocationState::Initializing);

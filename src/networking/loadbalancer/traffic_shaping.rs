@@ -1,7 +1,7 @@
-//! Traffic shaping and rate limiting.
-//!
-//! Provides rate limiting per client/peer, priority queuing, bandwidth allocation,
-//! and burst handling for optimal traffic management.
+// Traffic shaping and rate limiting.
+//
+// Provides rate limiting per client/peer, priority queuing, bandwidth allocation,
+// and burst handling for optimal traffic management.
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;

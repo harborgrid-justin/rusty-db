@@ -13,14 +13,12 @@
 // - MembershipCoordinator: Orchestrates join/leave operations
 // - Bootstrap: Handles cluster initialization
 
-use crate::error::{DbError, Result};
+use crate::error::Result;
 use crate::common::NodeId;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
-use std::sync::Arc;
 use std::time::{Duration, SystemTime};
-use tokio::sync::RwLock;
 
 pub mod raft;
 pub mod swim;
@@ -33,10 +31,9 @@ pub use raft::RaftMembership;
 pub use swim::SwimMembership;
 pub use view::MembershipView;
 pub use coordinator::MembershipCoordinator;
-pub use bootstrap::BootstrapManager;
 
 /// Node information in the cluster
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, bincode::Encode, bincode::Decode)]
 pub struct NodeInfo {
     /// Unique node identifier
     pub id: NodeId,
@@ -272,7 +269,7 @@ pub struct SwimConfig {
     pub protocol_period: Duration,
 
     /// Suspicion multiplier for failure detection
-    pub suspicion_mult: u32,
+    pub suspicion_multiplier: u32,
 
     /// Number of nodes to probe indirectly
     pub indirect_probe_size: usize,
@@ -288,7 +285,7 @@ impl Default for SwimConfig {
     fn default() -> Self {
         Self {
             protocol_period: Duration::from_millis(1000),
-            suspicion_mult: 4,
+            suspicion_multiplier: 4,
             indirect_probe_size: 3,
             gossip_fanout: 3,
             gossip_retransmit_mult: 4,

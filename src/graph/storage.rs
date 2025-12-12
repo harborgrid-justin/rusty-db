@@ -14,6 +14,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
+use bincode::{Encode, Decode};
 use crate::error::{Result, DbError};
 use super::property_graph::{
     PropertyGraph, VertexId, EdgeId, Vertex, Properties,
@@ -45,7 +46,7 @@ pub enum StorageFormat {
 // ============================================================================
 
 // Adjacency list representation of the graph
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 pub struct AdjacencyList {
     // Outgoing adjacency lists: vertex -> list of (neighbor, edge_id)
     pub outgoing: HashMap<VertexId, Vec<(VertexId, EdgeId)>>,
@@ -159,13 +160,14 @@ impl AdjacencyList {
 
     // Serialize to bytes
     pub fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::serialize(self)
+        bincode::encode_to_vec(self, bincode::config::standard())
             .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))
     }
 
     // Deserialize from bytes
     pub fn deserialize(data: &[u8]) -> Result<Self> {
-        bincode::deserialize(data)
+        bincode::decode_from_slice(data, bincode::config::standard())
+            .map(|(adj_list, _)| adj_list)
             .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))
     }
 }
@@ -181,7 +183,7 @@ impl Default for AdjacencyList {
 // ============================================================================
 
 // CSR (Compressed Sparse Row) format for efficient graph analytics
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 pub struct CSRGraph {
     // Number of vertices
     pub num_vertices: usize,
@@ -505,7 +507,7 @@ impl GraphStorageManager {
             StorageFormat::CSR => {
                 let adj_list = AdjacencyList::from_graph(graph);
                 let csr = CSRGraph::from_adjacency_list(&adj_list);
-                let data = bincode::serialize(&csr)
+                let data = bincode::encode_to_vec(&csr, bincode::config::standard())
                     .map_err(|e| DbError::Internal(format!("Serialization error: {}", e)))?;
                 self.write_file(&file_path, &data)?;
             }
@@ -529,7 +531,8 @@ impl GraphStorageManager {
                 Ok(Self::adjacency_list_to_graph(&adj_list)?)
             }
             StorageFormat::CSR => {
-                let csr: CSRGraph = bincode::deserialize(&data)
+                let csr: CSRGraph = bincode::decode_from_slice(&data, bincode::config::standard())
+                    .map(|(csr, _)| csr)
                     .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?;
                 Ok(Self::csr_to_graph(&csr)?)
             }

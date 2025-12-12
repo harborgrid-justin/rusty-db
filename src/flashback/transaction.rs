@@ -576,6 +576,7 @@ pub struct TransactionFlashbackStats {
 
 #[cfg(test)]
 mod tests {
+    use crate::flashback::current_timestamp;
     use super::*;
 
     #[test]

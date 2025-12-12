@@ -8,6 +8,7 @@ use rusty_db::network::{
 use std::time::Duration;
 use tokio::time::sleep;
 use uuid::Uuid;
+use rusty_db::network::cluster_network::NodeCapacity;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -60,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // For demo, we'll simulate adding nodes
     println!("4. Simulating cluster nodes...");
     let node1 = NodeInfo {
-        id: rusty_db::network::NodeId::new(),
+        id: rusty_db::network::NodeId::new(0),
         addr: "127.0.0.1:7001".parse()?,
         state: NodeState::Alive,
         incarnation: 1,
@@ -69,17 +70,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         datacenter: "dc1".to_string(),
         rack: "rack1".to_string(),
         capacity: NodeCapacity {
+            cpu: 0.0,
+            memory: 0,
             cpu_cores: 16,
             memory_gb: 64,
             max_connections: 2000,
             current_connections: 150,
             query_latency_ms: 5.2,
             disk_io_utilization: 0.3,
+            connections: 0,
         },
+        address: (),
     };
 
     let node2 = NodeInfo {
-        id: rusty_db::network::NodeId::new(),
+        id: rusty_db::network::NodeId::new(0),
         addr: "127.0.0.1:7002".parse()?,
         state: NodeState::Alive,
         incarnation: 1,
@@ -88,6 +93,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         datacenter: "dc1".to_string(),
         rack: "rack2".to_string(),
         capacity: NodeCapacity {
+            cpu: 0.0,
+            memory: 0,
+            connections: 0,
             cpu_cores: 16,
             memory_gb: 64,
             max_connections: 2000,
@@ -95,6 +103,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             query_latency_ms: 3.8,
             disk_io_utilization: 0.2,
         },
+        address: (),
     };
 
     manager.add_node(node1.clone()).await?;
@@ -198,7 +207,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 11. Message broadcasting demo
     println!("\n11. Broadcasting heartbeat to all nodes:");
     let heartbeat = ClusterMessage::HeartBeat {
-        node: rusty_db::network::NodeId::new(),
+        node: rusty_db::network::NodeId::new(0),
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
