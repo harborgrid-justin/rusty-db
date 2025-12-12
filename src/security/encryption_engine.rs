@@ -29,7 +29,6 @@ use chacha20poly1305::{
 };
 use sha2::{Digest, Sha256};
 use hmac::{Hmac, Mac};
-use rand::{RngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
 use parking_lot::{RwLock};
 use std::sync::Arc;
@@ -737,36 +736,36 @@ pub struct CryptoRandom;
 impl CryptoRandom {
     // Generate secure random bytes
     pub fn random_bytes(size: usize) -> Result<Vec<u8>> {
-        use rsa::rand_core::RngCore;
+        use rand::RngCore;
         let mut bytes = vec![0u8; size];
-        let mut rng = OsRng;
+        let mut rng = rand::rng();
         rng.fill_bytes(&mut bytes);
         Ok(bytes)
     }
 
     // Generate encryption key
     pub fn generate_key() -> Result<KeyMaterial> {
-        use rsa::rand_core::RngCore;
+        use rand::RngCore;
         let mut key = [0u8; KEY_SIZE];
-        let mut rng = OsRng;
+        let mut rng = rand::rng();
         rng.fill_bytes(&mut key);
         Ok(key)
     }
 
     // Generate IV for encryption
     pub fn generate_iv() -> Result<Iv> {
-        use rsa::rand_core::RngCore;
+        use rand::RngCore;
         let mut iv = [0u8; IV_SIZE];
-        let mut rng = OsRng;
+        let mut rng = rand::rng();
         rng.fill_bytes(&mut iv);
         Ok(iv)
     }
 
     // Generate nonce for encryption
     pub fn generate_nonce() -> Result<Nonce> {
-        use rsa::rand_core::RngCore;
+        use rand::RngCore;
         let mut nonce = [0u8; IV_SIZE];
-        let mut rng = OsRng;
+        let mut rng = rand::rng();
         rng.fill_bytes(&mut nonce);
         Ok(nonce)
     }

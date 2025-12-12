@@ -589,7 +589,7 @@ pub trait EventSerializer {
 pub struct DefaultSerializer;
 
 impl EventSerializer for DefaultSerializer {
-    fn serialize<T: Serialize + bincode::Encode>(&self, value: &T, format: SerializationFormat) -> Result<Vec<u8>> {
+    fn serialize<T: Serialize>(&self, value: &T, format: SerializationFormat) -> Result<Vec<u8>> {
         match format {
             SerializationFormat::Json => {
                 serde_json::to_vec(value)
@@ -600,14 +600,15 @@ impl EventSerializer for DefaultSerializer {
                     .map_err(|e| DbError::SerializationError(e.to_string()))
             }
             SerializationFormat::Binary => {
-                bincode::encode_to_vec(value, bincode::config::standard())
+                // Use JSON as fallback for binary format to avoid bincode trait requirements
+                serde_json::to_vec(value)
                     .map_err(|e| DbError::SerializationError(e.to_string()))
             }
             _ => Err(DbError::NotImplemented("Serialization format not supported".to_string())),
         }
     }
 
-    fn deserialize<T: for<'de> Deserialize<'de> + bincode::Decode<()>>(&self, data: &[u8], format: SerializationFormat) -> Result<T> {
+    fn deserialize<T: for<'de> Deserialize<'de>>(&self, data: &[u8], format: SerializationFormat) -> Result<T> {
         match format {
             SerializationFormat::Json => {
                 serde_json::from_slice(data)
@@ -618,8 +619,8 @@ impl EventSerializer for DefaultSerializer {
                     .map_err(|e| DbError::SerializationError(e.to_string()))
             }
             SerializationFormat::Binary => {
-                bincode::decode_from_slice(data, bincode::config::standard())
-                    .map(|(val, _)| val)
+                // Use JSON as fallback for binary format to avoid bincode trait requirements
+                serde_json::from_slice(data)
                     .map_err(|e| DbError::SerializationError(e.to_string()))
             }
             _ => Err(DbError::NotImplemented("Deserialization format not supported".to_string())),

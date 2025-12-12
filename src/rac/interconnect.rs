@@ -104,8 +104,7 @@ pub struct Message {
 }
 
 // Message type classification
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, bincode::Encode, bincode::Decode)]
 pub enum MessageType {
     // Heartbeat message
     Heartbeat,
@@ -133,7 +132,7 @@ pub enum MessageType {
 }
 
 // Message priority levels
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum MessagePriority {
     // Low priority - background tasks
     Low = 0,

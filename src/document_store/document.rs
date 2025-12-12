@@ -44,7 +44,7 @@ fn bson_to_json(bson_val: &bson::Bson) -> serde_json::Value {
         bson::Bson::Undefined => serde_json::Value::Null,
         bson::Bson::MaxKey => serde_json::json!("MaxKey"),
         bson::Bson::MinKey => serde_json::json!("MinKey"),
-        bson::Bson::DbPointer(ptr) => serde_json::json!({"namespace": ptr.namespace, "id": ptr.id.to_hex()}),
+        bson::Bson::DbPointer(ptr) => serde_json::json!(format!("{:?}", ptr)),
     }
 }
 

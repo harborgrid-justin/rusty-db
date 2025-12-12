@@ -140,23 +140,20 @@ impl BeaconProtocol {
         let data = bincode::encode_to_vec(&beacon, bincode::config::standard())
             .map_err(|e| DbError::Serialization(format!("Failed to serialize beacon: {}", e)))?;
 
-        // Helper to send beacon to an address
-        let send_beacon_to = |addr: SocketAddr| async move {
-            if let Err(e) = self.socket.send_to(&data, addr).await {
-                eprintln!("Error sending beacon to {}: {}", addr, e);
-            }
-        };
-
         // Send to all known nodes
         let states = self.states.read().await;
         for state in states.values() {
-            send_beacon_to(state.info.addr).await;
+            if let Err(e) = self.socket.send_to(&data, state.info.addr).await {
+                eprintln!("Error sending beacon to {}: {}", state.info.addr, e);
+            }
         }
         drop(states);
 
         // Also send to seed nodes
         for seed in &self.config.seed_nodes {
-            send_beacon_to(*seed).await;
+            if let Err(e) = self.socket.send_to(&data, *seed).await {
+                eprintln!("Error sending beacon to {}: {}", seed, e);
+            }
         }
 
         Ok(())

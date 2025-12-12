@@ -168,7 +168,7 @@ pub struct InstallSnapshotResponse {
 }
 
 // Cluster configuration for membership changes
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct ClusterConfiguration {
     // Current configuration members
     pub members: Vec<RaftNodeId>,

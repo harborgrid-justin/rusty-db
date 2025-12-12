@@ -176,7 +176,7 @@ impl Default for Hyperparameters {
 }
 
 // Hyperparameter value types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum HyperparamValue {
     Int(i64),
     Float(f64),

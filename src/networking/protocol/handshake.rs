@@ -187,7 +187,7 @@ impl HandshakeResponse {
 }
 
 /// Node capabilities advertised during handshake
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, bincode::Encode, bincode::Decode)]
 pub struct NodeCapabilities {
     /// Supports query execution
     pub supports_query: bool,

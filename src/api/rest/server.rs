@@ -318,7 +318,7 @@ impl RestApiServer {
         // Add middleware layers
         router = router
             .layer(TraceLayer::new_for_http())
-            .layer(TimeoutLayer::new(Duration::from_secs(self.config.request_timeout_secs)))
+            .layer(TimeoutLayer::with_status_code(axum::http::StatusCode::REQUEST_TIMEOUT, Duration::from_secs(self.config.request_timeout_secs)))
             .layer(RequestBodyLimitLayer::new(self.config.max_body_size as u64 as usize))
             .layer(middleware::from_fn_with_state(
                 self.state.clone(),

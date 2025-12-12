@@ -149,8 +149,8 @@ impl ReplicationManager {
             ));
         }
 
-        let term = state.current_term;
-        let commit_index = state.commit_index;
+        let _term = state.current_term;
+        let _commit_index = state.commit_index;
         let members = state.members.clone();
 
         // For each follower, send AppendEntries with new log entries

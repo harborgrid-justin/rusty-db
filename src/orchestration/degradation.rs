@@ -487,7 +487,7 @@ impl LoadShedder {
         if rate > 0.0 {
             use rand::Rng;
             let mut rng = rand::rng();
-            if rng.gen::<f64>() < rate {
+            if rng.random::<f64>() < rate {
                 self.rejected_requests.fetch_add(1, Ordering::Relaxed);
                 return false;
             }

@@ -367,7 +367,7 @@ impl ApiGateway {
         match backend.load_balancing {
             LoadBalancingStrategy::Random => {
                 use rand::Rng;
-                let idx = rand::thread_rng().gen_range(0..healthy_endpoints.len());
+                let idx = rand::rng().random_range(0..healthy_endpoints.len());
                 Ok(healthy_endpoints[idx].clone())
             },
             LoadBalancingStrategy::RoundRobin => {

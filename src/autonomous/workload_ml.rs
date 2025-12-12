@@ -157,8 +157,8 @@ impl KMeansClassifier {
 
         // Pick first centroid randomly
         use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let first_idx = rng.gen_range(0..data.len());
+        let mut rng = rand::rng();
+        let first_idx = rng.random_range(0..data.len());
         centroids.push(data[first_idx].clone());
         selected_indices.push(first_idx);
 

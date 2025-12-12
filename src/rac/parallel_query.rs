@@ -79,7 +79,7 @@ pub struct ParallelQueryPlan {
 }
 
 // Query fragment (unit of parallel work)
-#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryFragment {
     // Fragment identifier
     pub fragment_id: usize,
@@ -113,7 +113,7 @@ pub struct QueryFragment {
 }
 
 // Fragment type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum FragmentType {
     // Table scan producer
     TableScan,
@@ -138,7 +138,7 @@ pub enum FragmentType {
 }
 
 // Table scan specification
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct TableScan {
     pub table_id: TableId,
     pub table_name: String,
@@ -155,7 +155,7 @@ pub struct FilterExpression {
     pub value: Value,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum FilterOperator {
     Equal,
     NotEqual,
@@ -168,7 +168,7 @@ pub enum FilterOperator {
 }
 
 // Project expression
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct ProjectExpression {
     pub column: String,
     pub alias: Option<String>,
@@ -176,7 +176,7 @@ pub struct ProjectExpression {
 }
 
 // Join operation
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct JoinOperation {
     pub join_type: JoinType,
     pub left_column: String,
@@ -184,7 +184,7 @@ pub struct JoinOperation {
     pub build_side: JoinSide,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum JoinType {
     Inner,
     LeftOuter,
@@ -193,21 +193,21 @@ pub enum JoinType {
     Cross,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum JoinSide {
     Left,
     Right,
 }
 
 // Aggregate operation
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct AggregateOperation {
     pub function: AggregateFunction,
     pub column: String,
     pub alias: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum AggregateFunction {
     Count,
     Sum,
@@ -218,7 +218,7 @@ pub enum AggregateFunction {
 }
 
 // Sort operation
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct SortOperation {
     pub column: String,
     pub ascending: bool,
@@ -547,7 +547,7 @@ pub struct ParallelQueryStatistics {
 }
 
 // Query messages
-#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 enum QueryMessage {
     // Execute query fragment
     ExecuteFragment {
@@ -584,7 +584,7 @@ enum QueryMessage {
 }
 
 // Data chunk for parallel transfer
-#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataChunk {
     pub chunk_id: u64,
     pub tuples: Vec<Tuple>,
@@ -831,7 +831,7 @@ impl ParallelQueryCoordinator {
             fragment,
         };
 
-        let payload = bincode::encode_to_vec(&message, bincode::config::standard())
+        let payload = bincode::serde::encode_to_vec(&message, bincode::config::standard())
             .map_err(|e| DbError::Serialization(e.to_string()))?;
 
         self.interconnect.send_message(

@@ -713,7 +713,7 @@ impl MLEngine {
             }
             ModelType::KMeansClustering => {
                 // Placeholder for K-means clustering training
-                Err(MLError::InvalidOperation("K-means clustering not yet implemented".to_string()))
+                Err(MLError::InvalidOperation("K-means clustering not yet implemented".to_string()).into())
             }
         }
     }

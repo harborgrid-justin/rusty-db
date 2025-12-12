@@ -994,19 +994,6 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.15.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "054ccb5b10f9f2cbf51eb355ca1d05c2d279ce1804688d0db74b4733a5aeafd8"
-dependencies = [
- "encode_unicode",
- "libc",
- "once_cell",
- "unicode-width",
- "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "console"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b430743a6eb14e9764d4260d4c0d8123087d504eeb9c48f2b2a5e810dd369df4"
@@ -1314,7 +1301,7 @@ version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef6edbd3508c2f6276696cded0c0bb6f9cc1aa9f931fd465416aa00e105cc5cb"
 dependencies = [
- "console 0.16.1",
+ "console",
  "fuzzy-matcher",
  "itertools 0.14.0",
  "signal-hook",
@@ -1375,19 +1362,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.111",
-]
-
-[[package]]
-name = "dialoguer"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "658bce805d770f407bc62102fca7c2c64ceef2fbcb2b8bd19d2765ce093980de"
-dependencies = [
- "console 0.15.11",
- "shell-words",
- "tempfile",
- "thiserror 1.0.69",
- "zeroize",
 ]
 
 [[package]]
@@ -1554,16 +1528,6 @@ checksum = "8be9f3dfaaffdae2972880079a491a1a8bb7cbed0b8dd7a347f668b4150a3b93"
 dependencies = [
  "event-listener 5.4.1",
  "pin-project-lite",
-]
-
-[[package]]
-name = "eyre"
-version = "0.6.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cd915d99f24784cdc19fd37ef22b97e3ff0ae756c7e492e9fbfe897d61e2aec"
-dependencies = [
- "indenter",
- "once_cell",
 ]
 
 [[package]]
@@ -2115,7 +2079,6 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.26.4",
  "tower-service",
- "webpki-roots 1.0.4",
 ]
 
 [[package]]
@@ -2286,12 +2249,6 @@ dependencies = [
  "icu_normalizer",
  "icu_properties",
 ]
-
-[[package]]
-name = "indenter"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "964de6e86d545b246d84badc0fef527924ace5134f30641c203ef52ba83f58d5"
 
 [[package]]
 name = "indexmap"
@@ -2709,67 +2666,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1a5d38b9b352dbd913288736af36af41c48d61b1a8cd34bcecd727561b7d511"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "name"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "923246726b7061102c95648cce166f31828d0dbff88313cc17ffea0251900cdd"
-dependencies = [
- "eyre",
- "name-cli",
- "name-crates-io-client",
- "name-forge",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "name-cli"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0169a7226d7314512adc19cd7f6ac81b39824f861f8f41d5eddc10b6006249d4"
-dependencies = [
- "clap",
- "dialoguer",
- "eyre",
- "name-forge",
-]
-
-[[package]]
-name = "name-crates-io-client"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cc49ef694c7934781a2d67099c344e5014db04c1761e235fbf8fdc3d3bfe539"
-dependencies = [
- "eyre",
- "reqwest 0.12.25",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "name-dictionary"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cb9d401b13c79e5f45a04c124132c545ff4a52adb2cbe6d63ab05c12f38248f"
-
-[[package]]
-name = "name-forge"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f26998f18d7ca6c110ac959464b6bfccc7d842a2f0fbea0c6b962797b434bab3"
-dependencies = [
- "eyre",
- "futures",
- "name-crates-io-client",
- "name-dictionary",
- "rand 0.8.5",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -3849,7 +3745,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-streams",
  "web-sys",
- "webpki-roots 0.25.4",
+ "webpki-roots",
  "winreg",
 ]
 
@@ -3888,7 +3784,6 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
- "webpki-roots 1.0.4",
 ]
 
 [[package]]
@@ -4156,7 +4051,6 @@ dependencies = [
  "libc",
  "log",
  "logs",
- "name",
  "now",
  "num-traits",
  "num_cpus",
@@ -4400,12 +4294,6 @@ checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
 dependencies = [
  "lazy_static",
 ]
-
-[[package]]
-name = "shell-words"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc6fe69c597f9c37bfeeeeeb33da3530379845f10be461a66d16d03eca2ded77"
 
 [[package]]
 name = "shlex"
@@ -5602,15 +5490,6 @@ name = "webpki-roots"
 version = "0.25.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f20c57d8d7db6d3b86154206ae5d8fba62dd39573114de97c2cb0578251f8e1"
-
-[[package]]
-name = "webpki-roots"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2878ef029c47c6e8cf779119f20fcf52bde7ad42a731b2a304bc221df17571e"
-dependencies = [
- "rustls-pki-types",
-]
 
 [[package]]
 name = "winapi"

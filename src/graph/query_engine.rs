@@ -275,7 +275,7 @@ impl QueryResult {
         self.row_count == 0
     }
 
-    pub(crate) fn iter(&self) -> std::slice::Iter<'_, HashMap<String, crate::common::Value>> {
+    pub(crate) fn iter(&self) -> std::slice::Iter<'_, ResultRow> {
         self.rows.iter()
     }
 }

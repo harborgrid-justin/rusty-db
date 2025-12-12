@@ -247,6 +247,7 @@ impl Clone for DbError {
             DbError::Conflict(s) => DbError::Conflict(s.clone()),
             DbError::ConstraintViolation(s) => DbError::ConstraintViolation(s.clone()),
             DbError::ParseError(s) => DbError::ParseError(s.clone()),
+            DbError::BsonError(s) => DbError::BsonError(s.clone()),
         }
     }
 }

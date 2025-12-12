@@ -426,7 +426,7 @@ pub fn bench_random_page_scan(config: &BenchConfig) -> BenchMetrics {
         .map(|i| Page::new(i as u32))
         .collect();
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let start = Instant::now();
 
     for _ in 0..config.iterations {

@@ -14,13 +14,12 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use futures_util::StreamExt;
+
 use utoipa::ToSchema;
 
 use crate::api::rest::types::{ApiState, ApiError, ApiResult};
 use crate::ml::{
     MLEngine, ModelType, Dataset, Hyperparameters,
-    Algorithm,
     InferenceEngine,
 };
 

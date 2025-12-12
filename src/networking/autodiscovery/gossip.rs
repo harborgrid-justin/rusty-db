@@ -34,7 +34,7 @@ use tokio::sync::{mpsc, RwLock};
 use tokio::time::interval;
 
 /// Member state in the gossip protocol
-#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MemberState {
     /// Node is alive and responding
     Alive {
@@ -79,7 +79,7 @@ impl MemberState {
 }
 
 /// Gossip message types
-#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GossipMessage {
     /// Direct ping to check if node is alive
     Ping {
@@ -344,7 +344,7 @@ impl GossipDiscovery {
 
     /// Send a gossip message
     async fn send_message(&self, msg: &GossipMessage, addr: SocketAddr) -> Result<()> {
-        let bytes = bincode::encode_to_vec(msg, bincode::config::standard())
+        let bytes = bincode::serde::encode_to_vec(msg, bincode::config::standard())
             .map_err(|e| DbError::Serialization(format!("Failed to serialize message: {}", e)))?;
 
         self.socket.send_to(&bytes, addr).await
@@ -423,8 +423,8 @@ impl GossipDiscovery {
                 result = self.socket.recv_from(&mut buffer) => {
                     match result {
                         Ok((len, addr)) => {
-                            if let Ok((msg, _)) = bincode::decode_from_slice(&buffer[..len], bincode::config::standard()) {
-                                if let Err(e) = self.handle_message(msg, addr).await {
+                            if let Ok(msg) = bincode::serde::decode_from_slice::<GossipMessage, _>(&buffer[..len], bincode::config::standard()) {
+                                if let Err(e) = self.handle_message(msg.0, addr).await {
                                     eprintln!("Error handling message: {}", e);
                                 }
                             }

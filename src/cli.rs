@@ -70,7 +70,8 @@ async fn main() -> Result<()> {
             break;
         }
 
-        let response: Response = bincode::deserialize(&buffer[..n])
+        let response: Response = bincode::decode_from_slice(&buffer[..n], bincode::config::standard())
+            .map(|(r, _)| r)
             .map_err(|e| DbError::Serialization(e.to_string()))?;
 
         match response {

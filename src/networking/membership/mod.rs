@@ -102,7 +102,7 @@ impl NodeInfo {
 }
 
 /// Node status in the cluster
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, bincode::Encode, bincode::Decode)]
 pub enum NodeStatus {
     /// Node is joining the cluster
     Joining,
@@ -124,7 +124,7 @@ pub enum NodeStatus {
 }
 
 /// Node metadata
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, bincode::Encode, bincode::Decode)]
 pub struct NodeMetadata {
     /// Database version
     pub version: String,
@@ -159,7 +159,7 @@ impl Default for NodeMetadata {
 }
 
 /// Node role in the cluster
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, bincode::Encode, bincode::Decode)]
 pub enum NodeRole {
     /// Primary/master node
     Primary,

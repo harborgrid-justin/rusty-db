@@ -324,11 +324,29 @@ impl SqlParser {
                 })
             }
             Statement::Delete(delete) => {
-                let table = if let Some(first_table) = delete.tables.first() {
-                    first_table.0.to_string()
-                } else {
-                    return Err(DbError::SqlParse("Delete statement requires a table".to_string()));
+                let table = match &delete.from {
+                    sqlparser::ast::FromTable::WithFromKeyword(tables) => {
+                        tables.first().and_then(|t| {
+                            if let sqlparser::ast::TableFactor::Table { name, .. } = &t.relation {
+                                Some(name.to_string())
+                            } else {
+                                None
+                            }
+                        }).unwrap_or_default()
+                    }
+                    sqlparser::ast::FromTable::WithoutKeyword(tables) => {
+                        tables.first().and_then(|t| {
+                            if let sqlparser::ast::TableFactor::Table { name, .. } = &t.relation {
+                                Some(name.to_string())
+                            } else {
+                                None
+                            }
+                        }).unwrap_or_default()
+                    }
                 };
+                if table.is_empty() {
+                    return Err(DbError::SqlParse("Delete statement requires a table".to_string()));
+                }
                 Ok(SqlStatement::Delete {
                     table,
                     filter: None,

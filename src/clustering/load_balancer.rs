@@ -532,6 +532,7 @@ impl LoadBalancer {
         let total_weight: u32 = available.iter().map(|b| b.weight).sum();
 
         // Generate weighted random selection
+        use rand::Rng;
         let mut rng = rand::rng();
         let mut random = rng.random_range(0..total_weight);
 
@@ -600,6 +601,7 @@ impl LoadBalancer {
             return Err(DbError::Internal("No available backends".into()));
         }
 
+        use rand::prelude::IndexedRandom;
         let mut rng = rand::rng();
         let selected = available.choose(&mut rng).unwrap();
 

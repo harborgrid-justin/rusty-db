@@ -229,7 +229,7 @@ impl OutboxProcessor {
 // ============================================================================
 
 // Domain event for event sourcing
-#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DomainEvent {
     // Event ID
     pub event_id: u64,
@@ -478,7 +478,7 @@ impl ReadModelProjection {
         // Update read model based on event
         // Simplified implementation
         let key = format!("{}:{}", event.aggregate_type, event.aggregate_id);
-        let serialized = bincode::encode_to_vec(&event, bincode::config::standard())
+        let serialized = bincode::serde::encode_to_vec(&event, bincode::config::standard())
             .map_err(|e| crate::error::DbError::Serialization(format!("Serialization failed: {}", e)))?;
         self.data.write().insert(key, serialized);
         Ok(())

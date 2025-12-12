@@ -13,7 +13,7 @@ use super::{Algorithm, ModelType};
 // ============================================================================
 
 // Node in a decision tree
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 enum TreeNode {
     Leaf {
         value: f64,

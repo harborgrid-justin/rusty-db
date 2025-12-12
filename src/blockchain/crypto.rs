@@ -474,7 +474,7 @@ impl KeyPair {
 
         // Use secure random generation
         use rand::RngCore;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         rng.fill_bytes(&mut private_key);
 
         // Derive public key from private (simplified)
@@ -661,7 +661,7 @@ impl Commitment {
     pub fn commit(value: &[u8]) -> (Self, Hash256) {
         // Generate random blinding factor
         use rand::RngCore;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut blinding = [0u8; 32];
         rng.fill_bytes(&mut blinding);
 
@@ -738,10 +738,10 @@ impl RangeProof {
 
 // Generate secure random bytes
 pub fn secure_random(size: usize) -> Vec<u8> {
-    use rand::{thread_rng, RngCore};
+    use rand::RngCore;
 
     let mut bytes = vec![0u8; size];
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     rng.fill_bytes(&mut bytes);
     bytes
 }

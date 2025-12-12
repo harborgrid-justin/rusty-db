@@ -119,6 +119,8 @@ pub enum MLError {
     VersionConflict(String),
     // Invalid hyperparameters
     InvalidHyperparameters(String),
+    // Invalid operation
+    InvalidOperation(String),
 }
 
 impl fmt::Display for MLError {
@@ -135,6 +137,7 @@ impl fmt::Display for MLError {
             MLError::UnsupportedAlgorithm(algo) => write!(f, "Unsupported algorithm: {}", algo),
             MLError::VersionConflict(msg) => write!(f, "Version conflict: {}", msg),
             MLError::InvalidHyperparameters(msg) => write!(f, "Invalid hyperparameters: {}", msg),
+            MLError::InvalidOperation(msg) => write!(f, "Invalid operation: {}", msg),
         }
     }
 }

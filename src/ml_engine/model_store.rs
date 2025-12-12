@@ -145,14 +145,14 @@ pub enum ModelParameters {
 }
 
 // Neural network layer definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct NetworkLayer {
     pub weights: Vec<Vec<f64>>,
     pub biases: Vec<f64>,
     pub activation: ActivationType,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum ActivationType {
     ReLU,
     Sigmoid,
@@ -181,7 +181,7 @@ pub enum ModelStatus {
 // ============================================================================
 
 // Model deployment configuration
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct DeploymentConfig {
     // Deployment environment
     pub environment: DeploymentEnvironment,
@@ -213,7 +213,7 @@ impl DeploymentConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum DeploymentEnvironment {
     Development,
     Staging,
@@ -221,7 +221,7 @@ pub enum DeploymentEnvironment {
 }
 
 // Auto-scaling configuration
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct ScalingConfig {
     // Minimum instances
     pub min_instances: u32,
@@ -242,7 +242,7 @@ impl Default for ScalingConfig {
 }
 
 // Performance SLA requirements
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct PerformanceSLA {
     // Maximum latency in milliseconds (p99)
     pub max_latency_ms: f64,

@@ -70,7 +70,7 @@ pub struct ListDefinition {
 }
 
 /// Shard key value
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash, bincode::Encode, bincode::Decode)]
 pub enum ShardKey {
     Integer(i64),
     String(String),

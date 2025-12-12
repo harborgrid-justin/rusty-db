@@ -273,7 +273,7 @@ impl Vertex {
 // ============================================================================
 
 // Edge direction enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub enum EdgeDirection {
     // Directed edge from source to target
     Directed,

@@ -7,7 +7,7 @@ name = "rusty-db"
 version = "0.1.101"
 
 [dependencies]
-bincode = "2.0.1"
+bincode = { version = "2.0.1", features = ["serde"] }
 bytes = "1.5"
 chrono = { version = "0.4", features = ["serde"] }
 crc32fast = "1.3"
@@ -67,6 +67,7 @@ logs = "0.7.1"
 now = "0.1.3"
 reqwest = { version = "0.12.25", default-features = false, features = ["json", "rustls-tls-manual-roots"] }
 result = "1.0.0"
+rustls-pki-types = "1.13.1"
 sha1 = "0.10.6"
 size = "0.5.0"
 socket2 = { version = "0.6.1", features = ["all"] }
@@ -83,8 +84,6 @@ unicode-normalization = "0.1"
 utoipa = { version = "5.0", features = ["axum_extras", "chrono", "uuid"] }
 utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
 x509-parser = { version = "0.18.0", features = ["verify"] }
-name = "0.1.1"
-rustls-pki-types = "1.13.1"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_IO"] }
