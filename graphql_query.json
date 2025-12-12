@@ -1,0 +1,1 @@
+{"query":"mutation { rollbackTransaction(transactionId: \"a3ae88e2-9a3b-4c1f-b069-a2009e1378a4\") { transactionId status } }"}

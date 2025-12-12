@@ -53,6 +53,13 @@ use super::handlers::vpd_handlers;
 use super::handlers::privileges_handlers;
 use super::handlers::labels_handlers;
 
+// Advanced Business Logic Handlers
+use super::handlers::ml_handlers;
+use super::handlers::graph_handlers;
+use super::handlers::document_handlers;
+use super::handlers::spatial_handlers;
+use super::handlers::analytics_handlers;
+use super::handlers::inmemory_handlers;
 
 // Type alias for the GraphQL schema
 type GraphQLSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
@@ -307,6 +314,63 @@ impl RestApiServer {
             .route("/api/v1/security/labels/check-dominance", post(labels_handlers::check_label_dominance))
             .route("/api/v1/security/labels/validate-access", post(labels_handlers::validate_label_access))
             .route("/api/v1/security/labels/classifications", get(labels_handlers::list_classifications))
+
+            // Machine Learning API
+            .route("/api/v1/ml/models", get(ml_handlers::list_models))
+            .route("/api/v1/ml/models", post(ml_handlers::create_model))
+            .route("/api/v1/ml/models/{id}", get(ml_handlers::get_model))
+            .route("/api/v1/ml/models/{id}", delete(ml_handlers::delete_model))
+            .route("/api/v1/ml/models/{id}/train", post(ml_handlers::train_model))
+            .route("/api/v1/ml/models/{id}/predict", post(ml_handlers::predict))
+            .route("/api/v1/ml/models/{id}/metrics", get(ml_handlers::get_model_metrics))
+            .route("/api/v1/ml/models/{id}/evaluate", post(ml_handlers::evaluate_model))
+            .route("/api/v1/ml/models/{id}/export", get(ml_handlers::export_model))
+
+            // Graph Database API
+            .route("/api/v1/graph/query", post(graph_handlers::execute_query))
+            .route("/api/v1/graph/vertices", get(graph_handlers::list_vertices))
+            .route("/api/v1/graph/vertices", post(graph_handlers::create_vertex))
+            .route("/api/v1/graph/vertices/{id}", get(graph_handlers::get_vertex))
+            .route("/api/v1/graph/vertices/{id}", delete(graph_handlers::delete_vertex))
+            .route("/api/v1/graph/edges", get(graph_handlers::list_edges))
+            .route("/api/v1/graph/edges", post(graph_handlers::create_edge))
+            .route("/api/v1/graph/edges/{id}", get(graph_handlers::get_edge))
+            .route("/api/v1/graph/edges/{id}", delete(graph_handlers::delete_edge))
+            .route("/api/v1/graph/pagerank", post(graph_handlers::pagerank))
+            .route("/api/v1/graph/shortest-path", post(graph_handlers::shortest_path))
+            .route("/api/v1/graph/communities", post(graph_handlers::detect_communities))
+
+            // Document Store API
+            .route("/api/v1/documents/collections", get(document_handlers::list_collections))
+            .route("/api/v1/documents/collections", post(document_handlers::create_collection))
+            .route("/api/v1/documents/collections/{name}", get(document_handlers::get_collection))
+            .route("/api/v1/documents/collections/{name}", delete(document_handlers::delete_collection))
+            .route("/api/v1/documents/collections/{name}/documents", get(document_handlers::query_documents))
+            .route("/api/v1/documents/collections/{name}/documents", post(document_handlers::insert_document))
+            .route("/api/v1/documents/collections/{name}/documents/bulk", post(document_handlers::bulk_insert))
+            .route("/api/v1/documents/collections/{name}/documents/{id}", get(document_handlers::get_document))
+            .route("/api/v1/documents/collections/{name}/documents/{id}", put(document_handlers::update_document))
+            .route("/api/v1/documents/collections/{name}/documents/{id}", delete(document_handlers::delete_document))
+            .route("/api/v1/documents/collections/{name}/aggregate", post(document_handlers::aggregate))
+
+            // Spatial Database API
+            .route("/api/v1/spatial/query", post(spatial_handlers::spatial_query))
+            .route("/api/v1/spatial/nearest", post(spatial_handlers::nearest))
+            .route("/api/v1/spatial/route", post(spatial_handlers::calculate_route))
+            .route("/api/v1/spatial/buffer", post(spatial_handlers::buffer))
+            .route("/api/v1/spatial/transform", post(spatial_handlers::transform_coordinates))
+
+            // Analytics API
+            .route("/api/v1/analytics/olap/cube", post(analytics_handlers::create_cube))
+            .route("/api/v1/analytics/olap/query", post(analytics_handlers::query_cube))
+            .route("/api/v1/analytics/window", post(analytics_handlers::window_function))
+
+            // In-Memory Column Store API
+            .route("/api/v1/inmemory/tables", get(inmemory_handlers::list_tables))
+            .route("/api/v1/inmemory/tables/{name}/load", post(inmemory_handlers::load_table))
+            .route("/api/v1/inmemory/tables/{name}/unload", post(inmemory_handlers::unload_table))
+            .route("/api/v1/inmemory/query", post(inmemory_handlers::query))
+            .route("/api/v1/inmemory/stats", get(inmemory_handlers::get_stats))
 
             .with_state(self.state.clone());
 
