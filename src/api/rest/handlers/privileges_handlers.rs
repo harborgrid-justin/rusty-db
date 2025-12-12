@@ -234,12 +234,49 @@ pub async fn analyze_user_privileges(
                 let mut recommendation_msgs = Vec::new();
 
                 for rec in recommendations {
-                    recommendation_msgs.push(rec.recommendation);
-                    if rec.severity > 7 {
-                        high_risk_privs.push(rec.privilege);
-                    }
-                    if !rec.usage_count > 0 {
-                        unused_privs.push(rec.privilege);
+                    use crate::security_vault::PrivilegeRecommendation;
+
+                    match rec {
+                        PrivilegeRecommendation::RevokeUnused { privilege, .. } => {
+                            let priv_name = match privilege {
+                                crate::security_vault::privileges::PrivilegeType::System(name) => name,
+                                crate::security_vault::privileges::PrivilegeType::Object { privilege, object_name, .. } => {
+                                    format!("{} ON {}", privilege, object_name)
+                                }
+                                crate::security_vault::privileges::PrivilegeType::Role(name) => format!("ROLE {}", name),
+                            };
+                            unused_privs.push(priv_name.clone());
+                            recommendation_msgs.push(format!("Consider revoking unused privilege: {}", priv_name));
+                        }
+                        PrivilegeRecommendation::GrantMissing { privilege, reason, .. } => {
+                            let priv_name = match privilege {
+                                crate::security_vault::privileges::PrivilegeType::System(name) => name,
+                                crate::security_vault::privileges::PrivilegeType::Object { privilege, object_name, .. } => {
+                                    format!("{} ON {}", privilege, object_name)
+                                }
+                                crate::security_vault::privileges::PrivilegeType::Role(name) => format!("ROLE {}", name),
+                            };
+                            recommendation_msgs.push(format!("Grant missing privilege {}: {}", priv_name, reason));
+                        }
+                        PrivilegeRecommendation::ConsolidateToRole { suggested_role, .. } => {
+                            recommendation_msgs.push(format!("Consider consolidating privileges to role: {}", suggested_role));
+                        }
+                        PrivilegeRecommendation::CreateRole { role_name, .. } => {
+                            recommendation_msgs.push(format!("Consider creating role: {}", role_name));
+                        }
+                        PrivilegeRecommendation::PrivilegeEscalation { privilege, risk_level, reason, .. } => {
+                            let priv_name = match privilege {
+                                crate::security_vault::privileges::PrivilegeType::System(name) => name,
+                                crate::security_vault::privileges::PrivilegeType::Object { privilege, object_name, .. } => {
+                                    format!("{} ON {}", privilege, object_name)
+                                }
+                                crate::security_vault::privileges::PrivilegeType::Role(name) => format!("ROLE {}", name),
+                            };
+                            if risk_level > 7 {
+                                high_risk_privs.push(priv_name.clone());
+                            }
+                            recommendation_msgs.push(format!("High-risk privilege {}: {}", priv_name, reason));
+                        }
                     }
                 }
 

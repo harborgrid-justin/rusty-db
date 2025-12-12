@@ -294,8 +294,8 @@ pub async fn set_user_clearance(
 
     Ok(Json(UserClearanceResponse {
         user_id: request.user_id,
-        max_read_classification: request.max_read_classification,
-        max_write_classification: request.max_write_classification,
+        max_read_classification: request.max_read_classification.clone(),
+        max_write_classification: request.max_write_classification.clone(),
         current_classification: request.max_write_classification,
         authorized_compartments: authorized_compartments.into_iter().collect(),
     }))
