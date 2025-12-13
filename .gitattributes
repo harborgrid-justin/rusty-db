@@ -3,3 +3,4 @@ target/release/rusty-db-* filter=lfs diff=lfs merge=lfs -text
 target/x86_64-pc-windows-gnu/release/rusty-db-*.exe filter=lfs diff=lfs merge=lfs -text
 target/release/rusty-db-cli filter=lfs diff=lfs merge=lfs -text
 target/release/rusty-db-server filter=lfs diff=lfs merge=lfs -text
+target/x86_64-pc-windows-gnu/release/*.exe filter=lfs diff=lfs merge=lfs -text
