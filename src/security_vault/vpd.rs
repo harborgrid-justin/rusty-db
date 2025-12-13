@@ -27,6 +27,7 @@
 // ```
 
 use crate::{DbError, Result};
+use crate::security::injection_prevention::{DangerousPatternDetector, SQLValidator};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use parking_lot::RwLock;
@@ -435,7 +436,51 @@ impl VpdEngine {
     }
 
     // Inject security predicate into query
+    // SECURITY: Validates predicates before injection to prevent SQL injection
     fn inject_predicate(&self, query: &str, predicate: &str) -> Result<String> {
+        // SECURITY FIX: Validate predicate before injection
+        let detector = DangerousPatternDetector::new();
+        let validator = SQLValidator::new();
+
+        // Check for dangerous patterns in predicate
+        detector.scan(predicate).map_err(|e| {
+            DbError::Security(format!(
+                "VPD predicate validation failed: {}. Predicate: '{}'",
+                e, predicate
+            ))
+        })?;
+
+        // Validate SQL syntax of the predicate
+        validator.validate_sql(&format!("SELECT 1 WHERE {}", predicate)).map_err(|e| {
+            DbError::Security(format!(
+                "VPD predicate syntax validation failed: {}. Predicate: '{}'",
+                e, predicate
+            ))
+        })?;
+
+        // Block dangerous patterns that could allow SQL injection
+        let predicate_upper = predicate.to_uppercase();
+        if predicate_upper.contains("--")
+            || predicate_upper.contains("/*")
+            || predicate_upper.contains("*/")
+            || predicate_upper.contains(";")
+            || predicate_upper.contains("UNION")
+            || predicate_upper.contains("EXEC")
+            || predicate_upper.contains("DROP")
+            || predicate_upper.contains("TRUNCATE")
+            || predicate_upper.contains("DELETE FROM")
+            || predicate_upper.contains("INSERT INTO")
+            || predicate_upper.contains("UPDATE ")
+            || predicate_upper.contains("SLEEP")
+            || predicate_upper.contains("BENCHMARK")
+            || predicate_upper.contains("WAITFOR")
+        {
+            return Err(DbError::Security(format!(
+                "Dangerous SQL pattern detected in VPD predicate: '{}'",
+                predicate
+            )));
+        }
+
         // Simplified injection - real implementation would use SQL AST manipulation
         let where_regex = Regex::new(r"(?i)(WHERE\s+)")
             .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?;

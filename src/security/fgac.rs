@@ -19,6 +19,7 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 use crate::Result;
 use crate::error::DbError;
+use crate::security::injection_prevention::{DangerousPatternDetector, SQLValidator};
 
 // Table identifier
 pub type TableId = String;
@@ -623,19 +624,62 @@ impl FgacManager {
     }
 
     // Inject security predicates into a query
+    // SECURITY: Validates all predicates before injection to prevent SQL injection
     pub fn inject_predicates(
         &self,
         original_query: &str,
         table_id: &TableId,
         context: &SecurityContext,
-    ) -> String {
+    ) -> Result<String> {
         let predicates = self.generate_security_predicates(table_id, context);
 
         if predicates.is_empty() {
-            return original_query.to_string();
+            return Ok(original_query.to_string());
         }
 
-        // Build combined WHERE clause
+        // SECURITY FIX: Validate all predicates before injection
+        let detector = DangerousPatternDetector::new();
+        let validator = SQLValidator::new();
+
+        for predicate in &predicates {
+            // Check for dangerous patterns in predicate expressions
+            detector.scan(&predicate.expression).map_err(|e| {
+                DbError::Security(format!(
+                    "Security predicate validation failed: {}. Predicate: '{}'",
+                    e, predicate.expression
+                ))
+            })?;
+
+            // Validate SQL syntax structure
+            validator.validate_sql(&format!("SELECT 1 WHERE {}", predicate.expression)).map_err(|e| {
+                DbError::Security(format!(
+                    "Predicate syntax validation failed: {}. Predicate: '{}'",
+                    e, predicate.expression
+                ))
+            })?;
+
+            // Block dangerous patterns that could allow SQL injection
+            let expression_upper = predicate.expression.to_uppercase();
+            if expression_upper.contains("--")
+                || expression_upper.contains("/*")
+                || expression_upper.contains("*/")
+                || expression_upper.contains(";")
+                || expression_upper.contains("UNION")
+                || expression_upper.contains("EXEC")
+                || expression_upper.contains("DROP")
+                || expression_upper.contains("TRUNCATE")
+                || expression_upper.contains("DELETE FROM")
+                || expression_upper.contains("INSERT INTO")
+                || expression_upper.contains("UPDATE ")
+            {
+                return Err(DbError::Security(format!(
+                    "Dangerous SQL pattern detected in security predicate: '{}'",
+                    predicate.expression
+                )));
+            }
+        }
+
+        // Build combined WHERE clause (predicates are now validated)
         let security_where = predicates.iter()
             .map(|p| format!("({})", p.expression))
             .collect::<Vec<_>>()
@@ -643,9 +687,9 @@ impl FgacManager {
 
         // Inject into query (simplified - would need proper SQL parsing)
         if original_query.to_uppercase().contains("WHERE") {
-            format!("{} AND ({})", original_query, security_where)
+            Ok(format!("{} AND ({})", original_query, security_where))
         } else {
-            format!("{} WHERE {}", original_query, security_where)
+            Ok(format!("{} WHERE {}", original_query, security_where))
         }
     }
 
