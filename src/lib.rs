@@ -1116,3 +1116,33 @@ pub mod core;
 //
 // **Target LOC:** 3,000+ lines
 pub mod api;
+
+// WebSocket Support
+//
+// Real-time WebSocket connections with comprehensive monitoring and metrics.
+// Provides bidirectional communication for live query results, metrics streaming,
+// and real-time notifications.
+//
+// **Key Components:**
+// - `WebSocketMetrics`: Comprehensive metrics collection for WebSocket connections
+// - Connection tracking: active connections, total connections, connection duration
+// - Message tracking: sent/received counts, bytes transferred, latency
+// - Error tracking: categorized error counters
+// - Subscription management: active subscriptions tracking
+// - Performance metrics: queue depth, backpressure events
+//
+// **Features:**
+// - Thread-safe metric collection with atomic operations
+// - Low-overhead performance monitoring
+// - Prometheus-compatible metrics export
+// - Dashboard-ready data structures
+// - Per-connection detailed tracking
+// - Latency percentiles (p50, p95, p99)
+//
+// **Integration:**
+// - Integrates with monitoring API for Prometheus export
+// - Health check support
+// - Real-time metrics streaming
+//
+// **Target LOC:** 1,000+ lines
+pub mod websocket;

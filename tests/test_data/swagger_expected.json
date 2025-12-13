@@ -1,0 +1,332 @@
+{
+  "description": "Expected OpenAPI specification structure for RustyDB API validation",
+  "version": "1.0.0",
+  "required_fields": [
+    "openapi",
+    "info",
+    "info.title",
+    "info.version",
+    "paths"
+  ],
+  "optional_recommended_fields": [
+    "servers",
+    "components",
+    "components.schemas",
+    "components.securitySchemes",
+    "security",
+    "tags"
+  ],
+  "expected_openapi_version": {
+    "major": 3,
+    "minor_min": 0,
+    "format": "3.x.x"
+  },
+  "expected_info": {
+    "title": "RustyDB API",
+    "description": "Enterprise-grade Rust-based database management system REST API",
+    "version_pattern": "^\\d+\\.\\d+\\.\\d+$",
+    "contact": {
+      "name": "RustyDB Contributors",
+      "optional": true
+    },
+    "license": {
+      "name": "MIT OR Apache-2.0",
+      "optional": true
+    }
+  },
+  "expected_servers": [
+    {
+      "url": "http://localhost:5432",
+      "description": "Local development server"
+    },
+    {
+      "url": "http://127.0.0.1:5432",
+      "description": "Alternative local server"
+    }
+  ],
+  "expected_security_schemes": {
+    "bearer_auth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT",
+      "description": "JWT token authentication"
+    },
+    "api_key": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-API-Key",
+      "description": "API key authentication"
+    }
+  },
+  "expected_paths": {
+    "health": {
+      "path": "/health",
+      "methods": ["GET"],
+      "description": "Health check endpoint",
+      "responses": {
+        "200": "Healthy",
+        "503": "Unhealthy"
+      }
+    },
+    "query": {
+      "path_pattern": "/api/query",
+      "methods": ["POST"],
+      "description": "Execute SQL query",
+      "request_body_required": true,
+      "responses": {
+        "200": "Query executed successfully",
+        "400": "Invalid query",
+        "401": "Unauthorized",
+        "500": "Internal server error"
+      }
+    },
+    "execute": {
+      "path_pattern": "/api/execute",
+      "methods": ["POST"],
+      "description": "Execute SQL statement",
+      "request_body_required": true,
+      "responses": {
+        "200": "Statement executed successfully",
+        "400": "Invalid statement",
+        "401": "Unauthorized",
+        "500": "Internal server error"
+      }
+    },
+    "tables": {
+      "path_pattern": "/api/tables",
+      "methods": ["GET"],
+      "description": "List all tables",
+      "responses": {
+        "200": "List of tables",
+        "401": "Unauthorized"
+      }
+    },
+    "table_info": {
+      "path_pattern": "/api/tables/{table_name}",
+      "methods": ["GET"],
+      "description": "Get table information",
+      "parameters": {
+        "table_name": {
+          "in": "path",
+          "required": true,
+          "schema_type": "string"
+        }
+      },
+      "responses": {
+        "200": "Table information",
+        "404": "Table not found"
+      }
+    },
+    "websocket": {
+      "path_pattern": "/ws",
+      "methods": ["GET"],
+      "description": "WebSocket upgrade endpoint",
+      "responses": {
+        "101": "Switching Protocols"
+      }
+    },
+    "swagger_ui": {
+      "path_pattern": "/swagger-ui",
+      "methods": ["GET"],
+      "description": "Swagger UI interface",
+      "responses": {
+        "200": "Swagger UI HTML"
+      }
+    },
+    "openapi_spec": {
+      "path_pattern": "/api-docs/openapi.json",
+      "methods": ["GET"],
+      "description": "OpenAPI specification",
+      "responses": {
+        "200": "OpenAPI JSON specification"
+      }
+    }
+  },
+  "expected_schemas": {
+    "Error": {
+      "type": "object",
+      "required_properties": ["message"],
+      "optional_properties": ["code", "details"],
+      "description": "Standard error response"
+    },
+    "QueryRequest": {
+      "type": "object",
+      "required_properties": ["sql"],
+      "optional_properties": ["parameters", "transaction_id"],
+      "description": "SQL query request"
+    },
+    "QueryResponse": {
+      "type": "object",
+      "required_properties": ["columns", "rows"],
+      "optional_properties": ["rows_affected", "execution_time_ms"],
+      "description": "SQL query response"
+    },
+    "ExecuteRequest": {
+      "type": "object",
+      "required_properties": ["sql"],
+      "optional_properties": ["transaction_id"],
+      "description": "SQL execute request"
+    },
+    "ExecuteResponse": {
+      "type": "object",
+      "required_properties": ["rows_affected"],
+      "optional_properties": ["execution_time_ms"],
+      "description": "SQL execute response"
+    },
+    "TableInfo": {
+      "type": "object",
+      "required_properties": ["name"],
+      "optional_properties": ["columns", "indexes", "row_count"],
+      "description": "Table metadata"
+    },
+    "HealthStatus": {
+      "type": "object",
+      "required_properties": ["status"],
+      "optional_properties": ["uptime", "connections", "memory_usage"],
+      "description": "System health status"
+    },
+    "TransactionRequest": {
+      "type": "object",
+      "optional_properties": ["isolation_level"],
+      "description": "Transaction begin request"
+    },
+    "TransactionResponse": {
+      "type": "object",
+      "required_properties": ["transaction_id"],
+      "description": "Transaction response"
+    }
+  },
+  "expected_response_codes": {
+    "200": "OK - Request successful",
+    "201": "Created - Resource created",
+    "204": "No Content - Successful with no response body",
+    "400": "Bad Request - Invalid input",
+    "401": "Unauthorized - Authentication required",
+    "403": "Forbidden - Insufficient permissions",
+    "404": "Not Found - Resource not found",
+    "409": "Conflict - Request conflicts with current state",
+    "422": "Unprocessable Entity - Validation error",
+    "429": "Too Many Requests - Rate limit exceeded",
+    "500": "Internal Server Error - Server error",
+    "503": "Service Unavailable - Service temporarily unavailable"
+  },
+  "expected_tags": [
+    {
+      "name": "Query",
+      "description": "SQL query execution endpoints"
+    },
+    {
+      "name": "Tables",
+      "description": "Table management endpoints"
+    },
+    {
+      "name": "Transactions",
+      "description": "Transaction management endpoints"
+    },
+    {
+      "name": "Monitoring",
+      "description": "System monitoring and health check endpoints"
+    },
+    {
+      "name": "WebSocket",
+      "description": "WebSocket connection endpoints"
+    },
+    {
+      "name": "Documentation",
+      "description": "API documentation endpoints"
+    }
+  ],
+  "validation_rules": {
+    "all_paths_must_have_summary": true,
+    "all_paths_must_have_responses": true,
+    "all_request_bodies_must_have_schema": true,
+    "all_parameters_must_have_description": true,
+    "all_schemas_must_have_description": false,
+    "all_operations_must_have_operation_id": true,
+    "all_operations_must_have_tags": true
+  },
+  "content_types": {
+    "request": ["application/json"],
+    "response": ["application/json"]
+  },
+  "example_request_bodies": {
+    "query_request": {
+      "sql": "SELECT * FROM users WHERE id = ?",
+      "parameters": [1],
+      "transaction_id": null
+    },
+    "execute_request": {
+      "sql": "INSERT INTO users (name, email) VALUES (?, ?)",
+      "parameters": ["John Doe", "john@example.com"],
+      "transaction_id": "txn_12345"
+    },
+    "transaction_request": {
+      "isolation_level": "READ_COMMITTED"
+    }
+  },
+  "example_responses": {
+    "query_response": {
+      "columns": ["id", "name", "email"],
+      "rows": [
+        [1, "John Doe", "john@example.com"]
+      ],
+      "rows_affected": 1,
+      "execution_time_ms": 5
+    },
+    "execute_response": {
+      "rows_affected": 1,
+      "execution_time_ms": 3
+    },
+    "error_response": {
+      "code": "QUERY_ERROR",
+      "message": "Table 'users' does not exist",
+      "details": "Check your SQL syntax and table names"
+    },
+    "health_response": {
+      "status": "healthy",
+      "uptime": 86400,
+      "connections": 42,
+      "memory_usage": 1073741824
+    },
+    "transaction_response": {
+      "transaction_id": "txn_abc123"
+    }
+  },
+  "openapi_extensions": {
+    "x-rusty-db-version": "0.2.640",
+    "x-api-stability": "experimental",
+    "x-rate-limit": {
+      "requests_per_minute": 100,
+      "burst": 20
+    }
+  },
+  "test_criteria": {
+    "min_paths_count": 5,
+    "min_schemas_count": 3,
+    "must_have_health_endpoint": true,
+    "must_have_error_responses": true,
+    "must_document_authentication": true,
+    "must_have_examples": false,
+    "recommended_response_codes": [200, 400, 401, 404, 500]
+  },
+  "compliance_checks": {
+    "openapi_3_0_compliant": true,
+    "rest_best_practices": {
+      "use_proper_http_methods": true,
+      "use_proper_status_codes": true,
+      "use_consistent_naming": true,
+      "version_api": false
+    },
+    "security_best_practices": {
+      "document_authentication": true,
+      "document_authorization": true,
+      "no_sensitive_data_in_urls": true
+    }
+  },
+  "notes": [
+    "This file defines the expected structure of the OpenAPI specification for RustyDB API",
+    "Tests will validate the actual spec against these expectations",
+    "Some fields are optional but recommended for complete documentation",
+    "Validation rules can be adjusted based on API maturity level"
+  ]
+}

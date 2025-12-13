@@ -215,6 +215,118 @@ impl SubscriptionRoot {
             }
         }
     }
+
+    // Subscribe to query execution events
+    async fn query_execution<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        query_id: Option<String>,
+    ) -> impl Stream<Item = QueryExecutionEvent> + 'ctx {
+        let engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let (tx, rx) = broadcast::channel(1000);
+
+        // Register query execution subscription
+        engine.register_query_execution_subscription(query_id, tx).await;
+
+        BroadcastStream::new(rx).filter_map(|result| async move {
+            result.ok()
+        })
+    }
+
+    // Subscribe to table modifications (comprehensive row changes)
+    async fn table_modifications<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        tables: Vec<String>,
+        change_types: Option<Vec<ChangeType>>,
+    ) -> impl Stream<Item = TableModification> + 'ctx {
+        let engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let (tx, rx) = broadcast::channel(1000);
+
+        // Register table modification subscription
+        engine.register_table_modification_subscription(tables, change_types, tx).await;
+
+        BroadcastStream::new(rx).filter_map(|result| async move {
+            result.ok()
+        })
+    }
+
+    // Subscribe to system metrics stream
+    async fn system_metrics<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        interval_seconds: Option<i32>,
+        metric_types: Option<Vec<MetricType>>,
+    ) -> impl Stream<Item = SystemMetrics> + 'ctx {
+        let engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let interval = Duration::from_secs(interval_seconds.unwrap_or(5) as u64);
+        let metrics = metric_types.unwrap_or_else(|| vec![
+            MetricType::Cpu,
+            MetricType::Memory,
+            MetricType::Disk,
+            MetricType::Network,
+        ]);
+
+        async_stream::stream! {
+            let mut interval_timer = tokio::time::interval(interval);
+            loop {
+                interval_timer.tick().await;
+
+                match engine.collect_system_metrics(&metrics).await {
+                    Ok(metrics_data) => {
+                        yield SystemMetrics {
+                            cpu_usage: metrics_data.cpu_usage,
+                            memory_usage: metrics_data.memory_usage,
+                            memory_total: metrics_data.memory_total,
+                            disk_read_bps: metrics_data.disk_read_bps,
+                            disk_write_bps: metrics_data.disk_write_bps,
+                            network_rx_bps: metrics_data.network_rx_bps,
+                            network_tx_bps: metrics_data.network_tx_bps,
+                            active_connections: metrics_data.active_connections,
+                            active_queries: metrics_data.active_queries,
+                            timestamp: DateTime::now(),
+                        };
+                    }
+                    Err(_) => continue,
+                }
+            }
+        }
+    }
+
+    // Subscribe to replication status events
+    async fn replication_status<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        node_id: Option<String>,
+        interval_seconds: Option<i32>,
+    ) -> impl Stream<Item = ReplicationStatusEvent> + 'ctx {
+        let engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let interval = Duration::from_secs(interval_seconds.unwrap_or(10) as u64);
+
+        async_stream::stream! {
+            let mut interval_timer = tokio::time::interval(interval);
+            loop {
+                interval_timer.tick().await;
+
+                match engine.get_replication_status(node_id.clone()).await {
+                    Ok(status) => {
+                        yield ReplicationStatusEvent {
+                            node_id: status.node_id,
+                            role: status.role,
+                            state: status.state,
+                            lag_bytes: status.lag_bytes,
+                            lag_seconds: status.lag_seconds,
+                            last_wal_received: status.last_wal_received,
+                            last_wal_applied: status.last_wal_applied,
+                            is_healthy: status.is_healthy,
+                            timestamp: DateTime::now(),
+                        };
+                    }
+                    Err(_) => continue,
+                }
+            }
+        }
+    }
 }
 
 // Table change event (union of all change types)
@@ -466,6 +578,205 @@ pub struct SubscriptionInfo {
     pub filter: Option<WhereClause>,
     pub created_at: DateTime,
     pub last_event: Option<DateTime>,
+}
+
+// Query execution event
+#[derive(Clone, Debug)]
+pub struct QueryExecutionEvent {
+    pub query_id: String,
+    pub status: QueryExecutionStatus,
+    pub progress_percent: Option<f64>,
+    pub rows_affected: Option<BigInt>,
+    pub elapsed_ms: u64,
+    pub message: Option<String>,
+    pub timestamp: DateTime,
+}
+
+#[Object]
+impl QueryExecutionEvent {
+    async fn query_id(&self) -> &str {
+        &self.query_id
+    }
+
+    async fn status(&self) -> QueryExecutionStatus {
+        self.status
+    }
+
+    async fn progress_percent(&self) -> Option<f64> {
+        self.progress_percent
+    }
+
+    async fn rows_affected(&self) -> &Option<BigInt> {
+        &self.rows_affected
+    }
+
+    async fn elapsed_ms(&self) -> u64 {
+        self.elapsed_ms
+    }
+
+    async fn message(&self) -> &Option<String> {
+        &self.message
+    }
+
+    async fn timestamp(&self) -> &DateTime {
+        &self.timestamp
+    }
+}
+
+// Query execution status
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
+pub enum QueryExecutionStatus {
+    Started,
+    Running,
+    Completed,
+    Failed,
+    Cancelled,
+}
+
+// Table modification event
+#[derive(Clone, Debug)]
+pub struct TableModification {
+    pub table: String,
+    pub change_type: ChangeType,
+    pub row_id: ID,
+    pub row: Option<RowType>,
+    pub old_row: Option<RowType>,
+    pub changed_columns: Option<Vec<String>>,
+    pub transaction_id: Option<String>,
+    pub timestamp: DateTime,
+}
+
+#[Object]
+impl TableModification {
+    async fn table(&self) -> &str {
+        &self.table
+    }
+
+    async fn change_type(&self) -> ChangeType {
+        self.change_type
+    }
+
+    async fn row_id(&self) -> &ID {
+        &self.row_id
+    }
+
+    async fn row(&self) -> &Option<RowType> {
+        &self.row
+    }
+
+    async fn old_row(&self) -> &Option<RowType> {
+        &self.old_row
+    }
+
+    async fn changed_columns(&self) -> &Option<Vec<String>> {
+        &self.changed_columns
+    }
+
+    async fn transaction_id(&self) -> &Option<String> {
+        &self.transaction_id
+    }
+
+    async fn timestamp(&self) -> &DateTime {
+        &self.timestamp
+    }
+}
+
+// System metrics event
+#[derive(SimpleObject, Clone, Debug)]
+pub struct SystemMetrics {
+    pub cpu_usage: f64,
+    pub memory_usage: BigInt,
+    pub memory_total: BigInt,
+    pub disk_read_bps: BigInt,
+    pub disk_write_bps: BigInt,
+    pub network_rx_bps: BigInt,
+    pub network_tx_bps: BigInt,
+    pub active_connections: i32,
+    pub active_queries: i32,
+    pub timestamp: DateTime,
+}
+
+// Metric type enum
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
+pub enum MetricType {
+    Cpu,
+    Memory,
+    Disk,
+    Network,
+    Queries,
+    Connections,
+}
+
+// Replication status event
+#[derive(Clone, Debug)]
+pub struct ReplicationStatusEvent {
+    pub node_id: String,
+    pub role: ReplicationRole,
+    pub state: ReplicationState,
+    pub lag_bytes: BigInt,
+    pub lag_seconds: f64,
+    pub last_wal_received: Option<String>,
+    pub last_wal_applied: Option<String>,
+    pub is_healthy: bool,
+    pub timestamp: DateTime,
+}
+
+#[Object]
+impl ReplicationStatusEvent {
+    async fn node_id(&self) -> &str {
+        &self.node_id
+    }
+
+    async fn role(&self) -> ReplicationRole {
+        self.role
+    }
+
+    async fn state(&self) -> ReplicationState {
+        self.state
+    }
+
+    async fn lag_bytes(&self) -> &BigInt {
+        &self.lag_bytes
+    }
+
+    async fn lag_seconds(&self) -> f64 {
+        self.lag_seconds
+    }
+
+    async fn last_wal_received(&self) -> &Option<String> {
+        &self.last_wal_received
+    }
+
+    async fn last_wal_applied(&self) -> &Option<String> {
+        &self.last_wal_applied
+    }
+
+    async fn is_healthy(&self) -> bool {
+        self.is_healthy
+    }
+
+    async fn timestamp(&self) -> &DateTime {
+        &self.timestamp
+    }
+}
+
+// Replication role enum
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
+pub enum ReplicationRole {
+    Primary,
+    Standby,
+    Replica,
+}
+
+// Replication state enum
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
+pub enum ReplicationState {
+    Startup,
+    Catchup,
+    Streaming,
+    Backup,
+    Stopping,
+    Stopped,
 }
 
 // Helper function to compute hash of rows for change detection

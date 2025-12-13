@@ -61,6 +61,9 @@ use super::handlers::spatial_handlers;
 use super::handlers::analytics_handlers;
 use super::handlers::inmemory_handlers;
 
+// WebSocket Handlers
+use super::handlers::websocket_handlers;
+
 // Type alias for the GraphQL schema
 type GraphQLSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 
@@ -197,6 +200,13 @@ impl RestApiServer {
             .route("/api/v1/transactions/{id}/commit", post(commit_transaction))
             .route("/api/v1/transactions/{id}/rollback", post(rollback_transaction))
             .route("/api/v1/stream", get(websocket_stream))
+
+            // WebSocket API - Real-time Streaming
+            .route("/api/v1/ws", get(websocket_handlers::ws_upgrade_handler))
+            .route("/api/v1/ws/query", get(websocket_handlers::ws_query_stream))
+            .route("/api/v1/ws/metrics", get(websocket_handlers::ws_metrics_stream))
+            .route("/api/v1/ws/events", get(websocket_handlers::ws_events_stream))
+            .route("/api/v1/ws/replication", get(websocket_handlers::ws_replication_stream))
 
             // Health endpoint (public, no auth required)
             .route("/api/v1/admin/health", get(get_health))
@@ -409,14 +419,9 @@ impl RestApiServer {
         }
 
         // Add Swagger UI if enabled
-        // FIXME: SwaggerUi integration disabled - needs proper Router conversion
-        // See: https://docs.rs/utoipa-swagger-ui/latest/utoipa_swagger_ui/
-        // if self.config.enable_swagger {
-        //     router = router.merge(
-        //         SwaggerUi::new("/swagger-ui")
-        //             .url("/api-docs/openapi.json", ApiDoc::openapi())
-        //     );
-        // }
+        if self.config.enable_swagger {
+            router = router.merge(super::swagger::create_api_docs_router());
+        }
 
         router
     }

@@ -669,4 +669,66 @@ impl GraphQLEngine {
 
         executor.execute(&func, &context)
     }
+
+    // New subscription registration methods
+
+    /// Register a subscription for query execution events
+    pub async fn register_query_execution_subscription(
+        &self,
+        _query_id: Option<String>,
+        _tx: broadcast::Sender<super::subscriptions::QueryExecutionEvent>,
+    ) -> String {
+        // Mock implementation - would integrate with actual query execution tracker
+        uuid::Uuid::new_v4().to_string()
+    }
+
+    /// Register a subscription for table modifications
+    pub async fn register_table_modification_subscription(
+        &self,
+        _tables: Vec<String>,
+        _change_types: Option<Vec<super::subscriptions::ChangeType>>,
+        _tx: broadcast::Sender<super::subscriptions::TableModification>,
+    ) -> String {
+        // Mock implementation - would integrate with actual change data capture
+        uuid::Uuid::new_v4().to_string()
+    }
+
+    /// Collect system metrics
+    pub async fn collect_system_metrics(
+        &self,
+        _metric_types: &[super::subscriptions::MetricType],
+    ) -> Result<super::subscriptions::SystemMetrics, DbError> {
+        // Mock implementation - would integrate with actual monitoring system
+        Ok(super::subscriptions::SystemMetrics {
+            cpu_usage: 45.0,
+            memory_usage: BigInt(1024 * 1024 * 1024),
+            memory_total: BigInt(8 * 1024 * 1024 * 1024),
+            disk_read_bps: BigInt(1024 * 1024),
+            disk_write_bps: BigInt(512 * 1024),
+            network_rx_bps: BigInt(100 * 1024),
+            network_tx_bps: BigInt(50 * 1024),
+            active_connections: 10,
+            active_queries: 3,
+            timestamp: DateTime::now(),
+        })
+    }
+
+    /// Get replication status
+    pub async fn get_replication_status(
+        &self,
+        node_id: Option<String>,
+    ) -> Result<super::subscriptions::ReplicationStatusEvent, DbError> {
+        // Mock implementation - would integrate with actual replication system
+        Ok(super::subscriptions::ReplicationStatusEvent {
+            node_id: node_id.unwrap_or_else(|| "node-1".to_string()),
+            role: super::subscriptions::ReplicationRole::Primary,
+            state: super::subscriptions::ReplicationState::Streaming,
+            lag_bytes: BigInt(0),
+            lag_seconds: 0.0,
+            last_wal_received: Some("0/1000000".to_string()),
+            last_wal_applied: Some("0/1000000".to_string()),
+            is_healthy: true,
+            timestamp: DateTime::now(),
+        })
+    }
 }

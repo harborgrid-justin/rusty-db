@@ -9,6 +9,7 @@ pub mod health;
 pub mod alerts;
 pub mod dashboard_types;
 pub mod dashboard_api;
+pub mod websocket_metrics;
 
 // Re-export main types and functions
 pub use metrics_core::*;
@@ -18,3 +19,4 @@ pub use health::*;
 pub use alerts::*;
 pub use dashboard_types::*;
 pub use dashboard_api::*;
+pub use websocket_metrics::*;
