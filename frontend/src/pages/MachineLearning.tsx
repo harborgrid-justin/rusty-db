@@ -187,7 +187,7 @@ export default function MachineLearning() {
     setIsPredicting(true);
     // Simulate prediction
     setTimeout(() => {
-      setP redictionResult({
+      setPredictionResult({
         prediction: 'churn',
         confidence: 0.876,
         probabilities: {

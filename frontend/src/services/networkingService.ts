@@ -313,7 +313,7 @@ export const networkingService = {
   async getConnections(
     filters?: ConnectionFilters
   ): Promise<PaginatedResponse<NetworkConnection>> {
-    const queryParams = filters ? buildQueryParams(filters) : '';
+    const queryParams = filters ? buildQueryParams(filters as Record<string, unknown>) : '';
     const response = await get<PaginatedResponse<NetworkConnection>>(
       `/network/connections${queryParams}`
     );
@@ -393,7 +393,7 @@ export const networkingService = {
   async getClusterNodes(
     filters?: NodeFilters
   ): Promise<PaginatedResponse<ClusterNodeExtended>> {
-    const queryParams = filters ? buildQueryParams(filters) : '';
+    const queryParams = filters ? buildQueryParams(filters as Record<string, unknown>) : '';
     const response = await get<PaginatedResponse<ClusterNodeExtended>>(
       `/network/cluster/nodes${queryParams}`
     );

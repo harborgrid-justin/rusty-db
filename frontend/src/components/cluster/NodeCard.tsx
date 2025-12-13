@@ -17,7 +17,7 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
 } from '@heroicons/react/24/outline';
-import { CrownIcon } from '@heroicons/react/24/solid';
+import { StarIcon } from '@heroicons/react/24/solid';
 import type { ClusterNode } from '../../types';
 import clsx from 'clsx';
 
@@ -121,7 +121,7 @@ export function NodeCard({
               )}
             >
               {isLeader ? (
-                <CrownIcon className="w-6 h-6 text-amber-600" />
+                <StarIcon className="w-6 h-6 text-amber-600" />
               ) : (
                 <ServerIcon className="w-6 h-6 text-blue-600" />
               )}

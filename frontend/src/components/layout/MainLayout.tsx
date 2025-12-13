@@ -163,7 +163,7 @@ export function MainLayout() {
     children.some((child) => location.pathname.startsWith(child.href));
 
   return (
-    <div className="min-h-screen bg-dark-900 flex">
+    <div className="min-h-screen bg-transparent flex">
       {/* Sidebar Overlay (mobile) */}
       <AnimatePresence>
         {sidebar.isOpen && !sidebar.isPinned && (
@@ -180,17 +180,17 @@ export function MainLayout() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed lg:static inset-y-0 left-0 z-50 w-64 bg-dark-800 border-r border-dark-700 flex flex-col transition-transform duration-300',
+          'fixed lg:static inset-y-0 left-0 z-50 w-64 bg-dark-950/80 backdrop-blur-xl border-r border-white/5 flex flex-col transition-transform duration-300',
           sidebar.isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:overflow-hidden'
         )}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-dark-700">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-rusty-500 rounded-lg flex items-center justify-center">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-white/5">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-8 h-8 bg-gradient-to-br from-rusty-500 to-rusty-600 rounded-lg flex items-center justify-center shadow-glow-rusty transition-transform group-hover:scale-105">
               <CircleStackIcon className="w-5 h-5 text-white" />
             </div>
-            <span className="font-semibold text-dark-100">RustyDB</span>
+            <span className="font-bold text-lg tracking-tight text-white">RustyDB</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -267,10 +267,10 @@ export function MainLayout() {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-dark-700">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse" />
-            <span className="text-sm text-dark-400">System Healthy</span>
+        <div className="p-4 border-t border-white/5">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 border border-white/5">
+            <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+            <span className="text-xs font-medium text-dark-300">System Healthy</span>
           </div>
         </div>
       </aside>
@@ -278,22 +278,22 @@ export function MainLayout() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-dark-800 border-b border-dark-700 flex items-center justify-between px-4 lg:px-6">
+        <header className="h-16 bg-dark-950/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 lg:px-6">
           <div className="flex items-center gap-4">
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-lg text-dark-400 hover:text-dark-100 hover:bg-dark-700"
+              className="p-2 rounded-lg text-dark-400 hover:text-dark-100 hover:bg-white/5"
             >
               <Bars3Icon className="w-5 h-5" />
             </button>
 
             {/* Search */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-dark-700 rounded-lg text-dark-400 w-64">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-lg text-dark-400 w-64 focus-within:border-primary-500/50 focus-within:ring-1 focus-within:ring-primary-500/50 transition-all">
               <MagnifyingGlassIcon className="w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search... (Ctrl+K)"
-                className="bg-transparent border-none outline-none text-sm w-full text-dark-200 placeholder-dark-400"
+                className="bg-transparent border-none outline-none text-sm w-full text-dark-200 placeholder-dark-500"
               />
             </div>
           </div>
@@ -435,7 +435,7 @@ export function MainLayout() {
           <div className="flex items-center gap-4">
             <span>RustyDB v1.0.0</span>
             <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">Connected to localhost:8080</span>
+            <span className="hidden sm:inline">Connected to Server</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-success-500" />

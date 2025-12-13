@@ -3,7 +3,6 @@ import type {
   ResourceGroup,
   ResourceUsage,
   ConnectionPoolStats,
-  ApiResponse,
 } from '../types';
 
 // ============================================================================

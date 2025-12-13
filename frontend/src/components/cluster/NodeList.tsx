@@ -21,7 +21,7 @@ import {
   ChevronDownIcon,
   EllipsisHorizontalIcon,
 } from '@heroicons/react/24/outline';
-import { CrownIcon } from '@heroicons/react/24/solid';
+import { StarIcon } from '@heroicons/react/24/solid';
 import { Menu } from '@headlessui/react';
 import type { ClusterNode } from '../../types';
 import clsx from 'clsx';
@@ -103,7 +103,7 @@ export function NodeList({
           return (
             <div className="flex items-center space-x-2">
               {node.role === 'leader' && (
-                <CrownIcon className="w-4 h-4 text-amber-500" />
+                <StarIcon className="w-4 h-4 text-amber-500" />
               )}
               <span className="font-medium text-gray-900">{info.getValue()}</span>
             </div>

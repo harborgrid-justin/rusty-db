@@ -13,7 +13,7 @@ import {
   ClockIcon,
   ServerIcon,
 } from '@heroicons/react/24/outline';
-import { CrownIcon } from '@heroicons/react/24/solid';
+import { StarIcon } from '@heroicons/react/24/solid';
 import type { ClusterNode, UUID } from '../../types';
 import type { FailoverPreflightCheck } from '../../services/clusterService';
 import clsx from 'clsx';
@@ -131,7 +131,7 @@ export function FailoverWizard({
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <Dialog.Title className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
-              <CrownIcon className="w-6 h-6 text-amber-500" />
+              <StarIcon className="w-6 h-6 text-amber-500" />
               <span>Manual Failover Wizard</span>
             </Dialog.Title>
             {step !== 'executing' && (
@@ -185,7 +185,7 @@ export function FailoverWizard({
                 {currentLeader && (
                   <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                     <div className="flex items-center space-x-2 text-amber-900">
-                      <CrownIcon className="w-5 h-5" />
+                      <StarIcon className="w-5 h-5" />
                       <span className="font-medium">Current Leader: {currentLeader.name}</span>
                     </div>
                     <p className="text-sm text-amber-700 mt-1">

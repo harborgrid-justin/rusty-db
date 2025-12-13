@@ -42,8 +42,9 @@ class QueryService {
     try {
       const response = await api.post<ExecuteQueryResponse>('/api/query/execute', request);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to execute query');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to execute query';
+      throw new Error(message);
     }
   }
 
@@ -54,8 +55,9 @@ class QueryService {
     try {
       const response = await api.post<ExplainPlan>('/api/query/explain', { sql });
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to get execution plan');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to get execution plan';
+      throw new Error(message);
     }
   }
 
@@ -65,8 +67,9 @@ class QueryService {
   async cancelQuery(queryId: string): Promise<void> {
     try {
       await api.post(`/api/query/cancel/${queryId}`);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to cancel query');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to cancel query';
+      throw new Error(message);
     }
   }
 
@@ -79,8 +82,9 @@ class QueryService {
         params,
       });
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch query history');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch query history';
+      throw new Error(message);
     }
   }
 
@@ -93,8 +97,9 @@ class QueryService {
         params: { q: searchTerm, ...params },
       });
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to search query history');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to search query history';
+      throw new Error(message);
     }
   }
 
@@ -105,8 +110,9 @@ class QueryService {
     try {
       const response = await api.get<SavedQuery[]>('/api/query/saved');
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch saved queries');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch saved queries';
+      throw new Error(message);
     }
   }
 
@@ -117,8 +123,9 @@ class QueryService {
     try {
       const response = await api.get<SavedQuery>(`/api/query/saved/${id}`);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch saved query');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch saved query';
+      throw new Error(message);
     }
   }
 
@@ -129,8 +136,9 @@ class QueryService {
     try {
       const response = await api.post<SavedQuery>('/api/query/saved', request);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to save query');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to save query';
+      throw new Error(message);
     }
   }
 
@@ -141,8 +149,9 @@ class QueryService {
     try {
       const response = await api.put<SavedQuery>(`/api/query/saved/${id}`, request);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to update saved query');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update saved query';
+      throw new Error(message);
     }
   }
 
@@ -152,8 +161,9 @@ class QueryService {
   async deleteQuery(id: string): Promise<void> {
     try {
       await api.delete(`/api/query/saved/${id}`);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to delete query');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to delete query';
+      throw new Error(message);
     }
   }
 
@@ -164,9 +174,10 @@ class QueryService {
     try {
       const response = await api.post<{ formatted: string }>('/api/query/format', { sql });
       return response.data.formatted;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Fallback to client-side formatting if server fails
-      throw new Error(error.response?.data?.message || 'Failed to format query');
+      const message = error instanceof Error ? error.message : 'Failed to format query';
+      throw new Error(message);
     }
   }
 
@@ -180,8 +191,9 @@ class QueryService {
         { sql }
       );
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to validate query');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to validate query';
+      throw new Error(message);
     }
   }
 
@@ -194,8 +206,9 @@ class QueryService {
     try {
       const response = await api.get('/api/query/metadata');
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch schema metadata');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch schema metadata';
+      throw new Error(message);
     }
   }
 
@@ -219,7 +232,7 @@ class QueryService {
         }
       );
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error('Failed to export results');
     }
   }
@@ -231,7 +244,7 @@ class QueryService {
     const { columns, rows } = result;
 
     // Escape CSV values
-    const escapeCsvValue = (value: any): string => {
+    const escapeCsvValue = (value: string | number | boolean | null | undefined): string => {
       if (value === null || value === undefined) return '';
       const str = String(value);
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -258,7 +271,7 @@ class QueryService {
     const { columns, rows } = result;
 
     const data = rows.map(row => {
-      const obj: Record<string, any> = {};
+      const obj: Record<string, string | number | boolean | null> = {};
       columns.forEach((col, idx) => {
         obj[col] = row[idx];
       });

@@ -9,6 +9,7 @@ import type {
   DatabaseMetrics,
   QueryMetrics,
   HealthStatus,
+  ComponentHealth,
   Alert,
   ActiveSession,
   ConnectionPoolStats,
@@ -219,33 +220,81 @@ export const metricsService = {
    * Fetch current system metrics (CPU, Memory, Disk, Network)
    */
   async fetchSystemMetrics(): Promise<SystemMetrics> {
-    const response = await get<SystemMetrics>('/metrics/system');
+    const rawResponse = await get<any>('/metrics');
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch system metrics');
+    if (!rawResponse || !rawResponse.metrics) {
+      throw new Error('Failed to fetch system metrics');
     }
 
-    return response.data;
+    const metricsData = rawResponse.metrics;
+    const timestamp = new Date().toISOString();
+
+    return {
+      timestamp,
+      cpu: {
+        usage: metricsData['cpu_usage_percent']?.value || 0,
+        userTime: 0,
+        systemTime: 0,
+        idleTime: 0,
+        loadAverage: [0, 0, 0],
+        cores: 0,
+      },
+      memory: {
+        total: 0,
+        used: metricsData['memory_usage_bytes']?.value || 0,
+        free: 0,
+        cached: 0,
+        buffers: 0,
+        swapTotal: 0,
+        swapUsed: 0,
+        usagePercent: metricsData['memory_usage_percent']?.value || 0,
+      },
+      disk: {
+        total: 0,
+        used: 0,
+        free: 0,
+        readBytes: metricsData['disk_io_read_bytes']?.value || 0,
+        writeBytes: metricsData['disk_io_write_bytes']?.value || 0,
+        usagePercent: 0,
+      },
+      network: {
+        bytesSent: 0,
+        bytesReceived: 0,
+        packetsSent: 0,
+        packetsReceived: 0,
+      },
+      database: {
+        activeConnections: 0,
+        activeTransactions: 0,
+        bufferPoolUsage: 0,
+        cacheHitRatio: 0,
+      },
+    };
   },
 
   /**
    * Fetch database-specific metrics
    */
   async fetchDatabaseMetrics(): Promise<DatabaseMetrics> {
-    const response = await get<DatabaseMetrics>('/metrics/database');
+    const response = await get<any>('/metrics');
 
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || 'Failed to fetch database metrics');
     }
 
-    return response.data;
+    return {
+      activeConnections: 0,
+      activeTransactions: 0,
+      bufferPoolUsage: 0,
+      cacheHitRatio: 0,
+    };
   },
 
   /**
    * Fetch query statistics
    */
   async fetchQueryMetrics(): Promise<QueryMetrics> {
-    const response = await get<QueryMetrics>('/metrics/queries');
+    const response = await get<QueryMetrics>('/stats/queries');
 
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || 'Failed to fetch query metrics');
@@ -259,7 +308,7 @@ export const metricsService = {
    */
   async fetchPerformanceHistory(timeRange: TimeRange): Promise<PerformanceHistory> {
     const response = await get<PerformanceHistory>(
-      `/metrics/performance?timeRange=${timeRange}`
+      `/stats/performance?timeRange=${timeRange}`
     );
 
     if (!response.success || !response.data) {
@@ -273,13 +322,35 @@ export const metricsService = {
    * Fetch system health status
    */
   async fetchHealthStatus(): Promise<HealthStatus> {
-    const response = await get<HealthStatus>('/health');
+    const rawResponse = await get<any>('/admin/health');
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch health status');
+    if (!rawResponse || !rawResponse.status) {
+      throw new Error('Failed to fetch health status');
     }
 
-    return response.data;
+    const healthData = rawResponse;
+
+    // Map backend checks map to frontend ComponentHealth array
+    const components: any[] = [];
+    if (healthData.checks) {
+      Object.entries(healthData.checks).forEach(([key, value]: [string, any]) => {
+        components.push({
+          name: key,
+          status: value.status === 'healthy' ? 'healthy' : 'degraded',
+          message: value.message,
+          lastCheck: new Date(value.last_check * 1000).toISOString(),
+          responseTime: 0
+        });
+      });
+    }
+
+    return {
+      status: healthData.status === 'healthy' ? 'healthy' : 'degraded',
+      uptime: healthData.uptime_seconds,
+      version: healthData.version,
+      timestamp: new Date().toISOString(),
+      components,
+    };
   },
 
   /**
@@ -287,7 +358,7 @@ export const metricsService = {
    */
   async fetchAlerts(acknowledged?: boolean): Promise<Alert[]> {
     const params = acknowledged !== undefined ? `?acknowledged=${acknowledged}` : '';
-    const response = await get<Alert[]>(`/metrics/alerts${params}`);
+    const response = await get<Alert[]>(`/alerts${params}`);
 
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || 'Failed to fetch alerts');

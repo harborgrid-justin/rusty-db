@@ -16,10 +16,10 @@ export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'classNa
 }
 
 const variantClasses = {
-  default: 'bg-dark-800 border border-dark-700',
-  bordered: 'bg-dark-800 border-2 border-dark-600',
-  elevated: 'bg-dark-800 border border-dark-700 shadow-xl',
-  flat: 'bg-dark-800/50',
+  default: 'bg-dark-900/40 backdrop-blur-md border border-white/5 shadow-card',
+  bordered: 'bg-dark-900/40 backdrop-blur-md border border-white/10',
+  elevated: 'bg-dark-900/60 backdrop-blur-xl border border-white/5 shadow-card-hover',
+  flat: 'bg-transparent border border-transparent',
 };
 
 const paddingClasses = {

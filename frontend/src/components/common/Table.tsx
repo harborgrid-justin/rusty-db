@@ -67,7 +67,7 @@ export function Table<T extends Record<string, any>>({
   return (
     <div className={`overflow-x-auto ${className}`}>
       <table className="w-full border-collapse">
-        <thead className="bg-dark-700/50 border-b border-dark-700">
+        <thead className="bg-white/5 backdrop-blur-sm border-b border-white/10">
           <tr>
             {selectable && (
               <th className={`${compact ? 'px-3 py-2' : 'px-4 py-3'} text-left`}>
@@ -75,14 +75,14 @@ export function Table<T extends Record<string, any>>({
                   type="checkbox"
                   checked={isAllSelected}
                   onChange={onSelectAll}
-                  className="rounded border-dark-600 bg-dark-700 text-rusty-500 focus:ring-rusty-500 focus:ring-offset-dark-800"
+                  className="rounded border-dark-600 bg-dark-700 text-primary-500 focus:ring-primary-500 focus:ring-offset-dark-800"
                 />
               </th>
             )}
             {columns.map((column) => (
               <th
                 key={column.key}
-                className={`${compact ? 'px-3 py-2' : 'px-4 py-3'} text-${column.align || 'left'} text-sm font-semibold text-dark-300 ${
+                className={`${compact ? 'px-3 py-2' : 'px-4 py-3'} text-${column.align || 'left'} text-xs font-semibold uppercase tracking-wider text-dark-400 ${
                   column.sortable ? 'cursor-pointer select-none hover:text-dark-100' : ''
                 }`}
                 style={{ width: column.width }}
@@ -94,13 +94,13 @@ export function Table<T extends Record<string, any>>({
                     <div className="flex flex-col">
                       {sortBy === column.key ? (
                         sortOrder === 'asc' ? (
-                          <ChevronUpIcon className="w-4 h-4" />
+                          <ChevronUpIcon className="w-3 h-3 text-primary-400" />
                         ) : (
-                          <ChevronDownIcon className="w-4 h-4" />
+                          <ChevronDownIcon className="w-3 h-3 text-primary-400" />
                         )
                       ) : (
                         <div className="text-dark-600">
-                          <ChevronUpIcon className="w-4 h-4" />
+                          <ChevronUpIcon className="w-3 h-3" />
                         </div>
                       )}
                     </div>
@@ -110,7 +110,7 @@ export function Table<T extends Record<string, any>>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-dark-700">
+        <tbody className="divide-y divide-white/5">
           {loading ? (
             <tr>
               <td colSpan={columns.length + (selectable ? 1 : 0)} className="py-12">
@@ -137,10 +137,10 @@ export function Table<T extends Record<string, any>>({
                 <tr
                   key={rowKey}
                   className={`
-                    ${striped && index % 2 === 0 ? 'bg-dark-800/30' : ''}
-                    ${hoverable ? 'hover:bg-dark-700/50' : ''}
+                    ${striped && index % 2 === 0 ? 'bg-white/[0.02]' : ''}
+                    ${hoverable ? 'hover:bg-white/5' : ''}
                     ${onRowClick ? 'cursor-pointer' : ''}
-                    ${isSelected ? 'bg-rusty-500/10' : ''}
+                    ${isSelected ? 'bg-primary-500/10' : ''}
                     transition-colors
                   `}
                   onClick={() => onRowClick?.(row, index)}
@@ -155,7 +155,7 @@ export function Table<T extends Record<string, any>>({
                           onSelectRow?.(rowKey);
                         }}
                         onClick={(e) => e.stopPropagation()}
-                        className="rounded border-dark-600 bg-dark-700 text-rusty-500 focus:ring-rusty-500 focus:ring-offset-dark-800"
+                        className="rounded border-dark-600 bg-dark-700 text-primary-500 focus:ring-primary-500 focus:ring-offset-dark-800"
                       />
                     </td>
                   )}

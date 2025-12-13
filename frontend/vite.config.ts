@@ -35,6 +35,12 @@ export default defineConfig(({ mode }) => {
           secure: false,
           ws: true,
         },
+        '/ws': {
+          target: env.VITE_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+        },
       },
     },
     preview: {

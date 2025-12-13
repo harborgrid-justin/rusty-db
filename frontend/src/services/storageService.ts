@@ -1,6 +1,5 @@
 import { get, post, del, buildQueryParams } from './api';
 import type {
-  ApiResponse,
   UUID,
   Timestamp,
   PaginationParams,
@@ -193,7 +192,7 @@ export const storageService = {
    * List partitions with optional filters
    */
   async getPartitions(filters?: PartitionFilters): Promise<PaginatedResponse<Partition>> {
-    const queryParams = filters ? buildQueryParams(filters) : '';
+    const queryParams = filters ? buildQueryParams(filters as Record<string, unknown>) : '';
     const response = await get<PaginatedResponse<Partition>>(`/storage/partitions${queryParams}`);
 
     if (!response.success || !response.data) {

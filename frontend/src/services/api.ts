@@ -5,7 +5,7 @@ import type { ApiResponse, ApiError } from '@/types';
 // API Client Configuration
 // ============================================================================
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || '';
 const API_VERSION = import.meta.env.VITE_API_VERSION || 'v1';
 const REQUEST_TIMEOUT = 30000; // 30 seconds
 

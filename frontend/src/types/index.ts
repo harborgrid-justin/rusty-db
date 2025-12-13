@@ -36,6 +36,7 @@ export interface ApiResponse<T> {
 }
 
 export interface ApiError {
+  error: any;
   code: string;
   message: string;
   details?: Record<string, unknown>;
@@ -118,6 +119,7 @@ export interface Session {
 export interface LoginCredentials {
   username: string;
   password: string;
+  database?: string;
   rememberMe?: boolean;
 }
 

@@ -31,13 +31,13 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-rusty-500 hover:bg-rusty-600 text-white border-transparent shadow-sm hover:shadow-md',
-  secondary: 'bg-dark-700 hover:bg-dark-600 text-dark-100 border-dark-600 hover:border-dark-500',
+  primary: 'bg-primary-600 hover:bg-primary-500 text-white border-transparent shadow-glow-sm hover:shadow-glow-md',
+  secondary: 'bg-white/5 hover:bg-white/10 text-dark-100 border-white/10 hover:border-white/20 backdrop-blur-sm',
   success: 'bg-success-500 hover:bg-success-600 text-white border-transparent shadow-sm',
   danger: 'bg-danger-500 hover:bg-danger-600 text-white border-transparent shadow-sm',
   warning: 'bg-warning-500 hover:bg-warning-600 text-dark-900 border-transparent shadow-sm',
-  ghost: 'bg-transparent hover:bg-dark-700/50 text-dark-300 hover:text-dark-100 border-transparent',
-  link: 'bg-transparent hover:bg-transparent text-rusty-500 hover:text-rusty-400 border-transparent p-0 h-auto underline-offset-4 hover:underline',
+  ghost: 'bg-transparent hover:bg-white/5 text-dark-400 hover:text-dark-100 border-transparent',
+  link: 'bg-transparent hover:bg-transparent text-primary-400 hover:text-primary-300 border-transparent p-0 h-auto underline-offset-4 hover:underline',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -68,7 +68,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseClasses = 'inline-flex items-center justify-center font-medium border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rusty-500 focus:ring-offset-2 focus:ring-offset-dark-900';
+    const baseClasses = 'inline-flex items-center justify-center font-medium border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-950';
 
     const classes = [
       baseClasses,

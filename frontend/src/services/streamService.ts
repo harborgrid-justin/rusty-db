@@ -251,7 +251,7 @@ export async function disableCDC(): Promise<CDCStatus> {
 export async function listSubscriptions(
   filters?: SubscriptionFilters
 ): Promise<PaginatedResponse<CDCSubscription>> {
-  const queryString = filters ? buildQueryParams(filters) : '';
+  const queryString = filters ? buildQueryParams(filters as unknown as Record<string, unknown>) : '';
   const response = await get<PaginatedResponse<CDCSubscription>>(
     `/streams/cdc/subscriptions${queryString}`
   );

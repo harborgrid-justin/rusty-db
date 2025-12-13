@@ -1,4 +1,4 @@
-import { get, post, put, del, buildQueryParams } from './api';
+import { get, post, put, del, patch, buildQueryParams } from './api';
 import type {
   Backup,
   BackupSchedule,
@@ -22,6 +22,7 @@ export interface BackupFilters extends Partial<PaginationParams> {
   database?: string;
   startDate?: Timestamp;
   endDate?: Timestamp;
+  [key: string]: unknown;
 }
 
 export interface CreateBackupConfig {

@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LockClosedIcon, UserIcon } from '@heroicons/react/24/outline';
+import { LockClosedIcon, UserIcon, CircleStackIcon } from '@heroicons/react/24/outline';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
 import { useAuth } from '../hooks/useAuth';
@@ -18,6 +18,7 @@ export default function Login() {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
+    database: '',
     rememberMe: false,
   });
 
@@ -55,6 +56,7 @@ export default function Login() {
       await login({
         username: formData.username,
         password: formData.password,
+        database: formData.database,
         rememberMe: formData.rememberMe,
       });
       navigate('/');
@@ -63,12 +65,24 @@ export default function Login() {
     }
   };
 
-  const handleInputChange = (field: 'username' | 'password', value: string) => {
+  const handleInputChange = (field: 'username' | 'password' | 'database', value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
-    if (formErrors[field]) {
+    if (field !== 'database' && formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: '' }));
     }
+  };
+
+  const handleAutoFill = () => {
+    setFormData((prev) => ({
+      ...prev,
+      username: 'admin',
+      password: 'admin',
+    }));
+    setFormErrors({
+      username: '',
+      password: '',
+    });
   };
 
   return (
@@ -132,6 +146,19 @@ export default function Login() {
               </motion.div>
             )}
 
+            {/* Database Input */}
+            <Input
+              id="database"
+              label="Database (Optional)"
+              type="text"
+              value={formData.database}
+              onChange={(e) => handleInputChange('database', e.target.value)}
+              leftIcon={<CircleStackIcon className="w-5 h-5" />}
+              placeholder="Enter database name"
+              disabled={isLoading}
+              fullWidth
+            />
+
             {/* Username Input */}
             <Input
               id="username"
@@ -185,7 +212,14 @@ export default function Login() {
                 </label>
               </div>
 
-              <div className="text-sm">
+              <div className="text-sm flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={handleAutoFill}
+                  className="font-medium text-rusty-500 hover:text-rusty-400 transition-colors"
+                >
+                  Auto-fill Admin
+                </button>
                 <a
                   href="#"
                   className="font-medium text-rusty-500 hover:text-rusty-400 transition-colors"

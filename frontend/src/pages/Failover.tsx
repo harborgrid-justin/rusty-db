@@ -15,7 +15,7 @@ import {
   BoltIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
-import { CrownIcon } from '@heroicons/react/24/solid';
+import { StarIcon } from '@heroicons/react/24/solid';
 import { Dialog } from '@headlessui/react';
 import { useForm } from 'react-hook-form';
 import { FailoverWizard } from '../components/cluster/FailoverWizard';
@@ -124,7 +124,7 @@ export default function Failover() {
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <CrownIcon className="w-6 h-6 text-amber-600" />
+                <StarIcon className="w-6 h-6 text-amber-600" />
                 <div>
                   <div className="text-sm font-medium text-amber-900">Current Leader</div>
                   <div className="text-lg font-bold text-amber-900 mt-0.5">

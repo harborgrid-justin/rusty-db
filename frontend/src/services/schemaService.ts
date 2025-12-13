@@ -89,6 +89,31 @@ export interface TableStats {
 /**
  * Get all tables with optional filtering and pagination
  */
+interface BackendColumnMetadata {
+  name: string;
+  data_type: string;
+  nullable: boolean;
+  precision?: number;
+  scale?: number;
+}
+
+interface BackendTableInfo {
+  name: string;
+  schema: string;
+  row_count: number;
+  size_bytes: number;
+  columns: BackendColumnMetadata[];
+  indexes: any[];
+}
+
+interface BackendSchemaResponse {
+  database_name: string;
+  tables: BackendTableInfo[];
+  views: any[];
+  procedures: any[];
+  total_count: number;
+}
+
 export async function getTables(
   params?: Partial<PaginationParams> & {
     schema?: string;
@@ -96,20 +121,77 @@ export async function getTables(
     includeSystem?: boolean;
   }
 ): Promise<ApiResponse<PaginatedResponse<Table>>> {
-  const queryParams = new URLSearchParams();
+  // Fetch all tables from backend schema endpoint
+  // Backend returns raw SchemaResponse, not wrapped in ApiResponse
+  const rawResponse = await get<any>('/schema');
 
-  if (params?.page) queryParams.set('page', params.page.toString());
-  if (params?.pageSize) queryParams.set('pageSize', params.pageSize.toString());
-  if (params?.sortBy) queryParams.set('sortBy', params.sortBy);
-  if (params?.sortOrder) queryParams.set('sortOrder', params.sortOrder);
-  if (params?.schema) queryParams.set('schema', params.schema);
-  if (params?.search) queryParams.set('search', params.search);
-  if (params?.includeSystem !== undefined) {
-    queryParams.set('includeSystem', params.includeSystem.toString());
+  if (!rawResponse || !Array.isArray(rawResponse.tables)) {
+    return {
+      success: false,
+      error: {
+        code: 'FETCH_ERROR',
+        message: 'Invalid response from server',
+        timestamp: new Date().toISOString()
+      }
+    };
   }
 
-  const query = queryParams.toString();
-  return get<PaginatedResponse<Table>>(`/schema/tables${query ? `?${query}` : ''}`);
+  const data = rawResponse as BackendSchemaResponse;
+
+  // Map backend response to frontend Table model
+  let tables: Table[] = data.tables.map(t => ({
+    name: t.name,
+    schema: t.schema,
+    columns: t.columns.map(c => ({
+      name: c.name,
+      dataType: c.data_type as any,
+      nullable: c.nullable,
+      isPrimaryKey: false,
+      isForeignKey: false,
+      isUnique: false,
+      isIndexed: false
+    })),
+    primaryKey: undefined,
+    foreignKeys: [],
+    indexes: [],
+    constraints: [],
+    rowCount: t.row_count,
+    size: t.size_bytes,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }));
+
+  // Apply client-side filtering
+  if (params?.search) {
+    const search = params.search.toLowerCase();
+    tables = tables.filter(t => t.name.toLowerCase().includes(search));
+  }
+
+  if (params?.schema) {
+    tables = tables.filter(t => t.schema === params.schema);
+  }
+
+  // Apply client-side pagination
+  const page = params?.page || 1;
+  const pageSize = params?.pageSize || 10;
+  const total = tables.length;
+  const totalPages = Math.ceil(total / pageSize);
+
+  const start = (page - 1) * pageSize;
+  const paginatedTables = tables.slice(start, start + pageSize);
+
+  return {
+    success: true,
+    data: {
+      data: paginatedTables,
+      total,
+      page,
+      pageSize,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrevious: page > 1
+    }
+  };
 }
 
 /**
@@ -119,7 +201,50 @@ export async function getTable(
   tableName: string,
   schema: string = 'public'
 ): Promise<ApiResponse<Table>> {
-  return get<Table>(`/schema/tables/${schema}.${tableName}`);
+  try {
+    // Use correct endpoint from server.rs: /api/v1/tables/{name}
+    // Backend returns TableInfo struct directly
+    const rawResponse = await get<any>(`/tables/${tableName}`);
+    const info = rawResponse as BackendTableInfo;
+
+    if (!info || !info.name) {
+       throw new Error('Table not found');
+    }
+
+    return {
+      success: true,
+      data: {
+        name: info.name,
+        schema: info.schema,
+        columns: info.columns.map(c => ({
+          name: c.name,
+          dataType: c.data_type as any,
+          nullable: c.nullable,
+          isPrimaryKey: false,
+          isForeignKey: false,
+          isUnique: false,
+          isIndexed: false
+        })),
+        primaryKey: undefined,
+        foreignKeys: [],
+        indexes: [],
+        constraints: [],
+        rowCount: info.row_count,
+        size: info.size_bytes,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: {
+        code: 'FETCH_ERROR',
+        message: error.message || 'Failed to fetch table',
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
 }
 
 /**
@@ -128,7 +253,58 @@ export async function getTable(
 export async function createTable(
   definition: CreateTableRequest
 ): Promise<ApiResponse<Table>> {
-  return post<Table>('/schema/tables', definition);
+  // Map frontend request to backend expected format
+  const backendRequest = {
+    table_name: definition.name,
+    columns: definition.columns.map(col => ({
+      name: col.name,
+      data_type: col.dataType,
+      nullable: col.nullable ?? true,
+      default_value: col.defaultValue
+    })),
+    primary_key: definition.primaryKey,
+    indexes: [] // Backend expects this field
+  };
+
+  try {
+    // Backend returns 201 Created with empty body
+    await post<any>(`/tables/${definition.name}`, backendRequest);
+
+    // Construct success response since backend doesn't return the table
+    return {
+      success: true,
+      data: {
+        name: definition.name,
+        schema: definition.schema || 'public',
+        columns: definition.columns.map(c => ({
+          name: c.name,
+          dataType: c.dataType as any,
+          nullable: c.nullable ?? true,
+          isPrimaryKey: false,
+          isForeignKey: false,
+          isUnique: false,
+          isIndexed: false
+        })),
+        primaryKey: undefined,
+        foreignKeys: [],
+        indexes: [],
+        constraints: [],
+        rowCount: 0,
+        size: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: {
+        code: 'CREATE_ERROR',
+        message: error.message || 'Failed to create table',
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
 }
 
 /**
@@ -139,7 +315,7 @@ export async function alterTable(
   changes: AlterTableRequest,
   schema: string = 'public'
 ): Promise<ApiResponse<Table>> {
-  return put<Table>(`/schema/tables/${schema}.${tableName}`, changes);
+  return put<Table>(`/tables/${tableName}`, changes);
 }
 
 /**
@@ -150,7 +326,7 @@ export async function dropTable(
   schema: string = 'public',
   cascade: boolean = false
 ): Promise<ApiResponse<void>> {
-  return del<void>(`/schema/tables/${schema}.${tableName}?cascade=${cascade}`);
+  return del<void>(`/tables/${tableName}?cascade=${cascade}`);
 }
 
 /**

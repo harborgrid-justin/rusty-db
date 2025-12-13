@@ -42,10 +42,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const [showPassword, setShowPassword] = useState(false);
     const inputType = type === 'password' && showPassword ? 'text' : type;
 
-    const baseClasses = 'bg-dark-700 border rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-rusty-500 focus:border-transparent';
+    const baseClasses = 'bg-dark-900/50 border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-dark-500 text-dark-100';
     const stateClasses = error
       ? 'border-danger-500 focus:ring-danger-500'
-      : 'border-dark-600 hover:border-dark-500';
+      : 'border-dark-700 hover:border-dark-600 focus:border-primary-500';
     const disabledClasses = disabled ? 'opacity-50 cursor-not-allowed' : '';
 
     const inputClasses = [
