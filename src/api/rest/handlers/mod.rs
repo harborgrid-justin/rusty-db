@@ -31,7 +31,7 @@ pub mod analytics_handlers;
 mod diagnostics_handlers;
 mod gateway_handlers;
 mod flashback_handlers;
-mod health_handlers;
+pub mod health_handlers;
 mod index_handlers;
 mod streams_handlers;
 pub mod spatial_handlers;
@@ -44,6 +44,8 @@ pub mod inmemory_handlers;
 pub mod graph_handlers;
 pub mod document_handlers;
 mod dashboard_handlers;
+pub mod websocket_handlers;
+pub mod websocket_types;
 
 use std::sync::Arc;
 use crate::catalog::Catalog;
@@ -158,4 +160,21 @@ pub use labels_handlers::{
     list_compartments, create_compartment, get_compartment, delete_compartment,
     get_user_clearance, set_user_clearance, check_label_dominance,
     validate_label_access, list_classifications
+};
+
+// Health handlers
+pub use health_handlers::{
+    liveness_probe, readiness_probe, startup_probe, full_health_check,
+    LivenessProbeResponse, ReadinessProbeResponse, StartupProbeResponse, FullHealthResponse
+};
+
+// WebSocket handlers
+pub use websocket_handlers::{
+    ws_upgrade_handler, ws_query_stream, ws_metrics_stream,
+    ws_events_stream, ws_replication_stream,
+    // WebSocket management REST endpoints
+    get_websocket_status, list_connections,
+    get_connection as get_ws_connection, disconnect_connection,
+    broadcast_message, list_subscriptions, create_subscription,
+    delete_subscription
 };

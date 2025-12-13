@@ -335,6 +335,18 @@ pub async fn create_user(
 }
 
 /// Get user by ID
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/users/{id}",
+    tag = "admin",
+    params(
+        ("id" = u64, Path, description = "User ID")
+    ),
+    responses(
+        (status = 200, description = "User details", body = UserResponse),
+        (status = 404, description = "User not found", body = ApiError),
+    )
+)]
 pub async fn get_user(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<u64>,
@@ -348,6 +360,20 @@ pub async fn get_user(
 }
 
 /// Update user
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin/users/{id}",
+    tag = "admin",
+    params(
+        ("id" = u64, Path, description = "User ID")
+    ),
+    request_body = UserRequest,
+    responses(
+        (status = 200, description = "User updated"),
+        (status = 404, description = "User not found", body = ApiError),
+        (status = 400, description = "Invalid request", body = ApiError),
+    )
+)]
 pub async fn update_user(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<u64>,
@@ -378,6 +404,18 @@ pub async fn update_user(
 }
 
 /// Delete user
+#[utoipa::path(
+    delete,
+    path = "/api/v1/admin/users/{id}",
+    tag = "admin",
+    params(
+        ("id" = u64, Path, description = "User ID")
+    ),
+    responses(
+        (status = 204, description = "User deleted"),
+        (status = 404, description = "User not found", body = ApiError),
+    )
+)]
 pub async fn delete_user(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<u64>,
@@ -470,6 +508,18 @@ pub async fn create_role(
 }
 
 /// Get role by ID
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/roles/{id}",
+    tag = "admin",
+    params(
+        ("id" = u64, Path, description = "Role ID")
+    ),
+    responses(
+        (status = 200, description = "Role details", body = RoleResponse),
+        (status = 404, description = "Role not found", body = ApiError),
+    )
+)]
 pub async fn get_role(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<u64>,
@@ -483,6 +533,20 @@ pub async fn get_role(
 }
 
 /// Update role
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin/roles/{id}",
+    tag = "admin",
+    params(
+        ("id" = u64, Path, description = "Role ID")
+    ),
+    request_body = RoleRequest,
+    responses(
+        (status = 200, description = "Role updated"),
+        (status = 404, description = "Role not found", body = ApiError),
+        (status = 400, description = "Invalid request", body = ApiError),
+    )
+)]
 pub async fn update_role(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<u64>,
@@ -509,6 +573,19 @@ pub async fn update_role(
 }
 
 /// Delete role
+#[utoipa::path(
+    delete,
+    path = "/api/v1/admin/roles/{id}",
+    tag = "admin",
+    params(
+        ("id" = u64, Path, description = "Role ID")
+    ),
+    responses(
+        (status = 204, description = "Role deleted"),
+        (status = 404, description = "Role not found", body = ApiError),
+        (status = 409, description = "Role still in use", body = ApiError),
+    )
+)]
 pub async fn delete_role(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<u64>,

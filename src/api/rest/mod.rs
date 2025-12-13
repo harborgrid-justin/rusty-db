@@ -20,6 +20,8 @@ pub mod middleware;
 pub mod server;
 pub mod cors;
 pub mod system_metrics;
+pub mod openapi;
+pub mod swagger;
 
 // Re-export main types and functions for convenience
 pub use types::*;
@@ -27,6 +29,8 @@ pub use server::RestApiServer;
 pub use handlers::*;
 pub use middleware::*;
 pub use cors::{OriginMatcher, build_cors_layer, development_origins, production_origins};
+pub use openapi::{ApiDoc, get_openapi_json, get_openapi_pretty};
+pub use swagger::{configure_swagger, configure_default_swagger, configure_production_swagger, configure_development_swagger, create_api_docs_router, SwaggerConfiguration};
 
 // Re-export the server as the main entry point
 pub use server::RestApiServer as Server;

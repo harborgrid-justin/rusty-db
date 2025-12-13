@@ -13,6 +13,7 @@ pub mod schema;
 pub mod builders;
 pub mod helpers;
 pub mod monitoring_types;
+pub mod websocket_transport;
 
 // Re-export main types and functions
 // Note: types::DatabaseSchema is shadowed by models::DatabaseSchema
@@ -53,7 +54,15 @@ pub use subscriptions::{
     QueryChange,
     Heartbeat,
     SubscriptionManager,
-    SubscriptionInfo
+    SubscriptionInfo,
+    QueryExecutionEvent,
+    QueryExecutionStatus,
+    TableModification,
+    SystemMetrics,
+    MetricType,
+    ReplicationStatusEvent,
+    ReplicationRole,
+    ReplicationState,
 };
 pub use complexity::*;
 pub use engine::*;
@@ -92,4 +101,16 @@ pub use monitoring_types::{
     AlertSeverity,
     Alert,
     ServerInfo,
+};
+pub use websocket_transport::{
+    GraphQLWsMessage,
+    ConnectionInitPayload,
+    SubscribePayload,
+    GraphQLError,
+    ErrorLocation,
+    WebSocketConfig,
+    WebSocketSubscriptionManager,
+    ConnectionMetrics,
+    graphql_ws_handler,
+    graphql_ws_handler_with_config,
 };

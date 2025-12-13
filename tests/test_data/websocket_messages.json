@@ -1,0 +1,567 @@
+{
+  "description": "Test data for WebSocket message handling and protocol testing",
+  "version": "1.0.0",
+  "message_types": {
+    "connection_init": [
+      {
+        "name": "basic_init",
+        "message": {
+          "type": "connection_init",
+          "payload": {
+            "protocol_version": "1.0",
+            "client": "rusty-db-test-client",
+            "client_version": "0.1.0"
+          }
+        },
+        "expected_response_type": "connection_ack"
+      },
+      {
+        "name": "init_with_auth",
+        "message": {
+          "type": "connection_init",
+          "payload": {
+            "protocol_version": "1.0",
+            "client": "rusty-db-test-client",
+            "client_version": "0.1.0",
+            "auth": {
+              "type": "token",
+              "token": "test_token_12345"
+            }
+          }
+        },
+        "expected_response_type": "connection_ack"
+      },
+      {
+        "name": "init_with_invalid_protocol",
+        "message": {
+          "type": "connection_init",
+          "payload": {
+            "protocol_version": "99.0",
+            "client": "rusty-db-test-client"
+          }
+        },
+        "expected_response_type": "error"
+      }
+    ],
+    "authentication": [
+      {
+        "name": "token_auth",
+        "message": {
+          "type": "auth",
+          "payload": {
+            "type": "token",
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature",
+            "username": "test_user"
+          }
+        },
+        "expected_response_type": "auth_success"
+      },
+      {
+        "name": "basic_auth",
+        "message": {
+          "type": "auth",
+          "payload": {
+            "type": "basic",
+            "username": "admin",
+            "password": "test_password"
+          }
+        },
+        "expected_response_type": "auth_success"
+      },
+      {
+        "name": "invalid_auth",
+        "message": {
+          "type": "auth",
+          "payload": {
+            "type": "token",
+            "token": "invalid_token"
+          }
+        },
+        "expected_response_type": "auth_failure"
+      },
+      {
+        "name": "missing_credentials",
+        "message": {
+          "type": "auth",
+          "payload": {
+            "type": "basic"
+          }
+        },
+        "expected_response_type": "error"
+      }
+    ],
+    "subscription_requests": [
+      {
+        "name": "subscribe_metrics",
+        "message": {
+          "type": "subscribe",
+          "payload": {
+            "channel": "metrics",
+            "subscription_id": "sub_001",
+            "filters": {
+              "interval": "1s",
+              "metrics": ["cpu", "memory", "connections"]
+            }
+          }
+        },
+        "expected_response_type": "subscription_ack"
+      },
+      {
+        "name": "subscribe_query_results",
+        "message": {
+          "type": "subscribe",
+          "payload": {
+            "channel": "query_results",
+            "subscription_id": "sub_002",
+            "filters": {
+              "query_id": "q_12345"
+            }
+          }
+        },
+        "expected_response_type": "subscription_ack"
+      },
+      {
+        "name": "subscribe_table_changes",
+        "message": {
+          "type": "subscribe",
+          "payload": {
+            "channel": "table_changes",
+            "subscription_id": "sub_003",
+            "filters": {
+              "table": "users",
+              "operations": ["INSERT", "UPDATE", "DELETE"]
+            }
+          }
+        },
+        "expected_response_type": "subscription_ack"
+      },
+      {
+        "name": "subscribe_broadcasts",
+        "message": {
+          "type": "subscribe",
+          "payload": {
+            "channel": "broadcasts",
+            "subscription_id": "sub_004"
+          }
+        },
+        "expected_response_type": "subscription_ack"
+      },
+      {
+        "name": "unsubscribe",
+        "message": {
+          "type": "unsubscribe",
+          "payload": {
+            "subscription_id": "sub_001"
+          }
+        },
+        "expected_response_type": "unsubscription_ack"
+      },
+      {
+        "name": "subscribe_invalid_channel",
+        "message": {
+          "type": "subscribe",
+          "payload": {
+            "channel": "nonexistent_channel",
+            "subscription_id": "sub_999"
+          }
+        },
+        "expected_response_type": "error"
+      }
+    ],
+    "query_messages": [
+      {
+        "name": "simple_select",
+        "message": {
+          "type": "query",
+          "payload": {
+            "sql": "SELECT * FROM users WHERE id = 1",
+            "transaction_id": null,
+            "request_id": "req_001"
+          }
+        },
+        "expected_response_type": "query_result"
+      },
+      {
+        "name": "select_with_transaction",
+        "message": {
+          "type": "query",
+          "payload": {
+            "sql": "SELECT COUNT(*) FROM orders",
+            "transaction_id": "txn_12345",
+            "request_id": "req_002"
+          }
+        },
+        "expected_response_type": "query_result"
+      },
+      {
+        "name": "insert_statement",
+        "message": {
+          "type": "query",
+          "payload": {
+            "sql": "INSERT INTO users (name, email) VALUES ('Test User', 'test@example.com')",
+            "transaction_id": "txn_12346",
+            "request_id": "req_003"
+          }
+        },
+        "expected_response_type": "query_result"
+      },
+      {
+        "name": "update_statement",
+        "message": {
+          "type": "query",
+          "payload": {
+            "sql": "UPDATE users SET last_login = NOW() WHERE id = 1",
+            "transaction_id": "txn_12347",
+            "request_id": "req_004"
+          }
+        },
+        "expected_response_type": "query_result"
+      },
+      {
+        "name": "streaming_query",
+        "message": {
+          "type": "query",
+          "payload": {
+            "sql": "SELECT * FROM large_table",
+            "streaming": true,
+            "batch_size": 1000,
+            "request_id": "req_005"
+          }
+        },
+        "expected_response_type": "query_stream_start"
+      },
+      {
+        "name": "invalid_sql",
+        "message": {
+          "type": "query",
+          "payload": {
+            "sql": "SELEKT * FORM users",
+            "request_id": "req_999"
+          }
+        },
+        "expected_response_type": "error"
+      },
+      {
+        "name": "parameterized_query",
+        "message": {
+          "type": "query",
+          "payload": {
+            "sql": "SELECT * FROM users WHERE age > ? AND status = ?",
+            "parameters": [18, "active"],
+            "request_id": "req_006"
+          }
+        },
+        "expected_response_type": "query_result"
+      }
+    ],
+    "transaction_control": [
+      {
+        "name": "begin_transaction",
+        "message": {
+          "type": "begin_transaction",
+          "payload": {
+            "isolation_level": "READ_COMMITTED",
+            "request_id": "req_007"
+          }
+        },
+        "expected_response_type": "transaction_started"
+      },
+      {
+        "name": "commit_transaction",
+        "message": {
+          "type": "commit",
+          "payload": {
+            "transaction_id": "txn_12345",
+            "request_id": "req_008"
+          }
+        },
+        "expected_response_type": "transaction_committed"
+      },
+      {
+        "name": "rollback_transaction",
+        "message": {
+          "type": "rollback",
+          "payload": {
+            "transaction_id": "txn_12346",
+            "request_id": "req_009"
+          }
+        },
+        "expected_response_type": "transaction_rolled_back"
+      }
+    ],
+    "broadcast_messages": [
+      {
+        "name": "broadcast_notification",
+        "message": {
+          "type": "broadcast",
+          "payload": {
+            "channel": "broadcasts",
+            "data": {
+              "event": "system_notification",
+              "message": "System maintenance scheduled for tonight",
+              "priority": "high"
+            }
+          }
+        },
+        "expected_response_type": "broadcast_ack"
+      }
+    ],
+    "heartbeat": [
+      {
+        "name": "ping",
+        "message": {
+          "type": "ping",
+          "payload": {}
+        },
+        "expected_response_type": "pong"
+      },
+      {
+        "name": "ping_with_timestamp",
+        "message": {
+          "type": "ping",
+          "payload": {
+            "timestamp": 1702482000000
+          }
+        },
+        "expected_response_type": "pong"
+      }
+    ]
+  },
+  "error_responses": [
+    {
+      "name": "invalid_message_type",
+      "trigger": "Invalid message type",
+      "response": {
+        "type": "error",
+        "payload": {
+          "code": "INVALID_MESSAGE_TYPE",
+          "message": "Unknown message type",
+          "details": "Message type must be one of: connection_init, auth, subscribe, unsubscribe, query, ping, etc."
+        }
+      }
+    },
+    {
+      "name": "malformed_json",
+      "trigger": "Invalid JSON syntax",
+      "response": {
+        "type": "error",
+        "payload": {
+          "code": "MALFORMED_JSON",
+          "message": "Failed to parse message as JSON",
+          "details": "Message must be valid JSON"
+        }
+      }
+    },
+    {
+      "name": "authentication_required",
+      "trigger": "Unauthenticated request to protected resource",
+      "response": {
+        "type": "error",
+        "payload": {
+          "code": "AUTHENTICATION_REQUIRED",
+          "message": "Authentication required",
+          "details": "This operation requires authentication"
+        }
+      }
+    },
+    {
+      "name": "rate_limit_exceeded",
+      "trigger": "Too many messages in short time",
+      "response": {
+        "type": "error",
+        "payload": {
+          "code": "RATE_LIMIT_EXCEEDED",
+          "message": "Rate limit exceeded",
+          "details": "Maximum of 100 messages per minute allowed",
+          "retry_after": 60
+        }
+      }
+    },
+    {
+      "name": "subscription_not_found",
+      "trigger": "Unsubscribe from non-existent subscription",
+      "response": {
+        "type": "error",
+        "payload": {
+          "code": "SUBSCRIPTION_NOT_FOUND",
+          "message": "Subscription not found",
+          "details": "No active subscription with the given ID"
+        }
+      }
+    },
+    {
+      "name": "query_execution_error",
+      "trigger": "SQL query execution failure",
+      "response": {
+        "type": "error",
+        "payload": {
+          "code": "QUERY_EXECUTION_ERROR",
+          "message": "Failed to execute query",
+          "details": "Table 'nonexistent_table' does not exist",
+          "request_id": "req_999"
+        }
+      }
+    }
+  ],
+  "success_responses": [
+    {
+      "name": "connection_ack",
+      "response": {
+        "type": "connection_ack",
+        "payload": {
+          "protocol_version": "1.0",
+          "server": "rusty-db",
+          "server_version": "0.2.640",
+          "session_id": "sess_abc123"
+        }
+      }
+    },
+    {
+      "name": "auth_success",
+      "response": {
+        "type": "auth_success",
+        "payload": {
+          "user_id": "user_123",
+          "username": "test_user",
+          "roles": ["user", "developer"],
+          "session_id": "sess_xyz789"
+        }
+      }
+    },
+    {
+      "name": "subscription_ack",
+      "response": {
+        "type": "subscription_ack",
+        "payload": {
+          "subscription_id": "sub_001",
+          "channel": "metrics",
+          "status": "active"
+        }
+      }
+    },
+    {
+      "name": "query_result",
+      "response": {
+        "type": "query_result",
+        "payload": {
+          "request_id": "req_001",
+          "columns": ["id", "name", "email"],
+          "rows": [
+            [1, "Test User", "test@example.com"]
+          ],
+          "rows_affected": 1,
+          "execution_time_ms": 5
+        }
+      }
+    },
+    {
+      "name": "pong",
+      "response": {
+        "type": "pong",
+        "payload": {
+          "timestamp": 1702482000000
+        }
+      }
+    }
+  ],
+  "test_scenarios": [
+    {
+      "name": "complete_query_flow",
+      "description": "Full flow from connection to query execution",
+      "steps": [
+        {
+          "action": "connect",
+          "message_ref": "connection_init.basic_init"
+        },
+        {
+          "action": "authenticate",
+          "message_ref": "authentication.token_auth"
+        },
+        {
+          "action": "query",
+          "message_ref": "query_messages.simple_select"
+        },
+        {
+          "action": "disconnect"
+        }
+      ]
+    },
+    {
+      "name": "subscription_lifecycle",
+      "description": "Subscribe, receive updates, unsubscribe",
+      "steps": [
+        {
+          "action": "connect",
+          "message_ref": "connection_init.basic_init"
+        },
+        {
+          "action": "subscribe",
+          "message_ref": "subscription_requests.subscribe_metrics"
+        },
+        {
+          "action": "wait_for_updates",
+          "duration_ms": 5000
+        },
+        {
+          "action": "unsubscribe",
+          "message_ref": "subscription_requests.unsubscribe"
+        },
+        {
+          "action": "disconnect"
+        }
+      ]
+    },
+    {
+      "name": "transaction_flow",
+      "description": "Begin transaction, execute queries, commit",
+      "steps": [
+        {
+          "action": "connect",
+          "message_ref": "connection_init.basic_init"
+        },
+        {
+          "action": "begin_transaction",
+          "message_ref": "transaction_control.begin_transaction"
+        },
+        {
+          "action": "query",
+          "message_ref": "query_messages.insert_statement"
+        },
+        {
+          "action": "query",
+          "message_ref": "query_messages.update_statement"
+        },
+        {
+          "action": "commit",
+          "message_ref": "transaction_control.commit_transaction"
+        },
+        {
+          "action": "disconnect"
+        }
+      ]
+    },
+    {
+      "name": "error_handling",
+      "description": "Test various error conditions",
+      "steps": [
+        {
+          "action": "connect",
+          "message_ref": "connection_init.basic_init"
+        },
+        {
+          "action": "query",
+          "message_ref": "query_messages.invalid_sql",
+          "expect_error": true
+        },
+        {
+          "action": "subscribe",
+          "message_ref": "subscription_requests.subscribe_invalid_channel",
+          "expect_error": true
+        },
+        {
+          "action": "disconnect"
+        }
+      ]
+    }
+  ]
+}
