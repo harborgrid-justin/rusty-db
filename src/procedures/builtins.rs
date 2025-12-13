@@ -1441,6 +1441,7 @@ impl DbmsScheduler {
     }
 
     // Execute an external executable job
+    // SECURITY: Uses strict validation to prevent command injection
     fn execute_external_job(&self, action: &str) -> Result<()> {
         use std::process::Command;
 
@@ -1461,20 +1462,28 @@ impl DbmsScheduler {
             )));
         }
 
-        // Parse command and arguments
-        let parts: Vec<&str> = action_trimmed.split_whitespace().collect();
-        if parts.is_empty() {
+        // SECURITY FIX: Use proper shell-safe argument parsing
+        let args = Self::parse_command_args_safely(action_trimmed)?;
+        if args.is_empty() {
             return Err(DbError::InvalidInput(
                 "Executable command cannot be empty".to_string(),
             ));
         }
 
-        let executable = parts[0];
-        let args = &parts[1..];
+        let executable = &args[0];
+        let command_args = &args[1..];
+
+        // SECURITY: Validate executable path format
+        Self::validate_executable_path(executable)?;
+
+        // SECURITY: Validate all arguments for dangerous patterns
+        for arg in command_args {
+            Self::validate_command_argument(arg)?;
+        }
 
         // Execute the command
         let output = Command::new(executable)
-            .args(args)
+            .args(command_args)
             .output()
             .map_err(|e| DbError::Runtime(format!("Failed to execute command: {}", e)))?;
 
@@ -1485,6 +1494,139 @@ impl DbmsScheduler {
                 output.status.code(),
                 stderr
             )));
+        }
+
+        Ok(())
+    }
+
+    // SECURITY: Parse command arguments safely, handling quoted strings
+    fn parse_command_args_safely(input: &str) -> Result<Vec<String>> {
+        let mut args = Vec::new();
+        let mut current_arg = String::new();
+        let mut in_single_quote = false;
+        let mut in_double_quote = false;
+        let mut escape_next = false;
+
+        for ch in input.chars() {
+            if escape_next {
+                match ch {
+                    'n' => current_arg.push('\n'),
+                    't' => current_arg.push('\t'),
+                    'r' => current_arg.push('\r'),
+                    '\\' => current_arg.push('\\'),
+                    '\'' => current_arg.push('\''),
+                    '"' => current_arg.push('"'),
+                    ' ' => current_arg.push(' '),
+                    _ => {
+                        return Err(DbError::Security(format!(
+                            "Invalid escape sequence: \\{}",
+                            ch
+                        )));
+                    }
+                }
+                escape_next = false;
+                continue;
+            }
+
+            match ch {
+                '\\' if !in_single_quote => {
+                    escape_next = true;
+                }
+                '\'' if !in_double_quote => {
+                    in_single_quote = !in_single_quote;
+                }
+                '"' if !in_single_quote => {
+                    in_double_quote = !in_double_quote;
+                }
+                ' ' | '\t' if !in_single_quote && !in_double_quote => {
+                    if !current_arg.is_empty() {
+                        args.push(current_arg.clone());
+                        current_arg.clear();
+                    }
+                }
+                _ => {
+                    current_arg.push(ch);
+                }
+            }
+        }
+
+        if in_single_quote || in_double_quote {
+            return Err(DbError::Security(
+                "Unclosed quote in command arguments".to_string(),
+            ));
+        }
+
+        if escape_next {
+            return Err(DbError::Security(
+                "Trailing escape character in command arguments".to_string(),
+            ));
+        }
+
+        if !current_arg.is_empty() {
+            args.push(current_arg);
+        }
+
+        Ok(args)
+    }
+
+    // SECURITY: Validate executable path for dangerous characters
+    fn validate_executable_path(path: &str) -> Result<()> {
+        let dangerous_chars = ['|', '&', ';', '$', '`', '(', ')', '{', '}', '[', ']', '<', '>', '!', '*', '?', '#', '~', '\n', '\r'];
+
+        for ch in dangerous_chars {
+            if path.contains(ch) {
+                return Err(DbError::Security(format!(
+                    "Dangerous character '{}' in executable path",
+                    ch
+                )));
+            }
+        }
+
+        if path.contains("..") {
+            return Err(DbError::Security(
+                "Path traversal attempt detected in executable path".to_string(),
+            ));
+        }
+
+        let path_lower = path.to_lowercase();
+        let shell_commands = ["sh", "bash", "zsh", "csh", "ksh", "fish", "dash", "tcsh"];
+        for shell in &shell_commands {
+            if path_lower.ends_with(&format!("/{}", shell)) || path_lower == *shell {
+                return Err(DbError::Security(format!(
+                    "Direct shell execution not allowed: {}",
+                    path
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    // SECURITY: Validate individual command argument
+    fn validate_command_argument(arg: &str) -> Result<()> {
+        let dangerous_patterns = [
+            "$(", "`", "&&", "||", ";", "|", ">", ">>", "<", "<<", "&", "\n", "\r",
+        ];
+
+        for pattern in &dangerous_patterns {
+            if arg.contains(pattern) {
+                return Err(DbError::Security(format!(
+                    "Dangerous shell pattern '{}' in command argument",
+                    pattern
+                )));
+            }
+        }
+
+        if arg.contains("$") {
+            let dollar_idx = arg.find('$').unwrap();
+            if dollar_idx + 1 < arg.len() {
+                let next_char = arg.chars().nth(dollar_idx + 1).unwrap();
+                if next_char.is_alphabetic() || next_char == '_' || next_char == '{' {
+                    return Err(DbError::Security(
+                        "Environment variable expansion not allowed in command arguments".to_string(),
+                    ));
+                }
+            }
         }
 
         Ok(())
