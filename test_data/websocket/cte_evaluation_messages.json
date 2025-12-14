@@ -1,0 +1,41 @@
+[
+  {
+    "message_type": "cte_evaluation",
+    "query_id": "qry_def456",
+    "data": {
+      "query_id": "qry_def456",
+      "cte_name": "monthly_sales",
+      "evaluation_type": "materialized",
+      "rows_produced": 12000,
+      "evaluation_time_ms": 256.7,
+      "iterations": null
+    },
+    "timestamp": 1702512000
+  },
+  {
+    "message_type": "cte_evaluation",
+    "query_id": "qry_def456",
+    "data": {
+      "query_id": "qry_def456",
+      "cte_name": "recursive_categories",
+      "evaluation_type": "recursive",
+      "rows_produced": 345,
+      "evaluation_time_ms": 123.4,
+      "iterations": 8
+    },
+    "timestamp": 1702512001
+  },
+  {
+    "message_type": "cte_evaluation",
+    "query_id": "qry_def456",
+    "data": {
+      "query_id": "qry_def456",
+      "cte_name": "top_products",
+      "evaluation_type": "inline",
+      "rows_produced": 50,
+      "evaluation_time_ms": 15.2,
+      "iterations": null
+    },
+    "timestamp": 1702512002
+  }
+]

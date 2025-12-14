@@ -1,0 +1,20 @@
+{
+  "category": "sharding",
+  "event_type": "shard_added",
+  "severity": "info",
+  "source": "shard:products",
+  "timestamp": 1734135500,
+  "event_id": "evt_shard_001",
+  "payload": {
+    "event_type": "shard_added",
+    "shard_id": "shard-005",
+    "table_name": "products",
+    "status": "active",
+    "node_id": "node-005",
+    "key_range": {
+      "start_key": "1000000",
+      "end_key": "1999999"
+    },
+    "timestamp": 1734135500
+  }
+}

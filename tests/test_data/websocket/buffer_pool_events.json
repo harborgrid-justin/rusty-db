@@ -1,0 +1,57 @@
+[
+  {
+    "message_type": "buffer_pool_event",
+    "data": {
+      "PageHit": {
+        "page_id": 12345,
+        "timestamp": 1702569600
+      }
+    },
+    "timestamp": 1702569600
+  },
+  {
+    "message_type": "buffer_pool_event",
+    "data": {
+      "PageMiss": {
+        "page_id": 67890,
+        "timestamp": 1702569601
+      }
+    },
+    "timestamp": 1702569601
+  },
+  {
+    "message_type": "buffer_pool_event",
+    "data": {
+      "PageEvicted": {
+        "page_id": 11111,
+        "reason": "LRU eviction - least recently used",
+        "timestamp": 1702569602
+      }
+    },
+    "timestamp": 1702569602
+  },
+  {
+    "message_type": "buffer_pool_event",
+    "data": {
+      "PageFlushed": {
+        "page_id": 22222,
+        "dirty_bytes": 4096,
+        "timestamp": 1702569603
+      }
+    },
+    "timestamp": 1702569603
+  },
+  {
+    "message_type": "buffer_pool_event",
+    "data": {
+      "PoolStats": {
+        "hit_rate": 0.95,
+        "total_pages": 10000,
+        "used_pages": 7500,
+        "dirty_pages": 500,
+        "timestamp": 1702569604
+      }
+    },
+    "timestamp": 1702569604
+  }
+]

@@ -1,0 +1,65 @@
+[
+  {
+    "message_type": "disk_io_event",
+    "data": {
+      "ReadCompleted": {
+        "page_id": 12345,
+        "latency_us": 2500,
+        "bytes": 4096,
+        "timestamp": 1702569600
+      }
+    },
+    "timestamp": 1702569600
+  },
+  {
+    "message_type": "disk_io_event",
+    "data": {
+      "WriteCompleted": {
+        "page_id": 67890,
+        "latency_us": 3200,
+        "bytes": 4096,
+        "timestamp": 1702569601
+      }
+    },
+    "timestamp": 1702569601
+  },
+  {
+    "message_type": "disk_io_event",
+    "data": {
+      "VectoredRead": {
+        "page_count": 10,
+        "total_bytes": 40960,
+        "latency_us": 5000,
+        "timestamp": 1702569602
+      }
+    },
+    "timestamp": 1702569602
+  },
+  {
+    "message_type": "disk_io_event",
+    "data": {
+      "VectoredWrite": {
+        "page_count": 8,
+        "total_bytes": 32768,
+        "latency_us": 6000,
+        "timestamp": 1702569603
+      }
+    },
+    "timestamp": 1702569603
+  },
+  {
+    "message_type": "disk_io_event",
+    "data": {
+      "IoStats": {
+        "reads_per_sec": 1500.0,
+        "writes_per_sec": 800.0,
+        "read_throughput_mbps": 150.5,
+        "write_throughput_mbps": 120.3,
+        "avg_read_latency_us": 2500,
+        "avg_write_latency_us": 3200,
+        "timestamp": 1702569604
+      }
+    },
+    "timestamp": 1702569604
+  }
+]

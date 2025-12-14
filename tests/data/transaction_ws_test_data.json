@@ -1,0 +1,349 @@
+{
+  "description": "Test data for transaction WebSocket messages",
+  "test_messages": {
+    "transaction_lifecycle": [
+      {
+        "channel": "lifecycle",
+        "data": {
+          "event_type": "begin",
+          "transaction_id": { "0": 12345 },
+          "timestamp": 1702598400,
+          "isolation_level": "READ_COMMITTED",
+          "metadata": {
+            "readonly": false,
+            "session_id": 101,
+            "user_id": "user_001"
+          }
+        },
+        "timestamp": 1702598400
+      },
+      {
+        "channel": "lifecycle",
+        "data": {
+          "event_type": "commit",
+          "transaction_id": { "0": 12345 },
+          "timestamp": 1702598405,
+          "isolation_level": "READ_COMMITTED",
+          "metadata": {
+            "duration_ms": 5000,
+            "rows_affected": 150,
+            "wal_bytes_written": 4096
+          }
+        },
+        "timestamp": 1702598405
+      },
+      {
+        "channel": "lifecycle",
+        "data": {
+          "event_type": "rollback",
+          "transaction_id": { "0": 12346 },
+          "timestamp": 1702598410,
+          "isolation_level": "SERIALIZABLE",
+          "metadata": {
+            "reason": "user_abort",
+            "duration_ms": 2000
+          }
+        },
+        "timestamp": 1702598410
+      },
+      {
+        "channel": "lifecycle",
+        "data": {
+          "event_type": "timeout",
+          "transaction_id": { "0": 12347 },
+          "timestamp": 1702598415,
+          "isolation_level": "REPEATABLE_READ",
+          "metadata": {
+            "timeout_seconds": 30,
+            "state": "active"
+          }
+        },
+        "timestamp": 1702598415
+      }
+    ],
+    "lock_events": [
+      {
+        "channel": "locks",
+        "data": {
+          "event_type": "acquired",
+          "transaction_id": { "0": 12345 },
+          "resource_id": "table.users.row_42",
+          "lock_mode": "EXCLUSIVE",
+          "timestamp": 1702598400,
+          "wait_time_ms": 25
+        },
+        "timestamp": 1702598400
+      },
+      {
+        "channel": "locks",
+        "data": {
+          "event_type": "wait_start",
+          "transaction_id": { "0": 12346 },
+          "resource_id": "table.users.row_42",
+          "lock_mode": "SHARED",
+          "timestamp": 1702598402,
+          "wait_time_ms": null
+        },
+        "timestamp": 1702598402
+      },
+      {
+        "channel": "locks",
+        "data": {
+          "event_type": "released",
+          "transaction_id": { "0": 12345 },
+          "resource_id": "table.users.row_42",
+          "lock_mode": "EXCLUSIVE",
+          "timestamp": 1702598405,
+          "wait_time_ms": null
+        },
+        "timestamp": 1702598405
+      },
+      {
+        "channel": "locks",
+        "data": {
+          "event_type": "upgraded",
+          "transaction_id": { "0": 12348 },
+          "resource_id": "table.orders.page_10",
+          "lock_mode": "EXCLUSIVE",
+          "timestamp": 1702598408,
+          "wait_time_ms": 10
+        },
+        "timestamp": 1702598408
+      }
+    ],
+    "deadlock_events": [
+      {
+        "channel": "deadlocks",
+        "data": {
+          "deadlock_id": "deadlock_abc123",
+          "detected_at": 1702598420,
+          "cycle": [
+            { "0": 12345 },
+            { "0": 12346 },
+            { "0": 12345 }
+          ],
+          "victim": { "0": 12346 },
+          "resolution": "abort_youngest"
+        },
+        "timestamp": 1702598420
+      },
+      {
+        "channel": "deadlocks",
+        "data": {
+          "deadlock_id": "deadlock_def456",
+          "detected_at": 1702598450,
+          "cycle": [
+            { "0": 12350 },
+            { "0": 12351 },
+            { "0": 12352 },
+            { "0": 12350 }
+          ],
+          "victim": { "0": 12351 },
+          "resolution": "abort_least_work"
+        },
+        "timestamp": 1702598450
+      }
+    ],
+    "mvcc_events": [
+      {
+        "channel": "mvcc",
+        "data": {
+          "event_type": "version_created",
+          "transaction_id": { "0": 12345 },
+          "table": "users",
+          "key": "user_42",
+          "version_count": 3,
+          "timestamp": 1702598400
+        },
+        "timestamp": 1702598400
+      },
+      {
+        "channel": "mvcc",
+        "data": {
+          "event_type": "garbage_collected",
+          "transaction_id": { "0": 0 },
+          "table": "orders",
+          "key": "order_1000",
+          "version_count": 1,
+          "timestamp": 1702598430
+        },
+        "timestamp": 1702598430
+      },
+      {
+        "channel": "mvcc",
+        "data": {
+          "event_type": "snapshot_taken",
+          "transaction_id": { "0": 12360 },
+          "table": "all",
+          "key": "snapshot_1",
+          "version_count": 0,
+          "timestamp": 1702598440
+        },
+        "timestamp": 1702598440
+      }
+    ],
+    "wal_events": [
+      {
+        "channel": "wal",
+        "data": {
+          "event_type": "write",
+          "lsn": "0/1A2B3C4D",
+          "transaction_id": { "0": 12345 },
+          "size_bytes": 512,
+          "timestamp": 1702598400
+        },
+        "timestamp": 1702598400
+      },
+      {
+        "channel": "wal",
+        "data": {
+          "event_type": "flush",
+          "lsn": "0/1A2B4000",
+          "transaction_id": null,
+          "size_bytes": 16384,
+          "timestamp": 1702598405
+        },
+        "timestamp": 1702598405
+      },
+      {
+        "channel": "wal",
+        "data": {
+          "event_type": "checkpoint",
+          "lsn": "0/1A2C0000",
+          "transaction_id": null,
+          "size_bytes": 1048576,
+          "timestamp": 1702598460
+        },
+        "timestamp": 1702598460
+      }
+    ],
+    "two_phase_commit_events": [
+      {
+        "channel": "two_phase_commit",
+        "data": {
+          "event_type": "prepare",
+          "transaction_id": { "0": 12370 },
+          "coordinator_id": "node_1",
+          "participant_id": "node_2",
+          "state": "preparing",
+          "timestamp": 1702598500
+        },
+        "timestamp": 1702598500
+      },
+      {
+        "channel": "two_phase_commit",
+        "data": {
+          "event_type": "prepare_ok",
+          "transaction_id": { "0": 12370 },
+          "coordinator_id": "node_1",
+          "participant_id": "node_2",
+          "state": "prepared",
+          "timestamp": 1702598501
+        },
+        "timestamp": 1702598501
+      },
+      {
+        "channel": "two_phase_commit",
+        "data": {
+          "event_type": "commit",
+          "transaction_id": { "0": 12370 },
+          "coordinator_id": "node_1",
+          "participant_id": "node_2",
+          "state": "committed",
+          "timestamp": 1702598502
+        },
+        "timestamp": 1702598502
+      }
+    ],
+    "statistics_events": [
+      {
+        "channel": "statistics",
+        "data": {
+          "total_commits": 125000,
+          "total_aborts": 1250,
+          "total_deadlocks": 5,
+          "active_transactions": 42,
+          "avg_commit_latency_ms": 25,
+          "p99_latency_ms": 150,
+          "abort_rate": 0.01,
+          "timestamp": 1702598600
+        },
+        "timestamp": 1702598600
+      },
+      {
+        "channel": "statistics",
+        "data": {
+          "total_commits": 125100,
+          "total_aborts": 1253,
+          "total_deadlocks": 5,
+          "active_transactions": 38,
+          "avg_commit_latency_ms": 23,
+          "p99_latency_ms": 145,
+          "abort_rate": 0.0099,
+          "timestamp": 1702598605
+        },
+        "timestamp": 1702598605
+      }
+    ]
+  },
+  "usage_examples": {
+    "websocket_client": {
+      "description": "Example WebSocket client connections",
+      "examples": [
+        {
+          "endpoint": "ws://localhost:8080/api/v1/ws/transactions/lifecycle",
+          "description": "Subscribe to transaction begin/commit/rollback events"
+        },
+        {
+          "endpoint": "ws://localhost:8080/api/v1/ws/transactions/locks",
+          "description": "Monitor real-time lock acquisition and release"
+        },
+        {
+          "endpoint": "ws://localhost:8080/api/v1/ws/transactions/deadlocks",
+          "description": "Receive deadlock detection alerts"
+        },
+        {
+          "endpoint": "ws://localhost:8080/api/v1/ws/transactions/mvcc",
+          "description": "Track MVCC version changes"
+        },
+        {
+          "endpoint": "ws://localhost:8080/api/v1/ws/transactions/wal",
+          "description": "Monitor write-ahead log operations"
+        },
+        {
+          "endpoint": "ws://localhost:8080/api/v1/ws/transactions/stats",
+          "description": "Receive periodic transaction statistics"
+        }
+      ]
+    },
+    "graphql_subscriptions": {
+      "description": "Example GraphQL subscription queries",
+      "examples": [
+        {
+          "name": "Subscribe to transaction lifecycle",
+          "query": "subscription { transactionLifecycle(transactionIds: [\"txn_12345\"]) { transactionId eventType isolationLevel timestamp readOnly } }"
+        },
+        {
+          "name": "Subscribe to lock events",
+          "query": "subscription { lockEvents(transactionId: \"txn_12345\") { transactionId resourceId lockMode eventType waitTimeMs timestamp } }"
+        },
+        {
+          "name": "Subscribe to deadlocks",
+          "query": "subscription { deadlockEvents { deadlockId cycle victim resolution detectedAt } }"
+        },
+        {
+          "name": "Subscribe to MVCC events",
+          "query": "subscription { mvccEvents(table: \"users\") { transactionId table key eventType versionCount timestamp } }"
+        },
+        {
+          "name": "Subscribe to WAL events",
+          "query": "subscription { walEvents { lsn operation transactionId sizeBytes timestamp } }"
+        },
+        {
+          "name": "Subscribe to transaction statistics",
+          "query": "subscription { transactionStats(intervalSeconds: 5) { totalCommits totalAborts activeTransactions avgCommitLatencyMs p99LatencyMs abortRate timestamp } }"
+        }
+      ]
+    }
+  }
+}

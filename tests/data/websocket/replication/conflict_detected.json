@@ -1,0 +1,30 @@
+{
+  "category": "replication",
+  "event_type": "conflict_detected",
+  "severity": "warning",
+  "source": "replica:replica-003",
+  "timestamp": 1734134600,
+  "event_id": "evt_conflict_001",
+  "payload": {
+    "event_type": "conflict_detected",
+    "conflict_id": "conf_abc123",
+    "table_name": "users",
+    "conflict_type": "update_update",
+    "local_value": {
+      "id": 12345,
+      "name": "John Doe Updated",
+      "email": "john.doe.new@example.com",
+      "updated_at": "2025-12-14T10:00:00Z"
+    },
+    "remote_value": {
+      "id": 12345,
+      "name": "John Doe Modified",
+      "email": "john.doe.modified@example.com",
+      "updated_at": "2025-12-14T10:00:05Z"
+    },
+    "resolution_strategy": null,
+    "resolved_value": null,
+    "source_replica": "replica-003",
+    "timestamp": 1734134600
+  }
+}

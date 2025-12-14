@@ -1,0 +1,54 @@
+[
+  {
+    "message_type": "change_event",
+    "data": {
+      "operation_type": "insert",
+      "collection": "users",
+      "document_id": "doc_abc123",
+      "document": {
+        "_id": "doc_abc123",
+        "name": "Alice Johnson",
+        "email": "alice@example.com",
+        "created_at": "2024-12-14T10:30:00Z"
+      },
+      "full_document": {
+        "_id": "doc_abc123",
+        "name": "Alice Johnson",
+        "email": "alice@example.com",
+        "age": 32,
+        "status": "active",
+        "created_at": "2024-12-14T10:30:00Z"
+      },
+      "update_description": null
+    },
+    "timestamp": 1702858200,
+    "collection": "users"
+  },
+  {
+    "message_type": "change_event",
+    "data": {
+      "operation_type": "update",
+      "collection": "users",
+      "document_id": "doc_abc123",
+      "document": null,
+      "full_document": {
+        "_id": "doc_abc123",
+        "name": "Alice Johnson",
+        "email": "alice.j@example.com",
+        "age": 33,
+        "status": "active",
+        "updated_at": "2024-12-14T11:45:00Z"
+      },
+      "update_description": {
+        "updated_fields": {
+          "email": "alice.j@example.com",
+          "age": 33,
+          "updated_at": "2024-12-14T11:45:00Z"
+        },
+        "removed_fields": []
+      }
+    },
+    "timestamp": 1702862300,
+    "collection": "users"
+  }
+]

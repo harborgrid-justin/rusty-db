@@ -1,0 +1,18 @@
+{
+  "category": "replication",
+  "event_type": "replication_lag_alert",
+  "severity": "warning",
+  "source": "replica:replica-001",
+  "timestamp": 1734134400,
+  "event_id": "evt_lag_001",
+  "payload": {
+    "event_type": "replication_lag_alert",
+    "replica_id": "replica-001",
+    "lag_bytes": 524288,
+    "lag_seconds": 2.5,
+    "threshold_bytes": 262144,
+    "severity": "warning",
+    "timestamp": 1734134400,
+    "details": "Replication lag exceeding threshold due to high write volume"
+  }
+}

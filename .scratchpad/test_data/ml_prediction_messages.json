@@ -1,0 +1,36 @@
+[
+  {
+    "message_type": "prediction",
+    "data": {
+      "prediction_id": "pred_0",
+      "value": 0.8234,
+      "confidence": 0.92,
+      "class_probabilities": [0.1766, 0.8234],
+      "feature_importance": {
+        "age": 0.35,
+        "income": 0.28,
+        "tenure": 0.22,
+        "usage_frequency": 0.15
+      }
+    },
+    "timestamp": 1702857700,
+    "model_id": "model_abc123"
+  },
+  {
+    "message_type": "prediction",
+    "data": {
+      "prediction_id": "pred_1",
+      "value": 0.2145,
+      "confidence": 0.87,
+      "class_probabilities": [0.7855, 0.2145],
+      "feature_importance": {
+        "age": 0.42,
+        "income": 0.31,
+        "tenure": 0.18,
+        "usage_frequency": 0.09
+      }
+    },
+    "timestamp": 1702857701,
+    "model_id": "model_abc123"
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "category": "sharding",
+  "event_type": "rebalance_progress",
+  "severity": "info",
+  "source": "shard:orders",
+  "timestamp": 1734135400,
+  "event_id": "evt_rebalance_001",
+  "payload": {
+    "event_type": "rebalance_progress",
+    "plan_id": "plan_abc123",
+    "table_name": "orders",
+    "source_shard": "shard-001",
+    "target_shard": "shard-002",
+    "progress_percent": 45.5,
+    "rows_migrated": 455000,
+    "total_rows": 1000000,
+    "eta_seconds": 180.0,
+    "timestamp": 1734135400
+  }
+}

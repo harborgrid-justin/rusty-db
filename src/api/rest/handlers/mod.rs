@@ -46,6 +46,9 @@ pub mod document_handlers;
 mod dashboard_handlers;
 pub mod websocket_handlers;
 pub mod websocket_types;
+pub mod security_websocket_handlers;
+pub mod replication_websocket_types;
+pub mod cluster_websocket_handlers;
 
 use std::sync::Arc;
 use crate::catalog::Catalog;
@@ -178,3 +181,17 @@ pub use websocket_handlers::{
     broadcast_message, list_subscriptions, create_subscription,
     delete_subscription
 };
+
+// Security WebSocket handlers
+pub use security_websocket_handlers::{
+    ws_security_events, ws_authentication_events, ws_audit_stream,
+    ws_threat_alerts, ws_encryption_events, ws_rate_limit_events
+};
+
+// Cluster WebSocket handlers
+pub use cluster_websocket_handlers::{
+    ws_replication_events, ws_cluster_events, ws_rac_events, ws_sharding_events
+};
+
+// Cluster event types
+pub use replication_websocket_types::*;

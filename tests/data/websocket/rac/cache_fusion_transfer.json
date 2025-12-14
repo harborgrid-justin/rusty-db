@@ -1,0 +1,19 @@
+{
+  "category": "rac",
+  "event_type": "block_transfer",
+  "severity": "info",
+  "source": "rac:cache_fusion",
+  "timestamp": 1734135000,
+  "event_id": "evt_cf_001",
+  "payload": {
+    "event_type": "block_transfer",
+    "block_id": "blk_12345678",
+    "source_instance": "instance-1",
+    "target_instance": "instance-2",
+    "block_mode": "shared",
+    "transfer_size": 8192,
+    "duration_micros": 150,
+    "success": true,
+    "timestamp": 1734135000
+  }
+}

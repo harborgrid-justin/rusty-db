@@ -1,0 +1,53 @@
+[
+  {
+    "message_type": "lsm_event",
+    "data": {
+      "MemtableFlushed": {
+        "tree_name": "user_data_lsm",
+        "entries": 10000,
+        "size_bytes": 102400,
+        "timestamp": 1702569600
+      }
+    },
+    "timestamp": 1702569600
+  },
+  {
+    "message_type": "lsm_event",
+    "data": {
+      "CompactionStarted": {
+        "tree_name": "user_data_lsm",
+        "level": 0,
+        "sstable_count": 4,
+        "timestamp": 1702569605
+      }
+    },
+    "timestamp": 1702569605
+  },
+  {
+    "message_type": "lsm_event",
+    "data": {
+      "CompactionCompleted": {
+        "tree_name": "user_data_lsm",
+        "level": 0,
+        "old_sstables": 4,
+        "new_sstables": 1,
+        "duration_ms": 5432,
+        "timestamp": 1702569610
+      }
+    },
+    "timestamp": 1702569610
+  },
+  {
+    "message_type": "lsm_event",
+    "data": {
+      "LevelMigration": {
+        "tree_name": "user_data_lsm",
+        "from_level": 1,
+        "to_level": 2,
+        "sstable_count": 2,
+        "timestamp": 1702569620
+      }
+    },
+    "timestamp": 1702569620
+  }
+]

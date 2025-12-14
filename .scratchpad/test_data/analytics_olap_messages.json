@@ -1,0 +1,56 @@
+[
+  {
+    "message_type": "olap_result",
+    "data": {
+      "operation": "drill_down",
+      "dimensions": ["region", "product_category", "quarter"],
+      "data": [
+        {
+          "region": "North America",
+          "product_category": "Electronics",
+          "quarter": "Q1",
+          "total_sales": 1250000,
+          "total_units": 3450,
+          "avg_price": 362.32
+        },
+        {
+          "region": "North America",
+          "product_category": "Electronics",
+          "quarter": "Q2",
+          "total_sales": 1480000,
+          "total_units": 4120,
+          "avg_price": 359.22
+        },
+        {
+          "region": "Europe",
+          "product_category": "Clothing",
+          "quarter": "Q1",
+          "total_sales": 890000,
+          "total_units": 12500,
+          "avg_price": 71.20
+        }
+      ],
+      "row_count": 3,
+      "processing_time_ms": 42.5
+    },
+    "timestamp": 1702857800,
+    "query_id": "olap_xyz789"
+  },
+  {
+    "message_type": "timeseries_update",
+    "data": {
+      "analysis_type": "anomaly",
+      "progress_pct": 60.0,
+      "current_window": 6,
+      "total_windows": 10,
+      "preliminary_results": {
+        "trend": "upward",
+        "seasonality_detected": true,
+        "anomalies_found": 3,
+        "anomaly_timestamps": ["2024-01-15", "2024-02-03", "2024-03-12"]
+      }
+    },
+    "timestamp": 1702857900,
+    "query_id": null
+  }
+]

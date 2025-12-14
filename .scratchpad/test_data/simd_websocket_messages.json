@@ -1,0 +1,102 @@
+{
+  "simd_events": {
+    "filter_operation": {
+      "event_type": "simd_filter",
+      "operation_type": "filter",
+      "rows_processed": 1000000,
+      "rows_selected": 250000,
+      "selectivity": 0.25,
+      "simd_ops": 15625,
+      "scalar_ops": 0,
+      "simd_ratio": 1.0,
+      "duration_us": 5000,
+      "throughput_rows_per_sec": 200000000.0,
+      "vector_width": 256,
+      "timestamp": 1702598400
+    },
+    "aggregate_sum_operation": {
+      "event_type": "simd_aggregate",
+      "operation_type": "aggregate",
+      "rows_processed": 5000000,
+      "rows_selected": 5000000,
+      "selectivity": 1.0,
+      "simd_ops": 78125,
+      "scalar_ops": 0,
+      "simd_ratio": 1.0,
+      "duration_us": 8000,
+      "throughput_rows_per_sec": 625000000.0,
+      "vector_width": 256,
+      "timestamp": 1702598401
+    },
+    "scan_operation": {
+      "event_type": "simd_scan",
+      "operation_type": "scan",
+      "rows_processed": 10000000,
+      "rows_selected": 10000000,
+      "selectivity": 1.0,
+      "simd_ops": 156250,
+      "scalar_ops": 0,
+      "simd_ratio": 1.0,
+      "duration_us": 50000,
+      "throughput_rows_per_sec": 200000000.0,
+      "vector_width": 256,
+      "timestamp": 1702598402
+    },
+    "hash_operation": {
+      "event_type": "simd_hash",
+      "operation_type": "hash",
+      "rows_processed": 2000000,
+      "rows_selected": 2000000,
+      "selectivity": 1.0,
+      "simd_ops": 31250,
+      "scalar_ops": 0,
+      "simd_ratio": 1.0,
+      "duration_us": 3000,
+      "throughput_rows_per_sec": 666666666.0,
+      "vector_width": 256,
+      "timestamp": 1702598403
+    },
+    "string_match_operation": {
+      "event_type": "simd_string_match",
+      "operation_type": "string_match",
+      "rows_processed": 1500000,
+      "rows_selected": 375000,
+      "selectivity": 0.25,
+      "simd_ops": 23437,
+      "scalar_ops": 0,
+      "simd_ratio": 1.0,
+      "duration_us": 7500,
+      "throughput_rows_per_sec": 200000000.0,
+      "vector_width": 256,
+      "timestamp": 1702598404
+    },
+    "mixed_simd_scalar": {
+      "event_type": "simd_filter",
+      "operation_type": "filter",
+      "rows_processed": 1000000,
+      "rows_selected": 200000,
+      "selectivity": 0.2,
+      "simd_ops": 12000,
+      "scalar_ops": 3625,
+      "simd_ratio": 0.768,
+      "duration_us": 6500,
+      "throughput_rows_per_sec": 153846153.8,
+      "vector_width": 256,
+      "timestamp": 1702598405
+    },
+    "avx512_operation": {
+      "event_type": "simd_filter",
+      "operation_type": "filter",
+      "rows_processed": 1000000,
+      "rows_selected": 250000,
+      "selectivity": 0.25,
+      "simd_ops": 7813,
+      "scalar_ops": 0,
+      "simd_ratio": 1.0,
+      "duration_us": 2500,
+      "throughput_rows_per_sec": 400000000.0,
+      "vector_width": 512,
+      "timestamp": 1702598406
+    }
+  }
+}

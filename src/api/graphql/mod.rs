@@ -7,6 +7,8 @@ pub mod models;
 pub mod queries;
 pub mod mutations;
 pub mod subscriptions;
+pub mod security_subscriptions;
+pub mod cluster_subscriptions;
 pub mod complexity;
 pub mod engine;
 pub mod schema;
@@ -113,4 +115,25 @@ pub use websocket_transport::{
     ConnectionMetrics,
     graphql_ws_handler,
     graphql_ws_handler_with_config,
+};
+pub use security_subscriptions::{
+    SecuritySubscriptionRoot,
+    AuthenticationEvent,
+    AuthAction,
+    AuthorizationEvent,
+    AuthzAction,
+    AuditLogEvent,
+    AuditSeverity,
+    EncryptionEvent,
+    EncryptionAction,
+    RateLimitEvent,
+    InsiderThreatEvent,
+    ThreatType,
+    ThreatLevel,
+    MemoryHardeningEvent,
+    MemoryEventType,
+    CircuitBreakerEvent,
+    CircuitState,
+    SecurityMetrics as SecurityMetricsSubscription,
+    SecurityPosture,
 };

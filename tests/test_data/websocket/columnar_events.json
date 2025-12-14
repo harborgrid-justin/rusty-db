@@ -1,0 +1,41 @@
+[
+  {
+    "message_type": "columnar_event",
+    "data": {
+      "BatchInserted": {
+        "table_name": "analytics_data",
+        "rows": 10000,
+        "columns": 25,
+        "timestamp": 1702569600
+      }
+    },
+    "timestamp": 1702569600
+  },
+  {
+    "message_type": "columnar_event",
+    "data": {
+      "ColumnScanned": {
+        "table_name": "analytics_data",
+        "column_name": "revenue",
+        "rows_scanned": 1000000,
+        "duration_ms": 543,
+        "timestamp": 1702569610
+      }
+    },
+    "timestamp": 1702569610
+  },
+  {
+    "message_type": "columnar_event",
+    "data": {
+      "EncodingChanged": {
+        "table_name": "analytics_data",
+        "column_name": "status",
+        "old_encoding": "Plain",
+        "new_encoding": "Dictionary",
+        "compression_ratio": 0.15,
+        "timestamp": 1702569620
+      }
+    },
+    "timestamp": 1702569620
+  }
+]

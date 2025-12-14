@@ -1,0 +1,34 @@
+[
+  {
+    "request": {
+      "query_id": "qry_abc123",
+      "reason": "User requested cancellation"
+    },
+    "response": {
+      "message_type": "query_cancelled",
+      "query_id": "qry_abc123",
+      "data": {
+        "query_id": "qry_abc123",
+        "status": "cancelled",
+        "message": "Query cancelled successfully after processing 2500 rows"
+      },
+      "timestamp": 1702512005
+    }
+  },
+  {
+    "request": {
+      "query_id": "qry_timeout",
+      "reason": "Query timeout exceeded"
+    },
+    "response": {
+      "message_type": "query_cancelled",
+      "query_id": "qry_timeout",
+      "data": {
+        "query_id": "qry_timeout",
+        "status": "cancelled",
+        "message": "Query cancelled due to timeout (exceeded 30 second limit)"
+      },
+      "timestamp": 1702512030
+    }
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "category": "clustering",
+  "event_type": "failover_completed",
+  "severity": "warning",
+  "source": "cluster:failover",
+  "timestamp": 1734134810,
+  "event_id": "evt_failover_002",
+  "payload": {
+    "event_type": "failover_completed",
+    "failover_id": "fo_xyz789",
+    "failed_node": "node-003",
+    "replacement_node": "node-004",
+    "failover_type": "automatic",
+    "duration_seconds": 10.5,
+    "success": true,
+    "error_message": null,
+    "timestamp": 1734134810
+  }
+}

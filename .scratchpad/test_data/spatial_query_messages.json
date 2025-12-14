@@ -1,0 +1,60 @@
+[
+  {
+    "message_type": "spatial_result",
+    "data": {
+      "result_id": "spatial_1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.4194, 37.7749]
+      },
+      "properties": {
+        "name": "Golden Gate Bridge",
+        "category": "landmark",
+        "rating": 4.8,
+        "visitor_count": 10500000
+      },
+      "distance": 0.0,
+      "rank": 1
+    },
+    "timestamp": 1702858400,
+    "query_id": "spatial_query_001"
+  },
+  {
+    "message_type": "spatial_result",
+    "data": {
+      "result_id": "spatial_2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.4183, 37.8024]
+      },
+      "properties": {
+        "name": "Alcatraz Island",
+        "category": "landmark",
+        "rating": 4.6,
+        "visitor_count": 1500000
+      },
+      "distance": 3.1,
+      "rank": 2
+    },
+    "timestamp": 1702858401,
+    "query_id": "spatial_query_001"
+  },
+  {
+    "message_type": "routing_update",
+    "data": {
+      "current_node": "node_5",
+      "nodes_visited": 5,
+      "current_cost": 7.5,
+      "estimated_total_cost": 15.0,
+      "partial_path": [
+        [-122.4194, 37.7749],
+        [-122.4183, 37.7850],
+        [-122.4172, 37.7951],
+        [-122.4161, 37.8052],
+        [-122.4150, 37.8153]
+      ]
+    },
+    "timestamp": 1702858500,
+    "query_id": "route_query_001"
+  }
+]
