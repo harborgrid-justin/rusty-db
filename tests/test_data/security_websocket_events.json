@@ -1,0 +1,465 @@
+{
+  "security_events": {
+    "authentication_events": [
+      {
+        "event_type": "Authentication",
+        "action": "login",
+        "username": "alice@example.com",
+        "session_id": "sess_abc123def456",
+        "success": true,
+        "client_ip": "192.168.1.100",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "mfa_required": true,
+        "mfa_verified": true,
+        "failure_reason": null,
+        "timestamp": 1702827600
+      },
+      {
+        "event_type": "Authentication",
+        "action": "login",
+        "username": "bob@example.com",
+        "session_id": null,
+        "success": false,
+        "client_ip": "10.0.0.50",
+        "user_agent": "curl/7.68.0",
+        "mfa_required": false,
+        "mfa_verified": false,
+        "failure_reason": "Invalid password",
+        "timestamp": 1702827605
+      },
+      {
+        "event_type": "Authentication",
+        "action": "password_change",
+        "username": "charlie@example.com",
+        "session_id": "sess_xyz789ghi012",
+        "success": true,
+        "client_ip": "172.16.0.25",
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+        "mfa_required": true,
+        "mfa_verified": true,
+        "failure_reason": null,
+        "timestamp": 1702827610
+      },
+      {
+        "event_type": "Authentication",
+        "action": "account_locked",
+        "username": "eve@example.com",
+        "session_id": null,
+        "success": false,
+        "client_ip": "203.0.113.45",
+        "user_agent": "Python-requests/2.28.0",
+        "mfa_required": false,
+        "mfa_verified": false,
+        "failure_reason": "Too many failed login attempts",
+        "timestamp": 1702827615
+      }
+    ],
+    "authorization_events": [
+      {
+        "event_type": "Authorization",
+        "action": "permission_check",
+        "username": "alice@example.com",
+        "session_id": "sess_abc123def456",
+        "resource": "customers",
+        "resource_type": "TABLE",
+        "permission": "SELECT",
+        "granted": true,
+        "reason": null,
+        "role_id": "role_data_analyst",
+        "timestamp": 1702827620
+      },
+      {
+        "event_type": "Authorization",
+        "action": "permission_denied",
+        "username": "bob@example.com",
+        "session_id": "sess_bob987654",
+        "resource": "salaries",
+        "resource_type": "TABLE",
+        "permission": "UPDATE",
+        "granted": false,
+        "reason": "Insufficient privileges",
+        "role_id": "role_read_only",
+        "timestamp": 1702827625
+      },
+      {
+        "event_type": "Authorization",
+        "action": "role_assigned",
+        "username": "charlie@example.com",
+        "session_id": "sess_xyz789ghi012",
+        "resource": "admin_role",
+        "resource_type": "ROLE",
+        "permission": "GRANT",
+        "granted": true,
+        "reason": "Promoted to administrator",
+        "role_id": "role_admin",
+        "timestamp": 1702827630
+      }
+    ],
+    "audit_log_events": [
+      {
+        "event_type": "AuditLog",
+        "id": 12345,
+        "username": "alice@example.com",
+        "session_id": "sess_abc123def456",
+        "action": "SELECT",
+        "object_name": "customers",
+        "object_type": "TABLE",
+        "sql_text": "SELECT id, name, email FROM customers WHERE active = true LIMIT 100",
+        "success": true,
+        "severity": "INFO",
+        "rows_affected": 42,
+        "execution_time_ms": 125,
+        "client_ip": "192.168.1.100",
+        "error_message": null,
+        "timestamp": 1702827635
+      },
+      {
+        "event_type": "AuditLog",
+        "id": 12346,
+        "username": "admin@example.com",
+        "session_id": "sess_admin123",
+        "action": "DROP_TABLE",
+        "object_name": "temp_data",
+        "object_type": "TABLE",
+        "sql_text": "DROP TABLE temp_data",
+        "success": true,
+        "severity": "WARNING",
+        "rows_affected": null,
+        "execution_time_ms": 45,
+        "client_ip": "192.168.1.5",
+        "error_message": null,
+        "timestamp": 1702827640
+      },
+      {
+        "event_type": "AuditLog",
+        "id": 12347,
+        "username": "bob@example.com",
+        "session_id": "sess_bob987654",
+        "action": "UPDATE",
+        "object_name": "salaries",
+        "object_type": "TABLE",
+        "sql_text": "UPDATE salaries SET amount = 150000 WHERE employee_id = 42",
+        "success": false,
+        "severity": "ERROR",
+        "rows_affected": 0,
+        "execution_time_ms": 12,
+        "client_ip": "10.0.0.50",
+        "error_message": "Permission denied: insufficient privileges",
+        "timestamp": 1702827645
+      },
+      {
+        "event_type": "AuditLog",
+        "id": 12348,
+        "username": "system",
+        "session_id": null,
+        "action": "KEY_ROTATION",
+        "object_name": "master_encryption_key",
+        "object_type": "KEY",
+        "sql_text": null,
+        "success": true,
+        "severity": "CRITICAL",
+        "rows_affected": null,
+        "execution_time_ms": 5420,
+        "client_ip": null,
+        "error_message": null,
+        "timestamp": 1702827650
+      }
+    ],
+    "encryption_events": [
+      {
+        "event_type": "Encryption",
+        "action": "key_rotation_started",
+        "key_id": "key_abc123",
+        "key_type": "TableEncryption",
+        "algorithm": "AES256-GCM",
+        "target": "users_table",
+        "target_type": "TABLE",
+        "rotation_progress": 0,
+        "success": true,
+        "message": "Starting key rotation for users_table",
+        "timestamp": 1702827655
+      },
+      {
+        "event_type": "Encryption",
+        "action": "key_rotation_progress",
+        "key_id": "key_abc123",
+        "key_type": "TableEncryption",
+        "algorithm": "AES256-GCM",
+        "target": "users_table",
+        "target_type": "TABLE",
+        "rotation_progress": 45,
+        "success": true,
+        "message": "Re-encrypted 4500 of 10000 blocks",
+        "timestamp": 1702827715
+      },
+      {
+        "event_type": "Encryption",
+        "action": "key_rotation_completed",
+        "key_id": "key_abc123",
+        "key_type": "TableEncryption",
+        "algorithm": "AES256-GCM",
+        "target": "users_table",
+        "target_type": "TABLE",
+        "rotation_progress": 100,
+        "success": true,
+        "message": "Key rotation completed successfully",
+        "timestamp": 1702827835
+      },
+      {
+        "event_type": "Encryption",
+        "action": "tde_enabled",
+        "key_id": "key_master_001",
+        "key_type": "Master",
+        "algorithm": "AES256-GCM",
+        "target": "tablespace_data01",
+        "target_type": "TABLESPACE",
+        "rotation_progress": null,
+        "success": true,
+        "message": "Transparent Data Encryption enabled for tablespace",
+        "timestamp": 1702827840
+      }
+    ],
+    "rate_limit_events": [
+      {
+        "event_type": "RateLimit",
+        "source_ip": "192.168.1.200",
+        "user_id": "user_charlie",
+        "limit_type": "per_ip",
+        "limit_value": 1000,
+        "current_rate": 1250,
+        "blocked": true,
+        "adaptive_multiplier": 0.8,
+        "reputation_score": 35,
+        "ddos_suspected": false,
+        "timestamp": 1702827845
+      },
+      {
+        "event_type": "RateLimit",
+        "source_ip": "203.0.113.100",
+        "user_id": null,
+        "limit_type": "global",
+        "limit_value": 100000,
+        "current_rate": 125000,
+        "blocked": true,
+        "adaptive_multiplier": 0.5,
+        "reputation_score": 10,
+        "ddos_suspected": true,
+        "timestamp": 1702827850
+      },
+      {
+        "event_type": "RateLimit",
+        "source_ip": "10.0.0.75",
+        "user_id": "user_david",
+        "limit_type": "per_user",
+        "limit_value": 5000,
+        "current_rate": 4800,
+        "blocked": false,
+        "adaptive_multiplier": 1.2,
+        "reputation_score": 85,
+        "ddos_suspected": false,
+        "timestamp": 1702827855
+      }
+    ],
+    "insider_threat_events": [
+      {
+        "event_type": "InsiderThreat",
+        "threat_id": "threat_xyz789",
+        "user_id": "user_bob",
+        "threat_type": "DATA_EXFILTRATION",
+        "threat_level": "HIGH",
+        "risk_score": 75,
+        "query_text": "SELECT * FROM sensitive_customer_data WHERE created_at > '2024-01-01'",
+        "tables_accessed": ["sensitive_customer_data", "pii_records", "financial_data"],
+        "rows_affected": 50000,
+        "anomalies_detected": [
+          "Unusual data volume (50k rows vs typical 100)",
+          "Off-hours access (2:30 AM)",
+          "Atypical query pattern (full table scan)",
+          "Accessing tables never previously queried"
+        ],
+        "action_taken": "ALERT_GENERATED",
+        "client_ip": "10.0.0.50",
+        "location": "Unknown (VPN detected)",
+        "timestamp": 1702827860
+      },
+      {
+        "event_type": "InsiderThreat",
+        "threat_id": "threat_abc456",
+        "user_id": "user_eve",
+        "threat_type": "PRIVILEGE_ESCALATION",
+        "threat_level": "CRITICAL",
+        "risk_score": 95,
+        "query_text": "GRANT ALL PRIVILEGES ON *.* TO 'eve'@'%'",
+        "tables_accessed": [],
+        "rows_affected": 0,
+        "anomalies_detected": [
+          "Attempted privilege escalation",
+          "Unauthorized GRANT command",
+          "Targeting system tables"
+        ],
+        "action_taken": "BLOCKED",
+        "client_ip": "172.16.0.99",
+        "location": "External IP",
+        "timestamp": 1702827865
+      },
+      {
+        "event_type": "InsiderThreat",
+        "threat_id": "threat_def123",
+        "user_id": "user_frank",
+        "threat_type": "ANOMALOUS_QUERY",
+        "threat_level": "MEDIUM",
+        "risk_score": 55,
+        "query_text": "SELECT password_hash FROM users",
+        "tables_accessed": ["users"],
+        "rows_affected": 1500,
+        "anomalies_detected": [
+          "Accessing sensitive columns",
+          "Pattern deviation from baseline"
+        ],
+        "action_taken": "ALERT_GENERATED",
+        "client_ip": "192.168.1.150",
+        "location": "Office Network",
+        "timestamp": 1702827870
+      }
+    ],
+    "memory_hardening_events": [
+      {
+        "event_type": "MemoryHardening",
+        "event_type_detail": "CANARY_VIOLATION",
+        "severity": "WARNING",
+        "buffer_id": "buf_12345",
+        "address": "0x7ffe12345678",
+        "size": 4096,
+        "canary_value": "0xDEADBEEF12345678",
+        "expected_value": "0xCAFEBABE87654321",
+        "stack_trace": [
+          "buffer_write+0x42",
+          "page_manager::write+0x156",
+          "storage_engine::flush+0x89"
+        ],
+        "action_taken": "Buffer freed, logged, and allocated new secure buffer",
+        "timestamp": 1702827875
+      },
+      {
+        "event_type": "MemoryHardening",
+        "event_type_detail": "BUFFER_OVERFLOW",
+        "severity": "CRITICAL",
+        "buffer_id": "buf_67890",
+        "address": "0x7ffe87654321",
+        "size": 8192,
+        "canary_value": null,
+        "expected_value": null,
+        "stack_trace": [
+          "string_copy+0x23",
+          "query_parser::parse+0x445",
+          "executor::execute+0x112"
+        ],
+        "action_taken": "Process terminated, core dump generated",
+        "timestamp": 1702827880
+      }
+    ],
+    "circuit_breaker_events": [
+      {
+        "event_type": "CircuitBreaker",
+        "circuit_id": "db_connection_pool",
+        "old_state": "CLOSED",
+        "new_state": "OPEN",
+        "failure_count": 5,
+        "success_count": 95,
+        "error_rate": 5.0,
+        "half_open_successes": null,
+        "reason": "Error threshold exceeded: 5 failures in 10 seconds",
+        "timestamp": 1702827885
+      },
+      {
+        "event_type": "CircuitBreaker",
+        "circuit_id": "db_connection_pool",
+        "old_state": "OPEN",
+        "new_state": "HALF_OPEN",
+        "failure_count": 5,
+        "success_count": 95,
+        "error_rate": 5.0,
+        "half_open_successes": 0,
+        "reason": "Timeout period elapsed, attempting recovery",
+        "timestamp": 1702827915
+      },
+      {
+        "event_type": "CircuitBreaker",
+        "circuit_id": "db_connection_pool",
+        "old_state": "HALF_OPEN",
+        "new_state": "CLOSED",
+        "failure_count": 0,
+        "success_count": 100,
+        "error_rate": 0.0,
+        "half_open_successes": 3,
+        "reason": "Success threshold met, circuit recovered",
+        "timestamp": 1702827945
+      }
+    ]
+  },
+  "graphql_subscription_examples": {
+    "authentication_subscription": {
+      "query": "subscription AuthEvents { authenticationEvents(filterActions: [LOGIN, LOGOUT]) { eventId action username success timestamp } }",
+      "description": "Subscribe to login and logout events"
+    },
+    "audit_log_subscription": {
+      "query": "subscription AuditStream($username: String, $severity: AuditSeverity) { auditLogStream(filterUsername: $username, filterSeverity: $severity) { id username action objectName sqlText success severity timestamp } }",
+      "variables": {
+        "username": "alice@example.com",
+        "severity": "WARNING"
+      },
+      "description": "Subscribe to audit logs for specific user with minimum severity"
+    },
+    "insider_threat_subscription": {
+      "query": "subscription ThreatAlerts($minLevel: ThreatLevel) { insiderThreatAlerts(minThreatLevel: $minLevel) { threatId userId threatType threatLevel riskScore anomaliesDetected actionTaken timestamp } }",
+      "variables": {
+        "minLevel": "HIGH"
+      },
+      "description": "Subscribe to high-severity insider threat alerts"
+    },
+    "encryption_subscription": {
+      "query": "subscription EncryptionEvents { encryptionEvents(filterActions: [KEY_ROTATION_PROGRESS, KEY_ROTATION_COMPLETED]) { eventId action keyId target rotationProgress message timestamp } }",
+      "description": "Subscribe to key rotation events"
+    },
+    "security_metrics_subscription": {
+      "query": "subscription SecurityMetrics($interval: Int) { securityMetrics(intervalSeconds: $interval) { activeSessions totalUsers failedLoginsLastHour activeThreats criticalThreats auditEventsPerSecond timestamp } }",
+      "variables": {
+        "interval": 10
+      },
+      "description": "Subscribe to security metrics updated every 10 seconds"
+    }
+  },
+  "websocket_connection_examples": {
+    "authentication_stream": {
+      "endpoint": "ws://localhost:8080/api/v1/ws/security/authentication",
+      "description": "WebSocket endpoint for authentication events",
+      "sample_message": {
+        "event_type": "Authentication",
+        "action": "login",
+        "username": "alice@example.com",
+        "success": true,
+        "mfa_verified": true
+      }
+    },
+    "audit_stream": {
+      "endpoint": "ws://localhost:8080/api/v1/ws/security/audit",
+      "description": "WebSocket endpoint for audit log streaming",
+      "configuration": {
+        "event_types": ["SELECT", "INSERT", "UPDATE", "DELETE"],
+        "min_severity": "WARNING",
+        "include_sql": true
+      }
+    },
+    "threat_alerts": {
+      "endpoint": "ws://localhost:8080/api/v1/ws/security/threats",
+      "description": "WebSocket endpoint for insider threat alerts",
+      "sample_alert": {
+        "event_type": "InsiderThreat",
+        "threat_id": "threat_xyz789",
+        "threat_level": "HIGH",
+        "risk_score": 75,
+        "action_taken": "ALERT_GENERATED"
+      }
+    }
+  }
+}

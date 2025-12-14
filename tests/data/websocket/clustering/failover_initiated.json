@@ -1,0 +1,19 @@
+{
+  "category": "clustering",
+  "event_type": "failover_initiated",
+  "severity": "critical",
+  "source": "cluster:failover",
+  "timestamp": 1734134800,
+  "event_id": "evt_failover_001",
+  "payload": {
+    "event_type": "failover_initiated",
+    "failover_id": "fo_xyz789",
+    "failed_node": "node-003",
+    "replacement_node": null,
+    "failover_type": "automatic",
+    "duration_seconds": null,
+    "success": false,
+    "error_message": null,
+    "timestamp": 1734134800
+  }
+}

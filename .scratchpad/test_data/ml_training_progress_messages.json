@@ -1,0 +1,46 @@
+[
+  {
+    "message_type": "training_progress",
+    "data": {
+      "epoch": 1,
+      "total_epochs": 100,
+      "loss": 0.8542,
+      "accuracy": 0.7234,
+      "validation_loss": 0.9012,
+      "validation_accuracy": 0.6998,
+      "learning_rate": 0.01,
+      "elapsed_seconds": 0.5,
+      "estimated_remaining_seconds": 49.5
+    },
+    "timestamp": 1702857600,
+    "model_id": "model_abc123"
+  },
+  {
+    "message_type": "training_progress",
+    "data": {
+      "epoch": 50,
+      "total_epochs": 100,
+      "loss": 0.1234,
+      "accuracy": 0.9512,
+      "validation_loss": 0.1456,
+      "validation_accuracy": 0.9398,
+      "learning_rate": 0.01,
+      "elapsed_seconds": 25.0,
+      "estimated_remaining_seconds": 25.0
+    },
+    "timestamp": 1702857625,
+    "model_id": "model_abc123"
+  },
+  {
+    "message_type": "training_complete",
+    "data": {
+      "model_id": "model_abc123",
+      "model_name": "customer_churn_predictor",
+      "final_loss": 0.0123,
+      "final_accuracy": 0.9891,
+      "total_epochs": 100
+    },
+    "timestamp": 1702857650,
+    "model_id": "model_abc123"
+  }
+]

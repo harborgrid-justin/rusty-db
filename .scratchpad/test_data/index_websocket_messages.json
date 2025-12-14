@@ -1,0 +1,98 @@
+{
+  "index_events": {
+    "btree_split_event": {
+      "event_type": "btree_split",
+      "index_name": "idx_users_email",
+      "node_id": 12345,
+      "level": 2,
+      "keys_before": 512,
+      "keys_after": 256,
+      "split_key": "m@example.com",
+      "timestamp": 1702598400
+    },
+    "lsm_compaction_started": {
+      "event_type": "compaction_started",
+      "index_name": "idx_orders_timestamp",
+      "level": 1,
+      "num_files": 8,
+      "input_size_bytes": 67108864,
+      "output_size_bytes": 0,
+      "duration_ms": null,
+      "rows_compacted": 0,
+      "timestamp": 1702598400
+    },
+    "lsm_compaction_completed": {
+      "event_type": "compaction_completed",
+      "index_name": "idx_orders_timestamp",
+      "level": 1,
+      "num_files": 8,
+      "input_size_bytes": 67108864,
+      "output_size_bytes": 33554432,
+      "duration_ms": 1500,
+      "rows_compacted": 1000000,
+      "timestamp": 1702598415
+    },
+    "index_rebuild_started": {
+      "event_type": "index_rebuild_started",
+      "index_name": "idx_products_category",
+      "table_name": "products",
+      "progress_percent": 0.0,
+      "rows_processed": 0,
+      "total_rows": 1000000,
+      "elapsed_seconds": 0,
+      "estimated_remaining_seconds": 300,
+      "online_rebuild": true,
+      "timestamp": 1702598400
+    },
+    "index_rebuild_progress": {
+      "event_type": "index_rebuild_progress",
+      "index_name": "idx_products_category",
+      "table_name": "products",
+      "progress_percent": 45.5,
+      "rows_processed": 455000,
+      "total_rows": 1000000,
+      "elapsed_seconds": 120,
+      "estimated_remaining_seconds": 144,
+      "online_rebuild": true,
+      "timestamp": 1702598520
+    },
+    "index_rebuild_completed": {
+      "event_type": "index_rebuild_completed",
+      "index_name": "idx_products_category",
+      "table_name": "products",
+      "progress_percent": 100.0,
+      "rows_processed": 1000000,
+      "total_rows": 1000000,
+      "elapsed_seconds": 264,
+      "estimated_remaining_seconds": 0,
+      "online_rebuild": true,
+      "timestamp": 1702598664
+    },
+    "btree_merge_event": {
+      "event_type": "btree_merge",
+      "index_name": "idx_customers_id",
+      "node_id": 67890,
+      "level": 1,
+      "keys_before": 128,
+      "keys_after": 256,
+      "split_key": null,
+      "timestamp": 1702598400
+    },
+    "fulltext_document_indexed": {
+      "event_type": "document_indexed",
+      "index_name": "idx_ft_documents",
+      "document_id": "doc_12345",
+      "terms_added": 127,
+      "index_size_bytes": 5242880,
+      "timestamp": 1702598400
+    },
+    "fulltext_index_optimized": {
+      "event_type": "index_optimized",
+      "index_name": "idx_ft_documents",
+      "document_id": "",
+      "terms_added": 0,
+      "index_size_bytes": 4194304,
+      "timestamp": 1702598400
+    }
+  }
+}

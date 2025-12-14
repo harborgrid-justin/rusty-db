@@ -1,0 +1,19 @@
+{
+  "category": "rac",
+  "event_type": "query_completed",
+  "severity": "info",
+  "source": "rac:parallel_query",
+  "timestamp": 1734135300,
+  "event_id": "evt_pquery_001",
+  "payload": {
+    "event_type": "query_completed",
+    "query_id": "q_abc123def456",
+    "sql_text": "SELECT * FROM large_table WHERE created_date > '2024-01-01' ORDER BY id",
+    "dop": 4,
+    "instances": ["instance-1", "instance-2"],
+    "rows_processed": 1000000,
+    "duration_ms": 5420,
+    "success": true,
+    "timestamp": 1734135300
+  }
+}

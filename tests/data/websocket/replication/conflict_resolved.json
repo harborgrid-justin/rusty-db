@@ -1,0 +1,35 @@
+{
+  "category": "replication",
+  "event_type": "conflict_resolved",
+  "severity": "info",
+  "source": "replica:replica-003",
+  "timestamp": 1734134610,
+  "event_id": "evt_conflict_002",
+  "payload": {
+    "event_type": "conflict_resolved",
+    "conflict_id": "conf_abc123",
+    "table_name": "users",
+    "conflict_type": "update_update",
+    "local_value": {
+      "id": 12345,
+      "name": "John Doe Updated",
+      "email": "john.doe.new@example.com",
+      "updated_at": "2025-12-14T10:00:00Z"
+    },
+    "remote_value": {
+      "id": 12345,
+      "name": "John Doe Modified",
+      "email": "john.doe.modified@example.com",
+      "updated_at": "2025-12-14T10:00:05Z"
+    },
+    "resolution_strategy": "LastWriterWins",
+    "resolved_value": {
+      "id": 12345,
+      "name": "John Doe Modified",
+      "email": "john.doe.modified@example.com",
+      "updated_at": "2025-12-14T10:00:05Z"
+    },
+    "source_replica": "replica-003",
+    "timestamp": 1734134610
+  }
+}

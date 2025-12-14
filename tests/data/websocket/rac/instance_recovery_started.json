@@ -1,0 +1,19 @@
+{
+  "category": "rac",
+  "event_type": "recovery_started",
+  "severity": "warning",
+  "source": "rac:recovery",
+  "timestamp": 1734135200,
+  "event_id": "evt_recovery_001",
+  "payload": {
+    "event_type": "recovery_started",
+    "failed_instance": "instance-3",
+    "recovering_instance": "instance-1",
+    "recovery_phase": "redo_apply",
+    "progress_percent": 0.0,
+    "redo_logs_applied": 0,
+    "total_redo_logs": 10000,
+    "eta_seconds": 300.0,
+    "timestamp": 1734135200
+  }
+}

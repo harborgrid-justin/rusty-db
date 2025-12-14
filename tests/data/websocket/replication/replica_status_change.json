@@ -1,0 +1,21 @@
+{
+  "category": "replication",
+  "event_type": "replica_status_change",
+  "severity": "info",
+  "source": "replica:replica-002",
+  "timestamp": 1734134500,
+  "event_id": "evt_status_001",
+  "payload": {
+    "event_type": "replica_status_change",
+    "replica_id": "replica-002",
+    "old_status": "catching_up",
+    "new_status": "in_sync",
+    "reason": "Successfully caught up with primary after 15 minutes",
+    "timestamp": 1734134500,
+    "metadata": {
+      "catchup_duration_seconds": "900",
+      "bytes_replayed": "52428800",
+      "wal_position": "0/5000000"
+    }
+  }
+}

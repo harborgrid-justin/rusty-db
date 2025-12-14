@@ -1,0 +1,17 @@
+{
+  "category": "clustering",
+  "event_type": "leader_elected",
+  "severity": "info",
+  "source": "cluster:raft",
+  "timestamp": 1734134900,
+  "event_id": "evt_leader_001",
+  "payload": {
+    "event_type": "leader_elected",
+    "leader_id": "node-002",
+    "previous_leader": "node-001",
+    "term": 42,
+    "votes_received": 3,
+    "total_voters": 5,
+    "timestamp": 1734134900
+  }
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "message_type": "query_progress",
+    "query_id": "qry_abc123",
+    "data": {
+      "query_id": "qry_abc123",
+      "rows_scanned": 1000,
+      "rows_returned": 500,
+      "percentage_complete": 25.5,
+      "current_operation": "Sequential Scan on users",
+      "elapsed_ms": 1500,
+      "estimated_remaining_ms": 4400
+    },
+    "timestamp": 1702512000
+  },
+  {
+    "message_type": "query_progress",
+    "query_id": "qry_abc123",
+    "data": {
+      "query_id": "qry_abc123",
+      "rows_scanned": 2500,
+      "rows_returned": 1200,
+      "percentage_complete": 50.0,
+      "current_operation": "Hash Join with orders",
+      "elapsed_ms": 3000,
+      "estimated_remaining_ms": 3000
+    },
+    "timestamp": 1702512001
+  },
+  {
+    "message_type": "query_progress",
+    "query_id": "qry_abc123",
+    "data": {
+      "query_id": "qry_abc123",
+      "rows_scanned": 4000,
+      "rows_returned": 2000,
+      "percentage_complete": 100.0,
+      "current_operation": "Sort by created_at",
+      "elapsed_ms": 5800,
+      "estimated_remaining_ms": 0
+    },
+    "timestamp": 1702512003
+  }
+]

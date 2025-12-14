@@ -1,0 +1,130 @@
+{
+  "inmemory_events": {
+    "population_started": {
+      "event_type": "population_started",
+      "table_name": "sales_history",
+      "rows_populated": 0,
+      "total_rows": 10000000,
+      "progress_percent": 0.0,
+      "memory_used_bytes": 0,
+      "compression_ratio": 0.0,
+      "duration_ms": null,
+      "timestamp": 1702598400
+    },
+    "population_progress_25": {
+      "event_type": "population_progress",
+      "table_name": "sales_history",
+      "rows_populated": 2500000,
+      "total_rows": 10000000,
+      "progress_percent": 25.0,
+      "memory_used_bytes": 536870912,
+      "compression_ratio": 4.2,
+      "duration_ms": null,
+      "timestamp": 1702598420
+    },
+    "population_progress_55": {
+      "event_type": "population_progress",
+      "table_name": "sales_history",
+      "rows_populated": 5500000,
+      "total_rows": 10000000,
+      "progress_percent": 55.0,
+      "memory_used_bytes": 2147483648,
+      "compression_ratio": 4.5,
+      "duration_ms": null,
+      "timestamp": 1702598440
+    },
+    "population_completed": {
+      "event_type": "population_completed",
+      "table_name": "sales_history",
+      "rows_populated": 10000000,
+      "total_rows": 10000000,
+      "progress_percent": 100.0,
+      "memory_used_bytes": 3758096384,
+      "compression_ratio": 4.8,
+      "duration_ms": 80000,
+      "timestamp": 1702598480
+    },
+    "compression_started": {
+      "event_type": "compression_started",
+      "table_name": "customer_data",
+      "column_name": "email",
+      "compression_type": "dictionary",
+      "original_size_bytes": 536870912,
+      "compressed_size_bytes": 0,
+      "compression_ratio": 0.0,
+      "duration_ms": 0,
+      "timestamp": 1702598500
+    },
+    "compression_completed": {
+      "event_type": "compression_completed",
+      "table_name": "customer_data",
+      "column_name": "email",
+      "compression_type": "dictionary",
+      "original_size_bytes": 536870912,
+      "compressed_size_bytes": 67108864,
+      "compression_ratio": 8.0,
+      "duration_ms": 2500,
+      "timestamp": 1702598502
+    },
+    "compression_rle": {
+      "event_type": "compression_completed",
+      "table_name": "sensor_data",
+      "column_name": "status",
+      "compression_type": "rle",
+      "original_size_bytes": 1073741824,
+      "compressed_size_bytes": 10737418,
+      "compression_ratio": 100.0,
+      "duration_ms": 1200,
+      "timestamp": 1702598510
+    },
+    "compression_delta": {
+      "event_type": "compression_completed",
+      "table_name": "time_series",
+      "column_name": "timestamp",
+      "compression_type": "delta",
+      "original_size_bytes": 805306368,
+      "compressed_size_bytes": 134217728,
+      "compression_ratio": 6.0,
+      "duration_ms": 3000,
+      "timestamp": 1702598520
+    },
+    "compression_for": {
+      "event_type": "compression_completed",
+      "table_name": "measurements",
+      "column_name": "value",
+      "compression_type": "for",
+      "original_size_bytes": 536870912,
+      "compressed_size_bytes": 107374182,
+      "compression_ratio": 5.0,
+      "duration_ms": 1800,
+      "timestamp": 1702598530
+    },
+    "segment_evicted": {
+      "event_type": "segment_evicted",
+      "table_name": "archive_logs",
+      "segment_id": 42,
+      "rows_evicted": 500000,
+      "memory_freed_bytes": 262144000,
+      "reason": "lru",
+      "timestamp": 1702598540
+    },
+    "table_evicted": {
+      "event_type": "table_evicted",
+      "table_name": "old_data",
+      "segment_id": null,
+      "rows_evicted": 1000000,
+      "memory_freed_bytes": 524288000,
+      "reason": "memory_pressure",
+      "timestamp": 1702598550
+    },
+    "manual_eviction": {
+      "event_type": "table_evicted",
+      "table_name": "temp_analysis",
+      "segment_id": null,
+      "rows_evicted": 2500000,
+      "memory_freed_bytes": 1310720000,
+      "reason": "manual",
+      "timestamp": 1702598560
+    }
+  }
+}

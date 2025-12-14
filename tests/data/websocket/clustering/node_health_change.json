@@ -1,0 +1,23 @@
+{
+  "category": "clustering",
+  "event_type": "node_health_change",
+  "severity": "warning",
+  "source": "node:node-001",
+  "timestamp": 1734134700,
+  "event_id": "evt_health_001",
+  "payload": {
+    "event_type": "node_health_change",
+    "node_id": "node-001",
+    "old_status": "healthy",
+    "new_status": "degraded",
+    "metrics": {
+      "cpu_usage": 78.5,
+      "memory_usage": 85.2,
+      "disk_usage": 92.0,
+      "active_connections": 450,
+      "queries_per_second": 1250.0,
+      "avg_response_time_ms": 145.2
+    },
+    "timestamp": 1734134700
+  }
+}

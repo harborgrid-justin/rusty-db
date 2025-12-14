@@ -1,0 +1,60 @@
+[
+  {
+    "message_type": "page_event",
+    "data": {
+      "PageAllocated": {
+        "page_id": 12345,
+        "size": 4096,
+        "timestamp": 1702569600
+      }
+    },
+    "timestamp": 1702569600
+  },
+  {
+    "message_type": "page_event",
+    "data": {
+      "PageSplit": {
+        "original_page_id": 67890,
+        "new_page_id": 67891,
+        "reason": "Page utilization exceeded 90%",
+        "timestamp": 1702569610
+      }
+    },
+    "timestamp": 1702569610
+  },
+  {
+    "message_type": "page_event",
+    "data": {
+      "PageMerged": {
+        "page1_id": 11111,
+        "page2_id": 11112,
+        "result_page_id": 11111,
+        "timestamp": 1702569620
+      }
+    },
+    "timestamp": 1702569620
+  },
+  {
+    "message_type": "page_event",
+    "data": {
+      "PageCompacted": {
+        "page_id": 22222,
+        "bytes_reclaimed": 1024,
+        "timestamp": 1702569630
+      }
+    },
+    "timestamp": 1702569630
+  },
+  {
+    "message_type": "page_event",
+    "data": {
+      "ChecksumFailure": {
+        "page_id": 33333,
+        "expected": 2863311530,
+        "actual": 3735928559,
+        "timestamp": 1702569640
+      }
+    },
+    "timestamp": 1702569640
+  }
+]

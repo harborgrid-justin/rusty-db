@@ -1,0 +1,96 @@
+{
+  "memory_events": {
+    "pressure_warning": {
+      "event_type": "pressure_warning",
+      "pressure_level": "medium",
+      "total_memory_bytes": 8589934592,
+      "used_memory_bytes": 7301691392,
+      "available_memory_bytes": 1288243200,
+      "utilization_percent": 85.0,
+      "actions_taken": [
+        "Evicted 100 cache entries",
+        "Freed 50 query contexts",
+        "Compacted 20 arenas"
+      ],
+      "timestamp": 1702598400
+    },
+    "pressure_critical": {
+      "event_type": "pressure_critical",
+      "pressure_level": "critical",
+      "total_memory_bytes": 8589934592,
+      "used_memory_bytes": 8161181081,
+      "available_memory_bytes": 428753511,
+      "utilization_percent": 95.0,
+      "actions_taken": [
+        "Evicted 500 cache entries",
+        "Freed 200 query contexts",
+        "Triggered emergency GC",
+        "Disabled query cache",
+        "Killed long-running queries"
+      ],
+      "timestamp": 1702598460
+    },
+    "pressure_resolved": {
+      "event_type": "pressure_resolved",
+      "pressure_level": "normal",
+      "total_memory_bytes": 8589934592,
+      "used_memory_bytes": 5153960755,
+      "available_memory_bytes": 3435973837,
+      "utilization_percent": 60.0,
+      "actions_taken": [
+        "Re-enabled query cache"
+      ],
+      "timestamp": 1702598520
+    },
+    "gc_started": {
+      "event_type": "gc_started",
+      "gc_type": "minor",
+      "freed_bytes": 0,
+      "duration_ms": 0,
+      "contexts_cleaned": 0,
+      "fragmentation_before": 0.35,
+      "fragmentation_after": 0.35,
+      "timestamp": 1702598400
+    },
+    "gc_completed": {
+      "event_type": "gc_completed",
+      "gc_type": "minor",
+      "freed_bytes": 104857600,
+      "duration_ms": 50,
+      "contexts_cleaned": 25,
+      "fragmentation_before": 0.35,
+      "fragmentation_after": 0.12,
+      "timestamp": 1702598400
+    },
+    "allocator_stats_slab": {
+      "event_type": "allocator_stats",
+      "allocator_type": "slab",
+      "allocated_bytes": 2147483648,
+      "freed_bytes": 1073741824,
+      "current_usage_bytes": 1073741824,
+      "peak_usage_bytes": 2684354560,
+      "fragmentation": 0.15,
+      "timestamp": 1702598400
+    },
+    "allocator_stats_arena": {
+      "event_type": "allocator_stats",
+      "allocator_type": "arena",
+      "allocated_bytes": 1073741824,
+      "freed_bytes": 536870912,
+      "current_usage_bytes": 536870912,
+      "peak_usage_bytes": 1610612736,
+      "fragmentation": 0.08,
+      "timestamp": 1702598400
+    },
+    "allocator_stats_large_object": {
+      "event_type": "allocator_stats",
+      "allocator_type": "large_object",
+      "allocated_bytes": 536870912,
+      "freed_bytes": 268435456,
+      "current_usage_bytes": 268435456,
+      "peak_usage_bytes": 805306368,
+      "fragmentation": 0.0,
+      "timestamp": 1702598400
+    }
+  }
+}

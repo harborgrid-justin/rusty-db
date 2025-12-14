@@ -1,0 +1,64 @@
+{
+  "buffer_pool_events": {
+    "page_evicted": {
+      "event_type": "page_evicted",
+      "page_id": 42567,
+      "num_pages": 1,
+      "eviction_policy": "CLOCK",
+      "dirty_pages_flushed": 0,
+      "free_frames_after": 125,
+      "total_frames": 1000,
+      "timestamp": 1702598400
+    },
+    "batch_evicted": {
+      "event_type": "batch_evicted",
+      "page_id": null,
+      "num_pages": 64,
+      "eviction_policy": "2Q",
+      "dirty_pages_flushed": 12,
+      "free_frames_after": 189,
+      "total_frames": 1000,
+      "timestamp": 1702598402
+    },
+    "page_evicted_lru": {
+      "event_type": "page_evicted",
+      "page_id": 98765,
+      "num_pages": 1,
+      "eviction_policy": "LRU",
+      "dirty_pages_flushed": 1,
+      "free_frames_after": 190,
+      "total_frames": 1000,
+      "timestamp": 1702598404
+    },
+    "batch_evicted_lru_k": {
+      "event_type": "batch_evicted",
+      "page_id": null,
+      "num_pages": 32,
+      "eviction_policy": "LRU-K",
+      "dirty_pages_flushed": 8,
+      "free_frames_after": 222,
+      "total_frames": 1000,
+      "timestamp": 1702598406
+    },
+    "page_evicted_arc": {
+      "event_type": "page_evicted",
+      "page_id": 11223,
+      "num_pages": 1,
+      "eviction_policy": "ARC",
+      "dirty_pages_flushed": 0,
+      "free_frames_after": 223,
+      "total_frames": 1000,
+      "timestamp": 1702598408
+    },
+    "batch_evicted_lirs": {
+      "event_type": "batch_evicted",
+      "page_id": null,
+      "num_pages": 16,
+      "eviction_policy": "LIRS",
+      "dirty_pages_flushed": 3,
+      "free_frames_after": 239,
+      "total_frames": 1000,
+      "timestamp": 1702598410
+    }
+  }
+}

@@ -1,0 +1,51 @@
+[
+  {
+    "message_type": "algorithm_progress",
+    "data": {
+      "algorithm": "pagerank",
+      "iteration": 25,
+      "total_iterations": 50,
+      "converged": false,
+      "progress_pct": 50.0,
+      "vertices_processed": 500,
+      "edges_processed": 1125,
+      "intermediate_results": {
+        "top_vertices": [
+          {"id": "vertex_42", "score": 0.0245},
+          {"id": "vertex_17", "score": 0.0198},
+          {"id": "vertex_93", "score": 0.0167},
+          {"id": "vertex_8", "score": 0.0154},
+          {"id": "vertex_61", "score": 0.0142}
+        ],
+        "convergence_delta": 0.0012
+      }
+    },
+    "timestamp": 1702858000,
+    "graph_id": "social_network_graph"
+  },
+  {
+    "message_type": "algorithm_complete",
+    "data": {
+      "algorithm": "pagerank",
+      "converged": true,
+      "total_vertices": 1000,
+      "total_edges": 2250,
+      "iterations_completed": 50,
+      "execution_time_ms": 5234.5
+    },
+    "timestamp": 1702858005,
+    "graph_id": "social_network_graph"
+  },
+  {
+    "message_type": "traversal_update",
+    "data": {
+      "current_vertex": "v13",
+      "depth": 3,
+      "path": ["v1", "v5", "v9", "v13"],
+      "vertices_visited": 12,
+      "matches_found": 2
+    },
+    "timestamp": 1702858100,
+    "graph_id": "knowledge_graph"
+  }
+]

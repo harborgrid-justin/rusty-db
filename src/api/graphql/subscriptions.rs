@@ -327,6 +327,247 @@ impl SubscriptionRoot {
             }
         }
     }
+
+    /// Subscribe to index operation events
+    async fn index_operations<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        index_name: Option<String>,
+        event_types: Option<Vec<IndexEventType>>,
+        interval_seconds: Option<i32>,
+    ) -> impl Stream<Item = IndexOperationEvent> + 'ctx {
+        let engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let interval = Duration::from_secs(interval_seconds.unwrap_or(5) as u64);
+
+        async_stream::stream! {
+            let mut interval_timer = tokio::time::interval(interval);
+            let mut sequence = 0u64;
+
+            loop {
+                interval_timer.tick().await;
+                sequence += 1;
+
+                // Generate sample events - in production would come from actual index operations
+                let event_type = match sequence % 3 {
+                    0 => IndexEventType::BTreeSplit,
+                    1 => IndexEventType::LsmCompaction,
+                    _ => IndexEventType::RebuildProgress,
+                };
+
+                if let Some(ref types) = event_types {
+                    if !types.contains(&event_type) {
+                        continue;
+                    }
+                }
+
+                let event = IndexOperationEvent {
+                    event_type,
+                    index_name: index_name.clone().unwrap_or_else(|| "idx_sample".to_string()),
+                    table_name: Some("sample_table".to_string()),
+                    progress_percent: Some(45.5),
+                    rows_processed: Some(BigInt(455000)),
+                    details: Some("Sample index operation".to_string()),
+                    timestamp: DateTime::now(),
+                };
+
+                yield event;
+            }
+        }
+    }
+
+    /// Subscribe to memory pressure events
+    async fn memory_pressure<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        min_level: Option<MemoryPressureLevelGql>,
+        interval_seconds: Option<i32>,
+    ) -> impl Stream<Item = MemoryPressureEventGql> + 'ctx {
+        let _engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let interval = Duration::from_secs(interval_seconds.unwrap_or(10) as u64);
+
+        async_stream::stream! {
+            let mut interval_timer = tokio::time::interval(interval);
+
+            loop {
+                interval_timer.tick().await;
+
+                let level = MemoryPressureLevelGql::Medium;
+
+                if let Some(min) = min_level {
+                    let min_value = match min {
+                        MemoryPressureLevelGql::Normal => 0,
+                        MemoryPressureLevelGql::Low => 1,
+                        MemoryPressureLevelGql::Medium => 2,
+                        MemoryPressureLevelGql::High => 3,
+                        MemoryPressureLevelGql::Critical => 4,
+                    };
+                    let current_value = match level {
+                        MemoryPressureLevelGql::Normal => 0,
+                        MemoryPressureLevelGql::Low => 1,
+                        MemoryPressureLevelGql::Medium => 2,
+                        MemoryPressureLevelGql::High => 3,
+                        MemoryPressureLevelGql::Critical => 4,
+                    };
+                    if current_value < min_value {
+                        continue;
+                    }
+                }
+
+                let event = MemoryPressureEventGql {
+                    pressure_level: level,
+                    total_memory_bytes: BigInt(8589934592), // 8GB
+                    used_memory_bytes: BigInt(7301691392),  // ~6.8GB
+                    available_memory_bytes: BigInt(1288243200),
+                    utilization_percent: 85.0,
+                    actions_taken: vec![
+                        "Evicted 100 cache entries".to_string(),
+                        "Freed 50 query contexts".to_string(),
+                    ],
+                    timestamp: DateTime::now(),
+                };
+
+                yield event;
+            }
+        }
+    }
+
+    /// Subscribe to buffer pool events
+    async fn buffer_pool_events<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        event_types: Option<Vec<BufferPoolEventType>>,
+        interval_seconds: Option<i32>,
+    ) -> impl Stream<Item = BufferPoolEvent> + 'ctx {
+        let _engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let interval = Duration::from_secs(interval_seconds.unwrap_or(2) as u64);
+
+        async_stream::stream! {
+            let mut interval_timer = tokio::time::interval(interval);
+            let mut sequence = 0u64;
+
+            loop {
+                interval_timer.tick().await;
+                sequence += 1;
+
+                let event_type = match sequence % 3 {
+                    0 => BufferPoolEventType::PageEvicted,
+                    1 => BufferPoolEventType::BatchEvicted,
+                    _ => BufferPoolEventType::StatsUpdate,
+                };
+
+                if let Some(ref types) = event_types {
+                    if !types.contains(&event_type) {
+                        continue;
+                    }
+                }
+
+                let event = BufferPoolEvent {
+                    event_type,
+                    num_pages: 64,
+                    eviction_policy: Some("CLOCK".to_string()),
+                    dirty_pages_flushed: 12,
+                    free_frames: 189,
+                    total_frames: 1000,
+                    hit_rate: Some(0.95),
+                    timestamp: DateTime::now(),
+                };
+
+                yield event;
+            }
+        }
+    }
+
+    /// Subscribe to SIMD operation metrics
+    async fn simd_metrics<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        operation_types: Option<Vec<String>>,
+        interval_ms: Option<i32>,
+    ) -> impl Stream<Item = SimdOperationMetrics> + 'ctx {
+        let _engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let interval = Duration::from_millis(interval_ms.unwrap_or(1000) as u64);
+
+        async_stream::stream! {
+            let mut interval_timer = tokio::time::interval(interval);
+            let mut sequence = 0u64;
+
+            loop {
+                interval_timer.tick().await;
+                sequence += 1;
+
+                let op_type = if sequence % 2 == 0 { "filter" } else { "aggregate" };
+
+                if let Some(ref types) = operation_types {
+                    if !types.contains(&op_type.to_string()) {
+                        continue;
+                    }
+                }
+
+                let metrics = SimdOperationMetrics {
+                    operation_type: op_type.to_string(),
+                    rows_processed: BigInt(1000000),
+                    rows_selected: BigInt(250000),
+                    selectivity: 0.25,
+                    simd_ops: BigInt(15625),
+                    scalar_ops: BigInt(0),
+                    simd_ratio: 1.0,
+                    duration_us: BigInt(5000),
+                    throughput_rows_per_sec: 200000000.0,
+                    vector_width: 256,
+                    timestamp: DateTime::now(),
+                };
+
+                yield metrics;
+            }
+        }
+    }
+
+    /// Subscribe to in-memory column store events
+    async fn inmemory_store_events<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        table_name: Option<String>,
+        event_types: Option<Vec<InMemoryEventType>>,
+        interval_seconds: Option<i32>,
+    ) -> impl Stream<Item = InMemoryStoreEvent> + 'ctx {
+        let _engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let interval = Duration::from_secs(interval_seconds.unwrap_or(5) as u64);
+
+        async_stream::stream! {
+            let mut interval_timer = tokio::time::interval(interval);
+            let mut sequence = 0u64;
+
+            loop {
+                interval_timer.tick().await;
+                sequence += 1;
+
+                let event_type = match sequence % 3 {
+                    0 => InMemoryEventType::PopulationProgress,
+                    1 => InMemoryEventType::CompressionCompleted,
+                    _ => InMemoryEventType::TableEvicted,
+                };
+
+                if let Some(ref types) = event_types {
+                    if !types.contains(&event_type) {
+                        continue;
+                    }
+                }
+
+                let event = InMemoryStoreEvent {
+                    event_type,
+                    table_name: table_name.clone().unwrap_or_else(|| "sample_table".to_string()),
+                    rows_affected: Some(BigInt(1000000)),
+                    memory_bytes: Some(BigInt(2147483648)),
+                    compression_ratio: Some(4.5),
+                    progress_percent: Some(55.0),
+                    details: Some("Sample in-memory event".to_string()),
+                    timestamp: DateTime::now(),
+                };
+
+                yield event;
+            }
+        }
+    }
 }
 
 // Table change event (union of all change types)
@@ -791,3 +1032,291 @@ fn compute_rows_hash(rows: &[RowType]) -> u64 {
     }
     hasher.finish()
 }
+
+// ============================================================================
+// INDEX & MEMORY SUBSCRIPTIONS (New)
+// ============================================================================
+
+/// Index operation event
+#[derive(Clone, Debug)]
+pub struct IndexOperationEvent {
+    pub event_type: IndexEventType,
+    pub index_name: String,
+    pub table_name: Option<String>,
+    pub progress_percent: Option<f64>,
+    pub rows_processed: Option<BigInt>,
+    pub details: Option<String>,
+    pub timestamp: DateTime,
+}
+
+#[Object]
+impl IndexOperationEvent {
+    async fn event_type(&self) -> IndexEventType {
+        self.event_type
+    }
+
+    async fn index_name(&self) -> &str {
+        &self.index_name
+    }
+
+    async fn table_name(&self) -> &Option<String> {
+        &self.table_name
+    }
+
+    async fn progress_percent(&self) -> Option<f64> {
+        self.progress_percent
+    }
+
+    async fn rows_processed(&self) -> &Option<BigInt> {
+        &self.rows_processed
+    }
+
+    async fn details(&self) -> &Option<String> {
+        &self.details
+    }
+
+    async fn timestamp(&self) -> &DateTime {
+        &self.timestamp
+    }
+}
+
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
+pub enum IndexEventType {
+    RebuildStarted,
+    RebuildProgress,
+    RebuildCompleted,
+    BTreeSplit,
+    BTreeMerge,
+    LsmCompaction,
+    FullTextUpdate,
+}
+
+/// Memory pressure event
+#[derive(Clone, Debug)]
+pub struct MemoryPressureEventGql {
+    pub pressure_level: MemoryPressureLevelGql,
+    pub total_memory_bytes: BigInt,
+    pub used_memory_bytes: BigInt,
+    pub available_memory_bytes: BigInt,
+    pub utilization_percent: f64,
+    pub actions_taken: Vec<String>,
+    pub timestamp: DateTime,
+}
+
+#[Object]
+impl MemoryPressureEventGql {
+    async fn pressure_level(&self) -> MemoryPressureLevelGql {
+        self.pressure_level
+    }
+
+    async fn total_memory_bytes(&self) -> &BigInt {
+        &self.total_memory_bytes
+    }
+
+    async fn used_memory_bytes(&self) -> &BigInt {
+        &self.used_memory_bytes
+    }
+
+    async fn available_memory_bytes(&self) -> &BigInt {
+        &self.available_memory_bytes
+    }
+
+    async fn utilization_percent(&self) -> f64 {
+        self.utilization_percent
+    }
+
+    async fn actions_taken(&self) -> &[String] {
+        &self.actions_taken
+    }
+
+    async fn timestamp(&self) -> &DateTime {
+        &self.timestamp
+    }
+}
+
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
+pub enum MemoryPressureLevelGql {
+    Normal,
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+/// Buffer pool event
+#[derive(Clone, Debug)]
+pub struct BufferPoolEvent {
+    pub event_type: BufferPoolEventType,
+    pub num_pages: i32,
+    pub eviction_policy: Option<String>,
+    pub dirty_pages_flushed: i32,
+    pub free_frames: i32,
+    pub total_frames: i32,
+    pub hit_rate: Option<f64>,
+    pub timestamp: DateTime,
+}
+
+#[Object]
+impl BufferPoolEvent {
+    async fn event_type(&self) -> BufferPoolEventType {
+        self.event_type
+    }
+
+    async fn num_pages(&self) -> i32 {
+        self.num_pages
+    }
+
+    async fn eviction_policy(&self) -> &Option<String> {
+        &self.eviction_policy
+    }
+
+    async fn dirty_pages_flushed(&self) -> i32 {
+        self.dirty_pages_flushed
+    }
+
+    async fn free_frames(&self) -> i32 {
+        self.free_frames
+    }
+
+    async fn total_frames(&self) -> i32 {
+        self.total_frames
+    }
+
+    async fn hit_rate(&self) -> Option<f64> {
+        self.hit_rate
+    }
+
+    async fn timestamp(&self) -> &DateTime {
+        &self.timestamp
+    }
+}
+
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
+pub enum BufferPoolEventType {
+    PageEvicted,
+    BatchEvicted,
+    PageFlushed,
+    StatsUpdate,
+}
+
+/// SIMD operation metrics
+#[derive(Clone, Debug)]
+pub struct SimdOperationMetrics {
+    pub operation_type: String,
+    pub rows_processed: BigInt,
+    pub rows_selected: BigInt,
+    pub selectivity: f64,
+    pub simd_ops: BigInt,
+    pub scalar_ops: BigInt,
+    pub simd_ratio: f64,
+    pub duration_us: BigInt,
+    pub throughput_rows_per_sec: f64,
+    pub vector_width: i32,
+    pub timestamp: DateTime,
+}
+
+#[Object]
+impl SimdOperationMetrics {
+    async fn operation_type(&self) -> &str {
+        &self.operation_type
+    }
+
+    async fn rows_processed(&self) -> &BigInt {
+        &self.rows_processed
+    }
+
+    async fn rows_selected(&self) -> &BigInt {
+        &self.rows_selected
+    }
+
+    async fn selectivity(&self) -> f64 {
+        self.selectivity
+    }
+
+    async fn simd_ops(&self) -> &BigInt {
+        &self.simd_ops
+    }
+
+    async fn scalar_ops(&self) -> &BigInt {
+        &self.scalar_ops
+    }
+
+    async fn simd_ratio(&self) -> f64 {
+        self.simd_ratio
+    }
+
+    async fn duration_us(&self) -> &BigInt {
+        &self.duration_us
+    }
+
+    async fn throughput_rows_per_sec(&self) -> f64 {
+        self.throughput_rows_per_sec
+    }
+
+    async fn vector_width(&self) -> i32 {
+        self.vector_width
+    }
+
+    async fn timestamp(&self) -> &DateTime {
+        &self.timestamp
+    }
+}
+
+/// In-memory column store event
+#[derive(Clone, Debug)]
+pub struct InMemoryStoreEvent {
+    pub event_type: InMemoryEventType,
+    pub table_name: String,
+    pub rows_affected: Option<BigInt>,
+    pub memory_bytes: Option<BigInt>,
+    pub compression_ratio: Option<f64>,
+    pub progress_percent: Option<f64>,
+    pub details: Option<String>,
+    pub timestamp: DateTime,
+}
+
+#[Object]
+impl InMemoryStoreEvent {
+    async fn event_type(&self) -> InMemoryEventType {
+        self.event_type
+    }
+
+    async fn table_name(&self) -> &str {
+        &self.table_name
+    }
+
+    async fn rows_affected(&self) -> &Option<BigInt> {
+        &self.rows_affected
+    }
+
+    async fn memory_bytes(&self) -> &Option<BigInt> {
+        &self.memory_bytes
+    }
+
+    async fn compression_ratio(&self) -> Option<f64> {
+        self.compression_ratio
+    }
+
+    async fn progress_percent(&self) -> Option<f64> {
+        self.progress_percent
+    }
+
+    async fn details(&self) -> &Option<String> {
+        &self.details
+    }
+
+    async fn timestamp(&self) -> &DateTime {
+        &self.timestamp
+    }
+}
+
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
+pub enum InMemoryEventType {
+    PopulationStarted,
+    PopulationProgress,
+    PopulationCompleted,
+    TableEvicted,
+    SegmentEvicted,
+    CompressionCompleted,
+}
+

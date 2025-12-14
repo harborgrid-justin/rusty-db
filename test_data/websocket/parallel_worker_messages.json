@@ -1,0 +1,74 @@
+[
+  {
+    "message_type": "parallel_worker",
+    "query_id": "qry_ghi789",
+    "data": {
+      "query_id": "qry_ghi789",
+      "worker_id": 0,
+      "event_type": "started",
+      "rows_processed": 0,
+      "data_partition": "partition_0"
+    },
+    "timestamp": 1702512000
+  },
+  {
+    "message_type": "parallel_worker",
+    "query_id": "qry_ghi789",
+    "data": {
+      "query_id": "qry_ghi789",
+      "worker_id": 1,
+      "event_type": "started",
+      "rows_processed": 0,
+      "data_partition": "partition_1"
+    },
+    "timestamp": 1702512000
+  },
+  {
+    "message_type": "parallel_worker",
+    "query_id": "qry_ghi789",
+    "data": {
+      "query_id": "qry_ghi789",
+      "worker_id": 0,
+      "event_type": "progress",
+      "rows_processed": 2500,
+      "data_partition": "partition_0"
+    },
+    "timestamp": 1702512001
+  },
+  {
+    "message_type": "parallel_worker",
+    "query_id": "qry_ghi789",
+    "data": {
+      "query_id": "qry_ghi789",
+      "worker_id": 1,
+      "event_type": "progress",
+      "rows_processed": 2300,
+      "data_partition": "partition_1"
+    },
+    "timestamp": 1702512001
+  },
+  {
+    "message_type": "parallel_worker",
+    "query_id": "qry_ghi789",
+    "data": {
+      "query_id": "qry_ghi789",
+      "worker_id": 0,
+      "event_type": "completed",
+      "rows_processed": 5000,
+      "data_partition": "partition_0"
+    },
+    "timestamp": 1702512002
+  },
+  {
+    "message_type": "parallel_worker",
+    "query_id": "qry_ghi789",
+    "data": {
+      "query_id": "qry_ghi789",
+      "worker_id": 1,
+      "event_type": "completed",
+      "rows_processed": 4800,
+      "data_partition": "partition_1"
+    },
+    "timestamp": 1702512002
+  }
+]

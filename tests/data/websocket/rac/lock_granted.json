@@ -1,0 +1,18 @@
+{
+  "category": "rac",
+  "event_type": "lock_granted",
+  "severity": "info",
+  "source": "rac:locks",
+  "timestamp": 1734135100,
+  "event_id": "evt_lock_001",
+  "payload": {
+    "event_type": "lock_granted",
+    "resource_id": "res_users_table",
+    "lock_type": "shared",
+    "previous_lock_type": null,
+    "instance_id": "instance-2",
+    "granted": true,
+    "wait_time_ms": 5,
+    "timestamp": 1734135100
+  }
+}

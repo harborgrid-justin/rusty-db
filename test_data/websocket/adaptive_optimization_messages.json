@@ -1,0 +1,38 @@
+[
+  {
+    "message_type": "adaptive_optimization",
+    "query_id": "qry_jkl012",
+    "data": {
+      "query_id": "qry_jkl012",
+      "correction_type": "join_order_change",
+      "detected_issue": "Cardinality estimate was off by 15x - table users had 150,000 rows but estimated 10,000",
+      "action_taken": "Reordered joins: moved users join earlier to filter earlier",
+      "performance_impact": 4.2
+    },
+    "timestamp": 1702512000
+  },
+  {
+    "message_type": "adaptive_optimization",
+    "query_id": "qry_jkl012",
+    "data": {
+      "query_id": "qry_jkl012",
+      "correction_type": "join_algorithm_change",
+      "detected_issue": "Nested loop join taking longer than expected - inner table larger than anticipated",
+      "action_taken": "Switched from nested loop to hash join for orders table",
+      "performance_impact": 3.7
+    },
+    "timestamp": 1702512001
+  },
+  {
+    "message_type": "adaptive_optimization",
+    "query_id": "qry_jkl012",
+    "data": {
+      "query_id": "qry_jkl012",
+      "correction_type": "index_selection",
+      "detected_issue": "Sequential scan on products slower than expected due to disk I/O",
+      "action_taken": "Switched to index scan using products_category_idx",
+      "performance_impact": 2.8
+    },
+    "timestamp": 1702512002
+  }
+]

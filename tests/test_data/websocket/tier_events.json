@@ -1,0 +1,56 @@
+[
+  {
+    "message_type": "tier_event",
+    "data": {
+      "PageMigrated": {
+        "page_id": 12345,
+        "from_tier": "Hot",
+        "to_tier": "Warm",
+        "reason": "Access frequency below hot threshold",
+        "timestamp": 1702569600
+      }
+    },
+    "timestamp": 1702569600
+  },
+  {
+    "message_type": "tier_event",
+    "data": {
+      "PageMigrated": {
+        "page_id": 67890,
+        "from_tier": "Warm",
+        "to_tier": "Cold",
+        "reason": "Not accessed in 7 days",
+        "timestamp": 1702569610
+      }
+    },
+    "timestamp": 1702569610
+  },
+  {
+    "message_type": "tier_event",
+    "data": {
+      "PageMigrated": {
+        "page_id": 11111,
+        "from_tier": "Cold",
+        "to_tier": "Hot",
+        "reason": "Sudden high access frequency detected",
+        "timestamp": 1702569620
+      }
+    },
+    "timestamp": 1702569620
+  },
+  {
+    "message_type": "tier_event",
+    "data": {
+      "TierStats": {
+        "hot_pages": 1000,
+        "warm_pages": 5000,
+        "cold_pages": 10000,
+        "total_migrations": 500,
+        "avg_compression_ratio": 0.35,
+        "bytes_saved": 50000000,
+        "timestamp": 1702569630
+      }
+    },
+    "timestamp": 1702569630
+  }
+]
