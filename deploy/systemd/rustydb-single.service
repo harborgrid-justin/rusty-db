@@ -1,0 +1,53 @@
+[Unit]
+Description=RustyDB Database Server (Single Instance)
+Documentation=https://github.com/harborgrid-justin/rusty-db
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Run as a dedicated user
+User=rustydb
+Group=rustydb
+
+# Default instance location
+Environment=RUSTYDB_HOME=/var/lib/rustydb/default
+
+# Main server process
+ExecStart=/opt/rustydb/current/bin/rusty-db-server --home /var/lib/rustydb/default
+
+# Restart policy
+Restart=on-failure
+RestartSec=2
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+# Allow write access only to data directory
+ReadWritePaths=/var/lib/rustydb
+
+# File descriptor limits
+LimitNOFILE=1048576
+LimitNPROC=65536
+LimitCORE=infinity
+
+# OOM handling
+OOMScoreAdjust=-500
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rustydb
+
+[Install]
+WantedBy=multi-user.target

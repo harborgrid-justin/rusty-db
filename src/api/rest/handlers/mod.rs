@@ -5,6 +5,7 @@
 pub mod admin;
 pub mod auth;
 pub mod cluster;
+pub mod config_handlers;
 pub mod db;
 pub mod monitoring;
 pub mod network_handlers;

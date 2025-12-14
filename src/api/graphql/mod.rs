@@ -5,6 +5,8 @@
 pub mod builders;
 pub mod cluster_subscriptions;
 pub mod complexity;
+pub mod config_queries;
+pub mod config_types;
 pub mod ddl_subscriptions;
 pub mod engine;
 pub mod enterprise_subscriptions;
